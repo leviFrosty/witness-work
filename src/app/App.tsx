@@ -1,7 +1,7 @@
 import '../../env'
 import '@/lib/locales'
 import 'react-native-gesture-handler'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import RootStackComponent from '@/app/navigation/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -68,6 +68,7 @@ import { isOfflineError } from '@/lib/offlineError'
 import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { prepareNotesImportAppAttestRecovery } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
+import { analytics } from '@/lib/analytics'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -250,6 +251,10 @@ function SupporterSyncLapseGate() {
     if (isSupporter) return
     if (!iCloudSyncEnabled) return
     set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: false })
+    analytics.capture('icloud_sync_enabled_changed', {
+      enabled: false,
+      source: 'supporter_lapse',
+    })
   }, [supporterStatusKnown, isSupporter, iCloudSyncEnabled, set])
 
   return null
@@ -271,10 +276,10 @@ function SupporterSyncDefault() {
       if (cancelled) return
       switch (decision.outcome) {
         case 'seed':
-          await iCloudSync.applySeedEnable()
+          await iCloudSync.applySeedEnable('supporter_default')
           return
         case 'pull':
-          iCloudSync.applyPullEnable(decision.remote)
+          iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
           return
         case 'conflict':
         case 'unavailable':
@@ -306,6 +311,7 @@ export default function App() {
     Kalam_700Bold,
   })
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
+  const routeNameRef = useRef<string | undefined>(undefined)
 
   // Dev-only: bumping this key remounts the whole navigation tree (every
   // screen back to initial state) without a Metro bundle reload, so an
@@ -615,6 +621,23 @@ export default function App() {
                   key={devRemountKey}
                   ref={navigationRef}
                   linking={linking}
+                  onReady={() => {
+                    const initialScreen =
+                      navigationRef.current?.getCurrentRoute()?.name
+                    routeNameRef.current = initialScreen
+                    if (initialScreen) analytics.screen(initialScreen)
+                  }}
+                  onStateChange={() => {
+                    const previousScreen = routeNameRef.current
+                    const currentScreen =
+                      navigationRef.current?.getCurrentRoute()?.name
+                    if (currentScreen && currentScreen !== previousScreen) {
+                      analytics.screen(currentScreen, {
+                        previous_screen: previousScreen,
+                      })
+                    }
+                    routeNameRef.current = currentScreen
+                  }}
                 >
                   {/*
                    * ToastProvider must wrap TamaguiProvider — TamaguiProvider

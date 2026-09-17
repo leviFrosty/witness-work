@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   BellOff as BellOffIcon,
   Calendar1 as Calendar1Icon,
@@ -380,6 +381,10 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
       },
     })
 
+    analytics.capture('follow_up_rescheduled', {
+      was_dismissed: !!conversation.followUp?.dismissed,
+      reminder_scheduled: notifications.length > 0,
+    })
     dismiss()
   }, [
     conversation,
@@ -427,6 +432,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
                 dismissed: true,
               },
             })
+            analytics.capture('follow_up_dismissed')
             dismiss()
           },
         },

@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   CircleAlert as CircleAlertIcon,
   CircleCheck as CircleCheckIcon,
@@ -102,7 +103,15 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         setProbe({ state: 'found', remote })
       }
     }
-    void run()
+    void run().catch(() => {
+      if (!cancelled) setProbe({ state: 'noBackup' })
+      analytics.capture('import_failed', {
+        import_type: 'icloud',
+        source: 'onboarding',
+        stage: 'probe',
+        error_code: 'unexpected',
+      })
+    })
     return () => {
       cancelled = true
     }
@@ -136,13 +145,46 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     }
   }, [probe.state, pulse])
 
+  useEffect(() => {
+    analytics.capture('icloud_restore_probe_result', {
+      source: 'onboarding',
+      status: probe.state,
+    })
+  }, [probe.state])
+
   const handleRestore = () => {
     if (probe.state !== 'found' || restoring) return
     setRestoring(true)
+    analytics.capture('import_started', {
+      import_type: 'icloud',
+      source: 'onboarding',
+    })
     // Defer the synchronous store replacement one frame so the spinner
     // actually paints before the setState cascade blocks the JS thread.
     requestAnimationFrame(() => {
-      iCloudSync.replaceLocalWithRemote(probe.remote)
+      try {
+        iCloudSync.replaceLocalWithRemote(probe.remote)
+      } catch {
+        setRestoring(false)
+        analytics.capture('import_failed', {
+          import_type: 'icloud',
+          source: 'onboarding',
+          stage: 'restore',
+          error_code: 'unexpected',
+        })
+        Alert.alert(
+          i18n.t('importError_title'),
+          i18n.t('importError_description')
+        )
+        return
+      }
+      analytics.capture('import_completed', {
+        import_type: 'icloud',
+        source: 'onboarding',
+      })
+      analytics.capture('onboarding_completed', {
+        completion_method: 'icloud_restore',
+      })
       // Mark onboarding complete — the user's restored publisher/profile/etc.
       // replaces the defaults they would've otherwise set in the remaining
       // steps.
@@ -161,13 +203,21 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       // so the main app doesn't re-prompt the user and overwrite their
       // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
       // revision, but an older remote payload may not contain them.)
+      const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
       set({
         onboardingComplete: true,
+        onboardingStepId: null,
         hasCompletedMapOnboarding: true,
         ...(canEnableICloudSync
           ? { iCloudSyncEnabled: true, iCloudSyncSetByUser: true }
           : {}),
       })
+      if (canEnableICloudSync && !wasSyncEnabled) {
+        analytics.capture('icloud_sync_enabled_changed', {
+          enabled: true,
+          source: 'onboarding_restore',
+        })
+      }
       setProfile({ hasCompletedProfileSetup: true })
 
       // If the restored payload references images via iCloud markers, prompt
@@ -454,7 +504,13 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           </ActionButton>
         )}
         <Button
-          onPress={goNext}
+          onPress={() => {
+            analytics.capture('onboarding_import_skipped', {
+              import_type: 'icloud',
+              status: probe.state,
+            })
+            goNext()
+          }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}
           disabled={restoring}
         >

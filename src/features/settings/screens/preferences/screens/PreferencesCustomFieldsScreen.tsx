@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { usePreferences } from '@/stores/preferences'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
@@ -59,6 +60,7 @@ const PreferencesCustomFieldsScreen = () => {
   const handleAdd = () => {
     if (!newFieldName.trim()) return
     addCustomFieldDef(newFieldName)
+    analytics.capture('custom_field_created')
     setNewFieldName('')
   }
 
@@ -82,7 +84,10 @@ const PreferencesCustomFieldsScreen = () => {
       title: i18n.t('archiveField'),
       description: i18n.t('archiveField_description', { label }),
       confirmLabel: i18n.t('archive'),
-      onConfirm: () => archiveCustomFieldDef(id),
+      onConfirm: () => {
+        archiveCustomFieldDef(id)
+        analytics.capture('custom_field_archived')
+      },
     })
   }
 
@@ -91,7 +96,10 @@ const PreferencesCustomFieldsScreen = () => {
       title: i18n.t('permanentlyDelete'),
       description: i18n.t('permanentlyDeleteCustomField_warning', { label }),
       confirmLabel: i18n.t('delete'),
-      onConfirm: () => purgeCustomFieldDef(id),
+      onConfirm: () => {
+        purgeCustomFieldDef(id)
+        analytics.capture('custom_field_deleted')
+      },
     })
   }
 
@@ -222,6 +230,7 @@ const PreferencesCustomFieldsScreen = () => {
                         const trimmed = value.trim()
                         if (trimmed && trimmed !== def.label) {
                           renameCustomFieldDef(def.id, trimmed)
+                          analytics.capture('custom_field_renamed')
                         }
                         // Clear local edit so future label changes from
                         // sync show through.
@@ -279,7 +288,10 @@ const PreferencesCustomFieldsScreen = () => {
                           id: 'restore-field',
                           label: i18n.t('restore'),
                           icon: RotateCcwIcon,
-                          onPress: () => restoreCustomFieldDef(def.id),
+                          onPress: () => {
+                            restoreCustomFieldDef(def.id)
+                            analytics.capture('custom_field_restored')
+                          },
                         },
                         {
                           id: 'delete-field',

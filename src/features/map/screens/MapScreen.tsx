@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   BookUser as BookUserIcon,
   Expand as ExpandIcon,
@@ -176,6 +177,7 @@ const FullMapView = ({
       coordinate,
       userDraggedCoordinate: true,
     })
+    analytics.capture('map_marker_moved')
   }
 
   const fitToMarkers = useCallback(() => {
@@ -252,6 +254,7 @@ const FullMapView = ({
       // render and tap scrolls the carousel to the wrong card.
       const idx = findContactIndexById(visibleContactMarkers, id)
       if (idx < 0) return
+      analytics.capture('map_contact_selected')
       lastReconciledIndexRef.current = idx
 
       // Re-tap on the already-active pin: the carousel is already on this
@@ -506,6 +509,7 @@ const FullMapView = ({
       searchInputRef.current?.focus()
       return
     }
+    analytics.capture('map_search_opened')
     setSearchExpanded(true)
     searchExpand.value = withSpring(1, SEARCH_SPRING_OPEN)
     requestAnimationFrame(() => searchInputRef.current?.focus())

@@ -22,6 +22,15 @@ const envVariables = z.object({
     .string()
     .optional()
     .describe('BOOLEAN, Set to true to silence all logs. Defaults to false.'),
+  POSTHOG_PROJECT_TOKEN: z
+    .string()
+    .optional()
+    .describe('Public PostHog project token embedded in the Expo app config.'),
+  POSTHOG_HOST: z
+    .string()
+    .url()
+    .optional()
+    .describe('PostHog ingestion host embedded in the Expo app config.'),
   EXPO_PUBLIC_NOTES_IMPORT_BASE_URL: z
     .string()
     .optional()

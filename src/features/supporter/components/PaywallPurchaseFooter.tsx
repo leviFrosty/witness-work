@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { Linking, View } from 'react-native'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -7,6 +8,7 @@ import links from '@/constants/links'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 
 interface Props {
+  source: string
   selected: boolean
   tier: 'supporter' | 'tip'
   ctaLabel: string
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export default function PaywallPurchaseFooter({
+  source,
   selected,
   tier,
   ctaLabel,
@@ -80,7 +83,13 @@ export default function PaywallPurchaseFooter({
           </Button>
         )}
         <Button
-          onPress={() => Linking.openURL(links.termsOfUse)}
+          onPress={() => {
+            analytics.capture('paywall_legal_link_clicked', {
+              source,
+              link: 'terms',
+            })
+            Linking.openURL(links.termsOfUse)
+          }}
           style={{ minHeight: 44, justifyContent: 'center' }}
         >
           <Text
@@ -94,7 +103,13 @@ export default function PaywallPurchaseFooter({
           </Text>
         </Button>
         <Button
-          onPress={() => Linking.openURL(links.privacyPolicy)}
+          onPress={() => {
+            analytics.capture('paywall_legal_link_clicked', {
+              source,
+              link: 'privacy',
+            })
+            Linking.openURL(links.privacyPolicy)
+          }}
           style={{ minHeight: 44, justifyContent: 'center' }}
         >
           <Text

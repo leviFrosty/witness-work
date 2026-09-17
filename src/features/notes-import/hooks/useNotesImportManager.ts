@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { create } from 'zustand'
 import * as Sentry from '@sentry/react-native'
 import { logger } from '@/lib/logger'
@@ -30,7 +31,10 @@ import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import { buildNotesImportContext } from '@/features/notes-import/lib/buildNotesImportContext'
 import { mapNotesImport } from '@/features/notes-import/lib/mapNotesImport'
 import type { MappedWarning } from '@/features/notes-import/lib/mapNotesImport'
-import type { PreviewSelection } from '@/features/notes-import/lib/buildNotesImportPreview'
+import {
+  isEmptyPreview,
+  type PreviewSelection,
+} from '@/features/notes-import/lib/buildNotesImportPreview'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import {
   clientImportCap,
@@ -165,7 +169,10 @@ interface NotesImportManagerState {
   /** Promote/resume Working imports up to the concurrency cap. */
   tick: () => void
   /** Start a new import from pasted notes; returns its contentHash (the row id). */
-  submit: (notesText: string) => Promise<string | null>
+  submit: (
+    notesText: string,
+    source?: 'onboarding' | 'app'
+  ) => Promise<string | null>
   /**
    * Refine a Ready import (re-parses the SAME notes). Returns false if not
    * Ready.
@@ -431,6 +438,14 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         return
       }
 
+      const startedAt = Date.now()
+      const source = entry.analyticsSource ?? 'unknown'
+      analytics.capture('import_started', {
+        import_type: 'notes',
+        source,
+        resumed: !!entry.activeRun,
+        refinement: pendingRefinement.has(hash),
+      })
       inFlight.add(hash)
       const controller = new AbortController()
       controllers.set(hash, controller)
@@ -491,6 +506,24 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // Terminal success is authoritative after the server commits usage.
           // A malformed/missing snapshot leaves the last valid state untouched.
           applyCredits(hash, res.credits, 'terminal')
+          analytics.capture('import_preview_ready', {
+            import_type: 'notes',
+            source,
+            elapsed_ms: Date.now() - startedAt,
+            contact_count: res.result.contacts.length,
+            visit_count: res.result.visits.length,
+            time_entry_count: res.result.timeEntries.length,
+            warning_count: res.result.warnings.length,
+            empty: isEmptyPreview({
+              counts: {
+                contacts: res.result.contacts.length,
+                visits: res.result.visits.length,
+                timeEntries: res.result.timeEntries.length,
+              },
+              hasPublisher: !!res.result.publisher,
+            }),
+            empty_charged: res.emptyCharged ?? false,
+          })
           putParsedResult(hash, res.result, Date.now(), res.emptyCharged)
           patchRuntime(hash, { phase: 'done', running: false, error: null })
         })
@@ -535,6 +568,13 @@ export const useNotesImportManager = create<NotesImportManagerState>(
               setTimeout(() => get().tick(), decision.cooldownMs + 50)
               break
             case 'failed':
+              analytics.capture('import_failed', {
+                import_type: 'notes',
+                source,
+                stage: 'parse',
+                error_code: decision.code,
+                elapsed_ms: Date.now() - startedAt,
+              })
               if (decision.report) {
                 logger.error('Notes import: run failed', e)
                 Sentry.captureException(e)
@@ -638,11 +678,17 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         for (const hash of planImportsToStart(items, cap)) startRun(hash)
       },
 
-      submit: async (notesText) => {
+      submit: async (notesText, source = 'app') => {
         const text = notesText.trim()
         if (!text) return null
         const hash = await notesContentHash(text)
         const existing = getLedgerEntry(hash)
+        analytics.capture('notes_import_submitted', {
+          import_type: 'notes',
+          source,
+          reused_existing:
+            existing?.state === 'ready' || existing?.state === 'done',
+        })
         // Same content already parsed/accepted — surface that row, don't re-run.
         // A Working (resume) or Stopped (re-run from scratch) row falls through.
         if (
@@ -652,6 +698,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           return hash
         beginWorkingEntry(hash, {
           notesText: text,
+          analyticsSource: source,
           activeRun: existing?.activeRun ?? null,
           nowMs: Date.now(),
         })
@@ -780,12 +827,26 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           )
           const commit = writeMappedDataToStores(reconciled, { publisherMode })
           markAccepted(hash, commit, Date.now())
+          analytics.capture('notes_import_accepted', {
+            import_type: 'notes',
+            source: entry.analyticsSource ?? 'unknown',
+            contact_count: reconciled.contacts.length,
+            visit_count: reconciled.visits.length,
+            time_entry_count: reconciled.timeEntries.length,
+            warning_count: warnings.length,
+          })
           set({
             reconcileWarnings: { ...get().reconcileWarnings, [hash]: warnings },
           })
           get().hydrate()
           return true
         } catch (e) {
+          analytics.capture('import_failed', {
+            import_type: 'notes',
+            source: entry.analyticsSource ?? 'unknown',
+            stage: 'commit',
+            error_code: 'unexpected',
+          })
           logger.error('Notes import: accept failed', e)
           Sentry.captureException(e)
           return false
@@ -805,6 +866,10 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         try {
           undoImport(entry.commit)
           clearAccepted(hash)
+          analytics.capture('import_undone', {
+            import_type: 'notes',
+            source: entry.analyticsSource ?? 'unknown',
+          })
           set({
             reconcileWarnings: { ...get().reconcileWarnings, [hash]: [] },
           })
@@ -846,6 +911,10 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       },
 
       stop: (hash) => {
+        analytics.capture('import_stopped', {
+          import_type: 'notes',
+          source: getLedgerEntry(hash)?.analyticsSource ?? 'unknown',
+        })
         // A true stop, not a pause. Move the row to the terminal `stopped` state
         // FIRST so neither the run's finally→tick nor a later relaunch ever
         // restarts it (a Working row resumes; `paused` is in-memory only). Then
@@ -864,6 +933,10 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       },
 
       retry: (hash) => {
+        analytics.capture('import_retried', {
+          import_type: 'notes',
+          source: getLedgerEntry(hash)?.analyticsSource ?? 'unknown',
+        })
         cooldownUntil.delete(hash)
         patchRuntime(hash, { error: null, paused: false })
         get().tick()

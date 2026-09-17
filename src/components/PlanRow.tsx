@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   Calendar1 as Calendar1Icon,
   Pencil as PencilIcon,
@@ -163,6 +164,11 @@ const PlanRow = (props: {
       onDelete: (scope) => {
         if (props.item.type === 'day') {
           deleteDayPlan(props.item.plan.id)
+          analytics.capture('plan_deleted', {
+            plan_kind: 'day',
+            scope: 'all',
+            source: 'plan_row',
+          })
           return
         }
 
@@ -171,13 +177,28 @@ const PlanRow = (props: {
             props.item.plan.id,
             props.item.date
           )
+          analytics.capture('plan_deleted', {
+            plan_kind: 'recurring',
+            scope,
+            source: 'plan_row',
+          })
           return
         }
         if (scope === 'future') {
           deleteEventAndFutureEvents(props.item.plan.id, props.item.date)
+          analytics.capture('plan_deleted', {
+            plan_kind: 'recurring',
+            scope,
+            source: 'plan_row',
+          })
           return
         }
         deleteRecurringPlan(props.item.plan.id)
+        analytics.capture('plan_deleted', {
+          plan_kind: 'recurring',
+          scope,
+          source: 'plan_row',
+        })
       },
     })
   }

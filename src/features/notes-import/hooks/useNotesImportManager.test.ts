@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+
 type Snapshot = {
   remaining: number | null
   limit: number | null
@@ -184,6 +186,82 @@ beforeEach(async () => {
 })
 
 describe('useNotesImportManager credit lifecycle', () => {
+  it('attributes background previews to onboarding without claiming data was accepted', async () => {
+    const { analytics } = await import('@/lib/analytics')
+    vi.mocked(analytics.capture).mockClear()
+    const hash = await useNotesImportManager
+      .getState()
+      .submit('private source notes', 'onboarding')
+    harness.pending[0].resolve(terminal(snapshot()))
+    await settle()
+    expect(
+      useNotesImportManager
+        .getState()
+        .entries.find((entry) => entry.hash === hash)?.analyticsSource
+    ).toBe('onboarding')
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'import_preview_ready',
+      expect.objectContaining({
+        source: 'onboarding',
+        import_type: 'notes',
+        empty: true,
+      })
+    )
+    expect(
+      vi
+        .mocked(analytics.capture)
+        .mock.calls.some(([event]) => event === 'notes_import_accepted')
+    ).toBe(false)
+    expect(
+      JSON.stringify(vi.mocked(analytics.capture).mock.calls)
+    ).not.toContain('private source notes')
+    const { mapNotesImport } = await import(
+      '@/features/notes-import/lib/mapNotesImport'
+    )
+    const { writeMappedDataToStores } = await import(
+      '@/lib/import/writeMappedData'
+    )
+    vi.mocked(mapNotesImport).mockReturnValue({
+      contacts: [],
+      visits: [],
+      timeEntries: [],
+      categories: [],
+      customFieldDefs: [],
+      publisher: null,
+      warnings: [],
+    })
+    vi.mocked(writeMappedDataToStores).mockReturnValue({
+      insertedContactIds: [],
+      insertedVisitIds: [],
+      insertedTimeEntries: [],
+      insertedCategoryIds: [],
+      insertedCustomFieldDefIds: [],
+      publisherChange: null,
+    })
+    if (!hash) throw new Error('Expected import hash')
+    expect(
+      useNotesImportManager.getState().accept(hash, {
+        selection: { ids: new Set(), publisher: false },
+        publisherMode: 'fillIfUnset',
+      })
+    ).toBe(true)
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'notes_import_accepted',
+      expect.objectContaining({ source: 'onboarding' })
+    )
+    expect(
+      useNotesImportManager.getState().accept(hash, {
+        selection: { ids: new Set(), publisher: false },
+        publisherMode: 'fillIfUnset',
+      })
+    ).toBe(false)
+    expect(
+      vi
+        .mocked(analytics.capture)
+        .mock.calls.filter(([event]) => event === 'notes_import_accepted')
+    ).toHaveLength(1)
+  })
+
   it('re-arms a stale import denial when the app becomes active after expiry', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-01T00:00:00.000Z'))

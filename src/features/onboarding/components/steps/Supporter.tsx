@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   ChevronRight as ChevronRightIcon,
   Heart as HeartIcon,
@@ -173,7 +174,10 @@ const Supporter = ({ goBack, goNext }: Props) => {
               borderColor: theme.colors.supporter,
               backgroundColor: theme.colors.supporterTranslucent,
             }}
-            onPress={() => navigation.navigate('Paywall')}
+            onPress={() => {
+              analytics.capture('paywall_opened', { source: 'onboarding' })
+              navigation.navigate('Paywall', { source: 'onboarding' })
+            }}
           >
             <LucideIcon
               icon={HeartIcon}

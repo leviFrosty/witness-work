@@ -60,6 +60,8 @@ export interface NotesImportChatMessage {
 }
 
 export interface NotesImportLedgerEntry {
+  /** Original entry point, retained through background runs and refinements. */
+  analyticsSource?: 'onboarding' | 'app'
   hash: string
   /** Lifecycle state. The list renders this, not the backend run status. */
   state: NotesImportState
@@ -245,6 +247,10 @@ export const migrateLedgerEntry = (
 
   return {
     hash: o.hash,
+    analyticsSource:
+      o.analyticsSource === 'onboarding' || o.analyticsSource === 'app'
+        ? o.analyticsSource
+        : undefined,
     state,
     notesText,
     provisionalTitle,
@@ -285,6 +291,7 @@ export const beginWorkingTransition = (
   existing: NotesImportLedgerEntry | null,
   args: {
     notesText: string
+    analyticsSource?: 'onboarding' | 'app'
     activeRun: NotesImportActiveRun | null
     nowMs: number
   }
@@ -293,6 +300,7 @@ export const beginWorkingTransition = (
   return {
     hash: existing?.hash ?? '',
     state: 'working',
+    analyticsSource: existing?.analyticsSource ?? args.analyticsSource,
     notesText,
     provisionalTitle:
       provisionalTitleFromNotes(notesText) || existing?.provisionalTitle || '',
@@ -329,6 +337,7 @@ export const putParsedTransition = (
 ): NotesImportLedgerEntry => ({
   hash: existing?.hash ?? '',
   state: 'ready',
+  analyticsSource: existing?.analyticsSource,
   notesText: existing?.notesText ?? '',
   provisionalTitle: existing?.provisionalTitle ?? '',
   result,
@@ -502,6 +511,7 @@ export const beginWorkingEntry = (
   hash: string,
   args: {
     notesText: string
+    analyticsSource?: 'onboarding' | 'app'
     activeRun: NotesImportActiveRun | null
     nowMs: number
   }

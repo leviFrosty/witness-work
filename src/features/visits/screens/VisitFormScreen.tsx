@@ -41,6 +41,7 @@ import useNotifications from '@/hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '@/types/rootStack'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
+import { analytics } from '@/lib/analytics'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Visit Form'>
 type MomentOffset = {
@@ -456,6 +457,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                           style: 'destructive',
                           onPress: () => {
                             deleteConversation(conversation.id)
+                            analytics.capture('visit_deleted')
                             toast.show(i18n.t('success'), {
                               message: i18n.t('deleted'),
                               native: true,
@@ -475,6 +477,16 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                     // Failed validation if didn't submit
                     return
                   }
+
+                  analytics.capture(
+                    isEditing ? 'visit_updated' : 'visit_created',
+                    {
+                      not_at_home: !!conversation.notAtHome,
+                      bible_study: !!conversation.isBibleStudy,
+                      has_follow_up: !!conversation.followUp,
+                      reminder_enabled: !!conversation.followUp?.notifyMe,
+                    }
+                  )
 
                   await maybeRequestStoreReview({
                     calledGoecodeApiTimes,
@@ -514,6 +526,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
   }, [
     calledGoecodeApiTimes,
     conversation.id,
+    conversation.followUp,
+    conversation.isBibleStudy,
+    conversation.notAtHome,
     conversationToUpdate?.contact.id,
     deleteConversation,
     installedOn,

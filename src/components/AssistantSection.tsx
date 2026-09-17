@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   Lightbulb as LightbulbIcon,
   Settings as SettingsIcon,
@@ -210,6 +211,9 @@ const AssistantSection = ({
       action: 'dismissed',
       at: Date.now(),
     })
+    analytics.capture('assistant_recommendation_dismissed', {
+      shape: recommendation.shape,
+    })
     if (onDismiss) onDismiss()
     else setHasDismissedRecommendationHash(inputsHash)
   }, [
@@ -406,7 +410,12 @@ const AssistantSection = ({
 
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
         <Button
-          onPress={() => setPreviewOpen(true)}
+          onPress={() => {
+            analytics.capture('assistant_preview_opened', {
+              shape: recommendation?.shape,
+            })
+            setPreviewOpen(true)
+          }}
           style={{
             flex: 1,
             alignItems: 'center',

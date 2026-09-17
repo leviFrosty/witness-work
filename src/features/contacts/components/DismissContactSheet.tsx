@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { X as XIcon } from 'lucide-react-native'
 import React from 'react'
 import { View, Alert } from 'react-native'
@@ -199,6 +200,10 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
 
           // Use dismissContact function with notification ID
           dismissContact(contact.id, dismissedUntil, notificationId)
+          analytics.capture('contact_dismissed', {
+            duration: option.key,
+            reminder_scheduled: !!notificationId,
+          })
 
           setOpen(false)
 

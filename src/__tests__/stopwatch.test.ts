@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+
 // Mock the native module so vitest doesn't try to resolve `expo-modules-core`.
 vi.mock('../../modules/stopwatch-bridge', () => ({
   isAvailable: () => false,

@@ -67,7 +67,9 @@ export interface PreviewSelection {
 }
 
 /** True when a parsed preview has nothing importable — no records, no publisher. */
-export const isEmptyPreview = (preview: NotesImportPreview): boolean =>
+export const isEmptyPreview = (
+  preview: Pick<NotesImportPreview, 'counts' | 'hasPublisher'>
+): boolean =>
   preview.counts.contacts === 0 &&
   preview.counts.visits === 0 &&
   preview.counts.timeEntries === 0 &&

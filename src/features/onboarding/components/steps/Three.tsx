@@ -1,3 +1,5 @@
+import { analytics } from '@/lib/analytics'
+import * as Notifications from 'expo-notifications'
 import { View } from 'react-native'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -42,15 +44,41 @@ const StepThree = ({ goBack, goNext }: Props) => {
       <View>
         <ActionButton
           onPress={async () => {
-            notifications.register().then(() => {
+            analytics.capture('onboarding_notification_permission_requested')
+            try {
+              await notifications.register()
+              void Notifications.getPermissionsAsync()
+                .then((permission) => {
+                  analytics.capture(
+                    'onboarding_notification_permission_result',
+                    { status: permission.status }
+                  )
+                })
+                .catch(() => {
+                  analytics.capture(
+                    'onboarding_notification_permission_result',
+                    { status: 'unknown' }
+                  )
+                })
               goNext()
-            })
+            } catch {
+              analytics.capture('onboarding_notification_permission_result', {
+                status: 'error',
+              })
+            }
           }}
         >
           {i18n.t('allowNotifications')}
         </ActionButton>
         <View style={{ alignItems: 'center', marginTop: 15 }}>
-          <Button onPress={goNext}>
+          <Button
+            onPress={() => {
+              analytics.capture('onboarding_step_skipped', {
+                step_id: 'notifications',
+              })
+              goNext()
+            }}
+          >
             <Text style={styles.navSkip}>{i18n.t('skip')}</Text>
           </Button>
         </View>

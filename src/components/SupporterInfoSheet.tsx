@@ -1,7 +1,8 @@
+import { analytics } from '@/lib/analytics'
 import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
 import { Modal, ScrollView, View } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -30,6 +31,26 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
   // Keep the native Modal mounted through the Sheet's dismiss animation so it
   // can slide down instead of disappearing instantly when `open` flips false.
   const [mounted, setMounted] = useState(open)
+  const interactionHandled = useRef(false)
+
+  useEffect(() => {
+    if (open) {
+      interactionHandled.current = false
+      analytics.capture('supporter_gate_viewed', {
+        feature: featureKey ?? 'general',
+      })
+    }
+  }, [open, featureKey])
+
+  const dismiss = (method: string) => {
+    if (!open || interactionHandled.current) return
+    interactionHandled.current = true
+    analytics.capture('supporter_gate_dismissed', {
+      feature: featureKey ?? 'general',
+      method,
+    })
+    setOpen(false)
+  }
 
   useEffect(() => {
     if (open) {
@@ -55,9 +76,22 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
     // the Paywall covered by a touch-blocking overlay. Defer the push
     // by one frame so RN commits `visible={false}` and dispatches the
     // native dismiss before the new screen lands on top.
+    interactionHandled.current = true
+    analytics.capture('supporter_gate_clicked', {
+      feature: featureKey ?? 'general',
+    })
+    analytics.capture('paywall_opened', {
+      source: 'feature_gate',
+      feature: featureKey ?? 'general',
+    })
     setOpen(false)
     setMounted(false)
-    requestAnimationFrame(() => navigation.navigate('Paywall'))
+    requestAnimationFrame(() =>
+      navigation.navigate('Paywall', {
+        source: 'feature_gate',
+        feature: featureKey,
+      })
+    )
   }
 
   // Wrap the tamagui Sheet in a RN Modal so the sheet is hosted in a new
@@ -71,11 +105,13 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
       transparent
       statusBarTranslucent
       animationType='none'
-      onRequestClose={() => setOpen(false)}
+      onRequestClose={() => dismiss('system')}
     >
       <Sheet
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(nextOpen: boolean) => {
+          if (!nextOpen) dismiss('gesture_or_overlay')
+        }}
         dismissOnSnapToBottom
         modal={false}
         snapPoints={[90]}
@@ -119,7 +155,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
                 noTransform
                 icon={XIcon}
                 size='xl'
-                onPress={() => setOpen(false)}
+                onPress={() => dismiss('close_button')}
               />
             </View>
 
@@ -156,7 +192,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
               <Button
                 noTransform
                 style={{ alignSelf: 'center', paddingVertical: 8 }}
-                onPress={() => setOpen(false)}
+                onPress={() => dismiss('not_now')}
               >
                 <Text
                   style={{

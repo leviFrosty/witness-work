@@ -227,6 +227,9 @@ importers:
       moment:
         specifier: ^2.30.1
         version: 2.30.1
+      posthog-react-native:
+        specifier: 4.68.0
+        version: 4.68.0(465b6242b39befc8442348b612280da3)
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -2090,6 +2093,18 @@ packages:
         integrity: sha512-fdDH1LSGfZdTH2sxdpVMw31BanV28K/Gry0cVFxaNP77neJSkd82mM8ErPNYs9e+0O7SdHBLTDzDgwUuy18RnQ==,
       }
     engines: { node: ^12.20.0 || ^14.18.0 || >=16.0.0 }
+
+  '@posthog/core@1.52.0':
+    resolution:
+      {
+        integrity: sha512-pvbdeRRpizktmo8MXZQxjAI4aFfNajwkzxbm72wKV9n2wWcnQWa4m+AqTI2zmmCSsYk7F666rRUdvYqZLjjhWg==,
+      }
+
+  '@posthog/types@1.410.0':
+    resolution:
+      {
+        integrity: sha512-741sltt/h+l0eYH+Nkow96qKfDmRxwKacfjF93Z+kMySjzL0a87ptmpklZxGkbjBp/DJH/CSowGrolYWK/1ToA==,
+      }
 
   '@protobufjs/aspromise@1.1.2':
     resolution:
@@ -9733,6 +9748,54 @@ packages:
       }
     engines: { node: ^10 || ^12 || >=14 }
 
+  posthog-react-native@4.68.0:
+    resolution:
+      {
+        integrity: sha512-fWMFvShqwA1xd+vJlcNVaqUftP0pHnFxPccKBpKf/R+7kgl4DorIxr2iKVWlzBI93fUp5AQFhoGKnTXGowTCUw==,
+      }
+    hasBin: true
+    peerDependencies:
+      '@posthog/react-native-plugin': '>= 2.4.3'
+      '@react-native-async-storage/async-storage': '>=1.0.0'
+      '@react-navigation/native': '>= 5.0.0'
+      expo-application: '>= 4.0.0'
+      expo-device: '>= 4.0.0'
+      expo-file-system: '>= 13.0.0'
+      expo-localization: '>= 11.0.0'
+      posthog-react-native-session-replay: '>= 1.6.0'
+      react-native-device-info: '>= 10.0.0'
+      react-native-localize: '>= 3.0.0'
+      react-native-navigation: '>= 6.0.0'
+      react-native-safe-area-context: 5.7.0
+      react-native-svg: '>= 15.0.0'
+    peerDependenciesMeta:
+      '@posthog/react-native-plugin':
+        optional: true
+      '@react-native-async-storage/async-storage':
+        optional: true
+      '@react-navigation/native':
+        optional: true
+      expo-application:
+        optional: true
+      expo-device:
+        optional: true
+      expo-file-system:
+        optional: true
+      expo-localization:
+        optional: true
+      posthog-react-native-session-replay:
+        optional: true
+      react-native-device-info:
+        optional: true
+      react-native-localize:
+        optional: true
+      react-native-navigation:
+        optional: true
+      react-native-safe-area-context:
+        optional: true
+      react-native-svg:
+        optional: true
+
   precinct@12.2.0:
     resolution:
       {
@@ -13494,6 +13557,12 @@ snapshots:
       fastq: 1.19.1
 
   '@pkgr/core@0.1.2': {}
+
+  '@posthog/core@1.52.0':
+    dependencies:
+      '@posthog/types': 1.410.0
+
+  '@posthog/types@1.410.0': {}
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -19348,6 +19417,20 @@ snapshots:
       nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  posthog-react-native@4.68.0(465b6242b39befc8442348b612280da3):
+    dependencies:
+      '@posthog/core': 1.52.0
+      '@posthog/types': 1.410.0
+    optionalDependencies:
+      '@react-native-async-storage/async-storage': 2.2.0(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))
+      '@react-navigation/native': 7.3.8(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+      expo-application: 57.0.0(expo@57.0.4)
+      expo-device: 57.0.0(expo@57.0.4)
+      expo-file-system: 57.0.0(expo@57.0.4)(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))
+      expo-localization: 57.0.0(expo@57.0.4)(react@19.2.3)
+      react-native-safe-area-context: 5.7.0(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+      react-native-svg: 15.15.4(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
 
   precinct@12.2.0:
     dependencies:

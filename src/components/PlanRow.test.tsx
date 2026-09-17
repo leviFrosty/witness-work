@@ -9,6 +9,8 @@ const categoriesState = vi.hoisted(() => ({
   current: [] as Category[],
 }))
 
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+
 vi.mock('lucide-react-native', () => ({
   Calendar1: 'Calendar1',
   Pencil: 'Pencil',

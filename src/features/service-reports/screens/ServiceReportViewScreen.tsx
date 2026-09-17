@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
@@ -271,12 +272,19 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     async (action: string) => {
       if (action === 'copy') {
         await Clipboard.setStringAsync(data.reportAsString())
+        analytics.capture('service_report_exported', { method: 'copy' })
         confirmSubmission()
         return
       }
       if (action === 'share') {
-        await Share.share({ message: data.reportAsString() })
-        confirmSubmission()
+        const result = await Share.share({ message: data.reportAsString() })
+        analytics.capture(
+          result.action === Share.sharedAction
+            ? 'service_report_exported'
+            : 'service_report_export_dismissed',
+          { method: 'share' }
+        )
+        if (result.action === Share.sharedAction) confirmSubmission()
         return
       }
 
@@ -291,6 +299,9 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           : undefined
 
       if (action === 'hourglass') {
+        analytics.capture('service_report_export_requested', {
+          method: 'hourglass',
+        })
         await openURL(
           buildHourglassLink({
             month: month + 1,
@@ -300,6 +311,9 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         )
         confirmSubmission()
       } else if (action === 'nwpublisher' && data.isLastMonth) {
+        analytics.capture('service_report_export_requested', {
+          method: 'nwpublisher',
+        })
         await openURL(
           buildNwPublisherLink({
             sharedInMinistry: data.sharedInMinistry,

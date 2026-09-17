@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   ArrowLeftRight as ArrowLeftRightIcon,
   Construction as ConstructionIcon,
@@ -68,8 +69,10 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
       onConfirm: () => {
         if (isRolloverPair) {
           deleteRolloverPair(report)
+          analytics.capture('time_rollover_undone')
         } else {
           deleteServiceReport(report)
+          analytics.capture('time_entry_deleted', { source: 'time_report_row' })
         }
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),

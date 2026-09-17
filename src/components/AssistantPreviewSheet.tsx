@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   Minus as MinusIcon,
   Plus as PlusIcon,
@@ -134,6 +135,12 @@ const AssistantPreviewSheet = ({
         source: 'recommendation',
       })
     }
+    analytics.capture('assistant_recommendation_accepted', {
+      shape: recommendation.shape,
+      plan_count: survivors.length,
+      dropped_count: rows.length - survivors.length,
+      reminder_enabled: notifyMe,
+    })
     onAccepted()
     setPendingUndoIds(newIds)
     toast.show(
@@ -145,7 +152,15 @@ const AssistantPreviewSheet = ({
       }
     )
     onOpenChange(false)
-  }, [rows, addDayPlan, notifyMe, onAccepted, toast, onOpenChange])
+  }, [
+    rows,
+    addDayPlan,
+    notifyMe,
+    onAccepted,
+    toast,
+    onOpenChange,
+    recommendation.shape,
+  ])
 
   // After 5 seconds the undo window closes — drop the pending-undo state so
   // the inline affordance disappears and tapping it after the fact can't
@@ -161,6 +176,9 @@ const AssistantPreviewSheet = ({
     for (const id of pendingUndoIds) {
       deleteDayPlan(id)
     }
+    analytics.capture('assistant_recommendation_undone', {
+      plan_count: pendingUndoIds.length,
+    })
     onUndo()
     setPendingUndoIds(null)
   }, [pendingUndoIds, deleteDayPlan, onUndo])

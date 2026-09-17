@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   ChevronRight as ChevronRightIcon,
   ExternalLink as ExternalLinkIcon,
@@ -98,7 +99,10 @@ const SupportSection = () => {
           leftIconColor={theme.colors.supporter}
           leftIconFill={theme.colors.supporter}
           label={i18n.t('becomeSupporter')}
-          onPress={() => navigation.navigate('Paywall')}
+          onPress={() => {
+            analytics.capture('paywall_opened', { source: 'settings_support' })
+            navigation.navigate('Paywall', { source: 'settings_support' })
+          }}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>

@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
+import { analytics } from '@/lib/analytics'
 import { Heart as HeartIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import XView from '@/components/ui/layout/XView'
@@ -23,13 +25,21 @@ const SupporterNudgeCard = () => {
   const { set } = usePreferences()
   const navigation = useNavigation<RootStackNavigation>()
 
+  const isFocused = useIsFocused()
+  useEffect(() => {
+    if (!isFocused) return
+    analytics.capture('supporter_nudge_viewed', { source: 'home' })
+  }, [isFocused])
+
   const stampDismissal = () => {
     set({ supporterNudgeDismissedAt: Date.now() })
   }
 
   const handleLearnMore = () => {
     stampDismissal()
-    navigation.navigate('Paywall')
+    analytics.capture('supporter_nudge_clicked', { source: 'home' })
+    analytics.capture('paywall_opened', { source: 'home_nudge' })
+    navigation.navigate('Paywall', { source: 'home_nudge' })
   }
 
   return (
@@ -70,7 +80,10 @@ const SupporterNudgeCard = () => {
       </Text>
       <XView style={{ gap: 10, justifyContent: 'flex-end' }}>
         <Button
-          onPress={stampDismissal}
+          onPress={() => {
+            analytics.capture('supporter_nudge_dismissed', { source: 'home' })
+            stampDismissal()
+          }}
           style={{
             paddingVertical: 8,
             paddingHorizontal: 14,

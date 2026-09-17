@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -75,7 +76,10 @@ const IsSupporter = ({
   return (
     <>
       <Pressable
-        onPress={() => setSheetOpen(true)}
+        onPress={() => {
+          analytics.capture('supporter_feature_gate_clicked', { feature })
+          setSheetOpen(true)
+        }}
         style={{
           gap: 10,
           ...(fill

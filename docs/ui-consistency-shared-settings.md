@@ -9,7 +9,7 @@ the explicit `drawer` variant in `SettingsScreen`.
 
 - `components/ui/inputs/InputLayout.tsx`: settings and drawer tokens plus the
   explicit context contract.
-- `components/ui/inputs/InputRowContainer.tsx`: 76pt form rows, 48pt drawer
+- `components/ui/inputs/InputRowContainer.tsx`: 68pt form rows, 44pt drawer
   rows, label/info/description layout, and control sizing variants.
 - `components/ui/inputs/InputRowSelect.tsx`, `InputRowSwitch.tsx`, and
   `TextInputRow.tsx`: bounded selects, native settings switches, outlined
@@ -35,7 +35,7 @@ the explicit `drawer` variant in `SettingsScreen`.
 Navigation, Personalization, Plans, Publisher, Schedule, Widgets, and iCloud
 Preferences all mount through `SettingsInputLayout`. `MoreScreen` and
 `ImportAndExportScreen` use the same content inset contract. The drawer itself
-keeps `InputLayoutProvider value='drawer'` so its 48pt rows, 2pt gaps, 40pt
+keeps `InputLayoutProvider value='drawer'` so its 44pt rows, 2pt gaps, 32pt
 section spacing, and nav-aligned headings remain intact.
 
 ## Intentional exceptions

@@ -7,11 +7,11 @@ export const InputLayoutProvider = InputLayoutContext.Provider
 export const useInputLayout = () => useContext(InputLayoutContext)
 
 export const inputLayout = {
-  rowMinHeight: 76,
-  rowPadding: 16,
+  rowMinHeight: 68,
+  rowPadding: 12,
   horizontalPadding: 12,
-  iconSize: 21,
-  labelGap: 14,
+  iconSize: 20,
+  labelGap: 12,
   sectionBorderWidth: 1,
   controlGap: 10,
   descriptionGap: 4,
@@ -21,10 +21,10 @@ export const inputLayout = {
 }
 
 export const drawerLayout = {
-  rowMinHeight: 48,
-  rowPaddingVertical: 12,
+  rowMinHeight: 44,
+  rowPaddingVertical: 10,
   rowGap: 2,
-  sectionGap: 40,
+  sectionGap: 32,
   horizontalPadding: 16,
   iconSize: 20,
   labelGap: 12,

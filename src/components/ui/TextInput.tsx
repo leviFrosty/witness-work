@@ -44,7 +44,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       paddingHorizontal: 12,
       paddingVertical: 10,
       fontFamily: theme.fonts.regular,
-      fontSize: theme.fontSize('lg'),
+      fontSize: theme.fontSize('md'),
       color: theme.colors.text,
       textAlign: 'right',
     },

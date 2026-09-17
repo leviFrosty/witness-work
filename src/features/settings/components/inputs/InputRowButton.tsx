@@ -91,7 +91,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           <Text
             style={{
               fontFamily: theme.fonts.medium,
-              fontSize: theme.fontSize('lg'),
+              fontSize: theme.fontSize('md'),
             }}
           >
             {label}
@@ -122,11 +122,11 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         flexDirection: 'row',
         borderColor: theme.colors.border,
         borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: 12,
-        paddingTop: 12,
+        paddingBottom: 10,
+        paddingTop: 10,
         paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
         paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
-        minHeight: 64,
+        minHeight: 56,
         alignItems: 'center',
         flexGrow: 0,
         justifyContent: justifyContent ?? 'space-between',
@@ -156,7 +156,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           <Text
             style={{
               fontFamily: theme.fonts.medium,
-              fontSize: theme.fontSize('lg'),
+              fontSize: theme.fontSize('md'),
             }}
           >
             {label}

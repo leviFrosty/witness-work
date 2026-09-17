@@ -32,7 +32,7 @@ export default function SettingsContents() {
         accessibilityRole='header'
         style={{
           fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('2xl'),
+          fontSize: theme.fontSize('xl'),
           paddingStart:
             layout === 'drawer'
               ? drawerLayout.horizontalPadding
@@ -41,7 +41,7 @@ export default function SettingsContents() {
                 inputLayout.labelGap +
                 inputLayout.sectionBorderWidth,
           paddingEnd: inputLayout.horizontalPadding,
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       >
         {i18n.t('settings')}

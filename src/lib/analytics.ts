@@ -1,5 +1,9 @@
 import { posthogClient as client } from '@/lib/posthogClient'
 
+// Surveys use the SDK's renderer and response contract, separate from ordinary
+// structural analytics. Reuse this instance so responses have the same identity.
+export const surveyClient = client
+
 // Feature code depends only on this provider-neutral contract. Keep event payloads
 // structural: no names, notes, addresses, imported text, or raw error messages.
 export type AnalyticsProperties = Record<

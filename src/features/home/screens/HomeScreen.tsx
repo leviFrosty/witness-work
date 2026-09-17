@@ -40,7 +40,7 @@ import { TimerSection } from '@/features/service-reports/components/TimerSection
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
-import SupporterNudgeCard from '@/features/supporter/components/SupporterNudgeCard'
+import SupporterFeedback from '@/features/supporter/components/SupporterFeedback'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -342,7 +342,7 @@ export const HomeScreen = () => {
             <BackupReminder compact={iCloudSyncEnabled} />
           )}
           {!homeChecklistDismissed && <HomeChecklist />}
-          {showSupporterNudge && <SupporterNudgeCard />}
+          <SupporterFeedback showNudge={showSupporterNudge} />
           {effectiveOrder.map((key: HomeScreenElementKey) => {
             const section = (() => {
               switch (key) {

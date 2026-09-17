@@ -1,4 +1,7 @@
 {
+  "supporterFeedback_open": "Share feedback",
+  "supporterFeedback_placeholder": "Start typing...",
+  "supporterFeedback_thankYou": "Thank you for your feedback!",
   "infoPopoverLabel": "About %{title}",
   "creditLimitNoLimitHint": "Hours · 0 = No limit",
   "iCloudSync_summary": "Sync across your iPhone and iPad.",

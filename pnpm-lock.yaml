@@ -38,6 +38,9 @@ patchedDependencies:
 importers:
   .:
     dependencies:
+      '@posthog/core':
+        specifier: 1.52.0
+        version: 1.52.0
       '@bacons/apple-targets':
         specifier: 0.2.1
         version: 0.2.1

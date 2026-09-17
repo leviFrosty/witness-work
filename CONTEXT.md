@@ -191,8 +191,16 @@ _Avoid_: "pin" alone (Marker is the canonical term and it carries the staleness 
 ### Monetization
 
 **Supporter**:
-A User with an active paid entitlement (subscription). Unlocks iCloud sync (the only feature truly gated) and a set of personalization options (custom accent color, custom app icon, and others). Status flips off immediately when the entitlement expires or is cancelled — no grace period.
+A User with an active qualifying subscription entitlement or a manually gifted Lifetime Supporter promotional entitlement. Unlocks iCloud sync (the only feature truly gated) and a set of personalization options (custom accent color, custom app icon, and others). Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
 _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, donation-framed term used throughout the UI).
+
+**Subscription Cancellation**:
+Turning off renewal of a Supporter subscription. Paid access can continue until expiration. Distinct from abandoning a purchase sheet before completing a purchase.
+_Avoid_: treating cancellation as immediate loss of Supporter access.
+
+**Subscription Lapse**:
+The end of access provided by a Supporter subscription, including expiration after billing trouble. Lapse feedback applies within 30 days of confirmed expiration, including any billing grace period, and excludes refunds and free trials. Resubscribing removes lapse-feedback eligibility. See ADR 0013.
+_Avoid_: assuming every lapse was an intentional cancellation; treating revocation of a gifted entitlement as a subscription lapse.
 
 **Donor**:
 A User who has made one or more **Tips**. Recognized in the UI with a heart icon. Does **not** receive Supporter features — Donor and Supporter are independent statuses. A User can be both, neither, or only one.

@@ -1,3 +1,4 @@
+import { useFeatureFlag } from '@/lib/featureFlags'
 import { useEffect, useState } from 'react'
 import Constants from 'expo-constants'
 import { create } from 'zustand'
@@ -9,7 +10,7 @@ import {
 } from '@/features/notes-import/lib/notesImportVersionGate'
 
 export interface NotesImportAvailability {
-  /** False only once the proxy definitively reports the feature is down. */
+  /** True only after both the feature flag and availability probe succeed. */
   available: boolean
   /** Operator detail for an explicit unavailable response. */
   reason: string | null
@@ -35,7 +36,7 @@ let latestProbe = 0
  * since this JS session started.
  */
 const useAvailabilityStore = create<AvailabilityStore>((set) => ({
-  available: true,
+  available: false,
   reason: null,
   schedule: null,
   updateRequired: null,
@@ -43,10 +44,9 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
 
   probe: async () => {
     const probe = ++latestProbe
-    // Access remains fail-open, but schedule claims disappear while this fresh
-    // probe is pending (including when another surface mounts later).
+    // Access and schedule claims remain closed while a fresh probe is pending.
     set({
-      available: true,
+      available: false,
       reason: null,
       schedule: null,
       updateRequired: null,
@@ -57,7 +57,7 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
 
     if (!status) {
       set({
-        available: true,
+        available: false,
         reason: null,
         schedule: null,
         updateRequired: null,
@@ -104,10 +104,10 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
 
 /**
  * Probes Notes Import availability and shares only this session's latest valid
- * schedule. A failed probe never blocks an import attempt, but it does hide all
- * schedule-specific Help/Paywall copy.
+ * schedule. Failed or pending probes keep access closed.
  */
 export const useNotesImportAvailability = (): NotesImportAvailability => {
+  const enabled = useFeatureFlag('notes-import')
   const [hasFreshProbe, setHasFreshProbe] = useState(false)
   const available = useAvailabilityStore((state) => state.available)
   const reason = useAvailabilityStore((state) => state.reason)
@@ -119,19 +119,20 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
   useEffect(() => {
     let mounted = true
     setHasFreshProbe(false)
+    if (!enabled) return
     void probe().finally(() => {
       if (mounted) setHasFreshProbe(true)
     })
     return () => {
       mounted = false
     }
-  }, [probe])
+  }, [probe, enabled])
 
   const pending = !hasFreshProbe || loading
   return {
-    available: pending ? true : available,
+    available: enabled && !pending && available,
     reason: pending ? null : reason,
-    schedule: pending ? null : schedule,
+    schedule: !enabled || pending ? null : schedule,
     updateRequired: pending ? null : updateRequired,
     loading: pending,
   }

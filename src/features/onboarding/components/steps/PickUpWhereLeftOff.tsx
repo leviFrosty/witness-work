@@ -1,3 +1,4 @@
+import { useFeatureFlag } from '@/lib/featureFlags'
 import { analytics } from '@/lib/analytics'
 import {
   Cloud as CloudIcon,
@@ -112,6 +113,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     setMode('choose')
   }
   const icloudAvailable = ICloudBridge.isAvailable()
+  const notesImportEnabled = useFeatureFlag('notes-import')
   const notesImport = useNotesImportAvailability()
 
   useEffect(() => {
@@ -172,15 +174,17 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             {i18n.t('onboardingPickUp_description')}
           </Text>
 
-          <OptionCard
-            icon={FileTextIcon}
-            color={theme.colors.cyan}
-            titleKey='onboardingPickUp_notes'
-            descKey='onboardingPickUp_notesDesc'
-            disabled={!notesImport.available}
-            disabledNoteKey='notesImport_unavailable'
-            onPress={() => selectImport('notes')}
-          />
+          {notesImportEnabled && (
+            <OptionCard
+              icon={FileTextIcon}
+              color={theme.colors.cyan}
+              titleKey='onboardingPickUp_notes'
+              descKey='onboardingPickUp_notesDesc'
+              disabled={!notesImport.available}
+              disabledNoteKey='notesImport_unavailable'
+              onPress={() => selectImport('notes')}
+            />
+          )}
           <OptionCard
             icon={FileInputIcon}
             color={theme.colors.indigo}

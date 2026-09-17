@@ -1,6 +1,7 @@
 import '../../env'
 import '@/lib/locales'
 import 'react-native-gesture-handler'
+import { useInitializeFeatureFlags, useFeatureFlag } from '@/lib/featureFlags'
 import React, { useEffect, useRef, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import RootStackComponent from '@/app/navigation/RootStack'
@@ -134,12 +135,14 @@ function SupporterStoreSync() {
  * preparation never generates an App Attest key.
  */
 function NotesImportAttestPreparation() {
+  const enabled = useFeatureFlag('notes-import')
   useEffect(() => {
+    if (!enabled) return
     void prepareNotesImportAppAttestRecovery().catch(() => {
       // Best effort. The normal Notes Import path retries through the same module
       // and presents its localized error if enrollment still cannot complete.
     })
-  }, [])
+  }, [enabled])
   return null
 }
 
@@ -296,6 +299,8 @@ function SupporterSyncDefault() {
 }
 
 export default function App() {
+  useInitializeFeatureFlags()
+  const notesImportEnabled = useFeatureFlag('notes-import')
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
   useUserLocalePrefs()
@@ -323,18 +328,11 @@ export default function App() {
     return () => setDevRemountListener(null)
   }, [])
 
-  // A focused native-stack screen does not receive another navigation-focus
-  // event when iOS backgrounds and foregrounds the app. Normalize Scribe's
-  // persisted allowance on every AppState→active transition so a window that
-  // expired in the background immediately re-arms stale limit-denied imports.
+  // Flag initialization refreshes on foreground/reconnect. Resume automatic
+  // Notes Import work only after the feature becomes visible again.
   useEffect(() => {
-    const activate = () => useNotesImportManager.getState().appBecameActive()
-    activate()
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') activate()
-    })
-    return () => sub.remove()
-  }, [])
+    if (notesImportEnabled) useNotesImportManager.getState().appBecameActive()
+  }, [notesImportEnabled])
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {

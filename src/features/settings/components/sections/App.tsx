@@ -1,3 +1,4 @@
+import { useFeatureFlag } from '@/lib/featureFlags'
 import {
   ChevronRight as ChevronRightIcon,
   Cloud as CloudIcon,
@@ -22,6 +23,7 @@ import NotesImportReadyDot from '@/features/notes-import/components/NotesImportR
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   const navigation = useNavigation<RootStackNavigation>()
+  const notesImportEnabled = useFeatureFlag('notes-import')
   const notesImport = useNotesImportAvailability()
   const notesImportReadyCount = useNotesImportManager((s) =>
     unviewedReadyImportCount(s.entries)
@@ -44,24 +46,28 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
-        <InputRowButton
-          leftIcon={FileTextIcon}
-          label={i18n.t('notesImport_settingsLabel')}
-          disabled={!notesImport.available}
-          sublabel={
-            notesImport.available
-              ? undefined
-              : notesImport.updateRequired
-                ? i18n.t('notesImport_updateRequired')
-                : i18n.t('notesImport_unavailable')
-          }
-          onPress={() => handleNavigate('NotesImportComposer')}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <NotesImportReadyDot visible={notesImportReadyCount > 0} />
-            <IconButton icon={ChevronRightIcon} />
-          </View>
-        </InputRowButton>
+        {notesImportEnabled && (
+          <InputRowButton
+            leftIcon={FileTextIcon}
+            label={i18n.t('notesImport_settingsLabel')}
+            disabled={!notesImport.available}
+            sublabel={
+              notesImport.available
+                ? undefined
+                : notesImport.updateRequired
+                  ? i18n.t('notesImport_updateRequired')
+                  : i18n.t('notesImport_unavailable')
+            }
+            onPress={() => handleNavigate('NotesImportComposer')}
+          >
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            >
+              <NotesImportReadyDot visible={notesImportReadyCount > 0} />
+              <IconButton icon={ChevronRightIcon} />
+            </View>
+          </InputRowButton>
+        )}
         {Platform.OS === 'ios' && (
           <InputRowButton
             leftIcon={CloudIcon}

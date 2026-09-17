@@ -1,3 +1,4 @@
+import { useFeatureFlag } from '@/lib/featureFlags'
 import { analytics } from '@/lib/analytics'
 import {
   Heart as HeartIcon,
@@ -28,6 +29,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 const Drawer = createDrawerNavigator()
 
 const DrawerNavigator = () => {
+  const notesImportEnabled = useFeatureFlag('notes-import')
   const { hasPurchasedBefore } = useCustomer()
   const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()
@@ -43,8 +45,8 @@ const DrawerNavigator = () => {
 
   // Populate settings-level status immediately and resume persisted work.
   useEffect(() => {
-    focusNotesImports()
-  }, [focusNotesImports])
+    if (notesImportEnabled) focusNotesImports()
+  }, [focusNotesImports, notesImportEnabled])
 
   // Dev-only reset for the milestone-reveal flow. Long-press the date in the
   // header to clear both flags so the grand reveal fires fresh on next mount.
@@ -85,14 +87,14 @@ const DrawerNavigator = () => {
                     hitSlop={24}
                     color={theme.colors.text}
                     accessibilityLabel={
-                      notesImportReadyCount > 0
+                      notesImportEnabled && notesImportReadyCount > 0
                         ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`
                         : i18n.t('settings')
                     }
                     onPress={() => navigation.toggleDrawer()}
                   />
                   <NotesImportReadyDot
-                    visible={notesImportReadyCount > 0}
+                    visible={notesImportEnabled && notesImportReadyCount > 0}
                     style={{ position: 'absolute', top: -2, right: -3 }}
                   />
                 </View>

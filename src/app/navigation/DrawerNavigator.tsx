@@ -65,7 +65,8 @@ const DrawerNavigator = () => {
       screenOptions={{
         // Keep the same navigator across resizing so Home retains its state.
         // The wide layout has no drawer surface; Settings lives in the sidebar.
-        drawerType: hasSidebar ? 'permanent' : 'front',
+        // Preserve the platform default in compact layouts (slide on iOS).
+        drawerType: hasSidebar ? 'permanent' : undefined,
         swipeEnabled: !hasSidebar,
         drawerStyle: {
           width: hasSidebar ? 0 : Math.min(width * 0.88, 380),

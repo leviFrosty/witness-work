@@ -133,8 +133,7 @@ export type { NotesImportStatus } from '@/features/notes-import/lib/notesImportU
 
 /**
  * Cheap, unauthenticated availability probe (no App Attest, no inference).
- * Returns null on network or contract failure: callers remain fail-open for
- * access, but have no public schedule from which to make Help/Paywall claims.
+ * Returns null on network or contract failure; callers keep access closed.
  */
 export const getNotesImportStatus =
   async (): Promise<NotesImportStatus | null> => {

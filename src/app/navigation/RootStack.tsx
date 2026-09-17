@@ -1,3 +1,4 @@
+import { useFeatureFlag } from '@/lib/featureFlags'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
@@ -47,6 +48,7 @@ import { RootStackParamList } from '@/types/rootStack'
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
+  const notesImportEnabled = useFeatureFlag('notes-import')
   const { onboardingComplete } = usePreferences()
 
   return (
@@ -181,7 +183,9 @@ const RootStackComponent = () => {
               <Header
                 buttonType='back'
                 title={i18n.t('notesImport_title')}
-                rightElement={<NotesImportHeaderActions />}
+                rightElement={
+                  notesImportEnabled ? <NotesImportHeaderActions /> : undefined
+                }
               />
             ),
           }}

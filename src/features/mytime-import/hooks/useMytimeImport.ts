@@ -1,7 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { useCallback, useRef, useState } from 'react'
 import * as DocumentPicker from 'expo-document-picker'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
 import {
   readMytimeDb,
@@ -33,7 +33,7 @@ export type MytimeImportStatus =
 /**
  * `invalidFile` is an expected user mistake (wrong file) shown as a friendly
  * message and never reported; `unexpected` is a real defect, surfaced as a
- * generic error and sent to Sentry.
+ * generic error and sent to error tracking.
  */
 export type MytimeImportErrorKind = 'invalidFile' | 'unexpected'
 
@@ -166,7 +166,7 @@ export const useMytimeImport = ({
         setErrorKind('invalidFile')
       } else {
         logger.error('MyTime import: parse failed', e)
-        Sentry.captureException(e)
+        errorTracking.captureException(e)
         setErrorKind('unexpected')
       }
       setStatus('error')
@@ -216,7 +216,7 @@ export const useMytimeImport = ({
           error_code: 'unexpected',
         })
         logger.error('MyTime import: commit failed', e)
-        Sentry.captureException(e)
+        errorTracking.captureException(e)
         setErrorKind('unexpected')
         setStatus('error')
       }

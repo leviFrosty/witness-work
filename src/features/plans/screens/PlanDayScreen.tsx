@@ -18,7 +18,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -1091,7 +1091,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         try {
           await Notifications.cancelScheduledNotificationAsync(n.id)
         } catch (error) {
-          Sentry.captureException(error)
+          errorTracking.captureException(error)
         }
       }
     }
@@ -1126,7 +1126,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       })
       return [{ date: fireAt, id }]
     } catch (error) {
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       return []
     }
   }

@@ -6,13 +6,11 @@ minimumReleaseAgeExclude:
   - typescript
   - '@typescript/*'
 allowBuilds:
-  '@sentry/cli': true
   '@shopify/react-native-skia': true
   esbuild: true
   protobufjs: false
   unrs-resolver: true
 onlyBuiltDependencies:
-  - '@sentry/cli'
   - esbuild
   - protobufjs
   - '@shopify/react-native-skia'

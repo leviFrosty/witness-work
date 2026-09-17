@@ -344,8 +344,8 @@ Past follow-ups never enter the calendar. Once a follow-up's date drifts into th
 
 ## Telemetry
 
-- **Sentry**: capture only unexpected errors (not "permission denied," "calendar not found," "network timeout" — those are user states).
-- **Sentry breadcrumbs**: every reconcile start/end, every entity write at debug level — for context when a real Sentry event fires.
+- **Error tracking**: capture only unexpected errors (not "permission denied," "calendar not found," "network timeout" — those are user states).
+- **Error-tracking breadcrumbs**: every reconcile start/end, every entity write at debug level — for context when a real error event fires.
 - **Logger**: verbose for everything (existing `logger` from `src/lib/logger`).
 - **No new analytics library.**
 
@@ -478,6 +478,6 @@ Quick lookup of every decision made during planning, in case implementation surf
 | iOS 17+ permissions          | Full access required (write-only degrades gracefully)                                              |
 | Onboarding                   | None for new users; small inline banner for existing users                                         |
 | Paywall                      | Free feature row added to comparison chart                                                         |
-| Sentry                       | Unexpected errors only; breadcrumbs for normal activity                                            |
+| Error tracking               | Unexpected errors only; breadcrumbs for normal activity                                            |
 | Rollout                      | Direct ship in next version bump (no remote flag)                                                  |
 | i18n                         | Add keys to `en-US.json` only; translations run later                                              |

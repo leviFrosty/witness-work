@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { CustomerContext, CustomerCtx } from '@/contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
@@ -31,13 +31,13 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       setCustomer(customerInfo)
     } catch (error) {
       // Offline is an expected, unrecoverable condition here — log it but don't
-      // report to Sentry, otherwise an offline user revalidating in a loop
+      // report to error tracking, otherwise an offline user revalidating in a loop
       // floods the dashboard (JW-TIME-5B).
       if (isOfflineError(error)) {
         logger.warn('[CustomerProvider] getCustomerInfo offline', error)
         return
       }
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
     }
   }, [])
 
@@ -59,7 +59,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         '[CustomerProvider] EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY is empty at runtime — RevenueCat will not function. Check EAS env var name and visibility (must be sensitive/plaintext, not secret).'
       )
       logger.error(error.message)
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       return
     }
 
@@ -73,7 +73,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       accountId = getOrCreateAccountId()
     } catch (error) {
       logger.error('[CustomerProvider] account id resolution failed', error)
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
     }
 
     try {
@@ -93,7 +93,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // Misconfigured API key or unsupported platform — subsequent SDK calls
       // will fail, but the rest of the app should still load.
       logger.error('[CustomerProvider] Purchases.configure threw', error)
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       return
     }
 
@@ -122,7 +122,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     identify.catch((error) => {
       if (accountId && !isOfflineError(error)) {
         logger.warn('[CustomerProvider] Purchases.logIn failed', error)
-        Sentry.captureException(error)
+        errorTracking.captureException(error)
       } else {
         logger.warn('[CustomerProvider] initial customer info failed', error)
       }

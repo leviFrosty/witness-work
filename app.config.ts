@@ -1,6 +1,5 @@
 import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
-import { withSentry } from '@sentry/react-native/expo'
 /** Passed in from `env` property in profile `./eas.json` to eas build */
 const IS_DEV = process.env.APP_VARIANT === 'development'
 
@@ -212,8 +211,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   }
 
-  return withSentry(expoConfig, {
-    organization: 'levi-wilkerson',
-    project: 'jw-time',
-  })
+  // Dev clients use Metro; simulator builds can explicitly skip uploads.
+  if (!IS_DEV && process.env.POSTHOG_DISABLE_UPLOAD !== 'true') {
+    expoConfig.plugins?.unshift([
+      'posthog-react-native/expo',
+      {
+        dotenvFile: '.env.production',
+        uploadNativeSymbols: { includeSource: true },
+      },
+    ])
+  }
+
+  return expoConfig
 }

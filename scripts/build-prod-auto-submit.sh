@@ -32,9 +32,8 @@ IPA=./build-production.ipa
 APP_ID=$(node -p "require('./eas.json').submit.production.ios.ascAppId")
 
 # Production env comes from .env.production (.env holds development values).
-# Local builds don't receive EAS secret env vars (e.g. SENTRY_AUTH_TOKEN, which
-# the Sentry source-map upload phase fails hard without), so export everything
-# into the shell — the local build job inherits it.
+# Local builds don't receive EAS secret env vars, so export the PostHog upload
+# credentials and app configuration into the shell for the local build job.
 if [ ! -f .env.production ]; then
   echo "error: .env.production not found — copy .env.example and fill in production values" >&2
   exit 1
@@ -49,8 +48,15 @@ source .env.production
 # is deterministic and the warning goes away.
 NODE_ENV=production
 set +a
-if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
-  echo "error: SENTRY_AUTH_TOKEN not set in .env.production" >&2
+
+for variable in POSTHOG_CLI_API_KEY POSTHOG_CLI_PROJECT_ID; do
+  if [ -z "${!variable:-}" ]; then
+    echo "error: $variable not set in .env.production" >&2
+    exit 1
+  fi
+done
+if ! command -v posthog-cli >/dev/null 2>&1; then
+  echo "error: posthog-cli is required for source map uploads (see docs/build.md)" >&2
   exit 1
 fi
 

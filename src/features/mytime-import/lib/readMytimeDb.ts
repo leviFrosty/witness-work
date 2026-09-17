@@ -15,8 +15,8 @@ import type {
 /**
  * Why the import failed in a way the user can act on, as opposed to an
  * unexpected bug. The hook shows a "this isn't a MyTime backup" message for
- * both reasons and does NOT report them to Sentry — picking the wrong file is a
- * user mistake, not a defect.
+ * both reasons and does NOT report them to error tracking — picking the wrong
+ * file is a user mistake, not a defect.
  *
  * - `notMytime` — the file is a valid SQLite database but lacks MyTime's tables.
  * - `openFailed` — the file could not be opened as a SQLite database at all

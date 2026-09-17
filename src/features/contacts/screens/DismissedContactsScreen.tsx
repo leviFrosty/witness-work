@@ -18,7 +18,7 @@ import IconButton from '@/components/ui/IconButton'
 import { Contact } from '@/types/contact'
 import { useToastController } from '@tamagui/toast'
 import * as Notifications from 'expo-notifications'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dismissed Contacts'>
 
@@ -37,7 +37,7 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
           contact.dismissedNotificationId
         )
       } catch (error) {
-        Sentry.captureException(error)
+        errorTracking.captureException(error)
       }
     }
 

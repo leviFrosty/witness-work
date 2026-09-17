@@ -15,7 +15,7 @@ import { mergePayload } from '@/app/sync/merge'
 import { isAccountFilename } from '@/lib/accountFile'
 import { reclaimAccountFile } from '@/lib/account'
 import { logger } from '@/lib/logger'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
 import { Contact } from '@/types/contact'
@@ -418,7 +418,7 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
     await ICloudBridge.deleteAll()
   } catch (e) {
     logger.error(`${tag()} failed to clear remote before overwrite`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'overwrite' } })
+    errorTracking.captureException(e, { iCloudSync: 'overwrite' })
   }
   // deleteAll also removed the account file (same namespace); re-claim it so
   // another device can't win the empty-file race before the next reconcile.
@@ -575,7 +575,7 @@ const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
  * Pushes the local image bookkeeping forward: uploads any dirty or
  * never-uploaded avatars and persists the resulting bookkeeping back to
  * preferences. No-op when image sync is disabled. Failures are logged and
- * surfaced to Sentry; the returned promise resolves regardless.
+ * surfaced to error tracking; the returned promise resolves regardless.
  */
 async function pushImagesIfEnabled(
   trigger: 'store-edit' | 'foreground'
@@ -613,7 +613,7 @@ async function pushImagesIfEnabled(
     })
   } catch (e) {
     logger.error(`${tag()} image push failed`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'image-push' } })
+    errorTracking.captureException(e, { iCloudSync: 'image-push' })
   }
 }
 
@@ -672,7 +672,7 @@ async function pullImagesIfEnabled(): Promise<void> {
     })
   } catch (e) {
     logger.error(`${tag()} image pull failed`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'image-pull' } })
+    errorTracking.captureException(e, { iCloudSync: 'image-pull' })
   }
 }
 
@@ -707,14 +707,15 @@ async function gcImagesIfEnabled(): Promise<void> {
     }
   } catch (e) {
     logger.error(`${tag()} image gc failed`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'image-gc' } })
+    errorTracking.captureException(e, { iCloudSync: 'image-gc' })
   }
 }
 
 /**
  * Pushes current local state to iCloud. Safe to call when sync is disabled —
- * it's a no-op. Errors are logged + reported to Sentry but never thrown, so
- * callers (store subscribers, AppState handlers) don't need try/catch.
+ * it's a no-op. Errors are logged + reported to error tracking but never
+ * thrown, so callers (store subscribers, AppState handlers) don't need
+ * try/catch.
  */
 export async function push(reason: string): Promise<void> {
   if (!canSync()) {
@@ -751,7 +752,7 @@ export async function push(reason: string): Promise<void> {
       lastiCloudPushedAt: now,
     })
     logger.log(`${tag()} push success`, { reason, filename })
-    Sentry.addBreadcrumb({
+    errorTracking.addBreadcrumb({
       category: 'iCloudSync',
       message: `push (${reason})`,
       level: 'info',
@@ -761,7 +762,7 @@ export async function push(reason: string): Promise<void> {
     await pushImagesIfEnabled('store-edit')
   } catch (e) {
     logger.error(`${tag()} push failed (${reason})`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'push' } })
+    errorTracking.captureException(e, { iCloudSync: 'push' })
   }
 }
 
@@ -830,7 +831,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     files = await ICloudBridge.readAll()
   } catch (e) {
     logger.error(`${tag()} readAll failed (${reason})`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'pull' } })
+    errorTracking.captureException(e, { iCloudSync: 'pull' })
     return false
   }
 
@@ -843,7 +844,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   if (files.length === 0) {
     usePreferences.getState().set({ lastiCloudPulledAt: Date.now() })
     logger.log(`${tag()} pullAndMerge: no remote files`, { reason })
-    Sentry.addBreadcrumb({
+    errorTracking.addBreadcrumb({
       category: 'iCloudSync',
       message: `pull (${reason}) — no remote`,
       level: 'info',
@@ -872,7 +873,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
         bytes: file.json.length,
         jsonPreview: file.json.slice(0, 200),
       })
-      Sentry.captureMessage('iCloudSync: invalid remote payload', {
+      errorTracking.captureMessage('iCloudSync: invalid remote payload', {
         level: 'warning',
       })
       continue
@@ -1081,7 +1082,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     serviceReportsNow: countReports(useServiceReport.getState().serviceReports),
   })
 
-  Sentry.addBreadcrumb({
+  errorTracking.addBreadcrumb({
     category: 'iCloudSync',
     message: `pull (${reason}) — merged changes`,
     level: 'info',
@@ -1285,7 +1286,7 @@ export async function disableImageSync(): Promise<void> {
     await ICloudBridge.deleteAllBinaries()
   } catch (e) {
     logger.error(`${tag()} failed to clear remote binaries on disable`, e)
-    Sentry.captureException(e, { tags: { iCloudSync: 'image-disable' } })
+    errorTracking.captureException(e, { iCloudSync: 'image-disable' })
   }
   usePreferences.setState({
     iCloudSyncIncludeImages: false,

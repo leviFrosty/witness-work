@@ -6,12 +6,6 @@ const envVariables = z.object({
     .describe(
       '[iOS] Allows use of revenuecat service for in-app purchases for donations. Used at runtime.'
     ),
-  EXPO_PUBLIC_SENTRY_PROJECT: z
-    .string()
-    .describe("Configuration for sentry's project"),
-  EXPO_PUBLIC_SENTRY_ORG: z
-    .string()
-    .describe("Configuration for sentry's organization"),
   APP_VARIANT: z
     .string()
     .optional()
@@ -46,7 +40,7 @@ const envVariables = z.object({
 })
 
 // Validate runtime env in all builds. In dev we throw to fail fast; in
-// production we log + report to Sentry so a misconfigured EAS env var
+// production we log the validation failure so a misconfigured EAS env var
 // (e.g. the RevenueCat key shipped as a `secret`-visibility variable and
 // thus stripped from the bundle) surfaces loudly instead of silently
 // breaking features in TestFlight.

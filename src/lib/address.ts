@@ -3,7 +3,7 @@ import axios from 'axios'
 import { HereGeocodeResponse } from '@/types/here'
 import apis from '@/constants/apis'
 import * as Network from 'expo-network'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { Alert } from 'react-native'
 import i18n from '@/lib/locales'
 import { countTruthyValueStrings } from '@/lib/objects'
@@ -78,7 +78,7 @@ export const fetchCoordinateFromAddress = async (
       longitude: position.lng,
     }
   } catch (error) {
-    Sentry.captureException(error)
+    errorTracking.captureException(error)
     return null
   }
 }

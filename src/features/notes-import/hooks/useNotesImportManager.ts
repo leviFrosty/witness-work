@@ -1,6 +1,6 @@
 import { analytics } from '@/lib/analytics'
 import { create } from 'zustand'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
@@ -577,7 +577,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
               })
               if (decision.report) {
                 logger.error('Notes import: run failed', e)
-                Sentry.captureException(e)
+                errorTracking.captureException(e)
               }
               if (e instanceof NotesImportClientError && e.debug) {
                 logger.error('Notes import HTTP response', e.debug)
@@ -848,7 +848,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
             error_code: 'unexpected',
           })
           logger.error('Notes import: accept failed', e)
-          Sentry.captureException(e)
+          errorTracking.captureException(e)
           return false
         }
       },
@@ -876,7 +876,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           get().hydrate()
         } catch (e) {
           logger.error('Notes import: undo failed', e)
-          Sentry.captureException(e)
+          errorTracking.captureException(e)
         }
       },
 

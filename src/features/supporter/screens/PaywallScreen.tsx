@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, ScrollView, useWindowDimensions, View } from 'react-native'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -294,9 +294,9 @@ const PaywallScreen = ({
         })
         hasFetchedOfferings.current = false
         Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-        // Offline is expected, not a bug — surface the Alert but don't page Sentry
+        // Offline is expected, not a bug — show the Alert without reporting an error
         // (JW-TIME-BW). Other failures still report.
-        if (!isOfflineError(error)) Sentry.captureException(error)
+        if (!isOfflineError(error)) errorTracking.captureException(error)
         throw error
       }
     },
@@ -323,7 +323,7 @@ const PaywallScreen = ({
       await revalidate()
       hasFetchedOfferings.current = true
     } catch {
-      // fetchOfferings already surfaces the error via Alert/Sentry.
+      // fetchOfferings already shows an Alert and reports the error.
     } finally {
       setIsRefreshing(false)
     }
@@ -365,7 +365,7 @@ const PaywallScreen = ({
               hasFetchedOfferings.current = true
             } catch (error) {
               logger.error('[Paywall] dev reset failed', error)
-              Sentry.captureException(error)
+              errorTracking.captureException(error)
               Alert.alert(i18n.t('error'), i18n.t('tryAgainLater'))
             } finally {
               setIsResetting(false)
@@ -451,8 +451,8 @@ const PaywallScreen = ({
       if (!cancelled) {
         Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
         // Offline mid-checkout is expected — the Alert already explains the
-        // network instability; don't page Sentry for it (JW-TIME-BW).
-        if (!isOfflineError(error)) Sentry.captureException(error)
+        // network instability; don't report it as an error (JW-TIME-BW).
+        if (!isOfflineError(error)) errorTracking.captureException(error)
       }
     }
   }, [
@@ -482,9 +482,9 @@ const PaywallScreen = ({
         error_code: (error as PurchasesError)?.code ?? 'unknown',
         offline: isOfflineError(error),
       })
-      // Offline during restore is expected — show the Alert, skip Sentry
+      // Offline during restore is expected — show the Alert without reporting an error
       // (JW-TIME-BW).
-      if (!isOfflineError(error)) Sentry.captureException(error)
+      if (!isOfflineError(error)) errorTracking.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
   }, [setCustomer, source])

@@ -9,7 +9,7 @@ import Text from '@/components/ui/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import useContacts from '@/stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
@@ -354,7 +354,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
               id,
             })
           } catch (error) {
-            Sentry.captureException(error)
+            errorTracking.captureException(error)
           }
         }
 
@@ -377,7 +377,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             resolve(conversation)
           })
           .catch((error) => {
-            Sentry.captureException(error)
+            errorTracking.captureException(error)
             resolve(false)
           })
       } else {

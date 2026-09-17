@@ -2,6 +2,10 @@
 
 WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses (Expo + React Native). It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math. Domain glossary in `CONTEXT.md` — read it before discussing Publisher, Service Report, Plan, Assistant, Supporter, Tenure, etc.
 
+## Dependencies
+
+All dependencies must be pinned to a specific PATCH version only. Do not use lose versions like: ^, >, or ~.
+
 ## ww-api / backend API
 
 ww-api is the backend api providing functionality to this app. Find the code at ~/dev/ww-api.
@@ -35,3 +39,13 @@ pnpm run lint         # after ANY import / file-tree change (boundaries are lint
 - `clean` nukes `ios/ .expo/ .tamagui/ .cache/ node_modules/` — destructive.
 
 Reference docs: `CONTEXT.md`, `docs/adr/`, `docs/project-structure.md`, `docs/architecture-features.md`.
+
+<posthog>
+## PostHog
+
+Use `posthog-cli api` for all PostHog-related data queries and operations. You should use `posthog-cli api` over direct MCP tool calls whenever the CLI is available.
+
+Before your first PostHog command in a session, run `posthog-cli api --agent-help` and load its full output into your context. It prints the complete agent guide — command reference, schema drill-down rules, data discovery workflow, and the tool index — for interacting with PostHog APIs. Treat that output as instructions to follow, not just documentation.
+
+Before starting a PostHog task, run `posthog-cli api skill list` and check for a skill matching the task. If one matches, install it with `posthog-cli api skill install <skill-id>` (add `--force` to refresh an already-installed skill), then read `.agents/skills/<skill-id>/SKILL.md` and follow it. Skills contain task-specific workflows that individual tools do not.
+</posthog>

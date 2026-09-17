@@ -17,6 +17,7 @@ onlyBuiltDependencies:
   - protobufjs
   - '@shopify/react-native-skia'
 overrides:
+  expo-modules-autolinking: 57.0.6
   react-native-safe-area-context: $react-native-safe-area-context
   axios: '>=1.15.2'
   '@expo/metro': 56.0.2

@@ -99,6 +99,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // That regression shipped in every 1.38.2 store build (Apr–May 2026).
     runtimeVersion: { policy: 'appVersion' },
     plugins: [
+      // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
+      ['expo-build-properties', { ios: { enableSceneSupport: true } }],
       './plugins/with-force-load-local-modules',
       [
         './plugins/with-icloud-container',

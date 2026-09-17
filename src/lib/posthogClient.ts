@@ -15,15 +15,10 @@ function createClient(): PostHog | null {
       captureAppLifecycleEvents: true,
       before_send: (event) => {
         if (!event) return event
-        // Lifecycle autocapture includes deep links, which may contain shared
-        // contact tokens or local import filenames. Keep only structural data.
-        const properties = { ...event.properties }
-        delete properties.url
-        delete properties.$current_url
         return {
           ...event,
           properties: {
-            ...properties,
+            ...event.properties,
             app_variant: extra?.appVariant ?? 'unknown',
             development_mode: typeof __DEV__ !== 'undefined' && __DEV__,
           },

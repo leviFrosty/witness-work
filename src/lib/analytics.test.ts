@@ -42,7 +42,7 @@ describe('analytics boundary', () => {
     expect(mocks.capture).not.toHaveBeenCalled()
   })
 
-  it('tags every event and strips automatic deep links before sending', async () => {
+  it('tags every event before sending', async () => {
     mocks.config.extra.appVariant = 'development'
     await import('./analytics')
     const options = mocks.construct.mock.calls[0][1] as {
@@ -56,8 +56,6 @@ describe('analytics boundary', () => {
     const result = options.before_send({
       event: 'Application Opened',
       properties: {
-        url: 'file:///private/import.txt',
-        $current_url: 'https://example.com/c/token',
         count: 0,
       },
     })

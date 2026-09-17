@@ -36,6 +36,7 @@ import tamaguiConfig from '../../tamagui.config'
 import ThemeProvider from '@/providers/ThemeProvider'
 import CustomerProvider from '@/providers/CustomerProvider'
 import AccountProvider from '@/providers/AccountProvider'
+import SurveyProvider from '@/providers/SurveyProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import {
   hasMigratedFromAsyncStorage,
@@ -662,8 +663,10 @@ export default function App() {
                       <ToastViewport />
                       <ConfettiProvider>
                         <AnimationViewProvider>
-                          <DeepLinkListeners />
-                          <RootStackComponent />
+                          <SurveyProvider>
+                            <DeepLinkListeners />
+                            <RootStackComponent />
+                          </SurveyProvider>
                         </AnimationViewProvider>
                       </ConfettiProvider>
                     </TamaguiProvider>

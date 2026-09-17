@@ -122,3 +122,31 @@ with the analytics project token/host: complete and resume onboarding, try each
 import path, cancel a purchase, dismiss a nudge, and perform representative feature
 actions. Filter `app_variant: development` or `development_mode: true` from production analysis. No hosted dashboards
 or live ingestion verification are created by this code change.
+
+## Surveys
+
+The app's `SurveyProvider` uses PostHog's built-in `PostHogSurveyProvider` to
+automatically fetch and render eligible **Popover** surveys after onboarding.
+Create and launch future popover campaigns in PostHog without adding IDs to the
+app or shipping another release. Questions, appearance, audience, and recurrence
+follow the installed React Native SDK's capabilities and cache/refresh behavior.
+New app-specific events/properties or unsupported SDK features still need an app
+change. Disable partial-response collection for these campaigns so dismissal
+does not submit unfinished answers. Popover translations use SDK language detection.
+The provider reuses the existing client and does not enable touch/screen
+autocapture or session replay.
+
+### Supporter invitations
+
+The Home feedback invitation uses the same PostHog client and pseudonymous account
+identity as ordinary analytics. Survey responses are an explicit exception to the
+structural-event contract: text deliberately submitted in the SDK survey is sent
+as `survey sent` with PostHog's question IDs and response properties. Do not attach
+Contacts, Notes, ministry records, or other app text. Dismissing the card or modal
+sends `survey dismissed` without partial response text. No session replay or touch
+capture is enabled by this integration.
+
+PostHog manages the two API campaigns, their questions, translations, availability,
+and targeting. RevenueCat-based local eligibility distinguishes current paid
+access from a recent confirmed lapse. See [ADR 0013](adr/0013-supporter-feedback-surveys.md)
+for campaign links, default recurrence/dismissal behavior, and rollout steps.

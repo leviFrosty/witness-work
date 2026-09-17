@@ -29,6 +29,7 @@
     "deps": "madge --ts-config ./tsconfig.json src/app/App.tsx -c"
   },
   "dependencies": {
+    "@posthog/core": "1.52.0",
     "@bacons/apple-targets": "0.2.1",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/kalam": "^0.4.1",

@@ -146,6 +146,8 @@ export type BuildSnapshotArgs = {
   // Report inputs
   serviceReports: TimeEntriesByYear
   publisher: Publisher
+  /** Mirrors `preferences.logsHours` — unlocks the calendar for publishers. */
+  logsHours: boolean
   publisherHours: PublisherHours
   monthlyGoalOverrides: MonthlyGoalOverrides
   overrideCreditLimit: boolean
@@ -214,6 +216,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     dayPlans: args.dayPlans,
     recurringPlans: args.recurringPlans,
     publisher: args.publisher,
+    logsHours: args.logsHours,
     startOfWeek: args.startOfWeek,
   })
 

@@ -65,6 +65,7 @@ function pushSnapshot(reason: string): void {
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
       publisher: prefs.role,
+      logsHours: prefs.logsHours,
       publisherHours: prefs.publisherHours,
       monthlyGoalOverrides: prefs.monthlyGoalOverrides,
       overrideCreditLimit: prefs.overrideCreditLimit,

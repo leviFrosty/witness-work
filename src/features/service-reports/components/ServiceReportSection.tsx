@@ -22,7 +22,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 
 const ServiceReportSection = () => {
   const theme = useTheme()
-  const { entryMode } = usePublisher()
+  const { entryMode, showsTimeEntry } = usePublisher()
   const navigation = useNavigation<RootStackNavigation>()
   const month = moment().month()
   const year = moment().year()
@@ -104,7 +104,7 @@ const ServiceReportSection = () => {
           </ServiceReportStudiesOverlay>
         </View>
 
-        {entryMode === 'hours' ? (
+        {showsTimeEntry ? (
           <Button
             variant='glass'
             glassTint={theme.colors.accent}

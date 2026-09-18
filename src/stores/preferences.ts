@@ -706,6 +706,16 @@ export const PREFERENCE_DEFAULTS = {
    */
   autoRolloverEnabled: false,
   /**
+   * **Hours Logging** — Regular Publisher opt-in to log hours for themselves.
+   * Reveals the Add Time entry points, the timer, the Progress tab, and the
+   * calendar widget, plus an optional Monthly Goal (`publisherHours.publisher`,
+   * default 0). Does not change how the month is _reported_: the congregation
+   * report stays a "shared in ministry" yes/no. Ignored for hours-mode roles,
+   * which always track hours. Resolved via `tracksHours` /
+   * `derivePublisherCapabilities().showsTimeEntry`. Syncable.
+   */
+  logsHours: false,
+  /**
    * When true, fractional credit minutes are included in the rollover amount
    * (the pre-v1.44 behavior). Off by default: credit time is not eligible for
    * rollover, so only standard-time minutes are moved. Syncable.

@@ -198,10 +198,16 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     { month, year }
   )
   const goalMinutes = goalHours * 60
-  const progress = goalProgress({
-    minutes: adjusted.value,
-    goalMinutes,
-  }).fraction
+  // No goal (Regular Publisher, or a 0-hour custom goal) means nothing to make
+  // progress toward — report 0 rather than the helper's "done" clamp so the
+  // encouragement phrase doesn't read "Goal achieved!" every refresh.
+  const progress =
+    goalMinutes > 0
+      ? goalProgress({
+          minutes: adjusted.value,
+          goalMinutes,
+        }).fraction
+      : 0
 
   const formatted = formatMinutes(adjusted.value, args.timeDisplayFormat)
   const monthHoursFormatted =

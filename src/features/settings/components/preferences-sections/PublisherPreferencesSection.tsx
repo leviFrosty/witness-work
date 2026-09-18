@@ -1,10 +1,12 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
+import { analytics } from '@/lib/analytics'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import PublisherTypeSelector from '@/components/PublisherTypeSelector'
 import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
 import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelector'
@@ -27,6 +29,8 @@ const PublisherPreferencesSection = () => {
     tenureStartDate,
     autoRolloverEnabled,
     rolloverIncludesCredit,
+    logsHours,
+    publisherHours,
     setAutoRolloverEnabled,
     setRolloverIncludesCredit,
     set,
@@ -39,11 +43,19 @@ const PublisherPreferencesSection = () => {
     entryMode,
     canAdjustCreditLimit,
     tracksTenure,
+    showsTimeEntry,
+    monthlyGoalHours,
   } = usePublisher()
   const { hasName } = useUser()
   const theme = useTheme()
   const isCheckboxMode = entryMode === 'checkbox'
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  // Hours Logging goal input — mirrors the Custom role's goal input in
+  // `PublisherTypeSelector`: local text state, persisted on blur.
+  const [logHoursGoal, setLogHoursGoal] = useState(
+    publisherHours.publisher.toString()
+  )
+  const logHoursGoalInput = useRef<RNTextInput>(null)
 
   useEffect(() => {
     if (!hasCompletedProfileSetup && hasName) {
@@ -51,7 +63,23 @@ const PublisherPreferencesSection = () => {
     }
   }, [hasCompletedProfileSetup, hasName, setProfile])
 
-  const showAdvanced = canAdjustCreditLimit || !isCheckboxMode
+  const handleLogsHoursChange = (enabled: boolean) => {
+    set({ logsHours: enabled })
+    analytics.capture('hours_logging_changed', { enabled })
+  }
+
+  const saveLogHoursGoal = () => {
+    const parsed = parseFloat(logHoursGoal)
+    const next = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+    setLogHoursGoal(next.toString())
+    set({ publisherHours: { ...publisherHours, publisher: next } })
+  }
+
+  const showAdvanced = canAdjustCreditLimit || showsTimeEntry
+  // Hours-mode roles always get the annual-goal row. A publisher logging hours
+  // only gets it once they have a monthly goal to multiply (annual = ×12).
+  const showAnnualGoal =
+    !isCheckboxMode || (showsTimeEntry && monthlyGoalHours > 0)
 
   return (
     <View style={{ gap: 20 }}>
@@ -59,23 +87,6 @@ const PublisherPreferencesSection = () => {
         <ProfileCard editable />
       </View>
 
-      {isCheckboxMode && (
-        <>
-          <View>
-            <Card>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('lg'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('lookingForViewHours')}
-              </Text>
-              <Text>{i18n.t('lookingForViewHours_description')}</Text>
-            </Card>
-          </View>
-        </>
-      )}
       {publisherType === 'custom' && (
         <>
           <View>
@@ -110,7 +121,32 @@ const PublisherPreferencesSection = () => {
             </View>
           </InputRowContainer>
         )}
-        {!isCheckboxMode && (
+        {isCheckboxMode && (
+          <InputRowSwitch
+            label={i18n.t('logHours')}
+            info={i18n.t('logHours_description')}
+            value={logsHours}
+            onValueChange={handleLogsHoursChange}
+          />
+        )}
+        {isCheckboxMode && logsHours && (
+          <TextInputRow
+            ref={logHoursGoalInput}
+            label={i18n.t('logHoursGoal')}
+            info={i18n.t('logHoursGoal_description')}
+            controlStyle={{ width: 96 }}
+            textInputProps={{
+              accessibilityLabel: i18n.t('logHoursGoal'),
+              maxLength: 5,
+              value: logHoursGoal,
+              onChangeText: setLogHoursGoal,
+              onBlur: saveLogHoursGoal,
+              inputMode: 'decimal',
+              textAlign: 'left',
+            }}
+          />
+        )}
+        {showAnnualGoal && (
           <InputRowContainer label={i18n.t('annualGoal')}>
             <View style={{ flex: 1 }}>
               <AnnualGoalSelector />
@@ -158,7 +194,7 @@ const PublisherPreferencesSection = () => {
               {canAdjustCreditLimit && (
                 <MonthlyMaximumCreditHoursSection key={publisherType} />
               )}
-              {!isCheckboxMode && (
+              {showsTimeEntry && (
                 <Section>
                   <InputRowSwitch
                     label={i18n.t('autoRollover')}

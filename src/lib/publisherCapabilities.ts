@@ -51,6 +51,15 @@ export type PublisherCapabilities = {
    * for plain publishers and the custom role — they have no Tenure Type.
    */
   tracksTenure: boolean
+  /**
+   * Whether the User sees the hours-tracking surfaces — Add Time entry points,
+   * the hours total on Home, the Progress tab, the calendar widget. True for
+   * every hours-mode role, and for the Regular Publisher only when they have
+   * opted in via the **Hours Logging** preference (`logsHours`). Independent of
+   * `entryMode`: a Regular Publisher who logs hours still _reports_ via the
+   * checkbox (yes/no), so exports keep reading `entryMode`.
+   */
+  showsTimeEntry: boolean
   showsTimer: boolean
   showsYearTabs: boolean
   milestones: number[]
@@ -100,6 +109,20 @@ export const tracksTenure = (publisher: Publisher): boolean =>
 export const getEntryMode = (publisher: Publisher): 'checkbox' | 'hours' =>
   publisher === 'publisher' ? 'checkbox' : 'hours'
 
+/**
+ * Whether the hours-tracking surfaces (Add Time, timer, Progress tab, calendar
+ * widget) are shown. Pure helper for non-React callers (widget builders) — same
+ * value `derivePublisherCapabilities` exposes as `showsTimeEntry`.
+ *
+ * Hours-mode roles always track hours. The Regular Publisher (checkbox mode)
+ * only does so when they opt in via the `logsHours` preference. Note this does
+ * **not** change `entryMode`: their congregation report stays yes/no.
+ */
+export const tracksHours = (
+  publisher: Publisher,
+  logsHours: boolean
+): boolean => getEntryMode(publisher) === 'hours' || logsHours
+
 export type PublisherCapabilitiesInput = {
   publisher: Publisher
   publisherHours: PublisherHours
@@ -107,6 +130,8 @@ export type PublisherCapabilitiesInput = {
   milestoneOverrides: number[] | null
   overrideCreditLimit: boolean
   customCreditLimitHours: number
+  /** Regular Publisher opt-in to log hours for themselves. See `tracksHours`. */
+  logsHours: boolean
 }
 
 const baseCreditCapMinutes = (publisher: Publisher): number | null => {
@@ -176,11 +201,12 @@ export const derivePublisherCapabilities = (
     milestoneOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
+    logsHours,
   } = input
   const monthlyGoalHours = publisherHours[publisher]
   const annualGoalHours = monthlyGoalHours * 12
   const entryMode = getEntryMode(publisher)
-  const hoursMode = entryMode === 'hours'
+  const showsTimeEntry = tracksHours(publisher, logsHours)
   return {
     type: publisher,
     entryMode,
@@ -200,8 +226,9 @@ export const derivePublisherCapabilities = (
     isInFullTimeService: isInFullTimeService(publisher),
     tenureType: getTenureType(publisher),
     tracksTenure: tracksTenure(publisher),
-    showsTimer: hoursMode,
-    showsYearTabs: hoursMode,
+    showsTimeEntry,
+    showsTimer: showsTimeEntry,
+    showsYearTabs: showsTimeEntry,
     milestones: getEffectiveMilestones(
       publisher,
       milestoneOverrides,

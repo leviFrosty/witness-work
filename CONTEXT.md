@@ -227,7 +227,11 @@ _Avoid_: equating Tenure Type with Publisher — multiple Publishers map to the 
 ### Goals
 
 **Monthly Goal**:
-The User's target field-ministry hours per month. Set per-Publisher via role defaults (e.g. 50 for regular pioneer) or, for the Custom role, by free-text input. Drives the timer, projections, and the Year tab. Zero for Regular Publisher (no goal).
+The User's target field-ministry hours per month. Set per-Publisher via role defaults (e.g. 50 for regular pioneer) or, for the Custom role, by free-text input. Drives the timer, projections, and the Year tab. Zero for Regular Publisher by default; a Regular Publisher with **Hours Logging** on may set one.
+
+**Hours Logging**:
+A Regular Publisher's opt-in to log hours for themselves. Off by default. When on, the hours-tracking surfaces appear (Add Time, timer, Progress tab, calendar widget) and an optional Monthly Goal (default 0) is revealed. It does **not** change the Service Report: the congregation report for a Regular Publisher is always the "shared in ministry" yes/no, so `entryMode` stays `'checkbox'`. Any logged Time Entry also counts as "shared", so the checkbox and the hours never disagree. Hours-mode roles always track hours; the preference is ignored for them.
+_Avoid_: "hours mode" for this — that term is reserved for the hours-mode roles' _entry mode_.
 _Avoid_: "monthly hour goal", "monthly target".
 
 **Annual Goal**:

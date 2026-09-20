@@ -21,6 +21,7 @@ import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
+import YearTotalCard from '@/features/progress/components/YearTotalCard'
 import YearCategoryBreakdownSection from '@/features/progress/components/YearCategoryBreakdownSection'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -290,20 +291,25 @@ const ProgressYearTab = ({
       paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
       leading={
         <View style={{ gap: 24 }}>
+          {/* Roles without an Annual Goal get a raw service-year total instead
+            of the milestone hero, and no projection (there is nothing to
+            project against). */}
           {hasAnnualGoal ? (
-            <YearMilestoneCard
+            <>
+              <YearMilestoneCard
+                year={year}
+                onAdjustMilestones={onAdjustMilestones}
+                categoriesSlot={<YearCategoryBreakdownSection year={year} />}
+                separateMilestones
+              />
+              <ProjectedTotalCard scope={projectedScope} />
+            </>
+          ) : (
+            <YearTotalCard
               year={year}
-              onAdjustMilestones={onAdjustMilestones}
               categoriesSlot={<YearCategoryBreakdownSection year={year} />}
-              separateMilestones
             />
-          ) : null}
-          <ProjectedTotalCard scope={projectedScope} />
-          {!hasAnnualGoal ? (
-            <View style={{ paddingHorizontal: 15 }}>
-              <YearCategoryBreakdownSection year={year} />
-            </View>
-          ) : null}
+          )}
         </View>
       }
       trailing={

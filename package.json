@@ -15,7 +15,6 @@
     "eas-build-post-install": "npm install --global @posthog/cli@0.18.1",
     "upload:posthog-sourcemaps": "posthog-cli --dotenv-file .env.production hermes upload --directory dist",
     "check:locales": "node scripts/check-is-missing-locale-keys.mjs",
-    "translate": "bun run ./scripts/translate.ts",
     "bump-version": "node ./scripts/bump-version.js",
     "prepare": "husky",
     "test": "vitest",

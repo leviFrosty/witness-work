@@ -310,6 +310,8 @@
   "note_placeholder": "Write down information about your conversation. Be sure to be descriptive!",
   "optionalNote": "Optional note (e.g., details about the service day)",
   "followUp": "Follow Up",
+  "followUp_description": "Plan a return visit. Turn off if there is no specific time to return.",
+  "followUpDate": "Date",
   "topic_placeholder": "Enter topic, e.g., Enjoy Life Forever Ch. 1",
   "notifyMe": "Notify Me",
   "notifyMe_description": "Notifications are disabled.",

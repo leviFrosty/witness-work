@@ -35,6 +35,13 @@ export type Visit = {
   }
   date: Date
   note?: string
+  /**
+   * Present only when the user turned on the Follow Up switch in the visit
+   * form. Absence means "no return visit planned" — history hides the section
+   * and nothing surfaces in Missed/Approaching Conversations or the widget.
+   * Legacy placeholder follow-ups (no reminder, no topic) are stripped by the
+   * conversation store's persist migration and the sync payload parser.
+   */
   followUp?: {
     date: Date
     notifyMe: boolean

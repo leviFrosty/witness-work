@@ -201,9 +201,9 @@ export const HomeScreen = () => {
     [conversations]
   )
 
-  // `upcomingFollowUpConversations` already enforces the
-  // notify-or-topic-required filter via `isAppointment`, so we only need to
-  // narrow to active (non-deleted/non-dismissed) contacts here.
+  // `upcomingFollowUpConversations` already drops visits without an active
+  // follow-up via `isAppointment`, so we only need to narrow to active
+  // (non-deleted/non-dismissed) contacts here.
   const approachingConvosWithActiveContacts = useMemo(() => {
     const activeIds = new Set(contacts.map((c) => c.id))
     return approachingConversations.filter((c) => activeIds.has(c.contact.id))
@@ -211,8 +211,7 @@ export const HomeScreen = () => {
 
   // Overdue follow-ups — mirrors the widget's 30-day lookback so a user
   // tapping a missed appointment from the widget can also find it listed in
-  // the app. Unlike upcoming, overdue items are not filtered by notify/topic
-  // since the user always wants to know they missed something.
+  // the app.
   const overdueConvosWithActiveContacts = useMemo(() => {
     const overdue = overdueFollowUpConversations({
       currentTime: new Date(),

@@ -121,7 +121,7 @@ A designation a User applies to a Visit to indicate that a bible study was condu
 _Avoid_: assuming a Contact is "a Bible Study" on the Contact record itself — the app does not model the standing relationship; only the per-Visit designation.
 
 **Follow-up**:
-A scheduled future Visit attached to a Visit, optionally with a notification, an optional topic, and a dismissed flag for soft-cancellation. Surfaces in the "Missed Conversations" list and the widget's overdue list when its date passes without being acted on.
+A scheduled future Visit attached to a Visit, optionally with a notification, an optional topic, and a dismissed flag for soft-cancellation. Opt-in per Visit via the Follow Up switch on the visit form (on by default for a conversation, off by default for Not at Home); a Visit without one has no return visit planned. Surfaces in the "Missed Conversations" list and the widget's overdue list when its date passes without being acted on.
 _Avoid_: "appointment" (used colloquially but not in code).
 
 **Custom Field**:

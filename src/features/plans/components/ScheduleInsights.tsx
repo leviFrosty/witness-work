@@ -251,88 +251,95 @@ const ScheduleInsights = ({
     goal: goal.formatted,
   })
 
+  // With no monthly goal (Regular Publisher, or a 0-hour custom goal) there is
+  // nothing to "cover", so the coverage card would read a permanent 0%. Show
+  // only the pace card in that case.
+  const hasGoal = goalMinutes > 0
+
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
       <SchedulePaceInsight month={month} year={year} />
-      <PopoverCard
-        containerStyle={{ flex: 1 }}
-        cardStyle={{
-          minHeight: 84,
-          padding: 12,
-          gap: 10,
-          justifyContent: 'space-between',
-        }}
-        fill
-        accessibilityLabel={`${value}. ${label}`}
-        accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-        popoverContent={({ close }) => (
-          <GoalInsightContent
-            onClose={close}
-            coveredPercent={coveredPercent}
-            projected={projected.formatted}
-            goal={goal.formatted}
-            leftToPlan={leftToPlan.formatted}
-            goalProgress={goalProgressFraction}
-            onEditGoal={onEditGoal}
-          />
-        )}
-      >
-        <View style={{ flex: 1, justifyContent: 'center', gap: 6 }}>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={{
-              color: theme.colors.text,
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('2xl'),
-            }}
-          >
-            {value}
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 6,
-            }}
-          >
+      {hasGoal ? (
+        <PopoverCard
+          containerStyle={{ flex: 1 }}
+          cardStyle={{
+            minHeight: 84,
+            padding: 12,
+            gap: 10,
+            justifyContent: 'space-between',
+          }}
+          fill
+          accessibilityLabel={`${value}. ${label}`}
+          accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+          popoverContent={({ close }) => (
+            <GoalInsightContent
+              onClose={close}
+              coveredPercent={coveredPercent}
+              projected={projected.formatted}
+              goal={goal.formatted}
+              leftToPlan={leftToPlan.formatted}
+              goalProgress={goalProgressFraction}
+              onEditGoal={onEditGoal}
+            />
+          )}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', gap: 6 }}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{
+                color: theme.colors.text,
+                fontFamily: theme.fonts.bold,
+                fontSize: theme.fontSize('2xl'),
+              }}
+            >
+              {value}
+            </Text>
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'space-between',
                 gap: 6,
-                flexShrink: 1,
               }}
             >
-              <CircularProgress
-                progress={goalProgressFraction}
-                size={16}
-                strokeWidth={3}
-                color={theme.colors.accent}
-                trackColor={theme.colors.border}
-              />
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
+              <View
                 style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
                   flexShrink: 1,
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
                 }}
               >
-                {label}
-              </Text>
+                <CircularProgress
+                  progress={goalProgressFraction}
+                  size={16}
+                  strokeWidth={3}
+                  color={theme.colors.accent}
+                  trackColor={theme.colors.border}
+                />
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={{
+                    flexShrink: 1,
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {label}
+                </Text>
+              </View>
+              <LucideIcon
+                icon={ChevronRightIcon}
+                color={theme.colors.textAlt}
+                size={12}
+              />
             </View>
-            <LucideIcon
-              icon={ChevronRightIcon}
-              color={theme.colors.textAlt}
-              size={12}
-            />
           </View>
-        </View>
-      </PopoverCard>
+        </PopoverCard>
+      ) : null}
     </View>
   )
 }

@@ -11,11 +11,17 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useAnimation from '@/hooks/useAnimation'
+import usePublisher from '@/hooks/usePublisher'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { useFormattedMinutes } from '@/lib/minutes'
+import {
+  adjustedMinutesForSpecificMonth,
+  getMonthsReports,
+} from '@/lib/serviceReport'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
+import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import LottieView from 'lottie-react-native'
@@ -26,11 +32,39 @@ export default function PublisherCheckBoxCard() {
   const { serviceReports, addServiceReport, deleteServiceReport } =
     useServiceReport()
   const { playConfetti } = useAnimation()
+  const { type: publisher, showsTimeEntry } = usePublisher()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
   )
   const hasParticipated = monthReports.length > 0
+  // A publisher who opted into Hours Logging sees their month total under the
+  // checked state. Any logged entry also counts as "shared", so the checkbox
+  // and the hours never disagree.
+  const loggedMinutes = useMemo(
+    () =>
+      showsTimeEntry
+        ? adjustedMinutesForSpecificMonth(
+            monthReports,
+            moment().month(),
+            moment().year(),
+            publisher,
+            {
+              enabled: overrideCreditLimit,
+              customLimitHours: customCreditLimitHours,
+            }
+          ).value
+        : 0,
+    [
+      showsTimeEntry,
+      monthReports,
+      publisher,
+      overrideCreditLimit,
+      customCreditLimitHours,
+    ]
+  )
+  const loggedTime = useFormattedMinutes(loggedMinutes)
 
   const handleSubmitDidService = () => {
     const report: TimeEntry = {
@@ -86,6 +120,18 @@ export default function PublisherCheckBoxCard() {
         >
           {i18n.t('sharedTheGoodNews')}
         </Text>
+        {showsTimeEntry && loggedMinutes > 0 ? (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('hoursLoggedThisMonth', { time: loggedTime.formatted })}
+          </Text>
+        ) : null}
         {undoReport ? (
           <Button
             onPress={() => {

@@ -1455,8 +1455,6 @@
   "hide": "Ausblenden",
   "Month": "Monat",
   "Year": "Jahr",
-  "lookingForViewHours": "Suchen Sie nach Stunden?",
-  "lookingForViewHours_description": "Wenn Sie ein Verkündiger sind, aber Ihre Stunden aus persönlichen Gründen aufzeichnen möchten, ändern Sie Ihren Verkündiger-Status in „Benutzerdefiniert“. Dann steht Ihnen die Registerkarte „Monat“ auf dem Startbildschirm zur Verfügung.",
   "dontWantGoal": "Sie möchten kein Ziel?",
   "dontWantGoal_description": "Setzen Sie Ihren Stundenbedarf auf 0. So können Sie Ihre Zeit wie Pioniere ohne Ziel aufzeichnen.",
   "quickAction": "Schnelle Aktion",

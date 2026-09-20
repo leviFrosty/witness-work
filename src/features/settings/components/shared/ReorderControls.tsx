@@ -9,11 +9,16 @@ interface Props {
   onMoveDown?: () => void
 }
 
+// Visible button is 36pt; a 4pt hitSlop on every side brings the tap target
+// to 44pt. The 8pt gap keeps adjacent slops from overlapping (see IconButton).
+const BUTTON_SIZE = 36
+const HIT_SLOP = 4
+
 export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {
   const theme = useTheme()
 
   return (
-    <View style={{ flexDirection: 'row', gap: 6, flexShrink: 0 }}>
+    <View style={{ flexDirection: 'row', gap: HIT_SLOP * 2, flexShrink: 0 }}>
       {[
         { icon: ArrowUp, onPress: onMoveUp, label: i18n.t('moveUp') },
         { icon: ArrowDown, onPress: onMoveDown, label: i18n.t('moveDown') },
@@ -23,15 +28,20 @@ export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {
           icon={icon}
           onPress={onPress}
           accessibilityLabel={label}
-          hitSlop={0}
+          hitSlop={HIT_SLOP}
           size={16}
           style={{
-            width: 44,
-            height: 44,
+            width: BUTTON_SIZE,
+            height: BUTTON_SIZE,
             alignItems: 'center',
             justifyContent: 'center',
+            borderRadius: theme.numbers.borderRadiusSm,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.backgroundLightest,
+            opacity: onPress ? 1 : 0.4,
           }}
-          color={onPress ? theme.colors.textAlt : theme.colors.border}
+          color={theme.colors.textAlt}
         />
       ))}
     </View>

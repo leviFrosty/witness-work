@@ -27,7 +27,8 @@
     "typecheck": "node_modules/typescript-go/bin/tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",
-    "deps": "madge --ts-config ./tsconfig.json src/app/App.tsx -c"
+    "deps": "madge --ts-config ./tsconfig.json src/app/App.tsx -c",
+    "prototype:home": "node scripts/prototype-home.mjs"
   },
   "dependencies": {
     "@bacons/apple-targets": "0.2.1",

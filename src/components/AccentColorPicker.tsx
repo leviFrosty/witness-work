@@ -70,8 +70,7 @@ const PickerContents = () => {
       <View
         style={{
           flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: 10,
+          justifyContent: 'space-between',
           paddingVertical: 4,
         }}
       >

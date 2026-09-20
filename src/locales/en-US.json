@@ -2005,6 +2005,8 @@
   "emptyAllTime_description": "Your lifetime hours will appear here.",
   "multiple": "Multiple",
   "vsGoal": "vs Goal",
+  "yearTotal_info_title": "Service year total",
+  "yearTotal_info_description": "Your role doesn't have an annual goal, so this shows the raw hours logged this service year (after monthly credit caps) instead of progress toward a goal.",
   "category": "Category",
   "showAllDays": "Show all days",
   "hideFutureDays": "Hide future days",

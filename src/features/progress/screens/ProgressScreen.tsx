@@ -11,7 +11,6 @@ import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
 
 import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
@@ -36,8 +35,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { isWide } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
-  const { role, publisherHours } = usePreferences()
-
   const now = moment()
   const currentYear = now.year()
   const currentMonth = now.month()
@@ -45,38 +42,20 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const [month, setMonth] = useState(route.params?.month ?? currentMonth)
   const [year, setYear] = useState(route.params?.year ?? currentYear)
 
-  // Publisher types with no annual goal (e.g. `publisher` or custom-at-0) cannot
-  // meaningfully render the Year tab. Hide it from the selector and coerce
-  // route-param landings away from `year`.
-  const hideYearTab = (publisherHours[role] ?? 0) === 0
-
-  const initialTab: ProgressTab = (() => {
-    const requested = route.params?.tab
-    if (requested === 'year' && hideYearTab) return 'month'
-    return requested ?? 'month'
-  })()
-
-  const [activeTab, setActiveTab] = useState<ProgressTab>(initialTab)
+  // The Year tab is available to every role. Roles without an Annual Goal see
+  // raw service-year totals there (see `ProgressYearTab`).
+  const [activeTab, setActiveTab] = useState<ProgressTab>(
+    route.params?.tab ?? 'month'
+  )
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
-
-  // Keep activeTab sane if publisher type changes mid-session.
-  useEffect(() => {
-    if (hideYearTab && activeTab === 'year') {
-      setActiveTab('month')
-    }
-  }, [hideYearTab, activeTab])
 
   // Sync route params → local state when navigation updates them.
   useEffect(() => {
     if (route.params?.month !== undefined) setMonth(route.params.month)
     if (route.params?.year !== undefined) setYear(route.params.year)
-    if (route.params?.tab !== undefined) {
-      const next =
-        route.params.tab === 'year' && hideYearTab ? 'month' : route.params.tab
-      setActiveTab(next)
-    }
-  }, [route.params?.month, route.params?.year, route.params?.tab, hideYearTab])
+    if (route.params?.tab !== undefined) setActiveTab(route.params.tab)
+  }, [route.params?.month, route.params?.year, route.params?.tab])
 
   const selectedMonth = useMemo(
     () => moment().month(month).year(year),
@@ -165,9 +144,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             onChange={setActiveTab}
             options={[
               { key: 'month', label: i18n.t('month') },
-              ...(hideYearTab
-                ? []
-                : ([{ key: 'year', label: i18n.t('year') }] as const)),
+              { key: 'year', label: i18n.t('year') },
               { key: 'allTime', label: i18n.t('allTime') },
             ]}
             style={{ marginHorizontal: 15 }}
@@ -230,7 +207,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             onSwipeBack={() => handleMonthNav('back')}
           />
         ) : null}
-        {activeTab === 'year' && !hideYearTab ? (
+        {activeTab === 'year' ? (
           <ProgressYearTab
             year={serviceYear}
             onAdjustMilestones={() => setMilestoneSheetOpen(true)}
@@ -245,7 +222,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           <ProgressAllTimeTab
             onYearPress={(endYear) => {
               setYear(endYear)
-              setActiveTab(hideYearTab ? 'month' : 'year')
+              setActiveTab('year')
             }}
           />
         ) : null}

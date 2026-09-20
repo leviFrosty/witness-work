@@ -8,6 +8,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
+import usePublisher from '@/hooks/usePublisher'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { formatDate } from '@/lib/dates'
@@ -91,10 +92,15 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   onDayPlanPress,
   onRecurringPlanPress,
   onTimeReportPress,
-  onAddTime,
+  onAddTime: onAddTimeProp,
   onPlanDay,
 }) => {
   const theme = useTheme()
+  const { showsTimeEntry } = usePublisher()
+  // Regular Publishers who haven't opted into logging hours never see an
+  // "Add Time" affordance — hours entered here would be invisible to them
+  // (no Progress tab, and the report only says whether they shared).
+  const onAddTime = showsTimeEntry ? onAddTimeProp : undefined
   const { dayPlans, recurringPlans } = useServiceReport()
   const [notCountedExpanded, setNotCountedExpanded] = useState(false)
 

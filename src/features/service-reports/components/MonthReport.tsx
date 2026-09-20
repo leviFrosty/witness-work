@@ -555,7 +555,12 @@ const MonthReport = ({
               sealAnimatedStyle={sealAnimatedStyle}
               hideGoalLabel={allowGoalEditing}
               headerRightSlot={
-                !allowGoalEditing && hideTitle && showReportButton ? (
+                // The editable-goal row owns the report button when it
+                // renders; with no base goal that row is absent, so the
+                // button falls back to the hero header slot.
+                (!allowGoalEditing || baseGoalHours <= 0) &&
+                hideTitle &&
+                showReportButton ? (
                   <ViewReportButton month={month} year={year} />
                 ) : undefined
               }

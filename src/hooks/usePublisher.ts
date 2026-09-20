@@ -18,6 +18,7 @@ const usePublisher = (): PublisherCapabilities => {
     milestoneOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
+    logsHours,
   } = usePreferences()
 
   return derivePublisherCapabilities({
@@ -27,6 +28,7 @@ const usePublisher = (): PublisherCapabilities => {
     milestoneOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
+    logsHours,
   })
 }
 

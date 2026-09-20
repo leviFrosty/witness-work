@@ -3,6 +3,7 @@ import {
   creditCapMinutesFor,
   derivePublisherCapabilities,
   getTenureType,
+  tracksHours,
 } from '@/lib/publisherCapabilities'
 import type { Publisher } from '@/types/publisher'
 
@@ -19,6 +20,7 @@ const baseInput = {
   milestoneOverrides: null as number[] | null,
   overrideCreditLimit: false,
   customCreditLimitHours: 55,
+  logsHours: false,
 }
 
 const derive = (
@@ -200,13 +202,27 @@ describe('derivePublisherCapabilities', () => {
   })
 
   describe('hours-mode affordances', () => {
-    it('hides timer and year tabs for the checkbox-mode role', () => {
+    it('hides time entry, timer and year tabs for the checkbox-mode role', () => {
       const caps = derive('publisher')
+      expect(caps.showsTimeEntry).toBe(false)
       expect(caps.showsTimer).toBe(false)
       expect(caps.showsYearTabs).toBe(false)
     })
 
-    it('shows timer and year tabs for every hours-mode role', () => {
+    it('reveals time entry, timer and year tabs when a publisher opts into logging hours', () => {
+      const caps = derive('publisher', { logsHours: true })
+      expect(caps.showsTimeEntry).toBe(true)
+      expect(caps.showsTimer).toBe(true)
+      expect(caps.showsYearTabs).toBe(true)
+    })
+
+    it('keeps checkbox entry mode when a publisher opts into logging hours', () => {
+      expect(derive('publisher', { logsHours: true }).entryMode).toBe(
+        'checkbox'
+      )
+    })
+
+    it('shows time entry, timer and year tabs for every hours-mode role', () => {
       for (const role of [
         'regularAuxiliary',
         'regularPioneer',
@@ -215,9 +231,16 @@ describe('derivePublisherCapabilities', () => {
         'custom',
       ] as const) {
         const caps = derive(role)
+        expect(caps.showsTimeEntry).toBe(true)
         expect(caps.showsTimer).toBe(true)
         expect(caps.showsYearTabs).toBe(true)
       }
+    })
+
+    it('ignores logsHours for hours-mode roles (already tracking)', () => {
+      expect(tracksHours('regularPioneer', false)).toBe(true)
+      expect(tracksHours('publisher', false)).toBe(false)
+      expect(tracksHours('publisher', true)).toBe(true)
     })
   })
 

@@ -2,7 +2,7 @@ import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
-import { getEntryMode } from '@/lib/publisherCapabilities'
+import { tracksHours } from '@/lib/publisherCapabilities'
 import { getMonthsReports } from '@/lib/serviceReport'
 import {
   RecurringPlan,
@@ -77,6 +77,8 @@ export type BuildCalendarArgs = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   publisher: Publisher
+  /** Mirrors `preferences.logsHours` — see `tracksHours`. */
+  logsHours: boolean
   startOfWeek: number
 }
 
@@ -96,8 +98,9 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
     weekdayLabels.push(baseShortDays[(args.startOfWeek + i) % 7])
   }
 
-  // Publishers don't have an hours goal, so the feature is hidden for them.
-  if (getEntryMode(args.publisher) === 'checkbox') {
+  // Regular Publishers don't track hours unless they opt in, so the feature
+  // is locked for them.
+  if (!tracksHours(args.publisher, args.logsHours)) {
     return {
       locked: true,
       month,

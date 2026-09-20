@@ -83,7 +83,12 @@ const GoalProgressStats = ({
   const remainingDisplay = useFormattedMinutes(remainingMinutes)
   const beyondDisplay = useFormattedMinutes(beyondMinutes)
 
-  if (goalHours <= 0) return null
+  // No goal to measure against (e.g. a Regular Publisher who opted into Hours
+  // Logging without setting a Monthly Goal). Still surface the logged total —
+  // just without the goal-relative pill, suffix, or celebration palette. A
+  // future month has nothing logged and no goal to preview, so stay hidden.
+  const hasGoal = goalHours > 0
+  if (!hasGoal && periodState === 'future') return null
 
   const tier =
     hasMetGoal && periodState === 'current' && achievementTier
@@ -115,7 +120,11 @@ const GoalProgressStats = ({
   const goalSuffix = i18n.t('goalLabel', { value: goalDisplay.formatted })
   let pillText: string | null = null
   const trailingParts: string[] = []
-  if (hasMetGoal && beyondMinutes > 0) {
+  if (!hasGoal) {
+    if (periodState === 'current' && remainingLabel) {
+      trailingParts.push(remainingLabel)
+    }
+  } else if (hasMetGoal && beyondMinutes > 0) {
     trailingParts.push(
       i18n.t('beyondGoalShort', { value: beyondDisplay.formatted })
     )

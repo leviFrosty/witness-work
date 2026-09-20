@@ -1,9 +1,9 @@
 ---
 name: release-process
-description: WitnessWork's branching and release workflow — trunk-based on `main`, version bump + release notes via `pnpm run bump-version`, and what each GitHub Actions workflow does. Use when opening a PR, asking which branch to target, cutting a release/version bump, writing release notes, or touching `.github/workflows/*.yml`.
+description: WitnessWork's release workflow — trunk-based on `main`, version bump + release notes via `pnpm run bump-version`, and what each GitHub Actions workflow does. Use when opening a PR, asking which branch to target, cutting a release/version bump, writing release notes, or touching `.github/workflows/*.yml`.
 ---
 
-# Branching and release process
+# Release process
 
 The project is **trunk-based on `main`**. PRs target `main` directly, and `main` is not GitHub-protected (no required status checks) — checks still run, they just aren't enforced as a merge gate.
 

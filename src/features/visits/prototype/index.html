@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Who needs you · WitnessWork prototype</title>
+    <style>
+      :root {
+        font-family:
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: #373737;
+        background: #f5f6f4;
+        font-synthesis: none;
+        --green: #08cc50;
+        --ink: #145c31;
+        --line: #e5e8e4;
+        --muted: #737b75;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      button {
+        border: 0;
+        background: none;
+        color: inherit;
+        min-height: 44px;
+        border-radius: 12px;
+        padding: 9px 12px;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #00000008;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 3px solid #08cc50;
+        outline-offset: 3px;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      p {
+        line-height: 1.5;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+      h1 {
+        font-size: 38px;
+        letter-spacing: -1.6px;
+        line-height: 1.12;
+        margin-bottom: 18px;
+      }
+      h2 {
+        font-size: 22px;
+        letter-spacing: -0.6px;
+        line-height: 1.25;
+        margin-bottom: 9px;
+      }
+      h3 {
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 1.7px;
+        font-weight: 750;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .layout {
+        max-width: 1170px;
+        margin: auto;
+        padding: 42px 32px 120px;
+        display: grid;
+        grid-template-columns: 280px 390px 240px;
+        gap: 42px;
+        align-items: start;
+      }
+      .intro {
+        padding-top: 24px;
+      }
+      .intro > p {
+        font-size: 15px;
+        color: #687169;
+      }
+      .tag {
+        display: inline-block;
+        background: #e0ede3;
+        color: #346141;
+        padding: 6px 9px;
+        border-radius: 6px;
+        font-size: 11px;
+        letter-spacing: 1px;
+        margin-bottom: 24px;
+      }
+      .controls {
+        border-top: 1px solid #dce2db;
+        margin-top: 28px;
+        padding-top: 20px;
+      }
+      .controls label {
+        display: block;
+        font-size: 12px;
+        font-weight: 650;
+        margin: 17px 0 8px;
+      }
+      .controls select {
+        width: 100%;
+        background: white;
+        border: 1px solid #dce2db;
+        border-radius: 9px;
+        padding: 11px;
+        font-size: 13px;
+      }
+      .toggle {
+        display: flex;
+        gap: 5px;
+      }
+      .toggle button {
+        border: 1px solid #dce2db;
+        flex: 1;
+        background: white;
+        font-size: 12px;
+      }
+      .toggle button[aria-pressed='true'] {
+        background: #dff5e5;
+        border-color: #89c59d;
+        color: var(--ink);
+      }
+      .phone {
+        background: #e9e9e9;
+        border: 7px solid #272d29;
+        border-radius: 46px;
+        overflow: hidden;
+        box-shadow: 0 25px 60px #18342218;
+        position: relative;
+        min-height: 770px;
+      }
+      .status {
+        height: 42px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .appheader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 19px 14px;
+        font-size: 23px;
+        font-weight: 750;
+      }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #dcece1;
+        color: #336543;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .appheader .avatar {
+        background: #d5d7d4;
+        color: #686d68;
+        width: 33px;
+        height: 33px;
+      }
+      .content {
+        padding: 0 14px 25px;
+        min-height: 626px;
+      }
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background: #fff;
+        border-radius: 18px;
+        margin-bottom: 18px;
+      }
+      .profile p {
+        margin: 3px 0 0;
+      }
+      .card {
+        background: white;
+        border-radius: 19px;
+        padding: 18px;
+        margin-bottom: 17px;
+      }
+      .cardhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 10px;
+      }
+      .cardhead .eyebrow {
+        letter-spacing: 1.1px;
+      }
+      .more {
+        margin: -9px -9px -9px 0;
+        font-size: 22px;
+        letter-spacing: 1px;
+      }
+      .feature {
+        border: 1px solid #c9e5d1;
+        background: linear-gradient(135deg, #ecf9f0, #fff 75%);
+      }
+      .person {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 18px 0 12px;
+      }
+      .person p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .topic {
+        font-size: 14px;
+        margin: 6px 0 15px;
+        line-height: 1.4;
+      }
+      .chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .chips button {
+        background: white;
+        border: 1px solid #cbded0;
+        padding: 8px 10px;
+        font-size: 12px;
+        flex: 1;
+        white-space: nowrap;
+      }
+      .primary {
+        background: var(--green) !important;
+        color: #063b19 !important;
+      }
+      .secondary {
+        background: #e8f5ec !important;
+        color: var(--ink) !important;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 7px -6px -4px;
+        gap: 0;
+      }
+      .actions button {
+        font-size: 12px;
+        padding: 8px;
+      }
+      .actions .quiet {
+        font-weight: 500;
+        color: #737b75;
+      }
+      .row {
+        border-top: 1px solid var(--line);
+        padding: 12px 0;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        touch-action: pan-y;
+      }
+      .row .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 11px;
+      }
+      .row .copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .row strong {
+        font-size: 13px;
+      }
+      .row p {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 3px 0 0;
+      }
+      .row button {
+        font-size: 12px;
+        padding: 7px;
+      }
+      .footer {
+        display: block;
+        text-align: left;
+        width: 100%;
+        font-size: 12px;
+        color: var(--ink);
+        border-top: 1px solid var(--line);
+        border-radius: 0;
+        padding: 13px 0 0;
+      }
+      .stat {
+        font-size: 30px;
+        font-weight: 750;
+        letter-spacing: -1px;
+      }
+      .report {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .report p {
+        margin: 4px 0;
+      }
+      .track {
+        height: 5px;
+        background: #edf0ec;
+        border-radius: 6px;
+        margin: 16px 0 3px;
+      }
+      .track span {
+        display: block;
+        background: var(--green);
+        width: 58%;
+        height: 5px;
+        border-radius: 6px;
+      }
+      .nav {
+        display: flex;
+        background: #fbfbfb;
+        justify-content: space-around;
+        padding: 10px 2px 20px;
+        border-top: 1px solid #ddd;
+        font-size: 10px;
+        color: #8b918d;
+      }
+      .nav span {
+        text-align: center;
+        line-height: 1.7;
+      }
+      .nav .active {
+        color: var(--ink);
+      }
+      .focus {
+        text-align: center;
+        padding: 4px 2px 10px;
+      }
+      .focus .avatar {
+        width: 62px;
+        height: 62px;
+        margin: 14px auto;
+        font-size: 19px;
+        background: #cef0d7;
+      }
+      .focus h2 {
+        font-size: 26px;
+      }
+      .focus p {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .focus .primary {
+        width: 100%;
+        margin-top: 9px;
+      }
+      .focus .actions {
+        justify-content: center;
+      }
+      .focusrail {
+        display: flex;
+        gap: 7px;
+        margin-top: 14px;
+      }
+      .focusrail button {
+        flex: 1;
+        background: #f2f5f1;
+        font-size: 12px;
+        text-align: left;
+      }
+      .focusrail small {
+        display: block;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .agenda .row {
+        align-items: flex-start;
+      }
+      .day {
+        font-size: 10px;
+        color: var(--ink);
+        width: 40px;
+        padding-top: 6px;
+      }
+      .agenda .copy button {
+        font-size: 11px;
+        background: #e8f5ec;
+        margin-top: 9px;
+        padding: 6px 10px;
+        min-height: 35px;
+      }
+      .welcome {
+        background: #edf8ef;
+        border: 1px solid #cae4d1;
+      }
+      .welcome.amber {
+        background: #fff6df;
+        border-color: #eed49b;
+      }
+      .welcome .symbol {
+        font-size: 26px;
+        margin-bottom: 12px;
+      }
+      .welcome p {
+        font-size: 13px;
+        color: #697064;
+      }
+      .welcome button {
+        width: 100%;
+        font-size: 12px;
+        margin-top: 7px;
+      }
+      .annotation {
+        padding-top: 32px;
+      }
+      .annotation h3 {
+        font-size: 14px;
+      }
+      .annotation p {
+        font-size: 13px;
+        color: #6e786f;
+      }
+      .annotation .rule {
+        border-top: 1px solid #dce2db;
+        padding-top: 20px;
+        margin-top: 25px;
+      }
+      .widget {
+        background: white;
+        border-radius: 19px;
+        padding: 16px;
+        box-shadow: 0 8px 25px #213d1708;
+      }
+      .widget .eyebrow {
+        font-size: 9px;
+        letter-spacing: 1px;
+      }
+      .widget strong {
+        display: block;
+        font-size: 16px;
+        margin: 12px 0 4px;
+      }
+      .widget p {
+        font-size: 11px;
+        margin: 0;
+      }
+      .switcher {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #202d24;
+        color: white;
+        box-shadow: 0 8px 35px #0003;
+        border-radius: 40px;
+        display: flex;
+        align-items: center;
+        padding: 6px;
+        z-index: 5;
+      }
+      .switcher button {
+        font-size: 20px;
+        color: #c9e3cf;
+        min-width: 46px;
+      }
+      .switcher span {
+        font-size: 12px;
+        text-align: center;
+        min-width: 188px;
+      }
+      .switcher small {
+        display: block;
+        font-size: 9px;
+        letter-spacing: 1px;
+        color: #9dad9f;
+        margin-bottom: 4px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 98px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #202d24;
+        color: white;
+        padding: 8px 14px 8px 18px;
+        border-radius: 15px;
+        box-shadow: 0 5px 30px #0002;
+        max-width: 92vw;
+        width: max-content;
+        z-index: 12;
+        font-size: 13px;
+      }
+      .toast button {
+        color: #83ec9d;
+        margin-left: 14px;
+      }
+      .toast:empty {
+        display: none;
+      }
+      dialog {
+        border: 0;
+        border-radius: 24px;
+        padding: 23px;
+        width: min(410px, 94vw);
+        max-height: 85vh;
+        box-shadow: 0 25px 100px #0004;
+        color: #373737;
+      }
+      dialog::backdrop {
+        background: #13261d66;
+        backdrop-filter: blur(3px);
+      }
+      dialog h2 {
+        font-size: 22px;
+      }
+      dialog header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      dialog header h2 {
+        margin: 0;
+      }
+      dialog label {
+        display: block;
+        font-size: 12px;
+        margin: 15px 0 8px;
+      }
+      dialog input,
+      dialog textarea {
+        padding: 12px;
+        width: 100%;
+        border: 1px solid #d7ddd6;
+        border-radius: 10px;
+      }
+      dialog textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+      dialog .bulk {
+        display: grid;
+        gap: 7px;
+        margin: 17px 0;
+      }
+      .sectionlabel {
+        font-size: 11px;
+        color: #778277;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 20px 0 9px;
+      }
+      .menuitem {
+        display: block;
+        text-align: left;
+        width: 100%;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .debug {
+        margin-top: 20px;
+        font-size: 11px;
+      }
+      .debug summary {
+        cursor: pointer;
+        color: #788177;
+      }
+      .debug pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 300px;
+        overflow: auto;
+        font-size: 10px;
+        background: #e9ede7;
+        padding: 10px;
+      }
+      .empty {
+        padding: 24px 4px;
+        text-align: center;
+      }
+      .empty p {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .empty .symbol {
+        font-size: 28px;
+        color: var(--ink);
+        margin-bottom: 10px;
+      }
+      .smallnote {
+        font-size: 11px !important;
+        color: #858b84 !important;
+        margin-top: 15px;
+      }
+      @media (max-width: 1040px) {
+        .layout {
+          grid-template-columns: 250px 390px;
+          justify-content: center;
+          gap: 30px;
+        }
+        .annotation {
+          grid-column: 1/-1;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 25px;
+          padding-top: 0;
+        }
+        .annotation .rule {
+          margin: 0;
+        }
+        .debug {
+          grid-column: 1/-1;
+        }
+      }
+      @media (max-width: 720px) {
+        .layout {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px 15px 115px;
+          gap: 25px;
+        }
+        .intro {
+          width: min(100%, 390px);
+          padding: 0;
+        }
+        .intro h1 {
+          font-size: 29px;
+          margin-bottom: 10px;
+        }
+        .tag {
+          margin-bottom: 15px;
+        }
+        .intro > p {
+          font-size: 13px;
+        }
+        .controls {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px 12px;
+          margin-top: 16px;
+          padding-top: 5px;
+        }
+        .controls label {
+          margin-top: 10px;
+        }
+        .controls .reset {
+          grid-column: 1/-1;
+        }
+        .phone {
+          width: min(390px, 100%);
+          border-width: 4px;
+          border-radius: 32px;
+        }
+        .annotation {
+          display: block;
+          width: min(390px, 100%);
+        }
+        .annotation .rule {
+          margin-top: 20px;
+        }
+        .switcher {
+          bottom: 12px;
+        }
+        .toast {
+          bottom: 84px;
+        }
+        .content {
+          padding: 0 11px 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- THROWAWAY UI PROTOTYPE. Three structurally different Home follow-up layouts, ?variant=A|B|C.
+     Browser stand-in for the native Home screen; mock data only, no production imports or mutations. -->
+    <div class="layout">
+      <aside class="intro">
+        <span class="tag">WITNESSWORK / PROTOTYPE</span>
+        <h1>A small step<br />back into touch.</h1>
+        <p>
+          Explore a calmer Home card for return visits. One useful next step,
+          with room to catch up at your own pace.
+        </p>
+        <div class="controls">
+          <div>
+            <label for="scenario">Sample situation</label
+            ><select id="scenario">
+              <option value="normal">A few follow-ups · 5</option>
+              <option value="away">Welcome back · 9</option>
+              <option value="stale">Only older items · 3</option>
+              <option value="boundary">
+                Age boundaries · 3, 7, 8, 30, 31 days
+              </option>
+              <option value="empty">All caught up</option>
+            </select>
+          </div>
+          <div>
+            <label>Fresh window</label>
+            <div class="toggle">
+              <button data-window="3" aria-pressed="false">3 days</button
+              ><button data-window="7" aria-pressed="true">7 days</button>
+            </div>
+          </div>
+          <div>
+            <label>Welcome-back color</label>
+            <div class="toggle">
+              <button data-color="accent" aria-pressed="false">Accent</button
+              ><button data-color="amber" aria-pressed="true">Amber</button>
+            </div>
+          </div>
+          <div>
+            <label>Large queue behavior</label>
+            <div class="toggle">
+              <button data-welcome="true" aria-pressed="true">Welcome</button
+              ><button data-welcome="false" aria-pressed="false">List</button>
+            </div>
+          </div>
+          <button class="reset secondary" id="reset">↻ Reset sample</button>
+        </div>
+        <p class="smallnote">
+          Interactive sample · Nothing is saved.<br />Swipe rows right to
+          schedule, left to dismiss.
+        </p>
+      </aside>
+      <main class="phone" aria-label="Home screen prototype">
+        <div class="status"><span>9:41</span><span>▰ ▰ ▰</span></div>
+        <div class="appheader">
+          <span>Home</span><span class="avatar">JW</span>
+        </div>
+        <div class="content">
+          <div class="profile">
+            <span class="avatar">JW</span>
+            <div>
+              <strong style="font-size: 14px">Good morning, Jordan</strong>
+              <p class="muted">Sunday, September 20</p>
+            </div>
+          </div>
+          <section id="spotlight" aria-label="Follow-ups"></section>
+          <section class="card">
+            <div class="report">
+              <div>
+                <span class="eyebrow">September</span>
+                <p><strong>Service report</strong></p>
+              </div>
+              <span class="avatar">↗</span>
+            </div>
+            <div class="track"><span></span></div>
+            <p class="muted" style="margin: 12px 0 0">
+              Your month, one day at a time.
+            </p>
+          </section>
+          <section class="card">
+            <div class="cardhead">
+              <strong style="font-size: 14px">Coming up</strong
+              ><span class="muted">Tomorrow</span>
+            </div>
+            <div class="person" style="margin: 0">
+              <span class="avatar">DL</span>
+              <div>
+                <strong style="font-size: 13px">David Lee</strong>
+                <p>10:00 AM · A hope for the future</p>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="nav" aria-label="Surrounding app navigation, decorative">
+          <span class="active">⌂<br />Home</span><span>♧<br />Contacts</span
+          ><span>▦<br />Plans</span><span>↗<br />Progress</span>
+        </div>
+      </main>
+      <aside class="annotation">
+        <div>
+          <span class="eyebrow" id="variant-number"></span>
+          <h3 id="variant-title" style="margin-top: 12px"></h3>
+          <p id="variant-description"></p>
+          <p class="smallnote">
+            Try Tomorrow, Log visit, or Don’t remind. Open the ••• menu to
+            review the whole queue.
+          </p>
+        </div>
+        <div class="rule">
+          <h3>Same window. Same people.</h3>
+          <p>Widget concept · fresh items only</p>
+          <div class="widget" id="widget"></div>
+        </div>
+        <details class="debug">
+          <summary>Prototype state & outcomes</summary>
+          <pre id="state"></pre>
+        </details>
+      </aside>
+    </div>
+    <nav class="switcher" aria-label="Prototype variants">
+      <button id="prev" aria-label="Previous variant">←</button
+      ><span><small>COMPARE LAYOUTS</small><b id="variant-label"></b></span
+      ><button id="next" aria-label="Next variant">→</button>
+    </nav>
+    <div class="toast" id="toast" role="status"></div>
+    <dialog id="sheet"></dialog>
+    <script>
+      ;(() => {
+        const variants = {
+          A: {
+            name: 'Featured queue',
+            description:
+              'The proposal as written: one person gets space and inline actions. Two quieter rows keep the next steps visible.',
+          },
+          B: {
+            name: 'One person at a time',
+            description:
+              'A single invitation takes the spotlight. Choose another person from the small rail, or review everyone in the sheet.',
+          },
+          C: {
+            name: 'Compact agenda',
+            description:
+              'A short, scannable list gives every person equal weight. Scheduling is the primary action; other choices open on demand.',
+          },
+        }
+        const params = new URLSearchParams(location.search)
+        let variant = variants[params.get('variant')]
+          ? params.get('variant')
+          : 'A'
+        let freshWindow = 7,
+          color = 'amber',
+          welcome = true,
+          items = [],
+          hidden = null,
+          selected = null,
+          events = [],
+          undoState = null
+        const today = new Date('2026-09-20T12:00:00Z')
+        const source = [
+          ['Maria Santos', 1, 'Continue Revelation 21', true],
+          ['James Wilson', 3, 'Is a peaceful world possible?', true],
+          ['Lena Park', 7, 'Bring the Bible study lesson', false],
+          ['Noah Brooks', 12, 'Discuss the resurrection', true],
+          ['Anna Miller', 22, 'A hope for the family', false],
+          ['Daniel Reed', 4, 'Read Psalm 37 together', false],
+          ['Grace Chen', 9, 'Follow up on our conversation', true],
+          ['Eli Thomas', 17, 'Share the next article', false],
+          ['Sofia Ruiz', 29, 'Talk about prayer', true],
+        ]
+        const $ = (s) => document.querySelector(s)
+        const escape = (s) =>
+          String(s).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+              })[c]
+          )
+        const initials = (p) =>
+          p.name
+            .split(' ')
+            .map((x) => x[0])
+            .join('')
+        const pending = () =>
+          items
+            .filter((p) => p.status === 'pending' && p.age <= 30)
+            .sort((a, b) => a.age - b.age)
+        const fresh = () => pending().filter((p) => p.age <= freshWindow)
+        const stale = () => pending().filter((p) => p.age > freshWindow)
+        const planned = (p) => {
+          const d = new Date(today)
+          d.setUTCDate(d.getUTCDate() - p.age)
+          return d.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC',
+          })
+        }
+        const button = (label, action, id = '', cls = '') =>
+          `<button class="${cls}" data-action="${action}" data-id="${id}">${label}</button>`
+        function reset() {
+          const scenario = $('#scenario').value
+          let rows =
+            scenario === 'away'
+              ? source
+              : scenario === 'stale'
+                ? source.filter((p) => p[1] > 7).slice(0, 3)
+                : scenario === 'empty'
+                  ? []
+                  : scenario === 'boundary'
+                    ? source
+                        .slice(0, 5)
+                        .map((p, i) => [p[0], [3, 7, 8, 30, 31][i], p[2], p[3]])
+                    : source.slice(0, 5)
+          items = rows.map((p, i) => ({
+            id: String(i),
+            name: p[0],
+            age: p[1],
+            topic: p[2],
+            phone: p[3],
+            status: 'pending',
+            appointment: true,
+          }))
+          hidden = null
+          selected = null
+          events = []
+          undoState = null
+          $('#toast').innerHTML = ''
+          $('#sheet').close()
+          render()
+        }
+        function menu() {
+          openSheet(
+            'Follow-up options',
+            button('Hide until tomorrow', 'hide', '', 'menuitem') +
+              button('Review all', 'review', '', 'menuitem') +
+              button('Turn off on Home', 'off', '', 'menuitem')
+          )
+        }
+        function row(p) {
+          return `<div class="row" data-swipe="${p.id}"><span class="avatar">${initials(p)}</span><div class="copy"><strong>${p.name}</strong><p>Planned ${planned(p)} · ${p.topic}</p></div>${button('Schedule', 'schedule', p.id)}</div>`
+        }
+        function footer(shown) {
+          const rest = pending().length - shown
+          if (!rest) return ''
+          const older = stale().length
+          return button(
+            `${rest} more${older === rest ? ' from the past 30 days' : ''} <span aria-hidden="true">↗</span>`,
+            'review',
+            '',
+            'footer'
+          )
+        }
+        function actions(p) {
+          return `<div class="actions">${button('Log visit', 'log', p.id)}${button('Don’t remind', 'dismiss', p.id, 'quiet')}${button('Custom date', 'custom', p.id, 'quiet')}${p.phone ? button('☎', 'call', p.id) + button('✉', 'text', p.id) : ''}</div>`
+        }
+        function chips(p) {
+          return `<div class="chips">${button('Tomorrow', 'tomorrow', p.id)}${button('+3 days', 'three', p.id)}${button('Next week', 'week', p.id)}</div>`
+        }
+        const header = () =>
+          `<div class="cardhead"><span class="eyebrow">Who needs you</span><button class="more" data-action="menu" aria-label="Follow-up options">•••</button></div>`
+        function VariantA(list) {
+          const p = list[0]
+          return `<section class="card feature">${header()}<h2>${list.length === 1 ? p.name.split(' ')[0] + ' is' : list.length + ' people are'} waiting on a return visit</h2><div data-swipe="${p.id}"><div class="person"><span class="avatar">${initials(p)}</span><div><strong>${p.name}</strong><p>Planned ${planned(p)}</p></div></div><p class="topic">${p.topic}</p>${chips(p)}${actions(p)}</div>${list.slice(1, 3).map(row).join('')}${footer(Math.min(3, list.length))}</section>`
+        }
+        function VariantB(list) {
+          const p = list.find((p) => p.id === selected) || list[0]
+          return `<section class="card">${header()}<div class="focus" data-swipe="${p.id}"><div class="avatar">${initials(p)}</div><h2>Pick up with<br>${p.name.split(' ')[0]}.</h2><p>Planned ${planned(p)}<br>${p.topic}</p>${button('Schedule for tomorrow →', 'tomorrow', p.id, 'primary')}<div class="actions">${button('More dates', 'schedule', p.id)}${button('Log visit', 'log', p.id)}${button('Don’t remind', 'dismiss', p.id, 'quiet')}</div></div><div class="focusrail">${list
+            .filter((x) => x.id !== p.id)
+            .slice(0, 2)
+            .map((x) =>
+              button(
+                `${x.name.split(' ')[0]} <small>Planned ${planned(x)}</small>`,
+                'select',
+                x.id
+              )
+            )
+            .join('')}</div>${footer(Math.min(3, list.length))}</section>`
+        }
+        function VariantC(list) {
+          return `<section class="card agenda">${header()}<h2>A few people to<br>reconnect with.</h2><p class="muted">Choose a time that works for you.</p>${list
+            .slice(0, 3)
+            .map(
+              (p) =>
+                `<div class="row" data-swipe="${p.id}"><span class="day">${p.age}d ago</span><div class="copy"><strong>${p.name}</strong><p>${p.topic}</p>${button('Tomorrow ↗', 'tomorrow', p.id)}</div>${button('•••', 'schedule', p.id)}</div>`
+            )
+            .join('')}${footer(Math.min(3, list.length))}</section>`
+        }
+        function render() {
+          const list = fresh(),
+            all = pending()
+          let html
+          if (hidden)
+            html = `<section class="card empty"><div class="symbol">✓</div><h3>${hidden === 'tomorrow' ? 'Hidden until tomorrow' : 'Turned off on Home'}</h3><p>Your follow-ups are still available to review.</p>${button('Review all', 'review')}${button('Show again', 'show')}</section>`
+          else if (!all.length)
+            html = `<section class="card empty"><div class="symbol">✓</div><h3>You’re all caught up.</h3><p>A little room for your next conversation.</p></section>`
+          else if (welcome && all.length > 5)
+            html = `<section class="card welcome ${color === 'amber' ? 'amber' : ''}">${header()}<div class="symbol">☀</div><h2>Welcome back.<br>Take one small step.</h2><p>${all.length} follow-ups are ready to review.<br>Start with one, or make room for next week.</p>${button('Review them', 'review', '', 'primary')}${button('Snooze all to next week', 'bulk-week', '', 'secondary')}</section>`
+          else if (!list.length)
+            html = `<section class="card">${header()}<h2>A fresh start today.</h2><p class="muted">Nothing recent needs your attention.</p>${footer(0)}</section>`
+          else html = { A: VariantA, B: VariantB, C: VariantC }[variant](list)
+          $('#spotlight').innerHTML = html
+          $('#variant-number').textContent = `Layout ${variant} / 03`
+          $('#variant-title').textContent = variants[variant].name
+          $('#variant-description').textContent = variants[variant].description
+          $('#variant-label').textContent =
+            `${variant} · ${variants[variant].name}`
+          $('#widget').innerHTML =
+            `<span class="eyebrow">Return visits · ${list.length} fresh</span><strong>${list.length ? list[0].name : 'Nothing recent'}</strong><p>${list.length ? list[0].topic : 'Room for your next conversation.'}</p>${list.length > 1 ? `<p style="margin-top:9px">+ ${list.length - 1} more to reconnect with</p>` : ''}`
+          $('#state').textContent = JSON.stringify(
+            {
+              variant,
+              freshWindow,
+              welcomeThreshold: 5,
+              welcomeEnabled: welcome,
+              color,
+              hidden,
+              freshIds: list.map((p) => p.id),
+              staleIds: stale().map((p) => p.id),
+              items,
+              events,
+            },
+            null,
+            2
+          )
+          document
+            .querySelectorAll('[data-window]')
+            .forEach((b) =>
+              b.setAttribute(
+                'aria-pressed',
+                Number(b.dataset.window) === freshWindow
+              )
+            )
+          document
+            .querySelectorAll('[data-color]')
+            .forEach((b) =>
+              b.setAttribute('aria-pressed', b.dataset.color === color)
+            )
+          document
+            .querySelectorAll('[data-welcome]')
+            .forEach((b) =>
+              b.setAttribute(
+                'aria-pressed',
+                (b.dataset.welcome === 'true') === welcome
+              )
+            )
+        }
+        function switchVariant(delta) {
+          variant =
+            Object.keys(variants)[
+              (Object.keys(variants).indexOf(variant) + delta + 3) % 3
+            ]
+          const url = new URL(location)
+          url.searchParams.set('variant', variant)
+          history.replaceState(null, '', url)
+          render()
+        }
+        function openSheet(title, body) {
+          $('#sheet').innerHTML =
+            `<header><h2>${title}</h2>${button('✕', 'close')}</header>${body}`
+          if (!$('#sheet').open) $('#sheet').showModal()
+        }
+        function triage() {
+          const f = fresh(),
+            s = stale()
+          openSheet(
+            'Review follow-ups',
+            `<p class="muted">${pending().length} people · Swipe right to schedule, left to dismiss.</p><div class="bulk">${button('Snooze all to next week', 'bulk-week', '', 'primary')}${stale().length ? button(`Don’t remind about ${stale().length} older than ${freshWindow} days`, 'bulk-dismiss', '', 'secondary') : ''}</div><div class="sectionlabel">${freshWindow === 7 ? 'This week' : 'Past 3 days'} · ${f.length}</div>${f.length ? f.map(row).join('') : '<p class="muted">Nothing recent to review.</p>'}<div class="sectionlabel">Earlier · ${s.length}</div>${s.length ? s.map(row).join('') : '<p class="muted">No older follow-ups.</p>'}`
+          )
+          $('#sheet').dataset.mode = 'triage'
+        }
+        function schedule(p) {
+          $('#sheet').dataset.mode = 'schedule'
+          openSheet(
+            `Schedule ${p.name.split(' ')[0]}`,
+            `<p class="muted">${p.topic}</p>${chips(p)}${actions(p)}<p class="smallnote">Swipe right opens these date choices.</p>`
+          )
+        }
+        function notify(message, canUndo = false) {
+          $('#toast').innerHTML =
+            `${escape(message)}${canUndo ? button('Undo', 'undo') : button('✕', 'toast-close')}`
+        }
+        function mutate(ids, status, detail, notes) {
+          undoState = { items: structuredClone(items), hidden }
+          ids.forEach((id) => {
+            const p = items.find((p) => p.id === id)
+            p.status = status
+            if (notes !== undefined) p.visitNotes = notes
+            p.scheduledFor = status === 'scheduled' ? detail : null
+            events.push({
+              outcome: status,
+              id,
+              ageBucket: p.age <= freshWindow ? 'fresh' : 'stale',
+              detail,
+            })
+          })
+          const reviewing =
+            $('#sheet').open && $('#sheet').dataset.mode === 'triage'
+          if (reviewing) triage()
+          else $('#sheet').close()
+          render()
+          notify(
+            ids.length === 1
+              ? `${items.find((p) => p.id === ids[0]).name.split(' ')[0]} · ${detail}`
+              : `${ids.length} follow-ups · ${detail}`,
+            true
+          )
+        }
+        function act(action, id) {
+          const p = items.find((p) => p.id === id)
+          if (action === 'menu') menu()
+          if (action === 'review') triage()
+          if (action === 'close') $('#sheet').close()
+          if (action === 'toast-close') $('#toast').innerHTML = ''
+          if (action === 'schedule' && p) schedule(p)
+          if (action === 'select') {
+            selected = id
+            render()
+          }
+          if (['tomorrow', 'three', 'week'].includes(action) && p) {
+            const d = new Date(today)
+            d.setUTCDate(
+              d.getUTCDate() + { tomorrow: 1, three: 3, week: 7 }[action]
+            )
+            mutate([id], 'scheduled', d.toISOString().slice(0, 10))
+          }
+          if (action === 'dismiss' && p)
+            mutate([id], 'dismissed', 'Reminder dismissed')
+          if (action === 'bulk-week' && pending().length)
+            mutate(
+              pending().map((p) => p.id),
+              'scheduled',
+              '2026-09-27'
+            )
+          if (action === 'bulk-dismiss' && stale().length)
+            mutate(
+              stale().map((p) => p.id),
+              'dismissed',
+              'Older reminders dismissed'
+            )
+          if (action === 'undo' && undoState) {
+            items = undoState.items
+            hidden = undoState.hidden
+            undoState = null
+            events.push({ outcome: 'undo' })
+            render()
+            if ($('#sheet').open && $('#sheet').dataset.mode === 'triage')
+              triage()
+            notify('Restored')
+          }
+          if (action === 'hide' || action === 'off') {
+            undoState = { items: structuredClone(items), hidden }
+            hidden = action === 'hide' ? 'tomorrow' : 'off'
+            $('#sheet').close()
+            render()
+            notify(
+              action === 'hide'
+                ? 'Hidden until tomorrow (simulated)'
+                : 'Turned off on Home (simulated)',
+              true
+            )
+          }
+          if (action === 'show') {
+            hidden = null
+            render()
+          }
+          if (action === 'custom' && p) {
+            $('#sheet').dataset.mode = 'custom'
+            openSheet(
+              'Choose a date',
+              `<p>${p.name}</p><label for="date">Next visit</label><input id="date" type="date" min="2026-09-21" value="2026-09-21">${button('Save date', 'save-date', id, 'primary')}`
+            )
+          }
+          if (action === 'save-date' && p) {
+            if ($('#date').value >= '2026-09-21')
+              mutate([id], 'scheduled', $('#date').value)
+            else $('#date').reportValidity()
+          }
+          if (action === 'log' && p) {
+            $('#sheet').dataset.mode = 'log'
+            openSheet(
+              'Log visit',
+              `<label>Contact</label><p><strong>${p.name}</strong></p><label for="notes">Conversation notes</label><textarea id="notes" placeholder="What did you talk about?"></textarea>${button('Save visit', 'save-log', id, 'primary')}<p class="smallnote">Demo visit only. Saving resolves this follow-up.</p>`
+            )
+          }
+          if (action === 'save-log' && p) {
+            mutate([id], 'logged', 'Visit logged', $('#notes').value)
+          }
+          if ((action === 'call' || action === 'text') && p)
+            notify(
+              `${action === 'call' ? 'Call' : 'Text'} ${p.name} — simulated; no message sent`
+            )
+        }
+        document.addEventListener('click', (e) => {
+          const b = e.target.closest('button')
+          if (!b) return
+          if (b.dataset.action) act(b.dataset.action, b.dataset.id)
+          if (b.dataset.window) {
+            freshWindow = Number(b.dataset.window)
+            render()
+          }
+          if (b.dataset.color) {
+            color = b.dataset.color
+            render()
+          }
+          if (b.dataset.welcome) {
+            welcome = b.dataset.welcome === 'true'
+            render()
+          }
+        })
+        let swipe = null
+        document.addEventListener('pointerdown', (e) => {
+          const row = e.target.closest('[data-swipe]')
+          if (row && !e.target.closest('button'))
+            swipe = { id: row.dataset.swipe, x: e.clientX, y: e.clientY }
+        })
+        document.addEventListener('pointerup', (e) => {
+          if (!swipe) return
+          const dx = e.clientX - swipe.x,
+            dy = e.clientY - swipe.y,
+            id = swipe.id
+          swipe = null
+          if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.5)
+            act(dx > 0 ? 'schedule' : 'dismiss', id)
+        })
+        document.addEventListener('pointercancel', () => (swipe = null))
+        $('#prev').onclick = () => switchVariant(-1)
+        $('#next').onclick = () => switchVariant(1)
+        $('#reset').onclick = reset
+        $('#scenario').onchange = reset
+        document.addEventListener('keydown', (e) => {
+          if (
+            e.target.closest('input,textarea,select,[contenteditable]') ||
+            $('#sheet').open
+          )
+            return
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault()
+            switchVariant(e.key === 'ArrowLeft' ? -1 : 1)
+          }
+        })
+        // This standalone file is served only by the prototype command, never imported into the production app.
+        reset()
+      })()
+    </script>
+  </body>
+</html>

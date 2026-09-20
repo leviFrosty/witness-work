@@ -65,11 +65,34 @@ export const contactMostRecentStudy = ({
 }
 
 /**
- * A follow-up only counts as an "appointment" once the user has expressed
- * intent for it — by enabling a notification or writing a topic. Without
- * either, the follow-up date is just the placeholder the conversation form
- * auto-fills from `returnVisitTimeOffset`, and surfacing it in widgets or the
- * home screen would clutter the user with intentions they never set.
+ * A follow-up is a "legacy placeholder" when it was auto-filled by the visit
+ * form before the Follow Up switch existed: the form always attached a
+ * `followUp` with a default date, and the user's intent was inferred from
+ * whether they enabled a reminder or wrote a topic. With the switch, the
+ * presence of `followUp` _is_ the intent, so these placeholders must be
+ * stripped on the way in (persist migration + sync payload parser) or they
+ * would flood "Missed Conversations".
+ */
+export const isPlaceholderFollowUp = (followUp: Visit['followUp']): boolean => {
+  if (!followUp) return false
+  return !followUp.notifyMe && !(followUp.topic && followUp.topic.length > 0)
+}
+
+/**
+ * Returns the same Visit instance when nothing needs to change, so callers can
+ * detect "did anything get stripped" with a reference comparison.
+ */
+export const stripPlaceholderFollowUp = (visit: Visit): Visit => {
+  if (!isPlaceholderFollowUp(visit.followUp)) return visit
+  const { followUp: _placeholder, ...rest } = visit
+  return rest
+}
+
+/**
+ * A follow-up counts as an "appointment" whenever the user has one attached and
+ * hasn't dismissed it. The visit form's Follow Up switch is the gate: when it's
+ * off the Visit carries no `followUp` at all, so there is nothing to infer from
+ * reminders or topics.
  *
  * Used by `upcomingFollowUpConversations`, `overdueFollowUpConversations`, and
  * the widget appointments builder so all three places agree on what counts as
@@ -80,8 +103,7 @@ export const isAppointment = (conversation: Visit): boolean => {
   if (!followUp) return false
   // A dismissed follow-up is preserved on the record (so the topic/date stay
   // in history) but should not surface as an active appointment anywhere.
-  if (followUp.dismissed) return false
-  return !!followUp.notifyMe || !!(followUp.topic && followUp.topic.length > 0)
+  return !followUp.dismissed
 }
 
 export const upcomingFollowUpConversations = ({

@@ -199,9 +199,9 @@ const ConversationRow = ({
 
           {/* Content Section */}
           <View style={{ gap: 16 }}>
-            {/* Follow-up Section */}
-            {(conversation.followUp?.notifyMe ||
-              conversation.followUp?.topic) && (
+            {/* Follow-up Section — present only when the Follow Up switch
+                was on for this visit; the form strips it otherwise. */}
+            {conversation.followUp && (
               <View
                 style={{
                   borderColor: notificationHasPassed

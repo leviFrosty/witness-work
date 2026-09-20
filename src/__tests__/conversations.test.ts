@@ -4,6 +4,10 @@ import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
+  isAppointment,
+  isPlaceholderFollowUp,
+  overdueFollowUpConversations,
+  stripPlaceholderFollowUp,
   upcomingFollowUpConversations,
 } from '@/lib/conversations'
 import { Visit } from '@/types/visit'
@@ -12,7 +16,126 @@ import { describe, expect, it } from 'vitest'
 const testDate = moment({ year: 2023, month: 10 }).toDate()
 const contact = createFakeContact()
 
+const baseVisit = (overrides: Partial<Visit> = {}): Visit => ({
+  id: 'v1',
+  contact: { id: contact.id },
+  date: new Date(),
+  isBibleStudy: false,
+  ...overrides,
+})
+
 describe('lib/conversations', () => {
+  describe('isAppointment', () => {
+    it('is false without a follow-up', () => {
+      expect(isAppointment(baseVisit())).toBe(false)
+    })
+
+    it('is true for any attached follow-up, even without reminder or topic', () => {
+      const visit = baseVisit({
+        followUp: { date: new Date(), notifyMe: false },
+      })
+      expect(isAppointment(visit)).toBe(true)
+    })
+
+    it('is false once the follow-up is dismissed', () => {
+      const visit = baseVisit({
+        followUp: {
+          date: new Date(),
+          notifyMe: true,
+          topic: 'Ch. 1',
+          dismissed: true,
+        },
+      })
+      expect(isAppointment(visit)).toBe(false)
+    })
+  })
+
+  describe('isPlaceholderFollowUp / stripPlaceholderFollowUp', () => {
+    it('treats a follow-up with no reminder and no topic as a placeholder', () => {
+      expect(isPlaceholderFollowUp({ date: new Date(), notifyMe: false })).toBe(
+        true
+      )
+      expect(
+        isPlaceholderFollowUp({ date: new Date(), notifyMe: false, topic: '' })
+      ).toBe(true)
+    })
+
+    it('keeps follow-ups that carry intent', () => {
+      expect(isPlaceholderFollowUp({ date: new Date(), notifyMe: true })).toBe(
+        false
+      )
+      expect(
+        isPlaceholderFollowUp({ date: new Date(), notifyMe: false, topic: 'x' })
+      ).toBe(false)
+      expect(isPlaceholderFollowUp(undefined)).toBe(false)
+    })
+
+    it('strips a placeholder and returns a new record', () => {
+      const visit = baseVisit({
+        note: 'hi',
+        followUp: { date: new Date(), notifyMe: false },
+      })
+      const stripped = stripPlaceholderFollowUp(visit)
+      expect(stripped).not.toBe(visit)
+      expect(stripped.followUp).toBeUndefined()
+      expect('followUp' in stripped).toBe(false)
+      expect(stripped.note).toBe('hi')
+    })
+
+    it('returns the same instance when nothing needs stripping', () => {
+      const withIntent = baseVisit({
+        followUp: { date: new Date(), notifyMe: true },
+      })
+      expect(stripPlaceholderFollowUp(withIntent)).toBe(withIntent)
+      const none = baseVisit()
+      expect(stripPlaceholderFollowUp(none)).toBe(none)
+    })
+  })
+
+  describe('overdueFollowUpConversations', () => {
+    const now = moment('2026-09-20T12:00:00').toDate()
+
+    it('includes a plain follow-up whose date has passed', () => {
+      const visit = baseVisit({
+        date: moment(now).subtract(3, 'days').toDate(),
+        followUp: {
+          date: moment(now).subtract(1, 'day').toDate(),
+          notifyMe: false,
+        },
+      })
+      expect(
+        overdueFollowUpConversations({
+          currentTime: now,
+          conversations: [visit],
+          lookbackDays: 30,
+        })
+      ).toEqual([visit])
+    })
+
+    it('excludes visits without a follow-up and dismissed follow-ups', () => {
+      const none = baseVisit({
+        id: 'a',
+        date: moment(now).subtract(3, 'days').toDate(),
+      })
+      const dismissed = baseVisit({
+        id: 'b',
+        date: moment(now).subtract(3, 'days').toDate(),
+        followUp: {
+          date: moment(now).subtract(1, 'day').toDate(),
+          notifyMe: true,
+          dismissed: true,
+        },
+      })
+      expect(
+        overdueFollowUpConversations({
+          currentTime: now,
+          conversations: [none, dismissed],
+          lookbackDays: 30,
+        })
+      ).toEqual([])
+    })
+  })
+
   describe('contactStudiedForGivenMonth ', () => {
     it('should return false if no studies', () => {
       const conversations: Visit[] = []

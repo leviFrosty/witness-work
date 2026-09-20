@@ -209,11 +209,17 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         },
         date: new Date(conversationToUpdate.date),
         isBibleStudy: conversationToUpdate.isBibleStudy,
+        // Always seed a follow-up draft, even when the saved record has none,
+        // so flipping the switch on has sane defaults. `followUpEnabled`
+        // decides whether the draft is persisted.
         followUp: {
           topic: conversationToUpdate.followUp?.topic,
           date: new Date(conversationToUpdate.followUp?.date || new Date()),
           notifyMe: conversationToUpdate.followUp?.notifyMe || false,
           notifications: conversationToUpdate.followUp?.notifications,
+          ...(conversationToUpdate.followUp?.dismissed
+            ? { dismissed: true }
+            : {}),
         },
         note: conversationToUpdate.note,
         notAtHome: conversationToUpdate.notAtHome,
@@ -245,6 +251,26 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
   const [conversation, setConversation] = useState<Visit>(
     getConversationDefaultValue()
   )
+
+  // The Follow Up switch. Off means the saved Visit carries no `followUp` at
+  // all, which hides it from history and every appointment surface. Defaults
+  // off for Not at Home (no one answered, so there is rarely a time to plan)
+  // and on for a real conversation; when editing, mirrors the saved record.
+  const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(() =>
+    conversationToUpdate ? !!conversationToUpdate.followUp : !params.notAtHome
+  )
+
+  const handleFollowUpEnabledChange = (enabled: boolean) => {
+    setFollowUpEnabled(enabled)
+    if (enabled && conversation.followUp?.dismissed) {
+      // Re-enabling is an explicit commitment to the follow-up again, so a
+      // prior soft-dismissal no longer applies.
+      setConversation({
+        ...conversation,
+        followUp: { ...conversation.followUp, dismissed: false },
+      })
+    }
+  }
 
   const selectedContact = contacts.find((c) => c.id === contactId)
   const isEditing = conversationToUpdate?.contact.id
@@ -287,8 +313,23 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         )
       }
 
+      // The record that actually gets persisted. With the switch off the
+      // follow-up draft is dropped entirely — `followUp: undefined` (not an
+      // omitted key) so `updateConversation`'s spread clears a saved one.
+      const buildVisit = (notifications?: Notification[]): Visit => {
+        if (!followUpEnabled || !conversation.followUp) {
+          return { ...conversation, followUp: undefined }
+        }
+        if (!notifications) return conversation
+        return {
+          ...conversation,
+          followUp: { ...conversation.followUp, notifications },
+        }
+      }
+
       const scheduleNotifications = async () => {
-        if (!conversation.followUp) {
+        if (!followUpEnabled || !conversation.followUp) {
+          cancelExistingNotification()
           return []
         }
 
@@ -361,19 +402,16 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         return notifications
       }
 
+      const persist = (visit: Visit) => {
+        params.visitToEditId
+          ? updateConversation(visit)
+          : addConversation(visit)
+      }
+
       if (notificationsAllowed) {
         scheduleNotifications()
           .then((notifications) => {
-            const conversationWithNotificationIds: Visit = {
-              ...conversation,
-              followUp: {
-                ...conversation.followUp!,
-                notifications,
-              },
-            }
-            params.visitToEditId
-              ? updateConversation(conversationWithNotificationIds)
-              : addConversation(conversationWithNotificationIds)
+            persist(buildVisit(notifications))
             resolve(conversation)
           })
           .catch((error) => {
@@ -381,9 +419,8 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             resolve(false)
           })
       } else {
-        params.visitToEditId
-          ? updateConversation(conversation)
-          : addConversation(conversation)
+        if (!followUpEnabled) cancelExistingNotification()
+        persist(buildVisit())
         resolve(conversation)
       }
       toast.show(i18n.t('success'), {
@@ -397,6 +434,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
     addConversation,
     conversation,
     conversationToUpdate?.followUp,
+    followUpEnabled,
     notificationsAllowed,
     notifyMeOffset.amount,
     notifyMeOffset.unit,
@@ -483,8 +521,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                     {
                       not_at_home: !!conversation.notAtHome,
                       bible_study: !!conversation.isBibleStudy,
-                      has_follow_up: !!conversation.followUp,
-                      reminder_enabled: !!conversation.followUp?.notifyMe,
+                      has_follow_up: followUpEnabled,
+                      reminder_enabled:
+                        followUpEnabled && !!conversation.followUp?.notifyMe,
                     }
                   )
 
@@ -531,6 +570,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
     conversation.notAtHome,
     conversationToUpdate?.contact.id,
     deleteConversation,
+    followUpEnabled,
     installedOn,
     isEditing,
     lastTimeRequestedAReview,
@@ -631,42 +671,53 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
           )}
         </Section>
         <Section>
-          <InputRowContainer
+          <InputRowSwitch
             label={i18n.t('followUp')}
-            justifyContent='space-between'
-            controlWidth='auto'
-          >
-            <DateTimePicker
-              value={conversation.followUp!.date}
-              onChange={handleFollowUpDateChange}
-              iOSMode='datetime'
-            />
-          </InputRowContainer>
-          <TextInputRow
-            label={i18n.t('topic')}
-            textInputProps={{
-              placeholder: i18n.t('topic_placeholder'),
-              multiline: true,
-              enterKeyHint: 'enter',
-              defaultValue: conversation.followUp?.topic,
-              textAlign: 'left',
-              onChangeText: (topic: string) =>
-                setConversation({
-                  ...conversation,
-                  followUp: conversation.followUp && {
-                    ...conversation.followUp,
-                    topic,
-                  },
-                }),
-            }}
+            description={i18n.t('followUp_description')}
+            value={followUpEnabled}
+            onValueChange={handleFollowUpEnabledChange}
+            lastInSection={!followUpEnabled}
           />
-          <NotificationSection
-            conversation={conversation}
-            notificationsAllowed={notificationsAllowed}
-            notifyMeOffset={notifyMeOffset}
-            setConversation={setConversation}
-            setNotifyMeOffset={setNotifyMeOffset}
-          />
+          {followUpEnabled && (
+            <>
+              <InputRowContainer
+                label={i18n.t('followUpDate')}
+                justifyContent='space-between'
+                controlWidth='auto'
+              >
+                <DateTimePicker
+                  value={conversation.followUp!.date}
+                  onChange={handleFollowUpDateChange}
+                  iOSMode='datetime'
+                />
+              </InputRowContainer>
+              <TextInputRow
+                label={i18n.t('topic')}
+                textInputProps={{
+                  placeholder: i18n.t('topic_placeholder'),
+                  multiline: true,
+                  enterKeyHint: 'enter',
+                  defaultValue: conversation.followUp?.topic,
+                  textAlign: 'left',
+                  onChangeText: (topic: string) =>
+                    setConversation({
+                      ...conversation,
+                      followUp: conversation.followUp && {
+                        ...conversation.followUp,
+                        topic,
+                      },
+                    }),
+                }}
+              />
+              <NotificationSection
+                conversation={conversation}
+                notificationsAllowed={notificationsAllowed}
+                notifyMeOffset={notifyMeOffset}
+                setConversation={setConversation}
+                setNotifyMeOffset={setNotifyMeOffset}
+              />
+            </>
+          )}
         </Section>
       </Wrapper>
     </KeyboardAwareScrollView>

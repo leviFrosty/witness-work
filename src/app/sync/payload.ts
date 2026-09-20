@@ -43,6 +43,14 @@ export type SyncPayload = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     conversations: any[]
     deletedConversations?: { id: string; deletedAt: number }[]
+    /**
+     * `true` when written by a build with the visit form's Follow Up switch,
+     * where a Visit carries `followUp` only if the user wants one. Absent on
+     * payloads from older builds, which attached a placeholder follow-up to
+     * every Visit; `parsePayload` strips those on read. Additive so older
+     * builds keep accepting our payloads. See `payloadFollowUps.ts`.
+     */
+    explicitFollowUps?: boolean
   }
   serviceReportStore: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -158,6 +166,7 @@ export function buildPayload(args: {
     conversationStore: {
       conversations: conversations.conversations,
       deletedConversations: conversations.deletedConversations,
+      explicitFollowUps: true,
     },
     serviceReportStore: {
       serviceReports: serviceReports.serviceReports,
@@ -181,6 +190,7 @@ export function buildPayload(args: {
 }
 
 import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames'
+import { normalizeLegacyFollowUps } from '@/app/sync/payloadFollowUps'
 
 /**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
@@ -188,9 +198,11 @@ import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames
  * "leave local state alone, surface a sync error in settings."
  *
  * Also translates legacy preference field names from older app versions so the
- * merge step sees the canonical schema. The wire payload version
- * (`PAYLOAD_VERSION`) is intentionally NOT bumped for pure renames — receivers
- * normalize on read. See `payloadFieldRenames.ts` for the rename table.
+ * merge step sees the canonical schema, and strips placeholder follow-ups from
+ * payloads written before the visit form's Follow Up switch existed. The wire
+ * payload version (`PAYLOAD_VERSION`) is intentionally NOT bumped for either —
+ * receivers normalize on read. See `payloadFieldRenames.ts` for the rename
+ * table and `payloadFollowUps.ts` for the follow-up rule.
  */
 export function parsePayload(json: string): SyncPayload | null {
   let data: unknown
@@ -208,5 +220,6 @@ export function parsePayload(json: string): SyncPayload | null {
     return null
   }
   normalizeLegacyPayloadFieldNames(d)
+  normalizeLegacyFollowUps(d)
   return d as SyncPayload
 }

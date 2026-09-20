@@ -7,6 +7,31 @@ import {
   hasMigratedFromAsyncStorage,
   MmkvStorage,
 } from '@/stores/mmkv'
+import { stripPlaceholderFollowUp } from '@/lib/conversations'
+
+/**
+ * V0 → v1: the visit form gained a Follow Up switch, so a Visit only carries
+ * `followUp` when the user actually wants one. Before that, every Visit was
+ * saved with an auto-filled placeholder follow-up and intent was inferred from
+ * notify/topic. Strip those placeholders so `isAppointment` can trust the
+ * presence of `followUp` without flooding "Missed Conversations". `updatedAt`
+ * is left alone on purpose: a peer that hasn't upgraded yet holds the same
+ * timestamp, so neither side overwrites the other, and `parsePayload` strips
+ * whatever placeholders still arrive from it.
+ */
+export const migrateConversationsPersistedState = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  persistedState: any,
+  version: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  if (version >= 1) return persistedState
+  const conversations = (persistedState?.conversations ?? []) as Visit[]
+  return {
+    ...persistedState,
+    conversations: conversations.map(stripPlaceholderFollowUp),
+  }
+}
 
 const initialState = {
   // Persisted key kept as `conversations` for backward compatibility with
@@ -89,6 +114,9 @@ export const useConversations = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
+      version: 1,
+      migrate: (persistedState, version) =>
+        migrateConversationsPersistedState(persistedState, version),
     }
   )
 )

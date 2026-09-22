@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import moment from 'moment'
 import { mapMytimeData } from '@/features/mytime-import/lib/mapMytimeData'
 import type {
   MytimeAdditionalInfoRow,
@@ -547,9 +548,9 @@ describe('mapMytimeData — synthesized monthly residual (decision 1)', () => {
       minutes: 0,
     })
     expect(result.timeEntries[0].categoryId).toBeUndefined()
-    // Buckets into September 2025 (noon UTC survives date normalization).
-    expect(result.timeEntries[0].date.toISOString()).toBe(
-      '2025-09-01T12:00:00.000Z'
+    // Buckets into September 2025 as a local day for the store to anchor.
+    expect(moment(result.timeEntries[0].date).format('YYYY-MM-DD')).toBe(
+      '2025-09-01'
     )
   })
 

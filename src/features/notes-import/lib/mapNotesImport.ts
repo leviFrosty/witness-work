@@ -79,15 +79,16 @@ const clean = (s: string | null | undefined): string | undefined => {
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * Parses a model ISO string to a Date. A date-only value anchors to noon UTC on
- * that calendar day (so it buckets into the right month regardless of the
- * device timezone, matching the MyTime mapper); a full datetime is honored
+ * Parses a model ISO string to a Date. A date-only value becomes local noon on
+ * that calendar day — a local day, which is what the service-report store
+ * anchors itself (handing it a noon-UTC anchor lands on the next day at UTC+12
+ * and beyond) and what visit dates display as. A full datetime is honored
  * as-is. An unparseable value falls back to `importedAt`.
  */
 const parseDtoDate = (raw: string, importedAt: Date): Date => {
   if (DATE_ONLY.test(raw)) {
     const [y, m, d] = raw.split('-').map((n) => Number.parseInt(n, 10))
-    return new Date(Date.UTC(y, m - 1, d, 12))
+    return new Date(y, m - 1, d, 12)
   }
   const parsed = new Date(raw)
   return Number.isNaN(parsed.getTime()) ? importedAt : parsed

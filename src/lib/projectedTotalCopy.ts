@@ -1,9 +1,9 @@
-import moment from 'moment'
 import type {
   ProjectedTotalScope,
   ProjectedTotalState,
 } from '@/lib/projectedTotal'
 import { periodBounds } from '@/lib/serviceYear'
+import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 
 export type PeriodTense = 'past' | 'present' | 'future'
 
@@ -64,7 +64,8 @@ export const getPeriodTense = (
   today: Date
 ): PeriodTense => {
   const { start, end } = periodBounds(scope)
-  const t = moment.utc(today)
+  // Bounds are UTC-mode days; compare today's _local_ day in the same mode.
+  const t = momentStoredDate(normalizeDateForStorage(today))
   if (t.isBefore(start, 'day')) return 'future'
   if (t.isAfter(end, 'day')) return 'past'
   return 'present'

@@ -7,7 +7,6 @@ import {
   computeExcludedCreditMinutes,
   computePendingRollovers,
 } from '@/features/service-reports/lib/rollover'
-import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -347,7 +346,7 @@ describe('buildRolloverEntries', () => {
         id: 'id-1',
         hours: 0,
         minutes: -24,
-        date: normalizeDateForStorage(new Date(2026, 0, 31)),
+        date: new Date(2026, 0, 31, 12),
         rollover: true,
         rolloverGroupId: 'id-0',
       },
@@ -355,7 +354,7 @@ describe('buildRolloverEntries', () => {
         id: 'id-2',
         hours: 0,
         minutes: -30,
-        date: normalizeDateForStorage(new Date(2026, 1, 28)),
+        date: new Date(2026, 1, 28, 12),
         rollover: true,
         rolloverGroupId: 'id-0',
       },
@@ -363,7 +362,7 @@ describe('buildRolloverEntries', () => {
         id: 'id-3',
         hours: 0,
         minutes: 54,
-        date: normalizeDateForStorage(new Date(2026, 2, 1)),
+        date: new Date(2026, 2, 1, 12),
         rollover: true,
         rolloverGroupId: 'id-0',
       },

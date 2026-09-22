@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
-import moment from 'moment'
+import { momentStoredDate } from '@/lib/normalizeDate'
 
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
@@ -95,7 +95,7 @@ const LifetimeHoursCard = () => {
   const subtitle = useMemo(() => {
     if (!earliestDate) return null
     return i18n.t('sinceDateServiceYears', {
-      date: moment(earliestDate).format('MMM YYYY'),
+      date: momentStoredDate(earliestDate).format('MMM YYYY'),
       count: endYears.length,
     })
   }, [earliestDate, endYears.length])

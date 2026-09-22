@@ -35,18 +35,23 @@ const isAnchoredNoonUtc = (d: Date): boolean =>
  * Pre-fix values fall through to local extraction (best-effort, locked in to
  * the device's current TZ).
  *
+ * Accepts ISO strings too: persisted and synced state is JSON with no reviver,
+ * so after a restart every stored date is a string. Treating those as fresh
+ * input re-anchors them onto the next day at UTC+12 and beyond on every sync.
+ *
  * Do NOT use this on user-typed input — `normalizeDateForStorage` is the
  * write-path entry point. The shortcut here is unsafe for fresh user input
  * because midnight local in NZST (UTC+12) is _coincidentally_ noon UTC of the
  * prior day, and would be misread as already-anchored.
  */
 export const preserveOrNormalizeStoredDate = (date: Date | string): Date => {
-  if (date instanceof Date && isAnchoredNoonUtc(date)) {
+  const instant = date instanceof Date ? date : new Date(date)
+  if (isAnchoredNoonUtc(instant)) {
     return new Date(
       Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate(),
+        instant.getUTCFullYear(),
+        instant.getUTCMonth(),
+        instant.getUTCDate(),
         12,
         0,
         0,
@@ -164,23 +169,25 @@ export type PersistedServiceReportState = {
 }
 
 /**
- * One-shot migration that walks every persisted Date in the service-report
- * store and re-anchors it via `normalizeDateForStorage`. Bucket keys in
- * `serviceReports[year][month]` are rebuilt from the normalized date so they
- * always match.
+ * Walks every persisted Date in the service-report state and re-anchors it.
+ * Bucket keys in `serviceReports[year][month]` are rebuilt from the normalized
+ * date so they always match.
  *
- * Idempotent: running it twice yields the same shape (relies on
- * `normalizeDateForStorage` being idempotent across TZ changes).
+ * Defaults to `preserveOrNormalizeStoredDate` (iCloud merge/restore: keeps
+ * anchored values, re-anchors legacy ones) and is idempotent that way. The
+ * pre-v2 persist migration passes `normalizeDateForStorage`: that data predates
+ * anchoring, so a local midnight at UTC+12 must not be mistaken for an anchor.
  */
 export const migrateNormalizeDates = (
-  state: PersistedServiceReportState
+  state: PersistedServiceReportState,
+  normalize: (date: Date | string) => Date = preserveOrNormalizeStoredDate
 ): PersistedServiceReportState => {
   const rebucketed: TimeEntriesByYear = {}
   for (const yearKey of Object.keys(state.serviceReports)) {
     const months = state.serviceReports[yearKey]
     for (const monthKey of Object.keys(months)) {
       for (const report of months[monthKey]) {
-        const normalizedDate = preserveOrNormalizeStoredDate(report.date)
+        const normalizedDate = normalize(report.date)
         const m = momentStoredDate(normalizedDate)
         const y = m.year()
         const mo = m.month()
@@ -193,22 +200,22 @@ export const migrateNormalizeDates = (
 
   const dayPlans = state.dayPlans.map((p) => ({
     ...p,
-    date: preserveOrNormalizeStoredDate(p.date),
+    date: normalize(p.date),
   }))
 
   const recurringPlans = state.recurringPlans.map((p) => ({
     ...p,
-    startDate: preserveOrNormalizeStoredDate(p.startDate),
+    startDate: normalize(p.startDate),
     recurrence: {
       ...p.recurrence,
       endDate: p.recurrence.endDate
-        ? preserveOrNormalizeStoredDate(p.recurrence.endDate)
+        ? normalize(p.recurrence.endDate)
         : p.recurrence.endDate,
     },
-    deletedDates: p.deletedDates?.map((d) => preserveOrNormalizeStoredDate(d)),
+    deletedDates: p.deletedDates?.map((d) => normalize(d)),
     overrides: p.overrides?.map((o) => ({
       ...o,
-      date: preserveOrNormalizeStoredDate(o.date),
+      date: normalize(o.date),
     })),
   }))
 

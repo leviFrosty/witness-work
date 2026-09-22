@@ -25,9 +25,18 @@ export type ReasonCode =
   | 'best_effort_unreachable_goal'
 
 export type ProposedDayPlan = {
+  /** The proposed day in UTC components (the engine walks a UTC cursor). */
   date: Date
   minutes: number
 }
+
+/**
+ * A proposed plan's day as a local-mode Date — what previews format and what
+ * `addDayPlan` expects. Handing `addDayPlan` `p.date` directly lands it on the
+ * next day at UTC+12 and beyond.
+ */
+export const proposedPlanLocalDay = (p: ProposedDayPlan): Date =>
+  localDayFromUtcCursor(moment.utc(p.date))
 
 export type Recommendation = {
   shape: RecommendationShape
@@ -610,15 +619,17 @@ const collectConversationDayKeys = (
   today: Date
 ): Set<string> => {
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
+  // Visit and follow-up dates are instants, not stored days: key them by the
+  // local day they fall on.
   const keys = new Set<string>()
   for (const c of conversations) {
     if (c.date) {
-      const d = momentStoredDate(c.date)
+      const d = momentStoredDate(normalizeDateForStorage(c.date))
       if (d.isSameOrAfter(todayDay, 'day')) keys.add(d.format('YYYY-MM-DD'))
     }
     const fu = c.followUp
     if (fu && fu.date && fu.dismissed !== true) {
-      const d = momentStoredDate(fu.date)
+      const d = momentStoredDate(normalizeDateForStorage(fu.date))
       if (d.isSameOrAfter(todayDay, 'day')) keys.add(d.format('YYYY-MM-DD'))
     }
   }

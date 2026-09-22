@@ -41,6 +41,7 @@ import { getEntryMode, isInFullTimeService } from '@/lib/publisherCapabilities'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Theme } from '@/types/theme'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 interface Props {
   goBack: () => void
@@ -509,21 +510,29 @@ const PlanWeekVisual = () => {
     [today]
   )
 
+  // Stored-shaped (noon-UTC anchored) like real store data: CalendarDay reads
+  // these as stored days, and a raw local midnight reads a day early at UTC+12.
   const mockDayPlans: DayPlan[] = useMemo(
     () => [
       {
         id: 'wp-mock-mon',
-        date: startOfDisplayWeek.clone().add(1, 'days').toDate(),
+        date: normalizeDateForStorage(
+          startOfDisplayWeek.clone().add(1, 'days').toDate()
+        ),
         minutes: 90,
       },
       {
         id: 'wp-mock-wed',
-        date: startOfDisplayWeek.clone().add(3, 'days').toDate(),
+        date: normalizeDateForStorage(
+          startOfDisplayWeek.clone().add(3, 'days').toDate()
+        ),
         minutes: 120,
       },
       {
         id: 'wp-mock-sat',
-        date: startOfDisplayWeek.clone().add(6, 'days').toDate(),
+        date: normalizeDateForStorage(
+          startOfDisplayWeek.clone().add(6, 'days').toDate()
+        ),
         minutes: 180,
       },
     ],
@@ -534,7 +543,9 @@ const PlanWeekVisual = () => {
     () => [
       {
         id: 'wp-mock-r-1',
-        date: today.clone().subtract(1, 'day').toDate(),
+        date: normalizeDateForStorage(
+          today.clone().subtract(1, 'day').toDate()
+        ),
         hours: 1,
         minutes: 30,
       },

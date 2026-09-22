@@ -100,11 +100,14 @@ export const migrateServiceReportPersistedState = (
     next = { ...next, serviceReports: years }
   }
   if (version < 2) {
-    const normalized = migrateNormalizeDates({
-      serviceReports: next.serviceReports ?? {},
-      dayPlans: next.dayPlans ?? [],
-      recurringPlans: next.recurringPlans ?? [],
-    } as PersistedServiceReportState)
+    const normalized = migrateNormalizeDates(
+      {
+        serviceReports: next.serviceReports ?? {},
+        dayPlans: next.dayPlans ?? [],
+        recurringPlans: next.recurringPlans ?? [],
+      } as PersistedServiceReportState,
+      normalizeDateForStorage
+    )
     next = {
       ...next,
       serviceReports: normalized.serviceReports,

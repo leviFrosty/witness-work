@@ -670,8 +670,7 @@ export default function ToolsScreen() {
   const generateImminentDayPlanWithNotification = async () => {
     const planStart = new Date(Date.now() + 3 * 60_000)
     const fireAt = new Date(planStart.getTime() - 60_000)
-    const { date: storedDate, startTimeInMinutes } =
-      splitDateAndStartTime(planStart)
+    const { startTimeInMinutes } = splitDateAndStartTime(planStart)
 
     let notificationId: string | null = null
     if (await ensureNotificationPermission()) {
@@ -692,7 +691,7 @@ export default function ToolsScreen() {
 
     addDayPlan({
       id: `dev-imminent-${Date.now()}`,
-      date: storedDate,
+      date: planStart,
       startTimeInMinutes,
       minutes: 60,
       note: 'Dev imminent test plan',

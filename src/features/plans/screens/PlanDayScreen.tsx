@@ -48,8 +48,12 @@ import {
   localDayFromUtcCursor,
   momentStoredDate,
   preserveOrNormalizeStoredDate,
-  splitDateAndStartTime,
+  storedDateToLocalDate,
 } from '@/lib/normalizeDate'
+import {
+  planDayFromRouteDate,
+  splitPlanDate,
+} from '@/features/plans/lib/planDayDates'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
@@ -812,7 +816,7 @@ const RecurringSaveScopeModal = (props: {
 type PlanDayScreenProps = NativeStackScreenProps<RootStackParamList, 'PlanDay'>
 
 const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
-  const defaultDate = moment(route.params.date).toDate()
+  const defaultDate = planDayFromRouteDate(route.params.date)
   const defaultStoredDate = storedDateFor(defaultDate)
   const {
     dayPlans,
@@ -840,7 +844,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   const editingDate =
     existingRecurringPlan && route.params.recurringPlanDate
-      ? moment(route.params.recurringPlanDate).toDate()
+      ? planDayFromRouteDate(route.params.recurringPlanDate)
       : defaultDate
   const editingStoredDate = storedDateFor(editingDate)
   const editingWriteDate = localDateForWrite(editingDate)
@@ -1080,7 +1084,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }, [editingContext])
 
   const scheduleDayPlanNotification = async (
-    storedDate: Date,
+    planDate: Date,
     startTimeInMinutes: number,
     plannedMinutes: number,
     plannedNote: string | undefined,
@@ -1097,7 +1101,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     }
     if (!notifyMe || !notificationsAllowed) return []
 
-    const planStart = combineDateAndStartTime(storedDate, startTimeInMinutes)
+    const planStart = combineDateAndStartTime(planDate, startTimeInMinutes)
     const fireAt = moment(planStart)
       .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
       .toDate()
@@ -1132,9 +1136,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const buildRecurringPayload = () => {
-    const { date: storedDate, startTimeInMinutes } = splitDateAndStartTime(date)
+    const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     return {
-      startDate: storedDate,
+      startDate: planDate,
       startTimeInMinutes,
       minutes: hours * 60 + minutes,
       categoryId: selectedCategoryId,
@@ -1226,13 +1230,21 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           ...existingRecurringPlan.recurrence,
           endDate: lastOldDate,
         },
-        overrides: existingRecurringPlan.overrides?.filter((override) =>
-          storedDay(override.date).isBefore(storedDay(editingDate), 'day')
-        ),
-        deletedDates: existingRecurringPlan.deletedDates?.filter(
-          (deletedDate) =>
+        // The store re-anchors every date it's handed, so pass the kept
+        // stored anchors back as local days.
+        overrides: existingRecurringPlan.overrides
+          ?.filter((override) =>
+            storedDay(override.date).isBefore(storedDay(editingDate), 'day')
+          )
+          .map((override) => ({
+            ...override,
+            date: storedDateToLocalDate(override.date),
+          })),
+        deletedDates: existingRecurringPlan.deletedDates
+          ?.filter((deletedDate) =>
             storedDay(deletedDate).isBefore(storedDay(editingDate), 'day')
-        ),
+          )
+          .map(storedDateToLocalDate),
       })
       addRecurringPlan({
         id: Crypto.randomUUID(),
@@ -1248,14 +1260,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const savePlan = async (scope?: RecurringSaveScope) => {
-    const { date: storedDate, startTimeInMinutes } = splitDateAndStartTime(date)
+    const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     const plannedMinutes = hours * 60 + minutes
     const plannedNote = note || undefined
 
     if (isEditMode) {
       if (existingDayPlan) {
         const notifications = await scheduleDayPlanNotification(
-          storedDate,
+          planDate,
           startTimeInMinutes,
           plannedMinutes,
           plannedNote,
@@ -1263,7 +1275,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         )
         updateDayPlan({
           id: existingDayPlan.id,
-          date: storedDate,
+          date: planDate,
           startTimeInMinutes,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,
@@ -1283,7 +1295,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     } else {
       if (oneTime) {
         const notifications = await scheduleDayPlanNotification(
-          storedDate,
+          planDate,
           startTimeInMinutes,
           plannedMinutes,
           plannedNote,
@@ -1291,7 +1303,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         )
         addDayPlan({
           id: Crypto.randomUUID(),
-          date: storedDate,
+          date: planDate,
           startTimeInMinutes,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,

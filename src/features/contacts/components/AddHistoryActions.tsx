@@ -9,6 +9,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import { RootStackNavigation } from '@/types/rootStack'
+import { usePreferences } from '@/stores/preferences'
 
 interface Props {
   contactId: string
@@ -24,6 +25,15 @@ export default function AddHistoryActions({
   onAction,
 }: Props) {
   const theme = useTheme()
+  /**
+   * A not-at-home visit is a dated record that nobody answered at an identified
+   * householder's door — movement data about people who never agreed to
+   * anything, and the one thing the 2019 branch letter names outright. Data
+   * protection mode drops the action (and the copy advertising it); visits
+   * already recorded are untouched. See `docs/gdpr-mode-research.md` §9.2 item
+   * 7.
+   */
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const handleAction = (action: 'notAtHome' | 'conversation') => {
     const params = {
       contactId,
@@ -47,35 +57,39 @@ export default function AddHistoryActions({
         >
           {i18n.t('addToHistory')}
         </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            marginBottom: 15,
-            color: theme.colors.text,
-          }}
-        >
-          {i18n.t('add_description')}
-        </Text>
+        {!dataProtectionMode && (
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              marginBottom: 15,
+              color: theme.colors.text,
+            }}
+          >
+            {i18n.t('add_description')}
+          </Text>
+        )}
       </View>
-      <Button
-        noTransform
-        style={{ gap: 10 }}
-        variant='outline'
-        onPress={() => handleAction('notAtHome')}
-      >
-        <IconButton
-          iconStyle={{ color: theme.colors.text }}
-          icon={CaravanIcon}
-        />
-        <Text
-          style={{
-            color: theme.colors.text,
-            fontSize: theme.fontSize('md'),
-          }}
+      {!dataProtectionMode && (
+        <Button
+          noTransform
+          style={{ gap: 10 }}
+          variant='outline'
+          onPress={() => handleAction('notAtHome')}
         >
-          {i18n.t('notAtHome')}
-        </Text>
-      </Button>
+          <IconButton
+            iconStyle={{ color: theme.colors.text }}
+            icon={CaravanIcon}
+          />
+          <Text
+            style={{
+              color: theme.colors.text,
+              fontSize: theme.fontSize('md'),
+            }}
+          >
+            {i18n.t('notAtHome')}
+          </Text>
+        </Button>
+      )}
       <Button
         noTransform
         style={{ gap: 10, backgroundColor: theme.colors.accent }}

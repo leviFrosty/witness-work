@@ -14,6 +14,7 @@ import StepThree from '@/features/onboarding/components/steps/Three'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
 import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
+import DataProtection from '@/features/onboarding/components/steps/DataProtection'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import Supporter from '@/features/onboarding/components/steps/Supporter'
@@ -43,6 +44,7 @@ type StepId =
   | 'hero'
   | 'founderNote'
   | 'privacyFirst'
+  | 'dataProtection'
   | 'pickUpWhereLeftOff'
   | 'publisherType'
   | 'intentPicker'
@@ -89,6 +91,11 @@ const allSteps: StepDef[] = [
   { id: 'hero', Component: StepOne, countsTowardProgress: false },
   { id: 'founderNote', Component: FounderNote, countsTowardProgress: false },
   { id: 'privacyFirst', Component: PrivacyFirst, countsTowardProgress: true },
+  {
+    id: 'dataProtection',
+    Component: DataProtection,
+    countsTowardProgress: true,
+  },
   {
     id: 'pickUpWhereLeftOff',
     Component: PickUpWhereLeftOff,

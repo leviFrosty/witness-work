@@ -21,6 +21,7 @@ import MyTextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { GENDER_COLORS } from '@/features/contacts/components/GenderIcon'
 import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
 import { Contact } from '@/types/contact'
 
 interface Props {
@@ -128,6 +129,11 @@ const ContactIdentityCard = ({
   onNameChange,
 }: Props) => {
   const theme = useTheme()
+  // Gender is householder data with no ministry need, and a photo of a
+  // householder has no lawful basis at all — both are hidden rather than
+  // disabled so the form never invites the entry. Existing values are left
+  // untouched on the record. See `docs/gdpr-mode-research.md` §11.1.
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   return (
     <View style={{ gap: 8 }}>
@@ -155,6 +161,7 @@ const ContactIdentityCard = ({
             }
             name={contact.name}
             size={64}
+            allowImage={!dataProtectionMode}
             imageFileName={`contact-${contact.id}-avatar.jpg`}
             background={contact.avatarBackground ?? undefined}
             backgroundValue={contact.avatarBackground ?? null}
@@ -200,7 +207,12 @@ const ContactIdentityCard = ({
                 columnGap: 8,
               }}
             >
-              <View style={{ flexDirection: 'row' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  display: dataProtectionMode ? 'none' : 'flex',
+                }}
+              >
                 {(
                   [
                     { key: 'male', icon: Mars, color: GENDER_COLORS.male },

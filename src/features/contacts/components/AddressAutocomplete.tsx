@@ -26,6 +26,7 @@ import i18n from '@/lib/locales'
 import MyTextInput from '@/components/ui/TextInput'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useLocation from '@/features/contacts/hooks/useLocation'
+import { usePreferences } from '@/stores/preferences'
 
 const SUGGESTION_ROW_HEIGHT = 44
 const MAX_VISIBLE_SUGGESTIONS = 3
@@ -161,6 +162,14 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   const { location, status, requestLocation, refreshStatus } = useLocation()
   const theme = useTheme()
   const [isLoading, setIsLoading] = useState(false)
+  /**
+   * Autocomplete sends the address fragment the publisher is typing — plus a
+   * circle around their current position — to HERE via the vendor's proxy. In
+   * data protection mode the field degrades to a plain text input: no request,
+   * no suggestions, and no location prompt. See `docs/gdpr-mode-research.md`
+   * §11.2.
+   */
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (next) => {
@@ -218,7 +227,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (query.length < 3 || isResult) {
+      if (dataProtectionMode || query.length < 3 || isResult) {
         setSuggestions([])
         setIsLoading(false)
         return
@@ -265,7 +274,15 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     const debounce = setTimeout(fetchSuggestions, DEBOUNCE_TIMEOUT_MS)
     return () => clearTimeout(debounce)
-  }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
+  }, [
+    dataProtectionMode,
+    getHighlightedText,
+    isResult,
+    location,
+    query,
+    setError,
+    setSuggestions,
+  ])
 
   const showFloatingResults =
     !error && !isResult && (suggestions.length > 0 || isLoading)
@@ -278,7 +295,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             flexDirection: 'row',
             alignItems: 'center',
             paddingLeft: 12,
-            paddingRight: status === null ? 12 : 0,
+            paddingRight: dataProtectionMode || status === null ? 12 : 0,
             paddingBottom: 8,
           }}
         >
@@ -290,7 +307,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
               setQuery(text)
               setIsResult(false)
               // Show loading rows while debounce and the request are pending.
-              setIsLoading(text.length >= 3)
+              setIsLoading(!dataProtectionMode && text.length >= 3)
               if (text === '') {
                 // Clear structured fields too, so stale values cannot survive save.
                 onSelect({
@@ -311,7 +328,12 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             value={query}
             textAlign='left'
           />
-          <LocationStatusControl status={status} onRequest={requestLocation} />
+          {!dataProtectionMode && (
+            <LocationStatusControl
+              status={status}
+              onRequest={requestLocation}
+            />
+          )}
         </View>
         {showFloatingResults && (
           <View

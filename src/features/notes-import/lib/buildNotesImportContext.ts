@@ -32,9 +32,17 @@ const resolveTimeZone = (): string => {
 export const buildNotesImportContext = (
   now: Date = new Date()
 ): NotesImportContext => {
-  const contacts = useContacts.getState().contacts
   const categories = useCategories.getState().categories
-  const role = usePreferences.getState().role
+  const { role, dataProtectionMode } = usePreferences.getState()
+
+  // The dedupe roster is names, addresses and phone numbers of every
+  // householder the user has — sent to a third-party model for people who
+  // aren't in these notes at all. Data protection mode withholds it; the notes
+  // text itself still goes, because the user typed it deliberately for this
+  // purpose. Dedupe degrades but does not break: `reconcileMappedImport` runs
+  // at Accept time against current local data and re-points uniquely-named
+  // matches, so the usual duplicate is still caught before it is committed.
+  const contacts = dataProtectionMode ? [] : useContacts.getState().contacts
 
   const existingContacts: ExistingContactRef[] = contacts
     .slice(0, MAX_EXISTING_CONTACTS)

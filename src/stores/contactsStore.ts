@@ -15,6 +15,7 @@ import {
   hasMigratedFromAsyncStorage,
   MmkvStorage,
 } from '@/stores/mmkv'
+import { stripContactForTombstone } from '@/lib/dataProtection'
 
 const initialState = {
   contacts: [] as Contact[],
@@ -53,20 +54,41 @@ export const useContacts = create(
             ],
           }
         }),
-      deleteContact: (id: string) =>
+      /**
+       * Archives a contact.
+       *
+       * Normally the tombstone _is_ the archive — the whole record is kept so
+       * Recover Contacts can restore it. Pass `redact` to make the delete
+       * permanent instead: the tombstone is stripped to the id and timestamp
+       * iCloud's last-writer-wins merge needs, and nothing about the
+       * householder survives. Nothing is recoverable afterwards.
+       *
+       * The flag is an explicit argument rather than a preference read so this
+       * store stays free of the preferences/expo dependency chain. Callers
+       * deleting on the user's behalf should go through
+       * `stores/householderData.deleteHouseholderContact`, which applies the
+       * data-protection policy and takes the contact's visits and avatar with
+       * it; a bare `deleteContact` is the archive-and-keep path.
+       */
+      deleteContact: (id: string, options?: { redact?: boolean }) => {
+        const redact = options?.redact === true
         set(({ contacts, deletedContacts }) => {
           const foundContact = contacts.find((contact) => contact.id === id)
           if (!foundContact) {
             return { contacts, deletedContacts }
           }
+          const now = Date.now()
           return {
             deletedContacts: [
-              ...deletedContacts,
-              { ...foundContact, updatedAt: Date.now() },
+              ...deletedContacts.filter((contact) => contact.id !== id),
+              redact
+                ? stripContactForTombstone(foundContact, now)
+                : { ...foundContact, updatedAt: now },
             ],
             contacts: contacts.filter((contact) => contact.id !== id),
           }
-        }),
+        })
+      },
       updateContact: (contact: Partial<Contact>) => {
         set(({ contacts, deletedCustomFieldDefs }) => {
           const updatedCustomFields = stripTombstonedCustomFieldValues(
@@ -288,7 +310,9 @@ export const useContacts = create(
       recoverContact: (id: string) => {
         set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
           const recoverContact = deletedContacts.find((dC) => dC.id === id)
-          if (!recoverContact) {
+          // A redacted tombstone has no content left to restore — recovering it
+          // would resurrect an empty, nameless contact.
+          if (!recoverContact || recoverContact.redacted) {
             return { contacts, deletedContacts }
           }
 

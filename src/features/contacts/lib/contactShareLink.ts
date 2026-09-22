@@ -78,6 +78,10 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   coordinate: 'optional',
   customFields: 'optional',
   // Device-local state that should not flow between devices:
+  // Consent was given to the sharing publisher, not the recipient.
+  consentGivenAt: 'omit',
+  // Only ever set on a tombstone, which is never shared.
+  redacted: 'omit',
   userDraggedCoordinate: 'omit',
   dismissedUntil: 'omit',
   dismissedNotificationId: 'omit',

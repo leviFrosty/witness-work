@@ -542,6 +542,28 @@ export const PREFERENCE_DEFAULTS = {
    */
   iCloudSyncIncludeImages: false,
   /**
+   * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
+   * disables householder-data features that CJEU C-25/17 and GDPR make risky
+   * without consent: see `docs/gdpr-mode-research.md` section 11. Per-device
+   * (non-syncable) — a compliance choice made on one device is not implicitly a
+   * choice on another.
+   */
+  dataProtectionMode: false,
+  /**
+   * True once the user has explicitly toggled data protection mode (onboarding
+   * or Settings). Before this is set the mode may be defaulted from the device
+   * region; after, the user's explicit choice is respected.
+   */
+  dataProtectionModeSetByUser: false,
+  /**
+   * ISO timestamp of the last time the data-protection retention prompt was
+   * shown ("N contacts haven't been visited in 90 days"). Throttles the prompt
+   * to at most once per `DATA_PROTECTION_RETENTION_PROMPT_INTERVAL_DAYS`.
+   * Undefined until the user has been asked once. Per-device because the mode
+   * itself is.
+   */
+  dataProtectionRetentionPromptedAt: undefined as string | undefined,
+  /**
    * Persistent bookkeeping for the image-sync uploader. Keyed by container
    * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
    * upload/retry loop across app restarts so an interrupted migration or a
@@ -843,6 +865,9 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
   'iCloudSyncIncludeImages',
+  'dataProtectionMode',
+  'dataProtectionModeSetByUser',
+  'dataProtectionRetentionPromptedAt',
   'iCloudImageSync',
   'lastiCloudSyncAt',
   'lastiCloudPushedAt',
@@ -1220,8 +1245,20 @@ export const usePreferences = create(
             ) => Partial<typeof PREFERENCE_DEFAULTS>),
         replace?: boolean
       ) => void = (partial, replace) => {
-        const resolved =
+        let resolved =
           typeof partial === 'function' ? partial(getState()) : partial
+
+        // Applies to both Settings and onboarding, including the region default.
+        if (resolved.dataProtectionMode === true) {
+          resolved = {
+            ...resolved,
+            prefillAddress: {
+              ...(resolved.prefillAddress ?? getState().prefillAddress),
+              address: undefined,
+              lastUpdated: undefined,
+            },
+          }
+        }
 
         if (
           resolved &&
@@ -1291,6 +1328,13 @@ export const usePreferences = create(
           set({ contactsFilters }),
         setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
           set({ defaultPhoneRegionCode }),
+        /**
+         * Records that the data-protection retention prompt was just shown, so
+         * it stays quiet for the next interval regardless of which button the
+         * user chose.
+         */
+        markDataProtectionRetentionPrompted: (at: Date = new Date()) =>
+          set({ dataProtectionRetentionPromptedAt: at.toISOString() }),
         removeHint: (hint: keyof typeof hints) =>
           // Pass a partial rather than spreading the full preferences object —
           // the stamping wrapper iterates `Object.keys(resolved)` and would
@@ -1315,6 +1359,21 @@ export const usePreferences = create(
               },
             }
           })
+        },
+        /**
+         * Drops the cached last-entered householder address. Data protection
+         * mode calls this on every contact save: a cached address is a
+         * householder record that outlives the form it was typed into, with no
+         * contact attached to consent to it.
+         */
+        clearPrefillAddress: () => {
+          set(({ prefillAddress }) => ({
+            prefillAddress: {
+              ...prefillAddress,
+              address: undefined,
+              lastUpdated: undefined,
+            },
+          }))
         },
         setOverrideCreditLimit: (overrideCreditLimit: boolean) =>
           set({ overrideCreditLimit }),

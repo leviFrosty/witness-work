@@ -152,6 +152,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
     returnVisitTimeOffset,
     returnVisitNotificationOffset,
     returnVisitAlwaysNotify,
+    dataProtectionMode,
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
@@ -170,7 +171,11 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
 
   const contactId = params.contactId || conversationToUpdate?.contact.id || ''
 
-  const notAtHome = params.notAtHome
+  // The entry points that pass `notAtHome` are hidden in data protection mode
+  // (see `AddHistoryActions`); refusing it here too means a stale deep link or
+  // navigation state can't slip one through. Editing an existing not-at-home
+  // visit still works — its flag comes off the stored record, not from params.
+  const notAtHome = dataProtectionMode ? undefined : params.notAtHome
 
   // When editing, prefer the offset implied by the saved notification so the
   // form doesn't silently rewrite the user's prior choice with the preference
@@ -244,7 +249,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         notifyMe: returnVisitAlwaysNotify,
       },
       isBibleStudy: false,
-      notAtHome: params.notAtHome,
+      notAtHome,
     }
   }
 
@@ -648,6 +653,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
           </InputRowContainer>
           <TextInputRow
             label={i18n.t('note')}
+            info={
+              dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
+            }
             textInputProps={{
               placeholder: i18n.t('note_placeholder'),
               multiline: true,

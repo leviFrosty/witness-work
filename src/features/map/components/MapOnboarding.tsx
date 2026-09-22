@@ -39,7 +39,8 @@ import MapKey from '@/features/map/components/MapColorKey'
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
 export default function MapOnboarding() {
-  const { incrementGeocodeApiCallCount, set } = usePreferences()
+  const { incrementGeocodeApiCallCount, set, dataProtectionMode } =
+    usePreferences()
   const { contacts, updateContact } = useContacts()
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
@@ -57,12 +58,17 @@ export default function MapOnboarding() {
     goNext()
   }
 
+  // The backfill step posts each of these householder addresses to HERE
+  // through the vendor's proxy. Data protection mode has nothing to offer
+  // here, so the list is empty and the onboarding opens on the next step —
+  // coordinates come from a manually dropped pin or not at all.
   const oldContactsWithAddressWithoutCoordinates = useMemo(() => {
+    if (dataProtectionMode) return []
     return contacts.filter(
       (c) =>
         c.address && countTruthyValueStrings(c.address) !== 0 && !c.coordinate
     )
-  }, [contacts])
+  }, [contacts, dataProtectionMode])
 
   const [step, setStep] = useState(
     oldContactsWithAddressWithoutCoordinates.length === 0 ? 1 : 0

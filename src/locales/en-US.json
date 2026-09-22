@@ -20,6 +20,16 @@
   "privacyShareInLinkDesc": "Share contacts via secure and smart links.",
   "privacyYourDataTitle": "You're in Control",
   "privacyYourDataDesc": "Export a full backup anytime. You own your own data.",
+  "dataProtectionConsentLabel": "Householder agreed I may keep their details",
+  "dataProtectionConsentInfoTitle": "Their agreement",
+  "dataProtectionConsentInfoDesc": "\u201cMay I keep your name and phone or address on my phone so I can come back as we agreed? I only use it to follow up with you, I delete it if we lose touch, and you can ask me to delete it any time.\u201d",
+  "dataProtectionConsentRequiredHint": "Their details become available once they have agreed.",
+  "dataProtectionConsentRequiredError": "Needed before you can save",
+  "dataProtectionNoteHint": "Don't note religion, health, family situation, language or ethnicity.",
+  "dataProtectionRetentionTitle": "{{count}} contacts haven't been visited in {{days}} days",
+  "dataProtectionRetentionDesc": "Data protection mode suggests deleting details you no longer need.",
+  "dataProtectionRetentionDelete": "Delete {{count}}",
+  "dataProtectionRetentionKeep": "Keep",
   "founderNoteTitle": "A note from the developer",
   "founderNoteBody": "Hello, I'm Levi. I began building WitnessWork in 2023 to solve challenges I personally faced while pioneering. What started as a simple idea has grown into a true labor of love, shaped over many late nights and steady refinement.\n\nIt's been deeply encouraging to hear from brothers and sisters around the world who are benefiting from it. My hope is that this tool serves you well for many years to come.\n\nWith brotherly love,",
   "founderNoteSignOff": "Levi Wilkerson",
@@ -2321,5 +2331,19 @@
         "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
-  }
+  },
+  "dataProtectionTitle": "Data protection",
+  "dataProtectionDesc": "In the EU, the UK and Switzerland, the notes you keep about people you meet in the ministry are covered by data protection law. Turn this on and WitnessWork keeps those records to what the law allows.",
+  "dataProtectionSwitchLabel": "Data protection mode",
+  "dataProtectionInfoTitle": "Data protection mode",
+  "dataProtectionInfoDesc": "Courts in the EU have ruled that notes about people met in the ministry fall under data protection law. With this on, WitnessWork only stores a householder's details after they agree, hides fields for photos, gender and custom notes, does not record not-at-home visits, keeps address lookups on your device, turns off contact sharing, and offers to delete contacts you have not visited in 90 days. Notes Import still sends the text you enter to a third-party AI service for processing, but does not send your existing contact list. If you enable iCloud sync, your records are stored in iCloud and synced across your devices. This is not legal advice — follow your branch's direction.",
+  "dataProtectionSubtext": "You can change this any time in Settings › Preferences.",
+  "dataProtectionTurnOffTitle": "Turn off data protection mode?",
+  "dataProtectionTurnOffDesc": "Hidden fields and features will be available again.",
+  "dataProtectionTurnOffAction": "Turn off",
+  "dataProtectionDeleteAll": "Delete all householder data",
+  "dataProtectionDeleteAllTitle": "Delete all householder data?",
+  "dataProtectionDeleteAllDesc": "Every contact and visit will be permanently deleted from this device and from iCloud sync. Your time, reports and plans are not affected. This cannot be undone.",
+  "dataProtectionDeleteAllDoneTitle": "Deleted",
+  "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits."
 }

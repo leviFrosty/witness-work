@@ -1,16 +1,15 @@
 # Analytics journeys
 
 App and feature code use `analytics` from `@/lib/analytics`. Its scalar-property
-contract (`capture`, `screen`, `identify`, `reset`) is independent of the SDK.
+contract (`capture`, `screen`, `reset`) is independent of the SDK.
 The adapter owns provider configuration and serialization; replacing the provider
 should require no changes to feature instrumentation. Missing configuration or
 provider errors must not block startup or user actions.
 
 Events describe actions and outcomes, with bounded feature flags, counts, sources,
 and error codes. Never send names, notes, imported text, addresses, coordinates,
-contact identifiers, share tokens, or raw exception messages. Account identity is
-the existing pseudonymous account ID. Crash diagnostics use the separate
-`errorTracking` module from `@/lib/errorTracking`.
+contact identifiers, share tokens, or raw exception messages. Crash diagnostics
+use the separate `errorTracking` module from `@/lib/errorTracking`.
 Screen tracking sends route names only, including the initial route; it does not
 send route parameters. Each route sends at most one `$screen` per PostHog session
 (sessions end after 30 minutes idle), so screen insights measure reach — users and
@@ -35,6 +34,47 @@ configuration, skipped calls, identity resets, and provider failures.
 These diagnostics are off in production unless Developer Tools is enabled.
 Set `EXPO_PUBLIC_SILENT=true` or `1`
 before starting the dev server to silence them without disabling analytics.
+
+## Anonymous by design
+
+Analytics are anonymous usage statistics, not user tracking. The provider is
+configured with `personProfiles: 'never'`, the contract has no `identify`, and
+the account ID is never sent. Events carry only the SDK's random on-device
+identifier so that sessions can be counted and rollouts stay stable. Do not add
+`identify`, `alias`, `group`, or person properties; if a breakdown is needed,
+send it as a bounded event property instead. GeoIP stays on for abuse detection;
+disclose country-level location in the privacy policy.
+
+On upgrade, `AnonymousPostHog.setupBootstrap` clears legacy identified state
+after SDK storage loads and before any startup requests. It rotates the old
+linked identifiers and drops legacy queues, which may contain account IDs even
+on crash or survey events. App-version metadata and survey history survive.
+Anonymous installations keep their identifier on later launches.
+
+## User choice
+
+`analyticsEnabled` in the preferences store (default on, per device, not synced)
+controls usage events only. `analyticsEventsAllowed` in
+`src/lib/analyticsPolicy.ts` is checked in the provider's `before_send`, which
+covers feature events, screen events, and the SDK's own lifecycle events. The
+policy module holds a plain flag rather than reading the store, because the
+client is imported below the store in the module graph; `analyticsConsent.ts`
+publishes the store value into it at module load, after hydration, and on every
+change, and the flag is false until then so nothing is sent before the choice is
+known. The client also checks consent on every batch attempt, including retries,
+and removes pending
+usage events synchronously on withdrawal. Restored queues are pruned if consent
+is still unknown or disabled when SDK storage finishes loading. Crash reports
+(`$exception`), survey events, and feature flag requests
+are deliberately unaffected: flags gate access and rollouts, and surveys and crash
+reports are needed for a good experience. Turning analytics off resets the
+provider's random identifier from the preference subscription; survey seen dates,
+completed/dismissed survey history, and the SDK's normal retained properties
+survive. An HTTP request already underway cannot be recalled. The RevenueCat
+customer and the account ID are separate. The switch lives in Settings under Misc next to
+the Privacy Policy link, and the onboarding privacy step tells the user it
+exists. Keep in-app copy consistent: the app may say no personal data leaves the
+device, but must not claim there is no analytics at all.
 
 ## Onboarding and activation
 
@@ -232,7 +272,10 @@ for `FAQ` separately record arrival at the Help Center.
 
 Run `pnpm run typecheck`, `pnpm run lint`, and `pnpm run testFinal`.
 Adapter tests cover missing configuration, property serialization, and provider
-failure isolation. Import tests cover persisted attribution and distinguish preview
+failure isolation. Tests against the pinned SDK also cover legacy identity
+migration before startup requests, synchronous/asynchronous storage, offline
+queues and retries, consent hydration, rapid off/on changes, and survey history preservation.
+Import tests cover persisted attribution and distinguish preview
 readiness from acceptance.
 
 Before relying on production funnels, verify delivery from an iOS build configured
@@ -256,7 +299,7 @@ autocapture or session replay.
 
 ### Supporter invitations
 
-The Home feedback invitation uses the same PostHog client and pseudonymous account
+The Home feedback invitation uses the same PostHog client and anonymous device
 identity as ordinary analytics. Survey responses are an explicit exception to the
 structural-event contract: text deliberately submitted in the SDK survey is sent
 as `survey sent` with PostHog's question IDs and response properties. Do not attach

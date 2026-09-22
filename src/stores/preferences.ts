@@ -381,6 +381,14 @@ export const PREFERENCE_DEFAULTS = {
   devSupporterNudgeForceShow: false,
   ...hints,
   lastBackupDate: null as Date | null,
+  /**
+   * Whether anonymous usage events may leave this device. Default on; the user
+   * can turn it off in Settings. Only usage analytics are affected: crash
+   * reports, feature flags, and surveys keep working. Per-device (non-syncable)
+   * so a choice on one device is never implicitly extended to another. Enforced
+   * in `src/lib/analyticsPolicy.ts`.
+   */
+  analyticsEnabled: true,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
@@ -937,6 +945,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'calledGoecodeApiTimes',
   'lastTimeRequestedAReview',
   'lastBackupDate',
+  'analyticsEnabled',
   'onboardingStepId',
   'celebratedTiers',
   'celebratedMilestones',

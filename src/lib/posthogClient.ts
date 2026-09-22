@@ -1,5 +1,6 @@
 import Constants from 'expo-constants'
-import PostHog from 'posthog-react-native'
+import type PostHog from 'posthog-react-native'
+import { AnonymousPostHog } from '@/lib/anonymousPostHog'
 import { logger } from '@/lib/logger'
 import {
   errorTrackingEnabled,
@@ -7,6 +8,7 @@ import {
   shouldIgnoreExceptionProperties,
 } from '@/lib/errorTrackingPolicy'
 import { scrubShareLinkProperties } from '@/lib/shareLinkScrub'
+import { analyticsEventsAllowed, isAnalyticsEvent } from '@/lib/analyticsPolicy'
 
 const extra = Constants.expoConfig?.extra as
   | { posthogProjectToken?: string; posthogHost?: string; appVariant?: string }
@@ -23,8 +25,11 @@ function createClient(): PostHog | null {
     return null
   }
   try {
-    const client = new PostHog(projectToken, {
+    const client = new AnonymousPostHog(projectToken, {
       host,
+      // Anonymous usage statistics only: never create person profiles, so
+      // identify/alias/group are no-ops and events are not linked to a person.
+      personProfiles: 'never',
       captureAppLifecycleEvents: true,
       // The native plugin supplies crash capture; push analytics stay opt-in.
       capturePushNotificationSubscriptions: false,
@@ -44,6 +49,11 @@ function createClient(): PostHog | null {
         if (!event) return event
         // Lifecycle capture has no per-event switch; nothing uses this one.
         if (event.event === 'Application Backgrounded') return null
+        // The user's analytics switch. Crash reports and survey responses pass;
+        // feature flag requests do not go through here and are unaffected.
+        if (isAnalyticsEvent(event.event) && !analyticsEventsAllowed()) {
+          return null
+        }
         const isException = event.event === '$exception'
         if (
           isException &&

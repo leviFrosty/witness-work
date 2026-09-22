@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   screen: vi.fn(),
   getSessionId: vi.fn(),
-  identify: vi.fn(),
   reset: vi.fn(),
   debug: vi.fn(),
   construct: vi.fn(),
@@ -19,15 +18,16 @@ vi.mock('posthog-react-native', () => ({
     capture = mocks.capture
     screen = mocks.screen
     getSessionId = mocks.getSessionId
-    identify = mocks.identify
     reset = mocks.reset
     debug = mocks.debug
   },
 }))
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules()
   vi.resetAllMocks()
+  const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
+  setAnalyticsEventsAllowed(true)
   mocks.config.extra = {
     posthogProjectToken: 'test-token',
     posthogHost: 'https://example.com',
@@ -40,10 +40,45 @@ describe('analytics boundary', () => {
     const { analytics } = await import('./analytics')
     analytics.capture('action')
     analytics.screen('Home')
-    analytics.identify('account')
     analytics.reset()
     expect(mocks.construct).not.toHaveBeenCalled()
     expect(mocks.capture).not.toHaveBeenCalled()
+  })
+
+  it('configures the provider for anonymous events only', async () => {
+    await import('./analytics')
+    const options = mocks.construct.mock.calls[0][1] as Record<string, unknown>
+    expect(options.personProfiles).toBe('never')
+    expect(options.disableGeoip).toBeUndefined()
+  })
+
+  it('drops usage events, but not crash or survey events, when analytics are off', async () => {
+    // Fresh modules: the gate starts closed until the choice is published.
+    vi.resetModules()
+    const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
+    await import('./analytics')
+    const options = mocks.construct.mock.calls[0][1] as {
+      before_send: (event: {
+        event: string
+        properties: Record<string, unknown>
+      }) => unknown
+    }
+    const send = (event: string) =>
+      options.before_send({ event, properties: {} })
+
+    expect(send('contact_created')).toBeNull()
+    expect(send('$exception')).not.toBeNull()
+
+    setAnalyticsEventsAllowed(false)
+    expect(send('contact_created')).toBeNull()
+    expect(send('Application Opened')).toBeNull()
+    expect(send('$screen')).toBeNull()
+    expect(send('survey sent')).not.toBeNull()
+    expect(send('survey dismissed')).not.toBeNull()
+    expect(send('$exception')).not.toBeNull()
+
+    setAnalyticsEventsAllowed(true)
+    expect(send('contact_created')).not.toBeNull()
   })
 
   it('tags every event before sending', async () => {
@@ -85,8 +120,6 @@ describe('analytics boundary', () => {
     })
     analytics.screen('Home', { previous_screen: undefined })
     expect(mocks.screen).toHaveBeenCalledWith('Home', {})
-    analytics.identify('account', { supporter: true })
-    expect(mocks.identify).toHaveBeenCalledWith('account', { supporter: true })
   })
 
   it('drops lifecycle backgrounded events before sending', async () => {
@@ -129,14 +162,12 @@ describe('analytics boundary', () => {
       throw new Error('provider failure')
     })
     mocks.screen.mockRejectedValue(new Error('screen failure'))
-    mocks.identify.mockRejectedValue(new Error('identify failure'))
     mocks.reset.mockImplementation(() => {
       throw new Error('reset failure')
     })
     const { analytics } = await import('./analytics')
     expect(() => analytics.capture('action')).not.toThrow()
     expect(() => analytics.screen('Home')).not.toThrow()
-    expect(() => analytics.identify('account')).not.toThrow()
     expect(() => analytics.reset()).not.toThrow()
     await Promise.resolve()
   })

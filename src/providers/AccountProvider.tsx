@@ -22,7 +22,6 @@ import {
 } from '@/lib/account'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
-import { analytics } from '@/lib/analytics'
 
 interface Props {}
 
@@ -57,21 +56,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [iCloudSharingAvailable, setICloudSharingAvailable] = useState(
     () => Platform.OS === 'ios' && ICloudBridge.isAvailable()
   )
-
-  useEffect(() => {
-    if (!accountId) return
-    // Use the existing pseudonymous account identity; never attach profile data.
-    // Null customer means billing status is still unknown, not a non-supporter.
-    analytics.identify(
-      accountId,
-      customer
-        ? {
-            is_supporter: supporterSinceDate(customer) !== null,
-            is_donor: customer.nonSubscriptionTransactions.length > 0,
-          }
-        : undefined
-    )
-  }, [accountId, customer])
 
   // Latest customer state for event-driven reconciles without resubscribing.
   const customerRef = useRef(customer)

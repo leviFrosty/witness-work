@@ -7,6 +7,11 @@ export const surveyClient = client
 
 // Feature code depends only on this provider-neutral contract. Keep event payloads
 // structural: no names, notes, addresses, imported text, or raw error messages.
+// Events are anonymous: the provider never creates person profiles and the app
+// never identifies a user. The user can turn usage events off in Settings
+// (`analyticsEnabled`, per device); the provider's before_send hook enforces it
+// for every event, including the SDK's own lifecycle events. Crash reports,
+// feature flags, and surveys keep working with analytics off.
 export type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
@@ -63,11 +68,12 @@ export const analytics = {
       return client?.screen(name, definedProperties(properties))
     })
   },
-  identify(id: string, properties?: AnalyticsProperties): void {
-    safely('identify', () =>
-      client?.identify(id, definedProperties(properties))
-    )
-  },
+  /**
+   * Clears the provider's random on-device identifier. Only the analytics
+   * identity is affected; the RevenueCat customer and the account ID are
+   * separate and untouched. Discards pending usage events and preserves survey
+   * history and the SDK's normal retained properties.
+   */
   reset(): void {
     safely('reset', () => {
       logger.debug('[Analytics] Resetting identity')

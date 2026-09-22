@@ -17,7 +17,10 @@ import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 
 import i18n from '@/lib/locales'
-import type { Recommendation } from '@/lib/assistantRecommendation'
+import {
+  proposedPlanLocalDay,
+  type Recommendation,
+} from '@/lib/assistantRecommendation'
 import {
   projectStandardAddition,
   type ProjectedTotalResult,
@@ -52,7 +55,7 @@ const HOUR_STEP_MINUTES = 30
 const buildInitialRows = (rec: Recommendation): Row[] =>
   rec.plans.map((p) => ({
     rowId: Crypto.randomUUID(),
-    date: p.date,
+    date: proposedPlanLocalDay(p),
     minutes: p.minutes,
     dropped: false,
   }))

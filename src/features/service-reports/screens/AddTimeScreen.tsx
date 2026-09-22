@@ -10,7 +10,10 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
-import { storedDateToLocalDate } from '@/lib/normalizeDate'
+import {
+  normalizeDateForStorage,
+  storedDateToLocalDate,
+} from '@/lib/normalizeDate'
 import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
@@ -202,8 +205,16 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         role,
         creditOverride
       ).value
+      // Month math reads stored anchors; the form holds a local day, which at
+      // UTC+12 (local midnight == noon UTC) would read as the prior day.
       const afterMinutes = adjustedMinutesForSpecificMonth(
-        [...beforeReports, serviceReport],
+        [
+          ...beforeReports,
+          {
+            ...serviceReport,
+            date: normalizeDateForStorage(serviceReport.date),
+          },
+        ],
         reportMonth,
         reportYear,
         role,

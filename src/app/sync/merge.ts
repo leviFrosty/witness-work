@@ -13,6 +13,7 @@ import {
 } from '@/types/timeEntry'
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
+import { momentStoredDate } from '@/lib/normalizeDate'
 import { SyncPayload } from '@/app/sync/payload'
 
 /**
@@ -412,9 +413,9 @@ function mergeServiceReports(
 
   const rebuilt: TimeEntriesByYear = {}
   for (const r of merged) {
-    const d = new Date(r.date)
-    const year = d.getFullYear()
-    const month = d.getMonth()
+    const d = momentStoredDate(r.date)
+    const year = d.year()
+    const month = d.month()
     if (!rebuilt[year]) rebuilt[year] = {}
     if (!rebuilt[year][month]) rebuilt[year][month] = []
     rebuilt[year][month].push(r)

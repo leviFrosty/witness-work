@@ -2,7 +2,6 @@ import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
 import { Switch, View } from 'react-native'
 import upperFirst from 'lodash/upperFirst'
-import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -45,19 +44,18 @@ interface Props {
 }
 
 const isDateOnly = (date: Date) =>
-  date.getUTCHours() === 12 &&
-  date.getUTCMinutes() === 0 &&
-  date.getUTCSeconds() === 0 &&
-  date.getUTCMilliseconds() === 0
+  date.getHours() === 12 &&
+  date.getMinutes() === 0 &&
+  date.getSeconds() === 0 &&
+  date.getMilliseconds() === 0
 
 /**
- * The mapper anchors date-only values at noon UTC. Keep those on their original
- * calendar day — read in UTC so a far-east timezone can't roll noon onto the
- * next day — and show a local time only when the imported value had one.
+ * The mapper turns date-only values into local noon. Show those as a date, and
+ * a local time only when the imported value had one.
  */
 const formatReviewDate = (date: Date) =>
   isDateOnly(date)
-    ? formatDate(moment.utc(date), { style: 'medium' })
+    ? formatDate(date, { style: 'medium' })
     : formatDateTime(date)
 
 const SectionLabel = ({ children }: { children: string }) => {

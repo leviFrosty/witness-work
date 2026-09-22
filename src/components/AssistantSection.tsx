@@ -172,9 +172,10 @@ const AssistantSection = ({
         ),
         conversationDayKeys: conversations
           .flatMap((c) => [
-            c.date ? momentStoredDate(c.date).format('YYYY-MM-DD') : null,
+            // Visit dates are instants: key by the local day they fall on.
+            c.date ? moment(c.date).format('YYYY-MM-DD') : null,
             c.followUp?.date && c.followUp.dismissed !== true
-              ? momentStoredDate(c.followUp.date).format('YYYY-MM-DD')
+              ? moment(c.followUp.date).format('YYYY-MM-DD')
               : null,
           ])
           .filter((s): s is string => s !== null),

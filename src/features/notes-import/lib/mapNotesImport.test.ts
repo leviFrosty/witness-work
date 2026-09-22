@@ -160,7 +160,7 @@ describe('mapNotesImport — visits', () => {
     expect(r.visits[0].isBibleStudy).toBe(true)
     expect(r.visits[1].notAtHome).toBe(true)
     expect(r.visits[2].followUp).toEqual({
-      date: new Date(Date.UTC(2026, 5, 20, 12)),
+      date: new Date(2026, 5, 20, 12),
       notifyMe: false,
       topic: 'Romans',
     })
@@ -210,7 +210,7 @@ describe('mapNotesImport — time entries & categories', () => {
       minutes: 30,
     })
     expect(r.timeEntries[0].categoryId).toBeUndefined()
-    expect(r.timeEntries[0].date.toISOString()).toBe('2026-06-01T12:00:00.000Z')
+    expect(r.timeEntries[0].date).toEqual(new Date(2026, 5, 1, 12))
   })
 
   it('clamps out-of-range minutes', () => {
@@ -290,7 +290,7 @@ describe('mapNotesImport — publisher', () => {
     })
     expect(r.publisher).toEqual({
       role: 'regularPioneer',
-      tenureStartDate: new Date(Date.UTC(2024, 2, 1, 12)),
+      tenureStartDate: new Date(2024, 2, 1, 12),
     })
   })
 

@@ -1,7 +1,6 @@
 import moment from 'moment'
 import { Publisher } from '@/types/publisher'
 import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
-import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -133,6 +132,10 @@ export const buildRolloverEntries = ({
   // Shared id stamps every entry from this call so the pair (or set) can be
   // deleted atomically — preserving the invariant that source negatives and
   // destination positive sum to zero.
+  //
+  // Dates are local-noon days: `addServiceReport` anchors them itself, and an
+  // already-anchored date would be re-anchored onto the next day at UTC+12 and
+  // beyond — moving a month-end negative into the destination month.
   const groupId = genId()
 
   const entries: TimeEntry[] = pending.map(
@@ -144,9 +147,7 @@ export const buildRolloverEntries = ({
         id: genId(),
         hours: 0,
         minutes: -minutes,
-        date: normalizeDateForStorage(
-          new Date(sourceYear, sourceMonth, lastDay)
-        ),
+        date: new Date(sourceYear, sourceMonth, lastDay, 12),
         rollover: true,
         rolloverGroupId: groupId,
       }
@@ -158,7 +159,7 @@ export const buildRolloverEntries = ({
     id: genId(),
     hours: 0,
     minutes: totalMinutes,
-    date: normalizeDateForStorage(new Date(today.year(), today.month(), 1)),
+    date: new Date(today.year(), today.month(), 1, 12),
     rollover: true,
     rolloverGroupId: groupId,
   })

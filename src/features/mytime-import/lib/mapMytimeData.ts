@@ -52,14 +52,13 @@ const minutesToHM = (total: number): { hours: number; minutes: number } => ({
 })
 
 /**
- * Converts a MyTime `YYYYMM` integer to a Date anchored at noon UTC on the 1st,
- * so it buckets into the right month and survives the service-report store's
- * date normalization regardless of the importing device's timezone.
+ * Converts a MyTime `YYYYMM` integer to local noon on the 1st — the local day
+ * the service-report store expects and anchors itself.
  */
 const yyyymmToDate = (yyyymm: number): Date => {
   const year = Math.floor(yyyymm / 100)
   const month = yyyymm % 100
-  return new Date(Date.UTC(year, month - 1, 1, 12))
+  return new Date(year, month - 1, 1, 12)
 }
 
 /**

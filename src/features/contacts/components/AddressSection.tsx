@@ -18,6 +18,7 @@ import AddressAutocomplete, {
   Suggestion,
 } from '@/features/contacts/components/AddressAutocomplete'
 import { addressToString } from '@/lib/address'
+import { usePreferences } from '@/stores/preferences'
 
 type Mode = 'search' | 'manual'
 
@@ -114,11 +115,19 @@ export default function AddressSection({
       }
 }) {
   const theme = useTheme()
+  // Address search is the one entry path that leaves the device (HERE, via the
+  // vendor's proxy). With data protection mode on the segmented control is
+  // gone and the section is manual-entry only, so the address the publisher
+  // types is never transmitted anywhere. `AddressAutocomplete` refuses to
+  // fetch in this mode too, belt and braces.
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const [query, setQuery] = useState(addressToString(contact.address))
   const [isResult, setIsResult] = useState(!!contact.address)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [error, setError] = useState(false)
-  const [mode, setMode] = useState<Mode>('search')
+  const [mode, setMode] = useState<Mode>(
+    dataProtectionMode ? 'manual' : 'search'
+  )
   const [hasCleared, setHasCleared] = useState(false)
   const keysSameAsPrefill = (): (keyof Address)[] => {
     if (!contact.address || !prefill.address) {
@@ -191,33 +200,35 @@ export default function AddressSection({
         </Text>
       </View>
       <Section style={{ overflow: 'visible' }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 12,
-            marginHorizontal: 12,
-            marginBottom: 8,
-            padding: 3,
-            borderRadius: theme.numbers.borderRadiusSm + 3,
-            backgroundColor: theme.colors.background,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            gap: 3,
-          }}
-        >
-          <ModeSegment
-            active={mode === 'search'}
-            icon={SearchIcon}
-            labelKey='searchAddress'
-            onPress={() => switchMode('search')}
-          />
-          <ModeSegment
-            active={mode === 'manual'}
-            icon={SquarePenIcon}
-            labelKey='enterManually'
-            onPress={() => switchMode('manual')}
-          />
-        </View>
+        {!dataProtectionMode && (
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 12,
+              marginHorizontal: 12,
+              marginBottom: 8,
+              padding: 3,
+              borderRadius: theme.numbers.borderRadiusSm + 3,
+              backgroundColor: theme.colors.background,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              gap: 3,
+            }}
+          >
+            <ModeSegment
+              active={mode === 'search'}
+              icon={SearchIcon}
+              labelKey='searchAddress'
+              onPress={() => switchMode('search')}
+            />
+            <ModeSegment
+              active={mode === 'manual'}
+              icon={SquarePenIcon}
+              labelKey='enterManually'
+              onPress={() => switchMode('manual')}
+            />
+          </View>
+        )}
         {mode === 'search' ? (
           <AddressAutocomplete
             onSelect={handleAddressSelect}

@@ -31,6 +31,7 @@ import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
 import { useAppMigrations } from '@/app/migrations/useAppMigrations'
 import { useWidgetSync } from '@/app/widgets/useWidgetSync'
 import { useICloudSync } from '@/app/sync/useICloudSync'
+import { useDataProtectionRetentionPrompt } from '@/app/data-protection/useDataProtectionRetentionPrompt'
 import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
@@ -51,6 +52,7 @@ export default function App() {
   const hasMigrated = useAppMigrations()
   useWidgetSync(hasMigrated)
   useICloudSync(hasMigrated)
+  useDataProtectionRetentionPrompt(!!hasMigrated)
 
   if (!hasMigrated) {
     return (

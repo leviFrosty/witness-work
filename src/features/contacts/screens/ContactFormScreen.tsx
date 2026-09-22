@@ -22,6 +22,7 @@ import AddressSection from '@/features/contacts/components/AddressSection'
 import { RootStackParamList } from '@/types/rootStack'
 import { Errors } from '@/types/textInput'
 import ContactIdentityCard from '@/features/contacts/components/ContactIdentityCard'
+import ContactConsentSection from '@/features/contacts/components/ContactConsentSection'
 import { analytics } from '@/lib/analytics'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
@@ -41,8 +42,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     incrementGeocodeApiCallCount,
     prefillAddress,
     updatePrefillAddress,
+    clearPrefillAddress,
     defaultPhoneRegionCode,
     setDefaultPhoneRegionCode,
+    dataProtectionMode,
   } = usePreferences()
   const editMode = route.params.edit
   const [errors, setErrors] = useState<Errors>({
@@ -61,8 +64,14 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     (k) => !!prefillAddress.address?.[k]?.length
   )
 
-  /** Whether or not address should be prefilled based on state. */
+  /**
+   * Whether or not address should be prefilled based on state. Never in data
+   * protection mode: the cached address belongs to the previous householder,
+   * and pre-filling it makes it trivially easy to save a record about someone
+   * who was never asked.
+   */
   const prefill =
+    !dataProtectionMode &&
     prefillAddress?.enabled &&
     moment().isSame(prefillAddress.lastUpdated, 'day') &&
     prefillAddress.address &&
@@ -100,6 +109,29 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       customFields: {},
     }
   )
+
+  /**
+   * Consent gate (`docs/gdpr-mode-research.md` §9.5). In data protection mode a
+   * brand-new contact's identity, contact details and address are not rendered
+   * at all until the householder has agreed — the record simply cannot be
+   * started. An existing contact always renders everything: hiding data the
+   * user already holds would only make it harder to review or erase, and the
+   * switch there just reflects (and can withdraw) the recorded consent.
+   */
+  const hasConsent = !!contact.consentGivenAt
+  const consentRequired = dataProtectionMode && !editMode
+  const detailsVisible = !consentRequired || hasConsent
+
+  const setConsent = (agreed: boolean) => {
+    setContact((current) => ({
+      ...current,
+      // Keep an explicit cleared value so updateContact's merge removes it.
+      consentGivenAt: agreed ? new Date().toISOString() : undefined,
+    }))
+    if (agreed && errors.consent) {
+      setErrors((current) => ({ ...current, consent: '' }))
+    }
+  }
 
   const setName = (name: string) => {
     setContact({
@@ -210,6 +242,13 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const countryInput = useRef<TextInput>(null)
 
   const validateForm = useCallback((): boolean => {
+    if (consentRequired && !hasConsent) {
+      setErrors({
+        name: '',
+        consent: i18n.t('dataProtectionConsentRequiredError'),
+      })
+      return false
+    }
     if (!contact.name) {
       nameInput.current?.focus()
       setErrors({ name: i18n.t('name_error') })
@@ -219,7 +258,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       setErrors({ name: '' })
     }
     return true
-  }, [contact.name])
+  }, [consentRequired, contact.name, hasConsent])
 
   /** Mutates provided contact */
   const handleFetchCoordinate = useCallback(
@@ -255,7 +294,11 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       resolve: (value: unknown) => void
     ) => {
       commit(c)
-      if (!shouldGeocode) {
+      // Geocoding posts the full householder address to HERE through the
+      // vendor's proxy. In data protection mode the contact is saved without a
+      // coordinate unless the user dropped a pin themselves in `PinLocation`,
+      // which never leaves the device.
+      if (!shouldGeocode || dataProtectionMode) {
         resolve(c)
         return
       }
@@ -278,7 +321,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         proceed()
       })
     },
-    [handleFetchCoordinate, updateContact]
+    [dataProtectionMode, handleFetchCoordinate, updateContact]
   )
 
   const askUserToUpdateCoordinatesAutomatically = useCallback(
@@ -318,7 +361,11 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       /** This gets mutated in the conditionals below. */
       const newContact = { ...contact }
       const addressChanged = !isEqual(contactToUpdate?.address, contact.address)
-      if (contact.userDraggedCoordinate && addressChanged) {
+      if (
+        !dataProtectionMode &&
+        contact.userDraggedCoordinate &&
+        addressChanged
+      ) {
         // Ask the user if they wanna update their coordinate automatically.
         // This path persists the contact inside the alert handlers.
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
@@ -335,6 +382,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       askUserToUpdateCoordinatesAutomatically,
       contact,
       contactToUpdate?.address,
+      dataProtectionMode,
       persistThenGeocode,
       updateContact,
     ]
@@ -343,7 +391,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const handleAddContact = useCallback(
     (resolve: (value: unknown) => void) => {
       const newContact = { ...contact }
-      updatePrefillAddress(newContact.address)
+      if (!dataProtectionMode) updatePrefillAddress(newContact.address)
       persistThenGeocode(
         newContact,
         addContact,
@@ -351,7 +399,13 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         resolve
       )
     },
-    [addContact, contact, persistThenGeocode, updatePrefillAddress]
+    [
+      addContact,
+      contact,
+      dataProtectionMode,
+      persistThenGeocode,
+      updatePrefillAddress,
+    ]
   )
 
   const submit = useCallback(() => {
@@ -361,8 +415,18 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       } else {
         handleAddContact(resolve)
       }
+      // The cached "same address as last time" convenience is itself a
+      // householder record with no contact attached to consent to it, so a save
+      // in data protection mode is also the moment to drop it.
+      if (dataProtectionMode) clearPrefillAddress()
     })
-  }, [editMode, handleAddContact, handleUpdateContact])
+  }, [
+    clearPrefillAddress,
+    dataProtectionMode,
+    editMode,
+    handleAddContact,
+    handleUpdateContact,
+  ])
 
   useEffect(() => {
     // Cancels coordinate fetch request if user navigates away
@@ -480,43 +544,57 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           maxWidth: 680,
         }}
       >
-        <ContactIdentityCard
-          contact={contact}
-          setContact={setContact}
-          editMode={editMode}
-          nameInput={nameInput}
-          nameError={errors.name}
-          onNameChange={(name) => {
-            setName(name)
-            if (errors.name) setErrors({ ...errors, name: '' })
-          }}
-        />
-        <AddressSection
-          contact={contact}
-          setContact={setContact}
-          cityInput={cityInput}
-          countryInput={countryInput}
-          line1Input={line1Input}
-          line2Input={line2Input}
-          setCity={setCity}
-          setLine1={setLine1}
-          setLine2={setLine2}
-          setState={setState}
-          setZip={setZip}
-          setCountry={setCountry}
-          stateInput={stateInput}
-          zipInput={zipInput}
-          prefill={prefill}
-        />
-        <PersonalContactSection
-          contact={contact}
-          emailInput={emailInput}
-          setEmail={setEmail}
-          setPhone={setPhone}
-          setRegionCode={setRegionCode}
-          customFields={contact.customFields || {}}
-          setCustomField={setCustomField}
-        />
+        {dataProtectionMode && (
+          <ContactConsentSection
+            agreed={hasConsent}
+            onConsentChange={setConsent}
+            error={errors.consent}
+            showRequiredHint={!detailsVisible}
+          />
+        )}
+        {detailsVisible && (
+          <ContactIdentityCard
+            contact={contact}
+            setContact={setContact}
+            editMode={editMode}
+            nameInput={nameInput}
+            nameError={errors.name}
+            onNameChange={(name) => {
+              setName(name)
+              if (errors.name) setErrors({ ...errors, name: '' })
+            }}
+          />
+        )}
+        {detailsVisible && (
+          <AddressSection
+            contact={contact}
+            setContact={setContact}
+            cityInput={cityInput}
+            countryInput={countryInput}
+            line1Input={line1Input}
+            line2Input={line2Input}
+            setCity={setCity}
+            setLine1={setLine1}
+            setLine2={setLine2}
+            setState={setState}
+            setZip={setZip}
+            setCountry={setCountry}
+            stateInput={stateInput}
+            zipInput={zipInput}
+            prefill={prefill}
+          />
+        )}
+        {detailsVisible && (
+          <PersonalContactSection
+            contact={contact}
+            emailInput={emailInput}
+            setEmail={setEmail}
+            setPhone={setPhone}
+            setRegionCode={setRegionCode}
+            customFields={contact.customFields || {}}
+            setCustomField={setCustomField}
+          />
+        )}
       </Wrapper>
     </KeyboardAwareScrollView>
   )

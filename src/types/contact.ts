@@ -60,6 +60,23 @@ export type Contact = {
   customFields?: Record<string, string>
 
   /**
+   * ISO timestamp of when the householder agreed that the publisher may keep
+   * their details. Only written in data protection mode
+   * (`preferences.dataProtectionMode`); undefined elsewhere. Demonstrates
+   * consent per GDPR Art 7(1). See `docs/gdpr-mode-research.md` section 9.5.
+   */
+  consentGivenAt?: string
+
+  /**
+   * Set only on a deleted-contact tombstone whose householder fields were
+   * stripped at delete time by data protection mode. Such a record exists
+   * purely so iCloud sync can propagate the deletion (id + updatedAt); it is
+   * not recoverable and must not be offered for restore. See
+   * `lib/dataProtection.stripContactForTombstone`.
+   */
+  redacted?: boolean
+
+  /**
    * When set, this contact is dismissed and should be hidden from the main
    * contact list and map until the dismissedUntil date has passed.
    */

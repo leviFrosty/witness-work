@@ -52,11 +52,12 @@ export default function PersonalContactSection({
     contactInformationOrder,
     showContactPhone,
     showContactEmail,
+    dataProtectionMode,
   } = usePreferences()
   const theme = useTheme()
   const phoneTheme = (preferredColorScheme ?? colorScheme ?? 'light') as ITheme
 
-  const visibleFields = getContactInformationFields(
+  const allFields = getContactInformationFields(
     customFieldDefs,
     contactInformationOrder,
     {
@@ -64,6 +65,15 @@ export default function PersonalContactSection({
       email: showContactEmail,
     }
   )
+
+  // Custom fields are free text with a user-authored label — the one place in
+  // the app where religion, language, ethnicity or family situation can be
+  // recorded as a structured, searchable attribute. Data protection mode hides
+  // the inputs and the manager entry point rather than trying to police what
+  // gets typed into them. Values already on the record are left alone.
+  const visibleFields = dataProtectionMode
+    ? allFields.filter((field) => field.kind !== 'custom')
+    : allFields
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
@@ -116,17 +126,19 @@ export default function PersonalContactSection({
         >
           {i18n.t('information')}
         </Text>
-        <Button onPress={openCustomFieldManager}>
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('manageContactFields')}
-          </Text>
-        </Button>
+        {!dataProtectionMode && (
+          <Button onPress={openCustomFieldManager}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('manageContactFields')}
+            </Text>
+          </Button>
+        )}
       </XView>
       {visibleFields.length > 0 && (
         <Section>

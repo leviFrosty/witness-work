@@ -132,6 +132,14 @@ interface Props {
    * user's profile avatar) can omit it.
    */
   onImageMeta?: (meta: AvatarMetaCapture) => void
+  /**
+   * Whether the "choose photo" affordance is offered. Callers turn it off when
+   * an image would be an inappropriate thing to attach to the subject of the
+   * avatar — a photo of a householder has no lawful basis under data protection
+   * mode (`docs/gdpr-mode-research.md` §9.2). Emoji stay available either way;
+   * they describe nobody.
+   */
+  allowImage?: boolean
 }
 
 interface BackgroundSwatchesProps {
@@ -229,6 +237,7 @@ export const BackgroundSwatches = ({
 const AvatarPickerContent = ({
   value,
   onChange,
+  allowImage = true,
   imageFileName = DEFAULT_AVATAR_FILENAME,
   backgroundValue = null,
   onBackgroundChange,
@@ -377,23 +386,27 @@ const AvatarPickerContent = ({
           )
         })}
       </View>
-      <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+      {(allowImage || hasAvatar) && (
+        <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+      )}
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Button
-          variant='outline'
-          onPress={pickImage}
-          style={{
-            flex: 1,
-            paddingVertical: 10,
-            gap: 8,
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
-          <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-            {i18n.t('choosePhoto')}
-          </Text>
-        </Button>
+        {allowImage && (
+          <Button
+            variant='outline'
+            onPress={pickImage}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              gap: 8,
+              justifyContent: 'center',
+            }}
+          >
+            <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
+            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+              {i18n.t('choosePhoto')}
+            </Text>
+          </Button>
+        )}
         {hasAvatar && (
           <Button
             variant='outline'

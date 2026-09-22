@@ -22,7 +22,7 @@ import { FuseResultMatch } from 'fuse.js'
 import Button from '@/components/ui/Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '@/lib/haptics'
-import useContacts from '@/stores/contactsStore'
+import { deleteHouseholderContact } from '@/stores/householderData'
 import SwipeableArchive from '@/features/contacts/components/swipeableActions/Archive'
 import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Dismiss'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
@@ -38,6 +38,7 @@ import {
 } from '@/features/contacts/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
 import GenderIcon from '@/features/contacts/components/GenderIcon'
+import { usePreferences } from '@/stores/preferences'
 import confirmDestructive from '@/lib/confirmDestructive'
 
 const SNIPPET_CONTEXT_CHARS = 24
@@ -77,8 +78,8 @@ const ContactRow = ({
    */
   index: ConversationIndex
 }) => {
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const theme = useTheme()
-  const { deleteContact } = useContacts()
   const markerColors = useMarkerColors()
   const toast = useToastController()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
@@ -115,15 +116,21 @@ const ContactRow = ({
 
   const handleArchive = () => {
     confirmDestructive({
-      title: i18n.t('archiveContact_question'),
-      description: i18n.t('archiveContact_description'),
-      confirmLabel: i18n.t('archive'),
+      title: i18n.t(
+        dataProtectionMode ? 'permanentlyDelete' : 'archiveContact_question'
+      ),
+      description: i18n.t(
+        dataProtectionMode
+          ? 'permanentlyDeleteContact_warning'
+          : 'archiveContact_description'
+      ),
+      confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
       onConfirm: () => {
         toast.show(i18n.t('success'), {
-          message: i18n.t('archived'),
+          message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
           native: true,
         })
-        deleteContact(contact.id)
+        deleteHouseholderContact(contact.id)
       },
     })
   }
@@ -174,7 +181,9 @@ const ContactRow = ({
           onSwipeableWillOpen={() => Haptics.light()}
           containerStyle={{ backgroundColor: 'transparent' }}
           renderLeftActions={() => <SwipeableDismiss size='sm' />}
-          renderRightActions={() => <SwipeableArchive size='sm' />}
+          renderRightActions={() => (
+            <SwipeableArchive size='sm' permanent={dataProtectionMode} />
+          )}
           onSwipeableOpen={handleSwipeOpen}
         >
           <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>

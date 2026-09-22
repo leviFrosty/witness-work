@@ -38,6 +38,8 @@ interface Props {
    * Optional — the user's profile avatar doesn't track meta.
    */
   onImageMeta?: (meta: AvatarMetaCapture) => void
+  /** Forwarded to the picker — see `AvatarPickerContent`'s `allowImage`. */
+  allowImage?: boolean
 }
 
 // Width of the picker content (8 cols × 36 cell + 7 × 2 gap) plus padding.
@@ -62,6 +64,7 @@ const AvatarPickerPopover = ({
   onBackgroundChange,
   accessibilityLabel,
   onImageMeta,
+  allowImage = true,
 }: Props) => {
   const theme = useTheme()
 
@@ -117,6 +120,7 @@ const AvatarPickerPopover = ({
             close()
           }}
           imageFileName={imageFileName}
+          allowImage={allowImage}
           backgroundValue={backgroundValue}
           onBackgroundChange={onBackgroundChange}
           onImageMeta={onImageMeta}

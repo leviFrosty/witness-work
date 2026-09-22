@@ -11,10 +11,10 @@ import Empty from '@/components/ui/Empty'
 import useConversations from '@/stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
 import i18n from '@/lib/locales'
-import { useMemo } from 'react'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
 import { useToastController } from '@tamagui/toast'
+import { isRedactedContactTombstone } from '@/lib/dataProtection'
 
 const RecoverContactsScreen = () => {
   const theme = useTheme()
@@ -46,12 +46,16 @@ const RecoverContactsScreen = () => {
     })
   }
 
-  const sortedContacts = useMemo(
-    () =>
-      deletedContacts.sort((a, b) =>
-        moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
-      ),
-    [deletedContacts]
+  // Tombstones written by a data-protection hard delete keep nothing but an id
+  // and a timestamp, so there is nothing to show and nothing to restore. They
+  // stay in the store (iCloud needs them to propagate the deletion) but are
+  // filtered out here rather than rendered as blank, un-recoverable rows.
+  const recoverable = deletedContacts.filter(
+    (c) => !isRedactedContactTombstone(c)
+  )
+
+  const sortedContacts = [...recoverable].sort((a, b) =>
+    moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
   )
 
   return (
@@ -88,7 +92,7 @@ const RecoverContactsScreen = () => {
               marginBottom: insets.bottom,
             }}
           >
-            {deletedContacts.length === 0 && (
+            {recoverable.length === 0 && (
               <Empty title={i18n.t('deletedContactsWillAppearHere')} />
             )}
             <View style={{ minHeight: 2 }}>

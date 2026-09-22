@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
+import { deleteHouseholderContact } from '@/stores/householderData'
 import Header from '@/components/ui/layout/Header'
 import CardWithTitle from '@/components/CardWithTitle'
 import { Address, Contact } from '@/types/contact'
@@ -249,8 +250,14 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   const { updateContact } = useContacts()
   const { colorScheme, stalenessBreakpoints } = usePreferences()
   const { conversations } = useConversations()
-  const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
-    usePreferences()
+  const {
+    incrementGeocodeApiCallCount,
+    defaultNavigationMapProvider,
+    // Fetching a coordinate posts the householder's address to HERE through
+    // the vendor's proxy; in data protection mode the only coordinate a
+    // contact can get is one the user drops by hand.
+    dataProtectionMode,
+  } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const colors = useMarkerColors()
   const { locationPermission } = useLocation()
@@ -329,10 +336,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           </Copyeable>
         </View>
       </Button>
-      {(contact.coordinate && contact.coordinate.latitude === undefined) ||
-      (contact.coordinate && contact.coordinate.longitude === undefined) ||
-      (contact.coordinate === undefined &&
-        hasTriedToGetCoordinates === false) ? (
+      {!dataProtectionMode &&
+      ((contact.coordinate && contact.coordinate.latitude === undefined) ||
+        (contact.coordinate && contact.coordinate.longitude === undefined) ||
+        (contact.coordinate === undefined &&
+          hasTriedToGetCoordinates === false)) ? (
         <View style={{ gap: 3 }}>
           <Button onPress={attemptToGetCoordinates}>
             <Text
@@ -471,11 +479,20 @@ const ContactDetailsContent = ({
     contactInformationOrder,
     showContactPhone,
     showContactEmail,
+    /**
+     * A contact share link gzips the whole record — name, address, phone, and
+     * up to 50 visits with their notes — into a URL the vendor's proxy
+     * resolves, and hands it to whoever the recipient forwards it to. CJEU
+     * C-25/17 §45 is explicit that this makes the data accessible to "a
+     * potentially unlimited number of persons". Data protection mode removes
+     * the action entirely; sharing an _address_ to Apple/Google Maps stays,
+     * because that hand-off happens on-device.
+     */
+    dataProtectionMode,
   } = usePreferences()
   const params = { id, highlightedVisitId }
   const insets = useSafeAreaInsets()
-  const { contacts, deleteContact, toggleFavoriteContact, customFieldDefs } =
-    useContacts()
+  const { contacts, toggleFavoriteContact, customFieldDefs } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
@@ -561,13 +578,13 @@ const ContactDetailsContent = ({
     }
     actions.push({
       id: 'delete',
-      title: i18n.t('archive'),
-      image: 'archivebox',
+      title: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
+      image: dataProtectionMode ? 'trash' : 'archivebox',
       imageColor: theme.colors.error,
       attributes: { destructive: true },
     })
     return actions
-  }, [contact, theme.colors.error])
+  }, [contact, theme.colors.error, dataProtectionMode])
 
   const handleContactMenuAction = useCallback(
     (action: string) => {
@@ -588,13 +605,21 @@ const ContactDetailsContent = ({
           break
         case 'delete':
           confirmDestructive({
-            title: i18n.t('archiveContact_question'),
-            description: i18n.t('archiveContact_description'),
-            confirmLabel: i18n.t('archive'),
+            title: i18n.t(
+              dataProtectionMode
+                ? 'permanentlyDelete'
+                : 'archiveContact_question'
+            ),
+            description: i18n.t(
+              dataProtectionMode
+                ? 'permanentlyDeleteContact_warning'
+                : 'archiveContact_description'
+            ),
+            confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
             onConfirm: () => {
-              deleteContact(contact.id)
+              deleteHouseholderContact(contact.id)
               toast.show(i18n.t('success'), {
-                message: i18n.t('archived'),
+                message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
                 native: true,
               })
               if (!embedded) navigation.popToTop()
@@ -603,7 +628,7 @@ const ContactDetailsContent = ({
           break
       }
     },
-    [contact, deleteContact, navigation, toast, embedded]
+    [contact, navigation, toast, embedded, dataProtectionMode]
   )
 
   const shareContactAsFile = useCallback(async () => {
@@ -774,11 +799,13 @@ const ContactDetailsContent = ({
                 }}
               />
 
-              <IconButton
-                icon={ShareIcon}
-                color={heroForeground}
-                onPress={handleExportContact}
-              />
+              {!dataProtectionMode && (
+                <IconButton
+                  icon={ShareIcon}
+                  color={heroForeground}
+                  onPress={handleExportContact}
+                />
+              )}
 
               <Button onPress={() => setSheetOpen(true)}>
                 <XView
@@ -808,6 +835,7 @@ const ContactDetailsContent = ({
     contact?.id,
     contact?.isFavorite,
     contactMenuActions,
+    dataProtectionMode,
     embedded,
     handleContactMenuAction,
     handleExportContact,
@@ -905,12 +933,14 @@ const ContactDetailsContent = ({
             fill={contact.isFavorite ? heroForeground : 'none'}
             onPress={() => toggleFavoriteContact(contact.id)}
           />
-          <IconButton
-            icon={ShareIcon}
-            color={heroForeground}
-            onPress={handleExportContact}
-            accessibilityLabel={i18n.t('share')}
-          />
+          {!dataProtectionMode && (
+            <IconButton
+              icon={ShareIcon}
+              color={heroForeground}
+              onPress={handleExportContact}
+              accessibilityLabel={i18n.t('share')}
+            />
+          )}
           <AddHistoryPopover
             contactId={contact.id}
             navigation={navigation}

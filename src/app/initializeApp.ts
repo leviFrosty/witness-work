@@ -4,8 +4,12 @@ import * as Updates from 'expo-updates'
 import Constants from 'expo-constants'
 import { LogBox } from 'react-native'
 import { isAudioEnabled } from '@/lib/audio'
+import { configureLogger } from '@/lib/logger'
+import { usePreferences } from '@/stores/preferences'
 
 export function initializeApp() {
+  configureLogger(() => usePreferences.getState().developerTools)
+
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,

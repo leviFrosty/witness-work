@@ -76,6 +76,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     moment().isSame(prefillAddress.lastUpdated, 'day') &&
     prefillAddress.address &&
     prefillHasMinOneVal &&
+    !route.params.initialCoordinate &&
     !editMode
       ? ({
           address: prefillAddress.address,
@@ -103,6 +104,8 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       createdAt: new Date(),
       name: '',
       address: newContactAddress,
+      coordinate: route.params.initialCoordinate,
+      userDraggedCoordinate: route.params.initialCoordinate ? true : undefined,
       email: '',
       phone: '',
       phoneRegionCode: defaultPhoneRegionCode || locales[0].regionCode || '',

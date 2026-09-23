@@ -25,6 +25,7 @@ import { handleCall, handleMessage } from '@/lib/phone'
 import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation } from '@/types/rootStack'
 import { ContactMarker } from '@/features/map/types/map'
+import MapCard from '@/features/map/components/MapCard'
 
 interface Props {
   inspector?: boolean
@@ -67,20 +68,9 @@ const MapCarouselCard = ({
   const googleMapsLink = `${links.googleMapsBase}${addressUriEncoded}`
 
   return (
-    <Button
-      noTransform
+    <MapCard
       onPress={() => navigation.navigate('Contact Details', { id: contact.id })}
-      variant='glass'
-      style={{
-        borderRadius: theme.numbers.borderRadiusLg,
-        borderCurve: 'continuous',
-        borderWidth: 0,
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        padding: 12,
-        gap: 4,
-        flex: inspector ? undefined : 1,
-      }}
+      fill={!inspector}
     >
       <View
         style={{
@@ -249,7 +239,7 @@ const MapCarouselCard = ({
           <IconButton icon={ShareIcon} />
         </Button>
       </View>
-    </Button>
+    </MapCard>
   )
 }
 

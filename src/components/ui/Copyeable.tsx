@@ -1,4 +1,3 @@
-import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import {
   View,
   GestureResponderEvent,
@@ -18,7 +17,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import i18n from '@/lib/locales'
 import { ThemeContext } from '@/contexts/theme'
-import IconButton from '@/components/ui/IconButton'
 
 const AnimatedView = Animated.createAnimatedComponent(View)
 
@@ -105,21 +103,26 @@ const Copyeable: React.FC<PropsWithChildren<Props>> = ({
             overlayStyle,
           ]}
         >
-          <View style={{ position: 'relative' }}>
-            <Text style={{ fontSize: theme.fontSize('sm') }}>
-              {i18n.t('copied')}
-            </Text>
-            <IconButton
-              size={25}
-              style={{
-                position: 'absolute',
-                left: -4,
-                bottom: -22,
-              }}
-              icon={ChevronDownIcon}
-              iconStyle={{ color: theme.colors.backgroundLighter }}
-            />
-          </View>
+          <Text style={{ fontSize: theme.fontSize('sm') }}>
+            {i18n.t('copied')}
+          </Text>
+          {/* Cover the container border at the join; outline only the exposed edges. */}
+          <View
+            pointerEvents='none'
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: -6,
+              marginLeft: -6,
+              width: 12,
+              height: 12,
+              backgroundColor: theme.colors.backgroundLighter,
+              borderRightWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: theme.colors.border,
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
         </AnimatedView>
       )}
     </View>

@@ -18,11 +18,14 @@ const InfoPopover = ({
   title,
   description,
   inline = false,
+  color,
 }: {
   title: string
   description: string
   /** Keep the 44pt target without making a text line 44pt tall. */
   inline?: boolean
+  /** Icon color override, e.g. on a tinted hero. Defaults to `textAlt`. */
+  color?: string
 }) => {
   const theme = useTheme()
   const { width } = useWindowDimensions()
@@ -74,7 +77,7 @@ const InfoPopover = ({
           <LucideIcon
             icon={Info}
             size={theme.fontSize('md')}
-            color={theme.colors.textAlt}
+            color={color ?? theme.colors.textAlt}
           />
         </Pressable>
       )}

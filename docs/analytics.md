@@ -14,6 +14,21 @@ the existing pseudonymous account ID. Crash diagnostics use the separate
 Screen tracking sends route names only, including the initial route; it does not
 send route parameters. Touch/text autocapture is not enabled.
 
+## Development logging
+
+Analytics uses the shared `logger` for diagnostics and its enablement policy for
+PostHog's SDK debug logs. Development builds enable logging automatically; the
+Developer Tools preference also enables it in production. Filter the dev
+server console for `[PostHog]` to see event names and payloads (including screens,
+identity, lifecycle, and surveys), feature flags, flushes, and transport errors.
+Capture logs indicate queued events; flush logs show successful batch requests.
+`[Analytics]` logs show initialization, enabled/opted-out status, missing
+configuration, skipped calls, identity resets, and provider failures.
+
+These diagnostics are off in production unless Developer Tools is enabled.
+Set `EXPO_PUBLIC_SILENT=true` or `1`
+before starting the dev server to silence them without disabling analytics.
+
 ## Onboarding and activation
 
 Use `onboarding_started` / `onboarding_resumed`, `onboarding_step_viewed`,

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   screen: vi.fn(),
   identify: vi.fn(),
   reset: vi.fn(),
+  debug: vi.fn(),
   construct: vi.fn(),
 }))
 vi.mock('expo-constants', () => ({ default: { expoConfig: mocks.config } }))
@@ -18,6 +19,7 @@ vi.mock('posthog-react-native', () => ({
     screen = mocks.screen
     identify = mocks.identify
     reset = mocks.reset
+    debug = mocks.debug
   },
 }))
 

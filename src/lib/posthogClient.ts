@@ -1,5 +1,6 @@
 import Constants from 'expo-constants'
 import PostHog from 'posthog-react-native'
+import { logger } from '@/lib/logger'
 import {
   errorTrackingEnabled,
   getErrorContext,
@@ -13,9 +14,15 @@ const projectToken = extra?.posthogProjectToken
 const host = extra?.posthogHost
 
 function createClient(): PostHog | null {
-  if (!projectToken || !host) return null
+  if (!projectToken || !host) {
+    logger.debug('[Analytics] Disabled: missing configuration', {
+      hasProjectToken: Boolean(projectToken),
+      hasHost: Boolean(host),
+    })
+    return null
+  }
   try {
-    return new PostHog(projectToken, {
+    const client = new PostHog(projectToken, {
       host,
       captureAppLifecycleEvents: true,
       // The native plugin supplies crash capture; push analytics stay opt-in.
@@ -40,6 +47,11 @@ function createClient(): PostHog | null {
           (!errorTrackingEnabled ||
             shouldIgnoreExceptionProperties(event.properties ?? {}))
         ) {
+          logger.debug('[Analytics] Skipping $exception', {
+            reason: errorTrackingEnabled
+              ? 'ignored exception'
+              : 'error tracking disabled in development',
+          })
           return null
         }
         return {
@@ -53,7 +65,34 @@ function createClient(): PostHog | null {
         }
       },
     })
-  } catch {
+    // SDK debug output includes automatic events, feature flags, flushes, and
+    // transport errors as well as calls through the analytics adapter.
+    client.debug(logger.isEnabled())
+    if (logger.isEnabled()) {
+      logger.debug('[Analytics] Initializing PostHog', {
+        host,
+        appVariant: extra?.appVariant ?? 'unknown',
+        errorTrackingEnabled,
+      })
+      void client
+        .ready()
+        .then(() => {
+          logger.debug(
+            client.optedOut
+              ? '[Analytics] Disabled: SDK opted out'
+              : '[Analytics] Enabled',
+            {
+              optedOut: client.optedOut,
+            }
+          )
+        })
+        .catch((error: unknown) => {
+          logger.debug('[Analytics] Initialization failed', error)
+        })
+    }
+    return client
+  } catch (error) {
+    logger.debug('[Analytics] Disabled: initialization failed', error)
     return null
   }
 }

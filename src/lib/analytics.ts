@@ -1,4 +1,5 @@
 import { posthogClient as client } from '@/lib/posthogClient'
+import { logger } from '@/lib/logger'
 
 // Surveys use the SDK's renderer and response contract, separate from ordinary
 // structural analytics. Reuse this instance so responses have the same identity.
@@ -11,12 +12,21 @@ export type AnalyticsProperties = Record<
   string | number | boolean | null | undefined
 >
 
-function safely(send: () => unknown): void {
+function safely(operation: string, send: () => unknown): void {
   try {
+    if (!client) {
+      logger.debug(`[Analytics] Skipping ${operation}: client unavailable`)
+      return
+    }
     const result = send()
-    if (result instanceof Promise) void result.catch(() => {})
-  } catch {
+    if (result instanceof Promise) {
+      void result.catch((error: unknown) => {
+        logger.debug(`[Analytics] ${operation} failed`, error)
+      })
+    }
+  } catch (error) {
     // Analytics must never interrupt a user's action.
+    logger.debug(`[Analytics] ${operation} failed`, error)
   }
 }
 
@@ -31,15 +41,24 @@ function definedProperties(properties?: AnalyticsProperties) {
 
 export const analytics = {
   capture(event: string, properties?: AnalyticsProperties): void {
-    safely(() => client?.capture(event, definedProperties(properties)))
+    safely(`capture "${event}"`, () =>
+      client?.capture(event, definedProperties(properties))
+    )
   },
   screen(name: string, properties?: AnalyticsProperties): void {
-    safely(() => client?.screen(name, definedProperties(properties)))
+    safely(`screen "${name}"`, () =>
+      client?.screen(name, definedProperties(properties))
+    )
   },
   identify(id: string, properties?: AnalyticsProperties): void {
-    safely(() => client?.identify(id, definedProperties(properties)))
+    safely('identify', () =>
+      client?.identify(id, definedProperties(properties))
+    )
   },
   reset(): void {
-    safely(() => client?.reset())
+    safely('reset', () => {
+      logger.debug('[Analytics] Resetting identity')
+      return client?.reset()
+    })
   },
 }

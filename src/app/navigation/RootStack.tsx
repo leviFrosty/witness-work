@@ -25,6 +25,7 @@ import PreferencesPublisherScreen from '@/features/settings/screens/preferences/
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
 import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
+import PreferencesAudioAndHapticsScreen from '@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen'
 import PreferencesScheduleScreen from '@/features/settings/screens/preferences/screens/PreferencesScheduleScreen'
 import PreferencesHomeScreen from '@/features/settings/screens/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '@/features/settings/screens/preferences/screens/PreferencesBackupsScreen'
@@ -234,6 +235,15 @@ const RootStackComponent = () => {
           }}
           name='PreferencesNavigation'
           component={PreferencesNavigationScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('audioAndHaptics')} />
+            ),
+          }}
+          name='PreferencesAudioAndHaptics'
+          component={PreferencesAudioAndHapticsScreen}
         />
         <RootStack.Screen
           options={{

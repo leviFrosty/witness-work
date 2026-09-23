@@ -2347,5 +2347,8 @@
   "dataProtectionDeleteAllTitle": "Delete all householder data?",
   "dataProtectionDeleteAllDesc": "Every contact and visit will be permanently deleted from this device and from iCloud sync. Your time, reports and plans are not affected. This cannot be undone.",
   "dataProtectionDeleteAllDoneTitle": "Deleted",
-  "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits."
+  "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits.",
+  "audioAndHaptics": "Audio & Haptics",
+  "playSounds": "Play sounds",
+  "playSounds_description": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow iOS Settings > Notifications."
 }

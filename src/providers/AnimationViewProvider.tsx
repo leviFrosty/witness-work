@@ -13,9 +13,7 @@ import {
   AnimationViewCtx,
 } from '@/contexts/AnimationView'
 import confetti from '@/assets/lottie/confetti.json'
-import { useAudioPlayer } from 'expo-audio'
-// @ts-expect-error MP3 doesn't export module
-import chime from '@/assets/audio/success-chime.mp3'
+import { useSound } from '@/lib/audio'
 
 interface Props {}
 
@@ -34,23 +32,10 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
-  const player = useAudioPlayer(chime)
+  const playSound = useSound('successChime')
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingPlayRef = useRef(false)
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const playSound = useCallback(() => {
-    try {
-      // No setAudioModeAsync here: the default audio mode keeps the iOS
-      // session in the ambient category, so the chime respects the device's
-      // ring/silent switch (#365). Don't re-add `playsInSilentMode: true` —
-      // it flips the session to `.playback`, which bypasses the mute switch.
-      player.seekTo(0)
-      player.play()
-    } catch {
-      // Silently fail if playback cannot start
-    }
-  }, [player])
 
   const clearSafety = useCallback(() => {
     if (safetyTimerRef.current) {

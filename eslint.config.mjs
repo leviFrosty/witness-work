@@ -164,6 +164,35 @@ export default tseslint.config(
     },
   },
   {
+    // Sounds go through `useSound` so the Audio & Haptics setting can't be
+    // bypassed.
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    ignores: ['src/lib/audio.ts', 'src/__tests__/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'expo-audio',
+                'expo-audio/*',
+                'expo-av',
+                'expo-av/*',
+                '*.mp3',
+                '*.wav',
+                '*.caf',
+                '*.m4a',
+                '*.aiff',
+              ],
+              message: 'Register sounds in @/lib/audio and play with useSound.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],
     languageOptions: {
       globals: {

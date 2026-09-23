@@ -3,12 +3,16 @@ import { errorTracking } from '@/lib/errorTracking'
 import * as Updates from 'expo-updates'
 import Constants from 'expo-constants'
 import { LogBox } from 'react-native'
+import { isAudioEnabled } from '@/lib/audio'
 
 export function initializeApp() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
-      shouldPlaySound: true,
+      // Reminders that arrive while the app is open follow the in-app Audio
+      // setting. Delivered in the background, iOS Settings > Notifications
+      // decides.
+      shouldPlaySound: isAudioEnabled(),
       shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,

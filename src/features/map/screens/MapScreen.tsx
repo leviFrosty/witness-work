@@ -70,6 +70,8 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import MapContactInspector, {
   type MapContactRowRenderer,
 } from '@/features/map/components/MapContactInspector'
+import CreateContactCard from '@/features/map/components/CreateContactCard'
+import useMapContactCreation from '@/features/map/hooks/useMapContactCreation'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -121,6 +123,7 @@ const FullMapView = ({
     null
   )
   const [emptyStateHeight, setEmptyStateHeight] = useState(0)
+  const draggingContactRef = useRef(false)
   const [noResultsHeight, setNoResultsHeight] = useState(0)
   const [sheet, setSheet] = useState<MapShareSheet>({
     open: false,
@@ -355,6 +358,17 @@ const FullMapView = ({
     setIsTrackingUser(false)
   }, [])
 
+  const mapContactCreation = useMapContactCreation((id, coordinate) => {
+    // Clear the old filter before reconciliation so the saved Contact can
+    // become the selected carousel card (or the revealed iPad inspector row).
+    setSearch('')
+    pendingMarkerSnapIdRef.current = undefined
+    setActiveContactId(id)
+    setInspectorRevealRequest((request) => request + 1)
+    stopTrackingUser()
+    mapRef.current?.animateCamera({ center: coordinate }, { duration: 225 })
+  })
+
   const startTrackingUser = useCallback(async () => {
     let granted = locationPermission
     if (!granted) {
@@ -468,22 +482,18 @@ const FullMapView = ({
 
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
+  const mapCardBottom = insets.bottom + bottomBarHeight + LEGAL_LABEL_HEIGHT - 5
 
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, or the carousel.
   // Heights for the variable cards come from onLayout; the carousel is
   // fixed at CARD_HEIGHT.
   const locationButtonBottom =
-    contactMarkers.length === 0
-      ? insets.bottom + bottomBarHeight + 12 + emptyStateHeight + 8
-      : visibleContactMarkers.length === 0
-        ? insets.bottom + bottomBarHeight + 4 + noResultsHeight + 8
-        : insets.bottom +
-          bottomBarHeight +
-          LEGAL_LABEL_HEIGHT -
-          5 +
-          CARD_HEIGHT +
-          8
+    mapContactCreation.coordinate || visibleContactMarkers.length > 0
+      ? mapCardBottom + CARD_HEIGHT + 8
+      : contactMarkers.length === 0
+        ? insets.bottom + bottomBarHeight + 12 + emptyStateHeight + 8
+        : insets.bottom + bottomBarHeight + 4 + noResultsHeight + 8
 
   const mapControlStyle = {
     width: 44,
@@ -753,7 +763,21 @@ const FullMapView = ({
         showsUserLocation={locationPermission}
         ref={mapRef}
         onLayout={handleMapLayout}
-        onPress={collapseSearch}
+        onPress={() => {
+          collapseSearch()
+          mapContactCreation.cancel()
+        }}
+        onLongPress={(e) => {
+          if (draggingContactRef.current) return
+          collapseSearch()
+          stopTrackingUser()
+          pendingMarkerSnapIdRef.current = undefined
+          mapContactCreation.dropPin(e.nativeEvent.coordinate)
+          mapRef.current?.animateCamera(
+            { center: e.nativeEvent.coordinate },
+            { duration: 225 }
+          )
+        }}
         onPanDrag={handlePanDrag}
         mapPadding={{
           top: 0,
@@ -763,9 +787,20 @@ const FullMapView = ({
         }}
         style={{ height: '100%', width: '100%' }}
       >
+        {mapContactCreation.coordinate && (
+          <Marker
+            identifier='new-contact-location'
+            coordinate={mapContactCreation.coordinate}
+            pinColor={theme.colors.accent}
+            title={i18n.t('map_droppedPin')}
+            zIndex={1}
+            stopPropagation
+          />
+        )}
         {visibleContactMarkers.map((c) => (
           <Marker
             onPress={() => {
+              mapContactCreation.cancel()
               setInspectorRevealRequest((request) => request + 1)
               handlePinPress(c.id)
             }}
@@ -778,9 +813,14 @@ const FullMapView = ({
             coordinate={c.coordinate!}
             pinColor={c.pinColor}
             draggable
-            onDragEnd={(e) =>
+            onDragStart={() => {
+              draggingContactRef.current = true
+              mapContactCreation.cancel()
+            }}
+            onDragEnd={(e) => {
+              draggingContactRef.current = false
               handleDragContactPin(c.id, e.nativeEvent.coordinate)
-            }
+            }}
           />
         ))}
       </MapView>
@@ -865,7 +905,29 @@ const FullMapView = ({
         </Animated.View>
       )}
 
-      {contactMarkers.length === 0 ? (
+      {mapContactCreation.coordinate ? (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: isWide
+              ? insets.bottom + bottomBarHeight + 28
+              : mapCardBottom,
+            left: isWide ? undefined : sidebarWidth,
+            right: isWide ? 16 : undefined,
+            width: isWide ? inspectorWidth : width,
+            height: isWide ? undefined : CARD_HEIGHT,
+            // Match the focused carousel item, including its scaled contents.
+            transform: isWide ? undefined : [{ scale: parallaxScrollingScale }],
+          }}
+        >
+          <CreateContactCard
+            fill={!isWide}
+            coordinate={mapContactCreation.coordinate}
+            onCreate={mapContactCreation.createContact}
+            onCancel={mapContactCreation.cancel}
+          />
+        </View>
+      ) : contactMarkers.length === 0 ? (
         renderEmptyState()
       ) : visibleContactMarkers.length === 0 ? (
         <View
@@ -971,7 +1033,7 @@ const FullMapView = ({
           loop={visibleContactMarkers.length !== 1}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + bottomBarHeight + LEGAL_LABEL_HEIGHT - 5,
+            bottom: mapCardBottom,
             width,
             height: CARD_HEIGHT,
           }}
@@ -1043,7 +1105,11 @@ const FullMapView = ({
       <View
         style={{
           position: 'absolute',
-          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
+          right:
+            isWide &&
+            (contactMarkers.length > 0 || mapContactCreation.coordinate)
+              ? inspectorWidth + 48
+              : 16,
           bottom: isWide
             ? insets.bottom + bottomBarHeight + 32
             : locationButtonBottom,
@@ -1097,7 +1163,7 @@ const MapScreen = ({
 
   const contactMarkers: ContactMarker[] = useMemo(() => {
     const contactsWithCoords = activeContacts.filter(
-      (c) => c.coordinate?.latitude && c.coordinate.longitude
+      (c) => c.coordinate != null
     )
     return contactsWithCoords.map((c) => ({
       ...c,

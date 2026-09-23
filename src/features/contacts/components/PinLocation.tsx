@@ -86,13 +86,7 @@ export default function PinLocation(props: {
   }, [])
 
   const otherContacts = useMemo(
-    () =>
-      contacts.filter(
-        (c) =>
-          c.id !== contact.id &&
-          c.coordinate?.latitude &&
-          c.coordinate.longitude
-      ),
+    () => contacts.filter((c) => c.id !== contact.id && c.coordinate != null),
     [contact.id, contacts]
   )
 
@@ -107,31 +101,40 @@ export default function PinLocation(props: {
         <XView style={{ gap: 12, alignItems: 'center' }}>
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
               flex: 1,
               minWidth: 0,
+              gap: 4,
             }}
           >
-            <Text
-              style={{
-                flexShrink: 1,
-                fontFamily: theme.fonts.medium,
-                fontSize: theme.fontSize('md'),
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t('pinOnMap')}
-            </Text>
-            <InfoPopover
-              title={i18n.t('pinOnMap')}
-              description={
-                contact.coordinate
-                  ? i18n.t('pinOnMap_customSet')
-                  : i18n.t('pinOnMap_descriptionAuto')
-              }
-              inline
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text
+                style={{
+                  flexShrink: 1,
+                  fontFamily: theme.fonts.medium,
+                  fontSize: theme.fontSize('md'),
+                  color: theme.colors.text,
+                }}
+              >
+                {i18n.t('pinOnMap')}
+              </Text>
+              <InfoPopover
+                title={i18n.t('pinOnMap')}
+                description={
+                  contact.coordinate
+                    ? i18n.t('pinOnMap_customSet')
+                    : i18n.t('pinOnMap_descriptionAuto')
+                }
+                inline
+              />
+            </View>
+            {contact.coordinate && (
+              <Text style={{ color: theme.colors.textAlt }}>
+                {i18n.t('pinCoordinates', {
+                  latitude: contact.coordinate.latitude.toFixed(5),
+                  longitude: contact.coordinate.longitude.toFixed(5),
+                })}
+              </Text>
+            )}
           </View>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {contact.coordinate && (
@@ -146,15 +149,14 @@ export default function PinLocation(props: {
                 }}
                 onPress={() => {
                   setCoordinate(undefined)
+                  setContact({
+                    ...contact,
+                    coordinate: undefined,
+                    userDraggedCoordinate: undefined,
+                  })
                   if (userLocation) {
                     setRegion(userLocation)
                     mapRef.current?.animateToRegion(userLocation)
-
-                    setContact({
-                      ...contact,
-                      coordinate: undefined,
-                      userDraggedCoordinate: undefined,
-                    })
                   }
                 }}
               >
@@ -255,7 +257,7 @@ export default function PinLocation(props: {
                 }
                 onRegionChange={(newRegion) => setRegion(newRegion)}
               >
-                {coordinate?.latitude && coordinate.longitude && (
+                {coordinate && (
                   <Marker
                     draggable
                     identifier={contact.id}

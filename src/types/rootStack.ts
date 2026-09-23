@@ -1,4 +1,5 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Coordinate } from '@/types/contact'
 
 export type RootStackParamList = {
   Root: undefined
@@ -11,7 +12,12 @@ export type RootStackParamList = {
     returnToContacts?: boolean
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
-  'Contact Form': { id: string; edit?: boolean; returnToContacts?: boolean } // Contact ID
+  'Contact Form': {
+    id: string
+    edit?: boolean
+    returnToContacts?: boolean
+    initialCoordinate?: Coordinate
+  }
   'Contact Selector': undefined
   'Add Time':
     | {

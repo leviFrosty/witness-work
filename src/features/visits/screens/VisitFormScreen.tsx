@@ -19,6 +19,8 @@ import Section from '@/components/ui/inputs/Section'
 import { Visit, Notification } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
+import FollowUpCalendarControls from '@/features/visits/components/FollowUpCalendarControls'
+import { useCalendarSync } from '@/stores/calendarSync'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import moment from 'moment'
@@ -218,6 +220,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         // so flipping the switch on has sane defaults. `followUpEnabled`
         // decides whether the draft is persisted.
         followUp: {
+          calendarIncluded: conversationToUpdate.followUp?.calendarIncluded,
+          calendarDurationMinutes:
+            conversationToUpdate.followUp?.calendarDurationMinutes,
           topic: conversationToUpdate.followUp?.topic,
           date: new Date(conversationToUpdate.followUp?.date || new Date()),
           notifyMe: conversationToUpdate.followUp?.notifyMe || false,
@@ -238,6 +243,8 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
       date: new Date(),
       note: '',
       followUp: {
+        calendarIncluded: useCalendarSync.getState().defaultInclude,
+        calendarDurationMinutes: 30,
         date: moment()
           .add(
             returnVisitTimeOffset?.amount ??
@@ -723,6 +730,12 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                 notifyMeOffset={notifyMeOffset}
                 setConversation={setConversation}
                 setNotifyMeOffset={setNotifyMeOffset}
+              />
+              <FollowUpCalendarControls
+                followUp={conversation.followUp!}
+                onChange={(followUp) =>
+                  setConversation({ ...conversation, followUp })
+                }
               />
             </>
           )}

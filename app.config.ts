@@ -1,5 +1,6 @@
 import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
+import en from './src/locales/en-US.json'
 /** Passed in from `env` property in profile `./eas.json` to eas build */
 const IS_DEV = process.env.APP_VARIANT === 'development'
 
@@ -26,6 +27,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
         NSSupportsLiveActivities: true,
+        NSCalendarsUsageDescription: en.calendarPermissionUsage,
+        NSCalendarsFullAccessUsageDescription: en.calendarPermissionUsage,
         LSSupportsOpeningDocumentsInPlace: true,
         // expo-background-fetch requires this permitted task identifier
         // to register the snapshot refresh task.

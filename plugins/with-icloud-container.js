@@ -33,13 +33,13 @@ const withICloudContainer = (config, props) => {
     c.modResults['com.apple.developer.ubiquity-container-identifiers'] = [
       containerIdentifier,
     ]
-    // CloudDocuments is the capability for NSFileCoordinator-based document
-    // sync; CloudKit is not required for this approach.
+    // Document sync and calendar publishing ownership use separate services.
     const existingServices = c.modResults['com.apple.developer.icloud-services']
     const services = new Set(
       Array.isArray(existingServices) ? existingServices : []
     )
     services.add('CloudDocuments')
+    services.add('CloudKit')
     c.modResults['com.apple.developer.icloud-services'] = Array.from(services)
     return c
   })

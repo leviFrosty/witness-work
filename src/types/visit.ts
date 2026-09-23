@@ -43,6 +43,12 @@ export type Visit = {
    * conversation store's persist migration and the sync payload parser.
    */
   followUp?: {
+    /**
+     * User intent, synced with the Visit; native calendar identifiers stay
+     * local.
+     */
+    calendarIncluded?: boolean
+    calendarDurationMinutes?: number
     date: Date
     notifyMe: boolean
     topic?: string

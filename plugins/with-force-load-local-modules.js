@@ -31,6 +31,7 @@ const LOCAL_MODULES = [
   { importName: 'WidgetBridge', className: 'WidgetBridgeModule' },
   { importName: 'StopwatchBridge', className: 'StopwatchBridgeModule' },
   { importName: 'ICloudBridge', className: 'ICloudBridgeModule' },
+  { importName: 'CalendarBridge', className: 'CalendarBridgeModule' },
   { importName: 'KeychainUuid', className: 'KeychainUuidModule' },
   { importName: 'AppAttest', className: 'AppAttestModule' },
 ]
@@ -39,7 +40,24 @@ const IMPORT_MARKER = '// with-force-load-local-modules:imports'
 const REF_MARKER = '// with-force-load-local-modules:refs'
 
 const patchAppDelegate = (contents) => {
-  if (contents.includes(IMPORT_MARKER)) return contents
+  if (contents.includes(IMPORT_MARKER)) {
+    // Prebuild may reuse an AppDelegate generated before a local module was
+    // added. Extend the existing block instead of skipping new modules.
+    for (const module of LOCAL_MODULES) {
+      const declaration = `internal import ${module.importName}`
+      const reference = `    _ = ${module.className}.self // retain in Release link`
+      if (!contents.includes(declaration)) {
+        contents = contents.replace(
+          IMPORT_MARKER,
+          `${IMPORT_MARKER}\n${declaration}`
+        )
+      }
+      if (!contents.includes(reference)) {
+        contents = contents.replace(REF_MARKER, `${REF_MARKER}\n${reference}`)
+      }
+    }
+    return contents
+  }
 
   // `internal import` mirrors the AppDelegate's other Expo module
   // imports. Plain `import` fails to resolve for static-lib pods because

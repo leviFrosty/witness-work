@@ -116,6 +116,9 @@ const ADDRESS_POLICY: Record<keyof Address, FieldPolicy> = {
 type FollowUp = NonNullable<Visit['followUp']>
 
 const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
+  // Export consent belongs to the sender, not the recipient of a contact share.
+  calendarIncluded: 'omit',
+  calendarDurationMinutes: 'omit',
   date: 'always',
   notifyMe: 'always',
   topic: 'optional',

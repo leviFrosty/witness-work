@@ -38,6 +38,7 @@ export type RootStackParamList = {
   NotesImportComposer: { hash?: string; fromOnboarding?: boolean } | undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
+  PreferencesCalendar: undefined
   PreferencesPlans: undefined
   PreferencesNavigation: undefined
   PreferencesAudioAndHaptics: undefined

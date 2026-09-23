@@ -19,6 +19,7 @@
     "prepare": "husky",
     "test": "vitest",
     "test:release-tools": "node --test scripts/tests/release-tools.node.mjs",
+    "test:calendar-native": "node --test scripts/tests/calendar-native.node.mjs",
     "testFinal": "vitest run",
     "check:all": "concurrently 'pnpm run test:release-tools' 'pnpm run testFinal' 'pnpm run typecheck' 'pnpm run lint' 'pnpm run doctor'",
     "testVitest": "",

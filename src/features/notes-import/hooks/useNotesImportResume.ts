@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 
 export function useNotesImportResume() {
-  const enabled = useFeatureFlag('notes-import')
+  const enabled = useNotesImportEnabled()
 
   // Flag initialization refreshes on foreground/reconnect; resume only once visible.
   useEffect(() => {

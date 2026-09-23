@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import {
   ChevronRight as ChevronRightIcon,
   Cloud as CloudIcon,
@@ -23,7 +23,7 @@ import NotesImportReadyDot from '@/features/notes-import/components/NotesImportR
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   const navigation = useNavigation<RootStackNavigation>()
-  const notesImportEnabled = useFeatureFlag('notes-import')
+  const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
   const notesImportReadyCount = useNotesImportManager((s) =>
     unviewedReadyImportCount(s.entries)

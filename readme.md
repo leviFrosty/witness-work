@@ -2,7 +2,7 @@
 
 WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-It is written in Typescript using React Native and Expo and is available on iOS.
+It is written in Typescript using React Native and Expo and is available on iOS and Android.
 
 ## Sponsor
 
@@ -35,7 +35,7 @@ WitnessWork is available in 16 languages. Some of these translations are done by
 
 ## Building
 
-Development setup and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
+Development setup (iOS and Android) and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
 
 ## License
 

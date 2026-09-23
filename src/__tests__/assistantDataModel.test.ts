@@ -10,7 +10,11 @@ vi.mock(
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
 }))
-vi.mock('expo-device', () => ({ DeviceType: { TABLET: 2 }, deviceType: 1 }))
+vi.mock('expo-device', () => ({
+  DeviceType: { TABLET: 2 },
+  deviceType: 1,
+  osName: 'iOS',
+}))
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
 }))

@@ -1,6 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'

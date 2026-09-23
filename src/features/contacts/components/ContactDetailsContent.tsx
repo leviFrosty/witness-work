@@ -9,7 +9,9 @@ import {
   Share as ShareIcon,
   Star as StarIcon,
 } from 'lucide-react-native'
-import { View, ScrollView, Share, Alert, Pressable } from 'react-native'
+import { View, ScrollView, Alert, Pressable } from 'react-native'
+import { shareAsync } from 'expo-sharing'
+import { shareUrl } from '@/lib/share'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -258,18 +260,8 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     // contact can get is one the user drops by hand.
     dataProtectionMode,
   } = usePreferences()
-  const mapRef = useRef<MapView>(null)
   const colors = useMarkerColors()
   const { locationPermission } = useLocation()
-
-  const fitToMarkers = useCallback(() => {
-    setTimeout(() => {
-      if (!contact.coordinate) {
-        return
-      }
-      mapRef.current?.fitToSuppliedMarkers([contact.id])
-    }, 0)
-  }, [contact.coordinate, contact.id])
 
   const pinColor = useMemo(
     () =>
@@ -361,7 +353,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             {i18n.t('coordinatesAllowMapView')}
           </Text>
         </View>
-      ) : contact.coordinate?.latitude && contact.coordinate?.longitude ? (
+      ) : contact.coordinate ? (
         <>
           <Copyeable text={coordinateAsString(contact)}>
             <Text
@@ -376,8 +368,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           <MapView
             userInterfaceStyle={colorScheme ? colorScheme : undefined}
             showsUserLocation={locationPermission}
-            ref={mapRef}
-            onLayout={fitToMarkers}
+            initialRegion={{
+              ...contact.coordinate,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
             style={{
               height: 180,
               width: '100%',
@@ -668,9 +663,10 @@ const ContactDetailsContent = ({
 
     try {
       await FileSystem.writeAsStringAsync(fileUri, jsonString)
-      await Share.share({
-        url: fileUri,
-        title: i18n.t('exportContact'),
+      await shareAsync(fileUri, {
+        mimeType: 'application/witnesswork+json',
+        UTI: 'com.leviwilkerson.witnesswork.contact',
+        dialogTitle: i18n.t('exportContact'),
       })
     } catch (error) {
       logger.error('Error sharing contact file:', error)
@@ -700,10 +696,7 @@ const ContactDetailsContent = ({
       // Open Graph metadata from the ww-proxy fallback page and renders a
       // rich link preview in the share sheet + iMessage bubble. Passing
       // both fields causes some targets to duplicate the URL.
-      await Share.share({
-        url,
-        title: i18n.t('exportContact'),
-      })
+      await shareUrl(url, i18n.t('exportContact'))
       if (trimmed) {
         toast.show(i18n.t('shareContact'), {
           message: i18n.t('shareContactTrimmed', {

@@ -6,7 +6,7 @@ import {
   Shapes as ShapesIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -134,7 +134,7 @@ const SupporterBenefits = ({ compact }: Props) => {
       >
         {i18n.t('supportersUnlock')}
       </Text>
-      {!compact && <HeroCard />}
+      {!compact && Platform.OS === 'ios' && <HeroCard />}
       <View style={{ gap: 14 }}>
         {/* <Text
           style={{
@@ -147,21 +147,25 @@ const SupporterBenefits = ({ compact }: Props) => {
         >
           {i18n.t('supporterPerksLabel')}
         </Text> */}
-        <PerkRow
-          icon={FileTextIcon}
-          title={i18n.t('supporterPerkAiTitle')}
-          desc={i18n.t('supporterPerkAiDesc')}
-        />
+        {Platform.OS === 'ios' && (
+          <PerkRow
+            icon={FileTextIcon}
+            title={i18n.t('supporterPerkAiTitle')}
+            desc={i18n.t('supporterPerkAiDesc')}
+          />
+        )}
         <PerkRow
           icon={PaletteIcon}
           title={i18n.t('supporterPerkAccentTitle')}
           desc={i18n.t('supporterPerkAccentDesc')}
         />
-        <PerkRow
-          icon={ShapesIcon}
-          title={i18n.t('supporterPerkAppIconTitle')}
-          desc={i18n.t('supporterPerkAppIconDesc')}
-        />
+        {Platform.OS === 'ios' && (
+          <PerkRow
+            icon={ShapesIcon}
+            title={i18n.t('supporterPerkAppIconTitle')}
+            desc={i18n.t('supporterPerkAppIconDesc')}
+          />
+        )}
         <PerkRow
           icon={PlusIcon}
           title={i18n.t('supporterPerkMoreTitle')}

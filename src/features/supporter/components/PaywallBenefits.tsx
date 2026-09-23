@@ -5,7 +5,7 @@ import {
   Star as StarIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { Image } from 'expo-image'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -16,6 +16,7 @@ import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRating
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
+  iosOnly?: boolean
   // `true`/`false` render a check/dash; a TranslationKey renders that text
   // (e.g. the `5` vs. `Unlimited` Notes Import allowance).
   free: boolean | TranslationKey
@@ -23,12 +24,27 @@ const FEATURE_ROWS: ReadonlyArray<{
 }> = [
   // Differentiators lead; the "always free" rows close the table as a
   // trust signal rather than opening it with reasons not to pay.
-  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
+  {
+    labelKey: 'paywallFeatureSync',
+    free: false,
+    supporter: true,
+    iosOnly: true,
+  },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
-  { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
+  {
+    labelKey: 'paywallFeatureAppIcons',
+    free: false,
+    supporter: true,
+    iosOnly: true,
+  },
   { labelKey: 'paywallFeatureCore', free: true, supporter: true },
   { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
-  { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
+  {
+    labelKey: 'paywallFeatureWidgets',
+    free: true,
+    supporter: true,
+    iosOnly: true,
+  },
 ]
 
 const resolveCell = (value: boolean | TranslationKey): boolean | string =>
@@ -224,12 +240,14 @@ export const ComparisonChart = ({
     label: string
     free: boolean | string
     supporter: boolean | string
-  }> = FEATURE_ROWS.map((row) => ({
-    key: row.labelKey,
-    label: i18n.t(row.labelKey),
-    free: resolveCell(row.free),
-    supporter: resolveCell(row.supporter),
-  }))
+  }> = FEATURE_ROWS.filter((row) => !row.iosOnly || Platform.OS === 'ios').map(
+    (row) => ({
+      key: row.labelKey,
+      label: i18n.t(row.labelKey),
+      free: resolveCell(row.free),
+      supporter: resolveCell(row.supporter),
+    })
+  )
   if (notesImportAllowance) {
     rows.splice(1, 0, {
       key: 'notes-import',

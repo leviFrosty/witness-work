@@ -321,7 +321,9 @@ export const PREFERENCE_DEFAULTS = {
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
 
-  defaultNavigationMapProvider: 'apple' as DefaultNavigationMapProvider,
+  defaultNavigationMapProvider: (Device.osName === 'Android'
+    ? 'google'
+    : 'apple') as DefaultNavigationMapProvider,
   lastAppVersion: Constants.expoConfig?.version || null,
   /**
    * Set when a passively announced release lands, cleared once the user opens

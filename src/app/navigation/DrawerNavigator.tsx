@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
   Heart as HeartIcon,
@@ -29,7 +29,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 const Drawer = createDrawerNavigator()
 
 const DrawerNavigator = () => {
-  const notesImportEnabled = useFeatureFlag('notes-import')
+  const notesImportEnabled = useNotesImportEnabled()
   const { hasPurchasedBefore } = useCustomer()
   const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()

@@ -3,8 +3,15 @@ import { z } from 'zod'
 const envVariables = z.object({
   EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: z
     .string()
+    .optional()
     .describe(
       '[iOS] Allows use of revenuecat service for in-app purchases for donations. Used at runtime.'
+    ),
+  EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: z
+    .string()
+    .optional()
+    .describe(
+      '[Android] RevenueCat Google Play public SDK key. Used at runtime.'
     ),
   APP_VARIANT: z
     .string()

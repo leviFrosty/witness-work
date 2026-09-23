@@ -11,6 +11,9 @@
   "witnessWork": "WitnessWork",
   "getStarted": "Get Started",
   "privacyFirstTitle": "Privacy, by design.",
+  "privacyFirstDescAndroid": "Your ministry records stay on your device. Maps, address search, purchases, and diagnostics use online services. Usage statistics help improve the app.",
+  "privacyOnDeviceTitleAndroid": "Records Stored on Your Device",
+  "privacyOnDeviceDescAndroid": "Your profile, contacts, reports, and notes are stored locally. Address searches go to our mapping provider, and sharing or exporting sends only the data you choose.",
   "privacyFirstDesc": "WitnessWork was built to keep your ministry private. No accounts, no tracking, no data leaving your device without your permission.",
   "privacyOfflineTitle": "Works 100% Offline",
   "privacyOfflineDesc": "Every core feature runs on your device. No internet required.",
@@ -1443,6 +1446,8 @@
   "resetTimer": "Reset Timer",
   "resetTimer_description": "You will lose your current time entry if you reset the timer. Do you want to reset?",
   "reset": "Reset",
+  "timerStart": "Start timer",
+  "timerPause": "Pause timer",
   "notEnoughTime": "Not Enough Time",
   "notEnoughTime_description": "Not enough time has elapsed. You must have at least 5 minutes to submit a time entry.",
   "providedTimeIsLessThanFiveMinutes": "Provided time is less than 5 minutes.",
@@ -2398,5 +2403,8 @@
   "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits.",
   "audioAndHaptics": "Audio & Haptics",
   "playSounds": "Play sounds",
-  "playSounds_description": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow iOS Settings > Notifications."
+  "playSounds_description": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow iOS Settings > Notifications.",
+  "playSounds_descriptionAndroid": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow your device's notification settings.",
+  "notifications": "Notifications",
+  "purchasesUnavailable": "Purchases are unavailable right now. Please try again later."
 }

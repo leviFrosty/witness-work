@@ -20,6 +20,7 @@ import { GlassColorSchemeOverrideContext } from '@/contexts/glassColorScheme'
 import useConversations from '@/stores/conversationStore'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import {
+  Platform,
   useWindowDimensions,
   Pressable,
   StyleSheet,
@@ -66,6 +67,7 @@ import {
   reconcileActiveContact,
   resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
+import { fitMapToCoordinates } from '@/features/map/lib/mapCamera'
 import { addressToString, coordinateAsString } from '@/lib/address'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import MapContactInspector, {
@@ -122,8 +124,15 @@ const FullMapView = ({
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
+  const [isMapReady, setIsMapReady] = useState(false)
+  const [hasMapLayout, setHasMapLayout] = useState(false)
   const [mapLayer, setMapLayer] = useState<MapLayer>('standard')
   const insets = useSafeAreaInsets()
+  // Google Maps' logo sits above its padding; keep cards clear of that strip.
+  const bottomOverlayInset =
+    insets.bottom +
+    bottomBarHeight +
+    (Platform.OS === 'android' ? LEGAL_LABEL_HEIGHT : 0)
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
@@ -198,19 +207,23 @@ const FullMapView = ({
   }
 
   const fitToMarkers = useCallback(() => {
-    if (visibleContactMarkers.length === 0) {
-      return
-    }
-    mapRef.current?.fitToSuppliedMarkers(visibleContactMarkers.map((c) => c.id))
-  }, [visibleContactMarkers])
+    if (!isMapReady || !hasMapLayout) return
+    fitMapToCoordinates(
+      mapRef.current,
+      visibleContactMarkers.map((contact) => contact.coordinate!)
+    )
+  }, [hasMapLayout, isMapReady, visibleContactMarkers])
 
-  const handleMapLayout = () => {
-    fitToMarkers()
-  }
-
-  const fitToContactId = useCallback((id: string) => {
-    mapRef.current?.fitToSuppliedMarkers([id])
-  }, [])
+  const fitToContactId = useCallback(
+    (id: string) => {
+      if (!isMapReady || !hasMapLayout) return
+      const coordinate = visibleContactMarkers.find(
+        (c) => c.id === id
+      )?.coordinate
+      if (coordinate) fitMapToCoordinates(mapRef.current, [coordinate])
+    },
+    [hasMapLayout, isMapReady, visibleContactMarkers]
+  )
 
   const handleCarouselSnap = useCallback(
     (index: number) => {
@@ -347,11 +360,16 @@ const FullMapView = ({
   const hasFitOnMount = useRef(false)
 
   useEffect(() => {
-    if (!hasFitOnMount.current) {
+    if (
+      !hasFitOnMount.current &&
+      isMapReady &&
+      hasMapLayout &&
+      visibleContactMarkers.length > 0
+    ) {
       fitToMarkers()
       hasFitOnMount.current = true
     }
-  }, [fitToMarkers])
+  }, [fitToMarkers, hasMapLayout, isMapReady, visibleContactMarkers.length])
 
   useEffect(() => {
     const getLocation = async () => {
@@ -496,7 +514,7 @@ const FullMapView = ({
 
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
-  const mapCardBottom = insets.bottom + bottomBarHeight + LEGAL_LABEL_HEIGHT - 5
+  const mapCardBottom = bottomOverlayInset + LEGAL_LABEL_HEIGHT - 5
 
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, or the carousel.
@@ -506,8 +524,8 @@ const FullMapView = ({
     mapContactCreation.coordinate || visibleContactMarkers.length > 0
       ? mapCardBottom + CARD_HEIGHT + 8
       : contactMarkers.length === 0
-        ? insets.bottom + bottomBarHeight + 12 + emptyStateHeight + 8
-        : insets.bottom + bottomBarHeight + 4 + noResultsHeight + 8
+        ? bottomOverlayInset + 12 + emptyStateHeight + 8
+        : bottomOverlayInset + 4 + noResultsHeight + 8
 
   const mapControlStyle = {
     width: 44,
@@ -594,7 +612,7 @@ const FullMapView = ({
     left: sidebarWidth + 16,
     right: isWide ? undefined : 16,
     width: isWide ? 400 : undefined,
-    bottom: insets.bottom + bottomBarHeight + 12,
+    bottom: bottomOverlayInset + 12,
   }
 
   const renderEmptyState = () => (
@@ -611,7 +629,7 @@ const FullMapView = ({
         style={{
           width: '100%',
           maxWidth: isTablet ? 520 : undefined,
-          maxHeight: height - insets.top - insets.bottom - bottomBarHeight - 96,
+          maxHeight: height - insets.top - bottomOverlayInset - 96,
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
@@ -784,8 +802,10 @@ const FullMapView = ({
             mapType={mapLayer}
             userInterfaceStyle={colorScheme ? colorScheme : undefined}
             showsUserLocation={locationPermission}
+            showsMyLocationButton={false}
             ref={mapRef}
-            onLayout={handleMapLayout}
+            onLayout={() => setHasMapLayout(true)}
+            onMapReady={() => setIsMapReady(true)}
             onPress={() => {
               collapseSearch()
               mapContactCreation.cancel()
@@ -807,7 +827,11 @@ const FullMapView = ({
               right:
                 isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
               left: sidebarWidth,
-              bottom: insets.bottom + bottomBarHeight / 4,
+              bottom:
+                insets.bottom +
+                (Platform.OS === 'android'
+                  ? bottomBarHeight
+                  : bottomBarHeight / 4),
             }}
             style={{ height: '100%', width: '100%' }}
           >
@@ -936,9 +960,7 @@ const FullMapView = ({
             <View
               style={{
                 position: 'absolute',
-                bottom: isWide
-                  ? insets.bottom + bottomBarHeight + 28
-                  : mapCardBottom,
+                bottom: isWide ? bottomOverlayInset + 28 : mapCardBottom,
                 left: isWide ? undefined : sidebarWidth,
                 right: isWide ? 16 : undefined,
                 width: isWide ? inspectorWidth : width,
@@ -966,7 +988,7 @@ const FullMapView = ({
               onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
               style={{
                 position: 'absolute',
-                bottom: insets.bottom + bottomBarHeight + 4,
+                bottom: bottomOverlayInset + 4,
                 width: isWide ? inspectorWidth : width,
                 right: isWide ? 16 : undefined,
                 padding: 10,
@@ -1019,7 +1041,7 @@ const FullMapView = ({
                 position: 'absolute',
                 right: 16,
                 top: insets.top + 8,
-                bottom: insets.bottom + bottomBarHeight + 28,
+                bottom: bottomOverlayInset + 28,
                 width: inspectorWidth,
               }}
             >
@@ -1143,9 +1165,7 @@ const FullMapView = ({
               position: 'absolute',
               right:
                 isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
-              bottom: isWide
-                ? insets.bottom + bottomBarHeight + 32
-                : locationButtonBottom,
+              bottom: isWide ? bottomOverlayInset + 32 : locationButtonBottom,
             }}
           >
             <Button

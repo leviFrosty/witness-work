@@ -4,7 +4,8 @@ import {
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View, Pressable } from 'react-native'
+import { View, Pressable, Platform } from 'react-native'
+import { resolveNavigationMapProvider } from '@/lib/navigationMapProvider'
 import i18n from '@/lib/locales'
 import {
   usePreferences,
@@ -33,7 +34,11 @@ const PROVIDER_ICON: Record<
 }
 
 const StepDefaultNav = ({ goNext, goBack }: Props) => {
-  const { defaultNavigationMapProvider, set } = usePreferences()
+  const { defaultNavigationMapProvider: savedProvider, set } = usePreferences()
+  const defaultNavigationMapProvider = resolveNavigationMapProvider(
+    savedProvider,
+    Platform.OS
+  )
   const theme = useTheme()
 
   const selectedOption = navigationSelectionOptions.find(

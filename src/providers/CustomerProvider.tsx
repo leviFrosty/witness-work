@@ -12,6 +12,7 @@ import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
+import { Platform } from 'react-native'
 
 interface Props {}
 
@@ -23,6 +24,7 @@ interface Props {}
 const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerInfo | null>(null)
   const [ready, setReady] = useState(false)
+  const [unavailable, setUnavailable] = useState(false)
   const hasInitialized = useRef(false)
 
   const getCustomerInfo = useCallback(async () => {
@@ -47,16 +49,27 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
     // `configure` returns void synchronously; `setLogLevel` is fire-and-forget.
     // Flip `ready` immediately after so downstream screens can fetch offerings.
-    const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || ''
+    const apiKey =
+      Platform.OS === 'android'
+        ? process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY
+        : process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
     logger.log('[CustomerProvider] init')
 
     if (!apiKey) {
+      setUnavailable(true)
+      // Android purchases can remain disabled until the Play app is configured.
+      if (Platform.OS === 'android') {
+        logger.log(
+          '[CustomerProvider] Android purchases unavailable: no Google SDK key configured.'
+        )
+        return
+      }
       // Empty key means the EAS env var was never inlined into the bundle —
       // typically caused by missing `EXPO_PUBLIC_` prefix or `secret`
       // visibility. Report loudly so TestFlight regressions don't ship
       // silently like they did before this guard was added.
       const error = new Error(
-        '[CustomerProvider] EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY is empty at runtime — RevenueCat will not function. Check EAS env var name and visibility (must be sensitive/plaintext, not secret).'
+        `[CustomerProvider] RevenueCat ${Platform.OS} SDK key is empty at runtime. Check the platform-specific EXPO_PUBLIC_REVENUECAT key and EAS visibility (must be sensitive/plaintext, not secret).`
       )
       logger.error(error.message)
       errorTracking.captureException(error)
@@ -94,6 +107,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // will fail, but the rest of the app should still load.
       logger.error('[CustomerProvider] Purchases.configure threw', error)
       errorTracking.captureException(error)
+      setUnavailable(true)
       return
     }
 
@@ -149,6 +163,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     hasPurchasedBefore,
     setCustomer,
     ready,
+    unavailable,
   }
 
   return (

@@ -5,7 +5,7 @@ import {
   Wifi as WifiIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -43,8 +43,14 @@ const PrivacyFirst = ({ goBack, goNext }: Props) => {
     {
       id: 'on-device',
       icon: SmartphoneIcon,
-      titleKey: 'privacyOnDeviceTitle',
-      descriptionKey: 'privacyOnDeviceDesc',
+      titleKey:
+        Platform.OS === 'android'
+          ? 'privacyOnDeviceTitleAndroid'
+          : 'privacyOnDeviceTitle',
+      descriptionKey:
+        Platform.OS === 'android'
+          ? 'privacyOnDeviceDescAndroid'
+          : 'privacyOnDeviceDesc',
       color: theme.colors.indigo,
     },
     {
@@ -92,7 +98,11 @@ const PrivacyFirst = ({ goBack, goNext }: Props) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('privacyFirstDesc')}
+            {i18n.t(
+              Platform.OS === 'android'
+                ? 'privacyFirstDescAndroid'
+                : 'privacyFirstDesc'
+            )}
           </Text>
           {highlights.map((h) => (
             <Card

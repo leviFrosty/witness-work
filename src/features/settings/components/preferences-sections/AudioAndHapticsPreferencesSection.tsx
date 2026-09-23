@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -12,7 +12,11 @@ const AudioAndHapticsPreferencesSection = () => {
       <Section>
         <InputRowSwitch
           label={i18n.t('playSounds')}
-          description={i18n.t('playSounds_description')}
+          description={i18n.t(
+            Platform.OS === 'android'
+              ? 'playSounds_descriptionAndroid'
+              : 'playSounds_description'
+          )}
           value={audioEnabled}
           onValueChange={(value) => set({ audioEnabled: value })}
           lastInSection

@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { prepareNotesImportAppAttestRecovery } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 
 // Enroll existing keys after an upgrade; first-time users still prepare lazily.
 export default function NotesImportAttestPreparation() {
-  const enabled = useFeatureFlag('notes-import')
+  const enabled = useNotesImportEnabled()
   useEffect(() => {
     if (!enabled) return
     void prepareNotesImportAppAttestRecovery().catch(() => {

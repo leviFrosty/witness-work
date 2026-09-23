@@ -36,10 +36,10 @@ const ZERO: Stopwatch.StopwatchState = {
 }
 
 /**
- * Source of truth for the stopwatch is the iOS Swift `StopwatchStore` (App
- * Group UserDefaults). Lock-screen buttons on the Live Activity mutate the same
- * state via App Intents and we rehydrate on foreground. This hook is a thin
- * view over that state — commands are dispatched to the native module.
+ * The bridge owns persisted timestamp state: Swift/App Group UserDefaults on
+ * iOS, MMKV on Android. iOS Live Activities can also change it through App
+ * Intents. Both implementations rehydrate on foreground; this hook renders
+ * elapsed time and dispatches commands through the same interface.
  */
 export const useStopWatch = () => {
   const [state, setState] = useState<Stopwatch.StopwatchState>(() =>

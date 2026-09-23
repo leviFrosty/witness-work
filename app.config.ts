@@ -44,6 +44,51 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: IS_BETA ? './src/assets/icon-beta.png' : './src/assets/icon.png',
     userInterfaceStyle: 'automatic',
     assetBundlePatterns: ['**/*'],
+    android: {
+      // Avatar selection uses Android's system photo picker. Saving a photo
+      // does not need broad access to the user's media library.
+      blockedPermissions: [
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
+        'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+      ],
+      package: IS_DEV
+        ? 'com.leviwilkerson.jwtimedev'
+        : 'com.leviwilkerson.jwtime',
+      adaptiveIcon: {
+        foregroundImage: './src/assets/adaptive-icon.png',
+        monochromeImage: './src/assets/adaptive-icon-monochrome.png',
+        backgroundColor: '#4BD27C',
+      },
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          category: ['BROWSABLE', 'DEFAULT'],
+          data: [
+            {
+              scheme: 'https',
+              host: 'ww-proxy.leviwilkerson.com',
+              path: '/c',
+            },
+            {
+              scheme: 'https',
+              host: 'ww-proxy.leviwilkerson.com',
+              pathPrefix: '/c/',
+            },
+          ],
+        },
+        {
+          action: 'VIEW',
+          category: ['BROWSABLE', 'DEFAULT'],
+          data: [
+            { scheme: 'content', mimeType: 'application/witnesswork+json' },
+            { scheme: 'file', mimeType: 'application/witnesswork+json' },
+          ],
+        },
+      ],
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_ID,
@@ -131,6 +176,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
       ['expo-build-properties', { ios: { enableSceneSupport: true } }],
+      './plugins/with-android-build-memory',
       './plugins/with-force-load-local-modules',
       [
         './plugins/with-icloud-container',
@@ -142,6 +188,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       '@bacons/apple-targets',
       './plugins/with-posthog-symbols-last',
       '@react-native-community/datetimepicker',
+      [
+        'react-native-maps',
+        {
+          androidGoogleMapsApiKey:
+            process.env.GOOGLE_MAPS_ANDROID_API_KEY ||
+            'YOUR_GOOGLE_MAPS_ANDROID_API_KEY',
+        },
+      ],
       [
         'expo-alternate-app-icons',
         [

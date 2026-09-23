@@ -42,6 +42,7 @@ googleServiceAccount.json
 %ProgramData%/
 
 /ios/
+/android/
 
 # @bacons/apple-targets generated entitlements
 targets/*/generated.entitlements

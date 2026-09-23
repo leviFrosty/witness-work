@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 import { useWindowDimensions, View } from 'react-native'
-import { FullWindowOverlay } from 'react-native-screens'
+import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { Confetti, ConfettiConfig, useConfetti } from '@/vendor/ConfettiSkia'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 

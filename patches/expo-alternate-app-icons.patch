@@ -1,3 +1,16 @@
+diff --git a/plugin/build/index.js b/plugin/build/index.js
+--- a/plugin/build/index.js
++++ b/plugin/build/index.js
+@@ -18,6 +18,7 @@ function withAlternateAppIcons(config, props = []) {
+     (0, utils_1.generateTypeIconsFile)(iconNames);
+     config = (0, withAlternateAppIconsGenerator_1.withAlternateAppIconsGenerator)(config, alternateIcons);
+     config = (0, withXcodeProjectUpdate_1.withXcodeProjectUpdate)(config, iconNames);
+-    config = (0, withAdaptiveIconsGenerator_1.withAdaptiveIconsGenerator)(config, alternateIcons);
+-    config = (0, withAndroidManifestUpdate_1.withAndroidManifestUpdate)(config, iconNames);
++    const androidIcons = alternateIcons.filter((icon) => icon.android);
++    config = (0, withAdaptiveIconsGenerator_1.withAdaptiveIconsGenerator)(config, androidIcons);
++    config = (0, withAndroidManifestUpdate_1.withAndroidManifestUpdate)(config, androidIcons.map((icon) => icon.name));
+     return config;
 diff --git a/build/index.d.ts b/build/index.d.ts
 index 00650788cb26f5adfca8be5e63a030eac4fa0af2..77175729f9ce891aaaecb119c01794c1a74e10a4 100644
 --- a/build/index.d.ts

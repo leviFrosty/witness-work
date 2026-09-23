@@ -1,6 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { useEffect } from 'react'
-import { ScrollView, Switch, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
 import * as Haptics from 'expo-haptics'

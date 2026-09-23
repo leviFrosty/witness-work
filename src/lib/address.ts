@@ -4,7 +4,8 @@ import { HereGeocodeResponse } from '@/types/here'
 import apis from '@/constants/apis'
 import * as Network from 'expo-network'
 import { errorTracking } from '@/lib/errorTracking'
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
+import { resolveNavigationMapProvider } from '@/lib/navigationMapProvider'
 import i18n from '@/lib/locales'
 import { countTruthyValueStrings } from '@/lib/objects'
 import * as Location from 'expo-location'
@@ -88,7 +89,7 @@ export const navigateTo = (
   provider: DefaultNavigationMapProvider
 ) => {
   const getScheme = () => {
-    switch (provider) {
+    switch (resolveNavigationMapProvider(provider, Platform.OS)) {
       case 'apple':
         return links.appleMapsBase
       case 'google':

@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
   Cloud as CloudIcon,
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
@@ -113,7 +113,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     setMode('choose')
   }
   const icloudAvailable = ICloudBridge.isAvailable()
-  const notesImportEnabled = useFeatureFlag('notes-import')
+  const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
 
   useEffect(() => {
@@ -192,15 +192,17 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             descKey='onboardingPickUp_mytimeDesc'
             onPress={() => selectImport('mytime')}
           />
-          <OptionCard
-            icon={CloudIcon}
-            color={theme.colors.purple}
-            titleKey='onboardingPickUp_icloud'
-            descKey='onboardingPickUp_icloudDesc'
-            disabled={!icloudAvailable}
-            disabledNoteKey='onboardingPickUp_icloudUnavailable'
-            onPress={() => selectImport('icloud')}
-          />
+          {Platform.OS === 'ios' && (
+            <OptionCard
+              icon={CloudIcon}
+              color={theme.colors.purple}
+              titleKey='onboardingPickUp_icloud'
+              descKey='onboardingPickUp_icloudDesc'
+              disabled={!icloudAvailable}
+              disabledNoteKey='onboardingPickUp_icloudUnavailable'
+              onPress={() => selectImport('icloud')}
+            />
+          )}
         </View>
 
         <Button

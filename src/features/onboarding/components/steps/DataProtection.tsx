@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import { getLocales } from 'expo-localization'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'

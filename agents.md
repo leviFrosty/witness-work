@@ -1,10 +1,19 @@
 # AGENTS.md
 
-WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses. It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math.
+WitnessWork = iOS + Android field-service tracker for Jehovah's Witnesses. It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math.
 
 ## Backend Service
 
 ww-api is the backend api. Find the code at ~/dev/ww-api.
+
+## Platforms
+
+iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md).
+
+- **Test both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too — or be gated with `Platform.OS` and degrade gracefully.
+- **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
+- **iOS-only features.** iCloud sync/restore, widgets, Live Activities, alternate app icons, and Notes Import (needs Apple App Attest) stay unavailable on Android. Hide their entry points there instead of showing a broken state.
+- **Platform copy.** Don't write "iOS Settings", "iPhone", "App Store", etc. into shared copy; add an `…Android` i18n variant when the wording differs.
 
 ## Domain Specific Language
 

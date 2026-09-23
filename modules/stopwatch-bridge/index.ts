@@ -3,18 +3,10 @@ import {
   requireOptionalNativeModule,
   EventSubscription,
 } from 'expo-modules-core'
+import { androidStopwatch } from './androidStopwatch'
+import { ZERO_STATE, type StopwatchState } from './types'
 
-/**
- * Authoritative stopwatch state. Mirrors `StopwatchAttributes.ContentState` in
- * Swift. `startedAt` / `updatedAt` are Unix seconds (epoch). `accumulatedMs`
- * holds elapsed time from all prior start/pause segments.
- */
-export type StopwatchState = {
-  startedAt: number | null
-  accumulatedMs: number
-  isRunning: boolean
-  updatedAt: number
-}
+export type { StopwatchState } from './types'
 
 type StopwatchBridgeNative = {
   start(): Promise<StopwatchState>
@@ -24,77 +16,65 @@ type StopwatchBridgeNative = {
   reset(): Promise<StopwatchState>
   getState(): StopwatchState
   areLiveActivitiesEnabled(): boolean
-  addListener(eventName: string): void
-  removeListeners(count: number): void
+  addListener(
+    eventName: 'onStateChange',
+    listener: (state: StopwatchState) => void
+  ): EventSubscription
 }
 
 const native =
   requireOptionalNativeModule<StopwatchBridgeNative>('StopwatchBridge')
 
-const ZERO_STATE: StopwatchState = {
-  startedAt: null,
-  accumulatedMs: 0,
-  isRunning: false,
-  updatedAt: 0,
-}
+const stopwatch =
+  Platform.OS === 'android'
+    ? androidStopwatch
+    : Platform.OS === 'ios'
+      ? native
+      : null
 
-/** Whether the native stopwatch module is linked and iOS. */
+/** Whether this platform has a working stopwatch implementation. */
 export function isAvailable(): boolean {
-  return Platform.OS === 'ios' && native != null
+  return stopwatch != null
 }
 
 export function getState(): StopwatchState {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.getState()
+  return stopwatch?.getState() ?? ZERO_STATE
 }
 
 export function areLiveActivitiesEnabled(): boolean {
-  if (!isAvailable()) return false
-  return native!.areLiveActivitiesEnabled()
+  return Platform.OS === 'ios' && native != null
+    ? native.areLiveActivitiesEnabled()
+    : false
 }
 
 export async function start(): Promise<StopwatchState> {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.start()
+  return stopwatch?.start() ?? ZERO_STATE
 }
 
 export async function pause(): Promise<StopwatchState> {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.pause()
+  return stopwatch?.pause() ?? ZERO_STATE
 }
 
 export async function resume(): Promise<StopwatchState> {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.resume()
+  return stopwatch?.resume() ?? ZERO_STATE
 }
 
 export async function stop(): Promise<StopwatchState> {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.stop()
+  return stopwatch?.stop() ?? ZERO_STATE
 }
 
 export async function reset(): Promise<StopwatchState> {
-  if (!isAvailable()) return ZERO_STATE
-  return native!.reset()
+  return stopwatch?.reset() ?? ZERO_STATE
 }
 
 /**
- * Subscribe to state mutations — including ones from lock-screen buttons. The
- * native module emits on every command and on app foreground (to pick up
- * changes from App Intents that ran while JS was suspended).
+ * Subscribe to commands and foreground refreshes. On iOS this also receives
+ * lock-screen changes made through App Intents while JS was suspended.
  */
 export function onStateChange(
   listener: (state: StopwatchState) => void
 ): EventSubscription {
-  if (!isAvailable()) {
-    return { remove: () => {} } as EventSubscription
-  }
-  // Expo module event emitter surface — `addListener` is injected by Expo.
-  const emitter = native as unknown as {
-    addListener: (
-      name: string,
-      cb: (s: StopwatchState) => void
-    ) => EventSubscription
-  }
-  return emitter.addListener('onStateChange', listener)
+  return (
+    stopwatch?.addListener('onStateChange', listener) ?? { remove: () => {} }
+  )
 }

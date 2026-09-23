@@ -5,7 +5,13 @@ import {
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Alert, ScrollView, useWindowDimensions, View } from 'react-native'
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { errorTracking } from '@/lib/errorTracking'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -89,8 +95,14 @@ const PaywallScreen = ({
   const initialTier: Tier = route.params?.initialTier ?? 'supporter'
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
-  const { customer, setCustomer, hasPurchasedBefore, revalidate, ready } =
-    useCustomer()
+  const {
+    customer,
+    setCustomer,
+    hasPurchasedBefore,
+    revalidate,
+    ready,
+    unavailable,
+  } = useCustomer()
   const [tier, setTier] = useState<Tier>(initialTier)
   // Annual-first anchors the better value; monthly stays one tap away.
   const [supporterBilling, setSupporterBilling] =
@@ -506,7 +518,11 @@ const PaywallScreen = ({
       <Wrapper
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
       >
-        <Spinner />
+        {unavailable ? (
+          <Text>{i18n.t('purchasesUnavailable')}</Text>
+        ) : (
+          <Spinner />
+        )}
       </Wrapper>
     )
   }
@@ -562,7 +578,7 @@ const PaywallScreen = ({
   const benefits = (
     <View style={{ gap: 16 }}>
       <FounderLetter spacious={isWide} />
-      <SocialProofRow />
+      {Platform.OS === 'ios' && <SocialProofRow />}
       {tier === 'supporter' && (
         <View
           onLayout={(event) =>

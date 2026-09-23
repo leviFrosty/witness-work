@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useCallback, useEffect } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
   cancelAnimation,
@@ -43,13 +43,11 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation } from '@/types/rootStack'
 
-const HERO_FEATURES = [
-  'liquidGlass',
-  'widgets',
-  'progress',
-  'contacts',
-  'iCloudSync',
-] as const
+const HERO_FEATURES = (
+  ['liquidGlass', 'widgets', 'progress', 'contacts', 'iCloudSync'] as const
+).filter(
+  (id) => Platform.OS === 'ios' || id === 'progress' || id === 'contacts'
+)
 
 const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
   { id: 'rollover', icon: FastForwardIcon },
@@ -61,7 +59,7 @@ const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
   { id: 'followUpRework', icon: HistoryIcon },
   { id: 'recurring', icon: RefreshCwIcon },
   { id: 'supporter', icon: StarIcon },
-  { id: 'appIcon', icon: ShapesIcon },
+  ...(Platform.OS === 'ios' ? [{ id: 'appIcon', icon: ShapesIcon }] : []),
   { id: 'schedule', icon: CalendarDaysIcon },
   { id: 'shaders', icon: PaletteIcon },
   { id: 'mapEmpty', icon: MapPinIcon },

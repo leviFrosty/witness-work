@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -142,25 +142,27 @@ const PaywallThankYouScreen = () => {
            * (signed out, or iCloud Drive disabled for WitnessWork) does the
            * user have something to do, so only then surface the manual path.
            */}
-          {showSupporterCelebration && !iCloudSharingAvailable && (
-            <Card style={{ marginTop: 15 }}>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('thankYou_multiDeviceTitle')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t('thankYou_multiDeviceBody')}
-              </Text>
-            </Card>
-          )}
+          {Platform.OS === 'ios' &&
+            showSupporterCelebration &&
+            !iCloudSharingAvailable && (
+              <Card style={{ marginTop: 15 }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('thankYou_multiDeviceTitle')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('sm'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {i18n.t('thankYou_multiDeviceBody')}
+                </Text>
+              </Card>
+            )}
         </View>
       </ScrollView>
       <View

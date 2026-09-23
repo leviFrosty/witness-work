@@ -14,13 +14,13 @@ import {
   Image as RNImage,
   Modal,
   Pressable,
-  Share,
   StatusBar,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native'
 import { Image } from 'expo-image'
+import { shareAsync } from 'expo-sharing'
 import * as MediaLibrary from 'expo-media-library'
 import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'
@@ -374,9 +374,8 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     if (!displayedUri) return
     Haptics.selectionAsync().catch(() => {})
     try {
-      await Share.share({
-        url: stripCacheBuster(displayedUri),
-        title: contact.name,
+      await shareAsync(stripCacheBuster(displayedUri), {
+        dialogTitle: contact.name,
       })
     } catch (e) {
       logger.warn('Share avatar failed or was cancelled', e)

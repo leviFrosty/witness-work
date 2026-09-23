@@ -10,7 +10,8 @@ import {
   Trash2 as TrashIcon,
 } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'

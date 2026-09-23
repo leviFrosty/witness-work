@@ -7,7 +7,7 @@ import {
   Medal as MedalIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Alert, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
 import moment from 'moment'
 import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
@@ -106,22 +106,24 @@ const SupportSection = () => {
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
-        <InputRowButton
-          leftIcon={MedalIcon}
-          label={i18n.t('rateWitnessWorkOnAppStore')}
-          onPress={() => {
-            try {
-              openURL(links.appStoreReview)
-            } catch (error) {
-              Alert.alert(
-                i18n.t('appleAppStoreReviewErrorTitle'),
-                i18n.t('appleAppStoreReviewErrorMessage')
-              )
-            }
-          }}
-        >
-          <IconButton icon={ExternalLinkIcon} />
-        </InputRowButton>
+        {Platform.OS === 'ios' && (
+          <InputRowButton
+            leftIcon={MedalIcon}
+            label={i18n.t('rateWitnessWorkOnAppStore')}
+            onPress={() => {
+              try {
+                openURL(links.appStoreReview)
+              } catch (error) {
+                Alert.alert(
+                  i18n.t('appleAppStoreReviewErrorTitle'),
+                  i18n.t('appleAppStoreReviewErrorMessage')
+                )
+              }
+            }}
+          >
+            <IconButton icon={ExternalLinkIcon} />
+          </InputRowButton>
+        )}
 
         <InputRowButton
           leftIcon={GlobeIcon}

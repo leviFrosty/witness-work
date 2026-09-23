@@ -1,5 +1,5 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
-import { ActionSheetIOS } from 'react-native'
+import { ActionSheetIOS, Alert, Platform } from 'react-native'
 
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -61,6 +61,27 @@ const MonthStatusGoalButton = ({
   const onPress = () => {
     if (!statusLabel) return open('goal', 'direct')
     if (!hasGoal) return open('status', 'direct')
+    const dismissed = () => analytics.capture('month_card_edit_menu_dismissed')
+    if (Platform.OS !== 'ios') {
+      // ActionSheetIOS is iOS-only; a three-button alert covers the same menu.
+      Alert.alert(
+        label,
+        undefined,
+        [
+          { text: i18n.t('cancel'), style: 'cancel', onPress: dismissed },
+          {
+            text: i18n.t('monthStatus.changeStatus'),
+            onPress: () => open('status', 'menu'),
+          },
+          {
+            text: i18n.t('monthStatus.changeGoal'),
+            onPress: () => open('goal', 'menu'),
+          },
+        ],
+        { cancelable: true, onDismiss: dismissed }
+      )
+      return
+    }
     ActionSheetIOS.showActionSheetWithOptions(
       {
         options: [
@@ -73,7 +94,7 @@ const MonthStatusGoalButton = ({
       (index) => {
         if (index === 0) open('status', 'menu')
         else if (index === 1) open('goal', 'menu')
-        else analytics.capture('month_card_edit_menu_dismissed')
+        else dismissed()
       }
     )
   }

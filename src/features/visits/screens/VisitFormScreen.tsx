@@ -4,7 +4,8 @@ import {
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { useCallback } from 'react'
-import { View, Alert, Switch } from 'react-native'
+import { View, Alert } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'

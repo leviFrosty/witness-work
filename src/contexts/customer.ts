@@ -11,6 +11,8 @@ export type CustomerCtx = {
    * calls.
    */
   ready: boolean
+  /** Configuration failed; purchase screens should show an unavailable state. */
+  unavailable: boolean
 }
 
 export const CustomerContext = createContext<CustomerCtx | null>(null)

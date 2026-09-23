@@ -10,6 +10,7 @@ import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportSc
 import MoreScreen from '@/features/settings/screens/MoreScreen'
 import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
+import PreferencesCalendarScreen from '@/features/settings/screens/preferences/screens/PreferencesCalendarScreen'
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
 import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
@@ -73,6 +74,11 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     name: 'PreferencesPublisher',
     component: PreferencesPublisherScreen,
     title: () => i18n.t('profileEditTitle'),
+  },
+  {
+    name: 'PreferencesCalendar',
+    component: PreferencesCalendarScreen,
+    title: () => i18n.t('calendarSync'),
   },
   {
     name: 'PreferencesConversation',

@@ -614,3 +614,26 @@ No payload contents, device ids/names, record ids, addresses, photos, or excepti
 messages are included. Sheet dismissal is an explicit abandonment; do not infer
 abandonment merely from an app background event. Reminder repair is background
 maintenance, not a new user journey.
+
+## Calendar Sync
+
+`$screen` for `PreferencesCalendar` measures views of Calendar Sync settings.
+Calendar Sync is available on iOS. `calendar_connected` records a successful
+connection and initial publish (`created`: boolean). `calendar_setup_cancelled`
+records an explicit cancellation (`stage`: `access` or `destination`). A closed
+screen without a completed connection is funnel drop-off, not proof of abandonment.
+`calendar_disconnected` records local disconnect (`removed_events`: boolean).
+`calendar_primary_selected` records a requested handoff (`this_device`, `pending`:
+booleans); pending does not mean the previous publisher has released its write.
+`calendar_device_removed` records removing a stale device. `calendar_options_changed`
+contains only the changed `includeDetails`/`defaultInclude` booleans.
+
+`calendar_published` records completed native reconciliation (`entries`, `removals`,
+`published`: counts; `repair`: boolean). It can include a no-change reconciliation.
+`calendar_sync_failed` records failed actions (`error_key`: bounded localized error
+key; `background`: boolean). No destination/account names, device IDs/names,
+appointment dates, contact/Visit IDs, raw errors, or calendar contents are sent.
+
+`calendar_follow_up_inclusion_changed` (`included`, `configured`: booleans) and
+`calendar_follow_up_duration_changed` (`duration_minutes`: number) record draft
+choices in the Follow-up form. They do not imply the Visit was saved or published.

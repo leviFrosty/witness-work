@@ -37,6 +37,7 @@ import { useWidgetSync } from '@/app/widgets/useWidgetSync'
 import { useReconciledReminders } from '@/app/notifications/useReconciledReminders'
 import { useLocalAvatarCleanup } from '@/app/sync/useLocalAvatarCleanup'
 import { useDeletedContactRetention } from '@/app/useDeletedContactRetention'
+import { useCalendarSync } from '@/app/calendar/useCalendarSync'
 import { useICloudSync } from '@/app/sync/useICloudSync'
 import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
@@ -58,6 +59,7 @@ export default function App() {
   const hasMigrated = useAppMigrations()
   useWidgetSync(hasMigrated)
   useICloudSync(hasMigrated)
+  useCalendarSync(hasMigrated)
   useReconciledReminders(hasMigrated)
   useLocalAvatarCleanup(hasMigrated)
   useDeletedContactRetention(hasMigrated)

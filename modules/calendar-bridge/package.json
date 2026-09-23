@@ -1,0 +1,7 @@
+{
+  "name": "calendar-bridge",
+  "version": "0.1.0",
+  "description": "Single-publisher EventKit calendar integration",
+  "main": "index.ts",
+  "private": true
+}

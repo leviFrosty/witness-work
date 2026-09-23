@@ -45,6 +45,32 @@ const makeConversation = (overrides: Partial<Visit> = {}): Visit => ({
 })
 
 describe('contactShareLink round-trip', () => {
+  it('does not transfer calendar-publishing consent with a shared contact', () => {
+    const conversation = makeConversation({
+      followUp: {
+        date: new Date('2026-10-01'),
+        notifyMe: false,
+        calendarIncluded: true,
+        calendarDurationMinutes: 90,
+      },
+    })
+    const parsed = parseContactShareLink(
+      buildContactShareLink(makeContact(), [conversation]).url
+    ) as { conversations: Visit[] }
+    expect(parsed.conversations[0].followUp?.calendarIncluded).toBeUndefined()
+    expect(
+      parsed.conversations[0].followUp?.calendarDurationMinutes
+    ).toBeUndefined()
+    const imported = validateContactImport({
+      type: 'witnesswork-contact',
+      version: '1.0',
+      contact: makeContact(),
+      conversations: [conversation],
+    })
+    expect(imported.data?.conversations?.[0].followUp?.calendarIncluded).toBe(
+      false
+    )
+  })
   it('encodes a contact into a URL that parses back to the same contact', () => {
     const contact = makeContact({ phone: '+1 555 123 4567' })
     const { url } = buildContactShareLink(contact, [])

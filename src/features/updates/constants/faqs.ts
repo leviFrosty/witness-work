@@ -49,6 +49,11 @@ export const FAQS: FAQEntry[] = [
     pinned: true,
     related: [118],
   },
+  { id: 'calendarSetup', category: 'backups', related: [265] },
+  { id: 'calendarPrivacy', category: 'backups' },
+  { id: 'calendarPrimary', category: 'backups' },
+  { id: 'calendarTroubleshooting', category: 'backups' },
+  { id: 'calendarDisconnect', category: 'backups' },
   {
     id: 'widgets',
     category: 'general',

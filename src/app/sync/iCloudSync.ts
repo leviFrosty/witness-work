@@ -1035,8 +1035,24 @@ function schedulePush() {
  * - ICloud conflict duplicates) so we converge on the per-device layout over
  *   time, without losing any stranded data.
  */
+class ICloudReadError extends Error {}
+
 export async function pullAndMerge(reason: string): Promise<boolean> {
   return (await pull(reason)).changed
+}
+
+/** Calendar export must wait for a complete data pull, including queued reads. */
+export async function pullBeforeCalendarPublish(): Promise<void> {
+  const check = (outcome: PullOutcome) => {
+    if (!outcome.complete)
+      throw new ICloudReadError('iCloud data could not be fully read')
+  }
+  if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
+  if (!(await ICloudBridge.waitForInitialScan()))
+    throw new ICloudReadError('iCloud data scan incomplete')
+  check(await pull('calendar-publish'))
+  while (pullInFlight) check(await pullInFlight)
+  if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
 }
 
 function pull(reason: string): Promise<PullOutcome> {
@@ -1044,7 +1060,8 @@ function pull(reason: string): Promise<PullOutcome> {
     if (!pullQueuedReason) pullQueuedReason = reason
     return pullInFlight
   }
-  pullInFlight = (async () => {
+  // Defer execution until the promise is assigned, including a skipped pull.
+  pullInFlight = Promise.resolve().then(async () => {
     try {
       // GC judges orphans against the contacts it read at its start; merging
       // alongside it could delete the photo of a contact this pull brings in.
@@ -1066,7 +1083,7 @@ function pull(reason: string): Promise<PullOutcome> {
       pullInFlight = null
       if (queued) void pull(queued)
     }
-  })()
+  })
   return pullInFlight
 }
 
@@ -1675,6 +1692,7 @@ export async function enableImageSync(): Promise<void> {
 export const iCloudSync = {
   push,
   pullAndMerge,
+  pullBeforeCalendarPublish,
   canSync,
   backfillUpdatedAtIfNeeded,
   hasMeaningfulLocalData,

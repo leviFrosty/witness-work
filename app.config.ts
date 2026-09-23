@@ -100,6 +100,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
         NSSupportsLiveActivities: true,
+        NSCalendarsUsageDescription: enUS.calendarPermissionUsage,
+        NSCalendarsFullAccessUsageDescription: enUS.calendarPermissionUsage,
         LSSupportsOpeningDocumentsInPlace: true,
         // expo-background-fetch requires this permitted task identifier
         // to register the snapshot refresh task.

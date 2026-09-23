@@ -20,6 +20,78 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 1. Develop 🚀
 
+## Android development
+
+Install Android Studio with an emulator, Android SDK Platform 36, and JDK 17.
+Set `ANDROID_HOME` to your SDK directory and `JAVA_HOME` to JDK 17. Newer Java
+versions can fail the native CMake/Prefab build even when Gradle starts.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm run android
+```
+
+`android` generates the native project when needed, builds the development app,
+installs it, and starts Metro. For subsequent JavaScript work use
+`pnpm run dev:android`. After changing native plugins/configuration, regenerate
+with `pnpm run prebuild:android` and rebuild. The generated `android/` directory
+is ignored, like `ios/`.
+
+Development uses `com.leviwilkerson.jwtimedev`; production uses
+`com.leviwilkerson.jwtime`. Configure these values in the appropriate environment:
+
+- `GOOGLE_MAPS_ANDROID_API_KEY`: build-time Maps SDK for Android key, restricted
+  to the package and signing certificate. The default is an explicit placeholder;
+  the map screen opens but map tiles require a real key and a native rebuild.
+- `EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY`: the Google Play app's public SDK key
+  from the existing RevenueCat project, with Google Play products configured.
+  Production requires separate Apple and Google keys. For local development,
+  the same RevenueCat Test Store key (`test_…`) can be set in both SDK variables.
+  Without the Google key,
+  the core app remains usable and purchases show an unavailable state.
+
+Contact URL intent filters cover `ww-proxy.leviwilkerson.com/c#<payload>` and
+legacy `/c/<payload>` links.
+Automatic Android App Links additionally require the backend's
+`/.well-known/assetlinks.json` to list each package and signing certificate.
+Contact attachments use the `application/witnesswork+json` MIME type and are
+validated and confirmed before import, including opaque Android content URIs.
+
+iCloud sync/restore, widgets, Live Activities, alternate app icons, and Notes
+Import remain unavailable on Android. Notes Import's backend currently requires
+Apple App Attest; there is no Android authentication bypass. Local backups,
+MyTime import, contacts/visits, plans, service reports, preferences, and the
+persistent in-app stopwatch use the shared app flows.
+
+## Android production build and Play draft
+
+Build locally with JDK 17 and the production environment. Both store SDK keys
+must match their RevenueCat apps; never use a `test_` key in a store build.
+
+```bash
+set -a
+source .env.production
+set +a
+NODE_ENV=production eas build --platform android --profile production --local \
+  --non-interactive --output ./build-production.aab
+```
+
+The Android build-memory plugin gives Gradle 3 GB of heap, 1.5 GB of metaspace,
+and two workers. The template's 512 MB metaspace limit fails when compiling all
+four release architectures. Keep every ABI in the release bundle and verify its
+64-bit native libraries support 16 KB pages.
+
+Google Maps requires an active Cloud billing account, Maps SDK for Android,
+and a key restricted to `com.leviwilkerson.jwtime`. Allow both the EAS upload
+certificate and the Google Play app-signing certificate: Play re-signs delivered
+APKs. Store the key in `GOOGLE_MAPS_ANDROID_API_KEY` locally and in EAS production.
+
+Fastlane's `supply` uploads Android bundles. Explicitly use `release_status=draft`
+and `changes_not_sent_for_review=true`; never use its default release status.
+Preserve the existing completed production release when replacing a draft.
+Verify the release version code and draft status again in Play Console after
+upload. Preparing a draft does not submit for review or restore public availability.
+
 ## Production build & App Store upload (fully local)
 
 For the complete release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). Tag pushes run validation and create a GitHub Release; they do not build or upload.

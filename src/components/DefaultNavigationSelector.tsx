@@ -1,6 +1,8 @@
 import i18n from '@/lib/locales'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import { SelectData } from '@/components/ui/Select'
+import { Platform } from 'react-native'
+import { resolveNavigationMapProvider } from '@/lib/navigationMapProvider'
 import {
   DefaultNavigationMapProvider,
   usePreferences,
@@ -20,7 +22,9 @@ export const navigationSelectionOptions: SelectData<DefaultNavigationMapProvider
       label: i18n.t('waze'),
       value: 'waze',
     },
-  ]
+  ].filter(
+    (option) => Platform.OS === 'ios' || option.value !== 'apple'
+  ) as SelectData<DefaultNavigationMapProvider>
 
 const DefaultNavigationSelector = () => {
   const { defaultNavigationMapProvider, set } = usePreferences()
@@ -30,7 +34,10 @@ const DefaultNavigationSelector = () => {
       selectProps={{
         data: navigationSelectionOptions,
         onChange: ({ value }) => set({ defaultNavigationMapProvider: value }),
-        value: defaultNavigationMapProvider,
+        value: resolveNavigationMapProvider(
+          defaultNavigationMapProvider,
+          Platform.OS
+        ),
       }}
       label={i18n.t('defaultNavigationApp')}
       lastInSection

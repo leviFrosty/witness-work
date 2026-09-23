@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
-import { Alert, Pressable, ScrollView, View } from 'react-native'
+import { Alert, Platform, Pressable, ScrollView, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as FileSystem from 'expo-file-system/legacy'
 import useTheme from '@/contexts/theme'
@@ -293,10 +293,15 @@ const AvatarPickerContent = ({
    *    `onCropped` writes the final JPEG and we commit the avatar.
    */
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!perm.granted) {
-      Alert.alert(i18n.t('permissionRequired'), i18n.t('photoPermissionNeeded'))
-      return
+    if (Platform.OS === 'ios') {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!perm.granted) {
+        Alert.alert(
+          i18n.t('permissionRequired'),
+          i18n.t('photoPermissionNeeded')
+        )
+        return
+      }
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],

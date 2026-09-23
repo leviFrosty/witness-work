@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
-import { FullWindowOverlay } from 'react-native-screens'
+import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
@@ -98,7 +98,7 @@ const ExpandingCardOverlay = ({
   if (!origin) return null
 
   return (
-    <FullWindowOverlay>
+    <FullWindowOverlay open={open} onClose={onClose}>
       {open ? <StatusBar barStyle='light-content' animated /> : null}
       <View
         pointerEvents={open ? 'auto' : 'none'}

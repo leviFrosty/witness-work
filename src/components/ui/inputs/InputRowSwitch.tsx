@@ -1,4 +1,4 @@
-import { Switch } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import InputRowContainer, {
   InputRowContainerProps,
 } from '@/components/ui/inputs/InputRowContainer'

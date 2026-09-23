@@ -5,7 +5,8 @@ import {
   User as UserIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'

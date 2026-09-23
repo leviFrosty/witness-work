@@ -6,7 +6,8 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { View, ScrollView, Switch } from 'react-native'
+import { View, ScrollView } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import { Sheet } from 'tamagui'
 import { useToastController } from '@tamagui/toast'
 import * as Crypto from 'expo-crypto'

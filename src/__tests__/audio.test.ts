@@ -4,7 +4,11 @@ vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
 }))
-vi.mock('expo-device', () => ({ DeviceType: { TABLET: 2 }, deviceType: 1 }))
+vi.mock('expo-device', () => ({
+  DeviceType: { TABLET: 2 },
+  deviceType: 1,
+  osName: 'iOS',
+}))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))

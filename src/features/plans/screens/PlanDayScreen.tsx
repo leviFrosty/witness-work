@@ -6,13 +6,8 @@ import {
   Trash2 as Trash2Icon,
   X as XIcon,
 } from 'lucide-react-native'
-import {
-  Modal,
-  Pressable,
-  Switch,
-  TextInput as RNTextInput,
-  View,
-} from 'react-native'
+import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -30,11 +25,9 @@ import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import RNDateTimePicker from '@react-native-community/datetimepicker'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import Select from '@/components/ui/Select'
 import SelectWheel from '@/components/ui/SelectWheel'
-import { getLocales } from 'expo-localization'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Header from '@/components/ui/layout/Header'
 import confirmDeletePlan from '@/lib/confirmDeletePlan'
@@ -445,8 +438,7 @@ const RecurrenceFields = (props: {
             onValueChange={handleSetWillEnd}
           />
           {props.willEnd && props.endDate && (
-            <RNDateTimePicker
-              locale={getLocales()[0].languageCode || undefined}
+            <DateTimePicker
               value={props.endDate}
               onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
             />

@@ -1,4 +1,5 @@
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import ReorderControls from '@/features/settings/components/shared/ReorderControls'

@@ -13,7 +13,11 @@ vi.mock('lucide-react-native', () => ({
   RotateCcw: 'RotateCcw',
   Trash2: 'Trash2',
 }))
-vi.mock('react-native', () => ({ View: 'View', Switch: 'Switch' }))
+vi.mock('react-native', () => ({
+  View: 'View',
+  Switch: 'Switch',
+  Platform: { OS: 'ios' },
+}))
 vi.mock('react-native-keyboard-aware-scroll-view', () => ({
   KeyboardAwareScrollView: 'ScrollView',
 }))

@@ -1,6 +1,7 @@
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useState } from 'react'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import * as Crypto from 'expo-crypto'
 
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'

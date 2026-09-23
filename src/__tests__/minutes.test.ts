@@ -20,7 +20,11 @@ vi.mock('expo-localization', () => ({
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
 }))
-vi.mock('expo-device', () => ({ DeviceType: { TABLET: 2 }, deviceType: 1 }))
+vi.mock('expo-device', () => ({
+  DeviceType: { TABLET: 2 },
+  deviceType: 1,
+  osName: 'iOS',
+}))
 
 import { _i18n } from '@/lib/locales'
 import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'

@@ -77,6 +77,8 @@ export const TimerSection = () => {
         </Text>
         <XView>
           <Button
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t(isRunning ? 'timerPause' : 'timerStart')}
             style={{
               paddingVertical: 12,
               paddingHorizontal: 24,
@@ -98,6 +100,8 @@ export const TimerSection = () => {
             />
           </Button>
           <Button
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t('reset')}
             variant='outline'
             style={{
               paddingVertical: 12,

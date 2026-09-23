@@ -1,6 +1,7 @@
 import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
+import Switch from '@/components/ui/Switch'
 import upperFirst from 'lodash/upperFirst'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

@@ -7,7 +7,11 @@ import {
   ViewStyle,
 } from 'react-native'
 import Haptics from '@/lib/haptics'
-import { GlassColorScheme, GlassView } from 'expo-glass-effect'
+import {
+  GlassColorScheme,
+  GlassView,
+  isLiquidGlassAvailable,
+} from 'expo-glass-effect'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -91,9 +95,9 @@ export interface ButtonProps extends PressableProps {
    * - `solid` — flat card-color background (legacy default).
    * - `outline` — bordered, transparent background.
    * - `glass` — iOS 26 Liquid Glass material via `expo-glass-effect`. The
-   *   caller's `style.backgroundColor` (or `glassTint`) acts as the visible
-   *   fallback on iOS < 26 / Android — `GlassView` renders nothing there. See
-   *   `AGENTS.md` ("primary CTAs" are an explicit glass-target surface).
+   *   caller's `style.backgroundColor`, `glassTint`, or the theme's card color
+   *   provides the fallback on iOS < 26 / Android. See `AGENTS.md` ("primary
+   *   CTAs" are an explicit glass-target surface).
    */
   variant?: 'solid' | 'outline' | 'glass'
   /**
@@ -128,7 +132,8 @@ const useButtonBaseStyle = (
         variant === 'solid'
           ? theme.colors.card
           : isGlass
-            ? glassTint
+            ? (glassTint ??
+              (isLiquidGlassAvailable() ? undefined : theme.colors.card))
             : undefined,
       // Glass material is layered absolutely inside; clip it to the
       // button's borderRadius so the rounded shape carries through.

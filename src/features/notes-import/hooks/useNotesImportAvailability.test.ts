@@ -1,7 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
 
-const mocks = vi.hoisted(() => ({ enabled: false, status: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  enabled: false,
+  status: vi.fn(),
+  platform: 'ios',
+}))
+vi.mock('react-native', () => ({
+  Platform: {
+    get OS() {
+      return mocks.platform
+    },
+  },
+}))
 vi.mock('@/lib/featureFlags', () => ({ useFeatureFlag: () => mocks.enabled }))
 vi.mock('@/features/notes-import/lib/notesImportClient', () => ({
   getNotesImportStatus: mocks.status,
@@ -14,6 +25,7 @@ beforeEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
   mocks.enabled = false
+  mocks.platform = 'ios'
 })
 
 afterEach(() => {
@@ -51,6 +63,20 @@ async function mount() {
 }
 
 describe('Notes Import availability', () => {
+  it('keeps Android unavailable even when the flag and server allow imports', async () => {
+    mocks.platform = 'android'
+    mocks.enabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    const { snapshots, close } = await mount()
+    expect(mocks.status).not.toHaveBeenCalled()
+    expect(snapshots.at(-1)).toMatchObject({
+      available: false,
+      schedule: null,
+      loading: false,
+      updateRequired: null,
+    })
+    await close()
+  })
   it('does not probe or expose a schedule while the flag is closed', async () => {
     mocks.status.mockResolvedValue({ available: true, limits: schedule })
     const { snapshots, close } = await mount()

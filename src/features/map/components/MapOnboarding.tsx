@@ -11,10 +11,10 @@ import {
   Alert,
   FlatList,
   ScrollView,
-  Switch,
   TouchableOpacity,
   View,
 } from 'react-native'
+import Switch from '@/components/ui/Switch'
 
 import { countTruthyValueStrings } from '@/lib/objects'
 import {

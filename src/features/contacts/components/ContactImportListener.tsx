@@ -45,8 +45,11 @@ export default function ContactImportListener() {
 
   useEffect(() => {
     const isContactFileUrl = (url: string) =>
-      /\.witnesswork(\?|#|$)/i.test(url) &&
-      (url.startsWith('file:') || url.startsWith('content:'))
+      // Android document providers may use opaque content URIs without a
+      // filename. The intent filter restricts MIME type; import validates data
+      // before prompting and never writes it without confirmation.
+      url.startsWith('content:') ||
+      (url.startsWith('file:') && /\.witnesswork(\?|#|$)/i.test(url))
 
     const handle = async (url: string | null) => {
       logger.log('[ContactImportListener] handle() url =', url)

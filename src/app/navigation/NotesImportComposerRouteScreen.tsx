@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import Empty from '@/components/ui/Empty'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import i18n from '@/lib/locales'
@@ -10,7 +10,7 @@ import NotesImportComposerScreen from '@/features/notes-import/screens/NotesImpo
  * owns its upgrade CTA (kept out of the feature via this render-prop).
  */
 const NotesImportComposerRouteScreen = () => {
-  const enabled = useFeatureFlag('notes-import')
+  const enabled = useNotesImportEnabled()
   if (!enabled) {
     return (
       <Wrapper insets='bottom'>

@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { useEffect, useState } from 'react'
 import Constants from 'expo-constants'
 import { create } from 'zustand'
@@ -124,7 +124,7 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
  * schedule. Failed or pending probes keep access closed.
  */
 export const useNotesImportAvailability = (): NotesImportAvailability => {
-  const enabled = useFeatureFlag('notes-import')
+  const enabled = useNotesImportEnabled()
   const [hasFreshProbe, setHasFreshProbe] = useState(
     () => Date.now() < freshUntil
   )
@@ -147,12 +147,12 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
     }
   }, [probe, enabled])
 
-  const pending = !hasFreshProbe || loading
+  const pending = enabled && (!hasFreshProbe || loading)
   return {
     available: enabled && !pending && available,
-    reason: pending ? null : reason,
+    reason: !enabled || pending ? null : reason,
     schedule: !enabled || pending ? null : schedule,
-    updateRequired: pending ? null : updateRequired,
+    updateRequired: !enabled || pending ? null : updateRequired,
     loading: pending,
   }
 }

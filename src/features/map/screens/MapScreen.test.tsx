@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   addListener: vi.fn(),
   updateContact: vi.fn(),
   animateCamera: vi.fn(),
+  animateToRegion: vi.fn(),
+  fitToCoordinates: vi.fn(),
   fitToSuppliedMarkers: vi.fn(),
   scrollTo: vi.fn(),
   getCurrentIndex: vi.fn(),
@@ -40,6 +42,7 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
 })
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
   View: 'View',
   Pressable: 'Pressable',
   TextInput: 'TextInput',
@@ -50,6 +53,8 @@ vi.mock('react-native-maps', () => ({
   default: function MapView({ ref, ...props }: { ref: React.Ref<unknown> }) {
     useImperativeHandle(ref, () => ({
       animateCamera: mocks.animateCamera,
+      animateToRegion: mocks.animateToRegion,
+      fitToCoordinates: mocks.fitToCoordinates,
       fitToSuppliedMarkers: mocks.fitToSuppliedMarkers,
     }))
     return React.createElement('MapView', props)
@@ -223,6 +228,7 @@ beforeEach(async () => {
   mocks.listeners.clear()
   mocks.isWide = false
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
+  mocks.contacts[1].coordinate = { latitude: 41, longitude: -73 }
   mocks.addListener.mockImplementation((event, listener) => {
     const listeners = mocks.listeners.get(event) ?? new Set()
     listeners.add(listener)
@@ -250,6 +256,65 @@ async function startCreation(search: string) {
   )
   await act(async () => emit('blur'))
 }
+
+describe('Map camera initialization', () => {
+  it('uses street zoom for multiple contacts at the same location', async () => {
+    const coordinate = { latitude: 40, longitude: -73 }
+    mocks.contacts = mocks.contacts.map((contact) => ({
+      ...contact,
+      coordinate,
+    }))
+    await act(async () => root.update(screen()))
+    await act(async () => {
+      const map = root.root.findByType(MapView)
+      map.props.onMapReady()
+      map.props.onLayout()
+    })
+    expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
+    expect(mocks.animateToRegion).toHaveBeenCalledExactlyOnceWith(
+      { ...coordinate, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+      225
+    )
+  })
+
+  it.each([
+    ['onLayout', 'onMapReady'],
+    ['onMapReady', 'onLayout'],
+  ])(
+    'waits for both %s and %s before fitting contacts',
+    async (first, second) => {
+      const map = () => root.root.findByType(MapView)
+      expect(mocks.fitToSuppliedMarkers).not.toHaveBeenCalled()
+      expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
+      await act(async () => map().props[first]())
+      expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
+      await act(async () => map().props[second]())
+      expect(mocks.fitToCoordinates).toHaveBeenCalledExactlyOnceWith(
+        mocks.contacts.map((contact) => contact.coordinate)
+      )
+    }
+  )
+
+  it('frames the first contact added after an empty map becomes ready', async () => {
+    mocks.contacts = []
+    await act(async () => root.update(screen()))
+    await act(async () => {
+      const map = root.root.findByType(MapView)
+      map.props.onLayout()
+      map.props.onMapReady()
+    })
+    expect(mocks.animateToRegion).not.toHaveBeenCalled()
+    const saved = contact('new', 'New contact')
+    mocks.contacts = [saved]
+    await act(async () => root.update(screen()))
+    expect(mocks.animateToRegion).toHaveBeenCalledExactlyOnceWith(
+      { ...saved.coordinate, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+      225
+    )
+    await act(async () => root.update(screen()))
+    expect(mocks.animateToRegion).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('Map carousel after contact creation', () => {
   it.each(['Second', 'no matching contacts'])(

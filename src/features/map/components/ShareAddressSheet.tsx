@@ -6,7 +6,8 @@ import { Sheet } from 'tamagui'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
-import { Share, View } from 'react-native'
+import { View } from 'react-native'
+import { shareUrl } from '@/lib/share'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 
@@ -26,15 +27,11 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
 
   const handleShare = (service: 'apple' | 'google') => {
     if (service === 'apple') {
-      Share.share({
-        url: sheet.appleMapsUri,
-      })
+      void shareUrl(sheet.appleMapsUri)
     }
 
     if (service === 'google') {
-      Share.share({
-        url: sheet.googleMapsUri,
-      })
+      void shareUrl(sheet.googleMapsUri)
     }
 
     setSheet({

@@ -1,4 +1,4 @@
-import { useFeatureFlag } from '@/lib/featureFlags'
+import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
@@ -50,7 +50,7 @@ import { RootStackParamList } from '@/types/rootStack'
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
-  const notesImportEnabled = useFeatureFlag('notes-import')
+  const notesImportEnabled = useNotesImportEnabled()
   const { onboardingComplete } = usePreferences()
 
   return (

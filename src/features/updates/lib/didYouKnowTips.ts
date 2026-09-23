@@ -13,6 +13,7 @@ import {
   Trash2 as Trash2Icon,
   Type as TypeIcon,
 } from 'lucide-react-native'
+import { Platform } from 'react-native'
 export type DidYouKnowTip = {
   /**
    * Stable identifier — never rename or reorder existing entries, since
@@ -40,6 +41,8 @@ export const DID_YOU_KNOW_TIPS: DidYouKnowTip[] = [
   { id: 'followUpOffset', icon: HistoryIcon },
   { id: 'planNotifications', icon: BellIcon },
   { id: 'backupCadence', icon: CloudUploadIcon },
-  { id: 'widgetSort', icon: SlidersHorizontalIcon },
+  ...(Platform.OS === 'ios'
+    ? [{ id: 'widgetSort', icon: SlidersHorizontalIcon }]
+    : []),
   { id: 'swipeDeleteTime', icon: Trash2Icon },
 ]

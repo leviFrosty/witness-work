@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 import { View } from 'react-native'
-import { FullWindowOverlay } from 'react-native-screens'
+import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import {
   AnimationViewContext,
   AnimationViewCtx,

@@ -42,7 +42,7 @@ describe('getPeriodTense', () => {
     expect(
       getPeriodTense(
         { kind: 'month', year: 2026, month: 4 },
-        new Date('2026-05-01')
+        new Date(2026, 4, 1)
       )
     ).toBe('present')
   })

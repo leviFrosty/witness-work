@@ -92,7 +92,7 @@ describe('buildNotesImportPreview', () => {
     const [visit] = buildNotesImportPreview(mapped).preview.visits
     expect(visit.title).toBe('Listened to the Bible together.')
     expect(visit.followUp).toEqual({
-      date: new Date('2026-06-26T12:00:00.000Z'),
+      date: new Date(2026, 5, 26, 12),
       topic: 'Continue the discussion about hope.',
     })
   })

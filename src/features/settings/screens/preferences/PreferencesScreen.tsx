@@ -9,6 +9,7 @@ import {
   ShieldCheck as ShieldCheckIcon,
   SlidersHorizontal as SlidersHorizontalIcon,
   Trash2 as Trash2Icon,
+  Volume2 as Volume2Icon,
 } from 'lucide-react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -155,6 +156,15 @@ const PreferencesScreen = () => {
                 leftIcon={Calendar1Icon}
                 label={i18n.t('milestoneSecondary_schedule_title')}
                 onPress={() => navigation.navigate('PreferencesScheduleScreen')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={Volume2Icon}
+                label={i18n.t('audioAndHaptics')}
+                onPress={() =>
+                  navigation.navigate('PreferencesAudioAndHaptics')
+                }
               >
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>

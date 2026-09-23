@@ -564,6 +564,12 @@ export const PREFERENCE_DEFAULTS = {
    */
   dataProtectionRetentionPromptedAt: undefined as string | undefined,
   /**
+   * When false, in-app sounds (e.g. the celebration chime) never play. Read
+   * through `@/lib/audio`, not directly. Per-device (non-syncable) — muting a
+   * shared iPad shouldn't silence the user's phone.
+   */
+  audioEnabled: true,
+  /**
    * Persistent bookkeeping for the image-sync uploader. Keyed by container
    * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
    * upload/retry loop across app restarts so an interrupted migration or a
@@ -868,6 +874,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'dataProtectionMode',
   'dataProtectionModeSetByUser',
   'dataProtectionRetentionPromptedAt',
+  'audioEnabled',
   'iCloudImageSync',
   'lastiCloudSyncAt',
   'lastiCloudPushedAt',

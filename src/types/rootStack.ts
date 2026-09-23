@@ -40,6 +40,7 @@ export type RootStackParamList = {
   PreferencesConversation: undefined
   PreferencesPlans: undefined
   PreferencesNavigation: undefined
+  PreferencesAudioAndHaptics: undefined
   PreferencesHomeScreen: undefined
   PreferencesScheduleScreen: undefined
   PreferencesBackups: undefined

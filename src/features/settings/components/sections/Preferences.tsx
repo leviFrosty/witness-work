@@ -1,6 +1,5 @@
 import {
   ChevronRight as ChevronRightIcon,
-  Globe as GlobeIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
@@ -24,9 +23,9 @@ const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
       <View style={{ height: layout === 'drawer' ? 4 : 12 }} />
       <Section>
         <InputRowButton
-          leftIcon={GlobeIcon}
-          label={i18n.t('regionAndFormats')}
-          onPress={() => handleNavigate('PreferencesAppearance')}
+          leftIcon={UserIcon}
+          label={i18n.t('profile')}
+          onPress={() => handleNavigate('PreferencesPublisher')}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
@@ -34,13 +33,6 @@ const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={PaletteIcon}
           label={i18n.t('personalization')}
           onPress={() => handleNavigate('PreferencesPersonalization')}
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-        <InputRowButton
-          leftIcon={UserIcon}
-          label={i18n.t('profile')}
-          onPress={() => handleNavigate('PreferencesPublisher')}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>

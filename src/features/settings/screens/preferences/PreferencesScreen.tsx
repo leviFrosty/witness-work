@@ -2,6 +2,7 @@ import {
   Calendar1 as Calendar1Icon,
   ChevronRight as ChevronRightIcon,
   FileOutput as FileOutputIcon,
+  Globe as GlobeIcon,
   House as HouseIcon,
   LayoutGrid as LayoutGridIcon,
   MessagesSquare as MessagesSquareIcon,
@@ -117,6 +118,13 @@ const PreferencesScreen = () => {
           </View>
           <View style={{ gap: 5 }}>
             <Section>
+              <InputRowButton
+                leftIcon={GlobeIcon}
+                label={i18n.t('regionAndFormats')}
+                onPress={() => navigation.navigate('PreferencesAppearance')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
               <InputRowButton
                 leftIcon={MessagesSquareIcon}
                 label={i18n.t('conversations')}

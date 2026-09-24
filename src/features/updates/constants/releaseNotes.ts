@@ -1,4 +1,5 @@
 import moment from 'moment'
+import type { ReleaseAnnounce } from '@/features/updates/lib/evaluateRevealOnLaunch'
 
 export type ReleaseNote = {
   /** Semantic version number in format `x.y.z` */
@@ -28,6 +29,13 @@ export type ReleaseNote = {
    * rollups should set this on the new entry and clear it on prior ones.
    */
   milestone?: boolean
+  /**
+   * How loudly to announce this release on first launch after updating.
+   * Defaults to `'passive'` (Home card + Settings dot). Use `'silent'` for
+   * fix-only releases and reserve `'sheet'` for big releases worth interrupting
+   * the user's quick "open app, add time" flow.
+   */
+  announce?: ReleaseAnnounce
 }
 
 export const releaseNotes: ReleaseNote[] = [

@@ -15,13 +15,15 @@ import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
-import semver from 'semver'
 import { logger } from '@/lib/logger'
 import { useNavigation } from '@react-navigation/native'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
-import { evaluateRevealOnLaunch } from '@/features/updates/lib/evaluateRevealOnLaunch'
+import {
+  evaluateRevealOnLaunch,
+  getReleaseAnnounceBetween,
+} from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 
@@ -44,7 +46,7 @@ const HomeTabStack = () => {
     set,
   } = usePreferences()
   const { showsYearTabs } = usePublisher()
-  const [lastVersion] = useState(lastAppVersion)
+  const [whatsNewSince, setWhatsNewSince] = useState<string | null>(null)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
   const requestReveal = useMilestoneRevealStore((s) => s.request)
@@ -53,19 +55,23 @@ const HomeTabStack = () => {
   const rootNavigation = useNavigation<RootStackNavigation>()
 
   // Decide between the grand-reveal overlay (one-time, returning users coming
-  // up to MILESTONE_UPDATE_VERSION) and the standard WhatsNewSheet (every
-  // other version transition with notes).
+  // up to MILESTONE_UPDATE_VERSION), the WhatsNewSheet (releases announced as
+  // 'sheet') and the passive Home card (every other transition with notes).
   useEffect(() => {
     const currentVersion = Constants.expoConfig?.version
     if (!currentVersion || !lastAppVersion) return
     logger.log('[HomeTabStack] currentVersion', currentVersion)
     logger.log('[HomeTabStack] lastVersion', lastAppVersion)
 
-    const hasReleaseNotesBetween = releaseNotes.some(
-      (note) =>
-        semver.gt(note.version, lastAppVersion) &&
-        semver.lte(note.version, currentVersion)
+    const releaseAnnounce = getReleaseAnnounceBetween(
+      releaseNotes,
+      lastAppVersion,
+      currentVersion
     )
+    // Read outside the render snapshot so stamping it below doesn't re-run
+    // this effect. Earlier unread updates stack onto this one.
+    const { unreadReleaseNotes } = usePreferences.getState()
+    const notesSince = unreadReleaseNotes?.since ?? lastAppVersion
 
     const action = evaluateRevealOnLaunch({
       currentVersion,
@@ -73,7 +79,7 @@ const HomeTabStack = () => {
       milestoneRevealVersion: MILESTONE_UPDATE_VERSION,
       seenMilestoneUpdateReveal,
       dismissedMilestoneRevealOnce,
-      hasReleaseNotesBetween,
+      releaseAnnounce,
     })
     logger.log('[HomeTabStack] launch reveal action', action)
 
@@ -83,8 +89,19 @@ const HomeTabStack = () => {
         set({ lastAppVersion: currentVersion })
         return
       case 'whats-new':
+        setWhatsNewSince(notesSince)
         setShowWhatsNew(true)
-        set({ lastAppVersion: currentVersion })
+        set({ lastAppVersion: currentVersion, unreadReleaseNotes: null })
+        return
+      case 'whats-new-card':
+        set({
+          lastAppVersion: currentVersion,
+          unreadReleaseNotes: {
+            since: notesSince,
+            at: Date.now(),
+            cardDismissed: false,
+          },
+        })
         return
       case 'stamp-only':
         set({ lastAppVersion: currentVersion })
@@ -130,12 +147,9 @@ const HomeTabStack = () => {
 
   return (
     <View style={{ flexGrow: 1 }}>
-      {/* Mounted unconditionally so it stamps lastAppVersion on mount. During the
-          milestone reveal path show=false — the gate effect reads the pre-stamp
-          value from its closure snapshot, so effect ordering doesn't matter. */}
-      {lastVersion && (
+      {whatsNewSince && (
         <WhatsNewSheet
-          lastVersion={lastVersion}
+          sinceVersion={whatsNewSince}
           show={showWhatsNew}
           setShow={setShowWhatsNew}
         />

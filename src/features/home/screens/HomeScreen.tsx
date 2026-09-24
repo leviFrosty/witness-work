@@ -42,6 +42,7 @@ import ProfileCard from '@/features/profile/components/ProfileCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import SupporterFeedback from '@/features/supporter/components/SupporterFeedback'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
+import WhatsNewCard from '@/features/updates/components/WhatsNewCard'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { useServiceReport } from '@/stores/serviceReport'
 import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
@@ -435,6 +436,9 @@ export const HomeScreen = () => {
             })()
             return section
           })}
+          {/* Below the day-to-day sections so an update never pushes add-time
+              or the schedule out of reach. */}
+          <WhatsNewCard />
         </AdaptiveColumns>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet

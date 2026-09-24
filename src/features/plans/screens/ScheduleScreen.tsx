@@ -47,6 +47,7 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import PlanRow from '@/components/PlanRow'
+import PlanBuddiesLine from '@/features/buddies/components/PlanBuddiesLine'
 import type { PlanListItem } from '@/components/PlanRow'
 import i18n from '@/lib/locales'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
@@ -462,6 +463,11 @@ const ScheduleScreen = ({ route }: Props) => {
                         dateDisplay='monthList'
                         contextMonth={month}
                         contextYear={year}
+                        footer={
+                          item.type === 'day' ? (
+                            <PlanBuddiesLine plan={item.plan} />
+                          ) : undefined
+                        }
                         onPress={() => {
                           if (item.type === 'day') {
                             handleEditDayPlan(item.plan, item.date)

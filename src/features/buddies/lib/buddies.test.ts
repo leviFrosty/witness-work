@@ -21,9 +21,22 @@ import {
 } from '@/features/buddies/lib/engine'
 import {
   BuddiesState,
+  incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
+  OutgoingShareSpec,
 } from '@/features/buddies/lib/state'
+import {
+  buildOutgoingShares,
+  followUpShareDetails,
+  planShareKey,
+} from '@/features/buddies/lib/shares'
+import {
+  effectiveShareStatus,
+  reconcileLinkedPlans,
+} from '@/features/buddies/lib/linkedPlans'
+import type { Contact } from '@/types/contact'
+import type { Visit } from '@/types/visit'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
@@ -76,6 +89,7 @@ function setup() {
   ) {
     const store = memoryStore({ displayName: name })
     let rootSeed: Uint8Array | null = seed
+    let shares: OutgoingShareSpec[] = []
     const engine = createBuddiesEngine({
       relay,
       store,
@@ -86,8 +100,17 @@ function setup() {
         rootSeed = null
       },
       getPlans: () => plans,
+      getShares: () => shares,
     })
-    return { engine, store, seed, inboxId: deriveIdentity(seed).inboxId }
+    return {
+      engine,
+      store,
+      seed,
+      inboxId: deriveIdentity(seed).inboxId,
+      setShares: (next: OutgoingShareSpec[]) => {
+        shares = next
+      },
+    }
   }
 
   return {
@@ -549,5 +572,345 @@ describe('buddies pairing', () => {
     })
     await anna.engine.sync()
     expect(anna.store.getState().buddies).toEqual([])
+  })
+})
+
+describe('shared Plans and Follow-ups', () => {
+  const HOUR = 60 * 60 * 1000
+  const saturday = {
+    d: '2026-09-26',
+    s: 600,
+    m: 120,
+    title: 'Cart witnessing',
+    location: { name: "McDonald's", address: '1 Main St' },
+    note: 'Bring the cart https://example.com/cart',
+  }
+  const planSpec = (
+    recipients: string[],
+    details = saturday
+  ): OutgoingShareSpec => ({
+    key: planShareKey('sat'),
+    type: 'plan',
+    details,
+    recipients,
+    expiresAt: Date.parse('2026-09-28T00:00:00Z'),
+  })
+
+  async function trio() {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    const mom = env.user('Mom')
+    await pair(levi, anna)
+    await pair(levi, mom)
+    return { ...env, levi, anna, mom }
+  }
+
+  it('invites buddies, and replies come back to the sender', async () => {
+    const { fake, levi, anna, mom } = await trio()
+    levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
+    await levi.engine.publishShares()
+    expect(fake.pushes).toContainEqual({
+      inboxId: anna.inboxId,
+      kind: 'plan.invite',
+    })
+
+    await anna.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const key = incomingShareKey(levi.inboxId, shareId)
+    expect(anna.store.getState().incomingShares[key]).toMatchObject({
+      type: 'plan',
+      status: 'pending',
+      details: saturday,
+    })
+    expect(anna.store.getState().notifications[0]).toMatchObject({
+      kind: 'shareInvite',
+      name: 'Levi',
+      shareKey: key,
+      read: false,
+    })
+
+    await anna.engine.replyToShare(key, 'going')
+    expect(anna.store.getState().incomingShares[key].status).toBe('going')
+    await levi.engine.sync()
+    expect(levi.store.getState().shareReplies[shareId]).toMatchObject({
+      [anna.inboxId]: { status: 'going' },
+    })
+    expect(levi.store.getState().notifications[0]).toMatchObject({
+      kind: 'shareReply',
+      reply: 'going',
+      name: 'Anna',
+    })
+  })
+
+  it('sends nothing for an unchanged share and updates only on change', async () => {
+    const { fake, levi, anna, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const key = Object.keys(anna.store.getState().incomingShares)[0]
+    await anna.engine.replyToShare(key, 'going')
+
+    const pushesBefore = fake.pushes.length
+    advance(60_000)
+    await levi.engine.publishShares()
+    expect(fake.pushes.length).toBe(pushesBefore)
+
+    advance(60_000)
+    levi.setShares([planSpec([anna.inboxId], { ...saturday, s: 660 })])
+    await levi.engine.publishShares()
+    expect(fake.pushes.at(-1)).toEqual({
+      inboxId: anna.inboxId,
+      kind: 'plan.update',
+    })
+    await anna.engine.sync()
+    const share = anna.store.getState().incomingShares[key]
+    expect(share.details.s).toBe(660)
+    // Their answer stands; the change is flagged in the queue.
+    expect(share.status).toBe('going')
+    const entries = anna.store
+      .getState()
+      .notifications.filter((n) => n.shareKey === key)
+    expect(entries.map((n) => n.kind)).toEqual(['shareUpdate'])
+  })
+
+  it('cancels for dropped buddies and deleted Plans', async () => {
+    const { fake, levi, anna, mom, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
+    await levi.engine.publishShares()
+
+    advance(60_000)
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    expect(fake.pushes.at(-1)).toEqual({
+      inboxId: mom.inboxId,
+      kind: 'plan.cancel',
+    })
+    await mom.engine.sync()
+    const [momShare] = Object.values(mom.store.getState().incomingShares)
+    expect(momShare.status).toBe('cancelled')
+    expect(mom.store.getState().notifications.map((n) => n.kind)).toEqual([
+      'shareCancel',
+      'paired',
+    ])
+
+    advance(60_000)
+    levi.setShares([])
+    await levi.engine.publishShares()
+    expect(levi.store.getState().outgoingShares).toEqual({})
+    await anna.engine.sync()
+    const [annaShare] = Object.values(anna.store.getState().incomingShares)
+    expect(annaShare.status).toBe('cancelled')
+  })
+
+  it('wipes invitations once they lapse and when the buddy is removed', async () => {
+    const { levi, anna } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    expect(Object.keys(anna.store.getState().incomingShares)).toHaveLength(1)
+
+    await anna.engine.removeBuddy(levi.inboxId)
+    expect(anna.store.getState().incomingShares).toEqual({})
+    expect(
+      anna.store.getState().notifications.some((n) => n.from === levi.inboxId)
+    ).toBe(false)
+
+    const again = await trio()
+    again.levi.setShares([planSpec([again.anna.inboxId])])
+    await again.levi.engine.publishShares()
+    await again.anna.engine.sync()
+    again.advance(5 * 24 * HOUR)
+    await again.anna.engine.sync()
+    expect(again.anna.store.getState().incomingShares).toEqual({})
+    expect(
+      again.anna.store.getState().notifications.some((n) => n.shareKey)
+    ).toBe(false)
+  })
+
+  it('wipes lapsed invitations offline, without a sync', async () => {
+    const { levi, anna, offlineOps, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+
+    offlineOps.add('inbox/sync')
+    advance(5 * 24 * HOUR)
+    await expect(anna.engine.sync()).rejects.toThrow()
+    expect(anna.store.getState().incomingShares).toEqual({})
+    expect(anna.store.getState().notifications.some((n) => n.shareKey)).toBe(
+      false
+    )
+  })
+
+  it('keeps an answer given offline and sends it once back online', async () => {
+    const { levi, anna, offlineOps, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const key = Object.keys(anna.store.getState().incomingShares)[0]
+    await anna.engine.replyToShare(key, 'going')
+
+    offlineOps.add('event/put')
+    advance(60_000)
+    await anna.engine.replyToShare(key, 'declined')
+    expect(anna.store.getState().incomingShares[key]).toMatchObject({
+      status: 'declined',
+      unsentReplyRev: expect.any(Number),
+    })
+
+    offlineOps.clear()
+    await anna.engine.sync()
+    expect(
+      anna.store.getState().incomingShares[key].unsentReplyRev
+    ).toBeUndefined()
+    await levi.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    expect(levi.store.getState().shareReplies[shareId]).toMatchObject({
+      [anna.inboxId]: { status: 'declined' },
+    })
+  })
+
+  it('queues claims until they are answered', async () => {
+    const { user } = setup()
+    const levi = user('Levi')
+    const anna = user('Anna')
+    const link = await levi.engine.createInvite()
+    await anna.engine.acceptInvite(link)
+    await levi.engine.sync()
+    expect(levi.store.getState().notifications[0]).toMatchObject({
+      kind: 'claim',
+      name: 'Anna',
+    })
+    const [claim] = levi.store.getState().incomingClaims
+    await levi.engine.confirmClaim(claim.inviteId)
+    expect(levi.store.getState().notifications).toEqual([])
+    await anna.engine.sync()
+    expect(anna.store.getState().notifications[0]).toMatchObject({
+      kind: 'paired',
+      name: 'Levi',
+    })
+    anna.engine.markNotificationsRead()
+    expect(anna.store.getState().notifications[0].read).toBe(true)
+  })
+})
+
+describe('buildOutgoingShares', () => {
+  const now = Date.parse('2026-09-23T15:00:00Z')
+  const contact = {
+    id: 'c1',
+    name: 'Maria  Lopez',
+    phone: '555-0100',
+    address: { line1: '12 Oak St', city: 'Springfield', zip: '12345' },
+    coordinate: { latitude: 1, longitude: 2 },
+    createdAt: new Date(now),
+  } as Contact
+
+  it('shares only minimal householder details for a Follow-up', () => {
+    const details = followUpShareDetails(
+      {
+        date: new Date(2026, 8, 26, 10, 30),
+        notifyMe: false,
+        topic: 'x'.repeat(100),
+        buddies: ['b'],
+      },
+      contact
+    )
+    expect(details).toEqual({
+      d: '2026-09-26',
+      s: 630,
+      firstName: 'Maria',
+      location: {
+        address: '12 Oak St, Springfield',
+        latitude: 1,
+        longitude: 2,
+      },
+      topic: 'x'.repeat(80),
+    })
+  })
+
+  it('skips past, dismissed, linked, and uninvited items', () => {
+    const visit = (id: string, followUp: Partial<Visit['followUp']>): Visit =>
+      ({
+        id,
+        contact: { id: 'c1' },
+        date: new Date(now),
+        isBibleStudy: false,
+        followUp: {
+          date: new Date(now + 24 * 60 * 60 * 1000),
+          notifyMe: false,
+          ...followUp,
+        },
+      }) as Visit
+    const specs = buildOutgoingShares({
+      now,
+      contacts: [contact],
+      dayPlans: [
+        { ...dayPlan('2026-09-26', 60), id: 'shared', buddies: ['b'] },
+        { ...dayPlan('2026-09-20', 60), id: 'past', buddies: ['b'] },
+        { ...dayPlan('2026-09-26', 60), id: 'solo' },
+        {
+          ...dayPlan('2026-09-26', 60),
+          id: 'linked',
+          buddies: ['b'],
+          buddyShare: { from: 'x', shareId: 'y' },
+        },
+      ],
+      visits: [
+        visit('v1', { buddies: ['b'] }),
+        visit('v2', { buddies: ['b'], dismissed: true }),
+        visit('v3', {}),
+      ],
+    })
+    expect(specs.map((spec) => spec.key)).toEqual([
+      'plan:shared',
+      'followUp:v1',
+    ])
+  })
+})
+
+describe('reconcileLinkedPlans', () => {
+  const share = (status: 'pending' | 'going' | 'declined' | 'cancelled') => ({
+    from: 'levi',
+    shareId: 'share-1',
+    type: 'plan' as const,
+    rev: 1,
+    details: { d: '2026-09-26', s: 600, m: 90, title: 'Cart' },
+    expiresAt: 0,
+    receivedAt: 0,
+    status,
+  })
+
+  it('adds, follows, and removes the Plan a "Going" answer creates', () => {
+    const added = reconcileLinkedPlans([], [share('going')], () => 'new')
+    expect(added.add).toEqual([
+      expect.objectContaining({
+        id: 'new',
+        minutes: 90,
+        startTimeInMinutes: 600,
+        title: 'Cart',
+        buddyShare: { from: 'levi', shareId: 'share-1' },
+      }),
+    ])
+    const plan = added.add[0]
+    expect(reconcileLinkedPlans([plan], [share('going')], () => 'x')).toEqual({
+      add: [],
+      update: [],
+      remove: [],
+    })
+    const moved = {
+      ...share('going'),
+      details: { ...share('going').details, m: 120 },
+    }
+    expect(
+      reconcileLinkedPlans([plan], [moved], () => 'x').update[0]
+    ).toMatchObject({ id: 'new', minutes: 120 })
+    expect(
+      reconcileLinkedPlans([plan], [share('cancelled')], () => 'x').remove
+    ).toEqual(['new'])
+    expect(reconcileLinkedPlans([], [share('pending')], () => 'x').add).toEqual(
+      []
+    )
+    expect(effectiveShareStatus(share('pending'), [plan])).toBe('going')
   })
 })

@@ -8,7 +8,9 @@ The relay is **blind**: it stores ciphertext, random ids, public keys, and push 
 
 In: inbox registration, device/push registration, invite create → fetch → claim → confirm, Buddy Cards (Plans), removal from either side, delete-all, encrypted roster for multi-device restore, generic localized pushes, kill switch.
 
-Deferred (must land before any production rollout): App Attest on `inbox/register` and `invite/*` (reserved `attest` field below), Notification Service Extension decryption, QR invites, safety codes, Follow-up invitations, activity/awards.
+Deferred (must land before any production rollout): App Attest on `inbox/register` and `invite/*` (reserved `attest` field below), Notification Service Extension decryption, QR invites, safety codes, activity/awards.
+
+Since the MVP: shared Plans and Follow-up invitations (event kinds below). They need no relay changes.
 
 ## Conventions
 
@@ -247,3 +249,22 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 | ---------------- | ---------------- | --------------------------------- | ---- |
 | `invite.claimed` | relay (on claim) | the claim blob                    | yes  |
 | `pair.confirmed` | inviter          | `{ "v": 1, "name": "<inviter>" }` | yes  |
+
+### Shared Plans and Follow-ups
+
+A User can invite buddies to a one-time Plan or a Follow-up. Each is a **share**. Its `id` (22-char `b64u`) is `SHA-256("ww-buddies/v1/share|" + senderInboxId + "|" + key)[0..16]`, where `key` is `plan:<dayPlanId>` or `followUp:<visitId>`, so every device of the sender uses the same id. The client works declaratively: on each publish it compares the shares its data implies with what it last sent to each recipient (content hash per recipient). It then invites new recipients, updates changed shares, and cancels removed recipients and deleted shares. `rev` is the sender's clock at send time. Recipients ignore anything older than what they have, and a cancel wins a tie.
+
+| Kind                                  | Written by | Plaintext                                                         | Push |
+| ------------------------------------- | ---------- | ----------------------------------------------------------------- | ---- |
+| `plan.invite` / `plan.update`         | sender     | `{ "v": 1, "id", "rev", "type": "plan", "expiresAt", "details" }` | yes  |
+| `followup.invite` / `followup.update` | sender     | same, with `"type": "followUp"`                                   | yes  |
+| `plan.cancel` / `followup.cancel`     | sender     | `{ "v": 1, "id", "rev" }`                                         | yes  |
+| `share.reply`                         | recipient  | `{ "v": 1, "id", "rev", "status": "going" \| "declined" }`        | yes  |
+
+`details`: `d` (sender's local day, `YYYY-MM-DD`), `s?` (start, minutes after midnight), `m?` (Plan minutes), `title?` (≤ 100), `location?` (`{ name?, address?, latitude?, longitude? }`), `note?` (≤ 2000, Plans only), `firstName?` (≤ 40) and `topic?` (≤ 80), Follow-ups only.
+
+- **Follow-ups carry minimal householder data:** date and time, the Contact's first name, a one-line address and coordinate, and the topic. Never the surname, phone, email, notes, history, or Bible Study flag. In data protection mode the sender's picker is hidden, and the recipient sees only the date and time.
+- **Multi-device senders:** what was sent is tracked per device. Another of the sender's devices without that record re-sends under the same `id`; recipients see identical details and add no queue entry, though the push may still arrive once.
+- **Expiry:** a Plan share expires 24 h after the Plan ends; a Follow-up 24 h after its time. Both phones drop it then, locally and without needing the network: on launch, on foreground, and on every sync (the relay deletes events after 30 days).
+- **Going:** answering "Going" to a Plan adds a linked Day Plan (`buddyShare: { from, shareId }`) that mirrors the sender's changes and is removed when they cancel or the User changes their answer. Deleting that Plan answers "declined". An answer is saved before it's sent and retried on every sync until the relay accepts it, so it holds offline. Accepted Follow-ups appear read-only on the schedule day.
+- **Notification queue:** claims, confirmations, invites, changes, cancellations, and replies are queued on the device (no user content — references only) behind the Home header bell. Entries are pruned after 30 days or when the share they point at is wiped.

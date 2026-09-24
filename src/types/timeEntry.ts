@@ -104,6 +104,24 @@ export type TimeEntriesByYear = {
  */
 export type MinuteDisplayFormat = 'short' | 'decimal'
 
+/**
+ * Where a Plan happens: a place picked from Apple Maps search (a business or
+ * landmark carries `name`; a plain street address may not).
+ */
+export type PlanLocation = {
+  name?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+}
+
+/** Which buddy invitation a linked Plan follows. */
+export type BuddyShareRef = {
+  /** The inviting buddy's inbox id. */
+  from: string
+  shareId: string
+}
+
 export type DayPlan = {
   id: string
   date: Date
@@ -123,7 +141,20 @@ export type DayPlan = {
    * undefined, treat as noon (720) via `getStartTimeInMinutes`.
    */
   startTimeInMinutes?: number
+  /** Optional short name for the Plan, e.g. "Cart witnessing". */
+  title?: string
+  location?: PlanLocation
   note?: string
+  /**
+   * Buddies (their inbox ids) invited to this Plan. Each gets the date, time,
+   * title, location, and note end to end encrypted, and follows changes.
+   */
+  buddies?: string[]
+  /**
+   * Set when this Plan was added by answering "Going" to a buddy's invitation.
+   * It follows the buddy's changes and goes away if they cancel.
+   */
+  buddyShare?: BuddyShareRef
   /**
    * Whether the user opted this plan into a local notification. Defaults false;
    * the global preference `planAlwaysNotify` flips the default for newly
@@ -187,6 +218,9 @@ export type RecurringPlan = {
    * noon (720) via `getStartTimeInMinutes`.
    */
   startTimeInMinutes?: number
+  /** Pattern-level, like `categoryId`: overrides can't change these. */
+  title?: string
+  location?: PlanLocation
   recurrence: {
     frequency: RecurringPlanFrequencies
     interval: number

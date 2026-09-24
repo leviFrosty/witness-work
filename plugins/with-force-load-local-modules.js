@@ -34,6 +34,7 @@ const LOCAL_MODULES = [
   { importName: 'KeychainUuid', className: 'KeychainUuidModule' },
   { importName: 'AppAttest', className: 'AppAttestModule' },
   { importName: 'BuddiesKeychain', className: 'BuddiesKeychainModule' },
+  { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
 ]
 
 const IMPORT_MARKER = '// with-force-load-local-modules:imports'

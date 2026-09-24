@@ -70,7 +70,13 @@ import TypeSelectorRow, {
   type TypeSelection,
 } from '@/components/TypeSelectorRow'
 import { RootStackParamList } from '@/types/rootStack'
+import type { PlanLocation } from '@/types/timeEntry'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import PlaceSearchField from '@/features/plans/components/PlaceSearchField'
+import BuddyPicker from '@/features/buddies/components/BuddyPicker'
+import LinkedPlanBanner from '@/features/buddies/components/LinkedPlanBanner'
+import useShareReplies from '@/features/buddies/hooks/useShareReplies'
+import { planShareKey } from '@/features/buddies/lib/shares'
 
 type NotifyMeOffset = {
   amount: number
@@ -459,6 +465,10 @@ const RecurrenceFields = (props: {
 
 const PlanFields = (props: {
   isRecurring: boolean
+  title: string
+  setTitle: React.Dispatch<React.SetStateAction<string>>
+  location?: PlanLocation
+  setLocation: (location?: PlanLocation) => void
   date: Date
   setDate: React.Dispatch<React.SetStateAction<Date>>
   hours: number
@@ -486,9 +496,33 @@ const PlanFields = (props: {
 }) => {
   const theme = useTheme()
   const noteInput = useRef<RNTextInput>(null)
+  const titleInput = useRef<RNTextInput>(null)
 
   return (
     <>
+      <InputRowContainer
+        label={i18n.t('planTitle')}
+        onLabelPress={() => titleInput.current?.focus()}
+        controlWidth='full'
+      >
+        <TextInput
+          ref={titleInput}
+          value={props.title}
+          onChangeText={props.setTitle}
+          placeholder={i18n.t('planTitle_placeholder')}
+          placeholderTextColor={theme.colors.textAlt}
+          maxLength={100}
+          style={{
+            borderColor: theme.colors.border,
+            borderWidth: 1,
+            borderRadius: theme.numbers.borderRadiusSm,
+            padding: 10,
+            color: theme.colors.text,
+          }}
+          clearButtonMode='while-editing'
+          returnKeyType='done'
+        />
+      </InputRowContainer>
       <InputRowContainer
         label={i18n.t('date')}
         controlWidth='auto'
@@ -516,6 +550,7 @@ const PlanFields = (props: {
           setWeekOfMonth={props.setWeekOfMonth}
         />
       )}
+      <PlaceSearchField value={props.location} onChange={props.setLocation} />
       <InputRowContainer
         label={i18n.t('note')}
         onLabelPress={() => noteInput.current?.focus()}
@@ -990,6 +1025,21 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const [note, setNote] = useState(
     existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
+  const [title, setTitle] = useState(
+    existingDayPlan?.title ?? existingRecurringPlan?.title ?? ''
+  )
+  const [location, setLocation] = useState<PlanLocation | undefined>(
+    existingDayPlan?.location ?? existingRecurringPlan?.location
+  )
+  const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
+    existingDayPlan?.buddies ?? []
+  )
+  const linkedShare = existingDayPlan?.buddyShare
+  const shareReplies = useShareReplies(
+    existingDayPlan?.buddies?.length
+      ? planShareKey(existingDayPlan.id)
+      : undefined
+  )
 
   const { planNotificationOffset, planAlwaysNotify, timeDisplayFormat } =
     usePreferences()
@@ -1074,6 +1124,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
     )
     setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
+    setTitle(existingDayPlan?.title ?? existingRecurringPlan?.title ?? '')
+    setLocation(existingDayPlan?.location ?? existingRecurringPlan?.location)
+    setInvitedBuddies(existingDayPlan?.buddies ?? [])
     setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
     setNotifyMeOffset(initialNotifyOffset())
     setTypeValue(resolveInitialTypeValue())
@@ -1151,6 +1204,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             ? { weekday, weekOfMonth }
             : undefined,
       },
+      title: title.trim() || undefined,
+      location,
       note: note || undefined,
     }
   }
@@ -1163,6 +1218,12 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     const categoryChanged =
       (payload.categoryId ?? undefined) !==
       (existingRecurringPlan.categoryId ?? undefined)
+    // Like the Type, title and location are pattern-level: an instance that
+    // changes them becomes its own Day Plan.
+    const detailsChanged =
+      payload.title !== existingRecurringPlan.title ||
+      JSON.stringify(payload.location) !==
+        JSON.stringify(existingRecurringPlan.location)
 
     if (scope === 'instance') {
       const selectedDateMatchesInstance = sameDay(
@@ -1170,7 +1231,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         editingDate
       )
 
-      if (!selectedDateMatchesInstance || categoryChanged) {
+      if (!selectedDateMatchesInstance || categoryChanged || detailsChanged) {
         removeRecurringPlanOverride(existingRecurringPlan.id, instanceDate)
         deleteSingleEventFromRecurringPlan(
           existingRecurringPlan.id,
@@ -1182,6 +1243,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           startTimeInMinutes: payload.startTimeInMinutes,
           minutes: payload.minutes,
           categoryId: payload.categoryId,
+          title: payload.title,
+          location: payload.location,
           note: payload.note,
           notifyMe: false,
           notifications: [],
@@ -1189,6 +1252,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         analytics.capture('recurring_plan_instance_replaced', {
           date_changed: !selectedDateMatchesInstance,
           category_changed: categoryChanged,
+          details_changed: detailsChanged,
         })
         return
       }
@@ -1263,6 +1327,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     const plannedMinutes = hours * 60 + minutes
     const plannedNote = note || undefined
+    const plannedTitle = title.trim() || undefined
+    const plannedBuddies =
+      !linkedShare && invitedBuddies.length > 0 ? invitedBuddies : undefined
 
     if (isEditMode) {
       if (existingDayPlan) {
@@ -1279,7 +1346,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           startTimeInMinutes,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,
+          title: plannedTitle,
+          location,
           note: plannedNote,
+          buddies: plannedBuddies,
           notifyMe,
           notifications,
         })
@@ -1307,7 +1377,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           startTimeInMinutes,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,
+          title: plannedTitle,
+          location,
           note: plannedNote,
+          buddies: plannedBuddies,
           notifyMe,
           notifications,
         })
@@ -1331,6 +1404,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       frequency: oneTime ? undefined : frequency,
       has_category: !!selectedCategoryId,
       has_note: !!plannedNote,
+      has_title: !!plannedTitle,
+      has_location: !!location,
+      invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
       reminder_enabled: oneTime && notifyMe,
     })
     setSaveScopeModalOpen(false)
@@ -1459,12 +1535,17 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             alignSelf: 'center',
           }}
         >
+          {linkedShare && <LinkedPlanBanner share={linkedShare} />}
           <Section>
             {!isEditMode && (
               <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />
             )}
             <PlanFields
               isRecurring={!oneTime}
+              title={title}
+              setTitle={setTitle}
+              location={location}
+              setLocation={setLocation}
               date={date}
               setDate={handleDateChange}
               hours={hours}
@@ -1495,6 +1576,15 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               setNotifyMeOffset={setNotifyMeOffset}
               notificationsAllowed={notificationsAllowed}
             />
+            {oneTime && !linkedShare && (
+              <BuddyPicker
+                value={invitedBuddies}
+                onChange={setInvitedBuddies}
+                description={i18n.t('buddies_invitePlanDescription')}
+                replies={shareReplies}
+                lastInSection
+              />
+            )}
 
             {typeValue === CUSTOM_TYPE_VALUE && (
               <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>

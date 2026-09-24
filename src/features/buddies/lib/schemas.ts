@@ -49,6 +49,68 @@ export const pairConfirmedSchema = z.object({
   name: displayName,
 })
 
+/**
+ * Shared Plans and Follow-ups (invitations). `details` is everything the
+ * invited buddy sees; a Follow-up carries only minimal householder data.
+ */
+export const SHARE_TYPES = ['plan', 'followUp'] as const
+export type ShareType = (typeof SHARE_TYPES)[number]
+
+const shareLocationSchema = z.object({
+  name: z.string().max(120).optional(),
+  address: z.string().max(240).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+})
+
+export const shareDetailsSchema = z.object({
+  /** The sender's local calendar day. */
+  d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** Start, in minutes after midnight. */
+  s: z.number().int().min(0).max(1439).optional(),
+  /** Planned minutes (Plans only). */
+  m: z.number().int().min(1).max(1440).optional(),
+  title: z.string().max(100).optional(),
+  location: shareLocationSchema.optional(),
+  note: z.string().max(2000).optional(),
+  /** Follow-ups only: the householder's first name or nickname. */
+  firstName: z.string().max(40).optional(),
+  /** Follow-ups only. */
+  topic: z.string().max(80).optional(),
+})
+export type ShareDetails = z.infer<typeof shareDetailsSchema>
+
+/** `plan.invite` / `plan.update` / `followup.invite` / `followup.update`. */
+export const shareInviteSchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  /** The sender's clock at send time; newer wins. */
+  rev: z.number(),
+  type: z.enum(SHARE_TYPES),
+  /** When both phones wipe it. */
+  expiresAt: z.number(),
+  details: shareDetailsSchema,
+})
+export type ShareInvite = z.infer<typeof shareInviteSchema>
+
+/** `plan.cancel` / `followup.cancel`. */
+export const shareCancelSchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  rev: z.number(),
+})
+
+export const SHARE_REPLIES = ['going', 'declined'] as const
+export type ShareReply = (typeof SHARE_REPLIES)[number]
+
+/** `share.reply` (invited buddy → sender). */
+export const shareReplySchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  rev: z.number(),
+  status: z.enum(SHARE_REPLIES),
+})
+
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
 
 /** The encrypted multi-device roster: everything needed to rebuild pairings. */

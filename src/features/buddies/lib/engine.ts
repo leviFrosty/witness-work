@@ -27,15 +27,27 @@ import {
   pairingCardSchema,
   Roster,
   rosterSchema,
+  shareCancelSchema,
+  ShareInvite,
+  shareInviteSchema,
+  ShareReply,
+  shareReplySchema,
+  ShareType,
 } from '@/features/buddies/lib/schemas'
 import { buildBuddyCardDays } from '@/features/buddies/lib/card'
 import {
   Buddy,
   BuddiesState,
+  BuddyNotification,
+  IncomingShare,
+  incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
   MAX_BUDDIES,
+  MAX_NOTIFICATIONS,
+  withoutExpired,
   occupiedBuddySpots,
+  OutgoingShareSpec,
   PendingRemoval,
 } from '@/features/buddies/lib/state'
 import type { RecurringPlan } from '@/lib/recurrence'
@@ -66,6 +78,8 @@ export type BuddiesEngineDeps = {
   getRootSeed: () => Uint8Array
   deleteRootSeed: () => void
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
+  /** The Plans and Follow-ups this User has invited buddies to. */
+  getShares?: () => OutgoingShareSpec[]
 }
 
 export type BuddyInviteErrorReason =
@@ -96,7 +110,17 @@ export class BuddyRemovalPendingError extends Error {
 }
 
 /** Push kinds the relay may send; devices register a localized template each. */
-export const BUDDY_PUSH_KINDS = ['invite.claimed', 'pair.confirmed'] as const
+export const BUDDY_PUSH_KINDS = [
+  'invite.claimed',
+  'pair.confirmed',
+  'plan.invite',
+  'plan.update',
+  'plan.cancel',
+  'followup.invite',
+  'followup.update',
+  'followup.cancel',
+  'share.reply',
+] as const
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
 const aad = {
@@ -107,6 +131,18 @@ const aad = {
   event: (inboxId: string, slotId: string, eventId: string) =>
     `ww-buddies/v1/event|${inboxId}|${slotId}|${eventId}`,
   roster: (inboxId: string) => `ww-buddies/v1/roster|${inboxId}`,
+}
+
+const SHARE_KIND_PREFIX: Record<ShareType, string> = {
+  plan: 'plan',
+  followUp: 'followup',
+}
+
+function shareTypeOfKind(kind: string): ShareType | null {
+  const prefix = kind.split('.')[0]
+  if (prefix === 'plan') return 'plan'
+  if (prefix === 'followup') return 'followUp'
+  return null
 }
 
 type PairKeys = { incoming: DirectionKeys; outgoing: DirectionKeys }
@@ -260,11 +296,39 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
+  /** Also purges everything they shared with this User. */
   function forgetBuddy(inboxId: string) {
     store.setState((state) => ({
       buddies: state.buddies.filter((b) => b.inboxId !== inboxId),
       cards: omitKey(state.cards, inboxId),
       publishedCardHashes: omitKey(state.publishedCardHashes, inboxId),
+      incomingShares: Object.fromEntries(
+        Object.entries(state.incomingShares).filter(
+          ([, share]) => share.from !== inboxId
+        )
+      ),
+      outgoingShares: Object.fromEntries(
+        Object.entries(state.outgoingShares).map(([key, share]) => [
+          key,
+          { ...share, sent: omitKey(share.sent, inboxId) },
+        ])
+      ),
+      shareReplies: Object.fromEntries(
+        Object.entries(state.shareReplies).map(([shareId, replies]) => [
+          shareId,
+          omitKey(replies, inboxId),
+        ])
+      ),
+      notifications: state.notifications.filter((n) => n.from !== inboxId),
+    }))
+  }
+
+  function notify(entry: Omit<BuddyNotification, 'at' | 'read'>) {
+    store.setState((state) => ({
+      notifications: [
+        { ...entry, at: deps.now(), read: false },
+        ...state.notifications.filter((n) => n.id !== entry.id),
+      ].slice(0, MAX_NOTIFICATIONS),
     }))
   }
 
@@ -285,6 +349,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       incomingClaims: state.incomingClaims.filter(
         (claim) => claim.inviteId !== inviteId
       ),
+      notifications: state.notifications.filter((n) => n.inviteId !== inviteId),
     }))
   }
 
@@ -645,6 +710,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       ],
     }))
+    notify({
+      id: event.eventId,
+      kind: 'claim',
+      name: card.name,
+      inviteId: invite.inviteId,
+    })
   }
 
   function applyConfirmation(
@@ -677,6 +748,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             : b
         ),
       }))
+      notify({
+        id: event.eventId,
+        kind: 'paired',
+        from: buddy.inboxId,
+        name: body.name,
+      })
       return true
     } catch {
       return false
@@ -723,6 +800,397 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     } catch {
       // Undecryptable or malformed cards are dropped; the next publish replaces them.
     }
+  }
+
+  /** Stable per share, so every device of this User sends the same id. */
+  function shareIdFor(me: BuddyIdentity, key: string): string {
+    return toB64u(
+      sha256(utf8(`ww-buddies/v1/share|${me.inboxId}|${key}`)).slice(0, 16)
+    )
+  }
+
+  async function sendEvent(
+    me: BuddyIdentity,
+    buddy: Buddy,
+    kind: string,
+    body: unknown
+  ) {
+    const { outgoing } = pairKeys(me, buddy)
+    const eventId = newId()
+    await relay.putEvent(writerAuth(buddy.inboxId, outgoing), {
+      eventId,
+      kind,
+      blob: seal(
+        outgoing.contentKey,
+        json(body),
+        aad.event(buddy.inboxId, outgoing.slotId, eventId),
+        nonce()
+      ),
+      push: true,
+    })
+  }
+
+  /**
+   * Brings every buddy's view of this User's shared Plans and Follow-ups in
+   * line with the current data: invites new recipients, updates changed
+   * details, and cancels removed recipients and deleted shares. Content is
+   * hashed per recipient so an unchanged share sends nothing.
+   */
+  async function publishShares() {
+    if (!deps.getShares || !displayName()) return
+    const now = deps.now()
+    const specs = deps.getShares().filter((spec) => spec.expiresAt > now)
+    const state = store.getState()
+    if (specs.length === 0 && Object.keys(state.outgoingShares).length === 0)
+      return
+    const me = identity()
+    const activeBuddy = (inboxId: string) =>
+      store
+        .getState()
+        .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
+    let failure: unknown = null
+
+    /** Sends one event; false when it should be retried on the next publish. */
+    const deliver = async (inboxId: string, kind: string, body: unknown) => {
+      const buddy = activeBuddy(inboxId)
+      if (!buddy) return true
+      try {
+        await sendEvent(me, buddy, kind, body)
+        return true
+      } catch (error) {
+        if (isRelayError(error, 'gone')) {
+          forgetBuddy(inboxId)
+          return true
+        }
+        failure ??= error
+        return false
+      }
+    }
+
+    const saveSent = (
+      key: string,
+      share: BuddiesState['outgoingShares'][string] | null
+    ) =>
+      store.setState((current) => ({
+        outgoingShares: share
+          ? { ...current.outgoingShares, [key]: share }
+          : omitKey(current.outgoingShares, key),
+      }))
+
+    for (const spec of specs) {
+      const shareId = shareIdFor(me, spec.key)
+      const prefix = SHARE_KIND_PREFIX[spec.type]
+      const hash = toB64u(
+        sha256(
+          json({
+            type: spec.type,
+            details: spec.details,
+            expiresAt: spec.expiresAt,
+          })
+        )
+      )
+      const recipients = new Set(spec.recipients.filter(activeBuddy))
+      const sent = {
+        ...store.getState().outgoingShares[spec.key]?.sent,
+      }
+      const body: ShareInvite = {
+        v: 1,
+        id: shareId,
+        rev: now,
+        type: spec.type,
+        expiresAt: spec.expiresAt,
+        details: spec.details,
+      }
+      for (const inboxId of recipients) {
+        if (sent[inboxId] === hash) continue
+        const kind = `${prefix}.${sent[inboxId] ? 'update' : 'invite'}`
+        if (await deliver(inboxId, kind, body)) sent[inboxId] = hash
+      }
+      for (const inboxId of Object.keys(sent)) {
+        if (recipients.has(inboxId)) continue
+        const cancel = { v: 1, id: shareId, rev: now }
+        if (await deliver(inboxId, `${prefix}.cancel`, cancel))
+          delete sent[inboxId]
+      }
+      saveSent(spec.key, {
+        shareId,
+        type: spec.type,
+        expiresAt: spec.expiresAt,
+        sent,
+      })
+    }
+
+    const wanted = new Set(specs.map((spec) => spec.key))
+    for (const [key, share] of Object.entries(
+      store.getState().outgoingShares
+    )) {
+      if (wanted.has(key)) continue
+      const sent = { ...share.sent }
+      if (share.expiresAt > now) {
+        const cancel = { v: 1, id: share.shareId, rev: now }
+        for (const inboxId of Object.keys(sent)) {
+          const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
+          if (await deliver(inboxId, kind, cancel)) delete sent[inboxId]
+        }
+      }
+      saveSent(
+        key,
+        share.expiresAt > now && Object.keys(sent).length > 0
+          ? { ...share, sent }
+          : null
+      )
+    }
+    if (failure) throw failure
+  }
+
+  /** The buddy whose incoming slot delivered an event, if still active. */
+  function senderOf(me: BuddyIdentity, slotId: string): Buddy | undefined {
+    return store
+      .getState()
+      .buddies.find(
+        (candidate) =>
+          candidate.status === 'active' &&
+          pairKeys(me, candidate).incoming.slotId === slotId
+      )
+  }
+
+  function openEvent(
+    me: BuddyIdentity,
+    buddy: Buddy,
+    event: RelaySyncResponse['events'][number]
+  ): unknown {
+    return decode(
+      open(
+        pairKeys(me, buddy).incoming.contentKey,
+        event.blob,
+        aad.event(me.inboxId, event.slotId, event.eventId)
+      )
+    )
+  }
+
+  function applyShareEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number]
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    const action = event.kind.split('.')[1]
+    try {
+      const body = openEvent(me, buddy, event)
+      if (event.kind === 'share.reply') {
+        applyReply(buddy, event.eventId, shareReplySchema.parse(body))
+      } else if (action === 'cancel') {
+        const cancel = shareCancelSchema.parse(body)
+        applyCancel(buddy, event.eventId, cancel.id, cancel.rev)
+      } else if (action === 'invite' || action === 'update') {
+        const invite = shareInviteSchema.parse(body)
+        if (invite.type !== shareTypeOfKind(event.kind)) return
+        applyInvite(buddy, event.eventId, invite)
+      }
+    } catch {
+      // Undecryptable or malformed events are dropped.
+    }
+  }
+
+  function applyInvite(buddy: Buddy, eventId: string, invite: ShareInvite) {
+    if (invite.expiresAt <= deps.now()) return
+    const key = incomingShareKey(buddy.inboxId, invite.id)
+    const existing = store.getState().incomingShares[key]
+    if (existing && existing.rev >= invite.rev) return
+    const reopened = !existing || existing.status === 'cancelled'
+    const changed =
+      reopened ||
+      JSON.stringify(existing.details) !== JSON.stringify(invite.details)
+    const share: IncomingShare = {
+      from: buddy.inboxId,
+      shareId: invite.id,
+      type: invite.type,
+      rev: invite.rev,
+      details: invite.details,
+      expiresAt: invite.expiresAt,
+      receivedAt: deps.now(),
+      status: reopened ? 'pending' : existing.status,
+      unsentReplyRev: reopened ? undefined : existing.unsentReplyRev,
+    }
+    store.setState((state) => ({
+      incomingShares: { ...state.incomingShares, [key]: share },
+    }))
+    if (!changed) return
+    // One entry per share: the latest invite or change replaces older ones.
+    store.setState((state) => ({
+      notifications: state.notifications.filter(
+        (n) => n.shareKey !== key || n.kind === 'shareReply'
+      ),
+    }))
+    notify({
+      id: eventId,
+      kind: reopened ? 'shareInvite' : 'shareUpdate',
+      from: buddy.inboxId,
+      name: buddy.name,
+      shareKey: key,
+      shareType: invite.type,
+    })
+  }
+
+  function applyCancel(
+    buddy: Buddy,
+    eventId: string,
+    shareId: string,
+    rev: number
+  ) {
+    const key = incomingShareKey(buddy.inboxId, shareId)
+    const existing = store.getState().incomingShares[key]
+    // A cancel wins a tie with the invite it follows.
+    if (!existing || existing.rev > rev || existing.status === 'cancelled')
+      return
+    store.setState((state) => ({
+      incomingShares: {
+        ...state.incomingShares,
+        [key]: { ...existing, rev, status: 'cancelled' },
+      },
+      notifications: state.notifications.filter((n) => n.shareKey !== key),
+    }))
+    notify({
+      id: eventId,
+      kind: 'shareCancel',
+      from: buddy.inboxId,
+      name: buddy.name,
+      shareKey: key,
+      shareType: existing.type,
+    })
+  }
+
+  function applyReply(
+    buddy: Buddy,
+    eventId: string,
+    reply: { id: string; rev: number; status: ShareReply }
+  ) {
+    const previous = store.getState().shareReplies[reply.id]?.[buddy.inboxId]
+    if (previous && previous.rev >= reply.rev) return
+    const share = Object.values(store.getState().outgoingShares).find(
+      (candidate) => candidate.shareId === reply.id
+    )
+    store.setState((state) => ({
+      shareReplies: {
+        ...state.shareReplies,
+        [reply.id]: {
+          ...state.shareReplies[reply.id],
+          [buddy.inboxId]: {
+            status: reply.status,
+            rev: reply.rev,
+            at: deps.now(),
+          },
+        },
+      },
+      notifications: state.notifications.filter(
+        (n) =>
+          !(
+            n.kind === 'shareReply' &&
+            n.shareKey === reply.id &&
+            n.from === buddy.inboxId
+          )
+      ),
+    }))
+    notify({
+      id: eventId,
+      kind: 'shareReply',
+      from: buddy.inboxId,
+      name: buddy.name,
+      shareKey: reply.id,
+      shareType: share?.type,
+      reply: reply.status,
+    })
+  }
+
+  /**
+   * Answers a buddy's invitation; "going" is what adds the linked Plan. The
+   * answer is saved first, so it holds offline, and sent when the relay is
+   * reachable — now or on a later sync.
+   */
+  async function replyToShare(key: string, status: ShareReply) {
+    const share = store.getState().incomingShares[key]
+    if (!share || share.status === 'cancelled') return
+    store.setState((state) => ({
+      incomingShares: {
+        ...state.incomingShares,
+        [key]: { ...share, status, unsentReplyRev: deps.now() },
+      },
+      notifications: state.notifications.map((n) =>
+        n.shareKey === key ? { ...n, read: true } : n
+      ),
+    }))
+    await deliverReplies().catch(() => {
+      // Saved; retried on the next sync.
+    })
+  }
+
+  /** Sends the answers that haven't reached their buddy yet. */
+  async function deliverReplies() {
+    const unsent = Object.entries(store.getState().incomingShares).filter(
+      ([, share]) => share.unsentReplyRev !== undefined
+    )
+    if (unsent.length === 0) return
+    const me = await ensureInbox()
+    const markSent = (key: string, rev: number) =>
+      store.setState((state) => {
+        const current = state.incomingShares[key]
+        // A newer answer given meanwhile still needs sending.
+        if (current?.unsentReplyRev !== rev) return state
+        return {
+          incomingShares: {
+            ...state.incomingShares,
+            [key]: { ...current, unsentReplyRev: undefined },
+          },
+        }
+      })
+    let failure: unknown = null
+    for (const [key, share] of unsent) {
+      const rev = share.unsentReplyRev!
+      const buddy = store
+        .getState()
+        .buddies.find((b) => b.inboxId === share.from && b.status === 'active')
+      if (
+        !buddy ||
+        share.status === 'pending' ||
+        share.status === 'cancelled'
+      ) {
+        markSent(key, rev)
+        continue
+      }
+      try {
+        await sendEvent(me, buddy, 'share.reply', {
+          v: 1,
+          id: share.shareId,
+          rev,
+          status: share.status,
+        })
+        markSent(key, rev)
+      } catch (error) {
+        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
+        else failure ??= error
+      }
+    }
+    if (failure) throw failure
+  }
+
+  function markNotificationsRead() {
+    if (store.getState().notifications.every((n) => n.read)) return
+    store.setState((state) => ({
+      notifications: state.notifications.map((n) =>
+        n.read ? n : { ...n, read: true }
+      ),
+    }))
+  }
+
+  function dismissNotification(id: string) {
+    store.setState((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id),
+    }))
+  }
+
+  /** The id buddies know one of this User's shares by. */
+  function shareIdForKey(key: string): string {
+    return shareIdFor(identity(), key)
   }
 
   function readRoster(me: BuddyIdentity, blob: string): Roster | null {
@@ -802,6 +1270,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return added.map((b) => b.inboxId)
   }
 
+  /** Wipes lapsed shares, replies, and queue entries; needs no network. */
+  function expireLocal() {
+    store.setState((state) => withoutExpired(state, deps.now()))
+  }
+
   function expireStale() {
     const now = deps.now()
     const lapsed = store
@@ -810,15 +1283,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         (b) => b.status === 'awaitingConfirm' && (b.expiresAt ?? 0) <= now
       )
     if (lapsed.length > 0) queueRemoval(lapsed)
-    store.setState((state) => ({
-      outgoingInvites: state.outgoingInvites.filter((i) => i.expiresAt > now),
-      incomingClaims: state.incomingClaims.filter((c) => c.expiresAt > now),
-      closedInviteIds: Object.fromEntries(
-        Object.entries(state.closedInviteIds).filter(
-          ([, expiresAt]) => expiresAt > now
-        )
-      ),
-    }))
+    expireLocal()
     return lapsed.length > 0
   }
 
@@ -849,6 +1314,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   async function runSync() {
+    expireLocal()
     const me = await ensureInbox()
     slotsAddedDuringSync.clear()
     if (store.getState().slotsNeedRestore) await restoreInbox(me)
@@ -870,6 +1336,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         applyClaim(me, event)
       } else if (event.kind === 'pair.confirmed') {
         rosterChanged = applyConfirmation(me, event) || rosterChanged
+      } else if (
+        event.kind === 'share.reply' ||
+        shareTypeOfKind(event.kind) !== null
+      ) {
+        applyShareEvent(me, event)
       }
     }
     for (const card of response.cards) applyCard(me, card)
@@ -887,6 +1358,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
     rosterChanged = expireStale() || rosterChanged
     await flushRemovals(me)
+    await deliverReplies().catch(() => {
+      // Retried on the next sync.
+    })
     store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
     // Write the merged roster back when another device's copy lacks
     // something, which also heals a concurrent last-writer-wins overwrite.
@@ -897,6 +1371,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       rosterChanged = true
     if (rosterChanged) await saveRoster(me)
     await publishCards()
+    await publishShares()
   }
 
   /** Coalesces concurrent callers onto one in-flight sync. */
@@ -965,6 +1440,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     removeBuddy,
     setShowOnCalendar,
     publishCards,
+    publishShares,
+    replyToShare,
+    deliverReplies,
+    expire: expireLocal,
+    shareIdForKey,
+    markNotificationsRead,
+    dismissNotification,
     sync,
     registerPush,
     deleteEverything,

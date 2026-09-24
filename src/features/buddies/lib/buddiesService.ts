@@ -1,10 +1,13 @@
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import { fromB64u } from '@/features/buddies/lib/bytes'
 import { createBuddiesEngine } from '@/features/buddies/lib/engine'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient } from '@/features/buddies/lib/relay'
+import { buildOutgoingShares } from '@/features/buddies/lib/shares'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /** The app's single Buddies engine: Keychain seed + relay + local stores. */
@@ -19,4 +22,11 @@ export const buddiesEngine = createBuddiesEngine({
     const { dayPlans, recurringPlans } = useServiceReport.getState()
     return { dayPlans, recurringPlans }
   },
+  getShares: () =>
+    buildOutgoingShares({
+      dayPlans: useServiceReport.getState().dayPlans,
+      visits: useConversations.getState().conversations,
+      contacts: useContacts.getState().contacts,
+      now: Date.now(),
+    }),
 })

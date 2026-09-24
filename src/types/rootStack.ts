@@ -73,6 +73,8 @@ export type RootStackParamList = {
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined
   Buddies: undefined
+  /** The Home bell's queue of buddy invitations, changes, and replies. */
+  BuddyNotifications: undefined
   /** Pre-accept screen for an incoming Buddies invite link. */
   'Buddy Invite': { link: string }
 }

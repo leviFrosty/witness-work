@@ -18,9 +18,10 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 export default function BuddyPlansForDay({ date }: { date: Date }) {
   const theme = useTheme()
   const enabled = useBuddiesEnabled()
-  const { timeDisplayFormat } = usePreferences()
+  const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const buddies = useBuddies((state) => state.buddies)
   const cards = useBuddies((state) => state.cards)
+  const incomingShares = useBuddies((state) => state.incomingShares)
   if (!enabled) return null
 
   const key = moment(date).format('YYYY-MM-DD')
@@ -31,7 +32,20 @@ export default function BuddyPlansForDay({ date }: { date: Date }) {
         (plan, index) => ({ buddy, plan, key: `${buddy.inboxId}-${index}` })
       )
     )
-  if (rows.length === 0) return null
+  // Follow-ups the User said they'd join; accepted Plans are real Plans.
+  const followUps = Object.values(incomingShares)
+    .filter(
+      (share) =>
+        share.type === 'followUp' &&
+        share.status === 'going' &&
+        share.expiresAt > Date.now() &&
+        share.details.d === key
+    )
+    .flatMap((share) => {
+      const buddy = buddies.find((b) => b.inboxId === share.from)
+      return buddy ? [{ buddy, share }] : []
+    })
+  if (rows.length === 0 && followUps.length === 0) return null
 
   return (
     <View style={{ gap: 8, opacity: 0.7, paddingTop: 10 }}>
@@ -72,6 +86,34 @@ export default function BuddyPlansForDay({ date }: { date: Date }) {
           </XView>
         )
       })}
+      {followUps.map(({ buddy, share }) => (
+        <XView key={`${share.from}-${share.shareId}`} style={{ gap: 10 }}>
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: buddyColor(theme, buddy.colorIndex),
+            }}
+          />
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>{buddy.name}</Text>
+          <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+            {[
+              // The householder's name stays hidden in data protection mode.
+              share.details.firstName && !dataProtectionMode
+                ? i18n.t('buddies_followUpWith', {
+                    name: share.details.firstName,
+                  })
+                : i18n.t('buddies_followUp'),
+              share.details.s === undefined
+                ? undefined
+                : formatStartTime(share.details.s),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
+        </XView>
+      ))}
     </View>
   )
 }

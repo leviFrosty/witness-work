@@ -6,6 +6,7 @@ import {
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { ReactNode } from 'react'
 import { View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import moment from 'moment'
@@ -23,6 +24,9 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import Button from '@/components/ui/Button'
 import Copyeable from '@/components/ui/Copyeable'
 import Badge from '@/components/ui/Badge'
+import PlanLocationLink from '@/components/PlanLocationLink'
+import RichNoteText from '@/components/RichNoteText'
+import { findLinks } from '@/lib/linkPreview'
 import {
   formatDate,
   formatStartTime,
@@ -102,6 +106,8 @@ const PlanRow = (props: {
   contextMonth?: number
   contextYear?: number
   countingStatus?: 'counted' | 'notCounted'
+  /** Extra lines under the details, e.g. who the Plan is with. */
+  footer?: ReactNode
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -126,6 +132,11 @@ const PlanRow = (props: {
   const displayNote = recurringPlan
     ? getEffectiveNoteForRecurringPlan(recurringPlan, date)
     : dayPlan?.note
+  const noteStyle = {
+    color: theme.colors.textAlt,
+    fontSize: theme.fontSize('sm'),
+    lineHeight: theme.fontSize('sm') * 1.4,
+  }
   const displayStartTimeInMinutes = recurringPlan
     ? getEffectiveStartTimeInMinutesForRecurringPlan(recurringPlan, date)
     : dayPlan?.startTimeInMinutes
@@ -306,19 +317,29 @@ const PlanRow = (props: {
               />
             </View>
 
-            {displayNote && (
-              <Copyeable
-                textProps={{
-                  style: {
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('sm'),
-                    lineHeight: theme.fontSize('sm') * 1.4,
-                  },
-                }}
+            {plan.title ? (
+              <Text
+                style={{ fontFamily: theme.fonts.semiBold }}
+                numberOfLines={2}
               >
-                {displayNote}
-              </Copyeable>
-            )}
+                {plan.title}
+              </Text>
+            ) : null}
+
+            {plan.location ? (
+              <PlanLocationLink location={plan.location} compact />
+            ) : null}
+
+            {displayNote &&
+              (findLinks(displayNote).length > 0 ? (
+                <RichNoteText text={displayNote} style={noteStyle} />
+              ) : (
+                <Copyeable textProps={{ style: noteStyle }}>
+                  {displayNote}
+                </Copyeable>
+              ))}
+
+            {props.footer}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {isNotCounted && (

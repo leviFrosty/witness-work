@@ -3,7 +3,7 @@ import {
   MessagesSquare as MessagesSquareIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
-import { useCallback } from 'react'
+import { ReactNode, useCallback } from 'react'
 import { View, Alert, Switch } from 'react-native'
 import Text from '@/components/ui/MyText'
 import * as Notifications from 'expo-notifications'
@@ -43,7 +43,17 @@ import { RootStackParamList } from '@/types/rootStack'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import { analytics } from '@/lib/analytics'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Visit Form'>
+/** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
+export type FollowUpBuddiesSlot = (props: {
+  visitId: string
+  value: string[]
+  onChange: (inboxIds: string[]) => void
+}) => ReactNode
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Visit Form'> & {
+  /** Renders the "Invite Buddies" row in the Follow-up section. */
+  renderFollowUpBuddies?: FollowUpBuddiesSlot
+}
 type MomentOffset = {
   amount?: number | undefined
   unit?: moment.unitOfTime.DurationConstructor | undefined
@@ -141,7 +151,11 @@ const NotificationSection = (props: {
   )
 }
 
-const VisitFormScreen = ({ route, navigation }: Props) => {
+const VisitFormScreen = ({
+  route,
+  navigation,
+  renderFollowUpBuddies,
+}: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const {
@@ -224,6 +238,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
           notifications: conversationToUpdate.followUp?.notifications,
           ...(conversationToUpdate.followUp?.dismissed
             ? { dismissed: true }
+            : {}),
+          ...(conversationToUpdate.followUp?.buddies?.length
+            ? { buddies: conversationToUpdate.followUp.buddies }
             : {}),
         },
         note: conversationToUpdate.note,
@@ -717,6 +734,19 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                     }),
                 }}
               />
+              {!dataProtectionMode &&
+                renderFollowUpBuddies?.({
+                  visitId: conversation.id,
+                  value: conversation.followUp?.buddies ?? [],
+                  onChange: (buddies) =>
+                    setConversation({
+                      ...conversation,
+                      followUp: conversation.followUp && {
+                        ...conversation.followUp,
+                        buddies: buddies.length > 0 ? buddies : undefined,
+                      },
+                    }),
+                })}
               <NotificationSection
                 conversation={conversation}
                 notificationsAllowed={notificationsAllowed}

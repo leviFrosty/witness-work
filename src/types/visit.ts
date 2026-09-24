@@ -58,6 +58,11 @@ export type Visit = {
      * Re-enabled by rescheduling, which clears this flag implicitly.
      */
     dismissed?: boolean
+    /**
+     * Buddies (their inbox ids) invited along. They receive only the date and
+     * time, the Contact's first name, the address, and the topic.
+     */
+    buddies?: string[]
   }
   isBibleStudy: boolean
   notAtHome?: boolean

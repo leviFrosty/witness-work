@@ -154,6 +154,28 @@ _Avoid_: "repeat plan", "schedule rule".
 A per-instance modification to a Recurring Plan for a specific date — adjusts minutes, start time, or note for that one occurrence without changing the underlying pattern. An Override cannot change the Plan's Category: Type is pattern-level. To do a different kind of work on one occurrence, the User skips that instance and creates a Day Plan in its place.
 _Avoid_: "exception" (sounds error-related; an override is intentional).
 
+### Buddies
+
+**Buddies**:
+The product name for WitnessWork's end-to-end encrypted feature that pairs a User with up to five people they go out in service with, so each sees the others' planned days and times (plus name, photo, and pioneer status if shared) on their calendar. Always capitalized and plural, like a product: "WitnessWork Buddies" in full, "Buddies" once the context is clear (the tab, "Buddies Settings", "Delete My Buddies Data"). Artifacts the product owns take the product name — **Buddies Code**, **Buddies Invite**, **Buddies Settings** — never "Buddy code" or "buddy settings". Grammatically singular when naming the product ("Buddies is unavailable").
+_Avoid_: "friends", "partners", "buddy system"; lowercase "buddies" when the product is meant.
+
+**buddy**:
+A person the User is paired with in **Buddies** — the people-word, lowercase in sentences ("your buddy", "Remove Buddy" in title-case controls). A buddy is either confirmed or still awaiting the inviter's one-tap confirmation; nothing is shared until confirmed.
+_Avoid_: capital-B "Buddy" mid-sentence, "contact" (a **Contact** is a householder, never a buddy), "friend".
+
+**Buddies Code**:
+The single-use QR code that carries a **Buddies Invite** for in-person pairing, shown from the Buddies header and scanned in-app. Encodes the same link as a Buddies Invite.
+_Avoid_: "Buddy code", "QR invite", "pairing code".
+
+**Buddies Invite**:
+A single-use link (or its **Buddies Code**) that lets one person request to become the User's buddy. Expires after 7 days; counts against the five-buddy limit while open.
+_Avoid_: "buddy request" for the link itself (the request is what the invitee sends back after accepting).
+
+**Buddy Card**:
+Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, and planned days and times for the next 8 weeks. Never shown by name in the UI.
+_Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
+
 ### Assistant
 
 **Assistant**:

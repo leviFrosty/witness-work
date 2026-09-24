@@ -3,6 +3,7 @@ import { AccessibilityInfo, findNodeHandle, View } from 'react-native'
 import {
   MapPin as MapPinIcon,
   UserPlus as UserPlusIcon,
+  X as XIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -33,39 +34,64 @@ export default function CreateContactCard({
 
   return (
     <MapCard fill={fill} onAccessibilityEscape={onCancel}>
-      <View
-        ref={titleRef}
-        accessible
-        accessibilityRole='header'
-        accessibilityLabel={i18n.t('map_droppedPin')}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-      >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View
+          ref={titleRef}
+          accessible
+          accessibilityRole='header'
+          accessibilityLabel={i18n.t('map_droppedPin')}
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: theme.colors.accent,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            flex: 1,
+          }}
+        >
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: theme.colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LucideIcon
+              icon={MapPinIcon}
+              size={20}
+              color={theme.colors.textInverse}
+            />
+          </View>
+          <Text
+            numberOfLines={2}
+            style={{
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('lg'),
+              flexShrink: 1,
+            }}
+          >
+            {i18n.t('map_droppedPin')}
+          </Text>
+        </View>
+        <Button
+          noTransform
+          hitSlop={0}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('cancel')}
+          onPress={onCancel}
+          style={{
+            width: 44,
+            height: 44,
+            padding: 0,
+            borderRadius: 22,
             alignItems: 'center',
             justifyContent: 'center',
+            backgroundColor: 'transparent',
           }}
         >
-          <LucideIcon
-            icon={MapPinIcon}
-            size={20}
-            color={theme.colors.textInverse}
-          />
-        </View>
-        <Text
-          numberOfLines={2}
-          style={{
-            fontFamily: theme.fonts.bold,
-            fontSize: theme.fontSize('lg'),
-            flexShrink: 1,
-          }}
-        >
-          {i18n.t('map_droppedPin')}
-        </Text>
+          <LucideIcon icon={XIcon} size={20} color={theme.colors.text} />
+        </Button>
       </View>
       <Text
         style={{ color: theme.colors.textAlt, fontSize: theme.fontSize('sm') }}
@@ -115,28 +141,6 @@ export default function CreateContactCard({
             }}
           >
             {i18n.t('map_createContact')}
-          </Text>
-        </Button>
-        <Button
-          noTransform
-          hitSlop={0}
-          accessibilityRole='button'
-          variant='outline'
-          onPress={onCancel}
-          style={{
-            minHeight: 48,
-            paddingVertical: 0,
-            paddingHorizontal: 12,
-            justifyContent: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('cancel')}
           </Text>
         </Button>
       </View>

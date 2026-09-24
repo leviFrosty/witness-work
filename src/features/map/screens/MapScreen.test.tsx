@@ -1,10 +1,12 @@
 import React, { useImperativeHandle, useRef } from 'react'
+import { View } from 'react-native'
 import { act, create } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 
 const mocks = vi.hoisted(() => ({
   contacts: [] as Contact[],
+  isWide: false,
   listeners: new Map<string, Set<() => void>>(),
   navigate: vi.fn(),
   addListener: vi.fn(),
@@ -105,13 +107,15 @@ vi.mock('@/contexts/theme', () => ({
     fontSize: () => 16,
   }),
 }))
-vi.mock('@/hooks/useDevice', () => ({ default: () => ({ isTablet: false }) }))
+vi.mock('@/hooks/useDevice', () => ({
+  default: () => ({ isTablet: mocks.isWide }),
+}))
 vi.mock('@/hooks/useAdaptiveLayout', () => ({
   default: () => ({
-    isWide: false,
-    hasSidebar: false,
-    sidebarWidth: 0,
-    contentWidth: 390,
+    isWide: mocks.isWide,
+    hasSidebar: mocks.isWide,
+    sidebarWidth: mocks.isWide ? 200 : 0,
+    contentWidth: mocks.isWide ? 1000 : 390,
   }),
 }))
 vi.mock('@/hooks/useGlassColorScheme', () => ({ default: () => 'light' }))
@@ -175,6 +179,7 @@ const contact = (id: string, name: string): Contact => ({
 beforeEach(async () => {
   vi.clearAllMocks()
   mocks.listeners.clear()
+  mocks.isWide = false
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
   mocks.addListener.mockImplementation((event, listener) => {
     const listeners = mocks.listeners.get(event) ?? new Set()
@@ -242,5 +247,41 @@ describe('Map carousel after contact creation', () => {
     expect(root.root.findByType(Input).props.value).toBe('Second')
     const carousel = root.root.findByType(Carousel)
     expect(carousel.props.data[mocks.getCurrentIndex()].id).toBe('second')
+  })
+})
+
+describe('Dropped pin on an empty tablet map', () => {
+  it('replaces the empty card in place and restores it when cancelled', async () => {
+    mocks.isWide = true
+    mocks.contacts = []
+    await act(async () => root.update(screen()))
+    const emptyCard = root.root.findAll(
+      (node) => node.type === View && typeof node.props.onLayout === 'function'
+    )[0]
+    const { left, bottom, width } = emptyCard.props.style
+    const locationButton = () =>
+      root.root.findByProps({
+        accessibilityLabel: 'map_centerOnMyLocation',
+      })
+    const locationPlacement = locationButton().parent?.props.style
+
+    await act(async () =>
+      root.root.findByType(MapView).props.onLongPress({
+        nativeEvent: { coordinate: { latitude: 40, longitude: -73 } },
+      })
+    )
+    const card = root.root.findByType(CreateContactCard)
+    expect(card.parent?.props.style).toMatchObject({ left, bottom, width })
+    expect(card.parent?.props.style.right).toBeUndefined()
+    expect(locationButton().parent?.props.style).toEqual(locationPlacement)
+    expect(
+      root.root.findAllByProps({ children: 'map_emptyNoContactsTitle' })
+    ).toHaveLength(0)
+
+    await act(async () => card.props.onCancel())
+    expect(root.root.findAllByType(CreateContactCard)).toHaveLength(0)
+    expect(
+      root.root.findAllByProps({ children: 'map_emptyNoContactsTitle' }).length
+    ).toBeGreaterThan(0)
   })
 })

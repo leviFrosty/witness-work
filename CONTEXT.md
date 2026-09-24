@@ -28,6 +28,10 @@ _Avoid_: "publisher" (when meaning the human — that word is reserved for the r
 The User's field-ministry role. One of six values: `publisher`, `regularAuxiliary`, `regularPioneer`, `circuitOverseer`, `specialPioneer`, `custom`. Drives entry mode, monthly/annual goals, credit cap, milestone ladder, and which Home/Progress sections render.
 _Avoid_: "publisher type", "role" alone (use "Publisher" or "Publisher role").
 
+**Kingdom Publisher**:
+The specific Publisher role whose enum value is `publisher` — a standard, non-pioneer publisher (the "Regular Publisher" in this glossary's prose). Distinct from "publisher" in the everyday JW sense, which denotes a _person_ who shares in the ministry — pioneers and circuit overseers are publishers too. So "Kingdom Publisher" names one role; "publisher" alone never implies non-pioneer.
+_Avoid_: labeling a surface that covers every role (e.g. the settings row for the User's Publisher and Profile) as "Kingdom Publisher" — that row is **Profile**.
+
 **Profile**:
 The User's identity-shaped data — name, avatar, avatar background, hero background. The bits that say "this is who the User is," surfaced through the Avatar component and the profile feature folder.
 _Avoid_: "user info" (Profile is the canonical term). Today the data physically lives inside the preferences store; the conceptual split is real even though the storage isn't separated.
@@ -331,5 +335,5 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 
 ## Flagged ambiguities
 
-- "publisher" was used historically to mean both the human User and the role. Resolved: **User** is the human; **Publisher** is the role. The leaf role whose enum value is `'publisher'` is referred to in glossary prose as **"the Publisher role"** or **"Regular Publisher"** to disambiguate.
+- "publisher" was used historically to mean both the human User and the role. Resolved: **User** is the human; **Publisher** is the role. The leaf role whose enum value is `'publisher'` is referred to in glossary prose as **"the Publisher role"** or **"Regular Publisher"** to disambiguate; its user-facing label is **Kingdom Publisher**.
 - Resolved: the canonical noun for Supporters who were already subscribed before the Supporter Reveal update is **Founding Supporter** (see Monetization entry).

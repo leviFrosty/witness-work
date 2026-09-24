@@ -1296,6 +1296,7 @@
   "appearance": "Appearance",
   "regionAndFormats": "Region & Formats",
   "personalization": "Personalization",
+  "profile": "Profile",
   "fontSizeOffset": "Font Size Offset",
   "thisGloballyOffsetsTextSize": "For the best results, adjust text size in iOS Settings. This control changes text size only in WitnessWork.",
   "recurring": "Recurring",

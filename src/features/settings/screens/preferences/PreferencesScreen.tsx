@@ -140,6 +140,13 @@ const PreferencesScreen = () => {
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>
               <InputRowButton
+                leftIcon={Calendar1Icon}
+                label={i18n.t('calendarSync')}
+                onPress={() => navigation.navigate('PreferencesCalendar')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
                 leftIcon={RouteIcon}
                 label={i18n.t('navigation')}
                 onPress={() => navigation.navigate('PreferencesNavigation')}

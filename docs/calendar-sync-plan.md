@@ -1,5 +1,10 @@
 # Plan: One-Way Calendar Sync (iOS Calendar / Google Calendar)
 
+> Historical proposal. The implemented Follow-up scope, configurable single
+> primary device, native ownership gate, and release requirements are documented
+> in [calendar-sync.md](calendar-sync.md). See [research](calendar-sync-research.md)
+> for the decisions that superseded this broader plan.
+
 ## Goal
 
 Add opt-in, one-way sync of Witness Work follow-ups, day plans, and recurring plans into the user's iOS Calendar. Google Calendar support comes free via iOS's existing account integration (user adds Google to iOS Calendar; we write to the Google-backed calendar). No backend, no OAuth, no bidirectional sync.

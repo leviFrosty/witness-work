@@ -83,7 +83,8 @@ let pushScheduled = false
  * and the in-flight pull's readAll sees strictly newer data than anything the
  * coalesced caller saw.
  */
-let pullInFlight: Promise<boolean> | null = null
+type PullOutcome = { available: boolean; merged: boolean }
+let pullInFlight: Promise<PullOutcome> | null = null
 let pullQueuedReason: string | null = null
 
 function filenameForDevice(deviceId: string): string {
@@ -797,21 +798,51 @@ function schedulePush() {
  * - ICloud conflict duplicates) so we converge on the per-device layout over
  *   time, without losing any stranded data.
  */
+class ICloudReadError extends Error {}
+
 export async function pullAndMerge(reason: string): Promise<boolean> {
+  try {
+    return (await runPullAndMerge(reason)).merged
+  } catch (error) {
+    // Existing callers treat a failed read as a deferred sync, but exporters
+    // must be able to distinguish this from a successful empty/no-change pull.
+    if (error instanceof ICloudReadError) return false
+    throw error
+  }
+}
+
+/** Calendar export must stop on read failure rather than publish stale state. */
+export async function pullBeforeCalendarPublish(): Promise<void> {
+  if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
+  const check = (outcome: PullOutcome) => {
+    if (!outcome.available)
+      throw new ICloudReadError('iCloud data sync unavailable')
+  }
+  check(await runPullAndMerge('calendar-publish'))
+  // Joining a pull queues another read to catch files that arrived after its
+  // readAll began. Export must await that read too; don't enqueue more work
+  // while draining, or this would perpetually schedule its own follow-up.
+  while (pullInFlight) check(await pullInFlight)
+  if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
+}
+
+async function runPullAndMerge(reason: string): Promise<PullOutcome> {
   if (pullInFlight) {
     if (!pullQueuedReason) pullQueuedReason = reason
     return pullInFlight
   }
-  pullInFlight = (async () => {
+  // Defer execution until the promise is assigned, including a skipped pull.
+  pullInFlight = Promise.resolve().then(async () => {
     try {
-      return await pullAndMergeInner(reason)
+      if (!canSync()) return { available: false, merged: false }
+      return { available: true, merged: await pullAndMergeInner(reason) }
     } finally {
       const queued = pullQueuedReason
       pullQueuedReason = null
       pullInFlight = null
       if (queued) void pullAndMerge(queued)
     }
-  })()
+  })
   return pullInFlight
 }
 
@@ -832,7 +863,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   } catch (e) {
     logger.error(`${tag()} readAll failed (${reason})`, e)
     errorTracking.captureException(e, { iCloudSync: 'pull' })
-    return false
+    throw new ICloudReadError('iCloud data could not be read', { cause: e })
   }
 
   logger.log(`${tag()} pullAndMerge: readAll`, {
@@ -1317,6 +1348,7 @@ export async function enableImageSync(): Promise<void> {
 export const iCloudSync = {
   push,
   pullAndMerge,
+  pullBeforeCalendarPublish,
   canSync,
   backfillUpdatedAtIfNeeded,
   hasMeaningfulLocalData,

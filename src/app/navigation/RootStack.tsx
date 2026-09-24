@@ -23,6 +23,7 @@ import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposer
 import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
+import PreferencesCalendarScreen from '@/features/settings/screens/preferences/screens/PreferencesCalendarScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
 import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
 import PreferencesAudioAndHapticsScreen from '@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen'
@@ -205,11 +206,20 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             header: () => (
+              <Header buttonType='back' title={i18n.t('calendarSync')} />
+            ),
+          }}
+          name='PreferencesCalendar'
+          component={PreferencesCalendarScreen}
+        />
+        <RootStack.Screen
+          name='PreferencesConversation'
+          component={PreferencesConversationScreen}
+          options={{
+            header: () => (
               <Header buttonType='back' title={i18n.t('conversations')} />
             ),
           }}
-          name='PreferencesConversation'
-          component={PreferencesConversationScreen}
         />
         <RootStack.Screen
           options={{

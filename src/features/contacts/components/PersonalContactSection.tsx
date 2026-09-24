@@ -1,3 +1,4 @@
+import CustomFieldPrivacyWarning from '@/features/contacts/components/CustomFieldPrivacyWarning'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import PhoneInput, {
@@ -52,7 +53,6 @@ export default function PersonalContactSection({
     contactInformationOrder,
     showContactPhone,
     showContactEmail,
-    dataProtectionMode,
   } = usePreferences()
   const theme = useTheme()
   const phoneTheme = (preferredColorScheme ?? colorScheme ?? 'light') as ITheme
@@ -65,15 +65,6 @@ export default function PersonalContactSection({
       email: showContactEmail,
     }
   )
-
-  // Custom fields are free text with a user-authored label — the one place in
-  // the app where religion, language, ethnicity or family situation can be
-  // recorded as a structured, searchable attribute. Data protection mode hides
-  // the inputs and the manager entry point rather than trying to police what
-  // gets typed into them. Values already on the record are left alone.
-  const visibleFields = dataProtectionMode
-    ? allFields.filter((field) => field.kind !== 'custom')
-    : allFields
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
@@ -126,24 +117,22 @@ export default function PersonalContactSection({
         >
           {i18n.t('information')}
         </Text>
-        {!dataProtectionMode && (
-          <Button onPress={openCustomFieldManager}>
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {i18n.t('manageContactFields')}
-            </Text>
-          </Button>
-        )}
+        <Button onPress={openCustomFieldManager}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: theme.colors.textAlt,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {i18n.t('manageContactFields')}
+          </Text>
+        </Button>
       </XView>
-      {visibleFields.length > 0 && (
+      {allFields.length > 0 && (
         <Section>
-          {visibleFields.map((field, index) => {
-            const last = index === visibleFields.length - 1
+          {allFields.map((field, index) => {
+            const last = index === allFields.length - 1
             if (field.kind === 'phone')
               return (
                 <InputRowContainer key={field.id} lastInSection={last}>
@@ -248,21 +237,25 @@ export default function PersonalContactSection({
             if (field.kind !== 'custom') return null
             const def = field.definition
             return (
-              <TextInputRow
-                key={field.id}
-                label={def.label}
-                controlWidth='full'
-                textInputProps={{
-                  placeholder: i18n.t('goesHere'),
-                  onChangeText: (value: string) => {
-                    setCustomField(def.id, value)
-                  },
-                  value: customFields?.[def.id] ?? '',
-                  autoCapitalize: 'words',
-                  textAlign: 'left',
-                }}
-                lastInSection={last}
-              />
+              <View key={field.id}>
+                <TextInputRow
+                  label={def.label}
+                  controlWidth='full'
+                  textInputProps={{
+                    placeholder: i18n.t('goesHere'),
+                    onChangeText: (value: string) => {
+                      setCustomField(def.id, value)
+                    },
+                    value: customFields?.[def.id] ?? '',
+                    autoCapitalize: 'words',
+                    textAlign: 'left',
+                  }}
+                  lastInSection={last}
+                />
+                <CustomFieldPrivacyWarning
+                  texts={[def.label, customFields?.[def.id] ?? '']}
+                />
+              </View>
             )
           })}
         </Section>

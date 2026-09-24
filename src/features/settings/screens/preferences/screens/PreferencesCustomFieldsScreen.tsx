@@ -1,3 +1,4 @@
+import CustomFieldPrivacyWarning from '@/features/contacts/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { usePreferences } from '@/stores/preferences'
@@ -152,6 +153,7 @@ const PreferencesCustomFieldsScreen = () => {
                 </ActionButton>
               </InputRowContainer>
             </Section>
+            <CustomFieldPrivacyWarning texts={[newFieldName]} />
           </View>
 
           <View style={{ gap: 5 }}>
@@ -200,66 +202,68 @@ const PreferencesCustomFieldsScreen = () => {
                 const def = field.definition
                 const value = edits[def.id] ?? def.label
                 return (
-                  <InputRowContainer
-                    key={def.id}
-                    lastInSection={last}
-                    controlWidth='full'
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                    controlStyle={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <ReorderControls
-                      onMoveUp={
-                        idx === 0 ? undefined : () => move(field.id, -1)
-                      }
-                      onMoveDown={last ? undefined : () => move(field.id, 1)}
-                    />
-                    <MyTextInput
-                      value={value}
-                      onChangeText={(v: string) =>
-                        setEdits((s) => ({ ...s, [def.id]: v }))
-                      }
-                      onEndEditing={() => {
-                        const trimmed = value.trim()
-                        if (trimmed && trimmed !== def.label) {
-                          renameCustomFieldDef(def.id, trimmed)
-                          analytics.capture('custom_field_renamed')
-                        }
-                        // Clear local edit so future label changes from
-                        // sync show through.
-                        setEdits((s) => {
-                          const next = { ...s }
-                          delete next[def.id]
-                          return next
-                        })
+                  <View key={def.id}>
+                    <InputRowContainer
+                      lastInSection={last}
+                      controlWidth='full'
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
                       }}
-                      autoCapitalize='words'
-                      maxLength={14}
-                      textAlign='left'
-                      style={{ flex: 1 }}
-                    />
-                    <RowActionsMenu
-                      accessibilityLabel={i18n.t('moreActionsFor', {
-                        name: def.label,
-                      })}
-                      actions={[
-                        {
-                          id: 'archive-field',
-                          label: i18n.t('archiveField'),
-                          icon: ArchiveIcon,
-                          destructive: true,
-                          onPress: () => confirmArchive(def.id, def.label),
-                        },
-                      ]}
-                    />
-                  </InputRowContainer>
+                      controlStyle={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <ReorderControls
+                        onMoveUp={
+                          idx === 0 ? undefined : () => move(field.id, -1)
+                        }
+                        onMoveDown={last ? undefined : () => move(field.id, 1)}
+                      />
+                      <MyTextInput
+                        value={value}
+                        onChangeText={(v: string) =>
+                          setEdits((s) => ({ ...s, [def.id]: v }))
+                        }
+                        onEndEditing={() => {
+                          const trimmed = value.trim()
+                          if (trimmed && trimmed !== def.label) {
+                            renameCustomFieldDef(def.id, trimmed)
+                            analytics.capture('custom_field_renamed')
+                          }
+                          // Clear local edit so future label changes from
+                          // sync show through.
+                          setEdits((s) => {
+                            const next = { ...s }
+                            delete next[def.id]
+                            return next
+                          })
+                        }}
+                        autoCapitalize='words'
+                        maxLength={14}
+                        textAlign='left'
+                        style={{ flex: 1 }}
+                      />
+                      <RowActionsMenu
+                        accessibilityLabel={i18n.t('moreActionsFor', {
+                          name: def.label,
+                        })}
+                        actions={[
+                          {
+                            id: 'archive-field',
+                            label: i18n.t('archiveField'),
+                            icon: ArchiveIcon,
+                            destructive: true,
+                            onPress: () => confirmArchive(def.id, def.label),
+                          },
+                        ]}
+                      />
+                    </InputRowContainer>
+                    <CustomFieldPrivacyWarning texts={[value]} />
+                  </View>
                 )
               })}
             </Section>

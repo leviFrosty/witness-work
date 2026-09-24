@@ -68,6 +68,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
       <View
         style={{
           flexDirection: 'row',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,

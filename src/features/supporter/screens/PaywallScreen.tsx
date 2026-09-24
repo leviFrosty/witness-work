@@ -56,7 +56,9 @@ import {
   DevPillButton,
   AllOptionsSheet,
 } from '@/features/supporter/components/PaywallOptions'
-import PaywallPurchaseFooter from '@/features/supporter/components/PaywallPurchaseFooter'
+import PaywallPurchaseFooter, {
+  PaywallLegalFooter,
+} from '@/features/supporter/components/PaywallPurchaseFooter'
 import { analytics } from '@/lib/analytics'
 
 type Tier = 'supporter' | 'tip'
@@ -711,6 +713,11 @@ const PaywallScreen = ({
         }
       />
       <Divider />
+      <PaywallLegalFooter
+        source={source}
+        onRestore={handleRestore}
+        showRestore={!hasPurchasedBefore}
+      />
       {hasPurchasedBefore && customer && (
         <PreviousDonations customer={customer} revalidate={revalidate} />
       )}
@@ -718,13 +725,10 @@ const PaywallScreen = ({
   )
   const purchaseFooter = (
     <PaywallPurchaseFooter
-      source={source}
       selected={!!selectedPackage}
       tier={tier}
       ctaLabel={ctaLabel}
       onPurchase={handlePurchase}
-      onRestore={handleRestore}
-      showRestore={!hasPurchasedBefore}
     />
   )
 

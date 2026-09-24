@@ -8,23 +8,17 @@ import links from '@/constants/links'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 
 interface Props {
-  source: string
   selected: boolean
   tier: 'supporter' | 'tip'
   ctaLabel: string
   onPurchase: () => unknown
-  onRestore: () => unknown
-  showRestore: boolean
 }
 
 export default function PaywallPurchaseFooter({
-  source,
   selected,
   tier,
   ctaLabel,
   onPurchase,
-  onRestore,
-  showRestore,
 }: Props) {
   const theme = useTheme()
   return (
@@ -57,72 +51,86 @@ export default function PaywallPurchaseFooter({
           ? i18n.t('paywallCtaReassuranceSupporter')
           : i18n.t('paywallCtaReassuranceTip')}
       </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          columnGap: 16,
+    </View>
+  )
+}
+
+export function PaywallLegalFooter({
+  source,
+  onRestore,
+  showRestore,
+}: {
+  source: string
+  onRestore: () => unknown
+  showRestore: boolean
+}) {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        columnGap: 16,
+      }}
+    >
+      {showRestore && (
+        <Button
+          onPress={onRestore}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {i18n.t('restorePurchase')}
+          </Text>
+        </Button>
+      )}
+      <Button
+        onPress={() => {
+          analytics.capture('paywall_legal_link_clicked', {
+            source,
+            link: 'terms',
+          })
+          Linking.openURL(links.termsOfUse)
         }}
+        style={{ minHeight: 44, justifyContent: 'center' }}
       >
-        {showRestore && (
-          <Button
-            onPress={onRestore}
-            style={{ minHeight: 44, justifyContent: 'center' }}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {i18n.t('restorePurchase')}
-            </Text>
-          </Button>
-        )}
-        <Button
-          onPress={() => {
-            analytics.capture('paywall_legal_link_clicked', {
-              source,
-              link: 'terms',
-            })
-            Linking.openURL(links.termsOfUse)
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            textDecorationLine: 'underline',
           }}
-          style={{ minHeight: 44, justifyContent: 'center' }}
         >
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('termsOfUse')}
-          </Text>
-        </Button>
-        <Button
-          onPress={() => {
-            analytics.capture('paywall_legal_link_clicked', {
-              source,
-              link: 'privacy',
-            })
-            Linking.openURL(links.privacyPolicy)
+          {i18n.t('termsOfUse')}
+        </Text>
+      </Button>
+      <Button
+        onPress={() => {
+          analytics.capture('paywall_legal_link_clicked', {
+            source,
+            link: 'privacy',
+          })
+          Linking.openURL(links.privacyPolicy)
+        }}
+        style={{ minHeight: 44, justifyContent: 'center' }}
+      >
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            textDecorationLine: 'underline',
           }}
-          style={{ minHeight: 44, justifyContent: 'center' }}
         >
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('privacyPolicy')}
-          </Text>
-        </Button>
-      </View>
+          {i18n.t('privacyPolicy')}
+        </Text>
+      </Button>
     </View>
   )
 }

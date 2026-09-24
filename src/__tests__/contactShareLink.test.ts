@@ -85,37 +85,79 @@ describe('contactShareLink round-trip', () => {
 
 describe('isContactShareLink / parseContactShareLink URL matching', () => {
   const { url: sampleUrl } = buildContactShareLink(makeContact(), [])
-  const samplePayload = sampleUrl.slice(
-    (CONTACT_SHARE_LINK.ORIGIN_PROD + CONTACT_SHARE_LINK.PATH_PREFIX).length
-  )
+  const samplePayload = new URL(sampleUrl).hash.slice(1)
+  const { ORIGIN_PROD, PATH, LEGACY_PATH_PREFIX, SCHEME_HOST } =
+    CONTACT_SHARE_LINK
+
+  it('keeps the payload in the fragment, out of the path and query', () => {
+    const url = new URL(sampleUrl)
+    expect(sampleUrl).toBe(`${ORIGIN_PROD}${PATH}#${samplePayload}`)
+    expect(url.pathname).toBe(PATH)
+    expect(url.search).toBe('')
+    expect(samplePayload).toMatch(/^[A-Za-z0-9_-]+$/)
+  })
 
   it('recognizes the https universal-link form', () => {
     expect(isContactShareLink(sampleUrl)).toBe(true)
+    expect(parseContactShareLink(sampleUrl)).toMatchObject({
+      contact: { id: 'contact-1', name: 'Joe Shmoe' },
+    })
+  })
+
+  it('ignores a query string on the universal-link form', () => {
+    const withQuery = `${ORIGIN_PROD}${PATH}?utm_source=share#${samplePayload}`
+    expect(parseContactShareLink(withQuery)).toEqual(
+      parseContactShareLink(sampleUrl)
+    )
+  })
+
+  it('still parses the legacy path form from older app versions', () => {
+    const legacyUrl = `${ORIGIN_PROD}${LEGACY_PATH_PREFIX}${samplePayload}`
+    expect(isContactShareLink(legacyUrl)).toBe(true)
+    expect(parseContactShareLink(legacyUrl)).toEqual(
+      parseContactShareLink(sampleUrl)
+    )
   })
 
   it('recognizes the witnesswork:// scheme fallback form', () => {
-    const schemeUrl = `witnesswork://${CONTACT_SHARE_LINK.SCHEME_HOST}/${samplePayload}`
+    const schemeUrl = `witnesswork://${SCHEME_HOST}/${samplePayload}`
     expect(isContactShareLink(schemeUrl)).toBe(true)
-    const parsed = parseContactShareLink(schemeUrl)
-    expect(parsed).not.toBeNull()
+    expect(parseContactShareLink(schemeUrl)).toEqual(
+      parseContactShareLink(sampleUrl)
+    )
   })
 
   it('rejects URLs with a wrong host', () => {
-    const bad = `https://attacker.example.com${CONTACT_SHARE_LINK.PATH_PREFIX}${samplePayload}`
-    expect(isContactShareLink(bad)).toBe(false)
-    expect(parseContactShareLink(bad)).toBeNull()
+    for (const bad of [
+      `https://attacker.example.com${PATH}#${samplePayload}`,
+      `https://attacker.example.com${LEGACY_PATH_PREFIX}${samplePayload}`,
+    ]) {
+      expect(isContactShareLink(bad)).toBe(false)
+      expect(parseContactShareLink(bad)).toBeNull()
+    }
   })
 
-  it('rejects URLs with a wrong path prefix', () => {
-    const bad = `${CONTACT_SHARE_LINK.ORIGIN_PROD}/other/${samplePayload}`
-    expect(isContactShareLink(bad)).toBe(false)
-    expect(parseContactShareLink(bad)).toBeNull()
+  it('rejects URLs with a wrong path', () => {
+    for (const bad of [
+      `${ORIGIN_PROD}/other#${samplePayload}`,
+      `${ORIGIN_PROD}/other/${samplePayload}`,
+      `${ORIGIN_PROD}/#${samplePayload}`,
+    ]) {
+      expect(isContactShareLink(bad)).toBe(false)
+      expect(parseContactShareLink(bad)).toBeNull()
+    }
   })
 
   it('rejects URLs with an empty payload', () => {
-    const bad = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH_PREFIX}`
-    expect(isContactShareLink(bad)).toBe(false)
-    expect(parseContactShareLink(bad)).toBeNull()
+    for (const bad of [
+      `${ORIGIN_PROD}${PATH}`,
+      `${ORIGIN_PROD}${PATH}#`,
+      `${ORIGIN_PROD}${LEGACY_PATH_PREFIX}`,
+      `witnesswork://${SCHEME_HOST}/`,
+    ]) {
+      expect(isContactShareLink(bad)).toBe(false)
+      expect(parseContactShareLink(bad)).toBeNull()
+    }
   })
 
   it('rejects completely malformed URLs', () => {
@@ -124,9 +166,13 @@ describe('isContactShareLink / parseContactShareLink URL matching', () => {
   })
 
   it('returns null for a well-formed URL with a corrupt payload', () => {
-    const corrupt = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH_PREFIX}not-valid-base64-or-gzip`
-    expect(isContactShareLink(corrupt)).toBe(true)
-    expect(parseContactShareLink(corrupt)).toBeNull()
+    for (const corrupt of [
+      `${ORIGIN_PROD}${PATH}#not-valid-base64-or-gzip`,
+      `${ORIGIN_PROD}${LEGACY_PATH_PREFIX}not-valid-base64-or-gzip`,
+    ]) {
+      expect(isContactShareLink(corrupt)).toBe(true)
+      expect(parseContactShareLink(corrupt)).toBeNull()
+    }
   })
 })
 
@@ -139,6 +185,20 @@ describe('buildContactShareLink trimming', () => {
         date: new Date(2026, 0, 1 + i),
       })
     )
+
+  // Deterministic incompressible data: LCG-based pseudo-random so gzip
+  // can't collapse it, but the test is fully reproducible.
+  const makeIncompressible = () => {
+    let seed = 0x12345678
+    return (len: number) => {
+      let out = ''
+      for (let i = 0; i < len; i++) {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff
+        out += String.fromCharCode(33 + (seed % 90))
+      }
+      return out
+    }
+  }
 
   it('caps at MAX_CONVERSATIONS even if every conversation would fit', () => {
     const contact = makeContact()
@@ -168,18 +228,33 @@ describe('buildContactShareLink trimming', () => {
     expect(includedIds).toEqual(expectedNewest)
   })
 
+  it('drops the oldest conversations to keep the link under MAX_URL_BYTES', () => {
+    const incompressible = makeIncompressible()
+    const convs = manyConversations(20).map((conversation) => ({
+      ...conversation,
+      note: incompressible(400),
+    }))
+    const { url, includedConversations, trimmed } = buildContactShareLink(
+      makeContact(),
+      convs
+    )
+
+    expect(trimmed).toBe(true)
+    expect(includedConversations).toBeGreaterThan(0)
+    expect(includedConversations).toBeLessThan(convs.length)
+    expect(url.length).toBeLessThanOrEqual(CONTACT_SHARE_LINK.MAX_URL_BYTES)
+    expect(new URL(url).pathname).toBe(CONTACT_SHARE_LINK.PATH)
+    const parsed = parseContactShareLink(url) as { conversations: Visit[] }
+    expect(parsed.conversations.map((c) => c.id)).toEqual(
+      convs
+        .slice(-includedConversations)
+        .map((c) => c.id)
+        .reverse()
+    )
+  })
+
   it('throws when the bare contact alone exceeds MAX_URL_BYTES', () => {
-    // Deterministic incompressible data: LCG-based pseudo-random so gzip
-    // can't collapse it, but the test is fully reproducible.
-    let seed = 0x12345678
-    const incompressible = (len: number) => {
-      let out = ''
-      for (let i = 0; i < len; i++) {
-        seed = (seed * 1103515245 + 12345) & 0x7fffffff
-        out += String.fromCharCode(33 + (seed % 90))
-      }
-      return out
-    }
+    const incompressible = makeIncompressible()
     const contact = makeContact({
       customFields: Object.fromEntries(
         Array.from({ length: 20 }, (_, i) => [

@@ -66,6 +66,7 @@ const DrawerNavigator = () => {
           seenMilestoneUpdateReveal: false,
           dismissedMilestoneRevealOnce: false,
           lastAppVersion: '1.36.0',
+          unreadReleaseNotes: null,
           homeChecklistAllDoneCelebrated: false,
         })
       }

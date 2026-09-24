@@ -7,13 +7,15 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import moment from 'moment'
 import { formatRelative } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import Divider from '@/components/ui/Divider'
-import { usePreferences } from '@/stores/preferences'
+import Button from '@/components/ui/Button'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '@/types/rootStack'
 import Constants from 'expo-constants'
 import Badge from '@/components/ui/Badge'
 import semver from 'semver'
@@ -21,28 +23,30 @@ import semver from 'semver'
 interface Props {
   setShow: React.Dispatch<React.SetStateAction<boolean>>
   show: boolean
-}
-
-interface Props {
   /**
-   * If referenced directly from preferences, this value may be inaccurate
-   * because it will get changed when WhatsNew mounts.
-   *
-   * Should temporarily store initial value in a useRef outside of this
-   * component so it doesn't update when comparing semver.
+   * Version the user last saw notes for, captured before `lastAppVersion` is
+   * stamped. Only releases newer than this are listed.
    */
-  lastVersion: string
+  sinceVersion: string
 }
 
-export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
+export const WhatsNewContent = ({
+  lastVersion,
+  onlyNew,
+}: {
+  /** Releases newer than this get the "New" badge. */
+  lastVersion: string
+  /** List only the releases newer than `lastVersion`. */
+  onlyNew?: boolean
+}) => {
   const theme = useTheme()
 
   const notes = useMemo(
     () =>
-      releaseNotes.sort(
-        (a, b) => moment(b.date).unix() - moment(a.date).unix()
-      ),
-    []
+      [...releaseNotes]
+        .filter((note) => !onlyNew || semver.gt(note.version, lastVersion))
+        .sort((a, b) => moment(b.date).unix() - moment(a.date).unix()),
+    [lastVersion, onlyNew]
   )
 
   return (
@@ -153,26 +157,19 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
 }
 
 /**
- * Displays release notes for new versions.
- *
- * Handles setting new version for preferences after mounts. Do not set
- * lastVersion outside of this component.
+ * Displays release notes for the versions the user hasn't seen yet, with a link
+ * to the full history. Only used for releases announced as `'sheet'`; the
+ * launch gate in `HomeTabStack` owns stamping `lastAppVersion`.
  */
-const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
+const WhatsNewSheet: React.FC<Props> = ({ show, setShow, sinceVersion }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { lastAppVersion, set } = usePreferences()
-  const lastVersion = useRef(lastAppVersion)
-  const hasSetVersion = useRef(false)
+  const navigation = useNavigation<RootStackNavigation>()
 
-  useEffect(() => {
-    if (!hasSetVersion.current) {
-      set({
-        lastAppVersion: Constants.expoConfig?.version,
-      })
-      hasSetVersion.current = true
-    }
-  }, [set])
+  const handleSeeAll = () => {
+    setShow(false)
+    navigation.navigate('Whats New')
+  }
 
   return (
     <Sheet
@@ -216,9 +213,17 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
             }}
           >
             {/* Prevents rendering unneeded components at the home screen to save performance. */}
-            {show && (
-              <WhatsNewContent lastVersion={lastVersion.current || '1.0.0'} />
-            )}
+            {show && <WhatsNewContent lastVersion={sinceVersion} onlyNew />}
+            <Button onPress={handleSeeAll} style={{ alignSelf: 'center' }}>
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('whatsNew_seeAll')}
+              </Text>
+            </Button>
           </View>
         </Sheet.ScrollView>
       </Sheet.Frame>

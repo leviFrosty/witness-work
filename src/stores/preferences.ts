@@ -29,6 +29,12 @@ import {
 
 export type { MarkerColors }
 
+export type UnreadReleaseNotes = {
+  since: string
+  at: number
+  cardDismissed: boolean
+}
+
 /**
  * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
  * `customField:<defId>` template literal form on `ContactSortKey` and are
@@ -297,6 +303,15 @@ export const PREFERENCE_DEFAULTS = {
 
   defaultNavigationMapProvider: 'apple' as DefaultNavigationMapProvider,
   lastAppVersion: Constants.expoConfig?.version || null,
+  /**
+   * Set when a passively announced release lands, cleared once the user opens
+   * What's New. Drives the Home "Updated" card and the dot on the Settings
+   * What's New row. `since` is the version the user last saw notes for (so
+   * several unread updates stack), `at` is epoch ms of the latest update, and
+   * `cardDismissed` hides only the Home card. Per-device, like
+   * `lastAppVersion`.
+   */
+  unreadReleaseNotes: null as UnreadReleaseNotes | null,
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
@@ -896,6 +911,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'hasAttemptedToMigrateToMmkv',
   'monthlyRoutineHasShownInvalidMonthAlert',
   'lastAppVersion',
+  'unreadReleaseNotes',
   'calledGoecodeApiTimes',
   'lastTimeRequestedAReview',
   'lastBackupDate',

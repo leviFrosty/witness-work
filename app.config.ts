@@ -55,7 +55,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ],
       },
       // Universal Links for shared contact URLs
-      // (https://ww-proxy.leviwilkerson.com/c/*). The ww-proxy worker serves
+      // (https://ww-proxy.leviwilkerson.com/c#<payload>, plus the legacy
+      // /c/<payload> form). The ww-proxy worker serves
       // the AASA file that lists both dev and prod bundle IDs, so a single
       // associated domain works across both build variants.
       associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],

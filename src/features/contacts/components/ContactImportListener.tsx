@@ -21,8 +21,10 @@ import { logger } from '@/lib/logger'
 /**
  * Handles two kinds of incoming contact URLs:
  *
- * 1. `https://ww-proxy.leviwilkerson.com/c/<payload>` — Universal Link from a
- *    shared contact (decoded via `parseContactShareLink`).
+ * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` — Universal Link from a
+ *    shared contact (decoded via `parseContactShareLink`, which also accepts
+ *    the legacy `/c/<payload>` and `witnesswork://import-contact/<payload>`
+ *    forms).
  * 2. `file://…/<name>.witnesswork` — file attachment tapped from Files / iMessage
  *    / AirDrop (registered via `CFBundleDocumentTypes`).
  *
@@ -64,7 +66,7 @@ export default function ContactImportListener() {
         undefined
 
       if (isShareLink) {
-        // Universal link (https://ww-proxy.leviwilkerson.com/c/<payload>).
+        // Universal link (https://ww-proxy.leviwilkerson.com/c#<payload>).
         logger.log('[ContactImportListener] decoding universal link')
         const decoded = parseContactShareLink(url)
         logger.log('[ContactImportListener] decoded =', decoded)

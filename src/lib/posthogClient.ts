@@ -6,6 +6,7 @@ import {
   getErrorContext,
   shouldIgnoreExceptionProperties,
 } from '@/lib/errorTrackingPolicy'
+import { scrubShareLinkProperties } from '@/lib/shareLinkScrub'
 
 const extra = Constants.expoConfig?.extra as
   | { posthogProjectToken?: string; posthogHost?: string; appVariant?: string }
@@ -56,12 +57,14 @@ function createClient(): PostHog | null {
         }
         return {
           ...event,
-          properties: {
+          // `Application Opened` records the launch URL, which for a share
+          // link carries contact data or an invite secret.
+          properties: scrubShareLinkProperties({
             ...(isException ? getErrorContext() : {}),
             ...event.properties,
             app_variant: extra?.appVariant ?? 'unknown',
             development_mode: typeof __DEV__ !== 'undefined' && __DEV__,
-          },
+          }),
         }
       },
     })

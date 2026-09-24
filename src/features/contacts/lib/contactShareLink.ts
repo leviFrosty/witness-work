@@ -10,23 +10,35 @@ import { logger } from '@/lib/logger'
  *
  * The app produces URLs like:
  *
- * https://ww-proxy.leviwilkerson.com/c/<gzip+base64url(contact json)>
+ * https://ww-proxy.leviwilkerson.com/c#<gzip+base64url(contact json)>
  *
- * Ww-proxy serves the AASA file that registers this path prefix with iOS.
- * Tapping the URL on a device with WitnessWork installed opens the app
- * directly; otherwise a fallback HTML page with an App Store CTA renders.
+ * The payload rides in the URL fragment, which never leaves the device: link
+ * previews and the fallback page only ever request the bare `/c`, so the
+ * contact stays out of ww-proxy's request logs and Sentry.
+ *
+ * Ww-proxy serves the AASA file that registers these URLs with iOS. Tapping the
+ * URL on a device with WitnessWork installed opens the app directly; otherwise
+ * a fallback HTML page with an App Store CTA renders.
  */
 
 // --- Constants (no magic numbers) -------------------------------------------
 
 export const CONTACT_SHARE_LINK = {
-  ORIGIN_PROD: 'https://ww-proxy.leviwilkerson.com',
   /**
    * Dev builds intercept the same prod domain (AASA lists both bundle IDs), so
    * there is no separate dev origin — shared links open whichever build is
    * installed on the device.
    */
-  PATH_PREFIX: '/c/',
+  ORIGIN_PROD: 'https://ww-proxy.leviwilkerson.com',
+
+  /** The payload goes in the fragment: `/c#<payload>`. */
+  PATH: '/c',
+
+  /**
+   * Links shared by older app versions carried the payload in the path
+   * (`/c/<payload>`). Still parsed so already-sent links import.
+   */
+  LEGACY_PATH_PREFIX: '/c/',
 
   /**
    * Custom-scheme fallback used by the ww-proxy fallback page's "Open app"
@@ -323,7 +335,7 @@ export function buildContactShareLink(
   customFieldDefs: CustomFieldDefinition[] = [],
   now: Date = new Date()
 ): ContactShareLinkResult {
-  const baseUrl = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH_PREFIX}`
+  const baseUrl = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH}#`
 
   const sortedNewestFirst = [...conversations].sort((a, b) => {
     const at = new Date(a.date).getTime()
@@ -410,26 +422,33 @@ export function buildContactShareLink(
  * invalid-file messaging.
  */
 /**
- * Extracts the encoded payload from either the universal-link form
- * (https://ww-proxy.leviwilkerson.com/c/<payload>) or the custom-scheme
+ * Extracts the encoded payload from the universal-link form
+ * (https://ww-proxy.leviwilkerson.com/c#<payload>), the legacy path form
+ * (https://ww-proxy.leviwilkerson.com/c/<payload>), or the custom-scheme
  * fallback form (witnesswork://import-contact/<payload>). Returns null if the
- * URL matches neither.
+ * URL matches none of them.
  */
 function extractPayload(url: string): string | null {
   try {
     const parsed = new URL(url)
     const expected = new URL(CONTACT_SHARE_LINK.ORIGIN_PROD)
 
-    // https universal link
     if (
       parsed.protocol === expected.protocol &&
-      parsed.hostname === expected.hostname &&
-      parsed.pathname.startsWith(CONTACT_SHARE_LINK.PATH_PREFIX)
+      parsed.hostname === expected.hostname
     ) {
-      const payload = parsed.pathname.slice(
-        CONTACT_SHARE_LINK.PATH_PREFIX.length
-      )
-      return payload || null
+      // https://ww-proxy.leviwilkerson.com/c#<payload>
+      if (parsed.pathname === CONTACT_SHARE_LINK.PATH) {
+        return parsed.hash.slice(1) || null
+      }
+      // https://ww-proxy.leviwilkerson.com/c/<payload>
+      if (parsed.pathname.startsWith(CONTACT_SHARE_LINK.LEGACY_PATH_PREFIX)) {
+        const payload = parsed.pathname.slice(
+          CONTACT_SHARE_LINK.LEGACY_PATH_PREFIX.length
+        )
+        return payload || null
+      }
+      return null
     }
 
     // witnesswork://import-contact/<payload>

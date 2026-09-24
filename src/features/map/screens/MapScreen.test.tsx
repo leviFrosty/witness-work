@@ -62,6 +62,7 @@ vi.mock('react-native-reanimated', () => ({
   withSpring: (value: number) => value,
 }))
 vi.mock('tamagui', () => ({ Input: 'Input' }))
+vi.mock('@react-native-menu/menu', () => ({ MenuView: 'MenuView' }))
 vi.mock('expo-blur', () => ({ BlurView: 'BlurView' }))
 vi.mock('expo-glass-effect', () => ({
   GlassView: 'GlassView',
@@ -78,6 +79,7 @@ vi.mock('lucide-react-native', () => ({
   BookUser: 'BookUser',
   Expand: 'Expand',
   Info: 'Info',
+  Layers: 'Layers',
   MapPinned: 'MapPinned',
   Navigation: 'Navigation',
   Plus: 'Plus',

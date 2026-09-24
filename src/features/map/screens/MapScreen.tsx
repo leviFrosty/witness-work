@@ -72,6 +72,9 @@ import MapContactInspector, {
 } from '@/features/map/components/MapContactInspector'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
 import useMapContactCreation from '@/features/map/hooks/useMapContactCreation'
+import MapLayerMenu, {
+  type MapLayer,
+} from '@/features/map/components/MapLayerMenu'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -114,6 +117,7 @@ const FullMapView = ({
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
+  const [mapLayer, setMapLayer] = useState<MapLayer>('standard')
   const insets = useSafeAreaInsets()
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
@@ -759,6 +763,7 @@ const FullMapView = ({
   return (
     <>
       <MapView
+        mapType={mapLayer}
         userInterfaceStyle={colorScheme ? colorScheme : undefined}
         showsUserLocation={locationPermission}
         ref={mapRef}
@@ -1062,6 +1067,11 @@ const FullMapView = ({
             />
           </Button>
         )}
+        <MapLayerMenu
+          value={mapLayer}
+          onChange={setMapLayer}
+          style={mapControlStyle}
+        />
         <AnchoredPopover
           contentWidth={280}
           // Legend opens to the right of the control column, top-aligned to the

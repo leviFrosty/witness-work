@@ -388,6 +388,7 @@ export const HomeScreen = () => {
                             navigation.navigate('Progress', {
                               month: moment().month(),
                               year: moment().year(),
+                              tab: 'year',
                             })
                           }
                         >

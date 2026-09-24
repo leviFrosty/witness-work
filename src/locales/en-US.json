@@ -536,7 +536,6 @@
   "map_emptyNoContactsTitle": "Start building your map",
   "map_droppedPin": "Dropped pin",
   "map_createContact": "Create contact",
-  "map_dropPinHint": "Press and hold the map to create a contact at that location.",
   "pinCoordinates": "{{latitude}}, {{longitude}}",
   "map_fitContacts": "Fit contacts on map",
   "map_noSearchResults": "No matches",

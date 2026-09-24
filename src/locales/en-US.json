@@ -22,7 +22,7 @@
   "privacyYourDataDesc": "Export a full backup anytime. You own your own data.",
   "dataProtectionConsentLabel": "Householder agreed I may keep their details",
   "dataProtectionConsentInfoTitle": "Their agreement",
-  "dataProtectionConsentInfoDesc": "\u201cMay I keep your name and phone or address on my phone so I can come back as we agreed? I only use it to follow up with you, I delete it if we lose touch, and you can ask me to delete it any time.\u201d",
+  "dataProtectionConsentInfoDesc": "“May I keep your name and phone or address on my phone so I can come back as we agreed? I only use it to follow up with you, I delete it if we lose touch, and you can ask me to delete it any time.”",
   "dataProtectionConsentRequiredHint": "Their details become available once they have agreed.",
   "dataProtectionConsentRequiredError": "Needed before you can save",
   "dataProtectionNoteHint": "Don't note religion, health, family situation, language or ethnicity.",
@@ -891,6 +891,14 @@
       "c3": "See your logged time by category across the Service Year, and adjust the monthly credit limit in supported Publisher preferences.",
       "c4": "Hourglass submissions now separate preaching time from Credit Time.",
       "c5": "The calendar Assistant is available again, with controls in Schedule preferences."
+    },
+    "1430": {
+      "c1": "Data protection mode for publishers in the EU, the UK and Switzerland keeps householder records to what the law allows, including consent tracking and cleanup of contacts you haven't visited in a while.",
+      "c2": "Create a contact right from a pin you drop on the map.",
+      "c3": "Kingdom Publishers can choose to log their hours with a timer, an optional monthly goal and the Progress tab.",
+      "c4": "The Year tab now shows your service-year total for every role, even without an annual goal.",
+      "c5": "Follow-ups on visits are now optional, and you can turn off app sounds in Preferences.",
+      "c6": "Fixed dates shifting for publishers in far-east time zones."
     }
   },
   "installed": "Installed",

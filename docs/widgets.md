@@ -50,8 +50,9 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 
 - prod: `group.com.leviwilkerson.jwtime`
 - dev: `group.com.leviwilkerson.jwtimedev`
+- beta: `group.com.leviwilkerson.jwtimebeta`
 
-The dev variant has its own group so dev builds can iterate without polluting prod data. Both are declared in `app.config.ts` (`ios.entitlements`) and mirrored in `targets/hours/expo-target.config.js`.
+Dev and beta each have their own group so they can iterate without polluting prod data. All are declared in `app.config.ts` (`ios.entitlements`) and mirrored in `targets/hours/expo-target.config.js`.
 
 ## Adding a field to the snapshot
 

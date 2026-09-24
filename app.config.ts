@@ -1,26 +1,52 @@
 import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
-/** Passed in from `env` property in profile `./eas.json` to eas build */
-const IS_DEV = process.env.APP_VARIANT === 'development'
+/**
+ * Passed in from `env` property in profile `./eas.json` to eas build.
+ *
+ * - `development`: dev client for the simulator (Metro, dev App Attest).
+ * - `beta`: internal TestFlight app built from any branch by `/beta-build`. Its
+ *   own bundle id keeps WIP builds away from real service records.
+ * - `production`: the App Store app.
+ */
+type AppVariant = 'development' | 'beta' | 'production'
+const APP_VARIANT: AppVariant =
+  process.env.APP_VARIANT === 'development' ||
+  process.env.APP_VARIANT === 'beta'
+    ? process.env.APP_VARIANT
+    : 'production'
+const IS_DEV = APP_VARIANT === 'development'
+const IS_BETA = APP_VARIANT === 'beta'
+
+// App Group and iCloud container ids derive from the bundle id; the widget's
+// SnapshotLoader relies on `group.<host bundle id>`.
+const BUNDLE_ID = {
+  development: 'com.leviwilkerson.jwtimedev',
+  beta: 'com.leviwilkerson.jwtimebeta',
+  production: 'com.leviwilkerson.jwtime',
+}[APP_VARIANT]
+
+const APP_NAME = {
+  development: 'WitnessWork Dev',
+  beta: 'WitnessWork Beta',
+  production: 'WitnessWork',
+}[APP_VARIANT]
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const expoConfig: ExpoConfig = {
     ...config,
-    name: IS_DEV ? 'WitnessWork Dev' : 'WitnessWork',
+    name: APP_NAME,
     developmentClient: {},
     slug: 'jw-time',
     version: '1.43.0',
     owner: 'levi_frosty',
     scheme: 'witnesswork',
     orientation: 'portrait',
-    icon: './src/assets/icon.png',
+    icon: IS_BETA ? './src/assets/icon-beta.png' : './src/assets/icon.png',
     userInterfaceStyle: 'automatic',
     assetBundlePatterns: ['**/*'],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: IS_DEV
-        ? 'com.leviwilkerson.jwtimedev'
-        : 'com.leviwilkerson.jwtime',
+      bundleIdentifier: BUNDLE_ID,
       appleTeamId: 'Y3KE7B7AHJ',
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
@@ -61,15 +87,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // associated domain works across both build variants.
       associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
       entitlements: {
-        'com.apple.security.application-groups': [
-          IS_DEV
-            ? 'group.com.leviwilkerson.jwtimedev'
-            : 'group.com.leviwilkerson.jwtime',
-        ],
+        'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
         // App Attest (Notes Import request auth — ADR 0007). The environment
         // must track the build variant: dev builds attest against Apple's
         // development environment, store builds against production. A mismatch
-        // makes every attestation fail.
+        // makes every attestation fail. TestFlight (beta) always attests
+        // against production.
         'com.apple.developer.devicecheck.appattest-environment': IS_DEV
           ? 'development'
           : 'production',
@@ -80,7 +103,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
     extra: {
-      appVariant: IS_DEV ? 'development' : 'production',
+      appVariant: APP_VARIANT,
       commitHash: execSync('git rev-parse --short HEAD').toString().trim(),
       posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
@@ -90,6 +113,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     updates: {
       url: 'https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318',
+      // Beta OTA updates should land on the next cold launch instead of the
+      // one after, so wait briefly for a newer update before using the cache.
+      ...(IS_BETA && { fallbackToCacheTimeout: 10000 }),
     },
     // MUST stay top-level. `@expo/config-plugins` reads this key to write
     // EXUpdatesRuntimeVersion into Expo.plist at prebuild; the expo-updates
@@ -97,7 +123,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // drops the key and expo-updates disables itself at launch (no OTA,
     // "checkForUpdatesAsync() is not supported" in Settings > Updates).
     // That regression shipped in every 1.38.2 store build (Apr–May 2026).
-    runtimeVersion: { policy: 'appVersion' },
+    //
+    // Beta builds keep the same marketing version across native changes, so
+    // they use the native fingerprint instead; an OTA update only reaches beta
+    // builds with identical native code. See `fingerprint.config.js`.
+    runtimeVersion: { policy: IS_BETA ? 'fingerprint' : 'appVersion' },
     plugins: [
       // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
       ['expo-build-properties', { ios: { enableSceneSupport: true } }],
@@ -105,9 +135,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         './plugins/with-icloud-container',
         {
-          containerIdentifier: IS_DEV
-            ? 'iCloud.com.leviwilkerson.jwtimedev'
-            : 'iCloud.com.leviwilkerson.jwtime',
+          containerIdentifier: `iCloud.${BUNDLE_ID}`,
           containerDisplayName: 'WitnessWork',
         },
       ],

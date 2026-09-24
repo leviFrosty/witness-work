@@ -104,3 +104,16 @@ build, relaunch the app, and verify its symbolicated native stack.
 
 References: [React Native installation](https://posthog.com/docs/error-tracking/installation/react-native)
 and [source map uploads](https://posthog.com/docs/error-tracking/upload-source-maps/react-native).
+
+## Beta builds (internal TestFlight)
+
+Invoke `/beta-build` (see `.agents/skills/beta-build/SKILL.md`) to put any branch on your phone. It runs `scripts/build-beta.sh` (`pnpm run build:beta`), which ships the committed HEAD to **WitnessWork Beta**. That's a separate App Store Connect app (`com.leviwilkerson.jwtimebeta`, orange icon, never submitted for review) with its own App Group, iCloud container and data. WIP builds never replace the App Store app or touch real records, and Beta can reuse the current marketing version indefinitely.
+
+- **Native build + TestFlight** when native code changed: `eas build --profile beta --local`, then `asc builds upload --wait`. The upload sets What to Test to the branch, commit and `Runtime: <fingerprint>`.
+- **EAS Update** to the `beta` channel when it didn't. Beta uses the `fingerprint` runtime policy (`fingerprint.config.js`), and the script compares HEAD's fingerprint with the latest TestFlight build's `Runtime:` line. Beta launches wait up to 10 s for a new update, so a relaunch picks it up.
+
+Prerequisites are the same as production builds, plus:
+
+- **`.env.beta`** (gitignored): a copy of `.env.production` with `APP_VARIANT=beta` and the Beta app's RevenueCat public key. Worktrees fall back to the main checkout's copy.
+- **One-time signing setup per Apple account:** run `scripts/build-beta.sh --mode native --interactive` once in a Terminal and log in to Apple when EAS prompts. EAS registers the App Group, iCloud container and App Attest capability, then stores the profiles. Later runs are non-interactive.
+- **Unlocked login keychain** for remote/SSH-triggered builds, or codesign fails with `errSecInternalComponent`.

@@ -41,6 +41,18 @@
         "APP_VARIANT": "production"
       }
     },
+    "beta": {
+      "channel": "beta",
+      "environment": "preview",
+      "autoIncrement": true,
+      "node": "24.15.0",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "APP_VARIANT": "beta"
+      }
+    },
     "production-local": {
       "channel": "production",
       "autoIncrement": true,

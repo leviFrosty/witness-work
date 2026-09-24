@@ -6,20 +6,25 @@
  *   - ContactsWidget     (top contacts with quick actions)
  *   - AppointmentsWidget (upcoming follow-ups)
  *
- * The App Group identifier is mirrored from the host app's bundle id so the
- * dev variant points at `group.com.leviwilkerson.jwtimedev` and the prod
- * variant at `group.com.leviwilkerson.jwtime` automatically.
+ * The App Group identifier is mirrored from the host app's bundle id so each
+ * variant (dev `jwtimedev`, beta `jwtimebeta`, prod `jwtime`) points at its
+ * own `group.<bundle id>` automatically. Keep in sync with `app.config.ts`.
  */
-const IS_DEV = process.env.APP_VARIANT === 'development'
+const BUNDLE_ID =
+  {
+    development: 'com.leviwilkerson.jwtimedev',
+    beta: 'com.leviwilkerson.jwtimebeta',
+  }[process.env.APP_VARIANT] ?? 'com.leviwilkerson.jwtime'
 
-const APP_GROUP = IS_DEV
-  ? 'group.com.leviwilkerson.jwtimedev'
-  : 'group.com.leviwilkerson.jwtime'
+const APP_GROUP = `group.${BUNDLE_ID}`
 
 /** @type {import('@bacons/apple-targets').Config} */
 module.exports = {
   type: 'widget',
-  icon: '../../src/assets/icon.png',
+  icon:
+    process.env.APP_VARIANT === 'beta'
+      ? '../../src/assets/icon-beta.png'
+      : '../../src/assets/icon.png',
   deploymentTarget: '17.0',
   colors: {
     $accent: '#4BD27C',

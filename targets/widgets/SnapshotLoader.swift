@@ -5,8 +5,9 @@ import Foundation
 /// The App Group identifier is **not** hardcoded — it's derived from the
 /// widget extension's bundle id by stripping the last `.<widget>` segment and
 /// prefixing `group.`. This mirrors the logic in `WidgetBridgeModule.swift`
-/// so the dev variant (`com.leviwilkerson.jwtimedev`) and prod variant
-/// (`com.leviwilkerson.jwtime`) auto-resolve to their own containers.
+/// so the dev (`com.leviwilkerson.jwtimedev`), beta
+/// (`com.leviwilkerson.jwtimebeta`) and prod (`com.leviwilkerson.jwtime`)
+/// variants auto-resolve to their own containers.
 enum SnapshotLoader {
   static var appGroupIdentifier: String? {
     guard let widgetBundle = Bundle.main.bundleIdentifier else { return nil }

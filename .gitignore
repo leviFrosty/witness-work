@@ -30,6 +30,7 @@ npm-debug.*
 .env*.local
 .env
 .env.production
+.env.beta
 
 # typescript
 *.tsbuildinfo

@@ -1,11 +1,7 @@
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Category, CategoryTombstone } from '@/types/category'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 
 const initialState = {
   categories: [] as Category[],
@@ -79,9 +75,7 @@ export const useCategories = create(
     })),
     {
       name: 'categories',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
       version: 0,
     }
   )

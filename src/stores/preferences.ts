@@ -8,11 +8,7 @@ import type { DateOrder, FormatRegion, TimeFormat } from '@/lib/dates'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 import { Address } from '@/types/contact'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
@@ -1521,9 +1517,7 @@ export const usePreferences = create(
     }),
     {
       name: 'preferences',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
       version: 7,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),

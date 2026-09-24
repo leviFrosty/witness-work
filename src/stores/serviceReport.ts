@@ -21,11 +21,7 @@ import {
   normalizeRecurringPlan,
   PersistedServiceReportState,
 } from '@/lib/normalizeDate'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 import * as Notifications from 'expo-notifications'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 
@@ -585,9 +581,7 @@ export const useServiceReport = create(
     })),
     {
       name: 'serviceReports',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
       version: 4,
       migrate: (persistedState, version) =>
         migrateServiceReportPersistedState(persistedState, version),

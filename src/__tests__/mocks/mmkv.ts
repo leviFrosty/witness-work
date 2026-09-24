@@ -21,3 +21,5 @@ export const GuardedAsyncStorage = {
   setItem: () => Promise.resolve(),
   removeItem: () => Promise.resolve(),
 }
+
+export const PersistStorage = MmkvStorage

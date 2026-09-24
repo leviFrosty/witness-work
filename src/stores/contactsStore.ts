@@ -10,11 +10,7 @@ import {
   stripTombstonedCustomFieldValues,
   stripTombstonedCustomFields,
 } from '@/lib/customFields'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 import { stripContactForTombstone } from '@/lib/dataProtection'
 
 const initialState = {
@@ -392,9 +388,7 @@ export const useContacts = create(
     })),
     {
       name: 'contacts',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
     }
   )
 )

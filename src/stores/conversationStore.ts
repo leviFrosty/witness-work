@@ -2,11 +2,7 @@ import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Visit, VisitTombstone } from '@/types/visit'
 import * as Notifications from 'expo-notifications'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 import { stripPlaceholderFollowUp } from '@/lib/conversations'
 
 /**
@@ -111,9 +107,7 @@ export const useConversations = create(
     })),
     {
       name: 'conversations',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
       version: 1,
       migrate: (persistedState, version) =>
         migrateConversationsPersistedState(persistedState, version),

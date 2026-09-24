@@ -31,6 +31,12 @@ const envVariables = z.object({
     .describe(
       'Override the proxy base URL for Notes Import (e.g. a dev/staging worker) so the App Attest dev-bypass never hits production. Defaults to the prod proxy.'
     ),
+  EXPO_PUBLIC_BUDDIES_BASE_URL: z
+    .string()
+    .optional()
+    .describe(
+      'Override the relay base URL for Buddies. Defaults to the Notes Import base URL, then the prod proxy.'
+    ),
   EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS: z
     .string()
     .optional()

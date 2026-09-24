@@ -20,4 +20,11 @@ preparation, and startup/foreground import resumption are skipped while hidden.
 The import client and manager do not enforce flags. Server-side access control
 remains the backend's responsibility; already-running work is not cancelled.
 
+Buddies uses the `buddies` flag (create it in PostHog before rollout; it starts
+off). `useBuddiesEnabled()` also requires a binary that ships the
+`buddies-keychain` native module, and dev builds can force it on from Tools →
+Buddies. The flag gates the Settings row, invite-link handling, calendar
+overlays, and the background runtime. The relay enforces its own kill switch
+(`buddies:enabled`); see `docs/buddies-protocol.md`.
+
 PostHog SDK reference: https://posthog.com/docs/libraries/react-native#feature-flags

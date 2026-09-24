@@ -5,6 +5,7 @@ import i18n from '@/lib/locales'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, Switch, View } from 'react-native'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import TextInput from '@/components/ui/TextInput'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '@/components/ui/ActionButton'
@@ -145,6 +146,7 @@ const confirmDevAction = (title: string, onConfirm: () => void) =>
   })
 
 export default function ToolsScreen() {
+  const buddiesDevOverride = useBuddies((state) => state.devOverride)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useToastController()
@@ -787,6 +789,19 @@ export default function ToolsScreen() {
 
         {__DEV__ && (
           <>
+            <SectionHeader title='Buddies' />
+            <Card style={{ gap: 10 }}>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>Show Buddies without the remote flag:</Text>
+                <Switch
+                  value={buddiesDevOverride}
+                  onValueChange={(value) => {
+                    useBuddies.setState({ devOverride: value })
+                  }}
+                />
+              </XView>
+            </Card>
+
             <SectionHeader title='Supporter override' />
             <Card style={{ gap: 10 }}>
               <XView style={{ justifyContent: 'space-between' }}>

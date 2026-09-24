@@ -72,6 +72,9 @@ export type RootStackParamList = {
   More: undefined
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined
+  Buddies: undefined
+  /** Pre-accept screen for an incoming Buddies invite link. */
+  'Buddy Invite': { link: string }
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

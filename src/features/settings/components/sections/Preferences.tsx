@@ -4,6 +4,7 @@ import {
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
+  Users as UsersIcon,
 } from 'lucide-react-native'
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
@@ -13,9 +14,11 @@ import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 import { useInputLayout } from '@/components/ui/inputs/InputLayout'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 
 const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
   const layout = useInputLayout()
+  const buddiesEnabled = useBuddiesEnabled()
   return (
     <View style={{ gap: 3 }}>
       <Section>
@@ -44,6 +47,15 @@ const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
+        {buddiesEnabled && (
+          <InputRowButton
+            leftIcon={UsersIcon}
+            label={i18n.t('buddies_title')}
+            onPress={() => handleNavigate('Buddies')}
+          >
+            <IconButton icon={ChevronRightIcon} />
+          </InputRowButton>
+        )}
         <InputRowButton
           leftIcon={SettingsIcon}
           label={i18n.t('preferences')}

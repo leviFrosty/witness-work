@@ -333,6 +333,8 @@ const CalendarDay = (
      */
     dayPlansOverride?: DayPlan[]
     recurringPlansOverride?: RecurringPlan[]
+    /** Small dots along the bottom edge, one per color (e.g. Buddies' plans). */
+    markerColors?: string[]
   }
 ) => {
   const store = useServiceReport()
@@ -419,6 +421,32 @@ const CalendarDay = (
           <NonPlannedDay {...props} serviceReports={reportsForDay} />
         )}
       </Button>
+      {props.markerColors && props.markerColors.length > 0 && (
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            bottom: 1,
+            left: 0,
+            right: 0,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 2,
+          }}
+        >
+          {props.markerColors.slice(0, 3).map((color, index) => (
+            <View
+              key={`${color}-${index}`}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 2.5,
+                backgroundColor: color,
+              }}
+            />
+          ))}
+        </View>
+      )}
       {props.planMode && isToday && howToAddPlan && (
         <Animated.View
           style={[

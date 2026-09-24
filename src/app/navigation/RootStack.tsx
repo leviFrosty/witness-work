@@ -44,6 +44,8 @@ import FAQScreen from '@/features/updates/screens/FAQScreen'
 import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
 import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
+import BuddiesScreen from '@/features/buddies/screens/BuddiesScreen'
+import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -408,6 +410,29 @@ const RootStackComponent = () => {
           }}
           name='OnboardingBackfill'
           component={OnboardingBackfillScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('buddies_title')} />
+            ),
+          }}
+          name='Buddies'
+          component={BuddiesScreen}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='back'
+                title={i18n.t('buddies_title')}
+              />
+            ),
+          }}
+          name='Buddy Invite'
+          component={BuddyInviteScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

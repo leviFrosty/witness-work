@@ -4,6 +4,11 @@ const BASE_URL = 'https://ww-proxy.leviwilkerson.com'
 // dev-bypass path never touches production. Falls back to the prod proxy.
 const NOTES_BASE_URL = process.env.EXPO_PUBLIC_NOTES_IMPORT_BASE_URL || BASE_URL
 
+// Buddies shares the per-environment worker with Notes Import, so a dev .env
+// pointing Notes Import at ww-proxy-dev routes Buddies there too.
+const BUDDIES_BASE_URL =
+  process.env.EXPO_PUBLIC_BUDDIES_BASE_URL || NOTES_BASE_URL
+
 export default {
   geocode: `${BASE_URL}/geocode`,
   autocomplete: `${BASE_URL}/autocomplete`,
@@ -27,4 +32,6 @@ export default {
     `${NOTES_BASE_URL}/notes-import/${importId}/cancel`,
   notesImportDestroy: (importId: string) =>
     `${NOTES_BASE_URL}/notes-import/${importId}/destroy`,
+  // Base for the Buddies relay's `/buddies/v1/*` ops (docs/buddies-protocol.md).
+  buddies: BUDDIES_BASE_URL,
 }

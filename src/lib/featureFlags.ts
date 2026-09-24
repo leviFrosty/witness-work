@@ -5,7 +5,7 @@ import { create } from 'zustand'
 import { posthogClient } from '@/lib/posthogClient'
 
 // Add future flag keys to this union so call sites stay type-checked.
-export type FeatureFlag = 'notes-import'
+export type FeatureFlag = 'notes-import' | 'buddies'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 const useFlags = create<{ values: FlagValues }>(() => ({ values: {} }))
 

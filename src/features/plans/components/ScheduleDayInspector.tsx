@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native'
 import Card from '@/components/ui/Card'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
+import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
 import { RootStackNavigation } from '@/types/rootStack'
 import { TimeEntry } from '@/types/timeEntry'
 
@@ -42,6 +43,7 @@ export default function ScheduleDayInspector({
         onAddTime={() => navigation.navigate('Add Time', { date: dateString })}
         onPlanDay={() => navigation.navigate('PlanDay', { date: dateString })}
       />
+      <BuddyPlansForDay date={date} />
     </Card>
   )
 }

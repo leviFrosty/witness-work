@@ -28,4 +28,6 @@ export default {
     `${BASE_URL}/notes-import/${importId}/cancel`,
   notesImportDestroy: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/destroy`,
+  // Base for the Buddies relay's `/buddies/v1/*` ops (docs/buddies-protocol.md).
+  buddies: BASE_URL,
 }

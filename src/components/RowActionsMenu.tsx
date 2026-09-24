@@ -14,8 +14,8 @@ export interface RowAction {
   /** Renders the row in the error color — pair with `confirmDestructive`. */
   destructive?: boolean
   /**
-   * Runs after the popover closes. Alerts/sheets opened here land on a screen
-   * with no popover Modal in front of them.
+   * Runs once the popover's Modal has fully dismissed, so alerts, share sheets
+   * and navigation opened here land on a screen with no popover in front.
    */
   onPress: () => void
 }
@@ -78,7 +78,7 @@ const RowActionsMenu = ({
         </View>
       )}
     >
-      {({ close }) =>
+      {({ closeThen }) =>
         actions.map((action) => {
           const color = action.destructive
             ? theme.colors.error
@@ -88,10 +88,7 @@ const RowActionsMenu = ({
             <Pressable
               key={action.id}
               accessibilityRole='button'
-              onPress={() => {
-                close()
-                action.onPress()
-              }}
+              onPress={() => closeThen(action.onPress)}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,
                 flexDirection: 'row',

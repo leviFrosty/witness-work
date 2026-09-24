@@ -19,6 +19,8 @@ type MonthTimeReportsCalendarProps = {
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
   selectedDate?: Date
   viewMode?: CalendarViewMode
+  /** `YYYY-MM-DD` → marker dot colors rendered under that day. */
+  markerColorsByDate?: Record<string, string[]>
 }
 
 const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
@@ -28,6 +30,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   setSheet,
   viewMode = 'planned',
   selectedDate,
+  markerColorsByDate,
 }) => {
   const startOfWeek = useStartOfWeek()
   const dayPlans = useServiceReport((s) => s.dayPlans)
@@ -89,6 +92,11 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
             viewMode={viewMode}
             dayPlansOverride={dayPlans}
             recurringPlansOverride={recurringPlans}
+            markerColors={
+              props.date?.dateString
+                ? markerColorsByDate?.[props.date.dateString]
+                : undefined
+            }
             {...props}
           />
         </View>

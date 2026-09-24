@@ -133,6 +133,8 @@ const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
   topic: 'optional',
   notifications: 'optional',
   dismissed: 'optional',
+  // Buddy inbox ids are this User's own relationships, meaningless elsewhere.
+  buddies: 'omit',
 }
 
 const CONVERSATION_POLICY: Record<keyof Visit, FieldPolicy> = {

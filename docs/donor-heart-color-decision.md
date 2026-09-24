@@ -3,6 +3,12 @@
 **Date:** 2026-05-08
 **Status:** Decided. No code change.
 
+> **Update (2026-09):** `SyncPopover` left the Home header — iCloud Sync lives
+> in Settings. Active supporters now see the heart too (filled red, like any
+> past contributor), with the buddy notifications bell beside it. The color
+> rule below still holds; the notes about `SyncPopover` owning the slot are
+> history.
+
 ## TL;DR
 
 The home-header donor heart stays **red** (`theme.colors.errorAlt`) when

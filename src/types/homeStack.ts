@@ -12,6 +12,7 @@ export type HomeTabStackParamList = {
       }
     | undefined
   Schedule: { month: number; year: number } | undefined
+  Buddies: undefined
   Map: undefined
   Settings: undefined
 }

@@ -1,0 +1,7 @@
+{
+  "name": "place-search",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping Apple MapKit local search so Plans can find points of interest and addresses.",
+  "main": "index.ts",
+  "private": true
+}

@@ -26,6 +26,9 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
+import BuddiesTabScreen from '@/app/buddies/BuddiesTabScreen'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,
@@ -47,6 +50,8 @@ const HomeTabStack = () => {
   } = usePreferences()
   const { showsYearTabs } = usePublisher()
   const [whatsNewSince, setWhatsNewSince] = useState<string | null>(null)
+  const buddiesEnabled = useBuddiesEnabled()
+  const buddyRequests = useBuddies((state) => state.incomingClaims.length)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
   const requestReveal = useMilestoneRevealStore((s) => s.request)
@@ -169,6 +174,13 @@ const HomeTabStack = () => {
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
         <Tab.Screen name='Schedule' component={ScheduleScreen} />
+        {buddiesEnabled && (
+          <Tab.Screen
+            name='Buddies'
+            component={BuddiesTabScreen}
+            options={{ tabBarBadge: buddyRequests || undefined }}
+          />
+        )}
 
         <Tab.Screen name='Map' component={Map} />
         {hasSidebar && (

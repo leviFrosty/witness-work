@@ -15,6 +15,7 @@ import {
   Smartphone as SmartphoneIcon,
   Trash2 as Trash2Icon,
   UserRound as UserRoundIcon,
+  UsersRound as UsersRoundIcon,
 } from 'lucide-react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
@@ -23,6 +24,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, View } from 'react-native'
 import Switch from '@/components/ui/Switch'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import TextInput from '@/components/ui/TextInput'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useServiceReport from '@/stores/serviceReport'
@@ -124,6 +126,7 @@ const confirmDevAction = (title: string, onConfirm: () => void) =>
   })
 
 export default function ToolsScreen() {
+  const buddiesDevOverride = useBuddies((state) => state.devOverride)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useToastController()
@@ -1014,6 +1017,31 @@ export default function ToolsScreen() {
         </ToolSection>
 
         {/* ---- App state ---- */}
+        <ToolSection title='Buddies' icon={UsersRoundIcon}>
+          <ToolList>
+            {__DEV__ && (
+              <ToolRow
+                label='Show without the remote flag'
+                trailing={
+                  <Switch
+                    value={buddiesDevOverride}
+                    onValueChange={(value) => {
+                      useBuddies.setState({ devOverride: value })
+                    }}
+                  />
+                }
+              />
+            )}
+            <ToolRow
+              label='Reset Buddies onboarding'
+              onPress={() => {
+                useBuddies.setState({ onboardingComplete: false })
+                showDone('Buddies onboarding reset')
+              }}
+            />
+          </ToolList>
+        </ToolSection>
+
         {__DEV__ && (
           <ToolSection
             title='Supporter'

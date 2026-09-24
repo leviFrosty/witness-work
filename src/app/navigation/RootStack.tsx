@@ -2,7 +2,7 @@ import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImp
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
-import VisitFormScreen from '@/features/visits/screens/VisitFormScreen'
+import VisitFormRoute from '@/app/visits/VisitFormRoute'
 import ContactDetailsScreen from '@/features/contacts/screens/ContactDetailsScreen'
 import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'
 import RecoverContactsScreen from '@/features/contacts/screens/RecoverContactsScreen'
@@ -45,6 +45,10 @@ import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
 import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
 import ServiceHistoryScreen from '@/features/service-reports/screens/ServiceHistoryScreen'
+import BuddyCodeScreen from '@/features/buddies/screens/BuddyCodeScreen'
+import BuddyDetailScreen from '@/features/buddies/screens/BuddyDetailScreen'
+import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
+import BuddiesSettingsScreen from '@/features/buddies/screens/BuddiesSettingsScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -84,7 +88,7 @@ const RootStackComponent = () => {
           component={ContactDetailsScreen}
         />
         <RootStack.Screen name='Contact Form' component={ContactFormScreen} />
-        <RootStack.Screen name='Visit Form' component={VisitFormScreen} />
+        <RootStack.Screen name='Visit Form' component={VisitFormRoute} />
         <RootStack.Screen
           name='Add Time'
           options={{
@@ -421,6 +425,55 @@ const RootStackComponent = () => {
           }}
           name='ServiceHistory'
           component={ServiceHistoryScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('buddies_title')} />
+            ),
+          }}
+          name='Buddy'
+          component={BuddyDetailScreen}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='exit'
+                title={i18n.t('buddies_codeTitle')}
+              />
+            ),
+          }}
+          name='Buddy Code'
+          component={BuddyCodeScreen}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='back'
+                title={i18n.t('buddies_title')}
+              />
+            ),
+          }}
+          name='Buddy Invite'
+          component={BuddyInviteScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('buddies_settingsTitle')}
+              />
+            ),
+          }}
+          name='Buddies Settings'
+          component={BuddiesSettingsScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

@@ -39,7 +39,7 @@ const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
         </InputRowButton>
         <InputRowButton
           leftIcon={UserIcon}
-          label={i18n.t('publisher')}
+          label={i18n.t('profile')}
           onPress={() => handleNavigate('PreferencesPublisher')}
         >
           <IconButton icon={ChevronRightIcon} />

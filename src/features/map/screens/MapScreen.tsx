@@ -576,16 +576,20 @@ const FullMapView = ({
     ? () => navigation.navigate('Contacts')
     : addContact
 
+  const emptyCardPlacement = {
+    left: sidebarWidth + 16,
+    right: isWide ? undefined : 16,
+    width: isWide ? 400 : undefined,
+    bottom: insets.bottom + bottomBarHeight + 12,
+  }
+
   const renderEmptyState = () => (
     <View
       pointerEvents='box-none'
       onLayout={(e) => setEmptyStateHeight(e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
-        left: sidebarWidth + 16,
-        right: isWide ? undefined : 16,
-        width: isWide ? 400 : undefined,
-        bottom: insets.bottom + bottomBarHeight + 12,
+        ...emptyCardPlacement,
         alignItems: 'center',
       }}
     >
@@ -918,6 +922,9 @@ const FullMapView = ({
             height: isWide ? undefined : CARD_HEIGHT,
             // Match the focused carousel item, including its scaled contents.
             transform: isWide ? undefined : [{ scale: parallaxScrollingScale }],
+            ...(isWide && contactMarkers.length === 0
+              ? emptyCardPlacement
+              : {}),
           }}
         >
           <CreateContactCard
@@ -1105,11 +1112,7 @@ const FullMapView = ({
       <View
         style={{
           position: 'absolute',
-          right:
-            isWide &&
-            (contactMarkers.length > 0 || mapContactCreation.coordinate)
-              ? inspectorWidth + 48
-              : 16,
+          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
           bottom: isWide
             ? insets.bottom + bottomBarHeight + 32
             : locationButtonBottom,

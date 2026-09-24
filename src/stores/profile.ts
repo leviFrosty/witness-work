@@ -1,10 +1,6 @@
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import {
-  GuardedAsyncStorage,
-  hasMigratedFromAsyncStorage,
-  MmkvStorage,
-} from '@/stores/mmkv'
+import { PersistStorage } from '@/stores/mmkv'
 import type { ProfileAvatar } from '@/types/avatar'
 
 /**
@@ -103,9 +99,7 @@ export const useProfile = create(
     }),
     {
       name: 'profile',
-      storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
-      ),
+      storage: createJSONStorage(() => PersistStorage),
       version: 0,
     }
   )

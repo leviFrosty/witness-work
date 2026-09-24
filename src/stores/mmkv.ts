@@ -26,21 +26,12 @@ export function isTransientStorageReadError(error: unknown): boolean {
   )
 }
 
-export async function migrateFromAsyncStorage(): Promise<void> {
-  let asyncStorageKeys: readonly string[]
-  try {
-    asyncStorageKeys = await AsyncStorage.getAllKeys()
-  } catch (error) {
-    // Transient locked-device / IO read failure: leave the migration flag
-    // unset so it retries on a later launch instead of crashing hydration.
-    // See JW-TIME-C5.
-    if (isTransientStorageReadError(error)) {
-      return
-    }
-    throw error
-  }
-
-  for (const key of asyncStorageKeys) {
+async function copyAsyncStorageKeysToMmkv(
+  keys: readonly string[],
+  { overwrite }: { overwrite: boolean }
+): Promise<boolean> {
+  for (const key of keys) {
+    if (!overwrite && mmkvStorage.contains(key)) continue
     try {
       const value = await AsyncStorage.getItem(key)
 
@@ -54,12 +45,56 @@ export async function migrateFromAsyncStorage(): Promise<void> {
         // AsyncStorage.removeItem(key)
       }
     } catch (error) {
-      return
+      return false
       /** Can't handle error, allow to fail. */
     }
   }
+  return true
+}
 
+/**
+ * Copies legacy AsyncStorage data into MMKV and flips the migration flag.
+ *
+ * Resolves `true` when legacy data was copied and the JS bundle must reload so
+ * already-hydrated stores re-read from MMKV. Fresh installs have nothing to
+ * copy, so they skip the reload — `Updates.reloadAsync()` during first launch
+ * strands dev clients on the splash screen ("app context has been lost").
+ */
+export async function migrateFromAsyncStorage(): Promise<boolean> {
+  let asyncStorageKeys: readonly string[]
+  try {
+    asyncStorageKeys = await AsyncStorage.getAllKeys()
+  } catch (error) {
+    // Transient locked-device / IO read failure: leave the migration flag
+    // unset so it retries on a later launch instead of crashing hydration.
+    // See JW-TIME-C5.
+    if (isTransientStorageReadError(error)) {
+      return false
+    }
+    throw error
+  }
+
+  if (asyncStorageKeys.length > 0) {
+    const copied = await copyAsyncStorageKeysToMmkv(asyncStorageKeys, {
+      overwrite: true,
+    })
+    if (!copied) return false
+    mmkvStorage.set('hasMigratedFromAsyncStorage', true)
+    return true
+  }
+
+  // Fresh install: switch stores to MMKV now, then sweep up any persist writes
+  // that landed in AsyncStorage before the flag flipped. MMKV wins on conflict
+  // because it already holds the newer post-flip write.
   mmkvStorage.set('hasMigratedFromAsyncStorage', true)
+  try {
+    await copyAsyncStorageKeysToMmkv(await AsyncStorage.getAllKeys(), {
+      overwrite: false,
+    })
+  } catch {
+    // Best effort; the next persist write of each store lands in MMKV anyway.
+  }
+  return false
 }
 
 /**
@@ -128,4 +163,18 @@ export const MmkvStorage: StateStorage = {
   removeItem: (name) => {
     return mmkvStorage.delete(name)
   },
+}
+
+/**
+ * Zustand persist storage that follows the migration flag on every call, so
+ * stores created before the first-launch migration switch to MMKV without a JS
+ * reload.
+ */
+const activeStorage = () =>
+  hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
+
+export const PersistStorage: StateStorage = {
+  setItem: (name, value) => activeStorage().setItem(name, value),
+  getItem: (name) => activeStorage().getItem(name),
+  removeItem: (name) => activeStorage().removeItem(name),
 }

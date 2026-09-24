@@ -21,8 +21,10 @@ export function useAppMigrations() {
       // (InteractionManager is deprecated as of RN 0.86).
       requestIdleCallback(async () => {
         try {
-          await migrateFromAsyncStorage()
-          await Updates.reloadAsync() // Reloads JS and causes stores to point to new MMKV store
+          // Legacy data was copied: reload so hydrated stores re-read MMKV.
+          // Fresh installs skip this; reloading mid-launch strands dev clients
+          // on the splash screen ("app context has been lost").
+          if (await migrateFromAsyncStorage()) await Updates.reloadAsync()
         } catch {
           // Falls back to async storage
         }

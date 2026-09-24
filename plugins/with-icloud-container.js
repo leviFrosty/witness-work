@@ -6,9 +6,10 @@ const { withEntitlementsPlist, withInfoPlist } = require('@expo/config-plugins')
  * devices.
  *
  * Mirrors the App Group split: dev builds point at
- * `iCloud.com.leviwilkerson.jwtimedev`, prod at
- * `iCloud.com.leviwilkerson.jwtime`, so dev installations never read prod user
- * data.
+ * `iCloud.com.leviwilkerson.jwtimedev`, beta at
+ * `iCloud.com.leviwilkerson.jwtimebeta`, prod at
+ * `iCloud.com.leviwilkerson.jwtime`, so dev and beta installations never read
+ * prod user data.
  *
  * The container identifier must also be registered in the Apple Developer
  * portal under the team configured in `app.config.ts`. EAS will fail

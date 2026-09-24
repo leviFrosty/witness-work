@@ -12,6 +12,7 @@
     "build": "pnpm sync:widget-shared && eas build -p ios --profile development-simulator --local",
     "build:production": "pnpm sync:widget-shared && eas build -p ios --profile production-simulator --local",
     "build:prod-auto-submit": "./scripts/build-prod-auto-submit.sh",
+    "build:beta": "./scripts/build-beta.sh",
     "eas-build-post-install": "npm install --global @posthog/cli@0.18.1",
     "upload:posthog-sourcemaps": "posthog-cli --dotenv-file .env.production hermes upload --directory dist",
     "check:locales": "node scripts/check-is-missing-locale-keys.mjs",

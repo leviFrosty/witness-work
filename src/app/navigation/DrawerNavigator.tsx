@@ -10,15 +10,14 @@ import Header from '@/components/ui/layout/Header'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
-import { PixelRatio, Platform, View, useWindowDimensions } from 'react-native'
+import { PixelRatio, View, useWindowDimensions } from 'react-native'
 import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
 import { DevSettings } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'
-import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
-import SyncPopover from '@/app/sync/components/SyncPopover'
+import BuddyNotificationsBell from '@/features/buddies/components/BuddyNotificationsBell'
 import MilestoneRevealRecoveryIcon from '@/features/milestones/components/MilestoneRevealRecoveryIcon'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
@@ -31,7 +30,6 @@ const Drawer = createDrawerNavigator()
 const DrawerNavigator = () => {
   const notesImportEnabled = useNotesImportEnabled()
   const { hasPurchasedBefore } = useCustomer()
-  const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()
   const theme = useTheme()
   const { width } = useWindowDimensions()
@@ -40,8 +38,6 @@ const DrawerNavigator = () => {
     unviewedReadyImportCount(s.entries)
   )
   const focusNotesImports = useNotesImportManager((s) => s.focus)
-
-  const showSyncPopover = isSupporter && Platform.OS === 'ios'
 
   // The slide drawer translates the scene by exactly this width. A fractional
   // width lands the drawer's edge and the scene's edge on different physical
@@ -134,27 +130,24 @@ const DrawerNavigator = () => {
                     />
                   )}
                   <MilestoneRevealRecoveryIcon />
-                  {showSyncPopover ? (
-                    <SyncPopover />
-                  ) : (
-                    !hideDonateHeart && (
-                      <IconButton
-                        onPress={() => {
-                          analytics.capture('paywall_opened', {
-                            source: 'header_heart',
-                          })
-                          navigation.navigate('Paywall', {
-                            source: 'header_heart',
-                          })
-                        }}
-                        icon={hasPurchasedBefore ? HeartIcon : HeartIcon}
-                        color={
-                          hasPurchasedBefore
-                            ? theme.colors.errorAlt
-                            : theme.colors.text
-                        }
-                      />
-                    )
+                  <BuddyNotificationsBell />
+                  {!hideDonateHeart && (
+                    <IconButton
+                      onPress={() => {
+                        analytics.capture('paywall_opened', {
+                          source: 'header_heart',
+                        })
+                        navigation.navigate('Paywall', {
+                          source: 'header_heart',
+                        })
+                      }}
+                      icon={hasPurchasedBefore ? HeartIcon : HeartIcon}
+                      color={
+                        hasPurchasedBefore
+                          ? theme.colors.errorAlt
+                          : theme.colors.text
+                      }
+                    />
                   )}
                 </View>
               }

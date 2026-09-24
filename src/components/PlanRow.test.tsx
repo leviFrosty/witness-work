@@ -69,6 +69,9 @@ vi.mock('@/components/ui/Badge', async () => {
 vi.mock('@/components/ui/swipeableActions/Delete', () => ({
   default: () => null,
 }))
+vi.mock('@/components/RichNoteText', () => ({ default: () => null }))
+vi.mock('@/components/PlanLocationLink', () => ({ default: () => null }))
+vi.mock('@/lib/linkPreview', () => ({ findLinks: () => [] }))
 vi.mock('@/components/RowActionsMenu', () => ({
   default: () => null,
 }))

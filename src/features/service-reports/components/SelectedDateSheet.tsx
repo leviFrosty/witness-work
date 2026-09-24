@@ -22,6 +22,8 @@ interface Props {
     recurringPlanDate: string
   ) => void
   onEditTimeReport?: (report: TimeEntry) => void
+  /** Extra read-only content under the day's history (e.g. Buddies' plans). */
+  renderFooter?: (date: Date) => React.ReactNode
 }
 
 const SelectedDateSheet: React.FC<Props> = ({
@@ -33,6 +35,7 @@ const SelectedDateSheet: React.FC<Props> = ({
   onNavigateToPlanDay,
   onNavigateToRecurringPlan,
   onEditTimeReport,
+  renderFooter,
 }) => {
   const theme = useTheme()
 
@@ -90,6 +93,7 @@ const SelectedDateSheet: React.FC<Props> = ({
                 onPlanDay?.()
               }}
             />
+            {renderFooter?.(sheet.date)}
           </KeyboardAwareScrollView>
         </View>
       </Sheet.Frame>

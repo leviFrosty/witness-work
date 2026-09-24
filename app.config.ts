@@ -30,6 +30,8 @@ const APP_NAME = {
   beta: 'WitnessWork Beta',
   production: 'WitnessWork',
 }[APP_VARIANT]
+const CAMERA_PERMISSION =
+  '$(PRODUCT_NAME) uses your camera to take a profile or contact photo, and to scan a buddy invite code.'
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const expoConfig: ExpoConfig = {
@@ -281,12 +283,22 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // Camera is used to take profile/contact avatar photos. Give it a
           // specific purpose string instead of the plugin's generic default
           // (better for App Review than "Allow … to access your camera").
-          cameraPermission:
-            '$(PRODUCT_NAME) uses your camera to take a profile or contact photo.',
+          // Shares NSCameraUsageDescription with expo-camera below; keep the
+          // two strings identical so plugin order doesn't matter.
+          cameraPermission: CAMERA_PERMISSION,
           // We only pick still images, never video, so the microphone usage
           // string the plugin adds by default is unused — App Review flags
           // unused permissions (2.5.4 / 5.1.1). `false` deletes the key.
           microphonePermission: false,
+        },
+      ],
+      [
+        'expo-camera',
+        {
+          // Scans Buddies invite QR codes. Photos only; never records video.
+          cameraPermission: CAMERA_PERMISSION,
+          microphonePermission: false,
+          recordAudioAndroid: false,
         },
       ],
     ],

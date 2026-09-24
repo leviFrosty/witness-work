@@ -69,10 +69,16 @@ interface Props {
   contentStyle?: StyleProp<ViewStyle>
   /**
    * Popover content. Pass a function form to receive a `close` helper for
-   * in-content dismiss affordances (e.g. selecting an item closes the
-   * popover).
+   * in-content dismiss affordances (e.g. selecting an item closes the popover).
+   * Use `closeThen` for actions that present something (share sheet, alert,
+   * navigation): it runs them once the Modal has fully dismissed.
    */
-  children: ReactNode | ((props: { close: () => void }) => ReactNode)
+  children:
+    | ReactNode
+    | ((props: {
+        close: () => void
+        closeThen: (action: () => void) => void
+      }) => ReactNode)
 }
 
 const ANIMATION_MS = 140
@@ -136,6 +142,7 @@ const AnchoredPopover = ({
   const pendingOpenCancellation = useRef<(() => void) | null>(null)
   const openFrame = useRef<number | null>(null)
   const openRequest = useRef(0)
+  const afterDismiss = useRef<(() => void) | null>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -272,6 +279,7 @@ const AnchoredPopover = ({
   }
 
   const handlePress = () => {
+    afterDismiss.current = null
     cancelActivePopoverPreparation?.()
     const requestId = ++openRequest.current
     keyboardDidHideSubscription.current?.remove()
@@ -304,6 +312,16 @@ const AnchoredPopover = ({
 
   const close = () => setOpen(false)
 
+  // Native sheets (Share.share, pickers) present on the topmost presented view
+  // controller. Opened while this Modal is still up, they land on top of it,
+  // and the Modal's dismissal then takes them down instead of itself, leaving
+  // an invisible Modal swallowing every touch. Wait for `onDismiss`, when the
+  // Modal is really gone.
+  const closeThen = (action: () => void) => {
+    afterDismiss.current = action
+    setOpen(false)
+  }
+
   const positionStyle: {
     top?: number
     bottom?: number
@@ -323,7 +341,7 @@ const AnchoredPopover = ({
   // bar/sections keep their spacing. Otherwise the popover sizes to content.
   const { maxHeight, ...placement } = positionStyle
   const content =
-    typeof children === 'function' ? children({ close }) : children
+    typeof children === 'function' ? children({ close, closeThen }) : children
 
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
@@ -349,6 +367,9 @@ const AnchoredPopover = ({
           if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
         }}
         onDismiss={() => {
+          const then = afterDismiss.current
+          afterDismiss.current = null
+          then?.()
           if (!accessibilityFocusRef || !navigation.isFocused()) return
           const handle = anchorRef.current && findNodeHandle(anchorRef.current)
           if (handle) AccessibilityInfo.setAccessibilityFocus(handle)

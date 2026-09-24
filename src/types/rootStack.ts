@@ -82,6 +82,14 @@ export type RootStackParamList = {
         source?: ServiceHistorySource
       }
     | undefined
+  /** One buddy's profile, upcoming Plans, and remove action. */
+  Buddy: { inboxId: string }
+  /** In-person pairing: my single-use QR code, or a scanner for theirs. */
+  'Buddy Code': { mode: 'code' | 'scan'; inviteId?: string }
+  /** Pre-accept screen for an incoming Buddies invite link. */
+  'Buddy Invite': { link: string }
+  /** What buddies see, Buddies notifications, and delete-all. */
+  'Buddies Settings': undefined
 }
 
 /** Where the Service History editor was opened from (analytics). */

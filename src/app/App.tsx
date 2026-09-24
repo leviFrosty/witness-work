@@ -18,6 +18,7 @@ import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
+import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
 import NotesImportAttestPreparation from '@/features/notes-import/components/NotesImportAttestPreparation'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
@@ -116,6 +117,7 @@ export default function App() {
                         <AnimationViewProvider>
                           <SurveyProvider>
                             <DeepLinkListeners />
+                            <BuddiesRuntime />
                             <RootStackComponent />
                           </SurveyProvider>
                         </AnimationViewProvider>

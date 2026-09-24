@@ -7,6 +7,7 @@ import {
   MapPinned as MapPinnedIcon,
   Plus as PlusIcon,
   Settings as SettingsIcon,
+  Users as UsersIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
 import { useRef, useState } from 'react'
@@ -100,6 +101,8 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           return CalendarDaysIcon
         case 'Settings':
           return SettingsIcon
+        case 'Buddies':
+          return UsersIcon
         default:
           return CircleQuestionMarkIcon
       }
@@ -139,13 +142,28 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           opacity: pressed ? 0.6 : 1,
         })}
       >
-        <IconButton
-          iconStyle={{
-            color: hasSidebar && !isSettings ? theme.colors.accent : color,
-          }}
-          icon={icon}
-          size={hasSidebar ? 22 : 18}
-        />
+        <View>
+          <IconButton
+            iconStyle={{
+              color: hasSidebar && !isSettings ? theme.colors.accent : color,
+            }}
+            icon={icon}
+            size={hasSidebar ? 22 : 18}
+          />
+          {options.tabBarBadge !== undefined && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -4,
+                width: 9,
+                height: 9,
+                borderRadius: 4.5,
+                backgroundColor: theme.colors.error,
+              }}
+            />
+          )}
+        </View>
         {(hasSidebar || isFocused) && (
           <Text
             numberOfLines={1}

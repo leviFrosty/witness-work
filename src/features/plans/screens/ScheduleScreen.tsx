@@ -47,11 +47,14 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import PlanRow from '@/components/PlanRow'
+import PlanBuddiesLine from '@/features/buddies/components/PlanBuddiesLine'
 import type { PlanListItem } from '@/components/PlanRow'
 import i18n from '@/lib/locales'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
+import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
+import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
@@ -108,6 +111,7 @@ const ScheduleScreen = ({ route }: Props) => {
     clearOverride: clearMonthlyGoalOverride,
   } = useMonthlyGoal({ month, year })
   const { annualGoalHours, hasAnnualGoal } = usePublisher()
+  const buddyMarkers = useBuddyCalendarMarkers()
 
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -390,6 +394,7 @@ const ScheduleScreen = ({ route }: Props) => {
                     }
                     selectedDate={isWide ? selectedDateSheet.date : undefined}
                     viewMode={calendarViewMode}
+                    markerColorsByDate={buddyMarkers}
                   />
                 </View>
                 <ActionButton
@@ -458,6 +463,11 @@ const ScheduleScreen = ({ route }: Props) => {
                         dateDisplay='monthList'
                         contextMonth={month}
                         contextYear={year}
+                        footer={
+                          item.type === 'day' ? (
+                            <PlanBuddiesLine plan={item.plan} />
+                          ) : undefined
+                        }
                         onPress={() => {
                           if (item.type === 'day') {
                             handleEditDayPlan(item.plan, item.date)
@@ -487,6 +497,7 @@ const ScheduleScreen = ({ route }: Props) => {
           onNavigateToPlanDay={handleNavigateToPlanDay}
           onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
           onEditTimeReport={handleEditTimeReport}
+          renderFooter={(date) => <BuddyPlansForDay date={date} />}
         />
       )}
       {baseGoalHours > 0 && !isPastMonth ? (

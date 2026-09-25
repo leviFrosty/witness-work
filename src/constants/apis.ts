@@ -7,6 +7,8 @@ const NOTES_BASE_URL = process.env.EXPO_PUBLIC_NOTES_IMPORT_BASE_URL || BASE_URL
 export default {
   geocode: `${BASE_URL}/geocode`,
   autocomplete: `${BASE_URL}/autocomplete`,
+  // Paywall social proof; edge-cached by the worker, persisted 7 days here.
+  appStoreRatings: `${BASE_URL}/app-store/ratings`,
   // Unauthenticated worker health probe ({ status, versionId, deployedAt }) —
   // dev Tools screen only, for checking which worker build is live.
   notesImportHealth: `${NOTES_BASE_URL}/health`,

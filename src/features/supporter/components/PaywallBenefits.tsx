@@ -12,6 +12,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Card from '@/components/ui/Card'
+import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRatings'
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
@@ -128,6 +129,7 @@ export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
 
 export const SocialProofRow = () => {
   const theme = useTheme()
+  const { averageRating, ratingCount, countryCount } = useAppStoreRatings()
   return (
     <View style={{ alignItems: 'center', gap: 2 }}>
       <XView style={{ alignItems: 'center', gap: 5 }}>
@@ -144,11 +146,19 @@ export const SocialProofRow = () => {
             color: theme.colors.text,
           }}
         >
-          {i18n.t('paywallSocialProofRating')}
+          {i18n.t('paywallSocialProofRatingAverage', {
+            rating: averageRating.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+            ratings: ratingCount.toLocaleString(),
+          })}
         </Text>
       </XView>
       <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-        {i18n.t('paywallSocialProofReach')}
+        {i18n.t('paywallSocialProofCountries', {
+          countries: countryCount.toLocaleString(),
+        })}
       </Text>
     </View>
   )

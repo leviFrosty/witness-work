@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import TabBar from '@/components/ui/TabBar'
-import Map from '@/app/navigation/MapRouteScreen'
+import ContactsTabScreen from '@/app/navigation/ContactsTabScreen'
 import DrawerNavigator from '@/app/navigation/DrawerNavigator'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '@/app/navigation/ToolsScreen'
 import ProgressScreen from '@/features/progress/screens/ProgressScreen'
 import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
-import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
@@ -163,14 +162,12 @@ const HomeTabStack = () => {
         }}
       >
         <Tab.Screen name='Home' component={DrawerNavigator} />
-        <Tab.Screen name='Contacts' component={ContactsScreen} />
+        <Tab.Screen name='Contacts' component={ContactsTabScreen} />
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {showsYearTabs && (
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
         <Tab.Screen name='Schedule' component={ScheduleScreen} />
-
-        <Tab.Screen name='Map' component={Map} />
         {hasSidebar && (
           <Tab.Screen name='Settings' component={SettingsOverviewScreen} />
         )}

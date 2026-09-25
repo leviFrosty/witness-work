@@ -4,7 +4,6 @@ import {
   ChartLine as ChartLineIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
   House as HouseIcon,
-  MapPinned as MapPinnedIcon,
   Plus as PlusIcon,
   Settings as SettingsIcon,
   Wrench as WrenchIcon,
@@ -28,6 +27,7 @@ import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import { usePreferences } from '@/stores/preferences'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -56,7 +56,12 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const glassColorScheme = useGlassColorScheme()
   const isDark = theme.colors.background === '#121212'
   const { hasSidebar, sidebarWidth } = useAdaptiveLayout()
-  const overlaysMap = hasSidebar && state.routes[state.index].name === 'Map'
+  const contactsView = usePreferences((s) => s.contactsView)
+  // The map runs edge to edge under the iPad sidebar.
+  const overlaysMap =
+    hasSidebar &&
+    state.routes[state.index].name === 'Contacts' &&
+    contactsView === 'map'
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key]
@@ -90,8 +95,6 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           return HouseIcon
         case 'Contacts':
           return BookUserIcon
-        case 'Map':
-          return MapPinnedIcon
         case 'Tools':
           return WrenchIcon
         case 'Progress':

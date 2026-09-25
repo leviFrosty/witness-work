@@ -91,8 +91,25 @@ const CAROUSEL_ANIMATION = {
   easing: Easing.bezier(0.25, 1, 0.5, 1),
 }
 
-interface FullMapViewProps {
+interface MapHostProps {
   renderContactRow: MapContactRowRenderer
+  /**
+   * Space reserved below the safe area for chrome the host floats over the map
+   * (the Contacts tab's List | Map switch).
+   */
+  topInset?: number
+  /** Bump to re-fit the camera to the visible pins (e.g. re-selecting the map). */
+  fitRequest?: number
+  /**
+   * False while the host keeps the map mounted but hidden, so it stops tracking
+   * the user's location in the background.
+   */
+  visible?: boolean
+}
+
+interface FullMapViewProps extends MapHostProps {
+  topInset: number
+  visible: boolean
   contactMarkers: ContactMarker[]
   activeContactCount: number
   conversationIndex: ConversationIndex
@@ -103,6 +120,9 @@ const FullMapView = ({
   activeContactCount,
   conversationIndex,
   renderContactRow,
+  topInset,
+  fitRequest,
+  visible,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height } = useWindowDimensions()
@@ -325,14 +345,12 @@ const FullMapView = ({
     }
   }, [activeContactId, scrollCarouselTo, visibleContactMarkers, isWide])
 
+  const handledFitRequest = useRef(fitRequest)
   useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', (e) => {
-      if (e.target?.includes('Map')) {
-        fitToMarkers()
-      }
-    })
-    return unsubscribe
-  }, [fitToMarkers, navigation])
+    if (fitRequest === handledFitRequest.current) return
+    handledFitRequest.current = fitRequest
+    fitToMarkers()
+  }, [fitRequest, fitToMarkers])
 
   const hasFitOnMount = useRef(false)
 
@@ -361,6 +379,10 @@ const FullMapView = ({
     }
     setIsTrackingUser(false)
   }, [])
+
+  useEffect(() => {
+    if (!visible) stopTrackingUser()
+  }, [visible, stopTrackingUser])
 
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
     // Clear the old filter before reconciliation so the saved Contact can
@@ -577,7 +599,7 @@ const FullMapView = ({
     : i18n.t('addContact')
   const emptyStatePrimaryIcon = hasSavedActiveContacts ? BookUserIcon : PlusIcon
   const emptyStatePrimaryAction = hasSavedActiveContacts
-    ? () => navigation.navigate('Contacts')
+    ? () => navigation.navigate('Contacts', { view: 'list' })
     : addContact
 
   const emptyCardPlacement = {
@@ -601,7 +623,13 @@ const FullMapView = ({
         style={{
           width: '100%',
           maxWidth: isTablet ? 520 : undefined,
-          maxHeight: height - insets.top - insets.bottom - bottomBarHeight - 96,
+          maxHeight:
+            height -
+            insets.top -
+            topInset -
+            insets.bottom -
+            bottomBarHeight -
+            96,
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
@@ -769,7 +797,7 @@ const FullMapView = ({
       <MapView
         mapType={mapLayer}
         userInterfaceStyle={colorScheme ? colorScheme : undefined}
-        showsUserLocation={locationPermission}
+        showsUserLocation={locationPermission && visible}
         ref={mapRef}
         onLayout={handleMapLayout}
         onPress={() => {
@@ -789,7 +817,7 @@ const FullMapView = ({
         }}
         onPanDrag={handlePanDrag}
         mapPadding={{
-          top: 0,
+          top: topInset,
           right: isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
           left: sidebarWidth,
           bottom: insets.bottom + bottomBarHeight / 4,
@@ -839,7 +867,7 @@ const FullMapView = ({
           style={[
             {
               position: 'absolute',
-              top: insets.top + 8,
+              top: insets.top + topInset + 8,
               left: sidebarWidth + 16,
               height: 44,
               borderRadius: 22,
@@ -998,7 +1026,7 @@ const FullMapView = ({
           style={{
             position: 'absolute',
             right: 16,
-            top: insets.top + 8,
+            top: insets.top + topInset + 8,
             bottom: insets.bottom + bottomBarHeight + 28,
             width: inspectorWidth,
           }}
@@ -1055,7 +1083,7 @@ const FullMapView = ({
       <View
         style={{
           position: 'absolute',
-          top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
+          top: insets.top + topInset + (contactMarkers.length > 0 ? 64 : 8),
           left: sidebarWidth + 16,
           gap: 8,
         }}
@@ -1153,9 +1181,10 @@ const FullMapView = ({
 
 const MapScreen = ({
   renderContactRow,
-}: {
-  renderContactRow: MapContactRowRenderer
-}) => {
+  topInset = 0,
+  fitRequest,
+  visible = true,
+}: MapHostProps) => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
   const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences()
@@ -1196,6 +1225,9 @@ const MapScreen = ({
     <Wrapper insets='none' style={{ flexGrow: 1, position: 'relative' }}>
       <FullMapView
         renderContactRow={renderContactRow}
+        topInset={topInset}
+        fitRequest={fitRequest}
+        visible={visible}
         contactMarkers={contactMarkers}
         activeContactCount={activeContacts.length}
         conversationIndex={conversationIndex}

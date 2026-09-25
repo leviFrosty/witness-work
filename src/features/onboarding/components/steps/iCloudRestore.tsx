@@ -154,6 +154,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
 
   const handleRestore = () => {
     if (probe.state !== 'found' || restoring) return
+    const startedAt = Date.now()
     setRestoring(true)
     analytics.capture('import_started', {
       import_type: 'icloud',
@@ -171,6 +172,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           source: 'onboarding',
           stage: 'restore',
           error_code: 'unexpected',
+          elapsed_ms: Date.now() - startedAt,
         })
         Alert.alert(
           i18n.t('importError_title'),
@@ -181,6 +183,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       analytics.capture('import_completed', {
         import_type: 'icloud',
         source: 'onboarding',
+        elapsed_ms: Date.now() - startedAt,
       })
       analytics.capture('onboarding_completed', {
         completion_method: 'icloud_restore',
@@ -225,15 +228,29 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
       // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
       if (remoteReferencesImages(probe.remote)) {
+        analytics.capture('icloud_restore_images_prompted', {
+          source: 'onboarding',
+        })
         Alert.alert(
           i18n.t('iCloudImagesRestorePrompt_title'),
           i18n.t('iCloudImagesRestorePrompt_description'),
           [
-            { text: i18n.t('iCloudImagesRestorePrompt_skip'), style: 'cancel' },
+            {
+              text: i18n.t('iCloudImagesRestorePrompt_skip'),
+              style: 'cancel',
+              onPress: () => {
+                analytics.capture('icloud_restore_images_skipped', {
+                  source: 'onboarding',
+                })
+              },
+            },
             {
               text: i18n.t('iCloudImagesRestorePrompt_action'),
               onPress: async () => {
                 usePreferences.setState({ iCloudSyncIncludeImages: true })
+                analytics.capture('icloud_restore_images_requested', {
+                  source: 'onboarding',
+                })
                 await iCloudSync.pullImagesIfEnabled()
               },
             },

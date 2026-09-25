@@ -28,6 +28,8 @@ import IconButton from '@/components/ui/IconButton'
 import { useTimeCache } from '@/stores/timeCache'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import { analytics } from '@/lib/analytics'
+import { RouteProp, useRoute } from '@react-navigation/native'
+import { RootStackParamList } from '@/types/rootStack'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -41,6 +43,8 @@ type ImportFile = {
 }
 
 const ImportAndExportScreen = () => {
+  const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
+  const entryPoint = route.params?.source ?? 'settings'
   const serviceReportStore = useServiceReport()
   const contactStore = useContacts()
   const conversationStore = useConversations()
@@ -60,11 +64,17 @@ const ImportAndExportScreen = () => {
   }
 
   const handleImport = async () => {
+    const startedAt = Date.now()
+    let stage = 'file_picker'
+    const properties = {
+      import_type: 'backup_json',
+      source: 'settings',
+      entry_point: entryPoint,
+    }
     setLoading(true)
     setSuccessfulImport(false)
     analytics.capture('import_started', {
-      import_type: 'backup_json',
-      source: 'settings',
+      ...properties,
     })
 
     try {
@@ -76,24 +86,28 @@ const ImportAndExportScreen = () => {
 
       if (canceled) {
         analytics.capture('import_cancelled', {
-          import_type: 'backup_json',
-          source: 'settings',
-          stage: 'file_picker',
+          ...properties,
+          stage,
+          elapsed_ms: Date.now() - startedAt,
         })
         setLoading(false)
         return
       }
 
       const exportFileUri = assets[0].uri
+      analytics.capture('import_file_selected', properties)
+      stage = 'read_file'
 
       await FileSystem.readAsStringAsync(exportFileUri)
         .then((contents) => {
+          stage = 'validate_file'
           const data = JSON.parse(contents) as ImportFile
 
           if (!validImportFile(data)) {
             analytics.capture('import_failed', {
-              import_type: 'backup_json',
-              source: 'settings',
+              ...properties,
+              stage,
+              elapsed_ms: Date.now() - startedAt,
               error_code: 'invalid_file',
             })
             Alert.alert(
@@ -103,6 +117,7 @@ const ImportAndExportScreen = () => {
             return
           }
 
+          stage = 'migrate'
           // If importFile has old serviceReport data structure, update to new before importing.
           if (
             data.serviceReportStore &&
@@ -114,6 +129,8 @@ const ImportAndExportScreen = () => {
             ;(data.serviceReportStore as any).serviceReports = years
           }
 
+          stage = 'restore'
+          analytics.capture('import_commit_started', properties)
           data.serviceReportStore &&
             serviceReportStore.set(data.serviceReportStore)
           data.contactStore && contactStore.set(data.contactStore)
@@ -123,8 +140,8 @@ const ImportAndExportScreen = () => {
           timeCache.invalidateAllCache()
           setSuccessfulImport(true)
           analytics.capture('backup_imported', {
-            import_type: 'backup_json',
-            source: 'settings',
+            ...properties,
+            elapsed_ms: Date.now() - startedAt,
           })
         })
         .finally(() => {
@@ -132,10 +149,13 @@ const ImportAndExportScreen = () => {
         })
     } catch (error) {
       analytics.capture('import_failed', {
-        import_type: 'backup_json',
-        source: 'settings',
+        ...properties,
+        stage,
+        elapsed_ms: Date.now() - startedAt,
         error_code:
-          error instanceof SyntaxError ? 'invalid_json' : 'unexpected',
+          stage === 'validate_file' && error instanceof SyntaxError
+            ? 'invalid_json'
+            : 'unexpected',
       })
       errorTracking.captureException(error)
       setLoading(false)
@@ -147,6 +167,14 @@ const ImportAndExportScreen = () => {
   }
 
   const handleExport = async () => {
+    const startedAt = Date.now()
+    let stage = 'sharing_availability'
+    const properties = {
+      source: 'settings',
+      entry_point: entryPoint,
+      destination: 'share_sheet',
+    }
+    analytics.capture('backup_export_started', properties)
     const data: ImportFile = {
       serviceReportStore,
       contactStore,
@@ -159,6 +187,9 @@ const ImportAndExportScreen = () => {
       if (!(await Sharing.isAvailableAsync())) {
         setLoading(false)
         analytics.capture('backup_export_failed', {
+          ...properties,
+          stage,
+          elapsed_ms: Date.now() - startedAt,
           error_code: 'sharing_unavailable',
         })
         Alert.alert(i18n.t('sharingIsNotAvailable'))
@@ -167,16 +198,31 @@ const ImportAndExportScreen = () => {
 
       preferencesStore.set({ lastBackupDate: new Date() })
 
+      stage = 'write_file'
       await FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
         .then(async () => {
+          analytics.capture('backup_file_created', properties)
+          stage = 'share_sheet'
+          analytics.capture('backup_share_sheet_requested', properties)
           await Sharing.shareAsync(exportFileUri)
-          analytics.capture('backup_exported', { destination: 'share_sheet' })
+          // Expo resolves on both sharing and cancellation; this is not proof
+          // that the user saved a backup outside the app.
+          analytics.capture('backup_exported', {
+            ...properties,
+            outcome: 'unknown',
+            elapsed_ms: Date.now() - startedAt,
+          })
         })
         .finally(() => {
           setLoading(false)
         })
     } catch (error) {
-      analytics.capture('backup_export_failed', { error_code: 'unexpected' })
+      analytics.capture('backup_export_failed', {
+        ...properties,
+        stage,
+        elapsed_ms: Date.now() - startedAt,
+        error_code: 'unexpected',
+      })
       errorTracking.captureException(error)
       setLoading(false)
       Alert.alert(

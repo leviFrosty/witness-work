@@ -74,6 +74,44 @@ attribution across background work, relaunches, and refinements. Legacy entries
 without attribution use `unknown`. Each processing attempt may emit a start,
 including resumptions; these are attempts, not unique imported documents.
 
+## Backups and reminders
+
+| Journey                      | Events                                                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Home reminder                | `backup_reminder_viewed`, `backup_reminder_clicked`, `backup_reminder_dismissed`                                                         |
+| Reminder preferences         | `backup_reminders_enabled_changed`, `backup_reminder_frequency_changed`                                                                  |
+| JSON export                  | `backup_export_started` → `backup_file_created` → `backup_share_sheet_requested` → `backup_exported`; `backup_export_failed` on failure  |
+| JSON restore                 | `import_started` → `import_file_selected` → `import_commit_started` → `backup_imported`; `import_cancelled` or `import_failed` otherwise |
+| iCloud restore               | Existing `icloud_restore_probe_result`, `import_started`, `import_completed`, `import_failed`, and `onboarding_import_skipped`           |
+| iCloud photo restore consent | `icloud_restore_images_prompted`, `icloud_restore_images_requested`, `icloud_restore_images_skipped`                                     |
+
+Reminder events include `source: home`, `variant: full | compact`, and
+`frequency_days`. A view means the reminder rendered on the focused Home screen,
+once per mounted reminder/focus visit; it does not verify scroll visibility or
+represent a delivered push notification. Dismissal snoozes the existing reminder
+by updating `lastBackupDate`; it never emits a backup completion event. Therefore
+that preference is not proof of a saved backup. Preference events only fire for
+changed values from the controls, not hydration or restored preferences.
+
+JSON export and restore events retain `source: settings` and add
+`entry_point: settings | backup_reminder` to connect reminder clicks to subsequent
+actions. JSON restore events use `import_type: backup_json`. Export failures carry
+`stage: sharing_availability | write_file | share_sheet`; restore failures carry
+`stage: file_picker | read_file | validate_file | migrate | restore` and bounded
+`error_code` values. Terminal export/restore events include wall-clock `elapsed_ms`
+(including time spent in a picker, share sheet, or background).
+
+`backup_file_created` means the temporary export file was written.
+`backup_share_sheet_requested` precedes the native sharing call. The historical
+`backup_exported` event means that call resolved; its `outcome: unknown` explicitly
+reflects that Expo resolves on both sharing and cancellation. It cannot establish
+that a backup was saved or distinguish an export cancellation. File names, paths,
+contents, and raw errors are never attached to these analytics events.
+
+iCloud photo consent events measure the choice only, not successful image
+downloads. Background iCloud replication remains separate from these manual
+backup/restore journeys.
+
 ## Paywall and Supporter
 
 Use `paywall_opened` for entry intent and `paywall_viewed` for the rendered screen.

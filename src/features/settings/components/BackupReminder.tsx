@@ -12,7 +12,9 @@ import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import XView from '@/components/ui/layout/XView'
 import IconButton from '@/components/ui/IconButton'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { useEffect, useRef } from 'react'
+import { analytics } from '@/lib/analytics'
 import { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
@@ -29,11 +31,46 @@ const BackupReminder = ({ compact }: Props) => {
   const theme = useTheme()
   const { backupNotificationFrequencyAsDays, set } = usePreferences()
   const navigation = useNavigation<RootStackNavigation>()
+  const isFocused = useIsFocused()
+  const viewed = useRef(false)
+  const variant = compact ? 'compact' : 'full'
+
+  useEffect(() => {
+    if (!isFocused) {
+      viewed.current = false
+      return
+    }
+    if (viewed.current) return
+    viewed.current = true
+    analytics.capture('backup_reminder_viewed', {
+      source: 'home',
+      variant,
+      frequency_days: backupNotificationFrequencyAsDays,
+    })
+  }, [isFocused, variant, backupNotificationFrequencyAsDays])
+
+  const handleBackup = () => {
+    analytics.capture('backup_reminder_clicked', {
+      source: 'home',
+      variant,
+      frequency_days: backupNotificationFrequencyAsDays,
+    })
+    navigation.navigate('Import and Export', { source: 'backup_reminder' })
+  }
+
+  const handleDismiss = () => {
+    analytics.capture('backup_reminder_dismissed', {
+      source: 'home',
+      variant,
+      frequency_days: backupNotificationFrequencyAsDays,
+    })
+    set({ lastBackupDate: new Date() })
+  }
 
   if (compact) {
     return (
       <Button
-        onPress={() => navigation.navigate('Import and Export')}
+        onPress={handleBackup}
         style={{
           backgroundColor: theme.colors.warnTranslucent,
           borderColor: theme.colors.warn,
@@ -74,7 +111,7 @@ const BackupReminder = ({ compact }: Props) => {
             icon={XIcon}
             color={theme.colors.textAlt}
             size='xs'
-            onPress={() => set({ lastBackupDate: new Date() })}
+            onPress={handleDismiss}
           />
         </XView>
       </Button>
@@ -108,7 +145,7 @@ const BackupReminder = ({ compact }: Props) => {
         <IconButton
           icon={XIcon}
           color={theme.colors.text}
-          onPress={() => set({ lastBackupDate: new Date() })}
+          onPress={handleDismiss}
         />
       </XView>
       <Text>
@@ -116,7 +153,7 @@ const BackupReminder = ({ compact }: Props) => {
           count: backupNotificationFrequencyAsDays,
         })}
       </Text>
-      <Button onPress={() => navigation.navigate('Import and Export')}>
+      <Button onPress={handleBackup}>
         <Text
           style={{
             textDecorationLine: 'underline',

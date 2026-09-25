@@ -15,7 +15,8 @@ import MapView, { LatLng, Marker } from 'react-native-maps'
 import useContacts from '@/stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import useTheme from '@/contexts/theme'
+import useTheme, { ThemeContext } from '@/contexts/theme'
+import { GlassColorSchemeOverrideContext } from '@/contexts/glassColorScheme'
 import useConversations from '@/stores/conversationStore'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import {
@@ -72,6 +73,10 @@ import MapContactInspector, {
 } from '@/features/map/components/MapContactInspector'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
 import useMapContactCreation from '@/features/map/hooks/useMapContactCreation'
+import {
+  getMapImageryTheme,
+  MapImageryContext,
+} from '@/features/map/lib/mapImageryTheme'
 import MapLayerMenu, {
   type MapLayer,
 } from '@/features/map/components/MapLayerMenu'
@@ -138,8 +143,13 @@ const FullMapView = ({
   const [searchExpanded, setSearchExpanded] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
   const searchExpand = useSharedValue(0)
-  const theme = useTheme()
-  const glassColorScheme = useGlassColorScheme()
+  const appTheme = useTheme()
+  const appGlassColorScheme = useGlassColorScheme()
+  // Satellite/hybrid imagery is dark whatever the app theme, so every overlay
+  // on it switches to a dark, higher-contrast palette.
+  const overImagery = mapLayer !== 'standard'
+  const theme = overImagery ? getMapImageryTheme(appTheme) : appTheme
+  const glassColorScheme = overImagery ? 'dark' : appGlassColorScheme
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
@@ -765,389 +775,407 @@ const FullMapView = ({
   )
 
   return (
-    <>
-      <MapView
-        mapType={mapLayer}
-        userInterfaceStyle={colorScheme ? colorScheme : undefined}
-        showsUserLocation={locationPermission}
-        ref={mapRef}
-        onLayout={handleMapLayout}
-        onPress={() => {
-          collapseSearch()
-          mapContactCreation.cancel()
-        }}
-        onLongPress={(e) => {
-          if (draggingContactRef.current) return
-          collapseSearch()
-          stopTrackingUser()
-          pendingMarkerSnapIdRef.current = undefined
-          mapContactCreation.dropPin(e.nativeEvent.coordinate)
-          mapRef.current?.animateCamera(
-            { center: e.nativeEvent.coordinate },
-            { duration: 225 }
-          )
-        }}
-        onPanDrag={handlePanDrag}
-        mapPadding={{
-          top: 0,
-          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
-          left: sidebarWidth,
-          bottom: insets.bottom + bottomBarHeight / 4,
-        }}
-        style={{ height: '100%', width: '100%' }}
+    <ThemeContext.Provider value={theme}>
+      <GlassColorSchemeOverrideContext.Provider
+        value={overImagery ? 'dark' : undefined}
       >
-        {mapContactCreation.coordinate && (
-          <Marker
-            identifier='new-contact-location'
-            coordinate={mapContactCreation.coordinate}
-            pinColor={theme.colors.accent}
-            title={i18n.t('map_droppedPin')}
-            zIndex={1}
-            stopPropagation
-          />
-        )}
-        {visibleContactMarkers.map((c) => (
-          <Marker
+        <MapImageryContext.Provider value={overImagery}>
+          <MapView
+            mapType={mapLayer}
+            userInterfaceStyle={colorScheme ? colorScheme : undefined}
+            showsUserLocation={locationPermission}
+            ref={mapRef}
+            onLayout={handleMapLayout}
             onPress={() => {
-              mapContactCreation.cancel()
-              setInspectorRevealRequest((request) => request + 1)
-              handlePinPress(c.id)
-            }}
-            identifier={c.id}
-            // Include pinColor in the key so the marker remounts when its
-            // staleness color changes. react-native-maps only applies
-            // `pinColor` at mount on iOS — without the remount, logging a
-            // conversation never updates the pin tint until reload.
-            key={`${c.id}-${c.pinColor}`}
-            coordinate={c.coordinate!}
-            pinColor={c.pinColor}
-            draggable
-            onDragStart={() => {
-              draggingContactRef.current = true
+              collapseSearch()
               mapContactCreation.cancel()
             }}
-            onDragEnd={(e) => {
-              draggingContactRef.current = false
-              handleDragContactPin(c.id, e.nativeEvent.coordinate)
+            onLongPress={(e) => {
+              if (draggingContactRef.current) return
+              collapseSearch()
+              stopTrackingUser()
+              pendingMarkerSnapIdRef.current = undefined
+              mapContactCreation.dropPin(e.nativeEvent.coordinate)
+              mapRef.current?.animateCamera(
+                { center: e.nativeEvent.coordinate },
+                { duration: 225 }
+              )
             }}
-          />
-        ))}
-      </MapView>
-
-      {contactMarkers.length > 0 && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: insets.top + 8,
-              left: sidebarWidth + 16,
-              height: 44,
-              borderRadius: 22,
-              borderCurve: 'continuous',
-              backgroundColor: liquidGlass
-                ? undefined
-                : theme.colors.card + 'dd',
-              overflow: 'hidden',
-              flexDirection: 'row',
-              alignItems: 'center',
-            },
-            animatedSearchContainerStyle,
-          ]}
-        >
-          {liquidGlass ? (
-            <GlassView
-              pointerEvents='none'
-              glassEffectStyle='regular'
-              colorScheme={glassColorScheme}
-              style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
-            />
-          ) : (
-            <BlurView
-              pointerEvents='none'
-              tint={isDark ? 'dark' : 'light'}
-              intensity={60}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <Pressable
-            onPress={expandSearch}
-            accessibilityLabel={i18n.t('map_searchContacts')}
-            accessibilityRole='button'
-            style={{
-              width: 44,
-              height: 44,
-              alignItems: 'center',
-              justifyContent: 'center',
+            onPanDrag={handlePanDrag}
+            mapPadding={{
+              top: 0,
+              right:
+                isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
+              left: sidebarWidth,
+              bottom: insets.bottom + bottomBarHeight / 4,
             }}
+            style={{ height: '100%', width: '100%' }}
           >
-            <LucideIcon
-              icon={SearchIcon}
-              size={theme.fontSize('sm')}
-              style={{ color: theme.colors.text }}
-            />
-          </Pressable>
-          <Animated.View
-            style={[{ flex: 1, paddingRight: 14 }, animatedSearchInputStyle]}
-            pointerEvents={searchExpanded ? 'auto' : 'none'}
-          >
-            <Input
-              unstyled
-              ref={searchInputRef}
-              value={search}
-              onChangeText={setSearch}
-              onBlur={handleSearchBlur}
-              disabled={!searchExpanded}
-              placeholder={i18n.t('map_searchContacts')}
-              placeholderTextColor={
-                theme.colors.textAlt as InputProps['placeholderTextColor']
-              }
-              clearButtonMode='while-editing'
-              enterKeyHint='search'
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.fonts.regular,
-                fontSize: theme.fontSize('md'),
-                padding: 0,
-              }}
-            />
-          </Animated.View>
-        </Animated.View>
-      )}
-
-      {mapContactCreation.coordinate ? (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: isWide
-              ? insets.bottom + bottomBarHeight + 28
-              : mapCardBottom,
-            left: isWide ? undefined : sidebarWidth,
-            right: isWide ? 16 : undefined,
-            width: isWide ? inspectorWidth : width,
-            height: isWide ? undefined : CARD_HEIGHT,
-            // Match the focused carousel item, including its scaled contents.
-            transform: isWide ? undefined : [{ scale: parallaxScrollingScale }],
-            ...(isWide && contactMarkers.length === 0
-              ? emptyCardPlacement
-              : {}),
-          }}
-        >
-          <CreateContactCard
-            fill={!isWide}
-            coordinate={mapContactCreation.coordinate}
-            onCreate={mapContactCreation.createContact}
-            onCancel={mapContactCreation.cancel}
-          />
-        </View>
-      ) : contactMarkers.length === 0 ? (
-        renderEmptyState()
-      ) : visibleContactMarkers.length === 0 ? (
-        <View
-          onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
-          style={{
-            position: 'absolute',
-            bottom: insets.bottom + bottomBarHeight + 4,
-            width: isWide ? inspectorWidth : width,
-            right: isWide ? 16 : undefined,
-            padding: 10,
-          }}
-        >
-          <View
-            style={{
-              borderRadius: theme.numbers.borderRadiusLg,
-              borderCurve: 'continuous',
-              overflow: 'hidden',
-              backgroundColor: liquidGlass
-                ? undefined
-                : theme.colors.card + 'dd',
-            }}
-          >
-            {liquidGlass ? (
-              <GlassView
-                pointerEvents='none'
-                glassEffectStyle='regular'
-                colorScheme={glassColorScheme}
-                style={[
-                  StyleSheet.absoluteFill,
-                  { borderRadius: theme.numbers.borderRadiusLg },
-                ]}
-              />
-            ) : (
-              <BlurView
-                pointerEvents='none'
-                tint={isDark ? 'dark' : 'light'}
-                intensity={60}
-                style={StyleSheet.absoluteFill}
+            {mapContactCreation.coordinate && (
+              <Marker
+                identifier='new-contact-location'
+                coordinate={mapContactCreation.coordinate}
+                pinColor={theme.colors.accent}
+                title={i18n.t('map_droppedPin')}
+                zIndex={1}
+                stopPropagation
               />
             )}
-            <View style={{ padding: 20, gap: 8 }}>
-              <Text
+            {visibleContactMarkers.map((c) => (
+              <Marker
+                onPress={() => {
+                  mapContactCreation.cancel()
+                  setInspectorRevealRequest((request) => request + 1)
+                  handlePinPress(c.id)
+                }}
+                identifier={c.id}
+                // Include pinColor in the key so the marker remounts when its
+                // staleness color changes. react-native-maps only applies
+                // `pinColor` at mount on iOS — without the remount, logging a
+                // conversation never updates the pin tint until reload.
+                key={`${c.id}-${c.pinColor}`}
+                coordinate={c.coordinate!}
+                pinColor={c.pinColor}
+                draggable
+                onDragStart={() => {
+                  draggingContactRef.current = true
+                  mapContactCreation.cancel()
+                }}
+                onDragEnd={(e) => {
+                  draggingContactRef.current = false
+                  handleDragContactPin(c.id, e.nativeEvent.coordinate)
+                }}
+              />
+            ))}
+          </MapView>
+
+          {contactMarkers.length > 0 && (
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  top: insets.top + 8,
+                  left: sidebarWidth + 16,
+                  height: 44,
+                  borderRadius: 22,
+                  borderCurve: 'continuous',
+                  backgroundColor: liquidGlass
+                    ? undefined
+                    : theme.colors.card + 'dd',
+                  overflow: 'hidden',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                },
+                animatedSearchContainerStyle,
+              ]}
+            >
+              {liquidGlass ? (
+                <GlassView
+                  pointerEvents='none'
+                  glassEffectStyle='regular'
+                  colorScheme={glassColorScheme}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
+                />
+              ) : (
+                <BlurView
+                  pointerEvents='none'
+                  tint={isDark ? 'dark' : 'light'}
+                  intensity={60}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <Pressable
+                onPress={expandSearch}
+                accessibilityLabel={i18n.t('map_searchContacts')}
+                accessibilityRole='button'
                 style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
+                  width: 44,
+                  height: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {i18n.t('map_noSearchResults')}
-              </Text>
-              <Text>{i18n.t('map_noSearchResults_description')}</Text>
+                <LucideIcon
+                  icon={SearchIcon}
+                  size={theme.fontSize('sm')}
+                  style={{ color: theme.colors.text }}
+                />
+              </Pressable>
+              <Animated.View
+                style={[
+                  { flex: 1, paddingRight: 14 },
+                  animatedSearchInputStyle,
+                ]}
+                pointerEvents={searchExpanded ? 'auto' : 'none'}
+              >
+                <Input
+                  unstyled
+                  ref={searchInputRef}
+                  value={search}
+                  onChangeText={setSearch}
+                  onBlur={handleSearchBlur}
+                  disabled={!searchExpanded}
+                  placeholder={i18n.t('map_searchContacts')}
+                  placeholderTextColor={
+                    theme.colors.textAlt as InputProps['placeholderTextColor']
+                  }
+                  clearButtonMode='while-editing'
+                  enterKeyHint='search'
+                  style={{
+                    color: theme.colors.text,
+                    fontFamily: theme.fonts.regular,
+                    fontSize: theme.fontSize('md'),
+                    padding: 0,
+                  }}
+                />
+              </Animated.View>
+            </Animated.View>
+          )}
+
+          {mapContactCreation.coordinate ? (
+            <View
+              style={{
+                position: 'absolute',
+                bottom: isWide
+                  ? insets.bottom + bottomBarHeight + 28
+                  : mapCardBottom,
+                left: isWide ? undefined : sidebarWidth,
+                right: isWide ? 16 : undefined,
+                width: isWide ? inspectorWidth : width,
+                height: isWide ? undefined : CARD_HEIGHT,
+                // Match the focused carousel item, including its scaled contents.
+                transform: isWide
+                  ? undefined
+                  : [{ scale: parallaxScrollingScale }],
+                ...(isWide && contactMarkers.length === 0
+                  ? emptyCardPlacement
+                  : {}),
+              }}
+            >
+              <CreateContactCard
+                fill={!isWide}
+                coordinate={mapContactCreation.coordinate}
+                onCreate={mapContactCreation.createContact}
+                onCancel={mapContactCreation.cancel}
+              />
             </View>
-          </View>
-        </View>
-      ) : isWide ? (
-        <View
-          style={{
-            position: 'absolute',
-            right: 16,
-            top: insets.top + 8,
-            bottom: insets.bottom + bottomBarHeight + 28,
-            width: inspectorWidth,
-          }}
-        >
-          <MapContactInspector
-            renderContactRow={renderContactRow}
-            contacts={visibleContactMarkers}
-            activeId={activeContactId}
-            revealRequest={inspectorRevealRequest}
-            index={conversationIndex}
-            onSelect={handlePinPress}
-            setSheet={setSheet}
-          />
-        </View>
-      ) : (
-        <Carousel
-          onSnapToItem={handleCarouselSnap}
-          onScrollStart={handleCarouselScrollStart}
-          defaultIndex={Math.max(
-            0,
-            findContactIndexById(visibleContactMarkers, activeContactId)
-          )}
-          ref={carouselRef}
-          data={visibleContactMarkers}
-          keyExtractor={(contact) => contact.id}
-          renderItem={({ item }) => (
-            <MapCarouselCard
-              contact={item}
-              index={conversationIndex}
-              setSheet={setSheet}
+          ) : contactMarkers.length === 0 ? (
+            renderEmptyState()
+          ) : visibleContactMarkers.length === 0 ? (
+            <View
+              onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
+              style={{
+                position: 'absolute',
+                bottom: insets.bottom + bottomBarHeight + 4,
+                width: isWide ? inspectorWidth : width,
+                right: isWide ? 16 : undefined,
+                padding: 10,
+              }}
+            >
+              <View
+                style={{
+                  borderRadius: theme.numbers.borderRadiusLg,
+                  borderCurve: 'continuous',
+                  overflow: 'hidden',
+                  backgroundColor: liquidGlass
+                    ? undefined
+                    : theme.colors.card + 'dd',
+                }}
+              >
+                {liquidGlass ? (
+                  <GlassView
+                    pointerEvents='none'
+                    glassEffectStyle='regular'
+                    colorScheme={glassColorScheme}
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { borderRadius: theme.numbers.borderRadiusLg },
+                    ]}
+                  />
+                ) : (
+                  <BlurView
+                    pointerEvents='none'
+                    tint={isDark ? 'dark' : 'light'}
+                    intensity={60}
+                    style={StyleSheet.absoluteFill}
+                  />
+                )}
+                <View style={{ padding: 20, gap: 8 }}>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('xl'),
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {i18n.t('map_noSearchResults')}
+                  </Text>
+                  <Text>{i18n.t('map_noSearchResults_description')}</Text>
+                </View>
+              </View>
+            </View>
+          ) : isWide ? (
+            <View
+              style={{
+                position: 'absolute',
+                right: 16,
+                top: insets.top + 8,
+                bottom: insets.bottom + bottomBarHeight + 28,
+                width: inspectorWidth,
+              }}
+            >
+              <MapContactInspector
+                renderContactRow={renderContactRow}
+                contacts={visibleContactMarkers}
+                activeId={activeContactId}
+                revealRequest={inspectorRevealRequest}
+                index={conversationIndex}
+                onSelect={handlePinPress}
+                setSheet={setSheet}
+              />
+            </View>
+          ) : (
+            <Carousel
+              onSnapToItem={handleCarouselSnap}
+              onScrollStart={handleCarouselScrollStart}
+              defaultIndex={Math.max(
+                0,
+                findContactIndexById(visibleContactMarkers, activeContactId)
+              )}
+              ref={carouselRef}
+              data={visibleContactMarkers}
+              keyExtractor={(contact) => contact.id}
+              renderItem={({ item }) => (
+                <MapCarouselCard
+                  contact={item}
+                  index={conversationIndex}
+                  setSheet={setSheet}
+                />
+              )}
+              animation={CAROUSEL_ANIMATION}
+              // Only mount the visible card plus a few neighbors on each side —
+              // without renderWindowSize the v5 renderer mounts every Contact's
+              // card up front, regressing the map screen's first paint.
+              renderWindowSize={7}
+              layout={{
+                type: 'parallax',
+                offset: 100,
+                scale: parallaxScrollingScale,
+                adjacentScale: parallaxScrollingScale ** 2,
+              }}
+              loop={visibleContactMarkers.length !== 1}
+              style={{
+                position: 'absolute',
+                bottom: mapCardBottom,
+                width,
+                height: CARD_HEIGHT,
+              }}
             />
           )}
-          animation={CAROUSEL_ANIMATION}
-          // Only mount the visible card plus a few neighbors on each side —
-          // without renderWindowSize the v5 renderer mounts every Contact's
-          // card up front, regressing the map screen's first paint.
-          renderWindowSize={7}
-          layout={{
-            type: 'parallax',
-            offset: 100,
-            scale: parallaxScrollingScale,
-            adjacentScale: parallaxScrollingScale ** 2,
-          }}
-          loop={visibleContactMarkers.length !== 1}
-          style={{
-            position: 'absolute',
-            bottom: mapCardBottom,
-            width,
-            height: CARD_HEIGHT,
-          }}
-        />
-      )}
-      <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
-      <View
-        style={{
-          position: 'absolute',
-          top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
-          left: sidebarWidth + 16,
-          gap: 8,
-        }}
-      >
-        {visibleContactMarkers.length >= 1 && (
-          <Button
-            accessibilityLabel={i18n.t('map_fitContacts')}
-            variant='glass'
-            onPress={fitToMarkers}
-            style={mapControlStyle}
+          <View
+            style={{
+              position: 'absolute',
+              top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
+              left: sidebarWidth + 16,
+              gap: 8,
+            }}
           >
-            <LucideIcon
-              icon={ExpandIcon}
-              size={theme.fontSize('sm')}
-              style={{ color: theme.colors.text }}
-            />
-          </Button>
-        )}
-        <MapLayerMenu
-          value={mapLayer}
-          onChange={setMapLayer}
-          style={mapControlStyle}
-        />
-        <AnchoredPopover
-          contentWidth={280}
-          // Legend opens to the right of the control column, top-aligned to the
-          // info button, clamped on-screen — matches the old 'right-start'.
-          resolvePosition={({
-            anchor,
-            windowWidth,
-            windowHeight,
-            contentWidth,
-          }) => {
-            const margin = 12
-            const left = Math.min(
-              anchor.x + anchor.width + 8,
-              windowWidth - contentWidth - margin
-            )
-            return {
-              top: Math.min(anchor.y, windowHeight - margin),
-              left,
-            }
-          }}
-          renderTrigger={({ onPress, anchorRef }) => (
-            <View ref={anchorRef} collapsable={false}>
+            {visibleContactMarkers.length >= 1 && (
               <Button
-                accessibilityLabel={i18n.t('map_showLegend')}
+                accessibilityLabel={i18n.t('map_fitContacts')}
                 variant='glass'
-                onPress={onPress}
+                onPress={fitToMarkers}
                 style={mapControlStyle}
               >
                 <LucideIcon
-                  icon={InfoIcon}
+                  icon={ExpandIcon}
                   size={theme.fontSize('sm')}
                   style={{ color: theme.colors.text }}
                 />
               </Button>
-            </View>
-          )}
-        >
-          <MapKey />
-        </AnchoredPopover>
-      </View>
-      <View
-        style={{
-          position: 'absolute',
-          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
-          bottom: isWide
-            ? insets.bottom + bottomBarHeight + 32
-            : locationButtonBottom,
-        }}
-      >
-        <Button
-          accessibilityLabel={
-            isTrackingUser
-              ? i18n.t('map_stopFollowingLocation')
-              : i18n.t('map_centerOnMyLocation')
-          }
-          variant='glass'
-          onPress={toggleLocationTracking}
-          style={mapControlStyle}
-        >
-          <LucideIcon
-            icon={NavigationIcon}
-            size={theme.fontSize('sm')}
+            )}
+            <MapLayerMenu
+              value={mapLayer}
+              onChange={setMapLayer}
+              style={mapControlStyle}
+            />
+            <AnchoredPopover
+              contentWidth={280}
+              // Legend opens to the right of the control column, top-aligned to the
+              // info button, clamped on-screen — matches the old 'right-start'.
+              resolvePosition={({
+                anchor,
+                windowWidth,
+                windowHeight,
+                contentWidth,
+              }) => {
+                const margin = 12
+                const left = Math.min(
+                  anchor.x + anchor.width + 8,
+                  windowWidth - contentWidth - margin
+                )
+                return {
+                  top: Math.min(anchor.y, windowHeight - margin),
+                  left,
+                }
+              }}
+              renderTrigger={({ onPress, anchorRef }) => (
+                <View ref={anchorRef} collapsable={false}>
+                  <Button
+                    accessibilityLabel={i18n.t('map_showLegend')}
+                    variant='glass'
+                    onPress={onPress}
+                    style={mapControlStyle}
+                  >
+                    <LucideIcon
+                      icon={InfoIcon}
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.text }}
+                    />
+                  </Button>
+                </View>
+              )}
+            >
+              <MapKey />
+            </AnchoredPopover>
+          </View>
+          <View
             style={{
-              color: isTrackingUser ? theme.colors.accent : theme.colors.text,
+              position: 'absolute',
+              right:
+                isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
+              bottom: isWide
+                ? insets.bottom + bottomBarHeight + 32
+                : locationButtonBottom,
             }}
-          />
-        </Button>
-      </View>
-    </>
+          >
+            <Button
+              accessibilityLabel={
+                isTrackingUser
+                  ? i18n.t('map_stopFollowingLocation')
+                  : i18n.t('map_centerOnMyLocation')
+              }
+              variant='glass'
+              onPress={toggleLocationTracking}
+              style={mapControlStyle}
+            >
+              <LucideIcon
+                icon={NavigationIcon}
+                size={theme.fontSize('sm')}
+                style={{
+                  color: isTrackingUser
+                    ? theme.colors.accent
+                    : theme.colors.text,
+                }}
+              />
+            </Button>
+          </View>
+        </MapImageryContext.Provider>
+      </GlassColorSchemeOverrideContext.Provider>
+      {/* The share sheet is app chrome, not a map overlay — keep the app theme. */}
+      <ThemeContext.Provider value={appTheme}>
+        <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
+      </ThemeContext.Provider>
+    </ThemeContext.Provider>
   )
 }
 

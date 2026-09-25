@@ -15,7 +15,29 @@ const mocks = vi.hoisted(() => ({
   fitToSuppliedMarkers: vi.fn(),
   scrollTo: vi.fn(),
   getCurrentIndex: vi.fn(),
+  appearance: {} as Record<string, unknown>,
 }))
+// Stands in for a rendered overlay and records the appearance it receives.
+const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
+  const { useContext } = await import('react')
+  const { ThemeContext } = await import('@/contexts/theme')
+  const { GlassColorSchemeOverrideContext } = await import(
+    '@/contexts/glassColorScheme'
+  )
+  const { MapImageryContext } = await import(
+    '@/features/map/lib/mapImageryTheme'
+  )
+  return {
+    default: function AppearanceProbe() {
+      mocks.appearance[name] = {
+        theme: useContext(ThemeContext),
+        glass: useContext(GlassColorSchemeOverrideContext),
+        imagery: useContext(MapImageryContext),
+      }
+      return null
+    },
+  }
+})
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('react-native', () => ({
   View: 'View',
@@ -41,6 +63,8 @@ vi.mock('react-native-reanimated-carousel', () => ({
   }: {
     ref: React.Ref<unknown>
     defaultIndex: number
+    data: unknown[]
+    renderItem: (info: { item: unknown }) => React.ReactNode
   }) => {
     const index = useRef(props.defaultIndex)
     useImperativeHandle(ref, () => {
@@ -53,7 +77,11 @@ vi.mock('react-native-reanimated-carousel', () => ({
         },
       }
     })
-    return React.createElement('Carousel', props)
+    return React.createElement(
+      'Carousel',
+      props,
+      props.renderItem({ item: props.data[index.current] })
+    )
   },
 }))
 vi.mock('react-native-reanimated', () => ({
@@ -99,14 +127,26 @@ vi.mock('@/stores/conversationStore', () => ({
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ hasCompletedMapOnboarding: true }),
 }))
-vi.mock('@/contexts/theme', () => ({
-  default: () => ({
+vi.mock('@/contexts/theme', async () => {
+  const { createContext } = await import('react')
+  const theme = {
     colors: { card: '#fff' },
     fonts: {},
     numbers: {},
     fontSize: () => 16,
-  }),
-}))
+  }
+  return { default: () => theme, ThemeContext: createContext(theme) }
+})
+vi.mock('@/features/map/lib/mapImageryTheme', async () => {
+  const { createContext } = await import('react')
+  return {
+    getMapImageryTheme: (theme: object) => ({
+      ...theme,
+      colors: { card: '#000' },
+    }),
+    MapImageryContext: createContext(false),
+  }
+})
 vi.mock('@/hooks/useDevice', () => ({
   default: () => ({ isTablet: mocks.isWide }),
 }))
@@ -139,9 +179,10 @@ vi.mock('@/components/ui/AnchoredPopover', () => ({
   default: 'AnchoredPopover',
 }))
 vi.mock('@/components/ui/TabBar', () => ({ TAB_BAR_HEIGHT: 60 }))
-vi.mock('@/features/map/components/MapCarouselCard', () => ({
-  default: 'MapCarouselCard',
-}))
+vi.mock(
+  '@/features/map/components/MapCarouselCard',
+  appearanceProbe('carouselCard')
+)
 vi.mock('@/features/map/components/CreateContactCard', () => ({
   default: 'CreateContactCard',
 }))
@@ -154,9 +195,10 @@ vi.mock('@/features/map/components/MapColorKey', () => ({
 vi.mock('@/features/map/components/MapOnboarding', () => ({
   default: 'MapOnboarding',
 }))
-vi.mock('@/features/map/components/ShareAddressSheet', () => ({
-  default: 'ShareAddressSheet',
-}))
+vi.mock(
+  '@/features/map/components/ShareAddressSheet',
+  appearanceProbe('shareSheet')
+)
 
 import MapScreen from '@/features/map/screens/MapScreen'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
@@ -283,5 +325,30 @@ describe('Dropped pin on an empty tablet map', () => {
     expect(
       root.root.findAllByProps({ children: 'map_emptyNoContactsTitle' }).length
     ).toBeGreaterThan(0)
+  })
+})
+
+describe('Map overlays over satellite imagery', () => {
+  it('switches overlays to the imagery appearance but keeps the share sheet on the app theme', async () => {
+    const { default: MapLayerMenu } = await import(
+      '@/features/map/components/MapLayerMenu'
+    )
+    const appAppearance = {
+      theme: expect.objectContaining({ colors: { card: '#fff' } }),
+      glass: undefined,
+      imagery: false,
+    }
+    expect(mocks.appearance.carouselCard).toEqual(appAppearance)
+
+    await act(async () =>
+      root.root.findByType(MapLayerMenu).props.onChange('satellite')
+    )
+
+    expect(mocks.appearance.carouselCard).toEqual({
+      theme: expect.objectContaining({ colors: { card: '#000' } }),
+      glass: 'dark',
+      imagery: true,
+    })
+    expect(mocks.appearance.shareSheet).toEqual(appAppearance)
   })
 })

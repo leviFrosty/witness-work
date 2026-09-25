@@ -19,6 +19,7 @@ If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
 - **JW sensitivities.** No "magic" word or magic-wand iconography in i18n/copy.
 - **Translations.** `src/locales/en-US.json` is the source of truth; other locales are human-approved only — don't edit them without asking.
 - **Forms in sheets.** Do not add a Cancel button to a form presented in a dismissible sheet. Tapping outside the sheet or pulling it down already cancels; keep the explicit Save/Submit action and any meaningful reset/destructive action.
+- **Analytics for new UX.** Every new user experience ships with analytics tracking via `analytics` from `@/lib/analytics`, so we can monitor usage and improve it. Capture key actions and outcomes (viewed, completed, abandoned, errors) and document the events in [`docs/analytics.md`](./docs/analytics.md), following its privacy rules (no PII).
 - **Commits.** Rebase, never merge-commit; amend over `fix:` follow-ups. Husky pre-commit hooks stay on — no `--no-verify` unless told. Branch names are bare `[feature-name]` (no `agent/` or `feature/` prefix).
 
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.

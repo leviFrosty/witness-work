@@ -285,3 +285,20 @@ describe('Dropped pin on an empty tablet map', () => {
     ).toBeGreaterThan(0)
   })
 })
+
+describe('Host-requested camera fit', () => {
+  it('re-fits the pins only when fitRequest changes', async () => {
+    const hosted = (fitRequest: number) => (
+      <MapScreen renderContactRow={() => null} fitRequest={fitRequest} />
+    )
+    await act(async () => root.update(hosted(0)))
+    mocks.fitToSuppliedMarkers.mockClear()
+
+    await act(async () => root.update(hosted(0)))
+    expect(mocks.fitToSuppliedMarkers).not.toHaveBeenCalled()
+
+    await act(async () => root.update(hosted(1)))
+    expect(mocks.fitToSuppliedMarkers).toHaveBeenCalledTimes(1)
+    expect(mocks.fitToSuppliedMarkers).toHaveBeenCalledWith(['first', 'second'])
+  })
+})

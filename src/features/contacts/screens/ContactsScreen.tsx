@@ -39,8 +39,11 @@ import ContactDetailsContent from '@/features/contacts/components/ContactDetails
  * sliders icon that opens the modal `ContactsSortAndFilterScreen`. The "+" pill
  * is the only floating action; the global TabBar already supplies a QuickAction
  * accessory.
+ *
+ * `topInset` reserves space below the safe area for chrome the host floats
+ * above the screen (the Contacts tab's List | Map switch).
  */
-const ContactsScreen = () => {
+const ContactsScreen = ({ topInset = 0 }: { topInset?: number }) => {
   const theme = useTheme()
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const [selectedId, setSelectedId] = useState<string>()
@@ -166,7 +169,7 @@ const ContactsScreen = () => {
         style={{
           flex: 1,
           backgroundColor: theme.colors.background,
-          paddingTop: insets.top + 8,
+          paddingTop: insets.top + topInset + 8,
           flexDirection: isWide ? 'row' : 'column',
           width: '100%',
           maxWidth: isWide ? 1200 : 720,

@@ -17,6 +17,7 @@ import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
+import type { ContactsView } from '@/types/homeStack'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import {
   isValidMonthlyGoalHours,
@@ -298,6 +299,12 @@ export const PREFERENCE_DEFAULTS = {
    */
   contactsFilters: [] as ActiveFilter[],
   hasCompletedMapOnboarding: false,
+  /**
+   * Last view picked on the Contacts tab's List | Map switch, restored on
+   * launch. Per-device (non-syncable) — a phone and an iPad on the same Apple
+   * ID can each open to whichever view suits them.
+   */
+  contactsView: 'list' as ContactsView,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
 
@@ -923,6 +930,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'seenMilestoneUpdateReveal',
   'dismissedMilestoneRevealOnce',
   'seenFoundingSupporterReveal',
+  'contactsView',
 ])
 
 /**

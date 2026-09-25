@@ -39,7 +39,7 @@ export type RootStackParamList = {
     | { initialTier?: 'supporter' | 'tip'; source?: string; feature?: string }
     | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
-  'Import and Export': undefined
+  'Import and Export': { source: 'backup_reminder' } | undefined
   MytimeImport: undefined
   NotesImportComposer: { hash?: string; fromOnboarding?: boolean } | undefined
   PreferencesPublisher: undefined

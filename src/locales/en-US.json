@@ -2369,5 +2369,38 @@
   "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits.",
   "audioAndHaptics": "Audio & Haptics",
   "playSounds": "Play sounds",
-  "playSounds_description": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow iOS Settings > Notifications."
+  "playSounds_description": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow iOS Settings > Notifications.",
+  "contactDetails": {
+    "upNext": "Up next · {{countdown}}",
+    "reminderOn": "Reminder on",
+    "reminderOff": "No reminder",
+    "upNextWhen": "{{day}} · {{time}}",
+    "studyingSince": "Studying · last study {{date}}",
+    "lastStudy": "Last study {{date}}",
+    "studyRuleTitle": "Bible studies",
+    "visitCount": {
+      "one": "{{count}} visit",
+      "other": "{{count}} visits"
+    },
+    "studyCount": {
+      "one": "{{count}} study",
+      "other": "{{count}} studies"
+    },
+    "journeyNext": "{{date}} · next",
+    "nextVisit": "Next visit · {{date}}",
+    "seeUpNext": "see Up Next",
+    "gapEarlier": "{{gap}} earlier",
+    "sameDay": "Same day",
+    "followUpUpcoming": "Follow-up scheduled",
+    "followUpKept": "Followed up",
+    "followUpMissed": "Follow-up missed",
+    "followUpDismissed": "Follow-up dismissed",
+    "noOneAnswered": "No one answered.",
+    "relationshipBegan": "Relationship began {{date}}",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "text": "Text",
+    "journeySummary": "{{visits}} · {{studies}} · since {{date}}",
+    "contactInfo": "Contact information"
+  }
 }

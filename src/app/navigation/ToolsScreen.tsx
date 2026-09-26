@@ -70,6 +70,10 @@ import {
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import {
+  buildUniqueContactFixture,
+  UNIQUE_CONTACT_CUSTOM_FIELD_LABELS,
+} from '@/app/dev-fixtures/uniqueContact'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -162,10 +166,14 @@ export default function ToolsScreen() {
   const { categories, addCategory } = useCategories()
   const {
     contacts,
+    deletedContacts,
+    customFieldDefs,
     _WARNING_forceDeleteContacts,
     _WARNING_clearDeleted,
     addContact,
     addCustomFieldDef,
+    archiveCustomFieldDef,
+    removeDeletedContact,
   } = useContacts()
   const { cache, invalidateAllCache } = useTimeCache()
   const { conversations, addConversation, _WARNING_forceDeleteConversations } =
@@ -566,6 +574,46 @@ export default function ToolsScreen() {
           topic: v.topic,
         },
       })
+    })
+  }
+
+  // One contact whose visit history hits every Contact Details rendering
+  // branch; data lives in the pure builder. Opens the contact afterwards with
+  // a highlighted visit. Stable ids keep re-runs idempotent.
+  const generateUniqueContact = () => {
+    const labels = UNIQUE_CONTACT_CUSTOM_FIELD_LABELS
+    const defId = (label: string) => addCustomFieldDef(label)?.id ?? label
+    const archivedDefId = (label: string) => {
+      const existing = customFieldDefs.find(
+        (d) => d.archived && d.label === label
+      )
+      if (existing) return existing.id
+      const id = defId(label)
+      archiveCustomFieldDef(id)
+      return id
+    }
+    const { contact, visits, highlightedVisitId } = buildUniqueContactFixture({
+      now: moment(),
+      customFieldIds: {
+        language: defId(labels.language),
+        bestTime: defId(labels.bestTime),
+        longLabel: defId(labels.longLabel),
+        archived: archivedDefId(labels.archived),
+        emptyValue: defId(labels.emptyValue),
+      },
+    })
+
+    if (deletedContacts.some((c) => c.id === contact.id)) {
+      removeDeletedContact(contact.id)
+    }
+    const exists = contacts.some((c) => c.id === contact.id)
+    if (!exists) addContact(contact)
+    visits.forEach((visit) => addConversation(visit))
+
+    showDone(exists ? 'Unique contact exists' : 'Unique contact added')
+    navigation.navigate('Contact Details', {
+      id: contact.id,
+      highlightedVisitId,
     })
   }
 
@@ -1338,6 +1386,9 @@ export default function ToolsScreen() {
             }}
           >
             Overdue follow-ups
+          </ActionButton>
+          <ActionButton onPress={generateUniqueContact}>
+            Unique contact (edge cases)
           </ActionButton>
           <ActionButton
             onPress={() => {

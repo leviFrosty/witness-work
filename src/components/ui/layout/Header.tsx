@@ -6,8 +6,6 @@ import {
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import moment from 'moment'
-import { formatDate } from '@/lib/dates'
 import Text from '@/components/ui/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -34,7 +32,7 @@ type Props = {
    * Optional long-press handler on the title. Used for hidden dev affordances
    * (e.g. resetting the milestone-reveal flags from the home header). Pure
    * pass-through — Header doesn't add visual chrome to indicate it's
-   * long-pressable.
+   * long-pressable. Keeps an invisible target when there's no title.
    */
   onLongPressTitle?: () => void
 }
@@ -126,6 +124,11 @@ const Header = ({
           onLongPress={onLongPressTitle}
           disabled={!onLongPressTitle}
           delayLongPress={800}
+          style={
+            onLongPressTitle && !title
+              ? { minWidth: 120, minHeight: 24 }
+              : undefined
+          }
         >
           <Text
             style={{
@@ -138,7 +141,7 @@ const Header = ({
                   : theme.colors.text),
             }}
           >
-            {title ?? formatDate(moment())}
+            {title}
           </Text>
         </Pressable>
         {rightElement}

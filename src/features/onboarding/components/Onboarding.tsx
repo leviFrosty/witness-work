@@ -17,7 +17,6 @@ import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
 import DataProtection from '@/features/onboarding/components/steps/DataProtection'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
-import Supporter from '@/features/onboarding/components/steps/Supporter'
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import IntentPicker from '@/features/onboarding/components/steps/IntentPicker'
@@ -55,7 +54,6 @@ type StepId =
   | 'defaultNav'
   | 'defaultExportMethod'
   | 'onboardingBackfill'
-  | 'supporter'
 
 interface StepProps {
   goBack: () => void
@@ -141,7 +139,6 @@ const allSteps: StepDef[] = [
       moment(installedOn).month() !== 8 &&
       !hasReportsInCatchUpWindow(serviceReports, installedOn),
   },
-  { id: 'supporter', Component: Supporter, countsTowardProgress: true },
 ]
 
 const OnBoarding = () => {
@@ -178,6 +175,9 @@ const OnBoarding = () => {
     const initialVisible = allSteps.filter(
       (s) => !s.showIf || s.showIf(showIfCtx)
     )
+    // 'supporter' was the final step before it was removed; resume on the
+    // new final step rather than restarting from the hero.
+    if (onboardingStepId === 'supporter') return initialVisible.length - 1
     const idx = initialVisible.findIndex((s) => s.id === onboardingStepId)
     return idx >= 0 ? idx : 0
   })

@@ -52,3 +52,12 @@ export const monthStatusLabel = (
       return i18n.t(status)
   }
 }
+
+/**
+ * The status name alone, for places that show the goal beside it (the month
+ * card's status line) — so "(30 hours)" isn't repeated.
+ */
+export const monthStatusShortLabel = (status: MonthStatus): string =>
+  status === 'regularAuxiliary' || status === 'regularAuxiliaryReduced'
+    ? i18n.t('monthStatus.auxiliaryShort')
+    : i18n.t(status)

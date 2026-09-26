@@ -34,15 +34,13 @@ type GoalProgressStatsProps = {
    * crossed without pushing animation state down into this component.
    */
   sealAnimatedStyle?: Parameters<typeof Animated.View>[0]['style']
+  /** Rendered between the hero and the meta line (the progress bar). */
+  bar?: ReactNode
   /**
-   * Optional element rendered on the trailing edge of the top row. When a tier
-   * seal is present the two share the row with space-between; otherwise the
-   * slot rides alone, right-aligned. Lets the parent (e.g. MonthReport) place
-   * its View Report affordance without owning a duplicate row.
+   * Trailing edge of the meta line under the bar — pace and month-over-month
+   * deltas ride here so remaining and pace read as one line.
    */
-  headerRightSlot?: ReactNode
-  /** Suppress the plain goal suffix when the parent renders an editable goal. */
-  hideGoalLabel?: boolean
+  metaTrailing?: ReactNode
 }
 
 const tierCopyKey = (tier: AchievementTier) => {
@@ -67,8 +65,8 @@ const GoalProgressStats = ({
   totalLabel,
   achievementTier,
   sealAnimatedStyle,
-  headerRightSlot,
-  hideGoalLabel = false,
+  bar,
+  metaTrailing,
 }: GoalProgressStatsProps) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
@@ -103,44 +101,44 @@ const GoalProgressStats = ({
         ? theme.colors.textAlt
         : theme.colors.text
 
-  // iOS Health-style hero split: gigantic numeric headline + small unit
-  // baseline-aligned. For decimal preference we keep a bare number + "hours"
-  // unit; for short preference the formatter already emits "Xh Ym", so let it
-  // own the hero and suppress the standalone unit.
+  // iOS Health-style hero split: gigantic numeric headline + small suffix
+  // baseline-aligned. With a goal the suffix carries it ("/ 30 hours",
+  // matching the Service Year card), so the goal never needs its own label.
+  // For decimal preference the headline is a bare number; for short
+  // preference the formatter already emits "Xh Ym".
   const isDecimal = timeDisplayFormat === 'decimal'
+  const showsGoalInHero = hasGoal && periodState !== 'future'
   const heroSource = periodState === 'future' ? goalDisplay : completedDisplay
   const heroBig = isDecimal
     ? String(heroSource.decimalHours)
     : heroSource.formatted
-  const heroUnit = isDecimal ? i18n.t('hours_lowercase') : ''
+  // Goal hours are user-entered, so they render verbatim (as the year card's
+  // Annual Goal does) rather than through the minutes formatter.
+  const heroSuffix = showsGoalInHero
+    ? `/ ${goalHours} ${i18n.t('hours_lowercase')}`
+    : isDecimal
+      ? i18n.t('hours_lowercase')
+      : ''
 
-  // Context line under the hero. The actionable "X left" pill respects the
-  // user's time-display preference (decimal vs short). The trailing meta
-  // line (days left / goal) shares the same single-tier rhythm.
-  const goalSuffix = i18n.t('goalLabel', { value: goalDisplay.formatted })
-  let pillText: string | null = null
-  const trailingParts: string[] = []
+  // Meta line under the bar: the actionable figure (left/short) leads in the
+  // primary color, the calendar context trails in the secondary color.
+  let metaLead: string | null = null
+  let metaContext: string | null = null
   if (!hasGoal) {
-    if (periodState === 'current' && remainingLabel) {
-      trailingParts.push(remainingLabel)
-    }
+    if (periodState === 'current' && remainingLabel)
+      metaContext = remainingLabel
   } else if (hasMetGoal && beyondMinutes > 0) {
-    trailingParts.push(
-      i18n.t('beyondGoalShort', { value: beyondDisplay.formatted })
-    )
+    metaContext = i18n.t('beyondGoalShort', { value: beyondDisplay.formatted })
   } else if (hasMetGoal) {
-    trailingParts.push(i18n.t('goalAchieved'))
+    metaContext = i18n.t('goalAchieved')
   } else if (periodState === 'current') {
-    pillText = `${remainingDisplay.formatted} ${i18n.t('hoursLeft')}`
-    if (remainingLabel) trailingParts.push(remainingLabel)
-    if (!hideGoalLabel) trailingParts.push(goalSuffix)
+    metaLead = `${remainingDisplay.formatted} ${i18n.t('hoursLeft')}`
+    metaContext = remainingLabel ?? null
   } else if (periodState === 'past') {
-    pillText = i18n.t('hrsShort', { value: remainingDisplay.formatted })
-    if (!hideGoalLabel) trailingParts.push(goalSuffix)
+    metaLead = i18n.t('hrsShort', { value: remainingDisplay.formatted })
   } else if (periodState === 'future' && totalLabel) {
-    trailingParts.push(totalLabel)
+    metaContext = totalLabel
   }
-  const trailingText = trailingParts.join(' · ')
 
   const tierBadge = tier ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -161,26 +159,13 @@ const GoalProgressStats = ({
 
   return (
     <View style={{ gap: 10 }}>
-      {(tierBadge || headerRightSlot) && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            marginBottom: -6,
-          }}
-        >
-          {tierBadge ?? <View />}
-          {headerRightSlot}
-        </View>
-      )}
+      {tierBadge}
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'baseline',
           flexWrap: 'wrap',
-          gap: 8,
+          gap: showsGoalInHero ? 2 : 8,
         }}
       >
         <Text
@@ -197,58 +182,56 @@ const GoalProgressStats = ({
         >
           {heroBig}
         </Text>
-        {!!heroUnit && (
+        {!!heroSuffix && (
           <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-            }}
+            style={
+              showsGoalInHero
+                ? {
+                    fontSize: theme.fontSize('lg'),
+                    color: theme.colors.textAlt,
+                  }
+                : {
+                    fontSize: theme.fontSize('xl'),
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                  }
+            }
           >
-            {heroUnit}
+            {heroSuffix}
           </Text>
         )}
       </View>
-      {(pillText || trailingText) && (
+      {bar}
+      {(metaLead || metaContext || metaTrailing) && (
         <View
           style={{
             flexDirection: 'row',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 8,
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 12,
           }}
         >
-          {pillText && (
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                borderRadius: theme.numbers.borderRadiusSm,
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-              }}
-            >
+          <Text
+            style={{
+              flexShrink: 1,
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {metaLead && (
               <Text
                 style={{
-                  fontSize: theme.fontSize('sm'),
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.text,
                 }}
               >
-                {pillText}
+                {metaLead}
               </Text>
-            </View>
-          )}
-          {!!trailingText && (
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {trailingText}
-            </Text>
-          )}
+            )}
+            {metaLead && metaContext ? ' · ' : null}
+            {metaContext}
+          </Text>
+          {metaTrailing}
         </View>
       )}
     </View>

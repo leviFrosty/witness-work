@@ -69,6 +69,7 @@ const YearCategoryBreakdownSection = ({ year }: Props) => {
     <CategoriesSection
       segments={segments}
       description={i18n.t('categoryBreakdown_serviceYear_description')}
+      source='year_card'
     />
   )
 }

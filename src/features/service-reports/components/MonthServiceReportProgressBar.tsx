@@ -2,7 +2,6 @@ import { View, ViewProps, Animated, StyleProp, ViewStyle } from 'react-native'
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
-import useCategories from '@/stores/categories'
 import { getCategorySegmentColors } from '@/features/service-reports/lib/categorySegmentColors'
 import useTheme from '@/contexts/theme'
 import {
@@ -11,9 +10,6 @@ import {
   getTotalMinutesDetailedForSpecificMonth,
 } from '@/lib/serviceReport'
 import { goalProgress } from '@/lib/goalProgress'
-import Text from '@/components/ui/MyText'
-import i18n from '@/lib/locales'
-import Circle from '@/components/ui/Circle'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
 
@@ -95,20 +91,6 @@ const OtherHours = ({ percentage, color }: ProgressBarSegmentProps) => {
   )
 }
 
-interface ProgressBarKeyProps {
-  color: string
-  label: string
-}
-const ProgressBarKey = ({ color, label }: ProgressBarKeyProps) => {
-  const theme = useTheme()
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-      <Circle color={color} />
-      <Text style={{ fontSize: theme.fontSize('sm') }}>{label}</Text>
-    </View>
-  )
-}
-
 interface ProgressBarProps {
   month: number
   year: number
@@ -138,7 +120,6 @@ const MonthServiceReportProgressBar = ({
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
-  const { categories } = useCategories()
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const { type: role } = usePublisher({ month, year })
   const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
@@ -294,34 +275,6 @@ const MonthServiceReportProgressBar = ({
     segmentScalingFactor,
   ])
 
-  const renderOtherHoursColorKeys = useCallback(() => {
-    let currentIndex = 0
-    return minutesDetailed.other.reports.map((report, index) => {
-      if (currentIndex > otherColors.length - 1) {
-        currentIndex = 0
-      }
-
-      const color = otherColors[currentIndex]
-      currentIndex += 1
-
-      // Prefer the live Category name so a rename propagates without
-      // re-mounting the progress bar; fall back to the stamped `tag` label
-      // for unmigrated entries.
-      const liveCategory = report.categoryId
-        ? categories.find((c) => c.id === report.categoryId)
-        : undefined
-      const label = liveCategory?.name ?? report.tag
-
-      return (
-        <ProgressBarKey
-          key={`${report.categoryId ?? report.tag}-${index}`}
-          color={color}
-          label={label}
-        />
-      )
-    })
-  }, [minutesDetailed.other, otherColors, categories])
-
   return (
     <View
       style={[
@@ -447,30 +400,6 @@ const MonthServiceReportProgressBar = ({
           )}
         </View>
       </View>
-      {!minimal && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 7,
-            flexWrap: 'wrap',
-          }}
-        >
-          {hasStandardMinutes && (
-            <ProgressBarKey
-              color={theme.colors.accent}
-              label={i18n.t('standard')}
-            />
-          )}
-          {hasLdcMinutes && (
-            <ProgressBarKey
-              color={theme.colors.accentAlt}
-              label={i18n.t('ldc')}
-            />
-          )}
-          {renderOtherHoursColorKeys()}
-        </View>
-      )}
     </View>
   )
 }

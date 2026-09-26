@@ -1682,6 +1682,8 @@
   "hrsBehind": "{{count}} hrs behind",
   "aheadShort": "{{value}} ahead",
   "behindShort": "{{value}} behind",
+  "aheadOfPlan": "{{value}} ahead of plan",
+  "behindPlan": "{{value}} behind plan",
   "cumulativePace": "Pace vs schedule",
   "creditOverageChip": "+{{value}} over cap",
   "lastLoggedOn": "Last logged {{date}}",
@@ -2319,7 +2321,11 @@
     "onlyMonth": "Only {{month}}",
     "monthOnward": "{{month}} onward",
     "auxiliary": "Auxiliary Pioneer ({{count}} hours)",
-    "editAccessibility": "Change this month's status, currently {{status}}"
+    "auxiliaryShort": "Auxiliary Pioneer",
+    "withGoal": "{{status}} · {{goal}} goal",
+    "changeStatus": "Change status",
+    "changeGoal": "Change goal",
+    "editAccessibility": "Change this month's status or goal. {{summary}}"
   },
   "serviceHistory": {
     "title": "Service History",

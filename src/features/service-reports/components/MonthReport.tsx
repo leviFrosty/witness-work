@@ -30,7 +30,6 @@ import { formatMinutes } from '@/lib/minutes'
 import Card from '@/components/ui/Card'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
-import Chip from '@/components/ui/Chip'
 import CreditInfoSheet from '@/features/service-reports/components/CreditInfoSheet'
 import {
   useFocusEffect,
@@ -66,9 +65,9 @@ import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 import { formatMonthDayCompact } from '@/lib/dates'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
-import MonthGoalButton from '@/features/service-reports/components/MonthGoalButton'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
-import MonthStatusButton from '@/features/service-reports/components/MonthStatusButton'
+import MonthStatusGoalButton from '@/features/service-reports/components/MonthStatusGoalButton'
+import { monthStatusShortLabel } from '@/lib/monthStatus'
 import MonthStatusSheet from '@/features/service-reports/components/MonthStatusSheet'
 import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
 
@@ -216,6 +215,15 @@ const MonthReport = ({
     aheadBehindMinutes !== null
       ? formatMinutes(Math.abs(aheadBehindMinutes), timeDisplayFormat).formatted
       : null
+
+  const showPace = aheadBehindMinutes !== null && aheadBehindMinutes !== 0
+  const showMomDelta = momDeltaMinutes !== null && momDeltaMinutes !== 0
+  const toneColor = (tone: 'positive' | 'warn' | 'neutral') =>
+    tone === 'positive'
+      ? theme.colors.accent
+      : tone === 'warn'
+        ? theme.colors.warn
+        : theme.colors.textAlt
 
   const lastLoggedDate = useMemo(() => {
     if (!monthsReports || monthsReports.length === 0) return null
@@ -409,43 +417,36 @@ const MonthReport = ({
     }, [fireFireworks, month, year])
   )
 
+  const statusGoalButton = (
+    <MonthStatusGoalButton
+      statusLabel={
+        monthInFuture ? null : monthStatusShortLabel(monthStatus.status)
+      }
+      isStatusDifferent={monthStatus.isDifferent}
+      goalHours={baseGoalHours > 0 ? goalHours : null}
+      isGoalOverridden={isOverridden}
+      onEditStatus={() => setStatusSheetOpen(true)}
+      onEditGoal={() => setGoalEditorOpen(true)}
+    />
+  )
+
   if (!monthsReports) {
     return (
       <View>
         <Card>
-          <View
+          {allowGoalEditing ? (
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              {statusGoalButton}
+            </View>
+          ) : null}
+          <Text
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
             }}
           >
-            <Text
-              style={{
-                flex: 1,
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('noTimeReports')}
-            </Text>
-            {allowGoalEditing && baseGoalHours > 0 ? (
-              <MonthGoalButton
-                goalHours={goalHours}
-                isOverridden={isOverridden}
-                onPress={() => setGoalEditorOpen(true)}
-              />
-            ) : null}
-          </View>
-          {allowGoalEditing && !monthInFuture ? (
-            <MonthStatusButton
-              label={monthStatus.label}
-              isDifferent={monthStatus.isDifferent}
-              onPress={() => setStatusSheetOpen(true)}
-              style={{ marginTop: 8 }}
-            />
-          ) : null}
+            {i18n.t('noTimeReports')}
+          </Text>
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
@@ -497,7 +498,7 @@ const MonthReport = ({
             year={year}
             status={monthStatus.status}
             onSave={(status, scope) =>
-              monthStatus.save(status, scope, 'month_chip')
+              monthStatus.save(status, scope, 'month_card')
             }
           />
         ) : null}
@@ -550,50 +551,30 @@ const MonthReport = ({
             </View>
           )}
 
-          {allowGoalEditing ? (
+          {/* Status · goal on the leading edge, report on the trailing edge.
+            Plain text + icon rather than chips so the hero stays the loudest
+            thing on the card. */}
+          {allowGoalEditing || (hideTitle && showReportButton) ? (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 8,
+                gap: 12,
               }}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: 8,
-                  flexShrink: 1,
-                }}
-              >
-                {baseGoalHours > 0 ? (
-                  <MonthGoalButton
-                    goalHours={goalHours}
-                    isOverridden={isOverridden}
-                    onPress={() => setGoalEditorOpen(true)}
-                  />
-                ) : null}
-                {!monthInFuture ? (
-                  <MonthStatusButton
-                    label={monthStatus.label}
-                    isDifferent={monthStatus.isDifferent}
-                    onPress={() => setStatusSheetOpen(true)}
-                  />
-                ) : null}
-              </View>
+              {allowGoalEditing ? statusGoalButton : <View />}
               {hideTitle && showReportButton ? (
                 <ViewReportButton month={month} year={year} />
               ) : null}
             </View>
           ) : null}
 
-          {/* Hero + secondary line. When the parent suppressed the title row
-            the report-export affordance is passed into GoalProgressStats'
-            header slot so it sits to the right of the tier badge (or alone
-            on the trailing edge when no tier is celebrated). */}
-          {!noDetails && (
+          {/* Hero ("8 of 30 Hrs") → bar → one meta line: what's left on the
+            leading edge, pace against the plan on the trailing edge. */}
+          {noDetails ? (
+            <MonthServiceReportProgressBar month={month} year={year} />
+          ) : (
             <GoalProgressStats
               hoursCompleted={hoursCompleted}
               goalHours={goalHours}
@@ -605,91 +586,87 @@ const MonthReport = ({
               totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
               achievementTier={celebratingTier}
               sealAnimatedStyle={sealAnimatedStyle}
-              hideGoalLabel={allowGoalEditing}
-              headerRightSlot={
-                // The editable goal/status row owns the report button when it
-                // renders; otherwise the button falls back to the hero header
-                // slot.
-                !allowGoalEditing && hideTitle && showReportButton ? (
-                  <ViewReportButton month={month} year={year} />
-                ) : undefined
+              bar={<MonthServiceReportProgressBar month={month} year={year} />}
+              metaTrailing={
+                showPace || showMomDelta ? (
+                  <View
+                    style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1 }}
+                  >
+                    {showPace && (
+                      <Text
+                        style={{
+                          textAlign: 'right',
+                          fontSize: theme.fontSize('sm'),
+                          fontFamily: theme.fonts.semiBold,
+                          color: toneColor(
+                            aheadBehindMinutes > 0 ? 'positive' : 'neutral'
+                          ),
+                        }}
+                      >
+                        {`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
+                          aheadBehindMinutes > 0 ? 'aheadOfPlan' : 'behindPlan',
+                          { value: aheadBehindDisplay }
+                        )}`}
+                      </Text>
+                    )}
+                    {showMomDelta && (
+                      <Text
+                        style={{
+                          textAlign: 'right',
+                          fontSize: theme.fontSize('xs'),
+                          color: toneColor(
+                            // When both months cleared goal, a downward delta
+                            // isn't a warning — it just means a very strong
+                            // prior month. Keep it neutral so the celebration
+                            // card stays coherent.
+                            bothMonthsMetGoal
+                              ? 'neutral'
+                              : momDeltaMinutes > 0
+                                ? 'positive'
+                                : 'warn'
+                          ),
+                        }}
+                      >
+                        {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
+                      </Text>
+                    )}
+                  </View>
+                ) : null
               }
             />
           )}
 
-          {/* Category breakdown header — tap to open detailed sheet.
-            Sits directly above the progress bar since the bar itself
-            now carries the category colors + legend. */}
+          {/* The color key doubles as the way into the category breakdown. */}
           {!noDetails && hasCategorySegments && (
-            <CategoriesSection segments={categorySegments} />
+            <CategoriesSection
+              segments={categorySegments}
+              trigger='legend'
+              source='month_card'
+            />
           )}
 
-          {/* Progress bar — detailed view: each category is its own
-            colored segment, with a legend rendered below the bar. */}
-          <MonthServiceReportProgressBar month={month} year={year} />
-
-          {/* Context chips */}
-          {!noDetails && (
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 6,
-              }}
-            >
-              {aheadBehindMinutes !== null && aheadBehindMinutes !== 0 && (
-                <Chip
-                  label={`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
-                    aheadBehindMinutes > 0 ? 'aheadShort' : 'behindShort',
-                    { value: aheadBehindDisplay }
-                  )}`}
-                  tone={aheadBehindMinutes > 0 ? 'positive' : 'neutral'}
-                />
-              )}
-              {momDeltaMinutes !== null && momDeltaMinutes !== 0 && (
-                <Chip
-                  label={`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
-                  tone={
-                    // When both months cleared goal, a downward delta isn't a
-                    // warning — it just means a very strong prior month. Keep
-                    // tone neutral so the celebration card stays coherent.
-                    bothMonthsMetGoal
-                      ? 'neutral'
-                      : momDeltaMinutes > 0
-                        ? 'positive'
-                        : 'warn'
-                  }
-                />
-              )}
+          {!noDetails && adjustedMinutes.creditOverage > 0 && (
+            <View style={{ flexDirection: 'row' }}>
               <CreditInfoSheet
                 creditOverageMinutes={adjustedMinutes.creditOverage}
               />
-              {lastLoggedDate && (
-                <Chip
-                  label={i18n.t('lastLoggedOn', {
-                    date: formatMonthDayCompact(lastLoggedDate),
-                  })}
-                  tone='neutral'
-                />
-              )}
-              {isCurrentMonth && !lastLoggedDate && hoursCompleted === 0 && (
-                <Chip label={i18n.t('nothingLoggedYet')} tone='warn' />
-              )}
             </View>
           )}
         </View>
 
-        {/* Tertiary action — progress/breakdown is the primary focus; the
-          global "+" tab-bar pill is the primary path to logging, so this
-          button is kept subdued. */}
+        {/* Footer — a subdued action (the tab-bar "+" is the primary path to
+          logging) with recency on the trailing edge. */}
         {!noDetails && (
           <View
             style={{
-              marginTop: 10,
+              marginTop: 14,
               paddingTop: 10,
               borderTopWidth: 1,
               borderTopColor: theme.colors.border,
-              alignItems: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
             }}
           >
             <Button
@@ -723,6 +700,28 @@ const MonthReport = ({
                 {i18n.t(monthInFuture ? 'createPlan' : 'addTime')}
               </Text>
             </Button>
+            {lastLoggedDate ? (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('lastLoggedOn', {
+                  date: formatMonthDayCompact(lastLoggedDate),
+                })}
+              </Text>
+            ) : isCurrentMonth && hoursCompleted === 0 ? (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.warn,
+                }}
+              >
+                {i18n.t('nothingLoggedYet')}
+              </Text>
+            ) : null}
           </View>
         )}
       </Card>
@@ -844,7 +843,7 @@ const MonthReport = ({
           year={year}
           status={monthStatus.status}
           onSave={(status, scope) =>
-            monthStatus.save(status, scope, 'month_chip')
+            monthStatus.save(status, scope, 'month_card')
           }
         />
       ) : null}

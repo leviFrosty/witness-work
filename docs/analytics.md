@@ -163,7 +163,7 @@ does not prove delivery/submission to another person or app.
 ## Role History
 
 `role_period_set` records a committed change to which Publisher role applied to
-which months. Properties: `source` (`settings`, `month_chip`), `role` (the
+which months. Properties: `source` (`settings`, `month_card`), `role` (the
 Publisher enum value, or `regularAuxiliaryReduced` for the 15-hour auxiliary
 status), `scope` (`from_month`, `single_month`, or `all_months`), and for Settings
 changes `months_back` (how many months before the current month the change starts,
@@ -177,6 +177,19 @@ shown and `service_history_saved` on Save. Both carry `source` (`year_tab`,
 Year with a finished month). `service_history_saved` adds `months_status_changed`
 and `months_time_added` counts. Leaving without saving is the abandonment signal:
 a `service_history_viewed` with no following `service_history_saved`.
+
+## Month card
+
+The Progress → Month card shows status and goal as one line. Tapping it records
+`month_card_edit_opened` with `target` (`status`, `goal`) and `via`: `menu` when
+both were editable and the user picked one from the chooser, `direct` when only
+one was editable. Cancelling the chooser records `month_card_edit_menu_dismissed`.
+Whether the edit was committed is `role_period_set` (status); closing a sheet
+without saving is the abandonment signal.
+
+`category_breakdown_opened` records opening the category breakdown sheet, with
+`source` (`month_card` from the color key under the month bar, `year_card` from
+the Service Year breakdown) and `categories` (how many categories have time).
 
 ## iCloud Sync and Help Center
 

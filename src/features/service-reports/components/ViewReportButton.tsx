@@ -2,7 +2,6 @@ import { FileText as FileTextIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useNavigation } from '@react-navigation/native'
 import Button from '@/components/ui/Button'
-import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -18,34 +17,17 @@ const ViewReportButton = ({ month, year }: ViewReportButtonProps) => {
 
   return (
     <Button
+      accessibilityRole='button'
       accessibilityLabel={i18n.t('viewReport')}
       onPress={() => navigation.navigate('ServiceReportView', { month, year })}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        borderRadius: 999,
-        borderCurve: 'continuous',
-      }}
+      hitSlop={10}
+      style={{ padding: 4 }}
     >
       <LucideIcon
         icon={FileTextIcon}
-        size={theme.fontSize('sm')}
+        size={18}
         style={{ color: theme.colors.textAlt }}
       />
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('sm'),
-        }}
-      >
-        {i18n.t('viewReport')}
-      </Text>
     </Button>
   )
 }

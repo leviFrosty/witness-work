@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   config: { extra: {} as Record<string, string> },
   capture: vi.fn(),
   screen: vi.fn(),
+  getSessionId: vi.fn(),
   identify: vi.fn(),
   reset: vi.fn(),
   debug: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock('posthog-react-native', () => ({
     }
     capture = mocks.capture
     screen = mocks.screen
+    getSessionId = mocks.getSessionId
     identify = mocks.identify
     reset = mocks.reset
     debug = mocks.debug
@@ -85,6 +87,33 @@ describe('analytics boundary', () => {
     expect(mocks.screen).toHaveBeenCalledWith('Home', {})
     analytics.identify('account', { supporter: true })
     expect(mocks.identify).toHaveBeenCalledWith('account', { supporter: true })
+  })
+
+  it('drops lifecycle backgrounded events before sending', async () => {
+    await import('./analytics')
+    const options = mocks.construct.mock.calls[0][1] as {
+      before_send: (event: { event: string; properties: object }) => unknown
+    }
+    expect(
+      options.before_send({ event: 'Application Backgrounded', properties: {} })
+    ).toBeNull()
+  })
+
+  it('sends each screen once per session', async () => {
+    mocks.getSessionId.mockReturnValue('session-1')
+    const { analytics } = await import('./analytics')
+    analytics.screen('Dashboard')
+    analytics.screen('Schedule', { previous_screen: 'Dashboard' })
+    analytics.screen('Dashboard', { previous_screen: 'Schedule' })
+    expect(mocks.screen.mock.calls).toEqual([
+      ['Dashboard', undefined],
+      ['Schedule', { previous_screen: 'Dashboard' }],
+    ])
+
+    mocks.getSessionId.mockReturnValue('session-2')
+    analytics.screen('Dashboard')
+    expect(mocks.screen).toHaveBeenLastCalledWith('Dashboard', undefined)
+    expect(mocks.screen).toHaveBeenCalledTimes(3)
   })
 
   it('does not break app startup when the provider cannot initialize', async () => {

@@ -12,7 +12,14 @@ contact identifiers, share tokens, or raw exception messages. Account identity i
 the existing pseudonymous account ID. Crash diagnostics use the separate
 `errorTracking` module from `@/lib/errorTracking`.
 Screen tracking sends route names only, including the initial route; it does not
-send route parameters. Touch/text autocapture is not enabled.
+send route parameters. Each route sends at most one `$screen` per PostHog session
+(sessions end after 30 minutes idle), so screen insights measure reach — users and
+sessions — not repeat visits. `previous_screen` is the route before the first
+visit in that session. Touch/text autocapture is not enabled.
+
+Lifecycle autocapture sends `Application Installed`, `Updated`, `Opened` and
+`Became Active`; `Application Backgrounded` is dropped in `before_send` to save
+event volume.
 
 ## Development logging
 

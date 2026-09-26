@@ -39,6 +39,12 @@ function definedProperties(properties?: AnalyticsProperties) {
   return result
 }
 
+// Screen views are the largest event by volume, mostly tab switches. Send each
+// route once per session: screen reach, DAU and retention stay exact, but
+// repeat visits within a session are not counted.
+let screenSessionId: string | undefined
+const screensSentThisSession = new Set<string>()
+
 export const analytics = {
   capture(event: string, properties?: AnalyticsProperties): void {
     safely(`capture "${event}"`, () =>
@@ -46,9 +52,16 @@ export const analytics = {
     )
   },
   screen(name: string, properties?: AnalyticsProperties): void {
-    safely(`screen "${name}"`, () =>
-      client?.screen(name, definedProperties(properties))
-    )
+    safely(`screen "${name}"`, () => {
+      const sessionId = client?.getSessionId()
+      if (sessionId !== screenSessionId) {
+        screenSessionId = sessionId
+        screensSentThisSession.clear()
+      }
+      if (screensSentThisSession.has(name)) return
+      screensSentThisSession.add(name)
+      return client?.screen(name, definedProperties(properties))
+    })
   },
   identify(id: string, properties?: AnalyticsProperties): void {
     safely('identify', () =>

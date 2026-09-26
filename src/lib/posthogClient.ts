@@ -42,6 +42,8 @@ function createClient(): PostHog | null {
       },
       before_send: (event) => {
         if (!event) return event
+        // Lifecycle capture has no per-event switch; nothing uses this one.
+        if (event.event === 'Application Backgrounded') return null
         const isException = event.event === '$exception'
         if (
           isException &&

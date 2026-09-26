@@ -1,8 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import {
-  ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon,
   Check as CheckIcon,
+  ChevronDown as ChevronDownIcon,
   Copy as CopyIcon,
   Earth as EarthIcon,
   ExternalLink as ExternalLinkIcon,
@@ -32,10 +31,11 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
-import Button from '@/components/ui/Button'
-import SplitButton, { SplitButtonAction } from '@/components/ui/SplitButton'
+import ActionButton from '@/components/ui/ActionButton'
+import { MenuView } from '@react-native-menu/menu'
+import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
-import { exportMethodSelectionOptions } from '@/components/DefaultExportMethodSelector'
+import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
@@ -45,6 +45,13 @@ import {
   buildHourglassLink,
   buildNwPublisherLink,
 } from '@/features/service-reports/lib/submitLinks'
+import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
+import {
+  buildReportMonthMenu,
+  getEarliestReportMonth,
+  parseReportMonthId,
+} from '@/features/service-reports/lib/reportMonthMenu'
+import useServiceReport from '@/stores/serviceReport'
 import { openURL } from '@/lib/links'
 import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
 import useUser from '@/hooks/useUser'
@@ -59,14 +66,6 @@ const exportMethodCtaIcons = {
   hourglass: HourglassIcon,
   nwpublisher: EarthIcon,
 } as const satisfies Record<ReportExportMethod, unknown>
-
-/** SF Symbols for the native method menu rows. */
-const exportMethodSfSymbols = {
-  copy: 'doc.on.doc',
-  share: 'square.and.arrow.up',
-  hourglass: 'hourglass',
-  nwpublisher: 'globe.americas',
-} as const satisfies Record<ReportExportMethod, string>
 
 const PAPER_BG = '#F5ECD6'
 const PAPER_BG_EDGE = '#E6D9B4'
@@ -151,7 +150,6 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const {
     defaultExportMethod,
     markReportSubmitted,
-    set,
     setReportCommentOverride,
     clearReportCommentOverride,
   } = usePreferences()
@@ -165,18 +163,23 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     () => moment().month(month).year(year).format('MMMM YYYY'),
     [month, year]
   )
-  const selectedMonth = useMemo(
-    () => moment().month(month).year(year).startOf('month'),
-    [month, year]
-  )
-  const canNavigateForward = selectedMonth.isBefore(moment(), 'month')
-  const navigateMonth = useCallback(
-    (direction: -1 | 1) => {
-      const next = moment(selectedMonth).add(direction, 'month')
-      navigation.setParams({ month: next.month(), year: next.year() })
-    },
-    [navigation, selectedMonth]
-  )
+  const serviceReports = useServiceReport((state) => state.serviceReports)
+  const monthMenuActions = buildReportMonthMenu({
+    now: new Date(),
+    earliest: getEarliestReportMonth(serviceReports),
+    selected: { month, year },
+  })
+  const handleSelectMonth = (id: string) => {
+    // Year submenus are containers, not months.
+    if (id.startsWith('year-')) return
+    const next = parseReportMonthId(id)
+    analytics.capture('service_report_month_selected', {
+      months_ago: moment()
+        .startOf('month')
+        .diff(moment({ year: next.year, month: next.month }), 'months'),
+    })
+    navigation.setParams(next)
+  }
 
   const { regular: handwritingFont, bold: handwritingFontBold } =
     useHandwritingFonts(_i18n.locale)
@@ -335,19 +338,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   // the previous month's report, so the CTA disables outside that window.
   const submitDisabled =
     defaultExportMethod === 'nwpublisher' && !data.isLastMonth
-  const submitCtaLabel = useMemo(() => {
-    switch (defaultExportMethod) {
-      case 'hourglass':
-        return i18n.t('submitToApp', { app: i18n.t('hourglass') })
-      case 'nwpublisher':
-        return i18n.t('submitToApp', { app: i18n.t('nwPublisher') })
-      case 'share':
-        return i18n.t('share')
-      case 'copy':
-      default:
-        return i18n.t('copyToClipboard')
-    }
-  }, [defaultExportMethod])
+  const submitCtaLabel = getSubmitCtaLabel(defaultExportMethod)
 
   const handleSubmitCta = useCallback(() => {
     // Mid-edit, the first press commits the comment draft (the report data in
@@ -359,23 +350,13 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     handleShareAction(defaultExportMethod)
   }, [isEditingNotes, handleSaveNotes, handleShareAction, defaultExportMethod])
 
-  // Commit any in-progress comment edit before the popover takes over, so a
+  // Commit any in-progress comment edit before the menu takes over, so a
   // method switched from the menu submits the fresh text, and drop the
   // keyboard while the menu is up.
   const handleMenuOpen = useCallback(() => {
     if (isEditingNotes) handleSaveNotes()
     Keyboard.dismiss()
   }, [isEditingNotes, handleSaveNotes])
-
-  const methodActions: SplitButtonAction[] = useMemo(
-    () =>
-      exportMethodSelectionOptions.map((opt) => ({
-        id: opt.value,
-        title: opt.label,
-        sfSymbol: exportMethodSfSymbols[opt.value],
-      })),
-    []
-  )
 
   // Hourglass / NW Publisher hand off to another app or website — flag that
   // on the CTA with an external-link icon.
@@ -405,76 +386,48 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('lg'),
-            color: theme.colors.text,
-          }}
+        <MenuView
+          actions={monthMenuActions}
+          onOpenMenu={handleMenuOpen}
+          onPressAction={({ nativeEvent }) =>
+            handleSelectMonth(nativeEvent.event)
+          }
         >
-          {i18n.t('fieldServiceReport')}
-        </Text>
-        {/* Spacer mirroring the close button so the title stays centered */}
-        <View style={{ width: 18 }} />
-      </View>
-
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingTop: 6,
-          paddingBottom: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Button
-          accessibilityLabel={moment(selectedMonth)
-            .subtract(1, 'month')
-            .format('MMMM YYYY')}
-          onPress={() => navigateMonth(-1)}
-          style={monthNavButtonStyle(theme)}
-        >
-          <LucideIcon
-            icon={ArrowLeftIcon}
-            size={15}
-            color={theme.colors.textAlt}
-          />
-          <Text style={{ color: theme.colors.textAlt }}>
-            {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-          </Text>
-        </Button>
-
-        <Text
-          style={{
-            color: theme.colors.text,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('md'),
-          }}
-        >
-          {monthYearLabel}
-        </Text>
-
-        {canNavigateForward ? (
-          <Button
-            accessibilityLabel={moment(selectedMonth)
-              .add(1, 'month')
-              .format('MMMM YYYY')}
-            onPress={() => navigateMonth(1)}
-            style={monthNavButtonStyle(theme)}
+          <View
+            accessible
+            accessibilityRole='button'
+            accessibilityLabel={monthYearLabel}
+            accessibilityHint={i18n.t('selectMonth')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingHorizontal: 14,
+              paddingVertical: 7,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: theme.numbers.borderRadiusLg,
+              backgroundColor: theme.colors.card,
+            }}
           >
-            <Text style={{ color: theme.colors.textAlt }}>
-              {moment(selectedMonth).add(1, 'month').format('MMM')}
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('lg'),
+              }}
+            >
+              {monthYearLabel}
             </Text>
             <LucideIcon
-              icon={ArrowRightIcon}
+              icon={ChevronDownIcon}
               size={15}
               color={theme.colors.textAlt}
             />
-          </Button>
-        ) : (
-          <View style={{ width: 72 }} />
-        )}
+          </View>
+        </MenuView>
+        {/* Spacer mirroring the close button so the title stays centered */}
+        <View style={{ width: 18 }} />
       </View>
 
       <ScrollView
@@ -485,7 +438,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 18,
-          paddingBottom: insets.bottom + 130,
+          paddingBottom: insets.bottom + 190,
           paddingHorizontal: 16,
           alignItems: 'center',
         }}
@@ -564,32 +517,21 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           left: 20,
           right: 20,
           bottom: insets.bottom + 12,
-          gap: 6,
+          gap: 8,
         }}
       >
-        {submitDisabled && (
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('nwPublisherOnlyAllowsLastMonth')}
-          </Text>
-        )}
-        <SplitButton
-          onPress={handleSubmitCta}
-          disabled={submitDisabled}
-          actions={methodActions}
-          menuTitle={i18n.t('defaultExportMethod')}
-          selectedActionId={defaultExportMethod}
-          menuAccessibilityLabel={i18n.t('changeSubmissionMethod')}
-          onOpenMenu={handleMenuOpen}
-          onSelectAction={(actionId) =>
-            set({ defaultExportMethod: actionId as ReportExportMethod })
-          }
-        >
+        <Section>
+          <DefaultExportMethodSelector
+            lastInSection
+            source='report_screen'
+            description={
+              submitDisabled
+                ? i18n.t('nwPublisherOnlyAllowsLastMonth')
+                : undefined
+            }
+          />
+        </Section>
+        <ActionButton onPress={handleSubmitCta} disabled={submitDisabled}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <LucideIcon
               icon={
@@ -617,24 +559,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
               />
             )}
           </View>
-        </SplitButton>
+        </ActionButton>
       </View>
     </View>
   )
 }
-
-const monthNavButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
-  minWidth: 72,
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderWidth: 1,
-  borderColor: theme.colors.border,
-  borderRadius: theme.numbers.borderRadiusLg,
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-  gap: 5,
-})
 
 const BackPaperSheet = ({ height }: { height: number }) => {
   const path = useMemo(

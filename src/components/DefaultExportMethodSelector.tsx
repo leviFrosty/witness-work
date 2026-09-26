@@ -1,4 +1,5 @@
 import i18n from '@/lib/locales'
+import { analytics } from '@/lib/analytics'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import { SelectData } from '@/components/ui/Select'
 import { ReportExportMethod, usePreferences } from '@/stores/preferences'
@@ -24,8 +25,13 @@ export const exportMethodSelectionOptions: SelectData<ReportExportMethod> = [
 
 const DefaultExportMethodSelector = ({
   lastInSection,
+  description,
+  source = 'preferences',
 }: {
   lastInSection?: boolean
+  description?: string
+  /** Where the change happened, for analytics. */
+  source?: 'preferences' | 'report_screen'
 }) => {
   const { defaultExportMethod, set } = usePreferences()
 
@@ -33,10 +39,18 @@ const DefaultExportMethodSelector = ({
     <InputRowSelect
       selectProps={{
         data: exportMethodSelectionOptions,
-        onChange: ({ value }) => set({ defaultExportMethod: value }),
+        onChange: ({ value }) => {
+          analytics.capture('submission_method_changed', {
+            method: value,
+            previous_method: defaultExportMethod,
+            source,
+          })
+          set({ defaultExportMethod: value })
+        },
         value: defaultExportMethod,
       }}
       label={i18n.t('defaultExportMethod')}
+      description={description}
       lastInSection={lastInSection}
     />
   )

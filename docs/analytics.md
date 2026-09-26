@@ -191,6 +191,19 @@ without saving is the abandonment signal.
 `source` (`month_card` from the color key under the month bar, `year_card` from
 the Service Year breakdown) and `categories` (how many categories have time).
 
+## Service Report screen
+
+The report screen has a month dropdown in its header and a submission-method
+select above the Submit button.
+
+| Event                           | When / properties                                                                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `service_report_month_selected` | A month picked from the header dropdown. `months_ago` (0 = current month).                                                                               |
+| `submission_method_changed`     | Default submission method changed. `method`, `previous_method` (`copy`, `share`, `hourglass`, `nwpublisher`); `source` (`report_screen`, `preferences`). |
+
+Submission itself stays on the existing `service_report_export_requested` /
+`service_report_exported` events.
+
 ## iCloud Sync and Help Center
 
 `icloud_sync_enabled_changed` records committed enable/disable transitions with

@@ -56,7 +56,7 @@ const DrawerNavigator = () => {
     if (notesImportEnabled) focusNotesImports()
   }, [focusNotesImports, notesImportEnabled])
 
-  // Dev-only reset for the milestone-reveal flow. Long-press the date in the
+  // Dev-only reset for the milestone-reveal flow. Long-press the center of the
   // header to clear both flags so the grand reveal fires fresh on next mount.
   // Wired in __DEV__ only; the prop is undefined in production so production
   // callers see no behaviour change on long-press.

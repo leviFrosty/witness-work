@@ -42,7 +42,7 @@ clock time and may include time spent in another screen or in the background.
 Stable step IDs:
 `hero`, `founderNote`, `privacyFirst`, `pickUpWhereLeftOff`, `publisherType`,
 `intentPicker`, `profileSetup`, `pioneerDate`, `yourPlanPreview`, `notifications`,
-`defaultNav`, `defaultExportMethod`, `onboardingBackfill`, `supporter`.
+`defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
 
 Notification permission outcomes and import availability/outcomes help distinguish
 friction from an intentional skip. iCloud Restore completes onboarding directly,
@@ -143,6 +143,9 @@ Instrumented actions include:
   acceptance, dismissal, and undo.
 - Map selection, search opening, and Marker movement, without search text or
   coordinates.
+- Map onboarding's location step: `map_location_prompt_viewed`,
+  `map_location_permission_result` (`granted` boolean only, never coordinates),
+  and `map_location_prompt_skipped`.
 
 Events live at user-action boundaries to avoid counting hydration, sync, or import
 writes as manual feature usage. Contact archive/recovery/favorites, annual-history editing, and many individual

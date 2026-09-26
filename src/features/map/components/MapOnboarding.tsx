@@ -1,8 +1,11 @@
 import {
   Check as CheckIcon,
   CircleAlert as CircleAlertIcon,
+  LocateFixed as LocateFixedIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Users as UsersIcon,
 } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import {
   ActivityIndicator,
   Alert,
@@ -35,8 +38,49 @@ import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
+import LocationPreview from '@/features/map/components/LocationPreview'
+import { analytics } from '@/lib/analytics'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
+
+const LocationBenefit = ({
+  icon,
+  title,
+  desc,
+}: {
+  icon: AppIcon
+  title: string
+  desc: string
+}) => {
+  const theme = useTheme()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          backgroundColor: theme.colors.accentTranslucent,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <LucideIcon icon={icon} size={14} color={theme.colors.accent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {desc}
+        </Text>
+      </View>
+    </View>
+  )
+}
 
 export default function MapOnboarding() {
   const { incrementGeocodeApiCallCount, set, dataProtectionMode } =
@@ -54,7 +98,13 @@ export default function MapOnboarding() {
   const [fetchSnapshot, setFetchSnapshot] = useState<Contact[]>([])
 
   const handleLocationPermission = (status: boolean) => {
+    analytics.capture('map_location_permission_result', { granted: status })
     setLocationPermissions(status)
+    goNext()
+  }
+
+  const handleSkipLocation = () => {
+    analytics.capture('map_location_prompt_skipped')
     goNext()
   }
 
@@ -73,6 +123,10 @@ export default function MapOnboarding() {
   const [step, setStep] = useState(
     oldContactsWithAddressWithoutCoordinates.length === 0 ? 1 : 0
   )
+
+  useEffect(() => {
+    if (step === 1) analytics.capture('map_location_prompt_viewed')
+  }, [step])
 
   const hasFetched = Object.keys(statuses).length > 0
   const listData = hasFetched
@@ -406,47 +460,65 @@ export default function MapOnboarding() {
         </View>
       )}
       {step === 1 && (
-        <View style={{ flexGrow: 1, justifyContent: 'space-between' }}>
-          <View style={{ gap: 10 }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('witnessWorkWillShowYouYourLocation')}
-            </Text>
-            <Text>{i18n.t('thisMayHelpYouLocateWhereYouAre')}</Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            <View style={{ gap: 5 }}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'space-between',
+            gap: 20,
+          }}
+        >
+          <View style={{ gap: 20 }}>
+            <View style={{ gap: 6 }}>
               <Text
                 style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
+                  fontSize: theme.fontSize('xl'),
+                  fontFamily: theme.fonts.bold,
                 }}
               >
-                {i18n.t('yourLocationIsNeverSharedToExternalServices')}
+                {i18n.t('mapLocation_title')}
               </Text>
-              {locationPermissions === undefined ? (
-                <ActionButton
-                  onPress={() =>
-                    requestLocationPermission(handleLocationPermission)
-                  }
-                >
-                  <Text style={{ color: theme.colors.textInverse }}>
-                    {i18n.t('enableLocationServices')}
-                  </Text>
-                </ActionButton>
-              ) : (
-                <ActionButton onPress={goNext}>
-                  <Text style={{ color: theme.colors.textInverse }}>
-                    {i18n.t('continue')}
-                  </Text>
-                </ActionButton>
-              )}
+              <Text style={{ color: theme.colors.textAlt }}>
+                {i18n.t('mapLocation_subtitle')}
+              </Text>
             </View>
-            <Button onPress={goNext}>
+            <LocationPreview />
+            <View style={{ gap: 14 }}>
+              <LocationBenefit
+                icon={LocateFixedIcon}
+                title={i18n.t('mapLocation_hereTitle')}
+                desc={i18n.t('mapLocation_hereDesc')}
+              />
+              <LocationBenefit
+                icon={UsersIcon}
+                title={i18n.t('mapLocation_nearbyTitle')}
+                desc={i18n.t('mapLocation_nearbyDesc')}
+              />
+              <LocationBenefit
+                icon={ShieldCheckIcon}
+                title={i18n.t('mapLocation_privateTitle')}
+                desc={i18n.t('mapLocation_privateDesc')}
+              />
+            </View>
+          </View>
+          <View style={{ gap: 10 }}>
+            {locationPermissions === undefined ? (
+              <ActionButton
+                onPress={() =>
+                  requestLocationPermission(handleLocationPermission)
+                }
+              >
+                <Text style={{ color: theme.colors.textInverse }}>
+                  {i18n.t('enableLocationServices')}
+                </Text>
+              </ActionButton>
+            ) : (
+              <ActionButton onPress={goNext}>
+                <Text style={{ color: theme.colors.textInverse }}>
+                  {i18n.t('continue')}
+                </Text>
+              </ActionButton>
+            )}
+            <Button onPress={handleSkipLocation}>
               <Text
                 style={{
                   textAlign: 'center',
@@ -454,11 +526,11 @@ export default function MapOnboarding() {
                   fontSize: theme.fontSize('sm'),
                 }}
               >
-                {i18n.t('skip')}
+                {i18n.t('notNow')}
               </Text>
             </Button>
           </View>
-        </View>
+        </ScrollView>
       )}
       {step === 2 && (
         <ScrollView

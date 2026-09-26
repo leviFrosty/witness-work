@@ -1,4 +1,21 @@
-import { RotateCw as RotateCwIcon } from 'lucide-react-native'
+import {
+  Bell as BellIcon,
+  BellRing as BellRingIcon,
+  Braces as BracesIcon,
+  CalendarClock as CalendarClockIcon,
+  Cloud as CloudIcon,
+  CloudOff as CloudOffIcon,
+  Database as DatabaseIcon,
+  FlaskConical as FlaskConicalIcon,
+  HeartHandshake as HeartHandshakeIcon,
+  KeyRound as KeyRoundIcon,
+  PartyPopper as PartyPopperIcon,
+  RefreshCcw as RefreshCcwIcon,
+  RotateCw as RotateCwIcon,
+  Smartphone as SmartphoneIcon,
+  Trash2 as Trash2Icon,
+  UserRound as UserRoundIcon,
+} from 'lucide-react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -7,12 +24,12 @@ import useTheme from '@/contexts/theme'
 import { Alert, Platform, Switch, View } from 'react-native'
 import TextInput from '@/components/ui/TextInput'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import useContacts from '@/stores/contactsStore'
 import Card from '@/components/ui/Card'
+import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import Constants from 'expo-constants'
 import { hasMigratedFromAsyncStorage } from '@/stores/mmkv'
@@ -37,7 +54,6 @@ import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import * as ICloudBridge from '../../../modules/icloud-bridge/index'
 import * as Notifications from 'expo-notifications'
 import { splitDateAndStartTime } from '@/lib/normalizeDate'
-import IconButton from '@/components/ui/IconButton'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { monthCelebrationKey } from '@/lib/achievementTier'
 import { milestoneCelebrationKey } from '@/lib/milestones'
@@ -69,13 +85,14 @@ import {
 } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
-import { inputLayout } from '@/components/ui/inputs/InputLayout'
-
-const MONO = Platform.select({
-  ios: 'Menlo',
-  android: 'monospace',
-  default: 'monospace',
-})
+import {
+  MONO,
+  QuickTile,
+  ToolList,
+  ToolRow,
+  ToolSection,
+  ToolSubheading,
+} from '@/app/navigation/tools/ToolsUI'
 
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
@@ -84,45 +101,6 @@ const parseMockContactCount = (value: string) => {
   return Number.isFinite(parsed) && parsed > 0
     ? parsed
     : DEFAULT_MOCK_CONTACT_COUNT
-}
-
-const SectionHeader = ({ title, color }: { title: string; color?: string }) => {
-  const theme = useTheme()
-  return (
-    <Text
-      style={{
-        fontFamily: theme.fonts.semiBold,
-        fontSize: theme.fontSize('lg'),
-        color: color ?? theme.colors.textAlt,
-        marginTop: 10,
-        marginBottom: -5,
-      }}
-    >
-      {title}
-    </Text>
-  )
-}
-
-/** Label/value row in the debug cards; values render in mono and are selectable. */
-const InfoRow = ({ label, value }: { label: string; value: string }) => {
-  const theme = useTheme()
-  return (
-    <XView style={{ justifyContent: 'space-between', gap: 10 }}>
-      <Text style={{ fontFamily: theme.fonts.bold }}>{label}</Text>
-      <Text
-        selectable
-        style={{
-          color: theme.colors.textAlt,
-          fontFamily: MONO,
-          fontSize: theme.fontSize('sm'),
-          flexShrink: 1,
-          textAlign: 'right',
-        }}
-      >
-        {value}
-      </Text>
-    </XView>
-  )
 }
 
 /**
@@ -736,7 +714,107 @@ export default function ToolsScreen() {
     void AsyncStorage.clear()
   }
 
+  const generateAllMockData = async () => {
+    await generateContacts(mockContactCount)
+    generateServiceReports()
+    generateServicePlans()
+    generateOverdueFollowUps()
+    showDone(i18n.t('generated'))
+  }
+
+  const resetAll = () =>
+    confirmDevAction('Reset all (fresh install)', () => {
+      resetLocal()
+      showDone('All data cleared — restart the app')
+    })
+
+  const resetAllAndWipeICloud = () =>
+    Alert.alert(
+      'Reset all + wipe iCloud',
+      'This wipes local data AND every witness-work file in iCloud — affecting all devices on this Apple ID. Cannot be undone.',
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await ICloudBridge.deleteAll()
+              await ICloudBridge.deleteAllBinaries()
+            } catch (e) {
+              toast.show('iCloud wipe failed', {
+                message: (e as Error).message,
+                native: true,
+              })
+            }
+            resetLocal()
+            showDone('All data cleared (local + iCloud) — restart the app')
+          },
+        },
+      ]
+    )
+
   const cacheSize = Object.keys(cache ?? {}).length
+
+  // Month-goal celebrations key off the calendar month.
+  const now = moment()
+  const prevMonthMoment = moment().subtract(1, 'month')
+  const thisMonthKey = monthCelebrationKey(now.month(), now.year())
+  const prevMonthKey = monthCelebrationKey(
+    prevMonthMoment.month(),
+    prevMonthMoment.year()
+  )
+  const pendingCelebrations = Object.keys(celebrationQueue.pending).length
+
+  // Service-year start = current year if we're past Sep 1, otherwise the prior
+  // calendar year. Matches the Sep→Aug window used by YearMilestoneCard /
+  // MilestoneProgressBar.
+  const currentServiceYear = now.month() >= 8 ? now.year() : now.year() - 1
+  const prevServiceYear = currentServiceYear - 1
+  const currentYearKey = milestoneCelebrationKey(currentServiceYear)
+  const prevYearKey = milestoneCelebrationKey(prevServiceYear)
+  const currentMilestones = celebratedMilestones[currentYearKey] ?? []
+
+  const clearCelebratedTier = (key: string) => {
+    const { [key]: _removed, ...rest } = celebratedTiers
+    setPreferences({ celebratedTiers: rest })
+    showDone(`Cleared ${key} from celebratedTiers`)
+  }
+
+  const clearCelebratedMilestone = (key: string) => {
+    const { [key]: _removed, ...rest } = celebratedMilestones
+    setPreferences({ celebratedMilestones: rest })
+    showDone(`Cleared ${key} from celebratedMilestones`)
+  }
+
+  const deleteRows: { label: string; onConfirm: () => void }[] = [
+    {
+      label: i18n.t('forceDeleteContacts'),
+      onConfirm: _WARNING_forceDeleteContacts,
+    },
+    {
+      label: i18n.t('clearArchivedContacts'),
+      onConfirm: _WARNING_clearDeleted,
+    },
+    {
+      label: i18n.t('deleteAllConversations'),
+      onConfirm: _WARNING_forceDeleteConversations,
+    },
+    {
+      label: i18n.t('deleteReports'),
+      onConfirm: _WARNING_forceDeleteServiceReports,
+    },
+    {
+      label: i18n.t('deleteDayPlans'),
+      onConfirm: () => setServiceReports({ dayPlans: [] }),
+    },
+    {
+      label: i18n.t('deleteRecurringPlans'),
+      onConfirm: () => setServiceReports({ recurringPlans: [] }),
+    },
+  ]
+
+  const onOff = (value: boolean) => (value ? 'On' : 'Off')
 
   return (
     <View
@@ -748,79 +826,225 @@ export default function ToolsScreen() {
       }}
     >
       <KeyboardAwareScrollView
-        contentContainerStyle={{ gap: 15, paddingTop: 30, paddingBottom: 300 }}
+        contentContainerStyle={{ gap: 10, paddingTop: 30, paddingBottom: 300 }}
       >
-        <Text
-          style={{
-            fontSize: theme.fontSize('4xl'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('developerTools')}
-        </Text>
+        <View style={{ gap: 2, marginBottom: 6 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('4xl'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('developerTools')}
+          </Text>
+          <Text
+            selectable
+            style={{
+              color: theme.colors.textAlt,
+              fontFamily: MONO,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {`v${Constants.expoConfig?.version ?? '?'} · ${Platform.OS} ${Platform.Version}`}
+          </Text>
+        </View>
 
-        <SectionHeader title={i18n.t('metadata')} />
-        <Card>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {i18n.t('appVersion')}
-            </Text>
-            <Text style={{ color: theme.colors.textAlt, fontFamily: MONO }}>
-              {Constants.expoConfig?.version ?? i18n.t('versionUnknown')}
-            </Text>
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {i18n.t('migratedToMmkv')}
-            </Text>
-            <Text style={{ color: theme.colors.textAlt, fontFamily: MONO }}>
-              {`${hasMigratedFromAsyncStorage()}`}
-            </Text>
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: theme.fonts.bold }}>Platform</Text>
-            <Text style={{ color: theme.colors.textAlt, fontFamily: MONO }}>
-              {Platform.OS} {Platform.Version}
-            </Text>
+        {/* ---- Quick actions: the handful of things reached for daily ---- */}
+        <Card style={{ padding: 12, gap: 10 }}>
+          <XView style={{ flexWrap: 'wrap', gap: 10 }}>
+            <QuickTile
+              icon={FlaskConicalIcon}
+              label='Generate all mock data'
+              caption={`${mockContactCount} contacts, reports, plans`}
+              onPress={generateAllMockData}
+            />
+            <QuickTile
+              icon={RefreshCcwIcon}
+              label='Invalidate time cache'
+              caption={`${cacheSize} entries`}
+              tone='default'
+              onPress={() => {
+                invalidateAllCache()
+                showDone('Cache invalidated')
+              }}
+            />
+            <QuickTile
+              icon={Trash2Icon}
+              label='Reset all'
+              caption='Fresh install'
+              tone='destructive'
+              onPress={resetAll}
+            />
+            <QuickTile
+              icon={CloudOffIcon}
+              label='Reset all + iCloud'
+              caption='Every device on Apple ID'
+              tone='destructive'
+              onPress={resetAllAndWipeICloud}
+            />
+            {__DEV__ && (
+              <QuickTile
+                icon={HeartHandshakeIcon}
+                label={devSupporterOverride ? 'Stop supporter' : 'Be supporter'}
+                caption={`Override ${onOff(!!devSupporterOverride)}`}
+                tone='default'
+                onPress={() =>
+                  setPreferences({
+                    devSupporterOverride: devSupporterOverride
+                      ? null
+                      : new Date(),
+                  })
+                }
+              />
+            )}
+            <QuickTile
+              icon={BellRingIcon}
+              label='Test notification'
+              caption='Fires in 10s'
+              tone='default'
+              onPress={scheduleTestNotificationIn10s}
+            />
           </XView>
         </Card>
 
+        {/* ---- Data ---- */}
+        <ToolSection
+          title={i18n.t('generateMockData')}
+          icon={DatabaseIcon}
+          summary={`${contacts.length} contacts · ${conversations.length} convos`}
+          defaultExpanded
+        >
+          <ToolList>
+            <ToolRow
+              label='Contact count'
+              info='How many contacts the Contacts and Generate all actions create. Each gets conversations; the first few get Bible studies and upcoming follow-ups.'
+              trailing={
+                <TextInput
+                  value={mockContactCountInput}
+                  placeholder={`${DEFAULT_MOCK_CONTACT_COUNT}`}
+                  onChangeText={(value) =>
+                    setMockContactCountInput(value.replace(/[^0-9]/g, ''))
+                  }
+                  onBlur={() => {
+                    setMockContactCountInput(`${mockContactCount}`)
+                  }}
+                  inputMode='numeric'
+                  enterKeyHint='done'
+                  selectTextOnFocus
+                  textAlign='center'
+                  maxLength={4}
+                  style={{
+                    width: 80,
+                    minHeight: 36,
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    paddingVertical: 6,
+                    paddingHorizontal: 10,
+                    color: theme.colors.text,
+                  }}
+                />
+              }
+            />
+            <ToolRow
+              label={`${i18n.t('contacts')} (${mockContactCount})`}
+              info='Pulls names and addresses from jsonplaceholder, scatters them across San Francisco, and spreads creation dates over ~3 years so every staleness band is represented.'
+              onPress={async () => {
+                await generateContacts(mockContactCount)
+                showDone(i18n.t('generated'))
+              }}
+            />
+            <ToolRow
+              label={i18n.t('serviceReports')}
+              info='~3 years of daily entries with seeded categories, LDC credit, and realistic gaps between days.'
+              onPress={() => {
+                generateServiceReports()
+                showDone(i18n.t('generated'))
+              }}
+            />
+            <ToolRow
+              label={i18n.t('servicePlans')}
+              info='3 weekly recurring plans plus day plans spread across the past two weeks and the coming weeks.'
+              onPress={() => {
+                generateServicePlans()
+                showDone(i18n.t('generated'))
+              }}
+            />
+            <ToolRow
+              label='Overdue follow-ups'
+              info='Four contacts whose follow-ups are 5h, 1d, 7d, and 20d overdue, mixing notify and topic combinations.'
+              onPress={() => {
+                generateOverdueFollowUps()
+                showDone(i18n.t('generated'))
+              }}
+            />
+            <ToolRow
+              label='Oversized share contact'
+              info='One contact whose share link exceeds the 4 KB URL cap, to exercise the file-export fallback.'
+              onPress={() => {
+                generateOversizedShareContact()
+                showDone('Generated oversized share contact')
+              }}
+            />
+          </ToolList>
+        </ToolSection>
+
+        <ToolSection
+          title={i18n.t('dangerZone')}
+          icon={Trash2Icon}
+          tone='destructive'
+          info='Targeted deletes. Each asks for confirmation and cannot be undone. Use Reset all at the top for a full fresh-install wipe.'
+        >
+          <ToolList>
+            {deleteRows.map(({ label, onConfirm }) => (
+              <ToolRow
+                key={label}
+                label={label}
+                tone='destructive'
+                onPress={() =>
+                  confirmDevAction(label, () => {
+                    onConfirm()
+                    showDone(i18n.t('deleted'))
+                  })
+                }
+              />
+            ))}
+          </ToolList>
+        </ToolSection>
+
+        {/* ---- App state ---- */}
         {__DEV__ && (
-          <>
-            <SectionHeader title='Supporter override' />
-            <Card style={{ gap: 10 }}>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  Supporter override
-                </Text>
-                {isSupporter && <SupporterBadge />}
-              </XView>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {devSupporterOverride
-                  ? 'Forcing supporter status on. Bypasses RevenueCat.'
-                  : 'Off. useIsSupporter reads real RevenueCat state.'}
-              </Text>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>Current isSupporter:</Text>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {String(isSupporter)}
-                </Text>
-              </XView>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>Current since:</Text>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {supporterSince ? moment(supporterSince).format('ll') : '—'}
-                </Text>
-              </XView>
+          <ToolSection
+            title='Supporter'
+            icon={HeartHandshakeIcon}
+            summary={`isSupporter ${String(isSupporter)}`}
+          >
+            <ToolSubheading
+              title='Override'
+              info='When on, forces supporter status and bypasses RevenueCat. When off, useIsSupporter reads real RevenueCat state.'
+            />
+            <ToolList>
+              <ToolRow
+                label='isSupporter'
+                value={String(isSupporter)}
+                trailing={
+                  isSupporter ? (
+                    <XView style={{ gap: 8 }}>
+                      <SupporterBadge />
+                    </XView>
+                  ) : undefined
+                }
+              />
+              <ToolRow
+                label='Since'
+                value={
+                  supporterSince ? moment(supporterSince).format('ll') : '—'
+                }
+              />
               {devSupporterOverride ? (
-                <>
-                  <XView style={{ justifyContent: 'space-between' }}>
-                    <Text>Override since:</Text>
+                <ToolRow
+                  label='Override since'
+                  trailing={
                     <DateTimePicker
                       value={new Date(devSupporterOverride)}
                       maximumDate={new Date()}
@@ -828,952 +1052,633 @@ export default function ToolsScreen() {
                         if (date) setPreferences({ devSupporterOverride: date })
                       }}
                     />
-                  </XView>
-                  <ActionButton
-                    onPress={() =>
-                      setPreferences({ devSupporterOverride: null })
-                    }
-                  >
-                    Disable supporter override
-                  </ActionButton>
-                </>
-              ) : (
-                <>
-                  <ActionButton
-                    onPress={() =>
-                      setPreferences({ devSupporterOverride: new Date() })
-                    }
-                  >
-                    Enable as supporter (today)
-                  </ActionButton>
-                  <ActionButton
-                    onPress={() =>
-                      setPreferences({
-                        devSupporterOverride: moment()
-                          .subtract(2, 'years')
-                          .toDate(),
-                      })
-                    }
-                  >
-                    Enable as supporter (2 years ago)
-                  </ActionButton>
-                </>
-              )}
-            </Card>
-
-            <SectionHeader title='Supporter nudge' />
-            <Card style={{ gap: 10 }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                Force-show bypasses tenure, engagement, and cooldown gates so
-                you can see the Home card immediately. Still respects
-                !isSupporter.
-              </Text>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>Force-show nudge:</Text>
-                <Switch
-                  value={devSupporterNudgeForceShow}
-                  onValueChange={(value) =>
-                    setPreferences({ devSupporterNudgeForceShow: value })
                   }
                 />
-              </XView>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>hideSupporterNudge:</Text>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {String(hideSupporterNudge)}
-                </Text>
-              </XView>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>Last dismissed:</Text>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {supporterNudgeDismissedAt
+              ) : null}
+              {devSupporterOverride ? (
+                <ToolRow
+                  label='Disable override'
+                  onPress={() => setPreferences({ devSupporterOverride: null })}
+                />
+              ) : (
+                <ToolRow
+                  label='Enable (since today)'
+                  onPress={() =>
+                    setPreferences({ devSupporterOverride: new Date() })
+                  }
+                />
+              )}
+              {devSupporterOverride ? null : (
+                <ToolRow
+                  label='Enable (since 2 years ago)'
+                  onPress={() =>
+                    setPreferences({
+                      devSupporterOverride: moment()
+                        .subtract(2, 'years')
+                        .toDate(),
+                    })
+                  }
+                />
+              )}
+            </ToolList>
+
+            <ToolSubheading
+              title='Home nudge'
+              info='Force-show bypasses tenure, engagement, and cooldown gates so you can see the Home card immediately. Still respects !isSupporter.'
+            />
+            <ToolList>
+              <ToolRow
+                label='Force-show nudge'
+                trailing={
+                  <Switch
+                    value={devSupporterNudgeForceShow}
+                    onValueChange={(value) =>
+                      setPreferences({ devSupporterNudgeForceShow: value })
+                    }
+                  />
+                }
+              />
+              <ToolRow
+                label='hideSupporterNudge'
+                value={String(hideSupporterNudge)}
+              />
+              <ToolRow
+                label='Last dismissed'
+                value={
+                  supporterNudgeDismissedAt
                     ? moment(supporterNudgeDismissedAt).format('lll')
-                    : '—'}
-                </Text>
-              </XView>
-              <ActionButton
+                    : '—'
+                }
+              />
+              <ToolRow
+                label='Reset nudge dismissal'
                 onPress={() => {
                   setPreferences({ supporterNudgeDismissedAt: null })
                   showDone('Nudge dismissal cleared')
                 }}
-              >
-                Reset nudge dismissal
-              </ActionButton>
-            </Card>
-          </>
+              />
+            </ToolList>
+          </ToolSection>
         )}
 
-        <SectionHeader title='Notes Import — auth & attestation' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            The Notes Import auth module negotiates the worker protocol and
-            serializes challenge → assertion → protected response per key.
-            Diagnostics use the existing key through that same lane; they never
-            generate, rotate, enroll, recover, or clear lifecycle state. Repair
-            runs the attested no-op verify through the REAL protected path — if
-            Apple refuses to sign with the stored key, it re-registers under the
-            enrolled recovery credential and retries, rotating the key.
-          </Text>
-          <InfoRow label='Proxy base' value={authSnapshot.baseUrl} />
-          <InfoRow
-            label='Dev bypass'
-            value={String(authSnapshot.devBypassEnabled)}
-          />
-          <InfoRow
-            label='App Attest supported'
-            value={String(authSnapshot.appAttestSupported)}
-          />
-          <InfoRow
-            label='Negotiated protocol'
-            value={
-              authSnapshot.negotiatedProtocolVersion
-                ? `v${authSnapshot.negotiatedProtocolVersion}`
-                : 'not negotiated'
-            }
-          />
-          <InfoRow label='Active key' value={authSnapshot.activeKey} />
-          <InfoRow label='Recovery token' value={authSnapshot.recoveryToken} />
-          <InfoRow
-            label='Recovery enrollment'
-            value={authSnapshot.recoveryEnrollment}
-          />
-          <InfoRow
-            label='Install identity'
-            value={authSnapshot.installIdentity}
-          />
-          <InfoRow
-            label='Account identity'
-            value={authSnapshot.accountIdentity}
-          />
-          <InfoRow
-            label='Pending lifecycle operation'
-            value={
-              authSnapshot.pendingOperation
-                ? `${authSnapshot.pendingOperation.kind}/${authSnapshot.pendingOperation.stage}`
-                : 'none'
-            }
-          />
-          <ActionButton
-            disabled={authBusy}
-            onPress={() => void runAuthDiagnostics()}
-          >
-            {authBusy ? 'Running…' : 'Run auth diagnostics'}
-          </ActionButton>
-          <ActionButton
-            disabled={authBusy}
-            onPress={() => void runAuthRepair()}
-          >
-            {authBusy ? 'Running…' : 'Run attestation repair (verify)'}
-          </ActionButton>
-          <ActionButton onPress={() => void probeProxy()}>
-            Probe /health + /status
-          </ActionButton>
-          <JsonViewer
-            label='Auth snapshot (redacted)'
-            value={authSnapshot}
-            count={Object.keys(authSnapshot).length}
-          />
-          <JsonViewer
-            label='Diagnostics report'
-            value={authReport}
-            count={authReport?.steps.length ?? 0}
-          />
-          <JsonViewer
-            label='Repair report'
-            value={repairReport}
-            count={repairReport?.steps.length ?? 0}
-          />
-          <JsonViewer
-            label='Proxy health / status'
-            value={proxyProbe}
-            count={proxyProbe ? 2 : 0}
-          />
-        </Card>
-
-        <SectionHeader title='Notes Import — usage & limits' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            The proxy meters by account id (1 credit per distinct source text;
-            replays and refinements are free, refinements capped per import;
-            Supporters unmetered). There is no read-only usage endpoint — the
-            snapshot below is the credits object from the most recent
-            kickoff/done response this session, so it&apos;s empty until an
-            import runs.
-          </Text>
-          <InfoRow
-            label='Server isSupporter'
-            value={
-              notesImportCredits ? String(notesImportCredits.isSupporter) : '—'
-            }
-          />
-          <InfoRow
-            label='Imports remaining'
-            value={
-              notesImportCredits
-                ? notesImportCredits.remaining === null
-                  ? '∞'
-                  : `${notesImportCredits.remaining} / ${notesImportCredits.limit}`
-                : '—'
-            }
-          />
-          <InfoRow
-            label='Refinements remaining'
-            value={
-              notesImportCredits
-                ? `${notesImportCredits.refinements.remaining} / ${notesImportCredits.refinements.limit}`
-                : '—'
-            }
-          />
-          <InfoRow
-            label='Client concurrency cap'
-            value={`${clientImportCap(isSupporter)} (isSupporter=${String(isSupporter)})`}
-          />
-          <JsonViewer
-            label='Last credits snapshot'
-            value={notesImportCredits}
-            count={notesImportCredits ? 1 : 0}
-          />
-        </Card>
-
-        <SectionHeader title='Supporter sync (iCloud account id)' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            One account id per Apple ID, agreed via the account file in the
-            iCloud container: the entitled device claims it, every other device
-            adopts it (RevenueCat logIn), so Supporter status follows with no
-            sign-in. Read the file to see the current claim and the reconcile
-            action THIS device would take right now.
-          </Text>
-          <InfoRow label='Account id (context)' value={shortId(accountId)} />
-          <InfoRow label='Install id' value={shortId(getOrCreateInstallId())} />
-          <InfoRow
-            label='iCloud sharing available'
-            value={String(iCloudSharingAvailable)}
-          />
-          <InfoRow label='Entitled (RevenueCat)' value={String(entitled)} />
-          <InfoRow
-            label='isSupporter (effective)'
-            value={String(isSupporter)}
-          />
-          <InfoRow
-            label='Supporter since'
-            value={supporterSince ? moment(supporterSince).format('ll') : '—'}
-          />
-          <ActionButton onPress={() => void inspectAccountFile()}>
-            Read iCloud account file
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction('Clear adopted account id', () => {
-                clearAdoptedAccountId()
-                showDone('Adopted id cleared — falls back to install id')
-              })
-            }
-          >
-            Clear adopted account id
-          </ActionButton>
-          <JsonViewer
-            label='Account file + reconcile decision'
-            value={accountFileInspection}
-            count={accountFileInspection ? 1 : 0}
-          />
-        </Card>
-
-        {Platform.OS === 'ios' && (
-          <>
-            <SectionHeader title='App icon alerts' />
-            <Card style={{ gap: 10 }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                By default, app-icon changes (manual picks, seasonal rotation,
-                supporter-lapse reverts) bypass the iOS &quot;App Icon
-                Updated&quot; system alert via a patched private selector. Flip
-                this on to use the public API instead — the alert will fire on
-                every change, useful for confirming a change actually landed
-                when the icon doesn&apos;t appear to update.
-              </Text>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Text>Show system alert on icon change:</Text>
+        <ToolSection
+          title='Time rollover'
+          icon={CalendarClockIcon}
+          info='Override the "today" the rollover system uses, then re-trigger the check. Lets you simulate opening the app on the 1st of next month without waiting for the calendar to flip. Only affects rollover — every other date in the app still uses the real clock.'
+          summary={
+            devRolloverDateOverride
+              ? `Today = ${moment(devRolloverDateOverride).format('ll')}`
+              : `${rollover.pending.length} pending`
+          }
+        >
+          <ToolList>
+            <ToolRow
+              label='Pending rollovers'
+              value={
+                rollover.pending.length === 0
+                  ? 'none'
+                  : `${rollover.pending.length} (${rollover.totalMinutes}m)`
+              }
+            />
+            <ToolRow
+              label='lastRolloverYearMonth'
+              value={lastRolloverYearMonth ?? '—'}
+            />
+            <ToolRow
+              label='Auto rollover'
+              trailing={
                 <Switch
-                  value={devShowAppIconAlerts}
+                  value={autoRolloverEnabled}
                   onValueChange={(value) =>
-                    setPreferences({ devShowAppIconAlerts: value })
+                    setPreferences({ autoRolloverEnabled: value })
                   }
                 />
-              </XView>
-            </Card>
-          </>
-        )}
-
-        <SectionHeader title='Profile simulation' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            Keeps onboardingComplete=true but clears profile fields so the
-            post-update prompt re-appears. Use this to validate the upgrade flow
-            for existing users.
-          </Text>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>hasCompletedProfileSetup:</Text>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {String(hasCompletedProfileSetup)}
-            </Text>
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>name:</Text>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {name ? name : '—'}
-            </Text>
-          </XView>
-          <ActionButton
-            onPress={() => {
-              setPreferences({
-                onboardingComplete: true,
-                tenureStartDate: null,
-              })
-              setProfile({
-                hasCompletedProfileSetup: false,
-                name: '',
-                avatar: { type: 'none', value: '' },
-              })
-              showDone('Reset to pre-profile state')
-            }}
-          >
-            Reset profile data (keep onboarded)
-          </ActionButton>
-        </Card>
-
-        <SectionHeader title='Time rollover' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            Override the &quot;today&quot; the rollover system uses, then
-            re-trigger the check. Lets you simulate opening the app on the 1st
-            of next month without waiting for the calendar to flip. Only affects
-            rollover — every other date in the app still uses the real clock.
-          </Text>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>Pending rollovers:</Text>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {rollover.pending.length === 0
-                ? 'none'
-                : `${rollover.pending.length} (${rollover.totalMinutes}m)`}
-            </Text>
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>lastRolloverYearMonth:</Text>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {lastRolloverYearMonth ?? '—'}
-            </Text>
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>autoRolloverEnabled:</Text>
-            <Switch
-              value={autoRolloverEnabled}
-              onValueChange={(value) =>
-                setPreferences({ autoRolloverEnabled: value })
               }
             />
-          </XView>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>Override &quot;today&quot;:</Text>
-            <DateTimePicker
-              value={
+            <ToolRow
+              label='Override "today"'
+              info={
                 devRolloverDateOverride
-                  ? new Date(devRolloverDateOverride)
-                  : new Date()
+                  ? `Active. Using ${moment(devRolloverDateOverride).format('LL')} as today.`
+                  : 'Off. Using real clock.'
               }
-              onChange={(_, date) => {
-                if (date) setPreferences({ devRolloverDateOverride: date })
-              }}
+              trailing={
+                <DateTimePicker
+                  value={
+                    devRolloverDateOverride
+                      ? new Date(devRolloverDateOverride)
+                      : new Date()
+                  }
+                  onChange={(_, date) => {
+                    if (date) setPreferences({ devRolloverDateOverride: date })
+                  }}
+                />
+              }
             />
-          </XView>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {devRolloverDateOverride
-              ? `Active. Using ${moment(devRolloverDateOverride).format('LL')} as today.`
-              : 'Off. Using real clock.'}
-          </Text>
-          {devRolloverDateOverride && (
-            <ActionButton
+            <ToolRow
+              label='Run rollover check now'
               onPress={() => {
-                setPreferences({ devRolloverDateOverride: null })
-                showDone('Date override cleared')
-              }}
-            >
-              Clear date override
-            </ActionButton>
-          )}
-          <ActionButton
-            onPress={() => {
-              setPreferences({ lastRolloverYearMonth: null })
-              showDone('Marker cleared')
-            }}
-          >
-            Clear rollover marker
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              if (rollover.pending.length === 0) {
-                toast.show('Nothing pending', {
-                  message: 'No fractional minutes to roll over right now.',
-                  native: true,
-                })
-                return
-              }
-              if (autoRolloverEnabled) {
-                rollover.apply()
-                showDone('Applied silently')
-              } else {
-                navigation.navigate('Rollover')
-              }
-            }}
-          >
-            Run rollover check now
-          </ActionButton>
-        </Card>
-
-        <SectionHeader title={i18n.t('generateMockData')} />
-        <Card style={{ gap: 5 }}>
-          <XView
-            style={{
-              alignItems: 'center',
-              gap: 10,
-              justifyContent: 'space-between',
-            }}
-          >
-            <Text style={{ fontFamily: theme.fonts.bold }}>Mock contacts</Text>
-            <TextInput
-              value={mockContactCountInput}
-              placeholder={`${DEFAULT_MOCK_CONTACT_COUNT}`}
-              onChangeText={(value) =>
-                setMockContactCountInput(value.replace(/[^0-9]/g, ''))
-              }
-              onBlur={() => {
-                setMockContactCountInput(`${mockContactCount}`)
-              }}
-              inputMode='numeric'
-              enterKeyHint='done'
-              selectTextOnFocus
-              textAlign='center'
-              maxLength={4}
-              style={{
-                minWidth: 72,
-                width: 120,
-                maxWidth: inputLayout.controlMaxWidth,
-                minHeight: inputLayout.controlMinHeight,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-                borderRadius: theme.numbers.borderRadiusSm,
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                color: theme.colors.text,
+                if (rollover.pending.length === 0) {
+                  toast.show('Nothing pending', {
+                    message: 'No fractional minutes to roll over right now.',
+                    native: true,
+                  })
+                  return
+                }
+                if (autoRolloverEnabled) {
+                  rollover.apply()
+                  showDone('Applied silently')
+                } else {
+                  navigation.navigate('Rollover')
+                }
               }}
             />
-          </XView>
-          <ActionButton
-            onPress={async () => {
-              await generateContacts(mockContactCount)
-              showDone(i18n.t('generated'))
-            }}
-          >
-            {`${i18n.t('contacts')} (${mockContactCount})`}
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              generateServiceReports()
-              showDone(i18n.t('generated'))
-            }}
-          >
-            {i18n.t('serviceReports')}
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              generateServicePlans()
-              showDone(i18n.t('generated'))
-            }}
-          >
-            {i18n.t('servicePlans')}
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              generateOverdueFollowUps()
-              showDone(i18n.t('generated'))
-            }}
-          >
-            Overdue follow-ups
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              generateOversizedShareContact()
-              showDone('Generated oversized share contact')
-            }}
-          >
-            Oversized contact (share-link cap)
-          </ActionButton>
-        </Card>
-
-        <SectionHeader title='Plan notifications' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            End-to-end checks for the day-plan notification feature. Requires
-            iOS notification permission. Generated plans appear in the normal
-            day-plan list and respect the same delete-cancels-notification
-            wiring.
-          </Text>
-          <ActionButton onPress={scheduleTestNotificationIn10s}>
-            Schedule test notification (10s)
-          </ActionButton>
-          <ActionButton onPress={generateImminentDayPlanWithNotification}>
-            Generate plan with imminent notification (~2min)
-          </ActionButton>
-          <ActionButton onPress={cancelAllScheduledNotifications}>
-            Cancel all scheduled
-          </ActionButton>
-          <XView style={{ justifyContent: 'space-between', marginTop: 5 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
+            {devRolloverDateOverride ? (
+              <ToolRow
+                label='Clear date override'
+                onPress={() => {
+                  setPreferences({ devRolloverDateOverride: null })
+                  showDone('Date override cleared')
+                }}
+              />
+            ) : null}
+            <ToolRow
+              label='Clear rollover marker'
+              onPress={() => {
+                setPreferences({ lastRolloverYearMonth: null })
+                showDone('Marker cleared')
               }}
-            >
-              Scheduled (OS queue)
-            </Text>
-            <IconButton
-              icon={RotateCwIcon}
-              color={theme.colors.text}
+            />
+          </ToolList>
+        </ToolSection>
+
+        <ToolSection
+          title='Celebrations'
+          icon={PartyPopperIcon}
+          summary={`${pendingCelebrations} queued`}
+        >
+          <ToolSubheading
+            title='Month goal'
+            info='The queue is the in-memory handoff AddTimeScreen.submit() uses to ask MonthSummary for fireworks on focus. celebratedTiers is the persisted record of which tiers fired for which month — once a tier is in here, MonthSummary stops firing the on-mount celebration for it. To verify focus-gating: queue a month, stay on a different tab, and confirm nothing fires until you navigate to that month.'
+          />
+          <ToolList>
+            <ToolRow
+              label='Pending in queue'
+              value={`${pendingCelebrations}`}
+            />
+            <ToolRow
+              label='celebratedTiers months'
+              value={`${Object.keys(celebratedTiers).length}`}
+            />
+            <ToolRow label='This month key' value={thisMonthKey} />
+            <ToolRow
+              label={`Queue fireworks · ${now.format('MMM YYYY')}`}
+              onPress={() => {
+                celebrationQueue.queue(now.month(), now.year())
+                showDone(`Queued ${thisMonthKey}`)
+              }}
+            />
+            <ToolRow
+              label={`Queue fireworks · ${prevMonthMoment.format('MMM YYYY')}`}
+              onPress={() => {
+                celebrationQueue.queue(
+                  prevMonthMoment.month(),
+                  prevMonthMoment.year()
+                )
+                showDone(`Queued ${prevMonthKey}`)
+              }}
+            />
+            <ToolRow
+              label='Clear celebration queue'
+              onPress={() => {
+                useCelebrationQueue.setState({ pending: {} })
+                showDone('Queue cleared')
+              }}
+            />
+            <ToolRow
+              label='Reset this month’s tiers'
+              onPress={() => clearCelebratedTier(thisMonthKey)}
+            />
+            <ToolRow
+              label='Reset ALL celebratedTiers'
+              tone='destructive'
+              onPress={() =>
+                confirmDevAction('Reset all celebratedTiers', () => {
+                  setPreferences({ celebratedTiers: {} })
+                  showDone('All celebratedTiers cleared')
+                })
+              }
+            />
+          </ToolList>
+          <View style={{ gap: 8, paddingTop: 8 }}>
+            <JsonViewer
+              label='Celebration queue (pending)'
+              value={celebrationQueue.pending}
+              count={pendingCelebrations}
+            />
+            <JsonViewer
+              label='celebratedTiers'
+              value={celebratedTiers}
+              count={Object.keys(celebratedTiers).length}
+            />
+          </View>
+
+          <ToolSubheading
+            title='Year milestones'
+            info='Year-tab analogue of celebratedTiers. Resetting an entry replays the seal pulse + haptic (and, for the annual goal, fireworks) the next time the Year tab is focused with a hit milestone the user hasn’t been shown yet. Service years run Sep–Aug, keyed by the START year.'
+          />
+          <ToolList>
+            <ToolRow
+              label='celebratedMilestones years'
+              value={`${Object.keys(celebratedMilestones).length}`}
+            />
+            <ToolRow label='Current service-year key' value={currentYearKey} />
+            <ToolRow
+              label='Celebrated this year'
+              value={
+                currentMilestones.length === 0
+                  ? '—'
+                  : currentMilestones.join(', ')
+              }
+            />
+            <ToolRow
+              label={`Reset ${currentServiceYear}–${currentServiceYear + 1}`}
+              onPress={() => clearCelebratedMilestone(currentYearKey)}
+            />
+            <ToolRow
+              label={`Reset ${prevServiceYear}–${prevServiceYear + 1}`}
+              onPress={() => clearCelebratedMilestone(prevYearKey)}
+            />
+            <ToolRow
+              label='Reset ALL celebratedMilestones'
+              tone='destructive'
+              onPress={() =>
+                confirmDevAction('Reset all celebratedMilestones', () => {
+                  setPreferences({ celebratedMilestones: {} })
+                  showDone('All celebratedMilestones cleared')
+                })
+              }
+            />
+          </ToolList>
+          <View style={{ paddingTop: 8 }}>
+            <JsonViewer
+              label='celebratedMilestones'
+              value={celebratedMilestones}
+              count={Object.keys(celebratedMilestones).length}
+            />
+          </View>
+        </ToolSection>
+
+        <ToolSection
+          title='Profile & reports'
+          icon={UserRoundIcon}
+          summary={name ? name : 'No name'}
+        >
+          <ToolList>
+            <ToolRow
+              label='hasCompletedProfileSetup'
+              value={String(hasCompletedProfileSetup)}
+            />
+            <ToolRow label='Name' value={name ? name : '—'} />
+            <ToolRow
+              label='Reset profile (keep onboarded)'
+              info='Keeps onboardingComplete=true but clears profile fields so the post-update prompt re-appears. Use this to validate the upgrade flow for existing users.'
+              onPress={() => {
+                setPreferences({
+                  onboardingComplete: true,
+                  tenureStartDate: null,
+                })
+                setProfile({
+                  hasCompletedProfileSetup: false,
+                  name: '',
+                  avatar: { type: 'none', value: '' },
+                })
+                showDone('Reset to pre-profile state')
+              }}
+            />
+            <ToolRow
+              label='Submitted months'
+              value={
+                submittedReportMonths.length === 0
+                  ? '—'
+                  : submittedReportMonths.join(', ')
+              }
+            />
+            <ToolRow
+              label='Clear submitted reports'
+              info='submittedReportMonths drives the Home-screen "Submit <month>’s Report" reminder — it appears while the previous month’s YYYY-MM key is absent. Clearing brings the reminder (and the report screen’s submit CTA state) back.'
+              onPress={() => {
+                setPreferences({ submittedReportMonths: [] })
+                showDone('Submitted reports cleared')
+              }}
+            />
+          </ToolList>
+        </ToolSection>
+
+        <ToolSection
+          title='Plan notifications'
+          icon={BellIcon}
+          info='End-to-end checks for the day-plan notification feature. Requires iOS notification permission. Generated plans appear in the normal day-plan list and respect the same delete-cancels-notification wiring.'
+          summary={`${scheduledNotifications.length} in queue`}
+        >
+          <ToolList>
+            <ToolRow
+              label='Schedule test notification (10s)'
+              onPress={scheduleTestNotificationIn10s}
+            />
+            <ToolRow
+              label='Plan with imminent notification'
+              info='Creates a day plan starting in 3 minutes with a 1-minute notify offset, so the notification fires in ~2 minutes. Deleting the plan through the normal UI cancels it.'
+              onPress={generateImminentDayPlanWithNotification}
+            />
+            <ToolRow
+              label='Refresh OS queue'
+              trailing={
+                <LucideIcon
+                  icon={RotateCwIcon}
+                  size={theme.fontSize('md')}
+                  color={theme.colors.accent}
+                />
+              }
               onPress={async () => {
                 const count = await refreshScheduledNotifications()
                 toast.show(`${count} scheduled`, { message: '', native: true })
               }}
             />
-          </XView>
-          <JsonViewer
-            label='Scheduled (OS queue)'
-            value={scheduledNotifications}
-            count={scheduledNotifications.length}
+            <ToolRow
+              label='Cancel all scheduled'
+              tone='destructive'
+              onPress={cancelAllScheduledNotifications}
+            />
+          </ToolList>
+          <View style={{ paddingTop: 8 }}>
+            <JsonViewer
+              label='Scheduled (OS queue)'
+              value={scheduledNotifications}
+              count={scheduledNotifications.length}
+            />
+          </View>
+        </ToolSection>
+
+        {/* ---- Integrations ---- */}
+        <ToolSection
+          title='Supporter sync'
+          icon={CloudIcon}
+          info='One account id per Apple ID, agreed via the account file in the iCloud container: the entitled device claims it, every other device adopts it (RevenueCat logIn), so Supporter status follows with no sign-in. Read the file to see the current claim and the reconcile action THIS device would take right now.'
+          summary={shortId(accountId)}
+        >
+          <ToolList>
+            <ToolRow label='Account id' value={shortId(accountId)} />
+            <ToolRow
+              label='Install id'
+              value={shortId(getOrCreateInstallId())}
+            />
+            <ToolRow
+              label='iCloud sharing'
+              value={String(iCloudSharingAvailable)}
+            />
+            <ToolRow label='Entitled (RevenueCat)' value={String(entitled)} />
+            <ToolRow
+              label='isSupporter (effective)'
+              value={String(isSupporter)}
+            />
+            <ToolRow
+              label='Read iCloud account file'
+              onPress={() => void inspectAccountFile()}
+            />
+            <ToolRow
+              label='Clear adopted account id'
+              tone='destructive'
+              info='Falls back to this install’s id until the next reconcile pass.'
+              onPress={() =>
+                confirmDevAction('Clear adopted account id', () => {
+                  clearAdoptedAccountId()
+                  showDone('Adopted id cleared — falls back to install id')
+                })
+              }
+            />
+          </ToolList>
+          <View style={{ paddingTop: 8 }}>
+            <JsonViewer
+              label='Account file + reconcile decision'
+              value={accountFileInspection}
+              count={accountFileInspection ? 1 : 0}
+            />
+          </View>
+        </ToolSection>
+
+        <ToolSection
+          title='Notes Import'
+          icon={KeyRoundIcon}
+          summary={
+            notesImportCredits
+              ? notesImportCredits.remaining === null
+                ? '∞ imports'
+                : `${notesImportCredits.remaining}/${notesImportCredits.limit} imports`
+              : undefined
+          }
+        >
+          <ToolSubheading
+            title='Auth & attestation'
+            info='The auth module negotiates the worker protocol and serializes challenge → assertion → protected response per key. Diagnostics use the existing key through that same lane; they never generate, rotate, enroll, recover, or clear lifecycle state. Repair runs the attested no-op verify through the REAL protected path — if Apple refuses to sign with the stored key, it re-registers under the enrolled recovery credential and retries, rotating the key.'
           />
-        </Card>
+          <ToolList>
+            <ToolRow
+              label={authBusy ? 'Running…' : 'Run auth diagnostics'}
+              disabled={authBusy}
+              onPress={() => void runAuthDiagnostics()}
+            />
+            <ToolRow
+              label={authBusy ? 'Running…' : 'Run attestation repair'}
+              disabled={authBusy}
+              onPress={() => void runAuthRepair()}
+            />
+            <ToolRow
+              label='Probe /health + /status'
+              onPress={() => void probeProxy()}
+            />
+            <ToolRow label='Proxy base' value={authSnapshot.baseUrl} />
+            <ToolRow
+              label='Dev bypass'
+              value={String(authSnapshot.devBypassEnabled)}
+            />
+            <ToolRow
+              label='App Attest supported'
+              value={String(authSnapshot.appAttestSupported)}
+            />
+            <ToolRow
+              label='Protocol'
+              value={
+                authSnapshot.negotiatedProtocolVersion
+                  ? `v${authSnapshot.negotiatedProtocolVersion}`
+                  : 'not negotiated'
+              }
+            />
+            <ToolRow label='Active key' value={authSnapshot.activeKey} />
+            <ToolRow
+              label='Recovery token'
+              value={authSnapshot.recoveryToken}
+            />
+            <ToolRow
+              label='Recovery enrollment'
+              value={authSnapshot.recoveryEnrollment}
+            />
+            <ToolRow
+              label='Install identity'
+              value={authSnapshot.installIdentity}
+            />
+            <ToolRow
+              label='Account identity'
+              value={authSnapshot.accountIdentity}
+            />
+            <ToolRow
+              label='Pending lifecycle op'
+              value={
+                authSnapshot.pendingOperation
+                  ? `${authSnapshot.pendingOperation.kind}/${authSnapshot.pendingOperation.stage}`
+                  : 'none'
+              }
+            />
+          </ToolList>
+          <View style={{ gap: 8, paddingTop: 8 }}>
+            <JsonViewer
+              label='Auth snapshot (redacted)'
+              value={authSnapshot}
+              count={Object.keys(authSnapshot).length}
+            />
+            <JsonViewer
+              label='Diagnostics report'
+              value={authReport}
+              count={authReport?.steps.length ?? 0}
+            />
+            <JsonViewer
+              label='Repair report'
+              value={repairReport}
+              count={repairReport?.steps.length ?? 0}
+            />
+            <JsonViewer
+              label='Proxy health / status'
+              value={proxyProbe}
+              count={proxyProbe ? 2 : 0}
+            />
+          </View>
 
-        <SectionHeader title='Report submission' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            submittedReportMonths drives the Home-screen &quot;Submit
-            &lt;month&gt;&apos;s Report&quot; reminder — it appears while the
-            previous month&apos;s YYYY-MM key is absent. Clearing brings the
-            reminder (and the report screen&apos;s submit CTA state) back.
-          </Text>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>Submitted months:</Text>
-            <Text style={{ color: theme.colors.textAlt, fontFamily: MONO }}>
-              {submittedReportMonths.length === 0
-                ? '—'
-                : submittedReportMonths.join(', ')}
-            </Text>
-          </XView>
-          <ActionButton
-            onPress={() => {
-              setPreferences({ submittedReportMonths: [] })
-              showDone('Submitted reports cleared')
-            }}
-          >
-            Clear submitted reports
-          </ActionButton>
-        </Card>
-
-        <SectionHeader title='Celebrations' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            Two halves of the month-goal celebration. The queue is the in-memory
-            handoff AddTimeScreen.submit() uses to ask MonthSummary for
-            fireworks on focus. celebratedTiers is the persisted record of which
-            tiers fired for which month — once a tier is in here, MonthSummary
-            stops firing the on-mount celebration for it. To verify
-            focus-gating: queue a month, stay on a different tab, and confirm
-            nothing fires until you navigate to that month.
-          </Text>
-          {(() => {
-            const now = moment()
-            const thisMonth = now.month()
-            const thisYear = now.year()
-            const prev = moment().subtract(1, 'month')
-            const prevMonth = prev.month()
-            const prevYear = prev.year()
-            const thisKey = monthCelebrationKey(thisMonth, thisYear)
-            const prevKey = monthCelebrationKey(prevMonth, prevYear)
-            const pendingCount = Object.keys(celebrationQueue.pending).length
-            const celebratedCount = Object.keys(celebratedTiers).length
-            return (
-              <>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>Pending in queue:</Text>
-                  <Text style={{ fontFamily: theme.fonts.bold }}>
-                    {pendingCount}
-                  </Text>
-                </XView>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>celebratedTiers months:</Text>
-                  <Text style={{ fontFamily: theme.fonts.bold }}>
-                    {celebratedCount}
-                  </Text>
-                </XView>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>This month key:</Text>
-                  <Text
-                    style={{ color: theme.colors.textAlt, fontFamily: MONO }}
-                  >
-                    {thisKey}
-                  </Text>
-                </XView>
-                <ActionButton
-                  onPress={() => {
-                    celebrationQueue.queue(thisMonth, thisYear)
-                    showDone(`Queued ${thisKey}`)
-                  }}
-                >
-                  {`Queue fireworks for this month (${now.format('MMM YYYY')})`}
-                </ActionButton>
-                <ActionButton
-                  onPress={() => {
-                    celebrationQueue.queue(prevMonth, prevYear)
-                    showDone(`Queued ${prevKey}`)
-                  }}
-                >
-                  {`Queue fireworks for previous month (${prev.format('MMM YYYY')})`}
-                </ActionButton>
-                <ActionButton
-                  onPress={() => {
-                    useCelebrationQueue.setState({ pending: {} })
-                    showDone('Queue cleared')
-                  }}
-                >
-                  Clear celebration queue
-                </ActionButton>
-                <ActionButton
-                  onPress={() => {
-                    const { [thisKey]: _removed, ...rest } = celebratedTiers
-                    setPreferences({ celebratedTiers: rest })
-                    showDone(`Cleared ${thisKey} from celebratedTiers`)
-                  }}
-                >
-                  Reset celebratedTiers for this month
-                </ActionButton>
-                <ActionButton
-                  onPress={() =>
-                    confirmDevAction('Reset all celebratedTiers', () => {
-                      setPreferences({ celebratedTiers: {} })
-                      showDone('All celebratedTiers cleared')
-                    })
-                  }
-                >
-                  Reset ALL celebratedTiers
-                </ActionButton>
-              </>
-            )
-          })()}
-          <JsonViewer
-            label='Celebration queue (pending)'
-            value={celebrationQueue.pending}
-            count={Object.keys(celebrationQueue.pending).length}
+          <ToolSubheading
+            title='Usage & limits'
+            info='The proxy meters by account id (1 credit per distinct source text; replays and refinements are free, refinements capped per import; Supporters unmetered). There is no read-only usage endpoint — these values come from the most recent kickoff/done response this session, so they’re empty until an import runs.'
           />
-          <JsonViewer
-            label='celebratedTiers'
-            value={celebratedTiers}
-            count={Object.keys(celebratedTiers).length}
-          />
-        </Card>
+          <ToolList>
+            <ToolRow
+              label='Server isSupporter'
+              value={
+                notesImportCredits
+                  ? String(notesImportCredits.isSupporter)
+                  : '—'
+              }
+            />
+            <ToolRow
+              label='Imports remaining'
+              value={
+                notesImportCredits
+                  ? notesImportCredits.remaining === null
+                    ? '∞'
+                    : `${notesImportCredits.remaining} / ${notesImportCredits.limit}`
+                  : '—'
+              }
+            />
+            <ToolRow
+              label='Refinements remaining'
+              value={
+                notesImportCredits
+                  ? `${notesImportCredits.refinements.remaining} / ${notesImportCredits.refinements.limit}`
+                  : '—'
+              }
+            />
+            <ToolRow
+              label='Client concurrency cap'
+              value={`${clientImportCap(isSupporter)}`}
+            />
+          </ToolList>
+          <View style={{ paddingTop: 8 }}>
+            <JsonViewer
+              label='Last credits snapshot'
+              value={notesImportCredits}
+              count={notesImportCredits ? 1 : 0}
+            />
+          </View>
+        </ToolSection>
 
-        <SectionHeader title='Year milestones' />
-        <Card style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            Year-tab analogue of celebratedTiers. Resetting an entry replays the
-            seal pulse + haptic (and, for the annual goal, fireworks) the next
-            time the Year tab is focused with a hit milestone the user hasn’t
-            been shown yet. Computes the current service year the same way
-            YearMilestoneCard does: Sep–Aug, keyed by the START year.
-          </Text>
-          {(() => {
-            // Service-year start = current year if we’re past Sep 1, otherwise
-            // the prior calendar year. Matches the Sep→Aug window used by
-            // YearMilestoneCard / MilestoneProgressBar.
-            const now = moment()
-            const currentServiceYear =
-              now.month() >= 8 ? now.year() : now.year() - 1
-            const prevServiceYear = currentServiceYear - 1
-            const currentKey = milestoneCelebrationKey(currentServiceYear)
-            const prevKey = milestoneCelebrationKey(prevServiceYear)
-            const celebratedYearCount = Object.keys(celebratedMilestones).length
-            const currentMilestones = celebratedMilestones[currentKey] ?? []
-            return (
-              <>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>celebratedMilestones years:</Text>
-                  <Text style={{ fontFamily: theme.fonts.bold }}>
-                    {celebratedYearCount}
-                  </Text>
-                </XView>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>Current service-year key:</Text>
-                  <Text
-                    style={{ color: theme.colors.textAlt, fontFamily: MONO }}
-                  >
-                    {currentKey}
-                  </Text>
-                </XView>
-                <XView style={{ justifyContent: 'space-between' }}>
-                  <Text>Celebrated this year:</Text>
-                  <Text style={{ fontFamily: theme.fonts.bold }}>
-                    {currentMilestones.length === 0
-                      ? '—'
-                      : currentMilestones.join(', ')}
-                  </Text>
-                </XView>
-                <ActionButton
-                  onPress={() => {
-                    const { [currentKey]: _removed, ...rest } =
-                      celebratedMilestones
-                    setPreferences({ celebratedMilestones: rest })
-                    showDone(`Cleared ${currentKey} from celebratedMilestones`)
-                  }}
-                >
-                  {`Reset celebratedMilestones for current year (${currentServiceYear}-${currentServiceYear + 1})`}
-                </ActionButton>
-                <ActionButton
-                  onPress={() => {
-                    const { [prevKey]: _removed, ...rest } =
-                      celebratedMilestones
-                    setPreferences({ celebratedMilestones: rest })
-                    showDone(`Cleared ${prevKey} from celebratedMilestones`)
-                  }}
-                >
-                  {`Reset celebratedMilestones for previous year (${prevServiceYear}-${prevServiceYear + 1})`}
-                </ActionButton>
-                <ActionButton
-                  onPress={() =>
-                    confirmDevAction('Reset all celebratedMilestones', () => {
-                      setPreferences({ celebratedMilestones: {} })
-                      showDone('All celebratedMilestones cleared')
-                    })
-                  }
-                >
-                  Reset ALL celebratedMilestones
-                </ActionButton>
-              </>
-            )
-          })()}
-          <JsonViewer
-            label='celebratedMilestones'
-            value={celebratedMilestones}
-            count={Object.keys(celebratedMilestones).length}
-          />
-        </Card>
+        {/* ---- Device & raw data ---- */}
+        <ToolSection title={i18n.t('metadata')} icon={SmartphoneIcon}>
+          <ToolList>
+            <ToolRow
+              label={i18n.t('appVersion')}
+              value={Constants.expoConfig?.version ?? i18n.t('versionUnknown')}
+            />
+            <ToolRow
+              label='Platform'
+              value={`${Platform.OS} ${Platform.Version}`}
+            />
+            <ToolRow
+              label={i18n.t('migratedToMmkv')}
+              value={`${hasMigratedFromAsyncStorage()}`}
+            />
+            {Platform.OS === 'ios' ? (
+              <ToolRow
+                label='Show app icon alerts'
+                info='By default, app-icon changes (manual picks, seasonal rotation, supporter-lapse reverts) bypass the iOS "App Icon Updated" system alert via a patched private selector. Turn this on to use the public API instead — the alert fires on every change, useful for confirming a change landed when the icon doesn’t appear to update.'
+                trailing={
+                  <Switch
+                    value={devShowAppIconAlerts}
+                    onValueChange={(value) =>
+                      setPreferences({ devShowAppIconAlerts: value })
+                    }
+                  />
+                }
+              />
+            ) : null}
+          </ToolList>
+        </ToolSection>
 
-        <SectionHeader title={i18n.t('dangerZone')} color={theme.colors.warn} />
-        <Card style={{ gap: 5 }}>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('forceDeleteContacts'), () => {
-                _WARNING_forceDeleteContacts()
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('forceDeleteContacts')}
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('deleteReports'), () => {
-                _WARNING_forceDeleteServiceReports()
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('deleteReports')}
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('deleteDayPlans'), () => {
-                setServiceReports({ dayPlans: [] })
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('deleteDayPlans')}
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('deleteRecurringPlans'), () => {
-                setServiceReports({ recurringPlans: [] })
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('deleteRecurringPlans')}
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('clearArchivedContacts'), () => {
-                _WARNING_clearDeleted()
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('clearArchivedContacts')}
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction(i18n.t('deleteAllConversations'), () => {
-                _WARNING_forceDeleteConversations()
-                showDone(i18n.t('deleted'))
-              })
-            }
-          >
-            {i18n.t('deleteAllConversations')}
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              invalidateAllCache()
-              showDone('Cache invalidated')
-            }}
-          >
-            Invalidate time cache
-          </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDevAction('Reset all (fresh install)', () => {
-                resetLocal()
-                showDone('All data cleared — restart the app')
-              })
-            }
-          >
-            Reset all (fresh install)
-          </ActionButton>
-          <ActionButton
-            onPress={() => {
-              Alert.alert(
-                'Reset all + wipe iCloud',
-                'This wipes local data AND every witness-work file in iCloud — affecting all devices on this Apple ID. Cannot be undone.',
-                [
-                  { text: i18n.t('cancel'), style: 'cancel' },
-                  {
-                    text: i18n.t('delete'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      try {
-                        await ICloudBridge.deleteAll()
-                        await ICloudBridge.deleteAllBinaries()
-                      } catch (e) {
-                        toast.show('iCloud wipe failed', {
-                          message: (e as Error).message,
-                          native: true,
-                        })
-                      }
-                      resetLocal()
-                      showDone(
-                        'All data cleared (local + iCloud) — restart the app'
-                      )
-                    },
-                  },
-                ]
-              )
-            }}
-          >
-            Reset all + wipe iCloud
-          </ActionButton>
-        </Card>
-
-        <SectionHeader title={i18n.t('data')} />
-        <JsonViewer
-          label={i18n.t('preferences')}
-          value={preferences}
-          count={Object.keys(preferences).length}
-        />
-        <JsonViewer
-          label={i18n.t('contacts')}
-          value={contacts}
-          count={contacts.length}
-        />
-        <JsonViewer
-          label={i18n.t('serviceReports')}
-          value={serviceReports}
-          count={Object.keys(serviceReports).length}
-        />
-        <JsonViewer
-          label='Conversations'
-          value={conversations}
-          count={conversations.length}
-        />
-        <JsonViewer
-          label={i18n.t('dayPlans')}
-          value={dayPlans}
-          count={dayPlans.length}
-        />
-        <JsonViewer
-          label={i18n.t('recurringPlans')}
-          value={recurringPlans}
-          count={recurringPlans.length}
-        />
-        <JsonViewer
-          label={i18n.t('timeCache')}
-          value={cache}
-          count={cacheSize}
-        />
+        <ToolSection title={i18n.t('data')} icon={BracesIcon}>
+          <View style={{ gap: 8, paddingTop: 8 }}>
+            <JsonViewer
+              label={i18n.t('preferences')}
+              value={preferences}
+              count={Object.keys(preferences).length}
+            />
+            <JsonViewer
+              label={i18n.t('contacts')}
+              value={contacts}
+              count={contacts.length}
+            />
+            <JsonViewer
+              label={i18n.t('serviceReports')}
+              value={serviceReports}
+              count={Object.keys(serviceReports).length}
+            />
+            <JsonViewer
+              label='Conversations'
+              value={conversations}
+              count={conversations.length}
+            />
+            <JsonViewer
+              label={i18n.t('dayPlans')}
+              value={dayPlans}
+              count={dayPlans.length}
+            />
+            <JsonViewer
+              label={i18n.t('recurringPlans')}
+              value={recurringPlans}
+              count={recurringPlans.length}
+            />
+            <JsonViewer
+              label={i18n.t('timeCache')}
+              value={cache}
+              count={cacheSize}
+            />
+          </View>
+        </ToolSection>
       </KeyboardAwareScrollView>
     </View>
   )

@@ -26,6 +26,12 @@ import {
   type CalendarMonth,
   type MonthlyGoalOverrides,
 } from '@/lib/monthlyGoals'
+import {
+  roleForMonth,
+  setRoleForPeriod,
+  standingRole,
+  type RoleHistory,
+} from '@/lib/roleHistory'
 
 export type { MarkerColors }
 
@@ -253,6 +259,14 @@ export const PREFERENCE_DEFAULTS = {
    * one record.
    */
   monthlyGoalOverrides: {} as MonthlyGoalOverrides,
+  /**
+   * **Role History** — which Publisher role applied to each month. `null` means
+   * every month uses `role`. When set, `role` always equals the role the
+   * timeline ends on (see `standingRole`). Written only through `setRole` /
+   * `setRoleForMonths` so the two never disagree. See
+   * `src/lib/roleHistory.ts`.
+   */
+  roleHistory: null as RoleHistory | null,
   onboardingComplete: false,
   // `name`, `avatar`, `customAvatarBackground`, and `hasCompletedProfileSetup`
   // moved to `@/stores/profile` in preferences v3 — see `src/lib/profileMigration.ts`
@@ -1244,6 +1258,21 @@ const migratePioneerStartDateToTenureStartDate = (state: any): any => {
   return next
 }
 
+/**
+ * Glossary: the **Tenure Start Date** persists only within the same, non-null
+ * Tenure Type. Any cross-type transition (or either side being null) resets
+ * it.
+ */
+const tenureResetFor = (
+  previousRole: Publisher,
+  nextRole: Publisher
+): { tenureStartDate?: null } => {
+  const oldType = getTenureType(previousRole)
+  return oldType !== null && oldType === getTenureType(nextRole)
+    ? {}
+    : { tenureStartDate: null }
+}
+
 export const usePreferences = create(
   persist(
     combine(PREFERENCE_DEFAULTS, (rawSet, getState) => {
@@ -1321,18 +1350,48 @@ export const usePreferences = create(
          * the invariant ("tenureStartDate is non-null ⇒ current role tracks
          * tenure") true regardless of caller.
          */
-        setRole: (role: Publisher) => {
-          const previousRole = getState().role
-          const oldType = getTenureType(previousRole)
-          const newType = getTenureType(role)
-          // Glossary: persist the clock only within the same Tenure Type, and
-          // only when that type is non-null. Any cross-type transition (or
-          // either side being null) resets.
-          if (oldType !== null && oldType === newType) {
-            set({ role })
-            return
-          }
-          set({ role, tenureStartDate: null })
+        setRole: (role: Publisher, options?: { from?: CalendarMonth }) => {
+          const state = getState()
+          const previousRole = state.role
+          // Without a start month the role applies to every month, so any
+          // recorded Role History is replaced.
+          const roleHistory = options?.from
+            ? setRoleForPeriod(
+                state.roleHistory,
+                previousRole,
+                options.from,
+                null,
+                role
+              )
+            : null
+          set({ role, roleHistory, ...tenureResetFor(previousRole, role) })
+        },
+        /**
+         * Sets the Publisher role for the months `start` through `end`
+         * (inclusive) without changing the months around them — e.g. one month
+         * of auxiliary pioneering. The standing `role` only changes when the
+         * period reaches past the last recorded change.
+         */
+        setRoleForMonths: (
+          start: CalendarMonth,
+          end: CalendarMonth,
+          role: Publisher
+        ) => {
+          const state = getState()
+          const roleHistory = setRoleForPeriod(
+            state.roleHistory,
+            state.role,
+            start,
+            end,
+            role
+          )
+          const nextRole = standingRole(roleHistory, state.role)
+          set({
+            roleHistory,
+            ...(nextRole === state.role
+              ? {}
+              : { role: nextRole, ...tenureResetFor(state.role, nextRole) }),
+          })
         },
         incrementGeocodeApiCallCount: () =>
           set(({ calledGoecodeApiTimes }) => ({
@@ -1412,7 +1471,10 @@ export const usePreferences = create(
 
           const key = monthlyGoalKey(target)
           set((state) => {
-            const baseGoalHours = state.publisherHours[state.role]
+            const baseGoalHours =
+              state.publisherHours[
+                roleForMonth(state.roleHistory, state.role, target)
+              ]
             const existing = state.monthlyGoalOverrides[key]
 
             if (hours === baseGoalHours) {

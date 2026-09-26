@@ -17,6 +17,7 @@ import {
 import { applyFormatRegion, resolveStartOfWeek } from '@/lib/dates'
 import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
 import { logger } from '@/lib/logger'
+import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 
 export const WIDGET_REFRESH_TASK = 'com.leviwilkerson.jwtime.widget.refresh'
@@ -64,7 +65,8 @@ function pushSnapshot(reason: string): void {
 
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
-      publisher: prefs.role,
+      // Widgets show this month, so they use this month's role (Role History).
+      publisher: roleForMonth(prefs.roleHistory, prefs.role, calendarMonthOf()),
       logsHours: prefs.logsHours,
       publisherHours: prefs.publisherHours,
       monthlyGoalOverrides: prefs.monthlyGoalOverrides,

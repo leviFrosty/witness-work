@@ -1,3 +1,4 @@
+import usePublisher from '@/hooks/usePublisher'
 import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -13,7 +14,8 @@ const useScheduleStatus = ({
   const serviceReports = useServiceReport((state) => state.serviceReports)
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
-  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { type: role } = usePublisher({ month, year })
 
   return getScheduleStatusForMonth({
     month,

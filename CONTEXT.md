@@ -28,6 +28,10 @@ _Avoid_: "publisher" (when meaning the human — that word is reserved for the r
 The User's field-ministry role. One of six values: `publisher`, `regularAuxiliary`, `regularPioneer`, `circuitOverseer`, `specialPioneer`, `custom`. Drives entry mode, monthly/annual goals, credit cap, milestone ladder, and which Home/Progress sections render.
 _Avoid_: "publisher type", "role" alone (use "Publisher" or "Publisher role").
 
+**Role History**:
+Which Publisher role applied to each calendar month. A past month is always reckoned — goal, credit cap, entry mode, and the exported Service Report — by the role that applied then, so changing role never rewrites history. A standing change (e.g. "regular pioneer since September") starts a new role from a month onward; a one-off month (e.g. auxiliary pioneering in March) applies to that month only and the surrounding role resumes. With no recorded history, every month uses the current Publisher role. The User's Publisher preference is always the role the history ends on.
+_Avoid_: "status history" (Publisher is the canonical term), treating a one-off auxiliary month as a change of the User's standing role.
+
 **Kingdom Publisher**:
 The specific Publisher role whose enum value is `publisher` — a standard, non-pioneer publisher (the "Regular Publisher" in this glossary's prose). Distinct from "publisher" in the everyday JW sense, which denotes a _person_ who shares in the ministry — pioneers and circuit overseers are publishers too. So "Kingdom Publisher" names one role; "publisher" alone never implies non-pioneer.
 _Avoid_: labeling a surface that covers every role (e.g. the settings row for the User's Publisher and Profile) as "Kingdom Publisher" — that row is **Profile**.
@@ -239,7 +243,7 @@ _Avoid_: "hours mode" for this — that term is reserved for the hours-mode role
 _Avoid_: "monthly hour goal", "monthly target".
 
 **Annual Goal**:
-The User's target field-ministry hours across one Service Year. Always derived as **Monthly Goal × 12** — not independently settable. Drives the milestone ladder's terminal rung and the Year tab's progress math.
+The User's target field-ministry hours across one Service Year. Derived as **Monthly Goal × 12** — not independently settable. When the **Role History** changes within the Service Year, each month contributes its own role's Monthly Goal when that role carries an Annual Goal (so a pioneer appointed mid-year has a prorated goal). Drives the milestone ladder's terminal rung and the Year tab's progress math.
 _Avoid_: "year goal", "yearly goal" (ambiguous between calendar year and Service Year — Annual Goal is the canonical term and is always reckoned by Service Year).
 
 **Projected Total**:
@@ -309,6 +313,7 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 - A **User** can independently be a **Supporter**, a **Donor**, both, or neither. Donor status comes from one or more **Tips**; Supporter status comes from an active subscription entitlement.
 - A **Publisher** maps to at most one **Tenure Type**. **Full-Time Service** covers regular pioneer, special pioneer, and circuit overseer. **Auxiliary Pioneer** covers only regularAuxiliary. Regular Publisher and Custom map to no Tenure Type.
 - The **Tenure Start Date** persists across Publisher changes within the same Tenure Type and resets across Tenure Type changes.
+- Each calendar month has exactly one **Publisher** role, resolved from the **Role History**; a **Service Report** is always exported in its month's role.
 - A **Monthly Goal** determines an **Annual Goal** (`Annual = Monthly × 12`); the Annual Goal is never set independently.
 
 ## Example dialogue

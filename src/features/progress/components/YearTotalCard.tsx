@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
-import usePublisher from '@/hooks/usePublisher'
+import useRoleForMonth from '@/hooks/useRoleForMonth'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
@@ -30,7 +30,7 @@ interface YearTotalCardProps {
  */
 const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
   const theme = useTheme()
-  const { type: publisher } = usePublisher()
+  const roleFor = useRoleForMonth()
   const { timeDisplayFormat, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
   const serviceReports = useServiceReport((s) => s.serviceReports)
@@ -42,7 +42,7 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
       getTotalMinutesForServiceYear(
         getServiceYearReports(serviceReports, serviceYear),
         serviceYear,
-        publisher,
+        roleFor,
         {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
@@ -51,7 +51,7 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
     [
       serviceReports,
       serviceYear,
-      publisher,
+      roleFor,
       overrideCreditLimit,
       customCreditLimitHours,
     ]

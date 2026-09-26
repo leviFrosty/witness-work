@@ -15,6 +15,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Circle from '@/components/ui/Circle'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import usePublisher from '@/hooks/usePublisher'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
   borderRadiusLeft?: boolean
@@ -138,7 +139,8 @@ const MonthServiceReportProgressBar = ({
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { categories } = useCategories()
-  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { type: role } = usePublisher({ month, year })
   const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
 
   // Animation setup

@@ -25,6 +25,7 @@ Sources: `src/constants/publisher.ts`, `src/stores/preferences.ts`, `src/lib/pub
 `src/lib/publisherCapabilities.ts` is the **only** place role behavior is encoded.
 
 - **React code** reads via the `usePublisher()` hook (`src/hooks/usePublisher.ts`) — it wires the preferences store and adds a localized `displayName` fallback.
+- **Role History (`src/lib/roleHistory.ts`).** The role can differ per calendar month. `usePublisher()` resolves _this month_; pass `usePublisher({ month, year })` for any month-specific surface (month report, exports, Year-tab rows, goal math) and `usePublisher('standing')` only in Settings that edit the `role` preference. Multi-month walks use `useRoleForMonth()` (or pass a resolver to `getTotalMinutesForServiceYear`). Non-React callers use `roleForMonth(prefs.roleHistory, prefs.role, target)` / `publisherCapabilitiesForMonth`. Never read `prefs.role` for a specific month. Write only through `setRole(role, { from })` / `setRoleForMonths(start, end, role)` so `role` and `roleHistory` never disagree.
 - **Pure / non-React callers** (widget snapshot builders, `adjustedMinutesForSpecificMonth`, onboarding step gates) call `derivePublisherCapabilities` or the small helpers directly: `getEntryMode`, `isInFullTimeService`, `getTenureType`, `tracksTenure`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`.
 
 Resolved capability flags callers read: `entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tenureType`, `tracksTenure`, `showsTimeEntry`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`.

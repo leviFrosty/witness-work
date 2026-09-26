@@ -10,7 +10,7 @@ import { usePreferences } from '@/stores/preferences'
 
 const MonthlyMaximumCreditHoursSection = () => {
   const theme = useTheme()
-  const { creditCapMinutes } = usePublisher()
+  const { creditCapMinutes } = usePublisher('standing')
   const { overrideCreditLimit, set } = usePreferences()
   // This input is explicitly in hours; 0 is the stored unlimited sentinel.
   const limitHours = creditCapMinutes === null ? 0 : creditCapMinutes / 60

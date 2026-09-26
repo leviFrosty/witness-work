@@ -96,7 +96,6 @@ const MonthReport = ({
 }: MonthReportProps) => {
   const theme = useTheme()
   const {
-    role,
     overrideCreditLimit,
     customCreditLimitHours,
     celebratedTiers,
@@ -110,7 +109,12 @@ const MonthReport = ({
     setOverride: setMonthlyGoalOverride,
     clearOverride: clearMonthlyGoalOverride,
   } = useMonthlyGoal({ month, year })
-  const { annualGoalHours, hasAnnualGoal } = usePublisher()
+  // The role that applied this month (Role History), not today's role.
+  const {
+    type: role,
+    annualGoalHours,
+    hasAnnualGoal,
+  } = usePublisher({ month, year })
   const [goalEditorOpen, setGoalEditorOpen] = useState(false)
   const { categories } = useCategories()
   const navigation = useNavigation<RootStackNavigation>()
@@ -145,6 +149,10 @@ const MonthReport = ({
     month: prevMonth,
     year: prevMonthYear,
   })
+  const { type: previousMonthRole } = usePublisher({
+    month: prevMonth,
+    year: prevMonthYear,
+  })
   const lastMonthMinutes = useMemo(() => {
     const reports = getMonthsReports(serviceReports, prevMonth, prevMonthYear)
     if (!reports.length) return null
@@ -152,7 +160,7 @@ const MonthReport = ({
       reports,
       prevMonth,
       prevMonthYear,
-      role,
+      previousMonthRole,
       {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
@@ -162,7 +170,7 @@ const MonthReport = ({
     serviceReports,
     prevMonth,
     prevMonthYear,
-    role,
+    previousMonthRole,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

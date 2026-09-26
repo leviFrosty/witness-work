@@ -132,6 +132,11 @@ export type PublisherCapabilitiesInput = {
   customCreditLimitHours: number
   /** Regular Publisher opt-in to log hours for themselves. See `tracksHours`. */
   logsHours: boolean
+  /**
+   * Annual Goal resolved from the User's **Role History** for the Service Year
+   * in question. Defaults to the role's monthly goal × 12.
+   */
+  annualGoalHours?: number
 }
 
 const baseCreditCapMinutes = (publisher: Publisher): number | null => {
@@ -204,7 +209,7 @@ export const derivePublisherCapabilities = (
     logsHours,
   } = input
   const monthlyGoalHours = publisherHours[publisher]
-  const annualGoalHours = monthlyGoalHours * 12
+  const annualGoalHours = input.annualGoalHours ?? monthlyGoalHours * 12
   const entryMode = getEntryMode(publisher)
   const showsTimeEntry = tracksHours(publisher, logsHours)
   return {

@@ -5,6 +5,7 @@ import useCategories from '@/stores/categories'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { useTimeCache } from '@/stores/timeCache'
 import { tracksTenure } from '@/lib/publisherCapabilities'
+import { calendarMonthOf, type RoleHistory } from '@/lib/roleHistory'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Publisher } from '@/types/publisher'
@@ -38,6 +39,7 @@ export interface WriteMappedDataOptions {
 export interface PublisherUndo {
   prevRole: Publisher
   prevTenure: Date | null
+  prevRoleHistory: RoleHistory | null
 }
 
 /**
@@ -72,12 +74,18 @@ const applyPublisher = (
   const prefs = usePreferences.getState()
   const prevRole = prefs.role
   const prevTenure = prefs.tenureStartDate
+  const prevRoleHistory = prefs.roleHistory
   let changed = false
 
   const roleIsUnset = prevRole === PREFERENCE_DEFAULTS.role
   let effectiveRole = prevRole
   if ((mode === 'overwrite' || roleIsUnset) && prevRole !== publisher.role) {
-    prefs.setRole(publisher.role)
+    // A recorded Role History describes past months the import knows nothing
+    // about, so the imported role only takes over from this month.
+    prefs.setRole(
+      publisher.role,
+      prevRoleHistory ? { from: calendarMonthOf() } : undefined
+    )
     effectiveRole = publisher.role
     changed = true
   }
@@ -93,7 +101,7 @@ const applyPublisher = (
     changed = true
   }
 
-  return changed ? { prevRole, prevTenure } : null
+  return changed ? { prevRole, prevTenure, prevRoleHistory } : null
 }
 
 /**
@@ -272,11 +280,11 @@ export const undoImport = (commit: ImportCommitResult): void => {
   }
 
   if (commit.publisherChange) {
-    const prefs = usePreferences.getState()
-    prefs.setRole(commit.publisherChange.prevRole)
-    usePreferences
-      .getState()
-      .set({ tenureStartDate: commit.publisherChange.prevTenure })
+    usePreferences.getState().set({
+      role: commit.publisherChange.prevRole,
+      roleHistory: commit.publisherChange.prevRoleHistory ?? null,
+      tenureStartDate: commit.publisherChange.prevTenure,
+    })
   }
 
   useTimeCache.getState().invalidateAllCache()

@@ -48,6 +48,7 @@ import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalC
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { analytics } from '@/lib/analytics'
+import { roleForMonth } from '@/lib/roleHistory'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -57,7 +58,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const navigation = useNavigation<RootStackNavigation>()
   const noteInput = useRef<RNTextInput>(null)
   const {
-    role,
+    role: currentRole,
+    roleHistory,
     publisherHours,
     monthlyGoalOverrides,
     overrideCreditLimit,
@@ -183,6 +185,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     const reportMonth = reportMoment.month()
     const reportYear = reportMoment.year()
     const goalTarget = { month: reportMonth, year: reportYear }
+    // The entry's month is judged by the role that applied then.
+    const role = roleForMonth(roleHistory, currentRole, goalTarget)
     const effectiveGoalHours = resolveMonthlyGoalHours(
       publisherHours[role],
       monthlyGoalOverrides,

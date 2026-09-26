@@ -5,7 +5,7 @@ import Select, { SelectData } from '@/components/ui/Select'
 import usePublisher from '@/hooks/usePublisher'
 
 const AnnualGoalSelector = () => {
-  const { hasAnnualGoal: hasAnnualGoalByDefault } = usePublisher()
+  const { hasAnnualGoal: hasAnnualGoalByDefault } = usePublisher('standing')
   const { set, userSpecifiedHasAnnualGoal } = usePreferences()
 
   const items: SelectData<boolean | 'default'> = [

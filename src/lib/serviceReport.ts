@@ -1,5 +1,6 @@
 import round from 'lodash/round'
 import { Publisher } from '@/types/publisher'
+import type { CalendarMonth } from '@/lib/monthlyGoals'
 import {
   TimeEntry,
   TimeEntriesByYear,
@@ -349,20 +350,26 @@ export const getLoggedDayKeys = (reports: TimeEntry[]): Set<string> =>
 export const getTotalMinutesForServiceYear = (
   serviceYearReports: TimeEntriesByYear,
   _serviceYear: number,
-  publisher?: Publisher,
+  /**
+   * The role whose credit cap applies — or, with a **Role History**, a resolver
+   * returning the role for each month so every month is capped by the role that
+   * applied then.
+   */
+  publisher?: Publisher | ((target: CalendarMonth) => Publisher),
   creditLimitOverride?: { enabled: boolean; customLimitHours: number }
 ) => {
   // Same effective-cap resolution as `adjustedMinutesForSpecificMonth`: role
   // defaults and the user's override live behind `creditCapMinutesFor`;
   // callers that don't know the publisher keep the legacy 55h default.
-  const effectiveCreditLimitMinutes = publisher
-    ? creditCapMinutesFor(publisher, creditLimitOverride)
-    : monthCreditMaxMinutes
+  const capFor = (target: CalendarMonth): number | null => {
+    if (!publisher) return monthCreditMaxMinutes
+    const role = typeof publisher === 'function' ? publisher(target) : publisher
+    return creditCapMinutesFor(role, creditLimitOverride)
+  }
 
   return getServiceYearMonthlyBreakdowns(serviceYearReports).reduce(
     (minutes, m) =>
-      minutes +
-      applyMonthCreditCap(m.standard, m.credit, effectiveCreditLimitMinutes),
+      minutes + applyMonthCreditCap(m.standard, m.credit, capFor(m)),
     0
   )
 }

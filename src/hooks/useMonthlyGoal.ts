@@ -8,7 +8,7 @@ import {
 import { usePreferences } from '@/stores/preferences'
 
 export type MonthlyGoal = {
-  /** The regular, Publisher-derived Monthly Goal. */
+  /** The regular Monthly Goal of the role that applied that month. */
   baseGoalHours: number
   /** The saved value for this month, or `undefined` when it uses the base. */
   overrideGoalHours: number | undefined
@@ -24,7 +24,7 @@ export type MonthlyGoal = {
  * JavaScript/moment conventions (0 = January, 11 = December).
  */
 const useMonthlyGoal = (target: CalendarMonth): MonthlyGoal => {
-  const { monthlyGoalHours: baseGoalHours } = usePublisher()
+  const { monthlyGoalHours: baseGoalHours } = usePublisher(target)
   const {
     monthlyGoalOverrides,
     setMonthlyGoalOverride,

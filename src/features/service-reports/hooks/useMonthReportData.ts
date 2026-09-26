@@ -63,7 +63,11 @@ const useMonthReportData = (
     customCreditLimitHours,
     reportCommentOverrides,
   } = usePreferences()
-  const { type: publisher, entryMode } = usePublisher()
+  // Report in the role that applied that month (Role History): a month spent
+  // as a Regular Publisher still exports as yes/no after becoming a pioneer.
+  const { type: publisher, entryMode } = usePublisher(
+    month !== undefined && year !== undefined ? { month, year } : undefined
+  )
   const { serviceReports } = useServiceReport()
   const { categories } = useCategories()
   const { conversations } = useConversations()

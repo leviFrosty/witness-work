@@ -28,6 +28,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import { useCardStyle } from '@/components/ui/Card'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import { serviceYearFocusMonth } from '@/lib/roleHistory'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -83,7 +84,8 @@ const MonthRow = ({
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { type: role } = usePublisher({ month, year })
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
@@ -275,7 +277,9 @@ const ProgressYearTab = ({
     return list
   }, [year])
 
-  const { hasAnnualGoal, monthlyGoalHours } = usePublisher()
+  const { hasAnnualGoal, monthlyGoalHours } = usePublisher(
+    serviceYearFocusMonth(year - 1)
+  )
   const showDeltaColumn = monthlyGoalHours > 0
 
   // Stable reference so ProjectedTotalCard's memoized derivations don't

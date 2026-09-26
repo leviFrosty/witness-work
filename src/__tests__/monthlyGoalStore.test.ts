@@ -103,3 +103,73 @@ describe('Monthly Goal preference actions', () => {
     expect(usePreferences.getState().monthlyGoalOverrides).toEqual({})
   })
 })
+
+describe('Role History preference actions', () => {
+  beforeEach(() => {
+    usePreferences.setState({
+      ...PREFERENCE_DEFAULTS,
+      role: 'publisher',
+      roleHistory: null,
+      monthlyGoalOverrides: {},
+      tenureStartDate: null,
+      preferenceUpdatedAt: {},
+    })
+  })
+
+  it('setRole without a start month applies to every month', () => {
+    usePreferences
+      .getState()
+      .setRole('regularPioneer', { from: { year: 2025, month: 8 } })
+    usePreferences.getState().setRole('circuitOverseer')
+
+    expect(usePreferences.getState().role).toBe('circuitOverseer')
+    expect(usePreferences.getState().roleHistory).toBeNull()
+  })
+
+  it('setRole from a month keeps earlier months in the prior role', () => {
+    usePreferences
+      .getState()
+      .setRole('regularPioneer', { from: { year: 2025, month: 8 } })
+
+    const state = usePreferences.getState()
+    expect(state.role).toBe('regularPioneer')
+    expect(state.roleHistory).toEqual({
+      initial: 'publisher',
+      changes: { '2025-09': 'regularPioneer' },
+    })
+    expect(state.preferenceUpdatedAt.roleHistory).toBeTypeOf('number')
+  })
+
+  it('a one-off month leaves the standing role and tenure alone', () => {
+    usePreferences.setState({
+      role: 'regularPioneer',
+      tenureStartDate: new Date(2020, 8, 1),
+    })
+    usePreferences
+      .getState()
+      .setRoleForMonths(
+        { year: 2026, month: 2 },
+        { year: 2026, month: 2 },
+        'regularAuxiliary'
+      )
+
+    const state = usePreferences.getState()
+    expect(state.role).toBe('regularPioneer')
+    expect(state.tenureStartDate).toEqual(new Date(2020, 8, 1))
+  })
+
+  it('bases a month goal override on that month’s role', () => {
+    usePreferences
+      .getState()
+      .setRole('regularPioneer', { from: { year: 2025, month: 8 } })
+    // August 2025 was a Regular Publisher month (0h base), so 50h is an
+    // override there rather than the base goal.
+    usePreferences
+      .getState()
+      .setMonthlyGoalOverride({ year: 2025, month: 7 }, 50)
+
+    expect(usePreferences.getState().monthlyGoalOverrides).toEqual({
+      '2025-08': 50,
+    })
+  })
+})

@@ -14,6 +14,8 @@ import { useIsFocused } from '@react-navigation/native'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
+import useRoleForMonth from '@/hooks/useRoleForMonth'
+import { serviceYearFocusMonth } from '@/lib/roleHistory'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
@@ -72,8 +74,15 @@ const YearMilestoneCard = ({
   separateMilestones = false,
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
-  const { type: publisher, annualGoalHours, creditCapMinutes } = usePublisher()
+  const serviceYear = year - 1
   const {
+    type: publisher,
+    annualGoalHours,
+    creditCapMinutes,
+  } = usePublisher(serviceYearFocusMonth(serviceYear))
+  const roleFor = useRoleForMonth()
+  const {
+    roleHistory,
     milestoneOverrides,
     timeDisplayFormat,
     celebratedMilestones,
@@ -86,18 +95,19 @@ const YearMilestoneCard = ({
   const fireworks = useFireworks()
   const isFocused = useIsFocused()
 
-  const serviceYear = year - 1
-
   const { totalMinutesForServiceYear, cacheKey, reportsHash, needsCache } =
     useMemo(() => {
       const cacheKey = getAnnualServiceReportCacheKey(serviceYear)
       // The total is cap-dependent, so the cache key folds the resolved
       // credit cap in — otherwise a role/override change would keep serving
-      // the stale total until the next report edit.
+      // the stale total until the next report edit. Role History folds in too:
+      // each month is capped by the role that applied then.
       const reportsHash = `${generateServiceReportsHash(
         serviceReports,
         year - 1
-      )}:cap=${creditCapMinutes ?? 'unlimited'}`
+      )}:cap=${creditCapMinutes ?? 'unlimited'}:roles=${JSON.stringify(
+        roleHistory
+      )}`
 
       const cached = getCachedPlannedMinutes(cacheKey)
       if (cached && cached.planHash === reportsHash) {
@@ -116,7 +126,7 @@ const YearMilestoneCard = ({
       const total = getTotalMinutesForServiceYear(
         serviceYearsReports,
         serviceYear,
-        publisher,
+        roleFor,
         {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
@@ -135,7 +145,7 @@ const YearMilestoneCard = ({
       serviceReports,
       serviceYear,
       year,
-      publisher,
+      roleHistory,
       creditCapMinutes,
       overrideCreditLimit,
       customCreditLimitHours,

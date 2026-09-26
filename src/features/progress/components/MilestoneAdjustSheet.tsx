@@ -34,6 +34,8 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import ActionButton from '@/components/ui/ActionButton'
 import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
+import usePublisher from '@/hooks/usePublisher'
+import useRoleForMonth from '@/hooks/useRoleForMonth'
 
 const MILESTONE_STEP = 10
 
@@ -75,8 +77,6 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const {
-    role,
-    publisherHours,
     milestoneOverrides,
     setMilestoneOverrides,
     resetMilestoneOverrides,
@@ -85,7 +85,10 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   } = usePreferences()
   const { serviceReports } = useServiceReport()
 
-  const annualGoalHours = publisherHours[role] * 12
+  // This month's role and the current Service Year's Annual Goal (prorated
+  // when the Role History changes mid-year) — same values the Year tab shows.
+  const { type: role, annualGoalHours } = usePublisher()
+  const roleFor = useRoleForMonth()
 
   // Seed / re-seed the local draft whenever the sheet opens or the persisted
   // list changes (e.g. Reset to Defaults). We keep a local copy so the user
@@ -125,13 +128,13 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     return getTotalMinutesForServiceYear(
       serviceYearReports,
       serviceYearStart,
-      role,
+      roleFor,
       { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
     )
   }, [
     serviceReports,
     annualGoalHours,
-    role,
+    roleFor,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

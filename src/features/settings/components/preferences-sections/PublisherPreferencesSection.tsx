@@ -45,7 +45,7 @@ const PublisherPreferencesSection = () => {
     tracksTenure,
     showsTimeEntry,
     monthlyGoalHours,
-  } = usePublisher()
+  } = usePublisher('standing')
   const { hasName } = useUser()
   const theme = useTheme()
   const isCheckboxMode = entryMode === 'checkbox'

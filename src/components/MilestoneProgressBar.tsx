@@ -4,6 +4,8 @@ import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
+import useRoleForMonth from '@/hooks/useRoleForMonth'
+import { serviceYearFocusMonth } from '@/lib/roleHistory'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
@@ -281,12 +283,14 @@ interface MilestoneProgressBarProps {
  * progress bar for the given service year.
  */
 const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
-  const { type: publisher, annualGoalHours } = usePublisher()
+  const serviceYear = year - 1
+  const { type: publisher, annualGoalHours } = usePublisher(
+    serviceYearFocusMonth(serviceYear)
+  )
+  const roleFor = useRoleForMonth()
   const { milestoneOverrides, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
   const { serviceReports } = useServiceReport()
-
-  const serviceYear = year - 1
 
   const totalMinutesForServiceYear = useMemo(() => {
     const serviceYearsReports = getServiceYearReports(
@@ -296,13 +300,13 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
     return getTotalMinutesForServiceYear(
       serviceYearsReports,
       serviceYear,
-      publisher,
+      roleFor,
       { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
     )
   }, [
     serviceReports,
     serviceYear,
-    publisher,
+    roleFor,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

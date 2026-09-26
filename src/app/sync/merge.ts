@@ -14,6 +14,7 @@ import {
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
+import { normalizeRoleHistory } from '@/lib/roleHistory'
 import { SyncPayload } from '@/app/sync/payload'
 
 /**
@@ -445,6 +446,8 @@ function applyServiceReportTombstones(
   return out
 }
 
+const ROLE_GROUP = new Set(['role', 'roleHistory'])
+
 function mergePreferences(
   localValues: Record<string, unknown>,
   localUpdatedAt: Record<string, number>,
@@ -466,6 +469,7 @@ function mergePreferences(
   ])
 
   for (const key of keys) {
+    if (ROLE_GROUP.has(key)) continue
     const localTs = localUpdatedAt?.[key] ?? 0
     const remoteTs = remoteUpdatedAt?.[key] ?? 0
     if (remoteTs > localTs) {
@@ -473,6 +477,21 @@ function mergePreferences(
       updatedAt[key] = remoteTs
       changed = true
     }
+  }
+
+  // `role` and `roleHistory` describe one timeline (`role` is where the Role
+  // History ends), so the side that touched either most recently supplies
+  // both — merging them key-by-key could pair one device's role with the
+  // other's history.
+  const groupTs = (ts: Record<string, number> | undefined) =>
+    Math.max(...[...ROLE_GROUP].map((key) => ts?.[key] ?? 0))
+  const remoteGroupTs = groupTs(remoteUpdatedAt)
+  if (remoteGroupTs > groupTs(localUpdatedAt)) {
+    if ('role' in (remoteValues ?? {})) values.role = remoteValues.role
+    // A peer without Role History support applies its role to every month.
+    values.roleHistory = normalizeRoleHistory(remoteValues?.roleHistory)
+    for (const key of ROLE_GROUP) updatedAt[key] = remoteGroupTs
+    changed = true
   }
 
   return { values, updatedAt, changed }

@@ -2339,6 +2339,16 @@
     "loggedDescription": "This month already has time logged. Open the month to change it.",
     "applyToLaterMonths": "Set later months to {{status}}"
   },
+  "auxiliaryMonth": {
+    "prompt": "Auxiliary pioneering this month?",
+    "activeThisMonth": "Auxiliary pioneering this month · {{count}} hour goal",
+    "scheduled": "Auxiliary pioneering in {{month}}",
+    "title": "Auxiliary pioneering",
+    "description": "For the month you choose, you'll log hours and see your progress toward the goal. The next month goes back to your usual status.",
+    "goalHours": "{{count}} hours",
+    "start": "Start auxiliary pioneering in {{month}}",
+    "end": "Not auxiliary pioneering in {{month}}"
+  },
   "roleStart": {
     "title": "When did you start as {{role}}?",
     "thisMonth": "This month ({{month}})",

@@ -222,3 +222,28 @@ describe('Month status preference action', () => {
     })
   })
 })
+
+describe('Next-month auxiliary pioneering', () => {
+  beforeEach(() => {
+    usePreferences.setState({
+      ...PREFERENCE_DEFAULTS,
+      role: 'publisher',
+      roleHistory: null,
+      monthlyGoalOverrides: {},
+      preferenceUpdatedAt: {},
+    })
+  })
+
+  it('schedules a future month without changing this month or the standing role', () => {
+    usePreferences
+      .getState()
+      .setMonthStatus({ year: 2026, month: 9 }, 'regularAuxiliary', 'month')
+
+    const state = usePreferences.getState()
+    expect(state.role).toBe('publisher')
+    expect(state.roleHistory).toEqual({
+      initial: 'publisher',
+      changes: { '2026-10': 'regularAuxiliary', '2026-11': 'publisher' },
+    })
+  })
+})

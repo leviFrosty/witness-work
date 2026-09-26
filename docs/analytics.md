@@ -171,6 +171,16 @@ for `from_month`) and `reset_future_goals`. Dismissing a status sheet sends
 nothing and leaves the role unchanged. Onboarding role selection is covered by the
 onboarding events instead.
 
+A Kingdom Publisher (checkbox-mode standing role) can auxiliary pioneer for one
+month from the Home Service Report card or Settings without enabling Hours
+Logging. `auxiliary_month_sheet_viewed` records opening that sheet, with `source`
+(`home`, `settings`) and `state` (`none`, `this_month`, `next_month` — which month
+was already auxiliary). Saving sends `role_period_set` with `source`
+`home_auxiliary` or `settings_auxiliary`, `scope: single_month`, `role`
+(`regularAuxiliary`, `regularAuxiliaryReduced`, or the standing role when ending
+it), and `month_offset` (0 = this month, 1 = next month). A view with no
+following `role_period_set` is an abandoned sheet.
+
 The Service History editor records `service_history_viewed` once per Service Year
 shown and `service_history_saved` on Save. Both carry `source` (`year_tab`,
 `add_earlier_year`, `settings`) and `service_years_back` (0 = the latest Service

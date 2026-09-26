@@ -97,16 +97,18 @@ const DataProtection = ({ goBack, goNext }: Props) => {
                 description={i18n.t('dataProtectionInfoDesc')}
               />
             </View>
-            <Switch
-              accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
-              value={dataProtectionMode}
-              onValueChange={(value) =>
-                set({
-                  dataProtectionMode: value,
-                  dataProtectionModeSetByUser: true,
-                })
-              }
-            />
+            <View>
+              <Switch
+                accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
+                value={dataProtectionMode}
+                onValueChange={(value) =>
+                  set({
+                    dataProtectionMode: value,
+                    dataProtectionModeSetByUser: true,
+                  })
+                }
+              />
+            </View>
           </Card>
           <Text
             style={{

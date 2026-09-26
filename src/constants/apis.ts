@@ -1,8 +1,7 @@
-const BASE_URL = 'https://ww-proxy.leviwilkerson.com'
-
-// Notes Import may target a separate (dev/staging) worker so the App Attest
-// dev-bypass path never touches production. Falls back to the prod proxy.
-const NOTES_BASE_URL = process.env.EXPO_PUBLIC_NOTES_IMPORT_BASE_URL || BASE_URL
+// Every endpoint lives on ww-api. Override the base URL to target a dev/staging
+// worker (so the App Attest dev-bypass never touches production).
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'
 
 export default {
   geocode: `${BASE_URL}/geocode`,
@@ -11,22 +10,22 @@ export default {
   appStoreRatings: `${BASE_URL}/app-store/ratings`,
   // Unauthenticated worker health probe ({ status, versionId, deployedAt }) —
   // dev Tools screen only, for checking which worker build is live.
-  notesImportHealth: `${NOTES_BASE_URL}/health`,
-  notesImport: `${NOTES_BASE_URL}/notes-import`,
-  notesImportStatus: `${NOTES_BASE_URL}/notes-import/status`,
-  notesImportChallenge: `${NOTES_BASE_URL}/notes-import/challenge`,
-  notesImportAttest: `${NOTES_BASE_URL}/notes-import/attest`,
+  notesImportHealth: `${BASE_URL}/health`,
+  notesImport: `${BASE_URL}/notes-import`,
+  notesImportStatus: `${BASE_URL}/notes-import/status`,
+  notesImportChallenge: `${BASE_URL}/notes-import/challenge`,
+  notesImportAttest: `${BASE_URL}/notes-import/attest`,
   // Attested no-op — dev Tools diagnostics verify an assertion server-side
   // without spending credits or inference.
-  notesImportVerify: `${NOTES_BASE_URL}/notes-import/verify`,
+  notesImportVerify: `${BASE_URL}/notes-import/verify`,
   // Streaming import: attested kickoff → SSE progress stream → result snapshot.
-  notesImportKickoff: `${NOTES_BASE_URL}/notes-import/kickoff`,
+  notesImportKickoff: `${BASE_URL}/notes-import/kickoff`,
   notesImportEvents: (importId: string) =>
-    `${NOTES_BASE_URL}/notes-import/${importId}/events`,
+    `${BASE_URL}/notes-import/${importId}/events`,
   notesImportResult: (importId: string) =>
-    `${NOTES_BASE_URL}/notes-import/${importId}/result`,
+    `${BASE_URL}/notes-import/${importId}/result`,
   notesImportCancel: (importId: string) =>
-    `${NOTES_BASE_URL}/notes-import/${importId}/cancel`,
+    `${BASE_URL}/notes-import/${importId}/cancel`,
   notesImportDestroy: (importId: string) =>
-    `${NOTES_BASE_URL}/notes-import/${importId}/destroy`,
+    `${BASE_URL}/notes-import/${importId}/destroy`,
 }

@@ -15,6 +15,7 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import PublisherTypeSelector from '@/components/PublisherTypeSelector'
+import AuxiliaryMonthRow from '@/features/service-reports/components/AuxiliaryMonthRow'
 import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
 import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelector'
 import ProfileCard from '@/features/profile/components/ProfileCard'
@@ -163,6 +164,12 @@ const PublisherPreferencesSection = () => {
         )}
         <DefaultExportMethodSelector lastInSection />
       </Section>
+
+      {isCheckboxMode ? (
+        <Section>
+          <AuxiliaryMonthRow source='settings' variant='row' />
+        </Section>
+      ) : null}
 
       <Section>
         <InputRowButton

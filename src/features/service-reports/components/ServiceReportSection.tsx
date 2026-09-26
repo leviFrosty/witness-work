@@ -16,6 +16,7 @@ import ServiceReportTimeOverlay from '@/features/service-reports/components/Serv
 import PublisherCheckBoxCard from '@/features/service-reports/components/PublisherCheckBoxCard'
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
 import ServiceReportStudiesOverlay from '@/features/service-reports/components/ServiceReportStudiesOverlay'
+import AuxiliaryMonthRow from '@/features/service-reports/components/AuxiliaryMonthRow'
 import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -138,6 +139,7 @@ const ServiceReportSection = () => {
             </Text>
           </Button>
         ) : null}
+        <AuxiliaryMonthRow source='home' />
       </View>
     </Card>
   )

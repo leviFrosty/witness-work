@@ -16,7 +16,7 @@ import * as AppAttest from '../../../../modules/app-attest'
 import * as KeychainUuid from '../../../../modules/keychain-uuid'
 
 const REQUEST_TIMEOUT_MS = 90_000
-const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS || ''
+const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_API_DEV_BYPASS || ''
 const DEV_BYPASS_ENABLED =
   typeof __DEV__ !== 'undefined' && __DEV__ && DEV_BYPASS_TOKEN.length > 0
 

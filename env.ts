@@ -25,17 +25,17 @@ const envVariables = z.object({
     .url()
     .optional()
     .describe('PostHog ingestion host embedded in the Expo app config.'),
-  EXPO_PUBLIC_NOTES_IMPORT_BASE_URL: z
+  EXPO_PUBLIC_API_BASE_URL: z
     .string()
     .optional()
     .describe(
-      'Override the proxy base URL for Notes Import (e.g. a dev/staging worker) so the App Attest dev-bypass never hits production. Defaults to the prod proxy.'
+      'Override the ww-api base URL for all API requests (e.g. a dev/staging worker) so the App Attest dev-bypass never hits production. Defaults to the prod API.'
     ),
-  EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS: z
+  EXPO_PUBLIC_API_DEV_BYPASS: z
     .string()
     .optional()
     .describe(
-      'DEV ONLY. When set, Notes Import skips App Attest and sends this token as the x-ww-dev-bypass header so the iOS simulator (no Secure Enclave) can exercise the flow against a dev worker sharing the token. Never set in production.'
+      'DEV ONLY. When set, the app skips App Attest and sends this token as the x-ww-dev-bypass header so the iOS simulator (no Secure Enclave) can exercise the flow against a dev worker sharing the token. Never set in production.'
     ),
 })
 

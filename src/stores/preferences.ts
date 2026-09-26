@@ -27,6 +27,12 @@ import {
   type MonthlyGoalOverrides,
 } from '@/lib/monthlyGoals'
 import {
+  AUXILIARY_REDUCED_GOAL_HOURS,
+  monthStatusOf,
+  roleOfMonthStatus,
+  type MonthStatus,
+} from '@/lib/monthStatus'
+import {
   roleForMonth,
   setRoleForPeriod,
   standingRole,
@@ -1391,6 +1397,54 @@ export const usePreferences = create(
             ...(nextRole === state.role
               ? {}
               : { role: nextRole, ...tenureResetFor(state.role, nextRole) }),
+          })
+        },
+        /**
+         * Sets one month's status from the month status sheet or the Service
+         * History editor. `'onward'` makes it a standing change from `target`
+         * (e.g. "regular pioneer since March"); `'month'` changes only that
+         * month. The reduced-goal auxiliary status also saves that month's 15h
+         * Monthly Goal; leaving it clears that goal again.
+         */
+        setMonthStatus: (
+          target: CalendarMonth,
+          status: MonthStatus,
+          scope: 'month' | 'onward' = 'month'
+        ) => {
+          const state = getState()
+          const key = monthlyGoalKey(target)
+          const previousStatus = monthStatusOf(
+            roleForMonth(state.roleHistory, state.role, target),
+            state.monthlyGoalOverrides[key]
+          )
+          const roleHistory = setRoleForPeriod(
+            state.roleHistory,
+            state.role,
+            target,
+            scope === 'onward' ? null : target,
+            roleOfMonthStatus(status)
+          )
+          const nextRole = standingRole(roleHistory, state.role)
+
+          let monthlyGoalOverrides = state.monthlyGoalOverrides
+          if (status === 'regularAuxiliaryReduced') {
+            monthlyGoalOverrides = {
+              ...monthlyGoalOverrides,
+              [key]: AUXILIARY_REDUCED_GOAL_HOURS,
+            }
+          } else if (previousStatus === 'regularAuxiliaryReduced') {
+            monthlyGoalOverrides = { ...monthlyGoalOverrides }
+            delete monthlyGoalOverrides[key]
+          }
+
+          set({
+            roleHistory,
+            ...(nextRole === state.role
+              ? {}
+              : { role: nextRole, ...tenureResetFor(state.role, nextRole) }),
+            ...(monthlyGoalOverrides === state.monthlyGoalOverrides
+              ? {}
+              : { monthlyGoalOverrides }),
           })
         },
         incrementGeocodeApiCallCount: () =>

@@ -155,7 +155,7 @@ Instrumented actions include:
   and `map_location_prompt_skipped`.
 
 Events live at user-action boundaries to avoid counting hydration, sync, or import
-writes as manual feature usage. Contact archive/recovery/favorites, annual-history editing, and many individual
+writes as manual feature usage. Contact archive/recovery/favorites, deleting a Service Year, and many individual
 preference controls remain outside explicit action coverage. Native widget-only timer interactions do not pass
 through the JavaScript timer hook. Share-sheet presentation or external-app handoff
 does not prove delivery/submission to another person or app.
@@ -163,11 +163,20 @@ does not prove delivery/submission to another person or app.
 ## Role History
 
 `role_period_set` records a committed change to which Publisher role applied to
-which months. Properties: `source` (`settings`), `role` (the Publisher enum value),
-`scope` (`from_month` or `all_months`), `months_back` (how many months before the
-current month the change starts, for `from_month`), and `reset_future_goals`.
-Dismissing the start-month sheet sends nothing and leaves the role unchanged.
-Onboarding role selection is covered by the onboarding events instead.
+which months. Properties: `source` (`settings`, `month_chip`), `role` (the
+Publisher enum value, or `regularAuxiliaryReduced` for the 15-hour auxiliary
+status), `scope` (`from_month`, `single_month`, or `all_months`), and for Settings
+changes `months_back` (how many months before the current month the change starts,
+for `from_month`) and `reset_future_goals`. Dismissing a status sheet sends
+nothing and leaves the role unchanged. Onboarding role selection is covered by the
+onboarding events instead.
+
+The Service History editor records `service_history_viewed` once per Service Year
+shown and `service_history_saved` on Save. Both carry `source` (`year_tab`,
+`add_earlier_year`, `settings`) and `service_years_back` (0 = the latest Service
+Year with a finished month). `service_history_saved` adds `months_status_changed`
+and `months_time_added` counts. Leaving without saving is the abandonment signal:
+a `service_history_viewed` with no following `service_history_saved`.
 
 ## iCloud Sync and Help Center
 

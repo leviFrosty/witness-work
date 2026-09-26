@@ -173,3 +173,52 @@ describe('Role History preference actions', () => {
     })
   })
 })
+
+describe('Month status preference action', () => {
+  const march = { year: 2026, month: 2 }
+
+  beforeEach(() => {
+    usePreferences.setState({
+      ...PREFERENCE_DEFAULTS,
+      role: 'publisher',
+      roleHistory: null,
+      monthlyGoalOverrides: {},
+      preferenceUpdatedAt: {},
+    })
+  })
+
+  it('sets one month to reduced-goal auxiliary with its 15h goal', () => {
+    usePreferences
+      .getState()
+      .setMonthStatus(march, 'regularAuxiliaryReduced', 'month')
+
+    const state = usePreferences.getState()
+    expect(state.role).toBe('publisher')
+    expect(state.roleHistory).toEqual({
+      initial: 'publisher',
+      changes: { '2026-03': 'regularAuxiliary', '2026-04': 'publisher' },
+    })
+    expect(state.monthlyGoalOverrides).toEqual({ '2026-03': 15 })
+  })
+
+  it('clears the 15h goal when the month leaves reduced-goal auxiliary', () => {
+    const { setMonthStatus } = usePreferences.getState()
+    setMonthStatus(march, 'regularAuxiliaryReduced', 'month')
+    setMonthStatus(march, 'publisher', 'month')
+
+    const state = usePreferences.getState()
+    expect(state.roleHistory).toBeNull()
+    expect(state.monthlyGoalOverrides).toEqual({})
+  })
+
+  it('makes an onward status the standing role', () => {
+    usePreferences.getState().setMonthStatus(march, 'regularPioneer', 'onward')
+
+    const state = usePreferences.getState()
+    expect(state.role).toBe('regularPioneer')
+    expect(state.roleHistory).toEqual({
+      initial: 'publisher',
+      changes: { '2026-03': 'regularPioneer' },
+    })
+  })
+})

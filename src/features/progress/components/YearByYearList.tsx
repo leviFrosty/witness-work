@@ -3,13 +3,14 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
-import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import { useToastController } from '@tamagui/toast'
 
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
 import usePublisher from '@/hooks/usePublisher'
+import { useNavigation } from '@react-navigation/native'
+import type { RootStackNavigation } from '@/types/rootStack'
 import {
   getHoursForServiceYearEndYear,
   getMinutesForServiceYearEndYear,
@@ -83,7 +84,8 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
     return data
   }, [endYears, reports])
 
-  const { addServiceReport, deleteServiceYearReports } = useServiceReport()
+  const { deleteServiceYearReports } = useServiceReport()
+  const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
 
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -113,17 +115,11 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   }, [endYears])
 
   const handleAddEarlierYear = (endYear: number) => {
-    const startYear = endYear - 1
-    // Sept 1 = canonical start of a JW service year. Noon avoids any DST edge
-    // case that could shift the stored calendar day.
-    const date = new Date(startYear, 8, 1, 12, 0, 0, 0)
-    addServiceReport({
-      id: Crypto.randomUUID(),
-      hours: 0,
-      minutes: 0,
-      date,
-    })
     setSheetOpen(false)
+    navigation.navigate('ServiceHistory', {
+      serviceYear: endYear - 1,
+      source: 'add_earlier_year',
+    })
   }
 
   const divisor = useMemo(() => {

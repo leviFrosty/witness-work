@@ -44,6 +44,7 @@ import FAQScreen from '@/features/updates/screens/FAQScreen'
 import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
 import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
+import ServiceHistoryScreen from '@/features/service-reports/screens/ServiceHistoryScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -408,6 +409,18 @@ const RootStackComponent = () => {
           }}
           name='OnboardingBackfill'
           component={OnboardingBackfillScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('serviceHistory.title')}
+              />
+            ),
+          }}
+          name='ServiceHistory'
+          component={ServiceHistoryScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

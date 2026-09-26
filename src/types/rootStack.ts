@@ -72,6 +72,19 @@ export type RootStackParamList = {
   More: undefined
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined
+  ServiceHistory:
+    | {
+        /**
+         * Service Year start year (Sep of `serviceYear`); defaults to the
+         * latest with finished months.
+         */
+        serviceYear?: number
+        source?: ServiceHistorySource
+      }
+    | undefined
 }
+
+/** Where the Service History editor was opened from (analytics). */
+export type ServiceHistorySource = 'year_tab' | 'add_earlier_year' | 'settings'
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

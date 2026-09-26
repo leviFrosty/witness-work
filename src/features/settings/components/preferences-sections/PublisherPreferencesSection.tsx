@@ -1,4 +1,11 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import {
+  ChevronRight as ChevronRightIcon,
+  History as HistoryIcon,
+} from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native'
+import IconButton from '@/components/ui/IconButton'
+import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import type { RootStackNavigation } from '@/types/rootStack'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
@@ -75,6 +82,7 @@ const PublisherPreferencesSection = () => {
     set({ publisherHours: { ...publisherHours, publisher: next } })
   }
 
+  const navigation = useNavigation<RootStackNavigation>()
   const showAdvanced = canAdjustCreditLimit || showsTimeEntry
   // Hours-mode roles always get the annual-goal row. A publisher logging hours
   // only gets it once they have a monthly goal to multiply (annual = ×12).
@@ -154,6 +162,20 @@ const PublisherPreferencesSection = () => {
           </InputRowContainer>
         )}
         <DefaultExportMethodSelector lastInSection />
+      </Section>
+
+      <Section>
+        <InputRowButton
+          leftIcon={HistoryIcon}
+          label={i18n.t('serviceHistory.settingsRow')}
+          sublabel={i18n.t('serviceHistory.settingsRow_description')}
+          onPress={() =>
+            navigation.navigate('ServiceHistory', { source: 'settings' })
+          }
+          lastInSection
+        >
+          <IconButton icon={ChevronRightIcon} />
+        </InputRowButton>
       </Section>
 
       {showAdvanced && (

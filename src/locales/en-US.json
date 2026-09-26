@@ -2312,6 +2312,27 @@
     "explanationWithoutAnnualGoal": "Only {{month}} changes. Your regular monthly goal stays the same.",
     "useRegularGoal": "Use regular {{goal}} goal"
   },
+  "monthStatus": {
+    "title": "Status for {{month}}",
+    "description": "Choose your status for this month. Its goal and Service Report follow it.",
+    "appliesTo": "Applies to",
+    "onlyMonth": "Only {{month}}",
+    "monthOnward": "{{month}} onward",
+    "auxiliary": "Auxiliary Pioneer ({{count}} hours)",
+    "editAccessibility": "Change this month's status, currently {{status}}"
+  },
+  "serviceHistory": {
+    "title": "Service History",
+    "edit": "Edit Service History",
+    "settingsRow": "Service History",
+    "settingsRow_description": "Set your status for past months and add time you didn't log.",
+    "description": "Set your status for each month and add time you didn't log. Each month's goal and Service Report follow its status.",
+    "previousYear": "Previous service year",
+    "nextYear": "Next service year",
+    "logged": "Logged",
+    "loggedDescription": "This month already has time logged. Open the month to change it.",
+    "applyToLaterMonths": "Set later months to {{status}}"
+  },
   "roleStart": {
     "title": "When did you start as {{role}}?",
     "thisMonth": "This month ({{month}})",

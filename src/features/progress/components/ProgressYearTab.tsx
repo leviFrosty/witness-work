@@ -24,11 +24,15 @@ import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import YearTotalCard from '@/features/progress/components/YearTotalCard'
 import YearCategoryBreakdownSection from '@/features/progress/components/YearCategoryBreakdownSection'
 import Text from '@/components/ui/MyText'
+import { useNavigation } from '@react-navigation/native'
+import type { RootStackNavigation } from '@/types/rootStack'
+import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import { useCardStyle } from '@/components/ui/Card'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import { serviceYearFocusMonth } from '@/lib/roleHistory'
+import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -65,6 +69,32 @@ const CurrentMonthIcon = () => {
   )
 }
 
+const RowBadge = ({ label }: { label: string }) => {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: theme.numbers.borderRadiusSm,
+        backgroundColor: theme.colors.accentTranslucent,
+      }}
+    >
+      <Text
+        numberOfLines={1}
+        style={{
+          color: theme.colors.accent,
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('xs'),
+        }}
+      >
+        {label}
+      </Text>
+    </View>
+  )
+}
+
 /**
  * One row per month in the service year. Compact single-liner matching the
  * wireframe: `{MMM} {hours}h {+delta}`. Tap → Month tab for that month.
@@ -86,6 +116,7 @@ const MonthRow = ({
   const cardStyle = useCardStyle()
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const { type: role } = usePublisher({ month, year })
+  const monthStatus = useMonthStatus({ month, year })
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
@@ -183,28 +214,19 @@ const MonthRow = ({
             </Text>
             {isCurrent ? <CurrentMonthIcon /> : null}
           </XView>
-          {isOverridden ? (
-            <View
-              style={{
-                alignSelf: 'flex-start',
-                paddingHorizontal: 6,
-                paddingVertical: 2,
-                borderRadius: theme.numbers.borderRadiusSm,
-                backgroundColor: theme.colors.accentTranslucent,
-              }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('xs'),
-                }}
-              >
-                {i18n.t('monthGoalEditor.goalBadge', {
-                  goal: goalDisplay.formatted,
-                })}
-              </Text>
-            </View>
+          {isOverridden || monthStatus.isDifferent ? (
+            <XView style={{ gap: 6, flexWrap: 'wrap' }}>
+              {monthStatus.isDifferent ? (
+                <RowBadge label={monthStatus.label} />
+              ) : null}
+              {isOverridden ? (
+                <RowBadge
+                  label={i18n.t('monthGoalEditor.goalBadge', {
+                    goal: goalDisplay.formatted,
+                  })}
+                />
+              ) : null}
+            </XView>
           ) : null}
         </View>
         <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
@@ -259,9 +281,15 @@ const ProgressYearTab = ({
   const insets = useSafeAreaInsets()
   const { hasSidebar } = useAdaptiveLayout()
 
+  const navigation = useNavigation<RootStackNavigation>()
   const now = moment()
   const currentMonth = now.month()
   const currentYear = now.year()
+  // Service History covers finished months only.
+  const hasPastMonths = moment({ year: year - 1, month: 8 }).isBefore(
+    now,
+    'month'
+  )
 
   // Pairs of (monthIndex, calendarYear) for the service year span.
   const months = useMemo(() => {
@@ -396,6 +424,30 @@ const ProgressYearTab = ({
               )
             })}
           </View>
+          {hasPastMonths ? (
+            <Button
+              noTransform
+              accessibilityRole='button'
+              variant='outline'
+              onPress={() =>
+                navigation.navigate('ServiceHistory', {
+                  serviceYear: year - 1,
+                  source: 'year_tab',
+                })
+              }
+              style={{ justifyContent: 'center', paddingVertical: 12 }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                }}
+              >
+                {i18n.t('serviceHistory.edit')}
+              </Text>
+            </Button>
+          ) : null}
         </View>
       }
     />

@@ -68,6 +68,9 @@ import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
 import MonthGoalButton from '@/features/service-reports/components/MonthGoalButton'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
+import MonthStatusButton from '@/features/service-reports/components/MonthStatusButton'
+import MonthStatusSheet from '@/features/service-reports/components/MonthStatusSheet'
+import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
 
 interface MonthReportProps {
   monthsReports: TimeEntry[] | null
@@ -116,6 +119,8 @@ const MonthReport = ({
     hasAnnualGoal,
   } = usePublisher({ month, year })
   const [goalEditorOpen, setGoalEditorOpen] = useState(false)
+  const monthStatus = useMonthStatus({ month, year })
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false)
   const { categories } = useCategories()
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
@@ -433,6 +438,14 @@ const MonthReport = ({
               />
             ) : null}
           </View>
+          {allowGoalEditing && !monthInFuture ? (
+            <MonthStatusButton
+              label={monthStatus.label}
+              isDifferent={monthStatus.isDifferent}
+              onPress={() => setStatusSheetOpen(true)}
+              style={{ marginTop: 8 }}
+            />
+          ) : null}
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
@@ -474,6 +487,18 @@ const MonthReport = ({
             annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
             onSaveGoal={setMonthlyGoalOverride}
             onUseRegularGoal={clearMonthlyGoalOverride}
+          />
+        ) : null}
+        {allowGoalEditing ? (
+          <MonthStatusSheet
+            open={statusSheetOpen}
+            onOpenChange={setStatusSheetOpen}
+            month={month}
+            year={year}
+            status={monthStatus.status}
+            onSave={(status, scope) =>
+              monthStatus.save(status, scope, 'month_chip')
+            }
           />
         ) : null}
       </View>
@@ -525,7 +550,7 @@ const MonthReport = ({
             </View>
           )}
 
-          {allowGoalEditing && baseGoalHours > 0 ? (
+          {allowGoalEditing ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -534,11 +559,30 @@ const MonthReport = ({
                 gap: 8,
               }}
             >
-              <MonthGoalButton
-                goalHours={goalHours}
-                isOverridden={isOverridden}
-                onPress={() => setGoalEditorOpen(true)}
-              />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexShrink: 1,
+                }}
+              >
+                {baseGoalHours > 0 ? (
+                  <MonthGoalButton
+                    goalHours={goalHours}
+                    isOverridden={isOverridden}
+                    onPress={() => setGoalEditorOpen(true)}
+                  />
+                ) : null}
+                {!monthInFuture ? (
+                  <MonthStatusButton
+                    label={monthStatus.label}
+                    isDifferent={monthStatus.isDifferent}
+                    onPress={() => setStatusSheetOpen(true)}
+                  />
+                ) : null}
+              </View>
               {hideTitle && showReportButton ? (
                 <ViewReportButton month={month} year={year} />
               ) : null}
@@ -563,12 +607,10 @@ const MonthReport = ({
               sealAnimatedStyle={sealAnimatedStyle}
               hideGoalLabel={allowGoalEditing}
               headerRightSlot={
-                // The editable-goal row owns the report button when it
-                // renders; with no base goal that row is absent, so the
-                // button falls back to the hero header slot.
-                (!allowGoalEditing || baseGoalHours <= 0) &&
-                hideTitle &&
-                showReportButton ? (
+                // The editable goal/status row owns the report button when it
+                // renders; otherwise the button falls back to the hero header
+                // slot.
+                !allowGoalEditing && hideTitle && showReportButton ? (
                   <ViewReportButton month={month} year={year} />
                 ) : undefined
               }
@@ -792,6 +834,18 @@ const MonthReport = ({
           annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
           onSaveGoal={setMonthlyGoalOverride}
           onUseRegularGoal={clearMonthlyGoalOverride}
+        />
+      ) : null}
+      {allowGoalEditing ? (
+        <MonthStatusSheet
+          open={statusSheetOpen}
+          onOpenChange={setStatusSheetOpen}
+          month={month}
+          year={year}
+          status={monthStatus.status}
+          onSave={(status, scope) =>
+            monthStatus.save(status, scope, 'month_chip')
+          }
         />
       ) : null}
     </View>

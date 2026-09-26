@@ -2312,6 +2312,14 @@
     "explanationWithoutAnnualGoal": "Only {{month}} changes. Your regular monthly goal stays the same.",
     "useRegularGoal": "Use regular {{goal}} goal"
   },
+  "roleStart": {
+    "title": "When did you start as {{role}}?",
+    "thisMonth": "This month ({{month}})",
+    "allMonths": "All months",
+    "startingMonth": "Starting",
+    "fromDescription": "Months from {{month}} on will use {{role}}. Earlier months keep the status you had then.",
+    "allMonthsDescription": "Every month will use {{role}}, including past months."
+  },
   "projectedTotal": {
     "header": "Projected Total",
     "headerMonth": "Projected Month",

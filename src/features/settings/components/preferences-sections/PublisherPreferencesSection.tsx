@@ -106,7 +106,7 @@ const PublisherPreferencesSection = () => {
       )}
 
       <Section>
-        <PublisherTypeSelector />
+        <PublisherTypeSelector askStartMonth />
         {tracksTenure && (
           <InputRowContainer label={i18n.t(getStartDateLabels(role).label)}>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>

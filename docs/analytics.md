@@ -160,6 +160,15 @@ preference controls remain outside explicit action coverage. Native widget-only 
 through the JavaScript timer hook. Share-sheet presentation or external-app handoff
 does not prove delivery/submission to another person or app.
 
+## Role History
+
+`role_period_set` records a committed change to which Publisher role applied to
+which months. Properties: `source` (`settings`), `role` (the Publisher enum value),
+`scope` (`from_month` or `all_months`), `months_back` (how many months before the
+current month the change starts, for `from_month`), and `reset_future_goals`.
+Dismissing the start-month sheet sends nothing and leaves the role unchanged.
+Onboarding role selection is covered by the onboarding events instead.
+
 ## iCloud Sync and Help Center
 
 `icloud_sync_enabled_changed` records committed enable/disable transitions with

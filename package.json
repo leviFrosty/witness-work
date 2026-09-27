@@ -38,6 +38,7 @@
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/kalam": "^0.4.1",
     "@expo/dom-webview": "57.0.1",
+    "@expo/ui": "57.0.19",
     "@noble/ciphers": "2.4.0",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",

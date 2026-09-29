@@ -42,6 +42,7 @@ import Haptics from '@/lib/haptics'
 import useMonthReportData, {
   type MonthReportData,
 } from '@/features/service-reports/hooks/useMonthReportData'
+import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import { exportMonthReport } from '@/features/service-reports/lib/monthReportExport'
 import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
 import {
@@ -142,6 +143,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { month, year } = route.params
+  // A pending rollover changes this month's hours; decide it before submitting.
+  useRolloverPrompt({ month, year })
   const data = useMonthReportData(month, year)
   const { name, hasName } = useUser()
   const {

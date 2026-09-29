@@ -132,23 +132,19 @@ const HomeTabStack = () => {
     rootNavigation.navigate('MilestoneShowcase')
   }
 
-  const navigation = useNavigation<RootStackNavigation>()
   const rollover = useRollover()
   const { autoRolloverEnabled } = usePreferences()
-  // Once-per-mount guard. Without this, swapping the auto-toggle inside the
-  // rollover screen would re-trigger this effect (autoRolloverEnabled changes)
-  // and potentially navigate or apply twice.
+  // Auto mode applies a pending rollover silently at launch. Otherwise the
+  // decision waits in the notifications tray and comes up on Progress or before
+  // that month's report (`useRolloverPrompt`) instead of interrupting launch.
+  // Once-per-mount guard so toggling auto mode can't apply twice.
   const rolloverHandledRef = useRef(false)
   useEffect(() => {
     if (rolloverHandledRef.current) return
-    if (rollover.pending.length === 0) return
+    if (rollover.pending.length === 0 || !autoRolloverEnabled) return
     rolloverHandledRef.current = true
-    if (autoRolloverEnabled) {
-      rollover.apply()
-    } else {
-      navigation.navigate('Rollover')
-    }
-  }, [autoRolloverEnabled, navigation, rollover])
+    rollover.apply()
+  }, [autoRolloverEnabled, rollover])
 
   return (
     <View style={{ flexGrow: 1 }}>

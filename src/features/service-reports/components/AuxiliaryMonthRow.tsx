@@ -26,10 +26,16 @@ import useAuxiliaryMonths, {
 const AuxiliaryMonthRow = ({
   source,
   variant = 'inline',
+  statusOnly = false,
 }: {
   source: AuxiliaryMonthSource
   /** `inline` sits in a card (Home); `row` fills a settings Section. */
   variant?: 'inline' | 'row'
+  /**
+   * Only show an active or scheduled month. On Home the question itself lives
+   * in the notifications tray.
+   */
+  statusOnly?: boolean
 }) => {
   const theme = useTheme()
   const { entryMode } = usePublisher('standing')
@@ -78,6 +84,8 @@ const AuxiliaryMonthRow = ({
       onConfirm: () => setAuxiliary(activeMonth, null, source),
     })
   }
+
+  if (statusOnly && !active) return null
 
   return (
     <>

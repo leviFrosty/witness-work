@@ -17,7 +17,6 @@ import PublisherCheckBoxCard from '@/features/service-reports/components/Publish
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
 import ServiceReportStudiesOverlay from '@/features/service-reports/components/ServiceReportStudiesOverlay'
 import AuxiliaryMonthRow from '@/features/service-reports/components/AuxiliaryMonthRow'
-import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
@@ -106,7 +105,6 @@ const ServiceReportSection = () => {
           borderTopColor: theme.colors.border,
         }}
       >
-        <SubmitPreviousReportButton />
         <View
           style={{
             flexDirection: 'row',
@@ -169,7 +167,7 @@ const ServiceReportSection = () => {
             </Text>
           </Button>
         ) : null}
-        <AuxiliaryMonthRow source='home' />
+        <AuxiliaryMonthRow source='home' statusOnly />
       </View>
     </Card>
   )

@@ -17,11 +17,8 @@ import { DevSettings } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'
 import { usePreferences } from '@/stores/preferences'
-import BuddyNotificationsBell from '@/features/buddies/components/BuddyNotificationsBell'
-import MilestoneRevealRecoveryIcon from '@/features/milestones/components/MilestoneRevealRecoveryIcon'
+import NotificationsBell from '@/app/notifications/NotificationsBell'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
-import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
-import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
@@ -34,9 +31,6 @@ const DrawerNavigator = () => {
   const theme = useTheme()
   const { width } = useWindowDimensions()
   const { hasSidebar } = useAdaptiveLayout()
-  const notesImportReadyCount = useNotesImportManager((s) =>
-    unviewedReadyImportCount(s.entries)
-  )
   const focusNotesImports = useNotesImportManager((s) => s.focus)
 
   // The slide drawer translates the scene by exactly this width. A fractional
@@ -90,24 +84,14 @@ const DrawerNavigator = () => {
               buttonType={hasSidebar ? 'none' : undefined}
               leftElement={
                 hasSidebar ? undefined : (
-                  <View style={{ position: 'relative' }}>
-                    <IconButton
-                      icon={MenuIcon}
-                      size='xl'
-                      hitSlop={24}
-                      color={theme.colors.text}
-                      accessibilityLabel={
-                        notesImportEnabled && notesImportReadyCount > 0
-                          ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`
-                          : i18n.t('settings')
-                      }
-                      onPress={() => navigation.toggleDrawer()}
-                    />
-                    <NotesImportReadyDot
-                      visible={notesImportEnabled && notesImportReadyCount > 0}
-                      style={{ position: 'absolute', top: -2, right: -3 }}
-                    />
-                  </View>
+                  <IconButton
+                    icon={MenuIcon}
+                    size='xl'
+                    hitSlop={24}
+                    color={theme.colors.text}
+                    accessibilityLabel={i18n.t('settings')}
+                    onPress={() => navigation.toggleDrawer()}
+                  />
                 )
               }
               onLongPressTitle={onLongPressTitle}
@@ -129,8 +113,7 @@ const DrawerNavigator = () => {
                       onLongPress={() => DevSettings.reload()}
                     />
                   )}
-                  <MilestoneRevealRecoveryIcon />
-                  <BuddyNotificationsBell />
+                  <NotificationsBell />
                   {!hideDonateHeart && (
                     <IconButton
                       onPress={() => {

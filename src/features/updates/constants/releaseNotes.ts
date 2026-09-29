@@ -31,7 +31,7 @@ export type ReleaseNote = {
   milestone?: boolean
   /**
    * How loudly to announce this release on first launch after updating.
-   * Defaults to `'passive'` (Home card + Settings dot). Use `'silent'` for
+   * Defaults to `'passive'` (a notifications tray item). Use `'silent'` for
    * fix-only releases and reserve `'sheet'` for big releases worth interrupting
    * the user's quick "open app, add time" flow.
    */

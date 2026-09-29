@@ -48,19 +48,21 @@ function headline(entry: BuddyNotification): string {
 }
 
 /**
- * One queue entry; invitations and claims can be answered in place. Long-press
- * the entry to open or dismiss it; the answer buttons stay outside the
- * long-press target.
+ * One queue entry in the notifications tray; invitations and claims can be
+ * answered in place. Long-press the entry to open or dismiss it; the answer
+ * buttons stay outside the long-press target.
  */
 export default function BuddyNotificationRow({
   entry,
+  unread,
   onPress,
-  last,
+  onDismiss,
 }: {
   entry: BuddyNotification
+  unread: boolean
   /** Opens what the entry is about, when there's somewhere to go. */
   onPress?: () => void
-  last: boolean
+  onDismiss: () => void
 }) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
@@ -111,19 +113,10 @@ export default function BuddyNotificationRow({
   const canAnswer =
     !!share && status !== 'cancelled' && (status === 'pending' || changing)
 
-  const dismiss = () => buddiesEngine.dismissNotification(entry.id)
   const title = headline({ ...entry, name: buddy?.name ?? entry.name })
 
   return (
-    <View
-      style={{
-        gap: 10,
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        borderBottomWidth: last ? 0 : 1,
-        borderColor: theme.colors.border,
-      }}
-    >
+    <View style={{ gap: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
       <XView style={{ gap: 10, alignItems: 'flex-start' }}>
         <ContextMenu
           style={{ flex: 1 }}
@@ -141,7 +134,7 @@ export default function BuddyNotificationRow({
               id: 'dismiss',
               title: i18n.t('dismiss'),
               systemImage: 'xmark',
-              onPress: dismiss,
+              onPress: onDismiss,
             },
           ]}
         >
@@ -154,7 +147,7 @@ export default function BuddyNotificationRow({
                   colorIndex={buddy?.colorIndex}
                   size={36}
                 />
-                {!entry.read && (
+                {unread && (
                   <View
                     accessibilityElementsHidden
                     style={{
@@ -208,7 +201,7 @@ export default function BuddyNotificationRow({
           hitSlop={12}
           style={{ paddingTop: 10 }}
           accessibilityLabel={i18n.t('dismiss')}
-          onPress={dismiss}
+          onPress={onDismiss}
         />
       </XView>
 

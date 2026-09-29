@@ -6,19 +6,22 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import BuddyNotificationsList from '@/features/buddies/components/BuddyNotificationsList'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-import { useNotificationsPopover } from '@/features/buddies/stores/notificationsPopover'
+import type { NotificationItem } from '@/types/notifications'
+import NotificationsList from '@/features/notifications/components/NotificationsList'
+import { trayEntries, unreadCount } from '@/features/notifications/lib/tray'
+import {
+  recordArrivals,
+  useNotificationsTray,
+} from '@/features/notifications/stores/notificationsTray'
 
 const POPOVER_WIDTH = 380
 
 /** Opens the popover when something (a tapped push) asked for it. */
 function useOpenOnRequest(open: () => void) {
-  const requested = useNotificationsPopover((state) => state.openRequested)
+  const requested = useNotificationsTray((state) => state.openRequested)
   useEffect(() => {
     if (!requested) return
-    useNotificationsPopover.setState({ openRequested: false })
+    useNotificationsTray.setState({ openRequested: false })
     open()
   }, [requested, open])
 }
@@ -79,28 +82,49 @@ function BellTrigger({
 }
 
 /**
- * Home header bell for the buddy notification queue, with an unread badge. The
- * queue opens in a popover. Only shown once the User has started using
- * Buddies.
+ * Home header bell over every feature's time- and event-based notices, with an
+ * unread badge. Items are derived by the caller; this owns dismissal, read
+ * state, and when each item came in.
  */
-export default function BuddyNotificationsBell() {
+export default function NotificationsTray({
+  items,
+  now,
+  onOpen,
+}: {
+  items: NotificationItem[]
+  now: number
+  onOpen?: () => void
+}) {
   const { width } = useWindowDimensions()
-  const enabled = useBuddiesEnabled()
-  const started = useBuddies((state) => state.registeredInboxId !== null)
-  const unread = useBuddies(
-    (state) => state.notifications.filter((n) => !n.read).length
-  )
-  if (!enabled || !started) return null
+  const arrivals = useNotificationsTray((state) => state.arrivals)
+  const dismissed = useNotificationsTray((state) => state.dismissed)
+  const seen = useNotificationsTray((state) => state.seen)
+  const entries = trayEntries(items, { arrivals, dismissed, seen }, now)
+
+  const ids = items.map((item) => item.id).join('\n')
+  useEffect(() => {
+    if (ids) recordArrivals(ids.split('\n'))
+  }, [ids])
 
   return (
     <AnchoredPopover
       contentWidth={Math.min(POPOVER_WIDTH, width - 24)}
       contentStyle={{ padding: 0 }}
       renderTrigger={({ onPress, anchorRef }) => (
-        <BellTrigger onPress={onPress} anchorRef={anchorRef} unread={unread} />
+        <BellTrigger
+          onPress={onPress}
+          anchorRef={anchorRef}
+          unread={unreadCount(entries)}
+        />
       )}
     >
-      {({ closeThen }) => <BuddyNotificationsList closeThen={closeThen} />}
+      {({ closeThen }) => (
+        <NotificationsList
+          entries={entries}
+          closeThen={closeThen}
+          onOpen={onOpen}
+        />
+      )}
     </AnchoredPopover>
   )
 }

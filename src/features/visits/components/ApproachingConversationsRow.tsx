@@ -22,15 +22,8 @@ import useDismissFollowUp from '@/features/visits/hooks/useDismissFollowUp'
 
 const ApproachingConversationRow = ({
   conversation,
-  isOverdue = false,
 }: {
   conversation: Visit
-  /**
-   * When true, tap navigates to the Reschedule sheet instead of Contact
-   * Details. Same UX as tapping an overdue follow-up from the Appointments
-   * widget so users get one consistent flow regardless of entry point.
-   */
-  isOverdue?: boolean
 }) => {
   const theme = useContext(ThemeContext)
   const contact = useContacts((s) =>
@@ -61,8 +54,7 @@ const ApproachingConversationRow = ({
       visitId: conversation.id,
     })
 
-  // The row's tap action (Reschedule for missed follow-ups, the contact for
-  // upcoming ones) isn't repeated in its menu.
+  // The row's tap action (the contact) isn't repeated in its menu.
   const actions: ContextMenuEntries = [
     [
       {
@@ -72,7 +64,7 @@ const ApproachingConversationRow = ({
         onPress: () =>
           navigation.navigate('Visit Form', { contactId: contact.id }),
       },
-      !isOverdue && {
+      {
         id: 'reschedule',
         title: i18n.t('rescheduleEllipsis'),
         systemImage: 'calendar',
@@ -92,14 +84,6 @@ const ApproachingConversationRow = ({
       },
     ],
     [
-      isOverdue && {
-        id: 'open',
-        title: i18n.t('openContact'),
-        systemImage: 'person.crop.circle',
-        onPress: openContact,
-      },
-    ],
-    [
       {
         id: 'dismiss_follow_up',
         title: i18n.t('dismissFollowUpAction'),
@@ -113,23 +97,16 @@ const ApproachingConversationRow = ({
     <ContextMenu
       actions={actions}
       analyticsSurface='follow_up_row'
-      onPress={isOverdue ? reschedule : openContact}
+      onPress={openContact}
       preview={<ContactPreview contact={contact} lastVisit={conversation} />}
     >
       <Card
         style={{
-          backgroundColor: isOverdue
-            ? theme.colors.card
-            : theme.colors.backgroundLighter,
+          backgroundColor: theme.colors.backgroundLighter,
           paddingVertical: 12,
           gap: 12,
           flexDirection: 'row',
           alignItems: 'center',
-          ...(isOverdue
-            ? {
-                borderRadius: theme.numbers.borderRadiusMd,
-              }
-            : {}),
         }}
       >
         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>

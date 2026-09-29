@@ -8,7 +8,7 @@ import {
 } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 
-export type AuxiliaryMonthSource = 'home' | 'settings'
+export type AuxiliaryMonthSource = 'home' | 'settings' | 'notifications_tray'
 
 export type AuxiliaryMonth = {
   target: CalendarMonth

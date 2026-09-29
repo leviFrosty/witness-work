@@ -40,6 +40,7 @@ import Card from '@/components/ui/Card'
 import Chip from '@/components/ui/Chip'
 import MilestoneProgressBar from '@/components/MilestoneProgressBar'
 import Text from '@/components/ui/MyText'
+import ContextMenu from '@/components/ui/ContextMenu'
 
 interface YearMilestoneCardProps {
   /**
@@ -55,6 +56,11 @@ interface YearMilestoneCardProps {
    * screen's Year tab).
    */
   onAdjustMilestones?: () => void
+  /**
+   * Opens this service year on Progress. With `onAdjustMilestones`, it's
+   * offered in the hero's long-press menu.
+   */
+  onViewYear?: () => void
   /** Optional category details row between the annual total and progress bar. */
   categoriesSlot?: ReactNode
   /** Show milestone details in a second card on the Year screen. */
@@ -70,6 +76,7 @@ interface YearMilestoneCardProps {
 const YearMilestoneCard = ({
   year,
   onAdjustMilestones,
+  onViewYear,
   categoriesSlot,
   separateMilestones = false,
 }: YearMilestoneCardProps) => {
@@ -461,6 +468,104 @@ const YearMilestoneCard = ({
     </>
   )
 
+  const hero = (
+    <View style={{ gap: 15 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.textAlt,
+            letterSpacing: 0.5,
+          }}
+        >
+          {titleText}
+        </Text>
+        {showCompletionTreatment ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Animated.View style={sealAnimatedStyle}>
+              <LucideIcon
+                icon={CrownIcon}
+                color={theme.colors.supporter}
+                size={16}
+              />
+            </Animated.View>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.supporter,
+              }}
+            >
+              {i18n.t('annualGoalCompleteBadge')}
+            </Text>
+          </View>
+        ) : isCurrentServiceYear ? (
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {daysRemaining} {i18n.t('daysLeft')}
+            {minutesToGoal > 0
+              ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
+              : ''}
+          </Text>
+        ) : null}
+      </View>
+
+      <View style={{ gap: 10 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Text
+            // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
+            // card without auto-shrinking the hero to fine print.
+            style={{
+              fontSize: isDecimal ? 64 : 40,
+              lineHeight: isDecimal ? 68 : 44,
+              fontFamily: theme.fonts.bold,
+              color: theme.colors.text,
+            }}
+          >
+            {isDecimal
+              ? completedHeroDisplay.decimalHours
+              : completedHeroDisplay.formatted}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('lg'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            / {annualGoalHours} {i18n.t('hours_lowercase')}
+          </Text>
+        </View>
+
+        {!separateMilestones && milestoneCount}
+      </View>
+    </View>
+  )
+
   return (
     <>
       <Card
@@ -475,99 +580,31 @@ const YearMilestoneCard = ({
             : {}),
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              letterSpacing: 0.5,
-            }}
+        {/* The hero long-presses for the year's actions where the card has
+          them (Progress); both stay reachable from the visible links. */}
+        {onAdjustMilestones ? (
+          <ContextMenu
+            analyticsSurface='year_milestone_card'
+            actions={[
+              {
+                id: 'adjust_milestones',
+                title: i18n.t('adjustMilestonesEllipsis'),
+                systemImage: 'flag',
+                onPress: onAdjustMilestones,
+              },
+              onViewYear && {
+                id: 'view_year',
+                title: i18n.t('viewYear'),
+                systemImage: 'calendar',
+                onPress: onViewYear,
+              },
+            ]}
           >
-            {titleText}
-          </Text>
-          {showCompletionTreatment ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Animated.View style={sealAnimatedStyle}>
-                <LucideIcon
-                  icon={CrownIcon}
-                  color={theme.colors.supporter}
-                  size={16}
-                />
-              </Animated.View>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.supporter,
-                }}
-              >
-                {i18n.t('annualGoalCompleteBadge')}
-              </Text>
-            </View>
-          ) : isCurrentServiceYear ? (
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {daysRemaining} {i18n.t('daysLeft')}
-              {minutesToGoal > 0
-                ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
-                : ''}
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={{ gap: 10 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'baseline',
-              gap: 2,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Text
-              // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
-              // card without auto-shrinking the hero to fine print.
-              style={{
-                fontSize: isDecimal ? 64 : 40,
-                lineHeight: isDecimal ? 68 : 44,
-                fontFamily: theme.fonts.bold,
-                color: theme.colors.text,
-              }}
-            >
-              {isDecimal
-                ? completedHeroDisplay.decimalHours
-                : completedHeroDisplay.formatted}
-            </Text>
-            <Text
-              style={{
-                fontSize: theme.fontSize('lg'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              / {annualGoalHours} {i18n.t('hours_lowercase')}
-            </Text>
-          </View>
-
-          {!separateMilestones && milestoneCount}
-        </View>
+            {hero}
+          </ContextMenu>
+        ) : (
+          hero
+        )}
 
         {categoriesSlot}
 

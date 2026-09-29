@@ -25,6 +25,7 @@ import { ContactSortKey } from '@/lib/contactsSort'
 import { CustomFieldDefinition } from '@/types/customField'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
 import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import ContactsFilterSheet from '@/features/contacts/components/ContactsFilterSheet'
@@ -365,26 +366,40 @@ const ContactsSortAndFilterScreen = () => {
                         overflow: 'hidden',
                       }}
                     >
-                      <Button
+                      <ContextMenu
+                        style={{ flex: 1 }}
+                        analyticsSurface='contacts_filter_chip'
                         onPress={() => handleEditFilter(index)}
-                        noTransform
-                        style={{
-                          flex: 1,
-                          paddingHorizontal: 14,
-                          paddingVertical: 12,
-                        }}
+                        accessibilityLabel={label}
+                        actions={[
+                          {
+                            id: 'edit',
+                            title: i18n.t('editFilterEllipsis'),
+                            systemImage: 'pencil',
+                            onPress: () => handleEditFilter(index),
+                          },
+                          {
+                            id: 'remove',
+                            title: i18n.t('removeFilter'),
+                            systemImage: 'xmark.circle',
+                            destructive: true,
+                            onPress: () => handleRemoveFilter(index),
+                          },
+                        ]}
                       >
                         <Text
                           style={{
                             fontSize: theme.fontSize('sm'),
                             color: theme.colors.accent,
                             fontFamily: theme.fonts.semiBold,
+                            paddingHorizontal: 14,
+                            paddingVertical: 12,
                           }}
                           numberOfLines={2}
                         >
                           {label}
                         </Text>
-                      </Button>
+                      </ContextMenu>
                       <Button
                         onPress={() => handleRemoveFilter(index)}
                         noTransform

@@ -497,7 +497,9 @@ const ScheduleScreen = ({ route }: Props) => {
           onNavigateToPlanDay={handleNavigateToPlanDay}
           onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
           onEditTimeReport={handleEditTimeReport}
-          renderFooter={(date) => <BuddyPlansForDay date={date} />}
+          renderFooter={(date, onNavigate) => (
+            <BuddyPlansForDay date={date} onNavigate={onNavigate} />
+          )}
         />
       )}
       {baseGoalHours > 0 && !isPastMonth ? (

@@ -1,8 +1,9 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
-import { ActionSheetIOS, Alert, Platform } from 'react-native'
+import { View } from 'react-native'
 
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
@@ -26,7 +27,7 @@ type Props = {
 /**
  * One quiet line — "Auxiliary Pioneer · 30 Hrs goal ›" — replacing separate
  * status and goal chips. The goal follows the status, so they read as one fact;
- * when both are editable, a tap asks which to change.
+ * when both are editable, a tap opens a pull-down menu asking which to change.
  */
 const MonthStatusGoalButton = ({
   statusLabel,
@@ -58,63 +59,8 @@ const MonthStatusGoalButton = ({
     else onEditGoal()
   }
 
-  const onPress = () => {
-    if (!statusLabel) return open('goal', 'direct')
-    if (!hasGoal) return open('status', 'direct')
-    const dismissed = () => analytics.capture('month_card_edit_menu_dismissed')
-    if (Platform.OS !== 'ios') {
-      // ActionSheetIOS is iOS-only; a three-button alert covers the same menu.
-      Alert.alert(
-        label,
-        undefined,
-        [
-          { text: i18n.t('cancel'), style: 'cancel', onPress: dismissed },
-          {
-            text: i18n.t('monthStatus.changeStatus'),
-            onPress: () => open('status', 'menu'),
-          },
-          {
-            text: i18n.t('monthStatus.changeGoal'),
-            onPress: () => open('goal', 'menu'),
-          },
-        ],
-        { cancelable: true, onDismiss: dismissed }
-      )
-      return
-    }
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [
-          i18n.t('monthStatus.changeStatus'),
-          i18n.t('monthStatus.changeGoal'),
-          i18n.t('cancel'),
-        ],
-        cancelButtonIndex: 2,
-      },
-      (index) => {
-        if (index === 0) open('status', 'menu')
-        else if (index === 1) open('goal', 'menu')
-        else dismissed()
-      }
-    )
-  }
-
-  return (
-    <Button
-      noTransform
-      accessibilityRole='button'
-      accessibilityLabel={i18n.t('monthStatus.editAccessibility', {
-        summary: label,
-      })}
-      onPress={onPress}
-      hitSlop={8}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        flexShrink: 1,
-      }}
-    >
+  const content = (
+    <>
       <Text
         numberOfLines={1}
         style={{
@@ -127,6 +73,63 @@ const MonthStatusGoalButton = ({
         {label}
       </Text>
       <LucideIcon icon={ChevronRightIcon} size={12} style={{ color }} />
+    </>
+  )
+  const accessibilityLabel = i18n.t('monthStatus.editAccessibility', {
+    summary: label,
+  })
+
+  // Both editable: a native pull-down asks which to change.
+  if (statusLabel && hasGoal) {
+    return (
+      <PullDownMenu
+        analyticsSurface='month_card_status_goal'
+        accessibilityLabel={accessibilityLabel}
+        style={{ flexShrink: 1 }}
+        actions={[
+          {
+            id: 'change_status',
+            title: i18n.t('changeStatusEllipsis'),
+            systemImage: 'person.crop.circle',
+            onPress: () => open('status', 'menu'),
+          },
+          {
+            id: 'change_goal',
+            title: i18n.t('changeGoalEllipsis'),
+            systemImage: 'target',
+            onPress: () => open('goal', 'menu'),
+          },
+        ]}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            flexShrink: 1,
+          }}
+        >
+          {content}
+        </View>
+      </PullDownMenu>
+    )
+  }
+
+  return (
+    <Button
+      noTransform
+      accessibilityRole='button'
+      accessibilityLabel={accessibilityLabel}
+      onPress={() => open(statusLabel ? 'status' : 'goal', 'direct')}
+      hitSlop={8}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        flexShrink: 1,
+      }}
+    >
+      {content}
     </Button>
   )
 }

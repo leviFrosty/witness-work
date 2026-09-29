@@ -13,6 +13,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
+import ContextMenu from '@/components/ui/ContextMenu'
 import useTheme from '@/contexts/theme'
 import { RootStackNavigation } from '@/types/rootStack'
 
@@ -266,6 +267,46 @@ const AssistantSection = ({
     )
   }
 
+  const hide = () => {
+    if (recommendation) handleDismiss()
+    else onDismiss?.()
+  }
+
+  /**
+   * On its own card (Schedule), the Assistant's text is a long-press target for
+   * Assistant Settings / Hide This Section — both also in Preferences — in
+   * place of the header's gear. Its buttons stay outside the target.
+   */
+  const menuArea = (gap: number, children: ReactNode) =>
+    standalone ? (
+      <ContextMenu
+        analyticsSurface='schedule_assistant'
+        actions={[
+          {
+            id: 'assistant_settings',
+            title: i18n.t('assistantSettings'),
+            systemImage: 'gearshape',
+            onPress: openPlanPreferences,
+          },
+          onDismiss && {
+            id: 'hide_section',
+            title: i18n.t('hideThisSection'),
+            systemImage: 'eye.slash',
+            onPress: hide,
+          },
+        ]}
+      >
+        <View style={{ gap }}>{children}</View>
+      </ContextMenu>
+    ) : (
+      children
+    )
+  const header = (
+    <AssistantHeader
+      onPressSettings={standalone ? undefined : openPlanPreferences}
+    />
+  )
+
   // Acceptance collapse — when the user has just accepted and the gap is
   // closed, show the "you've planned enough" affirmation. Detect this by:
   // - engine returns null (no gap)
@@ -277,15 +318,18 @@ const AssistantSection = ({
     if (!justAccepted) return null
     return (
       <Wrapper gap={0}>
-        <Text
-          style={{
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('assistant.collapsedAfterAccept')}
-        </Text>
+        {menuArea(
+          0,
+          <Text
+            style={{
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t('assistant.collapsedAfterAccept')}
+          </Text>
+        )}
       </Wrapper>
     )
   }
@@ -297,25 +341,30 @@ const AssistantSection = ({
   if (!hasSeenAvailabilityOnboarding) {
     return (
       <Wrapper gap={10}>
-        <AssistantHeader onPressSettings={openPlanPreferences} />
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.text,
-          }}
-        >
-          {i18n.t('assistant.intro.title')}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-            lineHeight: theme.fontSize('xs') * 1.45,
-          }}
-        >
-          {i18n.t('assistant.intro.body')}
-        </Text>
+        {menuArea(
+          10,
+          <>
+            {header}
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('assistant.intro.title')}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+                lineHeight: theme.fontSize('xs') * 1.45,
+              }}
+            >
+              {i18n.t('assistant.intro.body')}
+            </Text>
+          </>
+        )}
         <Button
           onPress={() => setAvailabilityOpen(true)}
           style={{
@@ -374,40 +423,45 @@ const AssistantSection = ({
 
   return (
     <Wrapper gap={10}>
-      <AssistantHeader onPressSettings={openPlanPreferences} />
+      {menuArea(
+        10,
+        <>
+          {header}
 
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.text,
-          lineHeight: theme.fontSize('sm') * 1.4,
-        }}
-      >
-        {headlineSegments.map((s, i) => (
-          <Fragment key={i}>
-            <Text
-              style={
-                s.bold
-                  ? {
-                      fontFamily: theme.fonts.bold,
-                      fontSize: theme.fontSize('sm'),
-                    }
-                  : { fontSize: theme.fontSize('sm') }
-              }
-            >
-              {s.text}
-            </Text>
-          </Fragment>
-        ))}
-      </Text>
-      <Text
-        style={{
-          fontSize: theme.fontSize('xs'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {rationaleText}
-      </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.text,
+              lineHeight: theme.fontSize('sm') * 1.4,
+            }}
+          >
+            {headlineSegments.map((s, i) => (
+              <Fragment key={i}>
+                <Text
+                  style={
+                    s.bold
+                      ? {
+                          fontFamily: theme.fonts.bold,
+                          fontSize: theme.fontSize('sm'),
+                        }
+                      : { fontSize: theme.fontSize('sm') }
+                  }
+                >
+                  {s.text}
+                </Text>
+              </Fragment>
+            ))}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {rationaleText}
+          </Text>
+        </>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
         <Button
@@ -479,7 +533,8 @@ const AssistantSection = ({
 const AssistantHeader = ({
   onPressSettings,
 }: {
-  onPressSettings: () => void
+  /** Shows the gear; left out where a context menu offers Settings. */
+  onPressSettings?: () => void
 }) => {
   const theme = useTheme()
   return (
@@ -507,13 +562,15 @@ const AssistantHeader = ({
       >
         {i18n.t('assistant.label')}
       </Text>
-      <IconButton
-        icon={SettingsIcon}
-        size='xs'
-        color={theme.colors.textAlt}
-        onPress={onPressSettings}
-        accessibilityLabel={i18n.t('assistant.settingsA11y')}
-      />
+      {onPressSettings ? (
+        <IconButton
+          icon={SettingsIcon}
+          size='xs'
+          color={theme.colors.textAlt}
+          onPress={onPressSettings}
+          accessibilityLabel={i18n.t('assistant.settingsA11y')}
+        />
+      ) : null}
     </View>
   )
 }

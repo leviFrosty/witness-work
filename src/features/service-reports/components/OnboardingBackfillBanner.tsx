@@ -1,10 +1,11 @@
 import { X as XIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import moment from 'moment'
 
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
+import ContextMenu from '@/components/ui/ContextMenu'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -37,6 +38,9 @@ const OnboardingBackfillBanner = () => {
 
   if (!eligible || serviceYearCatchUpStatus !== 'skipped') return null
 
+  const startBackfill = () => navigation.navigate('OnboardingBackfill')
+  const dismiss = () => set({ serviceYearCatchUpStatus: 'dismissed' })
+
   return (
     <View
       style={{
@@ -51,34 +55,52 @@ const OnboardingBackfillBanner = () => {
         gap: 12,
       }}
     >
-      <Pressable
-        onPress={() => navigation.navigate('OnboardingBackfill')}
-        style={{ flex: 1, gap: 2 }}
+      <ContextMenu
+        analyticsSurface='onboarding_backfill_banner'
+        onPress={startBackfill}
+        accessibilityLabel={i18n.t('onboardingBackfillBannerTitle')}
+        style={{ flex: 1 }}
+        actions={[
+          {
+            id: 'start_backfill',
+            title: i18n.t('backdateServiceYearEllipsis'),
+            systemImage: 'calendar.badge.plus',
+            onPress: startBackfill,
+          },
+          {
+            id: 'dont_show_again',
+            title: i18n.t('dontShowAgain'),
+            systemImage: 'eye.slash',
+            onPress: dismiss,
+          },
+        ]}
       >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-            fontSize: 14,
-          }}
-        >
-          {i18n.t('onboardingBackfillBannerTitle')}
-        </Text>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: 12,
-            lineHeight: 16,
-          }}
-        >
-          {i18n.t('onboardingBackfillBannerSubtitle')}
-        </Text>
-      </Pressable>
+        <View style={{ gap: 2 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+              fontSize: 14,
+            }}
+          >
+            {i18n.t('onboardingBackfillBannerTitle')}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: 12,
+              lineHeight: 16,
+            }}
+          >
+            {i18n.t('onboardingBackfillBannerSubtitle')}
+          </Text>
+        </View>
+      </ContextMenu>
       <IconButton
         icon={XIcon}
         size={16}
         color={theme.colors.textAlt}
-        onPress={() => set({ serviceYearCatchUpStatus: 'dismissed' })}
+        onPress={dismiss}
         accessibilityLabel={i18n.t('onboardingBackfillBannerDismissA11y')}
         style={{
           padding: 8,

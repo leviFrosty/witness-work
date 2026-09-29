@@ -20,6 +20,8 @@ import AuxiliaryMonthRow from '@/features/service-reports/components/AuxiliaryMo
 import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
+import HomeSectionMenu from '@/components/HomeSectionMenu'
+import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
 
 const ServiceReportSection = () => {
   const theme = useTheme()
@@ -28,8 +30,11 @@ const ServiceReportSection = () => {
   const month = moment().month()
   const year = moment().year()
 
+  const { reportMenuItems } = useMonthReportExport()
+
   const viewReport = () =>
     navigation.navigate('ServiceReportView', { month, year })
+  const addTime = () => navigation.navigate('Add Time')
 
   return (
     <Card
@@ -40,32 +45,57 @@ const ServiceReportSection = () => {
         overflow: 'hidden',
       }}
     >
-      <Button
+      {/* Only the header long-presses: the card body is full of controls
+        with their own menus. */}
+      <HomeSectionMenu
+        section='serviceReport'
         accessibilityLabel={i18n.t('viewReport')}
         onPress={viewReport}
-        style={{
-          minHeight: 48,
-          paddingHorizontal: 20,
-          paddingVertical: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
+        actions={[
+          [
+            {
+              id: 'view_report',
+              title: i18n.t('viewReport'),
+              systemImage: 'doc.text',
+              onPress: viewReport,
+            },
+            ...reportMenuItems(month, year),
+          ],
+          showsTimeEntry && [
+            {
+              id: 'add_time',
+              title: i18n.t('addTime'),
+              systemImage: 'plus',
+              onPress: addTime,
+            },
+          ],
+        ]}
       >
-        <Text
+        <View
           style={{
-            fontSize: theme.fontSize('lg'),
-            fontFamily: theme.fonts.semiBold,
+            minHeight: 48,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {i18n.t('serviceReport')}
-        </Text>
-        <LucideIcon
-          icon={ChevronRightIcon}
-          size={16}
-          color={theme.colors.textAlt}
-        />
-      </Button>
+          <Text
+            style={{
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('serviceReport')}
+          </Text>
+          <LucideIcon
+            icon={ChevronRightIcon}
+            size={16}
+            color={theme.colors.textAlt}
+          />
+        </View>
+      </HomeSectionMenu>
 
       <View
         style={{
@@ -110,7 +140,7 @@ const ServiceReportSection = () => {
             variant='glass'
             glassTint={theme.colors.accent}
             accessibilityLabel={i18n.t('addTime')}
-            onPress={() => navigation.navigate('Add Time')}
+            onPress={addTime}
             style={{
               width: '100%',
               minHeight: 48,

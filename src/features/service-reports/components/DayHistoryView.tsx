@@ -41,6 +41,11 @@ interface DayHistoryViewProps {
   onTimeReportPress?: (report: TimeEntry) => void
   onAddTime?: () => void
   onPlanDay?: () => void
+  /**
+   * Runs a navigation from a row's context menu. A host sheet passes one that
+   * closes itself first.
+   */
+  onNavigate?: (navigate: () => void) => void
 }
 
 const contributionToPlanListItem = (
@@ -94,6 +99,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   onTimeReportPress,
   onAddTime: onAddTimeProp,
   onPlanDay,
+  onNavigate,
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
@@ -251,6 +257,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               <TimeReportRow
                 report={item}
                 onPress={() => onTimeReportPress?.(item)}
+                onNavigate={onNavigate}
               />
             )}
             ListEmptyComponent={
@@ -308,6 +315,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             renderItem={({ item }) => (
               <PlanRow
                 item={item}
+                onNavigate={onNavigate}
                 onPress={() => {
                   if (item.type === 'day') {
                     onDayPlanPress?.(item.plan, item.date)
@@ -403,6 +411,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                       key={`${item.type}-${item.plan.id}`}
                       item={item}
                       countingStatus='notCounted'
+                      onNavigate={onNavigate}
                       onPress={() => {
                         if (item.type === 'day') {
                           onDayPlanPress?.(item.plan, item.date)

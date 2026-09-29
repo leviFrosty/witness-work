@@ -15,6 +15,7 @@ import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
+import { isContactDismissed } from '@/lib/dismissedContacts'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
 import { builtInContactSortOptions } from '@/stores/preferences'
 import i18n from '@/lib/locales'
@@ -30,6 +31,13 @@ import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
 import { Contact } from '@/types/contact'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import ContactDetailsContent from '@/features/contacts/components/ContactDetailsContent'
+import ContactsSelectionBar from '@/features/contacts/components/ContactsSelectionBar'
+import PullDownMenu from '@/components/ui/PullDownMenu'
+import {
+  SELECTION_BAR_HEIGHT,
+  SelectionTextButton,
+} from '@/features/contacts/components/ListSelection'
+import useListSelection from '@/features/contacts/hooks/useListSelection'
 
 /**
  * Tab-level Contacts screen. Search lives inline at the top so the list updates
@@ -38,7 +46,8 @@ import ContactDetailsContent from '@/features/contacts/components/ContactDetails
  * Sort and filter are lower-frequency, so they're tucked behind a single
  * sliders icon that opens the modal `ContactsSortAndFilterScreen`. The "+" pill
  * is the only floating action; the global TabBar already supplies a QuickAction
- * accessory.
+ * accessory. Select mode (batch actions on the rows shown) starts from the "…"
+ * menu beside "+", as in Notes and Files, or from a row's long-press "Select".
  */
 const ContactsScreen = () => {
   const theme = useTheme()
@@ -49,6 +58,7 @@ const ContactsScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   const { contacts, customFieldDefs } = useContacts()
+  const dismissedCount = contacts.filter(isContactDismissed).length
 
   const search = useContactsSearchStore((s) => s.search)
   const setSearch = useContactsSearchStore((s) => s.setSearch)
@@ -67,6 +77,15 @@ const ContactsScreen = () => {
     searchMatchesById,
     conversationIndex,
   } = useContactsSorted()
+
+  const selection = useListSelection(
+    'contacts',
+    searchSortedAndFilteredContacts.map((contact) => contact.id)
+  )
+  const selectedContacts = searchSortedAndFilteredContacts.filter((contact) =>
+    selection.isSelected(contact.id)
+  )
+  const bottomChrome = insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT)
 
   const selectedContact =
     searchSortedAndFilteredContacts.find(
@@ -197,33 +216,102 @@ const ContactsScreen = () => {
                     style={{
                       fontFamily: theme.fonts.bold,
                       fontSize: theme.fontSize('2xl'),
+                      flexShrink: 1,
                     }}
+                    numberOfLines={1}
                   >
-                    {i18n.t('contacts_screen_title')}
+                    {selection.selecting
+                      ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                        i18n.t('selectedCount', {
+                          count: selection.ids.length,
+                        })
+                      : i18n.t('contacts_screen_title')}
                   </Text>
-                  <IconButton
-                    icon={PlusIcon}
-                    size='lg'
-                    style={{
-                      backgroundColor: theme.colors.accentTranslucent,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: theme.colors.accent,
-                    }}
-                    color={theme.colors.accent}
-                    onPress={() => {
-                      const id = Crypto.randomUUID()
-                      if (isWide) setSelectedId(id)
-                      navigation.navigate('Contact Form', {
-                        id,
-                        returnToContacts: isWide,
-                      })
-                    }}
-                  />
+                  {selection.selecting ? (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 16,
+                      }}
+                    >
+                      <SelectionTextButton
+                        label={i18n.t(
+                          selection.allSelected ? 'deselectAll' : 'selectAll'
+                        )}
+                        onPress={selection.toggleAll}
+                      />
+                      <SelectionTextButton
+                        label={i18n.t('done')}
+                        emphasized
+                        onPress={selection.finish}
+                      />
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 16,
+                      }}
+                    >
+                      <PullDownMenu
+                        analyticsSurface='contacts_header'
+                        accessibilityLabel={i18n.t('moreActions')}
+                        triggerColor={theme.colors.accent}
+                        triggerSize={22}
+                        actions={[
+                          [
+                            searchSortedAndFilteredContacts.length > 0 && {
+                              id: 'select',
+                              title: i18n.t('selectContacts'),
+                              systemImage: 'checkmark.circle',
+                              onPress: () => selection.start(),
+                            },
+                          ],
+                          [
+                            {
+                              id: 'sort_and_filter',
+                              title: i18n.t('sortAndFilterEllipsis'),
+                              systemImage: 'line.3.horizontal.decrease.circle',
+                              onPress: () =>
+                                navigation.navigate('Contacts Sort And Filter'),
+                            },
+                            dismissedCount > 0 && {
+                              id: 'dismissed_contacts',
+                              title: i18n.t('dismissedContacts'),
+                              systemImage: 'clock',
+                              onPress: () =>
+                                navigation.navigate('Dismissed Contacts'),
+                            },
+                          ],
+                        ]}
+                      />
+                      <IconButton
+                        icon={PlusIcon}
+                        size='lg'
+                        style={{
+                          backgroundColor: theme.colors.accentTranslucent,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          borderWidth: 1,
+                          borderColor: theme.colors.accent,
+                        }}
+                        color={theme.colors.accent}
+                        onPress={() => {
+                          const id = Crypto.randomUUID()
+                          if (isWide) setSelectedId(id)
+                          navigation.navigate('Contact Form', {
+                            id,
+                            returnToContacts: isWide,
+                          })
+                        }}
+                      />
+                    </View>
+                  )}
                 </View>
 
                 <ContactsStatsHeader
@@ -393,6 +481,9 @@ const ContactsScreen = () => {
             // so disable it here.
             maintainVisibleContentPosition={{ disabled: true }}
             keyExtractor={(item) => item.id}
+            // A new Set on every selection change, start, and finish — no need
+            // to join every selected id into a string on each render.
+            extraData={selection.selected}
             renderItem={({ item }) => (
               <ContactRow
                 contact={item}
@@ -400,7 +491,14 @@ const ContactsScreen = () => {
                 searchMatches={searchMatchesById.get(item.id)}
                 selected={isWide && selectedContact?.id === item.id}
                 showsDisclosure={!isWide}
+                selectionMode={selection.selecting}
+                checked={selection.isSelected(item.id)}
+                onSelect={() => selection.start(item.id, 'row')}
                 onPress={() => {
+                  if (selection.selecting) {
+                    selection.toggle(item.id)
+                    return
+                  }
                   setSelectedId(item.id)
                   if (!isWide)
                     navigation.navigate('Contact Details', { id: item.id })
@@ -415,9 +513,18 @@ const ContactsScreen = () => {
             contentContainerStyle={{
               paddingHorizontal: 12,
               paddingBottom:
-                insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT) + 16,
+                bottomChrome +
+                16 +
+                (selection.selecting ? SELECTION_BAR_HEIGHT + 12 : 0),
             }}
           />
+          {selection.selecting && (
+            <ContactsSelectionBar
+              contacts={selectedContacts}
+              selection={selection}
+              bottom={bottomChrome + (hasSidebar ? 12 : 8)}
+            />
+          )}
         </View>
         {isWide && (
           <View

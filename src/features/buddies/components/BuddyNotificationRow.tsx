@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Alert, Pressable, View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { X as XIcon } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -46,7 +47,11 @@ function headline(entry: BuddyNotification): string {
   }
 }
 
-/** One queue entry; invitations and claims can be answered in place. */
+/**
+ * One queue entry; invitations and claims can be answered in place. Long-press
+ * the entry to open or dismiss it; the answer buttons stay outside the
+ * long-press target.
+ */
 export default function BuddyNotificationRow({
   entry,
   onPress,
@@ -106,10 +111,11 @@ export default function BuddyNotificationRow({
   const canAnswer =
     !!share && status !== 'cancelled' && (status === 'pending' || changing)
 
+  const dismiss = () => buddiesEngine.dismissNotification(entry.id)
+  const title = headline({ ...entry, name: buddy?.name ?? entry.name })
+
   return (
-    <Pressable
-      disabled={!onPress}
-      onPress={onPress}
+    <View
       style={{
         gap: 10,
         paddingVertical: 12,
@@ -118,67 +124,93 @@ export default function BuddyNotificationRow({
         borderColor: theme.colors.border,
       }}
     >
-      <XView style={{ gap: 10, alignItems: 'center' }}>
-        <View>
-          <BuddyAvatar
-            avatar={buddy?.avatar ?? claim?.avatar}
-            name={buddy?.name ?? entry.name}
-            colorIndex={buddy?.colorIndex}
-            size={36}
-          />
-          {!entry.read && (
-            <View
-              accessibilityElementsHidden
-              style={{
-                position: 'absolute',
-                top: -2,
-                left: -2,
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                borderWidth: 1.5,
-                borderColor: theme.colors.card,
-                backgroundColor: theme.colors.accent,
-              }}
-            />
-          )}
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {headline({ ...entry, name: buddy?.name ?? entry.name })}
-          </Text>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {formatRelative(entry.at)}
-          </Text>
-        </View>
+      <XView style={{ gap: 10, alignItems: 'flex-start' }}>
+        <ContextMenu
+          style={{ flex: 1 }}
+          analyticsSurface='buddy_notification'
+          onPress={onPress}
+          accessibilityLabel={title}
+          actions={[
+            onPress && {
+              id: 'open',
+              title: i18n.t('open'),
+              systemImage: 'arrow.up.forward.app',
+              onPress,
+            },
+            {
+              id: 'dismiss',
+              title: i18n.t('dismiss'),
+              systemImage: 'xmark',
+              onPress: dismiss,
+            },
+          ]}
+        >
+          <View style={{ gap: 10 }}>
+            <XView style={{ gap: 10, alignItems: 'center' }}>
+              <View>
+                <BuddyAvatar
+                  avatar={buddy?.avatar ?? claim?.avatar}
+                  name={buddy?.name ?? entry.name}
+                  colorIndex={buddy?.colorIndex}
+                  size={36}
+                />
+                {!entry.read && (
+                  <View
+                    accessibilityElementsHidden
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      left: -2,
+                      width: 10,
+                      height: 10,
+                      borderRadius: 5,
+                      borderWidth: 1.5,
+                      borderColor: theme.colors.card,
+                      backgroundColor: theme.colors.accent,
+                    }}
+                  />
+                )}
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                  {title}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {formatRelative(entry.at)}
+                </Text>
+              </View>
+            </XView>
+
+            {entry.shareKey && entry.kind !== 'shareReply' ? (
+              share ? (
+                <View style={{ opacity: status === 'cancelled' ? 0.5 : 1 }}>
+                  <SharedEventSummary
+                    details={share.details}
+                    isFollowUp={share.type === 'followUp'}
+                  />
+                </View>
+              ) : (
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {i18n.t('buddies_noLongerAvailable')}
+                </Text>
+              )
+            ) : null}
+          </View>
+        </ContextMenu>
         <IconButton
           icon={XIcon}
           size={16}
           hitSlop={12}
+          style={{ paddingTop: 10 }}
           accessibilityLabel={i18n.t('dismiss')}
-          onPress={() => buddiesEngine.dismissNotification(entry.id)}
+          onPress={dismiss}
         />
       </XView>
-
-      {entry.shareKey && entry.kind !== 'shareReply' ? (
-        share ? (
-          <View style={{ opacity: status === 'cancelled' ? 0.5 : 1 }}>
-            <SharedEventSummary
-              details={share.details}
-              isFollowUp={share.type === 'followUp'}
-            />
-          </View>
-        ) : (
-          <Text style={{ color: theme.colors.textAlt }}>
-            {i18n.t('buddies_noLongerAvailable')}
-          </Text>
-        )
-      ) : null}
 
       {canAnswer ? (
         <XView style={{ gap: 10 }}>
@@ -238,6 +270,6 @@ export default function BuddyNotificationRow({
           </Button>
         </View>
       ) : null}
-    </Pressable>
+    </View>
   )
 }

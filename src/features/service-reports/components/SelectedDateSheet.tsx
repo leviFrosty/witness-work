@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
 import useTheme from '@/contexts/theme'
@@ -22,8 +23,14 @@ interface Props {
     recurringPlanDate: string
   ) => void
   onEditTimeReport?: (report: TimeEntry) => void
-  /** Extra read-only content under the day's history (e.g. Buddies' plans). */
-  renderFooter?: (date: Date) => React.ReactNode
+  /**
+   * Extra content under the day's history (e.g. Buddies' plans). Its menus
+   * navigate through `onNavigate`, which closes the sheet first.
+   */
+  renderFooter?: (
+    date: Date,
+    onNavigate: (navigate: () => void) => void
+  ) => React.ReactNode
 }
 
 const SelectedDateSheet: React.FC<Props> = ({
@@ -38,6 +45,22 @@ const SelectedDateSheet: React.FC<Props> = ({
   renderFooter,
 }) => {
   const theme = useTheme()
+  // Navigation chosen from a row's context menu waits for the sheet to close,
+  // or the pushed screen would land underneath the modal sheet.
+  const pendingNavigation = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (!sheet.open && pendingNavigation.current) {
+      const navigate = pendingNavigation.current
+      pendingNavigation.current = null
+      setTimeout(navigate, 125)
+    }
+  }, [sheet.open])
+
+  const navigateAfterClosing = (navigate: () => void) => {
+    pendingNavigation.current = navigate
+    setSheet({ ...sheet, open: false })
+  }
 
   return (
     <Sheet
@@ -92,8 +115,9 @@ const SelectedDateSheet: React.FC<Props> = ({
                 setSheet({ ...sheet, open: false })
                 onPlanDay?.()
               }}
+              onNavigate={navigateAfterClosing}
             />
-            {renderFooter?.(sheet.date)}
+            {renderFooter?.(sheet.date, navigateAfterClosing)}
           </KeyboardAwareScrollView>
         </View>
       </Sheet.Frame>

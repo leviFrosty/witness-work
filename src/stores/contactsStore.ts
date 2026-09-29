@@ -85,6 +85,33 @@ export const useContacts = create(
           }
         })
       },
+      /**
+       * Batch `deleteContact` for Select mode: one store update (and one
+       * persist) for the whole selection instead of one per contact.
+       */
+      deleteContacts: (ids: string[], options?: { redact?: boolean }) => {
+        const redact = options?.redact === true
+        const targets = new Set(ids)
+        set(({ contacts, deletedContacts }) => {
+          const removed = contacts.filter((contact) => targets.has(contact.id))
+          if (!removed.length) return { contacts, deletedContacts }
+          const removedIds = new Set(removed.map((contact) => contact.id))
+          const now = Date.now()
+          return {
+            deletedContacts: [
+              ...deletedContacts.filter(
+                (contact) => !removedIds.has(contact.id)
+              ),
+              ...removed.map((contact) =>
+                redact
+                  ? stripContactForTombstone(contact, now)
+                  : { ...contact, updatedAt: now }
+              ),
+            ],
+            contacts: contacts.filter((contact) => !removedIds.has(contact.id)),
+          }
+        })
+      },
       updateContact: (contact: Partial<Contact>) => {
         set(({ contacts, deletedCustomFieldDefs }) => {
           const updatedCustomFields = stripTombstonedCustomFieldValues(
@@ -351,6 +378,57 @@ export const useContacts = create(
             }),
           }
         })
+      },
+      /**
+       * Batch `dismissContact` for Select mode: one store update (and one
+       * persist) for the whole selection instead of one per contact.
+       */
+      dismissContacts: (
+        updates: {
+          id: string
+          dismissedUntil: Date
+          dismissedNotificationId?: string
+        }[]
+      ) => {
+        const byId = new Map(updates.map((update) => [update.id, update]))
+        const now = Date.now()
+        set(({ contacts }) => ({
+          contacts: contacts.map((c) => {
+            const update = byId.get(c.id)
+            if (!update) return c
+            return {
+              ...c,
+              dismissedUntil: update.dismissedUntil,
+              dismissedNotificationId: update.dismissedNotificationId,
+              updatedAt: now,
+            }
+          }),
+        }))
+      },
+      /** Batch `undismissContact` for Select mode, in one store update. */
+      undismissContacts: (ids: string[]) => {
+        const targets = new Set(ids)
+        const now = Date.now()
+        set(({ contacts }) => ({
+          contacts: contacts.map((c) => {
+            if (!targets.has(c.id)) return c
+            const updatedContact = { ...c, updatedAt: now }
+            delete updatedContact.dismissedUntil
+            delete updatedContact.dismissedNotificationId
+            return updatedContact
+          }),
+        }))
+      },
+      /** Batch favorite for Select mode; leaves already-matching contacts alone. */
+      setContactsFavorite: (ids: string[], isFavorite: boolean) => {
+        const targets = new Set(ids)
+        set(({ contacts }) => ({
+          contacts: contacts.map((c) =>
+            targets.has(c.id) && !!c.isFavorite !== isFavorite
+              ? { ...c, isFavorite, updatedAt: Date.now() }
+              : c
+          ),
+        }))
       },
       toggleFavoriteContact: (id: string) => {
         set(({ contacts }) => {

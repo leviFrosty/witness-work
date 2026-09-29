@@ -1,21 +1,12 @@
 import { ReactNode, useCallback, useState } from 'react'
-import {
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native'
+import { Alert, RefreshControl, ScrollView, View } from 'react-native'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  Plus as PlusIcon,
-  QrCode as QrCodeIcon,
-  RefreshCw as RefreshCwIcon,
-  Settings as SettingsIcon,
-} from 'lucide-react-native'
+import { Ellipsis as EllipsisIcon, Plus as PlusIcon } from 'lucide-react-native'
 import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -143,42 +134,46 @@ export default function BuddiesScreen({
               {i18n.t('buddies_title')}
             </Text>
             <BuddiesAlphaBadge />
-            {hasInbox &&
-              (refreshing ? (
-                <ActivityIndicator
-                  color={theme.colors.textAlt}
-                  style={{ width: 32, height: 32 }}
-                />
-              ) : (
-                <IconButton
-                  icon={RefreshCwIcon}
-                  size={18}
-                  color={theme.colors.textAlt}
-                  style={{ padding: 7 }}
-                  accessibilityLabel={i18n.t('buddies_refresh')}
-                  onPress={refresh}
-                />
-              ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <IconButton
-              icon={SettingsIcon}
-              size='lg'
-              style={headerButton}
-              color={theme.colors.accent}
-              accessibilityLabel={i18n.t('settings')}
-              onPress={() => navigation.navigate('Buddies Settings')}
-            />
-            <IconButton
-              icon={QrCodeIcon}
-              size='lg'
-              style={headerButton}
-              color={theme.colors.accent}
-              accessibilityLabel={i18n.t('buddies_codeA11y')}
-              onPress={() =>
-                navigation.navigate('Buddy Code', { mode: 'code' })
-              }
-            />
+            <PullDownMenu
+              analyticsSurface='buddies_header'
+              accessibilityLabel={i18n.t('moreActions')}
+              actions={[
+                [
+                  {
+                    id: 'show_code',
+                    title: i18n.t('buddies_showCode'),
+                    systemImage: 'qrcode',
+                    onPress: () =>
+                      navigation.navigate('Buddy Code', { mode: 'code' }),
+                  },
+                  {
+                    id: 'scan_code',
+                    title: i18n.t('buddies_scanCode'),
+                    systemImage: 'qrcode.viewfinder',
+                    onPress: () =>
+                      navigation.navigate('Buddy Code', { mode: 'scan' }),
+                  },
+                ],
+                [
+                  {
+                    id: 'settings',
+                    title: i18n.t('buddies_settingsTitle'),
+                    systemImage: 'gearshape',
+                    onPress: () => navigation.navigate('Buddies Settings'),
+                  },
+                ],
+              ]}
+            >
+              <View style={headerButton}>
+                <LucideIcon
+                  icon={EllipsisIcon}
+                  size={theme.fontSize('lg')}
+                  color={theme.colors.accent}
+                />
+              </View>
+            </PullDownMenu>
             <IconButton
               icon={PlusIcon}
               size='lg'

@@ -1,9 +1,11 @@
 import { Pipette as PipetteIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
-import { Pressable } from 'react-native'
+import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
+import ContextMenu from '@/components/ui/ContextMenu'
+import i18n from '@/lib/locales'
 
 interface Props {
   /** Currently-stored color, or null when nothing custom is set. */
@@ -22,6 +24,13 @@ interface Props {
   sheetInitialColor: string
   /** Diameter of the swatch; icon and selected border scale with this. */
   size?: number
+  /**
+   * Clears the custom color. When set, long-pressing an active custom swatch
+   * offers Edit… and Remove (Remove is also reachable by picking a preset).
+   */
+  onRemove?: () => void
+  /** Sent with long-press menu choices; defaults to `custom_color_swatch`. */
+  analyticsSurface?: string
 }
 
 /**
@@ -37,6 +46,8 @@ const CustomColorSwatch = ({
   title,
   sheetInitialColor,
   size = 24,
+  onRemove,
+  analyticsSurface = 'custom_color_swatch',
 }: Props) => {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
@@ -46,25 +57,50 @@ const CustomColorSwatch = ({
 
   return (
     <>
-      <Pressable
+      {/* Only an active custom color that can be removed gets a menu; the
+          idle eyedropper just opens the picker. */}
+      <ContextMenu
+        analyticsSurface={analyticsSurface}
         onPress={() => setOpen(true)}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: isCustom ? selectedBorder : 1,
-          borderColor: isCustom ? theme.colors.text : theme.colors.border,
-          backgroundColor: isCustom ? value : theme.colors.backgroundLighter,
-        }}
+        accessibilityLabel={title}
+        actions={
+          isCustom && onRemove
+            ? [
+                {
+                  id: 'edit',
+                  title: i18n.t('editEllipsis'),
+                  systemImage: 'eyedropper',
+                  onPress: () => setOpen(true),
+                },
+                {
+                  id: 'remove',
+                  title: i18n.t('remove'),
+                  systemImage: 'xmark.circle',
+                  onPress: onRemove,
+                },
+              ]
+            : []
+        }
       >
-        <LucideIcon
-          icon={PipetteIcon}
-          size={iconSize}
-          color={isCustom ? theme.colors.textInverse : theme.colors.text}
-        />
-      </Pressable>
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: isCustom ? selectedBorder : 1,
+            borderColor: isCustom ? theme.colors.text : theme.colors.border,
+            backgroundColor: isCustom ? value : theme.colors.backgroundLighter,
+          }}
+        >
+          <LucideIcon
+            icon={PipetteIcon}
+            size={iconSize}
+            color={isCustom ? theme.colors.textInverse : theme.colors.text}
+          />
+        </View>
+      </ContextMenu>
       <ColorPickerSheet
         visible={open}
         value={isCustom ? value : sheetInitialColor}

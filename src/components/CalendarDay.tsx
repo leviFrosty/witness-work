@@ -5,7 +5,9 @@ import { DateData } from 'react-native-calendars'
 import { DayProps } from 'react-native-calendars/src/calendar/day'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
+import DayPreview, { dayHasPreview } from '@/components/DayPreview'
+import useDayMenuActions from '@/hooks/useDayMenuActions'
 import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
@@ -395,19 +397,41 @@ const CalendarDay = (
     )
   }, [props.date, recurringPlans])
 
-  if (props.date === undefined || !props.date.dateString) return null
+  const disabled = props.state === 'disabled'
+  const localDay = props.date?.dateString
+    ? moment(props.date.dateString).toDate()
+    : undefined
+  // Adjacent-month cells aren't selectable, so they get no menu either.
+  const menu = useDayMenuActions(disabled ? undefined : localDay)
+
+  if (props.date === undefined || !props.date.dateString || !localDay)
+    return null
+
+  const previewData = {
+    reports: reportsForDay,
+    dayPlans: dayPlansForDay,
+    recurringPlans: recurringPlansForDay,
+  }
 
   return (
     <View style={{ position: 'relative' }}>
-      <Button
+      <ContextMenu
+        analyticsSurface='calendar_day'
+        actions={menu}
         onPress={() => {
           props.onPress?.(props.date)
           if (howToAddPlan) {
             removeHint('howToAddPlan')
           }
         }}
+        // The square only shows totals; the preview lists the day's entries.
+        preview={
+          !disabled && dayHasPreview(previewData) ? (
+            <DayPreview date={localDay} {...previewData} />
+          ) : undefined
+        }
         style={{
-          opacity: props.state === 'disabled' ? 0.4 : isOffDay ? 0.55 : 1,
+          opacity: disabled ? 0.4 : isOffDay ? 0.55 : 1,
         }}
       >
         {dayPlansForDay.length || recurringPlansForDay?.length ? (
@@ -420,7 +444,7 @@ const CalendarDay = (
         ) : (
           <NonPlannedDay {...props} serviceReports={reportsForDay} />
         )}
-      </Button>
+      </ContextMenu>
       {props.markerColors && props.markerColors.length > 0 && (
         <View
           pointerEvents='none'

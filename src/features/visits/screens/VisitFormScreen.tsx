@@ -1,10 +1,9 @@
 import {
   Caravan as CaravanIcon,
   MessagesSquare as MessagesSquareIcon,
-  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { ReactNode, useCallback } from 'react'
-import { View, Alert } from 'react-native'
+import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import * as Notifications from 'expo-notifications'
@@ -43,6 +42,7 @@ import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '@/types/rootStack'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import { analytics } from '@/lib/analytics'
+import confirmDestructive from '@/lib/confirmDestructive'
 
 /** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
@@ -187,7 +187,7 @@ const VisitFormScreen = ({
   const contactId = params.contactId || conversationToUpdate?.contact.id || ''
 
   // The entry points that pass `notAtHome` are hidden in data protection mode
-  // (see `AddHistoryActions`); refusing it here too means a stale deep link or
+  // (see `AddVisitMenu` and `useContactMenuActions`); refusing it here too means a stale deep link or
   // navigation state can't slip one through. Editing an existing not-at-home
   // visit still works — its flag comes off the stored record, not from params.
   const notAtHome = dataProtectionMode ? undefined : params.notAtHome
@@ -500,37 +500,6 @@ const VisitFormScreen = ({
                 right: 0,
               }}
             >
-              {isEditing && (
-                <IconButton
-                  icon={Trash2Icon}
-                  color={theme.colors.text}
-                  onPress={() =>
-                    Alert.alert(
-                      i18n.t('deleteConversation'),
-                      i18n.t('deleteConversation_description'),
-                      [
-                        {
-                          text: i18n.t('cancel'),
-                          style: 'cancel',
-                        },
-                        {
-                          text: i18n.t('delete'),
-                          style: 'destructive',
-                          onPress: () => {
-                            deleteConversation(conversation.id)
-                            analytics.capture('visit_deleted')
-                            toast.show(i18n.t('success'), {
-                              message: i18n.t('deleted'),
-                              native: true,
-                            })
-                            navigation.goBack()
-                          },
-                        },
-                      ]
-                    )
-                  }
-                />
-              )}
               <Button
                 onPress={async () => {
                   const succeeded = await submit()
@@ -592,7 +561,6 @@ const VisitFormScreen = ({
     conversation.isBibleStudy,
     conversation.notAtHome,
     conversationToUpdate?.contact.id,
-    deleteConversation,
     followUpEnabled,
     installedOn,
     isEditing,
@@ -602,9 +570,23 @@ const VisitFormScreen = ({
     submit,
     theme.colors.text,
     theme.colors.textInverse,
-    toast,
     updateLastTimeRequestedStoreReview,
   ])
+
+  const handleRequestDelete = () =>
+    confirmDestructive({
+      title: i18n.t('deleteConversation'),
+      description: i18n.t('deleteConversation_description'),
+      onConfirm: () => {
+        deleteConversation(conversation.id)
+        analytics.capture('visit_deleted')
+        toast.show(i18n.t('success'), {
+          message: i18n.t('deleted'),
+          native: true,
+        })
+        navigation.goBack()
+      },
+    })
 
   const getTitle = () => {
     if (params?.visitToEditId) {
@@ -758,6 +740,28 @@ const VisitFormScreen = ({
             </>
           )}
         </Section>
+        {isEditing && (
+          <Button
+            noTransform
+            onPress={handleRequestDelete}
+            accessibilityRole='button'
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+              }}
+            >
+              {i18n.t('deleteEllipsis')}
+            </Text>
+          </Button>
+        )}
       </Wrapper>
     </KeyboardAwareScrollView>
   )

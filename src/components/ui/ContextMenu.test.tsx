@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const haptics = vi.hoisted(() => ({ perform: vi.fn() }))
+const analytics = vi.hoisted(() => ({ capture: vi.fn() }))
 
 // Hoisted with the mocks; React is only read once a slot renders.
 const { slot } = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ vi.mock('@expo/ui/jetpack-compose', () => ({
   Host: 'ComposeHost',
   RNHostView: 'RNHostView',
   Text: 'ComposeText',
+  HorizontalDivider: 'HorizontalDivider',
   DropdownMenu: Object.assign(slot('DropdownMenu'), {
     Trigger: slot('Trigger'),
     Items: slot('Items'),
@@ -31,15 +33,15 @@ vi.mock('@expo/ui/swift-ui', () => ({
   Host: 'SwiftHost',
   RNHostView: 'RNHostView',
   Button: 'SwiftButton',
+  Divider: 'SwiftDivider',
+  Menu: 'SwiftMenu',
   ContextMenu: Object.assign(slot('ContextMenu'), {
     Trigger: slot('Trigger'),
     Items: slot('Items'),
     Preview: slot('Preview'),
   }),
 }))
-vi.mock('@expo/ui/swift-ui/modifiers', () => ({
-  disabled: (value: boolean) => ({ $type: 'disabled', value }),
-}))
+vi.mock('@/lib/analytics', () => ({ analytics }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: { card: '#card', text: '#text', textAlt: '#alt', error: '#err' },
@@ -51,7 +53,7 @@ vi.mock('@/stores/preferences', () => ({
 
 import AndroidContextMenu from '@/components/ui/ContextMenu.android'
 import IOSContextMenu from '@/components/ui/ContextMenu.ios'
-import type { ContextMenuAction } from '@/components/ui/ContextMenu.types'
+import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 
 let root: ReactTestRenderer
 
@@ -60,10 +62,14 @@ afterEach(async () => {
   vi.clearAllMocks()
 })
 
-const actions = (): ContextMenuAction[] => [
-  { id: 'pin', title: 'Pin', systemImage: 'pin', onPress: vi.fn() },
-  { id: 'archive', title: 'Archive', disabled: true, onPress: vi.fn() },
-  { id: 'delete', title: 'Delete', destructive: true, onPress: vi.fn() },
+const pin = { id: 'pin', title: 'Pin', systemImage: 'pin' as const }
+const archive = { id: 'archive', title: 'Archive' }
+const remove = { id: 'delete', title: 'Delete', destructive: true }
+
+const actions = () => [
+  { ...pin, onPress: vi.fn() },
+  { ...archive, onPress: vi.fn() },
+  { ...remove, onPress: vi.fn() },
 ]
 
 const render = async (element: React.ReactElement) => {
@@ -72,16 +78,20 @@ const render = async (element: React.ReactElement) => {
   })
 }
 
+const S = 'test_surface'
+
 describe('Android context menu', () => {
   const menu = () => root.root.findByType('DropdownMenu' as never)
   const items = () => root.root.findAllByType('DropdownMenuItem' as never)
+  const titles = () =>
+    root.root.findAllByType('ComposeText' as never).map((t) => t.props.children)
   const trigger = () => root.root.findByType('Pressable' as never)
 
-  it('opens on long press, runs the chosen action, and closes', async () => {
+  it('opens on long press, runs and records the chosen action, and closes', async () => {
     const onPress = vi.fn()
     const list = actions()
     await render(
-      <AndroidContextMenu actions={list} onPress={onPress}>
+      <AndroidContextMenu actions={list} analyticsSurface={S} onPress={onPress}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -97,13 +107,18 @@ describe('Android context menu', () => {
 
     await act(async () => items()[2].props.onClick())
     expect(list[2].onPress).toHaveBeenCalledOnce()
+    expect(analytics.capture).toHaveBeenCalledWith('context_menu_action', {
+      surface: S,
+      action: 'delete',
+      trigger: 'long_press',
+    })
     expect(menu().props.expanded).toBe(false)
   })
 
   it('closes on dismiss without running an action', async () => {
     const list = actions()
     await render(
-      <AndroidContextMenu actions={list}>
+      <AndroidContextMenu actions={list} analyticsSurface={S}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -113,36 +128,82 @@ describe('Android context menu', () => {
     list.forEach((action) => expect(action.onPress).not.toHaveBeenCalled())
   })
 
-  it('styles destructive and disabled items from the theme', async () => {
+  it('hides falsy items, separates groups, and colors destructive items', async () => {
+    const entries: ContextMenuEntries = [
+      [{ ...pin, onPress: vi.fn() }, false, null],
+      [{ ...remove, onPress: vi.fn() }],
+    ]
     await render(
-      <AndroidContextMenu actions={actions()}>
+      <AndroidContextMenu actions={entries} analyticsSurface={S}>
         <React.Fragment />
       </AndroidContextMenu>
     )
-    const [pin, archive, remove] = items()
-    expect(pin.props.elementColors.textColor).toBe('#text')
-    expect(archive.props.enabled).toBe(false)
-    expect(remove.props.elementColors.textColor).toBe('#err')
+    expect(titles()).toEqual(['Pin', 'Delete'])
+    expect(root.root.findAllByType('HorizontalDivider' as never)).toHaveLength(
+      1
+    )
+    expect(items()[0].props.elementColors.textColor).toBe('#text')
+    expect(items()[1].props.elementColors.textColor).toBe('#err')
   })
 
-  it('opens for screen readers through the long-press action', async () => {
+  it('swaps in a submenu and runs its action under a prefixed key', async () => {
+    const eachPlan = vi.fn()
     await render(
-      <AndroidContextMenu actions={actions()}>
+      <AndroidContextMenu
+        analyticsSurface={S}
+        actions={[
+          {
+            id: 'delete',
+            title: 'Delete',
+            actions: [
+              { id: 'one', title: 'This plan', onPress: vi.fn() },
+              { id: 'all', title: 'All plans', onPress: eachPlan },
+            ],
+          },
+        ]}
+      >
         <React.Fragment />
       </AndroidContextMenu>
     )
+    await act(async () => trigger().props.onLongPress())
+    await act(async () => items()[0].props.onClick())
+    expect(titles()).toEqual(['‹  Delete', 'This plan', 'All plans'])
+    await act(async () => items()[2].props.onClick())
+    expect(eachPlan).toHaveBeenCalledOnce()
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'context_menu_action',
+      expect.objectContaining({ action: 'delete.all' })
+    )
+  })
+
+  it('exposes every action to screen readers', async () => {
+    const list = actions()
+    await render(
+      <AndroidContextMenu actions={list} analyticsSurface={S}>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(
+      trigger().props.accessibilityActions.map(
+        (a: { label: string }) => a.label
+      )
+    ).toEqual(['Pin', 'Archive', 'Delete'])
     await act(async () =>
       trigger().props.onAccessibilityAction({
-        nativeEvent: { actionName: 'longpress' },
+        nativeEvent: { actionName: 'archive' },
       })
     )
-    expect(menu().props.expanded).toBe(true)
+    expect(list[1].onPress).toHaveBeenCalledOnce()
   })
 
   it('renders the content without a menu when there are no actions', async () => {
     const onPress = vi.fn()
     await render(
-      <AndroidContextMenu actions={[]} onPress={onPress}>
+      <AndroidContextMenu
+        actions={[false]}
+        analyticsSurface={S}
+        onPress={onPress}
+      >
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -152,11 +213,45 @@ describe('Android context menu', () => {
   })
 })
 
+describe('disabled context menu', () => {
+  it('keeps the native host but opens nothing on Android', async () => {
+    await render(
+      <AndroidContextMenu actions={actions()} analyticsSurface={S} disabled>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    const trigger = root.root.findByType('Pressable' as never)
+    expect(root.root.findAllByType('DropdownMenu' as never)).toHaveLength(1)
+    expect(trigger.props.onLongPress).toBeUndefined()
+    expect(trigger.props.accessibilityActions).toBeUndefined()
+  })
+
+  it('keeps the native host but offers no items on iOS', async () => {
+    await render(
+      <IOSContextMenu
+        actions={actions()}
+        analyticsSurface={S}
+        preview={<React.Fragment />}
+        disabled
+      >
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    expect(root.root.findAllByType('ContextMenu' as never)).toHaveLength(1)
+    expect(root.root.findAllByType('SwiftButton' as never)).toHaveLength(0)
+    expect(root.root.findAllByType('Preview' as never)).toHaveLength(0)
+  })
+})
+
 describe('iOS context menu', () => {
   it('maps actions to native buttons and hosts the preview', async () => {
     const list = actions()
     await render(
-      <IOSContextMenu actions={list} preview={<React.Fragment />}>
+      <IOSContextMenu
+        actions={list}
+        analyticsSurface={S}
+        preview={<React.Fragment />}
+      >
         <React.Fragment />
       </IOSContextMenu>
     )
@@ -167,16 +262,64 @@ describe('iOS context menu', () => {
       'Delete',
     ])
     expect(buttons[0].props.systemImage).toBe('pin')
-    expect(buttons[1].props.modifiers).toEqual([
-      { $type: 'disabled', value: true },
-    ])
     expect(buttons[2].props.role).toBe('destructive')
     expect(root.root.findAllByType('Preview' as never)).toHaveLength(1)
+
+    buttons[0].props.onPress()
+    expect(list[0].onPress).toHaveBeenCalledOnce()
+    expect(analytics.capture).toHaveBeenCalledWith('context_menu_action', {
+      surface: S,
+      action: 'pin',
+      trigger: 'long_press',
+    })
+  })
+
+  it('renders groups with dividers and submenus as nested menus', async () => {
+    await render(
+      <IOSContextMenu
+        analyticsSurface={S}
+        actions={[
+          [{ ...pin, onPress: vi.fn() }],
+          [
+            {
+              id: 'delete',
+              title: 'Delete',
+              actions: [{ id: 'all', title: 'All', onPress: vi.fn() }],
+            },
+            { id: 'empty', title: 'Empty', actions: [] },
+          ],
+        ]}
+      >
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    expect(root.root.findAllByType('SwiftDivider' as never)).toHaveLength(1)
+    const menus = root.root.findAllByType('SwiftMenu' as never)
+    expect(menus.map((m) => m.props.label)).toEqual(['Delete'])
+  })
+
+  it('mirrors actions as accessibility actions on the tappable trigger', async () => {
+    const list = actions()
+    await render(
+      <IOSContextMenu actions={list} analyticsSurface={S} onPress={vi.fn()}>
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const trigger = root.root.findByType('Pressable' as never)
+    expect(trigger.props.accessibilityActions).toHaveLength(3)
+    trigger.props.onAccessibilityAction({
+      nativeEvent: { actionName: 'delete' },
+    })
+    expect(list[2].onPress).toHaveBeenCalledOnce()
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'context_menu_action',
+      expect.objectContaining({ trigger: 'accessibility' })
+    )
   })
 
   it('renders the content without a menu when there are no actions', async () => {
     await render(
-      <IOSContextMenu actions={[]}>
+      <IOSContextMenu actions={[]} analyticsSurface={S}>
         <React.Fragment />
       </IOSContextMenu>
     )

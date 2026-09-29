@@ -200,10 +200,6 @@ vi.mock('@/features/map/components/MapColorKey', () => ({
 vi.mock('@/features/map/components/MapOnboarding', () => ({
   default: 'MapOnboarding',
 }))
-vi.mock(
-  '@/features/map/components/ShareAddressSheet',
-  appearanceProbe('shareSheet')
-)
 
 import MapScreen from '@/features/map/screens/MapScreen'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
@@ -394,7 +390,7 @@ describe('Dropped pin on an empty tablet map', () => {
 })
 
 describe('Map overlays over satellite imagery', () => {
-  it('switches overlays to the imagery appearance but keeps the share sheet on the app theme', async () => {
+  it('switches overlays to the imagery appearance', async () => {
     const { default: MapLayerMenu } = await import(
       '@/features/map/components/MapLayerMenu'
     )
@@ -414,6 +410,5 @@ describe('Map overlays over satellite imagery', () => {
       glass: 'dark',
       imagery: true,
     })
-    expect(mocks.appearance.shareSheet).toEqual(appAppearance)
   })
 })

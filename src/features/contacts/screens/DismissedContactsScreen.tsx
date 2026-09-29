@@ -1,139 +1,101 @@
-import { Undo2 as Undo2Icon } from 'lucide-react-native'
-import React, { useMemo } from 'react'
+import { Clock as ClockIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { FlashList } from '@shopify/flash-list'
+import moment from 'moment'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import Text from '@/components/ui/MyText'
-import Card from '@/components/ui/Card'
 import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import { getDismissedContacts } from '@/lib/dismissedContacts'
-import { FlashList } from '@shopify/flash-list'
 import { RootStackParamList } from '@/types/rootStack'
 import i18n from '@/lib/locales'
-import moment from 'moment'
-import { formatDate } from '@/lib/dates'
-import IconButton from '@/components/ui/IconButton'
-import { Contact } from '@/types/contact'
-import { useToastController } from '@tamagui/toast'
-import * as Notifications from 'expo-notifications'
-import { errorTracking } from '@/lib/errorTracking'
+import DismissedContactRow from '@/features/contacts/components/DismissedContactRow'
+import DismissedContactsHeader from '@/features/contacts/components/DismissedContactsHeader'
+import DismissedContactsSelectionBar from '@/features/contacts/components/DismissedContactsSelectionBar'
+import { SELECTION_BAR_HEIGHT } from '@/features/contacts/components/ListSelection'
+import useListSelection from '@/features/contacts/hooks/useListSelection'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dismissed Contacts'>
 
-const DismissedContactRow = ({ contact }: { contact: Contact }) => {
+const DismissedContactsScreen = ({ navigation }: Props) => {
   const theme = useTheme()
-  const { undismissContact } = useContacts()
-  const toast = useToastController()
-
-  // Undismissing only puts the contact back in the list — nothing is lost, so
-  // it runs immediately rather than behind a confirmation.
-  const handleUndismiss = async () => {
-    // Cancel scheduled notification if it exists
-    if (contact.dismissedNotificationId) {
-      try {
-        await Notifications.cancelScheduledNotificationAsync(
-          contact.dismissedNotificationId
-        )
-      } catch (error) {
-        errorTracking.captureException(error)
-      }
-    }
-
-    undismissContact(contact.id)
-    toast.show(i18n.t('contactUndismissed', { name: contact.name }), {
-      native: true,
-    })
-  }
-
-  return (
-    <Card
-      style={{
-        paddingHorizontal: 18,
-        paddingVertical: 16,
-        borderRadius: theme.numbers.borderRadiusSm,
-        backgroundColor: theme.colors.backgroundLighter,
-      }}
-    >
-      <View style={{ alignItems: 'center', flexDirection: 'row' }}>
-        <View style={{ flexGrow: 1, gap: 4 }}>
-          <Text style={{ fontSize: 18 }}>{contact.name}</Text>
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {contact.dismissedUntil
-              ? i18n.t('dismissedUntil', {
-                  date: formatDate(contact.dismissedUntil, { style: 'medium' }),
-                })
-              : ''}
-          </Text>
-        </View>
-        <IconButton
-          onPress={handleUndismiss}
-          icon={Undo2Icon}
-          size='lg'
-          style={{
-            backgroundColor: theme.colors.accentTranslucent,
-            padding: 12,
-            borderRadius: theme.numbers.borderRadiusSm,
-            borderWidth: 1,
-            borderColor: theme.colors.accent,
-          }}
-          color={theme.colors.accent}
-        />
-      </View>
-    </Card>
-  )
-}
-
-const DismissedContactsScreen: React.FC<Props> = ({ navigation }) => {
-  const theme = useTheme()
+  const insets = useSafeAreaInsets()
   const { contacts } = useContacts()
 
-  const dismissedContacts = useMemo(() => {
-    return getDismissedContacts(contacts).sort((a, b) => {
-      // Sort by dismissed until date, earliest first
-      if (!a.dismissedUntil) return 1
-      if (!b.dismissedUntil) return -1
-      return moment(a.dismissedUntil).unix() - moment(b.dismissedUntil).unix()
-    })
-  }, [contacts])
+  // Soonest to return first.
+  const dismissedContacts = getDismissedContacts(contacts).sort((a, b) => {
+    if (!a.dismissedUntil) return 1
+    if (!b.dismissedUntil) return -1
+    return moment(a.dismissedUntil).unix() - moment(b.dismissedUntil).unix()
+  })
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      title: i18n.t('dismissedContacts'),
-    })
-  }, [navigation])
+  const selection = useListSelection(
+    'dismissed_contacts',
+    dismissedContacts.map((contact) => contact.id)
+  )
+  const selectedIds = new Set(selection.ids)
+  const selectedContacts = dismissedContacts.filter((contact) =>
+    selectedIds.has(contact.id)
+  )
 
   return (
     <Wrapper insets='none'>
-      <View style={{ flex: 1, gap: 20 }}>
-        <View style={{ padding: 25, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-            {i18n.t('dismissedContacts')}
-          </Text>
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('dismissedContactsHelp')}
-          </Text>
-        </View>
-
-        <View style={{ paddingHorizontal: 10, flex: 1 }}>
-          {dismissedContacts.length === 0 ? (
-            <Empty title={i18n.t('noDismissedContacts')} />
-          ) : (
-            <Card style={{ flex: 1 }}>
-              <FlashList
-                data={dismissedContacts}
-                renderItem={({ item }) => (
-                  <DismissedContactRow key={item.id} contact={item} />
-                )}
-                ItemSeparatorComponent={() => (
-                  <View style={{ marginTop: 12 }} />
-                )}
-              />
-            </Card>
-          )}
-        </View>
+      <View style={{ padding: 12 }}>
+        <DismissedContactsHeader
+          selection={selection}
+          canSelect={dismissedContacts.length > 0}
+        />
       </View>
+      <View style={{ flex: 1 }}>
+        <FlashList
+          data={dismissedContacts}
+          extraData={`${selection.selecting}:${selection.ids.join()}`}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <DismissedContactRow
+              contact={item}
+              selectionMode={selection.selecting}
+              checked={selection.isSelected(item.id)}
+              onPress={() =>
+                selection.selecting
+                  ? selection.toggle(item.id)
+                  : navigation.navigate('Contact Details', { id: item.id })
+              }
+            />
+          )}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          ListEmptyComponent={
+            <Empty
+              icon={
+                <LucideIcon
+                  icon={ClockIcon}
+                  size={32}
+                  color={theme.colors.textAlt}
+                />
+              }
+              title={i18n.t('noDismissedContacts_title')}
+              description={i18n.t('noDismissedContacts_description')}
+            />
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 12,
+            paddingBottom:
+              insets.bottom +
+              16 +
+              (selection.selecting ? SELECTION_BAR_HEIGHT + 12 : 0),
+          }}
+        />
+      </View>
+      {selection.selecting && (
+        <DismissedContactsSelectionBar
+          contacts={selectedContacts}
+          selection={selection}
+          bottom={insets.bottom + 12}
+        />
+      )}
     </Wrapper>
   )
 }

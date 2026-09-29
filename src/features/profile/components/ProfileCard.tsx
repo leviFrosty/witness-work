@@ -24,6 +24,10 @@ import ProfileDetailOverlay, {
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
 import MyTextInput from '@/components/ui/TextInput'
+import ContextMenu from '@/components/ui/ContextMenu'
+import { useNavigation } from '@react-navigation/native'
+import type { RootStackNavigation } from '@/types/rootStack'
+import type { HomeTabStackNavigation } from '@/types/homeStack'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */
@@ -106,11 +110,13 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     set: setProfile,
   } = useProfile()
   const { name: trimmedName, hasName } = useUser()
-  const { type: publisher, isInFullTimeService } = usePublisher()
+  const { type: publisher, isInFullTimeService, showsYearTabs } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)
   const anchorRef = useRef<View>(null)
+  const navigation = useNavigation<RootStackNavigation>()
+  const homeNavigation = useNavigation<HomeTabStackNavigation>()
 
   const isIncomplete = !preview && !editable && !hasCompletedProfileSetup
 
@@ -342,14 +348,28 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <Pressable
+        <ContextMenu
+          analyticsSurface='profile_card'
           onPress={handleTap}
-          accessibilityRole='button'
           accessibilityLabel={`${greeting}. ${i18n.t(publisher)}. ${tenure.text}`}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          actions={[
+            {
+              id: 'edit_profile',
+              title: i18n.t('editProfile'),
+              systemImage: 'square.and.pencil',
+              onPress: () => navigation.navigate('PreferencesPublisher'),
+            },
+            // The Progress tab only exists for publishers who track time.
+            showsYearTabs && {
+              id: 'view_progress',
+              title: i18n.t('viewProgress'),
+              systemImage: 'chart.line.uptrend.xyaxis',
+              onPress: () => homeNavigation.navigate('Progress'),
+            },
+          ]}
         >
           {cardBody}
-        </Pressable>
+        </ContextMenu>
       </View>
       <ProfileDetailOverlay
         origin={origin}

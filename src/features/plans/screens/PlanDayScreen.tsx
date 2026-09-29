@@ -3,7 +3,6 @@ import {
   Calendar1 as Calendar1Icon,
   CornerDownRight as CornerDownRightIcon,
   Repeat as RepeatIcon,
-  Trash2 as Trash2Icon,
   X as XIcon,
 } from 'lucide-react-native'
 import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
@@ -14,7 +13,7 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
 import { errorTracking } from '@/lib/errorTracking'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
@@ -30,7 +29,7 @@ import Select from '@/components/ui/Select'
 import SelectWheel from '@/components/ui/SelectWheel'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Header from '@/components/ui/layout/Header'
-import confirmDeletePlan from '@/lib/confirmDeletePlan'
+import confirmDeletePlan, { deletePlan } from '@/lib/confirmDeletePlan'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -856,9 +855,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     updateRecurringPlanOverride,
     removeRecurringPlanOverride,
     getRecurringPlanForDate,
-    deleteDayPlan,
-    deleteRecurringPlan,
-    deleteEventAndFutureEvents,
     deleteSingleEventFromRecurringPlan,
   } = useServiceReport()
 
@@ -881,8 +877,17 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     : null
 
   const isEditMode = !!(existingDayPlan || existingRecurringPlan)
+  // Seeds for a new plan (Duplicate, Plan the Same Time); ignored when editing.
+  const prefill = isEditMode ? undefined : route.params.prefill
+  const prefillStartTime = prefill?.startTime
+    ? moment(prefill.startTime).hours() * 60 +
+      moment(prefill.startTime).minutes()
+    : undefined
+  const initialOneTime = existingRecurringPlan
+    ? false
+    : isEditMode || !route.params.recurring
 
-  const [oneTime, setOneTime] = useState(existingRecurringPlan ? false : true)
+  const [oneTime, setOneTime] = useState(initialOneTime)
   const [date, setDate] = useState(
     existingDayPlan
       ? combineDateAndStartTime(
@@ -894,7 +899,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             editingStoredDate,
             recurringPlanData?.startTimeInMinutes
           )
-        : combineDateAndStartTime(defaultStoredDate, undefined)
+        : combineDateAndStartTime(defaultStoredDate, prefillStartTime)
   )
   const [endDate, setEndDate] = useState<Date | null>(
     existingRecurringPlan?.recurrence.endDate
@@ -909,14 +914,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       ? Math.floor(existingDayPlan.minutes / 60)
       : recurringPlanData
         ? Math.floor(recurringPlanData.minutes / 60)
-        : 0
+        : Math.floor((prefill?.minutes ?? 0) / 60)
   )
   const [minutes, setMinutes] = useState(
     existingDayPlan
       ? existingDayPlan.minutes % 60
       : recurringPlanData
         ? recurringPlanData.minutes % 60
-        : 0
+        : (prefill?.minutes ?? 0) % 60
   )
   const [interval, setInterval] = useState<number>(
     existingRecurringPlan?.recurrence.interval ?? 1
@@ -939,7 +944,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   const resolveInitialTypeValue = (): string => {
     const categoryId =
-      existingDayPlan?.categoryId ?? existingRecurringPlan?.categoryId
+      existingDayPlan?.categoryId ??
+      existingRecurringPlan?.categoryId ??
+      prefill?.categoryId
     if (categoryId && categories.some((c) => c.id === categoryId)) {
       return categoryId
     }
@@ -1015,13 +1022,18 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const [note, setNote] = useState(
-    existingDayPlan?.note ?? recurringPlanData?.note ?? ''
+    existingDayPlan?.note ?? recurringPlanData?.note ?? prefill?.note ?? ''
   )
   const [title, setTitle] = useState(
-    existingDayPlan?.title ?? existingRecurringPlan?.title ?? ''
+    existingDayPlan?.title ??
+      existingRecurringPlan?.title ??
+      prefill?.title ??
+      ''
   )
   const [location, setLocation] = useState<PlanLocation | undefined>(
-    existingDayPlan?.location ?? existingRecurringPlan?.location
+    existingDayPlan?.location ??
+      existingRecurringPlan?.location ??
+      prefill?.location
   )
   const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
     existingDayPlan?.buddies ?? []
@@ -1067,10 +1079,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
 
-  const editingContext = `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}`
+  const editingContext = `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}-${route.params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
 
   useEffect(() => {
-    setOneTime(existingRecurringPlan ? false : true)
+    setOneTime(initialOneTime)
     setDate(
       existingDayPlan
         ? combineDateAndStartTime(
@@ -1082,7 +1094,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               editingStoredDate,
               recurringPlanData?.startTimeInMinutes
             )
-          : combineDateAndStartTime(defaultStoredDate, undefined)
+          : combineDateAndStartTime(defaultStoredDate, prefillStartTime)
     )
     setEndDate(
       existingRecurringPlan?.recurrence.endDate
@@ -1095,14 +1107,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         ? Math.floor(existingDayPlan.minutes / 60)
         : recurringPlanData
           ? Math.floor(recurringPlanData.minutes / 60)
-          : 0
+          : Math.floor((prefill?.minutes ?? 0) / 60)
     )
     setMinutes(
       existingDayPlan
         ? existingDayPlan.minutes % 60
         : recurringPlanData
           ? recurringPlanData.minutes % 60
-          : 0
+          : (prefill?.minutes ?? 0) % 60
     )
     setInterval(existingRecurringPlan?.recurrence.interval ?? 1)
     setFrequency(
@@ -1115,9 +1127,20 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     setWeekOfMonth(
       existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
     )
-    setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
-    setTitle(existingDayPlan?.title ?? existingRecurringPlan?.title ?? '')
-    setLocation(existingDayPlan?.location ?? existingRecurringPlan?.location)
+    setNote(
+      existingDayPlan?.note ?? recurringPlanData?.note ?? prefill?.note ?? ''
+    )
+    setTitle(
+      existingDayPlan?.title ??
+        existingRecurringPlan?.title ??
+        prefill?.title ??
+        ''
+    )
+    setLocation(
+      existingDayPlan?.location ??
+        existingRecurringPlan?.location ??
+        prefill?.location
+    )
     setInvitedBuddies(existingDayPlan?.buddies ?? [])
     setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
     setNotifyMeOffset(initialNotifyOffset())
@@ -1400,6 +1423,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       has_location: !!location,
       invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
       reminder_enabled: oneTime && notifyMe,
+      prefilled: !!prefill,
     })
     setSaveScopeModalOpen(false)
     navigation.goBack()
@@ -1418,41 +1442,27 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     savePlan()
   }
 
-  const existingDayPlanId = existingDayPlan?.id
-  const existingRecurringPlanId = existingRecurringPlan?.id
-  // Kept as a timestamp so the header effect below doesn't re-run every render
-  // on a freshly-constructed Date.
-  const recurringInstanceTime = existingRecurringPlan
-    ? editingWriteDate.getTime()
-    : undefined
-
-  const handleRequestDelete = useCallback(() => {
+  const handleRequestDelete = () => {
     confirmDeletePlan({
-      recurring: !!existingRecurringPlanId,
+      recurring: !!existingRecurringPlan,
       onDelete: (scope) => {
-        if (existingDayPlanId) {
-          deleteDayPlan(existingDayPlanId)
-        } else if (
-          existingRecurringPlanId &&
-          recurringInstanceTime !== undefined
-        ) {
-          const instanceDate = new Date(recurringInstanceTime)
-          if (scope === 'instance') {
-            deleteSingleEventFromRecurringPlan(
-              existingRecurringPlanId,
-              instanceDate
-            )
-          } else if (scope === 'future') {
-            deleteEventAndFutureEvents(existingRecurringPlanId, instanceDate)
-          } else {
-            deleteRecurringPlan(existingRecurringPlanId)
-          }
+        if (existingDayPlan) {
+          deletePlan({ kind: 'day', planId: existingDayPlan.id })
+        } else if (existingRecurringPlan) {
+          deletePlan(
+            {
+              kind: 'recurring',
+              planId: existingRecurringPlan.id,
+              date: editingWriteDate,
+            },
+            scope
+          )
         } else {
           return
         }
 
         analytics.capture('plan_deleted', {
-          plan_kind: existingDayPlanId ? 'day' : 'recurring',
+          plan_kind: existingDayPlan ? 'day' : 'recurring',
           scope,
         })
         toast.show(i18n.t('success'), {
@@ -1462,17 +1472,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         navigation.goBack()
       },
     })
-  }, [
-    deleteDayPlan,
-    deleteEventAndFutureEvents,
-    deleteRecurringPlan,
-    deleteSingleEventFromRecurringPlan,
-    existingDayPlanId,
-    existingRecurringPlanId,
-    navigation,
-    recurringInstanceTime,
-    toast,
-  ])
+  }
 
   useEffect(() => {
     navigation.setOptions({
@@ -1481,29 +1481,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           buttonType='back'
           noInsets
           title={i18n.t(isEditMode ? 'editPlan' : 'createPlan')}
-          rightElement={
-            isEditMode ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 20,
-                  position: 'absolute',
-                  right: 10,
-                }}
-              >
-                <IconButton
-                  icon={Trash2Icon}
-                  color={theme.colors.text}
-                  onPress={handleRequestDelete}
-                />
-              </View>
-            ) : undefined
-          }
         />
       ),
     })
-  }, [handleRequestDelete, isEditMode, navigation, theme.colors.text])
+  }, [isEditMode, navigation])
 
   return (
     <Wrapper
@@ -1598,6 +1579,29 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 </Text>
               </ActionButton>
             </View>
+            {isEditMode && (
+              <Button
+                noTransform
+                onPress={handleRequestDelete}
+                accessibilityRole='button'
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.error,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('md'),
+                  }}
+                >
+                  {i18n.t('deleteEllipsis')}
+                </Text>
+              </Button>
+            )}
           </Section>
         </KeyboardAwareScrollView>
       </View>

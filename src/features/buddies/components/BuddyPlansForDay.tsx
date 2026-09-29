@@ -1,5 +1,7 @@
 import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
+import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
@@ -7,16 +9,30 @@ import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
+import type { RootStackNavigation } from '@/types/rootStack'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import { buddyColor } from '@/features/buddies/lib/buddyColors'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Faded, read-only buddy Plans for one day — they never mix with the User's
- * own.
+ * own. Long-press a row to view the buddy or plan the same time.
  */
-export default function BuddyPlansForDay({ date }: { date: Date }) {
+export default function BuddyPlansForDay({
+  date,
+  onNavigate,
+}: {
+  date: Date
+  /**
+   * Runs a navigation from a row's menu, e.g. once the sheet the rows sit in
+   * has closed. Without it the rows have no menu.
+   */
+  onNavigate?: (go: () => void) => void
+}) {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+  const planSameTime = usePlanSameTime('buddy_plans_for_day')
   const enabled = useBuddiesEnabled()
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const buddies = useBuddies((state) => state.buddies)
@@ -47,6 +63,18 @@ export default function BuddyPlansForDay({ date }: { date: Date }) {
     })
   if (rows.length === 0 && followUps.length === 0) return null
 
+  const past = key < moment().format('YYYY-MM-DD')
+
+  // Also reachable from the buddy's detail screen and its upcoming plans.
+  const viewBuddy = (inboxId: string) =>
+    onNavigate && {
+      id: 'view_buddy',
+      title: i18n.t('buddies_viewBuddy'),
+      systemImage: 'person.crop.circle' as const,
+      onPress: () =>
+        onNavigate(() => navigation.navigate('Buddy', { inboxId })),
+    }
+
   return (
     <View style={{ gap: 8, opacity: 0.7, paddingTop: 10 }}>
       <Text
@@ -63,7 +91,51 @@ export default function BuddyPlansForDay({ date }: { date: Date }) {
       {rows.map(({ buddy, plan, key: rowKey }) => {
         const duration = formatMinutes(plan.m, timeDisplayFormat).formatted
         return (
-          <XView key={rowKey} style={{ gap: 10 }}>
+          <ContextMenu
+            key={rowKey}
+            analyticsSurface='buddy_day_plan'
+            actions={[
+              viewBuddy(buddy.inboxId),
+              onNavigate &&
+                !past && {
+                  id: 'plan_same_time',
+                  title: i18n.t('buddies_planSameTime'),
+                  systemImage: 'calendar.badge.plus',
+                  onPress: () => onNavigate(() => planSameTime(key, plan)),
+                },
+            ]}
+          >
+            <XView style={{ gap: 10 }}>
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: buddyColor(theme, buddy.colorIndex),
+                }}
+              />
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {buddy.name}
+              </Text>
+              <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+                {plan.s === undefined
+                  ? i18n.t('buddies_dayPlanAnyTime', { duration })
+                  : i18n.t('buddies_dayPlanAtTime', {
+                      time: formatStartTime(plan.s),
+                      duration,
+                    })}
+              </Text>
+            </XView>
+          </ContextMenu>
+        )
+      })}
+      {followUps.map(({ buddy, share }) => (
+        <ContextMenu
+          key={`${share.from}-${share.shareId}`}
+          analyticsSurface='buddy_day_follow_up'
+          actions={[viewBuddy(buddy.inboxId)]}
+        >
+          <XView style={{ gap: 10 }}>
             <View
               style={{
                 width: 10,
@@ -76,43 +148,22 @@ export default function BuddyPlansForDay({ date }: { date: Date }) {
               {buddy.name}
             </Text>
             <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-              {plan.s === undefined
-                ? i18n.t('buddies_dayPlanAnyTime', { duration })
-                : i18n.t('buddies_dayPlanAtTime', {
-                    time: formatStartTime(plan.s),
-                    duration,
-                  })}
+              {[
+                // The householder's name stays hidden in data protection mode.
+                share.details.firstName && !dataProtectionMode
+                  ? i18n.t('buddies_followUpWith', {
+                      name: share.details.firstName,
+                    })
+                  : i18n.t('buddies_followUp'),
+                share.details.s === undefined
+                  ? undefined
+                  : formatStartTime(share.details.s),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </Text>
           </XView>
-        )
-      })}
-      {followUps.map(({ buddy, share }) => (
-        <XView key={`${share.from}-${share.shareId}`} style={{ gap: 10 }}>
-          <View
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: buddyColor(theme, buddy.colorIndex),
-            }}
-          />
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>{buddy.name}</Text>
-          <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-            {[
-              // The householder's name stays hidden in data protection mode.
-              share.details.firstName && !dataProtectionMode
-                ? i18n.t('buddies_followUpWith', {
-                    name: share.details.firstName,
-                  })
-                : i18n.t('buddies_followUp'),
-              share.details.s === undefined
-                ? undefined
-                : formatStartTime(share.details.s),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </Text>
-        </XView>
+        </ContextMenu>
       ))}
     </View>
   )

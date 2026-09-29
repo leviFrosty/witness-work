@@ -7,7 +7,6 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { ConversationIndex } from '@/lib/conversationIndex'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
-import { MapShareSheet } from '@/features/map/components/ShareAddressSheet'
 import { ContactMarker } from '@/features/map/types/map'
 
 /**
@@ -28,7 +27,6 @@ interface Props {
   revealRequest: number
   index: ConversationIndex
   onSelect: (id: string) => void
-  setSheet: React.Dispatch<React.SetStateAction<MapShareSheet>>
 }
 
 /** Keep the map visible while browsing and acting on contacts. */
@@ -38,7 +36,6 @@ export default function MapContactInspector({
   revealRequest,
   index,
   onSelect,
-  setSheet,
   renderContactRow,
 }: Props) {
   const theme = useTheme()
@@ -139,12 +136,7 @@ export default function MapContactInspector({
             borderTopColor: theme.colors.border,
           }}
         >
-          <MapCarouselCard
-            contact={activeContact}
-            index={index}
-            setSheet={setSheet}
-            inspector
-          />
+          <MapCarouselCard contact={activeContact} index={index} inspector />
         </View>
       )}
     </View>

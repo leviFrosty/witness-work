@@ -36,6 +36,8 @@ export default function BuddyRequestRow({
     }
   }
 
+  const confirm = () => run(() => buddiesEngine.confirmClaim(claim.inviteId))
+
   const decline = () =>
     Alert.alert(
       i18n.t('buddies_requestTitle', { name: claim.name }),
@@ -58,13 +60,33 @@ export default function BuddyRequestRow({
       subtitle={i18n.t('buddies_requestRowSubtitle', {
         time: moment(claim.receivedAt).fromNow(),
       })}
+      analyticsSurface='buddy_request_row'
+      actions={
+        busy
+          ? []
+          : [
+              {
+                id: 'confirm',
+                title: i18n.t('buddies_confirm'),
+                systemImage: 'checkmark.circle',
+                onPress: () => void confirm(),
+              },
+              [
+                {
+                  id: 'decline',
+                  title: i18n.t('buddies_declineEllipsis'),
+                  systemImage: 'xmark.circle',
+                  destructive: true,
+                  onPress: decline,
+                },
+              ],
+            ]
+      }
       trailing={
         <XView style={{ gap: 6 }}>
           <Button
             disabled={busy}
-            onPress={() =>
-              run(() => buddiesEngine.confirmClaim(claim.inviteId))
-            }
+            onPress={confirm}
             style={{
               backgroundColor: theme.colors.accent,
               borderRadius: 999,

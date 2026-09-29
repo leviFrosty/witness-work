@@ -13,16 +13,17 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import {
   getPlansIntersectingDay,
   getEffectiveMinutesForRecurringPlan,
+  type RecurringPlan,
 } from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
-import { TimeEntry } from '@/types/timeEntry'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import { RootStackNavigation } from '@/types/rootStack'
 
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
-import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -30,6 +31,9 @@ import Badge from '@/components/ui/Badge'
 import { useCardStyle } from '@/components/ui/Card'
 import Circle from '@/components/ui/Circle'
 import { getDateStatusColor } from '@/components/CalendarDay'
+import ContextMenu from '@/components/ui/ContextMenu'
+import DayPreview, { dayHasPreview } from '@/components/DayPreview'
+import useDayMenuActions from '@/hooks/useDayMenuActions'
 import { formatMonthDayCompact } from '@/lib/dates'
 
 interface AllDaysListProps {
@@ -46,6 +50,122 @@ type DayRow = {
   categoryLabel: string
   isEmpty: boolean
   planDotColor: string | null
+  reports: TimeEntry[]
+  dayPlans: DayPlan[]
+  recurringPlans: RecurringPlan[]
+}
+
+/**
+ * One day in the list: tap opens the day's sheet; long-press offers Add Time /
+ * Plan This Day with a preview of the day's entries and plans.
+ */
+const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
+  const theme = useTheme()
+  const cardStyle = useCardStyle()
+  const menu = useDayMenuActions(row.date)
+  const previewData = {
+    reports: row.reports,
+    dayPlans: row.dayPlans,
+    recurringPlans: row.recurringPlans,
+  }
+
+  return (
+    <ContextMenu
+      analyticsSurface='day_row'
+      actions={menu}
+      onPress={onPress}
+      preview={
+        dayHasPreview(previewData) ? (
+          <DayPreview date={row.date} {...previewData} />
+        ) : undefined
+      }
+      style={{ marginHorizontal: 15 }}
+    >
+      <View
+        style={{
+          ...cardStyle,
+          paddingVertical: 12,
+          paddingHorizontal: 15,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+              }}
+              numberOfLines={1}
+            >
+              {row.dayOfWeekLabel}
+            </Text>
+            {row.planDotColor ? (
+              <Circle color={row.planDotColor} size={6} />
+            ) : (
+              <Circle
+                color='transparent'
+                size={6}
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.colors.textAlt,
+                }}
+              />
+            )}
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+              }}
+              numberOfLines={1}
+            >
+              {row.monthDayLabel}
+            </Text>
+          </View>
+          {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
+        </View>
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+          }}
+          numberOfLines={1}
+        >
+          {row.categoryLabel}
+        </Text>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+            minWidth: 44,
+            textAlign: 'right',
+          }}
+        >
+          {row.hoursLabel}
+        </Text>
+        <LucideIcon
+          icon={ChevronRightIcon}
+          size={12}
+          color={theme.colors.textAlt}
+        />
+      </View>
+    </ContextMenu>
+  )
 }
 
 /**
@@ -61,7 +181,6 @@ type DayRow = {
  */
 const AllDaysList = ({ month, year }: AllDaysListProps) => {
   const theme = useTheme()
-  const cardStyle = useCardStyle()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
   const { timeDisplayFormat } = usePreferences()
@@ -260,6 +379,9 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
         categoryLabel,
         isEmpty: reportsForDay.length === 0,
         planDotColor,
+        reports: reportsForDay,
+        dayPlans: dayPlansForDay,
+        recurringPlans: recurringPlansForDay,
       })
     }
 
@@ -334,92 +456,11 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           <View style={{ width: 12 }} />
         </View>
         {rows.map((row) => (
-          <Button
+          <DayRowItem
             key={row.date.toISOString()}
+            row={row}
             onPress={() => setSheet({ open: true, date: row.date })}
-            style={{
-              ...cardStyle,
-              paddingVertical: 12,
-              paddingHorizontal: 15,
-              marginHorizontal: 15,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: row.isEmpty
-                      ? theme.colors.textAlt
-                      : theme.colors.text,
-                  }}
-                  numberOfLines={1}
-                >
-                  {row.dayOfWeekLabel}
-                </Text>
-                {row.planDotColor ? (
-                  <Circle color={row.planDotColor} size={6} />
-                ) : (
-                  <Circle
-                    color='transparent'
-                    size={6}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: theme.colors.textAlt,
-                    }}
-                  />
-                )}
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: row.isEmpty
-                      ? theme.colors.textAlt
-                      : theme.colors.text,
-                  }}
-                  numberOfLines={1}
-                >
-                  {row.monthDayLabel}
-                </Text>
-              </View>
-              {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
-            </View>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-              numberOfLines={1}
-            >
-              {row.categoryLabel}
-            </Text>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
-                minWidth: 44,
-                textAlign: 'right',
-              }}
-            >
-              {row.hoursLabel}
-            </Text>
-            <IconButton icon={ChevronRightIcon} size={12} />
-          </Button>
+          />
         ))}
         {hasFutureDays && (
           <Button

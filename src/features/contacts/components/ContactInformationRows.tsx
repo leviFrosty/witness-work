@@ -8,7 +8,11 @@ import { useNavigation } from '@react-navigation/native'
 import { getLocales } from 'expo-localization'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { StyleSheet, View } from 'react-native'
-import Copyeable from '@/components/ui/Copyeable'
+import ContextMenu from '@/components/ui/ContextMenu'
+import Copyeable, {
+  liftedContent,
+  useCopyAction,
+} from '@/components/ui/Copyeable'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -21,7 +25,9 @@ import { RootStackNavigation } from '@/types/rootStack'
 
 /**
  * Mirrors the form: short built-in labels sit beside values; custom labels
- * stack.
+ * stack. Tapping a phone number calls and an email opens Mail; long-pressing
+ * offers the same actions plus Copy. The inline Call / Message / Email buttons
+ * stay beside the value as the visible path, outside the long-press target.
  */
 const ContactInformationRows = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
@@ -40,11 +46,15 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
       email: showContactEmail,
     }
   ).filter((field) => hasContactInformationValue(contact, field))
+  const phoneNumber = formatted.number?.international || contact.phone || ''
   const labelStyle = {
     fontSize: 14,
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.textAlt,
   }
+  const copyAction = useCopyAction()
+  const call = () => handleCall(contact, formatted, navigation)
+  const message = () => handleMessage(contact, formatted, navigation)
   const openMail = () =>
     openURL(`mailTo:${contact.email}`, {
       alert: { description: i18n.t('failedToOpenMailApplication') },
@@ -57,15 +67,31 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
           return (
             <View key={field.id} style={styles.row}>
               <Text style={[labelStyle, styles.label]}>{i18n.t('phone')}</Text>
-              <Copyeable
-                style={styles.value}
-                textProps={{
-                  onPress: () => handleCall(contact, formatted, navigation),
-                  style: { textAlign: 'right' },
-                }}
+              <ContextMenu
+                style={[styles.value, liftedContent.outset]}
+                analyticsSurface='contact_phone'
+                onPress={call}
+                accessibilityLabel={phoneNumber}
+                actions={[
+                  {
+                    id: 'call',
+                    title: i18n.t('call'),
+                    systemImage: 'phone',
+                    onPress: call,
+                  },
+                  {
+                    id: 'message',
+                    title: i18n.t('message'),
+                    systemImage: 'message',
+                    onPress: message,
+                  },
+                  copyAction(phoneNumber),
+                ]}
               >
-                {formatted.number?.international || contact.phone}
-              </Copyeable>
+                <Text style={[styles.valueText, liftedContent.inset]}>
+                  {phoneNumber}
+                </Text>
+              </ContextMenu>
               <View style={styles.actions}>
                 <IconButton
                   icon={Phone}
@@ -74,7 +100,7 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
                   accessibilityLabel={i18n.t('call')}
                   style={styles.action}
                   hitSlop={0}
-                  onPress={() => handleCall(contact, formatted, navigation)}
+                  onPress={call}
                 />
                 <IconButton
                   icon={MessageCircle}
@@ -83,7 +109,7 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
                   accessibilityLabel={i18n.t('message')}
                   style={styles.action}
                   hitSlop={0}
-                  onPress={() => handleMessage(contact, formatted, navigation)}
+                  onPress={message}
                 />
               </View>
             </View>
@@ -92,12 +118,25 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
           return (
             <View key={field.id} style={styles.row}>
               <Text style={[labelStyle, styles.label]}>{i18n.t('email')}</Text>
-              <Copyeable
-                style={styles.value}
-                textProps={{ onPress: openMail, style: { textAlign: 'right' } }}
+              <ContextMenu
+                style={[styles.value, liftedContent.outset]}
+                analyticsSurface='contact_email'
+                onPress={openMail}
+                accessibilityLabel={contact.email}
+                actions={[
+                  {
+                    id: 'email',
+                    title: i18n.t('email'),
+                    systemImage: 'envelope',
+                    onPress: openMail,
+                  },
+                  copyAction(contact.email ?? ''),
+                ]}
               >
-                {contact.email}
-              </Copyeable>
+                <Text style={[styles.valueText, liftedContent.inset]}>
+                  {contact.email}
+                </Text>
+              </ContextMenu>
               <IconButton
                 icon={Mail}
                 size={18}
@@ -114,7 +153,9 @@ const ContactInformationRows = ({ contact }: { contact: Contact }) => {
         return (
           <View style={{ gap: 10 }} key={definition.id}>
             <Text style={labelStyle}>{definition.label}</Text>
-            <Copyeable>{contact.customFields![definition.id]}</Copyeable>
+            <Copyeable analyticsSurface='contact_custom_field'>
+              {contact.customFields![definition.id]}
+            </Copyeable>
           </View>
         )
       })}
@@ -131,6 +172,7 @@ const styles = StyleSheet.create({
   },
   label: { flexShrink: 1, maxWidth: '25%' },
   value: { flex: 1, minWidth: 0 },
+  valueText: { textAlign: 'right' },
   actions: { flexDirection: 'row' },
   action: {
     width: 44,

@@ -7,7 +7,7 @@ import {
   SquarePen as SquarePenIcon,
 } from 'lucide-react-native'
 import React, { useCallback, useMemo, useState } from 'react'
-import { Alert, Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import moment from 'moment'
 import { formatDateTime, formatRelative } from '@/lib/dates'
 import * as Notifications from 'expo-notifications'
@@ -21,6 +21,10 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import DateTimePicker from '@/components/ui/DateTimePicker'
+import ContextMenu from '@/components/ui/ContextMenu'
+import ContactPreview from '@/components/ContactPreview'
+import useContactMenuActions from '@/hooks/useContactMenuActions'
+import useDismissFollowUp from '@/features/visits/hooks/useDismissFollowUp'
 
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
@@ -44,15 +48,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
  */
 const QuickActionIconButton = ({
   icon,
+  label,
   onPress,
 }: {
   icon: typeof PhoneIcon
+  label: string
   onPress: () => void
 }) => {
   const theme = useTheme()
   return (
     <Button
       onPress={onPress}
+      accessibilityLabel={label}
       style={{
         width: 36,
         height: 36,
@@ -319,6 +326,20 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     if (navigation.canGoBack()) navigation.goBack()
   }, [navigation])
 
+  const dismissFollowUp = useDismissFollowUp()
+  const contactActions = useContactMenuActions(contact, {
+    showOpen: true,
+    onAddVisit: (notAtHome) => {
+      if (!contact) return
+      dismiss()
+      ;(navigation as unknown as RootStackNavigation).navigate('Visit Form', {
+        contactId: contact.id,
+        notAtHome,
+      })
+    },
+    onRemoved: () => dismiss(),
+  })
+
   const handleReschedule = useCallback(async () => {
     if (!conversation) return
 
@@ -395,51 +416,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     dismiss,
   ])
 
-  const handleDismissFollowUp = useCallback(() => {
-    if (!conversation) return
-    Alert.alert(
-      i18n.t('dismissFollowUpConfirmTitle'),
-      i18n.t('dismissFollowUpConfirmDesc'),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('dismiss'),
-          style: 'destructive',
-          onPress: async () => {
-            await Promise.all(
-              (conversation.followUp?.notifications ?? []).map(
-                async ({ id }) => {
-                  try {
-                    await Notifications.cancelScheduledNotificationAsync(id)
-                  } catch (e) {
-                    logger.error(
-                      '[reschedule] failed to cancel notification',
-                      e
-                    )
-                  }
-                }
-              )
-            )
-            // Mark dismissed instead of nuking the followUp object — we want
-            // to preserve the user's topic/date/note context for history.
-            // Notifications are still cancelled above so a stale reminder
-            // can't fire after dismissal.
-            updateConversation({
-              ...conversation,
-              followUp: {
-                ...conversation.followUp!,
-                notifications: [],
-                dismissed: true,
-              },
-            })
-            analytics.capture('follow_up_dismissed')
-            dismiss()
-          },
-        },
-      ]
-    )
-  }, [conversation, updateConversation, dismiss])
-
   const handleAddConversation = useCallback(() => {
     if (!contact) return
     // Not marking the original follow-up complete — this opens Add
@@ -478,9 +454,14 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   // moment's fromNow(true) returns "5 hours" / "2 days" without the trailing
   // "ago", letting us compose a localized "{time} overdue" label that's more
   // scannable than the absolute timestamp alone.
-  const overdueLabel = i18n.t('overdueBy', {
-    time: formatRelative(originalDate, { withoutSuffix: true }),
-  })
+  // Reschedule is also offered on upcoming follow-ups (Home's context menu),
+  // which show when they're due instead.
+  const isOverdue = moment(originalDate).isBefore(moment())
+  const dueLabel = isOverdue
+    ? i18n.t('overdueBy', {
+        time: formatRelative(originalDate, { withoutSuffix: true }),
+      })
+    : formatRelative(originalDate)
 
   return (
     <Wrapper insets='bottom'>
@@ -492,12 +473,12 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           gap: 20,
         }}
       >
-        {/* Contact card — tappable to open full contact details. Shows a
-            tinted OVERDUE pill with relative time, the name, the user's
-            previous note (so they can pick up the thread before reaching
-            out), the follow-up topic, and quick call/text actions. */}
-        <Pressable
-          onPress={openContactDetails}
+        {/* Contact card — tap opens full contact details, long-press offers
+            the contact menu. Shows a tinted OVERDUE pill with relative time,
+            the name, the user's previous note (so they can pick up the thread
+            before reaching out), the follow-up topic, and quick call/text
+            actions (outside the long-press target so they stay tappable). */}
+        <View
           style={{
             backgroundColor: theme.colors.backgroundLighter,
             borderRadius: theme.numbers.borderRadiusLg,
@@ -507,84 +488,97 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
             gap: 12,
           }}
         >
-          <View style={{ flex: 1, gap: 6 }}>
-            <View
-              style={{
-                alignSelf: 'flex-start',
-                backgroundColor: theme.colors.warnTranslucent,
-                borderRadius: 999,
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-              }}
-            >
-              <Text
+          <ContextMenu
+            style={{ flex: 1 }}
+            actions={contactActions}
+            analyticsSurface='reschedule_contact_card'
+            onPress={openContactDetails}
+            preview={
+              <ContactPreview contact={contact} lastVisit={conversation} />
+            }
+          >
+            <View style={{ gap: 6 }}>
+              <View
                 style={{
-                  fontSize: 11,
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.warn,
-                  letterSpacing: 1,
+                  alignSelf: 'flex-start',
+                  backgroundColor: isOverdue
+                    ? theme.colors.warnTranslucent
+                    : theme.colors.accentTranslucent,
+                  borderRadius: 999,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
                 }}
               >
-                {overdueLabel.toUpperCase()}
-              </Text>
-            </View>
-            <Text
-              style={{ fontSize: 22, fontFamily: theme.fonts.bold }}
-              numberOfLines={1}
-            >
-              {contact.name}
-            </Text>
-            <Text
-              style={{
-                fontSize: 13,
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {formatDateTime(originalDate)}
-            </Text>
-            {conversation.note ? (
-              <View style={{ marginTop: 8, gap: 2 }}>
                 <Text
                   style={{
                     fontSize: 11,
                     fontFamily: theme.fonts.bold,
-                    color: theme.colors.textAlt,
+                    color: isOverdue ? theme.colors.warn : theme.colors.accent,
                     letterSpacing: 1,
                   }}
                 >
-                  {i18n.t('youLastWrote').toUpperCase()}
+                  {dueLabel.toUpperCase()}
                 </Text>
+              </View>
+              <Text
+                style={{ fontSize: 22, fontFamily: theme.fonts.bold }}
+                numberOfLines={1}
+              >
+                {contact.name}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {formatDateTime(originalDate)}
+              </Text>
+              {conversation.note ? (
+                <View style={{ marginTop: 8, gap: 2 }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontFamily: theme.fonts.bold,
+                      color: theme.colors.textAlt,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    {i18n.t('youLastWrote').toUpperCase()}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: theme.colors.text,
+                      fontStyle: 'italic',
+                    }}
+                    numberOfLines={3}
+                  >
+                    {`"${conversation.note}"`}
+                  </Text>
+                </View>
+              ) : null}
+              {conversation.followUp?.topic ? (
                 <Text
                   style={{
                     fontSize: 13,
                     color: theme.colors.text,
-                    fontStyle: 'italic',
+                    marginTop: 6,
                   }}
                   numberOfLines={3}
                 >
-                  {`"${conversation.note}"`}
+                  {conversation.followUp.topic}
                 </Text>
-              </View>
-            ) : null}
-            {conversation.followUp?.topic ? (
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: theme.colors.text,
-                  marginTop: 6,
-                }}
-                numberOfLines={3}
-              >
-                {conversation.followUp.topic}
-              </Text>
-            ) : null}
-          </View>
+              ) : null}
+            </View>
+          </ContextMenu>
 
           {phoneFormatted?.valid ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <QuickActionIconButton
                 icon={PhoneIcon}
+                label={i18n.t('call')}
                 onPress={() =>
                   handleCall(
                     contact,
@@ -595,6 +589,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
               />
               <QuickActionIconButton
                 icon={MessageCircleIcon}
+                label={i18n.t('message')}
                 onPress={() =>
                   handleMessage(
                     contact,
@@ -605,7 +600,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
               />
             </View>
           ) : null}
-        </Pressable>
+        </View>
 
         {/* Two mutually-exclusive paths. Primary (reschedule) is filled,
             secondary (log the visit that already happened) is outlined. */}
@@ -646,7 +641,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
         </View>
 
         <Button
-          onPress={handleDismissFollowUp}
+          onPress={() => dismissFollowUp(conversation, dismiss)}
           style={{
             alignSelf: 'center',
             flexDirection: 'row',

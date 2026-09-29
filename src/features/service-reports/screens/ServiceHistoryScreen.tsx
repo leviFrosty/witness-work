@@ -15,6 +15,7 @@ import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import ContextMenu from '@/components/ui/ContextMenu'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
@@ -22,46 +23,47 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import type { SelectData } from '@/components/ui/Select'
-import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
-import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
+import { monthlyGoalKey } from '@/lib/monthlyGoals'
 import {
   monthStatusLabel,
-  monthStatusOf,
   monthStatuses,
   roleOfMonthStatus,
   type MonthStatus,
 } from '@/lib/monthStatus'
 import { getEntryMode } from '@/lib/publisherCapabilities'
-import {
-  calendarMonthOf,
-  roleForMonth,
-  serviceYearMonths,
-  serviceYearOfMonth,
-} from '@/lib/roleHistory'
+import { serviceYearMonths, serviceYearOfMonth } from '@/lib/roleHistory'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import type { RootStackParamList } from '@/types/rootStack'
+import useConfirmDeleteServiceYear from '@/features/service-reports/hooks/useConfirmDeleteServiceYear'
+import {
+  buildServiceHistoryRows,
+  clearedRow,
+  rowsDiffer,
+  type ServiceHistoryRow,
+} from '@/features/service-reports/lib/serviceHistoryRows'
+import {
+  copiedFromPreviousMonth,
+  discardDraft,
+  dirtyServiceYears,
+  draftRowsFor,
+  saveServiceHistoryDrafts,
+  updateDraft,
+  withStatusAppliedToLaterMonths,
+  type ServiceHistoryDrafts,
+} from '@/features/service-reports/lib/serviceHistoryDrafts'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceHistory'>
 
 /** How many Service Years back the editor reaches. */
 const MAX_YEARS_BACK = 10
 
-type Row = {
-  target: CalendarMonth
-  savedStatus: MonthStatus
-  status: MonthStatus
-  /** Raw logged minutes; `null` when the month has no Time Entries. */
-  loggedMinutes: number | null
-  hours: string
-  creditHours: string
-  shared: boolean
-}
+type Row = ServiceHistoryRow
 
 /** The latest Service Year that has at least one finished month. */
 const latestServiceYear = (): number => {
@@ -72,16 +74,17 @@ const latestServiceYear = (): number => {
   })
 }
 
-const parseHours = (value: string): number => {
-  const hours = Number.parseFloat(value.replace(',', '.'))
-  return Number.isFinite(hours) && hours > 0 ? hours : 0
-}
+const serviceYearLabel = (serviceYear: number) =>
+  `${serviceYear}–${serviceYear + 1}`
 
 /**
  * **Service History** editor: one row per finished month of a Service Year,
  * where the User sets that month's status (Role History) and fills in time for
  * months with nothing logged yet. Months already logged show their total —
  * their Time Entries are edited from the month itself.
+ *
+ * Edits live in a draft per Service Year, so moving between years keeps them;
+ * Save writes every edited year at once.
  */
 const ServiceHistoryScreen = ({ navigation, route }: Props) => {
   const theme = useTheme()
@@ -107,36 +110,21 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
     setMonthStatus,
   } = usePreferences()
   const { serviceReports, addServiceReport } = useServiceReport()
+  const confirmDeleteYear = useConfirmDeleteServiceYear()
 
-  const buildRows = (sy: number): Row[] => {
-    const currentKey = monthlyGoalKey(calendarMonthOf())
-    return serviceYearMonths(sy)
-      .filter((target) => monthlyGoalKey(target) < currentKey)
-      .map((target) => {
-        const savedStatus = monthStatusOf(
-          roleForMonth(roleHistory, role, target),
-          monthlyGoalOverrides[monthlyGoalKey(target)]
-        )
-        const reports = getMonthsReports(
-          serviceReports,
-          target.month,
-          target.year
-        )
-        return {
-          target,
-          savedStatus,
-          status: savedStatus,
-          loggedMinutes: reports.length
-            ? reports.reduce((sum, r) => sum + r.hours * 60 + r.minutes, 0)
-            : null,
-          hours: '',
-          creditHours: '',
-          shared: false,
-        }
-      })
-  }
+  const buildRows = (sy: number): Row[] =>
+    buildServiceHistoryRows({
+      serviceYear: sy,
+      role,
+      roleHistory,
+      monthlyGoalOverrides,
+      serviceReports,
+    })
 
-  const [rows, setRows] = useState<Row[]>(() => buildRows(serviceYear))
+  const [drafts, setDrafts] = useState<ServiceHistoryDrafts>({})
+  const rows = draftRowsFor(drafts, serviceYear, buildRows)
+  const dirtyYears = dirtyServiceYears(drafts)
+  const otherDirtyYears = dirtyYears.filter((sy) => sy !== serviceYear)
 
   // Once per opened Service Year.
   useEffect(() => {
@@ -146,91 +134,40 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
     })
   }, [source, newestServiceYear, serviceYear])
 
-  const hasChanges = rows.some(
-    (r) =>
-      r.status !== r.savedStatus ||
-      (r.loggedMinutes === null &&
-        (parseHours(r.hours) > 0 || parseHours(r.creditHours) > 0 || r.shared))
-  )
-
   const changeServiceYear = (next: number) => {
     Keyboard.dismiss()
     setServiceYear(next)
-    setRows(buildRows(next))
   }
 
+  const updateRows = (update: (rows: Row[]) => Row[]) =>
+    setDrafts((prev) => updateDraft(prev, serviceYear, buildRows, update))
+
   const updateRow = (index: number, patch: Partial<Row>) =>
-    setRows((prev) =>
+    updateRows((prev) =>
       prev.map((r, i) => (i === index ? { ...r, ...patch } : r))
     )
 
-  const applyToLaterMonths = (index: number) =>
-    setRows((prev) =>
-      prev.map((r, i) => (i > index ? { ...r, status: prev[index].status } : r))
-    )
+  const hasTimeThisYear = serviceYearMonths(serviceYear).some(
+    (target) =>
+      getMonthsReports(serviceReports, target.month, target.year).length > 0
+  )
 
   const handleSave = () => {
     Keyboard.dismiss()
-    let monthsStatusChanged = 0
-    let monthsTimeAdded = 0
-
-    for (const row of rows) {
-      if (row.status !== row.savedStatus) {
-        setMonthStatus(row.target, row.status, 'month')
-        monthsStatusChanged++
-      }
-      if (row.loggedMinutes !== null) continue
-
-      // The 1st at noon, like the Onboarding Backfill, so no time zone can
-      // move the entry into the previous month.
-      const date = new Date(row.target.year, row.target.month, 1, 12)
-      const isCheckbox =
-        getEntryMode(roleOfMonthStatus(row.status)) === 'checkbox'
-      if (isCheckbox) {
-        if (!row.shared) continue
-        // A 0h Time Entry is the checkbox "shared" marker.
-        addServiceReport({
-          id: Crypto.randomUUID(),
-          date,
-          hours: 0,
-          minutes: 0,
-        })
-        monthsTimeAdded++
-        continue
-      }
-
-      const hours = parseHours(row.hours)
-      const creditHours = parseHours(row.creditHours)
-      if (hours > 0) {
-        addServiceReport({
-          id: Crypto.randomUUID(),
-          date,
-          hours: Math.floor(hours),
-          minutes: Math.round((hours % 1) * 60),
-          credit: false,
-        })
-      }
-      if (creditHours > 0) {
-        // Same credit routing as the Onboarding Backfill: the LDC builtin
-        // Category counts toward the credit bucket.
-        addServiceReport({
-          id: Crypto.randomUUID(),
-          date,
-          hours: Math.floor(creditHours),
-          minutes: Math.round((creditHours % 1) * 60),
-          categoryId: LDC_BUILTIN_CATEGORY_ID,
-          credit: true,
-        })
-      }
-      if (hours > 0 || creditHours > 0) monthsTimeAdded++
-    }
-
-    analytics.capture('service_history_saved', {
-      source,
-      service_years_back: newestServiceYear - serviceYear,
-      months_status_changed: monthsStatusChanged,
-      months_time_added: monthsTimeAdded,
+    const saved = saveServiceHistoryDrafts(drafts, {
+      setMonthStatus,
+      addServiceReport,
+      newId: Crypto.randomUUID,
     })
+    // One event per saved Service Year, pairing with its `service_history_viewed`.
+    for (const year of saved) {
+      analytics.capture('service_history_saved', {
+        source,
+        service_years_back: newestServiceYear - year.serviceYear,
+        months_status_changed: year.monthsStatusChanged,
+        months_time_added: year.monthsTimeAdded,
+      })
+    }
     navigation.goBack()
   }
 
@@ -276,7 +213,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
               fontSize: theme.fontSize('xl'),
             }}
           >
-            {`${serviceYear}–${serviceYear + 1}`}
+            {serviceYearLabel(serviceYear)}
           </Text>
           <IconButton
             icon={ChevronRightIcon}
@@ -304,6 +241,12 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
 
         {rows.map((row, index) => {
           const monthLabel = moment(row.target).format('MMMM YYYY')
+          const copiedRow = copiedFromPreviousMonth(
+            drafts,
+            serviceYear,
+            index,
+            buildRows
+          )
           const isCheckbox =
             getEntryMode(roleOfMonthStatus(row.status)) === 'checkbox'
           const canApplyLater =
@@ -313,18 +256,38 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
 
           return (
             <View key={monthlyGoalKey(row.target)} style={{ gap: 6 }}>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                  paddingHorizontal: inputLayout.horizontalPadding,
-                }}
+              {/* Long-press the month's header to copy or clear it. Both
+                only change the unsaved form, so leaving undoes them. */}
+              <ContextMenu
+                analyticsSurface='service_history_month'
+                actions={[
+                  rowsDiffer(copiedRow, row) && {
+                    id: 'copy_previous_month',
+                    title: i18n.t('copyFromPreviousMonth'),
+                    systemImage: 'doc.on.doc',
+                    onPress: () => updateRow(index, copiedRow),
+                  },
+                  rowsDiffer(clearedRow(row), row) && {
+                    id: 'clear_month',
+                    title: i18n.t('clearMonth'),
+                    systemImage: 'xmark.circle',
+                    onPress: () => updateRow(index, clearedRow(row)),
+                  },
+                ]}
               >
-                {monthLabel}
-              </Text>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('xs'),
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    paddingHorizontal: inputLayout.horizontalPadding,
+                  }}
+                >
+                  {monthLabel}
+                </Text>
+              </ContextMenu>
               <Section>
                 <InputRowSelect
                   label={i18n.t('status')}
@@ -402,7 +365,11 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                 <Button
                   noTransform
                   accessibilityRole='button'
-                  onPress={() => applyToLaterMonths(index)}
+                  onPress={() =>
+                    updateRows((prev) =>
+                      withStatusAppliedToLaterMonths(prev, index)
+                    )
+                  }
                   style={{
                     alignSelf: 'flex-start',
                     paddingHorizontal: inputLayout.horizontalPadding,
@@ -425,6 +392,37 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
             </View>
           )
         })}
+
+        {hasTimeThisYear ? (
+          <Button
+            noTransform
+            accessibilityRole='button'
+            onPress={() =>
+              confirmDeleteYear({
+                endYear: serviceYear + 1,
+                source: 'service_history',
+                // The year's rows rebuild without its time; its draft goes too.
+                onDeleted: () =>
+                  setDrafts((prev) => discardDraft(prev, serviceYear)),
+              })
+            }
+            style={{
+              alignSelf: 'center',
+              paddingVertical: 8,
+              paddingHorizontal: inputLayout.horizontalPadding,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('deleteThisYearsTime')}
+            </Text>
+          </Button>
+        ) : null}
       </KeyboardAwareScrollView>
 
       <View
@@ -436,10 +434,24 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
           alignSelf: 'center',
         }}
       >
+        {otherDirtyYears.length ? (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+              paddingBottom: 8,
+            }}
+          >
+            {i18n.t('serviceHistoryOtherYearsUnsaved', {
+              years: otherDirtyYears.map(serviceYearLabel).join(', '),
+            })}
+          </Text>
+        ) : null}
         <ActionButton
           noTransform
           accessibilityRole='button'
-          disabled={!hasChanges}
+          disabled={!dirtyYears.length}
           onPress={handleSave}
         >
           {i18n.t('save')}

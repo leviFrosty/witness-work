@@ -1,10 +1,9 @@
-import { Plus as PlusIcon, Trash2 as Trash2Icon } from 'lucide-react-native'
+import { Plus as PlusIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
 
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
@@ -25,8 +24,9 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
 import Text from '@/components/ui/MyText'
-import RowActionsMenu from '@/components/RowActionsMenu'
-import confirmDestructive from '@/lib/confirmDestructive'
+import ContextMenu from '@/components/ui/ContextMenu'
+import useConfirmDeleteServiceYear from '@/features/service-reports/hooks/useConfirmDeleteServiceYear'
+import YearSummaryPreview from '@/features/progress/components/YearSummaryPreview'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
@@ -57,7 +57,9 @@ const useFlatServiceReports = (): TimeEntry[] => {
  *   back to the max-hours year so rows still render comparatively.
  * - `{hours}{hoursCompact}` on the right (localized hour abbreviation).
  *
- * Tapping a row navigates to the Progress > Year tab for that service year.
+ * Tapping a row navigates to the Progress > Year tab for that service year;
+ * long-pressing previews the year and offers View Year, Edit Service History,
+ * and Delete This Year's Time (also at the bottom of Service History).
  */
 interface YearByYearListProps {
   /** Invoked when the user taps a year row — parent switches to Year tab. */
@@ -84,25 +86,10 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
     return data
   }, [endYears, reports])
 
-  const { deleteServiceYearReports } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
+  const confirmDeleteYear = useConfirmDeleteServiceYear()
 
   const [sheetOpen, setSheetOpen] = useState(false)
-
-  const confirmDeleteYear = (endYear: number, label: string) => {
-    confirmDestructive({
-      title: i18n.t('deleteYearTime_title', { year: label }),
-      description: i18n.t('deleteYearTime_description', { year: label }),
-      onConfirm: () => {
-        deleteServiceYearReports(endYear)
-        toast.show(i18n.t('success'), {
-          message: i18n.t('deleted'),
-          native: true,
-        })
-      },
-    })
-  }
 
   const availableEndYears = useMemo(() => {
     if (endYears.length === 0) return []
@@ -163,82 +150,105 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
               timeDisplayFormat
             ).formatted
 
-            return (
-              <Pressable
-                key={endYear}
-                accessibilityRole='button'
-                onPress={() => onYearPress(endYear)}
-                style={({ pressed }) => ({
-                  opacity: pressed ? 0.7 : 1,
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                  borderCurve: 'continuous',
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                })}
-              >
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.text,
-                    fontSize: theme.fontSize('sm'),
-                    minWidth: 72,
-                  }}
-                >
-                  {label}
-                </Text>
+            // Service History covers finished months only.
+            const hasFinishedMonths = moment({
+              year: startYear,
+              month: 8,
+            }).isBefore(moment(), 'month')
 
+            return (
+              <ContextMenu
+                key={endYear}
+                analyticsSurface='progress_year_row'
+                onPress={() => onYearPress(endYear)}
+                accessibilityLabel={`${label}, ${totalDisplay}`}
+                preview={<YearSummaryPreview endYear={endYear} />}
+                actions={[
+                  [
+                    {
+                      id: 'view_year',
+                      title: i18n.t('viewYear'),
+                      systemImage: 'calendar',
+                      onPress: () => onYearPress(endYear),
+                    },
+                    hasFinishedMonths && {
+                      id: 'edit_service_history',
+                      title: i18n.t('serviceHistory.edit'),
+                      systemImage: 'pencil',
+                      onPress: () =>
+                        navigation.navigate('ServiceHistory', {
+                          serviceYear: startYear,
+                          source: 'year_row_menu',
+                        }),
+                    },
+                  ],
+                  reportCount > 0 && [
+                    {
+                      id: 'delete_year',
+                      title: i18n.t('deleteThisYearsTime'),
+                      systemImage: 'trash',
+                      destructive: true,
+                      onPress: () =>
+                        confirmDeleteYear({ endYear, source: 'year_row_menu' }),
+                    },
+                  ],
+                ]}
+              >
                 <View
                   style={{
-                    flex: 1,
-                    height: 8,
-                    borderRadius: 999,
-                    backgroundColor: theme.colors.border,
-                    overflow: 'hidden',
+                    backgroundColor: theme.colors.card,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    borderCurve: 'continuous',
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
                   }}
                 >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.text,
+                      fontSize: theme.fontSize('sm'),
+                      minWidth: 72,
+                    }}
+                  >
+                    {label}
+                  </Text>
+
                   <View
                     style={{
-                      width: `${ratio * 100}%`,
-                      height: '100%',
-                      backgroundColor: theme.colors.accent,
+                      flex: 1,
+                      height: 8,
                       borderRadius: 999,
+                      backgroundColor: theme.colors.border,
+                      overflow: 'hidden',
                     }}
-                  />
+                  >
+                    <View
+                      style={{
+                        width: `${ratio * 100}%`,
+                        height: '100%',
+                        backgroundColor: theme.colors.accent,
+                        borderRadius: 999,
+                      }}
+                    />
+                  </View>
+
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.text,
+                      fontSize: theme.fontSize('sm'),
+                      minWidth: 56,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalDisplay}
+                  </Text>
                 </View>
-
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.text,
-                    fontSize: theme.fontSize('sm'),
-                    minWidth: 56,
-                    textAlign: 'right',
-                  }}
-                >
-                  {totalDisplay}
-                </Text>
-
-                {reportCount > 0 && (
-                  <RowActionsMenu
-                    accessibilityLabel={i18n.t('yearRow_moreActions', {
-                      year: label,
-                    })}
-                    actions={[
-                      {
-                        id: 'delete-year',
-                        label: i18n.t('deleteYearTime'),
-                        icon: Trash2Icon,
-                        destructive: true,
-                        onPress: () => confirmDeleteYear(endYear, label),
-                      },
-                    ]}
-                  />
-                )}
-              </Pressable>
+              </ContextMenu>
             )
           })}
 

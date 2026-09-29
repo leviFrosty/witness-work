@@ -3,8 +3,6 @@ import {
   BellOff as BellOffIcon,
   BookOpen as BookOpenIcon,
   Caravan as CaravanIcon,
-  Pencil as PencilIcon,
-  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
@@ -20,12 +18,50 @@ import Badge from '@/components/ui/Badge'
 import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import IconButton from '@/components/ui/IconButton'
-import Copyeable from '@/components/ui/Copyeable'
-import Button from '@/components/ui/Button'
-import RowActionsMenu from '@/components/RowActionsMenu'
+import ContextMenu from '@/components/ui/ContextMenu'
+import { useCopyAction } from '@/components/ui/Copyeable'
 import confirmDestructive from '@/lib/confirmDestructive'
+import { analytics } from '@/lib/analytics'
+import { isAppointment } from '@/lib/conversations'
 import { useToastController } from '@tamagui/toast'
 import { RootStackNavigation } from '@/types/rootStack'
+
+/** Notes past this many lines are cut off in the row; the preview shows all. */
+const NOTE_LINES = 10
+const LONG_NOTE_CHARS = 400
+
+/** Long-press preview for a visit whose note the row truncates. */
+const ConversationPreview = ({ conversation }: { conversation: Visit }) => {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        width: 320,
+        padding: 16,
+        gap: 10,
+        borderRadius: theme.numbers.borderRadiusLg,
+        backgroundColor: theme.colors.card,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: theme.fontSize('md'),
+          fontFamily: theme.fonts.bold,
+        }}
+      >
+        {moment(conversation.date).format('dddd, L')}
+      </Text>
+      {conversation.followUp?.topic ? (
+        <Text style={{ color: theme.colors.textAlt }}>
+          {`${i18n.t('topic')}: ${conversation.followUp.topic}`}
+        </Text>
+      ) : null}
+      <Text numberOfLines={40} style={{ lineHeight: 20 }}>
+        {conversation.note}
+      </Text>
+    </View>
+  )
+}
 
 const ConversationRow = ({
   conversation,
@@ -38,11 +74,17 @@ const ConversationRow = ({
   const theme = useTheme()
   const { deleteConversation } = useConversations()
   const toast = useToastController()
+  const copyAction = useCopyAction()
   const notificationHasPassed =
     conversation.followUp &&
     moment(conversation.followUp.date).isSameOrBefore(moment())
 
   const hasNoConversationDetails = !conversation.note?.length
+  const note = conversation.note ?? ''
+  const topic = conversation.followUp?.topic ?? ''
+  const noteIsLong =
+    note.length > LONG_NOTE_CHARS || note.split('\n').length > NOTE_LINES
+  const dateLabel = moment(conversation.date).format('dddd, L')
 
   const handleNavigateEdit = () => {
     navigation.navigate('Visit Form', {
@@ -53,7 +95,7 @@ const ConversationRow = ({
   }
 
   /**
-   * The one delete flow for this row — the overflow menu and the right-swipe
+   * The one delete flow for this row — the context menu and the right-swipe
    * both land here.
    */
   const handleRequestDelete = () => {
@@ -62,6 +104,7 @@ const ConversationRow = ({
       description: i18n.t('deleteConversation_description'),
       onConfirm: () => {
         deleteConversation(conversation.id)
+        analytics.capture('visit_deleted')
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,
@@ -89,21 +132,60 @@ const ConversationRow = ({
       renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={handleSwipeOpen}
     >
-      <Button
+      <ContextMenu
+        analyticsSurface='conversation_row'
         onPress={handleNavigateEdit}
-        style={{
-          paddingHorizontal: 5,
-          paddingVertical: 10,
-          backgroundColor: theme.colors.card,
-          borderWidth: highlighted ? 1 : 0,
-          borderColor: highlighted ? theme.colors.accent : undefined,
-        }}
+        accessibilityLabel={dateLabel}
+        preview={
+          noteIsLong ? (
+            <ConversationPreview conversation={conversation} />
+          ) : undefined
+        }
+        actions={[
+          [
+            {
+              id: 'edit',
+              title: i18n.t('edit'),
+              systemImage: 'pencil',
+              onPress: handleNavigateEdit,
+            },
+            isAppointment(conversation) && {
+              id: 'reschedule_follow_up',
+              title: i18n.t('rescheduleFollowUp'),
+              systemImage: 'calendar.badge.clock',
+              onPress: () =>
+                navigation.navigate('RescheduleVisit', {
+                  contactId: conversation.contact.id,
+                  visitId: conversation.id,
+                }),
+            },
+            !!note &&
+              copyAction(note, { id: 'copy_note', title: i18n.t('copyNote') }),
+            !!topic &&
+              copyAction(topic, {
+                id: 'copy_topic',
+                title: i18n.t('copyTopic'),
+              }),
+          ],
+          [
+            {
+              id: 'delete',
+              title: i18n.t('delete'),
+              systemImage: 'trash',
+              destructive: true,
+              onPress: handleRequestDelete,
+            },
+          ],
+        ]}
       >
         <View
           style={{
             gap: 16,
-            paddingVertical: 24,
-            paddingHorizontal: 16,
+            paddingVertical: 34,
+            paddingHorizontal: 21,
+            backgroundColor: theme.colors.card,
+            borderWidth: highlighted ? 1 : 0,
+            borderColor: highlighted ? theme.colors.accent : undefined,
           }}
         >
           {/* Header Section */}
@@ -175,26 +257,6 @@ const ConversationRow = ({
                 </Badge>
               </View>
             )}
-            <RowActionsMenu
-              accessibilityLabel={i18n.t('moreActionsFor', {
-                name: moment(conversation.date).format('dddd, L'),
-              })}
-              actions={[
-                {
-                  id: 'edit-conversation',
-                  label: i18n.t('edit'),
-                  icon: PencilIcon,
-                  onPress: handleNavigateEdit,
-                },
-                {
-                  id: 'delete-conversation',
-                  label: i18n.t('delete'),
-                  icon: Trash2Icon,
-                  destructive: true,
-                  onPress: handleRequestDelete,
-                },
-              ]}
-            />
           </View>
 
           {/* Content Section */}
@@ -278,18 +340,16 @@ const ConversationRow = ({
                       >
                         {i18n.t('topic')}
                       </Text>
-                      <Copyeable
-                        textProps={{
-                          style: {
-                            fontSize: theme.fontSize('md'),
-                            color: notificationHasPassed
-                              ? theme.colors.textAlt
-                              : theme.colors.accent3,
-                          },
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('md'),
+                          color: notificationHasPassed
+                            ? theme.colors.textAlt
+                            : theme.colors.accent3,
                         }}
                       >
                         {conversation.followUp?.topic}
-                      </Copyeable>
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -341,21 +401,20 @@ const ConversationRow = ({
                 >
                   {i18n.t('note')}
                 </Text>
-                <Copyeable
-                  textProps={{
-                    style: {
-                      fontSize: theme.fontSize('md'),
-                      lineHeight: theme.fontSize('md') * 1.4,
-                    },
+                <Text
+                  numberOfLines={NOTE_LINES}
+                  style={{
+                    fontSize: theme.fontSize('md'),
+                    lineHeight: theme.fontSize('md') * 1.4,
                   }}
                 >
                   {conversation.note}
-                </Copyeable>
+                </Text>
               </View>
             )}
           </View>
         </View>
-      </Button>
+      </ContextMenu>
     </Swipeable>
   )
 }

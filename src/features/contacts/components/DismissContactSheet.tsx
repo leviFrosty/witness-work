@@ -1,7 +1,6 @@
-import { analytics } from '@/lib/analytics'
 import { X as XIcon } from 'lucide-react-native'
 import React from 'react'
-import { View, Alert } from 'react-native'
+import { View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
@@ -9,89 +8,14 @@ import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
-import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
-import { useToastController } from '@tamagui/toast'
-import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
-import { formatDate, formatTime } from '@/lib/dates'
-import * as Notifications from 'expo-notifications'
-import { errorTracking } from '@/lib/errorTracking'
-import useNotifications from '@/hooks/notifications'
-
-export type DismissOption = {
-  key: string
-  duration: number
-  unit: 'seconds' | 'minutes' | 'days' | 'weeks' | 'months' | 'years'
-  label: string
-  example: string
-  isTestOption?: boolean
-}
-
-export const dismissOptions: DismissOption[] = [
-  {
-    key: '1_week',
-    duration: 1,
-    unit: 'weeks',
-    label: 'dismissFor1Week',
-    example: 'dismissExample',
-  },
-  {
-    key: '1_month',
-    duration: 1,
-    unit: 'months',
-    label: 'dismissFor1Month',
-    example: 'dismissExample',
-  },
-  {
-    key: '3_months',
-    duration: 3,
-    unit: 'months',
-    label: 'dismissFor3Months',
-    example: 'dismissExample',
-  },
-  {
-    key: '6_months',
-    duration: 6,
-    unit: 'months',
-    label: 'dismissFor6Months',
-    example: 'dismissExample',
-  },
-  {
-    key: '1_year',
-    duration: 1,
-    unit: 'years',
-    label: 'dismissFor1Year',
-    example: 'dismissExample',
-  },
-]
-
-export const testDismissOptions: DismissOption[] = [
-  {
-    key: '10_seconds',
-    duration: 10,
-    unit: 'seconds',
-    label: '10 Seconds',
-    example: 'Until {date}',
-    isTestOption: true,
-  },
-  {
-    key: '1_minute',
-    duration: 1,
-    unit: 'minutes',
-    label: '1 Minute',
-    example: 'Until {date}',
-    isTestOption: true,
-  },
-  {
-    key: '5_minutes',
-    duration: 5,
-    unit: 'minutes',
-    label: '5 Minutes',
-    example: 'Until {date}',
-    isTestOption: true,
-  },
-]
+import { formatDate } from '@/lib/dates'
+import useDismissContact, {
+  type DismissOption,
+  dismissOptions,
+  testDismissOptions,
+} from '@/hooks/useDismissContact'
 
 interface DismissContactSheetProps {
   open: boolean
@@ -99,139 +23,24 @@ interface DismissContactSheetProps {
   contact: Contact | null
 }
 
+/**
+ * Dismiss durations with a worked example of when the contact comes back — the
+ * row's swipe-left destination. Menus offer the same durations as a Dismiss For
+ * ▸ submenu. Dismissing is reversible, so a choice applies immediately.
+ */
 const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   open,
   setOpen,
   contact,
 }) => {
   const theme = useTheme()
-  const { dismissContact } = useContacts()
-  const { developerTools } = usePreferences()
-  const toast = useToastController()
-  const { allowed: notificationsAllowed } = useNotifications()
-  const navigation = useNavigation()
+  const developerTools = usePreferences((s) => s.developerTools)
+  const dismiss = useDismissContact()
 
-  const handleDismiss = async (option: DismissOption) => {
+  const handleDismiss = (option: DismissOption) => {
     if (!contact) return
-
-    const exampleFormat =
-      option.unit === 'seconds' || option.unit === 'minutes'
-        ? 'LTS'
-        : 'MMM D, YYYY'
-    const exampleDate = moment()
-      .add(option.duration, option.unit)
-      .format(exampleFormat)
-
-    // Handle label and example text based on whether it's a test option
-    const labelText = option.isTestOption
-      ? option.label
-      : i18n.t(option.label as 'dismissFor1Week')
-    const exampleText = option.isTestOption
-      ? option.example.replace('{date}', exampleDate)
-      : i18n.t(option.example as 'dismissExample', { date: exampleDate })
-
-    const dismissDescription = notificationsAllowed
-      ? i18n.t('dismissContactDescriptionWithNotification', {
-          name: contact.name,
-          duration: labelText,
-          example: exampleText,
-        })
-      : i18n.t('dismissContactDescription', {
-          name: contact.name,
-          duration: labelText,
-          example: exampleText,
-        })
-
-    Alert.alert(i18n.t('dismissContact'), dismissDescription, [
-      {
-        text: i18n.t('cancel'),
-        style: 'cancel',
-      },
-      {
-        text: i18n.t('dismiss'),
-        onPress: async () => {
-          const dismissedUntil = moment()
-            .add(option.duration, option.unit)
-            .toDate()
-
-          let notificationId: string | undefined
-
-          // Schedule notification if allowed
-          if (
-            notificationsAllowed &&
-            moment(dismissedUntil).isAfter(moment())
-          ) {
-            try {
-              const getRandomEmoji = () => {
-                const emojis = [
-                  '🔄',
-                  '✨',
-                  '👋',
-                  '⭐',
-                  '🎉',
-                  '💫',
-                  '👀',
-                  '💪',
-                  '⏱️',
-                  '🌟',
-                ]
-                const randomIndex = Math.floor(Math.random() * emojis.length)
-                return emojis[randomIndex]
-              }
-
-              notificationId = await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: i18n.t('contactAvailableAgain'),
-                  body: i18n.t('contactAvailableAgainMessage', {
-                    name: contact.name,
-                    emoji: getRandomEmoji(),
-                  }),
-                  sound: true,
-                },
-                trigger: {
-                  type: Notifications.SchedulableTriggerInputTypes.DATE,
-                  date: dismissedUntil,
-                },
-              })
-            } catch (error) {
-              errorTracking.captureException(error)
-            }
-          }
-
-          // Use dismissContact function with notification ID
-          dismissContact(contact.id, dismissedUntil, notificationId)
-          analytics.capture('contact_dismissed', {
-            duration: option.key,
-            reminder_scheduled: !!notificationId,
-          })
-
-          setOpen(false)
-
-          // Navigate back to close the ContactDetailsScreen
-          navigation.goBack()
-
-          const until =
-            option.unit === 'seconds' || option.unit === 'minutes'
-              ? formatTime(dismissedUntil, { withSeconds: true }) // "3:45:20 PM"
-              : formatDate(dismissedUntil, { style: 'medium' }) // "Dec 25, 2024"
-
-          const successMessage = notificationId
-            ? i18n.t('contactDismissedWithNotificationMessage', {
-                name: contact.name,
-                until,
-              })
-            : i18n.t('contactDismissedMessage', {
-                name: contact.name,
-                until,
-              })
-
-          toast.show(i18n.t('contactDismissed'), {
-            message: successMessage,
-            native: true,
-          })
-        },
-      },
-    ])
+    setOpen(false)
+    void dismiss(contact, option)
   }
 
   return (

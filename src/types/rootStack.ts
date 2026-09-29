@@ -1,5 +1,6 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Coordinate } from '@/types/contact'
+import type { PlanLocation } from '@/types/timeEntry'
 
 export type RootStackParamList = {
   Root: undefined
@@ -24,6 +25,8 @@ export type RootStackParamList = {
         date?: string
         hours?: number
         minutes?: number
+        /** Seeds a new entry's Type, e.g. logging a Plan as time. */
+        categoryId?: string
         /** Entering an existing service report ID will enter 'edit' mode. */
         existingReport?: string
       }
@@ -66,6 +69,21 @@ export type RootStackParamList = {
     existingRecurringPlanId?: string
     /** For recurring plans, the specific date instance being edited */
     recurringPlanDate?: string
+    /**
+     * Seeds a new plan (not an edit), e.g. duplicating a plan or planning the
+     * same time as a buddy. Pick the day with `date`.
+     */
+    prefill?: {
+      /** ISO timestamp; only its time of day is used. */
+      startTime?: string
+      minutes?: number
+      note?: string
+      title?: string
+      location?: PlanLocation
+      categoryId?: string
+    }
+    /** Starts a new plan as Recurring instead of One-Time. */
+    recurring?: boolean
   }
   Rollover: undefined
   MilestoneShowcase: undefined
@@ -96,6 +114,10 @@ export type RootStackParamList = {
 }
 
 /** Where the Service History editor was opened from (analytics). */
-export type ServiceHistorySource = 'year_tab' | 'add_earlier_year' | 'settings'
+export type ServiceHistorySource =
+  | 'year_tab'
+  | 'year_row_menu'
+  | 'add_earlier_year'
+  | 'settings'
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

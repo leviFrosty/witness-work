@@ -5,7 +5,9 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
-import Button from '@/components/ui/Button'
+import { View } from 'react-native'
+import ContextMenu from '@/components/ui/ContextMenu'
+import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -26,6 +28,7 @@ const SubmitPreviousReportButton = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { submittedReportMonths, installedOn } = usePreferences()
   const serviceReports = useServiceReport((state) => state.serviceReports)
+  const { reportMenuItems } = useMonthReportExport()
 
   const previousMonth = moment().subtract(1, 'month')
   const previousMonthHasEntries =
@@ -48,45 +51,61 @@ const SubmitPreviousReportButton = () => {
   const label = i18n.t('submitMonthsReport', {
     month: previousMonth.format('MMMM'),
   })
+  const month = previousMonth.month()
+  const year = previousMonth.year()
+  const viewReport = () =>
+    navigation.navigate('ServiceReportView', { month, year })
 
+  // Tap opens the report; long-press sends it straight away. Either way the
+  // send marks it submitted, which hides this reminder.
   return (
-    <Button
+    <ContextMenu
+      analyticsSurface='submit_previous_report'
       accessibilityLabel={label}
-      onPress={() =>
-        navigation.navigate('ServiceReportView', {
-          month: previousMonth.month(),
-          year: previousMonth.year(),
-        })
-      }
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 8,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        backgroundColor: theme.colors.accentTranslucent,
-        borderRadius: theme.numbers.borderRadiusMd,
-        borderCurve: 'continuous',
-      }}
+      onPress={viewReport}
+      actions={[
+        reportMenuItems(month, year),
+        [
+          {
+            id: 'view_report',
+            title: i18n.t('viewReport'),
+            systemImage: 'doc.text',
+            onPress: viewReport,
+          },
+        ],
+      ]}
     >
-      <LucideIcon icon={ShareIcon} size={18} color={theme.colors.accent} />
-      <Text
+      <View
         style={{
-          flex: 1,
-          color: theme.colors.accent,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('md'),
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          backgroundColor: theme.colors.accentTranslucent,
+          borderRadius: theme.numbers.borderRadiusMd,
+          borderCurve: 'continuous',
         }}
       >
-        {label}
-      </Text>
-      <LucideIcon
-        icon={ChevronRightIcon}
-        size={14}
-        color={theme.colors.accent}
-      />
-    </Button>
+        <LucideIcon icon={ShareIcon} size={18} color={theme.colors.accent} />
+        <Text
+          style={{
+            flex: 1,
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+          }}
+        >
+          {label}
+        </Text>
+        <LucideIcon
+          icon={ChevronRightIcon}
+          size={14}
+          color={theme.colors.accent}
+        />
+      </View>
+    </ContextMenu>
   )
 }
 

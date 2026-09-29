@@ -144,6 +144,7 @@ const SupportSection = () => {
               ]
             )
           }}
+          url={links.crowdin}
           lastInSection
         >
           <IconButton icon={ExternalLinkIcon} />

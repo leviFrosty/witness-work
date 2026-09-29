@@ -6,7 +6,7 @@ export default function MapRouteScreen() {
   return (
     <MapScreen
       renderContactRow={(props) => (
-        <ContactRow {...props} showsDisclosure={false} />
+        <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
       )}
     />
   )

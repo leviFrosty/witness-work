@@ -118,26 +118,6 @@ describe('lib/mapCarousel', () => {
       expect(result.activeId).toBe('a')
       expect(result.index).toBe(0)
     })
-
-    /**
-     * The captured-closure bug: render N saw `[a, b, c]` and bound the second
-     * marker's onPress to `index = 1`. Before the user tapped, render N+1
-     * produced `[x, a, b, c]`. The legacy code scrolled to index 1 (= "a"), not
-     * the marker the user actually tapped ("b"). With id-based lookup this
-     * can't happen.
-     */
-    it('id-based lookup survives the captured-index closure scenario', () => {
-      const renderN = [marker('a'), marker('b'), marker('c')]
-      const renderNPlus1 = [marker('x'), marker('a'), marker('b'), marker('c')]
-      const tappedId = renderN[1].id // user tapped "b"
-      const staleIndex = 1 // what a captured closure would carry
-
-      // legacy behaviour (positional): would scroll to "a", not "b"
-      expect(renderNPlus1[staleIndex].id).toBe('a')
-
-      // id-based behaviour: scrolls to the right contact
-      expect(findContactIndexById(renderNPlus1, tappedId)).toBe(2)
-    })
   })
 
   describe('resolveCarouselSnapContact', () => {

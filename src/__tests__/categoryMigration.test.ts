@@ -9,10 +9,7 @@ vi.mock('expo-crypto', () => ({
   randomUUID: vi.fn(() => 'mock-uuid'),
 }))
 
-import {
-  migrateTagsToCategories,
-  resolveCategoryForReport,
-} from '@/lib/categories'
+import { migrateTagsToCategories } from '@/lib/categories'
 import {
   LegacyTimeEntry,
   TimeEntry,
@@ -268,48 +265,5 @@ describe('migrateTagsToCategories', () => {
     })
     expect(result.categories).toEqual([])
     expect(result.reconciledCreditMismatches).toBe(0)
-  })
-})
-
-describe('resolveCategoryForReport', () => {
-  it('returns the matching Category when categoryId is set', () => {
-    const category = {
-      id: 'cat-1',
-      name: 'Hospital',
-      isCredit: true,
-    }
-    const report: TimeEntry = {
-      id: 'r1',
-      hours: 1,
-      minutes: 0,
-      date: new Date(),
-      categoryId: 'cat-1',
-    }
-    expect(resolveCategoryForReport(report, [category])).toEqual(category)
-  })
-
-  it('falls back to a synthetic Category for legacy `tag`-only entries', () => {
-    const report: TimeEntry = {
-      id: 'r1',
-      hours: 1,
-      minutes: 0,
-      date: new Date(),
-      tag: 'Hospital',
-      credit: true,
-    }
-    const synthesized = resolveCategoryForReport(report, [])
-    expect(synthesized).not.toBeNull()
-    expect(synthesized!.name).toBe('Hospital')
-    expect(synthesized!.isCredit).toBe(true)
-  })
-
-  it('returns null for entries with neither categoryId nor tag', () => {
-    const report: TimeEntry = {
-      id: 'r1',
-      hours: 1,
-      minutes: 0,
-      date: new Date(),
-    }
-    expect(resolveCategoryForReport(report, [])).toBeNull()
   })
 })

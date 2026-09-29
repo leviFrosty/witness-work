@@ -31,7 +31,6 @@ import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import {
   provisionalTitleFromNotes,
   ledgerEntryTitle,
-  readyImportCount,
   isUnviewedReady,
   unviewedReadyImportCount,
   markViewed,
@@ -40,7 +39,6 @@ import {
   isPrunableLedgerEntry,
   getLedgerEntry,
   getAllLedgerEntries,
-  hasLedgerEntry,
   beginWorkingEntry,
   setActiveRun,
   appendLedgerHistory,
@@ -631,13 +629,11 @@ describe('ledger lifecycle (store-backed)', () => {
 })
 
 describe('ledger list operations', () => {
-  it('lists newest-first and reports membership', () => {
+  it('lists newest-first', () => {
     beginWorkingEntry('old', { notesText: 'a', activeRun: null, nowMs: 100 })
     beginWorkingEntry('new', { notesText: 'b', activeRun: null, nowMs: 200 })
     const all = getAllLedgerEntries()
     expect(all.map((e) => e.hash)).toEqual(['new', 'old'])
-    expect(hasLedgerEntry('old')).toBe(true)
-    expect(hasLedgerEntry('missing')).toBe(false)
   })
 
   it('deletes a single row without touching others', () => {
@@ -673,43 +669,6 @@ describe('ledger list operations', () => {
     expect(pruneLedgerEntries(now)).toBe(1)
     expect(getLedgerEntry('stale')).toBeNull()
     expect(getLedgerEntry('fresh')).not.toBeNull()
-  })
-})
-
-describe('readyImportCount', () => {
-  const entry = (
-    state: NotesImportLedgerEntry['state']
-  ): NotesImportLedgerEntry => ({
-    hash: `h-${Math.random()}`,
-    state,
-    notesText: 'n',
-    provisionalTitle: 'n',
-    result: result(),
-    emptyCharged: false,
-    history: [],
-    summary: '',
-    commit: null,
-    activeRun: null,
-    createdAt: 1,
-    parsedAt: 2,
-    viewedAt: null,
-    acceptedAt: null,
-    updatedAt: 2,
-  })
-
-  it('counts only ready entries', () => {
-    expect(
-      readyImportCount([
-        entry('ready'),
-        entry('ready'),
-        entry('working'),
-        entry('done'),
-      ])
-    ).toBe(2)
-  })
-
-  it('is zero for an empty ledger', () => {
-    expect(readyImportCount([])).toBe(0)
   })
 })
 

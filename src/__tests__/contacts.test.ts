@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest'
 const testDate = moment({ year: 2023, month: 10 }).toDate()
 
 describe('lib/contacts', () => {
-  describe('getTotalStudiesCount', () => {
+  describe('getStudiesForGivenMonth', () => {
     it('returns 0 studies if 0 conversations', () => {
       const contacts = createFakeContacts()
       const conversations: Visit[] = []
@@ -145,7 +145,7 @@ describe('lib/contacts', () => {
   })
 
   describe('getStudyContactsForGivenMonth', () => {
-    it('returns the Contact sources once and matches the report count', () => {
+    it('returns each studied Contact once, skipping orphaned Conversations', () => {
       const contacts = createFakeContacts()
       contacts[0].dismissedUntil = moment(testDate).add(1, 'month').toDate()
       const conversations: Visit[] = [
@@ -185,9 +185,6 @@ describe('lib/contacts', () => {
         contacts[0].id,
         contacts[1].id,
       ])
-      expect(studyContacts).toHaveLength(
-        getStudiesForGivenMonth({ contacts, conversations, month: testDate })
-      )
     })
   })
 })

@@ -103,13 +103,6 @@ export const planImportsToStart = (
 }
 
 /**
- * Whether a Working import is showing as **Running** (live model run) or
- * **Queued** (waiting client-side for a slot) — the two Working sub-labels.
- */
-export const workingSubLabel = (isRunning: boolean): 'running' | 'queued' =>
-  isRunning ? 'running' : 'queued'
-
-/**
  * Prepares an Accept: project the mapped import down to the selected rows, then
  * Reconcile against the user's CURRENT local data (ADR 0010) so an earlier
  * import's records aren't duplicated. Pure — the snapshot is passed in and the

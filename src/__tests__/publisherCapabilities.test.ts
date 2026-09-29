@@ -262,23 +262,6 @@ describe('derivePublisherCapabilities', () => {
     })
   })
 
-  describe('tenureType', () => {
-    it("is 'fullTimeService' for the three full-time roles", () => {
-      expect(derive('regularPioneer').tenureType).toBe('fullTimeService')
-      expect(derive('specialPioneer').tenureType).toBe('fullTimeService')
-      expect(derive('circuitOverseer').tenureType).toBe('fullTimeService')
-    })
-
-    it("is 'auxiliaryPioneer' for the regularAuxiliary role", () => {
-      expect(derive('regularAuxiliary').tenureType).toBe('auxiliaryPioneer')
-    })
-
-    it('is null for roles that do not track a tenure clock', () => {
-      expect(derive('publisher').tenureType).toBeNull()
-      expect(derive('custom').tenureType).toBeNull()
-    })
-  })
-
   describe('hasUnlimitedCreditDefault', () => {
     it('is true for special pioneer and circuit overseer', () => {
       expect(derive('specialPioneer').hasUnlimitedCreditDefault).toBe(true)

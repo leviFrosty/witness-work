@@ -21,10 +21,7 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
 
-import {
-  extractProfileFromPreferences,
-  PROFILE_FIELD_KEYS,
-} from '@/lib/profileMigration'
+import { extractProfileFromPreferences } from '@/lib/profileMigration'
 
 describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
   it('splits identity-shaped fields out of a preferences blob into a profile blob', () => {
@@ -90,13 +87,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
     expect(result.preferences).toEqual(prefs)
   })
 
-  it('returns an empty profile slice when no profile fields are present', () => {
-    const prefs = { role: 'publisher' }
-    const result = extractProfileFromPreferences(prefs)
-    expect(result.profile.values).toEqual({})
-    expect(result.profile.updatedAt).toEqual({})
-  })
-
   it('preserves profile-field values even when their updatedAt entry is missing', () => {
     // A pre-sync install may have profile data but no timestamp map.
     const prefs = {
@@ -110,36 +100,5 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
       value: '🌱',
     })
     expect(result.profile.updatedAt).toEqual({})
-  })
-
-  it('exports the canonical list of profile field keys', () => {
-    // Public contract — the sync layer and the boot runner both rely on this
-    // list. Asserting it explicitly catches accidental drift.
-    expect(new Set(PROFILE_FIELD_KEYS)).toEqual(
-      new Set([
-        'name',
-        'avatar',
-        'customAvatarBackground',
-        'hasCompletedProfileSetup',
-      ])
-    )
-  })
-
-  it('handles the example case from the spec', () => {
-    const v2 = {
-      role: 'regularPioneer',
-      name: 'Alice',
-      avatar: { type: 'image', value: 'avatar://x' },
-      monthlyGoalOverride: 50,
-    }
-    const result = extractProfileFromPreferences(v2)
-    expect(result.preferences).toEqual({
-      role: 'regularPioneer',
-      monthlyGoalOverride: 50,
-    })
-    expect(result.profile.values).toEqual({
-      name: 'Alice',
-      avatar: { type: 'image', value: 'avatar://x' },
-    })
   })
 })

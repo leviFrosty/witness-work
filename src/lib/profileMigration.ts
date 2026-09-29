@@ -32,14 +32,12 @@
  *   Profile because it gates whether Profile data has been collected, not
  *   whether the app behaves a certain way.
  */
-export const PROFILE_FIELD_KEYS = [
+const PROFILE_FIELD_KEYS = [
   'name',
   'avatar',
   'customAvatarBackground',
   'hasCompletedProfileSetup',
 ] as const
-
-export type ProfileFieldKey = (typeof PROFILE_FIELD_KEYS)[number]
 
 const PROFILE_KEY_SET: ReadonlySet<string> = new Set(PROFILE_FIELD_KEYS)
 

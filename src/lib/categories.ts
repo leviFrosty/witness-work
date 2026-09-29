@@ -365,33 +365,6 @@ export function migrateLdcToCategory(
   }
 }
 
-/**
- * Helper used by readers that need the Category for a TimeEntry. Returns the
- * Category record when `categoryId` resolves; otherwise falls back to a
- * synthetic record built from the legacy `tag` + `credit` fields (for entries
- * that pre-date the migration and haven't been rewritten yet).
- *
- * Returns `null` when the entry has neither a categoryId nor a legacy tag —
- * i.e. it's a standard / LDC entry that doesn't belong to a user Category.
- */
-export function resolveCategoryForReport(
-  report: TimeEntry,
-  categories: Category[]
-): Category | null {
-  if (report.categoryId) {
-    const found = categories.find((c) => c.id === report.categoryId)
-    if (found) return found
-  }
-  if (report.tag) {
-    return {
-      id: report.categoryId ?? `__legacy:${report.tag}`,
-      name: report.tag,
-      isCredit: report.credit === true,
-    }
-  }
-  return null
-}
-
 export type CreditRestampResult = {
   /** False when no entry references the Category — nothing to write back. */
   changed: boolean

@@ -18,16 +18,8 @@ import {
 } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
-import { formatStartTime } from '@/lib/dates'
 import useServiceReport from '@/stores/serviceReport'
 
-// `formatStartTime` now lives in `@/lib/dates`, which imports
-// `expo-localization` (a react-native-backed native module). Stub it so this
-// node test doesn't try to parse react-native's Flow `import typeof` source.
-vi.mock('expo-localization', () => ({
-  getLocales: () => [{ languageTag: 'en-US' }],
-  getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
-}))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
@@ -80,18 +72,6 @@ describe('splitDateAndStartTime / combineDateAndStartTime', () => {
     const combined = combineDateAndStartTime(stored, undefined)
     expect(combined.getHours()).toBe(12)
     expect(combined.getMinutes()).toBe(0)
-  })
-})
-
-describe('formatStartTime', () => {
-  it('produces a non-empty locale-aware string for a valid time', () => {
-    const out = formatStartTime(540) // 9:00 AM
-    expect(typeof out).toBe('string')
-    expect(out.length).toBeGreaterThan(0)
-  })
-
-  it('formats noon when given undefined (default)', () => {
-    expect(formatStartTime(undefined)).toBe(formatStartTime(720))
   })
 })
 

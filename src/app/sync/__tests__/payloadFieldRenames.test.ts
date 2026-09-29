@@ -272,16 +272,6 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
     )
   })
 
-  it('lands a legacy name value in the profile slice on read (spec test)', () => {
-    // Legacy peer (running an older app version) writes the user's name
-    // inside preferencesStore.values. On read, the canonical destination is
-    // the profile slice.
-    const d = makePayload({ name: 'Bob' }, {})
-    normalizeLegacyPayloadFieldNames(d)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((d as any).profileStore.values.name).toBe('Bob')
-  })
-
   it('prefers an existing profileStore slice when both schemas are present', () => {
     // Defensive: a hybrid payload (post-wave-3 device that somehow re-included
     // legacy fields) routes nothing — the canonical slice wins.

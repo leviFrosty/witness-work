@@ -3,7 +3,6 @@ import {
   planImportsToStart,
   countRunning,
   clientImportCap,
-  workingSubLabel,
   prepareNotesImportCommit,
   foldStreamEvent,
   classifyRunOutcome,
@@ -71,13 +70,6 @@ describe('planImportsToStart', () => {
       item({ hash: 'queued', createdAt: 2 }),
     ]
     expect(planImportsToStart(items, 2)).toEqual(['queued'])
-  })
-})
-
-describe('workingSubLabel', () => {
-  it('distinguishes Running from Queued', () => {
-    expect(workingSubLabel(true)).toBe('running')
-    expect(workingSubLabel(false)).toBe('queued')
   })
 })
 

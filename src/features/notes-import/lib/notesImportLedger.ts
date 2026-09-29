@@ -149,10 +149,6 @@ export const ledgerEntryTitle = (entry: NotesImportLedgerEntry): string => {
   return entry.provisionalTitle || summary
 }
 
-/** How many imports are parsed and awaiting review (drives the "ready" badge). */
-export const readyImportCount = (entries: NotesImportLedgerEntry[]): number =>
-  entries.filter((entry) => entry.state === 'ready').length
-
 /**
  * True when a Ready import carries a result the user hasn't opened yet — the
  * unread state that drives the blue dot. A refinement re-parses into a newer
@@ -480,9 +476,6 @@ const parseStoredEntry = (
 
 export const getLedgerEntry = (hash: string): NotesImportLedgerEntry | null =>
   parseStoredEntry(store().getString(key(hash)), Date.now())
-
-export const hasLedgerEntry = (hash: string): boolean =>
-  store().contains(key(hash))
 
 /**
  * Every import in the ledger, newest first (by creation). The history list

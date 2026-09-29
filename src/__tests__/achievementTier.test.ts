@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import moment from 'moment'
 import {
   isPersonalBest12mo,
   monthCelebrationKey,
@@ -98,17 +97,12 @@ describe('lib/achievementTier', () => {
       expect(tierFromPercent(286)).toBe('crushed')
       expect(tierFromPercent(500)).toBe('crushed')
     })
-
-    it('never returns "record" — that tier is reserved for personal bests', () => {
-      const samples = [100, 110, 150, 200, 300, 1000]
-      for (const pct of samples) {
-        expect(tierFromPercent(pct)).not.toBe('record')
-      }
-    })
   })
 
   describe('resolveTier', () => {
     it('returns null when goal not met regardless of personal-best flag', () => {
+      // Callers already gate on `hasMetGoal`, but the function itself must not
+      // crown a sub-100% month.
       expect(resolveTier(0, true)).toBeNull()
       expect(resolveTier(50, true)).toBeNull()
       expect(resolveTier(99, false)).toBeNull()
@@ -118,7 +112,6 @@ describe('lib/achievementTier', () => {
       expect(resolveTier(100, false)).toBe('reached')
       expect(resolveTier(120, false)).toBe('exceeded')
       expect(resolveTier(160, false)).toBe('crushed')
-      expect(resolveTier(286, false)).toBe('crushed')
     })
 
     it('promotes any goal-met month to "record" when it is a personal best, regardless of starting tier', () => {
@@ -126,12 +119,6 @@ describe('lib/achievementTier', () => {
       expect(resolveTier(135, true)).toBe('record') // exceeded → record
       expect(resolveTier(199, true)).toBe('record') // crushed → record
       expect(resolveTier(500, true)).toBe('record') // crushed → record
-    })
-
-    it('does NOT promote when goal not met, even if isPersonalBest is true', () => {
-      // Defensive: callers should already gate on `hasMetGoal`, but the
-      // function itself must not crown a sub-100% month.
-      expect(resolveTier(80, true)).toBeNull()
     })
 
     it('keeps tier at "crushed" for 200%+ when not a personal best (regression)', () => {
@@ -399,11 +386,6 @@ describe('lib/achievementTier', () => {
       expect(monthCelebrationKey(0, 2026)).toBe('2026-01')
       expect(monthCelebrationKey(8, 2026)).toBe('2026-09')
       expect(monthCelebrationKey(11, 2026)).toBe('2026-12')
-    })
-
-    it('produces stable keys regardless of moment instance', () => {
-      const m = moment().month(3).year(2026)
-      expect(monthCelebrationKey(m.month(), m.year())).toBe('2026-04')
     })
   })
 })

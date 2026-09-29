@@ -1120,7 +1120,7 @@ export default function ToolsScreen() {
 
             <ToolSubheading
               title='Home nudge'
-              info='Force-show bypasses tenure, engagement, and cooldown gates so you can see the Home card immediately. Still respects !isSupporter.'
+              info='Force-show bypasses tenure, engagement, and cooldown gates so you can see the tray item immediately. Still respects !isSupporter.'
             />
             <ToolList>
               <ToolRow

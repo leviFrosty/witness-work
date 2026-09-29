@@ -11,8 +11,7 @@ const WhatsNewScreen = () => {
     () => unreadReleaseNotes?.since ?? lastAppVersion ?? '1.0.0'
   )
 
-  // Opening What's New counts as reading the notes: clears the Home card and
-  // the Settings row dot.
+  // Opening What's New counts as reading the notes: clears the tray item.
   useEffect(() => {
     set({ unreadReleaseNotes: null })
   }, [set])

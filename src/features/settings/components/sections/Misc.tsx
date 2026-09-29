@@ -9,21 +9,16 @@ import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { usePreferences } from '@/stores/preferences'
 import IconButton from '@/components/ui/IconButton'
 import links from '@/constants/links'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { openURL } from '@/lib/links'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
-import useTheme from '@/contexts/theme'
 
 const MiscSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
-  const theme = useTheme()
-  const { unreadReleaseNotes } = usePreferences()
-
   return (
     <View style={{ gap: 3 }}>
       <SectionTitle alignWithIcons text={i18n.t('misc')} />
@@ -35,20 +30,7 @@ const MiscSection = ({
           onPress={() => handleNavigate('Whats New')}
           selected={selectedDestination === 'Whats New'}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {unreadReleaseNotes && (
-              <View
-                accessibilityLabel={i18n.t('new')}
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: theme.colors.accent,
-                }}
-              />
-            )}
-            <IconButton icon={ChevronRightIcon} />
-          </View>
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
           leftIcon={CodeIcon}

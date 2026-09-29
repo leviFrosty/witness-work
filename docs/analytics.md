@@ -129,20 +129,22 @@ including resumptions; these are attempts, not unique imported documents.
 
 | Journey                      | Events                                                                                                                                   |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Home reminder                | `backup_reminder_viewed`, `backup_reminder_clicked`, `backup_reminder_dismissed`                                                         |
+| Tray reminder                | `backup_reminder_viewed`, `backup_reminder_clicked`, `backup_reminder_dismissed`                                                         |
 | Reminder preferences         | `backup_reminders_enabled_changed`, `backup_reminder_frequency_changed`                                                                  |
 | JSON export                  | `backup_export_started` → `backup_file_created` → `backup_share_sheet_requested` → `backup_exported`; `backup_export_failed` on failure  |
 | JSON restore                 | `import_started` → `import_file_selected` → `import_commit_started` → `backup_imported`; `import_cancelled` or `import_failed` otherwise |
 | iCloud restore               | Existing `icloud_restore_probe_result`, `import_started`, `import_completed`, `import_failed`, and `onboarding_import_skipped`           |
 | iCloud photo restore consent | `icloud_restore_images_prompted`, `icloud_restore_images_requested`, `icloud_restore_images_skipped`                                     |
 
-Reminder events include `source: home`, `variant: full | compact`, and
-`frequency_days`. A view means the reminder rendered on the focused Home screen,
-once per mounted reminder/focus visit; it does not verify scroll visibility or
-represent a delivered push notification. Dismissal snoozes the existing reminder
-by updating `lastBackupDate`; it never emits a backup completion event. Therefore
-that preference is not proof of a saved backup. Preference events only fire for
-changed values from the controls, not hydration or restored preferences.
+The reminder lives in the notifications tray. Its events include `source`
+(`notifications_tray`; `home` before the tray), `variant` (`compact` while iCloud
+Sync is on, otherwise `full`), and `frequency_days`. A view means the tray was
+opened with the reminder listed; it does not represent a delivered push
+notification. Dismissal snoozes the reminder for another period through
+`backupReminderSnoozedAt`, leaving `lastBackupDate` untouched, so that preference
+now only moves on an export (it still isn't proof of a saved backup). Preference
+events only fire for changed values from the controls, not hydration or restored
+preferences.
 
 JSON export and restore events retain `source: settings` and add
 `entry_point: settings | backup_reminder` to connect reminder clicks to subsequent
@@ -175,13 +177,13 @@ backup/restore journeys.
 
 Use `paywall_opened` for entry intent and `paywall_viewed` for the rendered screen.
 Break down by `source`, and `feature` for feature gates. Sources distinguish the
-heart entry, settings, home nudge, onboarding, Notes Import limit, and feature gates.
-Nudge and feature-gate view/click/dismiss events measure the earlier funnel.
-`supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for the
-Home Screen switch, `home_nudge` for the card's "Don't Show Again") records
-turning the nudge off for good.
-Nudge impressions mean a card rendered on the focused Home screen, not verified
-intersection with the visible scroll viewport.
+heart entry, settings, the nudge (`notifications_tray`; `home_nudge` before the
+tray), onboarding, Notes Import limit, and feature gates. Nudge and feature-gate
+view/click/dismiss events measure the earlier funnel. Nudge events carry `source:
+notifications_tray`; an impression means the tray was opened with the nudge
+listed. `supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for
+the Home Screen switch; `home_nudge` for the former Home card's "Don't Show
+Again") records turning the nudge off for good.
 
 Selection events cover tier, billing, price, and expanded options. Purchase events
 cover start, completion, cancellation, and failure. Use `tier` to distinguish a
@@ -193,15 +195,39 @@ Purchase completion is a client StoreKit result, not a renewal/refund/revenue
 ledger. External billing lifecycle analysis still requires server-side billing
 integration. Closing the app is not a navigation close event.
 
+## Notifications tray
+
+The Home header bell lists time- and event-based notices: last month's Service
+Report, the auxiliary pioneering question, the backup reminder, missed
+Follow-ups, Buddies activity, ready Notes Imports, What's New, the Milestone
+Update replay, and the Supporter nudge or feedback invitation.
+
+| Event                        | Properties                                                          |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `notifications_tray_opened`  | `item_count`, `unread_count` (as it opened)                         |
+| `notification_action_tapped` | `kind`, `action` (e.g. `submit`, `already_submitted`, `reschedule`) |
+| `notification_dismissed`     | `kind`                                                              |
+| `notifications_cleared`      | `count` (items cleared; ones waiting on an answer are kept)         |
+
+`kind` is one of `previous_report`, `auxiliary_month`, `backup`,
+`missed_follow_up`, `buddies`, `notes_import`, `whats_new`, `milestone_update`,
+`supporter_nudge`, or `supporter_survey`. Items never send their text, names, or
+ids. Tapping a row counts as its first action. An item that disappears because
+its condition cleared (report submitted, Follow-up rescheduled) sends nothing;
+compare `notifications_tray_opened` to `notification_action_tapped` for
+engagement. Existing item events (`backup_reminder_*`, `supporter_nudge_*`,
+`auxiliary_month_sheet_viewed`) still fire alongside, with a tray `source`.
+
 ## Feature usage
 
 Instrumented actions include:
 
 - Contact create/update and Visit create/update/delete paths, Custom Fields, Follow-ups, and
   safe flags such as Not at Home, Bible Study, and reminders.
-- Closing a Home Follow-up card: `follow_up_card_dismissed` with `card`
-  (`missed` or `approaching`) and `count` (Follow-ups on it). The card stays
-  closed until a new or rescheduled Follow-up joins it.
+- Closing the Home Follow-up card: `follow_up_card_dismissed` with `card`
+  (`approaching`; `missed` before missed Follow-ups moved to the notifications
+  tray) and `count` (Follow-ups on it). The card stays closed until a new or
+  rescheduled Follow-up joins it.
 - Time Entries, checkbox participation (including the widget deep link), timer
   actions, Time Rollover requests/dismissal/undo, and Service Report export actions.
 - Day and Recurring Plans, including edit/delete scope, and Assistant preview,
@@ -261,11 +287,13 @@ nothing and leaves the role unchanged. Onboarding role selection is covered by t
 onboarding events instead.
 
 A Kingdom Publisher (checkbox-mode standing role) can auxiliary pioneer for one
-month from the Home Service Report card or Settings without enabling Hours
-Logging. `auxiliary_month_sheet_viewed` records opening that sheet, with `source`
-(`home`, `settings`) and `state` (`none`, `this_month`, `next_month` — which month
-was already auxiliary). Saving sends `role_period_set` with `source`
-`home_auxiliary` or `settings_auxiliary`, `scope: single_month`, `role`
+month from the notifications tray (once a month, while neither this month nor
+next is auxiliary), the Home Service Report card (while one is), or Settings,
+without enabling Hours Logging. `auxiliary_month_sheet_viewed` records opening
+that sheet, with `source` (`notifications_tray`, `home`, `settings`) and `state`
+(`none`, `this_month`, `next_month` — which month was already auxiliary). Saving
+sends `role_period_set` with `source` `notifications_tray_auxiliary`,
+`home_auxiliary`, or `settings_auxiliary`, `scope: single_month`, `role`
 (`regularAuxiliary`, `regularAuxiliaryReduced`, or the standing role when ending
 it), and `month_offset` (0 = this month, 1 = next month). A view with no
 following `role_period_set` is an abandoned sheet.
@@ -390,13 +418,14 @@ autocapture or session replay.
 
 ### Supporter invitations
 
-The Home feedback invitation uses the same PostHog client and anonymous device
-identity as ordinary analytics. Survey responses are an explicit exception to the
-structural-event contract: text deliberately submitted in the SDK survey is sent
-as `survey sent` with PostHog's question IDs and response properties. Do not attach
-Contacts, Notes, ministry records, or other app text. Dismissing the card or modal
-sends `survey dismissed` without partial response text. No session replay or touch
-capture is enabled by this integration.
+The feedback invitation in the notifications tray uses the same PostHog client
+and anonymous device identity as ordinary analytics. Survey responses are an
+explicit exception to the structural-event contract: text deliberately submitted
+in the SDK survey is sent as `survey sent` with PostHog's question IDs and response
+properties. Do not attach Contacts, Notes, ministry records, or other app text.
+Dismissing the tray item (or clearing the tray) or the modal sends `survey
+dismissed` without partial response text. No session replay or touch capture is
+enabled by this integration.
 
 PostHog manages the two API campaigns, their questions, translations, availability,
 and targeting. RevenueCat-based local eligibility distinguishes current paid

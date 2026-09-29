@@ -2,7 +2,7 @@ import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 
 /**
- * Tenure, engagement, and cooldown thresholds for the Home supporter-nudge
+ * Tenure, engagement, and cooldown thresholds for the tray supporter-nudge
  * card. Exported so dev tools and tests can reference the same numbers. See
  * `docs/supporter-nudge-plan.md` for rationale.
  */
@@ -31,7 +31,7 @@ export type SupporterNudgeEligibilityInput = {
   /**
    * Epoch ms when the user first launched a build that has the nudge feature.
    * `null` means the stamp hasn't run yet — predicate returns false until the
-   * caller stamps it. See `HomeScreen` for the stamping site.
+   * caller stamps it. See `useSupporterNotifications` for the stamping site.
    */
   supporterNudgeAvailableSince: number | null
   serviceReports: TimeEntriesByYear
@@ -100,7 +100,7 @@ const meetsEngagementFloor = (
 }
 
 /**
- * Pure predicate: should the Home supporter-nudge card render right now?
+ * Pure predicate: should the supporter nudge be in the notifications tray now?
  *
  * Gates, all of which must pass:
  *
@@ -160,7 +160,7 @@ export const isSupporterNudgeEligible = (
     if (!cooldownOver) return false
   }
 
-  // Stamp hasn't run yet on this device — wait for HomeScreen to set it on
+  // Stamp hasn't run yet on this device — wait for the tray hook to set it on
   // next render rather than firing the card mid-stamp.
   if (supporterNudgeAvailableSince === null) return false
   const introGraceOver = moment(supporterNudgeAvailableSince)

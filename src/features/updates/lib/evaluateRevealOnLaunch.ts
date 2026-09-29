@@ -2,9 +2,9 @@ import semver from 'semver'
 
 /**
  * Pure decision function that decides, on app launch, whether to fire The
- * Milestone Update grand-reveal overlay, the `WhatsNewSheet`, the passive Home
- * `WhatsNewCard`, neither (but still stamp `lastAppVersion`), or do nothing at
- * all.
+ * Milestone Update grand-reveal overlay, the `WhatsNewSheet`, the passive
+ * notifications tray item, neither (but still stamp `lastAppVersion`), or do
+ * nothing at all.
  *
  * Extracted from `HomeTabStack` so the gate is unit-testable and so the rules
  * for crossing a Reveal-update version live in one place. See
@@ -17,7 +17,7 @@ import semver from 'semver'
  *   `lastAppVersion` to `currentVersion`.
  * - `'whats-new'` — show the `WhatsNewSheet` AND stamp. Reserved for releases
  *   announced as `'sheet'`.
- * - `'whats-new-card'` — mark the release notes unread (Home card + Settings dot)
+ * - `'whats-new-card'` — mark the release notes unread (notifications tray item)
  *   AND stamp. The default for releases with notes.
  * - `'stamp-only'` — only stamp; suppress every intro for this transition. Used
  *   when the user is in the Reveal update's audience but has already engaged
@@ -35,8 +35,8 @@ export type RevealAction =
  * How loudly a release is announced on first launch after updating.
  *
  * - `'silent'` — no launch UI; the notes only live in Settings → What's New.
- * - `'passive'` — a dismissible Home card and a dot on the Settings row. Never
- *   blocks the user's quick "open app, add time" flow.
+ * - `'passive'` — a dismissible item in the notifications tray. Never blocks the
+ *   user's quick "open app, add time" flow.
  * - `'sheet'` — the `WhatsNewSheet` over the app. Keep for genuinely big
  *   releases.
  */

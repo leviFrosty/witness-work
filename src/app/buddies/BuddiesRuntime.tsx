@@ -19,7 +19,7 @@ import {
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { Buddy, incomingShareKey } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-import { requestNotificationsPopover } from '@/features/buddies/stores/notificationsPopover'
+import { requestNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
 
 const SYNC_INTERVAL_MS = 10 * 60 * 1000
@@ -202,7 +202,7 @@ export default function BuddiesRuntime() {
           navigationRef.navigate('Root', { screen: 'Buddies' } as never)
         else {
           navigationRef.navigate('Root', { screen: 'Home' } as never)
-          requestNotificationsPopover()
+          requestNotificationsTray()
         }
       }
     )

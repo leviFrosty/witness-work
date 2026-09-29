@@ -61,7 +61,7 @@ const HomeTabStack = () => {
 
   // Decide between the grand-reveal overlay (one-time, returning users coming
   // up to MILESTONE_UPDATE_VERSION), the WhatsNewSheet (releases announced as
-  // 'sheet') and the passive Home card (every other transition with notes).
+  // 'sheet') and the passive tray item (every other transition with notes).
   useEffect(() => {
     const currentVersion = Constants.expoConfig?.version
     if (!currentVersion || !lastAppVersion) return

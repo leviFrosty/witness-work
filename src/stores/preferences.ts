@@ -327,11 +327,10 @@ export const PREFERENCE_DEFAULTS = {
   lastAppVersion: Constants.expoConfig?.version || null,
   /**
    * Set when a passively announced release lands, cleared once the user opens
-   * What's New. Drives the Home "Updated" card and the dot on the Settings
-   * What's New row. `since` is the version the user last saw notes for (so
-   * several unread updates stack), `at` is epoch ms of the latest update, and
-   * `cardDismissed` hides only the Home card. Per-device, like
-   * `lastAppVersion`.
+   * What's New. Drives the notifications tray's "Updated" item. `since` is the
+   * version the user last saw notes for (so several unread updates stack), `at`
+   * is epoch ms of the latest update, and `cardDismissed` means the tray item
+   * was dismissed. Per-device, like `lastAppVersion`.
    */
   unreadReleaseNotes: null as UnreadReleaseNotes | null,
   returnVisitTimeOffset: null as TimeOffset | null,
@@ -367,10 +366,10 @@ export const PREFERENCE_DEFAULTS = {
   hideSupporterNudge: false,
   /**
    * Epoch ms when the user first launched a build that has the nudge feature.
-   * Stamped lazily by `HomeScreen` when null. Drives the `introGraceDays` gate
-   * in `isSupporterNudgeEligible` so long-tenure users updating to the
-   * nudge-introducing build aren't asked the moment they open it. Syncable so
-   * the grace period persists across devices.
+   * Stamped lazily by the supporter notification hook when null. Drives the
+   * `introGraceDays` gate in `isSupporterNudgeEligible` so long-tenure users
+   * updating to the nudge-introducing build aren't asked the moment they open
+   * it. Syncable so the grace period persists across devices.
    */
   supporterNudgeAvailableSince: null as number | null,
   /**
@@ -381,6 +380,12 @@ export const PREFERENCE_DEFAULTS = {
   devSupporterNudgeForceShow: false,
   ...hints,
   lastBackupDate: null as Date | null,
+  /**
+   * Epoch ms the backup reminder was last dismissed from the notifications
+   * tray. Snoozes it for another `backupNotificationFrequencyAsDays` without
+   * pretending a backup was made. Per-device, like `lastBackupDate`.
+   */
+  backupReminderSnoozedAt: null as number | null,
   /**
    * Whether anonymous usage events may leave this device. Default on; the user
    * can turn it off in Settings. Only usage analytics are affected: crash
@@ -896,10 +901,11 @@ export const PREFERENCE_DEFAULTS = {
    */
   hasDismissedRecommendationHash: undefined as string | undefined,
   /**
-   * Follow-ups showing on each Home follow-up card (Missed / Approaching) when
-   * the user closed it, as `followUpCardKey`s. The card stays hidden while it
-   * would only show those follow-ups, and returns once a new or rescheduled one
-   * enters it. Syncable — dismissal is user intent.
+   * Follow-ups showing on the Home follow-up card (`approaching`; `missed` was
+   * the former Missed card, now in the notifications tray) when the user closed
+   * it, as `followUpCardKey`s. The card stays hidden while it would only show
+   * those follow-ups, and returns once a new or rescheduled one enters it.
+   * Syncable — dismissal is user intent.
    */
   dismissedFollowUpCards: {} as Partial<
     Record<'missed' | 'approaching', string[]>
@@ -954,6 +960,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'calledGoecodeApiTimes',
   'lastTimeRequestedAReview',
   'lastBackupDate',
+  'backupReminderSnoozedAt',
   'analyticsEnabled',
   'onboardingStepId',
   'celebratedTiers',

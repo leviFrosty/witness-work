@@ -1193,6 +1193,9 @@
   "notifications_unreadCount": "{{count}} unread",
   "notifications_unreadCount_plural": "{{count}} unread",
   "notifications_clearAll": "Clear All",
+  "notifications_alreadySubmitted": "Already Submitted",
+  "notifications_review": "Review",
+  "notifications_missedFollowUp": "Missed conversation with {{name}}",
   "buddies_notifPaired": "You and {{name}} are buddies now",
   "buddies_notifPlanInvite": "{{name}} invited you to a Plan",
   "buddies_notifFollowUpInvite": "{{name}} invited you to a Follow-up",
@@ -2580,7 +2583,9 @@
     "description": "For the month you choose, you'll log hours and see your progress toward the goal. The next month goes back to your usual status.",
     "goalHours": "{{count}} hours",
     "start": "Start auxiliary pioneering in {{month}}",
-    "end": "Not auxiliary pioneering in {{month}}"
+    "end": "Not auxiliary pioneering in {{month}}",
+    "setUp": "Set Up",
+    "notificationDescription": "Choose a month and an hour goal, and we'll track your progress."
   },
   "roleStart": {
     "title": "When did you start as {{role}}?",

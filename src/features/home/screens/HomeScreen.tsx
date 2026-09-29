@@ -2,12 +2,8 @@ import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useConversations from '@/stores/conversationStore'
-import {
-  overdueFollowUpConversations,
-  upcomingFollowUpConversations,
-} from '@/lib/conversations'
+import { upcomingFollowUpConversations } from '@/lib/conversations'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
-import MissedConversations from '@/features/visits/components/MissedConversations'
 import { isFollowUpCardDismissed } from '@/features/visits/lib/followUpCards'
 import useContacts from '@/stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
@@ -36,17 +32,13 @@ import {
   HomeScreenElementKey,
   usePreferences,
 } from '@/stores/preferences'
-import BackupReminder from '@/features/settings/components/BackupReminder'
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
-import SupporterFeedback from '@/features/supporter/components/SupporterFeedback'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
-import WhatsNewCard from '@/features/updates/components/WhatsNewCard'
-import useIsSupporter from '@/hooks/useIsSupporter'
+import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
-import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import type { TimeEntry } from '@/types/timeEntry'
@@ -55,33 +47,7 @@ export const HomeScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
-  const {
-    backupNotificationFrequencyAsDays,
-    homeChecklistDismissed,
-    remindMeAboutBackups,
-    lastBackupDate,
-    installedOn,
-    iCloudSyncEnabled,
-    lastiCloudPushedAt,
-    lastiCloudPulledAt,
-    hideDonateHeart,
-    hideSupporterNudge,
-    supporterNudgeDismissedAt,
-    supporterNudgeAvailableSince,
-    devSupporterNudgeForceShow,
-    set,
-  } = usePreferences()
-
-  // First time this build runs on the device, stamp the intro grace start.
-  // The nudge predicate waits `introGraceDays` after this so existing
-  // long-tenure users updating to the nudge-introducing build aren't asked
-  // while WhatsNew and other update surfaces are still landing.
-  useEffect(() => {
-    if (supporterNudgeAvailableSince === null) {
-      set({ supporterNudgeAvailableSince: Date.now() })
-    }
-  }, [supporterNudgeAvailableSince, set])
-  const { isSupporter } = useIsSupporter()
+  const { homeChecklistDismissed, iCloudSyncEnabled } = usePreferences()
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
@@ -223,96 +189,6 @@ export const HomeScreen = () => {
     return approachingConversations.filter((c) => activeIds.has(c.contact.id))
   }, [contacts, approachingConversations])
 
-  // Overdue follow-ups — mirrors the widget's 30-day lookback so a user
-  // tapping a missed appointment from the widget can also find it listed in
-  // the app.
-  const overdueConvosWithActiveContacts = useMemo(() => {
-    const overdue = overdueFollowUpConversations({
-      currentTime: new Date(),
-      conversations,
-      lookbackDays: 30,
-    })
-    const activeIds = new Set(contacts.map((c) => c.id))
-    return overdue.filter((c) => activeIds.has(c.contact.id))
-  }, [contacts, conversations])
-
-  const showSupporterNudge = useMemo(
-    () =>
-      isSupporterNudgeEligible({
-        isSupporter,
-        hideDonateHeart,
-        hideSupporterNudge,
-        installedOn,
-        supporterNudgeDismissedAt,
-        supporterNudgeAvailableSince,
-        serviceReports,
-        contactsCount: contacts.length,
-        conversationsCount: conversations.length,
-        devForceShow: devSupporterNudgeForceShow,
-        isDev: __DEV__,
-      }),
-    [
-      isSupporter,
-      hideDonateHeart,
-      hideSupporterNudge,
-      installedOn,
-      supporterNudgeDismissedAt,
-      supporterNudgeAvailableSince,
-      serviceReports,
-      contacts.length,
-      conversations.length,
-      devSupporterNudgeForceShow,
-    ]
-  )
-
-  const shouldRemindToBackup = useMemo(() => {
-    if (!remindMeAboutBackups) return false
-
-    // If iCloud sync is on and has successfully pushed or pulled within the
-    // backup-freshness window, the user's data is already off-device. Skip
-    // the local-export nag. If sync has been silent longer than the window
-    // (broken, signed out), fall through and nag as usual.
-    const mostRecentiCloudSyncAt = Math.max(
-      lastiCloudPushedAt ?? 0,
-      lastiCloudPulledAt ?? 0
-    )
-    if (
-      iCloudSyncEnabled &&
-      mostRecentiCloudSyncAt > 0 &&
-      moment(mostRecentiCloudSyncAt)
-        .add(backupNotificationFrequencyAsDays, 'days')
-        .isAfter(moment())
-    ) {
-      return false
-    }
-
-    const installedMoreThanNotificationFrequencyAgo = moment(installedOn)
-      .add(backupNotificationFrequencyAsDays, 'days')
-      .isBefore(moment())
-
-    if (lastBackupDate === null && installedMoreThanNotificationFrequencyAgo) {
-      return true
-    }
-
-    if (
-      moment(lastBackupDate)
-        .add(backupNotificationFrequencyAsDays, 'days')
-        .isBefore(moment())
-    ) {
-      return true
-    }
-
-    return false
-  }, [
-    backupNotificationFrequencyAsDays,
-    installedOn,
-    lastBackupDate,
-    remindMeAboutBackups,
-    iCloudSyncEnabled,
-    lastiCloudPushedAt,
-    lastiCloudPulledAt,
-  ])
-
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
@@ -351,38 +227,26 @@ export const HomeScreen = () => {
               rootNavigation.navigate('PreferencesPublisher')
             }
           />
-          {shouldRemindToBackup && (
-            <BackupReminder compact={iCloudSyncEnabled} />
-          )}
           {!homeChecklistDismissed && <HomeChecklist />}
-          <SupporterFeedback showNudge={showSupporterNudge} />
           {effectiveOrder.map((key: HomeScreenElementKey) => {
             const section = (() => {
               switch (key) {
                 case 'approachingConversations':
+                  // Missed Follow-ups live in the notifications tray.
                   if (
                     !homeScreenElements.approachingConversations ||
-                    ((overdueConvosWithActiveContacts.length === 0 ||
-                      isFollowUpCardDismissed(
-                        overdueConvosWithActiveContacts,
-                        dismissedFollowUpCards?.missed
-                      )) &&
-                      (approachingConvosWithActiveContacts.length === 0 ||
-                        isFollowUpCardDismissed(
-                          approachingConvosWithActiveContacts,
-                          dismissedFollowUpCards?.approaching
-                        )))
+                    approachingConvosWithActiveContacts.length === 0 ||
+                    isFollowUpCardDismissed(
+                      approachingConvosWithActiveContacts,
+                      dismissedFollowUpCards?.approaching
+                    )
                   )
                     return null
                   return (
-                    <View key={key} style={{ gap: 20 }}>
-                      <MissedConversations
-                        conversations={overdueConvosWithActiveContacts}
-                      />
-                      <ApproachingConversations
-                        conversations={approachingConvosWithActiveContacts}
-                      />
-                    </View>
+                    <ApproachingConversations
+                      key={key}
+                      conversations={approachingConvosWithActiveContacts}
+                    />
                   )
                 case 'tabletServiceYearSummary':
                   if (
@@ -464,9 +328,6 @@ export const HomeScreen = () => {
             })()
             return section
           })}
-          {/* Below the day-to-day sections so an update never pushes add-time
-              or the schedule out of reach. */}
-          <WhatsNewCard />
         </AdaptiveColumns>
       </KeyboardAwareScrollView>
       {isTablet && hasAnnualGoal && (
@@ -479,6 +340,7 @@ export const HomeScreen = () => {
         sheet={upgradeReportsSheet}
         setSheet={setUpgradeReportSheet}
       />
+      <NotificationHosts />
       <SelectedDateSheet
         sheet={selectedDateSheet}
         setSheet={setSelectedDateSheet}

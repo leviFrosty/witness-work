@@ -5,6 +5,7 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 export type NotificationKind =
   | 'backup'
   | 'previous_report'
+  | 'rollover'
   | 'missed_follow_up'
   | 'auxiliary_month'
   | 'whats_new'
@@ -12,6 +13,7 @@ export type NotificationKind =
   | 'notes_import'
   | 'supporter_nudge'
   | 'supporter_survey'
+  | 'data_protection_retention'
   | 'buddies'
 
 export type NotificationTone = 'accent' | 'warn' | 'supporter'

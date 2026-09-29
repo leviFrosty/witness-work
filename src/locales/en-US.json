@@ -33,6 +33,7 @@
   "dataProtectionRetentionDesc": "Data protection mode suggests deleting details you no longer need.",
   "dataProtectionRetentionDelete": "Delete {{count}}",
   "dataProtectionRetentionKeep": "Keep",
+  "dataProtectionRetentionDeleteConfirm": "This permanently deletes these contacts and every conversation logged with them. This cannot be undone.",
   "privacyAnalyticsTitle": "Anonymous Usage Statistics",
   "privacyAnalyticsDesc": "Anonymous counts of which features are used help improve the app. They are never tied to you or your records. Turn this off anytime in Settings.",
   "founderNoteTitle": "A note from the developer",

@@ -2,6 +2,8 @@ import React, { type ReactNode } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const platform = vi.hoisted(() => ({ OS: 'ios' }))
+
 vi.mock('lucide-react-native', () => ({
   Ellipsis: 'Ellipsis',
   Share: 'Share',
@@ -25,6 +27,7 @@ vi.mock('react-native', async () => {
     // Stays mounted while `visible` is false, like RN's iOS Modal, which only
     // unmounts after the native dismissal fires `onDismiss`.
     Modal: host('Modal'),
+    Platform: platform,
     Pressable: host('Pressable'),
     ScrollView: host('ScrollView'),
     StatusBar: () => null,
@@ -90,6 +93,43 @@ const pressables = (renderer: ReactTestRenderer) =>
 
 const modal = (renderer: ReactTestRenderer) => renderer.root.findByType(Modal)
 
+const renderMenuAndPickShare = (onShare: () => void) => {
+  let renderer!: ReactTestRenderer
+
+  act(() => {
+    renderer = create(
+      <RowActionsMenu
+        accessibilityLabel='More actions'
+        actions={[
+          { id: 'share', label: 'Share', icon: ShareIcon, onPress: onShare },
+        ]}
+      />,
+      {
+        createNodeMock: () => ({
+          measureInWindow: (
+            cb: (x: number, y: number, w: number, h: number) => void
+          ) => cb(0, 0, 10, 10),
+        }),
+      }
+    )
+  })
+
+  act(() => pressables(renderer)[0].props.onPress())
+  act(() => {
+    vi.runAllTimers()
+  })
+  expect(modal(renderer).props.visible).toBe(true)
+
+  const [, , shareAction] = pressables(renderer)
+  act(() => shareAction.props.onPress())
+  act(() => {
+    vi.runAllTimers()
+  })
+  expect(modal(renderer).props.visible).toBe(false)
+
+  return renderer
+}
+
 describe('RowActionsMenu', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -100,6 +140,7 @@ describe('RowActionsMenu', () => {
   })
 
   afterEach(() => {
+    platform.OS = 'ios'
     vi.unstubAllGlobals()
     vi.useRealTimers()
   })
@@ -109,43 +150,22 @@ describe('RowActionsMenu', () => {
   // dismissal takes the share sheet down with it and strands the Modal.
   it('runs the action only after the popover Modal has fully dismissed', () => {
     const onShare = vi.fn()
-    let renderer!: ReactTestRenderer
-
-    act(() => {
-      renderer = create(
-        <RowActionsMenu
-          accessibilityLabel='More actions'
-          actions={[
-            { id: 'share', label: 'Share', icon: ShareIcon, onPress: onShare },
-          ]}
-        />,
-        {
-          createNodeMock: () => ({
-            measureInWindow: (
-              cb: (x: number, y: number, w: number, h: number) => void
-            ) => cb(0, 0, 10, 10),
-          }),
-        }
-      )
-    })
-
-    act(() => pressables(renderer)[0].props.onPress())
-    act(() => {
-      vi.runAllTimers()
-    })
-    expect(modal(renderer).props.visible).toBe(true)
-
-    const [, , shareAction] = pressables(renderer)
-    act(() => shareAction.props.onPress())
-    act(() => {
-      vi.runAllTimers()
-    })
+    const renderer = renderMenuAndPickShare(onShare)
 
     // The Modal has been told to hide, but native hasn't finished dismissing.
-    expect(modal(renderer).props.visible).toBe(false)
     expect(onShare).not.toHaveBeenCalled()
 
     act(() => modal(renderer).props.onDismiss())
+    expect(onShare).toHaveBeenCalledTimes(1)
+  })
+
+  // RN never fires `onDismiss` on Android; the Modal is gone once it hides.
+  it('runs the action once the popover Modal has hidden on android', () => {
+    platform.OS = 'android'
+    const onShare = vi.fn()
+
+    renderMenuAndPickShare(onShare)
+
     expect(onShare).toHaveBeenCalledTimes(1)
   })
 })

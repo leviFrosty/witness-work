@@ -1,6 +1,5 @@
-import { Trash2 as Trash2Icon } from 'lucide-react-native'
 import { View, Alert, TextInput as RNTextInput } from 'react-native'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import useTheme from '@/contexts/theme'
@@ -33,7 +32,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
-import IconButton from '@/components/ui/IconButton'
+import Button from '@/components/ui/Button'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -78,11 +77,19 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ? getReport(serviceReports, JSON.parse(route.params.existingReport))
     : undefined
 
+  // A new entry seeded with a Type (e.g. logging a Plan as time) — only when
+  // that Category still exists.
+  const prefillCategory =
+    !existingServiceReport && route.params?.categoryId
+      ? categories.find((c) => c.id === route.params?.categoryId)
+      : undefined
+
   // Initial picker value: the referenced Category id (post-migration), else
   // fall back to legacy `tag` string for unmigrated entries, else Standard.
   // LDC is no longer special-cased — entries that point at the LDC builtin
   // Category id pick it up here like any other Category.
   const initialPickerValue: string = (() => {
+    if (prefillCategory) return prefillCategory.id
     if (existingServiceReport?.report.categoryId) {
       return existingServiceReport.report.categoryId
     }
@@ -107,8 +114,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     date: existingServiceReport
       ? storedDateToLocalDate(existingServiceReport.report.date)
       : moment(route.params?.date).toDate(),
-    credit: existingServiceReport?.report.credit ?? false,
-    categoryId: existingServiceReport?.report.categoryId,
+    credit:
+      existingServiceReport?.report.credit ??
+      prefillCategory?.isCredit ??
+      false,
+    categoryId: existingServiceReport?.report.categoryId ?? prefillCategory?.id,
     note: existingServiceReport?.report.note ?? '',
   })
   const toast = useToastController()
@@ -264,7 +274,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     navigation.goBack()
   }
 
-  const handleRequestDelete = useCallback(() => {
+  const handleRequestDelete = () => {
     Alert.alert(i18n.t('deleteTime_title'), i18n.t('deleteTime_description'), [
       {
         text: i18n.t('cancel'),
@@ -284,7 +294,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         },
       },
     ])
-  }, [deleteServiceReport, navigation, serviceReport, toast])
+  }
 
   useEffect(() => {
     navigation.setOptions({
@@ -292,35 +302,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         <Header
           buttonType='back'
           title={i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
-          rightElement={
-            existingServiceReport ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 20,
-                  position: 'absolute',
-                  right: 10,
-                }}
-              >
-                <IconButton
-                  icon={Trash2Icon}
-                  color={theme.colors.text}
-                  onPress={handleRequestDelete}
-                />
-              </View>
-            ) : undefined
-          }
         />
       ),
     })
-  }, [
-    existingServiceReport,
-    handleRequestDelete,
-    navigation,
-    theme.colors.text,
-    theme.colors.textInverse,
-  ])
+  }, [existingServiceReport, navigation])
 
   const hasEnteredTime =
     serviceReport.hours !== 0 || serviceReport.minutes !== 0
@@ -471,6 +456,28 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           >
             {i18n.t(existingServiceReport ? 'save' : 'submit')}
           </ActionButton>
+          {existingServiceReport && (
+            <Button
+              noTransform
+              onPress={handleRequestDelete}
+              accessibilityRole='button'
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.error,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('md'),
+                }}
+              >
+                {i18n.t('deleteEllipsis')}
+              </Text>
+            </Button>
+          )}
         </View>
       </KeyboardAwareScrollView>
     </Wrapper>

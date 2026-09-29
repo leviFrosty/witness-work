@@ -40,9 +40,6 @@ import { Carousel, type CarouselRef } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
-import ShareAddressSheet, {
-  MapShareSheet,
-} from '@/features/map/components/ShareAddressSheet'
 import { usePreferences } from '@/stores/preferences'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -55,6 +52,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import InfoPopover from '@/components/ui/InfoPopover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
@@ -143,11 +141,6 @@ const FullMapView = ({
   const [emptyStateHeight, setEmptyStateHeight] = useState(0)
   const draggingContactRef = useRef(false)
   const [noResultsHeight, setNoResultsHeight] = useState(0)
-  const [sheet, setSheet] = useState<MapShareSheet>({
-    open: false,
-    appleMapsUri: '',
-    googleMapsUri: '',
-  })
   const [search, setSearch] = useState('')
   const [searchExpanded, setSearchExpanded] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
@@ -597,9 +590,6 @@ const FullMapView = ({
   const emptyStateTitle = hasSavedActiveContacts
     ? i18n.t('map_emptyMissingLocationsTitle')
     : i18n.t('map_emptyNoContactsTitle')
-  const emptyStateBody = hasSavedActiveContacts
-    ? i18n.t('map_emptyMissingLocationsBody')
-    : i18n.t('map_emptyNoContactsBody')
   const emptyStatePrimaryLabel = hasSavedActiveContacts
     ? i18n.t('map_reviewContacts')
     : i18n.t('addContact')
@@ -682,15 +672,28 @@ const FullMapView = ({
               />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.text,
-                }}
-              >
-                {emptyStateTitle}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  accessibilityRole='header'
+                  style={{
+                    flexShrink: 1,
+                    fontSize: theme.fontSize('xl'),
+                    fontFamily: theme.fonts.bold,
+                    color: theme.colors.text,
+                  }}
+                >
+                  {emptyStateTitle}
+                </Text>
+                {/* The mapped count already says what's wrong; why and how to
+                  fix it are one tap away instead of a paragraph. */}
+                {hasSavedActiveContacts && (
+                  <InfoPopover
+                    inline
+                    title={emptyStateTitle}
+                    description={i18n.t('map_emptyMissingLocationsBody')}
+                  />
+                )}
+              </View>
               {hasSavedActiveContacts && (
                 <Text
                   style={{
@@ -707,15 +710,17 @@ const FullMapView = ({
             </View>
           </View>
 
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('md'),
-              lineHeight: theme.fontSize('md') * 1.35,
-            }}
-          >
-            {emptyStateBody}
-          </Text>
+          {!hasSavedActiveContacts && (
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('md'),
+                lineHeight: theme.fontSize('md') * 1.35,
+              }}
+            >
+              {i18n.t('map_emptyNoContactsBody')}
+            </Text>
+          )}
 
           <View
             style={{
@@ -1052,7 +1057,6 @@ const FullMapView = ({
                 revealRequest={inspectorRevealRequest}
                 index={conversationIndex}
                 onSelect={handlePinPress}
-                setSheet={setSheet}
               />
             </View>
           ) : (
@@ -1067,11 +1071,7 @@ const FullMapView = ({
               data={visibleContactMarkers}
               keyExtractor={(contact) => contact.id}
               renderItem={({ item }) => (
-                <MapCarouselCard
-                  contact={item}
-                  index={conversationIndex}
-                  setSheet={setSheet}
-                />
+                <MapCarouselCard contact={item} index={conversationIndex} />
               )}
               animation={CAROUSEL_ANIMATION}
               // Only mount the visible card plus a few neighbors on each side —
@@ -1191,10 +1191,6 @@ const FullMapView = ({
           </View>
         </MapImageryContext.Provider>
       </GlassColorSchemeOverrideContext.Provider>
-      {/* The share sheet is app chrome, not a map overlay — keep the app theme. */}
-      <ThemeContext.Provider value={appTheme}>
-        <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
-      </ThemeContext.Provider>
     </ThemeContext.Provider>
   )
 }

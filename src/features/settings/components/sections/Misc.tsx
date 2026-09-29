@@ -54,6 +54,7 @@ const MiscSection = ({
           leftIcon={CodeIcon}
           label={i18n.t('viewSource')}
           onPress={() => openURL(links.githubRepo)}
+          url={links.githubRepo}
         >
           <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
@@ -61,6 +62,7 @@ const MiscSection = ({
           leftIcon={ScrollTextIcon}
           label={i18n.t('privacyPolicy')}
           onPress={() => openURL(links.privacyPolicy)}
+          url={links.privacyPolicy}
         >
           <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
@@ -68,6 +70,7 @@ const MiscSection = ({
           leftIcon={ScrollTextIcon}
           label={i18n.t('termsOfUse')}
           onPress={() => openURL(links.termsOfUse)}
+          url={links.termsOfUse}
           lastInSection
         >
           <IconButton icon={ExternalLinkIcon} />

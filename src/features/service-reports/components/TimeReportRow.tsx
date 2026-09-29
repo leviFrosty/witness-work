@@ -2,8 +2,6 @@ import { analytics } from '@/lib/analytics'
 import {
   ArrowLeftRight as ArrowLeftRightIcon,
   Construction as ConstructionIcon,
-  Pencil as PencilIcon,
-  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
@@ -11,35 +9,47 @@ import Haptics from '@/lib/haptics'
 import { TimeEntry } from '@/types/timeEntry'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import { Alert, View } from 'react-native'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import useServiceReport from '@/stores/serviceReport'
 import Text from '@/components/ui/MyText'
 import { formatDate } from '@/lib/dates'
-import { momentStoredDate } from '@/lib/normalizeDate'
+import { momentStoredDate, storedDateToLocalDate } from '@/lib/normalizeDate'
 import IconButton from '@/components/ui/IconButton'
-import RowActionsMenu, { RowAction } from '@/components/RowActionsMenu'
+import ContextMenu, {
+  type ContextMenuAction,
+  type ContextMenuEntries,
+} from '@/components/ui/ContextMenu'
 import confirmDestructive from '@/lib/confirmDestructive'
-import { useCallback } from 'react'
-import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import { useToastController } from '@tamagui/toast'
+import * as Clipboard from 'expo-clipboard'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
 import { RootStackNavigation } from '@/types/rootStack'
-import { useFormattedMinutes } from '@/lib/minutes'
+import { formatMinutes, useFormattedMinutes } from '@/lib/minutes'
 import { useCardStyle } from '@/components/ui/Card'
 import useCategories from '@/stores/categories'
+import { usePreferences } from '@/stores/preferences'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import type { Category } from '@/types/category'
 
 interface TimeReportRowProps {
   report: TimeEntry
   onPress?: () => void
+  /**
+   * Runs a navigation from the row's menu. Hosts that present the row in a
+   * modal sheet pass one that closes the sheet first.
+   */
+  onNavigate?: (navigate: () => void) => void
 }
 
-const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
+const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const { deleteServiceReport, deleteRolloverPair } = useServiceReport()
+  const { deleteServiceReport, deleteRolloverPair, updateServiceReport } =
+    useServiceReport()
   const { categories } = useCategories()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
   const categoryLabel = getCategoryLabel(report, categories)
@@ -49,13 +59,17 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
   const isRollover = report.rollover === true
   const sign = totalMinutes < 0 ? '−' : '+'
+  const dateLabel = formatDate(momentStoredDate(report.date))
+
+  const go = (navigate: () => void) =>
+    onNavigate ? onNavigate(navigate) : navigate()
 
   /**
-   * The one delete flow for this row — the overflow menu and the right-swipe
+   * The one delete flow for this row — the context menu and the right-swipe
    * both land here, so the rollover-pair warning can't be reachable from only
    * one of them.
    */
-  const handleRequestDelete = useCallback(() => {
+  const handleRequestDelete = () => {
     const isRolloverPair =
       report.rollover === true && report.rolloverGroupId !== undefined
 
@@ -80,21 +94,21 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
         })
       },
     })
-  }, [deleteRolloverPair, deleteServiceReport, report, toast])
+  }
 
-  const handleSwipeOpen = useCallback(
-    (direction: 'left' | 'right', swipeable: Swipeable) => {
-      if (direction !== 'right') return
+  const handleSwipeOpen = (
+    direction: 'left' | 'right',
+    swipeable: Swipeable
+  ) => {
+    if (direction !== 'right') return
 
-      // Snap the row back before the confirmation lands — the alert owns the
-      // interaction from here, whichever way the user answers it.
-      swipeable.reset()
-      handleRequestDelete()
-    },
-    [handleRequestDelete]
-  )
+    // Snap the row back before the confirmation lands — the alert owns the
+    // interaction from here, whichever way the user answers it.
+    swipeable.reset()
+    handleRequestDelete()
+  }
 
-  const handleEdit = useCallback(() => {
+  const handleEdit = () => {
     if (onPress) {
       onPress()
       return
@@ -102,28 +116,126 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
     navigation.navigate('Add Time', {
       existingReport: JSON.stringify(report),
     })
-  }, [navigation, onPress, report])
+  }
 
-  const actions: RowAction[] = [
-    // Rollover entries are paired and must never be edited — see the press
-    // handler below.
-    ...(isRollover
-      ? []
-      : [
-          {
-            id: 'edit-time',
-            label: i18n.t('edit'),
-            icon: PencilIcon,
-            onPress: handleEdit,
-          },
-        ]),
-    {
-      id: 'delete-time',
-      label: i18n.t('delete'),
-      icon: Trash2Icon,
-      destructive: true,
-      onPress: handleRequestDelete,
+  const handlePress = () => {
+    // Rollover entries are paired and must never be edited — would imbalance
+    // the source/destination math. Block here regardless of whether a caller
+    // passed a custom onPress (their intent is also edit-routing).
+    // Centralizing the rule here means new call sites can't accidentally
+    // bypass it.
+    if (isRollover) {
+      Alert.alert(
+        i18n.t('timeRollover_cantEdit_title'),
+        i18n.t('timeRollover_cantEdit_description')
+      )
+      return
+    }
+    handleEdit()
+  }
+
+  const logAgainToday = () =>
+    go(() =>
+      navigation.navigate('Add Time', {
+        date: new Date().toISOString(),
+        hours: report.hours,
+        minutes: report.minutes,
+        categoryId: report.categoryId,
+      })
+    )
+
+  const copy = async () => {
+    const duration = formatMinutes(totalMinutes, timeDisplayFormat).formatted
+    const text = [`${dateLabel} · ${duration}`, report.note]
+      .filter(Boolean)
+      .join('\n')
+    Haptics.success().catch(() => {})
+    await Clipboard.setStringAsync(text)
+    toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+  }
+
+  /** Re-types the entry in place, as the Add Time screen's Type row would. */
+  const changeCategory = (category: Category | null) => {
+    updateServiceReport({
+      ...report,
+      date: storedDateToLocalDate(report.date),
+      categoryId: category?.id,
+      tag: undefined,
+      credit: category?.isCredit ?? false,
+    })
+    analytics.capture('time_entry_updated', {
+      source: 'time_report_row_menu',
+      has_category: !!category,
+      has_note: !!report.note,
+    })
+  }
+
+  // Standard, LDC, then the user's Categories — the Type picker's order —
+  // minus the one the entry already has.
+  const ldc = categories.find((c) => c.id === LDC_BUILTIN_CATEGORY_ID)
+  const categoryChoices: ContextMenuAction[] = [
+    !!report.categoryId && {
+      id: 'standard',
+      title: i18n.t('standard'),
+      onPress: () => changeCategory(null),
     },
+    ldc &&
+      !isLdc && {
+        id: 'ldc',
+        title: i18n.t('ldc'),
+        onPress: () => changeCategory(ldc),
+      },
+    ...categories
+      .filter(
+        (c) => c.id !== LDC_BUILTIN_CATEGORY_ID && c.id !== report.categoryId
+      )
+      .map((c, index) => ({
+        id: `category_${index}`,
+        title: i18n.t(c.name as TranslationKey, { defaultValue: c.name }),
+        onPress: () => changeCategory(c),
+      })),
+  ].filter((choice): choice is ContextMenuAction => !!choice)
+
+  const actions: ContextMenuEntries = [
+    [
+      // Rollover entries are paired and must never be edited — see the press
+      // handler above.
+      !isRollover && {
+        id: 'edit',
+        title: i18n.t('edit'),
+        systemImage: 'pencil',
+        onPress: handleEdit,
+      },
+      !isRollover && {
+        id: 'log_again_today',
+        title: i18n.t('logAgainToday'),
+        systemImage: 'clock.arrow.circlepath',
+        onPress: logAgainToday,
+      },
+      {
+        id: 'copy',
+        title: i18n.t('copy'),
+        systemImage: 'doc.on.doc',
+        onPress: () => void copy(),
+      },
+    ],
+    [
+      !isRollover && {
+        id: 'change_category',
+        title: i18n.t('changeCategory'),
+        systemImage: 'tag',
+        actions: categoryChoices,
+      },
+    ],
+    [
+      {
+        id: 'delete',
+        title: i18n.t('delete'),
+        systemImage: 'trash',
+        destructive: true,
+        onPress: handleRequestDelete,
+      },
+    ],
   ]
 
   return (
@@ -141,144 +253,129 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
         handleSwipeOpen(direction, swipeable)
       }
     >
-      <Button
-        onPress={() => {
-          // Rollover entries are paired and must never be edited — would
-          // imbalance the source/destination math. Block here regardless of
-          // whether a caller passed a custom onPress (their intent is also
-          // edit-routing). Centralizing the rule here means new call sites
-          // can't accidentally bypass it.
-          if (isRollover) {
-            Alert.alert(
-              i18n.t('timeRollover_cantEdit_title'),
-              i18n.t('timeRollover_cantEdit_description')
-            )
-            return
-          }
-          handleEdit()
-        }}
-        style={
-          isRollover
-            ? {
-                backgroundColor: theme.colors.backgroundLighter,
-                paddingVertical: 12,
-                paddingHorizontal: 15,
-                borderRadius: cardStyle.borderRadius,
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: theme.colors.border,
-                gap: 10,
-              }
-            : {
-                ...cardStyle,
-                paddingVertical: 12,
-                paddingHorizontal: 15,
-                gap: 10,
-              }
-        }
+      <ContextMenu
+        analyticsSurface='time_entry_row'
+        actions={actions}
+        onPress={handlePress}
       >
         <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexGrow: 1,
-            gap: 10,
-          }}
+          style={
+            isRollover
+              ? {
+                  backgroundColor: theme.colors.backgroundLighter,
+                  paddingVertical: 12,
+                  paddingHorizontal: 15,
+                  borderRadius: cardStyle.borderRadius,
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: theme.colors.border,
+                  gap: 10,
+                }
+              : {
+                  ...cardStyle,
+                  paddingVertical: 12,
+                  paddingHorizontal: 15,
+                  gap: 10,
+                }
+          }
         >
           <View
             style={{
-              flex: 1,
               flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: 8,
+              flexGrow: 1,
+              gap: 10,
             }}
           >
-            <Text
+            <View
               style={{
-                fontFamily: theme.fonts.semiBold,
-                color: isRollover ? theme.colors.textAlt : theme.colors.text,
-                flexShrink: 1,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
               }}
-              numberOfLines={1}
-              ellipsizeMode='tail'
             >
-              {formatDate(momentStoredDate(report.date))}
-            </Text>
-          </View>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-            }}
-            numberOfLines={1}
-          >
-            {isRollover
-              ? `${sign} ${formattedTime.formatted}`
-              : formattedTime.formatted}
-          </Text>
-          <RowActionsMenu
-            accessibilityLabel={i18n.t('moreActionsFor', {
-              name: formatDate(momentStoredDate(report.date)),
-            })}
-            actions={actions}
-          />
-        </View>
-        {isRollover && (
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 6,
-              alignItems: 'center',
-            }}
-          >
-            <IconButton icon={ArrowLeftRightIcon} />
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  color: isRollover ? theme.colors.textAlt : theme.colors.text,
+                  flexShrink: 1,
+                }}
+                numberOfLines={1}
+                ellipsizeMode='tail'
+              >
+                {dateLabel}
+              </Text>
+            </View>
             <Text
               style={{
                 color: theme.colors.textAlt,
                 fontSize: theme.fontSize('sm'),
               }}
+              numberOfLines={1}
             >
-              {i18n.t('timeRollover_rowLabel')}
+              {isRollover
+                ? `${sign} ${formattedTime.formatted}`
+                : formattedTime.formatted}
             </Text>
           </View>
-        )}
-        {!isRollover && (isLdc || categoryLabel || report.note) && (
-          <View style={{ gap: 5 }}>
-            {(isLdc || categoryLabel) && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  alignItems: 'center',
-                }}
-              >
-                {isLdc && <IconButton icon={ConstructionIcon} />}
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {isLdc ? i18n.t('ldc') : categoryLabel}
-                </Text>
-                {(report.credit || isLdc) && <CreditBadge />}
-              </View>
-            )}
-            {report.note && (
+          {isRollover && (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 6,
+                alignItems: 'center',
+              }}
+            >
+              <IconButton icon={ArrowLeftRightIcon} />
               <Text
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
-                  lineHeight: 18,
                 }}
               >
-                {report.note}
+                {i18n.t('timeRollover_rowLabel')}
               </Text>
-            )}
-          </View>
-        )}
-      </Button>
+            </View>
+          )}
+          {!isRollover && (isLdc || categoryLabel || report.note) && (
+            <View style={{ gap: 5 }}>
+              {(isLdc || categoryLabel) && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 5,
+                    alignItems: 'center',
+                  }}
+                >
+                  {isLdc && <IconButton icon={ConstructionIcon} />}
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('sm'),
+                    }}
+                  >
+                    {isLdc ? i18n.t('ldc') : categoryLabel}
+                  </Text>
+                  {(report.credit || isLdc) && <CreditBadge />}
+                </View>
+              )}
+              {report.note && (
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                    lineHeight: 18,
+                  }}
+                >
+                  {report.note}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      </ContextMenu>
     </Swipeable>
   )
 }

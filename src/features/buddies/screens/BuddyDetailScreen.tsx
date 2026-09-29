@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
-import { Alert, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { CalendarPlus as CalendarPlusIcon } from 'lucide-react-native'
 import moment from 'moment'
 import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Text from '@/components/ui/MyText'
@@ -16,14 +19,18 @@ import { usePreferences } from '@/stores/preferences'
 import { RootStackParamList } from '@/types/rootStack'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
+import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { confirmRemoveBuddy } from '@/features/buddies/lib/buddyConfirmations'
 import { buddyTenureLabel } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy'>
 
-/** One buddy: who they are, their upcoming Plans, and ending the pairing. */
+/**
+ * One buddy: who they are, their upcoming Plans (tap one to plan the same
+ * time), and ending the pairing.
+ */
 export default function BuddyDetailScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
@@ -32,6 +39,7 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
     state.buddies.find((candidate) => candidate.inboxId === inboxId)
   )
   const card = useBuddies((state) => state.cards[inboxId])
+  const planSameTime = usePlanSameTime('buddy_detail')
 
   // Removed here, from the other side, or by delete-all.
   useEffect(() => {
@@ -41,23 +49,6 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
 
   const today = moment().format('YYYY-MM-DD')
   const upcoming = (card?.days ?? []).filter((day) => day.d >= today)
-
-  const confirmRemove = () =>
-    Alert.alert(
-      i18n.t('buddies_removeTitle', { name: buddy.name }),
-      i18n.t('buddies_removeBody', { name: buddy.name }),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('buddies_remove'),
-          style: 'destructive',
-          onPress: () =>
-            buddiesEngine
-              .removeBuddy(buddy.inboxId)
-              .catch((error) => Alert.alert(buddiesErrorMessage(error))),
-        },
-      ]
-    )
 
   const secondary = {
     color: theme.colors.textAlt,
@@ -120,48 +111,81 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
               {i18n.t('buddies_noUpcomingPlans', { name: buddy.name })}
             </Text>
           ) : (
-            upcoming.map((day, index) => (
-              <XView
-                key={day.d}
-                style={{
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  gap: 12,
-                  paddingVertical: 12,
-                  paddingHorizontal: 15,
-                  borderBottomWidth: index === upcoming.length - 1 ? 0 : 1,
-                  borderColor: theme.colors.border,
-                }}
-              >
-                <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                  {moment(day.d, 'YYYY-MM-DD').format('ddd, MMM D')}
-                </Text>
-                <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                  {day.p.map((plan, planIndex) => {
-                    const duration = formatMinutes(
-                      plan.m,
-                      timeDisplayFormat
-                    ).formatted
-                    return (
-                      <Text
-                        key={planIndex}
-                        style={{ color: theme.colors.textAlt }}
-                      >
-                        {plan.s === undefined
+            upcoming.map((day, index) => {
+              const date = moment(day.d, 'YYYY-MM-DD').format('ddd, MMM D')
+              return (
+                <XView
+                  key={day.d}
+                  style={{
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 12,
+                    paddingVertical: 12,
+                    paddingHorizontal: 15,
+                    borderBottomWidth: index === upcoming.length - 1 ? 0 : 1,
+                    borderColor: theme.colors.border,
+                  }}
+                >
+                  <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                    {date}
+                  </Text>
+                  <View
+                    style={{ flexShrink: 1, alignItems: 'flex-end', gap: 2 }}
+                  >
+                    {day.p.map((plan, planIndex) => {
+                      const duration = formatMinutes(
+                        plan.m,
+                        timeDisplayFormat
+                      ).formatted
+                      const label =
+                        plan.s === undefined
                           ? i18n.t('buddies_dayPlanAnyTime', { duration })
                           : i18n.t('buddies_dayPlanAtTime', {
                               time: formatStartTime(plan.s),
                               duration,
-                            })}
-                      </Text>
-                    )
-                  })}
-                </View>
-              </XView>
-            ))
+                            })
+                      const same = () => planSameTime(day.d, plan)
+                      return (
+                        <ContextMenu
+                          key={planIndex}
+                          analyticsSurface='buddy_upcoming_plan'
+                          onPress={same}
+                          accessibilityLabel={i18n.t(
+                            'buddies_planSameTimeA11y',
+                            { name: buddy.name, plan: `${date}, ${label}` }
+                          )}
+                          actions={[
+                            {
+                              id: 'plan_same_time',
+                              title: i18n.t('buddies_planSameTime'),
+                              systemImage: 'calendar.badge.plus',
+                              onPress: same,
+                            },
+                          ]}
+                        >
+                          <XView style={{ gap: 6, paddingVertical: 2 }}>
+                            <Text style={{ color: theme.colors.textAlt }}>
+                              {label}
+                            </Text>
+                            <LucideIcon
+                              icon={CalendarPlusIcon}
+                              size={14}
+                              color={theme.colors.accent}
+                            />
+                          </XView>
+                        </ContextMenu>
+                      )
+                    })}
+                  </View>
+                </XView>
+              )
+            })
           )}
         </BuddiesSection>
-        <Button onPress={confirmRemove} style={{ alignSelf: 'center' }}>
+        <Button
+          onPress={() => confirmRemoveBuddy(buddy)}
+          style={{ alignSelf: 'center' }}
+        >
           <Text style={{ color: theme.colors.error }}>
             {i18n.t('buddies_removeBuddy')}
           </Text>

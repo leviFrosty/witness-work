@@ -7,6 +7,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import XView from '@/components/ui/layout/XView'
+import ContextMenu from '@/components/ui/ContextMenu'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -42,6 +43,20 @@ const SupporterNudgeCard = () => {
     navigation.navigate('Paywall', { source: 'home_nudge' })
   }
 
+  const handleNotNow = () => {
+    analytics.capture('supporter_nudge_dismissed', { source: 'home' })
+    stampDismissal()
+  }
+
+  // Same as the Settings switch (Preferences → Home Screen).
+  const handleDontShowAgain = () => {
+    analytics.capture('supporter_nudge_visibility_changed', {
+      hidden: true,
+      source: 'home_nudge',
+    })
+    set({ hideSupporterNudge: true })
+  }
+
   return (
     <View
       style={{
@@ -53,37 +68,65 @@ const SupporterNudgeCard = () => {
         gap: 12,
       }}
     >
-      <XView style={{ gap: 8 }}>
-        <LucideIcon
-          icon={HeartIcon}
-          size={14}
-          color={theme.colors.supporter}
-          fill={theme.colors.supporter}
-        />
-        <Text
-          style={{
-            fontSize: theme.fontSize('lg'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('supporterNudge_title')}
-        </Text>
-      </XView>
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.textAlt,
-          lineHeight: 20,
-        }}
+      {/* The message is long-pressable; the buttons below stay outside it. */}
+      <ContextMenu
+        analyticsSurface='supporter_nudge'
+        actions={[
+          [
+            {
+              id: 'learn_more',
+              title: i18n.t('learnMore'),
+              systemImage: 'heart',
+              onPress: handleLearnMore,
+            },
+          ],
+          [
+            {
+              id: 'not_now',
+              title: i18n.t('notRightNow'),
+              systemImage: 'clock',
+              onPress: handleNotNow,
+            },
+            {
+              id: 'dont_show_again',
+              title: i18n.t('dontShowAgain'),
+              systemImage: 'eye.slash',
+              onPress: handleDontShowAgain,
+            },
+          ],
+        ]}
       >
-        {i18n.t('supporterNudge_body')}
-      </Text>
+        <View style={{ gap: 12 }}>
+          <XView style={{ gap: 8 }}>
+            <LucideIcon
+              icon={HeartIcon}
+              size={14}
+              color={theme.colors.supporter}
+              fill={theme.colors.supporter}
+            />
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('supporterNudge_title')}
+            </Text>
+          </XView>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              lineHeight: 20,
+            }}
+          >
+            {i18n.t('supporterNudge_body')}
+          </Text>
+        </View>
+      </ContextMenu>
       <XView style={{ gap: 10, justifyContent: 'flex-end' }}>
         <Button
-          onPress={() => {
-            analytics.capture('supporter_nudge_dismissed', { source: 'home' })
-            stampDismissal()
-          }}
+          onPress={handleNotNow}
           style={{
             paddingVertical: 8,
             paddingHorizontal: 14,

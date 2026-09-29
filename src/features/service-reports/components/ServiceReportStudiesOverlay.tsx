@@ -9,73 +9,100 @@ import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { type StyleProp, View, type ViewStyle } from 'react-native'
 
+import ContactPreview from '@/components/ContactPreview'
 import Avatar from '@/components/ui/Avatar'
-import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Pagination from '@/components/ui/Pagination'
 import useTheme from '@/contexts/theme'
 import ServiceReportInsightOverlay from '@/features/service-reports/components/ServiceReportInsightOverlay'
-import { getStudyContactsForGivenMonth } from '@/lib/contacts'
+import {
+  getMostRecentConversationForContact,
+  getStudyContactsForGivenMonth,
+} from '@/lib/contacts'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
+import useContactMenuActions from '@/hooks/useContactMenuActions'
 import useConversations from '@/stores/conversationStore'
 import type { Contact } from '@/types/contact'
+import type { Visit } from '@/types/visit'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 const PAGE_SIZE = 5
 
 const StudyContactRow = ({
   contact,
+  lastVisit,
   last,
   onPress,
+  navigateAfterClose,
 }: {
   contact: Contact
+  lastVisit: Visit | null
   last: boolean
   onPress: () => void
+  /** Closes the overlay, which floats above every screen, then navigates. */
+  navigateAfterClose: (navigate: () => void) => void
 }) => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+  const actions = useContactMenuActions(contact, {
+    onAddVisit: (notAtHome) =>
+      navigateAfterClose(() =>
+        navigation.navigate('Visit Form', { contactId: contact.id, notAtHome })
+      ),
+    onEdit: () =>
+      navigateAfterClose(() =>
+        navigation.navigate('Contact Form', { id: contact.id, edit: true })
+      ),
+  })
 
   return (
-    <Button
-      noTransform
+    <ContextMenu
+      actions={actions}
+      analyticsSurface='studies_contact_row'
       onPress={onPress}
       accessibilityLabel={i18n.t('serviceReportInsights.openContact', {
         name: contact.name,
       })}
-      style={{
-        minHeight: 52,
-        paddingVertical: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        borderBottomWidth: last ? 0 : 1,
-        borderBottomColor: theme.colors.border,
-      }}
+      preview={<ContactPreview contact={contact} lastVisit={lastVisit} />}
     >
-      <Avatar
-        avatar={contact.avatar ?? { type: 'none', value: '' }}
-        name={contact.name}
-        size={36}
-        background={contact.avatarBackground ?? undefined}
-      />
-      <Text
-        numberOfLines={1}
+      <View
         style={{
-          flex: 1,
-          color: theme.colors.text,
-          fontFamily: theme.fonts.semiBold,
+          minHeight: 52,
+          paddingVertical: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          borderBottomWidth: last ? 0 : 1,
+          borderBottomColor: theme.colors.border,
         }}
       >
-        {contact.name}
-      </Text>
-      <LucideIcon
-        icon={ChevronRightIcon}
-        size={16}
-        color={theme.colors.textAlt}
-      />
-    </Button>
+        <Avatar
+          avatar={contact.avatar ?? { type: 'none', value: '' }}
+          name={contact.name}
+          size={36}
+          background={contact.avatarBackground ?? undefined}
+        />
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {contact.name}
+        </Text>
+        <LucideIcon
+          icon={ChevronRightIcon}
+          size={16}
+          color={theme.colors.textAlt}
+        />
+      </View>
+    </ContextMenu>
   )
 }
 
@@ -105,13 +132,14 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
     setRequestedPage((current) => Math.min(current, pageCount))
   }, [pageCount])
 
-  const openContact = (contact: Contact) => {
+  const navigateAfterClose = (navigate: () => void) => {
     onClose()
-    setTimeout(
-      () => navigation.navigate('Contact Details', { id: contact.id }),
-      150
-    )
+    setTimeout(navigate, 150)
   }
+  const openContact = (contact: Contact) =>
+    navigateAfterClose(() =>
+      navigation.navigate('Contact Details', { id: contact.id })
+    )
 
   return (
     <>
@@ -186,6 +214,11 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
               <StudyContactRow
                 key={contact.id}
                 contact={contact}
+                lastVisit={getMostRecentConversationForContact({
+                  conversations,
+                  contact,
+                })}
+                navigateAfterClose={navigateAfterClose}
                 last={index === pageContacts.length - 1}
                 onPress={() => openContact(contact)}
               />

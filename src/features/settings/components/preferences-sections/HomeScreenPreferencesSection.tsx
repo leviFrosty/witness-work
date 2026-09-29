@@ -16,6 +16,8 @@ import useTheme from '@/contexts/theme'
 import XView from '@/components/ui/layout/XView'
 import useDevice from '@/hooks/useDevice'
 import ReorderControls from '@/features/settings/components/shared/ReorderControls'
+import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
+import ContextMenu from '@/components/ui/ContextMenu'
 import { useMemo } from 'react'
 
 const HideDonateHeart = () => {
@@ -49,6 +51,7 @@ const HideSupporterNudge = () => {
       onValueChange={(value) => {
         analytics.capture('supporter_nudge_visibility_changed', {
           hidden: value,
+          source: 'settings',
         })
         set({ hideSupporterNudge: value })
       }}
@@ -125,6 +128,22 @@ const HomeElements = () => {
     set({ homeScreenElementsOrder: next })
   }
 
+  // Moves past hidden-capability rows too, keeping them where they were
+  // relative to their neighbors.
+  const moveTo = (visibleIdx: number, target: number) => {
+    if (Math.abs(target - visibleIdx) === 1) {
+      move(visibleIdx, target > visibleIdx ? 1 : -1)
+      return
+    }
+    const key = visibleKeys[visibleIdx]
+    const anchor = visibleKeys[target]
+    const next = effectiveOrder.filter((k) => k !== key)
+    const anchorIdx = next.indexOf(anchor)
+    if (!key || anchorIdx < 0) return
+    next.splice(target < visibleIdx ? anchorIdx : anchorIdx + 1, 0, key)
+    set({ homeScreenElementsOrder: next })
+  }
+
   return (
     <View
       style={{
@@ -177,7 +196,21 @@ const HomeElements = () => {
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ flexShrink: 1 }}>{labelFor(key)}</Text>
+                  {/* Long-press the label; the arrows, info button, and
+                      switch stay outside the menu's trigger. */}
+                  <ContextMenu
+                    style={{ flexShrink: 1 }}
+                    analyticsSurface='home_screen_preferences_row'
+                    actions={reorderMenuActions({
+                      index: idx,
+                      count: visibleKeys.length,
+                      moveTo: (target) => moveTo(idx, target),
+                      visible: isOn,
+                      setVisible: (value) => setVisibility(key, value),
+                    })}
+                  >
+                    <Text style={{ paddingVertical: 8 }}>{labelFor(key)}</Text>
+                  </ContextMenu>
                   {description !== null && (
                     <InfoPopover
                       title={labelFor(key)}

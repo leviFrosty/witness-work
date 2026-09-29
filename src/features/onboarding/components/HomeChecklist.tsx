@@ -32,6 +32,7 @@ import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
+import ContextMenu from '@/components/ui/ContextMenu'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 
@@ -55,6 +56,8 @@ type ChecklistItem = {
   id: HomeChecklistItemId
   label: string
   onPress: () => void
+  /** Tapping checks off this month instead of opening a screen. */
+  checksOffMonth: boolean
 }
 
 /**
@@ -215,6 +218,7 @@ const HomeChecklist = () => {
             : LABEL_I18N_KEY[id]
         return {
           id,
+          checksOffMonth: isTrackTime && isCheckboxMode,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: i18n.t(labelKey as any),
           onPress: () => {
@@ -262,6 +266,23 @@ const HomeChecklist = () => {
 
   const isComplete = (id: HomeChecklistItemId) =>
     autoCompletedIds.has(id) || homeChecklistManualCompletions.includes(id)
+
+  // Items the app can't detect (or the user did another way) can be checked
+  // off by hand from the circle or the item's long-press menu. Auto-completed
+  // items stay done.
+  const setManuallyDone = (
+    id: HomeChecklistItemId,
+    done: boolean,
+    source: 'circle' | 'menu'
+  ) => {
+    const others = homeChecklistManualCompletions.filter((it) => it !== id)
+    setPref({ homeChecklistManualCompletions: done ? [...others, id] : others })
+    analytics.capture('onboarding_checklist_item_marked', {
+      item_id: id,
+      done,
+      source,
+    })
+  }
 
   const handleDismiss = () => {
     analytics.capture('onboarding_checklist_dismissed', { all_done: allDone })
@@ -311,29 +332,43 @@ const HomeChecklist = () => {
     <DismissableCard
       onDismiss={handleDismiss}
       title={
-        <Text
-          style={{
-            fontSize: theme.fontSize('lg'),
-            fontFamily: theme.fonts.semiBold,
-          }}
+        // Only the header is long-pressable: the items have their own menus.
+        <ContextMenu
+          analyticsSurface='onboarding_checklist'
+          actions={[
+            {
+              id: 'hide_checklist',
+              title: i18n.t('hideChecklist'),
+              systemImage: 'eye.slash',
+              onPress: handleDismiss,
+            },
+          ]}
         >
-          {i18n.t('homeChecklistHeader')}
-        </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('homeChecklistHeader')}
+          </Text>
+        </ContextMenu>
       }
     >
       <View style={{ gap: 10 }}>
         {items.map((item) => {
           const done = isComplete(item.id)
+          const autoDone = autoCompletedIds.has(item.id)
           return (
-            <Pressable
-              key={item.id}
-              onPress={item.onPress}
-              hitSlop={4}
-              accessibilityRole='button'
-              accessibilityState={{ checked: done }}
-              accessibilityLabel={item.label}
-            >
-              <XView style={{ gap: 12 }}>
+            <XView key={item.id} style={{ gap: 12 }}>
+              <Pressable
+                onPress={() => setManuallyDone(item.id, !done, 'circle')}
+                disabled={autoDone}
+                hitSlop={8}
+                accessibilityRole='checkbox'
+                accessibilityState={{ checked: done, disabled: autoDone }}
+                accessibilityLabel={item.label}
+              >
                 <LucideIcon
                   icon={done ? CircleCheckIcon : CircleIcon}
                   size={theme.fontSize('xl')}
@@ -341,25 +376,55 @@ const HomeChecklist = () => {
                     color: done ? theme.colors.accent : theme.colors.border,
                   }}
                 />
-                <Text
-                  style={{
-                    flex: 1,
-                    fontSize: theme.fontSize('md'),
-                    color: done ? theme.colors.textAlt : theme.colors.text,
-                    textDecorationLine: done ? 'line-through' : 'none',
-                  }}
-                >
-                  {item.label}
-                </Text>
-                {done && (
-                  <LucideIcon
-                    icon={CheckIcon}
-                    size={theme.fontSize('sm')}
-                    style={{ color: theme.colors.accent }}
-                  />
-                )}
-              </XView>
-            </Pressable>
+              </Pressable>
+              <ContextMenu
+                style={{ flex: 1 }}
+                analyticsSurface='onboarding_checklist_item'
+                onPress={item.onPress}
+                accessibilityLabel={item.label}
+                actions={[
+                  !item.checksOffMonth && {
+                    id: 'open',
+                    title: i18n.t('open'),
+                    systemImage: 'arrow.up.forward.app',
+                    onPress: item.onPress,
+                  },
+                  !done && {
+                    id: 'mark_done',
+                    title: i18n.t('markAsDone'),
+                    systemImage: 'checkmark.circle',
+                    onPress: () => setManuallyDone(item.id, true, 'menu'),
+                  },
+                  done &&
+                    !autoDone && {
+                      id: 'mark_not_done',
+                      title: i18n.t('markAsNotDone'),
+                      systemImage: 'circle',
+                      onPress: () => setManuallyDone(item.id, false, 'menu'),
+                    },
+                ]}
+              >
+                <XView style={{ gap: 12, paddingVertical: 4 }}>
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontSize: theme.fontSize('md'),
+                      color: done ? theme.colors.textAlt : theme.colors.text,
+                      textDecorationLine: done ? 'line-through' : 'none',
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                  {done && (
+                    <LucideIcon
+                      icon={CheckIcon}
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.accent }}
+                    />
+                  )}
+                </XView>
+              </ContextMenu>
+            </XView>
           )
         })}
       </View>

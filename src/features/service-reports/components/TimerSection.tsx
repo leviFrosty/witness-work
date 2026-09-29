@@ -15,13 +15,12 @@ import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
-import { usePreferences } from '@/stores/preferences'
+import HomeSectionMenu from '@/components/HomeSectionMenu'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
-  const { homeScreenElements, set } = usePreferences()
   const minutes = Math.floor(ms / 60000) % 60
   const hours = Math.floor(ms / 3600000)
   const notEnoughTimeToSave = minutes < 5
@@ -34,39 +33,53 @@ export const TimerSection = () => {
     })
   }
 
-  const handleHide = () => {
-    set({
-      homeScreenElements: {
-        ...homeScreenElements,
-        timer: false,
-      },
-    })
-  }
+  const hasTime = ms >= 60000
 
+  // The whole card long-presses for the section menu (hiding also lives in
+  // Preferences → Home Screen); the buttons keep their own taps, which win for
+  // touches that land on them. Not one accessibility element, so the buttons
+  // stay individually reachable.
   return (
-    <View style={{ gap: 10 }}>
-      <XView style={{ justifyContent: 'space-between', marginHorizontal: 5 }}>
-        <Text
-          style={{
-            fontSize: 14,
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('timer')}
-        </Text>
-        <Button onPress={handleHide}>
+    <HomeSectionMenu
+      section='timer'
+      accessible={false}
+      actions={[
+        [
+          {
+            id: isRunning ? 'pause' : 'start',
+            title: i18n.t(isRunning ? 'timerPauseAction' : 'timerStartAction'),
+            systemImage: isRunning ? 'pause' : 'play',
+            onPress: isRunning ? stop : start,
+          },
+          hasTime && {
+            id: 'save',
+            title: i18n.t('timerSaveAction'),
+            systemImage: 'square.and.arrow.down',
+            onPress: handleSave,
+          },
+          ms > 0 && {
+            id: 'reset',
+            title: i18n.t('timerResetAction'),
+            systemImage: 'arrow.counterclockwise',
+            onPress: reset,
+          },
+        ],
+      ]}
+    >
+      <Card>
+        <View accessible accessibilityRole='header'>
           <Text
             style={{
-              fontSize: 12,
+              fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
+              fontSize: theme.fontSize('sm'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
             }}
           >
-            {i18n.t('hide')}
+            {i18n.t('timer')}
           </Text>
-        </Button>
-      </XView>
-      <Card>
+        </View>
         <Text
           style={{
             fontSize: theme.fontSize('3xl'),
@@ -137,6 +150,6 @@ export const TimerSection = () => {
           </Button>
         </XView>
       </Card>
-    </View>
+    </HomeSectionMenu>
   )
 }

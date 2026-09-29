@@ -95,6 +95,10 @@ Notification permission outcomes and import availability/outcomes help distingui
 friction from an intentional skip. iCloud Restore completes onboarding directly,
 with `completion_method: icloud_restore`; the guided path uses `guided`.
 Home checklist interactions cover activation after the guided flow.
+`onboarding_checklist_item_marked` records checking an item off (or back on) by
+hand, with `item_id`, `done` (boolean), and `source` (`circle` for the item's
+circle, `menu` for its long-press menu). Items the app detects on its own never
+send it.
 
 Do not interpret absence of an immediate completion as an explicit abandonment.
 Measure drop-off with an observation window and allow resumed onboarding.
@@ -165,6 +169,9 @@ Use `paywall_opened` for entry intent and `paywall_viewed` for the rendered scre
 Break down by `source`, and `feature` for feature gates. Sources distinguish the
 heart entry, settings, home nudge, onboarding, Notes Import limit, and feature gates.
 Nudge and feature-gate view/click/dismiss events measure the earlier funnel.
+`supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for the
+Home Screen switch, `home_nudge` for the card's "Don't Show Again") records
+turning the nudge off for good.
 Nudge impressions mean a card rendered on the focused Home screen, not verified
 intersection with the visible scroll viewport.
 
@@ -184,26 +191,60 @@ Instrumented actions include:
 
 - Contact create/update and Visit create/update/delete paths, Custom Fields, Follow-ups, and
   safe flags such as Not at Home, Bible Study, and reminders.
+- Closing a Home Follow-up card: `follow_up_card_dismissed` with `card`
+  (`missed` or `approaching`) and `count` (Follow-ups on it). The card stays
+  closed until a new or rescheduled Follow-up joins it.
 - Time Entries, checkbox participation (including the widget deep link), timer
   actions, Time Rollover requests/dismissal/undo, and Service Report export actions.
 - Day and Recurring Plans, including edit/delete scope, and Assistant preview,
-  acceptance, dismissal, and undo.
+  acceptance, dismissal, and undo. `plan_created` carries `prefilled` (true when
+  the form was seeded, e.g. by a Plan row's Duplicate… or a buddy's Plan the Same
+  Time). A Time Entry re-typed from its row's Change Category menu sends
+  `time_entry_updated` with `source: time_report_row_menu`.
 - Map selection, search opening, and Marker movement, without search text or
   coordinates.
 - Map onboarding's location step: `map_location_prompt_viewed`,
   `map_location_permission_result` (`granted` boolean only, never coordinates),
   and `map_location_prompt_skipped`.
+- Dropped-pin card: `map_dropped_pin_navigate_pressed` when its Navigate Here
+  button opens directions (no properties, never coordinates).
+- Buddies "Plan the Same Time": `buddy_plan_same_time_opened` when a buddy's
+  Plan opens a new prefilled Plan, with `source` (`buddy_detail` or
+  `buddy_plans_for_day`) and `has_start_time`. Never the buddy, day, or times;
+  `plan_created` records whether it was saved.
 
 Events live at user-action boundaries to avoid counting hydration, sync, or import
-writes as manual feature usage. Contact archive/recovery/favorites, deleting a Service Year, and many individual
+writes as manual feature usage. Contact archive/recovery/favorites and many individual
 preference controls remain outside explicit action coverage. Native widget-only timer interactions do not pass
 through the JavaScript timer hook. Share-sheet presentation or external-app handoff
 does not prove delivery/submission to another person or app.
 
+## Context menus
+
+Every long-press `ContextMenu` and tap-to-open `PullDownMenu` records
+`context_menu_action` when an item is chosen. Properties: `surface` (where the
+menu lives, e.g. `contact_row`, `plan_row`, `home_section`), `action` (the item
+id; submenu items are `submenu.item`, e.g. `delete.all`), and `trigger`
+(`long_press`, `tap`, or `accessibility` for VoiceOver/TalkBack custom
+actions). Opening a menu and closing it without choosing sends nothing; iOS
+doesn't report menu presentation. Actions keep their own feature events (e.g.
+`visit_deleted`), so this event measures which menus and items people use, not
+whether the action succeeded.
+
+Select mode on list screens records `list_selection_started` with `surface` and
+`source` (`menu` from the header's More menu or Select button, `row` from a
+row's long-press "Select", which starts with that row checked), and
+`list_selection_action` with `surface`, `action`, and `count` (items affected).
+Leaving Select mode without an action is the abandonment signal. Surfaces and
+actions: `contacts` (`favorite`, `unfavorite`, `dismiss`, `archive`, `delete`),
+`dismissed_contacts` (`undismiss`, `archive`, `delete`), `recover_contacts` (`recover`,
+`delete_permanently`).
+
 ## Role History
 
 `role_period_set` records a committed change to which Publisher role applied to
-which months. Properties: `source` (`settings`, `month_card`), `role` (the
+which months. Properties: `source` (`settings`, `month_card`, `year_tab` from a
+Year-tab month row's menu), `role` (the
 Publisher enum value, or `regularAuxiliaryReduced` for the 15-hour auxiliary
 status), `scope` (`from_month`, `single_month`, or `all_months`), and for Settings
 changes `months_back` (how many months before the current month the change starts,
@@ -222,18 +263,26 @@ it), and `month_offset` (0 = this month, 1 = next month). A view with no
 following `role_period_set` is an abandoned sheet.
 
 The Service History editor records `service_history_viewed` once per Service Year
-shown and `service_history_saved` on Save. Both carry `source` (`year_tab`,
-`add_earlier_year`, `settings`) and `service_years_back` (0 = the latest Service
+shown and `service_history_saved` on Save — one per Service Year with unsaved
+changes, since edits are kept per year while moving between years and Save
+writes them all. Both carry `source` (`year_tab`,
+`year_row_menu` from an All-time year row's menu, `add_earlier_year`, `settings`) and `service_years_back` (0 = the latest Service
 Year with a finished month). `service_history_saved` adds `months_status_changed`
 and `months_time_added` counts. Leaving without saving is the abandonment signal:
 a `service_history_viewed` with no following `service_history_saved`.
+
+`service_year_time_deleted` records a confirmed delete of every Time Entry in a
+Service Year, with `source` (`year_row_menu` from the All-time year row's menu,
+`service_history` from the button at the bottom of Service History).
 
 ## Month card
 
 The Progress → Month card shows status and goal as one line. Tapping it records
 `month_card_edit_opened` with `target` (`status`, `goal`) and `via`: `menu` when
-both were editable and the user picked one from the chooser, `direct` when only
-one was editable. Cancelling the chooser records `month_card_edit_menu_dismissed`.
+both were editable and the user picked one from the pull-down menu, `direct` when
+only one was editable, `context_menu` when picked from the card's long-press menu.
+Closing the pull-down without choosing sends nothing (`month_card_edit_menu_dismissed`
+is no longer sent; the native menu doesn't report it).
 Whether the edit was committed is `role_period_set` (status); closing a sheet
 without saving is the abandonment signal.
 
@@ -252,7 +301,10 @@ select above the Submit button.
 | `submission_method_changed`     | Default submission method changed. `method`, `previous_method` (`copy`, `share`, `hourglass`, `nwpublisher`); `source` (`report_screen`, `preferences`). |
 
 Submission itself stays on the existing `service_report_export_requested` /
-`service_report_exported` events.
+`service_report_exported` / `service_report_export_dismissed` events, with
+`method` and `source`: `report_screen` (the Submit button, including the other
+methods in its long-press menu) or `context_menu` (Copy/Share Report from a
+month's long-press menu on Home or Progress).
 
 ## iCloud Sync and Help Center
 

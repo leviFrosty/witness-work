@@ -14,23 +14,25 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import { Contact } from '@/types/contact'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import i18n from '@/lib/locales'
 import { formatRelative } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
 import { FuseResultMatch } from 'fuse.js'
-import Button from '@/components/ui/Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '@/lib/haptics'
-import { deleteHouseholderContact } from '@/stores/householderData'
 import SwipeableArchive from '@/features/contacts/components/swipeableActions/Archive'
 import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Dismiss'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
-import { useToastController } from '@tamagui/toast'
 import Avatar from '@/components/ui/Avatar'
+import ContextMenu from '@/components/ui/ContextMenu'
+import ContactPreview from '@/components/ContactPreview'
 import { stalenessToColor } from '@/lib/contactStaleness'
 import { ConversationIndex } from '@/lib/conversationIndex'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
+import useContactMenuActions, {
+  useContactRemovalActions,
+} from '@/hooks/useContactMenuActions'
 import {
   findNameMatch,
   MatchSource,
@@ -38,8 +40,9 @@ import {
 } from '@/features/contacts/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
 import GenderIcon from '@/features/contacts/components/GenderIcon'
+import { SelectionCheck } from '@/features/contacts/components/ListSelection'
+import useShareContact from '@/features/contacts/hooks/useShareContact'
 import { usePreferences } from '@/stores/preferences'
-import confirmDestructive from '@/lib/confirmDestructive'
 
 const SNIPPET_CONTEXT_CHARS = 24
 
@@ -58,10 +61,25 @@ const ContactRow = ({
   index,
   selected = false,
   showsDisclosure = true,
+  showOpenInMenu = false,
+  onSelect,
+  selectionMode = false,
+  checked = false,
 }: {
   selected?: boolean
   /** False when selecting this row updates an adjacent detail pane. */
   showsDisclosure?: boolean
+  /** Adds "Open Contact" to the menu, for lists whose tap does something else. */
+  showOpenInMenu?: boolean
+  /** Adds "Select" to the long-press menu; starts Select mode on this row. */
+  onSelect?: () => void
+  /**
+   * Select mode: the row shows a checkmark circle, reads as a checkbox, taps
+   * call `onPress` to toggle it, and swipes are off.
+   */
+  selectionMode?: boolean
+  /** Whether the row is checked in Select mode. */
+  checked?: boolean
   contact: Contact
   onPress?: () => void
   /**
@@ -81,59 +99,28 @@ const ContactRow = ({
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const theme = useTheme()
   const markerColors = useMarkerColors()
-  const toast = useToastController()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
+  // A closed Tamagui modal sheet still mounts its whole content through a
+  // Portal, so rows only mount theirs once it's first asked for.
+  const [dismissSheetMounted, setDismissSheetMounted] = useState(false)
+  const share = useShareContact(contact)
+  const menu = useContactMenuActions(contact, {
+    showOpen: showOpenInMenu,
+    onShare: share,
+    onSelect,
+  })
+  const { archive } = useContactRemovalActions(contact)
 
-  const nameMatch = useMemo(() => findNameMatch(searchMatches), [searchMatches])
-  const previewMatch = useMemo(
-    () => pickPreviewMatch(searchMatches),
-    [searchMatches]
+  const nameMatch = findNameMatch(searchMatches)
+  const previewMatch = pickPreviewMatch(searchMatches)
+  const stripeColor = stalenessToColor(
+    index.stalenessFor(contact.id),
+    markerColors
   )
-
-  const stripeColor = useMemo(
-    () => stalenessToColor(index.stalenessFor(contact.id), markerColors),
-    [contact.id, index, markerColors]
-  )
-
-  const isActiveBibleStudy = useMemo(
-    () => index.studiedThisMonthIds.has(contact.id),
-    [contact.id, index]
-  )
-
-  const hasStudiedPreviously = useMemo(
-    () => index.studyContactIds.has(contact.id),
-    [contact.id, index]
-  )
-
-  const mostRecentConversation = useMemo(
-    () => index.mostRecentConvByContact.get(contact.id) ?? null,
-    [contact.id, index]
-  )
-
-  const handleDismiss = () => {
-    setDismissSheetOpen(true)
-  }
-
-  const handleArchive = () => {
-    confirmDestructive({
-      title: i18n.t(
-        dataProtectionMode ? 'permanentlyDelete' : 'archiveContact_question'
-      ),
-      description: i18n.t(
-        dataProtectionMode
-          ? 'permanentlyDeleteContact_warning'
-          : 'archiveContact_description'
-      ),
-      confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      onConfirm: () => {
-        toast.show(i18n.t('success'), {
-          message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
-          native: true,
-        })
-        deleteHouseholderContact(contact.id)
-      },
-    })
-  }
+  const isActiveBibleStudy = index.studiedThisMonthIds.has(contact.id)
+  const hasStudiedPreviously = index.studyContactIds.has(contact.id)
+  const mostRecentConversation =
+    index.mostRecentConvByContact.get(contact.id) ?? null
 
   // Reset the row before confirming: the confirm Alert can be cancelled, and a
   // half-open row behind a dismissed Alert reads as stuck.
@@ -143,154 +130,193 @@ const ContactRow = ({
   ) => {
     swipeable.reset()
     if (direction === 'left') {
-      handleDismiss()
+      setDismissSheetMounted(true)
+      setDismissSheetOpen(true)
     } else {
-      handleArchive()
+      archive?.onPress()
     }
   }
 
-  // NOTE: the `Swipeable` is nested *inside* the tap `Button` rather than
-  // wrapping it, so the row's press target and its gesture target are inverted
-  // from the usual arrangement. Left as-is — untangling it changes the row's
-  // layout/press behaviour and belongs in its own change.
-  return (
-    <Button onPress={onPress} accessibilityState={{ selected }}>
-      <Card
-        style={{
-          paddingHorizontal: 18,
-          paddingVertical: 16,
-          borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: selected
+  // Everything inside is non-interactive: the wrapping ContextMenu owns taps
+  // and long presses for the whole card. In Select mode the card itself is the
+  // accessibility element, a checkbox.
+  const card = (
+    <Card
+      accessible={selectionMode}
+      accessibilityRole={selectionMode ? 'checkbox' : undefined}
+      accessibilityState={selectionMode ? { checked } : undefined}
+      accessibilityLabel={selectionMode ? contact.name : undefined}
+      accessibilityActions={selectionMode ? [{ name: 'activate' }] : undefined}
+      onAccessibilityAction={
+        selectionMode
+          ? (event) => {
+              if (event.nativeEvent.actionName === 'activate') onPress?.()
+            }
+          : undefined
+      }
+      style={{
+        paddingHorizontal: 18,
+        paddingVertical: 16,
+        borderRadius: theme.numbers.borderRadiusSm,
+        backgroundColor:
+          selected || (selectionMode && checked)
             ? theme.colors.accentTranslucent
             : theme.colors.backgroundLighter,
-          overflow: 'hidden',
+        overflow: 'hidden',
+      }}
+    >
+      <View
+        pointerEvents='none'
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          backgroundColor: stripeColor,
         }}
-      >
-        <View
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 4,
-            backgroundColor: stripeColor,
-          }}
-        />
-        <Swipeable
-          onSwipeableWillOpen={() => Haptics.light()}
-          containerStyle={{ backgroundColor: 'transparent' }}
-          renderLeftActions={() => <SwipeableDismiss size='sm' />}
-          renderRightActions={() => (
-            <SwipeableArchive size='sm' permanent={dataProtectionMode} />
-          )}
-          onSwipeableOpen={handleSwipeOpen}
-        >
-          <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
-            <Avatar
-              avatar={contact.avatar ?? { type: 'none', value: '' }}
-              name={contact.name}
-              size={36}
-              background={contact.avatarBackground ?? undefined}
-            />
-            <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <View style={{ flexShrink: 1 }}>
-                  <HighlightedText
-                    text={contact.name}
-                    match={nameMatch}
-                    baseStyle={{ fontSize: 18 }}
-                    numberOfLines={1}
-                  />
-                </View>
-                {contact.gender && (
-                  <GenderIcon gender={contact.gender} size={10} opacity={0.6} />
-                )}
-              </View>
-              {previewMatch ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <LucideIcon
-                    icon={ICON_BY_SOURCE[previewMatch.source]}
-                    size={9}
-                    style={{ color: theme.colors.textAlt }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <HighlightedText
-                      text={previewMatch.match.value ?? ''}
-                      match={previewMatch.match}
-                      contextChars={SNIPPET_CONTEXT_CHARS}
-                      baseStyle={{
-                        color: theme.colors.textAlt,
-                        fontSize: 11,
-                      }}
-                      numberOfLines={1}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <Text
-                  style={{ color: theme.colors.textAlt, fontSize: 10 }}
-                  numberOfLines={1}
-                >
-                  {mostRecentConversation
-                    ? formatRelative(mostRecentConversation.date)
-                    : i18n.t('noRecentConversation_plural')}
-                  {contact.address?.city ? ` · ${contact.address.city}` : ''}
-                </Text>
-              )}
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              {hasStudiedPreviously && (
-                <IconButton
-                  iconStyle={{
-                    color: isActiveBibleStudy
-                      ? theme.colors.text
-                      : theme.colors.textAlt,
-                  }}
-                  fill={isActiveBibleStudy ? theme.colors.text : 'none'}
-                  icon={BookOpenIcon}
-                />
-              )}
-              {contact.isFavorite && (
-                <IconButton
-                  icon={StarIcon}
-                  iconStyle={{ color: theme.colors.warn }}
-                  fill={theme.colors.warn}
-                  size='sm'
-                />
-              )}
-              {showsDisclosure && (
-                <IconButton
-                  iconStyle={{
-                    color: isActiveBibleStudy
-                      ? theme.colors.text
-                      : theme.colors.textAlt,
-                  }}
-                  icon={ChevronRightIcon}
-                />
-              )}
-            </View>
-          </View>
-        </Swipeable>
-      </Card>
-      <DismissContactSheet
-        open={dismissSheetOpen}
-        setOpen={setDismissSheetOpen}
-        contact={contact}
       />
-    </Button>
+      <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
+        {selectionMode && <SelectionCheck checked={checked} />}
+        <Avatar
+          avatar={contact.avatar ?? { type: 'none', value: '' }}
+          name={contact.name}
+          size={36}
+          background={contact.avatarBackground ?? undefined}
+        />
+        <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <View style={{ flexShrink: 1 }}>
+              <HighlightedText
+                text={contact.name}
+                match={nameMatch}
+                baseStyle={{ fontSize: 18 }}
+                numberOfLines={1}
+              />
+            </View>
+            {contact.gender && (
+              <GenderIcon gender={contact.gender} size={10} opacity={0.6} />
+            )}
+          </View>
+          {previewMatch ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <LucideIcon
+                icon={ICON_BY_SOURCE[previewMatch.source]}
+                size={9}
+                style={{ color: theme.colors.textAlt }}
+              />
+              <View style={{ flex: 1 }}>
+                <HighlightedText
+                  text={previewMatch.match.value ?? ''}
+                  match={previewMatch.match}
+                  contextChars={SNIPPET_CONTEXT_CHARS}
+                  baseStyle={{
+                    color: theme.colors.textAlt,
+                    fontSize: 11,
+                  }}
+                  numberOfLines={1}
+                />
+              </View>
+            </View>
+          ) : (
+            <Text
+              style={{ color: theme.colors.textAlt, fontSize: 10 }}
+              numberOfLines={1}
+            >
+              {mostRecentConversation
+                ? formatRelative(mostRecentConversation.date)
+                : i18n.t('noRecentConversation_plural')}
+              {contact.address?.city ? ` · ${contact.address.city}` : ''}
+            </Text>
+          )}
+        </View>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {hasStudiedPreviously && (
+            <IconButton
+              iconStyle={{
+                color: isActiveBibleStudy
+                  ? theme.colors.text
+                  : theme.colors.textAlt,
+              }}
+              fill={isActiveBibleStudy ? theme.colors.text : 'none'}
+              icon={BookOpenIcon}
+            />
+          )}
+          {contact.isFavorite && (
+            <IconButton
+              icon={StarIcon}
+              iconStyle={{ color: theme.colors.warn }}
+              fill={theme.colors.warn}
+              size='sm'
+            />
+          )}
+          {showsDisclosure && !selectionMode && (
+            <IconButton
+              iconStyle={{
+                color: isActiveBibleStudy
+                  ? theme.colors.text
+                  : theme.colors.textAlt,
+              }}
+              icon={ChevronRightIcon}
+            />
+          )}
+        </View>
+      </View>
+    </Card>
+  )
+
+  // The same tree in and out of Select mode, so switching modes (e.g. "Done"
+  // after "Select All") re-renders the visible rows instead of remounting each
+  // one's Swipeable and native context menu host. The menu stays available.
+  return (
+    <>
+      <Swipeable
+        enabled={!selectionMode}
+        onSwipeableWillOpen={() => Haptics.light()}
+        containerStyle={{ backgroundColor: 'transparent' }}
+        renderLeftActions={() => <SwipeableDismiss size='sm' />}
+        renderRightActions={() => (
+          <SwipeableArchive size='sm' permanent={dataProtectionMode} />
+        )}
+        onSwipeableOpen={handleSwipeOpen}
+      >
+        <ContextMenu
+          actions={menu}
+          analyticsSurface='contact_row'
+          onPress={onPress}
+          accessibilityLabel={contact.name}
+          accessible={!selectionMode}
+          disabled={selectionMode}
+          preview={
+            <ContactPreview
+              contact={contact}
+              lastVisit={mostRecentConversation}
+            />
+          }
+        >
+          {card}
+        </ContextMenu>
+      </Swipeable>
+      {dismissSheetMounted && (
+        <DismissContactSheet
+          open={dismissSheetOpen}
+          setOpen={setDismissSheetOpen}
+          contact={contact}
+        />
+      )}
+    </>
   )
 }
 

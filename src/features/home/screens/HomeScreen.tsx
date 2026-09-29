@@ -8,13 +8,13 @@ import {
 } from '@/lib/conversations'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import MissedConversations from '@/features/visits/components/MissedConversations'
+import { isFollowUpCardDismissed } from '@/features/visits/lib/followUpCards'
 import useContacts from '@/stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import XView from '@/components/ui/layout/XView'
 import AdaptiveColumns from '@/components/ui/layout/AdaptiveColumns'
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import moment from 'moment'
@@ -27,7 +27,8 @@ import SelectedDateSheet, {
 } from '@/features/service-reports/components/SelectedDateSheet'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
-import Button from '@/components/ui/Button'
+import HomeSectionMenu from '@/components/HomeSectionMenu'
+import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
 import { useNavigation } from '@react-navigation/native'
 import usePublisher from '@/hooks/usePublisher'
 import {
@@ -105,7 +106,11 @@ export const HomeScreen = () => {
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
-  const { homeScreenElements, homeScreenElementsOrder } = usePreferences()
+  const {
+    homeScreenElements,
+    homeScreenElementsOrder,
+    dismissedFollowUpCards,
+  } = usePreferences()
   const effectiveOrder = useMemo(
     () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
     [homeScreenElementsOrder]
@@ -133,6 +138,14 @@ export const HomeScreen = () => {
       ),
     [selectedDateSheet.date, serviceReports]
   )
+
+  const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
+  const viewServiceYear = () =>
+    navigation.navigate('Progress', {
+      month: moment().month(),
+      year: moment().year(),
+      tab: 'year',
+    })
 
   const handleAddTime = () => {
     const date = selectedDateSheet.date.toISOString()
@@ -349,8 +362,16 @@ export const HomeScreen = () => {
                 case 'approachingConversations':
                   if (
                     !homeScreenElements.approachingConversations ||
-                    (overdueConvosWithActiveContacts.length === 0 &&
-                      approachingConvosWithActiveContacts.length === 0)
+                    ((overdueConvosWithActiveContacts.length === 0 ||
+                      isFollowUpCardDismissed(
+                        overdueConvosWithActiveContacts,
+                        dismissedFollowUpCards?.missed
+                      )) &&
+                      (approachingConvosWithActiveContacts.length === 0 ||
+                        isFollowUpCardDismissed(
+                          approachingConvosWithActiveContacts,
+                          dismissedFollowUpCards?.approaching
+                        )))
                   )
                     return null
                   return (
@@ -382,20 +403,27 @@ export const HomeScreen = () => {
                       >
                         {i18n.t('serviceYearSummary')}
                       </Text>
-                      <XView>
-                        <Button
-                          style={{ flex: 1 }}
-                          onPress={() =>
-                            navigation.navigate('Progress', {
-                              month: moment().month(),
-                              year: moment().year(),
-                              tab: 'year',
-                            })
-                          }
-                        >
-                          <YearMilestoneCard year={serviceYear + 1} />
-                        </Button>
-                      </XView>
+                      <HomeSectionMenu
+                        section='tabletServiceYearSummary'
+                        onPress={viewServiceYear}
+                        accessibilityLabel={i18n.t('viewYear')}
+                        actions={[
+                          {
+                            id: 'view_year',
+                            title: i18n.t('viewYear'),
+                            systemImage: 'chart.line.uptrend.xyaxis',
+                            onPress: viewServiceYear,
+                          },
+                          {
+                            id: 'adjust_milestones',
+                            title: i18n.t('adjustMilestonesEllipsis'),
+                            systemImage: 'flag',
+                            onPress: () => setMilestoneSheetOpen(true),
+                          },
+                        ]}
+                      >
+                        <YearMilestoneCard year={serviceYear + 1} />
+                      </HomeSectionMenu>
                     </View>
                   )
                 case 'serviceReport':
@@ -441,6 +469,12 @@ export const HomeScreen = () => {
           <WhatsNewCard />
         </AdaptiveColumns>
       </KeyboardAwareScrollView>
+      {isTablet && hasAnnualGoal && (
+        <MilestoneAdjustSheet
+          visible={milestoneSheetOpen}
+          onClose={() => setMilestoneSheetOpen(false)}
+        />
+      )}
       <UpgradeLegacyTimeReportsSheet
         sheet={upgradeReportsSheet}
         setSheet={setUpgradeReportSheet}

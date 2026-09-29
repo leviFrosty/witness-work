@@ -41,6 +41,23 @@ export const deleteHouseholderContact = (contactId: string) => {
   useContacts.getState().deleteContact(contactId, { redact })
 }
 
+/**
+ * `deleteHouseholderContact` for many contacts at once (Select mode), with the
+ * same data-protection policy but a single contacts-store update.
+ */
+export const deleteHouseholderContacts = (contactIds: string[]) => {
+  const redact = usePreferences.getState().dataProtectionMode === true
+  if (redact) {
+    const targets = new Set(contactIds)
+    const { conversations, deleteConversation } = useConversations.getState()
+    for (const visit of conversations) {
+      if (targets.has(visit.contact.id)) deleteConversation(visit.id)
+    }
+    contactIds.forEach((id) => void deleteAvatarFiles(id))
+  }
+  useContacts.getState().deleteContacts(contactIds, { redact })
+}
+
 export type DeleteAllHouseholderDataResult = {
   /** Contacts removed from the active list. */
   contacts: number

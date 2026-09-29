@@ -25,9 +25,13 @@ import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import LottieView from 'lottie-react-native'
+import { useNavigation } from '@react-navigation/native'
+import ContextMenu from '@/components/ui/ContextMenu'
+import type { RootStackNavigation } from '@/types/rootStack'
 
 export default function PublisherCheckBoxCard() {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const [undoReport, setUndoReport] = useState<TimeEntry>()
   const { serviceReports, addServiceReport, deleteServiceReport } =
     useServiceReport()
@@ -84,6 +88,14 @@ export default function PublisherCheckBoxCard() {
     playConfetti()
   }
 
+  const undo = (report: TimeEntry) => {
+    deleteServiceReport(report)
+    analytics.capture('time_entry_deleted', {
+      source: 'participation_checkbox',
+      entry_mode: 'checkbox',
+    })
+  }
+
   if (hasParticipated) {
     return (
       <View
@@ -96,52 +108,69 @@ export default function PublisherCheckBoxCard() {
           width: '100%',
         }}
       >
-        {undoReport ? (
-          <LottieView
-            autoPlay
-            loop={false}
-            speed={0.875}
-            style={{ width: 130, height: 96, marginVertical: -16 }}
-            source={require('@/assets/lottie/checkMark.json')}
-          />
-        ) : (
-          <LucideIcon
-            icon={CircleCheckIcon}
-            size={54}
-            color={theme.colors.accent}
-          />
-        )}
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('md'),
-            textAlign: 'center',
-          }}
+        {/* The inline Undo stays outside so it keeps its own tap. */}
+        <ContextMenu
+          analyticsSurface='participation_checkbox'
+          actions={[
+            undoReport && {
+              id: 'undo',
+              title: i18n.t('undo'),
+              systemImage: 'arrow.uturn.backward',
+              onPress: () => undo(undoReport),
+            },
+            {
+              id: 'view_report',
+              title: i18n.t('viewReport'),
+              systemImage: 'doc.text',
+              onPress: () =>
+                navigation.navigate('ServiceReportView', {
+                  month: moment().month(),
+                  year: moment().year(),
+                }),
+            },
+          ]}
         >
-          {i18n.t('sharedTheGoodNews')}
-        </Text>
-        {showsTimeEntry && loggedMinutes > 0 ? (
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('hoursLoggedThisMonth', { time: loggedTime.formatted })}
-          </Text>
-        ) : null}
+          <View style={{ gap: 8, alignItems: 'center' }}>
+            {undoReport ? (
+              <LottieView
+                autoPlay
+                loop={false}
+                speed={0.875}
+                style={{ width: 130, height: 96, marginVertical: -16 }}
+                source={require('@/assets/lottie/checkMark.json')}
+              />
+            ) : (
+              <LucideIcon
+                icon={CircleCheckIcon}
+                size={54}
+                color={theme.colors.accent}
+              />
+            )}
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                textAlign: 'center',
+              }}
+            >
+              {i18n.t('sharedTheGoodNews')}
+            </Text>
+            {showsTimeEntry && loggedMinutes > 0 ? (
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                  textAlign: 'center',
+                }}
+              >
+                {i18n.t('hoursLoggedThisMonth', { time: loggedTime.formatted })}
+              </Text>
+            ) : null}
+          </View>
+        </ContextMenu>
         {undoReport ? (
-          <Button
-            onPress={() => {
-              deleteServiceReport(undoReport)
-              analytics.capture('time_entry_deleted', {
-                source: 'participation_checkbox',
-                entry_mode: 'checkbox',
-              })
-            }}
-          >
+          <Button onPress={() => undo(undoReport)}>
             <Text
               style={{
                 color: theme.colors.textAlt,

@@ -9,6 +9,7 @@ import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
 import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
+import useFollowUpCardDismissal from '@/features/visits/hooks/useFollowUpCardDismissal'
 
 interface Props {
   conversations: Visit[]
@@ -28,7 +29,12 @@ const MissedConversations = ({ conversations }: Props) => {
     [conversations]
   )
 
-  if (conversations.length === 0) return null
+  const { dismissed, dismiss } = useFollowUpCardDismissal(
+    'missed',
+    conversations
+  )
+
+  if (conversations.length === 0 || dismissed) return null
 
   const accentColor = theme.colors.warn
   const headerColor = theme.colors.warnText
@@ -36,6 +42,7 @@ const MissedConversations = ({ conversations }: Props) => {
 
   return (
     <DismissableCard
+      onDismiss={dismiss}
       titleColor={headerColor}
       title={
         <View

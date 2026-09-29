@@ -3,6 +3,11 @@ import Switch from '@/components/ui/Switch'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import ReorderControls from '@/features/settings/components/shared/ReorderControls'
+import {
+  moveItem,
+  reorderMenuActions,
+} from '@/features/settings/components/shared/reorderMenuActions'
+import ContextMenu from '@/components/ui/ContextMenu'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -26,6 +31,11 @@ const ScheduleScreenPreferencesSection = () => {
     ;[next[index], next[target]] = [next[target], next[index]]
     preferences.set({ scheduleScreenElementsOrder: next })
   }
+
+  const moveTo = (index: number, target: number) =>
+    preferences.set({
+      scheduleScreenElementsOrder: moveItem(order, index, target),
+    })
 
   const setVisibility = (key: ScheduleScreenElementKey, value: boolean) => {
     preferences.set((state) => ({
@@ -64,9 +74,23 @@ const ScheduleScreenPreferencesSection = () => {
                   index === order.length - 1 ? undefined : () => move(index, 1)
                 }
               />
-              <Text style={{ flex: 1, minWidth: 0 }}>
-                {i18n.t('assistant.label')}
-              </Text>
+              {/* Long-press the label; the arrows and switch stay outside
+                  the menu's trigger. */}
+              <ContextMenu
+                style={{ flex: 1, minWidth: 0 }}
+                analyticsSurface='schedule_screen_preferences_row'
+                actions={reorderMenuActions({
+                  index,
+                  count: order.length,
+                  moveTo: (target) => moveTo(index, target),
+                  visible: preferences.scheduleScreenElements[key],
+                  setVisible: (value) => setVisibility(key, value),
+                })}
+              >
+                <Text style={{ paddingVertical: 8 }}>
+                  {i18n.t('assistant.label')}
+                </Text>
+              </ContextMenu>
               <Switch
                 accessibilityLabel={i18n.t('assistant.label')}
                 value={preferences.scheduleScreenElements[key]}

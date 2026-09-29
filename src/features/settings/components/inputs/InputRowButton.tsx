@@ -1,6 +1,8 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import React, { PropsWithChildren, ReactNode } from 'react'
-import { GestureResponderEvent, Pressable, ViewStyle, View } from 'react-native'
+import { Pressable, StyleProp, ViewStyle, View } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
+import { useToastController } from '@tamagui/toast'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -11,6 +13,11 @@ import {
   useInputLayout,
 } from '@/components/ui/inputs/InputLayout'
 import Haptics from '@/lib/haptics'
+import i18n from '@/lib/locales'
+import { shareUrl } from '@/lib/share'
+import ContextMenu, {
+  type ContextMenuEntries,
+} from '@/components/ui/ContextMenu'
 
 interface Props {
   children?: ReactNode
@@ -28,7 +35,16 @@ interface Props {
     | 'space-around'
     | 'space-evenly'
     | undefined
-  onPress?: ((event: GestureResponderEvent) => void) | undefined
+  onPress?: () => void
+  /**
+   * External link the row opens. Adds a long-press menu with Open (the row's
+   * `onPress`), Copy Link, and Share….
+   */
+  url?: string
+  /** Extra long-press menu items, listed after the link actions. */
+  contextActions?: ContextMenuEntries
+  /** Sent with long-press menu choices. Defaults to `settings_link_row`. */
+  analyticsSurface?: string
   /** When true, dims the row and blocks the press. */
   disabled?: boolean
   /** Optional secondary line under the label (e.g. a reason it's disabled). */
@@ -52,37 +68,87 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   leftIcon,
   leftIconColor,
   leftIconFill,
+  url,
+  contextActions,
+  analyticsSurface = 'settings_link_row',
 }: Props) => {
   const theme = useTheme()
   const layout = useInputLayout()
+  const toast = useToastController()
+
+  const copyLink = async (link: string) => {
+    try {
+      await Clipboard.setStringAsync(link)
+      Haptics.success()
+      toast.show(i18n.t('linkCopied'), { native: true, duration: 2000 })
+    } catch {
+      Haptics.error()
+    }
+  }
+
+  const menuActions: ContextMenuEntries = [
+    ...(url
+      ? [
+          [
+            onPress && {
+              id: 'open',
+              title: i18n.t('open'),
+              systemImage: 'safari' as const,
+              onPress,
+            },
+            {
+              id: 'copy_link',
+              title: i18n.t('copyLink'),
+              systemImage: 'link' as const,
+              onPress: () => void copyLink(url),
+            },
+            {
+              id: 'share',
+              title: i18n.t('shareEllipsis'),
+              systemImage: 'square.and.arrow.up' as const,
+              onPress: () => void shareUrl(url, label).catch(() => {}),
+            },
+          ],
+        ]
+      : []),
+    ...(contextActions ?? []),
+  ]
+  const hasMenu = !disabled && menuActions.length > 0
+
+  // A long-press menu needs non-interactive content, so the row renders as a
+  // plain View inside ContextMenu, which owns both the tap and the long press.
+  const withMenu = (row: React.ReactElement) => (
+    <ContextMenu
+      analyticsSurface={analyticsSurface}
+      accessibilityLabel={label}
+      onPress={() => {
+        Haptics.light()
+        onPress?.()
+      }}
+      actions={menuActions}
+    >
+      {row}
+    </ContextMenu>
+  )
 
   if (layout === 'drawer') {
-    return (
-      <Pressable
-        accessibilityRole='button'
-        accessibilityLabel={label}
-        accessibilityState={{ disabled: !!disabled, selected: !!selected }}
-        disabled={disabled}
-        onPress={(event) => {
-          Haptics.light()
-          onPress?.(event)
-        }}
-        style={({ pressed }) => [
-          {
-            flexDirection: 'row',
-            alignItems: 'center',
-            minHeight: drawerLayout.rowMinHeight,
-            paddingHorizontal: drawerLayout.horizontalPadding,
-            paddingVertical: drawerLayout.rowPaddingVertical,
-            gap: drawerLayout.labelGap,
-            borderRadius: theme.numbers.borderRadiusLg,
-            backgroundColor:
-              pressed || selected ? theme.colors.card : 'transparent',
-            opacity: disabled ? 0.4 : 1,
-          },
-          style,
-        ]}
-      >
+    const drawerRowStyle = (pressed: boolean): StyleProp<ViewStyle> => [
+      {
+        flexDirection: 'row',
+        alignItems: 'center',
+        minHeight: drawerLayout.rowMinHeight,
+        paddingHorizontal: drawerLayout.horizontalPadding,
+        paddingVertical: drawerLayout.rowPaddingVertical,
+        gap: drawerLayout.labelGap,
+        borderRadius: theme.numbers.borderRadiusLg,
+        backgroundColor:
+          pressed || selected ? theme.colors.card : 'transparent',
+        opacity: disabled ? 0.4 : 1,
+      },
+      style,
+    ]
+    const drawerContent = (
+      <>
         {leftIcon && (
           <LucideIcon
             icon={leftIcon}
@@ -114,33 +180,52 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         <View pointerEvents='none' style={{ opacity: 0.6 }}>
           {children}
         </View>
+      </>
+    )
+
+    if (hasMenu) {
+      return withMenu(
+        <View style={drawerRowStyle(false)}>{drawerContent}</View>
+      )
+    }
+
+    return (
+      <Pressable
+        accessibilityRole='button'
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !!disabled, selected: !!selected }}
+        disabled={disabled}
+        onPress={() => {
+          Haptics.light()
+          onPress?.()
+        }}
+        style={({ pressed }) => drawerRowStyle(pressed)}
+      >
+        {drawerContent}
       </Pressable>
     )
   }
 
-  return (
-    <Button
-      noTransform
-      disabled={disabled}
-      style={{
-        flexDirection: 'row',
-        borderColor: theme.colors.border,
-        borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: 10,
-        paddingTop: 10,
-        paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
-        paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
-        minHeight: 56,
-        alignItems: 'center',
-        flexGrow: 0,
-        justifyContent: justifyContent ?? 'space-between',
-        gap: inputLayout.controlGap,
-        opacity: disabled ? 0.4 : 1,
-        ...(selected && { backgroundColor: theme.colors.card }),
-        ...style,
-      }}
-      onPress={onPress}
-    >
+  const rowStyle: ViewStyle = {
+    flexDirection: 'row',
+    borderColor: theme.colors.border,
+    borderBottomWidth: lastInSection ? 0 : 1,
+    paddingBottom: 10,
+    paddingTop: 10,
+    paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+    paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+    minHeight: 56,
+    alignItems: 'center',
+    flexGrow: 0,
+    justifyContent: justifyContent ?? 'space-between',
+    gap: inputLayout.controlGap,
+    opacity: disabled ? 0.4 : 1,
+    ...(selected && { backgroundColor: theme.colors.card }),
+    ...style,
+  }
+
+  const content = (
+    <>
       <View
         style={{
           flexDirection: 'row',
@@ -178,7 +263,20 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           )}
         </View>
       </View>
-      <View style={{ flexShrink: 0, alignItems: 'flex-end' }}>{children}</View>
+      <View
+        pointerEvents={hasMenu ? 'none' : undefined}
+        style={{ flexShrink: 0, alignItems: 'flex-end' }}
+      >
+        {children}
+      </View>
+    </>
+  )
+
+  if (hasMenu) return withMenu(<View style={rowStyle}>{content}</View>)
+
+  return (
+    <Button noTransform disabled={disabled} style={rowStyle} onPress={onPress}>
+      {content}
     </Button>
   )
 }

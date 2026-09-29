@@ -5,7 +5,7 @@ import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
-import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -20,6 +20,7 @@ import {
 } from '@/types/timeEntry'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import CalendarDay from '@/components/CalendarDay'
+import HomeSectionMenu from '@/components/HomeSectionMenu'
 import type { DateData } from 'react-native-calendars'
 
 type Props = {
@@ -119,98 +120,144 @@ const WeekStripTeaser = ({
     onSelectDay?.(moment(day.dateString).toDate())
   }
 
-  return (
-    <Card>
-      <View style={{ gap: 12 }}>
-        <Button onPress={openSchedule} noTransform>
+  const header = (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('sm'),
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        }}
+      >
+        {isCurrentMonth ? i18n.t('thisWeek') : i18n.t('schedule')}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {i18n.t('viewFullSchedule')}
+        </Text>
+        <LucideIcon
+          icon={ChevronRightIcon}
+          size={12}
+          color={theme.colors.textAlt}
+        />
+      </View>
+    </View>
+  )
+
+  const strip = (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 4,
+      }}
+    >
+      {days.map((day) => {
+        const inSelectedMonth = day.isSame(selectedMonth, 'month')
+        const dateString = day.format('YYYY-MM-DD')
+        const dateData: DateData = {
+          year: day.year(),
+          month: day.month() + 1,
+          day: day.date(),
+          timestamp: day.valueOf(),
+          dateString,
+        }
+        return (
           <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
+            key={dateString}
+            style={{ flex: 1, alignItems: 'center', gap: 4 }}
           >
             <Text
               style={{
-                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xs'),
                 color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
+                fontFamily: theme.fonts.medium,
               }}
             >
-              {isCurrentMonth ? i18n.t('thisWeek') : i18n.t('schedule')}
+              {day.format('dd').charAt(0)}
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('viewFullSchedule')}
-              </Text>
-              <IconButton
-                icon={ChevronRightIcon}
-                size={12}
-                iconStyle={{ color: theme.colors.textAlt }}
-              />
-            </View>
+            <CalendarDay
+              date={dateData}
+              state={inSelectedMonth ? '' : 'disabled'}
+              monthsReports={weekReports}
+              onPress={openSelectedDay}
+              height={50}
+              dayPlansOverride={dayPlansOverride}
+              recurringPlansOverride={recurringPlansOverride}
+            />
           </View>
-        </Button>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: 4,
-          }}
-        >
-          {days.map((day) => {
-            const inSelectedMonth = day.isSame(selectedMonth, 'month')
-            const dateString = day.format('YYYY-MM-DD')
-            const dateData: DateData = {
-              year: day.year(),
-              month: day.month() + 1,
-              day: day.date(),
-              timestamp: day.valueOf(),
-              dateString,
-            }
-            return (
-              <View
-                key={dateString}
-                style={{ flex: 1, alignItems: 'center', gap: 4 }}
-              >
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.medium,
-                  }}
-                >
-                  {day.format('dd').charAt(0)}
-                </Text>
-                <CalendarDay
-                  date={dateData}
-                  state={inSelectedMonth ? '' : 'disabled'}
-                  monthsReports={weekReports}
-                  onPress={openSelectedDay}
-                  height={50}
-                  dayPlansOverride={dayPlansOverride}
-                  recurringPlansOverride={recurringPlansOverride}
-                />
-              </View>
-            )
-          })}
+        )
+      })}
+    </View>
+  )
+
+  // Previews (custom `onOpenSchedule`) keep a plain header button.
+  if (onOpenSchedule) {
+    return (
+      <Card>
+        <View style={{ gap: 12 }}>
+          <Button onPress={openSchedule} noTransform>
+            {header}
+          </Button>
+          {strip}
         </View>
-      </View>
-    </Card>
+      </Card>
+    )
+  }
+
+  // The whole card long-presses for the section menu and taps through to
+  // Schedule; each day keeps its own tap and day menu, which win for touches
+  // that land on a day. Not one accessibility element, so the days stay
+  // individually reachable; the header reads as the Schedule button.
+  return (
+    <HomeSectionMenu
+      section='thisWeek'
+      onPress={openSchedule}
+      accessible={false}
+      actions={[
+        {
+          id: 'open_schedule',
+          title: i18n.t('openSchedule'),
+          systemImage: 'calendar',
+          onPress: openSchedule,
+        },
+      ]}
+    >
+      <Card>
+        <View style={{ gap: 12 }}>
+          <View
+            accessible
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t('viewFullSchedule')}
+            accessibilityActions={[{ name: 'activate' }]}
+            onAccessibilityAction={openSchedule}
+          >
+            {header}
+          </View>
+          {strip}
+        </View>
+      </Card>
+    </HomeSectionMenu>
   )
 }
 

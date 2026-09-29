@@ -2,24 +2,15 @@ import {
   getContactInformationFields,
   hasContactInformationValue,
 } from '@/lib/contactInformationFields'
-import {
-  BookOpen as BookOpenIcon,
-  EllipsisVertical as EllipsisVerticalIcon,
-  Plus as PlusIcon,
-  Share as ShareIcon,
-  Star as StarIcon,
-} from 'lucide-react-native'
-import { View, ScrollView, Alert, Pressable } from 'react-native'
-import { shareAsync } from 'expo-sharing'
-import { shareUrl } from '@/lib/share'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BookOpen as BookOpenIcon } from 'lucide-react-native'
+import { Platform, View, ScrollView } from 'react-native'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
-import { deleteHouseholderContact } from '@/stores/householderData'
 import Header from '@/components/ui/layout/Header'
 import CardWithTitle from '@/components/CardWithTitle'
-import { Address, Contact } from '@/types/contact'
+import { Contact } from '@/types/contact'
 import { FlashList } from '@shopify/flash-list'
 import ConversationRow from '@/features/contacts/components/ConversationRow'
 import useConversations from '@/stores/conversationStore'
@@ -28,7 +19,6 @@ import Divider from '@/components/ui/Divider'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import confirmDestructive from '@/lib/confirmDestructive'
 import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
@@ -38,59 +28,31 @@ import { Visit } from '@/types/visit'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '@/components/ui/IconButton'
-import { logger } from '@/lib/logger'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
-import { Sheet } from 'tamagui'
-import AddHistoryActions from '@/features/contacts/components/AddHistoryActions'
-import AddHistoryPopover from '@/features/contacts/components/AddHistoryPopover'
-import {
-  addressToString,
-  coordinateAsString,
-  fetchCoordinateFromAddress,
-  navigateTo,
-} from '@/lib/address'
+import ContextMenu from '@/components/ui/ContextMenu'
 import { usePreferences } from '@/stores/preferences'
-import MapView, { Marker } from 'react-native-maps'
-import useLocation from '@/features/contacts/hooks/useLocation'
-import * as FileSystem from 'expo-file-system/legacy'
-import { useToastController } from '@tamagui/toast'
 import XView from '@/components/ui/layout/XView'
-import { RootStackNavigation } from '@/types/rootStack'
-import { useMarkerColors } from '@/hooks/useMarkerColors'
-import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import { getReadableTextColor, relativeLuminance } from '@/lib/color'
-import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
-import {
-  buildContactShareLink,
-  ContactShareLinkTooLargeError,
-} from '@/features/contacts/lib/contactShareLink'
-import { MenuView, MenuAction } from '@react-native-menu/menu'
-import { isContactDismissed } from '@/lib/dismissedContacts'
 import Avatar, { isRenderableImageValue } from '@/components/ui/Avatar'
 import GenderIcon from '@/features/contacts/components/GenderIcon'
 import { ProfileAvatar } from '@/types/avatar'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import ContactAvatarViewer from '@/features/contacts/components/ContactAvatarViewer'
 import ContactInformationRows from '@/features/contacts/components/ContactInformationRows'
+import ContactAddressRow from '@/features/contacts/components/ContactAddressRow'
+import ContactDetailsActions, {
+  AddVisitMenu,
+  type ContactDetailsNavigation,
+} from '@/features/contacts/components/ContactDetailsActions'
 import useContactHeroBackground from '@/features/contacts/hooks/useContactHeroBackground'
+import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 
 type Props = {
   id: string
   highlightedVisitId?: string
-  navigation: Pick<
-    RootStackNavigation,
-    'navigate' | 'replace' | 'popToTop' | 'setOptions'
-  >
+  navigation: ContactDetailsNavigation
   embedded?: boolean
-}
-
-type ContactExport = {
-  version: '1.0'
-  type: 'witnesswork-contact'
-  exportedAt: string
-  contact: Contact
-  conversations?: Visit[]
 }
 
 const Hero = ({
@@ -103,9 +65,12 @@ const Hero = ({
   isBibleStudy: isActiveBibleStudy,
   hasStudiedPreviously,
   mostRecentStudy,
+  onEdit,
   compact = false,
 }: {
   compact?: boolean
+  /** Opens the contact form, e.g. to change a non-photo avatar. */
+  onEdit: () => void
   contact: Contact
   name: string
   avatar: ProfileAvatar
@@ -126,6 +91,8 @@ const Hero = ({
   // lands and the marker is rewritten to a `file://` URI.
   const isImageAvatar =
     avatar.type === 'image' && isRenderableImageValue(avatar.value)
+  const photo = useContactAvatarActions(contact, isImageAvatar)
+  const avatarSize = compact ? 96 : 134
 
   return (
     <View
@@ -148,24 +115,77 @@ const Hero = ({
         }}
       >
         {isImageAvatar ? (
-          <Pressable
+          <ContextMenu
+            analyticsSurface='contact_avatar'
             onPress={() => setViewerOpen(true)}
-            accessibilityRole='imagebutton'
             accessibilityLabel={i18n.t('profilePicture')}
-            hitSlop={4}
+            actions={[
+              [
+                {
+                  id: 'view',
+                  title: i18n.t('viewPhoto'),
+                  systemImage: 'photo',
+                  onPress: () => setViewerOpen(true),
+                },
+              ],
+              [
+                {
+                  id: 'edit_photo',
+                  title: i18n.t('editPhotoEllipsis'),
+                  systemImage: 'crop',
+                  onPress: () => void photo.edit(),
+                },
+                {
+                  id: 'save',
+                  title: i18n.t('saveToPhotos'),
+                  systemImage: 'square.and.arrow.down',
+                  onPress: () => void photo.save(),
+                },
+                {
+                  id: 'share',
+                  title: i18n.t('shareEllipsis'),
+                  systemImage: 'square.and.arrow.up',
+                  onPress: () => void photo.share(),
+                },
+              ],
+            ]}
           >
             <Avatar
               avatar={avatar}
               name={name}
-              size={compact ? 96 : 134}
+              size={avatarSize}
               background={avatarBackground ?? undefined}
             />
-          </Pressable>
+          </ContextMenu>
+        ) : Platform.OS === 'ios' ? (
+          // The focusable Avatar owns its tap (the morph-to-center preview).
+          // iOS layers the native long-press menu over it; on Android that
+          // tap handler would swallow the long press, so Edit stays in the
+          // More menu there.
+          <ContextMenu
+            analyticsSurface='contact_avatar'
+            actions={[
+              {
+                id: 'edit',
+                title: i18n.t('editEllipsis'),
+                systemImage: 'pencil',
+                onPress: onEdit,
+              },
+            ]}
+          >
+            <Avatar
+              avatar={avatar}
+              name={name}
+              size={avatarSize}
+              focusable
+              background={avatarBackground ?? undefined}
+            />
+          </ContextMenu>
         ) : (
           <Avatar
             avatar={avatar}
             name={name}
-            size={compact ? 96 : 134}
+            size={avatarSize}
             focusable
             background={avatarBackground ?? undefined}
           />
@@ -178,6 +198,7 @@ const Hero = ({
           onClose={() => setViewerOpen(false)}
         />
       )}
+      {isImageAvatar && photo.editor}
       <View
         style={{
           flexDirection: 'row',
@@ -244,167 +265,6 @@ const Hero = ({
   )
 }
 
-const AddressRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme()
-  const [hasTriedToGetCoordinates, setHasTriedToGetCoordinates] =
-    useState(false)
-  const { address } = contact
-  const { updateContact } = useContacts()
-  const { colorScheme, stalenessBreakpoints } = usePreferences()
-  const { conversations } = useConversations()
-  const {
-    incrementGeocodeApiCallCount,
-    defaultNavigationMapProvider,
-    // Fetching a coordinate posts the householder's address to HERE through
-    // the vendor's proxy; in data protection mode the only coordinate a
-    // contact can get is one the user drops by hand.
-    dataProtectionMode,
-  } = usePreferences()
-  const colors = useMarkerColors()
-  const { locationPermission } = useLocation()
-
-  const pinColor = useMemo(
-    () =>
-      stalenessToColor(
-        getContactStaleness(contact!, conversations, stalenessBreakpoints),
-        colors
-      ),
-    [colors, contact, conversations, stalenessBreakpoints]
-  )
-
-  const attemptToGetCoordinates = async () => {
-    setHasTriedToGetCoordinates(true)
-    const position = await fetchCoordinateFromAddress(
-      incrementGeocodeApiCallCount,
-      contact.address
-    )
-    updateContact({
-      ...contact,
-      coordinate: position || undefined,
-    })
-  }
-
-  return (
-    <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('address')}
-      </Text>
-
-      <Button onPress={() => navigateTo(contact, defaultNavigationMapProvider)}>
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <Copyeable
-            text={addressToString(address)}
-            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
-          >
-            {address && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: 5,
-                }}
-              >
-                {Object.keys(address).map((key) => {
-                  if (address[key as keyof Address]) {
-                    return (
-                      <Text key={key}>{address[key as keyof Address]}</Text>
-                    )
-                  }
-                })}
-              </View>
-            )}
-          </Copyeable>
-        </View>
-      </Button>
-      {!dataProtectionMode &&
-      ((contact.coordinate && contact.coordinate.latitude === undefined) ||
-        (contact.coordinate && contact.coordinate.longitude === undefined) ||
-        (contact.coordinate === undefined &&
-          hasTriedToGetCoordinates === false)) ? (
-        <View style={{ gap: 3 }}>
-          <Button onPress={attemptToGetCoordinates}>
-            <Text
-              style={{
-                textDecorationLine: 'underline',
-                color: theme.colors.accent,
-              }}
-            >
-              {i18n.t('fetchCoordinates')}
-            </Text>
-          </Button>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('coordinatesAllowMapView')}
-          </Text>
-        </View>
-      ) : contact.coordinate ? (
-        <>
-          <Copyeable text={coordinateAsString(contact)}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {coordinateAsString(contact)}
-            </Text>
-          </Copyeable>
-          <MapView
-            userInterfaceStyle={colorScheme ? colorScheme : undefined}
-            showsUserLocation={locationPermission}
-            initialRegion={{
-              ...contact.coordinate,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            }}
-            style={{
-              height: 180,
-              width: '100%',
-              borderRadius: theme.numbers.borderRadiusSm,
-            }}
-            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
-          >
-            <Marker
-              identifier={contact.id}
-              // Include pinColor in the key so the marker remounts when its
-              // staleness color changes. react-native-maps only applies
-              // `pinColor` at mount on iOS — without the remount, logging a
-              // conversation never updates the pin tint until reload.
-              key={`${contact.id}-${pinColor}`}
-              coordinate={contact.coordinate}
-              pinColor={pinColor}
-              draggable
-              onDragEnd={(e) =>
-                updateContact({
-                  ...contact,
-                  coordinate: e.nativeEvent.coordinate,
-                  userDraggedCoordinate: true,
-                })
-              }
-            />
-          </MapView>
-        </>
-      ) : null}
-    </View>
-  )
-}
-
 const CreatedAt = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
 
@@ -423,45 +283,6 @@ const CreatedAt = ({ contact }: { contact: Contact }) => {
   )
 }
 
-interface AddSheetProps {
-  sheetOpen: boolean
-  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
-  navigation: Pick<RootStackNavigation, 'navigate' | 'replace'>
-  embedded: boolean
-  contact: Contact
-}
-
-const AddSheet = ({
-  sheetOpen,
-  setSheetOpen,
-  navigation,
-  contact,
-  embedded,
-}: AddSheetProps) => {
-  return (
-    <Sheet
-      open={sheetOpen}
-      onOpenChange={setSheetOpen}
-      dismissOnSnapToBottom
-      snapPoints={[55]}
-      modal
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <View style={{ padding: 30 }}>
-          <AddHistoryActions
-            contactId={contact.id}
-            navigation={navigation}
-            embedded={embedded}
-            onAction={() => setSheetOpen(false)}
-          />
-        </View>
-      </Sheet.Frame>
-    </Sheet>
-  )
-}
-
 const ContactDetailsContent = ({
   id,
   highlightedVisitId,
@@ -474,25 +295,14 @@ const ContactDetailsContent = ({
     contactInformationOrder,
     showContactPhone,
     showContactEmail,
-    /**
-     * A contact share link gzips the whole record — name, address, phone, and
-     * up to 50 visits with their notes — into a URL the vendor's proxy
-     * resolves, and hands it to whoever the recipient forwards it to. CJEU
-     * C-25/17 §45 is explicit that this makes the data accessible to "a
-     * potentially unlimited number of persons". Data protection mode removes
-     * the action entirely; sharing an _address_ to Apple/Google Maps stays,
-     * because that hand-off happens on-device.
-     */
-    dataProtectionMode,
   } = usePreferences()
   const params = { id, highlightedVisitId }
   const insets = useSafeAreaInsets()
-  const { contacts, toggleFavoriteContact, customFieldDefs } = useContacts()
+  const { contacts, customFieldDefs } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
   )
-  const toast = useToastController()
   const { conversations } = useConversations()
   const heroBackground = useContactHeroBackground(contact)
   // Hero tint is user-controllable per contact, so the fixed `textInverse`
@@ -551,204 +361,15 @@ const ContactDetailsContent = ({
     [contactConversations]
   )
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
-
-  const contactMenuActions = useMemo<MenuAction[]>(() => {
-    const actions: MenuAction[] = [
-      {
-        id: 'edit',
-        title: i18n.t('edit'),
-        image: 'pencil',
-        imageColor: '#000000',
-      },
-    ]
-    if (contact && !isContactDismissed(contact)) {
-      actions.push({
-        id: 'dismiss',
-        title: i18n.t('dismiss'),
-        image: 'clock',
-        imageColor: '#000000',
+  const editContact = () => {
+    if (embedded)
+      navigation.navigate('Contact Form', {
+        id: params.id,
+        edit: true,
+        returnToContacts: true,
       })
-    }
-    actions.push({
-      id: 'delete',
-      title: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      image: dataProtectionMode ? 'trash' : 'archivebox',
-      imageColor: theme.colors.error,
-      attributes: { destructive: true },
-    })
-    return actions
-  }, [contact, theme.colors.error, dataProtectionMode])
-
-  const handleContactMenuAction = useCallback(
-    (action: string) => {
-      if (!contact) return
-      switch (action) {
-        case 'edit':
-          if (embedded)
-            navigation.navigate('Contact Form', {
-              id: contact.id,
-              edit: true,
-              returnToContacts: true,
-            })
-          else
-            navigation.replace('Contact Form', { id: contact.id, edit: true })
-          break
-        case 'dismiss':
-          setDismissSheetOpen(true)
-          break
-        case 'delete':
-          confirmDestructive({
-            title: i18n.t(
-              dataProtectionMode
-                ? 'permanentlyDelete'
-                : 'archiveContact_question'
-            ),
-            description: i18n.t(
-              dataProtectionMode
-                ? 'permanentlyDeleteContact_warning'
-                : 'archiveContact_description'
-            ),
-            confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-            onConfirm: () => {
-              deleteHouseholderContact(contact.id)
-              toast.show(i18n.t('success'), {
-                message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
-                native: true,
-              })
-              if (!embedded) navigation.popToTop()
-            },
-          })
-          break
-      }
-    },
-    [contact, navigation, toast, embedded, dataProtectionMode]
-  )
-
-  const shareContactAsFile = useCallback(async () => {
-    if (!contact) return
-    // Drop per-device image avatar URIs — same policy as the universal-link
-    // share (see contactShareLink.ts CONTACT_POLICY.avatar). The file path
-    // points inside this device's FileSystem.documentDirectory and would be
-    // dead on the recipient's device.
-    let exportContact: Contact = contact
-    if (contact.avatar?.type === 'image') {
-      exportContact = { ...contact }
-      delete exportContact.avatar
-    }
-
-    const exportData: ContactExport = {
-      version: '1.0',
-      type: 'witnesswork-contact',
-      exportedAt: moment().toISOString(),
-      contact: exportContact,
-    }
-
-    if (contactConversations.length > 0) {
-      exportData.conversations = contactConversations.sort((a, b) =>
-        moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-      )
-    }
-
-    const jsonString = JSON.stringify(exportData, null, 2)
-    const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
-    const timestamp = moment().format('YYYY-MM-DD')
-    const fileName = `${sanitizedName}_${timestamp}.witnesswork`
-    // Cache dir (not document dir): iOS share-sheet attachments are passed by
-    // reference, so we can't delete the file immediately after `Share.share`
-    // resolves without blanking the iMessage attachment. Cache is purged by
-    // the OS when needed.
-    const fileUri = `${FileSystem.cacheDirectory}${fileName}`
-
-    try {
-      await FileSystem.writeAsStringAsync(fileUri, jsonString)
-      await shareAsync(fileUri, {
-        mimeType: 'application/witnesswork+json',
-        UTI: 'com.leviwilkerson.witnesswork.contact',
-        dialogTitle: i18n.t('exportContact'),
-      })
-    } catch (error) {
-      logger.error('Error sharing contact file:', error)
-      Alert.alert(
-        i18n.t('shareContactFileFailed_title'),
-        i18n.t('shareContactFileFailed_description')
-      )
-    }
-  }, [contact, contactConversations])
-
-  const handleExportContact = useCallback(async () => {
-    if (!contact) return
-
-    // Primary path: share a universal link. Tapping it on a device with the
-    // app installed opens straight into the Contact Details screen; iOS
-    // without the app falls through to the ww-proxy fallback HTML (App Store
-    // CTA). Google-Maps-style "tap the bubble, open the app".
-    try {
-      const { url, includedConversations, trimmed } = buildContactShareLink(
-        contact,
-        contactConversations,
-        customFieldDefs
-      )
-      logger.log('[ContactShareLink] generated url =', url)
-      logger.log('[ContactShareLink] length =', url.length, 'bytes')
-      // Pass the URL as `url` (not embedded in `message`) so iOS fetches
-      // Open Graph metadata from the ww-proxy fallback page and renders a
-      // rich link preview in the share sheet + iMessage bubble. Passing
-      // both fields causes some targets to duplicate the URL.
-      await shareUrl(url, i18n.t('exportContact'))
-      if (trimmed) {
-        toast.show(i18n.t('shareContact'), {
-          message: i18n.t('shareContactTrimmed', {
-            included: includedConversations,
-            total: contactConversations.length,
-          }),
-          native: true,
-        })
-      }
-      return
-    } catch (error) {
-      if (error instanceof ContactShareLinkTooLargeError) {
-        // Surface the situation explicitly: file export only works for
-        // recipients who already have the app, unlike the universal link
-        // which falls back to an App Store CTA. The user needs to make that
-        // tradeoff themselves rather than us silently degrading.
-        logger.log(
-          '[ContactShareLink] payload too large, prompting user',
-          error.bareUrlBytes,
-          '/',
-          error.maxUrlBytes
-        )
-        Alert.alert(
-          i18n.t('shareContactTooLarge_title'),
-          i18n.t('shareContactTooLarge_description'),
-          [
-            { text: i18n.t('cancel'), style: 'cancel' },
-            {
-              text: i18n.t('shareContactTooLarge_shareAsFile'),
-              onPress: () => {
-                void shareContactAsFile()
-              },
-            },
-          ]
-        )
-        return
-      }
-      // Unexpected error from link build — surface it the same way so the
-      // user isn't left wondering why nothing happened.
-      logger.error('Unexpected error building contact share link:', error)
-      Alert.alert(
-        i18n.t('shareContactFileFailed_title'),
-        i18n.t('shareContactFileFailed_description')
-      )
-    }
-  }, [
-    contact,
-    contactConversations,
-    customFieldDefs,
-    toast,
-    shareContactAsFile,
-  ])
+    else navigation.replace('Contact Form', { id: params.id, edit: true })
+  }
 
   useEffect(() => {
     if (embedded) return
@@ -760,85 +381,22 @@ const ContactDetailsContent = ({
           buttonType='back'
           foregroundColor={heroForeground}
           rightElement={
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 20,
-                position: 'absolute',
-                right: 0,
-              }}
-            >
-              <MenuView
-                actions={contactMenuActions}
-                onPressAction={({ nativeEvent }) =>
-                  handleContactMenuAction(nativeEvent.event)
-                }
-              >
-                <IconButton
-                  icon={EllipsisVerticalIcon}
+            contact ? (
+              <View style={{ position: 'absolute', right: 0 }}>
+                <ContactDetailsActions
+                  contact={contact}
+                  navigation={navigation}
+                  embedded={false}
                   color={heroForeground}
                 />
-              </MenuView>
-
-              <IconButton
-                icon={StarIcon}
-                color={heroForeground}
-                fill={contact?.isFavorite ? heroForeground : 'none'}
-                onPress={() => {
-                  if (contact) {
-                    toggleFavoriteContact(contact.id)
-                  }
-                }}
-              />
-
-              {!dataProtectionMode && (
-                <IconButton
-                  icon={ShareIcon}
-                  color={heroForeground}
-                  onPress={handleExportContact}
-                />
-              )}
-
-              <Button onPress={() => setSheetOpen(true)}>
-                <XView
-                  style={{
-                    borderColor: heroForeground,
-                    borderWidth: 1,
-                    paddingVertical: 5,
-                    paddingHorizontal: 10,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                  }}
-                >
-                  <IconButton
-                    iconStyle={{ color: heroForeground }}
-                    icon={PlusIcon}
-                  />
-                  <Text style={{ color: heroForeground }}>{i18n.t('add')}</Text>
-                </XView>
-              </Button>
-            </View>
+              </View>
+            ) : undefined
           }
           backgroundColor={heroBackground}
         />
       ),
     })
-  }, [
-    contact,
-    contact?.id,
-    contact?.isFavorite,
-    contactMenuActions,
-    dataProtectionMode,
-    embedded,
-    handleContactMenuAction,
-    handleExportContact,
-    heroBackground,
-    heroForeground,
-    navigation,
-    params.id,
-    theme.numbers.borderRadiusSm,
-    toggleFavoriteContact,
-  ])
+  }, [contact, embedded, heroBackground, heroForeground, navigation])
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -907,37 +465,11 @@ const ContactDetailsContent = ({
             backgroundColor: heroBackground,
           }}
         >
-          <MenuView
-            actions={contactMenuActions}
-            onPressAction={({ nativeEvent }) =>
-              handleContactMenuAction(nativeEvent.event)
-            }
-          >
-            <IconButton
-              icon={EllipsisVerticalIcon}
-              color={heroForeground}
-              accessibilityLabel={i18n.t('edit')}
-            />
-          </MenuView>
-          <IconButton
-            icon={StarIcon}
-            accessibilityLabel={i18n.t('contacts_field_isFavorite')}
-            color={heroForeground}
-            fill={contact.isFavorite ? heroForeground : 'none'}
-            onPress={() => toggleFavoriteContact(contact.id)}
-          />
-          {!dataProtectionMode && (
-            <IconButton
-              icon={ShareIcon}
-              color={heroForeground}
-              onPress={handleExportContact}
-              accessibilityLabel={i18n.t('share')}
-            />
-          )}
-          <AddHistoryPopover
-            contactId={contact.id}
+          <ContactDetailsActions
+            contact={contact}
             navigation={navigation}
-            foregroundColor={heroForeground}
+            embedded
+            color={heroForeground}
           />
         </View>
       )}
@@ -974,6 +506,7 @@ const ContactDetailsContent = ({
             avatarBackground={contact.avatarBackground}
             heroBackground={heroBackground}
             heroForeground={heroForeground}
+            onEdit={editContact}
           />
           {developerTools && (
             <JsonViewer label={i18n.t('data')} value={contact} />
@@ -985,7 +518,9 @@ const ContactDetailsContent = ({
               style={{ margin: 20 }}
             >
               <View style={{ gap: 15 }}>
-                {(hasAddress || coordinate) && <AddressRow contact={contact} />}
+                {(hasAddress || coordinate) && (
+                  <ContactAddressRow contact={contact} />
+                )}
                 <ContactInformationRows contact={contact} />
                 {!hasAddress && !coordinate && !hasInformation && (
                   <Text>{i18n.t('noPersonalInformationSaved')}</Text>
@@ -1008,38 +543,13 @@ const ContactDetailsContent = ({
                 >
                   {i18n.t('conversationHistory')}
                 </Text>
-                {embedded ? (
-                  <AddHistoryPopover
-                    contactId={contact.id}
-                    navigation={navigation}
-                  />
-                ) : (
-                  <Button onPress={() => setSheetOpen(true)}>
-                    <XView
-                      style={{
-                        borderColor: theme.colors.text,
-                        borderWidth: 1,
-                        paddingVertical: 5,
-                        paddingHorizontal: 10,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                      }}
-                    >
-                      <IconButton
-                        iconStyle={{ color: theme.colors.text }}
-                        icon={PlusIcon}
-                        size={'sm'}
-                      />
-                      <Text
-                        style={{
-                          color: theme.colors.text,
-                          fontSize: theme.fontSize('sm'),
-                        }}
-                      >
-                        {i18n.t('add')}
-                      </Text>
-                    </XView>
-                  </Button>
-                )}
+                <AddVisitMenu
+                  contactId={contact.id}
+                  navigation={navigation}
+                  embedded={embedded}
+                  color={theme.colors.text}
+                  compact
+                />
               </XView>
               <View style={{ minHeight: 2 }}>
                 <FlashList
@@ -1097,18 +607,6 @@ const ContactDetailsContent = ({
           />
         </Wrapper>
       </ScrollView>
-      <AddSheet
-        embedded={embedded}
-        contact={contact}
-        navigation={navigation}
-        setSheetOpen={setSheetOpen}
-        sheetOpen={sheetOpen}
-      />
-      <DismissContactSheet
-        open={dismissSheetOpen}
-        setOpen={setDismissSheetOpen}
-        contact={contact}
-      />
     </View>
   )
 }

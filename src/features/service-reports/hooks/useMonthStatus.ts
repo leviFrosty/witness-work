@@ -8,7 +8,7 @@ import {
 import { roleForMonth } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 
-export type MonthStatusSource = 'month_card' | 'history_editor'
+export type MonthStatusSource = 'month_card' | 'year_tab' | 'history_editor'
 
 /** One month's status (Role History) plus a setter that records analytics. */
 const useMonthStatus = (target: CalendarMonth) => {

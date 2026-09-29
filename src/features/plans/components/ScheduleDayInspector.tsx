@@ -43,7 +43,7 @@ export default function ScheduleDayInspector({
         onAddTime={() => navigation.navigate('Add Time', { date: dateString })}
         onPlanDay={() => navigation.navigate('PlanDay', { date: dateString })}
       />
-      <BuddyPlansForDay date={date} />
+      <BuddyPlansForDay date={date} onNavigate={(go) => go()} />
     </Card>
   )
 }

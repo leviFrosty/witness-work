@@ -12,11 +12,10 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Alert, Keyboard, ScrollView, Share, View } from 'react-native'
+import { Alert, Keyboard, ScrollView, View } from 'react-native'
 import { TextArea } from 'tamagui'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
@@ -40,11 +39,10 @@ import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'
-import useMonthReportData from '@/features/service-reports/hooks/useMonthReportData'
-import {
-  buildHourglassLink,
-  buildNwPublisherLink,
-} from '@/features/service-reports/lib/submitLinks'
+import useMonthReportData, {
+  type MonthReportData,
+} from '@/features/service-reports/hooks/useMonthReportData'
+import { exportMonthReport } from '@/features/service-reports/lib/monthReportExport'
 import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
 import {
   buildReportMonthMenu,
@@ -52,7 +50,6 @@ import {
   parseReportMonthId,
 } from '@/features/service-reports/lib/reportMonthMenu'
 import useServiceReport from '@/stores/serviceReport'
-import { openURL } from '@/lib/links'
 import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
 import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
@@ -272,62 +269,14 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   }, [clearReportCommentOverride, reportMonthKey])
 
   const handleShareAction = useCallback(
-    async (action: string) => {
-      if (action === 'copy') {
-        await Clipboard.setStringAsync(data.reportAsString())
-        analytics.capture('service_report_exported', { method: 'copy' })
-        confirmSubmission()
-        return
-      }
-      if (action === 'share') {
-        const result = await Share.share({ message: data.reportAsString() })
-        analytics.capture(
-          result.action === Share.sharedAction
-            ? 'service_report_exported'
-            : 'service_report_export_dismissed',
-          { method: 'share' }
-        )
-        if (result.action === Share.sharedAction) confirmSubmission()
-        return
-      }
-
-      // NW Publisher has a separate credit field, so its default remark only
-      // needs the overage. Hourglass carries the credit breakdown in remarks.
-      const remarks = data.hasNotesOverride
-        ? data.notes || undefined
-        : data.creditOverageHours > 0
-          ? i18n.t('creditOverageInTheAmountOf', {
-              count: data.creditOverageHours,
-            })
-          : undefined
-
-      if (action === 'hourglass') {
-        analytics.capture('service_report_export_requested', {
-          method: 'hourglass',
-        })
-        await openURL(
-          buildHourglassLink({
-            month: month + 1,
-            year,
-            ...data.hourglassReport,
-          })
-        )
-        confirmSubmission()
-      } else if (action === 'nwpublisher' && data.isLastMonth) {
-        analytics.capture('service_report_export_requested', {
-          method: 'nwpublisher',
-        })
-        await openURL(
-          buildNwPublisherLink({
-            sharedInMinistry: data.sharedInMinistry,
-            hours: data.showHours ? data.hours : undefined,
-            credit: data.credit,
-            bibleStudies: data.studies,
-            remarks,
-          })
-        )
-        confirmSubmission()
-      }
+    async (action: ReportExportMethod, report: MonthReportData = data) => {
+      const sent = await exportMonthReport(
+        action,
+        report,
+        { month, year },
+        'report_screen'
+      )
+      if (sent) confirmSubmission()
     },
     [confirmSubmission, data, month, year]
   )

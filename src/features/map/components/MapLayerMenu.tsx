@@ -33,6 +33,7 @@ export default function MapLayerMenu({
       }}
     >
       <Button
+        accessibilityRole='button'
         accessibilityLabel={i18n.t('map_chooseLayer')}
         accessibilityValue={{ text: i18n.t(`map_layer_${value}`) }}
         variant='glass'

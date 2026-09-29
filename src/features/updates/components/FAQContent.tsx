@@ -5,13 +5,17 @@ import {
   Search as SearchIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Image, View } from 'react-native'
+import { Image, Share, View } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
+import { useToastController } from '@tamagui/toast'
 import { Input, InputProps } from 'tamagui'
 import Text from '@/components/ui/MyText'
 import Accordion from '@/components/ui/Accordion'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
+import ContextMenu from '@/components/ui/ContextMenu'
+import { errorTracking } from '@/lib/errorTracking'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import links from '@/constants/links'
@@ -77,6 +81,16 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
   const theme = useTheme()
   const question = i18n.t(`faq_${entry.id}_q` as TranslationKey)
   const answer = i18n.t(`faq_${entry.id}_a` as TranslationKey)
+  const toast = useToastController()
+
+  const copyAnswer = async () => {
+    try {
+      await Clipboard.setStringAsync(answer)
+      toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+    } catch (error) {
+      errorTracking.captureException(error)
+    }
+  }
 
   return (
     <Accordion
@@ -102,7 +116,28 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
       }
     >
       <View style={{ gap: 12 }}>
-        <Text style={{ lineHeight: 22 }}>{answer}</Text>
+        <ContextMenu
+          analyticsSurface='faq_answer'
+          actions={[
+            {
+              id: 'copy_answer',
+              title: i18n.t('copyAnswer'),
+              systemImage: 'doc.on.doc',
+              onPress: () => void copyAnswer(),
+            },
+            {
+              id: 'share',
+              title: i18n.t('shareEllipsis'),
+              systemImage: 'square.and.arrow.up',
+              onPress: () =>
+                void Share.share({ message: `${question}\n\n${answer}` }).catch(
+                  () => {}
+                ),
+            },
+          ]}
+        >
+          <Text style={{ lineHeight: 22 }}>{answer}</Text>
+        </ContextMenu>
         {entry.id === 'reportBug' && <ReportLinks />}
       </View>
     </Accordion>

@@ -895,6 +895,15 @@ export const PREFERENCE_DEFAULTS = {
    * re-emerging once any input changes.
    */
   hasDismissedRecommendationHash: undefined as string | undefined,
+  /**
+   * Follow-ups showing on each Home follow-up card (Missed / Approaching) when
+   * the user closed it, as `followUpCardKey`s. The card stays hidden while it
+   * would only show those follow-ups, and returns once a new or rescheduled one
+   * enters it. Syncable — dismissal is user intent.
+   */
+  dismissedFollowUpCards: {} as Partial<
+    Record<'missed' | 'approaching', string[]>
+  >,
 }
 
 /**

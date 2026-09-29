@@ -1,131 +1,127 @@
+import type { ReactElement, ReactNode } from 'react'
 import {
+  StyleSheet,
   View,
-  GestureResponderEvent,
-  TextProps,
-  Pressable,
-  ViewProps,
+  type StyleProp,
+  type TextProps,
+  type ViewStyle,
 } from 'react-native'
-import Haptics from '@/lib/haptics'
 import * as Clipboard from 'expo-clipboard'
-import { PropsWithChildren, useContext, useState } from 'react'
+import { useToastController } from '@tamagui/toast'
+
+import ContextMenu, {
+  type ContextMenuAction,
+  type ContextMenuEntries,
+} from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
+import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
-import { ThemeContext } from '@/contexts/theme'
 
-const AnimatedView = Animated.createAnimatedComponent(View)
+/**
+ * Builds a Copy menu item: copies the text, confirms with a haptic and a
+ * "Copied!" toast. For menus that mix Copy with other actions in a specific
+ * order (e.g. Call, Message, Copy).
+ */
+export function useCopyAction() {
+  const toast = useToastController()
 
-interface Props extends ViewProps {
-  textProps?: TextProps
-  text?: string
-  onPress?: (event: GestureResponderEvent) => void
+  return (
+    text: string,
+    {
+      id = 'copy',
+      title = i18n.t('copy'),
+    }: { id?: string; title?: string } = {}
+  ): ContextMenuAction => ({
+    id,
+    title,
+    systemImage: 'doc.on.doc',
+    onPress: () => {
+      void Clipboard.setStringAsync(text).then(
+        () => {
+          Haptics.success().catch(() => {})
+          toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+        },
+        () => {
+          Haptics.error().catch(() => {})
+        }
+      )
+    },
+  })
 }
 
-const Copyeable: React.FC<PropsWithChildren<Props>> = ({
+/**
+ * Breathing room for content that iOS lifts out on long press: the lifted view
+ * is exactly the trigger, so text flush with its edges gets clipped. `inset`
+ * pads the content and `outset` (on the `ContextMenu`) cancels it with equal
+ * negative margins, so the resting layout doesn't move.
+ */
+export const liftedContent = StyleSheet.create({
+  outset: { marginHorizontal: -8, marginVertical: -4 },
+  inset: { paddingHorizontal: 8, paddingVertical: 4 },
+})
+
+interface Props {
+  children: ReactNode
+  /**
+   * Props for the Text rendered when `children` is a string. Press handlers
+   * belong on `onPress`: the content stays non-interactive so the long press
+   * reaches the menu.
+   */
+  textProps?: Omit<TextProps, 'onPress' | 'onLongPress'>
+  /** What Copy puts on the clipboard. Defaults to string `children`. */
+  text?: string
+  /** Tap action, e.g. call a phone number. */
+  onPress?: () => void
+  /** Extra menu items after Copy, e.g. Navigate for an address. */
+  actions?: ContextMenuEntries
+  /** Sent with chosen items as `context_menu_action`. */
+  analyticsSurface?: string
+  accessibilityLabel?: string
+  preview?: ReactElement
+  /** Outer style. Its margins replace the lift padding's negative margins. */
+  style?: StyleProp<ViewStyle>
+}
+
+/**
+ * Text (or content) whose long-press menu offers Copy, plus any caller actions.
+ * Built on `ContextMenu`, so it must not sit inside another `ContextMenu` —
+ * fold a Copy item into that menu instead (`useCopyAction`).
+ */
+const Copyeable = ({
   children,
   textProps,
   text,
   onPress,
-  ...props
-}) => {
-  const theme = useContext(ThemeContext)
-  const [showOverlay, setShowOverlay] = useState(false)
-  const opacity = useSharedValue(0)
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }))
+  actions = [],
+  analyticsSurface = 'copyable',
+  accessibilityLabel,
+  preview,
+  style,
+}: Props) => {
+  const copyAction = useCopyAction()
+  const copyText = text ?? (typeof children === 'string' ? children : '')
 
-  const handleLongPress = async (event: GestureResponderEvent) => {
-    Haptics.success()
-    if (text || typeof children === 'string') {
-      setShowOverlay(true)
-      opacity.value = withTiming(1, {
-        duration: 150,
-        easing: Easing.in(Easing.quad),
-      })
-      await Clipboard.setStringAsync(text || (children as string)).then(() => {
-        setTimeout(() => {
-          opacity.value = withTiming(0, {
-            duration: 150,
-            easing: Easing.out(Easing.quad),
-          })
-        }, 1300)
-        setTimeout(() => {
-          setShowOverlay(false)
-        }, 1500)
-      })
-    }
-    textProps?.onLongPress?.(event)
-  }
   return (
-    <View
-      style={[
-        [
-          {
-            position: 'relative',
-          },
-        ],
-        [props.style],
-      ]}
-      {...props}
+    <ContextMenu
+      actions={[[copyText ? copyAction(copyText) : null], ...actions]}
+      analyticsSurface={analyticsSurface}
+      onPress={onPress}
+      accessibilityLabel={
+        accessibilityLabel ??
+        (typeof children === 'string' ? children : undefined)
+      }
+      preview={preview}
+      style={[liftedContent.outset, style]}
     >
-      {typeof children === 'string' ? (
-        <Text onLongPress={handleLongPress} {...textProps}>
-          {children}
-        </Text>
-      ) : (
-        <Pressable onLongPress={handleLongPress} onPress={onPress}>
-          {children}
-        </Pressable>
-      )}
-      {showOverlay && (
-        <AnimatedView
-          style={[
-            {
-              position: 'absolute',
-              top: -40,
-              left: 0,
-              backgroundColor: theme.colors.backgroundLighter,
-              shadowColor: theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: theme.numbers.shadowOpacity,
-              paddingHorizontal: 10,
-              paddingVertical: 10,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              borderRadius: theme.numbers.borderRadiusLg,
-            },
-            overlayStyle,
-          ]}
-        >
-          <Text style={{ fontSize: theme.fontSize('sm') }}>
-            {i18n.t('copied')}
-          </Text>
-          {/* Cover the container border at the join; outline only the exposed edges. */}
-          <View
-            pointerEvents='none'
-            style={{
-              position: 'absolute',
-              left: '50%',
-              bottom: -6,
-              marginLeft: -6,
-              width: 12,
-              height: 12,
-              backgroundColor: theme.colors.backgroundLighter,
-              borderRightWidth: 1,
-              borderBottomWidth: 1,
-              borderColor: theme.colors.border,
-              transform: [{ rotate: '45deg' }],
-            }}
-          />
-        </AnimatedView>
-      )}
-    </View>
+      <View style={liftedContent.inset}>
+        {typeof children === 'string' ? (
+          <Text {...textProps}>{children}</Text>
+        ) : (
+          children
+        )}
+      </View>
+    </ContextMenu>
   )
 }
+
 export default Copyeable

@@ -4,6 +4,7 @@ import {
   Pressable,
   PressableProps,
   StyleSheet,
+  View,
   ViewStyle,
 } from 'react-native'
 import Haptics from '@/lib/haptics'
@@ -274,7 +275,63 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   )
 }
 
+/**
+ * A Button with nothing to do: same surface, but a plain View, so it doesn't
+ * dim, shift, take the touch, or read as tappable. Covers containers styled
+ * like buttons (e.g. empty-state blocks) and triggers whose press is handled
+ * natively by a wrapper (e.g. a `MenuView`).
+ */
+const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
+  children,
+  style,
+  variant,
+  glassTint,
+  glassColorScheme,
+  noTransform: _noTransform,
+  hitSlop: _hitSlop,
+  ...props
+}) => {
+  const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
+  const resolvedGlassColorScheme = useGlassColorScheme()
+  const resolvedStyle =
+    typeof style === 'function' ? style({ pressed: false }) : style
+  const glassBorderRadius = isGlass
+    ? StyleSheet.flatten([baseStyle, resolvedStyle as ViewStyle]).borderRadius
+    : undefined
+
+  return (
+    <View
+      // Labelled triggers (e.g. a MenuView's button) stay one accessible
+      // element; plain containers let their content be read as-is.
+      accessible={
+        props.accessibilityLabel != null || props.accessibilityRole != null
+      }
+      {...props}
+      style={[baseStyle, resolvedStyle as ViewStyle]}
+    >
+      {isGlass && (
+        <GlassView
+          pointerEvents='none'
+          glassEffectStyle='regular'
+          tintColor={glassTint}
+          colorScheme={glassColorScheme ?? resolvedGlassColorScheme}
+          style={[StyleSheet.absoluteFill, { borderRadius: glassBorderRadius }]}
+        />
+      )}
+      {children}
+    </View>
+  )
+}
+
 const Button: React.FC<PropsWithChildren<ButtonProps>> = (props) => {
+  if (
+    !props.onPress &&
+    !props.onLongPress &&
+    !props.onPressIn &&
+    !props.onPressOut
+  ) {
+    return <InertButton {...props} />
+  }
   if (props.noTransform) {
     return <PlainButton {...props} />
   }

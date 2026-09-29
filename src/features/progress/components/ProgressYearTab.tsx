@@ -1,6 +1,6 @@
 import { CalendarCheck as TodayIcon } from 'lucide-react-native'
-import { useMemo } from 'react'
-import { Pressable, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { View } from 'react-native'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
@@ -33,6 +33,14 @@ import { useCardStyle } from '@/components/ui/Card'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import { serviceYearFocusMonth } from '@/lib/roleHistory'
 import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
+import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
+import MonthStatusGoalSheets from '@/features/service-reports/components/MonthStatusGoalSheets'
+import {
+  monthEditTargets,
+  type MonthEditTarget,
+} from '@/features/service-reports/lib/monthEditTargets'
+import MonthSummaryPreview from '@/features/service-reports/components/MonthSummaryPreview'
+import ContextMenu from '@/components/ui/ContextMenu'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -97,7 +105,8 @@ const RowBadge = ({ label }: { label: string }) => {
 
 /**
  * One row per month in the service year. Compact single-liner matching the
- * wireframe: `{MMM} {hours}h {+delta}`. Tap → Month tab for that month.
+ * wireframe: `{MMM} {hours}h {+delta}`. Tap → Month tab for that month;
+ * long-press → the month's report preview and actions.
  */
 const MonthRow = ({
   month,
@@ -105,23 +114,31 @@ const MonthRow = ({
   isCurrent,
   isFuture,
   onPress,
+  onEdit,
 }: {
   month: number
   year: number
   isCurrent: boolean
   isFuture: boolean
   onPress: () => void
+  onEdit: (target: MonthEditTarget) => void
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
+  const navigation = useNavigation<RootStackNavigation>()
+  const { reportMenuItems } = useMonthReportExport()
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
-  const { type: role } = usePublisher({ month, year })
+  const { type: role, showsTimeEntry } = usePublisher({ month, year })
   const monthStatus = useMonthStatus({ month, year })
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
 
-  const { effectiveGoalHours: goalHours, isOverridden } = useMonthlyGoal({
+  const {
+    baseGoalHours,
+    effectiveGoalHours: goalHours,
+    isOverridden,
+  } = useMonthlyGoal({
     month,
     year,
   })
@@ -187,82 +204,133 @@ const MonthRow = ({
         : theme.colors.warn
 
   const monthYearLabel = moment().month(month).year(year).format('MMMM, YYYY')
+  const editable = monthEditTargets({ month, year, baseGoalHours })
 
   return (
-    <Pressable
+    <ContextMenu
+      analyticsSurface='progress_month_row'
       onPress={onPress}
-      accessibilityRole='button'
-      style={({ pressed }) => ({
-        ...cardStyle,
-        opacity: pressed ? 0.6 : 1,
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-      })}
+      accessibilityLabel={monthYearLabel}
+      preview={
+        <MonthSummaryPreview
+          month={month}
+          year={year}
+          completedMinutes={completedMinutes}
+          goalMinutes={goalMinutes}
+          statusLabel={monthStatus.label}
+          showsTime={showsTimeEntry}
+          sharedInMinistry={monthsReports.length > 0}
+        />
+      }
+      actions={[
+        [
+          {
+            id: 'view_report',
+            title: i18n.t('viewReport'),
+            systemImage: 'doc.text',
+            onPress: () =>
+              navigation.navigate('ServiceReportView', { month, year }),
+          },
+          !isFuture &&
+            showsTimeEntry && {
+              id: 'add_time',
+              title: i18n.t('addTime'),
+              systemImage: 'plus',
+              onPress: () =>
+                navigation.navigate('Add Time', {
+                  date: moment().month(month).year(year).toISOString(),
+                }),
+            },
+        ],
+        !isFuture && reportMenuItems(month, year),
+        [
+          editable.status && {
+            id: 'change_status',
+            title: i18n.t('changeStatusEllipsis'),
+            systemImage: 'person.crop.circle',
+            onPress: () => onEdit('status'),
+          },
+          editable.goal && {
+            id: 'change_goal',
+            title: i18n.t('changeGoalEllipsis'),
+            systemImage: 'target',
+            onPress: () => onEdit('goal'),
+          },
+        ],
+      ]}
     >
-      <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ gap: 4, flex: 1, minWidth: 0 }}>
-          <XView style={{ gap: 8 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('md'),
-                color: theme.colors.text,
-                flexShrink: 1,
-              }}
-            >
-              {monthYearLabel}
-            </Text>
-            {isCurrent ? <CurrentMonthIcon /> : null}
-          </XView>
-          {isOverridden || monthStatus.isDifferent ? (
-            <XView style={{ gap: 6, flexWrap: 'wrap' }}>
-              {monthStatus.isDifferent ? (
-                <RowBadge label={monthStatus.label} />
-              ) : null}
-              {isOverridden ? (
-                <RowBadge
-                  label={i18n.t('monthGoalEditor.goalBadge', {
-                    goal: goalDisplay.formatted,
-                  })}
-                />
-              ) : null}
+      <View
+        style={{
+          ...cardStyle,
+          paddingHorizontal: 15,
+          paddingVertical: 12,
+        }}
+      >
+        <XView style={{ justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ gap: 4, flex: 1, minWidth: 0 }}>
+            <XView style={{ gap: 8 }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('md'),
+                  color: theme.colors.text,
+                  flexShrink: 1,
+                }}
+              >
+                {monthYearLabel}
+              </Text>
+              {isCurrent ? <CurrentMonthIcon /> : null}
             </XView>
-          ) : null}
-        </View>
-        <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: hasActivity ? theme.colors.text : theme.colors.textAlt,
-              letterSpacing: -0.3,
-              flex: 1,
-              minWidth: 0,
-              textAlign: 'right',
-            }}
-          >
-            {showFuturePlanned
-              ? plannedDisplay.formatted
-              : completedDisplay.formatted}
-          </Text>
-          {showDelta ? (
+            {isOverridden || monthStatus.isDifferent ? (
+              <XView style={{ gap: 6, flexWrap: 'wrap' }}>
+                {monthStatus.isDifferent ? (
+                  <RowBadge label={monthStatus.label} />
+                ) : null}
+                {isOverridden ? (
+                  <RowBadge
+                    label={i18n.t('monthGoalEditor.goalBadge', {
+                      goal: goalDisplay.formatted,
+                    })}
+                  />
+                ) : null}
+              </XView>
+            ) : null}
+          </View>
+          <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
-                color: deltaColor,
+                color: hasActivity ? theme.colors.text : theme.colors.textAlt,
                 letterSpacing: -0.3,
                 flex: 1,
                 minWidth: 0,
                 textAlign: 'right',
               }}
             >
-              {deltaLabel}
+              {showFuturePlanned
+                ? plannedDisplay.formatted
+                : completedDisplay.formatted}
             </Text>
-          ) : (
-            <View style={{ flex: 1 }} />
-          )}
+            {showDelta ? (
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  color: deltaColor,
+                  letterSpacing: -0.3,
+                  flex: 1,
+                  minWidth: 0,
+                  textAlign: 'right',
+                }}
+              >
+                {deltaLabel}
+              </Text>
+            ) : (
+              <View style={{ flex: 1 }} />
+            )}
+          </XView>
         </XView>
-      </XView>
-    </Pressable>
+      </View>
+    </ContextMenu>
   )
 }
 
@@ -282,6 +350,12 @@ const ProgressYearTab = ({
   const { hasSidebar } = useAdaptiveLayout()
 
   const navigation = useNavigation<RootStackNavigation>()
+  // One pair of status/goal sheets for every row; `target` null = closed.
+  const [editing, setEditing] = useState<{
+    month: number
+    year: number
+    target: MonthEditTarget | null
+  }>({ month: moment().month(), year: moment().year(), target: null })
   const now = moment()
   const currentMonth = now.month()
   const currentYear = now.year()
@@ -420,6 +494,9 @@ const ProgressYearTab = ({
                   isCurrent={isCurrent}
                   isFuture={isFuture}
                   onPress={() => onMonthPress(month, calendarYear)}
+                  onEdit={(target) =>
+                    setEditing({ month, year: calendarYear, target })
+                  }
                 />
               )
             })}
@@ -448,6 +525,13 @@ const ProgressYearTab = ({
               </Text>
             </Button>
           ) : null}
+          <MonthStatusGoalSheets
+            month={editing.month}
+            year={editing.year}
+            editing={editing.target}
+            onClose={() => setEditing({ ...editing, target: null })}
+            source='year_tab'
+          />
         </View>
       }
     />

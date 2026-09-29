@@ -1,24 +1,25 @@
-import { Alert } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  Undo2 as UndoIcon,
-} from 'lucide-react-native'
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
-import RowActionsMenu from '@/components/RowActionsMenu'
+import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import {
+  confirmRemoveBuddy,
+  confirmWithdrawRequest,
+} from '@/features/buddies/lib/buddyConfirmations'
 import { buddyTenureLabel } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
 
 /**
- * An active buddy opens their detail screen. One still `awaitingConfirm` (I
- * accepted their invite) is muted, with a menu to withdraw the request.
+ * An active buddy opens their detail screen; long-press for its calendar toggle
+ * and removal. One still `awaitingConfirm` (I accepted their invite) is muted,
+ * with a menu to withdraw the request.
  */
 export default function BuddyRow({
   buddy,
@@ -30,11 +31,52 @@ export default function BuddyRow({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const awaiting = buddy.status === 'awaitingConfirm'
+  const open = () => navigation.navigate('Buddy', { inboxId: buddy.inboxId })
 
-  const withdraw = () =>
-    buddiesEngine
-      .removeBuddy(buddy.inboxId)
-      .catch((error) => Alert.alert(buddiesErrorMessage(error)))
+  const withdraw: ContextMenuEntries = [
+    {
+      id: 'withdraw',
+      title: i18n.t('buddies_withdrawRequestEllipsis'),
+      systemImage: 'arrow.uturn.backward',
+      destructive: true,
+      onPress: () => confirmWithdrawRequest(buddy),
+    },
+  ]
+
+  // Everything here is also on the buddy's detail screen.
+  const actions: ContextMenuEntries = [
+    [
+      {
+        id: 'view',
+        title: i18n.t('buddies_viewBuddy'),
+        systemImage: 'person.crop.circle',
+        onPress: open,
+      },
+      buddy.showOnCalendar
+        ? {
+            id: 'hide_from_calendar',
+            title: i18n.t('buddies_hideFromCalendarAction'),
+            systemImage: 'calendar.badge.minus',
+            onPress: () =>
+              buddiesEngine.setShowOnCalendar(buddy.inboxId, false),
+          }
+        : {
+            id: 'show_on_calendar',
+            title: i18n.t('buddies_showOnCalendarAction'),
+            systemImage: 'calendar.badge.plus',
+            onPress: () => buddiesEngine.setShowOnCalendar(buddy.inboxId, true),
+          },
+    ],
+    [
+      {
+        id: 'remove',
+        title: i18n.t('buddies_removeBuddyEllipsis'),
+        systemImage: 'person.badge.minus',
+        destructive: true,
+        onPress: () => confirmRemoveBuddy(buddy),
+      },
+    ],
+  ]
 
   return (
     <BuddyListRow
@@ -55,32 +97,29 @@ export default function BuddyRow({
             ? buddyTenureLabel(buddy.tenure)
             : i18n.t('buddies_sharingPlans')
       }
-      onPress={
-        awaiting
-          ? undefined
-          : () => navigation.navigate('Buddy', { inboxId: buddy.inboxId })
-      }
-      trailing={
-        awaiting ? (
-          <RowActionsMenu
-            accessibilityLabel={i18n.t('moreActionsFor', { name: buddy.name })}
-            actions={[
-              {
-                id: 'withdraw',
-                label: i18n.t('buddies_withdrawRequest'),
-                icon: UndoIcon,
-                destructive: true,
-                onPress: withdraw,
-              },
-            ]}
-          />
-        ) : (
+      onPress={awaiting ? undefined : open}
+      analyticsSurface='buddy_row'
+      actions={awaiting ? withdraw : actions}
+      accessory={
+        awaiting ? undefined : (
           <LucideIcon
             icon={ChevronRightIcon}
             size={18}
             color={theme.colors.textAlt}
           />
         )
+      }
+      // A waiting request has no detail screen, so its only action stays
+      // visible too.
+      trailing={
+        awaiting ? (
+          <PullDownMenu
+            actions={withdraw}
+            analyticsSurface='buddy_row'
+            accessibilityLabel={i18n.t('moreActionsFor', { name: buddy.name })}
+            triggerSize={16}
+          />
+        ) : undefined
       }
     />
   )

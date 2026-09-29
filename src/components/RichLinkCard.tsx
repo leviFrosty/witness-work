@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { ActivityIndicator, Pressable, View } from 'react-native'
+import { ActivityIndicator, Platform, Share, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Clipboard from 'expo-clipboard'
 import { useToastController } from '@tamagui/toast'
 import { Link as LinkIcon } from 'lucide-react-native'
 import Text from '@/components/ui/MyText'
+import ContextMenu, {
+  type ContextMenuEntries,
+} from '@/components/ui/ContextMenu'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
@@ -14,7 +17,7 @@ import { useLinkPreview } from '@/hooks/useLinkPreview'
 
 const THUMBNAIL_SIZE = 56
 
-/** Shared tap / long-press behavior for links in notes. */
+/** Shared tap / menu behavior for links in notes. */
 export function useLinkActions() {
   const toast = useToastController()
 
@@ -23,27 +26,62 @@ export function useLinkActions() {
     void openURL(url)
   }
 
-  const copy = async (url: string) => {
+  const copyText = async (text: string, message = i18n.t('copied')) => {
     Haptics.success().catch(() => {})
     try {
-      await Clipboard.setStringAsync(url)
-      toast.show(i18n.t('linkCopied'), { native: true, duration: 2000 })
+      await Clipboard.setStringAsync(text)
+      toast.show(message, { native: true, duration: 2000 })
     } catch {
       Haptics.error().catch(() => {})
     }
   }
 
-  return { open, copy }
+  const copy = (url: string) => copyText(url, i18n.t('linkCopied'))
+
+  const share = (url: string) => {
+    // iOS shares the URL itself (rich previews); Android only takes text.
+    void Share.share(Platform.OS === 'ios' ? { url } : { message: url })
+  }
+
+  /** Open / Copy Link / Share… — the context menu for any link. */
+  const menu = (url: string): ContextMenuEntries => [
+    isHttpUrl(url) && {
+      id: 'open',
+      title: i18n.t('open'),
+      systemImage: 'safari',
+      onPress: () => open(url),
+    },
+    {
+      id: 'copy_link',
+      title: i18n.t('copyLink'),
+      systemImage: 'doc.on.doc',
+      onPress: () => void copy(url),
+    },
+    {
+      id: 'share',
+      title: i18n.t('shareEllipsis'),
+      systemImage: 'square.and.arrow.up',
+      onPress: () => share(url),
+    },
+  ]
+
+  return { open, copy, copyText, share, menu }
 }
 
 interface Props {
   url: string
+  /**
+   * Off when the card sits inside another long-press target (e.g. a Plan row):
+   * it then renders as plain content, and the host folds Open Link into its own
+   * menu.
+   */
+  interactive?: boolean
 }
 
-const RichLinkCard = ({ url }: Props) => {
+const RichLinkCard = ({ url, interactive = true }: Props) => {
   const theme = useTheme()
   const { preview, loading } = useLinkPreview(url)
-  const { open, copy } = useLinkActions()
+  const { open, menu } = useLinkActions()
   const [imageFailed, setImageFailed] = useState<string | null>(null)
 
   const hostname = getHostname(url)
@@ -59,15 +97,9 @@ const RichLinkCard = ({ url }: Props) => {
       : undefined
   const showThumbnail = loading || !!imageUrl
 
-  return (
-    <Pressable
-      accessibilityRole='link'
-      accessibilityLabel={title}
-      accessibilityHint={i18n.t('richLink_hint')}
-      accessibilityState={{ busy: loading }}
-      onPress={() => open(url)}
-      onLongPress={() => void copy(url)}
-      style={({ pressed }) => ({
+  const card = (
+    <View
+      style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
@@ -76,8 +108,7 @@ const RichLinkCard = ({ url }: Props) => {
         borderWidth: 1,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.backgroundLighter,
-        opacity: pressed ? 0.7 : 1,
-      })}
+      }}
     >
       {showThumbnail ? (
         <View
@@ -138,7 +169,20 @@ const RichLinkCard = ({ url }: Props) => {
           {subtitle}
         </Text>
       </View>
-    </Pressable>
+    </View>
+  )
+
+  if (!interactive) return card
+
+  return (
+    <ContextMenu
+      analyticsSurface='link'
+      actions={menu(url)}
+      onPress={() => open(url)}
+      accessibilityLabel={title}
+    >
+      {card}
+    </ContextMenu>
   )
 }
 

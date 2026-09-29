@@ -12,6 +12,7 @@ import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
+import useFollowUpCardDismissal from '@/features/visits/hooks/useFollowUpCardDismissal'
 
 interface Props {
   conversations: Visit[]
@@ -29,7 +30,12 @@ const ApproachingConversations = ({ conversations }: Props) => {
     [conversations]
   )
 
-  if (conversations.length === 0) return null
+  const { dismissed, dismiss } = useFollowUpCardDismissal(
+    'approaching',
+    conversations
+  )
+
+  if (conversations.length === 0 || dismissed) return null
 
   const now = moment()
   const endOfDay = moment().endOf('day').hour(16) // 4:59:59 PM
@@ -42,6 +48,7 @@ const ApproachingConversations = ({ conversations }: Props) => {
 
   return (
     <DismissableCard
+      onDismiss={dismiss}
       titleColor={theme.colors.accent}
       title={
         <View

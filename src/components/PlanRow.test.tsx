@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react'
+import moment from 'moment'
 import { act, create, type ReactTestRendererJSON } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -8,15 +9,33 @@ import type { DayPlan } from '@/types/timeEntry'
 const categoriesState = vi.hoisted(() => ({
   current: [] as Category[],
 }))
+const navigation = vi.hoisted(() => ({ navigate: vi.fn() }))
+const publisher = vi.hoisted(() => ({ showsTimeEntry: true }))
 
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 
 vi.mock('lucide-react-native', () => ({
   Calendar1: 'Calendar1',
-  Pencil: 'Pencil',
   Repeat: 'Repeat',
-  Trash2: 'Trash2',
 }))
+vi.mock('@react-navigation/native', () => ({
+  useNavigation: () => navigation,
+}))
+vi.mock('@/hooks/usePublisher', () => ({ default: () => publisher }))
+vi.mock('@/components/ui/ContextMenu', async () => {
+  const ReactModule = await import('react')
+  return {
+    default: ({ children, ...props }: { children?: ReactNode }) =>
+      ReactModule.createElement('ContextMenu', props, children),
+  }
+})
+vi.mock('@/components/RichLinkCard', () => ({
+  useLinkActions: () => ({ open: vi.fn(), copyText: vi.fn() }),
+}))
+vi.mock('@/lib/placeSearch', () => ({
+  appleMapsUrl: () => 'https://maps.apple.com/?q=Hall',
+}))
+vi.mock('@/lib/links', () => ({ openURL: vi.fn() }))
 
 vi.mock('react-native', async () => {
   const ReactModule = await import('react')
@@ -45,20 +64,6 @@ vi.mock('@/components/ui/MyText', async () => {
       ReactModule.createElement('Text', null, children),
   }
 })
-vi.mock('@/components/ui/Button', async () => {
-  const ReactModule = await import('react')
-  return {
-    default: ({ children }: { children?: ReactNode }) =>
-      ReactModule.createElement('Button', null, children),
-  }
-})
-vi.mock('@/components/ui/Copyeable', async () => {
-  const ReactModule = await import('react')
-  return {
-    default: ({ children }: { children?: ReactNode }) =>
-      ReactModule.createElement('Copyeable', null, children),
-  }
-})
 vi.mock('@/components/ui/Badge', async () => {
   const ReactModule = await import('react')
   return {
@@ -70,10 +75,13 @@ vi.mock('@/components/ui/swipeableActions/Delete', () => ({
   default: () => null,
 }))
 vi.mock('@/components/RichNoteText', () => ({ default: () => null }))
-vi.mock('@/components/PlanLocationLink', () => ({ default: () => null }))
-vi.mock('@/lib/linkPreview', () => ({ findLinks: () => [] }))
-vi.mock('@/components/RowActionsMenu', () => ({
+vi.mock('@/components/PlanLocationLink', () => ({
   default: () => null,
+  planLocationText: () => 'Hall',
+}))
+vi.mock('@/lib/linkPreview', () => ({
+  findLinks: (text: string) => text.match(/https?:\/\/\S+/g) ?? [],
+  getHostname: (url: string) => new URL(url).hostname,
 }))
 
 vi.mock('@/stores/categories', () => ({
@@ -82,14 +90,7 @@ vi.mock('@/stores/categories', () => ({
     return selector ? selector(state) : state
   },
 }))
-vi.mock('@/stores/serviceReport', () => ({
-  default: () => ({
-    deleteDayPlan: vi.fn(),
-    deleteRecurringPlan: vi.fn(),
-    deleteSingleEventFromRecurringPlan: vi.fn(),
-    deleteEventAndFutureEvents: vi.fn(),
-  }),
-}))
+vi.mock('@/stores/serviceReport', () => ({ default: { getState: vi.fn() } }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: {
@@ -139,7 +140,13 @@ vi.mock('@/lib/recurrence', () => ({
   }) => plan.startTimeInMinutes ?? 12 * 60,
 }))
 
-import PlanRow from '@/components/PlanRow'
+import PlanRow, { type PlanListItem } from '@/components/PlanRow'
+import type { RecurringPlan } from '@/lib/recurrence'
+import { flattenMenu, menuGroups, isSubmenu } from '@/components/ui/menuEntries'
+import type {
+  ContextMenuEntries,
+  ContextMenuItem,
+} from '@/components/ui/ContextMenu.types'
 
 const dayPlan = (id: string, categoryId?: string): DayPlan => ({
   id,
@@ -194,5 +201,121 @@ describe('PlanRow', () => {
     expect(text).toContain('Metro')
     expect(text).toContain('Credit')
     expect(text).not.toContain('Type:')
+  })
+
+  const renderMenu = (item: PlanListItem, onPress?: () => void) => {
+    let row: ReturnType<typeof create>
+    act(() => {
+      row = create(<PlanRow item={item} onPress={onPress} />)
+    })
+    const menu = row!.root.findByType('ContextMenu' as never)
+    return {
+      groups: menuGroups(menu.props.actions as ContextMenuEntries),
+      preview: menu.props.preview,
+    }
+  }
+  const ids = (groups: ContextMenuItem[][]) =>
+    groups.map((group) => group.map((item) => item.id))
+
+  const past = new Date(2026, 7, 27)
+  const future = moment().add(3, 'days').toDate()
+
+  it('offers edit, log, duplicate and delete for a past Day Plan', () => {
+    const { groups } = renderMenu(
+      { type: 'day', date: past, plan: dayPlan('p1') },
+      () => {}
+    )
+    expect(ids(groups)).toEqual([
+      ['edit', 'log_as_time', 'duplicate'],
+      ['delete'],
+    ])
+    const [remove] = groups[1]
+    expect(!isSubmenu(remove) && remove.destructive).toBe(true)
+  })
+
+  it('hides Log as Time for future plans and for publishers not logging hours', () => {
+    expect(
+      ids(
+        renderMenu({ type: 'day', date: future, plan: dayPlan('p1') }).groups
+      )[0]
+    ).toEqual(['duplicate'])
+
+    publisher.showsTimeEntry = false
+    expect(
+      ids(
+        renderMenu({ type: 'day', date: past, plan: dayPlan('p1') }).groups
+      )[0]
+    ).toEqual(['duplicate'])
+    publisher.showsTimeEntry = true
+  })
+
+  it('folds location, links and note into the menu', () => {
+    const plan = {
+      ...dayPlan('p1'),
+      location: { name: 'Hall' },
+      note: 'See https://jw.org and https://wol.jw.org',
+    }
+    const { groups } = renderMenu({ type: 'day', date: past, plan })
+    expect(ids(groups)[1]).toEqual([
+      'open_in_maps',
+      'copy_address',
+      'open_link',
+      'copy_note',
+    ])
+    const links = groups[1][2]
+    expect(isSubmenu(links) && links.actions.map((a) => a.title)).toEqual([
+      'jw.org',
+      'wol.jw.org',
+    ])
+  })
+
+  it('duplicates into a new plan prefilled from this one', () => {
+    const plan = { ...dayPlan('p1', 'metro'), note: 'Bring tracts' }
+    const { groups } = renderMenu({ type: 'day', date: past, plan })
+    const leaves = flattenMenu(groups)
+    leaves.find(({ key }) => key === 'duplicate')!.action.onPress()
+    expect(navigation.navigate).toHaveBeenCalledWith('PlanDay', {
+      date: past.toISOString(),
+      prefill: {
+        startTime: moment(past).startOf('day').add(9, 'hours').toISOString(),
+        minutes: 60,
+        note: 'Bring tracts',
+        title: undefined,
+        location: undefined,
+        categoryId: 'metro',
+      },
+    })
+  })
+
+  it('offers each recurring delete scope in a Delete submenu', () => {
+    const plan = {
+      id: 'r1',
+      startDate: past,
+      minutes: 60,
+      recurrence: { frequency: 0, interval: 1, endDate: null },
+    } as unknown as RecurringPlan
+    const { groups } = renderMenu({ type: 'recurring', date: past, plan })
+    const remove = groups[groups.length - 1][0]
+    expect(isSubmenu(remove) && remove.actions.map((a) => a.id)).toEqual([
+      'instance',
+      'future',
+      'all',
+    ])
+  })
+
+  it('previews the whole note only when the row clips it', () => {
+    const short = renderMenu({
+      type: 'day',
+      date: past,
+      plan: { ...dayPlan('p1'), note: 'Short' },
+    })
+    expect(short.preview).toBeUndefined()
+
+    const long = renderMenu({
+      type: 'day',
+      date: past,
+      plan: { ...dayPlan('p1'), note: 'word '.repeat(60) },
+    })
+    expect(long.preview).toBeTruthy()
   })
 })

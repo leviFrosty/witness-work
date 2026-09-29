@@ -78,13 +78,6 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
       }
     }
 
-    const onLongPress = () => {
-      props.navigation.emit({
-        type: 'tabLongPress',
-        target: route.key,
-      })
-    }
-
     const icon = (() => {
       switch (label) {
         case 'Home':
@@ -120,7 +113,6 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           options.tabBarAccessibilityLabel ?? i18n.t(labelKey)
         }
         onPress={onPress}
-        onLongPress={onLongPress}
         hitSlop={hasSidebar ? 0 : { top: 20, bottom: 20, left: 4, right: 4 }}
         style={({ pressed }) => ({
           flex: hasSidebar ? undefined : 1,

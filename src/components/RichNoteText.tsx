@@ -38,13 +38,23 @@ interface Props {
   text: string
   style?: StyleProp<TextStyle>
   numberOfLines?: number
+  /**
+   * Off when the note sits inside another long-press target (e.g. a Plan row):
+   * links render as plain content and the host offers them in its menu.
+   */
+  interactive?: boolean
 }
 
 /**
  * Renders a note's plain text with its links shown as rich preview cards (up to
  * three). Links beyond that stay inline as tappable text.
  */
-const RichNoteText = ({ text, style, numberOfLines }: Props) => {
+const RichNoteText = ({
+  text,
+  style,
+  numberOfLines,
+  interactive = true,
+}: Props) => {
   const theme = useTheme()
   const { open, copy } = useLinkActions()
 
@@ -83,10 +93,14 @@ const RichNoteText = ({ text, style, numberOfLines }: Props) => {
             ) : (
               <RNText
                 key={index}
-                accessibilityRole='link'
-                accessibilityHint={i18n.t('richLink_hint')}
-                onPress={() => open(part.url)}
-                onLongPress={() => void copy(part.url)}
+                accessibilityRole={interactive ? 'link' : undefined}
+                accessibilityHint={
+                  interactive ? i18n.t('richLink_hint') : undefined
+                }
+                onPress={interactive ? () => open(part.url) : undefined}
+                onLongPress={
+                  interactive ? () => void copy(part.url) : undefined
+                }
                 style={{
                   color: theme.colors.accent,
                   textDecorationLine: 'underline',
@@ -99,7 +113,7 @@ const RichNoteText = ({ text, style, numberOfLines }: Props) => {
         </Text>
       )}
       {cardUrls.map((url) => (
-        <RichLinkCard key={url} url={url} />
+        <RichLinkCard key={url} url={url} interactive={interactive} />
       ))}
     </View>
   )

@@ -10,8 +10,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
-  Image as RNImage,
   Modal,
   Pressable,
   StatusBar,
@@ -20,12 +18,8 @@ import {
   View,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { shareAsync } from 'expo-sharing'
-import * as MediaLibrary from 'expo-media-library'
-import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
-import { useToastController } from '@tamagui/toast'
 import {
   Gesture,
   GestureDetector,
@@ -42,18 +36,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { Contact } from '@/types/contact'
-import useContacts from '@/stores/contactsStore'
-import {
-  cropAndSaveAvatar,
-  croppedAvatarPath,
-  defaultCenteredSquareCrop,
-  originalAvatarPath,
-  originalExists,
-  stripCacheBuster,
-  withCacheBuster,
-} from '@/lib/contactAvatarFiles'
-import { logger } from '@/lib/logger'
-import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
+import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 
 interface Props {
   visible: boolean
@@ -171,24 +154,16 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const dims = useWindowDimensions()
-  const { updateContact } = useContacts()
-  const toast = useToastController()
-
   const [infoOpen, setInfoOpen] = useState(false)
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [hasOriginal, setHasOriginal] = useState(false)
-
-  useEffect(() => {
-    if (!visible) return
-    let cancelled = false
-    originalExists(contact.id).then((exists) => {
-      if (!cancelled) setHasOriginal(exists)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [visible, contact.id, contact.avatar?.value])
+  const {
+    busy,
+    hasOriginal,
+    edit: handleEdit,
+    save: handleSave,
+    share: handleShare,
+    reset: handleReset,
+    editor,
+  } = useContactAvatarActions(contact, visible)
 
   const fitSize = useMemo(() => {
     const horizontalRoom = dims.width - 24
@@ -286,171 +261,6 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
   }))
 
   const displayedUri = contact.avatar?.value
-  const editableSource = useMemo(() => {
-    if (hasOriginal) {
-      const path = originalAvatarPath(contact.id)
-      return { uri: path, isOriginal: true }
-    }
-    if (displayedUri) {
-      return { uri: stripCacheBuster(displayedUri), isOriginal: false }
-    }
-    return null
-  }, [hasOriginal, displayedUri, contact.id])
-
-  const [editableDims, setEditableDims] = useState<{
-    width: number
-    height: number
-  } | null>(null)
-
-  // Probe pixel dimensions of the editable source when the user opens the
-  // editor. Avatar metadata gives us the original's dimensions; for the
-  // fallback (cropped image) we ask expo-image at edit time.
-  const ensureEditableDims = async (): Promise<{
-    width: number
-    height: number
-  } | null> => {
-    if (editableDims) return editableDims
-    if (!editableSource) return null
-    if (editableSource.isOriginal && contact.avatarMeta) {
-      const d = {
-        width: contact.avatarMeta.width,
-        height: contact.avatarMeta.height,
-      }
-      setEditableDims(d)
-      return d
-    }
-    return new Promise((resolve) => {
-      RNImage.getSize(
-        editableSource.uri,
-        (width, height) => {
-          const d = { width, height }
-          setEditableDims(d)
-          resolve(d)
-        },
-        () => resolve(null)
-      )
-    })
-  }
-
-  const handleEdit = async () => {
-    Haptics.selectionAsync().catch(() => {})
-    const d = await ensureEditableDims()
-    if (!d) {
-      Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
-      return
-    }
-    setEditorOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!displayedUri || busy) return
-    setBusy(true)
-    try {
-      const perm = await MediaLibrary.requestPermissionsAsync(true)
-      if (!perm.granted) {
-        Alert.alert(
-          i18n.t('permissionRequired'),
-          i18n.t('photoLibraryWritePermissionNeeded')
-        )
-        return
-      }
-      await MediaLibrary.saveToLibraryAsync(stripCacheBuster(displayedUri))
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {}
-      )
-      toast.show(i18n.t('success'), {
-        message: i18n.t('savedToPhotos'),
-        native: true,
-      })
-    } catch (e) {
-      logger.error('Failed to save avatar to photos', e)
-      Alert.alert(i18n.t('error'), i18n.t('savePhotoFailed'))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleShare = async () => {
-    if (!displayedUri) return
-    Haptics.selectionAsync().catch(() => {})
-    try {
-      await shareAsync(stripCacheBuster(displayedUri), {
-        dialogTitle: contact.name,
-      })
-    } catch (e) {
-      logger.warn('Share avatar failed or was cancelled', e)
-    }
-  }
-
-  const handleReset = async () => {
-    if (busy) return
-    Alert.alert(
-      i18n.t('resetPhoto_question'),
-      i18n.t('resetPhoto_description'),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('reset'),
-          onPress: async () => {
-            setBusy(true)
-            try {
-              const exists = await originalExists(contact.id)
-              if (!exists || !contact.avatarMeta) {
-                Alert.alert(i18n.t('error'), i18n.t('originalUnavailable'))
-                return
-              }
-              const sourcePath = originalAvatarPath(contact.id)
-              const source = {
-                width: contact.avatarMeta.width,
-                height: contact.avatarMeta.height,
-              }
-              const rect = defaultCenteredSquareCrop(source)
-              const result = await cropAndSaveAvatar(
-                sourcePath,
-                contact.id,
-                rect,
-                source
-              )
-              updateContact({
-                id: contact.id,
-                avatar: { type: 'image', value: withCacheBuster(result.path) },
-                avatarMeta: {
-                  ...contact.avatarMeta,
-                  croppedAt: new Date().toISOString(),
-                },
-              })
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success
-              ).catch(() => {})
-            } catch (e) {
-              logger.error('Failed to reset crop', e)
-              Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
-            } finally {
-              setBusy(false)
-            }
-          },
-        },
-      ]
-    )
-  }
-
-  const handleCropped = (next: {
-    path: string
-    width: number
-    height: number
-  }) => {
-    updateContact({
-      id: contact.id,
-      avatar: { type: 'image', value: next.path },
-      avatarMeta: contact.avatarMeta
-        ? {
-            ...contact.avatarMeta,
-            croppedAt: new Date().toISOString(),
-          }
-        : undefined,
-    })
-    setEditorOpen(false)
-  }
 
   if (!displayedUri) return null
 
@@ -698,17 +508,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
           </Pressable>
         )}
 
-        {editableSource && editableDims && (
-          <ContactAvatarCropEditor
-            visible={editorOpen}
-            sourceUri={editableSource.uri}
-            sourceWidth={editableDims.width}
-            sourceHeight={editableDims.height}
-            destPath={croppedAvatarPath(contact.id)}
-            onClose={() => setEditorOpen(false)}
-            onCropped={handleCropped}
-          />
-        )}
+        {editor}
       </GestureHandlerRootView>
     </Modal>
   )

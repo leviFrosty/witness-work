@@ -65,10 +65,18 @@ import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 import { formatMonthDayCompact } from '@/lib/dates'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
-import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
+import MonthStatusGoalSheets from '@/features/service-reports/components/MonthStatusGoalSheets'
+import {
+  monthEditTargets,
+  type MonthEditTarget,
+} from '@/features/service-reports/lib/monthEditTargets'
+import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
+import ContextMenu, {
+  type ContextMenuEntries,
+} from '@/components/ui/ContextMenu'
+import { analytics } from '@/lib/analytics'
 import MonthStatusGoalButton from '@/features/service-reports/components/MonthStatusGoalButton'
 import { monthStatusShortLabel } from '@/lib/monthStatus'
-import MonthStatusSheet from '@/features/service-reports/components/MonthStatusSheet'
 import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
 
 interface MonthReportProps {
@@ -108,18 +116,12 @@ const MonthReport = ({
     baseGoalHours,
     effectiveGoalHours: goalHours,
     isOverridden,
-    setOverride: setMonthlyGoalOverride,
-    clearOverride: clearMonthlyGoalOverride,
   } = useMonthlyGoal({ month, year })
   // The role that applied this month (Role History), not today's role.
-  const {
-    type: role,
-    annualGoalHours,
-    hasAnnualGoal,
-  } = usePublisher({ month, year })
-  const [goalEditorOpen, setGoalEditorOpen] = useState(false)
+  const { type: role } = usePublisher({ month, year })
   const monthStatus = useMonthStatus({ month, year })
-  const [statusSheetOpen, setStatusSheetOpen] = useState(false)
+  const [editing, setEditing] = useState<MonthEditTarget | null>(null)
+  const { reportMenuItems } = useMonthReportExport()
   const { categories } = useCategories()
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
@@ -425,8 +427,129 @@ const MonthReport = ({
       isStatusDifferent={monthStatus.isDifferent}
       goalHours={baseGoalHours > 0 ? goalHours : null}
       isGoalOverridden={isOverridden}
-      onEditStatus={() => setStatusSheetOpen(true)}
-      onEditGoal={() => setGoalEditorOpen(true)}
+      onEditStatus={() => setEditing('status')}
+      onEditGoal={() => setEditing('goal')}
+    />
+  )
+
+  const sheets = allowGoalEditing ? (
+    <MonthStatusGoalSheets
+      month={month}
+      year={year}
+      editing={editing}
+      onClose={() => setEditing(null)}
+      source='month_card'
+    />
+  ) : null
+
+  const addTimeOrPlan = () =>
+    monthInFuture
+      ? tabNavigation.navigate('Schedule', { month, year })
+      : navigation.navigate('Add Time', {
+          date: moment().month(month).year(year).toISOString(),
+        })
+
+  // Long-press on the card's hero (the Progress → Month card). Every item is
+  // also a visible control on the card or the report screen.
+  const editable = monthEditTargets({ month, year, baseGoalHours })
+  const editFromMenu = (target: MonthEditTarget) => {
+    analytics.capture('month_card_edit_opened', { target, via: 'context_menu' })
+    setEditing(target)
+  }
+  const cardMenu: ContextMenuEntries = [
+    [
+      {
+        id: 'view_report',
+        title: i18n.t('viewReport'),
+        systemImage: 'doc.text',
+        onPress: () =>
+          navigation.navigate('ServiceReportView', { month, year }),
+      },
+      ...(monthInFuture ? [] : reportMenuItems(month, year)),
+    ],
+    [
+      editable.status && {
+        id: 'change_status',
+        title: i18n.t('changeStatusEllipsis'),
+        systemImage: 'person.crop.circle',
+        onPress: () => editFromMenu('status'),
+      },
+      editable.goal && {
+        id: 'change_goal',
+        title: i18n.t('changeGoalEllipsis'),
+        systemImage: 'target',
+        onPress: () => editFromMenu('goal'),
+      },
+    ],
+    [
+      {
+        id: monthInFuture ? 'create_plan' : 'add_time',
+        title: i18n.t(monthInFuture ? 'createPlan' : 'addTime'),
+        systemImage: monthInFuture ? 'calendar.badge.plus' : 'plus',
+        onPress: addTimeOrPlan,
+      },
+    ],
+  ]
+
+  // Hero ("8 of 30 Hrs") → bar → one meta line: what's left on the leading
+  // edge, pace against the plan on the trailing edge.
+  const hero = noDetails ? (
+    <MonthServiceReportProgressBar month={month} year={year} />
+  ) : (
+    <GoalProgressStats
+      hoursCompleted={hoursCompleted}
+      goalHours={goalHours}
+      hasMetGoal={hasMetGoal}
+      periodState={isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'}
+      remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
+      totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
+      achievementTier={celebratingTier}
+      sealAnimatedStyle={sealAnimatedStyle}
+      bar={<MonthServiceReportProgressBar month={month} year={year} />}
+      metaTrailing={
+        showPace || showMomDelta ? (
+          <View style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1 }}>
+            {showPace && (
+              <Text
+                style={{
+                  textAlign: 'right',
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: toneColor(
+                    aheadBehindMinutes > 0 ? 'positive' : 'neutral'
+                  ),
+                }}
+              >
+                {`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
+                  aheadBehindMinutes > 0 ? 'aheadOfPlan' : 'behindPlan',
+                  { value: aheadBehindDisplay }
+                )}`}
+              </Text>
+            )}
+            {showMomDelta && (
+              <Text
+                style={{
+                  textAlign: 'right',
+                  fontSize: theme.fontSize('xs'),
+                  color: toneColor(
+                    // When both months cleared goal, a downward delta
+                    // isn't a warning — it just means a very strong
+                    // prior month. Keep it neutral so the celebration
+                    // card stays coherent.
+                    bothMonthsMetGoal
+                      ? 'neutral'
+                      : momDeltaMinutes > 0
+                        ? 'positive'
+                        : 'warn'
+                  ),
+                }}
+              >
+                {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
+              </Text>
+            )}
+          </View>
+        ) : null
+      }
     />
   )
 
@@ -477,31 +600,7 @@ const MonthReport = ({
             </ActionButton>
           )}
         </Card>
-        {allowGoalEditing && baseGoalHours > 0 ? (
-          <MonthGoalEditorSheet
-            open={goalEditorOpen}
-            onOpenChange={setGoalEditorOpen}
-            month={month}
-            year={year}
-            regularGoalHours={baseGoalHours}
-            effectiveGoalHours={goalHours}
-            annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
-            onSaveGoal={setMonthlyGoalOverride}
-            onUseRegularGoal={clearMonthlyGoalOverride}
-          />
-        ) : null}
-        {allowGoalEditing ? (
-          <MonthStatusSheet
-            open={statusSheetOpen}
-            onOpenChange={setStatusSheetOpen}
-            month={month}
-            year={year}
-            status={monthStatus.status}
-            onSave={(status, scope) =>
-              monthStatus.save(status, scope, 'month_card')
-            }
-          />
-        ) : null}
+        {sheets}
       </View>
     )
   }
@@ -570,70 +669,16 @@ const MonthReport = ({
             </View>
           ) : null}
 
-          {/* Hero ("8 of 30 Hrs") → bar → one meta line: what's left on the
-            leading edge, pace against the plan on the trailing edge. */}
-          {noDetails ? (
-            <MonthServiceReportProgressBar month={month} year={year} />
+          {/* Long-pressing the hero opens the month's menu on Progress. */}
+          {allowGoalEditing ? (
+            <ContextMenu
+              analyticsSurface='month_report_card'
+              actions={cardMenu}
+            >
+              {hero}
+            </ContextMenu>
           ) : (
-            <GoalProgressStats
-              hoursCompleted={hoursCompleted}
-              goalHours={goalHours}
-              hasMetGoal={hasMetGoal}
-              periodState={
-                isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'
-              }
-              remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
-              totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
-              achievementTier={celebratingTier}
-              sealAnimatedStyle={sealAnimatedStyle}
-              bar={<MonthServiceReportProgressBar month={month} year={year} />}
-              metaTrailing={
-                showPace || showMomDelta ? (
-                  <View
-                    style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1 }}
-                  >
-                    {showPace && (
-                      <Text
-                        style={{
-                          textAlign: 'right',
-                          fontSize: theme.fontSize('sm'),
-                          fontFamily: theme.fonts.semiBold,
-                          color: toneColor(
-                            aheadBehindMinutes > 0 ? 'positive' : 'neutral'
-                          ),
-                        }}
-                      >
-                        {`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
-                          aheadBehindMinutes > 0 ? 'aheadOfPlan' : 'behindPlan',
-                          { value: aheadBehindDisplay }
-                        )}`}
-                      </Text>
-                    )}
-                    {showMomDelta && (
-                      <Text
-                        style={{
-                          textAlign: 'right',
-                          fontSize: theme.fontSize('xs'),
-                          color: toneColor(
-                            // When both months cleared goal, a downward delta
-                            // isn't a warning — it just means a very strong
-                            // prior month. Keep it neutral so the celebration
-                            // card stays coherent.
-                            bothMonthsMetGoal
-                              ? 'neutral'
-                              : momDeltaMinutes > 0
-                                ? 'positive'
-                                : 'warn'
-                          ),
-                        }}
-                      >
-                        {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
-                      </Text>
-                    )}
-                  </View>
-                ) : null
-              }
-            />
+            hero
           )}
 
           {/* The color key doubles as the way into the category breakdown. */}
@@ -670,13 +715,7 @@ const MonthReport = ({
             }}
           >
             <Button
-              onPress={() =>
-                monthInFuture
-                  ? tabNavigation.navigate('Schedule', { month, year })
-                  : navigation.navigate('Add Time', {
-                      date: moment().month(month).year(year).toISOString(),
-                    })
-              }
+              onPress={addTimeOrPlan}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -822,31 +861,7 @@ const MonthReport = ({
           </View>
         )}
 
-      {allowGoalEditing && baseGoalHours > 0 ? (
-        <MonthGoalEditorSheet
-          open={goalEditorOpen}
-          onOpenChange={setGoalEditorOpen}
-          month={month}
-          year={year}
-          regularGoalHours={baseGoalHours}
-          effectiveGoalHours={goalHours}
-          annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
-          onSaveGoal={setMonthlyGoalOverride}
-          onUseRegularGoal={clearMonthlyGoalOverride}
-        />
-      ) : null}
-      {allowGoalEditing ? (
-        <MonthStatusSheet
-          open={statusSheetOpen}
-          onOpenChange={setStatusSheetOpen}
-          month={month}
-          year={year}
-          status={monthStatus.status}
-          onSave={(status, scope) =>
-            monthStatus.save(status, scope, 'month_card')
-          }
-        />
-      ) : null}
+      {sheets}
     </View>
   )
 }

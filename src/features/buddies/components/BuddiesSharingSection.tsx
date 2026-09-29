@@ -53,7 +53,7 @@ export default function BuddiesSharingSection() {
         title={name.trim() || i18n.t('buddies_editProfile')}
         subtitle={name.trim() ? i18n.t('buddies_editProfile') : undefined}
         onPress={() => navigation.navigate('PreferencesPublisher')}
-        trailing={
+        accessory={
           <LucideIcon
             icon={ChevronRightIcon}
             size={18}

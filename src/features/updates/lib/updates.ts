@@ -15,6 +15,7 @@ export const fetchUpdate = async (
     const update = await Updates.checkForUpdateAsync()
     if (update.isAvailable) {
       handleNavigation('Update')
+      return
     }
     Alert.alert(i18n.t('noUpdateAvailable'))
   } catch (error) {

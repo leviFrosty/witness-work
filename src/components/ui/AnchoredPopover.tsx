@@ -4,6 +4,7 @@ import {
   findNodeHandle,
   Keyboard,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StatusBar,
@@ -143,6 +144,7 @@ const AnchoredPopover = ({
   const openFrame = useRef<number | null>(null)
   const openRequest = useRef(0)
   const afterDismiss = useRef<(() => void) | null>(null)
+  const wasMounted = useRef(false)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -321,6 +323,25 @@ const AnchoredPopover = ({
     afterDismiss.current = action
     setOpen(false)
   }
+
+  // RN only fires `onDismiss` on iOS. Android's Modal is gone as soon as it
+  // renders with `visible={false}`, so mirror `onDismiss` once it unmounts.
+  // Inlined so the exhaustive-deps lint doesn't need suppressing.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    if (mounted) {
+      wasMounted.current = true
+      return
+    }
+    if (!wasMounted.current) return
+    wasMounted.current = false
+    const then = afterDismiss.current
+    afterDismiss.current = null
+    then?.()
+    if (!accessibilityFocusRef || !navigation.isFocused()) return
+    const handle = anchorRef.current && findNodeHandle(anchorRef.current)
+    if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
+  }, [mounted, accessibilityFocusRef, navigation])
 
   const positionStyle: {
     top?: number

@@ -1,4 +1,5 @@
 import type { NotificationItem } from '@/types/notifications'
+import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useBuddyNotifications, {
   syncBuddyNotifications,
@@ -9,6 +10,7 @@ import NotificationsTray from '@/features/notifications/components/Notifications
 import useNow from '@/features/notifications/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
 import usePreviousReportNotification from '@/features/service-reports/hooks/usePreviousReportNotification'
+import useRolloverNotification from '@/features/service-reports/hooks/useRolloverNotification'
 import useBackupNotification from '@/features/settings/hooks/useBackupNotification'
 import useSupporterNotifications from '@/features/supporter/hooks/useSupporterNotifications'
 import useWhatsNewNotification from '@/features/updates/hooks/useWhatsNewNotification'
@@ -22,9 +24,12 @@ export default function NotificationsBell() {
   const { now, refresh } = useNow()
   const buddiesEnabled = useBuddiesEnabled()
   const items: (NotificationItem | null)[] = [
+    // Ahead of last month's report on the same day: decide the rollover first.
+    useRolloverNotification(),
     usePreviousReportNotification(now),
     useAuxiliaryMonthNotification(now),
     useBackupNotification(now),
+    useDataProtectionRetentionNotification(now),
     ...useMissedFollowUpNotifications(now),
     ...useBuddyNotifications(),
     ...useNotesImportNotifications(),

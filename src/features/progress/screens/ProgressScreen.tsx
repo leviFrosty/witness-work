@@ -26,6 +26,7 @@ import ProgressMonthTab from '@/features/progress/components/ProgressMonthTab'
 import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
 import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
 import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
+import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -33,6 +34,7 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
+  useRolloverPrompt()
   const { isWide } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
   const now = moment()

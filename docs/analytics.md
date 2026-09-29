@@ -197,10 +197,11 @@ integration. Closing the app is not a navigation close event.
 
 ## Notifications tray
 
-The Home header bell lists time- and event-based notices: last month's Service
-Report, the auxiliary pioneering question, the backup reminder, missed
-Follow-ups, Buddies activity, ready Notes Imports, What's New, the Milestone
-Update replay, and the Supporter nudge or feedback invitation.
+The Home header bell lists time- and event-based notices: a pending Time
+Rollover, last month's Service Report, the auxiliary pioneering question, the
+backup reminder, the data protection retention reminder, missed Follow-ups,
+Buddies activity, ready Notes Imports, What's New, the Milestone Update replay,
+and the Supporter nudge or feedback invitation.
 
 | Event                        | Properties                                                          |
 | ---------------------------- | ------------------------------------------------------------------- |
@@ -209,14 +210,18 @@ Update replay, and the Supporter nudge or feedback invitation.
 | `notification_dismissed`     | `kind`                                                              |
 | `notifications_cleared`      | `count` (items cleared; ones waiting on an answer are kept)         |
 
-`kind` is one of `previous_report`, `auxiliary_month`, `backup`,
-`missed_follow_up`, `buddies`, `notes_import`, `whats_new`, `milestone_update`,
-`supporter_nudge`, or `supporter_survey`. Items never send their text, names, or
+`kind` is one of `rollover`, `previous_report`, `auxiliary_month`, `backup`,
+`data_protection_retention`, `missed_follow_up`, `buddies`, `notes_import`,
+`whats_new`, `milestone_update`, `supporter_nudge`, or `supporter_survey`. Items never send their text, names, or
 ids. Tapping a row counts as its first action. An item that disappears because
 its condition cleared (report submitted, Follow-up rescheduled) sends nothing;
 compare `notifications_tray_opened` to `notification_action_tapped` for
 engagement. Existing item events (`backup_reminder_*`, `supporter_nudge_*`,
 `auxiliary_month_sheet_viewed`) still fire alongside, with a tray `source`.
+
+The Time Rollover screen no longer opens at launch. Its tray item opens it, and
+it comes up once per session on Progress or on the Service Report for the month
+it changes, so its `time_rollover_*` events keep `source: rollover_screen`.
 
 ## Feature usage
 

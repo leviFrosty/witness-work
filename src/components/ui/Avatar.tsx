@@ -19,6 +19,7 @@ import Animated, {
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { ProfileAvatar } from '@/types/avatar'
+import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
 
 /**
  * Whether an `avatar.value` string actually resolves to something `<Image>` can
@@ -45,6 +46,7 @@ type AnchorRect = { x: number; y: number; size: number }
 interface Props {
   avatar: ProfileAvatar
   name?: string
+  /** Defaults to the enclosing `AvatarGroup`'s size, else 44. */
   size?: number
   /** Background of the circle when avatar is an emoji or letter fallback. */
   background?: string
@@ -56,8 +58,16 @@ interface Props {
   focusable?: boolean
 }
 
-const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
+const Avatar = ({
+  avatar,
+  name,
+  size: sizeProp,
+  background,
+  focusable,
+}: Props) => {
   const theme = useTheme()
+  const groupSize = useAvatarGroupSize()
+  const size = sizeProp ?? groupSize ?? 44
   const anchorRef = useRef<View>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)

@@ -5,6 +5,7 @@ import Switch from '@/components/ui/Switch'
 import upperFirst from 'lodash/upperFirst'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Divider from '@/components/ui/Divider'
@@ -432,14 +433,7 @@ const NotesImportContactDetailsModal = ({
                 </View>
 
                 {group.visits.length === 0 ? (
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {i18n.t('notesImport_noVisits')}
-                  </Text>
+                  <Empty title={i18n.t('notesImport_noVisits')} />
                 ) : (
                   group.visits.map((v) => (
                     <VisitReviewCard

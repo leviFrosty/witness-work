@@ -96,7 +96,7 @@ export default function BuddyNotificationsList({
     return (
       <Empty
         icon={
-          <LucideIcon icon={BellIcon} size={32} color={theme.colors.text} />
+          <LucideIcon icon={BellIcon} size={24} color={theme.colors.text} />
         }
         title={i18n.t('notifications_emptyTitle')}
         description={i18n.t('notifications_emptyBody')}

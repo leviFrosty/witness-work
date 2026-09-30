@@ -9,6 +9,8 @@ import { formatDate } from '@/lib/dates'
 import Card from '@/components/ui/Card'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
+import { ArchiveRestore as ArchiveRestoreIcon } from 'lucide-react-native'
 import useConversations from '@/stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
 import i18n from '@/lib/locales'
@@ -273,7 +275,16 @@ const RecoverContactsScreen = () => {
             }}
           >
             {recoverable.length === 0 && (
-              <Empty title={i18n.t('deletedContactsWillAppearHere')} />
+              <Empty
+                icon={
+                  <LucideIcon
+                    icon={ArchiveRestoreIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                }
+                title={i18n.t('deletedContactsWillAppearHere')}
+              />
             )}
             <View style={{ minHeight: 2 }}>
               <FlashList

@@ -1,88 +1,183 @@
-import { ReactNode } from 'react'
-import { View } from 'react-native'
+import type { ReactNode } from 'react'
+import { StyleSheet, View, type TextProps, type ViewProps } from 'react-native'
 
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 
-interface EmptyProps {
-  /** Optional illustrative icon / graphic rendered above the title. */
-  icon?: ReactNode
-  /** Short, focused headline describing what's missing. */
-  title: string
-  /** Optional supporting copy beneath the title. */
-  description?: string
-  /** Optional call-to-action (button, link, etc.) rendered below the copy. */
-  action?: ReactNode
+type EmptyProps = ViewProps & {
   /** Draws a faint dashed outline around the empty surface. */
   dashedOutline?: boolean
-}
+} & (
+    | {
+        icon?: ReactNode
+        title: string
+        description?: ReactNode
+        action?: ReactNode
+        children?: never
+      }
+    | {
+        children: ReactNode
+        icon?: never
+        title?: never
+        description?: never
+        action?: never
+      }
+  )
 
-/**
- * Small, reusable empty-state component. Shadcn-flavored: centered column,
- * generous padding, subdued palette. Used across the new Progress subscreens
- * for zero-data surfaces (e.g. All-time tab with no reports yet).
- */
+/** Centered empty surface, with shorthand props or shadcn-style composition. */
 const Empty = ({
   icon,
   title,
   description,
   action,
-  dashedOutline,
+  children,
+  dashedOutline = false,
+  style,
+  ...props
 }: EmptyProps) => {
   const theme = useTheme()
 
   return (
     <View
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 40,
-        paddingHorizontal: 24,
-        gap: 12,
-        borderWidth: dashedOutline ? 1 : 0,
-        borderStyle: dashedOutline ? 'dashed' : undefined,
-        borderColor: theme.colors.border,
-        borderRadius: theme.numbers.borderRadiusLg,
-      }}
+      {...props}
+      style={[
+        styles.empty,
+        {
+          borderWidth: dashedOutline ? 1 : 0,
+          borderStyle: dashedOutline ? 'dashed' : 'solid',
+          borderColor: theme.colors.border,
+          borderRadius: theme.numbers.borderRadiusLg,
+        },
+        style,
+      ]}
     >
-      {icon ? (
-        <View
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 4,
-            opacity: 0.6,
-          }}
-        >
-          {icon}
-        </View>
-      ) : null}
-      <Text
-        style={{
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('lg'),
-          color: theme.colors.text,
-          textAlign: 'center',
-        }}
-      >
-        {title}
-      </Text>
-      {description ? (
-        <Text
-          style={{
-            fontFamily: theme.fonts.regular,
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-            textAlign: 'center',
-            maxWidth: 320,
-          }}
-        >
-          {description}
-        </Text>
-      ) : null}
-      {action ? <View style={{ marginTop: 8 }}>{action}</View> : null}
+      {title !== undefined ? (
+        <>
+          <EmptyHeader>
+            {icon ? <EmptyMedia variant='icon'>{icon}</EmptyMedia> : null}
+            <EmptyTitle>{title}</EmptyTitle>
+            {description ? (
+              <EmptyDescription>{description}</EmptyDescription>
+            ) : null}
+          </EmptyHeader>
+          {action ? <EmptyContent>{action}</EmptyContent> : null}
+        </>
+      ) : (
+        children
+      )}
     </View>
   )
 }
 
+const EmptyHeader = ({ style, ...props }: ViewProps) => (
+  <View {...props} style={[styles.header, style]} />
+)
+
+const EmptyMedia = ({
+  variant = 'default',
+  style,
+  ...props
+}: ViewProps & { variant?: 'default' | 'icon' }) => {
+  const theme = useTheme()
+
+  return (
+    <View
+      accessibilityElementsHidden={variant === 'icon'}
+      importantForAccessibility={
+        variant === 'icon' ? 'no-hide-descendants' : 'auto'
+      }
+      {...props}
+      style={[
+        styles.media,
+        variant === 'icon' && [
+          styles.icon,
+          {
+            backgroundColor: theme.colors.backgroundLighter,
+            borderRadius: theme.numbers.borderRadiusMd,
+          },
+        ],
+        style,
+      ]}
+    />
+  )
+}
+
+const EmptyTitle = ({ style, ...props }: TextProps) => {
+  const theme = useTheme()
+
+  return (
+    <Text
+      accessibilityRole='header'
+      {...props}
+      style={[
+        styles.text,
+        { fontFamily: theme.fonts.semiBold, fontSize: theme.fontSize('lg') },
+        style,
+      ]}
+    />
+  )
+}
+
+const EmptyDescription = ({ style, ...props }: TextProps) => {
+  const theme = useTheme()
+
+  return (
+    <Text
+      {...props}
+      style={[
+        styles.text,
+        { fontSize: theme.fontSize('sm'), color: theme.colors.textAlt },
+        style,
+      ]}
+    />
+  )
+}
+
+const EmptyContent = ({ style, ...props }: ViewProps) => (
+  <View {...props} style={[styles.content, style]} />
+)
+
+const styles = StyleSheet.create({
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    gap: 24,
+    width: '100%',
+  },
+  header: {
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    maxWidth: 320,
+  },
+  media: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  icon: {
+    width: 48,
+    height: 48,
+  },
+  text: {
+    textAlign: 'center',
+  },
+  content: {
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    maxWidth: 320,
+  },
+})
+
+export {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+}
 export default Empty

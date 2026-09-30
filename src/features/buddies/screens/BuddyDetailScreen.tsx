@@ -3,8 +3,10 @@ import { ScrollView, View } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { CalendarPlus as CalendarPlusIcon } from 'lucide-react-native'
 import moment from 'moment'
+import { CalendarDays as CalendarDaysIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
+import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -107,9 +109,16 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
           }
         >
           {upcoming.length === 0 ? (
-            <Text style={{ ...secondary, padding: 15 }}>
-              {i18n.t('buddies_noUpcomingPlans', { name: buddy.name })}
-            </Text>
+            <Empty
+              icon={
+                <LucideIcon
+                  icon={CalendarDaysIcon}
+                  size={24}
+                  color={theme.colors.text}
+                />
+              }
+              title={i18n.t('buddies_noUpcomingPlans', { name: buddy.name })}
+            />
           ) : (
             upcoming.map((day, index) => {
               const date = moment(day.d, 'YYYY-MM-DD').format('ddd, MMM D')

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
+import { Clock as ClockIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
@@ -10,6 +11,8 @@ import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 
 import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
+import useTheme from '@/contexts/theme'
 import LifetimeHoursCard from '@/features/progress/components/LifetimeHoursCard'
 import YearByYearList from '@/features/progress/components/YearByYearList'
 
@@ -29,6 +32,7 @@ interface ProgressAllTimeTabProps {
 }
 
 const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
+  const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const { serviceReports } = useServiceReport()
@@ -63,6 +67,9 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
         }}
       >
         <Empty
+          icon={
+            <LucideIcon icon={ClockIcon} size={24} color={theme.colors.text} />
+          }
           title={i18n.t('emptyAllTime_title')}
           description={i18n.t('emptyAllTime_description')}
         />

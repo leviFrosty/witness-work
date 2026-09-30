@@ -7,6 +7,14 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/Empty'
+import {
   Fragment,
   useCallback,
   useEffect,
@@ -1181,67 +1189,55 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           {/* The intro sits centered in an empty conversation, then disappears
               once the first import is submitted and the chat takes over. */}
           {!activeEntry && (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                gap: 10,
-                paddingHorizontal: 12,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <LucideIcon
-                  icon={SparklesIcon}
-                  size={20}
-                  color={theme.colors.accent}
-                />
-                <Text
+            <Empty style={{ flex: 1 }}>
+              <EmptyHeader>
+                <EmptyMedia variant='icon'>
+                  <LucideIcon
+                    icon={SparklesIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                </EmptyMedia>
+                <View
                   style={{
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('xl'),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
                   }}
                 >
-                  {i18n.t('notesImport_inputLabel')}
-                </Text>
-                <Badge
-                  color={theme.colors.accentTranslucent}
-                  size='xs'
-                  textStyle={{ color: theme.colors.accent }}
+                  <EmptyTitle>{i18n.t('notesImport_inputLabel')}</EmptyTitle>
+                  <Badge
+                    color={theme.colors.accentTranslucent}
+                    size='xs'
+                    textStyle={{ color: theme.colors.accent }}
+                  >
+                    {i18n.t('beta')}
+                  </Badge>
+                </View>
+                <EmptyDescription>
+                  {i18n.t('notesImport_description')}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button
+                  onPress={openHelp}
+                  accessibilityRole='button'
+                  style={{ paddingVertical: 5 }}
                 >
-                  {i18n.t('beta')}
-                </Badge>
-              </View>
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('md'),
-                  lineHeight: 21,
-                }}
-              >
-                {i18n.t('notesImport_description')}
-              </Text>
-              <Button
-                onPress={openHelp}
-                accessibilityRole='button'
-                style={{ alignSelf: 'flex-start', paddingVertical: 5 }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('notesImport_howToUse')}
-                </Text>
-              </Button>
-            </View>
+                  <Text
+                    style={{
+                      color: theme.colors.accent,
+                      fontFamily: theme.fonts.semiBold,
+                      fontSize: theme.fontSize('sm'),
+                    }}
+                  >
+                    {i18n.t('notesImport_howToUse')}
+                  </Text>
+                </Button>
+              </EmptyContent>
+            </Empty>
           )}
 
           {conversation()}

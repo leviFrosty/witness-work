@@ -1,4 +1,7 @@
-import { MessageCircle as MessageCircleIcon } from 'lucide-react-native'
+import {
+  MessageCircle as MessageCircleIcon,
+  Search as SearchIcon,
+} from 'lucide-react-native'
 import {
   useCallback,
   useEffect,
@@ -17,6 +20,8 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
+import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -163,9 +168,13 @@ const FAQScreen = () => {
         <FAQItem key={entry.id} entry={entry} />
       ))}
       {matches.length === 0 && (
-        <Text style={{ color: theme.colors.textAlt }}>
-          {i18n.t('faq_noResults')}
-        </Text>
+        <Empty
+          icon={
+            <LucideIcon icon={SearchIcon} size={24} color={theme.colors.text} />
+          }
+          title={i18n.t('contacts_emptySearch_title')}
+          description={i18n.t('faq_noResults')}
+        />
       )}
     </View>
   )

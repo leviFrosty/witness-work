@@ -2,10 +2,15 @@ import {
   getContactInformationFields,
   hasContactInformationValue,
 } from '@/lib/contactInformationFields'
-import { BookOpen as BookOpenIcon } from 'lucide-react-native'
+import {
+  BookOpen as BookOpenIcon,
+  MessageCircle as MessageCircleIcon,
+} from 'lucide-react-native'
 import { Platform, View, ScrollView } from 'react-native'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
+import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import Header from '@/components/ui/layout/Header'
@@ -29,7 +34,6 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '@/components/ui/IconButton'
 import Copyeable from '@/components/ui/Copyeable'
-import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { usePreferences } from '@/stores/preferences'
 import XView from '@/components/ui/layout/XView'
@@ -569,17 +573,17 @@ const ContactDetailsContent = ({
                   ItemSeparatorComponent={() => <Divider borderWidth={2} />}
                   data={contactConversationsSorted}
                   ListEmptyComponent={
-                    <View
-                      style={{
-                        backgroundColor: theme.colors.backgroundLighter,
-                        paddingVertical: 30,
-                        paddingHorizontal: 20,
-                      }}
-                    >
-                      <Button>
-                        <Text>{i18n.t('thisContactHasNoConversations')}</Text>
-                      </Button>
-                    </View>
+                    <Empty
+                      icon={
+                        <LucideIcon
+                          icon={MessageCircleIcon}
+                          size={24}
+                          color={theme.colors.text}
+                        />
+                      }
+                      title={i18n.t('noConversationYet')}
+                      description={i18n.t('thisContactHasNoConversations')}
+                    />
                   }
                 />
               </View>

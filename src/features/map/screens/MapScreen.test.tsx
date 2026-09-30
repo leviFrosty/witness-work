@@ -45,8 +45,9 @@ vi.mock('react-native', () => ({
   Platform: { OS: 'ios' },
   View: 'View',
   Pressable: 'Pressable',
+  ScrollView: 'ScrollView',
   TextInput: 'TextInput',
-  StyleSheet: { absoluteFill: {} },
+  StyleSheet: { absoluteFill: {}, create: (styles: object) => styles },
   useWindowDimensions: () => ({ width: 390, height: 844 }),
 }))
 vi.mock('react-native-maps', () => ({

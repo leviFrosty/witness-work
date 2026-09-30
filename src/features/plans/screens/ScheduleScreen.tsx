@@ -1,6 +1,7 @@
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
+  CalendarDays as CalendarDaysIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
@@ -41,6 +42,8 @@ import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
 import Card from '@/components/ui/Card'
+import Empty from '@/components/ui/Empty'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Button from '@/components/ui/Button'
 import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
@@ -452,9 +455,17 @@ const ScheduleScreen = ({ route }: Props) => {
                 </XView>
                 <View style={{ gap: 10, minHeight: 10 }}>
                   {!hasAnyPlans ? (
-                    <Card>
-                      <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
-                    </Card>
+                    <Empty
+                      dashedOutline
+                      icon={
+                        <LucideIcon
+                          icon={CalendarDaysIcon}
+                          size={24}
+                          color={theme.colors.text}
+                        />
+                      }
+                      title={i18n.t('noPlansScheduledForThisMonth')}
+                    />
                   ) : (
                     visiblePlans.map((item) => (
                       <PlanRow

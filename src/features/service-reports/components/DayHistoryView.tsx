@@ -1,6 +1,8 @@
 import {
+  CalendarDays as CalendarDaysIcon,
   ChevronDown as ChevronDownIcon,
   ChevronUp as ChevronUpIcon,
+  Clock as ClockIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -263,6 +265,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             ListEmptyComponent={
               <Empty
                 dashedOutline
+                icon={
+                  <LucideIcon
+                    icon={ClockIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                }
                 title={i18n.t('noReportsThisDay')}
                 action={
                   onAddTime ? (
@@ -328,6 +337,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             ListEmptyComponent={
               <Empty
                 dashedOutline
+                icon={
+                  <LucideIcon
+                    icon={CalendarDaysIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                }
                 title={i18n.t('noPlansThisDay')}
                 action={
                   onPlanDay ? (

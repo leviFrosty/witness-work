@@ -38,7 +38,7 @@ export default function BuddiesList({ onInvite }: { onInvite: () => void }) {
       <Empty
         dashedOutline
         icon={
-          <LucideIcon icon={UsersIcon} size={40} color={theme.colors.text} />
+          <LucideIcon icon={UsersIcon} size={24} color={theme.colors.text} />
         }
         title={i18n.t('buddies_emptyTitle')}
         description={i18n.t('buddies_emptyBody')}

@@ -102,12 +102,16 @@ const DrawerNavigator = () => {
                     right: 0,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 12,
+                    // Each button's slop covers half the gap so neighbours
+                    // don't overlap and steal each other's taps.
+                    gap: 24,
                   }}
                 >
                   {__DEV__ && (
                     <IconButton
                       icon={RefreshCwIcon}
+                      size='xl'
+                      hitSlop={12}
                       accessibilityLabel='DEV: remount all screens (hold to reload JS)'
                       onPress={triggerDevRemount}
                       onLongPress={() => DevSettings.reload()}
@@ -125,6 +129,8 @@ const DrawerNavigator = () => {
                         })
                       }}
                       icon={hasPurchasedBefore ? HeartIcon : HeartIcon}
+                      size='xl'
+                      hitSlop={12}
                       color={
                         hasPurchasedBefore
                           ? theme.colors.errorAlt

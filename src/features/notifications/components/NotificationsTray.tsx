@@ -42,6 +42,8 @@ function BellTrigger({
     <View ref={anchorRef} collapsable={false} style={{ position: 'relative' }}>
       <IconButton
         icon={BellIcon}
+        size='xl'
+        hitSlop={12}
         color={theme.colors.text}
         accessibilityLabel={
           unread > 0
@@ -55,8 +57,8 @@ function BellTrigger({
           pointerEvents='none'
           style={{
             position: 'absolute',
-            top: -6,
-            right: -8,
+            top: -5,
+            right: -7,
             minWidth: 16,
             height: 16,
             borderRadius: 8,

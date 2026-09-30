@@ -2056,6 +2056,8 @@
   "iCloudResetConfirm_description": "This clears the synced file in iCloud. Your device's data is not affected — it will be pushed again on the next sync.",
   "iCloudUnavailable_title": "iCloud is unavailable",
   "iCloudUnavailable_description": "Open Settings → [Your Name] → iCloud → iCloud Drive and turn it on, then try again.",
+  "iCloudRemoteNotReady_title": "iCloud isn't ready yet",
+  "iCloudRemoteNotReady_description": "We couldn't finish checking iCloud for your data. Try again in a moment — if this keeps happening, make sure WitnessWork is up to date on this device.",
   "iCloudOpenSettings": "Open iOS Settings",
   "iCloudOpenSettingsHelp": "Go to Settings → [Your Name] → iCloud → iCloud Drive and turn it on.",
   "open": "Open",

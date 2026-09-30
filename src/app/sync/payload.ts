@@ -223,3 +223,18 @@ export function parsePayload(json: string): SyncPayload | null {
   normalizeLegacyFollowUps(d)
   return d as SyncPayload
 }
+
+/**
+ * Whether `parsePayload` rejected `json` for coming from a newer app version.
+ * Unlike a malformed file, it holds real data this build can't merge, so
+ * callers treat the remote as unreadable rather than absent.
+ */
+export function isNewerPayloadVersion(json: string): boolean {
+  try {
+    const version: unknown = (JSON.parse(json) as { version?: unknown })
+      ?.version
+    return typeof version === 'number' && version > PAYLOAD_VERSION
+  } catch {
+    return false
+  }
+}

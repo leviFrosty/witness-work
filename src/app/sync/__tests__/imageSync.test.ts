@@ -455,6 +455,49 @@ describe('pullMissingImages', () => {
     expect(result.downloaded).toHaveLength(0)
     expect(result.missing).toEqual([{ kind: 'contact', id: 'abc' }])
   })
+
+  it('keeps downloading past a binary that fails, and retries it next time', async () => {
+    const deps = makeDeps({
+      bridge: {
+        writeBinary: vi.fn(),
+        // Removed since the listing, say.
+        readBinary: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('ICLOUD_READ_BINARY_MISSING'))
+          .mockResolvedValue(3000),
+        listBinaryFiles: vi.fn(async () => [
+          { filename: 'witness-work-img-contact-bad.jpg', modifiedAt: 3000 },
+          { filename: 'witness-work-img-contact-ok.jpg', modifiedAt: 3000 },
+        ]),
+        deleteBinaryFile: vi.fn(),
+      },
+    })
+
+    const result = await pullMissingImages({
+      expectedSources: [
+        {
+          kind: 'contact',
+          id: 'bad',
+          localPath: 'file:///docs/contact-bad-avatar.jpg',
+        },
+        {
+          kind: 'contact',
+          id: 'ok',
+          localPath: 'file:///docs/contact-ok-avatar.jpg',
+        },
+      ],
+      bookkeeping: {},
+      deps,
+    })
+
+    expect(result.downloaded).toEqual([
+      expect.objectContaining({ kind: 'contact', id: 'ok' }),
+    ])
+    expect(result.failed).toBe(1)
+    expect(result.bookkeeping).not.toHaveProperty(
+      'witness-work-img-contact-bad.jpg'
+    )
+  })
 })
 
 describe('gcOrphanImages', () => {

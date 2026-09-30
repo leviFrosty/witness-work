@@ -29,7 +29,7 @@ public class ICloudBridgeModule: Module {
   /// writes OR reads). Used to distinguish "this file changed remotely" from
   /// "we just wrote it ourselves" in the metadata query handler.
   ///
-  /// Accessed from three contexts: the `.utility` queue (write/readAll/
+  /// Accessed from three contexts: the `.utility` queue (write/read/
   /// delete callbacks), the main thread (metadataQueryDidUpdate), and the
   /// module lifecycle hooks. Swift's `Dictionary` is not thread-safe, so all
   /// reads and writes must go through `stateQueue.sync` — concurrent bucket
@@ -157,11 +157,9 @@ public class ICloudBridgeModule: Module {
       }
     }
 
-    // Reads every `witness-work*.json` file in the ubiquity Documents dir,
-    // triggering parallel downloads for any that are still placeholders.
-    // Returns one entry per successfully-materialized file. Files still
-    // downloading at the 10s deadline are skipped — they'll be picked up on
-    // the next pull.
+    // Reads every `witness-work*.json` file in the ubiquity Documents dir.
+    // Superseded by `listFiles` + `readFiles`; kept for JS bundles that
+    // predate them (an OTA update onto this build of the same app version).
     AsyncFunction("readAll") { (promise: Promise) in
       guard let documentsURL = self.documentsURL() else {
         promise.reject(ICloudBridgeError.unavailable)
@@ -174,84 +172,62 @@ public class ICloudBridgeModule: Module {
             at: documentsURL,
             withIntermediateDirectories: true
           )
-
           let urls = try self.listSyncFiles(in: documentsURL)
-          if urls.isEmpty {
-            promise.resolve([])
-            return
-          }
-
-          // Kick off downloads for all files concurrently. On the second
-          // device in a sync pair, files surface as `.icloud` placeholders
-          // until iOS has downloaded them; reading without this first would
-          // return empty.
-          for url in urls {
-            try? FileManager.default.startDownloadingUbiquitousItem(at: url)
-          }
-
-          // Poll all files in parallel until each becomes `.current` or the
-          // deadline elapses.
-          let deadline = Date().addingTimeInterval(10.0)
-          var remaining = Set(urls.map { $0.path })
-          while Date() < deadline && !remaining.isEmpty {
-            for url in urls where remaining.contains(url.path) {
-              let values = try? url.resourceValues(forKeys: [
-                .ubiquitousItemDownloadingStatusKey,
-              ])
-              if values?.ubiquitousItemDownloadingStatus == .current {
-                remaining.remove(url.path)
-              }
-            }
-            if !remaining.isEmpty {
-              Thread.sleep(forTimeInterval: 0.2)
-            }
-          }
-
-          // Coordinated read of every file that finished downloading.
-          var results: [[String: Any]] = []
-          let coordinator = NSFileCoordinator(filePresenter: nil)
-          for url in urls {
-            if remaining.contains(url.path) {
-              // Still downloading — skip. The metadata query will fire when
-              // it lands and the next pull will read it.
-              continue
-            }
-            var payload: (json: String, modifiedAt: Date)?
-            var coordinatorError: NSError?
-            coordinator.coordinate(
-              readingItemAt: url,
-              options: [],
-              error: &coordinatorError
-            ) { readURL in
-              guard FileManager.default.fileExists(atPath: readURL.path) else {
-                return
-              }
-              guard let data = try? Data(contentsOf: readURL) else { return }
-              let values = try? readURL.resourceValues(forKeys: [
-                .contentModificationDateKey,
-              ])
-              let modifiedAt = values?.contentModificationDate ?? Date()
-              let json = String(data: data, encoding: .utf8) ?? ""
-              payload = (json, modifiedAt)
-            }
-            if let (json, modifiedAt) = payload {
-              let filename = url.lastPathComponent
-              self.setLastObserved(filename, modifiedAt)
-              results.append([
-                "filename": filename,
-                "json": json,
-                "modifiedAt": modifiedAt.timeIntervalSince1970 * 1000,
-              ])
-            }
-          }
-
-          promise.resolve(results)
+          promise.resolve(self.readSyncFiles(urls).files)
         } catch {
           promise.reject(
             "ICLOUD_READ_ALL",
             "Failed to enumerate iCloud files: \(error.localizedDescription)"
           )
         }
+      }
+    }
+
+    /// Names of every `witness-work*.json` file in the ubiquity Documents
+    /// dir. Downloads nothing and marks nothing observed, so JS can pick the
+    /// files it will actually consume before calling `readFiles`.
+    AsyncFunction("listFiles") { (promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+
+      DispatchQueue.global(qos: .utility).async {
+        do {
+          let urls = try self.listSyncFiles(in: documentsURL)
+          promise.resolve(urls.map { $0.lastPathComponent })
+        } catch {
+          promise.reject(
+            "ICLOUD_LIST",
+            "Failed to enumerate iCloud files: \(error.localizedDescription)"
+          )
+        }
+      }
+    }
+
+    /// Reads just `filenames`, triggering parallel downloads for any that are
+    /// still placeholders. Resolves `{ files, pending }`: one entry per file
+    /// read, plus the names still downloading at the 10s deadline (or present
+    /// but unreadable). Only files actually read are marked observed, so a
+    /// caller reading one file can't swallow the remote-change event for
+    /// another file it never consumed.
+    AsyncFunction("readFiles") { (filenames: [String], promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+      if let invalid = filenames.first(where: { !self.isValidSyncFilename($0) }) {
+        promise.reject("ICLOUD_FILENAME", "Refusing to read outside sync namespace: \(invalid)")
+        return
+      }
+      let urls = filenames.map { documentsURL.appendingPathComponent($0) }
+
+      DispatchQueue.global(qos: .utility).async {
+        let result = self.readSyncFiles(urls)
+        promise.resolve([
+          "files": result.files,
+          "pending": result.pending,
+        ])
       }
     }
 
@@ -440,7 +416,7 @@ public class ICloudBridgeModule: Module {
     /// Coordinated-read of a binary from the ubiquity container into
     /// `destinationPath` on the local filesystem. Triggers
     /// `startDownloadingUbiquitousItem` for placeholder files and polls up to
-    /// 10s for `.current` — mirrors the pattern in `readAll` for JSON files.
+    /// 10s for `.current` — mirrors the pattern in `readSyncFiles` for JSON files.
     ///
     /// Returns the container file's modification time in epoch ms so the JS
     /// bookkeeping layer can decide whether a later re-download is warranted.
@@ -459,13 +435,10 @@ public class ICloudBridgeModule: Module {
       DispatchQueue.global(qos: .utility).async {
         try? FileManager.default.startDownloadingUbiquitousItem(at: sourceURL)
 
-        // Poll for `.current` status — identical strategy to readAll.
+        // Poll for `.current` status — identical strategy to readSyncFiles.
         let deadline = Date().addingTimeInterval(10.0)
         while Date() < deadline {
-          let values = try? sourceURL.resourceValues(forKeys: [
-            .ubiquitousItemDownloadingStatusKey,
-          ])
-          if values?.ubiquitousItemDownloadingStatus == .current {
+          if self.downloadStatus(of: sourceURL) == .current {
             break
           }
           Thread.sleep(forTimeInterval: 0.2)
@@ -778,6 +751,94 @@ public class ICloudBridgeModule: Module {
       options: []
     )
     return contents.filter { self.isValidSyncFilename($0.lastPathComponent) }
+  }
+
+  /// Downloads (where needed) and reads `urls`, recording each read's content
+  /// date as observed so the metadata query only reports versions this device
+  /// hasn't consumed. Blocking — call off the main thread. Files still
+  /// downloading at the 10s deadline, or present but unreadable, come back in
+  /// `pending`, unread and unobserved, so the metadata query reports them
+  /// again once they land.
+  private func readSyncFiles(_ urls: [URL]) -> (files: [[String: Any]], pending: [String]) {
+    // Kick off downloads for all files concurrently. On the second device in a
+    // sync pair, files surface as placeholders until iOS has downloaded them;
+    // reading without this first would return empty.
+    for url in urls {
+      try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+    }
+
+    // Poll all files in parallel until each becomes `.current` or the
+    // deadline elapses.
+    let deadline = Date().addingTimeInterval(10.0)
+    var remaining = Set(urls.map { $0.path })
+    while Date() < deadline && !remaining.isEmpty {
+      for url in urls where remaining.contains(url.path) {
+        if self.downloadStatus(of: url) == .current {
+          remaining.remove(url.path)
+        }
+      }
+      if !remaining.isEmpty {
+        Thread.sleep(forTimeInterval: 0.2)
+      }
+    }
+
+    // Coordinated read of every file that finished downloading.
+    var files: [[String: Any]] = []
+    var pending: [String] = []
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+    for url in urls {
+      let filename = url.lastPathComponent
+      if remaining.contains(url.path) {
+        pending.append(filename)
+        continue
+      }
+      var payload: (json: String, modifiedAt: Date)?
+      var coordinatorError: NSError?
+      coordinator.coordinate(
+        readingItemAt: url,
+        options: [],
+        error: &coordinatorError
+      ) { readURL in
+        guard FileManager.default.fileExists(atPath: readURL.path) else {
+          return
+        }
+        guard let data = try? Data(contentsOf: readURL) else { return }
+        // Fresh URL: the enumerated one may carry a pre-download date.
+        let values = try? self.uncachedURL(readURL).resourceValues(forKeys: [
+          .contentModificationDateKey,
+        ])
+        let modifiedAt = values?.contentModificationDate ?? Date()
+        let json = String(data: data, encoding: .utf8) ?? ""
+        payload = (json, modifiedAt)
+      }
+      if let (json, modifiedAt) = payload {
+        self.setLastObserved(filename, modifiedAt)
+        files.append([
+          "filename": filename,
+          "json": json,
+          "modifiedAt": modifiedAt.timeIntervalSince1970 * 1000,
+        ])
+      } else if FileManager.default.fileExists(atPath: url.path) {
+        pending.append(filename)
+      }
+    }
+    return (files, pending)
+  }
+
+  /// `URL.resourceValues` answers from a cache on the URL object that is only
+  /// flushed between run-loop passes — never, on the GCD queues these reads
+  /// run on — and `listSyncFiles` pre-fetches the download status into that
+  /// cache. Polling the same URL kept reporting the enumeration-time status,
+  /// so a download that finished mid-poll still looked unfinished and the
+  /// file was skipped. A new URL object has no cache.
+  private func uncachedURL(_ url: URL) -> URL {
+    return URL(fileURLWithPath: url.path, isDirectory: false)
+  }
+
+  private func downloadStatus(of url: URL) -> URLUbiquitousItemDownloadingStatus? {
+    return try? uncachedURL(url)
+      .resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
+      .ubiquitousItemDownloadingStatus
   }
 
   /// Matches both the new per-device scheme (`witness-work-<id>.json`) and any

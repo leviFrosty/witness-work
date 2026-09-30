@@ -9,7 +9,6 @@ import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { usePreferences } from '@/stores/preferences'
 import IconButton from '@/components/ui/IconButton'
 import links from '@/constants/links'
@@ -20,7 +19,7 @@ import useTheme from '@/contexts/theme'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   const theme = useTheme()
-  const { unreadReleaseNotes, analyticsEnabled, set } = usePreferences()
+  const { unreadReleaseNotes } = usePreferences()
 
   return (
     <View style={{ gap: 3 }}>
@@ -54,12 +53,6 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
         >
           <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
-        <InputRowSwitch
-          label={i18n.t('anonymousAnalytics')}
-          description={i18n.t('anonymousAnalyticsDesc')}
-          value={analyticsEnabled}
-          onValueChange={(value) => set({ analyticsEnabled: value })}
-        />
         <InputRowButton
           leftIcon={ScrollTextIcon}
           label={i18n.t('privacyPolicy')}

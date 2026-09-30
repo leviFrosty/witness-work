@@ -53,6 +53,7 @@ export type RootStackParamList = {
   PreferencesAppearance: undefined
   PreferencesPersonalization: undefined
   PreferencesWidgets: undefined
+  PreferencesPrivacy: undefined
   PreferencesiCloud: undefined
   PreferencesAppIcon: undefined
   PreferencesColorKey: undefined

@@ -268,6 +268,11 @@ Hydration and developer resets are not instrumented.
 `paywall_faq_clicked` event remains available for the paywall funnel. Screen events
 for `FAQ` separately record arrival at the Help Center.
 
+`faq_search_performed` records a nonempty Help Center query after a 400 ms pause
+in typing, with `result_count` (including zero for no matches). Results update
+immediately; the pause only limits event volume. Clearing the query or unmounting
+the screen before the pause cancels the pending event. Search text is never sent.
+
 ## Settings split view
 
 On wide layouts (iPad with the sidebar), Settings shows its list beside the open

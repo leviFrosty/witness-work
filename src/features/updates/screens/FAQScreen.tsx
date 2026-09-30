@@ -19,7 +19,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import {
   FAQS,
   FAQ_CATEGORIES,
@@ -36,6 +36,7 @@ import FAQTopics, {
   faqTopicTitle,
 } from '@/features/updates/components/FAQTopics'
 import { RootStackParamList } from '@/types/rootStack'
+import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
 
 const FAQScreen = () => {
   const theme = useTheme()
@@ -54,6 +55,7 @@ const FAQScreen = () => {
     targetCategory ?? 'pinned'
   )
   const [search, setSearch] = useState('')
+  const { matches, isSearching } = useFAQSearch(search)
   const scrollRef = useRef<ScrollView>(null)
   const answersRef = useRef<ScrollView>(null)
   const categoryOffsets = useRef<Partial<Record<FAQCategory, number>>>({})
@@ -134,20 +136,6 @@ const FAQScreen = () => {
     })
   }, [navigation, isWide])
 
-  const query = search.toLocaleLowerCase().trim()
-  const isSearching = query.length > 0
-  const matches = FAQS.filter(
-    (entry) =>
-      !isSearching ||
-      i18n
-        .t(`faq_${entry.id}_q` as TranslationKey)
-        .toLocaleLowerCase()
-        .includes(query) ||
-      i18n
-        .t(`faq_${entry.id}_a` as TranslationKey)
-        .toLocaleLowerCase()
-        .includes(query)
-  )
   const pinned = FAQS.filter((entry) => entry.pinned)
   const visibleAnswers = isSearching
     ? matches

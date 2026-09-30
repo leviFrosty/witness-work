@@ -2,6 +2,7 @@ export type FAQCategory =
   | 'time'
   | 'contacts'
   | 'plans'
+  | 'buddies'
   | 'map'
   | 'customization'
   | 'backups'
@@ -14,7 +15,7 @@ export interface FAQEntry {
   category: FAQCategory
   /** When true, shown in the pinned "Top questions" section. */
   pinned?: boolean
-  /** Closed GitHub issue numbers this FAQ was derived from. */
+  /** GitHub issue numbers this FAQ was derived from. */
   related?: number[]
 }
 
@@ -66,6 +67,18 @@ export const FAQS: FAQEntry[] = [
     pinned: true,
     related: [243, 238, 41],
   },
+  {
+    id: 'buddiesOverview',
+    category: 'buddies',
+    pinned: true,
+  },
+  { id: 'buddiesAdd', category: 'buddies' },
+  { id: 'buddiesInviteTrouble', category: 'buddies' },
+  { id: 'buddiesPrivacy', category: 'buddies' },
+  { id: 'buddiesInvitations', category: 'buddies' },
+  { id: 'buddiesMissingPlans', category: 'buddies' },
+  { id: 'buddiesRemove', category: 'buddies' },
+  { id: 'buddiesRestore', category: 'buddies' },
   {
     id: 'remainingHours',
     category: 'time',
@@ -151,6 +164,19 @@ export const FAQS: FAQEntry[] = [
     category: 'backups',
     related: [277, 93],
   },
+  { id: 'backupRecovery', category: 'backups', related: [433] },
+  { id: 'syncTroubleshooting', category: 'backups', related: [118] },
+  { id: 'syncPhotos', category: 'backups' },
+  { id: 'notesImportHelp', category: 'backups', related: [360, 378] },
+  { id: 'notesImportRetry', category: 'backups' },
+  { id: 'mytimeTrouble', category: 'backups', related: [360] },
+  {
+    id: 'hourglassSetup',
+    category: 'time',
+    related: [392, 399, 429],
+  },
+  { id: 'followUpReminders', category: 'contacts', related: [480] },
+  { id: 'soundEffects', category: 'customization', related: [365, 486] },
   {
     id: 'shareAddress',
     category: 'map',
@@ -160,6 +186,7 @@ export const FAQS: FAQEntry[] = [
     category: 'map',
     related: [100, 144, 168, 153, 141, 140],
   },
+  { id: 'locationTrouble', category: 'map' },
   {
     id: 'profilePic',
     category: 'contacts',
@@ -178,6 +205,7 @@ export const FAQS: FAQEntry[] = [
     id: 'becomeSupporter',
     category: 'supporter',
   },
+  { id: 'restoreSupporter', category: 'supporter' },
   {
     id: 'stillFree',
     category: 'supporter',
@@ -205,6 +233,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'time',
   'contacts',
   'plans',
+  'buddies',
   'map',
   'customization',
   'backups',

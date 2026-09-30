@@ -18,13 +18,19 @@ import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import { FAQEntry } from '@/features/updates/constants/faqs'
+import { analytics } from '@/lib/analytics'
+
+const openHelpResource = (resource: string, url: string) => {
+  analytics.capture('help_center_resource_clicked', { resource })
+  openURL(url)
+}
 
 const ReportLinks = () => {
   const theme = useTheme()
   return (
     <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
       <Button
-        onPress={() => openURL(links.bugReport)}
+        onPress={() => openHelpResource('bug_report', links.bugReport)}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -43,7 +49,9 @@ const ReportLinks = () => {
         </Text>
       </Button>
       <Button
-        onPress={() => openURL(links.featureRequest)}
+        onPress={() =>
+          openHelpResource('feature_request', links.featureRequest)
+        }
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -73,6 +81,14 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
   return (
     <Accordion
       style={{ flexShrink: 1 }}
+      onExpand={(wasExpanded) => {
+        if (!wasExpanded) {
+          analytics.capture('help_center_question_opened', {
+            question_id: entry.id,
+            category: entry.category,
+          })
+        }
+      }}
       header={
         <Text
           style={{
@@ -210,6 +226,42 @@ export const FAQSupport = ({
             {i18n.t('faq_stillNeedHelp_description')}
           </Text>
           <ReportLinks />
+          <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
+            {[
+              {
+                resource: 'privacy_policy',
+                url: links.privacyPolicy,
+                label: 'privacyPolicy',
+              },
+              {
+                resource: 'source_code',
+                url: links.githubRepo,
+                label: 'faq_sourceCode',
+              },
+              {
+                resource: 'notes_import_data_policy',
+                url: links.openRouterZdr,
+                label: 'notesImport_privacyLink',
+              },
+            ].map(({ resource, url, label }) => (
+              <Button
+                key={resource}
+                noTransform
+                accessibilityRole='link'
+                onPress={() => openHelpResource(resource, url)}
+                style={{ minHeight: 44, justifyContent: 'center' }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.accent,
+                    textDecorationLine: 'underline',
+                  }}
+                >
+                  {i18n.t(label as TranslationKey)}
+                </Text>
+              </Button>
+            ))}
+          </View>
           <Text
             style={{
               fontSize: theme.fontSize('xs'),
@@ -219,7 +271,7 @@ export const FAQSupport = ({
           >
             {i18n.t('faq_emailLevi')}{' '}
             <Text
-              onPress={() => openURL(`mailto:${email}`)}
+              onPress={() => openHelpResource('email', `mailto:${email}`)}
               style={{
                 fontSize: theme.fontSize('xs'),
                 color: theme.colors.accent,

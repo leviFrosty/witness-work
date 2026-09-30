@@ -40,7 +40,9 @@ describe('FAQ search', () => {
   )
 
   it('finds a term appearing only in an answer', () => {
-    expect(searchFAQsFuzzy('Hourglass', 'en-us')[0].id).toBe('submitReport')
+    expect(searchFAQsFuzzy('plain-text summary', 'en-us')[0].id).toBe(
+      'submitReport'
+    )
   })
 
   it('returns no results for unrelated text', () => {

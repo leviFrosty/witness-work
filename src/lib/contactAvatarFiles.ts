@@ -1,40 +1,64 @@
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
+import {
+  avatarFileContactId,
+  isManagedAvatarPath,
+  originalSiblingFileName,
+} from '@/lib/avatarFilePolicy'
+
+export { originalSiblingFileName } from '@/lib/avatarFilePolicy'
 
 /**
  * On-disk layout for a contact's image avatar.
  *
- * - `<id>-avatar.jpg` (cropped, displayed) — what `Contact.avatar.value` points
- *   at. Synced to iCloud as `witness-work-img-contact-<id>.jpg` via the regular
- *   image-sync pipeline.
- * - `<id>-avatar-original.jpg` (uncropped source) — local-only. Lets the crop
- *   editor re-crop the image without quality loss across passes. Receivers of a
- *   synced avatar do not get the original — see `avatarMeta` doc on Contact.
- *
- * The cropped file is what every existing call site already writes; the
- * original is new and additive, so legacy contacts simply have no original on
- * disk and the crop editor falls back to the displayed image as the source.
+ * Cropped picks and local-only originals have immutable revision paths. A
+ * pending draft therefore cannot overwrite another photo's source, and cleanup
+ * of a remote replacement cannot delete the pending draft's original. Legacy
+ * records without revisions retain their canonical filenames.
  */
 
 const CROPPED_PREFIX = 'contact-'
 const CROPPED_SUFFIX = '-avatar.jpg'
-const ORIGINAL_SUFFIX = '-avatar-original.jpg'
 
-export function croppedAvatarFileName(contactId: string): string {
-  return `${CROPPED_PREFIX}${contactId}${CROPPED_SUFFIX}`
+/** New cropped bytes use immutable paths so an upload cannot read a later pick. */
+export function revisionImageFileName(
+  fileName: string,
+  revision: string
+): string {
+  const dot = fileName.lastIndexOf('.')
+  return dot < 0
+    ? `${fileName}-picked-${revision}`
+    : `${fileName.slice(0, dot)}-picked-${revision}${fileName.slice(dot)}`
 }
 
-export function originalAvatarFileName(contactId: string): string {
-  return `${CROPPED_PREFIX}${contactId}${ORIGINAL_SUFFIX}`
+export function croppedAvatarFileName(
+  contactId: string,
+  revision?: string
+): string {
+  const fileName = `${CROPPED_PREFIX}${contactId}${CROPPED_SUFFIX}`
+  return revision ? revisionImageFileName(fileName, revision) : fileName
 }
 
-export function croppedAvatarPath(contactId: string): string {
-  return `${FileSystem.documentDirectory}${croppedAvatarFileName(contactId)}`
+export function originalAvatarFileName(
+  contactId: string,
+  revision?: string
+): string {
+  return originalSiblingFileName(croppedAvatarFileName(contactId), revision)
 }
 
-export function originalAvatarPath(contactId: string): string {
-  return `${FileSystem.documentDirectory}${originalAvatarFileName(contactId)}`
+export function croppedAvatarPath(
+  contactId: string,
+  revision?: string
+): string {
+  return `${FileSystem.documentDirectory}${croppedAvatarFileName(contactId, revision)}`
+}
+
+export function originalAvatarPath(
+  contactId: string,
+  revision?: string
+): string {
+  return `${FileSystem.documentDirectory}${originalAvatarFileName(contactId, revision)}`
 }
 
 /**
@@ -50,8 +74,13 @@ export function withCacheBuster(path: string): string {
   return `${path}?t=${Date.now()}`
 }
 
-export async function originalExists(contactId: string): Promise<boolean> {
-  const info = await FileSystem.getInfoAsync(originalAvatarPath(contactId))
+export async function originalExists(
+  contactId: string,
+  revision?: string
+): Promise<boolean> {
+  const info = await FileSystem.getInfoAsync(
+    originalAvatarPath(contactId, revision)
+  )
   return info.exists
 }
 
@@ -140,22 +169,15 @@ export function cropAndSaveAvatar(
   srcUri: string,
   contactId: string,
   rect: CropRect,
-  source: { width: number; height: number }
+  source: { width: number; height: number },
+  revision?: string
 ): Promise<{ path: string; width: number; height: number }> {
-  return cropAndSaveImage(srcUri, croppedAvatarPath(contactId), rect, source)
-}
-
-/**
- * Sibling "-original" filename for any given displayed-image filename. Used by
- * the avatar picker so the original-source policy applies uniformly to both
- * contact avatars (`contact-<id>-avatar.jpg` →
- * `contact-<id>-avatar-original.jpg`) and the profile avatar
- * (`profile-avatar.jpg` → `profile-avatar-original.jpg`).
- */
-export function originalSiblingFileName(croppedFileName: string): string {
-  const dotIdx = croppedFileName.lastIndexOf('.')
-  if (dotIdx === -1) return `${croppedFileName}-original`
-  return `${croppedFileName.slice(0, dotIdx)}-original${croppedFileName.slice(dotIdx)}`
+  return cropAndSaveImage(
+    srcUri,
+    croppedAvatarPath(contactId, revision),
+    rect,
+    source
+  )
 }
 
 /**
@@ -176,15 +198,30 @@ export function defaultCenteredSquareCrop(source: {
 }
 
 /**
- * Best-effort cleanup of all on-disk avatar files for a contact. Called when
- * the user clears the avatar entirely. Errors are swallowed since the caller
- * cares about the in-memory state, not whether the disk eviction succeeded.
+ * Best-effort cleanup of all on-disk avatar files for a contact. Called when a
+ * user explicitly erases householder data. Errors are swallowed since the
+ * caller cares about the in-memory state, not whether the disk eviction
+ * succeeded.
  */
 export async function deleteAvatarFiles(contactId: string): Promise<void> {
-  for (const path of [
+  if (!FileSystem.documentDirectory) return
+  const paths = new Set([
     croppedAvatarPath(contactId),
     originalAvatarPath(contactId),
-  ]) {
+  ])
+  try {
+    const files = await FileSystem.readDirectoryAsync(
+      FileSystem.documentDirectory
+    )
+    for (const file of files) {
+      if (avatarFileContactId(file) === contactId)
+        paths.add(`${FileSystem.documentDirectory}${file}`)
+    }
+  } catch (error) {
+    logger.warn('Failed to enumerate avatar revisions', error)
+  }
+  for (const path of paths) {
+    if (!isManagedAvatarPath(path, FileSystem.documentDirectory)) continue
     try {
       await FileSystem.deleteAsync(path, { idempotent: true })
     } catch (e) {

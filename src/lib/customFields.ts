@@ -28,7 +28,12 @@ export function stripTombstonedCustomFieldValues(
 ): Record<string, string> | undefined {
   if (!customFields || tombstones.length === 0) return customFields
 
-  const deletedIds = new Set(tombstones.map((tombstone) => tombstone.id))
+  const deletedIds = new Set(
+    tombstones.flatMap((tombstone) => [
+      tombstone.id,
+      ...(tombstone.legacyIds ?? []),
+    ])
+  )
   const next = { ...customFields }
   let changed = false
 

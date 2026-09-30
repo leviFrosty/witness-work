@@ -1,3 +1,15 @@
+import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
+import type { MergeResult } from '@/app/sync/merge'
+type LocalMergeState = Omit<MergeResult, 'changed'>
+import { syncNow, setSyncClockOffset, refreshSyncClock } from '@/lib/syncClock'
+import { reconcileSyncDefinitions } from '@/app/sync/definitionReconciliation'
+import { expireDeletedContactDetails } from '@/lib/contactRetention'
+import { alignPayloadClock } from '@/app/sync/clockSkew'
+import {
+  syncableValues,
+  NON_SYNCABLE_PROFILE_KEYS,
+} from '@/lib/syncPreferencePolicy'
+import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 import { analytics } from '@/lib/analytics'
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -23,19 +35,8 @@ import { logger } from '@/lib/logger'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
-import { Contact } from '@/types/contact'
-import {
-  CustomFieldDefinition,
-  CustomFieldTombstone,
-} from '@/types/customField'
-import { Visit, VisitTombstone } from '@/types/visit'
-import {
-  DayPlan,
-  TimeEntriesByYear,
-  TimeEntryTombstone,
-} from '@/types/timeEntry'
-import { Category, CategoryTombstone } from '@/types/category'
-import { RecurringPlan } from '@/lib/serviceReport'
+import { CustomFieldDefinition } from '@/types/customField'
+import { Category } from '@/types/category'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { stripTombstonedCustomFields } from '@/lib/customFields'
 import {
@@ -45,11 +46,14 @@ import {
   ActiveIdentity,
   ImageSyncBookkeeping,
   ImageSyncDeps,
+  AvatarSource,
+  filenameForSource,
 } from '@/app/sync/imageSync'
 import {
   collectLocalAvatarSources,
   collectExpectedMarkerSources,
   applyDownloadedAvatars,
+  obsoleteDownloadPaths,
 } from '@/app/sync/imageSources'
 
 const PUSH_DEBOUNCE_MS = 5000
@@ -78,7 +82,31 @@ const SYNC_FILE_EXT = '.json'
 
 let installed = false
 let pushScheduled = false
-let pushDeferred = false
+let pushInFlight: Promise<boolean> | null = null
+let pushRetryTimer: ReturnType<typeof setTimeout> | null = null
+let pushRetries = 0
+let editGeneration = 0
+const PUSH_RETRY_DELAYS_MS = [5_000, 20_000, 60_000]
+function cancelPushRetry() {
+  if (pushRetryTimer) clearTimeout(pushRetryTimer)
+  pushRetryTimer = null
+  pushRetries = 0
+}
+function retryPush() {
+  if (
+    !installed ||
+    pushRetryTimer ||
+    AppState.currentState !== 'active' ||
+    !canSync()
+  )
+    return
+  const delay = PUSH_RETRY_DELAYS_MS[pushRetries++]
+  if (delay === undefined) return
+  pushRetryTimer = setTimeout(() => {
+    pushRetryTimer = null
+    void push('push-retry')
+  }, delay)
+}
 
 /**
  * `complete` means local state now reflects every remote payload: the read
@@ -136,7 +164,7 @@ function filenameForDevice(deviceId: string): string {
  * pre-upgrade single-file name `witness-work.json` or its iCloud conflict
  * duplicates `witness-work 2.json`, `witness-work 3.json`, etc. These can still
  * contain valuable data (one of ours had 23KB stranded in `witness-work
- * 4.json`), so the reader absorbs them and then deletes them.
+ * 4.json`), so the reader absorbs them and retains the source file.
  *
  * The account file (`witness-work-account.json`, ADR 0011) shares the sync
  * namespace but is NOT a sync payload — every reader must skip it via
@@ -260,125 +288,6 @@ export function hasMeaningfulLocalData(): boolean {
   return false
 }
 
-type LocalMergeState = {
-  contacts: Contact[]
-  deletedContacts: Contact[]
-  customFieldDefs: CustomFieldDefinition[]
-  deletedCustomFieldDefs: CustomFieldTombstone[]
-  conversations: Visit[]
-  deletedConversations: VisitTombstone[]
-  serviceReports: TimeEntriesByYear
-  dayPlans: DayPlan[]
-  recurringPlans: RecurringPlan[]
-  deletedServiceReports: TimeEntryTombstone[]
-  categories: Category[]
-  deletedCategories: CategoryTombstone[]
-  preferencesValues: Record<string, unknown>
-  preferenceUpdatedAt: Record<string, number>
-  profileValues: Record<string, unknown>
-  profileUpdatedAt: Record<string, number>
-}
-
-/**
- * Folds a list of remote payloads into a single synthesized SyncPayload by
- * merging them pairwise via the LWW merge algorithm. Used for
- * `peekRemotePayload` and the manual "restore from iCloud" flow, where the
- * caller expects one payload-shaped object representing the full remote state
- * across all devices.
- *
- * Returns null when the input is empty.
- */
-function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
-  if (payloads.length === 0) return null
-  if (payloads.length === 1) return payloads[0]
-
-  const first = payloads[0]
-  let acc: LocalMergeState = {
-    contacts: (first.contactStore.contacts ?? []) as Contact[],
-    deletedContacts: (first.contactStore.deletedContacts ?? []) as Contact[],
-    customFieldDefs: (first.contactStore.customFieldDefs ??
-      []) as CustomFieldDefinition[],
-    deletedCustomFieldDefs: first.contactStore.deletedCustomFieldDefs ?? [],
-    conversations: (first.conversationStore.conversations ?? []) as Visit[],
-    deletedConversations: first.conversationStore.deletedConversations ?? [],
-    serviceReports:
-      (first.serviceReportStore.serviceReports as TimeEntriesByYear) ?? {},
-    dayPlans: (first.serviceReportStore.dayPlans ?? []) as DayPlan[],
-    recurringPlans: (first.serviceReportStore.recurringPlans ??
-      []) as RecurringPlan[],
-    deletedServiceReports: first.serviceReportStore.deletedServiceReports ?? [],
-    categories: (first.categoryStore?.categories ?? []) as Category[],
-    deletedCategories: first.categoryStore?.deletedCategories ?? [],
-    preferencesValues: first.preferencesStore?.values ?? {},
-    preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
-    profileValues: first.profileStore?.values ?? {},
-    profileUpdatedAt: first.profileStore?.updatedAt ?? {},
-  }
-
-  for (let i = 1; i < payloads.length; i++) {
-    const result = mergePayload(acc, payloads[i])
-    acc = {
-      contacts: result.contacts,
-      deletedContacts: result.deletedContacts,
-      customFieldDefs: result.customFieldDefs,
-      deletedCustomFieldDefs: result.deletedCustomFieldDefs,
-      conversations: result.conversations,
-      deletedConversations: result.deletedConversations,
-      serviceReports: result.serviceReports,
-      dayPlans: result.dayPlans,
-      recurringPlans: result.recurringPlans,
-      deletedServiceReports: result.deletedServiceReports,
-      categories: result.categories,
-      deletedCategories: result.deletedCategories,
-      preferencesValues: result.preferencesValues,
-      preferenceUpdatedAt: result.preferenceUpdatedAt,
-      profileValues: result.profileValues,
-      profileUpdatedAt: result.profileUpdatedAt,
-    }
-  }
-
-  // Representative metadata: pick the payload with the newest writtenAt.
-  let rep = payloads[0]
-  for (const p of payloads) {
-    if (p.writtenAt > rep.writtenAt) rep = p
-  }
-
-  return {
-    version: rep.version,
-    writtenAt: rep.writtenAt,
-    deviceId: rep.deviceId,
-    deviceName: rep.deviceName,
-    contactStore: {
-      contacts: acc.contacts,
-      deletedContacts: acc.deletedContacts,
-      customFieldDefs: acc.customFieldDefs,
-      deletedCustomFieldDefs: acc.deletedCustomFieldDefs,
-    },
-    conversationStore: {
-      conversations: acc.conversations,
-      deletedConversations: acc.deletedConversations,
-    },
-    serviceReportStore: {
-      serviceReports: acc.serviceReports,
-      dayPlans: acc.dayPlans,
-      recurringPlans: acc.recurringPlans,
-      deletedServiceReports: acc.deletedServiceReports,
-    },
-    categoryStore: {
-      categories: acc.categories,
-      deletedCategories: acc.deletedCategories,
-    },
-    preferencesStore: {
-      values: acc.preferencesValues,
-      updatedAt: acc.preferenceUpdatedAt,
-    },
-    profileStore: {
-      values: acc.profileValues,
-      updatedAt: acc.profileUpdatedAt,
-    },
-  }
-}
-
 /**
  * Destructive: wipes local user data + syncable prefs and replaces them with
  * the contents of `remote`. Device-local bookkeeping (`iCloudSyncEnabled`,
@@ -395,66 +304,72 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
  * merges).
  */
 export function replaceLocalWithRemote(remote: SyncPayload): void {
-  const deletedCustomFieldDefs =
-    remote.contactStore.deletedCustomFieldDefs ?? []
-  const deletedCustomFieldIds = new Set(
-    deletedCustomFieldDefs.map((tombstone) => tombstone.id)
-  )
-  useContacts.setState({
-    contacts: (remote.contactStore.contacts ?? []).map((contact) =>
-      stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
-    ),
-    deletedContacts: (remote.contactStore.deletedContacts ?? []).map(
-      (contact) => stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
-    ),
-    customFieldDefs: (
-      (remote.contactStore.customFieldDefs ?? []) as CustomFieldDefinition[]
-    ).filter((def) => !deletedCustomFieldIds.has(def.id)),
-    deletedCustomFieldDefs,
-  })
-  useConversations.setState({
-    conversations: remote.conversationStore.conversations ?? [],
-    deletedConversations: remote.conversationStore.deletedConversations ?? [],
-  })
-  // Remote may have been written by a device that pre-dates calendar-day
-  // normalization, so re-anchor every Date to noon UTC before persisting it
-  // locally. Idempotent on already-normalized data.
-  const normalizedRemote = migrateNormalizeDates({
-    serviceReports: remote.serviceReportStore.serviceReports ?? {},
-    dayPlans: remote.serviceReportStore.dayPlans ?? [],
-    recurringPlans: remote.serviceReportStore.recurringPlans ?? [],
-  })
-  useServiceReport.setState({
-    serviceReports: normalizedRemote.serviceReports,
-    dayPlans: normalizedRemote.dayPlans,
-    recurringPlans: normalizedRemote.recurringPlans,
-    deletedServiceReports:
-      remote.serviceReportStore.deletedServiceReports ?? [],
-  })
-  useCategories.setState({
-    categories: (remote.categoryStore?.categories ?? []) as Category[],
-    deletedCategories: remote.categoryStore?.deletedCategories ?? [],
-  })
+  remote = foldRemotePayloads([remote])!
+  withRemoteDataMutation(() => {
+    const deletedCustomFieldDefs =
+      remote.contactStore.deletedCustomFieldDefs ?? []
+    const deletedCustomFieldIds = new Set(
+      deletedCustomFieldDefs.map((tombstone) => tombstone.id)
+    )
+    useContacts.setState({
+      contacts: (remote.contactStore.contacts ?? []).map((contact) =>
+        stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
+      ),
+      deletedContacts: (remote.contactStore.deletedContacts ?? []).map(
+        (contact) =>
+          stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
+      ),
+      customFieldDefs: (
+        (remote.contactStore.customFieldDefs ?? []) as CustomFieldDefinition[]
+      ).filter((def) => !deletedCustomFieldIds.has(def.id)),
+      deletedCustomFieldDefs,
+    })
+    useConversations.setState({
+      conversations: remote.conversationStore.conversations ?? [],
+      deletedConversations: remote.conversationStore.deletedConversations ?? [],
+    })
+    // Remote may have been written by a device that pre-dates calendar-day
+    // normalization, so re-anchor every Date to noon UTC before persisting it
+    // locally. Idempotent on already-normalized data.
+    const normalizedRemote = migrateNormalizeDates({
+      serviceReports: remote.serviceReportStore.serviceReports ?? {},
+      dayPlans: remote.serviceReportStore.dayPlans ?? [],
+      recurringPlans: remote.serviceReportStore.recurringPlans ?? [],
+    })
+    useServiceReport.setState({
+      serviceReports: normalizedRemote.serviceReports,
+      dayPlans: normalizedRemote.dayPlans,
+      recurringPlans: normalizedRemote.recurringPlans,
+      deletedServiceReports:
+        remote.serviceReportStore.deletedServiceReports ?? [],
+    })
+    useCategories.setState({
+      categories: (remote.categoryStore?.categories ?? []) as Category[],
+      deletedCategories: remote.categoryStore?.deletedCategories ?? [],
+    })
 
-  const now = Date.now()
-  usePreferences.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(remote.preferencesStore.values as any),
-    preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
-    lastiCloudSyncAt: now,
-    lastiCloudPulledAt: now,
-    lastiCloudRemoteWrittenAt: remote.writtenAt,
-    lastiCloudRemoteDeviceId: remote.deviceId,
-    lastiCloudRemoteDeviceName: remote.deviceName ?? null,
-  })
-  // Profile slice — `parsePayload` has already lifted any legacy
-  // profile-shaped fields out of `preferencesStore.values` into
-  // `remote.profileStore` via `normalizeLegacyPayloadFieldNames`, so this
-  // single write covers both fresh-shape and legacy-shape remote payloads.
-  useProfile.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...((remote.profileStore?.values ?? {}) as any),
-    profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
+    const now = Date.now()
+    usePreferences.setState({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(syncableValues(remote.preferencesStore.values) as any),
+      preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
+      lastiCloudSyncAt: now,
+      lastiCloudPulledAt: now,
+      lastiCloudRemoteWrittenAt: remote.writtenAt,
+      lastiCloudRemoteDeviceId: remote.deviceId,
+      lastiCloudRemoteDeviceName: remote.deviceName ?? null,
+    })
+    // Profile slice — `parsePayload` has already lifted any legacy
+    // profile-shaped fields out of `preferencesStore.values` into
+    // `remote.profileStore` via `normalizeLegacyPayloadFieldNames`, so this
+    // single write covers both fresh-shape and legacy-shape remote payloads.
+    useProfile.setState({
+      ...syncableValues(
+        remote.profileStore?.values ?? {},
+        NON_SYNCABLE_PROFILE_KEYS
+      ),
+      profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
+    })
   })
 }
 
@@ -464,16 +379,15 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
  * device. Used by the first-enable sheet's "Keep this device's data" branch.
  */
 export async function overwriteRemoteWithLocal(): Promise<void> {
-  try {
-    await ICloudBridge.deleteAll()
-  } catch (e) {
-    logger.error(`${tag()} failed to clear remote before overwrite`, e)
-    errorTracking.captureException(e, { iCloudSync: 'overwrite' })
-  }
-  // deleteAll also removed the account file (same namespace); re-claim it so
-  // another device can't win the empty-file race before the next reconcile.
-  void reclaimAccountFile(useSupporter.getState().isSupporter)
-  await push('overwrite-remote')
+  await ICloudBridge.deleteAll()
+  await clearCloudPhotos()
+  await reclaimAccountFile(useSupporter.getState().isSupporter)
+  usePreferences.getState().set({
+    iCloudSyncEnabled: true,
+    iCloudSyncNeedsResolution: false,
+    iCloudFreshSetup: false,
+  })
+  if (!(await push('overwrite-remote'))) throw new Error('iCloud write failed')
 }
 
 /**
@@ -481,7 +395,11 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
  * hadn't finished, a remote file was still downloading after waiting, or one
  * came from a newer app version.
  */
-export type RemoteIncompleteReason = 'scan' | 'downloading' | 'newer-version'
+export type RemoteIncompleteReason =
+  | 'scan'
+  | 'downloading'
+  | 'newer-version'
+  | 'invalid-file'
 
 /**
  * What `peekRemotePayload` saw. `incomplete` means a backup may exist that the
@@ -535,13 +453,19 @@ export async function peekRemotePayload(): Promise<RemotePeek> {
       return incompletePeek('scan')
     }
     for (let attempt = 1; ; attempt++) {
-      const { files, pending } = await ICloudBridge.readFiles(isPayloadFilename)
+      const { files, pending } = await ICloudBridge.readFiles(
+        (filename) =>
+          isPayloadFilename(filename) &&
+          filename !== filenameForDevice(ensureDeviceId())
+      )
       const payloads: SyncPayload[] = []
       for (const file of files) {
         const parsed = parsePayload(file.json)
-        if (parsed) payloads.push(parsed)
+        if (parsed) payloads.push(alignPayloadClock(parsed, file.modifiedAt))
         else if (isNewerPayloadVersion(file.json)) {
           return incompletePeek('newer-version')
+        } else {
+          return incompletePeek('invalid-file')
         }
       }
       // `pending: null` is a binary that can't tell (see `readFiles`); decide
@@ -626,11 +550,16 @@ export async function applySeedEnable(
 ): Promise<void> {
   backfillUpdatedAtIfNeeded()
   const wasEnabled = usePreferences.getState().iCloudSyncEnabled
-  usePreferences.getState().set({ iCloudSyncEnabled: true })
+  usePreferences.getState().set({
+    iCloudSyncEnabled: true,
+    iCloudSyncNeedsResolution: false,
+    iCloudFreshSetup: false,
+  })
   if (!wasEnabled) {
     analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
   }
-  await push('initial-enable-seed')
+  if (!(await push('initial-enable-seed')))
+    throw new Error('iCloud write failed')
 }
 
 /**
@@ -646,7 +575,11 @@ export function applyPullEnable(
 ): void {
   replaceLocalWithRemote(remote)
   const wasEnabled = usePreferences.getState().iCloudSyncEnabled
-  usePreferences.getState().set({ iCloudSyncEnabled: true })
+  usePreferences.getState().set({
+    iCloudSyncEnabled: true,
+    iCloudSyncNeedsResolution: false,
+    iCloudFreshSetup: false,
+  })
   if (!wasEnabled) {
     analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
   }
@@ -658,8 +591,12 @@ export function applyPullEnable(
  * upload/download bookkeeping testable without react-native mocks; this is the
  * production adapter.
  */
-function buildImageSyncDeps(): ImageSyncDeps {
+function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
   return {
+    canTransfer: () =>
+      usePreferences.getState().iCloudSyncIncludeImages &&
+      ICloudBridge.isAvailable() &&
+      (oneShot || canSync()),
     bridge: {
       writeBinary: (filename, sourcePath) =>
         ICloudBridge.writeBinary(filename, sourcePath),
@@ -680,10 +617,19 @@ function buildImageSyncDeps(): ImageSyncDeps {
           : Date.now()
       },
     },
-    now: () => Date.now(),
+    now: () => syncNow(),
   }
 }
 
+let imageWork: Promise<void> = Promise.resolve()
+function serializeImages<T>(work: () => Promise<T>): Promise<T> {
+  const result = imageWork.then(work)
+  imageWork = result.then(
+    () => undefined,
+    () => undefined
+  )
+  return result
+}
 const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
 
 /**
@@ -692,18 +638,29 @@ const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
  * preferences. No-op when image sync is disabled. Failures are logged and
  * surfaced to error tracking; the returned promise resolves regardless.
  */
-async function pushImagesIfEnabled(
-  trigger: 'store-edit' | 'foreground'
+function pushImagesIfEnabled(
+  trigger: 'store-edit' | 'foreground',
+  publishedSources?: AvatarSource[]
+): Promise<void> {
+  return serializeImages(() => pushImagesInner(trigger, publishedSources))
+}
+async function pushImagesInner(
+  trigger: 'store-edit' | 'foreground',
+  publishedSources?: AvatarSource[]
 ): Promise<void> {
   const prefs = usePreferences.getState()
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!publishedSources && prefs.iCloudSyncPendingPush) return
   if (Platform.OS !== 'ios') return
   try {
-    const sources = collectLocalAvatarSources({
-      contacts: useContacts.getState().contacts,
-      profileAvatar: useProfile.getState().avatar,
-      documentDirectory: DOCUMENT_DIR,
-    })
+    const sources =
+      publishedSources ??
+      collectLocalAvatarSources({
+        contacts: useContacts.getState().contacts,
+        profileAvatar: useProfile.getState().avatar,
+        profileUpdatedAt: useProfile.getState().profileUpdatedAt.avatar,
+        documentDirectory: DOCUMENT_DIR,
+      })
     if (sources.length === 0) return
     const deps = buildImageSyncDeps()
     const result = await pushAllImages({
@@ -739,18 +696,24 @@ async function pushImagesIfEnabled(
  * devices is how receivers naturally fall back to initials (see Q4 in
  * docs/icloud-image-sync-plan.md).
  */
-async function pullImagesIfEnabled(): Promise<void> {
+let materializingImages = false
+function pullImagesIfEnabled(oneShot = false): Promise<void> {
+  return serializeImages(() => pullImagesInner(oneShot))
+}
+async function pullImagesInner(oneShot = false): Promise<void> {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages) return
   if (Platform.OS !== 'ios') return
+  if (!oneShot && !canSync()) return
   try {
     const sources = collectExpectedMarkerSources({
       contacts: useContacts.getState().contacts,
       profileAvatar: useProfile.getState().avatar,
+      profileUpdatedAt: useProfile.getState().profileUpdatedAt.avatar,
       documentDirectory: DOCUMENT_DIR,
     })
     if (sources.length === 0) return
-    const deps = buildImageSyncDeps()
+    const deps = buildImageSyncDeps(oneShot)
     const result = await pullMissingImages({
       expectedSources: sources,
       bookkeeping: prefs.iCloudImageSync ?? {},
@@ -769,21 +732,57 @@ async function pullImagesIfEnabled(): Promise<void> {
     }
     const contactsState = useContacts.getState()
     const profileState = useProfile.getState()
-    const applied = applyDownloadedAvatars({
-      contacts: contactsState.contacts,
-      profileAvatar: profileState.avatar,
-      downloaded: result.downloaded,
-    })
+    const applied = usePreferences.getState().iCloudSyncIncludeImages
+      ? applyDownloadedAvatars({
+          contacts: contactsState.contacts,
+          profileAvatar: profileState.avatar,
+          profileUpdatedAt: profileState.profileUpdatedAt.avatar,
+          downloaded: result.downloaded,
+        })
+      : { contacts: contactsState.contacts, profileAvatar: profileState.avatar }
     // Write through the stores' own `set` to avoid bumping `updatedAt` — the
     // helper preserved the records' timestamps, and `set` is a raw state
     // replacement (no stamping). Using `useProfile.setState` directly
     // bypasses the stamping wrapper on the Profile store for the same reason.
-    contactsState.set({ contacts: applied.contacts })
+    if (applied.contacts !== contactsState.contacts) {
+      // File materialization is local display state; the reference was already
+      // published. It must not arm another JSON push on every remote echo.
+      materializingImages = true
+      try {
+        contactsState.set({ contacts: applied.contacts })
+      } finally {
+        materializingImages = false
+      }
+    }
     if (
       applied.profileAvatar &&
       applied.profileAvatar !== profileState.avatar
     ) {
       useProfile.setState({ avatar: applied.profileAvatar })
+    }
+    const deletedPaths = new Set<string>()
+    for (const download of result.downloaded) {
+      // A prior delete may await IO while another contact/revision is restored.
+      // Re-read ownership immediately before each subsequent deletion.
+      const obsolete = obsoleteDownloadPaths({
+        contacts: useContacts.getState().contacts,
+        deletedContacts: useContacts.getState().deletedContacts,
+        profileAvatar: useProfile.getState().avatar,
+        downloaded: [download],
+        documentDirectory: DOCUMENT_DIR,
+      })
+      for (const path of obsolete) {
+        if (deletedPaths.has(path)) continue
+        await FileSystem.deleteAsync(path, { idempotent: true })
+        deletedPaths.add(path)
+      }
+    }
+    // Discard bookkeeping for removed/superseded identities too.
+    for (const download of result.downloaded) {
+      if (deletedPaths.has(download.localUri.split('?')[0]))
+        delete result.bookkeeping[
+          filenameForSource({ ...download, localPath: '' })
+        ]
     }
     usePreferences.setState({ iCloudImageSync: result.bookkeeping })
     logger.log(`${tag()} image pull`, {
@@ -811,7 +810,7 @@ function gcImagesIfEnabled(): Promise<void> {
   if (gcInFlight) return gcInFlight
   if (pullInFlight) return Promise.resolve()
   gcStopRequested = false
-  gcInFlight = gcImages().finally(() => {
+  gcInFlight = serializeImages(gcImages).finally(() => {
     gcInFlight = null
   })
   return gcInFlight
@@ -824,16 +823,35 @@ async function gcImages(): Promise<void> {
   try {
     const { contacts } = useContacts.getState()
     const { avatar } = useProfile.getState()
-    const active: ActiveIdentity[] = contacts.map((c) => ({
-      kind: 'contact',
-      id: c.id,
-    }))
+    const active: ActiveIdentity[] = contacts
+      .filter((c) => c.avatar?.type === 'image')
+      .map((c) => ({ kind: 'contact', id: c.id, revision: c.avatar?.revision }))
     if (avatar?.type === 'image') {
-      active.push({ kind: 'profile' })
+      active.push({ kind: 'profile', revision: avatar.revision })
     }
     const deps = buildImageSyncDeps()
     const result = await gcOrphanImages({
       activeIdentities: active,
+      deletions: [
+        ...useContacts.getState().deletedContacts.map((c) => ({
+          identity: { kind: 'contact' as const, id: c.id },
+          deletedAt: c.updatedAt ?? 0,
+        })),
+        ...contacts
+          .filter((c) => c.updatedAt && c.updatedAt > 1 && c.avatar)
+          .map((c) => ({
+            identity: { kind: 'contact' as const, id: c.id },
+            deletedAt: c.updatedAt!,
+          })),
+        ...(useProfile.getState().profileUpdatedAt.avatar
+          ? [
+              {
+                identity: { kind: 'profile' as const },
+                deletedAt: useProfile.getState().profileUpdatedAt.avatar,
+              },
+            ]
+          : []),
+      ],
       deps,
       // A pull waiting to merge, or a local edit (a new photo uploading), may
       // give an orphan an owner.
@@ -870,16 +888,57 @@ async function gcImages(): Promise<void> {
  * thrown, so callers (store subscribers, AppState handlers) don't need
  * try/catch.
  */
-export async function push(reason: string): Promise<void> {
+export function push(reason: string): Promise<boolean> {
+  if (pushInFlight) return pushInFlight
+  let succeeded = false
+  pushInFlight = pushInner(reason)
+    .then((result) => {
+      succeeded = result
+      return result
+    })
+    .finally(() => {
+      pushInFlight = null
+      // A debounce can fire while the successful write is still uploading its
+      // photos. Release the coalesced promise before scheduling uncovered edits.
+      if (
+        succeeded &&
+        usePreferences.getState().iCloudSyncPendingPush &&
+        canSync()
+      )
+        schedulePush()
+    })
+  return pushInFlight
+}
+async function calibrateClock(): Promise<void> {
+  const offset = await refreshSyncClock()
+  if (offset !== null)
+    usePreferences.setState({
+      iCloudClockOffsetMs: offset,
+      iCloudClockCalibrated: true,
+    })
+}
+
+async function pushInner(reason: string): Promise<boolean> {
   if (!canSync()) {
+    usePreferences.setState({ iCloudSyncPendingPush: true })
     logger.log(`${tag()} push skipped (canSync=false)`, { reason })
-    return
+    return false
   }
   // Every push is a full snapshot, so it covers any deferred edit.
-  pushDeferred = false
   try {
+    await calibrateClock()
+    if (!canSync()) {
+      usePreferences.setState({ iCloudSyncPendingPush: true })
+      return false
+    }
+    const generation = editGeneration
     const deviceId = ensureDeviceId()
     const filename = filenameForDevice(deviceId)
+    const imageSources = collectLocalAvatarSources({
+      contacts: useContacts.getState().contacts,
+      profileAvatar: useProfile.getState().avatar,
+      documentDirectory: DOCUMENT_DIR,
+    })
     const payload = buildPayload({
       deviceId,
       deviceName: Device.modelName ?? undefined,
@@ -901,10 +960,17 @@ export async function push(reason: string): Promise<void> {
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
     await ICloudBridge.write(filename, json)
+    const covered = generation === editGeneration
+    usePreferences.setState({ iCloudSyncPendingPush: !covered })
+    cancelPushRetry()
+    if (!covered) schedulePush()
     const now = Date.now()
     usePreferences.getState().set({
       lastiCloudSyncAt: now,
       lastiCloudPushedAt: now,
+      ...(usePreferences.getState().iCloudSyncIssue === 'push-failed'
+        ? { iCloudSyncIssue: null }
+        : {}),
     })
     logger.log(`${tag()} push success`, { reason, filename })
     errorTracking.addBreadcrumb({
@@ -914,10 +980,20 @@ export async function push(reason: string): Promise<void> {
     })
     // Piggyback the binary upload on every successful JSON push. No-op when
     // image sync is disabled.
-    await pushImagesIfEnabled('store-edit')
+    await pushImagesIfEnabled(
+      reason === 'foreground' ? 'foreground' : 'store-edit',
+      imageSources
+    )
+    return true
   } catch (e) {
     logger.error(`${tag()} push failed (${reason})`, e)
     errorTracking.captureException(e, { iCloudSync: 'push' })
+    usePreferences.setState({
+      iCloudSyncPendingPush: true,
+      iCloudSyncIssue: 'push-failed',
+    })
+    retryPush()
+    return false
   }
 }
 
@@ -931,11 +1007,12 @@ const debouncedPush = debounce(
 )
 
 function schedulePush() {
+  editGeneration++
+  usePreferences.setState({ iCloudSyncPendingPush: true })
   if (!canSync()) {
     // Most often an edit at cold launch, before supporter status loads.
     // `catchUp` pushes it once sync is ready instead of waiting for the
     // next edit.
-    pushDeferred = true
     return
   }
   pushScheduled = true
@@ -1036,12 +1113,18 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     if (readRetries === 0) {
       errorTracking.captureException(e, { iCloudSync: 'pull' })
     }
+    usePreferences.setState({ iCloudSyncIssue: 'read-failed' })
     scheduleReadRetry()
     return { changed: false, complete: false }
   }
   cancelReadRetry()
+  let issue: 'newer-version' | 'invalid-file' | 'read-failed' | null = null
   const { files, pending } = read
-  let complete = pending?.length === 0
+  let complete = (pending?.length ?? 0) === 0
+  if (!complete) {
+    issue = 'read-failed'
+    scheduleReadRetry()
+  }
 
   logger.log(`${tag()} pullAndMerge: read`, {
     reason,
@@ -1051,7 +1134,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   if (files.length === 0) {
-    usePreferences.getState().set({ lastiCloudPulledAt: Date.now() })
+    usePreferences
+      .getState()
+      .set({ lastiCloudPulledAt: Date.now(), iCloudSyncIssue: issue })
     logger.log(`${tag()} pullAndMerge: no remote files`, { reason })
     errorTracking.addBreadcrumb({
       category: 'iCloudSync',
@@ -1061,10 +1146,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     return { changed: false, complete }
   }
 
-  // Parse each file. Legacy filenames are tracked for post-merge cleanup so
-  // that once we've absorbed their contents, subsequent pulls stop seeing
-  // them. A foreign device still on the old code will re-create a legacy
-  // file on its next push; that's fine — we'll absorb + delete again.
+  // Parse files independently. Retain legacy sources so an old writer's
+  // concurrent update cannot be deleted after our read.
   const remotePayloads: Array<{
     payload: SyncPayload
     filename: string
@@ -1076,6 +1159,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     const parsed = parsePayload(file.json)
     if (!parsed) {
       complete = false
+      issue = isNewerPayloadVersion(file.json)
+        ? 'newer-version'
+        : (issue ?? 'invalid-file')
       if (isNewerPayloadVersion(file.json)) {
         // A device already on a newer app version. Its data waits until this
         // device updates, and so does image GC, which can't see its
@@ -1095,7 +1181,6 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
         reason,
         filename: file.filename,
         bytes: file.json.length,
-        jsonPreview: file.json.slice(0, 200),
       })
       errorTracking.captureMessage('iCloudSync: invalid remote payload', {
         level: 'warning',
@@ -1103,7 +1188,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       continue
     }
     remotePayloads.push({
-      payload: parsed,
+      payload: alignPayloadClock(parsed, file.modifiedAt),
       filename: file.filename,
       modifiedAt: file.modifiedAt,
     })
@@ -1123,9 +1208,10 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     }
   }
 
-  const now = Date.now()
+  const now = syncNow()
   usePreferences.getState().set({
     lastiCloudPulledAt: now,
+    iCloudSyncIssue: issue,
     ...(freshest
       ? {
           lastiCloudRemoteWrittenAt: freshest.payload.writtenAt,
@@ -1141,12 +1227,11 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       totalFiles: files.length,
       skippedOwn: files.some((f) => f.filename === ownFilename),
     })
-    // Even with no foreign payloads, stale legacy files may exist from this
-    // device's own pre-upgrade writes. Clean them up.
-    void cleanupLegacyFiles(legacyFilenames)
+    // Keep legacy files: another writer may still be updating them.
     return { changed: false, complete }
   }
 
+  if (!canSync()) return { changed: false, complete: false }
   // Snapshot local state once; fold each remote payload into the accumulator.
   const contactsState = useContacts.getState()
   const conversationsState = useConversations.getState()
@@ -1205,24 +1290,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   for (const r of remotePayloads) {
     const result = mergePayload(acc, r.payload)
     if (result.changed) anyChanged = true
-    acc = {
-      contacts: result.contacts,
-      deletedContacts: result.deletedContacts,
-      customFieldDefs: result.customFieldDefs,
-      deletedCustomFieldDefs: result.deletedCustomFieldDefs,
-      conversations: result.conversations,
-      deletedConversations: result.deletedConversations,
-      serviceReports: result.serviceReports,
-      dayPlans: result.dayPlans,
-      recurringPlans: result.recurringPlans,
-      deletedServiceReports: result.deletedServiceReports,
-      categories: result.categories,
-      deletedCategories: result.deletedCategories,
-      preferencesValues: result.preferencesValues,
-      preferenceUpdatedAt: result.preferenceUpdatedAt,
-      profileValues: result.profileValues,
-      profileUpdatedAt: result.profileUpdatedAt,
-    }
+    const { changed: _changed, ...next } = result
+    acc = next
   }
 
   logger.log(`${tag()} pullAndMerge: merge result`, {
@@ -1240,10 +1309,6 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   if (!anyChanged) {
-    // Still clean up legacy files — their contents are already reflected in
-    // local state from a prior pull, so deleting them is safe and stops
-    // future pulls from re-reading them.
-    void cleanupLegacyFiles(legacyFilenames)
     // Even when the JSON merge is a no-op, image state can drift:
     //
     // - User enabled image sync on this device after a previous pull
@@ -1275,12 +1340,14 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     dayPlans: acc.dayPlans,
     recurringPlans: acc.recurringPlans,
   })
-  serviceReportState.set({
-    serviceReports: normalizedAcc.serviceReports,
-    dayPlans: normalizedAcc.dayPlans,
-    recurringPlans: normalizedAcc.recurringPlans,
-    deletedServiceReports: acc.deletedServiceReports,
-  })
+  withRemoteDataMutation(() =>
+    serviceReportState.set({
+      serviceReports: normalizedAcc.serviceReports,
+      dayPlans: normalizedAcc.dayPlans,
+      recurringPlans: normalizedAcc.recurringPlans,
+      deletedServiceReports: acc.deletedServiceReports,
+    })
+  )
   categoriesState.set({
     categories: acc.categories,
     deletedCategories: acc.deletedCategories,
@@ -1312,10 +1379,6 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     level: 'info',
   })
 
-  // Legacy contents are now reflected in local state AND will be written to
-  // this device's per-device file on the next push. Safe to delete.
-  void cleanupLegacyFiles(legacyFilenames)
-
   // A merge that changed anything may have introduced new avatar markers for
   // contacts whose images we haven't downloaded yet. Fire-and-forget — the
   // helper handles its own error reporting and is a no-op when image sync
@@ -1327,36 +1390,44 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
 }
 
 /**
- * Deletes legacy sync files after their contents have been absorbed. Failures
- * are non-fatal — next pull will retry. Keeping this async-fire-and-forget so
- * it doesn't add latency to the hot path.
- */
-async function cleanupLegacyFiles(filenames: string[]): Promise<void> {
-  if (filenames.length === 0) return
-  for (const filename of filenames) {
-    try {
-      await ICloudBridge.deleteFile(filename)
-      logger.log(`${tag()} deleted legacy file`, { filename })
-    } catch (e) {
-      logger.warn(`${tag()} failed to delete legacy file`, {
-        filename,
-        error: (e as Error).message,
-      })
-    }
-  }
-}
-
-/**
- * One-time backfill: stamps `updatedAt = Date.now()` onto any record that lacks
- * one, so the merge algorithm has something to compare against on the first
- * sync. Runs once per install (gated on
+ * One-time backfill: stamps the deterministic legacy value `updatedAt = 1` onto
+ * any record that lacks one, so the merge algorithm has something to compare
+ * against on the first sync. Runs once per install (gated on
  * `preferences.hasMigratedToSyncSchema`).
  */
 export function backfillUpdatedAtIfNeeded(): void {
   const prefs = usePreferences.getState()
+  const contactStore = useContacts.getState()
+  const expired = expireDeletedContactDetails(contactStore.deletedContacts)
+  if (
+    expired.some(
+      (contact, index) => contact !== contactStore.deletedContacts[index]
+    )
+  )
+    contactStore.set({ deletedContacts: expired })
+  if (!prefs.hasReconciledSyncDefinitions) {
+    const reports = useServiceReport.getState()
+    const categories = useCategories.getState()
+    const reconciled = reconcileSyncDefinitions({
+      ...reports,
+      ...contactStore,
+      categories: categories.categories,
+    })
+    useContacts.setState({
+      contacts: reconciled.contacts,
+      deletedContacts: expireDeletedContactDetails(reconciled.deletedContacts),
+      customFieldDefs: reconciled.customFieldDefs,
+    })
+    useServiceReport.setState({
+      serviceReports: reconciled.serviceReports,
+      dayPlans: reconciled.dayPlans,
+      recurringPlans: reconciled.recurringPlans,
+    })
+    useCategories.setState({ categories: reconciled.categories })
+    usePreferences.setState({ hasReconciledSyncDefinitions: true })
+  }
   if (prefs.hasMigratedToSyncSchema) return
 
-  const now = Date.now()
   const contacts = useContacts.getState()
   const conversations = useConversations.getState()
   const reports = useServiceReport.getState()
@@ -1364,15 +1435,15 @@ export function backfillUpdatedAtIfNeeded(): void {
 
   contacts.set({
     contacts: contacts.contacts.map((c) =>
-      c.updatedAt ? c : { ...c, updatedAt: now }
+      c.updatedAt ? c : { ...c, updatedAt: 1 }
     ),
     deletedContacts: contacts.deletedContacts.map((c) =>
-      c.updatedAt ? c : { ...c, updatedAt: now }
+      c.updatedAt ? c : { ...c, updatedAt: 1 }
     ),
   })
   conversations.set({
     conversations: conversations.conversations.map((c) =>
-      c.updatedAt ? c : { ...c, updatedAt: now }
+      c.updatedAt ? c : { ...c, updatedAt: 1 }
     ),
   })
 
@@ -1384,23 +1455,23 @@ export function backfillUpdatedAtIfNeeded(): void {
       rebuiltReports[yearKey][monthKey] = month.map((r) => {
         if (r.updatedAt) return r
         reportsMutated = true
-        return { ...r, updatedAt: now }
+        return { ...r, updatedAt: 1 }
       })
     }
   }
   reports.set({
     serviceReports: reportsMutated ? rebuiltReports : reports.serviceReports,
     dayPlans: reports.dayPlans.map((p) =>
-      p.updatedAt ? p : { ...p, updatedAt: now }
+      p.updatedAt ? p : { ...p, updatedAt: 1 }
     ),
     recurringPlans: reports.recurringPlans.map((p) =>
-      p.updatedAt ? p : { ...p, updatedAt: now }
+      p.updatedAt ? p : { ...p, updatedAt: 1 }
     ),
   })
 
   categories.set({
     categories: categories.categories.map((c) =>
-      c.updatedAt ? c : { ...c, updatedAt: now }
+      c.updatedAt ? c : { ...c, updatedAt: 1 }
     ),
   })
 
@@ -1418,17 +1489,19 @@ export function backfillUpdatedAtIfNeeded(): void {
  */
 async function catchUp(reason: string): Promise<void> {
   if (!canSync()) return
+  backfillUpdatedAtIfNeeded()
   if (catchUpInFlight) {
     catchUpQueuedReason ??= reason
     return
   }
   catchUpInFlight = true
   try {
+    await calibrateClock()
     const scanned = await ICloudBridge.waitForInitialScan(5000)
     await pull(reason)
-    if (pushDeferred) schedulePush()
-    // Also gives quota-backoffed uploads another shot (see imageSync.ts).
-    await pushImagesIfEnabled('foreground')
+    // Publish the exact snapshot whose photos the push will upload. Failed
+    // writes leave bytes untouched and retain the pending flag for retries.
+    await push(reason)
     // Joining a running pull returns its (older) result and queues a
     // follow-up, and remote-change pulls may have run meanwhile. Let every
     // queued pull land so GC judges the newest read.
@@ -1454,8 +1527,15 @@ export function installiCloudSync(): () => void {
   if (Platform.OS !== 'ios') return () => {}
   if (installed) return () => {}
   installed = true
+  setSyncClockOffset(
+    usePreferences.getState().iCloudClockOffsetMs ?? 0,
+    usePreferences.getState().iCloudClockCalibrated
+  )
+  backfillUpdatedAtIfNeeded()
 
-  const unsubContacts = useContacts.subscribe(() => schedulePush())
+  const unsubContacts = useContacts.subscribe(() => {
+    if (!materializingImages) schedulePush()
+  })
   const unsubConversations = useConversations.subscribe(() => schedulePush())
   const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
   const unsubCategories = useCategories.subscribe(() => schedulePush())
@@ -1487,6 +1567,7 @@ export function installiCloudSync(): () => void {
     }
     // The foreground catch-up pulls anyway, and brings a fresh retry budget.
     cancelReadRetry()
+    cancelPushRetry()
     // Leaving foreground (inactive/background): if a debounced push is
     // pending, flush it now so the user's latest edits actually land in
     // iCloud before the process is suspended. Otherwise typing a note and
@@ -1550,26 +1631,23 @@ export function installiCloudSync(): () => void {
     availabilitySub?.remove()
     debouncedRemotePull.cancel()
     cancelReadRetry()
+    cancelPushRetry()
+    debouncedPush.cancel()
+    pushScheduled = false
     installed = false
   }
 }
 
-/**
- * Destructive cleanup for the image-sync-off path. Wipes every binary from the
- * ubiquity container and clears local bookkeeping. Does NOT touch local
- * `documentDirectory` copies — the user turned sync off, not their photos.
- */
-export async function disableImageSync(): Promise<void> {
-  try {
+/** The per-device toggle pauses photo transfer; shared cleanup is explicit. */
+export function clearCloudPhotos(): Promise<void> {
+  return serializeImages(async () => {
     await ICloudBridge.deleteAllBinaries()
-  } catch (e) {
-    logger.error(`${tag()} failed to clear remote binaries on disable`, e)
-    errorTracking.captureException(e, { iCloudSync: 'image-disable' })
-  }
-  usePreferences.setState({
-    iCloudSyncIncludeImages: false,
-    iCloudImageSync: {},
+    usePreferences.setState({ iCloudImageSync: {} })
   })
+}
+
+export async function disableImageSync(): Promise<void> {
+  usePreferences.setState({ iCloudSyncIncludeImages: false })
 }
 
 /**
@@ -1587,8 +1665,10 @@ export async function disableImageSync(): Promise<void> {
  */
 export async function enableImageSync(): Promise<void> {
   usePreferences.setState({ iCloudSyncIncludeImages: true })
-  await pushImagesIfEnabled('store-edit')
-  await pullImagesIfEnabled()
+  if (canSync() && !(await push('images-enabled'))) {
+    throw new Error('Could not write photo references to iCloud')
+  }
+  await pullImagesIfEnabled(!canSync())
 }
 
 /** For tests + the Settings "Sync now" button. */
@@ -1606,8 +1686,9 @@ export const iCloudSync = {
   applyPullEnable,
   enableImageSync,
   disableImageSync,
+  clearCloudPhotos,
   pushImagesIfEnabled: () => pushImagesIfEnabled('foreground'),
-  pullImagesIfEnabled,
+  pullImagesIfEnabled: () => pullImagesIfEnabled(true),
   gcImagesIfEnabled,
   isPushScheduled: () => pushScheduled,
 }

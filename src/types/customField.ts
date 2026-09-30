@@ -8,6 +8,8 @@
 export type CustomFieldDefinition = {
   /** UUID. Stable across renames, reorders, sync merges. */
   id: string
+  /** Identities merged during the legacy multi-device migration cleanup. */
+  legacyIds?: string[]
   /** User-facing field name. Mutable; safe to edit without affecting data. */
   label: string
   /**
@@ -45,5 +47,7 @@ export type CustomFieldDefinition = {
  */
 export type CustomFieldTombstone = {
   id: string
+  /** Identities merged during the legacy multi-device migration cleanup. */
+  legacyIds?: string[]
   deletedAt: number
 }

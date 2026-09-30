@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
+  setPreferences: vi.fn(),
   remoteChangeListeners: [] as Array<() => void>,
   appStateListeners: [] as Array<(state: string) => void>,
 }))
@@ -26,10 +27,13 @@ vi.mock('@/hooks/useIsSupporter', () => ({
   default: () => ({ isSupporter: true }),
 }))
 vi.mock('@/stores/preferences', () => ({
-  usePreferences: () => ({
-    iCloudSyncEnabled: false,
-    iCloudSyncSetByUser: false,
-  }),
+  usePreferences: Object.assign(
+    () => ({
+      iCloudSyncEnabled: false,
+      iCloudSyncSetByUser: false,
+    }),
+    { getState: () => ({ set: runtime.setPreferences }) }
+  ),
 }))
 vi.mock('@/app/sync/iCloudSync', () => ({
   iCloudSync: {
@@ -119,4 +123,23 @@ describe('SupporterSyncDefault', () => {
 
     expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith('supporter_default')
   })
+})
+
+it('shows a persistent resolution prompt instead of silently giving up on a conflict', async () => {
+  const { default: SupporterSyncDefault } = await import(
+    './SupporterSyncDefault'
+  )
+  const { iCloudSync } = await import('@/app/sync/iCloudSync')
+  vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+    outcome: 'conflict',
+    remote,
+  } as never)
+  await act(async () => {
+    renderer = create(<SupporterSyncDefault />)
+  })
+  expect(runtime.setPreferences).toHaveBeenCalledWith({
+    iCloudSyncNeedsResolution: true,
+  })
+  expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
+  expect(iCloudSync.applyPullEnable).not.toHaveBeenCalled()
 })

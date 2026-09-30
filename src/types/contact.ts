@@ -75,6 +75,11 @@ export type Contact = {
    * `lib/dataProtection.stripContactForTombstone`.
    */
   redacted?: boolean
+  /**
+   * Retention deadline for legacy deleted contacts without a deletion
+   * timestamp.
+   */
+  detailsRetainUntil?: number
 
   /**
    * When set, this contact is dismissed and should be hidden from the main

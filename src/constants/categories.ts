@@ -59,10 +59,10 @@ export const isLdcBuiltinCategory = (category: {
  * `updatedAt` themselves (typically Date.now()) so the record participates in
  * iCloud last-writer-wins merge alongside user-created Categories.
  */
-export const makeLdcBuiltinCategory = (now: number): Category => ({
+export const makeLdcBuiltinCategory = (_now: number): Category => ({
   id: LDC_BUILTIN_CATEGORY_ID,
   name: LDC_BUILTIN_CATEGORY_NAME,
   isCredit: true,
   builtin: true,
-  updatedAt: now,
+  updatedAt: 1,
 })

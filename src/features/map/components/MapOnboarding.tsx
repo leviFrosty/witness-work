@@ -17,6 +17,7 @@ import {
 import Switch from '@/components/ui/Switch'
 
 import { countTruthyValueStrings } from '@/lib/objects'
+import { mayApplyGeocode } from '@/lib/contactEdits'
 import {
   addressToString,
   fetchCoordinateFromAddress,
@@ -186,7 +187,14 @@ export default function MapOnboarding() {
             )
             if (abortController.current?.signal.aborted) break
             if (position) {
-              updateContact({ ...contact, coordinate: position })
+              const latest = useContacts
+                .getState()
+                .contacts.find((item) => item.id === contact.id)
+              if (!mayApplyGeocode(contact, latest)) {
+                setStatuses((prev) => ({ ...prev, [contact.id]: 'idle' }))
+                continue
+              }
+              updateContact({ id: contact.id, coordinate: position })
               setStatuses((prev) => ({ ...prev, [contact.id]: 'success' }))
             } else {
               setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))

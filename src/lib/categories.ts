@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { legacyDefinitionId } from '@/lib/legacyDefinitionId'
 import { Category } from '@/types/category'
 import {
   LegacyTimeEntry,
@@ -90,8 +90,7 @@ export function migrateTagsToCategories(
   const {
     serviceReports,
     legacyTags,
-    now,
-    uuid = () => Crypto.randomUUID(),
+    uuid,
     creditResolution = 'majority',
   } = args
 
@@ -172,13 +171,13 @@ export function migrateTagsToCategories(
   const categories: Category[] = []
   for (const name of sortedNames) {
     const stats = tagStats.get(name)!
-    const id = uuid()
+    const id = uuid?.() ?? legacyDefinitionId('category', name)
     nameToId.set(name, id)
     categories.push({
       id,
       name,
       isCredit: resolveIsCredit(stats),
-      updatedAt: now,
+      updatedAt: 1,
     })
   }
 

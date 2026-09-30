@@ -23,6 +23,25 @@ const makeDeps = (overrides: Partial<ImageSyncDeps> = {}): ImageSyncDeps => ({
 })
 
 describe('pushAllImages', () => {
+  it('stops starting uploads when transfer authority is revoked mid-pass', async () => {
+    let allowed = true
+    const deps = makeDeps({ canTransfer: () => allowed })
+    vi.mocked(deps.bridge.writeBinary).mockImplementationOnce(async () => {
+      allowed = false
+      return 1000
+    })
+    await pushAllImages({
+      sources: ['a', 'b'].map((id) => ({
+        kind: 'contact',
+        id,
+        localPath: `file:///docs/contact-${id}-avatar.jpg`,
+      })),
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledOnce()
+  })
   it('uploads a contact avatar that has never been uploaded before', async () => {
     const deps = makeDeps()
     const result = await pushAllImages({
@@ -47,11 +66,15 @@ describe('pushAllImages', () => {
     expect(result.bookkeeping['witness-work-img-contact-abc.jpg']).toEqual({
       localMtime: 500,
       uploadedMtime: 500,
+      containerMtime: 1000,
     })
   })
 
   it('skips a source whose local file matches the last uploaded mtime', async () => {
     const deps = makeDeps()
+    vi.mocked(deps.bridge.listBinaryFiles).mockResolvedValue([
+      { filename: 'witness-work-img-contact-abc.jpg', modifiedAt: 500 },
+    ])
     const result = await pushAllImages({
       sources: [
         {
@@ -102,6 +125,7 @@ describe('pushAllImages', () => {
     expect(result.bookkeeping['witness-work-img-contact-abc.jpg']).toEqual({
       localMtime: 800,
       uploadedMtime: 800,
+      containerMtime: 1000,
     })
   })
 
@@ -264,6 +288,7 @@ describe('pushAllImages', () => {
     expect(second.bookkeeping['witness-work-img-contact-abc.jpg']).toEqual({
       localMtime: 500,
       uploadedMtime: 500,
+      containerMtime: 3000,
     })
   })
 
@@ -312,6 +337,59 @@ describe('pushAllImages', () => {
     expect(result.failed).toBe(0)
     expect(result.bookkeeping).toEqual({})
   })
+})
+
+it('stops starting downloads when photo consent is revoked', async () => {
+  let allowed = true
+  const deps = makeDeps({ canTransfer: () => allowed })
+  vi.mocked(deps.fs.getModifiedAt).mockResolvedValue(null)
+  vi.mocked(deps.bridge.listBinaryFiles).mockResolvedValue(
+    Array.from({ length: 8 }, (_, i) => ({
+      filename: `witness-work-img-contact-${i}.jpg`,
+      modifiedAt: 1000,
+    }))
+  )
+  vi.mocked(deps.bridge.readBinary).mockImplementation(async () => {
+    allowed = false
+    return 1000
+  })
+  await pullMissingImages({
+    expectedSources: Array.from({ length: 8 }, (_, i) => ({
+      kind: 'contact',
+      id: String(i),
+      localPath: `file:///docs/contact-${i}-avatar.jpg`,
+    })),
+    bookkeeping: {},
+    deps,
+  })
+  expect(deps.bridge.readBinary).toHaveBeenCalledOnce()
+})
+
+it('stops cloud cleanup when ongoing transfer access is revoked', async () => {
+  let allowed = true
+  const deps = makeDeps({
+    now: () => 3 * 24 * 60 * 60_000,
+    canTransfer: () => allowed,
+  })
+  vi.mocked(deps.bridge.listBinaryFiles).mockResolvedValue(
+    ['a', 'b'].map((id) => ({
+      filename: `witness-work-img-contact-${id}.jpg`,
+      modifiedAt: 1,
+    }))
+  )
+  vi.mocked(deps.bridge.deleteBinaryFile).mockImplementation(async () => {
+    allowed = false
+  })
+  const result = await gcOrphanImages({
+    activeIdentities: [],
+    deletions: ['a', 'b'].map((id) => ({
+      identity: { kind: 'contact', id },
+      deletedAt: 1,
+    })),
+    deps,
+  })
+  expect(deps.bridge.deleteBinaryFile).toHaveBeenCalledOnce()
+  expect(result.stopped).toBe(true)
 })
 
 describe('pullMissingImages', () => {
@@ -387,7 +465,7 @@ describe('pullMissingImages', () => {
     })
 
     expect(deps.bridge.readBinary).not.toHaveBeenCalled()
-    expect(result.downloaded).toHaveLength(0)
+    expect(result.downloaded).toHaveLength(1)
     expect(result.missing).toHaveLength(0)
   })
 
@@ -431,6 +509,7 @@ describe('pullMissingImages', () => {
 
   it('reports missing when the expected binary is not in the container', async () => {
     const deps = makeDeps({
+      fs: { getModifiedAt: vi.fn(async () => null) },
       bridge: {
         writeBinary: vi.fn(),
         readBinary: vi.fn(),
@@ -515,8 +594,12 @@ describe('gcOrphanImages', () => {
       },
     })
 
+    deps.now = () => 2 * 24 * 60 * 60_000
     const result = await gcOrphanImages({
       // Only contact 'abc' still exists locally — 'zzz' is gone.
+      deletions: [
+        { identity: { kind: 'contact', id: 'zzz' }, deletedAt: 2000 },
+      ],
       activeIdentities: [{ kind: 'contact', id: 'abc' }],
       deps,
     })
@@ -541,7 +624,11 @@ describe('gcOrphanImages', () => {
       },
     })
 
+    deps.now = () => 2 * 24 * 60 * 60_000
     const result = await gcOrphanImages({
+      deletions: [
+        { identity: { kind: 'contact', id: 'zzz' }, deletedAt: 2000 },
+      ],
       activeIdentities: [{ kind: 'profile' }],
       deps,
     })
@@ -560,7 +647,11 @@ describe('gcOrphanImages', () => {
       },
     })
 
+    deps.now = () => 2 * 24 * 60 * 60_000
     const result = await gcOrphanImages({
+      deletions: [
+        { identity: { kind: 'contact', id: 'zzz' }, deletedAt: 2000 },
+      ],
       activeIdentities: [{ kind: 'contact', id: 'abc' }],
       deps,
     })

@@ -1,3 +1,4 @@
+import enUS from './src/locales/en-US.json'
 import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
 /**
@@ -278,8 +279,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-image-picker',
         {
-          photosPermission:
-            '$(PRODUCT_NAME) uses your photos only to set a profile picture. Images stay on your device.',
+          photosPermission: enUS.photoLibraryPurpose,
           // Camera is used to take profile/contact avatar photos. Give it a
           // specific purpose string instead of the plugin's generic default
           // (better for App Review than "Allow … to access your camera").

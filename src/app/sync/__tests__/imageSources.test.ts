@@ -3,6 +3,7 @@ import {
   collectLocalAvatarSources,
   collectExpectedMarkerSources,
   applyDownloadedAvatars,
+  obsoleteDownloadPaths,
 } from '@/app/sync/imageSources'
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
@@ -15,6 +16,18 @@ const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
 })
 
 describe('collectLocalAvatarSources', () => {
+  it('rejects encoded traversal and unrelated document files', () => {
+    const sources = collectLocalAvatarSources({
+      contacts: [
+        makeContact({
+          avatar: { type: 'image', value: 'file:///Docs/%2e%2e/Library/data' },
+        }),
+      ],
+      profileAvatar: { type: 'image', value: 'file:///Docs/database.db' },
+      documentDirectory: 'file:///Docs/',
+    })
+    expect(sources).toEqual([])
+  })
   it('returns a contact source for each contact with a local file-backed image avatar', () => {
     const sources = collectLocalAvatarSources({
       contacts: [
@@ -141,7 +154,10 @@ describe('collectExpectedMarkerSources', () => {
       {
         kind: 'contact',
         id: 'abc',
-        localPath: 'file:///Docs/contact-abc-avatar.jpg',
+        localPath: 'file:///Docs/contact-abc-avatar-synced.jpg',
+        fallbackPath: 'file:///Docs/contact-abc-avatar.jpg',
+        expectedValue: 'icloud://contact-abc',
+        expectedUpdatedAt: undefined,
       },
     ])
   })
@@ -154,11 +170,16 @@ describe('collectExpectedMarkerSources', () => {
     })
 
     expect(sources).toEqual([
-      { kind: 'profile', localPath: 'file:///Docs/profile-avatar.jpg' },
+      {
+        kind: 'profile',
+        localPath: 'file:///Docs/profile-avatar-synced.jpg',
+        fallbackPath: 'file:///Docs/profile-avatar.jpg',
+        expectedValue: 'icloud://profile',
+      },
     ])
   })
 
-  it('skips local-file avatars, emoji, and none avatars', () => {
+  it('checks local-file avatars while skipping emoji and none', () => {
     const sources = collectExpectedMarkerSources({
       contacts: [
         makeContact({
@@ -180,7 +201,16 @@ describe('collectExpectedMarkerSources', () => {
       documentDirectory: 'file:///Docs/',
     })
 
-    expect(sources).toEqual([])
+    expect(sources).toHaveLength(2)
+    expect(sources[0]).toMatchObject({
+      id: 'local',
+      localPath: 'file:///Docs/contact-local-avatar-synced.jpg',
+      fallbackPath: 'file:///Docs/contact-local-avatar.jpg',
+    })
+    expect(sources[1]).toMatchObject({
+      kind: 'profile',
+      localPath: 'file:///Docs/profile-avatar-synced.jpg',
+    })
   })
 })
 
@@ -270,5 +300,66 @@ describe('applyDownloadedAvatars', () => {
 
     expect(result.contacts).toBe(contacts)
     expect(result.profileAvatar).toBe(profileAvatar)
+  })
+  it('preserves identities when the downloaded URI is already current', () => {
+    const avatar: ProfileAvatar = {
+      type: 'image',
+      revision: 'a',
+      value: 'file:///Docs/profile-avatar-synced-a.jpg?t=1',
+    }
+    const contacts = [
+      makeContact({
+        id: 'c',
+        avatar: {
+          ...avatar,
+          value: 'file:///Docs/contact-c-avatar-synced-a.jpg?t=1',
+        },
+      }),
+    ]
+    const result = applyDownloadedAvatars({
+      contacts,
+      profileAvatar: avatar,
+      downloaded: [
+        {
+          kind: 'contact',
+          id: 'c',
+          revision: 'a',
+          localUri: contacts[0].avatar!.value,
+        },
+        { kind: 'profile', revision: 'a', localUri: avatar.value },
+      ],
+    })
+    expect(result.contacts).toBe(contacts)
+    expect(result.profileAvatar).toBe(avatar)
+  })
+  it('cleans rejected obsolete revisions and keeps still-referenced marker bytes', () => {
+    const contacts = [
+      makeContact({
+        id: 'c',
+        updatedAt: 200,
+        avatar: { type: 'image', revision: 'a', value: 'icloud://contact-c' },
+      }),
+    ]
+    expect(
+      obsoleteDownloadPaths({
+        contacts,
+        profileAvatar: { type: 'none', value: '' },
+        documentDirectory: 'file:///Docs/',
+        downloaded: [
+          {
+            kind: 'profile',
+            revision: 'a',
+            localUri: 'file:///Docs/profile-avatar-synced-a.jpg?t=1',
+          },
+          {
+            kind: 'contact',
+            id: 'c',
+            revision: 'a',
+            expectedUpdatedAt: 100,
+            localUri: 'file:///Docs/contact-c-avatar-synced-a.jpg?t=1',
+          },
+        ],
+      })
+    ).toEqual(['file:///Docs/profile-avatar-synced-a.jpg'])
   })
 })

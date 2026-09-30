@@ -1,3 +1,4 @@
+import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import * as Crypto from 'expo-crypto'
@@ -44,7 +45,7 @@ export const useContacts = create(
             contacts: [
               ...contacts,
               stripTombstonedCustomFields(
-                { ...contact, updatedAt: Date.now() },
+                { ...contact, updatedAt: syncTimestamp() },
                 deletedCustomFieldDefs
               ),
             ],
@@ -73,7 +74,7 @@ export const useContacts = create(
           if (!foundContact) {
             return { contacts, deletedContacts }
           }
-          const now = Date.now()
+          const now = syncTimestamp(foundContact.updatedAt)
           return {
             deletedContacts: [
               ...deletedContacts.filter((contact) => contact.id !== id),
@@ -96,7 +97,12 @@ export const useContacts = create(
           const removed = contacts.filter((contact) => targets.has(contact.id))
           if (!removed.length) return { contacts, deletedContacts }
           const removedIds = new Set(removed.map((contact) => contact.id))
-          const now = Date.now()
+          const now = syncTimestamp(
+            removed.reduce(
+              (stamp, contact) => Math.max(stamp, contact.updatedAt ?? 0),
+              0
+            )
+          )
           return {
             deletedContacts: [
               ...deletedContacts.filter(
@@ -130,7 +136,7 @@ export const useContacts = create(
                 ...(contact.customFields
                   ? { customFields: updatedCustomFields }
                   : {}),
-                updatedAt: Date.now(),
+                updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
           }
@@ -155,7 +161,7 @@ export const useContacts = create(
             result = existing
             return { customFieldDefs }
           }
-          const now = Date.now()
+          const now = syncTimestamp()
           const def: CustomFieldDefinition = {
             id: Crypto.randomUUID(),
             label: trimmed,
@@ -173,7 +179,9 @@ export const useContacts = create(
         if (!trimmed) return
         set(({ customFieldDefs }) => ({
           customFieldDefs: customFieldDefs.map((d) =>
-            d.id === id ? { ...d, label: trimmed, updatedAt: Date.now() } : d
+            d.id === id
+              ? { ...d, label: trimmed, updatedAt: syncTimestamp(d.updatedAt) }
+              : d
           ),
         }))
       },
@@ -185,7 +193,12 @@ export const useContacts = create(
        */
       reorderCustomFieldDefs: (orderedIds: string[]) => {
         set(({ customFieldDefs }) => {
-          const now = Date.now()
+          const now = syncTimestamp(
+            customFieldDefs.reduce(
+              (stamp, def) => Math.max(stamp, def.updatedAt),
+              0
+            )
+          )
           const byId = new Map(customFieldDefs.map((d) => [d.id, d]))
           const archived = customFieldDefs.filter((d) => d.archived)
           const reorderedActive: CustomFieldDefinition[] = []
@@ -201,7 +214,11 @@ export const useContacts = create(
           })
           // Preserve archived defs as-is, ordered after active.
           archived.forEach((d, i) => {
-            archived[i] = { ...d, order: orderedIds.length + i }
+            archived[i] = {
+              ...d,
+              order: orderedIds.length + i,
+              updatedAt: d.order === orderedIds.length + i ? d.updatedAt : now,
+            }
           })
           return {
             customFieldDefs: [...reorderedActive, ...archived],
@@ -211,7 +228,9 @@ export const useContacts = create(
       archiveCustomFieldDef: (id: string) => {
         set(({ customFieldDefs }) => ({
           customFieldDefs: customFieldDefs.map((d) =>
-            d.id === id ? { ...d, archived: true, updatedAt: Date.now() } : d
+            d.id === id
+              ? { ...d, archived: true, updatedAt: syncTimestamp(d.updatedAt) }
+              : d
           ),
         }))
       },
@@ -221,7 +240,7 @@ export const useContacts = create(
           if (!target || !target.archived) return { customFieldDefs }
           // Slot restored def at the end of the active list.
           const activeCount = customFieldDefs.filter((d) => !d.archived).length
-          const now = Date.now()
+          const now = syncTimestamp(target.updatedAt)
           return {
             customFieldDefs: customFieldDefs.map((d) =>
               d.id === id
@@ -252,8 +271,12 @@ export const useContacts = create(
               }
             }
 
-            const deletedAt = Date.now()
-            const tombstone: CustomFieldTombstone = { id, deletedAt }
+            const deletedAt = syncTimestamp(target.updatedAt)
+            const tombstone: CustomFieldTombstone = {
+              id,
+              deletedAt,
+              ...(target.legacyIds ? { legacyIds: target.legacyIds } : {}),
+            }
             const tombstones = [
               ...deletedCustomFieldDefs.filter((t) => t.id !== id),
               tombstone,
@@ -287,7 +310,7 @@ export const useContacts = create(
           }) => {
             const removed = customFieldDefs.some((d) => d.id === id)
             if (!removed) return { customFieldDefs, deletedCustomFieldDefs }
-            const updatedAt = Date.now()
+            const updatedAt = syncTimestamp()
             const rollbackTombstone = { id, deletedAt: updatedAt }
             return {
               customFieldDefs: customFieldDefs.filter((d) => d.id !== id),
@@ -344,7 +367,10 @@ export const useContacts = create(
             contacts: [
               ...contacts,
               stripTombstonedCustomFields(
-                { ...recoverContact, updatedAt: Date.now() },
+                {
+                  ...recoverContact,
+                  updatedAt: syncTimestamp(recoverContact.updatedAt),
+                },
                 deletedCustomFieldDefs
               ),
             ],
@@ -373,7 +399,7 @@ export const useContacts = create(
                 ...c,
                 dismissedUntil,
                 dismissedNotificationId,
-                updatedAt: Date.now(),
+                updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
           }
@@ -391,7 +417,6 @@ export const useContacts = create(
         }[]
       ) => {
         const byId = new Map(updates.map((update) => [update.id, update]))
-        const now = Date.now()
         set(({ contacts }) => ({
           contacts: contacts.map((c) => {
             const update = byId.get(c.id)
@@ -400,7 +425,7 @@ export const useContacts = create(
               ...c,
               dismissedUntil: update.dismissedUntil,
               dismissedNotificationId: update.dismissedNotificationId,
-              updatedAt: now,
+              updatedAt: syncTimestamp(c.updatedAt),
             }
           }),
         }))
@@ -408,11 +433,13 @@ export const useContacts = create(
       /** Batch `undismissContact` for Select mode, in one store update. */
       undismissContacts: (ids: string[]) => {
         const targets = new Set(ids)
-        const now = Date.now()
         set(({ contacts }) => ({
           contacts: contacts.map((c) => {
             if (!targets.has(c.id)) return c
-            const updatedContact = { ...c, updatedAt: now }
+            const updatedContact = {
+              ...c,
+              updatedAt: syncTimestamp(c.updatedAt),
+            }
             delete updatedContact.dismissedUntil
             delete updatedContact.dismissedNotificationId
             return updatedContact
@@ -425,7 +452,7 @@ export const useContacts = create(
         set(({ contacts }) => ({
           contacts: contacts.map((c) =>
             targets.has(c.id) && !!c.isFavorite !== isFavorite
-              ? { ...c, isFavorite, updatedAt: Date.now() }
+              ? { ...c, isFavorite, updatedAt: syncTimestamp(c.updatedAt) }
               : c
           ),
         }))
@@ -440,7 +467,7 @@ export const useContacts = create(
               return {
                 ...c,
                 isFavorite: !c.isFavorite,
-                updatedAt: Date.now(),
+                updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
           }
@@ -453,7 +480,10 @@ export const useContacts = create(
               if (c.id !== id) {
                 return c
               }
-              const updatedContact = { ...c, updatedAt: Date.now() }
+              const updatedContact = {
+                ...c,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
               delete updatedContact.dismissedUntil
               delete updatedContact.dismissedNotificationId
               return updatedContact

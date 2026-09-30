@@ -24,6 +24,8 @@ import * as ICloudBridge from '../../../../../modules/icloud-bridge'
 import { iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
+import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
+import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { useProfile } from '@/stores/profile'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 
@@ -55,40 +57,10 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
 }
 
 /**
- * Whether the folded remote payload contains any image markers — i.e. the
- * source device had image sync on and would expect its companion devices to
- * download binaries. Used to gate the "also download photos?" prompt so we
- * don't show it for users whose remote payload is image-free.
- */
-function remoteReferencesImages(remote: SyncPayload): boolean {
-  for (const c of remote.contactStore.contacts ?? []) {
-    const avatar = (c as { avatar?: { type?: string; value?: string } }).avatar
-    if (
-      avatar?.type === 'image' &&
-      typeof avatar.value === 'string' &&
-      avatar.value.startsWith('icloud://')
-    ) {
-      return true
-    }
-  }
-  const profile = remote.preferencesStore?.values?.avatar as
-    | { type?: string; value?: string }
-    | undefined
-  if (
-    profile?.type === 'image' &&
-    typeof profile.value === 'string' &&
-    profile.value.startsWith('icloud://')
-  ) {
-    return true
-  }
-  return false
-}
-
-/**
  * Offers a one-shot restore from iCloud during onboarding. Pulling is not gated
  * by supporter status — the user can import their data now and decide whether
- * to enable ongoing sync (which IS supporter-only) later. Skipping just
- * advances to the next onboarding step with no side effects.
+ * to enable ongoing sync (which IS supporter-only) later. Skipping preserves an
+ * explicit local off choice before advancing.
  *
  * Not rendered on Android: iCloud is iOS-only. The parent step list hides this
  * step on non-iOS platforms.
@@ -268,7 +240,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       // the user to also pull those photos down. Per-device consent means we
       // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
       // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
-      if (remoteReferencesImages(probe.remote)) {
+      if (payloadReferencesPhotos(probe.remote)) {
         analytics.capture('icloud_restore_images_prompted', {
           source: 'onboarding',
         })
@@ -629,6 +601,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               import_type: 'icloud',
               status: probe.state,
             })
+            set(FRESH_SETUP_PREFERENCES)
             goNext()
           }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}

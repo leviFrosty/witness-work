@@ -94,6 +94,7 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   consentGivenAt: 'omit',
   // Only ever set on a tombstone, which is never shared.
   redacted: 'omit',
+  detailsRetainUntil: 'omit',
   userDraggedCoordinate: 'omit',
   dismissedUntil: 'omit',
   dismissedNotificationId: 'omit',

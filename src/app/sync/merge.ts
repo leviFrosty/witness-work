@@ -1,3 +1,10 @@
+import { syncNow } from '@/lib/syncClock'
+import { translateSyncTimestamps } from '@/app/sync/clockSkew'
+import {
+  reconcileSyncDefinitions,
+  expandDefinitionTombstones,
+} from '@/app/sync/definitionReconciliation'
+import { expireDeletedContactDetails } from '@/lib/contactRetention'
 import { Contact } from '@/types/contact'
 import { Visit, VisitTombstone } from '@/types/visit'
 import {
@@ -14,14 +21,13 @@ import {
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
-import { normalizeRoleHistory } from '@/lib/roleHistory'
+import { mergePreferences } from '@/app/sync/preferencesMerge'
+import { canonicalJson } from '@/lib/canonicalJson'
+import {
+  NON_SYNCABLE_PREFERENCE_KEYS,
+  NON_SYNCABLE_PROFILE_KEYS,
+} from '@/lib/syncPreferencePolicy'
 import { SyncPayload } from '@/app/sync/payload'
-
-/**
- * Records older than this are dropped from tombstone arrays to keep them
- * bounded.
- */
-const TOMBSTONE_RETENTION_MS = 1000 * 60 * 60 * 24 * 90 // 90 days
 
 /**
  * Outcome of a merge pass — lets the caller write exactly the fields that
@@ -85,20 +91,22 @@ export function mergePayload(
   local: LocalState,
   remote: SyncPayload
 ): MergeResult {
-  const now = Date.now()
+  const now = syncNow()
+  const originalLocal = local
+  local = translateSyncTimestamps(local, 0, now + 5 * 60_000)
+  remote = translateSyncTimestamps(remote, 0, now + 5 * 60_000)
 
   // --- Contacts (active) ---
-  const { merged: mergedContacts, changed: contactsChanged } = mergeById(
+  const { merged: mergedContacts } = mergeById(
     local.contacts,
     remote.contactStore.contacts as Contact[]
   )
 
   // --- Contacts (deleted) — tombstones also carry updatedAt. ---
-  const { merged: mergedDeletedContacts, changed: deletedContactsChanged } =
-    mergeById(
-      local.deletedContacts,
-      remote.contactStore.deletedContacts as Contact[]
-    )
+  const { merged: mergedDeletedContacts } = mergeById(
+    local.deletedContacts,
+    remote.contactStore.deletedContacts as Contact[]
+  )
 
   // --- Custom field definitions ---
   // Merged by id with per-def updatedAt LWW. Permanent deletion carries an
@@ -106,21 +114,20 @@ export function mergePayload(
   // data and a stale peer would reintroduce it on the next merge.
   const remoteDefs = (remote.contactStore.customFieldDefs ??
     []) as CustomFieldDefinition[]
-  const { merged: mergedDefs, changed: defsChanged } = mergeById(
-    local.customFieldDefs,
-    remoteDefs
-  )
-  const mergedCustomFieldTombstones = mergeTombstones(
-    local.deletedCustomFieldDefs,
-    remote.contactStore.deletedCustomFieldDefs ?? [],
-    now
-  )
-  const customFieldTombstonesChanged = !sameTombstones(
-    local.deletedCustomFieldDefs,
-    mergedCustomFieldTombstones
+  const { merged: mergedDefs } = mergeById(local.customFieldDefs, remoteDefs)
+  const mergedCustomFieldTombstones = expandDefinitionTombstones(
+    [...local.customFieldDefs, ...remoteDefs],
+    mergeTombstones(
+      local.deletedCustomFieldDefs,
+      remote.contactStore.deletedCustomFieldDefs ?? [],
+      now
+    )
   )
   const deletedCustomFieldIds = new Set(
-    mergedCustomFieldTombstones.map((tombstone) => tombstone.id)
+    mergedCustomFieldTombstones.flatMap((tombstone) => [
+      tombstone.id,
+      ...(tombstone.legacyIds ?? []),
+    ])
   )
   const customFieldDefsAfterTombstones = mergedDefs.filter(
     (def) => !deletedCustomFieldIds.has(def.id)
@@ -149,19 +156,11 @@ export function mergePayload(
       contact.updatedAt
     )
   )
-  const contactsSanitized = sanitizedContactsFinal.some(
-    (contact, index) => contact !== contactsFinal[index]
-  )
-  const deletedContactsSanitized = sanitizedDeletedContactsFinal.some(
-    (contact, index) => contact !== deletedContactsFinal[index]
-  )
-
   // --- Conversations ---
-  const { merged: mergedConversations, changed: conversationsChanged } =
-    mergeById(
-      local.conversations,
-      remote.conversationStore.conversations as Visit[]
-    )
+  const { merged: mergedConversations } = mergeById(
+    local.conversations,
+    remote.conversationStore.conversations as Visit[]
+  )
   const mergedConversationTombstones = mergeTombstones(
     local.deletedConversations,
     remote.conversationStore.deletedConversations ?? [],
@@ -173,11 +172,10 @@ export function mergePayload(
   )
 
   // --- Service reports (nested year → month → report[]) ---
-  const { reports: mergedReports, changed: reportsChanged } =
-    mergeServiceReports(
-      local.serviceReports,
-      remote.serviceReportStore.serviceReports
-    )
+  const { reports: mergedReports } = mergeServiceReports(
+    local.serviceReports,
+    remote.serviceReportStore.serviceReports
+  )
   const mergedReportTombstones = mergeTombstones(
     local.deletedServiceReports,
     remote.serviceReportStore.deletedServiceReports ?? [],
@@ -189,29 +187,31 @@ export function mergePayload(
   )
 
   // --- Day plans / recurring plans (no tombstones in v1) ---
-  const { merged: mergedDayPlans, changed: dayPlansChanged } = mergeById(
+  const { merged: mergedDayPlans } = mergeById(
     local.dayPlans,
     remote.serviceReportStore.dayPlans as DayPlan[]
   )
-  const { merged: mergedRecurringPlans, changed: recurringPlansChanged } =
-    mergeById(
-      local.recurringPlans,
-      remote.serviceReportStore.recurringPlans as RecurringPlan[]
-    )
+  const { merged: mergedRecurringPlans } = mergeById(
+    local.recurringPlans,
+    remote.serviceReportStore.recurringPlans as RecurringPlan[]
+  )
 
   // --- Categories (id-keyed records + tombstones, mirrors contacts) ---
   const remoteCategoryStore = remote.categoryStore ?? {
     categories: [] as Category[],
     deletedCategories: [] as CategoryTombstone[],
   }
-  const { merged: mergedCategories, changed: categoriesChanged } = mergeById(
+  const { merged: mergedCategories } = mergeById(
     local.categories,
     (remoteCategoryStore.categories ?? []) as Category[]
   )
-  const mergedCategoryTombstones = mergeTombstones(
-    local.deletedCategories,
-    remoteCategoryStore.deletedCategories ?? [],
-    now
+  const mergedCategoryTombstones = expandDefinitionTombstones(
+    [...local.categories, ...remoteCategoryStore.categories],
+    mergeTombstones(
+      local.deletedCategories,
+      remoteCategoryStore.deletedCategories ?? [],
+      now
+    )
   )
   const categoriesAfterTombstones = applyTombstones(
     mergedCategories,
@@ -219,16 +219,14 @@ export function mergePayload(
   )
 
   // --- Preferences ---
-  const {
-    values: mergedPrefValues,
-    updatedAt: mergedPrefTimestamps,
-    changed: prefsChanged,
-  } = mergePreferences(
-    local.preferencesValues,
-    local.preferenceUpdatedAt,
-    remote.preferencesStore.values,
-    remote.preferencesStore.updatedAt
-  )
+  const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
+    mergePreferences(
+      local.preferencesValues,
+      local.preferenceUpdatedAt,
+      remote.preferencesStore.values,
+      remote.preferencesStore.updatedAt,
+      NON_SYNCABLE_PREFERENCE_KEYS
+    )
 
   // --- Profile (per-key LWW, mirrors preferences) ---
   // A pre-wave-3 peer payload won't carry `profileStore`; the legacy fields
@@ -239,39 +237,21 @@ export function mergePayload(
     values: {},
     updatedAt: {},
   }
-  const {
-    values: mergedProfileValues,
-    updatedAt: mergedProfileTimestamps,
-    changed: profileChanged,
-  } = mergePreferences(
-    local.profileValues,
-    local.profileUpdatedAt,
-    remoteProfile.values,
-    remoteProfile.updatedAt
-  )
+  const { values: mergedProfileValues, updatedAt: mergedProfileTimestamps } =
+    mergePreferences(
+      local.profileValues,
+      local.profileUpdatedAt,
+      remoteProfile.values,
+      remoteProfile.updatedAt,
+      NON_SYNCABLE_PROFILE_KEYS
+    )
 
-  const changed =
-    contactsChanged ||
-    deletedContactsChanged ||
-    defsChanged ||
-    customFieldDefsAfterTombstones.length !== mergedDefs.length ||
-    contactsSanitized ||
-    deletedContactsSanitized ||
-    customFieldTombstonesChanged ||
-    conversationsChanged ||
-    reportsChanged ||
-    dayPlansChanged ||
-    recurringPlansChanged ||
-    categoriesChanged ||
-    prefsChanged ||
-    profileChanged ||
-    mergedConversationTombstones.length !== local.deletedConversations.length ||
-    mergedReportTombstones.length !== local.deletedServiceReports.length ||
-    mergedCategoryTombstones.length !== local.deletedCategories.length
-
-  return {
+  const result = reconcileSyncDefinitions({
     contacts: sanitizedContactsFinal,
-    deletedContacts: sanitizedDeletedContactsFinal,
+    deletedContacts: expireDeletedContactDetails(
+      sanitizedDeletedContactsFinal,
+      now
+    ),
     customFieldDefs: customFieldDefsAfterTombstones,
     deletedCustomFieldDefs: mergedCustomFieldTombstones,
     conversations: conversationsAfterTombstones,
@@ -286,13 +266,36 @@ export function mergePayload(
     preferenceUpdatedAt: mergedPrefTimestamps,
     profileValues: mergedProfileValues,
     profileUpdatedAt: mergedProfileTimestamps,
-    changed,
-  }
+  })
+  // Judge the final state, after tombstones. A stale insertion filtered out in
+  // this pass is not a change and must not trigger another push.
+  const changed = Object.entries(result).some(
+    ([key, value]) =>
+      canonicalJson(value) !==
+      canonicalJson(originalLocal[key as keyof LocalState])
+  )
+  return { ...result, changed }
 }
 
 // --- Helpers ---------------------------------------------------------------
 
-type WithId = { id: string; updatedAt?: number }
+type WithId = { id: string; updatedAt?: number; legacyIds?: string[] }
+
+function recordKey(record: WithId): string {
+  const value = { ...record } as Record<string, unknown>
+  delete value.notifications
+  delete value.dismissedNotificationId
+  delete value.avatarMeta
+  delete value.legacyIds
+  const avatar = value.avatar as { type?: string; value?: string } | undefined
+  if (avatar?.type === 'image') value.avatar = { ...avatar, value: 'image' }
+  const followUp = value.followUp as Record<string, unknown> | undefined
+  if (followUp) {
+    const { notifications: _local, ...rest } = followUp
+    value.followUp = rest
+  }
+  return canonicalJson(value)
+}
 
 function mergeById<T extends WithId>(
   local: T[],
@@ -303,7 +306,7 @@ function mergeById<T extends WithId>(
 
   let changed = false
   for (const r of remote) {
-    const existing = byId.get(r.id)
+    let existing = byId.get(r.id)
     if (!existing) {
       byId.set(r.id, r)
       changed = true
@@ -311,8 +314,37 @@ function mergeById<T extends WithId>(
     }
     const localTs = existing.updatedAt ?? 0
     const remoteTs = r.updatedAt ?? 0
-    if (remoteTs > localTs) {
-      byId.set(r.id, r)
+    const aliases = [
+      ...new Set([...(existing.legacyIds ?? []), ...(r.legacyIds ?? [])]),
+    ]
+      .filter((id) => id !== r.id)
+      .sort()
+    if (aliases.length) {
+      existing = { ...existing, legacyIds: aliases }
+      byId.set(r.id, existing)
+    }
+    if (
+      remoteTs > localTs ||
+      (remoteTs === localTs && recordKey(r) > recordKey(existing))
+    ) {
+      const before = existing as T & {
+        avatar?: { type: string; value: string; revision?: string }
+      }
+      const after = r as T & {
+        avatar?: { type: string; value: string; revision?: string }
+      }
+      const samePhoto =
+        before.avatar?.type === 'image' &&
+        after.avatar?.type === 'image' &&
+        before.avatar.revision === after.avatar.revision &&
+        before.avatar.value.startsWith('file://')
+      const winner = samePhoto
+        ? { ...r, avatar: { ...after.avatar, value: before.avatar!.value } }
+        : r
+      byId.set(
+        r.id,
+        aliases.length ? { ...winner, legacyIds: aliases } : winner
+      )
       changed = true
     }
   }
@@ -353,43 +385,44 @@ function reconcileActiveAndDeletedContacts(
 function mergeTombstones<T extends { id: string; deletedAt: number }>(
   local: T[],
   remote: T[],
-  now: number
+  _now: number
 ): T[] {
   const byId = new Map<string, T>()
   for (const t of [...local, ...remote]) {
     const existing = byId.get(t.id)
-    if (!existing || t.deletedAt > existing.deletedAt) {
+    if (!existing) {
       byId.set(t.id, t)
+      continue
     }
+    const winner = t.deletedAt > existing.deletedAt ? t : existing
+    const aliases = [
+      ...new Set([
+        ...((existing as T & { legacyIds?: string[] }).legacyIds ?? []),
+        ...((t as T & { legacyIds?: string[] }).legacyIds ?? []),
+      ]),
+    ].sort()
+    byId.set(t.id, aliases.length ? { ...winner, legacyIds: aliases } : winner)
   }
-  const cutoff = now - TOMBSTONE_RETENTION_MS
-  return Array.from(byId.values()).filter((t) => t.deletedAt >= cutoff)
-}
-
-function sameTombstones<T extends { id: string; deletedAt: number }>(
-  left: T[],
-  right: T[]
-): boolean {
-  if (left.length !== right.length) return false
-  const rightById = new Map(right.map((tombstone) => [tombstone.id, tombstone]))
-  return left.every(
-    (tombstone) =>
-      rightById.get(tombstone.id)?.deletedAt === tombstone.deletedAt
-  )
+  // Deletion ids have no householder details. Keep evidence even when a
+  // writer's clock is wrong or an old device reconnects much later.
+  return Array.from(byId.values())
 }
 
 function applyTombstones<T extends WithId>(
   records: T[],
-  tombstones: { id: string; deletedAt: number }[]
+  tombstones: { id: string; deletedAt: number; legacyIds?: string[] }[]
 ): T[] {
   if (tombstones.length === 0) return records
-  const tombsById = new Map(tombstones.map((t) => [t.id, t]))
+  const tombsById = new Map<string, number>()
+  for (const tombstone of tombstones)
+    for (const id of [tombstone.id, ...(tombstone.legacyIds ?? [])])
+      tombsById.set(id, Math.max(tombsById.get(id) ?? 0, tombstone.deletedAt))
   return records.filter((r) => {
-    const t = tombsById.get(r.id)
-    if (!t) return true
+    const deletedAt = tombsById.get(r.id)
+    if (deletedAt === undefined) return true
     const ts = r.updatedAt ?? 0
     // Tombstone wins unless the record was updated strictly after it.
-    return ts > t.deletedAt
+    return ts > deletedAt
   })
 }
 
@@ -444,55 +477,4 @@ function applyServiceReportTombstones(
     }
   }
   return out
-}
-
-const ROLE_GROUP = new Set(['role', 'roleHistory'])
-
-function mergePreferences(
-  localValues: Record<string, unknown>,
-  localUpdatedAt: Record<string, number>,
-  remoteValues: Record<string, unknown>,
-  remoteUpdatedAt: Record<string, number>
-): {
-  values: Record<string, unknown>
-  updatedAt: Record<string, number>
-  changed: boolean
-} {
-  const values = { ...localValues }
-  const updatedAt = { ...localUpdatedAt }
-  let changed = false
-
-  // Union of keys from both sides.
-  const keys = new Set<string>([
-    ...Object.keys(remoteValues ?? {}),
-    ...Object.keys(remoteUpdatedAt ?? {}),
-  ])
-
-  for (const key of keys) {
-    if (ROLE_GROUP.has(key)) continue
-    const localTs = localUpdatedAt?.[key] ?? 0
-    const remoteTs = remoteUpdatedAt?.[key] ?? 0
-    if (remoteTs > localTs) {
-      values[key] = remoteValues[key]
-      updatedAt[key] = remoteTs
-      changed = true
-    }
-  }
-
-  // `role` and `roleHistory` describe one timeline (`role` is where the Role
-  // History ends), so the side that touched either most recently supplies
-  // both — merging them key-by-key could pair one device's role with the
-  // other's history.
-  const groupTs = (ts: Record<string, number> | undefined) =>
-    Math.max(...[...ROLE_GROUP].map((key) => ts?.[key] ?? 0))
-  const remoteGroupTs = groupTs(remoteUpdatedAt)
-  if (remoteGroupTs > groupTs(localUpdatedAt)) {
-    if ('role' in (remoteValues ?? {})) values.role = remoteValues.role
-    // A peer without Role History support applies its role to every month.
-    values.roleHistory = normalizeRoleHistory(remoteValues?.roleHistory)
-    for (const key of ROLE_GROUP) updatedAt[key] = remoteGroupTs
-    changed = true
-  }
-
-  return { values, updatedAt, changed }
 }

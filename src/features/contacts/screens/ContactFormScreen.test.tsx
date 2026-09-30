@@ -31,7 +31,9 @@ vi.mock('expo-localization', () => ({
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: { text: '#000', background: '#fff' } }),
 }))
-vi.mock('@/stores/contactsStore', () => ({ default: () => mocks }))
+vi.mock('@/stores/contactsStore', () => ({
+  default: Object.assign(() => mocks, { getState: () => mocks }),
+}))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({
     prefillAddress: {
@@ -105,6 +107,9 @@ async function save() {
 }
 
 beforeEach(() => {
+  mocks.addContact.mockImplementation((contact: Contact) => {
+    mocks.contacts.push({ ...contact })
+  })
   vi.clearAllMocks()
   mocks.contacts = []
   mocks.dataProtectionMode = false
@@ -200,7 +205,6 @@ describe('Contact Form map coordinates', () => {
     expect(mocks.updateContact).toHaveBeenCalledWith(
       expect.objectContaining({
         coordinate: { latitude: 12, longitude: 34 },
-        userDraggedCoordinate: undefined,
       })
     )
   })

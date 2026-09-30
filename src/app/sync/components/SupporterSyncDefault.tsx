@@ -38,6 +38,9 @@ export default function SupporterSyncDefault() {
       try {
         const decision = await iCloudSync.resolveInitialEnable()
         if (settled) return
+        analytics.capture('icloud_sync_auto_enable_outcome', {
+          outcome: decision.outcome,
+        })
         switch (decision.outcome) {
           case 'seed':
             settle()
@@ -67,10 +70,18 @@ export default function SupporterSyncDefault() {
             }
             return
           case 'conflict':
+            usePreferences.getState().set({ iCloudSyncNeedsResolution: true })
+            settle()
+            return
           case 'unavailable':
             settle()
             return
         }
+      } catch {
+        analytics.capture('icloud_sync_auto_enable_outcome', {
+          outcome: 'failed',
+        })
+        settle()
       } finally {
         running = false
         if (again) {

@@ -1,3 +1,4 @@
+import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Category, CategoryTombstone } from '@/types/category'
@@ -31,7 +32,10 @@ export const useCategories = create(
           const existing = categories.find((c) => c.id === category.id)
           if (existing) return {}
           return {
-            categories: [...categories, { ...category, updatedAt: Date.now() }],
+            categories: [
+              ...categories,
+              { ...category, updatedAt: syncTimestamp() },
+            ],
           }
         }),
       updateCategory: (category: Partial<Category> & { id: string }) =>
@@ -49,9 +53,9 @@ export const useCategories = create(
                 id: _dropId,
                 ...rest
               } = category
-              return { ...c, ...rest, updatedAt: Date.now() }
+              return { ...c, ...rest, updatedAt: syncTimestamp(c.updatedAt) }
             }
-            return { ...c, ...category, updatedAt: Date.now() }
+            return { ...c, ...category, updatedAt: syncTimestamp(c.updatedAt) }
           }),
         })),
       deleteCategory: (id: string) =>
@@ -61,12 +65,16 @@ export const useCategories = create(
           // Builtin Categories (LDC) cannot be deleted — they're seeded on
           // every device and the cap math relies on a stable id.
           if (found.builtin) return {}
-          const now = Date.now()
+          const now = syncTimestamp(found.updatedAt)
           return {
             categories: categories.filter((c) => c.id !== id),
             deletedCategories: [
               ...deletedCategories.filter((t) => t.id !== id),
-              { id, deletedAt: now },
+              {
+                id,
+                deletedAt: now,
+                ...(found.legacyIds ? { legacyIds: found.legacyIds } : {}),
+              },
             ],
           }
         }),

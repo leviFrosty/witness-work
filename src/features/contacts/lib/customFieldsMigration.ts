@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { legacyDefinitionId } from '@/lib/legacyDefinitionId'
 import { Contact } from '@/types/contact'
 import { CustomFieldDefinition } from '@/types/customField'
 
@@ -42,8 +42,8 @@ export function migrateCustomFieldsToIds(args: {
   contacts: Contact[]
   deletedContacts: Contact[]
 } {
-  const { legacyLabels, contacts, deletedContacts, now } = args
-  const uuid = args.uuid ?? (() => Crypto.randomUUID())
+  const { legacyLabels, contacts, deletedContacts } = args
+  const uuid = args.uuid
 
   const labelToId = new Map<string, string>()
   const defs: CustomFieldDefinition[] = []
@@ -55,14 +55,14 @@ export function migrateCustomFieldsToIds(args: {
     const label = typeof raw === 'string' ? raw.trim() : ''
     if (!label) continue
     if (labelToId.has(label)) continue
-    const id = uuid()
+    const id = uuid?.() ?? legacyDefinitionId('field', label)
     labelToId.set(label, id)
     defs.push({
       id,
       label,
       order: defs.length,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: 1,
+      updatedAt: 1,
     })
   }
 
@@ -87,14 +87,14 @@ export function migrateCustomFieldsToIds(args: {
       }
       let id = labelToId.get(trimmed)
       if (!id) {
-        id = uuid()
+        id = uuid?.() ?? legacyDefinitionId('field', trimmed)
         labelToId.set(trimmed, id)
         defs.push({
           id,
           label: trimmed,
           order: defs.length,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: 1,
+          updatedAt: 1,
           archived: true,
         })
         mutated = true
@@ -106,7 +106,7 @@ export function migrateCustomFieldsToIds(args: {
     }
 
     if (!mutated) return c
-    return { ...c, customFields: out, updatedAt: now }
+    return { ...c, customFields: out }
   }
 
   return {

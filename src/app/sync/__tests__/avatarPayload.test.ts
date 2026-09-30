@@ -14,12 +14,15 @@ const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
 
 describe('payload.sanitizeContactAvatar', () => {
   describe('with includeImages=false (default, Phase 1)', () => {
-    it('drops the avatar field entirely when it is an image', () => {
+    it('retains the photo reference when transfer is off', () => {
       const c = makeContact({
         avatar: { type: 'image', value: 'file:///tmp/c.jpg?t=1' },
       })
       const out = sanitizeContactAvatar(c, { includeImages: false })
-      expect(out.avatar).toBeUndefined()
+      expect(out.avatar).toEqual({
+        type: 'image',
+        value: 'icloud://contact-contact-1',
+      })
     })
 
     it('leaves emoji + none avatars untouched', () => {
@@ -64,13 +67,13 @@ describe('payload.sanitizeContactAvatar', () => {
 })
 
 describe('payload.sanitizeProfileAvatar', () => {
-  it('collapses image to none when images are off', () => {
+  it('retains the profile photo reference when transfer is off', () => {
     expect(
       sanitizeProfileAvatar(
         { type: 'image', value: 'file:///tmp/profile.jpg?t=1' },
         { includeImages: false }
       )
-    ).toEqual({ type: 'none', value: '' })
+    ).toEqual({ type: 'image', value: 'icloud://profile' })
   })
 
   it('rewrites image to the profile marker when images are on', () => {

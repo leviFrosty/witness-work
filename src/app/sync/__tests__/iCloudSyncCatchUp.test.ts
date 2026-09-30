@@ -1,3 +1,7 @@
+vi.mock('@/lib/syncClock', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/syncClock')>()),
+  refreshSyncClock: vi.fn(async () => null),
+}))
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Drives `installiCloudSync` against a fake bridge to cover when the app
@@ -130,6 +134,12 @@ const phonePayload = (version = 1): SyncFile => ({
 const load = async () => {
   const sync = await import('@/app/sync/iCloudSync')
   const bridge = await import('../../../../modules/icloud-bridge')
+  const fs = await import('expo-file-system/legacy')
+  vi.mocked(fs.getInfoAsync).mockResolvedValue({
+    exists: false,
+    uri: '',
+    isDirectory: false,
+  })
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
   const { usePreferences } = await import('@/stores/preferences')
   const { default: useContacts } = await import('@/stores/contactsStore')
@@ -138,6 +148,18 @@ const load = async () => {
     iCloudSyncEnabled: true,
     iCloudDeviceId: 'ipad',
     hasMigratedToSyncSchema: true,
+    hasReconciledSyncDefinitions: true,
+  })
+  useContacts.setState({
+    deletedContacts: [
+      {
+        id: 'deleted-long-ago',
+        name: '',
+        createdAt: new Date(0),
+        updatedAt: Date.now() - 2 * 24 * 60 * 60_000,
+        redacted: true,
+      },
+    ],
   })
   return {
     ...sync,
@@ -159,7 +181,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 let uninstall: () => void = () => {}
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules()
   vi.clearAllMocks()
   runtime.appState = 'active'
@@ -170,6 +192,12 @@ beforeEach(() => {
   runtime.files = [phonePayload()]
   runtime.pending = []
   runtime.binaries = []
+  const bridge = await import('../../../../modules/icloud-bridge')
+  vi.mocked(bridge.readFiles).mockImplementation(async (include) => ({
+    files: runtime.files.filter((file) => include(file.filename)),
+    pending: runtime.pending.filter(include),
+  }))
+  vi.mocked(bridge.write).mockResolvedValue(1)
 })
 
 afterEach(() => {
@@ -241,8 +269,14 @@ describe('catching up without a manual sync', () => {
 
   it('pushes an edit made before sync was ready', async () => {
     runtime.files = []
-    const { installiCloudSync, iCloudSync, useSupporter, useContacts } =
-      await load()
+    const {
+      installiCloudSync,
+      iCloudSync,
+      useSupporter,
+      useContacts,
+      bridge,
+      usePreferences,
+    } = await load()
     uninstall = installiCloudSync()
 
     useContacts.getState().set({
@@ -252,7 +286,8 @@ describe('catching up without a manual sync', () => {
 
     useSupporter.getState().setSupporter(true)
 
-    await vi.waitFor(() => expect(iCloudSync.isPushScheduled()).toBe(true))
+    await vi.waitFor(() => expect(bridge.write).toHaveBeenCalled())
+    expect(usePreferences.getState().iCloudSyncPendingPush).toBe(false)
   })
 })
 
@@ -500,4 +535,430 @@ describe('retrying a failed read', () => {
 
     expect(bridge.readFiles).toHaveBeenCalledTimes(1)
   })
+})
+
+it('persists a failed push and retries it without another user edit', async () => {
+  vi.useFakeTimers()
+  try {
+    runtime.files = []
+    const {
+      installiCloudSync,
+      useSupporter,
+      usePreferences,
+      bridge,
+      iCloudSync,
+    } = await load()
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+    await vi.advanceTimersByTimeAsync(0)
+    vi.mocked(bridge.write).mockClear()
+    vi.mocked(bridge.write).mockRejectedValueOnce(new Error('temporary'))
+    expect(await iCloudSync.push('manual')).toBe(false)
+    expect(usePreferences.getState()).toMatchObject({
+      iCloudSyncPendingPush: true,
+      iCloudSyncIssue: 'push-failed',
+    })
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(bridge.write).toHaveBeenCalledTimes(2)
+    expect(usePreferences.getState()).toMatchObject({
+      iCloudSyncPendingPush: false,
+      iCloudSyncIssue: null,
+    })
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('sends persisted pending work when the runtime is reinstalled', async () => {
+  runtime.files = []
+  const { installiCloudSync, useSupporter, usePreferences, bridge } =
+    await load()
+  usePreferences.setState({ iCloudSyncPendingPush: true })
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  await vi.waitFor(() => expect(bridge.write).toHaveBeenCalledOnce())
+  expect(usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+})
+
+it('keeps healthy peers syncing while surfacing a malformed peer', async () => {
+  runtime.files = [
+    phonePayload(),
+    {
+      filename: 'witness-work-bad.json',
+      modifiedAt: 1000,
+      json: JSON.stringify({
+        ...JSON.parse(phonePayload().json),
+        serviceReportStore: {
+          serviceReports: { 2026: { 8: [null] } },
+          dayPlans: [],
+          recurringPlans: [],
+        },
+      }),
+    },
+  ]
+  const { installiCloudSync, useSupporter, usePreferences, useContacts } =
+    await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+  expect(usePreferences.getState().iCloudSyncIssue).toBe('invalid-file')
+})
+
+it('surfaces newer payloads instead of reporting a complete sync', async () => {
+  runtime.files = [phonePayload(99)]
+  const { installiCloudSync, useSupporter, usePreferences } = await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  await vi.waitFor(() =>
+    expect(usePreferences.getState().iCloudSyncIssue).toBe('newer-version')
+  )
+})
+
+it('stops an in-flight merge after Set up fresh disables sync', async () => {
+  runtime.appState = 'background'
+  const {
+    installiCloudSync,
+    iCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    bridge,
+  } = await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  let finish: (value: {
+    files: SyncFile[]
+    pending: string[]
+  }) => void = () => {}
+  vi.mocked(bridge.readFiles).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      })
+  )
+  const pull = iCloudSync.pullAndMerge('manual')
+  await Promise.resolve()
+  usePreferences.getState().set({
+    iCloudSyncEnabled: false,
+    iCloudSyncSetByUser: true,
+    iCloudFreshSetup: true,
+  })
+  finish({ files: [phonePayload()], pending: [] })
+  await pull
+  expect(hasPhoneContact(useContacts)).toBe(false)
+})
+
+it('does not delete legacy files after reading them', async () => {
+  runtime.files = [{ ...phonePayload(), filename: 'witness-work.json' }]
+  const { installiCloudSync, useSupporter, useContacts, bridge } = await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+  expect(bridge.deleteFile).not.toHaveBeenCalled()
+})
+
+it('reports failed photo enablement before transferring photo bytes', async () => {
+  runtime.appState = 'background'
+  runtime.files = []
+  const {
+    installiCloudSync,
+    useSupporter,
+    iCloudSync,
+    bridge,
+    usePreferences,
+  } = await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  vi.mocked(bridge.write).mockRejectedValueOnce(new Error('storage full'))
+
+  await expect(iCloudSync.enableImageSync()).rejects.toThrow(
+    'Could not write photo references to iCloud'
+  )
+  expect(usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+  expect(bridge.writeBinary).not.toHaveBeenCalled()
+  expect(bridge.readBinary).not.toHaveBeenCalled()
+})
+
+const localPhoto = (revision = 'a') => ({
+  id: 'c',
+  name: 'Contact',
+  createdAt: new Date(0),
+  updatedAt: 100,
+  avatar: {
+    type: 'image' as const,
+    revision,
+    value: `file:///test/Documents/contact-c-avatar-picked-${revision}.jpg`,
+  },
+})
+const availablePhotos = async () => {
+  const fs = await import('expo-file-system/legacy')
+  vi.mocked(fs.getInfoAsync).mockImplementation(async (uri) => ({
+    exists: true,
+    uri,
+    isDirectory: false,
+    size: 1,
+    modificationTime: 0.5,
+  }))
+  return fs
+}
+
+it('does not upload bytes after a failed foreground JSON publication', async () => {
+  runtime.files = []
+  const {
+    installiCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    bridge,
+  } = await load()
+  useContacts.setState({ contacts: [localPhoto()] })
+  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  useSupporter.getState().setSupporter(true)
+  await availablePhotos()
+  vi.mocked(bridge.write).mockRejectedValue(new Error('storage full'))
+  uninstall = installiCloudSync()
+  await vi.waitFor(() => expect(bridge.write).toHaveBeenCalled())
+  await settle()
+  expect(bridge.writeBinary).not.toHaveBeenCalled()
+})
+
+it('uploads only the photo revision included in the successful JSON snapshot', async () => {
+  runtime.appState = 'background'
+  runtime.files = []
+  const {
+    installiCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    bridge,
+    iCloudSync,
+  } = await load()
+  useContacts.setState({ contacts: [localPhoto()] })
+  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  useSupporter.getState().setSupporter(true)
+  await availablePhotos()
+  uninstall = installiCloudSync()
+  let finish: (mtime: number) => void = () => {}
+  vi.mocked(bridge.write).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      })
+  )
+  const push = iCloudSync.push('manual')
+  await vi.waitFor(() => expect(bridge.write).toHaveBeenCalledOnce())
+  useContacts.setState({ contacts: [localPhoto('b')] })
+  finish(1)
+  await push
+  expect(bridge.writeBinary).toHaveBeenCalledWith(
+    'witness-work-img-contact-c--a.jpg',
+    localPhoto().avatar.value
+  )
+  expect(bridge.writeBinary).not.toHaveBeenCalledWith(
+    'witness-work-img-contact-c--b.jpg',
+    expect.anything()
+  )
+})
+
+it('pushes edits whose debounce fired during a slow photo upload', async () => {
+  vi.useFakeTimers()
+  try {
+    runtime.appState = 'background'
+    runtime.files = []
+    const {
+      installiCloudSync,
+      useSupporter,
+      usePreferences,
+      useContacts,
+      bridge,
+      iCloudSync,
+    } = await load()
+    useContacts.setState({ contacts: [localPhoto()] })
+    usePreferences.setState({ iCloudSyncIncludeImages: true })
+    useSupporter.getState().setSupporter(true)
+    await availablePhotos()
+    uninstall = installiCloudSync()
+    let finish: (mtime: number) => void = () => {}
+    vi.mocked(bridge.writeBinary).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
+    const push = iCloudSync.push('manual')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(bridge.writeBinary).toHaveBeenCalledOnce()
+    useContacts.setState({
+      contacts: [{ ...localPhoto(), name: 'Edited while uploading' }],
+    })
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(bridge.write).toHaveBeenCalledOnce()
+    finish(1000)
+    await push
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(bridge.write).toHaveBeenCalledTimes(2)
+    const json = vi.mocked(bridge.write).mock.calls[1][1]
+    expect(JSON.parse(json).contactStore.contacts[0].name).toBe(
+      'Edited while uploading'
+    )
+    expect(usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('does not schedule JSON pushes for unchanged photo materialization', async () => {
+  runtime.appState = 'background'
+  runtime.files = []
+  runtime.binaries = [
+    { filename: 'witness-work-img-contact-c--a.jpg', modifiedAt: 1000 },
+  ]
+  const {
+    installiCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    iCloudSync,
+    bridge,
+  } = await load()
+  useContacts.setState({
+    contacts: [
+      {
+        ...localPhoto(),
+        avatar: {
+          ...localPhoto().avatar,
+          value: 'file:///test/Documents/contact-c-avatar-synced-a.jpg?t=500',
+        },
+      },
+    ],
+  })
+  usePreferences.setState({
+    iCloudSyncIncludeImages: true,
+    iCloudImageSync: {
+      'witness-work-img-contact-c--a.jpg': {
+        localMtime: 500,
+        uploadedMtime: 500,
+        containerMtime: 1000,
+      },
+    },
+  })
+  useSupporter.getState().setSupporter(true)
+  await availablePhotos()
+  uninstall = installiCloudSync()
+  await iCloudSync.pullImagesIfEnabled()
+  await iCloudSync.pullImagesIfEnabled()
+  expect(bridge.readBinary).not.toHaveBeenCalled()
+  expect(iCloudSync.isPushScheduled()).toBe(false)
+})
+
+it('removes private bytes and bookkeeping from a superseded in-flight profile download', async () => {
+  runtime.appState = 'background'
+  runtime.files = []
+  runtime.binaries = [
+    { filename: 'witness-work-img-profile--a.jpg', modifiedAt: 1000 },
+  ]
+  const { installiCloudSync, usePreferences, iCloudSync, bridge } = await load()
+  const { useProfile } = await import('@/stores/profile')
+  const fs = await import('expo-file-system/legacy')
+  useProfile.setState({
+    avatar: { type: 'image', value: 'icloud://profile', revision: 'a' },
+    profileUpdatedAt: { avatar: 100 },
+  })
+  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  uninstall = installiCloudSync()
+  let finish: (mtime: number) => void = () => {}
+  vi.mocked(bridge.readBinary).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      })
+  )
+  const pull = iCloudSync.pullImagesIfEnabled()
+  await vi.waitFor(() => expect(bridge.readBinary).toHaveBeenCalledOnce())
+  useProfile.getState().set({ avatar: { type: 'none', value: '' } })
+  await availablePhotos()
+  finish(1000)
+  await pull
+  expect(useProfile.getState().avatar.type).toBe('none')
+  expect(fs.deleteAsync).toHaveBeenCalledWith(
+    'file:///test/Documents/profile-avatar-synced-a.jpg',
+    { idempotent: true }
+  )
+  expect(usePreferences.getState().iCloudImageSync).not.toHaveProperty(
+    'witness-work-img-profile--a.jpg'
+  )
+})
+
+it('rechecks each obsolete download after a prior deletion awaited IO', async () => {
+  runtime.appState = 'background'
+  runtime.files = []
+  runtime.binaries = ['a', 'b'].map((id) => ({
+    filename: `witness-work-img-contact-${id}--r.jpg`,
+    modifiedAt: 1000,
+  }))
+  const { installiCloudSync, usePreferences, useContacts, iCloudSync, bridge } =
+    await load()
+  const fs = await import('expo-file-system/legacy')
+  const contacts = ['a', 'b'].map((id) => ({
+    id,
+    name: id,
+    createdAt: new Date(),
+    updatedAt: 100,
+    avatar: {
+      type: 'image' as const,
+      value: `icloud://contact-${id}`,
+      revision: 'r',
+    },
+  }))
+  useContacts.setState({ contacts })
+  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  uninstall = installiCloudSync()
+  const finishes: Array<(mtime: number) => void> = []
+  vi.mocked(bridge.readBinary).mockImplementation(
+    () =>
+      new Promise<number>((resolve) => {
+        finishes.push(resolve)
+      })
+  )
+  let finishDelete: () => void = () => {}
+  vi.mocked(fs.deleteAsync).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finishDelete = resolve
+      })
+  )
+  const pull = iCloudSync.pullImagesIfEnabled()
+  await vi.waitFor(() => expect(finishes).toHaveLength(2))
+  useContacts.setState({ contacts: [] })
+  await availablePhotos()
+  finishes.forEach((finish) => finish(1000))
+  await vi.waitFor(() =>
+    expect(fs.deleteAsync).toHaveBeenCalledWith(
+      'file:///test/Documents/contact-a-avatar-synced-r.jpg',
+      { idempotent: true }
+    )
+  )
+  useContacts.setState({
+    contacts: [
+      {
+        ...contacts[1],
+        avatar: {
+          ...contacts[1].avatar,
+          value: 'file:///test/Documents/contact-b-avatar-synced-r.jpg',
+        },
+      },
+    ],
+  })
+  finishDelete()
+  await pull
+  expect(fs.deleteAsync).not.toHaveBeenCalledWith(
+    'file:///test/Documents/contact-b-avatar-synced-r.jpg',
+    expect.anything()
+  )
+  expect(usePreferences.getState().iCloudImageSync).not.toHaveProperty(
+    'witness-work-img-contact-a--r.jpg'
+  )
+  expect(usePreferences.getState().iCloudImageSync).toHaveProperty(
+    'witness-work-img-contact-b--r.jpg'
+  )
 })

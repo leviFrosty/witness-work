@@ -1,3 +1,4 @@
+import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
@@ -31,10 +32,27 @@ const buildStatus = (
   enabled: boolean,
   available: boolean,
   lastiCloudPulledAt: number | null,
-  lastiCloudPushedAt: number | null
+  lastiCloudPushedAt: number | null,
+  issue: string | null,
+  pending: boolean,
+  paused: boolean,
+  needsResolution: boolean
 ): StatusDisplay => {
+  if (needsResolution) return { text: i18n.t('iCloudStatusNeedsResolution') }
+  if (paused) return { text: i18n.t('iCloudStatusSupporterPaused') }
   if (!enabled) return { text: i18n.t('iCloudStatusDisabled') }
   if (!available) return { text: i18n.t('iCloudStatusUnavailable') }
+  if (issue)
+    return {
+      text: i18n.t(
+        issue === 'newer-version'
+          ? 'iCloudStatusNewerVersion'
+          : issue === 'invalid-file'
+            ? 'iCloudStatusInvalidFile'
+            : 'iCloudStatusRetryNeeded'
+      ),
+    }
+  if (pending) return { text: i18n.t('iCloudStatusPendingPush') }
   const mostRecent = Math.max(lastiCloudPulledAt ?? 0, lastiCloudPushedAt ?? 0)
   if (!mostRecent) return { text: i18n.t('iCloudStatusWaitingForFirstSync') }
   return {
@@ -62,6 +80,10 @@ const PreferencesiCloudScreenInner = () => {
     lastiCloudRemoteDeviceId,
     lastiCloudRemoteDeviceName,
     iCloudDeviceId,
+    iCloudSyncIssue,
+    iCloudSyncPendingPush,
+    iCloudSyncPausedForLapse,
+    iCloudSyncNeedsResolution,
     developerTools,
     set,
   } = usePreferences()
@@ -101,7 +123,13 @@ const PreferencesiCloudScreenInner = () => {
   const applyFirstEnableChoice = async (choice: FirstEnableChoice) => {
     iCloudSync.backfillUpdatedAtIfNeeded()
     const wasEnabled = usePreferences.getState().iCloudSyncEnabled
-    set({ iCloudSyncEnabled: true })
+    analytics.capture('icloud_sync_first_enable_chosen', { choice })
+    if (choice !== 'keepLocal')
+      set({
+        iCloudSyncEnabled: true,
+        iCloudSyncNeedsResolution: false,
+        iCloudFreshSetup: false,
+      })
     if (!wasEnabled) {
       analytics.capture('icloud_sync_enabled_changed', {
         enabled: true,
@@ -119,16 +147,30 @@ const PreferencesiCloudScreenInner = () => {
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
-            shouldPromptForImages = remotePayloadReferencesImages(pendingRemote)
+            shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
             toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
           }
           break
         case 'merge':
           await iCloudSync.pullAndMerge('initial-enable-merge')
-          await iCloudSync.push('initial-enable-merge')
+          if (
+            usePreferences.getState().iCloudSyncIssue ||
+            !(await iCloudSync.push('initial-enable-merge'))
+          )
+            throw new Error('iCloud sync incomplete')
           toast.show(i18n.t('iCloudEnabledToastMerged'), { native: true })
           break
       }
+      analytics.capture('icloud_sync_first_enable_outcome', {
+        choice,
+        outcome: 'completed',
+      })
+    } catch {
+      analytics.capture('icloud_sync_first_enable_outcome', {
+        choice,
+        outcome: 'failed',
+      })
+      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
     } finally {
       setPendingRemote(null)
       setSyncing(false)
@@ -152,44 +194,49 @@ const PreferencesiCloudScreenInner = () => {
     }
   }
 
-  /**
-   * Returns true when the folded remote payload carries any image markers,
-   * meaning the sender had image sync on. Drives the "also download photos?"
-   * prompt — we don't bother showing it when the remote payload is image-free
-   * (Q9 in the design doc).
-   */
-  const remotePayloadReferencesImages = (remote: SyncPayload): boolean => {
-    for (const c of remote.contactStore.contacts ?? []) {
-      const avatar = (c as { avatar?: { type?: string; value?: string } })
-        .avatar
-      if (
-        avatar?.type === 'image' &&
-        typeof avatar.value === 'string' &&
-        avatar.value.startsWith('icloud://')
-      ) {
-        return true
-      }
-    }
-    const profile = remote.preferencesStore?.values?.avatar as
-      | { type?: string; value?: string }
-      | undefined
-    return (
-      profile?.type === 'image' &&
-      typeof profile.value === 'string' &&
-      profile.value.startsWith('icloud://')
-    )
-  }
-
   const handleToggle = async (next: boolean) => {
     if (!next) {
-      const wasEnabled = usePreferences.getState().iCloudSyncEnabled
-      set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
-      if (wasEnabled) {
-        analytics.capture('icloud_sync_enabled_changed', {
-          enabled: false,
-          source: 'settings',
-        })
-      }
+      Alert.alert(
+        i18n.t('iCloudSyncDisabled_title'),
+        i18n.t('iCloudDisableConfirm_description'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          {
+            text: i18n.t('iCloudDisableConfirm_pause'),
+            onPress: () => {
+              set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
+              analytics.capture('icloud_sync_enabled_changed', {
+                enabled: false,
+                source: 'settings',
+              })
+            },
+          },
+          {
+            text: i18n.t('iCloudDisableConfirm_removePhotos'),
+            style: 'destructive',
+            onPress: async () => {
+              setSyncing(true)
+              try {
+                await iCloudSync.disableImageSync()
+                await iCloudSync.clearCloudPhotos()
+                set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
+                analytics.capture('icloud_sync_cloud_photos_removed', {
+                  source: 'disable_sync',
+                  outcome: 'completed',
+                })
+              } catch {
+                analytics.capture('icloud_sync_cloud_photos_removed', {
+                  source: 'disable_sync',
+                  outcome: 'failed',
+                })
+                Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+              } finally {
+                setSyncing(false)
+              }
+            },
+          },
+        ]
+      )
       return
     }
     set({ iCloudSyncSetByUser: true })
@@ -216,6 +263,7 @@ const PreferencesiCloudScreenInner = () => {
     if (decision.outcome === 'conflict') {
       setPendingRemote(decision.remote)
       setSyncing(false)
+      analytics.capture('icloud_sync_first_enable_viewed')
       setFirstEnableSheetOpen(true)
       return
     }
@@ -253,6 +301,8 @@ const PreferencesiCloudScreenInner = () => {
           )
           break
       }
+    } catch {
+      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
     } finally {
       setSyncing(false)
       setPendingEnable(null)
@@ -272,15 +322,30 @@ const PreferencesiCloudScreenInner = () => {
   const handleSyncNow = async () => {
     if (!iCloudSyncEnabled) return
     setSyncing(true)
+    analytics.capture('icloud_sync_manual_started')
     try {
       const merged = await iCloudSync.pullAndMerge('manual')
-      await iCloudSync.push('manual')
+      const pullIssue = usePreferences.getState().iCloudSyncIssue
+      const pushed = await iCloudSync.push('manual')
+      if (
+        pullIssue ||
+        !pushed ||
+        usePreferences.getState().iCloudSyncPendingPush
+      )
+        throw new Error('iCloud sync incomplete')
+      analytics.capture('icloud_sync_manual_outcome', {
+        outcome: 'completed',
+        merged,
+      })
       toast.show(
         merged
           ? i18n.t('iCloudManualSyncMerged')
           : i18n.t('iCloudManualSyncNoChanges'),
         { native: true }
       )
+    } catch {
+      analytics.capture('icloud_sync_manual_outcome', { outcome: 'failed' })
+      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
     } finally {
       setSyncing(false)
     }
@@ -294,15 +359,17 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncEnabled,
     available,
     lastiCloudPulledAt,
-    lastiCloudPushedAt
+    lastiCloudPushedAt,
+    iCloudSyncIssue,
+    iCloudSyncPendingPush,
+    iCloudSyncPausedForLapse,
+    iCloudSyncNeedsResolution
   )
 
   /**
-   * Handles the image-sync toggle. Both directions are destructive (enabling
-   * copies photos to iCloud; disabling deletes them from iCloud) so both
-   * surface a confirmation alert before the async flow runs. The optimistic
-   * `pendingImagesEnable` state keeps the switch visually responsive while
-   * `enableImageSync` / `disableImageSync` do their work.
+   * Handles photo transfer consent and an explicit shared-file cleanup choice.
+   * The optimistic `pendingImagesEnable` state keeps the switch visually
+   * responsive while `enableImageSync` / `disableImageSync` do their work.
    */
   const handleImagesToggle = (next: boolean) => {
     if (next) {
@@ -321,6 +388,10 @@ const PreferencesiCloudScreenInner = () => {
                 native: true,
               })
               try {
+                analytics.capture('icloud_sync_images_changed', {
+                  enabled: true,
+                  source: 'settings',
+                })
                 await iCloudSync.enableImageSync()
                 // Surface migration result — imageSync returns counts but
                 // `enableImageSync` awaits the first push internally. The
@@ -348,6 +419,16 @@ const PreferencesiCloudScreenInner = () => {
                     { native: true }
                   )
                 }
+                analytics.capture('icloud_sync_images_outcome', {
+                  enabled: true,
+                  outcome: 'completed',
+                })
+              } catch {
+                analytics.capture('icloud_sync_images_outcome', {
+                  enabled: true,
+                  outcome: 'failed',
+                })
+                Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
               } finally {
                 setMigratingImages(false)
                 setPendingImagesEnable(null)
@@ -366,16 +447,43 @@ const PreferencesiCloudScreenInner = () => {
         { text: i18n.t('cancel'), style: 'cancel' },
         {
           text: i18n.t('iCloudImagesDisableConfirm_action'),
-          style: 'destructive',
           onPress: async () => {
             setPendingImagesEnable(false)
             setMigratingImages(true)
             try {
               await iCloudSync.disableImageSync()
-              toast.show(i18n.t('iCloudImagesToastRemoved'), { native: true })
+              analytics.capture('icloud_sync_images_changed', {
+                enabled: false,
+                source: 'settings',
+              })
+              toast.show(i18n.t('iCloudImagesToastPaused'), { native: true })
             } finally {
               setMigratingImages(false)
               setPendingImagesEnable(null)
+            }
+          },
+        },
+        {
+          text: i18n.t('iCloudDisableConfirm_removePhotos'),
+          style: 'destructive',
+          onPress: async () => {
+            setMigratingImages(true)
+            try {
+              await iCloudSync.disableImageSync()
+              await iCloudSync.clearCloudPhotos()
+              analytics.capture('icloud_sync_cloud_photos_removed', {
+                source: 'images_toggle',
+                outcome: 'completed',
+              })
+              toast.show(i18n.t('iCloudImagesToastRemoved'), { native: true })
+            } catch {
+              analytics.capture('icloud_sync_cloud_photos_removed', {
+                source: 'images_toggle',
+                outcome: 'failed',
+              })
+              Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+            } finally {
+              setMigratingImages(false)
             }
           },
         },
@@ -401,9 +509,17 @@ const PreferencesiCloudScreenInner = () => {
           onPress: async () => {
             setSyncing(true)
             try {
-              await ICloudBridge.deleteAll()
-              set({ lastiCloudSyncAt: null })
-              await iCloudSync.push('post-reset')
+              analytics.capture('icloud_sync_reset_started')
+              await iCloudSync.overwriteRemoteWithLocal()
+              analytics.capture('icloud_sync_reset_outcome', {
+                outcome: 'completed',
+              })
+              toast.show(i18n.t('iCloudEnabledToastKeep'), { native: true })
+            } catch {
+              analytics.capture('icloud_sync_reset_outcome', {
+                outcome: 'failed',
+              })
+              Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
             } finally {
               setSyncing(false)
             }
@@ -717,6 +833,7 @@ const PreferencesiCloudScreenInner = () => {
         setOpen={(open) => {
           setFirstEnableSheetOpen(open)
           if (!open) {
+            analytics.capture('icloud_sync_first_enable_dismissed')
             setPendingRemote(null)
             setSyncing(false)
             // Dismiss without a choice = user cancelled. Roll the optimistic

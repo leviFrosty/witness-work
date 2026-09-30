@@ -53,8 +53,8 @@ describe('migrateCustomFieldsToIds', () => {
       'Spouse',
     ])
     expect(result.defs.map((d) => d.order)).toEqual([0, 1, 2])
-    expect(result.defs.every((d) => d.createdAt === NOW)).toBe(true)
-    expect(result.defs.every((d) => d.updatedAt === NOW)).toBe(true)
+    expect(result.defs.every((d) => d.createdAt === 1)).toBe(true)
+    expect(result.defs.every((d) => d.updatedAt === 1)).toBe(true)
     expect(result.defs.every((d) => !d.archived)).toBe(true)
   })
 
@@ -75,8 +75,8 @@ describe('migrateCustomFieldsToIds', () => {
       [companyDef.id]: 'Acme',
       [deptDef.id]: 'Sales',
     })
-    // updatedAt bumps when keys actually change.
-    expect(result.contacts[0].updatedAt).toBe(NOW)
+    // Migration preserves the original edit timestamp on every device.
+    expect(result.contacts[0].updatedAt).toBeUndefined()
   })
 
   it('collapses duplicate labels in legacy array to a single def', () => {

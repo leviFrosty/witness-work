@@ -4,6 +4,7 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 /** Where a tray item comes from. Bounded, so it's safe as an analytics value. */
 export type NotificationKind =
   | 'backup'
+  | 'icloud_sync'
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'

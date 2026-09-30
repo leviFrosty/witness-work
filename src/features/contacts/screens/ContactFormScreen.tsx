@@ -1,3 +1,4 @@
+import { contactEditPatch, mayApplyGeocode } from '@/lib/contactEdits'
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import { Alert, TextInput, View } from 'react-native'
 import Text from '@/components/ui/MyText'
@@ -51,9 +52,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const [errors, setErrors] = useState<Errors>({
     name: '',
   })
-  const contactToUpdate = editMode
-    ? contacts.find((c) => c.id === route.params.id)
-    : undefined
+  const originalContact = useRef(
+    editMode ? contacts.find((c) => c.id === route.params.id) : undefined
+  )
+  const contactToUpdate = originalContact.current
   const locales = Localization.getLocales()
   const geocodeAbortController = useRef<AbortController>(null)
   const [fetching, setFetching] = useState(false)
@@ -273,8 +275,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         geocodeAbortController.current ?? undefined
       )
       if (position) {
-        c.coordinate = position
-        c.userDraggedCoordinate = undefined
+        return { ...c, coordinate: position, userDraggedCoordinate: undefined }
       }
       return c
     },
@@ -318,7 +319,12 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       const timeout = setTimeout(proceed, GEOCODE_NAV_TIMEOUT_MS)
       handleFetchCoordinate(c).then((geocoded) => {
         if (geocoded.coordinate) {
-          updateContact(geocoded)
+          const latest = useContacts
+            .getState()
+            .contacts.find((item) => item.id === c.id)
+          if (mayApplyGeocode(c, latest)) {
+            updateContact({ id: c.id, coordinate: geocoded.coordinate })
+          }
         }
         clearTimeout(timeout)
         proceed()
@@ -338,7 +344,17 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             style: 'cancel',
             text: i18n.t('keepExisting'),
             onPress: () => {
-              updateContact(contact)
+              updateContact(
+                contactToUpdate
+                  ? contactEditPatch(
+                      contactToUpdate,
+                      contact,
+                      useContacts
+                        .getState()
+                        .contacts.find((current) => current.id === contact.id)
+                    )
+                  : contact
+              )
               setFetching(false)
               resolve(contact)
             },
@@ -347,16 +363,28 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             style: 'destructive',
             text: i18n.t('fetchCoordinate'),
             onPress: () =>
-              handleFetchCoordinate(contact).finally(() => {
-                updateContact(contact)
-                setFetching(false)
-                resolve(contact)
-              }),
+              persistThenGeocode(
+                { ...contact, userDraggedCoordinate: undefined },
+                (value) =>
+                  updateContact(
+                    contactToUpdate
+                      ? contactEditPatch(
+                          contactToUpdate,
+                          value,
+                          useContacts
+                            .getState()
+                            .contacts.find((current) => current.id === value.id)
+                        )
+                      : value
+                  ),
+                true,
+                resolve
+              ),
           },
         ]
       )
     },
-    [handleFetchCoordinate, updateContact]
+    [contactToUpdate, persistThenGeocode, updateContact]
   )
 
   const handleUpdateContact = useCallback(
@@ -376,7 +404,18 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       }
       persistThenGeocode(
         newContact,
-        updateContact,
+        (value) =>
+          updateContact(
+            contactToUpdate
+              ? contactEditPatch(
+                  contactToUpdate,
+                  value,
+                  useContacts
+                    .getState()
+                    .contacts.find((current) => current.id === value.id)
+                )
+              : value
+          ),
         addressChanged || !contact.coordinate,
         resolve
       )
@@ -384,7 +423,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     [
       askUserToUpdateCoordinatesAutomatically,
       contact,
-      contactToUpdate?.address,
+      contactToUpdate,
       dataProtectionMode,
       persistThenGeocode,
       updateContact,

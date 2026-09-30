@@ -1,3 +1,5 @@
+import { usePreferences } from '@/stores/preferences'
+import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
@@ -210,6 +212,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             analytics.capture('onboarding_step_skipped', {
               step_id: 'pickUpWhereLeftOff',
             })
+            usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
             goNext()
           }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}

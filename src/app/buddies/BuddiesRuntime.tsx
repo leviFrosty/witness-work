@@ -1,3 +1,4 @@
+import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -154,7 +155,8 @@ export default function BuddiesRuntime() {
         state.recurringPlans === previous.recurringPlans
       )
         return
-      declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
+      if (!isApplyingRemoteData())
+        declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
       schedulePublish()
     })
     // Name, photo, and Tenure travel in Buddy Cards too.

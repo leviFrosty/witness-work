@@ -7,6 +7,7 @@ vi.mock('expo-file-system/legacy', () => ({
   getInfoAsync: vi.fn(async () => ({ exists: false })),
   copyAsync: vi.fn(async () => undefined),
   deleteAsync: vi.fn(async () => undefined),
+  readDirectoryAsync: vi.fn(async () => [] as string[]),
 }))
 vi.mock('expo-image-manipulator', () => ({
   manipulateAsync: vi.fn(async () => ({
@@ -30,13 +31,89 @@ import {
   originalSiblingFileName,
   stripCacheBuster,
   withCacheBuster,
+  cropAndSaveAvatar,
+  deleteAvatarFiles,
 } from '@/lib/contactAvatarFiles'
 
 describe('contactAvatarFiles paths', () => {
+  it('writes successive crops to immutable revision paths', async () => {
+    const { copyAsync } = await import('expo-file-system/legacy')
+    const crop = { originX: 0, originY: 0, width: 10, height: 10 }
+    const source = { width: 10, height: 10 }
+    const first = await cropAndSaveAvatar(
+      'file:///source.jpg',
+      'c',
+      crop,
+      source,
+      'a'
+    )
+    const second = await cropAndSaveAvatar(
+      'file:///source.jpg',
+      'c',
+      crop,
+      source,
+      'b'
+    )
+    expect(first.path).not.toBe(second.path)
+    expect(copyAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'file:///fake/Documents/contact-c-avatar-picked-a.jpg',
+      })
+    )
+    expect(copyAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'file:///fake/Documents/contact-c-avatar-picked-b.jpg',
+      })
+    )
+  })
   it('builds cropped + original filenames per contact id', () => {
     expect(croppedAvatarFileName('abc')).toBe('contact-abc-avatar.jpg')
     expect(originalAvatarFileName('abc')).toBe(
       'contact-abc-avatar-original.jpg'
+    )
+  })
+
+  it('gives each picked original its own revision path', () => {
+    expect(originalAvatarPath('c', 'a')).toBe(
+      'file:///fake/Documents/contact-c-avatar-original-a.jpg'
+    )
+    expect(originalAvatarPath('c', 'b')).toBe(
+      'file:///fake/Documents/contact-c-avatar-original-b.jpg'
+    )
+    expect(originalSiblingFileName('profile-avatar.jpg', 'b')).toBe(
+      'profile-avatar-original-b.jpg'
+    )
+  })
+
+  it('erases canceled draft revisions only for the exact contact owner', async () => {
+    const fs = await import('expo-file-system/legacy')
+    vi.mocked(fs.deleteAsync).mockClear()
+    vi.mocked(fs.readDirectoryAsync).mockResolvedValue([
+      'contact-c-avatar.jpg',
+      'contact-c-avatar-original.jpg',
+      'contact-c-avatar-picked-a.jpg',
+      'contact-c-avatar-picked-canceled.jpg',
+      'contact-c-avatar-original-canceled.jpg',
+      'contact-c-avatar-synced-a.jpg',
+      'contact-c-avatar-other-avatar-picked-a.jpg',
+      'profile-avatar-picked-a.jpg',
+      'unrelated.jpg',
+    ])
+    await deleteAvatarFiles('c')
+    expect(
+      vi
+        .mocked(fs.deleteAsync)
+        .mock.calls.map(([path]) => path)
+        .sort()
+    ).toEqual(
+      [
+        'file:///fake/Documents/contact-c-avatar.jpg',
+        'file:///fake/Documents/contact-c-avatar-original.jpg',
+        'file:///fake/Documents/contact-c-avatar-picked-a.jpg',
+        'file:///fake/Documents/contact-c-avatar-picked-canceled.jpg',
+        'file:///fake/Documents/contact-c-avatar-original-canceled.jpg',
+        'file:///fake/Documents/contact-c-avatar-synced-a.jpg',
+      ].sort()
     )
   })
 

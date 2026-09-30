@@ -52,7 +52,7 @@ public class ICloudBridgeModule: Module {
   /// Pending promises from `waitForInitialScan` calls that arrived before the
   /// first `DidFinishGathering`. Resolved all at once when gathering finishes,
   /// or individually by their own timeout timer. Also guarded by `stateQueue`.
-  private var pendingScanWaiters: [(Bool) -> Void] = []
+  private var pendingScanWaiters: [UUID: (Bool) -> Void] = [:]
 
   private func getLastObserved(_ filename: String) -> Date? {
     return stateQueue.sync { self.lastObservedModifiedAt[filename] }
@@ -135,12 +135,13 @@ public class ICloudBridgeModule: Module {
         promise.resolve(result)
       }
 
+      let waiterId = UUID()
       var alreadyDone = false
       self.stateQueue.sync {
         if self.initialGatheringDidFinish {
           alreadyDone = true
         } else {
-          self.pendingScanWaiters.append(tryResolve)
+          self.pendingScanWaiters[waiterId] = tryResolve
         }
       }
 
@@ -153,6 +154,7 @@ public class ICloudBridgeModule: Module {
       // unreachable on-device), we still resolve so the caller isn't stuck.
       let deadline = DispatchTime.now() + (timeoutMs / 1000.0)
       DispatchQueue.global().asyncAfter(deadline: deadline) {
+        _ = self.stateQueue.sync { self.pendingScanWaiters.removeValue(forKey: waiterId) }
         tryResolve(false)
       }
     }
@@ -386,10 +388,8 @@ public class ICloudBridgeModule: Module {
           error: &coordinatorError
         ) { writeURL in
           do {
-            if FileManager.default.fileExists(atPath: writeURL.path) {
-              try FileManager.default.removeItem(at: writeURL)
-            }
-            try FileManager.default.copyItem(at: sourceURL, to: writeURL)
+            let data = try Data(contentsOf: sourceURL)
+            try data.write(to: writeURL, options: .atomic)
             let values = try writeURL.resourceValues(forKeys: [
               .contentModificationDateKey,
             ])
@@ -431,64 +431,84 @@ public class ICloudBridgeModule: Module {
       }
       let sourceURL = documentsURL.appendingPathComponent(filename)
       let destURL = self.fileURL(from: destinationPath)
+      guard self.isInsideAppDocuments(destURL) else {
+        promise.reject("ICLOUD_READ_BINARY_DESTINATION", "Destination outside app documents directory")
+        return
+      }
 
-      DispatchQueue.global(qos: .utility).async {
-        try? FileManager.default.startDownloadingUbiquitousItem(at: sourceURL)
-
-        // Poll for `.current` status — identical strategy to readSyncFiles.
-        let deadline = Date().addingTimeInterval(10.0)
-        while Date() < deadline {
-          if self.downloadStatus(of: sourceURL) == .current {
-            break
-          }
-          Thread.sleep(forTimeInterval: 0.2)
-        }
-
-        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
-          promise.reject("ICLOUD_READ_BINARY_MISSING", "Binary not in container: \(filename)")
-          return
-        }
-
-        let coordinator = NSFileCoordinator(filePresenter: nil)
-        var coordinatorError: NSError?
-        var readResult: Result<Date, Error> = .failure(ICloudBridgeError.unavailable)
-
-        coordinator.coordinate(
-          readingItemAt: sourceURL,
-          options: [],
-          error: &coordinatorError
-        ) { readURL in
-          do {
-            // Ensure parent dir of destination exists.
-            let parent = destURL.deletingLastPathComponent()
-            try FileManager.default.createDirectory(
-              at: parent,
-              withIntermediateDirectories: true
-            )
-            if FileManager.default.fileExists(atPath: destURL.path) {
-              try FileManager.default.removeItem(at: destURL)
-            }
-            try FileManager.default.copyItem(at: readURL, to: destURL)
-            let values = try readURL.resourceValues(forKeys: [
-              .contentModificationDateKey,
-            ])
-            readResult = .success(values.contentModificationDate ?? Date())
-          } catch {
-            readResult = .failure(error)
-          }
-        }
-
-        if let err = coordinatorError {
-          promise.reject("ICLOUD_COORDINATE", "Coordinator error: \(err.localizedDescription)")
-          return
-        }
-
-        switch readResult {
+      let coordinator = NSFileCoordinator(filePresenter: nil)
+      let completionLock = NSLock()
+      var finished = false
+      let isFinished: () -> Bool = {
+        completionLock.lock()
+        defer { completionLock.unlock() }
+        return finished
+      }
+      let finish: (Result<Date, Error>) -> Void = { result in
+        completionLock.lock()
+        guard !finished else { completionLock.unlock(); return }
+        finished = true
+        completionLock.unlock()
+        switch result {
         case .success(let modifiedAt):
           promise.resolve(modifiedAt.timeIntervalSince1970 * 1000)
         case .failure(let error):
           promise.reject("ICLOUD_READ_BINARY", "Failed to read image: \(error.localizedDescription)")
         }
+      }
+      let timeoutError = NSError(domain: "ICloudBridge", code: 408,
+        userInfo: [NSLocalizedDescriptionKey: "Photo download timed out"])
+      let timeout = DispatchWorkItem {
+        finish(.failure(timeoutError))
+        coordinator.cancel()
+      }
+      DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 10, execute: timeout)
+
+      DispatchQueue.global(qos: .utility).async {
+        defer { timeout.cancel() }
+        try? FileManager.default.startDownloadingUbiquitousItem(at: sourceURL)
+        let deadline = ProcessInfo.processInfo.systemUptime + 10
+        while ProcessInfo.processInfo.systemUptime < deadline && !isFinished() {
+          if self.downloadStatus(of: sourceURL) == .current { break }
+          Thread.sleep(forTimeInterval: 0.2)
+        }
+        guard !isFinished() else { return }
+        guard self.downloadStatus(of: sourceURL) == .current else {
+          finish(.failure(timeoutError))
+          return
+        }
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+          finish(.failure(ICloudBridgeError.unavailable))
+          return
+        }
+        var coordinatorError: NSError?
+        var readResult: Result<Date, Error> = .failure(ICloudBridgeError.unavailable)
+        coordinator.coordinate(readingItemAt: sourceURL, options: [], error: &coordinatorError) { readURL in
+          do {
+            guard !isFinished() else { return }
+            let data = try Data(contentsOf: readURL)
+            guard !isFinished() else { return }
+            let temporaryURL = destURL.deletingLastPathComponent()
+              .appendingPathComponent(".icloud-download-\(UUID().uuidString).tmp")
+            defer { try? FileManager.default.removeItem(at: temporaryURL) }
+            try FileManager.default.createDirectory(at: destURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            // Stage slow disk IO outside the settlement lock. A timeout can
+            // reject promptly, and an expired read never publishes its bytes.
+            try data.write(to: temporaryURL, options: .atomic)
+            let values = try readURL.resourceValues(forKeys: [.contentModificationDateKey])
+            completionLock.lock()
+            defer { completionLock.unlock() }
+            guard !finished else { return }
+            if FileManager.default.fileExists(atPath: destURL.path) {
+              _ = try FileManager.default.replaceItemAt(destURL, withItemAt: temporaryURL)
+            } else {
+              try FileManager.default.moveItem(at: temporaryURL, to: destURL)
+            }
+            readResult = .success(values.contentModificationDate ?? Date())
+          } catch { readResult = .failure(error) }
+        }
+        if let error = coordinatorError { finish(.failure(error)) }
+        else { finish(readResult) }
       }
     }
 
@@ -875,42 +895,29 @@ public class ICloudBridgeModule: Module {
   // MARK: - Remote change observation
 
   private func startMetadataQuery() {
-    guard self.metadataQuery == nil else { return }
-    let query = NSMetadataQuery()
-    query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
-    query.predicate = NSPredicate(
-      format: "%K LIKE %@",
-      NSMetadataItemFSNameKey,
-      "\(ICloudBridgeModule.syncFilePrefix)*.\(ICloudBridgeModule.syncFileExtension)"
-    )
-
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(metadataQueryDidFinishGathering(_:)),
-      name: NSNotification.Name.NSMetadataQueryDidFinishGathering,
-      object: query
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(metadataQueryDidUpdate(_:)),
-      name: NSNotification.Name.NSMetadataQueryDidUpdate,
-      object: query
-    )
-
     DispatchQueue.main.async {
+      guard self.metadataQuery == nil else { return }
+      let query = NSMetadataQuery()
+      query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
+      query.predicate = NSPredicate(
+        format: "%K LIKE %@", NSMetadataItemFSNameKey,
+        "\(ICloudBridgeModule.syncFilePrefix)*.\(ICloudBridgeModule.syncFileExtension)"
+      )
+      NotificationCenter.default.addObserver(self, selector: #selector(self.metadataQueryDidFinishGathering(_:)), name: NSNotification.Name.NSMetadataQueryDidFinishGathering, object: query)
+      NotificationCenter.default.addObserver(self, selector: #selector(self.metadataQueryDidUpdate(_:)), name: NSNotification.Name.NSMetadataQueryDidUpdate, object: query)
+      self.metadataQuery = query
       query.start()
     }
-    self.metadataQuery = query
   }
 
   private func stopMetadataQuery() {
-    guard let query = self.metadataQuery else { return }
-    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.NSMetadataQueryDidFinishGathering, object: query)
-    NotificationCenter.default.removeObserver(self, name: NSNotification.Name.NSMetadataQueryDidUpdate, object: query)
     DispatchQueue.main.async {
+      guard let query = self.metadataQuery else { return }
+      NotificationCenter.default.removeObserver(self, name: NSNotification.Name.NSMetadataQueryDidFinishGathering, object: query)
+      NotificationCenter.default.removeObserver(self, name: NSNotification.Name.NSMetadataQueryDidUpdate, object: query)
       query.stop()
+      self.metadataQuery = nil
     }
-    self.metadataQuery = nil
   }
 
   /// Fires once per query lifetime when the initial directory scan completes.
@@ -923,7 +930,7 @@ public class ICloudBridgeModule: Module {
     stateQueue.sync {
       if !self.initialGatheringDidFinish {
         self.initialGatheringDidFinish = true
-        waitersToResolve = self.pendingScanWaiters
+        waitersToResolve = Array(self.pendingScanWaiters.values)
         self.pendingScanWaiters.removeAll()
       }
     }

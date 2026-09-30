@@ -5,8 +5,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { analytics } from '@/lib/analytics'
 
-// Wait for RevenueCat before treating false as a lapse. Reset the explicit-choice
-// flag so resubscribing can enter the safe first-enable flow again.
+// Wait for RevenueCat and preserve the sync choice so access can resume safely.
 export default function SupporterSyncLapseGate() {
   const { customer } = useCustomer()
   const { isSupporter } = useIsSupporter()
@@ -16,10 +15,13 @@ export default function SupporterSyncLapseGate() {
   useEffect(() => {
     if (Platform.OS !== 'ios') return
     if (!supporterStatusKnown) return
-    if (isSupporter) return
+    if (isSupporter) {
+      set({ iCloudSyncPausedForLapse: false })
+      return
+    }
     if (!iCloudSyncEnabled) return
-    set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: false })
-    analytics.capture('icloud_sync_enabled_changed', {
+    set({ iCloudSyncPausedForLapse: true })
+    analytics.capture('icloud_sync_paused', {
       enabled: false,
       source: 'supporter_lapse',
     })

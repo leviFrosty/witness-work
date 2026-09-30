@@ -1,10 +1,27 @@
+import { translateSyncTimestamps } from '@/app/sync/clockSkew'
+import { syncNow, hasCalibratedSyncClock } from '@/lib/syncClock'
+import { expireDeletedContactDetails } from '@/lib/contactRetention'
+import {
+  payloadSchema,
+  hasUnsafeKeys,
+  validSettingValues,
+  validProfileValues,
+} from '@/app/sync/payloadValidation'
+import {
+  syncableValues,
+  NON_SYNCABLE_PROFILE_KEYS as PROFILE_EXCLUDED,
+} from '@/lib/syncPreferencePolicy'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
-import { usePreferences } from '@/stores/preferences'
+import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
-import { useProfile, NON_SYNCABLE_PROFILE_KEYS } from '@/stores/profile'
+import {
+  useProfile,
+  PROFILE_DEFAULTS,
+  NON_SYNCABLE_PROFILE_KEYS,
+} from '@/stores/profile'
 import { ProfileAvatar } from '@/types/avatar'
 import type { CustomFieldTombstone } from '@/types/customField'
 import {
@@ -22,6 +39,11 @@ export const PAYLOAD_VERSION = 1
 export type SyncPayload = {
   version: number
   writtenAt: number
+  /**
+   * New writers use a calibrated clock, so replication delays need no
+   * translation.
+   */
+  calibratedClock?: boolean
   deviceId: string
   deviceName?: string
   contactStore: {
@@ -97,9 +119,8 @@ export type SyncPayload = {
  * reads state synchronously so the caller (sync layer) can diff and push
  * without waiting on React.
  *
- * Avatar sanitization (drop-or-rewrite) is delegated to `./avatarPayload` and
- * gated on the per-device `iCloudSyncIncludeImages` preference — see that
- * module for the full behavior matrix.
+ * Avatar references are sanitized by `./avatarPayload`. Per-device consent
+ * controls only binary uploads/downloads.
  */
 export function buildPayload(args: {
   deviceId: string
@@ -148,18 +169,19 @@ export function buildPayload(args: {
     syncableProfile[key] = value
   }
 
-  return {
+  return translateSyncTimestamps({
     version: PAYLOAD_VERSION,
-    writtenAt: Date.now(),
+    calibratedClock: hasCalibratedSyncClock(),
+    writtenAt: syncNow(),
     deviceId,
     deviceName,
     contactStore: {
       contacts: contacts.contacts.map((c) =>
         sanitizeContactAvatar(c, avatarOpts)
       ),
-      deletedContacts: contacts.deletedContacts.map((c) =>
-        sanitizeContactAvatar(c, avatarOpts)
-      ),
+      deletedContacts: expireDeletedContactDetails(
+        contacts.deletedContacts
+      ).map((c) => sanitizeContactAvatar(c, avatarOpts)),
       customFieldDefs: contacts.customFieldDefs,
       deletedCustomFieldDefs: contacts.deletedCustomFieldDefs,
     },
@@ -186,7 +208,7 @@ export function buildPayload(args: {
       values: syncableProfile,
       updatedAt: profile.profileUpdatedAt ?? {},
     },
-  }
+  })
 }
 
 import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames'
@@ -211,17 +233,37 @@ export function parsePayload(json: string): SyncPayload | null {
   } catch {
     return null
   }
-  if (!data || typeof data !== 'object') return null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = data as any
-  if (typeof d.version !== 'number') return null
-  if (d.version > PAYLOAD_VERSION) return null
-  if (!d.contactStore || !d.conversationStore || !d.serviceReportStore) {
+  try {
+    if (hasUnsafeKeys(data)) return null
+    const result = payloadSchema.safeParse(data)
+    if (!result.success || result.data.version > PAYLOAD_VERSION) return null
+    const d = result.data
+    normalizeLegacyPayloadFieldNames(d)
+    normalizeLegacyFollowUps(d)
+    if (
+      !validSettingValues(d.preferencesStore.values, PREFERENCE_DEFAULTS) ||
+      (d.profileStore && !validProfileValues(d.profileStore.values))
+    )
+      return null
+    const knownPreferences = Object.fromEntries(
+      Object.entries(d.preferencesStore.values).filter(([key]) =>
+        Object.hasOwn(PREFERENCE_DEFAULTS, key)
+      )
+    )
+    d.preferencesStore.values = syncableValues(knownPreferences)
+    if (d.profileStore)
+      d.profileStore.values = syncableValues(
+        Object.fromEntries(
+          Object.entries(d.profileStore.values).filter(([key]) =>
+            Object.hasOwn(PROFILE_DEFAULTS, key)
+          )
+        ),
+        PROFILE_EXCLUDED
+      )
+    return d as SyncPayload
+  } catch {
     return null
   }
-  normalizeLegacyPayloadFieldNames(d)
-  normalizeLegacyFollowUps(d)
-  return d as SyncPayload
 }
 
 /**

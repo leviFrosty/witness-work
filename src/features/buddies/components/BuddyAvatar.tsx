@@ -16,7 +16,7 @@ export default function BuddyAvatar({
   avatar,
   name,
   colorIndex,
-  size = 44,
+  size,
   focusable,
 }: {
   avatar?: SharedAvatar

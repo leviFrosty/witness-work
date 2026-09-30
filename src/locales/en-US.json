@@ -345,6 +345,8 @@
   "deleteTime_description": "Deleting this time report will permanently remove it.",
   "moreActions": "More actions",
   "moreActionsFor": "More actions for {{name}}",
+  "avatarGroup_moreCount_one": "{{count}} more person",
+  "avatarGroup_moreCount_other": "{{count}} more people",
   "yearRow_moreActions": "More actions for {{year}}",
   "deleteYearTime": "Delete All Time",
   "deleteYearTime_title": "Delete All Time for {{year}}?",

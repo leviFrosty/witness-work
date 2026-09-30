@@ -497,3 +497,27 @@ addresses, notes, credentials, file contents, or share links.
 PostHog is the current implementation. Provider configuration, automatic capture,
 and source-map/native-symbol uploads belong to the shared implementation and
 build setup, so changing providers does not require changing feature call sites.
+
+## iCloud sync controls and recovery
+
+| Event                                                             | Bounded properties / meaning                                                    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `icloud_sync_first_enable_viewed`                                 | Conflict choice sheet opened                                                    |
+| `icloud_sync_first_enable_chosen`                                 | `choice`: `keepLocal`, `useRemote`, or `merge`                                  |
+| `icloud_sync_first_enable_outcome`                                | `choice`; `outcome`: `completed` or `failed`                                    |
+| `icloud_sync_first_enable_dismissed`                              | Sheet closed without choosing                                                   |
+| `icloud_sync_manual_started`                                      | Sync now requested                                                              |
+| `icloud_sync_manual_outcome`                                      | `outcome`: `completed` or `failed`; `merged` on completion                      |
+| `icloud_sync_reset_started` / `icloud_sync_reset_outcome`         | Rebuild requested; `outcome`: `completed` or `failed`                           |
+| `icloud_sync_images_changed`                                      | `enabled` boolean, `source: settings`                                           |
+| `icloud_sync_images_outcome`                                      | `enabled` boolean; `outcome`: `completed` or `failed`                           |
+| `icloud_sync_cloud_photos_removed`                                | `source`: `disable_sync` or `images_toggle`; `outcome`: `completed` or `failed` |
+| `icloud_sync_auto_enable_outcome`                                 | `outcome`: `seed`, `pull`, `conflict`, `incomplete`, `unavailable`, or `failed` |
+| `icloud_sync_resolution_viewed` / `icloud_sync_resolution_opened` | `source: notifications_tray`                                                    |
+
+Existing enabled-change, paused, and enable-deferred events remain. A completed
+manual action is a local read/write outcome, not proof of Apple's cloud upload.
+No payload contents, device ids/names, record ids, addresses, photos, or exception
+messages are included. Sheet dismissal is an explicit abandonment; do not infer
+abandonment merely from an app background event. Reminder repair is background
+maintenance, not a new user journey.

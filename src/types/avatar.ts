@@ -42,4 +42,6 @@
 export type ProfileAvatar = {
   type: 'none' | 'emoji' | 'image'
   value: string
+  /** Immutable identity of the selected photo; old records may lack one. */
+  revision?: string
 }

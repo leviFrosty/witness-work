@@ -1,3 +1,7 @@
+vi.mock('@/lib/syncClock', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/syncClock')>()),
+  refreshSyncClock: vi.fn(async () => null),
+}))
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // First-enable decisions against a fake bridge: a remote the device can't see
@@ -172,4 +176,12 @@ describe('first enable while the remote is incomplete', () => {
 
     expect(await resolveInitialEnable()).toEqual({ outcome: 'seed' })
   })
+})
+
+it('ignores this installation’s own old snapshot during restore and first enable', async () => {
+  const { resolveInitialEnable } = await load()
+  const { usePreferences } = await import('@/stores/preferences')
+  usePreferences.setState({ iCloudDeviceId: 'same' })
+  runtime.files = [payloadFile('witness-work-same.json', 'same')]
+  expect(await resolveInitialEnable()).toEqual({ outcome: 'seed' })
 })

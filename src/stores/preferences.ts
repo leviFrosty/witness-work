@@ -1,3 +1,12 @@
+import { syncTimestamp } from '@/lib/syncClock'
+import {
+  NON_SYNCABLE_PREFERENCE_KEYS,
+  SYNC_MAP_KEYS,
+  SYNC_SET_KEYS,
+  entryTimestampKey,
+} from '@/lib/syncPreferencePolicy'
+import { canonicalJson } from '@/lib/canonicalJson'
+import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
@@ -572,6 +581,19 @@ export const PREFERENCE_DEFAULTS = {
    * on foreground / remote-change events. Defaulted to true for supporters on
    * first launch; off by default for non-supporters.
    */
+  iCloudClockOffsetMs: 0,
+  iCloudClockCalibrated: false,
+  iCloudSyncPendingPush: false,
+  iCloudSyncIssue: null as
+    | 'newer-version'
+    | 'invalid-file'
+    | 'read-failed'
+    | 'push-failed'
+    | null,
+  iCloudSyncNeedsResolution: false,
+  iCloudSyncPausedForLapse: false,
+  iCloudFreshSetup: false,
+  hasReconciledSyncDefinitions: false,
   iCloudSyncEnabled: false,
   /**
    * True once the user has explicitly toggled iCloud sync on or off in
@@ -643,6 +665,7 @@ export const PREFERENCE_DEFAULTS = {
     {
       localMtime: number
       uploadedMtime: number | null
+      containerMtime?: number
       lastError?: string
       failedAt?: number
     }
@@ -917,60 +940,14 @@ export const PREFERENCE_DEFAULTS = {
  * flags, device-specific state). Everything outside this set participates in
  * per-key last-writer-wins merge when iCloud sync is enabled.
  *
- * Completion flags (`onboardingComplete`, `hasCompletedProfileSetup`,
- * `hasCompletedMapOnboarding`) intentionally DO sync — once the user sets up on
- * one device, the other device shouldn't re-prompt and wipe out their restored
- * profile. Device-specific _install_ bookkeeping (MMKV migration flag, dev
- * tools, geocode counter, etc.) stays local.
+ * `onboardingComplete` stays local so restarting onboarding affects one device.
+ * Completion flags (`hasCompletedProfileSetup`, `hasCompletedMapOnboarding`)
+ * intentionally DO sync — once the user sets up on one device, the other device
+ * shouldn't re-prompt and wipe out their restored profile. Device-specific
+ * _install_ bookkeeping (MMKV migration flag, dev tools, geocode counter, etc.)
+ * stays local.
  */
-export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
-  'iCloudSyncEnabled',
-  'iCloudSyncSetByUser',
-  'iCloudSyncIncludeImages',
-  'dataProtectionMode',
-  'dataProtectionModeSetByUser',
-  'dataProtectionRetentionPromptedAt',
-  'audioEnabled',
-  'iCloudImageSync',
-  'lastiCloudSyncAt',
-  'lastiCloudPushedAt',
-  'lastiCloudPulledAt',
-  'lastiCloudRemoteWrittenAt',
-  'lastiCloudRemoteDeviceId',
-  'lastiCloudRemoteDeviceName',
-  'iCloudDeviceId',
-  'preferenceUpdatedAt',
-  'hasMigratedToSyncSchema',
-  'hasMigratedCustomFieldsToIds',
-  'hasMigratedTagsToCategories',
-  'hasMigratedProfileFromPreferences',
-  'hasCollapsedLdcIntoCategory',
-  // Legacy field — removed from the schema but may still exist on disk for
-  // installs that pre-date the id-keyed migration. Listed here so the boot
-  // cleanup that wipes it doesn't propagate the deletion through sync.
-  'customContactFields',
-  'devSupporterOverride',
-  'devSupporterNudgeForceShow',
-  'devShowAppIconAlerts',
-  'developerTools',
-  'hasAttemptedToMigrateToMmkv',
-  'monthlyRoutineHasShownInvalidMonthAlert',
-  'lastAppVersion',
-  'unreadReleaseNotes',
-  'calledGoecodeApiTimes',
-  'lastTimeRequestedAReview',
-  'lastBackupDate',
-  'backupReminderSnoozedAt',
-  'analyticsEnabled',
-  'onboardingStepId',
-  'celebratedTiers',
-  'celebratedMilestones',
-  'homeChecklistAllDoneCelebrated',
-  'devRolloverDateOverride',
-  'seenMilestoneUpdateReveal',
-  'dismissedMilestoneRevealOnce',
-  'seenFoundingSupporterReveal',
-])
+export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
 
 /**
  * Persisted-shape migrations for the preferences store.
@@ -1347,13 +1324,51 @@ export const usePreferences = create(
           !Array.isArray(resolved) &&
           !replace
         ) {
-          const now = Date.now()
           const current = getState().preferenceUpdatedAt ?? {}
           const next: Record<string, number> = { ...current }
           let changed = false
           for (const key of Object.keys(resolved)) {
             if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
-            next[key] = now
+            next[key] = syncTimestamp(current[key])
+            const before = getState()[key as keyof typeof PREFERENCE_DEFAULTS]
+            const after = resolved[key as keyof typeof PREFERENCE_DEFAULTS]
+            const mapBefore =
+              key === 'roleHistory' ? roleHistoryEntries(before) : before
+            const mapAfter =
+              key === 'roleHistory' ? roleHistoryEntries(after) : after
+            if (
+              SYNC_MAP_KEYS.has(key) ||
+              SYNC_SET_KEYS.has(key) ||
+              key === 'roleHistory'
+            ) {
+              const oldMap = (
+                SYNC_SET_KEYS.has(key)
+                  ? Object.fromEntries(
+                      ((before as string[]) ?? []).map((entry) => [entry, true])
+                    )
+                  : (mapBefore ?? {})
+              ) as Record<string, unknown>
+              const newMap = (
+                SYNC_SET_KEYS.has(key)
+                  ? Object.fromEntries(
+                      ((after as string[]) ?? []).map((entry) => [entry, true])
+                    )
+                  : (mapAfter ?? {})
+              ) as Record<string, unknown>
+              for (const entry of new Set([
+                ...Object.keys(oldMap),
+                ...Object.keys(newMap),
+              ])) {
+                if (
+                  canonicalJson(oldMap[entry]) === canonicalJson(newMap[entry])
+                )
+                  continue
+                const stampKey = entryTimestampKey(key, entry)
+                next[stampKey] = syncTimestamp(
+                  current[stampKey] ?? current[key]
+                )
+              }
+            }
             changed = true
           }
           if (changed) {

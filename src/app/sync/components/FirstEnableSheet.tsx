@@ -56,7 +56,6 @@ const FirstEnableSheet: React.FC<Props> = ({
           text: i18n.t('iCloudReplaceLocalConfirm_action'),
           style: 'destructive',
           onPress: () => {
-            setOpen(false)
             onChoose('useRemote')
           },
         },
@@ -119,7 +118,6 @@ const FirstEnableSheet: React.FC<Props> = ({
               title={i18n.t('iCloudChoiceKeepLocalTitle')}
               description={i18n.t('iCloudChoiceKeepLocalDesc')}
               onPress={() => {
-                setOpen(false)
                 onChoose('keepLocal')
               }}
             />
@@ -137,7 +135,6 @@ const FirstEnableSheet: React.FC<Props> = ({
               title={i18n.t('iCloudChoiceMergeTitle')}
               description={i18n.t('iCloudChoiceMergeDesc')}
               onPress={() => {
-                setOpen(false)
                 onChoose('merge')
               }}
             />

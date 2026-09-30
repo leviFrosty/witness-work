@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto'
 import {
   Camera as CameraIcon,
   Check as CheckIcon,
@@ -20,9 +21,12 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import {
   originalSiblingFileName,
+  revisionImageFileName,
+  stripCacheBuster,
   withCacheBuster,
 } from '@/lib/contactAvatarFiles'
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
+import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 
 export type AvatarMetaCapture = {
   width: number
@@ -244,8 +248,7 @@ const AvatarPickerContent = ({
   onImageMeta,
 }: Props) => {
   const theme = useTheme()
-  const destPath = `${FileSystem.documentDirectory}${imageFileName}`
-  const originalPath = `${FileSystem.documentDirectory}${originalSiblingFileName(imageFileName)}`
+  const draftFiles = useAvatarDraftFiles()
 
   /**
    * Pending pick that's awaiting user crop. Holds enough state to render the
@@ -253,32 +256,22 @@ const AvatarPickerContent = ({
    * when no pick is in flight (the picker is idle).
    */
   const [pendingPick, setPendingPick] = useState<{
+    revision: string
     sourceUri: string
+    destPath: string
     sourceWidth: number
     sourceHeight: number
     fileSize?: number
     capturedAt?: string
   } | null>(null)
 
-  const deleteStoredImage = async () => {
-    if (value.type !== 'image' || !value.value) return
-    const path = value.value.split('?')[0]
-    for (const p of [path, originalPath]) {
-      try {
-        await FileSystem.deleteAsync(p, { idempotent: true })
-      } catch (e) {
-        logger.warn('Failed to delete previous avatar image', p, e)
-      }
-    }
-  }
-
-  const pickEmoji = async (emoji: string) => {
-    await deleteStoredImage()
+  // The caller may be editing an unsaved form. Store cleanup removes the old
+  // files only when this choice is actually committed.
+  const pickEmoji = (emoji: string) => {
     onChange({ type: 'emoji', value: emoji })
   }
 
-  const clearAvatar = async () => {
-    await deleteStoredImage()
+  const clearAvatar = () => {
     onChange({ type: 'none', value: '' })
   }
 
@@ -312,17 +305,28 @@ const AvatarPickerContent = ({
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
+    const revision = Crypto.randomUUID()
+    const originalPath = `${FileSystem.documentDirectory}${originalSiblingFileName(imageFileName, revision)}`
+    const destPath = `${FileSystem.documentDirectory}${revisionImageFileName(imageFileName, revision)}`
+    const paths = [originalPath, destPath]
+    if (!draftFiles.claim(paths)) return
     try {
-      await FileSystem.deleteAsync(originalPath, { idempotent: true })
       await FileSystem.copyAsync({ from: asset.uri, to: originalPath })
+      if (!draftFiles.owns(paths)) {
+        draftFiles.release(paths)
+        return
+      }
     } catch (e) {
+      draftFiles.release(paths)
       logger.error('Failed to save original avatar image', e)
       Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
       return
     }
 
     setPendingPick({
+      revision,
       sourceUri: originalPath,
+      destPath,
       sourceWidth: asset.width,
       sourceHeight: asset.height,
       fileSize: asset.fileSize,
@@ -336,7 +340,15 @@ const AvatarPickerContent = ({
     height: number
   }) => {
     if (!pendingPick) return
-    onChange({ type: 'image', value: withCacheBuster(next.path) })
+    if (
+      !draftFiles.commit([pendingPick.sourceUri, stripCacheBuster(next.path)])
+    )
+      return
+    onChange({
+      type: 'image',
+      value: withCacheBuster(next.path),
+      revision: pendingPick.revision,
+    })
     onImageMeta?.({
       width: pendingPick.sourceWidth,
       height: pendingPick.sourceHeight,
@@ -436,8 +448,11 @@ const AvatarPickerContent = ({
           sourceUri={pendingPick.sourceUri}
           sourceWidth={pendingPick.sourceWidth}
           sourceHeight={pendingPick.sourceHeight}
-          destPath={destPath}
-          onClose={() => setPendingPick(null)}
+          destPath={pendingPick.destPath}
+          onClose={() => {
+            draftFiles.release([pendingPick.sourceUri, pendingPick.destPath])
+            setPendingPick(null)
+          }}
           onCropped={handleCropped}
         />
       )}

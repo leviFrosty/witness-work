@@ -236,6 +236,7 @@ export const handleContactImport = async (
         ...finalData.contact,
       })
       finalData.conversations?.forEach((c) => {
+        callbacks.addConversation(c)
         callbacks.updateConversation(c)
       })
     } else {

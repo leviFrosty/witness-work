@@ -8,10 +8,8 @@ import ActionButton from '@/components/ui/ActionButton'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import i18n from '@/lib/locales'
-import useContacts from '@/stores/contactsStore'
-import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
-import useServiceReport, { migrateServiceReports } from '@/stores/serviceReport'
+import { migrateServiceReports } from '@/stores/serviceReport'
 import * as FileSystem from 'expo-file-system/legacy'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
@@ -30,16 +28,17 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
-import { BackupFile, createBackupFile } from '@/lib/backupFile'
+import {
+  BackupFile,
+  createBackupFile,
+  restoreBackupFile,
+} from '@/lib/backupFile'
 
 type ImportFile = BackupFile
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
   const entryPoint = route.params?.source ?? 'settings'
-  const serviceReportStore = useServiceReport()
-  const contactStore = useContacts()
-  const conversationStore = useConversations()
   const preferencesStore = usePreferences()
   const timeCache = useTimeCache()
 
@@ -110,25 +109,18 @@ const ImportAndExportScreen = () => {
           }
 
           stage = 'migrate'
-          // If importFile has old serviceReport data structure, update to new before importing.
           if (
             data.serviceReportStore &&
             Array.isArray((data.serviceReportStore as any).serviceReports)
           ) {
-            const years: any = migrateServiceReports(
-              (data.serviceReportStore as any).serviceReports
-            )
-            ;(data.serviceReportStore as any).serviceReports = years
+            ;(data.serviceReportStore as any).serviceReports =
+              migrateServiceReports(
+                (data.serviceReportStore as any).serviceReports
+              )
           }
-
           stage = 'restore'
           analytics.capture('import_commit_started', properties)
-          data.serviceReportStore &&
-            serviceReportStore.set(data.serviceReportStore)
-          data.contactStore && contactStore.set(data.contactStore)
-          data.conversationStore &&
-            conversationStore.set(data.conversationStore)
-          data.preferencesStore && preferencesStore.set(data.preferencesStore)
+          restoreBackupFile(data)
           timeCache.invalidateAllCache()
           setSuccessfulImport(true)
           analytics.capture('backup_imported', {

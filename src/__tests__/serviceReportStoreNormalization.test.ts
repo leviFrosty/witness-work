@@ -17,7 +17,7 @@ vi.mock(
 )
 
 import useServiceReport from '@/stores/serviceReport'
-import { momentStoredDate } from '@/lib/normalizeDate'
+import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   RecurringPlanFrequencies,
   type RecurringPlan,
@@ -45,6 +45,26 @@ const expectAnchoredCalendarDay = (date: Date, ymdLocal: string) => {
   expect(date.getUTCHours()).toBe(12)
   expect(momentStoredDate(date).format('YYYY-MM-DD')).toBe(ymdLocal)
 }
+
+it.each(['pair', 'year'])(
+  'keeps %s deletions newer than entries written with a future clock',
+  (kind) => {
+    const future = Date.now() + 365 * 24 * 60 * 60_000
+    const entry = {
+      id: 'future',
+      date: normalizeDateForStorage(new Date('2026-05-15T12:00:00Z')),
+      hours: 1,
+      minutes: 0,
+      updatedAt: future,
+    }
+    useServiceReport.setState({ serviceReports: { 2026: { 4: [entry] } } })
+    if (kind === 'pair') useServiceReport.getState().deleteRolloverPair(entry)
+    else useServiceReport.getState().deleteServiceYearReports(2026)
+    expect(useServiceReport.getState().deletedServiceReports).toEqual([
+      { id: entry.id, deletedAt: future + 1 },
+    ])
+  }
+)
 
 describe('addServiceReport', () => {
   it('normalizes the report date and rebuckets by the normalized day', () => {
@@ -193,4 +213,44 @@ describe('cross-TZ scenario through the store', () => {
       '2026-05-01'
     )
   })
+})
+
+it('moves an edited time entry across calendar months and years', () => {
+  const store = useServiceReport.getState()
+  store.addServiceReport({
+    id: 'move',
+    date: moment('2026-12-31').toDate(),
+    hours: 1,
+    minutes: 0,
+  })
+  store.updateServiceReport({
+    id: 'move',
+    date: moment('2027-01-02').toDate(),
+    hours: 2,
+    minutes: 15,
+  })
+  expect(useServiceReport.getState().serviceReports[2026][11]).toEqual([])
+  const updated = useServiceReport.getState().serviceReports[2027][0]
+  expect(updated).toHaveLength(1)
+  expect(updated[0]).toMatchObject({ id: 'move', hours: 2, minutes: 15 })
+  expectAnchoredCalendarDay(updated[0].date, '2027-01-02')
+})
+
+it('keeps distinct recurring plan ids that start on the same date', () => {
+  const store = useServiceReport.getState()
+  const first = {
+    id: 'first',
+    startDate: moment('2026-09-01').toDate(),
+    minutes: 30,
+    recurrence: {
+      frequency: RecurringPlanFrequencies.WEEKLY,
+      interval: 1,
+      endDate: null,
+    },
+  }
+  store.addRecurringPlan(first)
+  store.addRecurringPlan({ ...first, id: 'second', minutes: 60 })
+  expect(
+    useServiceReport.getState().recurringPlans.map((plan) => plan.id)
+  ).toEqual(['first', 'second'])
 })

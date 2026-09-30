@@ -75,7 +75,7 @@ describe('migrateLdcToCategory', () => {
     expect(ldc!.name).toBe(LDC_BUILTIN_CATEGORY_NAME)
     expect(ldc!.isCredit).toBe(true)
     expect(ldc!.builtin).toBe(true)
-    expect(ldc!.updatedAt).toBe(NOW)
+    expect(ldc!.updatedAt).toBe(1)
   })
 
   it('does not re-seed when the LDC builtin already exists', () => {

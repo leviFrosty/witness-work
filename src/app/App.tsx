@@ -32,6 +32,9 @@ import { useNotesImportResume } from '@/features/notes-import/hooks/useNotesImpo
 import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
 import { useAppMigrations } from '@/app/migrations/useAppMigrations'
 import { useWidgetSync } from '@/app/widgets/useWidgetSync'
+import { useReconciledReminders } from '@/app/notifications/useReconciledReminders'
+import { useLocalAvatarCleanup } from '@/app/sync/useLocalAvatarCleanup'
+import { useDeletedContactRetention } from '@/app/useDeletedContactRetention'
 import { useICloudSync } from '@/app/sync/useICloudSync'
 import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
@@ -53,6 +56,9 @@ export default function App() {
   const hasMigrated = useAppMigrations()
   useWidgetSync(hasMigrated)
   useICloudSync(hasMigrated)
+  useReconciledReminders(hasMigrated)
+  useLocalAvatarCleanup(hasMigrated)
+  useDeletedContactRetention(hasMigrated)
 
   if (!hasMigrated) {
     return (

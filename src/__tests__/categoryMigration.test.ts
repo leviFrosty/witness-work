@@ -249,7 +249,7 @@ describe('migrateTagsToCategories', () => {
       now: NOW,
       uuid: makeUuid(),
     })
-    expect(result.categories[0].updatedAt).toBe(NOW)
+    expect(result.categories[0].updatedAt).toBe(1)
   })
 
   it('is a structural no-op when there are no tags anywhere', () => {

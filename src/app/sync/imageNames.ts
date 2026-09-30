@@ -44,8 +44,8 @@ export const MARKER_PROFILE = 'icloud://profile'
  * Container filename for a contact's avatar. Same contact id → same filename on
  * every device, which is what makes LWW-at-the-filesystem work.
  */
-export function filenameForContact(id: string): string {
-  return `${CONTACT_FILENAME_PREFIX}${id}${IMG_EXT}`
+export function filenameForContact(id: string, revision?: string): string {
+  return `${CONTACT_FILENAME_PREFIX}${id}${revision ? `--${revision}` : ''}${IMG_EXT}`
 }
 
 /**
@@ -53,8 +53,10 @@ export function filenameForContact(id: string): string {
  * Apple ID has a single profile, and "last writer wins" on the filename is the
  * intended semantics (see Q8).
  */
-export function filenameForProfile(): string {
-  return PROFILE_FILENAME
+export function filenameForProfile(revision?: string): string {
+  return revision
+    ? `${IMG_PREFIX}profile--${revision}${IMG_EXT}`
+    : PROFILE_FILENAME
 }
 
 /**

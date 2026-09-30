@@ -1,3 +1,4 @@
+import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Visit, VisitTombstone } from '@/types/visit'
@@ -61,7 +62,7 @@ export const useConversations = create(
           return {
             conversations: [
               ...conversations,
-              { ...conversation, updatedAt: Date.now() },
+              { ...conversation, updatedAt: syncTimestamp() },
             ],
           }
         }),
@@ -79,7 +80,10 @@ export const useConversations = create(
               await Notifications.cancelScheduledNotificationAsync(id)
           )
 
-          const now = Date.now()
+          const now = syncTimestamp(
+            conversations.find((conversation) => conversation.id === id)
+              ?.updatedAt
+          )
           return {
             conversations: conversations.filter(
               (conversation) => conversation.id !== id
@@ -97,7 +101,11 @@ export const useConversations = create(
               if (c.id !== conversation.id) {
                 return c
               }
-              return { ...c, ...conversation, updatedAt: Date.now() }
+              return {
+                ...c,
+                ...conversation,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })

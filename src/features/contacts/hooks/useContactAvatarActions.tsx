@@ -1,8 +1,10 @@
+import * as Crypto from 'expo-crypto'
 import { useEffect, useState } from 'react'
 import { Alert, Image as RNImage } from 'react-native'
 import { shareAsync } from 'expo-sharing'
 import * as MediaLibrary from 'expo-media-library'
 import * as Haptics from 'expo-haptics'
+import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
 
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
@@ -19,6 +21,7 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import useContacts from '@/stores/contactsStore'
 import type { Contact } from '@/types/contact'
+import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 
 type Dims = { width: number; height: number }
 
@@ -37,7 +40,15 @@ export default function useContactAvatarActions(
 ) {
   const updateContact = useContacts((s) => s.updateContact)
   const toast = useToastController()
+  const draftFiles = useAvatarDraftFiles()
   const [editorOpen, setEditorOpen] = useState(false)
+  const [editSource, setEditSource] = useState<{
+    uri: string
+    width: number
+    height: number
+    revision: string
+    avatarMeta: Contact['avatarMeta']
+  } | null>(null)
   const [busy, setBusy] = useState(false)
   const [hasOriginal, setHasOriginal] = useState(false)
   const [editableDims, setEditableDims] = useState<Dims | null>(null)
@@ -45,20 +56,25 @@ export default function useContactAvatarActions(
   useEffect(() => {
     if (!enabled) return
     let cancelled = false
-    originalExists(contact.id).then((exists) => {
+    setHasOriginal(false)
+    setEditableDims(null)
+    originalExists(contact.id, contact.avatar?.revision).then((exists) => {
       if (!cancelled) setHasOriginal(exists)
     })
     return () => {
       cancelled = true
     }
-  }, [enabled, contact.id, contact.avatar?.value])
+  }, [enabled, contact.id, contact.avatar?.value, contact.avatar?.revision])
 
   const displayedUri = contact.avatar?.value
   // The crop editor prefers the locally-saved original (full quality) and
   // falls back to the displayed image when no original exists (legacy
   // contacts).
   const editableSource = hasOriginal
-    ? { uri: originalAvatarPath(contact.id), isOriginal: true }
+    ? {
+        uri: originalAvatarPath(contact.id, contact.avatar?.revision),
+        isOriginal: true,
+      }
     : displayedUri
       ? { uri: stripCacheBuster(displayedUri), isOriginal: false }
       : null
@@ -93,11 +109,40 @@ export default function useContactAvatarActions(
   const edit = async () => {
     Haptics.selectionAsync().catch(() => {})
     const d = await ensureEditableDims()
-    if (!d) {
+    if (!d || !editableSource) {
       Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
       return
     }
-    setEditorOpen(true)
+    const revision = Crypto.randomUUID()
+    const uri = originalAvatarPath(contact.id, revision)
+    const paths = [uri, croppedAvatarPath(contact.id, revision)]
+    if (!draftFiles.claim(paths)) return
+    try {
+      // The editor owns this source until it commits or is cancelled. A remote
+      // replacement can safely remove the previously saved photo meanwhile.
+      await FileSystem.copyAsync({ from: editableSource.uri, to: uri })
+      if (!draftFiles.owns(paths)) {
+        draftFiles.release(paths)
+        return
+      }
+      setEditSource({
+        uri,
+        ...d,
+        revision,
+        avatarMeta: {
+          ...contact.avatarMeta,
+          ...d,
+          fileSize: editableSource.isOriginal
+            ? contact.avatarMeta?.fileSize
+            : undefined,
+        },
+      })
+      setEditorOpen(true)
+    } catch (error) {
+      draftFiles.release(paths)
+      logger.error('Failed to preserve crop source', error)
+      Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
+    }
   }
 
   const save = async () => {
@@ -152,26 +197,40 @@ export default function useContactAvatarActions(
           onPress: async () => {
             setBusy(true)
             try {
-              const exists = await originalExists(contact.id)
+              const exists = await originalExists(
+                contact.id,
+                contact.avatar?.revision
+              )
               if (!exists || !contact.avatarMeta) {
                 Alert.alert(i18n.t('error'), i18n.t('originalUnavailable'))
                 return
               }
-              const sourcePath = originalAvatarPath(contact.id)
+              const sourcePath = originalAvatarPath(
+                contact.id,
+                contact.avatar?.revision
+              )
               const source = {
                 width: contact.avatarMeta.width,
                 height: contact.avatarMeta.height,
               }
               const rect = defaultCenteredSquareCrop(source)
+              const revision = Crypto.randomUUID()
+              const nextOriginal = originalAvatarPath(contact.id, revision)
+              await FileSystem.copyAsync({ from: sourcePath, to: nextOriginal })
               const result = await cropAndSaveAvatar(
-                sourcePath,
+                nextOriginal,
                 contact.id,
                 rect,
-                source
+                source,
+                revision
               )
               updateContact({
                 id: contact.id,
-                avatar: { type: 'image', value: withCacheBuster(result.path) },
+                avatar: {
+                  type: 'image',
+                  revision,
+                  value: withCacheBuster(result.path),
+                },
                 avatarMeta: {
                   ...contact.avatarMeta,
                   croppedAt: new Date().toISOString(),
@@ -197,12 +256,19 @@ export default function useContactAvatarActions(
     width: number
     height: number
   }) => {
+    if (!editSource) return
+    if (!draftFiles.commit([editSource.uri, stripCacheBuster(next.path)]))
+      return
     updateContact({
       id: contact.id,
-      avatar: { type: 'image', value: next.path },
-      avatarMeta: contact.avatarMeta
+      avatar: {
+        type: 'image',
+        revision: editSource.revision,
+        value: next.path,
+      },
+      avatarMeta: editSource.avatarMeta
         ? {
-            ...contact.avatarMeta,
+            ...editSource.avatarMeta,
             croppedAt: new Date().toISOString(),
           }
         : undefined,
@@ -210,18 +276,23 @@ export default function useContactAvatarActions(
     setEditorOpen(false)
   }
 
-  const editor =
-    editableSource && editableDims ? (
-      <ContactAvatarCropEditor
-        visible={editorOpen}
-        sourceUri={editableSource.uri}
-        sourceWidth={editableDims.width}
-        sourceHeight={editableDims.height}
-        destPath={croppedAvatarPath(contact.id)}
-        onClose={() => setEditorOpen(false)}
-        onCropped={handleCropped}
-      />
-    ) : null
+  const editor = editSource ? (
+    <ContactAvatarCropEditor
+      visible={editorOpen}
+      sourceUri={editSource.uri}
+      sourceWidth={editSource.width}
+      sourceHeight={editSource.height}
+      destPath={croppedAvatarPath(contact.id, editSource.revision)}
+      onClose={() => {
+        draftFiles.release([
+          editSource.uri,
+          croppedAvatarPath(contact.id, editSource.revision),
+        ])
+        setEditorOpen(false)
+      }}
+      onCropped={handleCropped}
+    />
+  ) : null
 
   return { busy, hasOriginal, edit, save, share, reset, editor }
 }

@@ -1,3 +1,4 @@
+import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import {
@@ -145,7 +146,7 @@ export const useServiceReport = create(
           reports[year][month].push({
             ...report,
             date: normalizedDate,
-            updatedAt: Date.now(),
+            updatedAt: syncTimestamp(),
           })
 
           return {
@@ -166,7 +167,10 @@ export const useServiceReport = create(
           }
 
           return {
-            dayPlans: [...dayPlans, { ...normalized, updatedAt: Date.now() }],
+            dayPlans: [
+              ...dayPlans,
+              { ...normalized, updatedAt: syncTimestamp() },
+            ],
           }
         }),
       updateDayPlan: (dayPlan: Partial<DayPlan>) => {
@@ -179,7 +183,11 @@ export const useServiceReport = create(
               if (c.id !== normalized.id) {
                 return c
               }
-              return { ...c, ...normalized, updatedAt: Date.now() }
+              return {
+                ...c,
+                ...normalized,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -205,33 +213,15 @@ export const useServiceReport = create(
       addRecurringPlan: (recurringPlan: RecurringPlan) =>
         set(({ recurringPlans }) => {
           const normalized = normalizeRecurringPlan(recurringPlan)
-          const foundRecurringPlanStartDate = recurringPlans.find((c) =>
-            momentStoredDate(c.startDate).isSame(
-              momentStoredDate(normalized.startDate),
-              'day'
-            )
+          const existing = recurringPlans.find(
+            (plan) => plan.id === normalized.id
           )
-
-          if (foundRecurringPlanStartDate) {
-            return {
-              recurringPlans: recurringPlans.map((c) => {
-                if (
-                  !momentStoredDate(c.startDate).isSame(
-                    momentStoredDate(normalized.startDate),
-                    'day'
-                  )
-                ) {
-                  return c
-                }
-                return { ...c, ...normalized, updatedAt: Date.now() }
-              }),
-            }
-          }
+          if (existing) return {}
 
           return {
             recurringPlans: [
               ...recurringPlans,
-              { ...normalized, updatedAt: Date.now() },
+              { ...normalized, updatedAt: syncTimestamp() },
             ],
           }
         }),
@@ -246,7 +236,11 @@ export const useServiceReport = create(
               // Stamp updatedAt (mirrors the day-plan actions) — iCloud merge
               // is whole-object last-writer-wins on this timestamp; without
               // it a remote copy always beats a local edit.
-              return { ...c, ...normalized, updatedAt: Date.now() }
+              return {
+                ...c,
+                ...normalized,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -452,16 +446,18 @@ export const useServiceReport = create(
             serviceReports: reports,
             deletedServiceReports: [
               ...deletedServiceReports.filter((t) => t.id !== report.id),
-              { id: report.id, deletedAt: Date.now() },
+              {
+                id: report.id,
+                deletedAt: syncTimestamp(report.updatedAt),
+              },
             ],
           }
         }),
       deleteRolloverPair: (_report: TimeEntry) =>
         set(({ serviceReports, deletedServiceReports }) => {
           const groupId = _report.rolloverGroupId
-          const now = Date.now()
           const reports: TimeEntriesByYear = {}
-          const removedIds: string[] = []
+          const removed: TimeEntry[] = []
 
           // Walk the whole tree once. With or without a groupId we always
           // remove the passed report itself; with a groupId we also drop any
@@ -476,7 +472,7 @@ export const useServiceReport = create(
                   groupId !== undefined && r.rolloverGroupId === groupId
                 const matchesId = r.id === _report.id
                 if (matchesGroup || matchesId) {
-                  removedIds.push(r.id)
+                  removed.push(r)
                   return false
                 }
                 return true
@@ -490,13 +486,13 @@ export const useServiceReport = create(
             }
           }
 
-          if (removedIds.length === 0) return {}
+          if (removed.length === 0) return {}
 
-          const newTombstones = removedIds.map((id) => ({
-            id,
-            deletedAt: now,
+          const newTombstones = removed.map((entry) => ({
+            id: entry.id,
+            deletedAt: syncTimestamp(entry.updatedAt),
           }))
-          const removedSet = new Set(removedIds)
+          const removedSet = new Set(removed.map((entry) => entry.id))
           return {
             serviceReports: reports,
             deletedServiceReports: [
@@ -510,9 +506,8 @@ export const useServiceReport = create(
           // Service year Sep `endYear - 1` → Aug `endYear`; entries carry the
           // start year, so match on that.
           const startYear = endYear - 1
-          const now = Date.now()
           const reports: TimeEntriesByYear = {}
-          const removedIds: string[] = []
+          const removed: TimeEntry[] = []
 
           for (const yearKey of Object.keys(serviceReports)) {
             const yearMap: TimeEntriesByMonth = {}
@@ -523,7 +518,7 @@ export const useServiceReport = create(
                   momentStoredDate(r.date)
                 )
                 if (reportStartYear === startYear) {
-                  removedIds.push(r.id)
+                  removed.push(r)
                   return false
                 }
                 return true
@@ -537,14 +532,17 @@ export const useServiceReport = create(
             }
           }
 
-          if (removedIds.length === 0) return {}
+          if (removed.length === 0) return {}
 
-          const removedSet = new Set(removedIds)
+          const removedSet = new Set(removed.map((entry) => entry.id))
           return {
             serviceReports: reports,
             deletedServiceReports: [
               ...deletedServiceReports.filter((t) => !removedSet.has(t.id)),
-              ...removedIds.map((id) => ({ id, deletedAt: now })),
+              ...removed.map((entry) => ({
+                id: entry.id,
+                deletedAt: syncTimestamp(entry.updatedAt),
+              })),
             ],
           }
         }),
@@ -559,16 +557,23 @@ export const useServiceReport = create(
           if (!foundReport) {
             return {}
           }
-          const { month, year } = foundReport
-          const updatedMonth = serviceReports[year][month].map((c) => {
-            if (c.id !== normalized.id) {
-              return c
-            }
-            return { ...c, ...normalized, updatedAt: Date.now() }
-          })
-
-          reports[year][month] = updatedMonth
-
+          const { month, year, report: previous } = foundReport
+          const nextDate = momentStoredDate(normalized.date)
+          const nextYear = nextDate.year(),
+            nextMonth = nextDate.month()
+          const updated = {
+            ...previous,
+            ...normalized,
+            updatedAt: syncTimestamp(previous.updatedAt),
+          }
+          const oldEntries = serviceReports[year][month].filter(
+            (entry) => entry.id !== normalized.id
+          )
+          reports[year] = { ...reports[year], [month]: oldEntries }
+          reports[nextYear] = {
+            ...reports[nextYear],
+            [nextMonth]: [...(reports[nextYear]?.[nextMonth] ?? []), updated],
+          }
           return {
             serviceReports: reports,
           }

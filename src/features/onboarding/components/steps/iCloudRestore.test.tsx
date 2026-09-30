@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
   remoteChangeListeners: [] as Array<() => void>,
+  preferencesSet: vi.fn(),
 }))
 
 vi.mock('react-native', async () => {
@@ -77,8 +78,13 @@ vi.mock('@/components/ui/Button', async () => {
 vi.mock('@/components/ui/ActionButton', async () => {
   const ReactModule = await import('react')
   return {
-    default: ({ children }: { children?: ReactNode }) =>
-      ReactModule.createElement('ActionButton', null, children),
+    default: ({
+      children,
+      onPress,
+    }: {
+      children?: ReactNode
+      onPress?: () => void
+    }) => ReactModule.createElement('ActionButton', { onPress }, children),
   }
 })
 vi.mock('@/features/onboarding/components/Onboarding.styles', () => ({
@@ -95,7 +101,7 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/app/sync/payload', () => ({}))
 vi.mock('@/app/sync/iCloudSync', () => ({
-  iCloudSync: { peekRemotePayload: vi.fn() },
+  iCloudSync: { peekRemotePayload: vi.fn(), replaceLocalWithRemote: vi.fn() },
 }))
 vi.mock('../../../../../modules/icloud-bridge', () => ({
   isAvailable: () => true,
@@ -105,7 +111,9 @@ vi.mock('../../../../../modules/icloud-bridge', () => ({
   },
 }))
 vi.mock('@/stores/preferences', () => ({
-  usePreferences: () => ({ set: vi.fn() }),
+  usePreferences: Object.assign(() => ({ set: runtime.preferencesSet }), {
+    getState: () => ({ iCloudSyncEnabled: true }),
+  }),
 }))
 vi.mock('@/stores/profile', () => ({ useProfile: () => ({ set: vi.fn() }) }))
 vi.mock('@/hooks/useFeatureAccess', () => ({
@@ -121,15 +129,81 @@ const texts = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.stubGlobal('requestAnimationFrame', (callback: () => void) => callback())
   runtime.remoteChangeListeners = []
 })
 
 afterEach(() => {
   act(() => renderer?.unmount())
   renderer = null
+  vi.unstubAllGlobals()
 })
 
 describe('onboarding iCloud restore', () => {
+  it('remembers the alternate fresh-start choice', async () => {
+    const { default: ICloudRestore } = await import('./iCloudRestore')
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    vi.mocked(iCloudSync.peekRemotePayload).mockResolvedValue({
+      status: 'none',
+    })
+    const next = vi.fn()
+    await act(async () => {
+      renderer = create(<ICloudRestore goBack={() => {}} goNext={next} />)
+    })
+    const skip = renderer!.root
+      .findAll((node) => (node.type as unknown) === 'Button')
+      .at(-1)!
+    await act(async () => {
+      skip.props.onPress()
+    })
+    expect(runtime.preferencesSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        iCloudSyncEnabled: false,
+        iCloudSyncSetByUser: true,
+        iCloudFreshSetup: true,
+      })
+    )
+    expect(next).toHaveBeenCalledOnce()
+  })
+  it('prompts for a modern profile-only photo restore', async () => {
+    const { default: ICloudRestore } = await import('./iCloudRestore')
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    const { Alert } = await import('react-native')
+    vi.mocked(iCloudSync.peekRemotePayload).mockResolvedValue({
+      status: 'found',
+      remote: {
+        version: 1,
+        deviceId: 'peer',
+        writtenAt: 1,
+        contactStore: { contacts: [], deletedContacts: [] },
+        conversationStore: { conversations: [] },
+        serviceReportStore: {
+          serviceReports: {},
+          dayPlans: [],
+          recurringPlans: [],
+        },
+        preferencesStore: { values: {}, updatedAt: {} },
+        profileStore: {
+          values: { avatar: { type: 'image', value: 'icloud://profile' } },
+          updatedAt: {},
+        },
+      },
+    })
+    await act(async () => {
+      renderer = create(<ICloudRestore goBack={() => {}} goNext={() => {}} />)
+    })
+    const restore = renderer!.root.find(
+      (node) => (node.type as unknown) === 'ActionButton'
+    )
+    await act(async () => {
+      await restore.props.onPress()
+    })
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'iCloudImagesRestorePrompt_title',
+      'iCloudImagesRestorePrompt_description',
+      expect.any(Array)
+    )
+  })
   it("doesn't call a backup that's still downloading 'nothing to restore'", async () => {
     const { default: ICloudRestore } = await import('./iCloudRestore')
     const { iCloudSync } = await import('@/app/sync/iCloudSync')

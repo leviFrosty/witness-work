@@ -1,3 +1,4 @@
+import { useSyncResolutionNotification } from '@/app/sync/useSyncResolutionNotification'
 import type { NotificationItem } from '@/types/notifications'
 import useDevNotificationItems from '@/app/notifications/devNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
@@ -30,6 +31,7 @@ export default function NotificationsBell() {
     usePreviousReportNotification(now),
     useAuxiliaryMonthNotification(now),
     useBackupNotification(now),
+    useSyncResolutionNotification(),
     useDataProtectionRetentionNotification(now),
     ...useMissedFollowUpNotifications(now),
     ...useBuddyNotifications(),

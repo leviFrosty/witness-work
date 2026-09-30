@@ -12,6 +12,8 @@
 export type Category = {
   /** Stable UUID. The id is what gets referenced by `TimeEntry.categoryId`. */
   id: string
+  /** Identities merged during the legacy multi-device migration cleanup. */
+  legacyIds?: string[]
   /** User-visible label (e.g. "Bethel", "Hospital"). */
   name: string
   /**
@@ -42,5 +44,7 @@ export type Category = {
  */
 export type CategoryTombstone = {
   id: string
+  /** Identities merged during the legacy multi-device migration cleanup. */
+  legacyIds?: string[]
   deletedAt: number
 }

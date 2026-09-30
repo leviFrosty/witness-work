@@ -2,6 +2,7 @@ import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
 import { AvatarSource, DownloadedAvatar } from '@/app/sync/imageSync'
 import { parseContactMarker, isProfileMarker } from '@/app/sync/imageNames'
+import { isManagedAvatarPath } from '@/lib/avatarFilePolicy'
 
 /**
  * Conventional local filename for a contact's avatar image inside
@@ -36,38 +37,6 @@ function stripCacheBuster(value: string): string {
 }
 
 /**
- * Defense-in-depth: ensure an avatar source path lives inside the app's own
- * document directory before it reaches the iCloud-write pipeline. The
- * contactImport validator already strips image avatars off any imported payload
- * — this is the second layer that would catch a future regression which
- * re-opens that door. A foreign `file://` path could otherwise point at MMKV /
- * AsyncStorage / error tracking breadcrumbs / the ubiquity container itself,
- * and the bridge would happily copy that file into iCloud Drive as a JPEG.
- *
- * Both inputs are normalized to plain `/path` strings (scheme stripped,
- * traversal segments rejected) and compared by prefix. The cache-buster has
- * already been removed upstream.
- */
-function isInsideDocumentDirectory(
-  candidate: string,
-  documentDirectory: string
-): boolean {
-  const normalize = (input: string): string | null => {
-    if (!input) return null
-    const stripped = input.startsWith('file://')
-      ? input.slice('file://'.length)
-      : input
-    if (stripped.split('/').some((seg) => seg === '..')) return null
-    return stripped
-  }
-  const c = normalize(candidate)
-  const d = normalize(documentDirectory)
-  if (c == null || d == null) return false
-  const dirPrefix = d.endsWith('/') ? d : `${d}/`
-  return c.startsWith(dirPrefix)
-}
-
-/**
  * Walks the local state and returns every avatar whose value is a local
  * `file://` URI — these are the ones the device has in
  * `FileSystem.documentDirectory` and needs to UPLOAD on the next push.
@@ -79,6 +48,7 @@ function isInsideDocumentDirectory(
 export function collectLocalAvatarSources(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
+  profileUpdatedAt?: number
   documentDirectory: string
 }): AvatarSource[] {
   const sources: AvatarSource[] = []
@@ -87,15 +57,24 @@ export function collectLocalAvatarSources(args: {
     if (c.avatar?.type !== 'image') continue
     if (!c.avatar.value.startsWith('file://')) continue
     const localPath = stripCacheBuster(c.avatar.value)
-    if (!isInsideDocumentDirectory(localPath, args.documentDirectory)) continue
-    sources.push({ kind: 'contact', id: c.id, localPath })
+    if (!isManagedAvatarPath(localPath, args.documentDirectory)) continue
+    sources.push({
+      kind: 'contact',
+      id: c.id,
+      localPath,
+      ...(c.avatar.revision ? { revision: c.avatar.revision } : {}),
+    })
   }
 
   const profile = args.profileAvatar
   if (profile?.type === 'image' && profile.value.startsWith('file://')) {
     const localPath = stripCacheBuster(profile.value)
-    if (isInsideDocumentDirectory(localPath, args.documentDirectory)) {
-      sources.push({ kind: 'profile', localPath })
+    if (isManagedAvatarPath(localPath, args.documentDirectory)) {
+      sources.push({
+        kind: 'profile',
+        localPath,
+        ...(profile.revision ? { revision: profile.revision } : {}),
+      })
     }
   }
 
@@ -111,26 +90,67 @@ export function collectLocalAvatarSources(args: {
 export function collectExpectedMarkerSources(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
+  profileUpdatedAt?: number
   documentDirectory: string
 }): AvatarSource[] {
   const sources: AvatarSource[] = []
 
   for (const c of args.contacts) {
     if (c.avatar?.type !== 'image') continue
+    if (
+      c.avatar.value.startsWith('file://') &&
+      !isManagedAvatarPath(
+        stripCacheBuster(c.avatar.value),
+        args.documentDirectory
+      )
+    )
+      continue
     const markerId = parseContactMarker(c.avatar.value)
-    if (markerId == null) continue
+    if (markerId == null && !c.avatar.value.startsWith('file://')) continue
     sources.push({
       kind: 'contact',
       id: c.id,
-      localPath: localAvatarPathForContact(args.documentDirectory, c.id),
+      localPath: localAvatarPathForContact(
+        args.documentDirectory,
+        c.id
+      ).replace(
+        '.jpg',
+        `-synced${c.avatar.revision ? `-${c.avatar.revision}` : ''}.jpg`
+      ),
+      fallbackPath: c.avatar.value.startsWith('file://')
+        ? stripCacheBuster(c.avatar.value)
+        : !c.avatar.revision
+          ? localAvatarPathForContact(args.documentDirectory, c.id)
+          : undefined,
+      expectedValue: c.avatar.value,
+      expectedUpdatedAt: c.updatedAt,
+      ...(c.avatar.revision ? { revision: c.avatar.revision } : {}),
     })
   }
 
   const profile = args.profileAvatar
-  if (profile?.type === 'image' && isProfileMarker(profile.value)) {
+  if (
+    profile?.type === 'image' &&
+    (isProfileMarker(profile.value) ||
+      (profile.value.startsWith('file://') &&
+        isManagedAvatarPath(profile.value, args.documentDirectory)))
+  ) {
     sources.push({
       kind: 'profile',
-      localPath: localAvatarPathForProfile(args.documentDirectory),
+      localPath: localAvatarPathForProfile(args.documentDirectory).replace(
+        '.jpg',
+        `-synced${profile.revision ? `-${profile.revision}` : ''}.jpg`
+      ),
+      fallbackPath: profile.value.startsWith('file://')
+        ? stripCacheBuster(profile.value)
+        : !profile.revision
+          ? localAvatarPathForProfile(args.documentDirectory)
+          : undefined,
+      expectedValue: profile.value,
+      ...(args.profileUpdatedAt !== undefined
+        ? { expectedUpdatedAt: args.profileUpdatedAt }
+        : {}),
+      ...(profile.revision ? { revision: profile.revision } : {}),
     })
   }
 
@@ -150,31 +170,101 @@ export function collectExpectedMarkerSources(args: {
 export function applyDownloadedAvatars(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
+  profileUpdatedAt?: number
   downloaded: DownloadedAvatar[]
 }): { contacts: Contact[]; profileAvatar: ProfileAvatar | undefined } {
   if (args.downloaded.length === 0) {
     return { contacts: args.contacts, profileAvatar: args.profileAvatar }
   }
 
-  const contactUris = new Map<string, string>()
-  let profileUri: string | undefined
+  const contactUris = new Map<string, DownloadedAvatar & { kind: 'contact' }>()
+  let downloadedProfile: (DownloadedAvatar & { kind: 'profile' }) | undefined
   for (const d of args.downloaded) {
-    if (d.kind === 'contact') contactUris.set(d.id, d.localUri)
-    else profileUri = d.localUri
+    if (d.kind === 'contact') contactUris.set(d.id, d)
+    else downloadedProfile = d
   }
 
-  const nextContacts = contactUris.size
+  let contactsChanged = false
+  const mappedContacts = contactUris.size
     ? args.contacts.map((c) => {
-        const uri = contactUris.get(c.id)
-        if (!uri) return c
-        return { ...c, avatar: { type: 'image' as const, value: uri } }
+        const download = contactUris.get(c.id)
+        if (
+          !download ||
+          (download.expectedUpdatedAt !== undefined &&
+            c.updatedAt !== download.expectedUpdatedAt) ||
+          (download.expectedValue !== undefined &&
+            (c.avatar?.value !== download.expectedValue ||
+              c.avatar.revision !== download.revision))
+        )
+          return c
+        if (c.avatar?.value === download.localUri) return c
+        contactsChanged = true
+        return {
+          ...c,
+          avatar: {
+            ...c.avatar,
+            type: 'image' as const,
+            value: download.localUri,
+          },
+        }
       })
     : args.contacts
+  const nextContacts = contactsChanged ? mappedContacts : args.contacts
 
   const nextProfile =
-    profileUri != null
-      ? { type: 'image' as const, value: profileUri }
+    downloadedProfile != null &&
+    downloadedProfile.localUri !== args.profileAvatar?.value &&
+    (downloadedProfile.expectedUpdatedAt === undefined ||
+      downloadedProfile.expectedUpdatedAt === args.profileUpdatedAt) &&
+    (downloadedProfile.expectedValue === undefined ||
+      (args.profileAvatar?.value === downloadedProfile.expectedValue &&
+        args.profileAvatar.revision === downloadedProfile.revision))
+      ? {
+          ...args.profileAvatar,
+          type: 'image' as const,
+          value: downloadedProfile.localUri,
+        }
       : args.profileAvatar
 
   return { contacts: nextContacts, profileAvatar: nextProfile }
+}
+
+/** Keep useful bytes for a still-current revision, even after a text edit. */
+export function obsoleteDownloadPaths(args: {
+  contacts: Contact[]
+  deletedContacts?: Contact[]
+  profileAvatar: ProfileAvatar | undefined
+  downloaded: DownloadedAvatar[]
+  documentDirectory: string
+}): string[] {
+  const contacts = [
+    ...args.contacts,
+    ...(args.deletedContacts ?? []).filter((contact) => !contact.redacted),
+  ]
+  const references = new Set(
+    [
+      ...contacts.map((contact) => contact.avatar?.value ?? ''),
+      args.profileAvatar?.value ?? '',
+    ].map(stripCacheBuster)
+  )
+  return [
+    ...new Set(
+      args.downloaded
+        .filter((download) => {
+          const current =
+            download.kind === 'profile'
+              ? args.profileAvatar
+              : contacts.find((contact) => contact.id === download.id)?.avatar
+          return !(
+            current?.type === 'image' && current.revision === download.revision
+          )
+        })
+        .map((download) => stripCacheBuster(download.localUri))
+    ),
+  ].filter(
+    (path) =>
+      isManagedAvatarPath(path, args.documentDirectory) &&
+      !references.has(path) &&
+      /-synced(?:-[a-zA-Z0-9_-]+)?\.jpg$/.test(path)
+  )
 }

@@ -1,3 +1,5 @@
+import { syncTimestamp } from '@/lib/syncClock'
+import { NON_SYNCABLE_PROFILE_KEYS } from '@/lib/syncPreferencePolicy'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { PersistStorage } from '@/stores/mmkv'
@@ -44,7 +46,7 @@ export const PROFILE_DEFAULTS = {
  * explicit empty set so future per-device flags can be added without
  * reorganising the store.
  */
-export const NON_SYNCABLE_PROFILE_KEYS = new Set<string>(['profileUpdatedAt'])
+export { NON_SYNCABLE_PROFILE_KEYS } from '@/lib/syncPreferencePolicy'
 
 /**
  * Persisted profile store. Brand new at version 0; the v2→v3 preferences
@@ -69,13 +71,12 @@ export const useProfile = create(
           !Array.isArray(resolved) &&
           !replace
         ) {
-          const now = Date.now()
           const current = getState().profileUpdatedAt ?? {}
           const next: Record<string, number> = { ...current }
           let changed = false
           for (const key of Object.keys(resolved)) {
             if (NON_SYNCABLE_PROFILE_KEYS.has(key)) continue
-            next[key] = now
+            next[key] = syncTimestamp(current[key])
             changed = true
           }
           if (changed) {

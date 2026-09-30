@@ -150,7 +150,7 @@ const FullMapView = ({
   const overImagery = mapLayer !== 'standard'
   const theme = overImagery ? getMapImageryTheme(appTheme) : appTheme
   const glassColorScheme = overImagery ? 'dark' : appGlassColorScheme
-  const { contacts, updateContact } = useContacts()
+  const { updateContact } = useContacts()
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
 
@@ -190,7 +190,7 @@ const FullMapView = ({
   const programmaticScrollRef = useRef(false)
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
-      ...contacts.find((c) => c.id === id),
+      id,
       coordinate,
       userDraggedCoordinate: true,
     })

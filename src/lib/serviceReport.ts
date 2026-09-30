@@ -617,22 +617,12 @@ export const getReport = (
   if (!report) {
     return
   }
-  const m = momentStoredDate(report.date)
-  const month = m.month()
-  const year = m.year()
-  if (!years[year] || !years[year][month]) {
-    return
-  }
-
-  const found = years[year][month].find((r) => r.id === report.id)
-  if (!found) {
-    return
-  }
-
-  return {
-    month,
-    year,
-    report: found,
+  for (const [year, months] of Object.entries(years)) {
+    for (const [month, entries] of Object.entries(months)) {
+      const found = entries.find((entry) => entry.id === report.id)
+      if (found)
+        return { year: Number(year), month: Number(month), report: found }
+    }
   }
 }
 

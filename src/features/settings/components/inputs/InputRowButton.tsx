@@ -33,6 +33,8 @@ interface Props {
   disabled?: boolean
   /** Optional secondary line under the label (e.g. a reason it's disabled). */
   sublabel?: string
+  /** Highlights the row whose destination is open beside the list. */
+  selected?: boolean
   style?: ViewStyle
 }
 
@@ -45,6 +47,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   onPress,
   disabled,
   sublabel,
+  selected,
   style,
   leftIcon,
   leftIconColor,
@@ -58,7 +61,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       <Pressable
         accessibilityRole='button'
         accessibilityLabel={label}
-        accessibilityState={{ disabled: !!disabled }}
+        accessibilityState={{ disabled: !!disabled, selected: !!selected }}
         disabled={disabled}
         onPress={(event) => {
           Haptics.light()
@@ -73,7 +76,8 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
             paddingVertical: drawerLayout.rowPaddingVertical,
             gap: drawerLayout.labelGap,
             borderRadius: theme.numbers.borderRadiusLg,
-            backgroundColor: pressed ? theme.colors.card : 'transparent',
+            backgroundColor:
+              pressed || selected ? theme.colors.card : 'transparent',
             opacity: disabled ? 0.4 : 1,
           },
           style,
@@ -132,6 +136,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         justifyContent: justifyContent ?? 'space-between',
         gap: inputLayout.controlGap,
         opacity: disabled ? 0.4 : 1,
+        ...(selected && { backgroundColor: theme.colors.card }),
         ...style,
       }}
       onPress={onPress}

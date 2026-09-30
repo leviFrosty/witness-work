@@ -268,6 +268,13 @@ Hydration and developer resets are not instrumented.
 `paywall_faq_clicked` event remains available for the paywall funnel. Screen events
 for `FAQ` separately record arrival at the Help Center.
 
+## Settings split view
+
+On wide layouts (iPad with the sidebar), Settings shows its list beside the open
+destination. `settings_split_destination_selected` records a tap on a list row with
+`destination` (the route name, e.g. `PreferencesPublisher`, `FAQ`). Screen events
+cover arrival and subsection pushes inside the pane.
+
 ## Validation and analysis
 
 Run `pnpm run typecheck`, `pnpm run lint`, and `pnpm run testFinal`.

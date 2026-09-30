@@ -10,7 +10,12 @@ import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
-import { buildPayload, parsePayload, SyncPayload } from '@/app/sync/payload'
+import {
+  buildPayload,
+  isNewerPayloadVersion,
+  parsePayload,
+  SyncPayload,
+} from '@/app/sync/payload'
 import { mergePayload } from '@/app/sync/merge'
 import { isAccountFilename } from '@/lib/accountFile'
 import { reclaimAccountFile } from '@/lib/account'
@@ -73,18 +78,54 @@ const SYNC_FILE_EXT = '.json'
 
 let installed = false
 let pushScheduled = false
+let pushDeferred = false
 
 /**
- * Coalesce concurrent `pullAndMerge` calls. NSMetadataQuery fires in bursts
- * (both `DidFinishGathering` and `DidUpdate`, plus multiple notifications per
- * iCloud file op), and each `readAll` takes ~1s; running them concurrently
- * wastes I/O and produced the storm visible in the logs. At-most-one-queued is
- * enough because every caller just wants "the freshest state after my wake-up,"
- * and the in-flight pull's readAll sees strictly newer data than anything the
- * coalesced caller saw.
+ * `complete` means local state now reflects every remote payload: the read
+ * succeeded and no file was left downloading or unparseable. Image GC depends
+ * on it; see `gcImagesIfEnabled`.
  */
-let pullInFlight: Promise<boolean> | null = null
+type PullOutcome = { changed: boolean; complete: boolean }
+/** `complete` of the most recent pull, whichever trigger ran it. */
+let lastPullComplete = false
+
+/**
+ * Coalesce concurrent pulls. NSMetadataQuery fires in bursts (both
+ * `DidFinishGathering` and `DidUpdate`, plus multiple notifications per iCloud
+ * file op), and each read takes ~1s; running them concurrently wastes I/O and
+ * produced the storm visible in the logs. At-most-one-queued is enough because
+ * every caller just wants "the freshest state after my wake-up," and the
+ * in-flight pull's read sees strictly newer data than anything the coalesced
+ * caller saw.
+ */
+let pullInFlight: Promise<PullOutcome> | null = null
 let pullQueuedReason: string | null = null
+
+/**
+ * The running image GC. It deletes binaries no local contact owns, judged
+ * against the contacts it read when it started, so pulls never merge while it
+ * runs (see `pull`).
+ */
+let gcInFlight: Promise<void> | null = null
+/** Set by a pull waiting on GC; GC stops before its next delete. */
+let gcStopRequested = false
+/** Longest a pull waits for a stopping GC's current delete. */
+const GC_STOP_WAIT_MS = 10_000
+
+/**
+ * Backoff for pulling again after a read fails (iCloud briefly unreachable),
+ * which otherwise leaves the device stale until the next foreground or remote
+ * change. Only while the app is active and can sync: backgrounding and
+ * uninstall cancel it, a successful read resets it, and each foreground gets a
+ * fresh budget.
+ */
+const READ_RETRY_DELAYS_MS = [5_000, 20_000, 60_000]
+let readRetryTimer: ReturnType<typeof setTimeout> | null = null
+let readRetries = 0
+
+/** Same coalescing as `pullInFlight`, for `catchUp`. */
+let catchUpInFlight = false
+let catchUpQueuedReason: string | null = null
 
 function filenameForDevice(deviceId: string): string {
   return `${SYNC_FILE_PREFIX}-${deviceId}${SYNC_FILE_EXT}`
@@ -103,6 +144,15 @@ function filenameForDevice(deviceId: string): string {
  */
 function isLegacyFilename(filename: string): boolean {
   return !filename.startsWith(`${SYNC_FILE_PREFIX}-`)
+}
+
+/**
+ * Sync payload readers pass this to `readFiles` so they never read (and mark
+ * observed) the account file, which would swallow its remote-change event
+ * before `AccountProvider` sees it.
+ */
+function isPayloadFilename(filename: string): boolean {
+  return !isAccountFilename(filename)
 }
 
 /**
@@ -427,6 +477,40 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
 }
 
 /**
+ * Why `peekRemotePayload` couldn't see the whole remote: the initial scan
+ * hadn't finished, a remote file was still downloading after waiting, or one
+ * came from a newer app version.
+ */
+export type RemoteIncompleteReason = 'scan' | 'downloading' | 'newer-version'
+
+/**
+ * What `peekRemotePayload` saw. `incomplete` means a backup may exist that the
+ * read couldn't see in full, so neither "no backup" nor the partial fold is
+ * trustworthy. `unavailable` covers no iCloud and a failed read.
+ */
+export type RemotePeek =
+  | { status: 'found'; remote: SyncPayload }
+  | { status: 'none' }
+  | { status: 'incomplete'; reason: RemoteIncompleteReason }
+  | { status: 'unavailable' }
+
+/**
+ * Reads `peekRemotePayload` makes before giving up on a download in progress.
+ * Each read waits up to 10 s natively for the downloads it starts.
+ */
+const PEEK_READ_ATTEMPTS = 2
+
+function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
+  logger.warn(`${tag()} peekRemotePayload: remote incomplete`, { reason })
+  errorTracking.addBreadcrumb({
+    category: 'iCloudSync',
+    message: `peek — remote incomplete (${reason})`,
+    level: 'warning',
+  })
+  return { status: 'incomplete', reason }
+}
+
+/**
  * One-shot read of the remote state without installing sync, without requiring
  * the user to be opted in. Used by the onboarding restore step to peek at
  * what's available before the user decides.
@@ -437,26 +521,42 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
  * already exists. Skipping this wait is what used to cause onboarding to report
  * "no backup" on new devices, letting the user complete onboarding with fresh
  * timestamps that then beat their real remote data in the LWW merge once sync
- * was enabled.
+ * was enabled. For the same reason a scan that times out, a file still
+ * downloading after another read, or a payload from a newer app version is
+ * reported `incomplete` rather than folded into a partial answer.
  *
  * Folds all per-device files together so the caller sees one unified view.
  */
-export async function peekRemotePayload(): Promise<SyncPayload | null> {
-  if (Platform.OS !== 'ios') return null
-  if (!ICloudBridge.isAvailable()) return null
+export async function peekRemotePayload(): Promise<RemotePeek> {
+  if (Platform.OS !== 'ios') return { status: 'unavailable' }
+  if (!ICloudBridge.isAvailable()) return { status: 'unavailable' }
   try {
-    await ICloudBridge.waitForInitialScan(5000)
-    const files = await ICloudBridge.readAll()
-    const payloads: SyncPayload[] = []
-    for (const file of files) {
-      if (isAccountFilename(file.filename)) continue
-      const parsed = parsePayload(file.json)
-      if (parsed) payloads.push(parsed)
+    if (!(await ICloudBridge.waitForInitialScan(5000))) {
+      return incompletePeek('scan')
     }
-    return foldRemotePayloads(payloads)
+    for (let attempt = 1; ; attempt++) {
+      const { files, pending } = await ICloudBridge.readFiles(isPayloadFilename)
+      const payloads: SyncPayload[] = []
+      for (const file of files) {
+        const parsed = parsePayload(file.json)
+        if (parsed) payloads.push(parsed)
+        else if (isNewerPayloadVersion(file.json)) {
+          return incompletePeek('newer-version')
+        }
+      }
+      // `pending: null` is a binary that can't tell (see `readFiles`); decide
+      // on what it read, as before `pending` existed.
+      if (!pending?.length) {
+        const remote = foldRemotePayloads(payloads)
+        return remote ? { status: 'found', remote } : { status: 'none' }
+      }
+      if (attempt >= PEEK_READ_ATTEMPTS) return incompletePeek('downloading')
+    }
   } catch (e) {
+    // Not proof of "no backup": a read that fails (iCloud Drive off for the
+    // app) must not lead to seeding.
     logger.error(`${tag()} peekRemotePayload failed`, e)
-    return null
+    return { status: 'unavailable' }
   }
 }
 
@@ -466,8 +566,12 @@ export async function peekRemotePayload(): Promise<SyncPayload | null> {
  * `resolveInitialEnable()` so every call site that flips sync on for the first
  * time shares the same "look before leaping" decision.
  *
- * - `unavailable` — iCloud isn't usable (wrong platform or no identity token).
- *   Caller should abort.
+ * - `unavailable` — iCloud isn't usable (wrong platform, no identity token, or
+ *   the container couldn't be read). Caller should abort.
+ * - `incomplete` — the remote couldn't be seen in full (see `RemotePeek`), so
+ *   every other outcome could be wrong: `seed` would push this device's
+ *   onboarding defaults over a backup still downloading. Caller must leave sync
+ *   off and try again later.
  * - `seed` — no remote file exists. Safe to enable + push this device's state.
  * - `pull` — remote exists, local has no meaningful user records. Safe to
  *   destructively replace local with remote + enable.
@@ -477,6 +581,7 @@ export async function peekRemotePayload(): Promise<SyncPayload | null> {
  */
 export type InitialEnableDecision =
   | { outcome: 'unavailable' }
+  | { outcome: 'incomplete'; reason: RemoteIncompleteReason }
   | { outcome: 'seed' }
   | { outcome: 'pull'; remote: SyncPayload }
   | { outcome: 'conflict'; remote: SyncPayload }
@@ -495,10 +600,20 @@ export type InitialEnableDecision =
 export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
   if (Platform.OS !== 'ios') return { outcome: 'unavailable' }
   if (!ICloudBridge.isAvailable()) return { outcome: 'unavailable' }
-  const remote = await peekRemotePayload()
-  if (!remote) return { outcome: 'seed' }
-  if (!hasMeaningfulLocalData()) return { outcome: 'pull', remote }
-  return { outcome: 'conflict', remote }
+  const peek = await peekRemotePayload()
+  switch (peek.status) {
+    case 'unavailable':
+      return { outcome: 'unavailable' }
+    case 'incomplete':
+      return { outcome: 'incomplete', reason: peek.reason }
+    case 'none':
+      return { outcome: 'seed' }
+    case 'found':
+      if (!hasMeaningfulLocalData()) {
+        return { outcome: 'pull', remote: peek.remote }
+      }
+      return { outcome: 'conflict', remote: peek.remote }
+  }
 }
 
 /**
@@ -641,6 +756,11 @@ async function pullImagesIfEnabled(): Promise<void> {
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
     })
+    if (result.failed > 0) {
+      logger.warn(`${tag()} image pull: downloads failed`, {
+        failed: result.failed,
+      })
+    }
     if (result.downloaded.length === 0) {
       // Still persist bookkeeping even without downloads in case we tracked
       // new containerMtime observations via skip-branch.
@@ -677,29 +797,62 @@ async function pullImagesIfEnabled(): Promise<void> {
 }
 
 /**
- * Deletes container binaries with no corresponding local identity. Meant to be
- * fired on foreground after a merge that changed the contact list and once at
- * app launch — cleans up after contact deletes that happened while this device
- * was offline.
+ * Deletes container binaries with no corresponding local identity — cleans up
+ * after contact deletes that happened while this device was offline. Only safe
+ * once local state reflects every remote payload; otherwise it deletes the
+ * photos of contacts still on their way in. `catchUp` runs it after a complete
+ * pull.
+ *
+ * Never runs alongside a pull, which could give an orphan an owner mid-sweep:
+ * it skips while one is running, and a pull that starts meanwhile stops it
+ * before its next delete (see `pull`).
  */
-async function gcImagesIfEnabled(): Promise<void> {
+function gcImagesIfEnabled(): Promise<void> {
+  if (gcInFlight) return gcInFlight
+  if (pullInFlight) return Promise.resolve()
+  gcStopRequested = false
+  gcInFlight = gcImages().finally(() => {
+    gcInFlight = null
+  })
+  return gcInFlight
+}
+
+async function gcImages(): Promise<void> {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages) return
   if (Platform.OS !== 'ios') return
   try {
-    const active: ActiveIdentity[] = useContacts
-      .getState()
-      .contacts.map((c) => ({ kind: 'contact', id: c.id }))
-    if (useProfile.getState().avatar?.type === 'image') {
+    const { contacts } = useContacts.getState()
+    const { avatar } = useProfile.getState()
+    const active: ActiveIdentity[] = contacts.map((c) => ({
+      kind: 'contact',
+      id: c.id,
+    }))
+    if (avatar?.type === 'image') {
       active.push({ kind: 'profile' })
     }
     const deps = buildImageSyncDeps()
-    const result = await gcOrphanImages({ activeIdentities: active, deps })
+    const result = await gcOrphanImages({
+      activeIdentities: active,
+      deps,
+      // A pull waiting to merge, or a local edit (a new photo uploading), may
+      // give an orphan an owner.
+      shouldStop: () =>
+        gcStopRequested ||
+        useContacts.getState().contacts !== contacts ||
+        useProfile.getState().avatar !== avatar,
+    })
+    if (result.stopped) {
+      logger.log(`${tag()} image gc stopped early`, {
+        deleted: result.deleted.length,
+      })
+    }
     if (result.deleted.length > 0) {
       // Strip the deleted filenames from bookkeeping so we don't keep stale
-      // entries forever.
+      // entries forever. Read it fresh: image uploads and downloads may have
+      // updated it during the sweep.
       const next: ImageSyncBookkeeping = {
-        ...(prefs.iCloudImageSync ?? {}),
+        ...(usePreferences.getState().iCloudImageSync ?? {}),
       }
       for (const filename of result.deleted) delete next[filename]
       usePreferences.setState({ iCloudImageSync: next })
@@ -722,6 +875,8 @@ export async function push(reason: string): Promise<void> {
     logger.log(`${tag()} push skipped (canSync=false)`, { reason })
     return
   }
+  // Every push is a full snapshot, so it covers any deferred edit.
+  pushDeferred = false
   try {
     const deviceId = ensureDeviceId()
     const filename = filenameForDevice(deviceId)
@@ -776,7 +931,13 @@ const debouncedPush = debounce(
 )
 
 function schedulePush() {
-  if (!canSync()) return
+  if (!canSync()) {
+    // Most often an edit at cold launch, before supporter status loads.
+    // `catchUp` pushes it once sync is ready instead of waiting for the
+    // next edit.
+    pushDeferred = true
+    return
+  }
   pushScheduled = true
   debouncedPush()
 }
@@ -788,8 +949,8 @@ function schedulePush() {
  * sync is disabled. Returns whether any local state actually changed.
  *
  * Coalesces concurrent callers: if a pull is already running, this returns the
- * in-flight promise and schedules at most one follow-up pull to catch anything
- * the running `readAll` raced past. See the `pullInFlight` comment for why
+ * in-flight result and schedules at most one follow-up pull to catch anything
+ * the running read raced past. See the `pullInFlight` comment for why
  * at-most-one is sufficient.
  *
  * Also absorbs + cleans up **legacy files** (pre-upgrade single-file scheme
@@ -798,27 +959,67 @@ function schedulePush() {
  *   time, without losing any stranded data.
  */
 export async function pullAndMerge(reason: string): Promise<boolean> {
+  return (await pull(reason)).changed
+}
+
+function pull(reason: string): Promise<PullOutcome> {
   if (pullInFlight) {
     if (!pullQueuedReason) pullQueuedReason = reason
     return pullInFlight
   }
   pullInFlight = (async () => {
     try {
-      return await pullAndMergeInner(reason)
+      // GC judges orphans against the contacts it read at its start; merging
+      // alongside it could delete the photo of a contact this pull brings in.
+      // Stop it before its next delete and let it finish first — within
+      // reason, so a coordinated delete that hangs can't stall every pull.
+      if (gcInFlight) {
+        gcStopRequested = true
+        await Promise.race([
+          gcInFlight,
+          new Promise((resolve) => setTimeout(resolve, GC_STOP_WAIT_MS)),
+        ])
+      }
+      const outcome = await pullAndMergeInner(reason)
+      lastPullComplete = outcome.complete
+      return outcome
     } finally {
       const queued = pullQueuedReason
       pullQueuedReason = null
       pullInFlight = null
-      if (queued) void pullAndMerge(queued)
+      if (queued) void pull(queued)
     }
   })()
   return pullInFlight
 }
 
-async function pullAndMergeInner(reason: string): Promise<boolean> {
+/** Arms the next `READ_RETRY_DELAYS_MS` pull after a failed read, if any. */
+function scheduleReadRetry(): void {
+  if (!installed || readRetryTimer) return
+  if (AppState.currentState !== 'active' || !canSync()) return
+  const delay = READ_RETRY_DELAYS_MS[readRetries]
+  if (delay === undefined) {
+    logger.warn(`${tag()} read retries exhausted`)
+    return
+  }
+  readRetries++
+  readRetryTimer = setTimeout(() => {
+    readRetryTimer = null
+    if (AppState.currentState !== 'active' || !canSync()) return
+    void pull('read-retry')
+  }, delay)
+}
+
+function cancelReadRetry(): void {
+  if (readRetryTimer) clearTimeout(readRetryTimer)
+  readRetryTimer = null
+  readRetries = 0
+}
+
+async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   if (!canSync()) {
     logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
-    return false
+    return { changed: false, complete: false }
   }
 
   logger.log(`${tag()} pullAndMerge start`, { reason })
@@ -826,19 +1027,27 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const deviceId = ensureDeviceId()
   const ownFilename = filenameForDevice(deviceId)
 
-  let files: ICloudBridge.SyncFile[]
+  let read: ICloudBridge.SyncRead
   try {
-    files = await ICloudBridge.readAll()
+    read = await ICloudBridge.readFiles(isPayloadFilename)
   } catch (e) {
-    logger.error(`${tag()} readAll failed (${reason})`, e)
-    errorTracking.captureException(e, { iCloudSync: 'pull' })
-    return false
+    logger.error(`${tag()} read failed (${reason})`, e)
+    // Retries of the same outage would only repeat the report.
+    if (readRetries === 0) {
+      errorTracking.captureException(e, { iCloudSync: 'pull' })
+    }
+    scheduleReadRetry()
+    return { changed: false, complete: false }
   }
+  cancelReadRetry()
+  const { files, pending } = read
+  let complete = pending?.length === 0
 
-  logger.log(`${tag()} pullAndMerge: readAll`, {
+  logger.log(`${tag()} pullAndMerge: read`, {
     reason,
     totalFiles: files.length,
     filenames: files.map((f) => f.filename),
+    pending,
   })
 
   if (files.length === 0) {
@@ -849,7 +1058,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
       message: `pull (${reason}) — no remote`,
       level: 'info',
     })
-    return false
+    return { changed: false, complete }
   }
 
   // Parse each file. Legacy filenames are tracked for post-merge cleanup so
@@ -864,9 +1073,24 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const legacyFilenames: string[] = []
   for (const file of files) {
     if (file.filename === ownFilename) continue
-    if (isAccountFilename(file.filename)) continue
     const parsed = parsePayload(file.json)
     if (!parsed) {
+      complete = false
+      if (isNewerPayloadVersion(file.json)) {
+        // A device already on a newer app version. Its data waits until this
+        // device updates, and so does image GC, which can't see its
+        // contacts. Expected, so a breadcrumb rather than a report.
+        logger.warn(`${tag()} pullAndMerge: skipping newer payload version`, {
+          reason,
+          filename: file.filename,
+        })
+        errorTracking.addBreadcrumb({
+          category: 'iCloudSync',
+          message: `pull (${reason}) — skipped newer payload version; image GC paused`,
+          level: 'warning',
+        })
+        continue
+      }
       logger.warn(`${tag()} pullAndMerge: skipping invalid file`, {
         reason,
         filename: file.filename,
@@ -920,7 +1144,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     // Even with no foreign payloads, stale legacy files may exist from this
     // device's own pre-upgrade writes. Clean them up.
     void cleanupLegacyFiles(legacyFilenames)
-    return false
+    return { changed: false, complete }
   }
 
   // Snapshot local state once; fold each remote payload into the accumulator.
@@ -1031,7 +1255,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     // unconditionally on every pull cycle and let its own bookkeeping
     // skip no-op downloads.
     await pullImagesIfEnabled()
-    return false
+    return { changed: false, complete }
   }
 
   contactsState.set({
@@ -1099,7 +1323,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   // own UI refresh after images land.
   await pullImagesIfEnabled()
 
-  return true
+  return { changed: true, complete }
 }
 
 /**
@@ -1184,8 +1408,44 @@ export function backfillUpdatedAtIfNeeded(): void {
 }
 
 /**
- * Wires iCloud sync into store changes, foreground transitions, and
- * remote-change events from the native module. Idempotent.
+ * Brings this device level with iCloud: pull, push any edits made while sync
+ * wasn't ready, then upload images and GC. Runs on foreground and whenever sync
+ * becomes ready while the app is active.
+ *
+ * Image steps wait for the pull so the image bookkeeping has one writer and GC
+ * sees the merged contact list. GC also needs the initial scan: an early empty
+ * listing looks like "no remote payloads".
+ */
+async function catchUp(reason: string): Promise<void> {
+  if (!canSync()) return
+  if (catchUpInFlight) {
+    catchUpQueuedReason ??= reason
+    return
+  }
+  catchUpInFlight = true
+  try {
+    const scanned = await ICloudBridge.waitForInitialScan(5000)
+    await pull(reason)
+    if (pushDeferred) schedulePush()
+    // Also gives quota-backoffed uploads another shot (see imageSync.ts).
+    await pushImagesIfEnabled('foreground')
+    // Joining a running pull returns its (older) result and queues a
+    // follow-up, and remote-change pulls may have run meanwhile. Let every
+    // queued pull land so GC judges the newest read.
+    while (pullInFlight) await pullInFlight
+    if (scanned && lastPullComplete) await gcImagesIfEnabled()
+    else logger.log(`${tag()} image gc skipped`, { reason, scanned })
+  } finally {
+    catchUpInFlight = false
+    const queued = catchUpQueuedReason
+    catchUpQueuedReason = null
+    if (queued) void catchUp(queued)
+  }
+}
+
+/**
+ * Wires iCloud sync into store changes, foreground transitions, readiness
+ * changes, and remote-change events from the native module. Idempotent.
  *
  * Safe to call unconditionally at app boot — it gates on platform + the opt-in
  * preference, so nothing runs until the user flips the toggle.
@@ -1221,16 +1481,12 @@ export function installiCloudSync(): () => void {
 
   const onAppState = (state: AppStateStatus) => {
     if (state === 'active') {
-      if (!canSync()) return
-      // Fire and forget — errors are already handled inside pullAndMerge.
-      void pullAndMerge('foreground')
-      // Also drive a foreground image-push so quota-backoffed uploads get
-      // another shot (see imageSync.ts quota handling) and a GC sweep to
-      // clean up after foreign-device deletes we might have missed.
-      void pushImagesIfEnabled('foreground')
-      void gcImagesIfEnabled()
+      // Fire and forget — errors are already handled inside the steps.
+      void catchUp('foreground')
       return
     }
+    // The foreground catch-up pulls anyway, and brings a fresh retry budget.
+    cancelReadRetry()
     // Leaving foreground (inactive/background): if a debounced push is
     // pending, flush it now so the user's latest edits actually land in
     // iCloud before the process is suspended. Otherwise typing a note and
@@ -1255,11 +1511,31 @@ export function installiCloudSync(): () => void {
     if (!canSync()) return
     debouncedRemotePull()
   })
+
+  // Sync often becomes ready after launch: supporter status loads
+  // asynchronously (and flips again when this device adopts another device's
+  // account), and iCloud can sign back in. `canSync` dropped any foreground
+  // or remote-change events before then — and a cold launch usually delivers
+  // no foreground event at all — so catch up here or nothing pulls until the
+  // user taps Sync. Deliberately not keyed on `iCloudSyncEnabled`: enable
+  // flows reconcile themselves, and a concurrent pull would race "Keep this
+  // device's data".
+  const catchUpIfActive = (reason: string) => {
+    if (AppState.currentState === 'active') void catchUp(reason)
+  }
+  const unsubSupporter = useSupporter.subscribe((state, prev) => {
+    if (state.isSupporter && !prev.isSupporter) {
+      catchUpIfActive('supporter-ready')
+    }
+  })
   availabilitySub = ICloudBridge.addAvailabilityChangeListener((e) => {
     if (!e.available) {
       logger.warn(`${tag()} iCloud became unavailable`)
+      return
     }
+    catchUpIfActive('icloud-available')
   })
+  catchUpIfActive('launch')
 
   return () => {
     unsubContacts()
@@ -1268,10 +1544,12 @@ export function installiCloudSync(): () => void {
     unsubCategories()
     unsubPreferences()
     unsubProfile()
+    unsubSupporter()
     appStateSub.remove()
     remoteChangeSub?.remove()
     availabilitySub?.remove()
     debouncedRemotePull.cancel()
+    cancelReadRetry()
     installed = false
   }
 }

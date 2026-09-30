@@ -230,11 +230,27 @@ const PreferencesiCloudScreenInner = () => {
           iCloudSync.applyPullEnable(decision.remote)
           toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
           break
+        case 'incomplete':
+          // Part of the remote is still downloading (or from a newer app
+          // version), so seeding or restoring now could overwrite it. Leave
+          // sync off; toggling again re-checks.
+          analytics.capture('icloud_sync_enable_deferred', {
+            source: 'settings',
+            reason: decision.reason,
+          })
+          Alert.alert(
+            i18n.t('iCloudRemoteNotReady_title'),
+            i18n.t('iCloudRemoteNotReady_description')
+          )
+          break
         case 'unavailable':
-          // We already early-returned on `!isAvailable()` above, so reaching
-          // `unavailable` here means the iCloud identity token flipped out
-          // between the availability check and the peek. Bail quietly — the
-          // availability listener will update UI.
+          // We already checked `isAvailable()` above, so this is the identity
+          // token flipping mid-peek or the container being unreadable
+          // (iCloud Drive off for the app).
+          Alert.alert(
+            i18n.t('iCloudUnavailable_title'),
+            i18n.t('iCloudUnavailable_description')
+          )
           break
       }
     } finally {

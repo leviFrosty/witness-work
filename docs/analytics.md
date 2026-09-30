@@ -155,6 +155,14 @@ reflects that Expo resolves on both sharing and cancellation. It cannot establis
 that a backup was saved or distinguish an export cancellation. File names, paths,
 contents, and raw errors are never attached to these analytics events.
 
+`icloud_restore_probe_result` `status` is `probing`, `found`, `noBackup`,
+`unavailable`, or `incomplete` — iCloud couldn't be read in full (still
+scanning, a file still downloading, or a newer app version's data), so the step
+shows "iCloud isn't ready yet" instead of "nothing to restore". The step
+re-probes on its own when a file lands, so one visit can record several results.
+`icloud_restore_search_again_clicked` records the manual retry with
+`source: onboarding` and the `status` shown when tapped.
+
 iCloud photo consent events measure the choice only, not successful image
 downloads. Background iCloud replication remains separate from these manual
 backup/restore journeys.
@@ -263,6 +271,14 @@ switch changes. Enabling is recorded only after the preference changes, includin
 first-enable collision resolution; canceled/unavailable flows and unchanged
 values emit nothing. This measures the sync setting, not successful data transfer.
 Hydration and developer resets are not instrumented.
+
+`icloud_sync_enable_deferred` records a first enable that left sync off because
+iCloud couldn't be read in full, with `source` (`settings` or
+`supporter_default`) and `reason`: `scan` (the initial iCloud scan hadn't
+finished), `downloading` (a remote file was still downloading), or
+`newer-version` (another device writes a newer sync format). Settings shows an
+"iCloud isn't ready yet" alert; the supporter default records it once and
+decides again when a file lands or the app returns to the foreground.
 
 `help_center_opened` records navigation from `settings` or `paywall`. The existing
 `paywall_faq_clicked` event remains available for the paywall funnel. Screen events

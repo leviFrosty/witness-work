@@ -61,29 +61,46 @@ export const clearAdoptedAccountId = (): void => {
   _cached = null
 }
 
+export type AccountRead = {
+  file: AccountFile | null
+  /**
+   * An account file is still downloading, so `file` may be stale — or null
+   * while another device's claim is on its way in. Claiming or rewriting on
+   * this read could overwrite that claim.
+   */
+  pending: boolean
+}
+
 /**
  * Reads the account file from the ubiquity container. Also absorbs iCloud
  * conflict duplicates (`witness-work-account 2.json`): the newest payload wins,
  * losers are deleted, and a winner that lived under a duplicate name is
- * rewritten to the canonical filename — all best-effort.
+ * rewritten to the canonical filename — all best-effort, and skipped while any
+ * of them is still downloading.
  *
  * Rejects when iCloud is unavailable (signed out, or iCloud Drive disabled for
  * the app) — callers treat that as "sharing unavailable", not an error.
  */
-export const readAccountFile = async (): Promise<AccountFile | null> => {
-  const files = await ICloudBridge.readAll()
-  const candidates = files
-    .filter((f) => isAccountFilename(f.filename))
+export const readAccountFile = async (): Promise<AccountRead> => {
+  const read = await ICloudBridge.readFiles(isAccountFilename)
+  // `pending: null` is a binary that can't tell (see `readFiles`). Treat its
+  // read as complete, as before `pending` existed: refusing would stop claims
+  // on those builds altogether, and claims still wait for the initial scan.
+  const pending = (read.pending?.length ?? 0) > 0
+  const candidates = read.files
     .map((f) => ({ filename: f.filename, payload: parseAccountFile(f.json) }))
     .filter(
       (c): c is { filename: string; payload: AccountFile } => c.payload !== null
     )
-  if (candidates.length === 0) return null
+  if (candidates.length === 0) return { file: null, pending }
 
   let best = candidates[0]
   for (const c of candidates) {
     if (c.payload.updatedAt > best.payload.updatedAt) best = c
   }
+  // The file still downloading may be the newest; canonicalizing now could
+  // overwrite it with an older duplicate.
+  if (pending) return { file: best.payload, pending }
 
   for (const c of candidates) {
     if (c.filename === best.filename || c.filename === ACCOUNT_FILENAME) {
@@ -99,7 +116,7 @@ export const readAccountFile = async (): Promise<AccountFile | null> => {
       logger.warn('[Account] failed to canonicalize account file', e)
     }
   }
-  return best.payload
+  return { file: best.payload, pending: false }
 }
 
 /** Claims (or re-claims) the account file for `accountId`. */

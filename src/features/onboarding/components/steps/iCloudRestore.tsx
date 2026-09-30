@@ -3,6 +3,7 @@ import {
   CircleAlert as CircleAlertIcon,
   CircleCheck as CircleCheckIcon,
   Cloud as CloudIcon,
+  RotateCw as RotateCwIcon,
   Save as SaveIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -20,7 +21,7 @@ import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
-import { iCloudSync } from '@/app/sync/iCloudSync'
+import { iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -35,7 +36,23 @@ type Probe =
   | { state: 'probing' }
   | { state: 'unavailable' } // iCloud account unavailable on this device
   | { state: 'noBackup' } // Available but nothing there yet
+  | { state: 'incomplete' } // A backup may exist but isn't fully readable yet
   | { state: 'found'; remote: SyncPayload }
+
+const probeFromPeek = (peek: RemotePeek): Probe => {
+  switch (peek.status) {
+    case 'found':
+      return { state: 'found', remote: peek.remote }
+    case 'none':
+      return { state: 'noBackup' }
+    case 'incomplete':
+      // "Nothing to restore" here would send the user through onboarding
+      // with fresh defaults that later beat their real data.
+      return { state: 'incomplete' }
+    case 'unavailable':
+      return { state: 'unavailable' }
+  }
+}
 
 /**
  * Whether the folded remote payload contains any image markers — i.e. the
@@ -82,6 +99,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   const { set: setProfile } = useProfile()
   const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
+  // Bumped by "Search again" to run the probe effect afresh.
+  const [search, setSearch] = useState(0)
   const [restoring, setRestoring] = useState(false)
 
   // Breathing animation for the cloud icon while probing. Runs only while
@@ -90,32 +109,54 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
 
   useEffect(() => {
     let cancelled = false
+    let running = false
+    let again = false
+    let found = false
     const run = async () => {
-      if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
-        if (!cancelled) setProbe({ state: 'unavailable' })
+      if (running) {
+        again = true
         return
       }
-      const remote = await iCloudSync.peekRemotePayload()
-      if (cancelled) return
-      if (!remote) {
-        setProbe({ state: 'noBackup' })
-      } else {
-        setProbe({ state: 'found', remote })
+      running = true
+      setProbe({ state: 'probing' })
+      try {
+        let next: Probe
+        do {
+          again = false
+          next =
+            Platform.OS !== 'ios' || !ICloudBridge.isAvailable()
+              ? { state: 'unavailable' }
+              : probeFromPeek(await iCloudSync.peekRemotePayload())
+        } while (again && !cancelled && next.state !== 'found')
+        if (cancelled) return
+        found = next.state === 'found'
+        setProbe(next)
+      } finally {
+        running = false
       }
     }
-    void run().catch(() => {
-      if (!cancelled) setProbe({ state: 'noBackup' })
-      analytics.capture('import_failed', {
-        import_type: 'icloud',
-        source: 'onboarding',
-        stage: 'probe',
-        error_code: 'unexpected',
+    const probeRemote = () =>
+      void run().catch(() => {
+        if (!cancelled) setProbe({ state: 'unavailable' })
+        analytics.capture('import_failed', {
+          import_type: 'icloud',
+          source: 'onboarding',
+          stage: 'probe',
+          error_code: 'unexpected',
+        })
       })
+    probeRemote()
+    // A backup that lands after the probe — materializing late on a cold
+    // launch, or finishing its download — upgrades the screen on its own:
+    // the metadata query reports files this device hasn't read yet.
+    const sub = ICloudBridge.addRemoteChangeListener(() => {
+      if (!cancelled && !found) probeRemote()
     })
     return () => {
       cancelled = true
+      sub.remove()
     }
-  }, [])
+  }, [search])
 
   useEffect(() => {
     if (probe.state !== 'probing') {
@@ -398,6 +439,34 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           </Card>
         )}
 
+        {probe.state === 'incomplete' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <LucideIcon
+              icon={CircleAlertIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t('iCloudRemoteNotReady_description')}
+            </Text>
+          </Card>
+        )}
+
         {probe.state === 'noBackup' && (
           <Card
             style={{
@@ -519,6 +588,40 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               )
             )}
           </ActionButton>
+        )}
+        {(probe.state === 'noBackup' ||
+          probe.state === 'unavailable' ||
+          probe.state === 'incomplete') && (
+          <Button
+            onPress={() => {
+              analytics.capture('icloud_restore_search_again_clicked', {
+                source: 'onboarding',
+                status: probe.state,
+              })
+              setSearch((n) => n + 1)
+            }}
+            style={{
+              alignSelf: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              paddingVertical: 10,
+            }}
+          >
+            <LucideIcon
+              icon={RotateCwIcon}
+              size={14}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('iCloudRestoreRetry')}
+            </Text>
+          </Button>
         )}
         <Button
           onPress={() => {

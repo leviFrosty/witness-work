@@ -197,7 +197,12 @@ export default function ToolsScreen() {
     probedAt: string
   } | null>(null)
   const [accountFileInspection, setAccountFileInspection] = useState<
-    | { file: AccountFile | null; action: AccountAction; readAt: string }
+    | {
+        file: AccountFile | null
+        pending: boolean
+        action: AccountAction
+        readAt: string
+      }
     | { error: string }
     | null
   >(null)
@@ -259,7 +264,7 @@ export default function ToolsScreen() {
 
   const inspectAccountFile = async () => {
     try {
-      const file = await readAccountFile()
+      const { file, pending } = await readAccountFile()
       // The same pure decision AccountProvider's reconcile pass would make
       // right now — shows WHY the device is claiming/adopting/idle.
       const action = decideAccountAction({
@@ -269,6 +274,8 @@ export default function ToolsScreen() {
       })
       setAccountFileInspection({
         file,
+        // AccountProvider defers every action while this is true.
+        pending,
         action,
         readAt: new Date().toISOString(),
       })

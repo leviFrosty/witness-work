@@ -165,6 +165,12 @@ export type PullImagesResult = {
    */
   missing: Array<{ kind: 'profile' } | { kind: 'contact'; id: string }>
   /**
+   * Binaries that failed to download this pass (removed since the listing,
+   * still downloading at the deadline). Left out of `bookkeeping`, so the next
+   * pull tries them again.
+   */
+  failed: number
+  /**
    * Updated per-filename bookkeeping. Currently just echoes the input — the
    * pull path doesn't own the upload-mtime field — but reserved here for a
    * future per-filename "last downloaded container mtime" once we want to
@@ -192,6 +198,7 @@ export async function pullMissingImages(args: {
   const bookkeeping: ImageSyncBookkeeping = { ...args.bookkeeping }
   const downloaded: DownloadedAvatar[] = []
   const missing: PullImagesResult['missing'] = []
+  let failed = 0
 
   const containerIndex = new Map<string, number>()
   for (const entry of await deps.bridge.listBinaryFiles()) {
@@ -215,7 +222,15 @@ export async function pullMissingImages(args: {
       continue
     }
 
-    await deps.bridge.readBinary(filename, source.localPath)
+    try {
+      await deps.bridge.readBinary(filename, source.localPath)
+    } catch {
+      // One unreadable binary mustn't strand every photo after it — or the
+      // ones already downloaded this pass, which the caller only applies
+      // once this returns.
+      failed++
+      continue
+    }
     bookkeeping[filename] = {
       localMtime: existing?.localMtime ?? 0,
       uploadedMtime: existing?.uploadedMtime ?? null,
@@ -229,7 +244,7 @@ export async function pullMissingImages(args: {
     )
   }
 
-  return { downloaded, missing, bookkeeping }
+  return { downloaded, missing, failed, bookkeeping }
 }
 
 /** An active identity the caller wants to keep in the container. */
@@ -240,14 +255,17 @@ export type ActiveIdentity =
 export type GcResult = {
   /** Filenames removed from the container. */
   deleted: string[]
+  /** `shouldStop` ended the sweep before every orphan was deleted. */
+  stopped: boolean
 }
 
 /**
  * Deletes container binaries that no longer correspond to any active local
- * identity — the Phase-2 equivalent of tombstone cleanup. Safe to run
- * liberally; the container is not the source of truth for avatars (the contact
- * records are), so deleting an orphan never loses user data that isn't already
- * lost.
+ * identity — the Phase-2 equivalent of tombstone cleanup. Only safe when
+ * `activeIdentities` reflects every device's records: a binary whose owner
+ * hasn't reached this device yet looks orphaned, and its uploader never
+ * re-uploads an unchanged photo. `shouldStop` is checked before each delete so
+ * the caller can end the sweep when that set may have changed.
  *
  * Concrete cases this catches:
  *
@@ -261,6 +279,7 @@ export type GcResult = {
 export async function gcOrphanImages(args: {
   activeIdentities: ActiveIdentity[]
   deps: ImageSyncDeps
+  shouldStop?: () => boolean
 }): Promise<GcResult> {
   const { deps } = args
   const keep = new Set<string>()
@@ -274,9 +293,10 @@ export async function gcOrphanImages(args: {
   const deleted: string[] = []
   for (const { filename } of container) {
     if (keep.has(filename)) continue
+    if (args.shouldStop?.()) return { deleted, stopped: true }
     await deps.bridge.deleteBinaryFile(filename)
     deleted.push(filename)
   }
 
-  return { deleted }
+  return { deleted, stopped: false }
 }

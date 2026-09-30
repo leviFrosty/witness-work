@@ -52,7 +52,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   })
   // Optimistic until the first reconcile probes the container: `isAvailable`
   // only proves iCloud sign-in; iCloud Drive being disabled for the app
-  // surfaces as a readAll rejection and flips this false.
+  // surfaces as a read rejection and flips this false.
   const [iCloudSharingAvailable, setICloudSharingAvailable] = useState(
     () => Platform.OS === 'ios' && ICloudBridge.isAvailable()
   )
@@ -93,9 +93,9 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         // container materializes would shadow another device's real claim.
         const scanned = await ICloudBridge.waitForInitialScan(5000)
 
-        let file
+        let read
         try {
-          file = await readAccountFile()
+          read = await readAccountFile()
         } catch (error) {
           // Signed in but container unreachable (iCloud Drive off for the
           // app) — expected for a minority of users, not an error.
@@ -107,6 +107,17 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           return
         }
         setICloudSharingAvailable(true)
+        if (read.pending) {
+          // The file still downloading may be another device's claim, so no
+          // decision is safe yet — a claim would overwrite it. Pending files
+          // stay unobserved, so the metadata query reports the file again
+          // once it lands and `remote-change` re-runs this.
+          logger.log('[Account] deferred (account file downloading)', {
+            reason,
+          })
+          return
+        }
+        const { file } = read
 
         const mine = getOrCreateAccountId()
         const entitled = supporterSinceDate(customerRef.current) !== null

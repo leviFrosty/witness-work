@@ -11,6 +11,16 @@ export type SyncFile = {
   modifiedAt: number
 }
 
+export type SyncRead = {
+  files: SyncFile[]
+  /**
+   * Matching files still downloading at the deadline (or present but
+   * unreadable). Skipped this time; the metadata query reports them again once
+   * they land. `null` when the binary can't tell (see `readFiles`).
+   */
+  pending: string[] | null
+}
+
 /** One entry returned by `listBinaryFiles` — filename + container mtime. */
 export type BinaryFileInfo = {
   filename: string
@@ -27,6 +37,9 @@ declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   getContainerPath(): string | null
   waitForInitialScan(timeoutMs: number): Promise<boolean>
   readAll(): Promise<SyncFile[]>
+  // Optional: absent on binaries built before they existed.
+  listFiles?(): Promise<string[]>
+  readFiles?(filenames: string[]): Promise<SyncRead>
   write(filename: string, json: string): Promise<number>
   deleteFile(filename: string): Promise<null>
   deleteAll(): Promise<null>
@@ -70,16 +83,29 @@ export async function waitForInitialScan(timeoutMs = 5000): Promise<boolean> {
 }
 
 /**
- * Reads every `witness-work*.json` file in the ubiquity container, triggering
- * downloads in parallel for any that are still iCloud placeholders. Resolves to
- * the list of successfully-materialized files — anything still downloading at
- * the 10s deadline is skipped and picked up by the next pull.
+ * Reads the `witness-work*.json` files whose names pass `include`, triggering
+ * downloads in parallel for any that are still iCloud placeholders. Anything
+ * still downloading at the 10s deadline is skipped and listed in `pending`.
  *
- * Returns an empty array when there are no sync files yet.
+ * Reading a file marks its current version observed, which silences the
+ * remote-change event for that version — so callers must include only the files
+ * they actually consume. Reading everything to find one file (as the account
+ * reader once did) swallows the event for data files nobody merged.
  */
-export async function readAll(): Promise<SyncFile[]> {
-  if (Platform.OS !== 'ios' || !native) return []
-  return native.readAll()
+export async function readFiles(
+  include: (filename: string) => boolean
+): Promise<SyncRead> {
+  if (Platform.OS !== 'ios' || !native) return { files: [], pending: [] }
+  // Binaries predating `readFiles` (an OTA update onto an older build of the
+  // same app version) can only read everything, and silently skip files still
+  // downloading.
+  if (!native.listFiles || !native.readFiles) {
+    const files = await native.readAll()
+    return { files: files.filter((f) => include(f.filename)), pending: null }
+  }
+  const filenames = (await native.listFiles()).filter(include)
+  if (filenames.length === 0) return { files: [], pending: [] }
+  return native.readFiles(filenames)
 }
 
 /**

@@ -32,6 +32,7 @@ import PreferencesBackupsScreen from '@/features/settings/screens/preferences/sc
 import PreferencesAppearanceScreen from '@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen'
 import PreferencesPersonalizationScreen from '@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen'
 import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen'
+import PreferencesPrivacyScreen from '@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen'
 import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
 import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
@@ -306,6 +307,15 @@ const RootStackComponent = () => {
           }}
           name='PreferencesWidgets'
           component={PreferencesWidgetsScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('privacy')} />
+            ),
+          }}
+          name='PreferencesPrivacy'
+          component={PreferencesPrivacyScreen}
         />
         <RootStack.Screen
           options={{

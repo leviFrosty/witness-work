@@ -37,6 +37,7 @@ import FAQTopics, {
 } from '@/features/updates/components/FAQTopics'
 import { RootStackParamList } from '@/types/rootStack'
 import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
+import { analytics } from '@/lib/analytics'
 
 const FAQScreen = () => {
   const theme = useTheme()
@@ -69,8 +70,10 @@ const FAQScreen = () => {
       // matters for granting a promotional entitlement in the RC dashboard.
       const id = await Purchases.getAppUserID()
       await Clipboard.setStringAsync(id)
+      analytics.capture('help_center_account_id_copied')
       toast.show(i18n.t('accountIdCopied'), { message: '', native: true })
     } catch (error) {
+      analytics.capture('help_center_account_id_copy_failed')
       errorTracking.captureException(error)
       toast.show(i18n.t('copyAccountIdError'), { message: '', native: true })
     }

@@ -273,6 +273,17 @@ in typing, with `result_count` (including zero for no matches). Results update
 immediately; the pause only limits event volume. Clearing the query or unmounting
 the screen before the pause cancels the pending event. Search text is never sent.
 
+| Event                                | When / properties                                                                                                                                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `help_center_question_opened`        | An answer is expanded. `question_id` is the stable FAQ entry ID; `category` is its FAQ category, including `buddies`. Collapsing an answer emits nothing.                                                                                                    |
+| `help_center_resource_clicked`       | A support resource is tapped. `resource`: `bug_report`, `feature_request`, `email`, `privacy_policy`, `source_code`, or `notes_import_data_policy`. This records the request to open the resource, not a submitted report or successful external navigation. |
+| `help_center_account_id_copied`      | The support account ID is successfully copied to the clipboard. No ID is captured.                                                                                                                                                                           |
+| `help_center_account_id_copy_failed` | Reading or copying the support account ID fails. No ID or raw error is captured.                                                                                                                                                                             |
+
+Help Center events never include search text, question/answer text, URLs, account
+IDs, contact information, or backup contents. Opening an external resource hands
+off to another app, so completion or abandonment there is not inferred.
+
 ## Settings split view
 
 On wide layouts (iPad with the sidebar), Settings shows its list beside the open

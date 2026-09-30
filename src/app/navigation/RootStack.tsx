@@ -26,6 +26,7 @@ import BuddyDetailScreen from '@/features/buddies/screens/BuddyDetailScreen'
 import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
 import BuddiesSettingsScreen from '@/features/buddies/screens/BuddiesSettingsScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
+import BuddiesFeedbackScreen from '@/features/buddies/screens/BuddiesFeedbackScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -263,6 +264,20 @@ const RootStackComponent = () => {
           }}
           name='Buddies Settings'
           component={BuddiesSettingsScreen}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='exit'
+                title={i18n.t('buddies_feedbackTitle')}
+              />
+            ),
+          }}
+          name='Buddies Feedback'
+          component={BuddiesFeedbackScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

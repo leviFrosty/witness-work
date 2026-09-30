@@ -27,7 +27,7 @@ import {
   surveyAppearance,
   surveyAvailable,
   surveyEventProperties,
-} from '@/features/supporter/lib/surveySdk'
+} from '@/lib/surveySdk'
 
 export default function SupporterFeedback({
   showNudge,

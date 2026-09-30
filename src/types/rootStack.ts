@@ -91,6 +91,8 @@ export type RootStackParamList = {
   'Buddy Invite': { link: string }
   /** What buddies see, Buddies notifications, and delete-all. */
   'Buddies Settings': undefined
+  /** Alpha explainer, opt-in diagnostics, and the Buddies feedback survey. */
+  'Buddies Feedback': { source: 'badge' | 'card' | 'settings' } | undefined
 }
 
 /** Where the Service History editor was opened from (analytics). */

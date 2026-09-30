@@ -21,6 +21,8 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { RootStackNavigation } from '@/types/rootStack'
+import BuddiesAlphaBadge from '@/features/buddies/components/BuddiesAlphaBadge'
+import BuddiesFeedbackCard from '@/features/buddies/components/BuddiesFeedbackCard'
 import BuddiesList from '@/features/buddies/components/BuddiesList'
 import BuddiesNotificationsCard from '@/features/buddies/components/BuddiesNotificationsCard'
 import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
@@ -140,6 +142,7 @@ export default function BuddiesScreen({
             >
               {i18n.t('buddies_title')}
             </Text>
+            <BuddiesAlphaBadge />
             {hasInbox &&
               (refreshing ? (
                 <ActivityIndicator
@@ -189,6 +192,7 @@ export default function BuddiesScreen({
         <EnterInviteLink />
         <BuddiesList onInvite={invite} />
         {hasInbox && <BuddiesNotificationsCard />}
+        <BuddiesFeedbackCard />
       </ScrollView>
     </View>
   )

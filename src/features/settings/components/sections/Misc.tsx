@@ -17,7 +17,10 @@ import { openURL } from '@/lib/links'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import useTheme from '@/contexts/theme'
 
-const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
+const MiscSection = ({
+  handleNavigate,
+  selectedDestination,
+}: SettingsSectionProps) => {
   const theme = useTheme()
   const { unreadReleaseNotes } = usePreferences()
 
@@ -30,6 +33,7 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={TagIcon}
           label={i18n.t('whatsNew')}
           onPress={() => handleNavigate('Whats New')}
+          selected={selectedDestination === 'Whats New'}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {unreadReleaseNotes && (

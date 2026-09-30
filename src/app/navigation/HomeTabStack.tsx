@@ -25,7 +25,7 @@ import {
   getReleaseAnnounceBetween,
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
+import SettingsSplitScreen from '@/app/navigation/SettingsSplitScreen'
 import BuddiesTabScreen from '@/app/buddies/BuddiesTabScreen'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -184,7 +184,7 @@ const HomeTabStack = () => {
 
         <Tab.Screen name='Map' component={Map} />
         {hasSidebar && (
-          <Tab.Screen name='Settings' component={SettingsOverviewScreen} />
+          <Tab.Screen name='Settings' component={SettingsSplitScreen} />
         )}
       </Tab.Navigator>
       {/* Mounted last so it overlays the tab bar. The global ConfettiProvider

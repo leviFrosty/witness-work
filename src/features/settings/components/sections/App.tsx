@@ -14,15 +14,15 @@ import InputRowButton from '@/features/settings/components/inputs/InputRowButton
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
-import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '@/types/rootStack'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
 import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 
-const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
-  const navigation = useNavigation<RootStackNavigation>()
+const AppSection = ({
+  handleNavigate,
+  selectedDestination,
+}: SettingsSectionProps) => {
   const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
   const notesImportReadyCount = useNotesImportManager((s) =>
@@ -36,6 +36,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={FileOutputIcon}
           label={i18n.t('backupAndRestore')}
           onPress={() => handleNavigate('Import and Export')}
+          selected={selectedDestination === 'Import and Export'}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
@@ -43,6 +44,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={FileInputIcon}
           label={i18n.t('mytimeImport')}
           onPress={() => handleNavigate('MytimeImport')}
+          selected={selectedDestination === 'MytimeImport'}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
@@ -59,6 +61,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
                   : i18n.t('notesImport_unavailable')
             }
             onPress={() => handleNavigate('NotesImportComposer')}
+            selected={selectedDestination === 'NotesImportComposer'}
           >
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
@@ -73,6 +76,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
             leftIcon={CloudIcon}
             label={i18n.t('iCloudSync')}
             onPress={() => handleNavigate('PreferencesiCloud')}
+            selected={selectedDestination === 'PreferencesiCloud'}
           >
             <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
@@ -80,7 +84,8 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         <InputRowButton
           leftIcon={EllipsisIcon}
           label={i18n.t('more')}
-          onPress={() => navigation.navigate('More')}
+          onPress={() => handleNavigate('More')}
+          selected={selectedDestination === 'More'}
           lastInSection
         >
           <IconButton icon={ChevronRightIcon} />

@@ -15,16 +15,28 @@ import MiscSection from '@/features/settings/components/sections/Misc'
 import SupportSection from '@/features/settings/components/sections/Support'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
+type Props = {
+  /** Opens destinations somewhere other than the root stack (the split pane). */
+  onNavigate?: (destination: keyof RootStackParamList) => void
+  selectedDestination?: keyof RootStackParamList
+}
+
 /** The same settings destinations in the compact drawer and wide workspace. */
-export default function SettingsContents() {
+export default function SettingsContents({
+  onNavigate,
+  selectedDestination,
+}: Props) {
   const theme = useTheme()
   const layout = useInputLayout()
   const navigation = useNavigation<RootStackNavigation>()
   const handleNavigate = (destination: keyof RootStackParamList) => {
+    if (onNavigate) return onNavigate(destination)
     // These sections supply settings destinations that take no required params.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     navigation.navigate(destination as any)
   }
+
+  const sectionProps = { handleNavigate, selectedDestination }
 
   return (
     <>
@@ -47,11 +59,11 @@ export default function SettingsContents() {
         {i18n.t('settings')}
       </Text>
       <View style={{ gap: drawerLayout.sectionGap }}>
-        <PreferencesSection handleNavigate={handleNavigate} />
-        <AppSection handleNavigate={handleNavigate} />
+        <PreferencesSection {...sectionProps} />
+        <AppSection {...sectionProps} />
         <SupportSection />
-        <ContactSection />
-        <MiscSection handleNavigate={handleNavigate} />
+        <ContactSection {...sectionProps} />
+        <MiscSection {...sectionProps} />
       </View>
     </>
   )

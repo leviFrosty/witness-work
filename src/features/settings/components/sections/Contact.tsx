@@ -9,12 +9,12 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
-import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '@/types/rootStack'
+import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 
-const ContactSection = () => {
-  const navigation = useNavigation<RootStackNavigation>()
-
+const ContactSection = ({
+  handleNavigate,
+  selectedDestination,
+}: SettingsSectionProps) => {
   return (
     <View style={{ gap: 3 }}>
       <SectionTitle alignWithIcons text={i18n.t('helpCenter')} />
@@ -23,9 +23,10 @@ const ContactSection = () => {
           lastInSection
           leftIcon={CircleQuestionMarkIcon}
           label={i18n.t('helpCenter')}
+          selected={selectedDestination === 'FAQ'}
           onPress={() => {
             analytics.capture('help_center_opened', { source: 'settings' })
-            navigation.navigate('FAQ')
+            handleNavigate('FAQ')
           }}
         >
           <IconButton icon={ChevronRightIcon} />

@@ -1,4 +1,3 @@
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
@@ -12,37 +11,13 @@ import OnBoarding from '@/features/onboarding/components/Onboarding'
 import { usePreferences } from '@/stores/preferences'
 import UpdateScreen from '@/features/updates/screens/UpdateScreen'
 import HomeTabStack from '@/app/navigation/HomeTabStack'
-import PreferencesScreen from '@/features/settings/screens/preferences/PreferencesScreen'
 import i18n from '@/lib/locales'
-import WhatsNewScreen from '@/features/updates/screens/WhatsNewScreen'
 import PaywallRouteScreen from '@/app/navigation/PaywallRouteScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
-import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
-import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
-import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposerRouteScreen'
-import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
-import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
-import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
-import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
-import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
-import PreferencesAudioAndHapticsScreen from '@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen'
-import PreferencesScheduleScreen from '@/features/settings/screens/preferences/screens/PreferencesScheduleScreen'
-import PreferencesHomeScreen from '@/features/settings/screens/preferences/screens/PreferencesHomeScreen'
-import PreferencesBackupsScreen from '@/features/settings/screens/preferences/screens/PreferencesBackupsScreen'
-import PreferencesAppearanceScreen from '@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen'
-import PreferencesPersonalizationScreen from '@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen'
-import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen'
-import PreferencesPrivacyScreen from '@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen'
-import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
-import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
-import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
-import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
 import RescheduleVisitScreen from '@/features/visits/screens/RescheduleVisitScreen'
 import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
 import RolloverScreen from '@/features/service-reports/screens/RolloverScreen'
 import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShowcaseScreen'
-import FAQScreen from '@/features/updates/screens/FAQScreen'
-import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
 import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
 import ServiceHistoryScreen from '@/features/service-reports/screens/ServiceHistoryScreen'
@@ -50,12 +25,12 @@ import BuddyCodeScreen from '@/features/buddies/screens/BuddyCodeScreen'
 import BuddyDetailScreen from '@/features/buddies/screens/BuddyDetailScreen'
 import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
 import BuddiesSettingsScreen from '@/features/buddies/screens/BuddiesSettingsScreen'
+import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
-  const notesImportEnabled = useNotesImportEnabled()
   const { onboardingComplete } = usePreferences()
 
   return (
@@ -134,24 +109,22 @@ const RootStackComponent = () => {
           name='Update'
           component={UpdateScreen}
         />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('preferences')} />
-            ),
-          }}
-          name='Preferences'
-          component={PreferencesScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('whatsNew')} />
-            ),
-          }}
-          name='Whats New'
-          component={WhatsNewScreen}
-        />
+        {settingsDetailScreens.map((screen) => (
+          <RootStack.Screen
+            key={screen.name}
+            name={screen.name}
+            component={screen.component}
+            options={{
+              header: () => (
+                <Header
+                  buttonType='back'
+                  title={screen.title()}
+                  rightElement={screen.headerRight && <screen.headerRight />}
+                />
+              ),
+            }}
+          />
+        ))}
         <RootStack.Screen
           options={{
             header: () => <Header buttonType='back' title={i18n.t('donate')} />,
@@ -165,184 +138,6 @@ const RootStackComponent = () => {
           }}
           name='Thank You'
           component={PaywallThankYouScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('importAndExport')} />
-            ),
-          }}
-          name='Import and Export'
-          component={ImportAndExportScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('mytimeImport')} />
-            ),
-          }}
-          name='MytimeImport'
-          component={MytimeImportScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header
-                buttonType='back'
-                title={i18n.t('notesImport_title')}
-                rightElement={
-                  notesImportEnabled ? <NotesImportHeaderActions /> : undefined
-                }
-              />
-            ),
-          }}
-          name='NotesImportComposer'
-          component={NotesImportComposerRouteScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('profileEditTitle')} />
-            ),
-          }}
-          name='PreferencesPublisher'
-          component={PreferencesPublisherScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('conversations')} />
-            ),
-          }}
-          name='PreferencesConversation'
-          component={PreferencesConversationScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => <Header buttonType='back' title={i18n.t('plans')} />,
-          }}
-          name='PreferencesPlans'
-          component={PreferencesPlansScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('contactFields')} />
-            ),
-          }}
-          name='PreferencesCustomFields'
-          component={PreferencesCustomFieldsScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('navigation')} />
-            ),
-          }}
-          name='PreferencesNavigation'
-          component={PreferencesNavigationScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('audioAndHaptics')} />
-            ),
-          }}
-          name='PreferencesAudioAndHaptics'
-          component={PreferencesAudioAndHapticsScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('homeScreen')} />
-            ),
-          }}
-          name='PreferencesHomeScreen'
-          component={PreferencesHomeScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header
-                buttonType='back'
-                title={i18n.t('milestoneSecondary_schedule_title')}
-              />
-            ),
-          }}
-          name='PreferencesScheduleScreen'
-          component={PreferencesScheduleScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('backups')} />
-            ),
-          }}
-          name='PreferencesBackups'
-          component={PreferencesBackupsScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('regionAndFormats')} />
-            ),
-          }}
-          name='PreferencesAppearance'
-          component={PreferencesAppearanceScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('personalization')} />
-            ),
-          }}
-          name='PreferencesPersonalization'
-          component={PreferencesPersonalizationScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('widgets')} />
-            ),
-          }}
-          name='PreferencesWidgets'
-          component={PreferencesWidgetsScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('privacy')} />
-            ),
-          }}
-          name='PreferencesPrivacy'
-          component={PreferencesPrivacyScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('iCloudSync')} />
-            ),
-          }}
-          name='PreferencesiCloud'
-          component={PreferencesiCloudScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('appIconScreenTitle')} />
-            ),
-          }}
-          name='PreferencesAppIcon'
-          component={PreferencesAppIconScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('colorKeyScreenTitle')} />
-            ),
-          }}
-          name='PreferencesColorKey'
-          component={PreferencesColorKeyScreen}
         />
         <RootStack.Screen
           options={{
@@ -387,22 +182,6 @@ const RootStackComponent = () => {
           }}
           name='MilestoneShowcase'
           component={MilestoneShowcaseScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('helpCenter')} />
-            ),
-          }}
-          name='FAQ'
-          component={FAQScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => <Header buttonType='back' title={i18n.t('more')} />,
-          }}
-          name='More'
-          component={MoreScreen}
         />
         <RootStack.Screen
           options={{

@@ -5,11 +5,7 @@ import {
   SurveyType,
 } from '@posthog/core'
 import type { PostHog, Survey } from 'posthog-react-native'
-import {
-  closeSurvey,
-  seenSurveys,
-  surveyAvailable,
-} from '@/features/supporter/lib/surveySdk'
+import { closeSurvey, seenSurveys, surveyAvailable } from '@/lib/surveySdk'
 
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 

@@ -335,6 +335,38 @@ and targeting. RevenueCat-based local eligibility distinguishes current paid
 access from a recent confirmed lapse. See [ADR 0013](adr/0013-supporter-feedback-surveys.md)
 for campaign links, default recurrence/dismissal behavior, and rollout steps.
 
+### Buddies Alpha feedback
+
+The Buddies tab's Alpha badge, its feedback card, and Buddies Settings open the
+Buddies Feedback screen, which explains Alpha and then opens the API survey
+[WitnessWork Buddies feedback (Alpha)](https://us.posthog.com/project/492895/surveys/01a0f037-23cd-0000-e818-63a4821064d8)
+(`schedule: always`, so testers can send feedback repeatedly). Its ID lives in
+`src/features/buddies/lib/feedback.ts`; edit questions in PostHog.
+
+Usage events (all with `source`: `badge`, `card`, or `settings`):
+`buddies_feedback_viewed`, `buddies_feedback_started` (`diagnostics` boolean),
+`buddies_feedback_submitted` (`diagnostics` boolean), `buddies_feedback_abandoned`,
+`buddies_feedback_unavailable` (survey not loaded, e.g. offline),
+`buddies_feedback_attached`, and `buddies_feedback_attachment_failed`.
+
+**Opt-in diagnostics are the one place app data leaves the device through
+PostHog.** Off by default; only when the user turns on Include Diagnostics _and_
+submits the survey, the app sends `survey attachment` events (a `survey `
+event, so they pass with usage analytics off, like the response itself). They
+share a random `feedback_id` with the `survey sent` response, which gets it as a
+session-only property:
+
+- `kind: diagnostics` — platform, OS, device model, app version/build, locale,
+  time zone, and Buddies _counts_ (never buddies' names, cards, shares, relay ids,
+  or keys — that data is other people's and end-to-end encrypted).
+- `kind: backup` — the same JSON backup Settings exports, gzipped and base64url
+  encoded across `part`/`parts` events of ≤500KB each (PostHog drops events over
+  1MB). Rebuild it with
+  `node --env-file=.env scripts/buddies-feedback-backup.mjs <feedback_id>`.
+
+Backups hold Contacts, Notes, and ministry records: open them only to debug that
+report, and delete local copies afterwards.
+
 ## Error tracking
 
 Use `errorTracking` from `@/lib/errorTracking` for diagnostics. Feature code must

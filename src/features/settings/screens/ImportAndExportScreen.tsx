@@ -30,17 +30,9 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
+import { BackupFile, createBackupFile } from '@/lib/backupFile'
 
-/**
- * Any new stores should be added to this type to be included in the
- * import/export
- */
-type ImportFile = {
-  serviceReportStore?: unknown
-  contactStore?: unknown
-  conversationStore?: unknown
-  preferencesStore?: unknown
-}
+type ImportFile = BackupFile
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
@@ -175,12 +167,7 @@ const ImportAndExportScreen = () => {
       destination: 'share_sheet',
     }
     analytics.capture('backup_export_started', properties)
-    const data: ImportFile = {
-      serviceReportStore,
-      contactStore,
-      conversationStore,
-      preferencesStore,
-    }
+    const data = createBackupFile()
     setLoading(true)
 
     try {

@@ -5,8 +5,9 @@
 // `src/lib/analyticsConsent.ts`).
 
 // Events the provider sends that are not usage analytics and therefore stay on
-// regardless of the user's analytics choice: crash reports and the answers a
-// user deliberately submits or dismisses in an in-app survey.
+// regardless of the user's analytics choice: crash reports, the answers a
+// user deliberately submits or dismisses in an in-app survey, and diagnostics
+// they opt to attach to a response (`survey attachment`).
 export function isAnalyticsEvent(event: string): boolean {
   return event !== '$exception' && !event.startsWith('survey ')
 }

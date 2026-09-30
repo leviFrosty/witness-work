@@ -12,6 +12,7 @@ import { type StyleProp, View, type ViewStyle } from 'react-native'
 import ContactPreview from '@/components/ContactPreview'
 import Avatar from '@/components/ui/Avatar'
 import ContextMenu from '@/components/ui/ContextMenu'
+import Empty from '@/components/ui/Empty'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -226,17 +227,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
           </View>
         </View>
       ) : (
-        <View
-          style={{
-            padding: 18,
-            borderRadius: theme.numbers.borderRadiusMd,
-            backgroundColor: theme.colors.backgroundLighter,
-          }}
-        >
-          <Text style={{ color: theme.colors.textAlt, textAlign: 'center' }}>
-            {i18n.t('serviceReportInsights.noStudies')}
-          </Text>
-        </View>
+        <Empty title={i18n.t('serviceReportInsights.noStudies')} />
       )}
 
       <Pagination

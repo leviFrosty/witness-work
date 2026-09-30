@@ -1,6 +1,7 @@
 import {
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
+  BookUser as BookUserIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
   SlidersHorizontal as SlidersHorizontalIcon,
@@ -20,6 +21,7 @@ import useContactsSearchStore from '@/features/contacts/stores/contactsSearchSto
 import { builtInContactSortOptions } from '@/stores/preferences'
 import i18n from '@/lib/locales'
 import Card from '@/components/ui/Card'
+import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -134,48 +136,27 @@ const ContactsScreen = () => {
     const hasSearch = search.trim().length > 0
     if (!hasSearch && !hasActiveFilters) {
       return (
-        <View style={{ paddingHorizontal: 12, paddingTop: 24 }}>
-          <Text
-            style={{
-              textAlign: 'center',
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('md'),
-            }}
-          >
-            {i18n.t('noContactsSaved')}
-          </Text>
-        </View>
+        <Empty
+          icon={
+            <LucideIcon
+              icon={BookUserIcon}
+              size={24}
+              color={theme.colors.text}
+            />
+          }
+          title={i18n.t('noContactsYet')}
+          description={i18n.t('noContactsSaved')}
+        />
       )
     }
     return (
-      <View
-        style={{
-          paddingHorizontal: 24,
-          paddingTop: 32,
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('lg'),
-            color: theme.colors.text,
-            textAlign: 'center',
-          }}
-        >
-          {i18n.t('contacts_emptySearch_title')}
-        </Text>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('md'),
-            textAlign: 'center',
-          }}
-        >
-          {i18n.t('contacts_emptySearch_body')}
-        </Text>
-      </View>
+      <Empty
+        icon={
+          <LucideIcon icon={SearchIcon} size={24} color={theme.colors.text} />
+        }
+        title={i18n.t('contacts_emptySearch_title')}
+        description={i18n.t('contacts_emptySearch_body')}
+      />
     )
   }
 

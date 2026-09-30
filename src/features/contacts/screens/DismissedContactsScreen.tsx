@@ -72,8 +72,8 @@ const DismissedContactsScreen = ({ navigation }: Props) => {
               icon={
                 <LucideIcon
                   icon={ClockIcon}
-                  size={32}
-                  color={theme.colors.textAlt}
+                  size={24}
+                  color={theme.colors.text}
                 />
               }
               title={i18n.t('noDismissedContacts_title')}

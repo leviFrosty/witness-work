@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native'
 import * as Location from 'expo-location'
 import Text from '@/components/ui/MyText'
+import Empty from '@/components/ui/Empty'
 import MyTextInput from '@/components/ui/TextInput'
 import LucideIcon from '@/components/ui/LucideIcon'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -275,16 +276,7 @@ const PlaceSearchInput = ({
           ))}
         </View>
       )}
-      {showNoResults && (
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('planLocation_noResults')}
-        </Text>
-      )}
+      {showNoResults && <Empty title={i18n.t('planLocation_noResults')} />}
     </View>
   )
 }

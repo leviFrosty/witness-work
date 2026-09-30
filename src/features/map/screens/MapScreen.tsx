@@ -1,11 +1,8 @@
 import { analytics } from '@/lib/analytics'
 import {
-  BookUser as BookUserIcon,
   Expand as ExpandIcon,
   Info as InfoIcon,
-  MapPinned as MapPinnedIcon,
   Navigation as NavigationIcon,
-  Plus as PlusIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -23,6 +20,7 @@ import {
   Platform,
   useWindowDimensions,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -41,8 +39,9 @@ import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
-import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
+import Empty from '@/components/ui/Empty'
+import MapEmptyState from '@/features/map/components/MapEmptyState'
 import i18n from '@/lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapOnboarding from '@/features/map/components/MapOnboarding'
@@ -52,7 +51,6 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
-import InfoPopover from '@/components/ui/InfoPopover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
@@ -586,18 +584,6 @@ const FullMapView = ({
       id: Crypto.randomUUID(),
     })
 
-  const hasSavedActiveContacts = activeContactCount > 0
-  const emptyStateTitle = hasSavedActiveContacts
-    ? i18n.t('map_emptyMissingLocationsTitle')
-    : i18n.t('map_emptyNoContactsTitle')
-  const emptyStatePrimaryLabel = hasSavedActiveContacts
-    ? i18n.t('map_reviewContacts')
-    : i18n.t('addContact')
-  const emptyStatePrimaryIcon = hasSavedActiveContacts ? BookUserIcon : PlusIcon
-  const emptyStatePrimaryAction = hasSavedActiveContacts
-    ? () => navigation.navigate('Contacts')
-    : addContact
-
   const emptyCardPlacement = {
     left: sidebarWidth + 16,
     right: isWide ? undefined : 16,
@@ -645,154 +631,13 @@ const FullMapView = ({
             style={StyleSheet.absoluteFill}
           />
         )}
-        <View style={{ padding: 20, gap: 16 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-            }}
-          >
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.colors.accentTranslucent,
-                borderWidth: 1,
-                borderColor: theme.colors.accent,
-              }}
-            >
-              <LucideIcon
-                icon={MapPinnedIcon}
-                size={theme.fontSize('lg')}
-                style={{ color: theme.colors.accent }}
-              />
-            </View>
-            <View style={{ flex: 1, gap: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  accessibilityRole='header'
-                  style={{
-                    flexShrink: 1,
-                    fontSize: theme.fontSize('xl'),
-                    fontFamily: theme.fonts.bold,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {emptyStateTitle}
-                </Text>
-                {/* The mapped count already says what's wrong; why and how to
-                  fix it are one tap away instead of a paragraph. */}
-                {hasSavedActiveContacts && (
-                  <InfoPopover
-                    inline
-                    title={emptyStateTitle}
-                    description={i18n.t('map_emptyMissingLocationsBody')}
-                  />
-                )}
-              </View>
-              {hasSavedActiveContacts && (
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('sm'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('map_emptyMappedCount', {
-                    count: activeContactCount,
-                  })}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {!hasSavedActiveContacts && (
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('md'),
-                lineHeight: theme.fontSize('md') * 1.35,
-              }}
-            >
-              {i18n.t('map_emptyNoContactsBody')}
-            </Text>
-          )}
-
-          <View
-            style={{
-              flexDirection: hasSavedActiveContacts ? 'row' : 'column',
-              gap: 10,
-            }}
-          >
-            <Button
-              onPress={emptyStatePrimaryAction}
-              style={{
-                flex: hasSavedActiveContacts ? 1 : undefined,
-                minHeight: 48,
-                borderRadius: theme.numbers.borderRadiusMd,
-                backgroundColor: theme.colors.accent,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 10,
-                paddingHorizontal: 16,
-              }}
-            >
-              <LucideIcon
-                icon={emptyStatePrimaryIcon}
-                size={theme.fontSize('sm')}
-                style={{ color: theme.colors.textInverse }}
-              />
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={{
-                  color: theme.colors.textInverse,
-                  fontFamily: theme.fonts.bold,
-                  fontSize: theme.fontSize('md'),
-                }}
-              >
-                {emptyStatePrimaryLabel}
-              </Text>
-            </Button>
-            {hasSavedActiveContacts && (
-              <Button
-                onPress={addContact}
-                variant='outline'
-                style={{
-                  minHeight: 48,
-                  borderRadius: theme.numbers.borderRadiusMd,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                  paddingHorizontal: 16,
-                }}
-              >
-                <LucideIcon
-                  icon={PlusIcon}
-                  size={theme.fontSize('sm')}
-                  style={{ color: theme.colors.text }}
-                />
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  style={{
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('md'),
-                  }}
-                >
-                  {i18n.t('addContact')}
-                </Text>
-              </Button>
-            )}
-          </View>
-        </View>
+        <ScrollView bounces={false} style={{ flexShrink: 1 }}>
+          <MapEmptyState
+            activeContactCount={activeContactCount}
+            onReviewContacts={() => navigation.navigate('Contacts')}
+            onAddContact={addContact}
+          />
+        </ScrollView>
       </View>
     </View>
   )
@@ -1027,17 +872,17 @@ const FullMapView = ({
                     style={StyleSheet.absoluteFill}
                   />
                 )}
-                <View style={{ padding: 20, gap: 8 }}>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xl'),
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {i18n.t('map_noSearchResults')}
-                  </Text>
-                  <Text>{i18n.t('map_noSearchResults_description')}</Text>
-                </View>
+                <Empty
+                  icon={
+                    <LucideIcon
+                      icon={SearchIcon}
+                      size={24}
+                      color={theme.colors.text}
+                    />
+                  }
+                  title={i18n.t('map_noSearchResults')}
+                  description={i18n.t('map_noSearchResults_description')}
+                />
               </View>
             </View>
           ) : isWide ? (

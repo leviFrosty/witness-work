@@ -15,6 +15,8 @@ export type NotificationKind =
   | 'supporter_survey'
   | 'data_protection_retention'
   | 'buddies'
+  /** Test items from the Tools screen. */
+  | 'dev_test'
 
 export type NotificationTone = 'accent' | 'warn' | 'supporter'
 

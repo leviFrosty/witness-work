@@ -96,6 +96,14 @@ import {
   ToolSection,
   ToolSubheading,
 } from '@/app/navigation/tools/ToolsUI'
+import {
+  addDevNotification,
+  clearDevNotifications,
+  DEV_TRAY_PUSH_DATA,
+  openNotificationsTray,
+  useDevNotifications,
+} from '@/app/notifications/devNotifications'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
@@ -630,7 +638,8 @@ export default function ToolsScreen() {
   }
 
   // Smallest possible end-to-end check: schedules a generic notification 10s
-  // out. Verifies the OS scheduling pipeline independent of any plan logic.
+  // out, plus a matching tray item that lands as it fires. Tapping the push
+  // opens the tray, like a Buddies push.
   const scheduleTestNotificationIn10s = async () => {
     if (!(await ensureNotificationPermission())) return
     const fireAt = new Date(Date.now() + 10_000)
@@ -639,11 +648,17 @@ export default function ToolsScreen() {
         title: 'Test notification',
         body: 'Fired from dev tools (10s)',
         sound: true,
+        data: DEV_TRAY_PUSH_DATA,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: fireAt,
       },
+    })
+    addDevNotification({
+      title: 'Test notification',
+      description: 'Fired from dev tools (10s)',
+      at: fireAt.getTime(),
     })
     const count = await refreshScheduledNotifications()
     toast.show('Scheduled', {
@@ -705,6 +720,21 @@ export default function ToolsScreen() {
       const count = await refreshScheduledNotifications()
       showDone(`Cancelled · queue=${count}`)
     })
+
+  const devTrayItems = useDevNotifications((state) => state.items)
+  const trayArrivals = useNotificationsTray((state) => state.arrivals)
+  const trayDismissed = useNotificationsTray((state) => state.dismissed)
+  const traySeen = useNotificationsTray((state) => state.seen)
+
+  const addTrayItems = (count: number, label: string) => {
+    for (let i = 1; i <= count; i++)
+      addDevNotification({
+        title: count > 1 ? `Test item ${i}` : 'Test item',
+        description: 'Added from dev tools',
+        at: Date.now() - i * 60_000,
+      })
+    showDone(label)
+  }
 
   const resetLocal = () => {
     // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
@@ -1412,14 +1442,18 @@ export default function ToolsScreen() {
         </ToolSection>
 
         <ToolSection
-          title='Plan notifications'
+          title='Notifications'
           icon={BellIcon}
-          info='End-to-end checks for the day-plan notification feature. Requires iOS notification permission. Generated plans appear in the normal day-plan list and respect the same delete-cancels-notification wiring.'
-          summary={`${scheduledNotifications.length} in queue`}
+          summary={`${scheduledNotifications.length} in queue · ${devTrayItems.length} in tray`}
         >
+          <ToolSubheading
+            title='Push'
+            info='End-to-end checks for OS notifications. Requires notification permission. Generated plans appear in the normal day-plan list and respect the same delete-cancels-notification wiring.'
+          />
           <ToolList>
             <ToolRow
               label='Schedule test notification (10s)'
+              info='Also adds a tray item that shows up as the push fires. Tapping the push opens the tray on Home.'
               onPress={scheduleTestNotificationIn10s}
             />
             <ToolRow
@@ -1452,6 +1486,81 @@ export default function ToolsScreen() {
               label='Scheduled (OS queue)'
               value={scheduledNotifications}
               count={scheduledNotifications.length}
+            />
+          </View>
+
+          <ToolSubheading
+            title='Tray'
+            info='Test items in the Home bell. Their primary action opens Tools; Bump moves the item to the top without closing the tray.'
+          />
+          <ToolList>
+            <ToolRow label='Open tray' onPress={openNotificationsTray} />
+            <ToolRow
+              label='Add test item'
+              onPress={() => addTrayItems(1, 'Added to tray')}
+            />
+            <ToolRow
+              label='Add sticky item'
+              info='Survives Clear All; only its own dismiss removes it.'
+              onPress={() => {
+                addDevNotification({
+                  title: 'Sticky test item',
+                  description: 'Survives Clear All',
+                  sticky: true,
+                })
+                showDone('Added sticky item')
+              }}
+            />
+            <ToolRow
+              label='Add backdated item (3 days ago)'
+              info='Checks newest-first ordering and the relative time label.'
+              onPress={() => {
+                addDevNotification({
+                  title: 'Backdated test item',
+                  description: 'Came in 3 days ago',
+                  at: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                })
+                showDone('Added backdated item')
+              }}
+            />
+            <ToolRow
+              label='Add 12 items'
+              info='Overflows the popover and caps the badge at 9+.'
+              onPress={() => addTrayItems(12, 'Added 12 items')}
+            />
+            <ToolRow
+              label='Mark all unread'
+              info='Clears read state, so every listed item counts toward the badge again.'
+              onPress={() => {
+                useNotificationsTray.setState({ seen: {} })
+                showDone('Marked all unread')
+              }}
+            />
+            <ToolRow
+              label='Restore dismissed'
+              info='Brings back every dismissed or cleared item whose condition still holds, including real ones.'
+              onPress={() => {
+                useNotificationsTray.setState({ dismissed: {} })
+                showDone('Dismissed items restored')
+              }}
+            />
+            <ToolRow
+              label='Remove test items'
+              tone='destructive'
+              onPress={() => {
+                clearDevNotifications()
+                showDone('Test items removed')
+              }}
+            />
+          </ToolList>
+          <View style={{ paddingTop: 8 }}>
+            <JsonViewer
+              label='Tray bookkeeping'
+              value={{
+                arrivals: trayArrivals,
+                dismissed: trayDismissed,
+                seen: traySeen,
+              }}
             />
           </View>
         </ToolSection>

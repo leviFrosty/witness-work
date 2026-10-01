@@ -212,7 +212,8 @@ and the Supporter nudge or feedback invitation.
 
 `kind` is one of `rollover`, `previous_report`, `auxiliary_month`, `backup`,
 `data_protection_retention`, `missed_follow_up`, `buddies`, `notes_import`,
-`whats_new`, `milestone_update`, `supporter_nudge`, or `supporter_survey`. Items never send their text, names, or
+`whats_new`, `milestone_update`, `supporter_nudge`, `supporter_survey`, or
+`dev_test` (Tools screen test items; `open_tools` and `bump` actions). Items never send their text, names, or
 ids. Tapping a row counts as its first action. An item that disappears because
 its condition cleared (report submitted, Follow-up rescheduled) sends nothing;
 compare `notifications_tray_opened` to `notification_action_tapped` for

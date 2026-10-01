@@ -10,9 +10,9 @@ import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
+import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
-import { buddyColor } from '@/features/buddies/lib/buddyColors'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
@@ -106,13 +106,11 @@ export default function BuddyPlansForDay({
             ]}
           >
             <XView style={{ gap: 10 }}>
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: buddyColor(theme, buddy.colorIndex),
-                }}
+              <BuddyAvatar
+                avatar={buddy.avatar}
+                name={buddy.name}
+                colorIndex={buddy.colorIndex}
+                size={22}
               />
               <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {buddy.name}
@@ -136,13 +134,11 @@ export default function BuddyPlansForDay({
           actions={[viewBuddy(buddy.inboxId)]}
         >
           <XView style={{ gap: 10 }}>
-            <View
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: buddyColor(theme, buddy.colorIndex),
-              }}
+            <BuddyAvatar
+              avatar={buddy.avatar}
+              name={buddy.name}
+              colorIndex={buddy.colorIndex}
+              size={22}
             />
             <Text style={{ fontFamily: theme.fonts.semiBold }}>
               {buddy.name}

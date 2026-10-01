@@ -1,11 +1,12 @@
 import { Pressable, View } from 'react-native'
 import { Check as CheckIcon } from 'lucide-react-native'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import LucideIcon from '@/components/ui/LucideIcon'
+import { AvatarBadge } from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
+import ShareReplyBadge from '@/features/buddies/components/ShareReplyBadge'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import type { ReceivedReply } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -97,29 +98,18 @@ export default function BuddyPicker({
                   : undefined,
               }}
             >
-              {isSelected ? (
-                <View
-                  style={{
-                    width: 22,
-                    height: 22,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <LucideIcon
-                    icon={CheckIcon}
-                    size={14}
-                    color={theme.colors.accent}
-                  />
-                </View>
-              ) : (
-                <BuddyAvatar
-                  avatar={buddy.avatar}
-                  name={buddy.name}
-                  colorIndex={buddy.colorIndex}
-                  size={22}
-                />
-              )}
+              <BuddyAvatar
+                avatar={buddy.avatar}
+                name={buddy.name}
+                colorIndex={buddy.colorIndex}
+                size={24}
+              >
+                {reply ? (
+                  <ShareReplyBadge status={reply.status} />
+                ) : isSelected ? (
+                  <AvatarBadge color={theme.colors.accent} icon={CheckIcon} />
+                ) : null}
+              </BuddyAvatar>
               <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {buddy.name}
               </Text>

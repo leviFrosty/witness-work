@@ -1,4 +1,5 @@
 import type { NotificationItem } from '@/types/notifications'
+import useDevNotificationItems from '@/app/notifications/devNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useBuddyNotifications, {
@@ -36,6 +37,7 @@ export default function NotificationsBell() {
     useWhatsNewNotification(),
     useMilestoneUpdateNotification(),
     ...useSupporterNotifications(now),
+    ...useDevNotificationItems(now),
   ]
 
   return (

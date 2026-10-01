@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
 import { useToastController } from '@tamagui/toast'
@@ -32,16 +32,10 @@ import { logger } from '@/lib/logger'
  * navigate to the imported contact.
  */
 export default function ContactImportListener() {
-  const {
-    contacts,
-    deletedContacts,
-    addContact,
-    updateContact,
-    recoverContact,
-    mergeIncomingCustomFieldDefs,
-  } = useContacts()
-  const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
+  // `getInitialURL` keeps returning the launch URL for the app's lifetime, so
+  // handle it once — otherwise a re-run of the effect re-prompts the import.
+  const handledInitialUrl = useRef(false)
 
   useEffect(() => {
     const isContactFileUrl = (url: string) =>
@@ -119,6 +113,18 @@ export default function ContactImportListener() {
             text: i18n.t('import'),
             onPress: async () => {
               try {
+                // Read the stores at tap time so the effect doesn't depend on
+                // (and re-run with) contact state.
+                const {
+                  contacts,
+                  deletedContacts,
+                  addContact,
+                  updateContact,
+                  recoverContact,
+                  mergeIncomingCustomFieldDefs,
+                } = useContacts.getState()
+                const { addConversation, updateConversation } =
+                  useConversations.getState()
                 const callbacks: ImportHandlerCallbacks = {
                   addContact,
                   updateContact,
@@ -152,30 +158,26 @@ export default function ContactImportListener() {
       )
     }
 
-    Linking.getInitialURL()
-      .then((initial) => {
-        logger.log('[ContactImportListener] getInitialURL resolved =', initial)
-        return handle(initial)
-      })
-      .catch((error) => {
-        logger.error('[ContactImportListener] getInitialURL error:', error)
-      })
+    if (!handledInitialUrl.current) {
+      handledInitialUrl.current = true
+      Linking.getInitialURL()
+        .then((initial) => {
+          logger.log(
+            '[ContactImportListener] getInitialURL resolved =',
+            initial
+          )
+          return handle(initial)
+        })
+        .catch((error) => {
+          logger.error('[ContactImportListener] getInitialURL error:', error)
+        })
+    }
     const sub = Linking.addEventListener('url', ({ url }) => {
       logger.log('[ContactImportListener] url event fired, url =', url)
       handle(url)
     })
     return () => sub.remove()
-  }, [
-    contacts,
-    deletedContacts,
-    addContact,
-    updateContact,
-    recoverContact,
-    mergeIncomingCustomFieldDefs,
-    addConversation,
-    updateConversation,
-    toast,
-  ])
+  }, [toast])
 
   return null
 }

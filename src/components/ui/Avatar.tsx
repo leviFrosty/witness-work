@@ -1,6 +1,13 @@
 import { User as UserIcon } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect, useRef, useState } from 'react'
+import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   Modal,
   Pressable,
@@ -56,7 +63,12 @@ interface Props {
    * back) dismisses with the reverse animation.
    */
   focusable?: boolean
+  /** Overlays drawn on the avatar, e.g. an `AvatarBadge`. */
+  children?: ReactNode
 }
+
+/** Lets `AvatarBadge` scale with the avatar it sits on. */
+const AvatarSizeContext = createContext(44)
 
 const Avatar = ({
   avatar,
@@ -64,6 +76,7 @@ const Avatar = ({
   size: sizeProp,
   background,
   focusable,
+  children,
 }: Props) => {
   const theme = useTheme()
   const groupSize = useAvatarGroupSize()
@@ -208,7 +221,18 @@ const Avatar = ({
     )
   })()
 
-  if (!focusable) return inner
+  const content = children ? (
+    <AvatarSizeContext.Provider value={size}>
+      <View style={{ width: size, height: size }}>
+        {inner}
+        {children}
+      </View>
+    </AvatarSizeContext.Provider>
+  ) : (
+    inner
+  )
+
+  if (!focusable) return content
 
   return (
     <>
@@ -220,7 +244,7 @@ const Avatar = ({
         >
           {/* Hide the source while the overlay is presenting so we don't
               briefly see a duplicate next to the animated copy. */}
-          <View style={{ opacity: open ? 0 : 1 }}>{inner}</View>
+          <View style={{ opacity: open ? 0 : 1 }}>{content}</View>
         </Pressable>
       </View>
       <Modal
@@ -265,6 +289,54 @@ const Avatar = ({
         <StatusBar translucent />
       </Modal>
     </>
+  )
+}
+
+/**
+ * Status dot on an avatar's bottom-right edge, modeled on shadcn's AvatarBadge.
+ * Render as a child of `Avatar`. The icon is dropped on small avatars where it
+ * wouldn't read.
+ */
+export const AvatarBadge = ({
+  color,
+  icon,
+  ringColor,
+}: {
+  color: string
+  icon?: AppIcon
+  /** Match the surface behind the avatar. */
+  ringColor?: string
+}) => {
+  const theme = useTheme()
+  const avatarSize = useContext(AvatarSizeContext)
+  const size = Math.max(8, Math.round(avatarSize * 0.42))
+  const ring = 2
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        right: -ring,
+        bottom: -ring,
+        width: size + ring * 2,
+        height: size + ring * 2,
+        borderRadius: size / 2 + ring,
+        borderWidth: ring,
+        borderColor: ringColor ?? theme.colors.card,
+        backgroundColor: color,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {icon && size >= 10 ? (
+        <LucideIcon
+          icon={icon}
+          size={Math.round(size * 0.8)}
+          strokeWidth={3.5}
+          color={theme.colors.textInverse}
+        />
+      ) : null}
+    </View>
   )
 }
 

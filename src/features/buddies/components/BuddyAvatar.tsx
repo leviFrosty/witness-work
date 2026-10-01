@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import useTheme from '@/contexts/theme'
 import type { ProfileAvatar } from '@/types/avatar'
@@ -18,12 +19,15 @@ export default function BuddyAvatar({
   colorIndex,
   size,
   focusable,
+  children,
 }: {
   avatar?: SharedAvatar
   name: string
   colorIndex?: number
   size?: number
   focusable?: boolean
+  /** E.g. an `AvatarBadge`. */
+  children?: ReactNode
 }) {
   const theme = useTheme()
   return (
@@ -35,6 +39,8 @@ export default function BuddyAvatar({
       background={
         colorIndex === undefined ? undefined : buddyColor(theme, colorIndex)
       }
-    />
+    >
+      {children}
+    </Avatar>
   )
 }

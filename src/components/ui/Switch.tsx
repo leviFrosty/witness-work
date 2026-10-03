@@ -2,6 +2,11 @@ import { Platform, Switch as NativeSwitch, SwitchProps } from 'react-native'
 import { Switch as TamaguiSwitch } from 'tamagui'
 import useTheme from '@/contexts/theme'
 
+const TRACK_WIDTH = 52
+const TRACK_HEIGHT = 32
+const TRACK_PADDING = 3
+const THUMB_SIZE = TRACK_HEIGHT - TRACK_PADDING * 2
+
 type Props = Pick<
   SwitchProps,
   | 'value'
@@ -31,15 +36,23 @@ export default function Switch(props: Props) {
       disabled={disabled}
       accessibilityRole='switch'
       accessibilityState={{ checked: value, disabled: !!disabled }}
-      size='$3'
+      width={TRACK_WIDTH}
+      height={TRACK_HEIGHT}
+      minHeight={TRACK_HEIGHT}
       flexShrink={0}
-      padding={2}
+      padding={TRACK_PADDING}
+      borderWidth={0}
       backgroundColor={theme.colors.border}
       activeStyle={{ backgroundColor: theme.colors.accent }}
       opacity={disabled ? 0.5 : 1}
       hitSlop={8}
     >
-      <TamaguiSwitch.Thumb backgroundColor='white' />
+      <TamaguiSwitch.Thumb
+        transition='quick'
+        width={THUMB_SIZE}
+        height={THUMB_SIZE}
+        backgroundColor='white'
+      />
     </TamaguiSwitch>
   )
 }

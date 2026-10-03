@@ -1,0 +1,4116 @@
+{
+  "research_date": "2026-09-30",
+  "project_id": 492895,
+  "catalog": "governed catalog consulted: no match (empty catalog)",
+  "status": "Noncanonical exploratory analysis. Counts are analytics identifiers, not unique people. Snapshots can differ slightly with late arrivals or session semantics.",
+  "primary_window_utc": {
+    "from": "2026-09-23T00:00:00Z",
+    "to": "2026-09-30T00:00:00Z",
+    "end_exclusive": true
+  },
+  "dashboards_reviewed": [
+    {
+      "name": "Product Analytics",
+      "url": "https://us.posthog.com/project/492895/dashboard/2116383"
+    },
+    {
+      "name": "User Research",
+      "url": "https://us.posthog.com/project/492895/dashboard/2116387"
+    },
+    {
+      "name": "Analytics basics (wizard)",
+      "url": "https://us.posthog.com/project/492895/dashboard/2105081"
+    }
+  ],
+  "queries": {
+    "reach7": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$screen_name",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 80
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Dashboard"],
+          "value": 3978,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Add Time"],
+          "value": 3367,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Schedule"],
+          "value": 2656,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contacts"],
+          "value": 1896,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Progress"],
+          "value": 1488,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Map"],
+          "value": 906,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contact Details"],
+          "value": 837,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Visit Form"],
+          "value": 649,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PlanDay"],
+          "value": 631,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["ServiceReportView"],
+          "value": 553,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contact Form"],
+          "value": 455,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Import and Export"],
+          "value": 189,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPublisher"],
+          "value": 178,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["RescheduleVisit"],
+          "value": 163,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Onboarding"],
+          "value": 157,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Preferences"],
+          "value": 101,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPersonalization"],
+          "value": 95,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["More"],
+          "value": 74,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Paywall"],
+          "value": 68,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAppearance"],
+          "value": 58,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesCustomFields"],
+          "value": 51,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPlans"],
+          "value": 49,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesColorKey"],
+          "value": 46,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesHomeScreen"],
+          "value": 46,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["NotesImportComposer"],
+          "value": 44,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesConversation"],
+          "value": 44,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contacts Sort And Filter"],
+          "value": 42,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesScheduleScreen"],
+          "value": 42,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAppIcon"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesWidgets"],
+          "value": 39,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["MytimeImport"],
+          "value": 38,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesNavigation"],
+          "value": 36,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesiCloud"],
+          "value": 33,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["MilestoneShowcase"],
+          "value": 26,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAudioAndHaptics"],
+          "value": 25,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesBackups"],
+          "value": 19,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["FAQ"],
+          "value": 16,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Settings"],
+          "value": 14,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Dismissed Contacts"],
+          "value": 13,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Whats New"],
+          "value": 13,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Recover Contacts"],
+          "value": 12,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Thank You"],
+          "value": 8,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Rollover"],
+          "value": 5,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Dashboard"],
+          "value": 28380,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Add Time"],
+          "value": 11385,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Schedule"],
+          "value": 7545,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contacts"],
+          "value": 4601,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Progress"],
+          "value": 3462,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contact Details"],
+          "value": 2218,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Map"],
+          "value": 1527,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Visit Form"],
+          "value": 1371,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PlanDay"],
+          "value": 940,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["ServiceReportView"],
+          "value": 804,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contact Form"],
+          "value": 724,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["RescheduleVisit"],
+          "value": 279,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Onboarding"],
+          "value": 274,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Import and Export"],
+          "value": 206,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPublisher"],
+          "value": 196,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Preferences"],
+          "value": 117,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPersonalization"],
+          "value": 112,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["More"],
+          "value": 85,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Paywall"],
+          "value": 84,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAppearance"],
+          "value": 64,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesCustomFields"],
+          "value": 57,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPlans"],
+          "value": 53,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesHomeScreen"],
+          "value": 49,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesColorKey"],
+          "value": 48,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesConversation"],
+          "value": 48,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contacts Sort And Filter"],
+          "value": 47,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["NotesImportComposer"],
+          "value": 47,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesScheduleScreen"],
+          "value": 46,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesiCloud"],
+          "value": 45,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAppIcon"],
+          "value": 42,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesWidgets"],
+          "value": 42,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["MytimeImport"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesNavigation"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAudioAndHaptics"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["MilestoneShowcase"],
+          "value": 26,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesBackups"],
+          "value": 20,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["FAQ"],
+          "value": 18,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Settings"],
+          "value": 17,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Dismissed Contacts"],
+          "value": 15,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Recover Contacts"],
+          "value": 14,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Whats New"],
+          "value": 13,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Thank You"],
+          "value": 8,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Rollover"],
+          "value": 5,
+          "days": [],
+          "data": []
+        }
+      ],
+      "posthog_url": "https://us.posthog.com/project/492895/insights/new#q=%7B%22kind%22%3A%22InsightVizNode%22%2C%22source%22%3A%7B%22breakdownFilter%22%3A%7B%22breakdown_limit%22%3A80%2C%22breakdowns%22%3A%5B%7B%22property%22%3A%22%24screen_name%22%2C%22type%22%3A%22event%22%7D%5D%7D%2C%22dateRange%22%3A%7B%22date_from%22%3A%222026-09-23T00%3A00%3A00Z%22%2C%22date_to%22%3A%222026-09-29T23%3A59%3A59Z%22%7D%2C%22filterTestAccounts%22%3Afalse%2C%22interval%22%3A%22day%22%2C%22kind%22%3A%22TrendsQuery%22%2C%22properties%22%3A%5B%7B%22key%22%3A%22app_variant%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22production%22%5D%7D%2C%7B%22key%22%3A%22development_mode%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22false%22%5D%7D%2C%7B%22key%22%3A%22%24app_namespace%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22com.leviwilkerson.jwtime%22%5D%7D%5D%2C%22series%22%3A%5B%7B%22event%22%3A%22%24screen%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22Anonymous%20installation%20identifiers%22%7D%2C%7B%22event%22%3A%22%24screen%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22unique_session%22%2C%22name%22%3A%22Sessions%22%7D%5D%2C%22trendsFilter%22%3A%7B%22aggregationAxisFormat%22%3A%22numeric%22%2C%22display%22%3A%22ActionsTable%22%2C%22metricColorByDirection%22%3Afalse%2C%22metricShowChange%22%3Atrue%2C%22metricSummary%22%3A%22total%22%2C%22showAlertThresholdLines%22%3Afalse%2C%22showLabelsOnSeries%22%3Afalse%2C%22showLegend%22%3Afalse%2C%22showMultipleYAxes%22%3Afalse%2C%22showPercentStackView%22%3Afalse%2C%22showValuesOnSeries%22%3Afalse%2C%22smoothingIntervals%22%3A1%2C%22yAxisScaleType%22%3A%22linear%22%7D%7D%7D"
+    },
+    "denominator7": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          }
+        ]
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 4022,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": null,
+          "value": 29481,
+          "days": [],
+          "data": []
+        }
+      ],
+      "posthog_url": "https://us.posthog.com/project/492895/insights/new#q=%7B%22kind%22%3A%22InsightVizNode%22%2C%22source%22%3A%7B%22dateRange%22%3A%7B%22date_from%22%3A%222026-09-23T00%3A00%3A00Z%22%2C%22date_to%22%3A%222026-09-29T23%3A59%3A59Z%22%7D%2C%22filterTestAccounts%22%3Afalse%2C%22interval%22%3A%22day%22%2C%22kind%22%3A%22TrendsQuery%22%2C%22properties%22%3A%5B%7B%22key%22%3A%22app_variant%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22production%22%5D%7D%2C%7B%22key%22%3A%22development_mode%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22false%22%5D%7D%2C%7B%22key%22%3A%22%24app_namespace%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22com.leviwilkerson.jwtime%22%5D%7D%5D%2C%22series%22%3A%5B%7B%22event%22%3A%22%24screen%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22Anonymous%20installation%20identifiers%22%7D%2C%7B%22event%22%3A%22%24screen%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22unique_session%22%2C%22name%22%3A%22Sessions%22%7D%5D%2C%22trendsFilter%22%3A%7B%22aggregationAxisFormat%22%3A%22numeric%22%2C%22display%22%3A%22ActionsTable%22%2C%22metricColorByDirection%22%3Afalse%2C%22metricShowChange%22%3Atrue%2C%22metricSummary%22%3A%22total%22%2C%22showAlertThresholdLines%22%3Afalse%2C%22showLabelsOnSeries%22%3Afalse%2C%22showLegend%22%3Afalse%2C%22showMultipleYAxes%22%3Afalse%2C%22showPercentStackView%22%3Afalse%2C%22showValuesOnSeries%22%3Afalse%2C%22smoothingIntervals%22%3A1%2C%22yAxisScaleType%22%3A%22linear%22%7D%7D%7D"
+    },
+    "platform7": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$os_name",
+              "type": "event"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["iOS"],
+          "value": 3899,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["iPadOS"],
+          "value": 134,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Android"],
+          "value": 13,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "actions7": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "name": "time_entry_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "name": "timer_action_completed",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "name": "plan_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "visit_created",
+            "name": "visit_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "contact_created",
+            "name": "contact_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "map_contact_selected",
+            "name": "map_contact_selected",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "service_report_exported",
+            "name": "service_report_exported",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "notifications_tray_opened",
+            "name": "notifications_tray_opened",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "name": "paywall_opened",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "onboarding_completed",
+            "name": "onboarding_completed",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "name": "time_entry_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "name": "timer_action_completed events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "name": "plan_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "visit_created",
+            "name": "visit_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "contact_created",
+            "name": "contact_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "map_contact_selected",
+            "name": "map_contact_selected events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "service_report_exported",
+            "name": "service_report_exported events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "notifications_tray_opened",
+            "name": "notifications_tray_opened events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "name": "paywall_opened events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "onboarding_completed",
+            "name": "onboarding_completed events",
+            "math": "total"
+          }
+        ]
+      },
+      "results": [
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 3335,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 470,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 328,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "visit_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 595,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "contact_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 355,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "map_contact_selected",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 126,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "service_report_exported",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 28,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "notifications_tray_opened",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 0,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 68,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "onboarding_completed",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 113,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 14649,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "total",
+          "breakdown": null,
+          "value": 3729,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 1720,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "visit_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 1610,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "contact_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 616,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "map_contact_selected",
+          "math": "total",
+          "breakdown": null,
+          "value": 1235,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "service_report_exported",
+          "math": "total",
+          "breakdown": null,
+          "value": 43,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "notifications_tray_opened",
+          "math": "total",
+          "breakdown": null,
+          "value": 0,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": null,
+          "value": 90,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "onboarding_completed",
+          "math": "total",
+          "breakdown": null,
+          "value": 117,
+          "days": [],
+          "data": []
+        }
+      ],
+      "posthog_url": "https://us.posthog.com/project/492895/insights/new#q=%7B%22kind%22%3A%22InsightVizNode%22%2C%22source%22%3A%7B%22dateRange%22%3A%7B%22date_from%22%3A%222026-09-23T00%3A00%3A00Z%22%2C%22date_to%22%3A%222026-09-29T23%3A59%3A59Z%22%7D%2C%22filterTestAccounts%22%3Afalse%2C%22interval%22%3A%22day%22%2C%22kind%22%3A%22TrendsQuery%22%2C%22properties%22%3A%5B%7B%22key%22%3A%22app_variant%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22production%22%5D%7D%2C%7B%22key%22%3A%22development_mode%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22false%22%5D%7D%2C%7B%22key%22%3A%22%24app_namespace%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22com.leviwilkerson.jwtime%22%5D%7D%5D%2C%22series%22%3A%5B%7B%22event%22%3A%22time_entry_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22time_entry_created%22%7D%2C%7B%22event%22%3A%22timer_action_completed%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22timer_action_completed%22%7D%2C%7B%22event%22%3A%22plan_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22plan_created%22%7D%2C%7B%22event%22%3A%22visit_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22visit_created%22%7D%2C%7B%22event%22%3A%22contact_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22contact_created%22%7D%2C%7B%22event%22%3A%22map_contact_selected%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22map_contact_selected%22%7D%2C%7B%22event%22%3A%22service_report_exported%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22service_report_exported%22%7D%2C%7B%22event%22%3A%22notifications_tray_opened%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22notifications_tray_opened%22%7D%2C%7B%22event%22%3A%22paywall_opened%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22paywall_opened%22%7D%2C%7B%22event%22%3A%22onboarding_completed%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22hogql%22%2C%22math_hogql%22%3A%22uniqExact(distinct_id)%22%2C%22name%22%3A%22onboarding_completed%22%7D%2C%7B%22event%22%3A%22time_entry_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22time_entry_created%20events%22%7D%2C%7B%22event%22%3A%22timer_action_completed%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22timer_action_completed%20events%22%7D%2C%7B%22event%22%3A%22plan_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22plan_created%20events%22%7D%2C%7B%22event%22%3A%22visit_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22visit_created%20events%22%7D%2C%7B%22event%22%3A%22contact_created%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22contact_created%20events%22%7D%2C%7B%22event%22%3A%22map_contact_selected%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22map_contact_selected%20events%22%7D%2C%7B%22event%22%3A%22service_report_exported%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22service_report_exported%20events%22%7D%2C%7B%22event%22%3A%22notifications_tray_opened%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22notifications_tray_opened%20events%22%7D%2C%7B%22event%22%3A%22paywall_opened%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22paywall_opened%20events%22%7D%2C%7B%22event%22%3A%22onboarding_completed%22%2C%22kind%22%3A%22EventsNode%22%2C%22math%22%3A%22total%22%2C%22name%22%3A%22onboarding_completed%20events%22%7D%5D%2C%22trendsFilter%22%3A%7B%22aggregationAxisFormat%22%3A%22numeric%22%2C%22display%22%3A%22ActionsTable%22%2C%22metricColorByDirection%22%3Afalse%2C%22metricShowChange%22%3Atrue%2C%22metricSummary%22%3A%22total%22%2C%22showAlertThresholdLines%22%3Afalse%2C%22showLabelsOnSeries%22%3Afalse%2C%22showLegend%22%3Afalse%2C%22showMultipleYAxes%22%3Afalse%2C%22showPercentStackView%22%3Afalse%2C%22showValuesOnSeries%22%3Afalse%2C%22smoothingIntervals%22%3A1%2C%22yAxisScaleType%22%3A%22linear%22%7D%7D%7D"
+    },
+    "reach30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Screen events",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$screen_name",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 80
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Dashboard"],
+          "value": 4185,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Add Time"],
+          "value": 3535,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Schedule"],
+          "value": 2971,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contacts"],
+          "value": 2254,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Progress"],
+          "value": 1751,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Map"],
+          "value": 1153,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contact Details"],
+          "value": 995,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PlanDay"],
+          "value": 789,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Visit Form"],
+          "value": 777,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["ServiceReportView"],
+          "value": 693,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contact Form"],
+          "value": 587,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPublisher"],
+          "value": 257,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Import and Export"],
+          "value": 244,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Onboarding"],
+          "value": 236,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["RescheduleVisit"],
+          "value": 195,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Preferences"],
+          "value": 140,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPersonalization"],
+          "value": 137,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["More"],
+          "value": 103,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Paywall"],
+          "value": 100,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAppearance"],
+          "value": 86,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesCustomFields"],
+          "value": 76,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesPlans"],
+          "value": 74,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["NotesImportComposer"],
+          "value": 73,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesColorKey"],
+          "value": 70,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesHomeScreen"],
+          "value": 70,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAppIcon"],
+          "value": 63,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesConversation"],
+          "value": 62,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesWidgets"],
+          "value": 61,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contacts Sort And Filter"],
+          "value": 59,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesScheduleScreen"],
+          "value": 58,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesiCloud"],
+          "value": 49,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["MytimeImport"],
+          "value": 46,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesNavigation"],
+          "value": 45,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["MilestoneShowcase"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesBackups"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["PreferencesAudioAndHaptics"],
+          "value": 25,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Whats New"],
+          "value": 24,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Dismissed Contacts"],
+          "value": 22,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["FAQ"],
+          "value": 21,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Settings"],
+          "value": 21,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Recover Contacts"],
+          "value": 18,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Thank You"],
+          "value": 12,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Rollover"],
+          "value": 6,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Tools"],
+          "value": 2,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["OnboardingBackfill"],
+          "value": 1,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Dashboard"],
+          "value": 38091,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Add Time"],
+          "value": 15107,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Schedule"],
+          "value": 10214,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contacts"],
+          "value": 6232,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Progress"],
+          "value": 4659,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contact Details"],
+          "value": 2970,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Map"],
+          "value": 2059,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Visit Form"],
+          "value": 1838,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PlanDay"],
+          "value": 1296,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["ServiceReportView"],
+          "value": 1044,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contact Form"],
+          "value": 994,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Onboarding"],
+          "value": 387,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["RescheduleVisit"],
+          "value": 366,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPublisher"],
+          "value": 292,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Import and Export"],
+          "value": 275,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Preferences"],
+          "value": 171,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPersonalization"],
+          "value": 167,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["More"],
+          "value": 121,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Paywall"],
+          "value": 121,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAppearance"],
+          "value": 94,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesCustomFields"],
+          "value": 89,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesPlans"],
+          "value": 84,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["NotesImportComposer"],
+          "value": 80,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesHomeScreen"],
+          "value": 80,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesConversation"],
+          "value": 75,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesColorKey"],
+          "value": 72,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Contacts Sort And Filter"],
+          "value": 69,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesWidgets"],
+          "value": 68,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesScheduleScreen"],
+          "value": 67,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAppIcon"],
+          "value": 66,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesiCloud"],
+          "value": 66,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesNavigation"],
+          "value": 52,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["MytimeImport"],
+          "value": 49,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["MilestoneShowcase"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesBackups"],
+          "value": 29,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["FAQ"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["PreferencesAudioAndHaptics"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Settings"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Dismissed Contacts"],
+          "value": 25,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Whats New"],
+          "value": 25,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Recover Contacts"],
+          "value": 21,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Thank You"],
+          "value": 12,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Rollover"],
+          "value": 6,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["Tools"],
+          "value": 4,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["OnboardingBackfill"],
+          "value": 1,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Dashboard"],
+          "value": 61669,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Schedule"],
+          "value": 27568,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Add Time"],
+          "value": 22795,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Contacts"],
+          "value": 12999,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Contact Details"],
+          "value": 9143,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Progress"],
+          "value": 8503,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PlanDay"],
+          "value": 4242,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Visit Form"],
+          "value": 3294,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Map"],
+          "value": 3255,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Contact Form"],
+          "value": 1641,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["ServiceReportView"],
+          "value": 1413,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Preferences"],
+          "value": 848,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["RescheduleVisit"],
+          "value": 681,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Onboarding"],
+          "value": 454,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesPublisher"],
+          "value": 369,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesPersonalization"],
+          "value": 350,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Import and Export"],
+          "value": 298,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["More"],
+          "value": 194,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Paywall"],
+          "value": 143,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesCustomFields"],
+          "value": 113,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["NotesImportComposer"],
+          "value": 107,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesPlans"],
+          "value": 106,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesAppearance"],
+          "value": 105,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Settings"],
+          "value": 101,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesHomeScreen"],
+          "value": 99,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesiCloud"],
+          "value": 89,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesScheduleScreen"],
+          "value": 87,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Contacts Sort And Filter"],
+          "value": 85,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesConversation"],
+          "value": 84,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesColorKey"],
+          "value": 83,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesWidgets"],
+          "value": 82,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesAppIcon"],
+          "value": 72,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesNavigation"],
+          "value": 58,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["MytimeImport"],
+          "value": 54,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["MilestoneShowcase"],
+          "value": 40,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["FAQ"],
+          "value": 36,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Dismissed Contacts"],
+          "value": 32,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesBackups"],
+          "value": 30,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["PreferencesAudioAndHaptics"],
+          "value": 29,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Whats New"],
+          "value": 27,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Recover Contacts"],
+          "value": 25,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Thank You"],
+          "value": 12,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Tools"],
+          "value": 9,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["Rollover"],
+          "value": 7,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["OnboardingBackfill"],
+          "value": 1,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "denominator30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Screen events",
+            "math": "total"
+          }
+        ]
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 4245,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": null,
+          "value": 39522,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": null,
+          "value": 161432,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "platform30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$os_name",
+              "type": "event"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["iOS"],
+          "value": 4109,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["iPadOS"],
+          "value": 152,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Android"],
+          "value": 13,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "version30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$app_version",
+              "type": "event"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["1.42.0"],
+          "value": 3761,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["1.43.0"],
+          "value": 3417,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "coverage-versions": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "$app_version",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 80
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["1.42.0"],
+          "value": 3762,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["1.43.0"],
+          "value": 3417,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "coverage-variant": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Screen events",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "app_variant",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 80
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["production"],
+          "value": 4246,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": ["production"],
+          "value": 39523,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": ["production"],
+          "value": 161437,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "daily30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsLineGraph"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Sessions",
+            "math": "unique_session"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Screen events",
+            "math": "total"
+          }
+        ]
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": null,
+          "value": null,
+          "days": [
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05",
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14",
+            "2026-09-15",
+            "2026-09-16",
+            "2026-09-17",
+            "2026-09-18",
+            "2026-09-19",
+            "2026-09-20",
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29"
+          ],
+          "data": [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8, 506, 1446,
+            1667, 1914, 2057, 2074, 2110, 2329, 2081, 1958, 2126
+          ]
+        },
+        {
+          "event": "$screen",
+          "math": "unique_session",
+          "breakdown": null,
+          "value": null,
+          "days": [
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05",
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14",
+            "2026-09-15",
+            "2026-09-16",
+            "2026-09-17",
+            "2026-09-18",
+            "2026-09-19",
+            "2026-09-20",
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29"
+          ],
+          "data": [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 14, 941, 2479,
+            3089, 3649, 4141, 4143, 4440, 4999, 3972, 3832, 4203
+          ]
+        },
+        {
+          "event": "$screen",
+          "math": "total",
+          "breakdown": null,
+          "value": null,
+          "days": [
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05",
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14",
+            "2026-09-15",
+            "2026-09-16",
+            "2026-09-17",
+            "2026-09-18",
+            "2026-09-19",
+            "2026-09-20",
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29"
+          ],
+          "data": [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 95, 5348,
+            10184, 11395, 14579, 16788, 15965, 17476, 21542, 15946, 13871, 18246
+          ]
+        }
+      ]
+    },
+    "actions30": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "name": "time_entry_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "name": "timer_action_completed",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "name": "plan_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "visit_created",
+            "name": "visit_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "contact_created",
+            "name": "contact_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "map_contact_selected",
+            "name": "map_contact_selected",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "service_report_exported",
+            "name": "service_report_exported",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "notifications_tray_opened",
+            "name": "notifications_tray_opened",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "name": "paywall_opened",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "onboarding_completed",
+            "name": "onboarding_completed",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "name": "time_entry_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "name": "timer_action_completed events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "name": "plan_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "visit_created",
+            "name": "visit_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "contact_created",
+            "name": "contact_created events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "map_contact_selected",
+            "name": "map_contact_selected events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "service_report_exported",
+            "name": "service_report_exported events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "notifications_tray_opened",
+            "name": "notifications_tray_opened events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "name": "paywall_opened events",
+            "math": "total"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "onboarding_completed",
+            "name": "onboarding_completed events",
+            "math": "total"
+          }
+        ]
+      },
+      "results": [
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 3507,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 506,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 411,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "visit_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 713,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "contact_created",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 450,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "map_contact_selected",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 151,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "service_report_exported",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 36,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "notifications_tray_opened",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 0,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 100,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "onboarding_completed",
+          "math": "hogql",
+          "breakdown": null,
+          "value": 177,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 19372,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "total",
+          "breakdown": null,
+          "value": 4962,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 2226,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "visit_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 2207,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "contact_created",
+          "math": "total",
+          "breakdown": null,
+          "value": 851,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "map_contact_selected",
+          "math": "total",
+          "breakdown": null,
+          "value": 1564,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "service_report_exported",
+          "math": "total",
+          "breakdown": null,
+          "value": 52,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "notifications_tray_opened",
+          "math": "total",
+          "breakdown": null,
+          "value": 0,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": null,
+          "value": 134,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "onboarding_completed",
+          "math": "total",
+          "breakdown": null,
+          "value": 182,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "entry-sources": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "name": "time_entry_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "time_entry_created",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "source",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 40
+        }
+      },
+      "results": [
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": ["time_entry_form"],
+          "value": 3490,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": ["participation_checkbox"],
+          "value": 13,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": ["onboarding_checklist"],
+          "value": 7,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "hogql",
+          "breakdown": ["widget"],
+          "value": 3,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": ["time_entry_form"],
+          "value": 19348,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": ["participation_checkbox"],
+          "value": 14,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": ["onboarding_checklist"],
+          "value": 7,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "time_entry_created",
+          "math": "total",
+          "breakdown": ["widget"],
+          "value": 3,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "paywall-sources": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "name": "paywall_opened",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "paywall_opened",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "source",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 40
+        }
+      },
+      "results": [
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["settings_support"],
+          "value": 36,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["header_heart"],
+          "value": 28,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["feature_gate"],
+          "value": 18,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["home_nudge"],
+          "value": 17,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["onboarding"],
+          "value": 9,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "hogql",
+          "breakdown": ["notes_import_limit"],
+          "value": 1,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["settings_support"],
+          "value": 49,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["header_heart"],
+          "value": 32,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["feature_gate"],
+          "value": 26,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["home_nudge"],
+          "value": 17,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["onboarding"],
+          "value": 9,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "paywall_opened",
+          "math": "total",
+          "breakdown": ["notes_import_limit"],
+          "value": 1,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "timer-actions": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "name": "timer_action_completed",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "timer_action_completed",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "action",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 40
+        }
+      },
+      "results": [
+        {
+          "event": "timer_action_completed",
+          "math": "hogql",
+          "breakdown": ["reset"],
+          "value": 485,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "hogql",
+          "breakdown": ["started"],
+          "value": 473,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "hogql",
+          "breakdown": ["paused"],
+          "value": 325,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "total",
+          "breakdown": ["started"],
+          "value": 2060,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "total",
+          "breakdown": ["reset"],
+          "value": 1864,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "timer_action_completed",
+          "math": "total",
+          "breakdown": ["paused"],
+          "value": 1038,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "plan-types": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-08-31T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "name": "plan_created",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)"
+          },
+          {
+            "kind": "EventsNode",
+            "event": "plan_created",
+            "math": "total"
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "plan_kind",
+              "type": "event"
+            }
+          ],
+          "breakdown_limit": 40
+        }
+      },
+      "results": [
+        {
+          "event": "plan_created",
+          "math": "hogql",
+          "breakdown": ["day"],
+          "value": 386,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "hogql",
+          "breakdown": ["recurring"],
+          "value": 84,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "total",
+          "breakdown": ["day"],
+          "value": 2005,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "plan_created",
+          "math": "total",
+          "breakdown": ["recurring"],
+          "value": 221,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "previous-screen7": {
+      "tool": "query-trends",
+      "input": {
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false,
+        "trendsFilter": {
+          "display": "ActionsTable"
+        },
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "$screen",
+            "name": "Anonymous installation identifiers",
+            "math": "hogql",
+            "math_hogql": "uniqExact(distinct_id)",
+            "properties": [
+              {
+                "key": "$screen_name",
+                "operator": "exact",
+                "type": "event",
+                "value": ["Add Time"]
+              }
+            ]
+          }
+        ],
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "property": "previous_screen",
+              "type": "event"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Dashboard"],
+          "value": 2657,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Schedule"],
+          "value": 1727,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Progress"],
+          "value": 282,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contacts"],
+          "value": 29,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Map"],
+          "value": 8,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["Contact Details"],
+          "value": 1,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["RescheduleVisit"],
+          "value": 1,
+          "days": [],
+          "data": []
+        },
+        {
+          "event": "$screen",
+          "math": "hogql",
+          "breakdown": ["$$_posthog_breakdown_null_$$"],
+          "value": 131,
+          "days": [],
+          "data": []
+        }
+      ]
+    },
+    "paths7": {
+      "tool": "query-paths",
+      "input": {
+        "pathsFilter": {
+          "includeEventTypes": ["$screen"],
+          "startPoint": "Dashboard",
+          "stepLimit": 3,
+          "edgeLimit": 15
+        },
+        "dateRange": {
+          "date_from": "2026-09-23T00:00:00Z",
+          "date_to": "2026-09-29T23:59:59Z"
+        },
+        "properties": [
+          {
+            "key": "app_variant",
+            "operator": "exact",
+            "type": "event",
+            "value": ["production"]
+          },
+          {
+            "key": "development_mode",
+            "operator": "exact",
+            "type": "event",
+            "value": ["false"]
+          },
+          {
+            "key": "$app_namespace",
+            "operator": "exact",
+            "type": "event",
+            "value": ["com.leviwilkerson.jwtime"]
+          }
+        ],
+        "filterTestAccounts": false
+      },
+      "results": [
+        {
+          "source": "1_Dashboard",
+          "target": "2_Add Time",
+          "value": 6359
+        },
+        {
+          "source": "2_Add Time",
+          "target": "3_Dashboard",
+          "value": 6311
+        },
+        {
+          "source": "1_Dashboard",
+          "target": "2_Schedule",
+          "value": 3182
+        },
+        {
+          "source": "1_Dashboard",
+          "target": "2_Contacts",
+          "value": 1959
+        },
+        {
+          "source": "2_Schedule",
+          "target": "3_Add Time",
+          "value": 1498
+        },
+        {
+          "source": "1_Dashboard",
+          "target": "2_Progress",
+          "value": 639
+        },
+        {
+          "source": "2_Contacts",
+          "target": "3_Contact Details",
+          "value": 575
+        },
+        {
+          "source": "2_Contacts",
+          "target": "3_Progress",
+          "value": 570
+        },
+        {
+          "source": "2_Schedule",
+          "target": "3_Dashboard",
+          "value": 374
+        },
+        {
+          "source": "2_Contacts",
+          "target": "3_Schedule",
+          "value": 367
+        },
+        {
+          "source": "1_Dashboard",
+          "target": "2_Map",
+          "value": 348
+        },
+        {
+          "source": "2_Progress",
+          "target": "3_Schedule",
+          "value": 267
+        },
+        {
+          "source": "2_Schedule",
+          "target": "3_PlanDay",
+          "value": 243
+        },
+        {
+          "source": "1_Dashboard",
+          "target": "2_ServiceReportView",
+          "value": 195
+        },
+        {
+          "source": "2_Contacts",
+          "target": "3_Dashboard",
+          "value": 182
+        }
+      ],
+      "posthog_url": "https://us.posthog.com/project/492895/insights/new#q=%7B%22kind%22%3A%22InsightVizNode%22%2C%22source%22%3A%7B%22dateRange%22%3A%7B%22date_from%22%3A%222026-09-23T00%3A00%3A00Z%22%2C%22date_to%22%3A%222026-09-29T23%3A59%3A59Z%22%7D%2C%22filterTestAccounts%22%3Afalse%2C%22kind%22%3A%22PathsQuery%22%2C%22pathsFilter%22%3A%7B%22edgeLimit%22%3A15%2C%22excludeEvents%22%3A%5B%5D%2C%22includeEventTypes%22%3A%5B%22%24screen%22%5D%2C%22localPathCleaningFilters%22%3A%5B%5D%2C%22pathGroupings%22%3A%5B%5D%2C%22startPoint%22%3A%22Dashboard%22%2C%22stepLimit%22%3A3%7D%2C%22properties%22%3A%5B%7B%22key%22%3A%22app_variant%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22production%22%5D%7D%2C%7B%22key%22%3A%22development_mode%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22false%22%5D%7D%2C%7B%22key%22%3A%22%24app_namespace%22%2C%22operator%22%3A%22exact%22%2C%22type%22%3A%22event%22%2C%22value%22%3A%5B%22com.leviwilkerson.jwtime%22%5D%7D%5D%7D%7D"
+    },
+    "cooccurrence30": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nWITH visits AS (SELECT $session_id AS sid, max(properties.$screen_name = 'Contacts') AS contacts, max(properties.$screen_name = 'Map') AS map, max(properties.$screen_name = 'Schedule') AS schedule, max(properties.$screen_name = 'Progress') AS progress, max(properties.$screen_name = 'Add Time') AS add_time FROM events WHERE timestamp >= toDateTime('2026-08-31 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND properties.development_mode = false AND properties.$app_namespace = 'com.leviwilkerson.jwtime' GROUP BY sid) SELECT count() AS all_sessions, countIf(map=1) AS map_sessions, countIf(map=1 AND contacts=1) AS map_and_contacts, countIf(map=1 AND contacts=0) AS map_without_contacts, countIf(schedule=1 AND progress=1) AS schedule_and_progress, countIf(add_time=1 AND schedule=1) AS add_time_and_schedule FROM visits"
+      },
+      "result": "all_sessions|map_sessions|map_and_contacts|map_without_contacts|schedule_and_progress|add_time_and_schedule\n39523|2059|1314|745|3445|6872"
+    },
+    "map-frequency30": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nWITH people AS (SELECT distinct_id, uniqExact(toDate(timestamp)) AS map_days, uniqExact($session_id) AS map_sessions FROM events WHERE timestamp >= toDateTime('2026-08-31 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND properties.development_mode = false AND properties.$app_namespace = 'com.leviwilkerson.jwtime' AND properties.$screen_name = 'Map' GROUP BY distinct_id) SELECT count() AS map_identifiers, countIf(map_days >= 2) AS repeat_day_identifiers, countIf(map_days >= 4) AS four_day_identifiers, countIf(map_sessions >= 5) AS five_session_identifiers, max(map_days) AS max_map_days FROM people"
+      },
+      "result": "map_identifiers|repeat_day_identifiers|four_day_identifiers|five_session_identifiers|max_map_days\n1153|317|42|59|8"
+    },
+    "observation-span": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nSELECT min(timestamp) AS first_observation, max(timestamp) AS last_observation, countIf(properties.previous_screen IS NULL) AS no_previous_screen, count() AS screen_events FROM events WHERE timestamp >= toDateTime('2026-08-31 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND properties.development_mode = false AND properties.$app_namespace = 'com.leviwilkerson.jwtime'"
+      },
+      "result": "first_observation|last_observation|no_previous_screen|screen_events\n2026-09-17T15:51:17.324000Z|2026-09-29T23:59:58.602000Z|38196|161437"
+    },
+    "session-first-nonhome7": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nWITH visits AS (SELECT $session_id AS sid, argMin(properties.$screen_name,timestamp) AS first_screen FROM events WHERE timestamp >= toDateTime('2026-09-23 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND properties.development_mode = false AND properties.$app_namespace = 'com.leviwilkerson.jwtime' AND properties.$screen_name NOT IN ('Dashboard','Onboarding') GROUP BY sid) SELECT first_screen, count() AS sessions FROM visits GROUP BY first_screen ORDER BY sessions DESC LIMIT 15"
+      },
+      "result": "first_screen|sessions\nAdd Time|7995\nSchedule|3465\nContacts|2381\nProgress|706\nMap|460\nServiceReportView|206\nContact Form|200\nRescheduleVisit|189\nContact Details|164\nImport and Export|120\nPlanDay|62\nPreferencesPublisher|36\nVisit Form|35\nPaywall|25\nNotesImportComposer|18"
+    },
+    "cooccurrence7": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nWITH visits AS (SELECT $session_id AS sid, max(properties.$screen_name = 'Contacts') AS contacts, max(properties.$screen_name = 'Map') AS map, max(properties.$screen_name = 'Schedule') AS schedule, max(properties.$screen_name = 'Progress') AS progress, max(properties.$screen_name = 'Add Time') AS add_time FROM events WHERE timestamp >= toDateTime('2026-09-23 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND toString(properties.development_mode) = 'false' AND properties.$app_namespace = 'com.leviwilkerson.jwtime' GROUP BY sid) SELECT count() AS all_sessions, countIf(map=1) AS map_sessions, countIf(map=1 AND contacts=1) AS map_and_contacts, countIf(map=1 AND contacts=0) AS map_without_contacts, countIf(schedule=1 AND progress=1) AS schedule_and_progress, countIf(add_time=1 AND schedule=1) AS add_time_and_schedule FROM visits"
+      },
+      "result": "all_sessions|map_sessions|map_and_contacts|map_without_contacts|schedule_and_progress|add_time_and_schedule\n29483|1527|954|573|2515|5092"
+    },
+    "map-frequency7": {
+      "tool": "execute-sql",
+      "input": {
+        "query": "-- Noncanonical exploratory analysis; governed catalog consulted: no match\nWITH people AS (SELECT distinct_id, uniqExact(toDate(timestamp)) AS map_days, uniqExact($session_id) AS map_sessions FROM events WHERE timestamp >= toDateTime('2026-09-23 00:00:00') AND timestamp < toDateTime('2026-09-30 00:00:00') AND event = '$screen' AND properties.app_variant = 'production' AND toString(properties.development_mode) = 'false' AND properties.$app_namespace = 'com.leviwilkerson.jwtime' AND properties.$screen_name = 'Map' GROUP BY distinct_id) SELECT count() AS map_identifiers, countIf(map_days >= 2) AS repeat_day_identifiers, countIf(map_days >= 4) AS four_day_identifiers, countIf(map_sessions >= 5) AS five_session_identifiers, max(map_days) AS max_map_days FROM people"
+      },
+      "result": "map_identifiers|repeat_day_identifiers|four_day_identifiers|five_session_identifiers|max_map_days\n906|228|19|40|6"
+    }
+  },
+  "saved_insight_review": {
+    "url": "https://us.posthog.com/project/492895/insights/13QI9dAX",
+    "query": {
+      "kind": "TrendsQuery",
+      "series": [
+        {
+          "kind": "EventsNode",
+          "math": "dau",
+          "event": "$screen"
+        }
+      ],
+      "version": 4,
+      "interval": "day",
+      "dateRange": {
+        "date_from": "-30d",
+        "explicitDate": false,
+        "excludeIncompletePeriods": false
+      },
+      "properties": [],
+      "trendsFilter": {
+        "display": "ActionsBarValue",
+        "showLegend": true,
+        "hideWeekends": false,
+        "metricSummary": "total",
+        "legendPosition": "bottom",
+        "yAxisScaleType": "linear",
+        "showAnnotations": true,
+        "metricShowChange": true,
+        "yAxisStartAtZero": true,
+        "showMultipleYAxes": false,
+        "showLabelsOnSeries": false,
+        "showValuesOnSeries": true,
+        "smoothingIntervals": 1,
+        "showPercentStackView": false,
+        "stackBreakdownValues": false,
+        "aggregationAxisFormat": "numeric",
+        "resultCustomizationBy": "value",
+        "excludeBoxPlotOutliers": true,
+        "metricColorByDirection": false,
+        "showAlertThresholdLines": false
+      },
+      "breakdownFilter": {
+        "breakdowns": [
+          {
+            "type": "event",
+            "property": "$screen_name"
+          }
+        ],
+        "breakdown_type": "event",
+        "breakdown_limit": 10,
+        "breakdown_path_cleaning": false
+      },
+      "filterTestAccounts": true
+    },
+    "cached_last_refresh": "2026-09-29T20:43:10.839051Z",
+    "results": [
+      {
+        "screen": ["Dashboard"],
+        "value": 4138
+      },
+      {
+        "screen": ["Add Time"],
+        "value": 3507
+      },
+      {
+        "screen": ["Schedule"],
+        "value": 2935
+      },
+      {
+        "screen": ["Contacts"],
+        "value": 2220
+      },
+      {
+        "screen": ["Progress"],
+        "value": 1731
+      },
+      {
+        "screen": ["Map"],
+        "value": 1135
+      },
+      {
+        "screen": ["Contact Details"],
+        "value": 985
+      },
+      {
+        "screen": ["PlanDay"],
+        "value": 781
+      },
+      {
+        "screen": ["Visit Form"],
+        "value": 768
+      },
+      {
+        "screen": ["ServiceReportView"],
+        "value": 676
+      },
+      {
+        "screen": ["$$_posthog_breakdown_other_$$"],
+        "value": 3051
+      }
+    ]
+  },
+  "buddies_flag_lookup": {
+    "query": "SELECT id, key, name, rollout_percentage FROM system.feature_flags WHERE deleted = 0 AND key ILIKE '%buddies%'",
+    "result": "No matching nondeleted flag in this project. Not proof of lack of demand."
+  }
+}

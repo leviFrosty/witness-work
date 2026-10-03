@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native'
 import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -75,6 +76,7 @@ const currentServiceYearEnd = (): number => {
 
 const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const navigation = useNavigation<RootStackNavigation>()
   const {
     milestoneOverrides,
@@ -310,7 +312,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
+      <Sheet.Frame paddingBottom={sheetBottomInset}>
         <View
           style={{
             flex: 1,

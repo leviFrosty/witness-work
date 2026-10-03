@@ -11,6 +11,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import type { SelectData } from '@/components/ui/Select'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import type { Publisher } from '@/types/publisher'
@@ -49,6 +50,7 @@ const RoleStartSheet = ({
   onSave,
 }: RoleStartSheetProps) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const [startKey, setStartKey] = useState<string>(ALL_MONTHS)
   const [resetFutureGoals, setResetFutureGoals] = useState(false)
 
@@ -96,7 +98,10 @@ const RoleStartSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.background}>
+      <Sheet.Frame
+        backgroundColor={theme.colors.background}
+        paddingBottom={sheetBottomInset}
+      >
         <View
           style={{
             paddingHorizontal: inputLayout.horizontalPadding,

@@ -12,7 +12,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Alert, Keyboard, ScrollView, View } from 'react-native'
+import { Alert, Keyboard, Platform, ScrollView, View } from 'react-native'
 import { TextArea } from 'tamagui'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -320,7 +320,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-        paddingTop: 20,
+        // Android presents this modal full-screen, edge-to-edge.
+        paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
         paddingHorizontal: 10,
       }}
     >

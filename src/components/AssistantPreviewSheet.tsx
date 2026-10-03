@@ -16,6 +16,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 
 import i18n from '@/lib/locales'
 import {
@@ -70,6 +71,7 @@ const AssistantPreviewSheet = ({
   onUndo,
 }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const toast = useToastController()
   const { addDayPlan, deleteDayPlan } = useServiceReport()
   const { planAlwaysNotify, timeDisplayFormat } = usePreferences()
@@ -203,7 +205,7 @@ const AssistantPreviewSheet = ({
       >
         <Sheet.Handle />
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
+        <Sheet.Frame paddingBottom={sheetBottomInset}>
           <View style={{ padding: 20, flex: 1, gap: 15 }}>
             <View
               style={{

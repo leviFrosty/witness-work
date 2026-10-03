@@ -7,6 +7,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -42,6 +43,7 @@ const AvailabilityOnboardingSheet = ({
   markSeenOnDismiss = true,
 }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const {
     offDays,
     meetingDays,
@@ -104,7 +106,7 @@ const AvailabilityOnboardingSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
+      <Sheet.Frame paddingBottom={sheetBottomInset}>
         <View style={{ padding: 20, gap: 16, flex: 1 }}>
           <View
             style={{

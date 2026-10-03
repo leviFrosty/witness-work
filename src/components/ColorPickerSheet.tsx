@@ -8,6 +8,7 @@ import ColorPicker, {
   Preview,
 } from 'reanimated-color-picker'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -48,6 +49,7 @@ const ColorPickerSheet = ({
   title,
 }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   // Mirrors SupporterInfoSheet: keep the RN Modal mounted through the Sheet's
   // dismiss animation so the slide-down isn't interrupted.
   const [mounted, setMounted] = useState(visible)
@@ -87,7 +89,7 @@ const ColorPickerSheet = ({
       >
         <Sheet.Handle />
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
+        <Sheet.Frame paddingBottom={sheetBottomInset}>
           <View style={{ padding: 20, paddingBottom: 32, gap: 16 }}>
             <View
               style={{

@@ -5,6 +5,7 @@ import { Modal, ScrollView, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
@@ -26,6 +27,7 @@ interface Props {
 
 const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const navigation = useNavigation<RootStackNavigation>()
   const { priceString } = useCheapestSupporterPrice()
   // Keep the native Modal mounted through the Sheet's dismiss animation so it
@@ -118,7 +120,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
       >
         <Sheet.Handle />
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
+        <Sheet.Frame paddingBottom={sheetBottomInset}>
           <ScrollView
             contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 18 }}
           >

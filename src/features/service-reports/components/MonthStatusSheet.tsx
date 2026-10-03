@@ -10,6 +10,7 @@ import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import type { SelectData } from '@/components/ui/Select'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import {
   monthStatusLabel,
@@ -43,6 +44,7 @@ const MonthStatusSheet = ({
   onSave,
 }: MonthStatusSheetProps) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const { publisherHours } = usePreferences()
   const [draftStatus, setDraftStatus] = useState<MonthStatus>(status)
   const [scope, setScope] = useState<MonthStatusScope>('month')
@@ -85,7 +87,10 @@ const MonthStatusSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.background}>
+      <Sheet.Frame
+        backgroundColor={theme.colors.background}
+        paddingBottom={sheetBottomInset}
+      >
         <View
           style={{
             paddingHorizontal: inputLayout.horizontalPadding,

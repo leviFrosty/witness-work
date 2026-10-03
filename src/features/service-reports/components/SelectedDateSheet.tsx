@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import { TimeEntry } from '@/types/timeEntry'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
@@ -45,6 +46,7 @@ const SelectedDateSheet: React.FC<Props> = ({
   renderFooter,
 }) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   // Navigation chosen from a row's context menu waits for the sheet to close,
   // or the pushed screen would land underneath the modal sheet.
   const pendingNavigation = useRef<(() => void) | null>(null)
@@ -72,7 +74,7 @@ const SelectedDateSheet: React.FC<Props> = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
+      <Sheet.Frame paddingBottom={sheetBottomInset}>
         <View
           style={{
             paddingHorizontal: 30,

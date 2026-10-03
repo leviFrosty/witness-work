@@ -11,6 +11,7 @@ import TextInput from '@/components/ui/TextInput'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -49,6 +50,7 @@ const MonthGoalEditorSheet = ({
   onUseRegularGoal,
 }: MonthGoalEditorSheetProps) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const inputRef = useRef<RNTextInput>(null)
   const [draftGoal, setDraftGoal] = useState(String(effectiveGoalHours))
   const [showValidationError, setShowValidationError] = useState(false)
@@ -95,7 +97,10 @@ const MonthGoalEditorSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.background}>
+      <Sheet.Frame
+        backgroundColor={theme.colors.background}
+        paddingBottom={sheetBottomInset}
+      >
         <KeyboardAwareScrollView
           keyboardShouldPersistTaps='handled'
           extraScrollHeight={20}

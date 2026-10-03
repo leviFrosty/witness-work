@@ -9,6 +9,7 @@ import Text from '@/components/ui/MyText'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { AUXILIARY_REDUCED_GOAL_HOURS } from '@/lib/monthStatus'
 import { usePreferences } from '@/stores/preferences'
@@ -36,6 +37,7 @@ const AuxiliaryMonthSheet = ({
   source,
 }: AuxiliaryMonthSheetProps) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const { publisherHours } = usePreferences()
   const { months, setAuxiliary } = useAuxiliaryMonths()
   const [thisMonth, nextMonth] = months
@@ -81,7 +83,10 @@ const AuxiliaryMonthSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.background}>
+      <Sheet.Frame
+        backgroundColor={theme.colors.background}
+        paddingBottom={sheetBottomInset}
+      >
         <View
           style={{
             paddingHorizontal: inputLayout.horizontalPadding * 2,

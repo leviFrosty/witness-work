@@ -6,6 +6,7 @@ import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 
@@ -15,6 +16,7 @@ type Props = {
 
 const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const [open, setOpen] = useState(false)
   const overageDisplay = useFormattedMinutes(creditOverageMinutes)
 
@@ -36,7 +38,7 @@ const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
       >
         <Sheet.Handle />
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
+        <Sheet.Frame paddingBottom={sheetBottomInset}>
           <View
             style={{
               padding: 25,

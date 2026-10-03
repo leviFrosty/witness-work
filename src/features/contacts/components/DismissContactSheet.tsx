@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -34,6 +35,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   contact,
 }) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const developerTools = usePreferences((s) => s.developerTools)
   const dismiss = useDismissContact()
 
@@ -54,7 +56,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
+      <Sheet.Frame paddingBottom={sheetBottomInset}>
         <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
           <Text
             style={{

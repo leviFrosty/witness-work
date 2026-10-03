@@ -14,6 +14,7 @@ import CategorySegmentBar, {
   CategorySegment,
 } from '@/features/service-reports/components/CategorySegmentBar'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { formatMinutes } from '@/lib/minutes'
@@ -38,6 +39,7 @@ const CategoriesSection = ({
   source,
 }: Props) => {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
   const { timeDisplayFormat } = usePreferences()
   const [open, setOpen] = useState(false)
   const visible = segments.filter((s) => s.minutes > 0)
@@ -137,7 +139,7 @@ const CategoriesSection = ({
       >
         <Sheet.Handle />
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
+        <Sheet.Frame paddingBottom={sheetBottomInset}>
           <View
             style={{
               padding: 25,

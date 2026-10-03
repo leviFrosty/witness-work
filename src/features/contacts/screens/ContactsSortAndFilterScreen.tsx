@@ -8,8 +8,9 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useMemo, useState } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -104,6 +105,7 @@ const describeFilter = (
 const ContactsSortAndFilterScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const insets = useSafeAreaInsets()
 
   const { customFieldDefs } = useContacts()
   const {
@@ -279,7 +281,8 @@ const ContactsSortAndFilterScreen = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 20,
-          paddingTop: 20,
+          // Android presents this modal full-screen, edge-to-edge.
+          paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
           paddingBottom: 14,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: theme.colors.border,
@@ -311,7 +314,7 @@ const ContactsSortAndFilterScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 18,
-          paddingBottom: 120,
+          paddingBottom: 120 + insets.bottom,
         }}
         keyboardShouldPersistTaps='handled'
         showsVerticalScrollIndicator
@@ -533,7 +536,7 @@ const ContactsSortAndFilterScreen = () => {
           bottom: 0,
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: 28,
+          paddingBottom: Math.max(28, insets.bottom + 12),
           backgroundColor: theme.colors.background,
           borderTopWidth: 1,
           borderTopColor: theme.colors.border,

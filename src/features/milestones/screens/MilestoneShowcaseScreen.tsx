@@ -104,7 +104,14 @@ const MilestoneShowcaseScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={[styles.closeRow, { paddingHorizontal: 16 }]}>
+      <View
+        style={[
+          styles.closeRow,
+          { paddingHorizontal: 16 },
+          // Android presents this modal full-screen, edge-to-edge.
+          Platform.OS === 'android' && { paddingTop: insets.top + 12 },
+        ]}
+      >
         <IconButton
           onPress={handleClose}
           size={20}

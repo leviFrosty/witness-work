@@ -1,12 +1,14 @@
 import { X as XIcon } from 'lucide-react-native'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { InputProps } from 'tamagui'
 
 import useTheme from '@/contexts/theme'
@@ -189,6 +191,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   onSave,
 }) => {
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
 
   const [field, setField] = useState<FieldKey>(null)
   const [op, setOp] = useState<TextOperator | ComparableOperator | null>(null)
@@ -423,7 +426,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             paddingHorizontal: 20,
-            paddingTop: 20,
+            paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
             paddingBottom: 10,
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: theme.colors.border,
@@ -451,7 +454,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: 120,
+            paddingBottom: 120 + insets.bottom,
           }}
           keyboardShouldPersistTaps='handled'
         >
@@ -540,7 +543,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
             bottom: 0,
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: 28,
+            paddingBottom: Math.max(28, insets.bottom + 12),
             backgroundColor: theme.colors.background,
             borderTopWidth: 1,
             borderTopColor: theme.colors.border,

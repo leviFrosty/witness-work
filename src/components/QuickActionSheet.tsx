@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
+import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import IconButton from '@/components/ui/IconButton'
 import QuickActionMenu from '@/components/QuickActionMenu'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -21,6 +22,7 @@ export default function QuickActionSheet({
   navigation,
 }: QuickActionSheetProps) {
   const theme = useTheme()
+  const sheetBottomInset = useSheetBottomInset()
 
   return (
     <Sheet
@@ -33,7 +35,7 @@ export default function QuickActionSheet({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
+      <Sheet.Frame paddingBottom={sheetBottomInset}>
         <XStack ai='center' jc='space-between' px={20} pt={20} pb={5}>
           <Text
             style={{

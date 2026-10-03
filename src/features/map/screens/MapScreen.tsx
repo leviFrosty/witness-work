@@ -108,17 +108,14 @@ const FullMapView = ({
   renderContactRow,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const { height } = useWindowDimensions()
-  const {
-    isWide,
-    hasSidebar,
-    sidebarWidth,
-    contentWidth: width,
-  } = useAdaptiveLayout()
+  const { height: windowHeight } = useWindowDimensions()
+  const { isWide, hasSidebar, contentWidth: width } = useAdaptiveLayout()
+  // Map sits below the Contacts header, so size overlays to its own frame.
+  const [height, setHeight] = useState(windowHeight)
   const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
-  const { colorScheme } = usePreferences()
+  const { colorScheme, set: setPreferences } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
@@ -339,11 +336,10 @@ const FullMapView = ({
     }
   }, [activeContactId, scrollCarouselTo, visibleContactMarkers, isWide])
 
+  // Reselecting the Contacts tab while on the map refits it to every pin.
   useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', (e) => {
-      if (e.target?.includes('Map')) {
-        fitToMarkers()
-      }
+    const unsubscribe = navigation.addListener('tabPress', () => {
+      if (navigation.isFocused()) fitToMarkers()
     })
     return unsubscribe
   }, [fitToMarkers, navigation])
@@ -585,7 +581,7 @@ const FullMapView = ({
     })
 
   const emptyCardPlacement = {
-    left: sidebarWidth + 16,
+    left: 16,
     right: isWide ? undefined : 16,
     width: isWide ? 400 : undefined,
     bottom: bottomOverlayInset + 12,
@@ -605,7 +601,7 @@ const FullMapView = ({
         style={{
           width: '100%',
           maxWidth: isTablet ? 520 : undefined,
-          maxHeight: height - insets.top - bottomOverlayInset - 96,
+          maxHeight: height - bottomOverlayInset - 80,
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
@@ -634,7 +630,13 @@ const FullMapView = ({
         <ScrollView bounces={false} style={{ flexShrink: 1 }}>
           <MapEmptyState
             activeContactCount={activeContactCount}
-            onReviewContacts={() => navigation.navigate('Contacts')}
+            onReviewContacts={() => {
+              analytics.capture('contacts_view_changed', {
+                view: 'list',
+                source: 'map_empty_state',
+              })
+              setPreferences({ contactsView: 'list' })
+            }}
             onAddContact={addContact}
           />
         </ScrollView>
@@ -654,7 +656,10 @@ const FullMapView = ({
             showsUserLocation={locationPermission}
             showsMyLocationButton={false}
             ref={mapRef}
-            onLayout={() => setHasMapLayout(true)}
+            onLayout={(e) => {
+              setHeight(e.nativeEvent.layout.height)
+              setHasMapLayout(true)
+            }}
             onMapReady={() => setIsMapReady(true)}
             onPress={() => {
               collapseSearch()
@@ -676,7 +681,7 @@ const FullMapView = ({
               top: 0,
               right:
                 isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
-              left: sidebarWidth,
+              left: 0,
               bottom:
                 insets.bottom +
                 (Platform.OS === 'android'
@@ -728,8 +733,8 @@ const FullMapView = ({
               style={[
                 {
                   position: 'absolute',
-                  top: insets.top + 8,
-                  left: sidebarWidth + 16,
+                  top: 8,
+                  left: 16,
                   height: 44,
                   borderRadius: 22,
                   borderCurve: 'continuous',
@@ -811,7 +816,7 @@ const FullMapView = ({
               style={{
                 position: 'absolute',
                 bottom: isWide ? bottomOverlayInset + 28 : mapCardBottom,
-                left: isWide ? undefined : sidebarWidth,
+                left: isWide ? undefined : 0,
                 right: isWide ? 16 : undefined,
                 width: isWide ? inspectorWidth : width,
                 height: isWide ? undefined : CARD_HEIGHT,
@@ -890,7 +895,7 @@ const FullMapView = ({
               style={{
                 position: 'absolute',
                 right: 16,
-                top: insets.top + 8,
+                top: 8,
                 bottom: bottomOverlayInset + 28,
                 width: inspectorWidth,
               }}
@@ -941,8 +946,8 @@ const FullMapView = ({
           <View
             style={{
               position: 'absolute',
-              top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
-              left: sidebarWidth + 16,
+              top: contactMarkers.length > 0 ? 64 : 8,
+              left: 16,
               gap: 8,
             }}
           >

@@ -8,7 +8,7 @@ This codebase is organised into **shared / feature / app** tiers, enforced at li
 src/
   app/                 ← app tier (navigation + cross-cutting infra)
     App.tsx
-    navigation/        RootStack, HomeTabStack, DrawerNavigator, ToolsScreen
+    navigation/        RootStack, HomeTabStack, HomeNavigator, ToolsScreen
     widgets/           iOS widget snapshot composition
     sync/              iCloud sync orchestration (+ components/)
     deep-links/        DeepLinkListeners

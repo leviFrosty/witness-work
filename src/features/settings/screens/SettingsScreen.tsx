@@ -1,49 +1,39 @@
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useEffect } from 'react'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
+import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import {
-  DrawerContentComponentProps,
-  DrawerContentScrollView,
-} from '@react-navigation/drawer'
 import SettingsContents from '@/features/settings/components/SettingsContents'
 import { InputLayoutProvider } from '@/components/ui/inputs/InputLayout'
 
-const SettingsScreen = (props: DrawerContentComponentProps) => {
+/** Settings on compact layouts, pushed from the account menu. */
+const SettingsScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
   const { hasSidebar } = useAdaptiveLayout()
-  useEffect(() => {
-    // Resizing back to compact must not resurrect a previously open drawer.
-    if (hasSidebar) props.navigation.closeDrawer()
-  }, [hasSidebar, props.navigation])
 
-  if (hasSidebar) return null
+  // Wide layouts show Settings in the sidebar instead.
+  useEffect(() => {
+    if (hasSidebar && navigation.canGoBack()) navigation.goBack()
+  }, [hasSidebar, navigation])
 
   return (
     <InputLayoutProvider value='drawer'>
-      <View
-        style={{
-          backgroundColor: theme.colors.background,
-          flex: 1,
-          borderRightWidth: 1,
-          borderRightColor: theme.colors.border,
-          justifyContent: 'space-between',
-        }}
-      >
-        <DrawerContentScrollView
-          {...props}
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScrollView
           contentContainerStyle={{
-            paddingTop: insets.top + 24,
-            paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 24,
-            paddingStart: 12,
-            paddingEnd: 12,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 24,
+            paddingHorizontal: 12,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
           }}
         >
           <SettingsContents />
-        </DrawerContentScrollView>
+        </ScrollView>
       </View>
     </InputLayoutProvider>
   )

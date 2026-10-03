@@ -5,9 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ellipsis as EllipsisIcon, Plus as PlusIcon } from 'lucide-react-native'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -25,7 +23,10 @@ import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile
 import { createAndShareInvite } from '@/features/buddies/lib/shareInvite'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** The Buddies tab: first-visit onboarding, then the buddies list. */
+/**
+ * Buddies, opened from Schedule's header: first-visit onboarding, then the
+ * buddies list. The stack header carries the title and Back.
+ */
 export default function BuddiesScreen({
   profileEditor,
 }: {
@@ -88,22 +89,14 @@ export default function BuddiesScreen({
   }
 
   return (
-    // The list starts below the status bar so the pull-to-refresh spinner
-    // isn't hidden behind the Dynamic Island.
-    <View
-      style={{
-        flex: 1,
-        paddingTop: insets.top,
-        backgroundColor: theme.colors.background,
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
           gap: 24,
           paddingTop: 8,
           paddingHorizontal: 15,
-          paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 40,
+          paddingBottom: insets.bottom + 40,
           width: '100%',
           maxWidth: 720,
           alignSelf: 'center',
@@ -124,17 +117,7 @@ export default function BuddiesScreen({
             gap: 8,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSize('2xl'),
-              }}
-            >
-              {i18n.t('buddies_title')}
-            </Text>
-            <BuddiesAlphaBadge />
-          </View>
+          <BuddiesAlphaBadge />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <PullDownMenu
               analyticsSurface='buddies_header'

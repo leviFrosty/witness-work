@@ -101,6 +101,10 @@ export type RootStackParamList = {
         source?: ServiceHistorySource
       }
     | undefined
+  /** Settings on compact layouts, opened from the account menu. */
+  SettingsMenu: undefined
+  /** Roster, requests, and invites. Opened from Schedule's header. */
+  Buddies: undefined
   /** One buddy's profile, upcoming Plans, and remove action. */
   Buddy: { inboxId: string }
   /** In-person pairing: my single-use QR code, or a scanner for theirs. */

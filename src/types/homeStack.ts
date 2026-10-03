@@ -1,8 +1,12 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 
+/** The Contacts tab's two workspaces. */
+export type ContactsView = 'list' | 'map'
+
 export type HomeTabStackParamList = {
   Home: undefined
-  Contacts: undefined
+  /** `view` opens a workspace and remembers it, e.g. the Map from Home. */
+  Contacts: { view?: ContactsView } | undefined
   Tools: undefined
   Progress:
     | {
@@ -12,8 +16,6 @@ export type HomeTabStackParamList = {
       }
     | undefined
   Schedule: { month: number; year: number } | undefined
-  Buddies: undefined
-  Map: undefined
   Settings: undefined
 }
 

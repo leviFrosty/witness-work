@@ -241,6 +241,8 @@ afterEach(async () => {
   await act(async () => root.unmount())
 })
 
+const layoutEvent = { nativeEvent: { layout: { height: 800 } } }
+
 async function startCreation(search: string) {
   await act(async () => root.root.findByType(Input).props.onChangeText(search))
   await act(async () =>
@@ -265,7 +267,7 @@ describe('Map camera initialization', () => {
     await act(async () => {
       const map = root.root.findByType(MapView)
       map.props.onMapReady()
-      map.props.onLayout()
+      map.props.onLayout(layoutEvent)
     })
     expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
     expect(mocks.animateToRegion).toHaveBeenCalledExactlyOnceWith(
@@ -283,9 +285,9 @@ describe('Map camera initialization', () => {
       const map = () => root.root.findByType(MapView)
       expect(mocks.fitToSuppliedMarkers).not.toHaveBeenCalled()
       expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
-      await act(async () => map().props[first]())
+      await act(async () => map().props[first](layoutEvent))
       expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
-      await act(async () => map().props[second]())
+      await act(async () => map().props[second](layoutEvent))
       expect(mocks.fitToCoordinates).toHaveBeenCalledExactlyOnceWith(
         mocks.contacts.map((contact) => contact.coordinate)
       )
@@ -297,7 +299,7 @@ describe('Map camera initialization', () => {
     await act(async () => root.update(screen()))
     await act(async () => {
       const map = root.root.findByType(MapView)
-      map.props.onLayout()
+      map.props.onLayout(layoutEvent)
       map.props.onMapReady()
     })
     expect(mocks.animateToRegion).not.toHaveBeenCalled()

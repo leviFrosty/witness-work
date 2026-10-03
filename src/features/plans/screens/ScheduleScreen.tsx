@@ -58,6 +58,8 @@ import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoa
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
+import BuddiesHeaderButton from '@/features/buddies/components/BuddiesHeaderButton'
+import RootHeader from '@/components/RootHeader'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
@@ -285,6 +287,11 @@ const ScheduleScreen = ({ route }: Props) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <RootHeader
+        title={i18n.t('Schedule')}
+        actions={<BuddiesHeaderButton />}
+        contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+      />
       <SwipeMonthNavigator
         onSwipeForward={() => handleArrowNavigate('forward')}
         onSwipeBack={() => handleArrowNavigate('back')}
@@ -293,7 +300,7 @@ const ScheduleScreen = ({ route }: Props) => {
         <AdaptiveSplitScrollView
           leadingFraction={0.54}
           gap={20}
-          paddingTop={insets.top + 15}
+          paddingTop={8}
           paddingBottom={(hasSidebar ? insets.bottom : tabBarHeight) + 40}
           header={
             <View style={{ gap: 15 }}>

@@ -1,17 +1,22 @@
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
+  FileText as FileTextIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import i18n from '@/lib/locales'
+import { analytics } from '@/lib/analytics'
+import RootHeader from '@/components/RootHeader'
+import HeaderPillButton from '@/components/ui/HeaderPillButton'
+import { RootStackNavigation } from '@/types/rootStack'
 
 import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
 import Badge from '@/components/ui/Badge'
@@ -36,7 +41,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   useRolloverPrompt()
   const { isWide } = useAdaptiveLayout()
-  const insets = useSafeAreaInsets()
+  const rootNavigation = useNavigation<RootStackNavigation>()
   const now = moment()
   const currentYear = now.year()
   const currentMonth = now.month()
@@ -110,12 +115,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <View
-        style={{
-          paddingTop: insets.top,
-          overflow: 'hidden',
-        }}
-      >
+      <View style={{ overflow: 'hidden' }}>
         <BlurView
           tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
           intensity={40}
@@ -131,9 +131,26 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             },
           ]}
         />
+        <RootHeader
+          title={i18n.t('Progress')}
+          contentStyle={{ maxWidth: 720 }}
+          actions={
+            <HeaderPillButton
+              icon={FileTextIcon}
+              label={i18n.t('viewReport')}
+              onPress={() => {
+                analytics.capture('service_report_opened', {
+                  source: 'progress_header',
+                  tab: activeTab,
+                })
+                rootNavigation.navigate('ServiceReportView', { month, year })
+              }}
+            />
+          }
+        />
         <View
           style={{
-            paddingTop: isWide ? 15 : 6,
+            paddingTop: isWide ? 9 : 0,
             paddingBottom: isWide ? 15 : 6,
             width: '100%',
             maxWidth: 720,

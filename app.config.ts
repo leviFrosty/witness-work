@@ -62,7 +62,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       adaptiveIcon: {
         foregroundImage: './src/assets/adaptive-icon.png',
         monochromeImage: './src/assets/adaptive-icon-monochrome.png',
-        backgroundColor: '#4BD27C',
+        // Match the standard icon's light surface so the green mark has contrast.
+        backgroundColor: '#F8F9FA',
       },
       intentFilters: [
         {
@@ -255,6 +256,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           image: './src/assets/splash.png',
           resizeMode: 'contain',
           backgroundColor: '#4BD27C',
+          android: {
+            // A 160dp mark on Android's 288dp canvas, inside its 192dp safe circle.
+            drawable: { icon: './src/assets/splash-android.xml' },
+          },
           // The checked-in asset is a full-device splash composition. Without
           // this, SDK 57 constrains it to the plugin default 100px image width.
           ios: {

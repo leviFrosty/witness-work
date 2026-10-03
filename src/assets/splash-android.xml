@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Center the 650 x 506 brand mark at 160dp wide within the 192dp safe circle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <group
+        android:translateX="64"
+        android:translateY="81.72308"
+        android:scaleX="0.24615385"
+        android:scaleY="0.24615385">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M72,0 H578 A72,72 0,0 1,650 72 V434 A72,72 0,0 1,578 506 H72 A72,72 0,0 1,0 434 V72 A72,72 0,0 1,72 0 Z M54,145 H596 V433 A18,18 0,0 1,578 451 H72 A18,18 0,0 1,54 433 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M162,252 A72,72 0,1 0,306 252 A72,72 0,1 0,162 252 Z M108,451 A126,90 0,0 1,360 451 Z M423,199 H518 A25,25 0,0 1,518 249 H423 A25,25 0,0 1,423 199 Z M423,307 H518 A25,25 0,0 1,518 357 H423 A25,25 0,0 1,423 307 Z" />
+    </group>
+</vector>

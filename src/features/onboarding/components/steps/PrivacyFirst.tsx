@@ -1,5 +1,4 @@
 import {
-  ChartBar as ChartBarIcon,
   Link as LinkIcon,
   ShieldUser as ShieldUserIcon,
   Smartphone as SmartphoneIcon,
@@ -67,13 +66,6 @@ const PrivacyFirst = ({ goBack, goNext }: Props) => {
       titleKey: 'privacyYourDataTitle',
       descriptionKey: 'privacyYourDataDesc',
       color: theme.colors.purple,
-    },
-    {
-      id: 'anonymous-analytics',
-      icon: ChartBarIcon,
-      titleKey: 'privacyAnalyticsTitle',
-      descriptionKey: 'privacyAnalyticsDesc',
-      color: theme.colors.textAlt,
     },
   ]
 

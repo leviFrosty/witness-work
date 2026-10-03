@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest'
 
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
@@ -26,6 +26,10 @@ vi.mock('@/lib/locales', () => ({ default: { t: (k: string) => k } }))
 vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: vi.fn(),
 }))
+const { deleteAvatarFiles } = vi.hoisted(() => ({
+  deleteAvatarFiles: vi.fn(async () => {}),
+}))
+vi.mock('@/lib/contactAvatarFiles', () => ({ deleteAvatarFiles }))
 
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -40,6 +44,12 @@ import {
 import type { MappedImport } from '@/lib/import/types'
 import type { Contact } from '@/types/contact'
 import type { CustomFieldDefinition } from '@/types/customField'
+import { isRedactedContactTombstone } from '@/lib/dataProtection'
+import {
+  deviceFromStores,
+  pullFrom,
+  timeEntriesOf,
+} from '@/__tests__/helpers/syncPeer'
 
 const AT = new Date('2026-06-08T12:00:00.000Z')
 
@@ -119,7 +129,11 @@ describe('undoImport', () => {
     undoImport(commit)
 
     expect(useContacts.getState().contacts).toHaveLength(0)
-    expect(useContacts.getState().deletedContacts).toHaveLength(0)
+    // Only a redacted tombstone remains, so the Undo reaches other devices.
+    const { deletedContacts } = useContacts.getState()
+    expect(deletedContacts.map((c) => c.id)).toEqual(['notes-h-c-c1'])
+    expect(isRedactedContactTombstone(deletedContacts[0])).toBe(true)
+    expect(JSON.stringify(deletedContacts)).not.toContain('Maria')
     expect(useConversations.getState().conversations).toHaveLength(0)
     expect(useCategories.getState().categories).toHaveLength(0)
     const reports = useServiceReport.getState().serviceReports
@@ -376,5 +390,121 @@ describe('undoImport — reference-aware retention (F44)', () => {
     expect(commit.insertedCustomFieldDefIds).toEqual([])
     expect(useContacts.getState().customFieldDefs).toEqual([])
     expect(useContacts.getState().contacts[0].customFields).toEqual({})
+  })
+})
+
+// Undo leaves a redacted contact tombstone (plus the visit/time-entry/category
+// tombstones), so it reaches the user's other devices; re-running the same
+// deterministic import afterwards must still work everywhere.
+describe('undoImport — sync and re-import', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(AT)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const minutesLater = (minutes: number) =>
+    vi.setSystemTime(AT.getTime() + minutes * 60_000)
+
+  it('removes the undone records from devices that already synced them', () => {
+    const commit = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+    const peer = deviceFromStores()
+
+    minutesLater(1)
+    undoImport(commit)
+
+    const merged = pullFrom(peer, deviceFromStores())
+    expect(merged.contacts).toEqual([])
+    expect(merged.conversations).toEqual([])
+    expect(timeEntriesOf(merged)).toEqual([])
+    expect(merged.categories).toEqual([])
+    expect(JSON.stringify(merged.deletedContacts)).not.toContain('Maria')
+  })
+
+  it('runs again after Undo, and the re-import reaches other devices', () => {
+    const first = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+    minutesLater(1)
+    undoImport(first)
+    const peerAfterUndo = deviceFromStores()
+
+    minutesLater(2)
+    const second = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+
+    expect(second.insertedContactIds).toEqual(['notes-h-c-c1'])
+    expect(second.insertedVisitIds).toEqual(['notes-h-v-v1'])
+    expect(second.insertedTimeEntries.map((e) => e.id)).toEqual([
+      'notes-h-t-t1',
+    ])
+    expect(useContacts.getState().contacts.map((c) => c.name)).toEqual([
+      'Maria',
+    ])
+    expect(useContacts.getState().deletedContacts).toEqual([])
+
+    const local = deviceFromStores()
+    for (const device of [
+      pullFrom(peerAfterUndo, local),
+      pullFrom(local, peerAfterUndo),
+    ]) {
+      expect(device.contacts.map((c) => c.name)).toEqual(['Maria'])
+      expect(device.deletedContacts).toEqual([])
+      expect(device.conversations.map((v) => v.id)).toEqual(['notes-h-v-v1'])
+      expect(timeEntriesOf(device).map((e) => e.id)).toEqual(['notes-h-t-t1'])
+      expect(device.categories.map((c) => c.id)).toEqual(['notes-h-cat-bethel'])
+    }
+
+    // The re-import can be undone in turn.
+    minutesLater(3)
+    undoImport(second)
+    expect(useContacts.getState().contacts).toEqual([])
+    expect(
+      useContacts.getState().deletedContacts.map(isRedactedContactTombstone)
+    ).toEqual([true])
+  })
+
+  it('erases the photos of the contacts it removes, and only those', () => {
+    const commit = writeMappedDataToStores(
+      {
+        ...sampleImport(),
+        contacts: [aContact('notes-h-c-c1', 'Maria'), aContact('kept', 'Ana')],
+      },
+      { publisherMode: 'overwrite' }
+    )
+    // The user logs their own visit on one imported contact, so Undo keeps it.
+    useConversations.getState().addConversation({
+      id: 'own-visit',
+      contact: { id: 'kept' },
+      date: AT,
+      isBibleStudy: false,
+    })
+    deleteAvatarFiles.mockClear()
+
+    undoImport(commit)
+
+    expect(deleteAvatarFiles.mock.calls).toEqual([['notes-h-c-c1']])
+    expect(useContacts.getState().contacts.map((c) => c.id)).toEqual(['kept'])
+  })
+
+  it('still skips a contact the user moved to Recover Contacts', () => {
+    writeMappedDataToStores(sampleImport(), { publisherMode: 'overwrite' })
+    useContacts.getState().deleteContact('notes-h-c-c1')
+
+    const again = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+
+    expect(again.insertedContactIds).toEqual([])
+    expect(useContacts.getState().contacts).toEqual([])
+    expect(useContacts.getState().deletedContacts.map((c) => c.name)).toEqual([
+      'Maria',
+    ])
   })
 })

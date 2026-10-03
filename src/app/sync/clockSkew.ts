@@ -15,9 +15,13 @@ export function translateSyncTimestamps<T>(
   const adjust = (item: unknown, key = ''): unknown => {
     if (
       typeof item === 'number' &&
-      ['updatedAt', 'deletedAt', 'writtenAt', 'detailsRetainUntil'].includes(
-        key
-      )
+      [
+        'updatedAt',
+        'deletedAt',
+        'writtenAt',
+        'readdedAt',
+        'detailsRetainUntil',
+      ].includes(key)
     ) {
       return key === 'detailsRetainUntil' ? item + offset : stamp(item)
     }

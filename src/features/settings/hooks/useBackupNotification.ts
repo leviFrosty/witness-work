@@ -6,6 +6,7 @@ import { usePreferences } from '@/stores/preferences'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { backupReminderDueAt } from '@/features/settings/lib/backupReminder'
+import * as ICloudBridge from '../../../../modules/icloud-bridge'
 
 /**
  * Tray reminder to export a backup once it's been
@@ -25,6 +26,7 @@ export default function useBackupNotification(
     iCloudSyncEnabled,
     lastiCloudPushedAt,
     lastiCloudPulledAt,
+    lastiCloudUploadedAt,
     set,
   } = usePreferences()
 
@@ -37,6 +39,8 @@ export default function useBackupNotification(
     iCloudSyncEnabled,
     lastiCloudPushedAt,
     lastiCloudPulledAt,
+    lastiCloudUploadedAt,
+    uploadConfirmationSupported: ICloudBridge.supportsUploadStatus(),
     now,
   })
   if (dueAt === null) return null

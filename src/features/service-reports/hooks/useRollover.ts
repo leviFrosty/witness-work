@@ -1,6 +1,5 @@
 import moment from 'moment'
 import { useCallback, useMemo } from 'react'
-import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import {
@@ -9,6 +8,7 @@ import {
   computePendingRollovers,
   PendingRollover,
 } from '@/features/service-reports/lib/rollover'
+import { addRolloverEntries } from '@/features/service-reports/lib/addRolloverEntries'
 import usePublisher from '@/hooks/usePublisher'
 
 type RolloverContext = {
@@ -27,7 +27,11 @@ type RolloverContext = {
    */
   excludedCreditMinutes: number
   markerKey: string
-  /** Apply pending rollover entries and stamp the marker. No-op if none. */
+  /**
+   * Apply pending rollover entries and stamp the marker. No-op if none. Entry
+   * ids derive from the months (see `rolloverIds`), so applying the same
+   * rollover on two devices leaves one pair after iCloud sync.
+   */
   apply: () => void
   /** Stamp the marker without applying — used for "Not now". */
   dismiss: () => void
@@ -47,7 +51,7 @@ export const useRollover = (): RolloverContext => {
     devRolloverDateOverride,
     set,
   } = usePreferences()
-  const { serviceReports, addServiceReport } = useServiceReport()
+  const { serviceReports } = useServiceReport()
 
   const overrideMs = devRolloverDateOverride
     ? new Date(devRolloverDateOverride).getTime()
@@ -154,16 +158,14 @@ export const useRollover = (): RolloverContext => {
         customLimitHours: customCreditLimitHours,
       },
       includeCredit: prefs.rolloverIncludesCredit,
-      genId: () => Crypto.randomUUID(),
     })
     if (!result) {
       set({ lastRolloverYearMonth: markerKey })
       return
     }
-    result.entries.forEach((entry) => addServiceReport(entry))
+    addRolloverEntries(result.entries)
     set({ lastRolloverYearMonth: result.markerKey })
   }, [
-    addServiceReport,
     customCreditLimitHours,
     hasAnnualGoal,
     markerKey,

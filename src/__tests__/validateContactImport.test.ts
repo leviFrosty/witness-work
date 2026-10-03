@@ -30,8 +30,10 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 // Now import after all mocks are set up
 import {
   validateContactImport,
+  processContactImport,
   ContactImportData,
 } from '@/features/contacts/lib/contactImport'
+import { stripContactForTombstone } from '@/lib/dataProtection'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import i18n from '@/lib/locales'
@@ -578,5 +580,34 @@ describe('validateContactImport', () => {
       expect(result.success).toBe(true)
       expect(result.data).toEqual(dataWithStringDate)
     })
+  })
+})
+
+describe('processContactImport', () => {
+  const shared: Contact = {
+    id: 'shared-1',
+    name: 'John Doe',
+    createdAt: new Date('2023-01-01'),
+  }
+  const importData: ContactImportData = {
+    version: '1.0',
+    type: 'witnesswork-contact',
+    exportedAt: '2026-10-01T00:00:00.000Z',
+    contact: shared,
+  }
+
+  it('offers to recover a contact waiting in Recover Contacts', () => {
+    const result = processContactImport(importData, [], [shared])
+    expect(result.isDeleted).toBe(true)
+    expect(result.deletedContact).toBe(shared)
+  })
+
+  it('imports afresh over a permanently deleted contact', () => {
+    // A redacted tombstone has nothing to recover; addContact replaces it.
+    const tombstone = stripContactForTombstone(shared, 1)
+    const result = processContactImport(importData, [], [tombstone])
+    expect(result.isDeleted).toBe(false)
+    expect(result.deletedContact).toBeUndefined()
+    expect(result.conflictExists).toBe(false)
   })
 })

@@ -10,6 +10,20 @@ import {
   NON_SYNCABLE_PROFILE_KEYS,
 } from '@/lib/syncPreferencePolicy'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
+import {
+  ResetEpoch,
+  compareResetEpochs,
+  createResetEpoch,
+  newestResetEpoch,
+} from '@/lib/syncResetEpoch'
+import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
+import {
+  SyncDeviceFile,
+  SyncDeviceFiles,
+  deviceIdFromSyncFilename,
+  mergeSyncDeviceFiles,
+  syncDeviceRemoval,
+} from '@/lib/syncDevices'
 import { analytics } from '@/lib/analytics'
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -29,8 +43,14 @@ import {
   SyncPayload,
 } from '@/app/sync/payload'
 import { mergePayload } from '@/app/sync/merge'
+import { classifyUploadStatus, UploadVerdict } from '@/app/sync/uploadStatus'
 import { isAccountFilename } from '@/lib/accountFile'
 import { reclaimAccountFile } from '@/lib/account'
+import {
+  IdentityCheckSource,
+  checkICloudIdentity,
+  ensureSyncDeviceId,
+} from '@/lib/iCloudIdentity'
 import { logger } from '@/lib/logger'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Device from 'expo-device'
@@ -39,6 +59,7 @@ import { CustomFieldDefinition } from '@/types/customField'
 import { Category } from '@/types/category'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { stripTombstonedCustomFields } from '@/lib/customFields'
+import { markCompleteICloudPull } from '@/lib/iCloudPullWait'
 import {
   pushAllImages,
   pullMissingImages,
@@ -116,6 +137,11 @@ function retryPush() {
 type PullOutcome = { changed: boolean; complete: boolean }
 /** `complete` of the most recent pull, whichever trigger ran it. */
 let lastPullComplete = false
+/**
+ * Whether the most recent read listed any file. An empty listing can mean the
+ * scan isn't done yet, so it doesn't release `markCompleteICloudPull` waiters.
+ */
+let lastReadFoundFiles = false
 
 /**
  * Coalesce concurrent pulls. NSMetadataQuery fires in bursts (both
@@ -151,9 +177,37 @@ const READ_RETRY_DELAYS_MS = [5_000, 20_000, 60_000]
 let readRetryTimer: ReturnType<typeof setTimeout> | null = null
 let readRetries = 0
 
+/**
+ * Upload confirmation. A successful `write` only proves the snapshot reached
+ * the local container; iCloud uploads it later, or not at all while storage is
+ * full. Each write leaves this device's snapshot waiting
+ * (`iCloudUploadPendingSince`) until a check sees it uploaded, which records
+ * `lastiCloudUploadedAt`. Checks back off while the app is active, and every
+ * write or catch-up starts a fresh budget. They only observe: iCloud retries
+ * the upload itself, so re-pushing would not help a full account.
+ */
+const UPLOAD_CHECK_DELAYS_MS = [3_000, 10_000, 30_000, 60_000, 120_000, 300_000]
+let uploadCheckTimer: ReturnType<typeof setTimeout> | null = null
+let uploadChecks = 0
+let uploadCheckInFlight: Promise<UploadVerdict | null> | null = null
+/**
+ * Bumped by every write, so a check that read the previous version can't
+ * confirm the next one.
+ */
+let uploadGeneration = 0
+
 /** Same coalescing as `pullInFlight`, for `catchUp`. */
 let catchUpInFlight = false
 let catchUpQueuedReason: string | null = null
+
+/**
+ * Set for the whole of `overwriteRemoteWithLocal`. Pulls don't read meanwhile,
+ * and one already reading doesn't apply what it read: adopting another device's
+ * reset, or merging, would replace the data the user chose to keep just before
+ * it's published. A skipped pull runs once the reset ends.
+ */
+let resetInProgress = false
+let pullDeferredReason: string | null = null
 
 function filenameForDevice(deviceId: string): string {
   return `${SYNC_FILE_PREFIX}-${deviceId}${SYNC_FILE_EXT}`
@@ -202,24 +256,11 @@ function countReports(
 }
 
 /**
- * Lightweight UUID-ish id. Good enough for attributing writes to a device in
- * the sync payload metadata. Not security-sensitive, so a stronger RNG would be
- * overkill.
+ * This device's snapshot id. A copy restored from another device's backup gets
+ * a fresh one so both devices keep reading each other (see `iCloudIdentity`).
  */
-function generateDeviceId(): string {
-  return (
-    Math.random().toString(36).slice(2, 10) +
-    Math.random().toString(36).slice(2, 10) +
-    Date.now().toString(36)
-  )
-}
-
 function ensureDeviceId(): string {
-  const prefs = usePreferences.getState()
-  if (prefs.iCloudDeviceId) return prefs.iCloudDeviceId
-  const id = generateDeviceId()
-  prefs.set({ iCloudDeviceId: id })
-  return id
+  return ensureSyncDeviceId()
 }
 
 /**
@@ -240,13 +281,55 @@ function tag(): string {
  * AND iCloud is actually usable. The supporter check is a runtime gate: if the
  * subscription lapses between syncs, push/pull immediately stop even before the
  * lapse-flip effect in `App.tsx` clears `iCloudSyncEnabled`.
+ *
+ * Also the Apple Account gate: every read and write checks here first, so a
+ * device signed into another account turns sync off before touching that
+ * account's container.
  */
 export function canSync(): boolean {
   if (Platform.OS !== 'ios') return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
   if (!useSupporter.getState().isSupporter) return false
-  return ICloudBridge.isAvailable()
+  if (!ICloudBridge.isAvailable()) return false
+  return checkICloudIdentity('can_sync')
+}
+
+/**
+ * The Apple Account a read of iCloud was made under, as `checkICloudIdentity`
+ * recorded it. A choice the user makes about that read (restore, merge, keep
+ * this device's data) applies only while `confirmICloudAccount` still holds:
+ * applying it after a switch would carry the previous account's data, or a
+ * reset, into the new account's iCloud.
+ */
+export type ICloudAccount = { token: string | null; changedAt: number | null }
+
+function storedICloudAccount(): ICloudAccount {
+  const { iCloudIdentityToken, iCloudAccountChangedAt } =
+    usePreferences.getState()
+  return { token: iCloudIdentityToken, changedAt: iCloudAccountChangedAt }
+}
+
+/**
+ * `changedAt` also catches a switch away and back, which leaves the token as it
+ * was but has already reset this device's sync state.
+ */
+function isStoredICloudAccount(account: ICloudAccount): boolean {
+  const stored = storedICloudAccount()
+  return (
+    stored.token === account.token && stored.changedAt === account.changedAt
+  )
+}
+
+/**
+ * Whether the Apple Account is still the one `account` was captured under.
+ * Checks first, so a switch nobody has noticed yet turns sync off now.
+ */
+export function confirmICloudAccount(
+  account: ICloudAccount,
+  source: IdentityCheckSource = 'initial_enable'
+): boolean {
+  return checkICloudIdentity(source) && isStoredICloudAccount(account)
 }
 
 /**
@@ -277,6 +360,9 @@ export function hasMeaningfulLocalData(): boolean {
   if (reports.dayPlans.length > 0) return true
   if (reports.recurringPlans.length > 0) return true
   if (reports.deletedServiceReports.length > 0) return true
+  // A deletion is user data too: replacing it would bring the Plan back.
+  if (reports.deletedDayPlans.length > 0) return true
+  if (reports.deletedRecurringPlans.length > 0) return true
   for (const year of Object.values(reports.serviceReports)) {
     for (const month of Object.values(year)) {
       if (month.length > 0) return true
@@ -291,7 +377,8 @@ export function hasMeaningfulLocalData(): boolean {
 /**
  * Destructive: wipes local user data + syncable prefs and replaces them with
  * the contents of `remote`. Device-local bookkeeping (`iCloudSyncEnabled`,
- * `iCloudDeviceId`, etc.) is preserved.
+ * `iCloudDeviceId`, etc.) is preserved. Adopts `remote`'s reset generation, so
+ * the next pull merges with it instead of replacing again.
  *
  * Use this as the "Use iCloud data" branch of the first-enable sheet and as the
  * onboarding one-shot restore. Caller is responsible for confirming destructive
@@ -342,6 +429,9 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       recurringPlans: normalizedRemote.recurringPlans,
       deletedServiceReports:
         remote.serviceReportStore.deletedServiceReports ?? [],
+      deletedDayPlans: remote.serviceReportStore.deletedDayPlans ?? [],
+      deletedRecurringPlans:
+        remote.serviceReportStore.deletedRecurringPlans ?? [],
     })
     useCategories.setState({
       categories: (remote.categoryStore?.categories ?? []) as Category[],
@@ -358,6 +448,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       lastiCloudRemoteWrittenAt: remote.writtenAt,
       lastiCloudRemoteDeviceId: remote.deviceId,
       lastiCloudRemoteDeviceName: remote.deviceName ?? null,
+      iCloudResetEpoch: remote.resetEpoch ?? null,
     })
     // Profile slice — `parsePayload` has already lifted any legacy
     // profile-shaped fields out of `preferencesStore.values` into
@@ -374,20 +465,170 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
 }
 
 /**
- * The inverse of `replaceLocalWithRemote`: wipes every remote file so nothing
- * on iCloud shadows what's about to be pushed, then pushes fresh from this
- * device. Used by the first-enable sheet's "Keep this device's data" branch.
+ * "Merge both" joins the remote's reset generation before merging, so the pull
+ * merges with it rather than adopting it and replacing the data being merged.
+ */
+export function joinRemoteResetEpoch(remote: SyncPayload): void {
+  usePreferences.setState({ iCloudResetEpoch: remote.resetEpoch ?? null })
+}
+
+/**
+ * The inverse of `replaceLocalWithRemote`: starts a new reset generation and
+ * publishes this device's data in it. Every other device ignores older
+ * snapshots and adopts this one on its next pull. Used by the first-enable
+ * sheet's "Keep this device's data" branch and "Rebuild iCloud data".
+ *
+ * The publish comes before any cleanup, so the new generation is in iCloud even
+ * if cleanup stops part way; pre-reset files are harmless once it is. A failed
+ * publish restores the previous generation and sync settings and throws.
+ *
+ * The reset belongs to the Apple Account it started under. A switch noticed
+ * before the publish stops it without turning sync on, and a failed publish
+ * after one leaves the account-change reset in place: restoring the previous
+ * settings would sync the new account under the old generation.
+ *
+ * Pulls wait until it ends (`resetInProgress`), so it publishes this device's
+ * data rather than another device's reset adopted meanwhile.
  */
 export async function overwriteRemoteWithLocal(): Promise<void> {
-  await ICloudBridge.deleteAll()
-  await clearCloudPhotos()
-  await reclaimAccountFile(useSupporter.getState().isSupporter)
-  usePreferences.getState().set({
+  if (resetInProgress) throw new Error('iCloud reset already running')
+  resetInProgress = true
+  try {
+    await overwriteRemoteWithLocalInner()
+  } finally {
+    resetInProgress = false
+    const deferred = pullDeferredReason
+    pullDeferredReason = null
+    if (deferred) void pull(deferred)
+  }
+}
+
+async function overwriteRemoteWithLocalInner(): Promise<void> {
+  const source = usePreferences.getState().iCloudSyncEnabled
+    ? 'can_sync'
+    : 'initial_enable'
+  if (!checkICloudIdentity(source)) throw new Error('Apple Account changed')
+  const account = storedICloudAccount()
+  const prefs = usePreferences.getState()
+  const previous = {
+    iCloudResetEpoch: prefs.iCloudResetEpoch,
+    iCloudResetAdoptedNotice: prefs.iCloudResetAdoptedNotice,
+    iCloudSyncEnabled: prefs.iCloudSyncEnabled,
+    iCloudSyncNeedsResolution: prefs.iCloudSyncNeedsResolution,
+    iCloudFreshSetup: prefs.iCloudFreshSetup,
+  }
+  await calibrateClock()
+  // A push that started earlier snapshotted the previous generation; joining
+  // it would publish without the new one. A pull that started earlier may
+  // still be applying what it read.
+  while (pushInFlight || pullInFlight)
+    await Promise.allSettled([pushInFlight, pullInFlight])
+  if (!confirmICloudAccount(account, source))
+    throw new Error('Apple Account changed')
+  const deviceId = ensureDeviceId()
+  const epoch = createResetEpoch({
+    now: syncNow(),
+    // A pull may have adopted another reset meanwhile.
+    previous: usePreferences.getState().iCloudResetEpoch,
+    deviceId,
+    deviceName: Device.modelName ?? undefined,
+  })
+  // `push` needs sync on. Pulls meanwhile ignore every pre-reset file.
+  usePreferences.setState({
+    iCloudResetEpoch: epoch,
+    iCloudResetAdoptedNotice: null,
     iCloudSyncEnabled: true,
     iCloudSyncNeedsResolution: false,
     iCloudFreshSetup: false,
   })
-  if (!(await push('overwrite-remote'))) throw new Error('iCloud write failed')
+  if (!(await push('overwrite-remote'))) {
+    if (isStoredICloudAccount(account)) usePreferences.setState(previous)
+    throw new Error('iCloud write failed')
+  }
+  logger.log(`${tag()} reset published`, { epoch: epoch.id })
+  errorTracking.addBreadcrumb({
+    category: 'iCloudSync',
+    message: 'reset — new generation published',
+    level: 'info',
+  })
+  await reclaimAccountFile(useSupporter.getState().isSupporter)
+  await removePreResetFiles(filenameForDevice(deviceId), epoch)
+}
+
+/**
+ * Cleanup after a reset publish: deletes other devices' payloads and legacy
+ * files from older generations, and cloud photos the published data doesn't
+ * reference. Never the account file. A newer generation (a concurrent reset) is
+ * kept, and so is any file this device can't read: one from a newer app
+ * version, or still downloading, could be that newer reset. The Devices list
+ * can remove those later. Failures are logged, not thrown: the published
+ * generation already makes what's left harmless.
+ */
+async function removePreResetFiles(
+  ownFilename: string,
+  epoch: ResetEpoch
+): Promise<void> {
+  try {
+    const { files } = await ICloudBridge.readFiles(
+      (filename) => isPayloadFilename(filename) && filename !== ownFilename
+    )
+    const stale = files
+      .filter((file) => {
+        const parsed = parsePayload(file.json)
+        return parsed && compareResetEpochs(parsed.resetEpoch, epoch) < 0
+      })
+      .map((file) => file.filename)
+    for (const filename of stale) await ICloudBridge.deleteFile(filename)
+    logger.log(`${tag()} reset cleanup: payloads`, { deleted: stale.length })
+  } catch (e) {
+    logger.warn(`${tag()} reset cleanup: payloads failed`, e)
+    errorTracking.addBreadcrumb({
+      category: 'iCloudSync',
+      message: 'reset cleanup — payload delete failed',
+      level: 'warning',
+    })
+  }
+  try {
+    await deleteUnreferencedCloudPhotos()
+  } catch (e) {
+    logger.warn(`${tag()} reset cleanup: photos failed`, e)
+    errorTracking.addBreadcrumb({
+      category: 'iCloudSync',
+      message: 'reset cleanup — photo delete failed',
+      level: 'warning',
+    })
+  }
+}
+
+/**
+ * Keeps the cloud photos this device's data references (contacts, recoverable
+ * deleted contacts and the profile, uploaded by any device) and deletes the
+ * rest. Unlike `clearCloudPhotos`, never removes a photo the reset publish just
+ * uploaded.
+ */
+function deleteUnreferencedCloudPhotos(): Promise<void> {
+  return serializeImages(async () => {
+    const keep = new Set<string>()
+    const { contacts, deletedContacts } = useContacts.getState()
+    for (const contact of [...contacts, ...deletedContacts])
+      if (contact.avatar?.type === 'image')
+        keep.add(filenameForContact(contact.id, contact.avatar.revision))
+    const { avatar } = useProfile.getState()
+    if (avatar?.type === 'image') keep.add(filenameForProfile(avatar.revision))
+    const deleted: string[] = []
+    for (const { filename } of await ICloudBridge.listBinaryFiles()) {
+      if (keep.has(filename)) continue
+      await ICloudBridge.deleteBinaryFile(filename)
+      deleted.push(filename)
+    }
+    if (deleted.length === 0) return
+    const next: ImageSyncBookkeeping = {
+      ...(usePreferences.getState().iCloudImageSync ?? {}),
+    }
+    for (const filename of deleted) delete next[filename]
+    usePreferences.setState({ iCloudImageSync: next })
+    logger.log(`${tag()} reset cleanup: photos`, { deleted: deleted.length })
+  })
 }
 
 /**
@@ -407,7 +648,7 @@ export type RemoteIncompleteReason =
  * trustworthy. `unavailable` covers no iCloud and a failed read.
  */
 export type RemotePeek =
-  | { status: 'found'; remote: SyncPayload }
+  | { status: 'found'; remote: SyncPayload; account: ICloudAccount }
   | { status: 'none' }
   | { status: 'incomplete'; reason: RemoteIncompleteReason }
   | { status: 'unavailable' }
@@ -444,10 +685,19 @@ function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
  * reported `incomplete` rather than folded into a partial answer.
  *
  * Folds all per-device files together so the caller sees one unified view.
+ * `found` carries the Apple Account it was read under; a read the account
+ * switched during is `unavailable`.
  */
 export async function peekRemotePayload(): Promise<RemotePeek> {
   if (Platform.OS !== 'ios') return { status: 'unavailable' }
   if (!ICloudBridge.isAvailable()) return { status: 'unavailable' }
+  checkICloudIdentity('initial_enable')
+  const account = storedICloudAccount()
+  const peek = await readRemotePeek(account)
+  return confirmICloudAccount(account) ? peek : { status: 'unavailable' }
+}
+
+async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
   try {
     if (!(await ICloudBridge.waitForInitialScan(5000))) {
       return incompletePeek('scan')
@@ -472,7 +722,9 @@ export async function peekRemotePayload(): Promise<RemotePeek> {
       // on what it read, as before `pending` existed.
       if (!pending?.length) {
         const remote = foldRemotePayloads(payloads)
-        return remote ? { status: 'found', remote } : { status: 'none' }
+        return remote
+          ? { status: 'found', remote, account }
+          : { status: 'none' }
       }
       if (attempt >= PEEK_READ_ATTEMPTS) return incompletePeek('downloading')
     }
@@ -501,14 +753,15 @@ export async function peekRemotePayload(): Promise<RemotePeek> {
  *   destructively replace local with remote + enable.
  * - `conflict` — both sides populated. Caller must ask the user to resolve
  *   (Settings renders `FirstEnableSheet`; headless callers like
- *   `SupporterSyncDefault` should leave sync disabled and defer to Settings).
+ *   `SupporterSyncDefault` should leave sync disabled and defer to Settings),
+ *   and apply the choice only while `confirmICloudAccount(account)` holds.
  */
 export type InitialEnableDecision =
   | { outcome: 'unavailable' }
   | { outcome: 'incomplete'; reason: RemoteIncompleteReason }
   | { outcome: 'seed' }
   | { outcome: 'pull'; remote: SyncPayload }
-  | { outcome: 'conflict'; remote: SyncPayload }
+  | { outcome: 'conflict'; remote: SyncPayload; account: ICloudAccount }
 
 /**
  * Peeks at the remote state and classifies what an initial enable should do.
@@ -524,6 +777,8 @@ export type InitialEnableDecision =
 export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
   if (Platform.OS !== 'ios') return { outcome: 'unavailable' }
   if (!ICloudBridge.isAvailable()) return { outcome: 'unavailable' }
+  // A headless auto-enable must not seed an account it just noticed.
+  if (!checkICloudIdentity('initial_enable')) return { outcome: 'unavailable' }
   const peek = await peekRemotePayload()
   switch (peek.status) {
     case 'unavailable':
@@ -536,7 +791,7 @@ export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
       if (!hasMeaningfulLocalData()) {
         return { outcome: 'pull', remote: peek.remote }
       }
-      return { outcome: 'conflict', remote: peek.remote }
+      return { outcome: 'conflict', remote: peek.remote, account: peek.account }
   }
 }
 
@@ -957,9 +1212,13 @@ async function pushInner(reason: string): Promise<boolean> {
       serviceReports: countReports(payload.serviceReportStore.serviceReports),
       dayPlans: payload.serviceReportStore.dayPlans.length,
       recurringPlans: payload.serviceReportStore.recurringPlans.length,
+      deletedDayPlans: payload.serviceReportStore.deletedDayPlans?.length ?? 0,
+      deletedRecurringPlans:
+        payload.serviceReportStore.deletedRecurringPlans?.length ?? 0,
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
     await ICloudBridge.write(filename, json)
+    awaitUpload()
     const covered = generation === editGeneration
     usePreferences.setState({ iCloudSyncPendingPush: !covered })
     cancelPushRetry()
@@ -996,6 +1255,127 @@ async function pushInner(reason: string): Promise<boolean> {
     return false
   }
 }
+
+function awaitingUpload(): boolean {
+  const prefs = usePreferences.getState()
+  return prefs.iCloudUploadPendingSince !== null || !!prefs.iCloudUploadIssue
+}
+
+/** After a write: this version waits for iCloud to confirm its upload. */
+function awaitUpload(): void {
+  // A binary that can't tell keeps showing local activity, as before.
+  if (!ICloudBridge.supportsUploadStatus()) return
+  uploadGeneration++
+  if (usePreferences.getState().iCloudUploadPendingSince === null) {
+    usePreferences.setState({ iCloudUploadPendingSince: Date.now() })
+  }
+  restartUploadChecks()
+}
+
+function cancelUploadChecks(): void {
+  if (uploadCheckTimer) clearTimeout(uploadCheckTimer)
+  uploadCheckTimer = null
+  uploadChecks = 0
+}
+
+function restartUploadChecks(): void {
+  cancelUploadChecks()
+  scheduleUploadCheck()
+}
+
+function scheduleUploadCheck(): void {
+  if (!installed || uploadCheckTimer || !awaitingUpload()) return
+  if (AppState.currentState !== 'active' || !canSync()) return
+  const delay = UPLOAD_CHECK_DELAYS_MS[uploadChecks++]
+  if (delay === undefined) return
+  uploadCheckTimer = setTimeout(() => {
+    uploadCheckTimer = null
+    void checkUpload().then((verdict) => {
+      if (verdict !== 'uploaded') scheduleUploadCheck()
+    })
+  }, delay)
+}
+
+/**
+ * Asks iCloud whether this device's snapshot has uploaded and records the
+ * answer. Null when nothing is waiting or iCloud couldn't say (the binary
+ * predates `uploadStatus`, the file is mid-rebuild, or the read failed).
+ */
+export function checkUpload(): Promise<UploadVerdict | null> {
+  if (uploadCheckInFlight) return uploadCheckInFlight
+  uploadCheckInFlight = checkUploadInner().finally(() => {
+    uploadCheckInFlight = null
+  })
+  return uploadCheckInFlight
+}
+
+async function checkUploadInner(): Promise<UploadVerdict | null> {
+  if (!awaitingUpload() || !canSync()) return null
+  if (!ICloudBridge.supportsUploadStatus()) {
+    // Recorded by a newer binary before an OTA rollback onto this one.
+    usePreferences.setState({
+      iCloudUploadPendingSince: null,
+      iCloudUploadIssue: null,
+    })
+    return null
+  }
+  const generation = uploadGeneration
+  let status: ICloudBridge.UploadStatus | null
+  try {
+    status = await ICloudBridge.uploadStatus(
+      filenameForDevice(ensureDeviceId())
+    )
+  } catch (e) {
+    logger.warn(`${tag()} upload status unavailable`, e)
+    return null
+  }
+  // Missing while a rebuild deletes and rewrites it; an account change means
+  // the answer is about another container.
+  if (!status || !canSync()) return null
+  const verdict = classifyUploadStatus(status)
+  const previousIssue = usePreferences.getState().iCloudUploadIssue
+  switch (verdict) {
+    case 'uploaded':
+      // A write since the read started is a newer version still uploading.
+      if (generation !== uploadGeneration) return 'waiting'
+      cancelUploadChecks()
+      usePreferences.setState({
+        lastiCloudUploadedAt: Date.now(),
+        iCloudUploadPendingSince: null,
+        iCloudUploadIssue: null,
+      })
+      if (previousIssue) {
+        logger.log(`${tag()} upload recovered`, { previousIssue })
+        analytics.capture('icloud_sync_upload_recovered', {
+          previous_issue: analyticsReason(previousIssue),
+        })
+      }
+      break
+    case 'icloud-full':
+    case 'upload-failed':
+      if (previousIssue === verdict) break
+      usePreferences.setState({ iCloudUploadIssue: verdict })
+      logger.warn(`${tag()} upload failed`, { verdict, error: status.error })
+      errorTracking.addBreadcrumb({
+        category: 'iCloudSync',
+        message: `upload failed (${verdict})`,
+        level: 'warning',
+      })
+      analytics.capture('icloud_sync_upload_failed', {
+        reason: analyticsReason(verdict),
+      })
+      break
+    case 'unreachable':
+      logger.log(`${tag()} upload waiting: iCloud unreachable`)
+      break
+    case 'waiting':
+      break
+  }
+  return verdict
+}
+
+const analyticsReason = (issue: 'icloud-full' | 'upload-failed') =>
+  issue === 'icloud-full' ? 'icloud_full' : 'other'
 
 const debouncedPush = debounce(
   () => {
@@ -1056,6 +1436,12 @@ export async function pullBeforeCalendarPublish(): Promise<void> {
 }
 
 function pull(reason: string): Promise<PullOutcome> {
+  if (resetInProgress) {
+    pullDeferredReason ??= reason
+    // Nothing was read, so GC and device removal wait for the deferred pull.
+    lastPullComplete = false
+    return Promise.resolve({ changed: false, complete: false })
+  }
   if (pullInFlight) {
     if (!pullQueuedReason) pullQueuedReason = reason
     return pullInFlight
@@ -1074,8 +1460,10 @@ function pull(reason: string): Promise<PullOutcome> {
           new Promise((resolve) => setTimeout(resolve, GC_STOP_WAIT_MS)),
         ])
       }
+      lastReadFoundFiles = false
       const outcome = await pullAndMergeInner(reason)
       lastPullComplete = outcome.complete
+      if (outcome.complete && lastReadFoundFiles) markCompleteICloudPull()
       return outcome
     } finally {
       const queued = pullQueuedReason
@@ -1110,6 +1498,18 @@ function cancelReadRetry(): void {
   readRetries = 0
 }
 
+/**
+ * Checked after a read, right before applying it: sync may have turned off, or
+ * a reset started, while it read. A pull a reset stops runs again after it.
+ */
+function canApplyPull(reason: string): boolean {
+  if (resetInProgress) {
+    pullDeferredReason ??= reason
+    return false
+  }
+  return canSync()
+}
+
 async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   if (!canSync()) {
     logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
@@ -1121,6 +1521,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   const deviceId = ensureDeviceId()
   const ownFilename = filenameForDevice(deviceId)
 
+  const seenAt = nextReadStamp()
   let read: ICloudBridge.SyncRead
   try {
     read = await ICloudBridge.readFiles(isPayloadFilename)
@@ -1137,6 +1538,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   cancelReadRetry()
   let issue: 'newer-version' | 'invalid-file' | 'read-failed' | null = null
   const { files, pending } = read
+  lastReadFoundFiles = files.length > 0
   let complete = (pending?.length ?? 0) === 0
   if (!complete) {
     issue = 'read-failed'
@@ -1165,16 +1567,18 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
 
   // Parse files independently. Retain legacy sources so an old writer's
   // concurrent update cannot be deleted after our read.
-  const remotePayloads: Array<{
+  let remotePayloads: Array<{
     payload: SyncPayload
     filename: string
     modifiedAt: number
   }> = []
   const legacyFilenames: string[] = []
+  const unparsed: SyncDeviceFiles = {}
   for (const file of files) {
     if (file.filename === ownFilename) continue
     const parsed = parsePayload(file.json)
     if (!parsed) {
+      unparsed[file.filename] = unparsedDeviceFile(file, seenAt)
       complete = false
       issue = isNewerPayloadVersion(file.json)
         ? 'newer-version'
@@ -1214,6 +1618,51 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     }
   }
 
+  // Reset generations: a newer one replaces local data; an older one is a
+  // snapshot a reset replaced, and stays out of the merge. Neither makes the
+  // read incomplete.
+  const localEpoch = usePreferences.getState().iCloudResetEpoch
+  const newestEpoch = newestResetEpoch(
+    remotePayloads.map((r) => r.payload.resetEpoch)
+  )
+  recordDeviceFiles({
+    read,
+    ownFilename,
+    deviceId,
+    remotePayloads,
+    unparsed,
+    epoch: newestResetEpoch([newestEpoch, localEpoch]),
+    seenAt,
+  })
+  if (compareResetEpochs(newestEpoch, localEpoch) > 0) {
+    if (!canApplyPull(reason)) return { changed: false, complete: false }
+    return adoptResetEpoch(
+      reason,
+      remotePayloads
+        .filter(
+          (r) => compareResetEpochs(r.payload.resetEpoch, newestEpoch) === 0
+        )
+        .map((r) => r.payload),
+      complete,
+      issue
+    )
+  }
+  const preReset = remotePayloads.filter(
+    (r) => compareResetEpochs(r.payload.resetEpoch, localEpoch) < 0
+  )
+  if (preReset.length > 0) {
+    logger.log(`${tag()} pullAndMerge: ignoring pre-reset payloads`, {
+      reason,
+      filenames: preReset.map((r) => r.filename),
+    })
+    errorTracking.addBreadcrumb({
+      category: 'iCloudSync',
+      message: `pull (${reason}) — ignored ${preReset.length} pre-reset payload(s)`,
+      level: 'info',
+    })
+    remotePayloads = remotePayloads.filter((r) => !preReset.includes(r))
+  }
+
   // Surface the freshest remote file in the settings display, regardless of
   // whether the merge actually changes anything. Chosen by `modifiedAt`
   // rather than `writtenAt` so the clock skew between devices doesn't
@@ -1248,7 +1697,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     return { changed: false, complete }
   }
 
-  if (!canSync()) return { changed: false, complete: false }
+  if (!canApplyPull(reason)) return { changed: false, complete: false }
   // Snapshot local state once; fold each remote payload into the accumulator.
   const contactsState = useContacts.getState()
   const conversationsState = useConversations.getState()
@@ -1279,6 +1728,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     serviceReports: countReports(serviceReportState.serviceReports),
     dayPlans: serviceReportState.dayPlans.length,
     recurringPlans: serviceReportState.recurringPlans.length,
+    deletedDayPlans: serviceReportState.deletedDayPlans.length,
+    deletedRecurringPlans: serviceReportState.deletedRecurringPlans.length,
     preferenceUpdatedAtKeys: Object.keys(
       preferencesState.preferenceUpdatedAt ?? {}
     ).length,
@@ -1295,6 +1746,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     dayPlans: serviceReportState.dayPlans,
     recurringPlans: serviceReportState.recurringPlans,
     deletedServiceReports: serviceReportState.deletedServiceReports,
+    deletedDayPlans: serviceReportState.deletedDayPlans,
+    deletedRecurringPlans: serviceReportState.deletedRecurringPlans,
     categories: categoriesState.categories,
     deletedCategories: categoriesState.deletedCategories,
     preferencesValues: localPrefValues,
@@ -1323,6 +1776,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     serviceReports: countReports(acc.serviceReports),
     dayPlans: acc.dayPlans.length,
     recurringPlans: acc.recurringPlans.length,
+    deletedDayPlans: acc.deletedDayPlans.length,
+    deletedRecurringPlans: acc.deletedRecurringPlans.length,
   })
 
   if (!anyChanged) {
@@ -1351,7 +1806,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     deletedConversations: acc.deletedConversations,
   })
   // Same rationale as `replaceLocalWithRemote`: a peer device could have
-  // written un-normalized dates. Re-anchor before applying.
+  // written un-normalized dates. Re-anchor before applying. A Plan another
+  // device deleted leaves here as a remote mutation: that device already
+  // answered any buddy's invitation, and the reminder hook drops its reminder.
   const normalizedAcc = migrateNormalizeDates({
     serviceReports: acc.serviceReports,
     dayPlans: acc.dayPlans,
@@ -1363,6 +1820,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       dayPlans: normalizedAcc.dayPlans,
       recurringPlans: normalizedAcc.recurringPlans,
       deletedServiceReports: acc.deletedServiceReports,
+      deletedDayPlans: acc.deletedDayPlans,
+      deletedRecurringPlans: acc.deletedRecurringPlans,
     })
   )
   categoriesState.set({
@@ -1403,6 +1862,189 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   // own UI refresh after images land.
   await pullImagesIfEnabled()
 
+  return { changed: true, complete }
+}
+
+/**
+ * `seenAt` for the Devices list: taken before a read and strictly increasing,
+ * so a removal's `since` (see `removeSyncDevice`) is later than every earlier
+ * read, even within a millisecond.
+ */
+let lastReadStamp = 0
+function nextReadStamp(): number {
+  lastReadStamp = Math.max(Date.now(), lastReadStamp + 1)
+  return lastReadStamp
+}
+
+function unparsedDeviceFile(
+  file: ICloudBridge.SyncFile,
+  seenAt: number
+): SyncDeviceFile {
+  return {
+    deviceId: deviceIdFromSyncFilename(file.filename),
+    deviceName: null,
+    writtenAt: null,
+    modifiedAt: file.modifiedAt,
+    status: isNewerPayloadVersion(file.json) ? 'newer-version' : 'unreadable',
+    seenAt,
+  }
+}
+
+/**
+ * Records what this read saw of each device's file for the Devices list (see
+ * `src/lib/syncDevices.ts`), from the files the pull already read; reading more
+ * would mark them observed and silence their remote-change events. A file from
+ * a generation older than `epoch`, the one local data is in after this pull, is
+ * `pre-reset`.
+ */
+function recordDeviceFiles(args: {
+  read: ICloudBridge.SyncRead
+  ownFilename: string
+  deviceId: string
+  remotePayloads: Array<{
+    payload: SyncPayload
+    filename: string
+    modifiedAt: number
+  }>
+  unparsed: SyncDeviceFiles
+  epoch: ResetEpoch | null
+  seenAt: number
+}): void {
+  // An Apple Account change during the read already cleared these; the files
+  // belong to the previous account's container.
+  if (!canSync()) return
+  const { read, ownFilename, seenAt } = args
+  const observed: SyncDeviceFiles = { ...args.unparsed }
+  const own = read.files.find((file) => file.filename === ownFilename)
+  if (own) {
+    observed[ownFilename] = {
+      deviceId: args.deviceId,
+      deviceName: Device.modelName ?? null,
+      writtenAt: null,
+      modifiedAt: own.modifiedAt,
+      status: 'ok',
+      seenAt,
+    }
+  }
+  for (const r of args.remotePayloads) {
+    observed[r.filename] = {
+      deviceId: r.payload.deviceId ?? null,
+      deviceName: r.payload.deviceName ?? null,
+      writtenAt: r.payload.writtenAt,
+      modifiedAt: r.modifiedAt,
+      status:
+        compareResetEpochs(r.payload.resetEpoch, args.epoch) < 0
+          ? 'pre-reset'
+          : 'ok',
+      seenAt,
+    }
+  }
+  usePreferences.setState({
+    iCloudSyncDevices: mergeSyncDeviceFiles(
+      usePreferences.getState().iCloudSyncDevices ?? {},
+      observed,
+      // `pending: null` is a binary that can't tell what it skipped.
+      Array.isArray(read.pending) && read.pending.length === 0
+    ),
+  })
+}
+
+export type RemoveSyncDeviceOutcome =
+  /** Deleted, or a complete read found it already gone. */
+  | 'removed'
+  /** This device may not hold that device's data yet. */
+  | 'sync-first'
+  /** A newer app version wrote it; this device can't merge it. */
+  | 'update-app'
+  | 'unavailable'
+
+/**
+ * Settings Devices list: deletes another device's snapshot from iCloud, never
+ * this device's or the account file. If that device is still in use, its next
+ * push writes the snapshot again. Pulls first so the decision rests on a read
+ * made now (`syncDeviceRemoval`): a current-generation snapshot goes only when
+ * that pull was complete, so this device already merged it. `entry` is the file
+ * as that pull saw it. Throws if the delete fails.
+ */
+export async function removeSyncDevice(filename: string): Promise<{
+  outcome: RemoveSyncDeviceOutcome
+  entry: SyncDeviceFile | null
+}> {
+  if (!canSync()) return { outcome: 'unavailable', entry: null }
+  if (
+    filename === filenameForDevice(ensureDeviceId()) ||
+    !isPayloadFilename(filename) ||
+    !filename.startsWith(SYNC_FILE_PREFIX) ||
+    !filename.endsWith(SYNC_FILE_EXT)
+  )
+    throw new Error('Not another device’s sync file')
+  const since = nextReadStamp()
+  await pull('remove-device')
+  // A pull already running read before `since`; let the one it queued land.
+  while (pullInFlight) await pullInFlight
+  if (!canSync()) return { outcome: 'unavailable', entry: null }
+  const entry = usePreferences.getState().iCloudSyncDevices?.[filename] ?? null
+  if (!entry) return { outcome: 'removed', entry: null }
+  const decision = syncDeviceRemoval(entry, {
+    complete: lastPullComplete,
+    issue: usePreferences.getState().iCloudSyncIssue,
+    since,
+  })
+  if (decision !== 'allowed') {
+    logger.log(`${tag()} device removal blocked`, { filename, decision })
+    return { outcome: decision, entry }
+  }
+  await ICloudBridge.deleteFile(filename)
+  const { [filename]: _removed, ...rest } =
+    usePreferences.getState().iCloudSyncDevices ?? {}
+  usePreferences.setState({ iCloudSyncDevices: rest })
+  logger.log(`${tag()} device removed`, { filename, status: entry.status })
+  errorTracking.addBreadcrumb({
+    category: 'iCloudSync',
+    message: `device file removed (${entry.status})`,
+    level: 'info',
+  })
+  return { outcome: 'removed', entry }
+}
+
+/**
+ * Another device reset the iCloud data: replace local synced data with that
+ * generation's payloads, as a restore would, then publish this device's file in
+ * it. Never merges local data into the newer generation; unpushed local edits
+ * are replaced, which is the point of a reset.
+ */
+async function adoptResetEpoch(
+  reason: string,
+  payloads: SyncPayload[],
+  complete: boolean,
+  issue: 'newer-version' | 'invalid-file' | 'read-failed' | null
+): Promise<PullOutcome> {
+  const remote = foldRemotePayloads(payloads)!
+  const epoch = remote.resetEpoch!
+  replaceLocalWithRemote(remote)
+  usePreferences.setState({
+    iCloudSyncIssue: issue,
+    iCloudResetAdoptedNotice: {
+      epochId: epoch.id,
+      deviceName: epoch.deviceName ?? null,
+      at: Date.now(),
+    },
+  })
+  analytics.capture('icloud_sync_reset_adopted', {
+    remote_files: payloads.length,
+  })
+  logger.log(`${tag()} pullAndMerge: adopted reset`, {
+    reason,
+    epoch: epoch.id,
+    remoteFiles: payloads.length,
+  })
+  errorTracking.addBreadcrumb({
+    category: 'iCloudSync',
+    message: `pull (${reason}) — adopted newer reset`,
+    level: 'info',
+  })
+  await push('reset-adopted')
+  await pullImagesIfEnabled()
   return { changed: true, complete }
 }
 
@@ -1519,6 +2161,9 @@ async function catchUp(reason: string): Promise<void> {
     // Publish the exact snapshot whose photos the push will upload. Failed
     // writes leave bytes untouched and retain the pending flag for retries.
     await push(reason)
+    // A write arms its own checks; this covers a failed push and a snapshot
+    // still waiting from an earlier session.
+    restartUploadChecks()
     // Joining a running pull returns its (older) result and queues a
     // follow-up, and remote-change pulls may have run meanwhile. Let every
     // queued pull land so GC judges the newest read.
@@ -1544,6 +2189,9 @@ export function installiCloudSync(): () => void {
   if (Platform.OS !== 'ios') return () => {}
   if (installed) return () => {}
   installed = true
+  // Before the clock offset is read: a copied device resets it. Also catches
+  // an Apple Account switch made while the app wasn't running.
+  checkICloudIdentity('launch')
   setSyncClockOffset(
     usePreferences.getState().iCloudClockOffsetMs ?? 0,
     usePreferences.getState().iCloudClockCalibrated
@@ -1585,6 +2233,7 @@ export function installiCloudSync(): () => void {
     // The foreground catch-up pulls anyway, and brings a fresh retry budget.
     cancelReadRetry()
     cancelPushRetry()
+    cancelUploadChecks()
     // Leaving foreground (inactive/background): if a debounced push is
     // pending, flush it now so the user's latest edits actually land in
     // iCloud before the process is suspended. Otherwise typing a note and
@@ -1627,6 +2276,7 @@ export function installiCloudSync(): () => void {
     }
   })
   availabilitySub = ICloudBridge.addAvailabilityChangeListener((e) => {
+    checkICloudIdentity('availability')
     if (!e.available) {
       logger.warn(`${tag()} iCloud became unavailable`)
       return
@@ -1649,6 +2299,7 @@ export function installiCloudSync(): () => void {
     debouncedRemotePull.cancel()
     cancelReadRetry()
     cancelPushRetry()
+    cancelUploadChecks()
     debouncedPush.cancel()
     pushScheduled = false
     installed = false
@@ -1694,9 +2345,11 @@ export const iCloudSync = {
   pullAndMerge,
   pullBeforeCalendarPublish,
   canSync,
+  confirmICloudAccount,
   backfillUpdatedAtIfNeeded,
   hasMeaningfulLocalData,
   replaceLocalWithRemote,
+  joinRemoteResetEpoch,
   overwriteRemoteWithLocal,
   peekRemotePayload,
   resolveInitialEnable,
@@ -1705,6 +2358,8 @@ export const iCloudSync = {
   enableImageSync,
   disableImageSync,
   clearCloudPhotos,
+  checkUpload,
+  removeSyncDevice,
   pushImagesIfEnabled: () => pushImagesIfEnabled('foreground'),
   pullImagesIfEnabled: () => pullImagesIfEnabled(true),
   gcImagesIfEnabled,

@@ -7,6 +7,8 @@ import { useTimeCache } from '@/stores/timeCache'
 import { tracksTenure } from '@/lib/publisherCapabilities'
 import { calendarMonthOf, type RoleHistory } from '@/lib/roleHistory'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import { isRedactedContactTombstone } from '@/lib/dataProtection'
+import { deleteAvatarFiles } from '@/lib/contactAvatarFiles'
 import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Publisher } from '@/types/publisher'
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
@@ -148,9 +150,14 @@ export const writeMappedDataToStores = (
     )
     .map((d) => d.id)
 
-  // Contacts (addContact skips ids present in contacts OR deletedContacts).
+  // Contacts. Mirrors addContact: it skips ids that are active or still in
+  // Recover Contacts, but replaces a redacted tombstone (left by a permanent
+  // delete or an earlier Undo), so an undone import can be run again.
   const existingContactIds = new Set(
-    [...contacts.contacts, ...contacts.deletedContacts].map((c) => c.id)
+    [
+      ...contacts.contacts,
+      ...contacts.deletedContacts.filter((c) => !isRedactedContactTombstone(c)),
+    ].map((c) => c.id)
   )
   const insertedContactIds: string[] = []
   for (const contact of mapped.contacts) {
@@ -263,8 +270,12 @@ export const undoImport = (commit: ImportCommitResult): void => {
     // Kept: a sibling import (or the user) still has a visit on this contact.
     if (externallyReferencedContactIds.has(id)) continue
     contacts.deleteContact(id)
-    // Purge from the recycle bin too, so an undone import leaves no trace.
+    // Redact the recycle-bin copy too, so no householder data survives the
+    // Undo. The tombstone carries the Undo to the user's other devices, and a
+    // re-import replaces it (see addContact). The store leaves photo files to
+    // its callers; one may have been added since the import.
     contacts.removeDeletedContact(id)
+    void deleteAvatarFiles(id)
   }
   for (const id of commit.insertedVisitIds) conversations.deleteConversation(id)
   for (const entry of commit.insertedTimeEntries) {

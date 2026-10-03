@@ -17,6 +17,7 @@ import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
 import { useNavigation } from '@react-navigation/native'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
+import useICloudPullSettled from '@/hooks/useICloudPullSettled'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import {
@@ -128,17 +129,21 @@ const HomeTabStack = () => {
 
   const rollover = useRollover()
   const { autoRolloverEnabled } = usePreferences()
+  // With iCloud sync on, another device may already have rolled this month
+  // over or dismissed it. Its pair and synced marker only arrive with a pull,
+  // so auto mode waits for one (or a timeout), then decides on fresh data.
+  const iCloudSettled = useICloudPullSettled()
   // Auto mode applies a pending rollover silently at launch. Otherwise the
   // decision waits in the notifications tray and comes up on Progress or before
   // that month's report (`useRolloverPrompt`) instead of interrupting launch.
   // Once-per-mount guard so toggling auto mode can't apply twice.
   const rolloverHandledRef = useRef(false)
   useEffect(() => {
-    if (rolloverHandledRef.current) return
+    if (rolloverHandledRef.current || !iCloudSettled) return
     if (rollover.pending.length === 0 || !autoRolloverEnabled) return
     rolloverHandledRef.current = true
     rollover.apply()
-  }, [autoRolloverEnabled, rollover])
+  }, [autoRolloverEnabled, iCloudSettled, rollover])
 
   return (
     <View style={{ flexGrow: 1 }}>

@@ -21,7 +21,7 @@ import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
-import { iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
+import { ICloudAccount, iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
@@ -39,12 +39,15 @@ type Probe =
   | { state: 'unavailable' } // iCloud account unavailable on this device
   | { state: 'noBackup' } // Available but nothing there yet
   | { state: 'incomplete' } // A backup may exist but isn't fully readable yet
-  | { state: 'found'; remote: SyncPayload }
+  | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
+
+/** `merge` is offered only when ongoing sync can be enabled (Supporters). */
+type RestoreMode = 'replace' | 'merge'
 
 const probeFromPeek = (peek: RemotePeek): Probe => {
   switch (peek.status) {
     case 'found':
-      return { state: 'found', remote: peek.remote }
+      return { state: 'found', remote: peek.remote, account: peek.account }
     case 'none':
       return { state: 'noBackup' }
     case 'incomplete':
@@ -165,112 +168,242 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     })
   }, [probe.state])
 
+  /**
+   * Onboarding is reachable with real data (More → Restart onboarding), and the
+   * restore can't see this device's own iCloud file. So when this device has
+   * records of its own, ask before replacing them; Supporters can merge
+   * instead. A fresh install keeps the one-tap restore.
+   */
   const handleRestore = () => {
     if (probe.state !== 'found' || restoring) return
+    const { remote, account } = probe
+    if (!iCloudSync.hasMeaningfulLocalData()) {
+      restore(remote, account, 'replace')
+      return
+    }
+    const properties = {
+      source: 'onboarding',
+      merge_offered: canEnableICloudSync,
+    }
+    analytics.capture('icloud_restore_replace_prompted', properties)
+    const choose = (mode: RestoreMode) => () => {
+      analytics.capture('icloud_restore_replace_confirmed', {
+        ...properties,
+        choice: mode,
+      })
+      restore(remote, account, mode)
+    }
+    Alert.alert(
+      i18n.t('iCloudRestoreReplaceConfirm_title'),
+      i18n.t(
+        canEnableICloudSync
+          ? 'iCloudRestoreReplaceConfirm_descriptionWithMerge'
+          : 'iCloudRestoreReplaceConfirm_description'
+      ),
+      [
+        {
+          text: i18n.t('cancel'),
+          style: 'cancel',
+          onPress: () =>
+            analytics.capture('icloud_restore_replace_cancelled', properties),
+        },
+        ...(canEnableICloudSync
+          ? [
+              {
+                text: i18n.t('iCloudRestoreReplaceConfirm_merge'),
+                onPress: choose('merge'),
+              },
+            ]
+          : []),
+        {
+          text: i18n.t('iCloudRestoreReplaceConfirm_replace'),
+          style: 'destructive' as const,
+          onPress: choose('replace'),
+        },
+      ]
+    )
+  }
+
+  const restore = (
+    remote: SyncPayload,
+    account: ICloudAccount,
+    mode: RestoreMode
+  ) => {
     const startedAt = Date.now()
     setRestoring(true)
     analytics.capture('import_started', {
       import_type: 'icloud',
       source: 'onboarding',
+      mode,
     })
-    // Defer the synchronous store replacement one frame so the spinner
-    // actually paints before the setState cascade blocks the JS thread.
-    requestAnimationFrame(() => {
-      try {
-        iCloudSync.replaceLocalWithRemote(probe.remote)
-      } catch {
-        setRestoring(false)
-        analytics.capture('import_failed', {
-          import_type: 'icloud',
-          source: 'onboarding',
-          stage: 'restore',
-          error_code: 'unexpected',
-          elapsed_ms: Date.now() - startedAt,
-        })
+    const failed = (errorCode: 'unexpected' | 'account_changed') => {
+      setRestoring(false)
+      analytics.capture('import_failed', {
+        import_type: 'icloud',
+        source: 'onboarding',
+        stage: 'restore',
+        error_code: errorCode,
+        mode,
+        elapsed_ms: Date.now() - startedAt,
+      })
+    }
+    // The backup shown came from the Apple Account it was read under; after a
+    // switch it would land in, or merge with, the new account's iCloud. Look
+    // again instead.
+    const sameAccount = () => {
+      if (iCloudSync.confirmICloudAccount(account)) return true
+      failed('account_changed')
+      Alert.alert(i18n.t('iCloudAccountChangedNotice_title'))
+      setSearch((n) => n + 1)
+      return false
+    }
+    const fail = () => {
+      failed('unexpected')
+      if (mode === 'merge')
+        Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+      else
         Alert.alert(
           i18n.t('importError_title'),
           i18n.t('importError_description')
         )
+    }
+    if (mode === 'merge') {
+      if (!sameAccount()) return
+      void merge(remote).then(
+        () => finishRestore(remote, mode, startedAt),
+        fail
+      )
+      return
+    }
+    // Defer the synchronous store replacement one frame so the spinner
+    // actually paints before the setState cascade blocks the JS thread.
+    requestAnimationFrame(() => {
+      if (!sameAccount()) return
+      try {
+        iCloudSync.replaceLocalWithRemote(remote)
+      } catch {
+        fail()
         return
       }
-      analytics.capture('import_completed', {
-        import_type: 'icloud',
-        source: 'onboarding',
-        elapsed_ms: Date.now() - startedAt,
-      })
-      analytics.capture('onboarding_completed', {
-        completion_method: 'icloud_restore',
-      })
-      // Mark onboarding complete — the user's restored publisher/profile/etc.
-      // replaces the defaults they would've otherwise set in the remaining
-      // steps.
-      //
-      // For supporters, also flip ongoing sync on and mark the choice as
-      // user-set so `SupporterSyncDefault` doesn't second-guess it. The user
-      // just explicitly picked "bring my data from iCloud" — keeping the two
-      // sides in sync is the obvious follow-up, and requiring them to dig
-      // into Settings to turn it on is friction with no upside.
-      //
-      // Non-supporters leave `iCloudSyncEnabled` off: ongoing sync is
-      // supporter-gated, so enabling it here would be a dead write that the
-      // Settings screen would refuse to expose anyway.
-      //
-      // Also force-set `hasCompletedProfileSetup` + `hasCompletedMapOnboarding`
-      // so the main app doesn't re-prompt the user and overwrite their
-      // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
-      // revision, but an older remote payload may not contain them.)
-      const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
-      set({
-        onboardingComplete: true,
-        onboardingStepId: null,
-        hasCompletedMapOnboarding: true,
-        ...(canEnableICloudSync
-          ? { iCloudSyncEnabled: true, iCloudSyncSetByUser: true }
-          : {}),
-      })
-      if (canEnableICloudSync && !wasSyncEnabled) {
-        analytics.capture('icloud_sync_enabled_changed', {
-          enabled: true,
-          source: 'onboarding_restore',
-        })
-      }
-      setProfile({ hasCompletedProfileSetup: true })
-
-      // If the restored payload references images via iCloud markers, prompt
-      // the user to also pull those photos down. Per-device consent means we
-      // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
-      // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
-      if (payloadReferencesPhotos(probe.remote)) {
-        analytics.capture('icloud_restore_images_prompted', {
-          source: 'onboarding',
-        })
-        Alert.alert(
-          i18n.t('iCloudImagesRestorePrompt_title'),
-          i18n.t('iCloudImagesRestorePrompt_description'),
-          [
-            {
-              text: i18n.t('iCloudImagesRestorePrompt_skip'),
-              style: 'cancel',
-              onPress: () => {
-                analytics.capture('icloud_restore_images_skipped', {
-                  source: 'onboarding',
-                })
-              },
-            },
-            {
-              text: i18n.t('iCloudImagesRestorePrompt_action'),
-              onPress: async () => {
-                usePreferences.setState({ iCloudSyncIncludeImages: true })
-                analytics.capture('icloud_restore_images_requested', {
-                  source: 'onboarding',
-                })
-                await iCloudSync.pullImagesIfEnabled()
-              },
-            },
-          ]
-        )
-      }
+      finishRestore(remote, mode, startedAt)
     })
+  }
+
+  /**
+   * The Settings "Merge both" choice: turns ongoing sync on, merges every other
+   * device's data into this device's, then publishes the result. Throws when
+   * either step didn't finish; sync stays on and retries, and nothing local was
+   * replaced.
+   */
+  const merge = async (remote: SyncPayload) => {
+    iCloudSync.backfillUpdatedAtIfNeeded()
+    // Before sync turns on: joining iCloud's newest reset generation makes the
+    // pull merge with it instead of adopting it and replacing this device's
+    // data.
+    iCloudSync.joinRemoteResetEpoch(remote)
+    enableSync()
+    await iCloudSync.pullAndMerge('onboarding-merge')
+    if (
+      usePreferences.getState().iCloudSyncIssue ||
+      !(await iCloudSync.push('onboarding-merge'))
+    )
+      throw new Error('iCloud sync incomplete')
+  }
+
+  /**
+   * For Supporters, flips ongoing sync on and marks the choice as user-set so
+   * `SupporterSyncDefault` doesn't second-guess it. The user just explicitly
+   * picked "bring my data from iCloud" — keeping the two sides in sync is the
+   * obvious follow-up, and requiring them to dig into Settings to turn it on is
+   * friction with no upside. Like `applyPullEnable`, a replace enables sync
+   * only after local data was swapped for the backup, so there's nothing left
+   * for this device to resolve.
+   *
+   * Non-supporters leave `iCloudSyncEnabled` off: ongoing sync is
+   * supporter-gated, so enabling it here would be a dead write that the
+   * Settings screen would refuse to expose anyway.
+   */
+  const enableSync = () => {
+    if (!canEnableICloudSync) return
+    const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
+    set({
+      iCloudSyncEnabled: true,
+      iCloudSyncSetByUser: true,
+      iCloudSyncNeedsResolution: false,
+      iCloudFreshSetup: false,
+    })
+    if (!wasSyncEnabled) {
+      analytics.capture('icloud_sync_enabled_changed', {
+        enabled: true,
+        source: 'onboarding_restore',
+      })
+    }
+  }
+
+  const finishRestore = (
+    remote: SyncPayload,
+    mode: RestoreMode,
+    startedAt: number
+  ) => {
+    analytics.capture('import_completed', {
+      import_type: 'icloud',
+      source: 'onboarding',
+      mode,
+      elapsed_ms: Date.now() - startedAt,
+    })
+    analytics.capture('onboarding_completed', {
+      completion_method: 'icloud_restore',
+    })
+    // Mark onboarding complete — the user's restored publisher/profile/etc.
+    // replaces the defaults they would've otherwise set in the remaining
+    // steps.
+    //
+    // Also force-set `hasCompletedProfileSetup` + `hasCompletedMapOnboarding`
+    // so the main app doesn't re-prompt the user and overwrite their
+    // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
+    // revision, but an older remote payload may not contain them.)
+    set({
+      onboardingComplete: true,
+      onboardingStepId: null,
+      hasCompletedMapOnboarding: true,
+    })
+    if (mode === 'replace') enableSync()
+    setProfile({ hasCompletedProfileSetup: true })
+
+    // If the restored payload references images via iCloud markers, prompt
+    // the user to also pull those photos down. Per-device consent means we
+    // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
+    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
+    if (payloadReferencesPhotos(remote)) {
+      analytics.capture('icloud_restore_images_prompted', {
+        source: 'onboarding',
+      })
+      Alert.alert(
+        i18n.t('iCloudImagesRestorePrompt_title'),
+        i18n.t('iCloudImagesRestorePrompt_description'),
+        [
+          {
+            text: i18n.t('iCloudImagesRestorePrompt_skip'),
+            style: 'cancel',
+            onPress: () => {
+              analytics.capture('icloud_restore_images_skipped', {
+                source: 'onboarding',
+              })
+            },
+          },
+          {
+            text: i18n.t('iCloudImagesRestorePrompt_action'),
+            onPress: async () => {
+              usePreferences.setState({ iCloudSyncIncludeImages: true })
+              analytics.capture('icloud_restore_images_requested', {
+                source: 'onboarding',
+              })
+              await iCloudSync.pullImagesIfEnabled()
+            },
+          },
+        ]
+      )
+    }
   }
 
   return (

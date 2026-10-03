@@ -39,7 +39,10 @@ import {
 import {
   effectiveShareStatus,
   forgetBuddiesInData,
+  linkedPlanId,
   reconcileLinkedPlans,
+  sharesJustAccepted,
+  sharesLeftUnlinked,
 } from '@/features/buddies/lib/linkedPlans'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
@@ -1310,10 +1313,10 @@ describe('reconcileLinkedPlans', () => {
   })
 
   it('adds, follows, and removes the Plan a "Going" answer creates', () => {
-    const added = reconcileLinkedPlans([], [share('going')], () => 'new')
+    const added = reconcileLinkedPlans([], [share('going')])
     expect(added.add).toEqual([
       expect.objectContaining({
-        id: 'new',
+        id: linkedPlanId({ from: 'levi', shareId: 'share-1' }),
         minutes: 90,
         startTimeInMinutes: 600,
         title: 'Cart',
@@ -1321,7 +1324,7 @@ describe('reconcileLinkedPlans', () => {
       }),
     ])
     const plan = added.add[0]
-    expect(reconcileLinkedPlans([plan], [share('going')], () => 'x')).toEqual({
+    expect(reconcileLinkedPlans([plan], [share('going')])).toEqual({
       add: [],
       update: [],
       remove: [],
@@ -1330,16 +1333,131 @@ describe('reconcileLinkedPlans', () => {
       ...share('going'),
       details: { ...share('going').details, m: 120 },
     }
-    expect(
-      reconcileLinkedPlans([plan], [moved], () => 'x').update[0]
-    ).toMatchObject({ id: 'new', minutes: 120 })
-    expect(
-      reconcileLinkedPlans([plan], [share('cancelled')], () => 'x').remove
-    ).toEqual(['new'])
-    expect(reconcileLinkedPlans([], [share('pending')], () => 'x').add).toEqual(
-      []
-    )
+    expect(reconcileLinkedPlans([plan], [moved]).update[0]).toMatchObject({
+      id: plan.id,
+      minutes: 120,
+    })
+    expect(reconcileLinkedPlans([plan], [share('cancelled')]).remove).toEqual([
+      plan.id,
+    ])
+    expect(reconcileLinkedPlans([], [share('pending')]).add).toEqual([])
     expect(effectiveShareStatus(share('pending'), [plan])).toBe('going')
+  })
+
+  it('gives the Plan the same id on every device that answers "Going"', () => {
+    const onPhone = reconcileLinkedPlans([], [share('going')]).add[0]
+    const onIpad = reconcileLinkedPlans([], [share('going')]).add[0]
+
+    expect(onPhone.id).toBe(onIpad.id)
+    expect(onPhone.id).not.toBe(
+      reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }])
+        .add[0].id
+    )
+  })
+
+  it('gives linked Plans ids that pass sync validation', () => {
+    // Inbox and share ids are 22-character base64url relay ids.
+    const id = linkedPlanId({
+      from: 'AbC-_0123456789abcdefg',
+      shareId: 'zYx_-9876543210ZYXWVUt',
+    })
+
+    expect(id).toBe('buddy.AbC-_0123456789abcdefg.zYx_-9876543210ZYXWVUt')
+    expect(id).not.toMatch(/\/|\\|\.\./)
+  })
+
+  it('keeps the same copy on every device when duplicates meet', () => {
+    const linked = (id: string): DayPlan => ({
+      ...reconcileLinkedPlans([], [share('going')]).add[0],
+      id,
+    })
+    // Older builds gave each device's copy a random id.
+    const phoneCopy = linked('b-from-phone')
+    const ipadCopy = linked('a-from-ipad')
+    const removedFrom = (dayPlans: DayPlan[]) =>
+      reconcileLinkedPlans(dayPlans, [share('going')]).remove
+
+    expect(removedFrom([phoneCopy, ipadCopy])).toEqual(['b-from-phone'])
+    expect(removedFrom([ipadCopy, phoneCopy])).toEqual(['b-from-phone'])
+
+    // The shared id wins over any older copy, whatever the order.
+    const shared = linked(linkedPlanId({ from: 'levi', shareId: 'share-1' }))
+    expect(removedFrom([ipadCopy, shared, phoneCopy])).toEqual([
+      'a-from-ipad',
+      'b-from-phone',
+    ])
+    expect(removedFrom([shared, phoneCopy, ipadCopy])).toEqual([
+      'a-from-ipad',
+      'b-from-phone',
+    ])
+  })
+
+  it('declines only once no Plan follows the invitation', () => {
+    const plan = (id: string, shareId = 'share-1'): DayPlan => ({
+      ...dayPlan('2026-09-26', 60),
+      id,
+      buddyShare: { from: 'levi', shareId },
+    })
+    const key = incomingShareKey('levi', 'share-1')
+
+    // Removing a duplicate leaves the kept copy following it.
+    expect(sharesLeftUnlinked([plan('a'), plan('b')], [plan('a')])).toEqual([])
+    expect(sharesLeftUnlinked([plan('a')], [])).toEqual([key])
+    expect(sharesLeftUnlinked([plan('a'), plan('b')], [])).toEqual([key])
+    // A Plan that stays but stops following (its buddy is gone) wasn't deleted.
+    expect(
+      sharesLeftUnlinked([plan('a')], [{ ...plan('a'), buddyShare: undefined }])
+    ).toEqual([])
+    expect(
+      sharesLeftUnlinked([plan('a'), plan('c', 'share-2')], [plan('a')])
+    ).toEqual([incomingShareKey('levi', 'share-2')])
+  })
+
+  it("doesn't bring back a Plan deleted on another device", () => {
+    const id = linkedPlanId({ from: 'levi', shareId: 'share-1' })
+    const key = incomingShareKey('levi', 'share-1')
+    const deletedPlanIds = new Set([id])
+
+    // This iPad still says "Going"; the phone deleted the Plan (and declined).
+    expect(
+      reconcileLinkedPlans([], [share('going')], { deletedPlanIds }).add
+    ).toEqual([])
+    // Answering "Going" again here adds it back.
+    expect(
+      reconcileLinkedPlans([], [share('going')], {
+        deletedPlanIds,
+        answered: new Set([key]),
+      }).add.map((plan) => plan.id)
+    ).toEqual([id])
+    // Other shares are unaffected.
+    expect(
+      reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }], {
+        deletedPlanIds,
+      }).add
+    ).toHaveLength(1)
+  })
+
+  it('treats only a fresh "Going" answer as answered', () => {
+    const key = incomingShareKey('levi', 'share-1')
+    const at = (
+      status: 'pending' | 'going' | 'declined',
+      unsentReplyRev?: number
+    ) => ({ [key]: { ...share('going'), status, unsentReplyRev } })
+
+    expect(sharesJustAccepted(at('pending'), at('going', 5))).toEqual(
+      new Set([key])
+    )
+    expect(sharesJustAccepted(at('going', 5), at('going', 9))).toEqual(
+      new Set([key])
+    )
+    // Delivered, a buddy's update, or another answer.
+    expect(sharesJustAccepted(at('going', 5), at('going'))).toEqual(new Set())
+    expect(sharesJustAccepted(at('going', 5), at('going', 5))).toEqual(
+      new Set()
+    )
+    expect(sharesJustAccepted(at('going', 5), at('declined', 9))).toEqual(
+      new Set()
+    )
   })
 
   it('takes buddies who are gone off Plans and Follow-ups', () => {

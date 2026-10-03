@@ -21,6 +21,16 @@ export type SyncRead = {
   pending: string[] | null
 }
 
+/**
+ * Whether iCloud has uploaded a sync file's current version. `error` is
+ * iCloud's last upload failure as an `NSError` domain and code (no message).
+ */
+export type UploadStatus = {
+  uploaded: boolean
+  uploading: boolean
+  error: { domain: string; code: number } | null
+}
+
 /** One entry returned by `listBinaryFiles` — filename + container mtime. */
 export type BinaryFileInfo = {
   filename: string
@@ -34,12 +44,16 @@ type ICloudBridgeEvents = {
 
 declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   isAvailable(): boolean
+  // Optional: absent on binaries built before they existed.
+  identityToken?(): string | null
+  identityTokenMatches?(stored: string): boolean | null
   getContainerPath(): string | null
   waitForInitialScan(timeoutMs: number): Promise<boolean>
   readAll(): Promise<SyncFile[]>
   // Optional: absent on binaries built before they existed.
   listFiles?(): Promise<string[]>
   readFiles?(filenames: string[]): Promise<SyncRead>
+  uploadStatus?(filename: string): Promise<UploadStatus | null>
   write(filename: string, json: string): Promise<number>
   deleteFile(filename: string): Promise<null>
   deleteAll(): Promise<null>
@@ -55,6 +69,29 @@ const native = requireOptionalNativeModule<ICloudBridgeNative>('ICloudBridge')
 export function isAvailable(): boolean {
   if (Platform.OS !== 'ios' || !native) return false
   return native.isAvailable()
+}
+
+/**
+ * The current iCloud identity token, archived and base64-encoded, for storing
+ * and later passing to `identityTokenMatches`. Opaque: two archives of one
+ * Apple Account's token can differ (an iOS update), so never compare them
+ * directly except as a shortcut for "same". Null when signed out, off iOS, or
+ * on a binary that predates it — callers treat null as "can't tell" and decide
+ * nothing.
+ */
+export function identityToken(): string | null {
+  if (Platform.OS !== 'ios' || !native?.identityToken) return null
+  return native.identityToken()
+}
+
+/**
+ * Whether `stored`, an earlier `identityToken`, is the current Apple Account,
+ * compared natively with `isEqual:` as Apple documents. Null when signed out,
+ * when `stored` can't be decoded, or when the binary predates it.
+ */
+export function identityTokenMatches(stored: string): boolean | null {
+  if (Platform.OS !== 'ios' || !native?.identityTokenMatches) return null
+  return native.identityTokenMatches(stored)
 }
 
 /** Debug helper: absolute filesystem path of the ubiquity container (or null). */
@@ -120,6 +157,24 @@ export async function write(filename: string, json: string): Promise<number> {
     throw new Error('iCloud bridge is not available on this platform')
   }
   return native.write(filename, json)
+}
+
+/** Whether this binary can report upload status (`uploadStatus`). */
+export function supportsUploadStatus(): boolean {
+  return Platform.OS === 'ios' && !!native?.uploadStatus
+}
+
+/**
+ * Whether iCloud has uploaded the current version of sync file `filename`. A
+ * `write` only proves the bytes reached the local container. Null when the file
+ * or container is missing, off iOS, or on a binary that predates it (see
+ * `supportsUploadStatus`).
+ */
+export async function uploadStatus(
+  filename: string
+): Promise<UploadStatus | null> {
+  if (Platform.OS !== 'ios' || !native?.uploadStatus) return null
+  return native.uploadStatus(filename)
 }
 
 /**
@@ -219,7 +274,8 @@ export function addRemoteChangeListener(
 
 /**
  * Fires when the iCloud identity token changes — e.g. the user signs out or
- * into a different Apple ID while the app is foregrounded.
+ * into a different Apple ID while the app is foregrounded. The native side has
+ * already restarted its metadata query for the new container.
  */
 export function addAvailabilityChangeListener(
   listener: ICloudBridgeEvents['onAvailabilityChange']

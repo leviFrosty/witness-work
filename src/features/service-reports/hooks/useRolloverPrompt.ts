@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
+import useICloudPullSettled from '@/hooks/useICloudPullSettled'
 
 /** Markers already brought up this session, so an undecided exit can't loop. */
 const prompted = new Set<string>()
@@ -19,6 +20,9 @@ export default function useRolloverPrompt(forMonth?: {
   const navigation = useNavigation<RootStackNavigation>()
   const focused = useIsFocused()
   const { pending, markerKey, apply, autoEnabled } = useRollover()
+  // Opened right after launch, the screen holds off until iCloud has caught up
+  // (see `HomeTabStack`), so it never offers what another device already did.
+  const iCloudSettled = useICloudPullSettled()
   const due = pending.some(
     (source) =>
       !forMonth ||
@@ -27,9 +31,9 @@ export default function useRolloverPrompt(forMonth?: {
   )
 
   useEffect(() => {
-    if (!focused || !due || prompted.has(markerKey)) return
+    if (!focused || !iCloudSettled || !due || prompted.has(markerKey)) return
     prompted.add(markerKey)
     if (autoEnabled) apply()
     else navigation.navigate('Rollover')
-  }, [focused, due, markerKey, autoEnabled, apply, navigation])
+  }, [focused, iCloudSettled, due, markerKey, autoEnabled, apply, navigation])
 }

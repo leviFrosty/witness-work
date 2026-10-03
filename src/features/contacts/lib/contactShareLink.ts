@@ -102,6 +102,7 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   // Sync bookkeeping — only meaningful inside the iCloud sync payload, not in
   // a universal-link share intended for another person.
   updatedAt: 'omit',
+  readdedAt: 'omit',
   // Avatar holds either an emoji or a per-device image URI; the URI would be a
   // dead path on the recipient's device, so the whole field is dropped from
   // shares. The recipient picks their own avatar.

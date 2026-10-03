@@ -17,6 +17,8 @@ const base: BackupReminderInput = {
   iCloudSyncEnabled: false,
   lastiCloudPushedAt: null,
   lastiCloudPulledAt: null,
+  lastiCloudUploadedAt: null,
+  uploadConfirmationSupported: true,
   now,
 }
 
@@ -58,20 +60,55 @@ describe('backupReminderDueAt', () => {
     )
   })
 
-  it('stays quiet while iCloud Sync has synced within the period', () => {
+  it('stays quiet while iCloud has confirmed an upload within the period', () => {
     expect(
       backupReminderDueAt({
         ...base,
         iCloudSyncEnabled: true,
-        lastiCloudPulledAt: daysAgo(2),
+        lastiCloudUploadedAt: daysAgo(2),
       })
     ).toBe(null)
     expect(
       backupReminderDueAt({
         ...base,
         iCloudSyncEnabled: true,
-        lastiCloudPulledAt: daysAgo(60),
+        lastiCloudUploadedAt: daysAgo(60),
       })
+    ).not.toBe(null)
+  })
+
+  it('still reminds when this device only wrote locally or pulled', () => {
+    expect(
+      backupReminderDueAt({
+        ...base,
+        iCloudSyncEnabled: true,
+        lastiCloudPushedAt: daysAgo(1),
+        lastiCloudPulledAt: daysAgo(1),
+        lastiCloudUploadedAt: daysAgo(60),
+      })
+    ).not.toBe(null)
+  })
+
+  it('reminds once sync is off, however recent the upload', () => {
+    expect(
+      backupReminderDueAt({ ...base, lastiCloudUploadedAt: daysAgo(1) })
+    ).not.toBe(null)
+  })
+
+  it('counts any recent sync activity on a binary that cannot confirm uploads', () => {
+    const legacy = {
+      ...base,
+      iCloudSyncEnabled: true,
+      uploadConfirmationSupported: false,
+    }
+    expect(
+      backupReminderDueAt({ ...legacy, lastiCloudPulledAt: daysAgo(2) })
+    ).toBe(null)
+    expect(
+      backupReminderDueAt({ ...legacy, lastiCloudPushedAt: daysAgo(2) })
+    ).toBe(null)
+    expect(
+      backupReminderDueAt({ ...legacy, lastiCloudPulledAt: daysAgo(60) })
     ).not.toBe(null)
   })
 

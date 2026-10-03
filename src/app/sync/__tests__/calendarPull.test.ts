@@ -39,6 +39,10 @@ vi.mock('@/app/sync/merge', () => ({}))
 vi.mock('@/app/sync/imageSync', () => ({}))
 vi.mock('@/app/sync/imageSources', () => ({}))
 vi.mock('@/lib/account', () => ({}))
+vi.mock('@/lib/iCloudIdentity', () => ({
+  checkICloudIdentity: () => true,
+  ensureSyncDeviceId: () => 'device',
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: {} }))
 vi.mock('@/lib/normalizeDate', () => ({}))
 vi.mock('@/lib/logger', () => ({

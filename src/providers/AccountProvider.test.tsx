@@ -13,6 +13,8 @@ const runtime = vi.hoisted(() => ({
   pending: [] as string[] | null,
   remoteChangeListeners: [] as Array<() => void>,
   setCustomer: () => {},
+  /** Runs once as the next identity check's detected Apple Account change. */
+  appleAccountChange: null as (() => void) | null,
 }))
 
 vi.mock('react-native', () => ({
@@ -65,6 +67,16 @@ vi.mock('@/hooks/useCustomer', () => ({
   }),
 }))
 vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'ipad' }))
+// The identity decision itself is covered in `iCloudIdentity.test.ts`; here a
+// detected change only needs its effect on the account id.
+vi.mock('@/lib/iCloudIdentity', () => ({
+  checkICloudIdentity: () => {
+    const change = runtime.appleAccountChange
+    runtime.appleAccountChange = null
+    change?.()
+    return !change
+  },
+}))
 vi.mock('expo-device', () => ({ modelName: 'iPad' }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
@@ -105,6 +117,7 @@ beforeEach(() => {
   runtime.files = []
   runtime.pending = []
   runtime.remoteChangeListeners = []
+  runtime.appleAccountChange = null
 })
 
 afterEach(() => {
@@ -147,5 +160,26 @@ describe('account reconcile while iCloud is downloading', () => {
     await vi.waitFor(() =>
       expect(bridge.write).toHaveBeenCalledWith(ACCOUNT_FILE, ownClaim)
     )
+  })
+
+  it('returns to this device’s own id after an Apple Account change', async () => {
+    const account = await import('@/lib/account')
+    account.adoptAccountId('phone')
+    runtime.appleAccountChange = account.clearAdoptedAccountId
+    const { AccountProvider, bridge, Purchases } = await load()
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() =>
+      expect(bridge.write).toHaveBeenCalledWith(ACCOUNT_FILE, ownClaim)
+    )
+    expect(Purchases.logIn).toHaveBeenCalledWith('ipad')
+    expect(Purchases.logIn).not.toHaveBeenCalledWith('phone')
+    // The previous account's shared id never claims the new account's file.
+    expect(bridge.write).not.toHaveBeenCalledWith(
+      ACCOUNT_FILE,
+      expect.stringContaining('"accountId":"phone"')
+    )
+    expect(account.getOrCreateAccountId()).toBe('ipad')
   })
 })

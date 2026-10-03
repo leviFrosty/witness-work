@@ -1,7 +1,6 @@
 import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
-import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
@@ -22,9 +21,11 @@ import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile
 import {
   forgetBuddiesInData,
   reconcileLinkedPlans,
+  sharesJustAccepted,
+  sharesLeftUnlinked,
 } from '@/features/buddies/lib/linkedPlans'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
-import { Buddy, incomingShareKey } from '@/features/buddies/lib/state'
+import { Buddy } from '@/features/buddies/lib/state'
 import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
@@ -44,13 +45,20 @@ const PUBLISH_DEBOUNCE_MS = 30 * 1000
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
 
-/** Adds, updates, and removes the Plans that follow buddies' invitations. */
-function syncLinkedPlans() {
+/**
+ * Adds, updates, and removes the Plans that follow buddies' invitations.
+ * `answered` holds the invitations just answered "Going" here, the only ones
+ * whose deleted Plan comes back.
+ */
+function syncLinkedPlans(answered?: ReadonlySet<string>) {
   const report = useServiceReport.getState()
   const { add, update, remove } = reconcileLinkedPlans(
     report.dayPlans,
     Object.values(useBuddies.getState().incomingShares),
-    () => Crypto.randomUUID()
+    {
+      deletedPlanIds: new Set(report.deletedDayPlans.map((plan) => plan.id)),
+      answered,
+    }
   )
   for (const plan of add) report.addDayPlan(plan)
   for (const plan of update) report.updateDayPlan(plan)
@@ -59,13 +67,13 @@ function syncLinkedPlans() {
 
 /**
  * Deleting a Plan that follows a buddy's invitation means "Can't make it" —
- * otherwise the buddy's next change would bring it back.
+ * otherwise the buddy's next change would bring it back. Removing a duplicate
+ * while another Plan still follows the invitation doesn't. The caller skips
+ * remote mutations (restores, imports, and Plans another device deleted): the
+ * device where the user deleted the Plan answers for them.
  */
 function declineDeletedLinkedPlans(previous: DayPlan[], current: DayPlan[]) {
-  const remaining = new Set(current.map((plan) => plan.id))
-  for (const plan of previous) {
-    if (!plan.buddyShare || remaining.has(plan.id)) continue
-    const key = incomingShareKey(plan.buddyShare.from, plan.buddyShare.shareId)
+  for (const key of sharesLeftUnlinked(previous, current)) {
     if (useBuddies.getState().incomingShares[key]?.status !== 'going') continue
     // Saved at once, so reconciling won't bring the Plan back; sent when online.
     void buddiesEngine.replyToShare(key, 'declined').catch(logFailure)
@@ -233,7 +241,10 @@ export default function BuddiesRuntime() {
     const buddies = useBuddies.subscribe((state, previous) => {
       if (state.buddies !== previous.buddies)
         forgetRemovedBuddies(previous.buddies, state.buddies)
-      if (state.incomingShares !== previous.incomingShares) syncLinkedPlans()
+      if (state.incomingShares !== previous.incomingShares)
+        syncLinkedPlans(
+          sharesJustAccepted(previous.incomingShares, state.incomingShares)
+        )
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {

@@ -66,7 +66,6 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
   const theme = useTheme()
   const { categories, addCategory, updateCategory, deleteCategory } =
     useCategories()
-  const serviceReports = useServiceReport((s) => s.serviceReports)
   const setServiceReportStore = useServiceReport((s) => s.set)
 
   const [customCategoryName, setCustomCategoryName] = useState<string>('')
@@ -92,10 +91,10 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
 
   /**
    * Flips `isCredit` on the currently-selected Category record and re-stamps
-   * `credit` on every TimeEntry that references it (see
-   * `restampTimeEntriesCredit` for the why). Skips the store write entirely
-   * when no entry references the Category — flipping a freshly-created custom
-   * Category is a no-op on the reports.
+   * `credit` (and `updatedAt`, so iCloud sync carries it) on every TimeEntry
+   * that references it (see `restampTimeEntriesCredit` for the why). Skips the
+   * store write entirely when no entry needs it — flipping a freshly-created
+   * custom Category is a no-op on the reports.
    */
   const setCategoryIsCredit = (isCredit: boolean) => {
     if (!selectedCategory) return
@@ -106,7 +105,7 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
     })
 
     const restamped = restampTimeEntriesCredit(
-      serviceReports,
+      useServiceReport.getState().serviceReports,
       selectedCategory.id,
       isCredit
     )

@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import {
   DayPlan,
+  PlanTombstone,
   TimeEntry,
   TimeEntriesByYear,
   TimeEntryTombstone,
@@ -34,7 +35,53 @@ const initialState = {
    * so iCloud sync can propagate deletions across devices.
    */
   deletedServiceReports: [] as TimeEntryTombstone[],
+  /**
+   * Tombstones for removed Day Plans and Recurring Plans, so iCloud sync
+   * propagates the removal instead of another device's copy bringing the Plan
+   * back. Every action that removes a Plan writes one; adding a Plan with that
+   * id, or updating one that's still here, clears it.
+   */
+  deletedDayPlans: [] as PlanTombstone[],
+  deletedRecurringPlans: [] as PlanTombstone[],
 }
+
+/**
+ * `tombstones` with a fresh one for `plan`, replacing any earlier one for its
+ * id. Stamped past the Plan's last edit and that earlier deletion, so it beats
+ * every copy of the Plan this device has seen.
+ */
+const withPlanTombstone = (
+  tombstones: PlanTombstone[],
+  plan: { id: string; updatedAt?: number }
+): PlanTombstone[] => {
+  const previous = tombstones.find((tombstone) => tombstone.id === plan.id)
+  return [
+    ...tombstones.filter((tombstone) => tombstone.id !== plan.id),
+    {
+      id: plan.id,
+      deletedAt: syncTimestamp(
+        Math.max(plan.updatedAt ?? 0, previous?.deletedAt ?? 0)
+      ),
+    },
+  ]
+}
+
+/** `tombstones` without the one for `id`; the same array when there is none. */
+const withoutPlanTombstone = (
+  tombstones: PlanTombstone[],
+  id: string | undefined
+): PlanTombstone[] =>
+  tombstones.some((tombstone) => tombstone.id === id)
+    ? tombstones.filter((tombstone) => tombstone.id !== id)
+    : tombstones
+
+/**
+ * The `updatedAt` for a Plan added under `id`. A removed id can come back (a
+ * buddy's linked Plan has a fixed id), so it's stamped past that removal: other
+ * devices keep the tombstone, and the Plan must outlive it there too.
+ */
+const addedPlanStamp = (tombstones: PlanTombstone[], id: string) =>
+  syncTimestamp(tombstones.find((tombstone) => tombstone.id === id)?.deletedAt)
 
 /** Migrates legacy service report data: `TimeEntry[]` -> `TimeEntriesByYear` */
 export const migrateServiceReports = (
@@ -79,6 +126,10 @@ export const migrateServiceReports = (
  *   in a boot-time runner (`migrateLdcToCategory` in `src/lib/categories.ts`)
  *   for the same multi-store coordination reason. Same no-op pattern — the
  *   version bump tags the on-disk shape as post-collapse.
+ *
+ * Additive fields need no bump: persist's default shallow merge fills any key
+ * missing from the saved state from `initialState`, which is how existing
+ * installs start with empty `deletedDayPlans` / `deletedRecurringPlans`.
  *
  * Exported for unit testing.
  */
@@ -153,7 +204,7 @@ export const useServiceReport = create(
           }
         }),
       addDayPlan: (dayPlan: DayPlan) =>
-        set(({ dayPlans }) => {
+        set(({ dayPlans, deletedDayPlans }) => {
           const normalized: DayPlan = {
             ...dayPlan,
             date: normalizeDateForStorage(dayPlan.date),
@@ -168,15 +219,25 @@ export const useServiceReport = create(
           return {
             dayPlans: [
               ...dayPlans,
-              { ...normalized, updatedAt: syncTimestamp() },
+              {
+                ...normalized,
+                updatedAt: addedPlanStamp(deletedDayPlans, normalized.id),
+              },
             ],
+            // A removed id can come back (a buddy's linked Plan has a fixed
+            // id); it's live again.
+            deletedDayPlans: withoutPlanTombstone(
+              deletedDayPlans,
+              normalized.id
+            ),
           }
         }),
       updateDayPlan: (dayPlan: Partial<DayPlan>) => {
-        set(({ dayPlans }) => {
+        set(({ dayPlans, deletedDayPlans }) => {
           const normalized: Partial<DayPlan> = dayPlan.date
             ? { ...dayPlan, date: normalizeDateForStorage(dayPlan.date) }
             : dayPlan
+          const found = dayPlans.some((c) => c.id === normalized.id)
           return {
             dayPlans: dayPlans.map((c) => {
               if (c.id !== normalized.id) {
@@ -188,11 +249,22 @@ export const useServiceReport = create(
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
+            // Only a Plan that's still here: clearing the tombstone of one
+            // removed meanwhile (an edit screen saved after a pull removed
+            // it) would let a stale copy bring it back.
+            ...(found
+              ? {
+                  deletedDayPlans: withoutPlanTombstone(
+                    deletedDayPlans,
+                    normalized.id
+                  ),
+                }
+              : {}),
           }
         })
       },
       deleteDayPlan: (id: string) =>
-        set(({ dayPlans }) => {
+        set(({ dayPlans, deletedDayPlans }) => {
           const foundDayPlan = dayPlans.find((plan) => plan.id === id)
           if (!foundDayPlan) {
             return {}
@@ -200,10 +272,11 @@ export const useServiceReport = create(
 
           return {
             dayPlans: dayPlans.filter((plan) => plan.id !== id),
+            deletedDayPlans: withPlanTombstone(deletedDayPlans, foundDayPlan),
           }
         }),
       addRecurringPlan: (recurringPlan: RecurringPlan) =>
-        set(({ recurringPlans }) => {
+        set(({ recurringPlans, deletedRecurringPlans }) => {
           const normalized = normalizeRecurringPlan(recurringPlan)
           const existing = recurringPlans.find(
             (plan) => plan.id === normalized.id
@@ -213,13 +286,22 @@ export const useServiceReport = create(
           return {
             recurringPlans: [
               ...recurringPlans,
-              { ...normalized, updatedAt: syncTimestamp() },
+              {
+                ...normalized,
+                updatedAt: addedPlanStamp(deletedRecurringPlans, normalized.id),
+              },
             ],
+            // Same rule as `addDayPlan`.
+            deletedRecurringPlans: withoutPlanTombstone(
+              deletedRecurringPlans,
+              normalized.id
+            ),
           }
         }),
       updateRecurringPlan: (recurringPlan: Partial<RecurringPlan>) => {
-        set(({ recurringPlans }) => {
+        set(({ recurringPlans, deletedRecurringPlans }) => {
           const normalized = normalizePartialRecurringPlan(recurringPlan)
+          const found = recurringPlans.some((c) => c.id === normalized.id)
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== normalized.id) {
@@ -234,6 +316,15 @@ export const useServiceReport = create(
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
+            // Same rule as `updateDayPlan`.
+            ...(found
+              ? {
+                  deletedRecurringPlans: withoutPlanTombstone(
+                    deletedRecurringPlans,
+                    normalized.id
+                  ),
+                }
+              : {}),
           }
         })
       },
@@ -259,7 +350,15 @@ export const useServiceReport = create(
                     'day'
                   )
               )
-              return { ...c, overrides: [...updatedOverrides, normalized] }
+              // Every occurrence edit stamps the Plan: iCloud merge is
+              // whole-record last-writer-wins on `updatedAt`, so an unstamped
+              // edit never reaches other devices and their next edit
+              // reverts it.
+              return {
+                ...c,
+                overrides: [...updatedOverrides, normalized],
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -290,7 +389,11 @@ export const useServiceReport = create(
                 }
                 return o
               })
-              return { ...c, overrides: updatedOverrides }
+              return {
+                ...c,
+                overrides: updatedOverrides,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -311,7 +414,11 @@ export const useServiceReport = create(
                     'day'
                   )
               )
-              return { ...c, overrides: updatedOverrides }
+              return {
+                ...c,
+                overrides: updatedOverrides,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -361,7 +468,11 @@ export const useServiceReport = create(
                     'day'
                   )
               )
-              return { ...c, deletedDates: updatedDeleted }
+              return {
+                ...c,
+                deletedDates: updatedDeleted,
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -375,7 +486,11 @@ export const useServiceReport = create(
                 return c
               }
               const deleted = c.deletedDates || []
-              return { ...c, deletedDates: [...deleted, normalizedDate] }
+              return {
+                ...c,
+                deletedDates: [...deleted, normalizedDate],
+                updatedAt: syncTimestamp(c.updatedAt),
+              }
             }),
           }
         })
@@ -396,13 +511,14 @@ export const useServiceReport = create(
                   ...c.recurrence,
                   endDate: normalizedDate,
                 },
+                updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
           }
         })
       },
       deleteRecurringPlan: (id: string) =>
-        set(({ recurringPlans }) => {
+        set(({ recurringPlans, deletedRecurringPlans }) => {
           const foundRecurringPlan = recurringPlans.find(
             (plan) => plan.id === id
           )
@@ -412,6 +528,10 @@ export const useServiceReport = create(
 
           return {
             recurringPlans: recurringPlans.filter((plan) => plan.id !== id),
+            deletedRecurringPlans: withPlanTombstone(
+              deletedRecurringPlans,
+              foundRecurringPlan
+            ),
           }
         }),
       deleteServiceReport: (_report: TimeEntry) =>

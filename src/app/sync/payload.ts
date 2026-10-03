@@ -24,6 +24,7 @@ import {
 } from '@/stores/profile'
 import { ProfileAvatar } from '@/types/avatar'
 import type { CustomFieldTombstone } from '@/types/customField'
+import type { ResetEpoch } from '@/lib/syncResetEpoch'
 import {
   sanitizeContactAvatar,
   sanitizeProfileAvatar,
@@ -46,6 +47,13 @@ export type SyncPayload = {
   calibratedClock?: boolean
   deviceId: string
   deviceName?: string
+  /**
+   * The writer's reset generation; absent is generation zero. Receivers ignore
+   * payloads from an older generation and adopt a newer one. Additive, so
+   * `PAYLOAD_VERSION` stays put: older builds drop the key and merge as before.
+   * See `src/lib/syncResetEpoch.ts`.
+   */
+  resetEpoch?: ResetEpoch
   contactStore: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     contacts: any[]
@@ -82,6 +90,14 @@ export type SyncPayload = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recurringPlans: any[]
     deletedServiceReports?: { id: string; deletedAt: number }[]
+    /**
+     * Plan tombstones. Optional because payloads from builds before Plan
+     * deletions synced lack them; receivers treat that as none. Additive, so
+     * `PAYLOAD_VERSION` stays put and older builds keep accepting our payloads
+     * (their validation drops the unknown keys).
+     */
+    deletedDayPlans?: { id: string; deletedAt: number }[]
+    deletedRecurringPlans?: { id: string; deletedAt: number }[]
   }
   /**
    * User-defined Category records (the first-class shape that replaces the
@@ -175,6 +191,7 @@ export function buildPayload(args: {
     writtenAt: syncNow(),
     deviceId,
     deviceName,
+    ...(prefs.iCloudResetEpoch ? { resetEpoch: prefs.iCloudResetEpoch } : {}),
     contactStore: {
       contacts: contacts.contacts.map((c) =>
         sanitizeContactAvatar(c, avatarOpts)
@@ -195,6 +212,8 @@ export function buildPayload(args: {
       dayPlans: serviceReports.dayPlans,
       recurringPlans: serviceReports.recurringPlans,
       deletedServiceReports: serviceReports.deletedServiceReports,
+      deletedDayPlans: serviceReports.deletedDayPlans,
+      deletedRecurringPlans: serviceReports.deletedRecurringPlans,
     },
     categoryStore: {
       categories: categories.categories,

@@ -86,6 +86,16 @@ export type TimeEntryTombstone = {
   deletedAt: number
 }
 
+/**
+ * Tombstone written when a Day Plan or Recurring Plan is removed, so the
+ * deletion propagates across devices instead of another device's copy bringing
+ * the Plan back.
+ */
+export type PlanTombstone = {
+  id: string
+  deletedAt: number
+}
+
 /** 0-indexed month key, 0-11 */
 export type TimeEntriesByMonth = {
   [month: string]: TimeEntry[]

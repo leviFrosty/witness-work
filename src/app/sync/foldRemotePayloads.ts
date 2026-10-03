@@ -10,6 +10,7 @@ import type {
   RecurringPlan,
 } from '@/types/timeEntry'
 import type { Category } from '@/types/category'
+import { atNewestResetEpoch } from '@/lib/syncResetEpoch'
 
 type LocalMergeState = Omit<MergeResult, 'changed'>
 
@@ -20,12 +21,16 @@ type LocalMergeState = Omit<MergeResult, 'changed'>
  * caller expects one payload-shaped object representing the full remote state
  * across all devices.
  *
+ * Only payloads from the newest reset generation are folded: older ones are
+ * snapshots a reset replaced. The result carries that generation.
+ *
  * Returns null when the input is empty.
  */
 export function foldRemotePayloads(
-  payloads: SyncPayload[]
+  allPayloads: SyncPayload[]
 ): SyncPayload | null {
-  if (payloads.length === 0) return null
+  if (allPayloads.length === 0) return null
+  const payloads = atNewestResetEpoch(allPayloads)
 
   const first = payloads[0]
   let acc: LocalMergeState = {
@@ -42,6 +47,8 @@ export function foldRemotePayloads(
     recurringPlans: (first.serviceReportStore.recurringPlans ??
       []) as RecurringPlan[],
     deletedServiceReports: first.serviceReportStore.deletedServiceReports ?? [],
+    deletedDayPlans: first.serviceReportStore.deletedDayPlans ?? [],
+    deletedRecurringPlans: first.serviceReportStore.deletedRecurringPlans ?? [],
     categories: (first.categoryStore?.categories ?? []) as Category[],
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
     preferencesValues: first.preferencesStore?.values ?? {},
@@ -68,6 +75,7 @@ export function foldRemotePayloads(
     writtenAt: rep.writtenAt,
     deviceId: rep.deviceId,
     deviceName: rep.deviceName,
+    ...(rep.resetEpoch ? { resetEpoch: rep.resetEpoch } : {}),
     contactStore: {
       contacts: acc.contacts,
       deletedContacts: acc.deletedContacts,
@@ -83,6 +91,8 @@ export function foldRemotePayloads(
       dayPlans: acc.dayPlans,
       recurringPlans: acc.recurringPlans,
       deletedServiceReports: acc.deletedServiceReports,
+      deletedDayPlans: acc.deletedDayPlans,
+      deletedRecurringPlans: acc.deletedRecurringPlans,
     },
     categoryStore: {
       categories: acc.categories,

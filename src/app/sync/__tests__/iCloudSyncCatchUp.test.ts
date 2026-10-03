@@ -20,6 +20,7 @@ const runtime = vi.hoisted(() => ({
   files: [] as SyncFile[],
   pending: [] as string[],
   binaries: [] as Array<{ filename: string; modifiedAt: number }>,
+  uploadSupported: true,
 }))
 
 vi.mock('react-native', () => ({
@@ -36,12 +37,19 @@ vi.mock('react-native', () => ({
 }))
 vi.mock('../../../../modules/icloud-bridge', () => ({
   isAvailable: () => runtime.available,
+  identityToken: () => null,
   waitForInitialScan: vi.fn(async () => true),
   readFiles: vi.fn(async (include: (filename: string) => boolean) => ({
     files: runtime.files.filter((f) => include(f.filename)),
     pending: runtime.pending.filter(include),
   })),
   write: vi.fn(async () => 1),
+  supportsUploadStatus: () => runtime.uploadSupported,
+  uploadStatus: vi.fn(async () => ({
+    uploaded: true,
+    uploading: false,
+    error: null,
+  })),
   deleteFile: vi.fn(async () => {}),
   deleteAll: vi.fn(async () => {}),
   writeBinary: vi.fn(async () => 1),
@@ -61,6 +69,7 @@ vi.mock('../../../../modules/icloud-bridge', () => ({
   },
 }))
 vi.mock('@/lib/account', () => ({ reclaimAccountFile: vi.fn() }))
+vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'install' }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: {
@@ -192,12 +201,18 @@ beforeEach(async () => {
   runtime.files = [phonePayload()]
   runtime.pending = []
   runtime.binaries = []
+  runtime.uploadSupported = true
   const bridge = await import('../../../../modules/icloud-bridge')
   vi.mocked(bridge.readFiles).mockImplementation(async (include) => ({
     files: runtime.files.filter((file) => include(file.filename)),
     pending: runtime.pending.filter(include),
   }))
   vi.mocked(bridge.write).mockResolvedValue(1)
+  vi.mocked(bridge.uploadStatus).mockResolvedValue({
+    uploaded: true,
+    uploading: false,
+    error: null,
+  })
 })
 
 afterEach(() => {
@@ -962,3 +977,172 @@ it('rechecks each obsolete download after a prior deletion awaited IO', async ()
     'witness-work-img-contact-b--r.jpg'
   )
 })
+
+describe('confirming the upload', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    runtime.files = []
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const start = async () => {
+    const loaded = await load()
+    const { analytics } = await import('@/lib/analytics')
+    loaded.useSupporter.getState().setSupporter(true)
+    uninstall = loaded.installiCloudSync()
+    await vi.advanceTimersByTimeAsync(0)
+    return { ...loaded, analytics }
+  }
+  const quotaFull = {
+    uploaded: false,
+    uploading: false,
+    error: { domain: 'NSCocoaErrorDomain', code: 4354 },
+  }
+
+  it('waits after a write until iCloud confirms the upload', async () => {
+    const { usePreferences, bridge } = await start()
+    expect(bridge.write).toHaveBeenCalled()
+    expect(usePreferences.getState().iCloudUploadPendingSince).not.toBeNull()
+    expect(usePreferences.getState().lastiCloudUploadedAt).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(3_000)
+
+    expect(bridge.uploadStatus).toHaveBeenCalledWith('witness-work-ipad.json')
+    expect(usePreferences.getState()).toMatchObject({
+      iCloudUploadPendingSince: null,
+      iCloudUploadIssue: null,
+    })
+    expect(usePreferences.getState().lastiCloudUploadedAt).toEqual(
+      expect.any(Number)
+    )
+  })
+
+  it('keeps checking with a bounded backoff while the upload is queued', async () => {
+    const { usePreferences, bridge } = await load()
+    vi.mocked(bridge.uploadStatus).mockResolvedValue({
+      uploaded: false,
+      uploading: true,
+      error: null,
+    })
+    await start()
+
+    await vi.advanceTimersByTimeAsync(60 * 60_000)
+
+    expect(bridge.uploadStatus).toHaveBeenCalledTimes(6)
+    expect(usePreferences.getState().iCloudUploadPendingSince).not.toBeNull()
+    expect(usePreferences.getState().iCloudUploadIssue).toBeNull()
+  })
+
+  it('surfaces full iCloud storage without pushing again, then recovers', async () => {
+    const { bridge } = await load()
+    vi.mocked(bridge.uploadStatus).mockResolvedValue(quotaFull)
+    const { usePreferences, analytics } = await start()
+    const writes = vi.mocked(bridge.write).mock.calls.length
+
+    await vi.advanceTimersByTimeAsync(3_000)
+
+    expect(usePreferences.getState().iCloudUploadIssue).toBe('icloud-full')
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'icloud_sync_upload_failed',
+      { reason: 'icloud_full' }
+    )
+    // Later checks repeat neither the event nor the write.
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(bridge.uploadStatus).toHaveBeenCalledTimes(2)
+    expect(
+      vi
+        .mocked(analytics.capture)
+        .mock.calls.filter(([event]) => event === 'icloud_sync_upload_failed')
+    ).toHaveLength(1)
+    expect(bridge.write).toHaveBeenCalledTimes(writes)
+
+    // A new write doesn't clear the issue on its own...
+    expect(await (await import('@/app/sync/iCloudSync')).push('manual')).toBe(
+      true
+    )
+    expect(usePreferences.getState().iCloudUploadIssue).toBe('icloud-full')
+
+    // ...but a confirmed upload does.
+    vi.mocked(bridge.uploadStatus).mockResolvedValue({
+      uploaded: true,
+      uploading: false,
+      error: null,
+    })
+    await vi.advanceTimersByTimeAsync(3_000)
+    expect(usePreferences.getState()).toMatchObject({
+      iCloudUploadIssue: null,
+      iCloudUploadPendingSince: null,
+    })
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'icloud_sync_upload_recovered',
+      { previous_issue: 'icloud_full' }
+    )
+  })
+
+  it('treats unreachable servers as still uploading', async () => {
+    const { bridge } = await load()
+    vi.mocked(bridge.uploadStatus).mockResolvedValue({
+      uploaded: false,
+      uploading: false,
+      error: { domain: 'NSCocoaErrorDomain', code: 4355 },
+    })
+    const { usePreferences } = await start()
+
+    await vi.advanceTimersByTimeAsync(3_000)
+
+    expect(usePreferences.getState().iCloudUploadIssue).toBeNull()
+    expect(usePreferences.getState().iCloudUploadPendingSince).not.toBeNull()
+  })
+
+  it("doesn't confirm a write made while the check was reading", async () => {
+    const { bridge, iCloudSync, usePreferences } = await start()
+    let answer: (status: ICloudStatusAnswer) => void = () => {}
+    vi.mocked(bridge.uploadStatus).mockImplementationOnce(
+      () => new Promise((resolve) => (answer = resolve))
+    )
+    const check = iCloudSync.checkUpload()
+    await vi.advanceTimersByTimeAsync(0)
+    await iCloudSync.push('manual')
+    answer({ uploaded: true, uploading: false, error: null })
+
+    expect(await check).toBe('waiting')
+    expect(usePreferences.getState().iCloudUploadPendingSince).not.toBeNull()
+  })
+
+  it('stops checking once the app leaves the foreground', async () => {
+    const { bridge } = await start()
+    runtime.appState = 'background'
+    runtime.appStateListeners.forEach((listener) => listener('background'))
+
+    await vi.advanceTimersByTimeAsync(60 * 60_000)
+
+    expect(bridge.uploadStatus).not.toHaveBeenCalled()
+  })
+
+  it('keeps the previous behaviour on a binary that predates upload status', async () => {
+    runtime.uploadSupported = false
+    const { usePreferences, bridge, iCloudSync } = await start()
+
+    await vi.advanceTimersByTimeAsync(60 * 60_000)
+
+    expect(bridge.write).toHaveBeenCalled()
+    expect(bridge.uploadStatus).not.toHaveBeenCalled()
+    expect(usePreferences.getState()).toMatchObject({
+      iCloudUploadPendingSince: null,
+      lastiCloudUploadedAt: null,
+      iCloudUploadIssue: null,
+    })
+    expect(usePreferences.getState().lastiCloudPushedAt).toEqual(
+      expect.any(Number)
+    )
+    expect(await iCloudSync.checkUpload()).toBeNull()
+  })
+})
+
+type ICloudStatusAnswer = {
+  uploaded: boolean
+  uploading: boolean
+  error: { domain: string; code: number } | null
+}

@@ -7,6 +7,7 @@ import type { Contact } from '@/types/contact'
 const mocks = vi.hoisted(() => ({
   contacts: [] as Contact[],
   isWide: false,
+  platform: 'ios',
   listeners: new Map<string, Set<() => void>>(),
   navigate: vi.fn(),
   addListener: vi.fn(),
@@ -43,7 +44,11 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
 })
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    get OS() {
+      return mocks.platform
+    },
+  },
   View: 'View',
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
@@ -255,6 +260,7 @@ beforeEach(async () => {
   vi.clearAllMocks()
   mocks.listeners.clear()
   mocks.isWide = false
+  mocks.platform = 'ios'
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
   mocks.contacts[1].coordinate = { latitude: 41, longitude: -73 }
   mocks.addListener.mockImplementation((event, listener) => {
@@ -286,6 +292,28 @@ async function startCreation(search: string) {
   )
   await act(async () => emit('blur'))
 }
+
+describe('Map padding readiness', () => {
+  it('defers Android native padding until the map is ready, even after layout', async () => {
+    mocks.platform = 'android'
+    await act(async () => root.update(screen()))
+    const map = () => root.root.findByType(MapView)
+    expect(map().props.mapPadding).toBeUndefined()
+    await act(async () => map().props.onLayout(layoutEvent))
+    expect(map().props.mapPadding).toBeUndefined()
+    await act(async () => map().props.onMapReady())
+    expect(map().props.mapPadding).toEqual({
+      top: expect.any(Number),
+      right: 0,
+      left: 0,
+      bottom: expect.any(Number),
+    })
+  })
+
+  it('keeps initial iOS padding', () => {
+    expect(root.root.findByType(MapView).props.mapPadding).toBeDefined()
+  })
+})
 
 describe('Map camera initialization', () => {
   it('uses street zoom for multiple contacts at the same location', async () => {

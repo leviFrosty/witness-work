@@ -28,27 +28,32 @@ versions can fail the native CMake/Prefab build even when Gradle starts.
 
 ```bash
 pnpm install --frozen-lockfile
+# Copy .env.example to .env and configure development keys first.
+pnpm run check:env:android
 pnpm run android
 ```
 
-`android` generates the native project when needed, builds the development app,
-installs it, and starts Metro. For subsequent JavaScript work use
-`pnpm run dev:android`. After changing native plugins/configuration, regenerate
-with `pnpm run prebuild:android` and rebuild. The generated `android/` directory
-is ignored, like `ios/`.
+`android` loads the development environment, refreshes native configuration,
+builds and installs the development app, and starts Metro. This refresh ensures
+a changed Maps key reaches the Android manifest even when `android/` already
+exists. For subsequent JavaScript work use `pnpm run dev:android`. Stop an older
+Metro process before restarting with these commands; an already-running process
+cannot inherit the new environment. The generated `android/` directory is
+ignored, like `ios/`.
 
 Development uses `com.leviwilkerson.jwtimedev`; production uses
 `com.leviwilkerson.jwtime`. Configure these values in the appropriate environment:
 
 - `GOOGLE_MAPS_ANDROID_API_KEY`: build-time Maps SDK for Android key, restricted
-  to the package and signing certificate. The default is an explicit placeholder;
-  the map screen opens but map tiles require a real key and a native rebuild.
+  to the package and signing certificate. Local Android commands reject a missing
+  key or placeholder before building. Map tiles require a real key and a native
+  rebuild; Metro reloads cannot update this key.
 - `EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY`: the Google Play app's public SDK key
   from the existing RevenueCat project, with Google Play products configured.
   Production requires separate Apple and Google keys. For local development,
   the same RevenueCat Test Store key (`test_…`) can be set in both SDK variables.
-  Without the Google key,
-  the core app remains usable and purchases show an unavailable state.
+  Local commands require the platform SDK key so a configuration gap is caught
+  before launch. The app itself still handles missing keys gracefully.
 
 Contact URL intent filters cover `ww-proxy.leviwilkerson.com/c#<payload>` and
 legacy `/c/<payload>` links.
@@ -69,11 +74,7 @@ Build locally with JDK 17 and the production environment. Both store SDK keys
 must match their RevenueCat apps; never use a `test_` key in a store build.
 
 ```bash
-set -a
-source .env.production
-set +a
-NODE_ENV=production eas build --platform android --profile production --local \
-  --non-interactive --output ./build-production.aab
+pnpm run build:android:production --non-interactive --output ./build-production.aab
 ```
 
 The Android build-memory plugin gives Gradle 3 GB of heap, 1.5 GB of metaspace,
@@ -262,10 +263,59 @@ App Store review submission (version, "What's New", submit) is a separate step �
 
 ### Environment files
 
-- `.env` — **development** values. Loaded by Expo for `expo start` / dev builds.
-- `.env.production` — **production** values (gitignored). Loaded two ways:
-  - Expo CLI loads it with higher priority than `.env` whenever `NODE_ENV=production` (e.g. `expo export`). It explicitly blanks the dev-only notes-import bypass vars so they can never leak into a production bundle.
-  - The build script `set -a; source`s it so the local EAS build job inherits everything — required because EAS **secret** env vars (e.g. `POSTHOG_CLI_API_KEY` for source map and native symbol uploads) are never delivered to local builds. Plaintext/sensitive vars from the EAS `production` environment _are_ injected into local builds; keep `.env.production` in sync with `eas env:list production`.
+Local dev and simulator/build commands use `scripts/with-local-env.mjs` to
+select files explicitly and export their values to Expo and local EAS jobs:
+
+| App variant       | Base file         | Optional override       |
+| ----------------- | ----------------- | ----------------------- |
+| Development       | `.env`            | `.env.local`            |
+| Production        | `.env.production` | `.env.production.local` |
+| Beta helper usage | `.env.beta`       | `.env.beta.local`       |
+
+The files are gitignored. If the base file is absent in a worktree, the helper
+uses the main checkout's files; an override in the current worktree takes final
+priority. App configuration in these files replaces inherited `EXPO_PUBLIC_*`,
+`POSTHOG_*` and Maps values. Toolchain variables such as `JAVA_HOME`, `ANDROID_HOME`
+and `ANDROID_SERIAL` remain inherited. The helper sets `APP_VARIANT` and disables
+Expo's additional dotenv loading with `EXPO_NO_DOTENV=1`, so a bundler switching
+`NODE_ENV` cannot accidentally mix production keys into a development bundle.
+Production and Beta helper usage rejects a nonempty dev bypass and Test Store
+SDK keys. `build:beta` retains its dedicated `.env.beta` loading workflow.
+
+`pnpm run check:env:android` / `pnpm run check:env:ios` validate development
+configuration without building or printing credentials. These check presence,
+placeholders and URL format; they do not prove provider authorization. To inspect
+production configuration, run
+`node scripts/with-local-env.mjs production android --check` (or `ios`).
+`pnpm run build:android` builds a local EAS development client;
+`pnpm run build:android:production` builds the production bundle. The existing
+`build` and `build:production` commands target the iOS simulators.
+
+For a local backend, start `pnpm dev` in `~/dev/ww-api` with its Wrangler secrets
+configured (`HERE_API_KEY` is server-side and powers autocomplete/geocoding).
+Keep `EXPO_PUBLIC_API_BASE_URL=http://localhost:8787` in the app development env.
+Boot/connect the Android device before running `android` or `dev:android`; those
+commands automatically run `adb reverse` for the backend port. If multiple devices
+are connected, set `ANDROID_SERIAL` to the intended device. `localhost` on Android
+otherwise refers to the device, not the host. This forwarding is for debug builds,
+which permit local HTTP. For a standalone release build, use an HTTPS backend
+reachable from the device. To use the deployed backend, leave the base URL and
+dev bypass blank in the selected env.
+
+After changing RevenueCat/backend variables, restart Metro and reload the app.
+After changing the Maps key, run `pnpm run android` to regenerate and reinstall.
+If Maps still reports an authorization failure with a real embedded key, enable
+Maps SDK for Android and billing, and allow the development package
+`com.leviwilkerson.jwtimedev` and its debug signing SHA-1 in Google Cloud.
+
+Gitignored env files are excluded from EAS archives. The helper exports local
+configuration into the build process instead. EAS **secret** variables are not
+provided to local builds, so upload credentials must also be present locally.
+Cloud builds use the explicit `development`, `preview` or `production` EAS
+environment in `eas.json`; runtime `EXPO_PUBLIC_*` SDK keys must have
+plaintext/sensitive visibility to be inlined into the app. Keep the cloud values
+in sync with the corresponding local file. The auto-submit script explicitly
+exports `.env.production` and disables extra dotenv loading too.
 
 ### PostHog error tracking and source maps
 

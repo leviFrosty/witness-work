@@ -47,6 +47,7 @@ source .env.production
 # above are what feed the build — but set the mode explicitly so env loading
 # is deterministic and the warning goes away.
 NODE_ENV=production
+EXPO_NO_DOTENV=1
 set +a
 
 for variable in POSTHOG_CLI_API_KEY POSTHOG_CLI_PROJECT_ID; do

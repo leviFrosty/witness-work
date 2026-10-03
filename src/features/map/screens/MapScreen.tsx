@@ -734,19 +734,25 @@ const FullMapView = ({
               )
             }}
             onPanDrag={handlePanDrag}
-            mapPadding={{
-              top: topInset,
-              right:
-                isWide && contactMarkers.length > 0 && !cardsStowed
-                  ? inspectorWidth + 32
-                  : 0,
-              left: 0,
-              bottom:
-                insets.bottom +
-                (Platform.OS === 'android'
-                  ? bottomBarHeight
-                  : bottomBarHeight / 4),
-            }}
+            mapPadding={
+              // Android calls GoogleMap.setPadding synchronously; the native
+              // map can still be null when Fabric applies initial props.
+              Platform.OS === 'android' && !isMapReady
+                ? undefined
+                : {
+                    top: topInset,
+                    right:
+                      isWide && contactMarkers.length > 0 && !cardsStowed
+                        ? inspectorWidth + 32
+                        : 0,
+                    left: 0,
+                    bottom:
+                      insets.bottom +
+                      (Platform.OS === 'android'
+                        ? bottomBarHeight
+                        : bottomBarHeight / 4),
+                  }
+            }
             style={{ height: '100%', width: '100%' }}
           >
             {mapContactCreation.coordinate && (

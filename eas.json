@@ -14,16 +14,17 @@
       "env": {
         "APP_VARIANT": "development"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "environment": "development"
     },
-
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
         "APP_VARIANT": "development"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "environment": "development"
     },
     "preview": {
       "distribution": "internal",

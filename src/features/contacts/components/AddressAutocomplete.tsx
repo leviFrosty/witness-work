@@ -263,6 +263,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
               address,
             }
           })
+        setError(false)
         setSuggestions(results)
       } catch (error) {
         setError(true)

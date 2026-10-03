@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
+import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
@@ -133,6 +134,7 @@ const AnchoredPopover = ({
 }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation()
+  const viewportRef = useRef<View>(null)
   const dims = useWindowDimensions()
   const anchorRef = useRef<View>(null)
   const keyboardRaised = useRef(Keyboard.isVisible())
@@ -412,6 +414,8 @@ const AnchoredPopover = ({
           <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
         </Animated.View>
         <Animated.View
+          ref={viewportRef}
+          collapsable={false}
           accessibilityViewIsModal
           onAccessibilityEscape={close}
           style={[
@@ -437,17 +441,19 @@ const AnchoredPopover = ({
             contentAnimatedStyle,
           ]}
         >
-          {maxHeight != null ? (
-            <ScrollView
-              style={{ maxHeight }}
-              contentContainerStyle={[{ padding: 12 }, contentStyle]}
-              showsVerticalScrollIndicator
-            >
-              {content}
-            </ScrollView>
-          ) : (
-            content
-          )}
+          <VisibilityViewportContext value={viewportRef}>
+            {maxHeight != null ? (
+              <ScrollView
+                style={{ maxHeight }}
+                contentContainerStyle={[{ padding: 12 }, contentStyle]}
+                showsVerticalScrollIndicator
+              >
+                {content}
+              </ScrollView>
+            ) : (
+              content
+            )}
+          </VisibilityViewportContext>
         </Animated.View>
         <StatusBar translucent />
       </Modal>

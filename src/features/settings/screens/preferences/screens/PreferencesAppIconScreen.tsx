@@ -1,7 +1,7 @@
 import { Check as CheckIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect, useMemo, useState } from 'react'
-import { Image, Pressable, View } from 'react-native'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Image, Pressable, View, type ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useToastController } from '@tamagui/toast'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -20,6 +20,7 @@ import {
 } from '@/features/settings/lib/appIcon'
 import type { Hemisphere } from '@/features/settings/lib/hemisphere'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 
 const TILES = [
   {
@@ -245,21 +246,33 @@ const PreferencesAppIconPicker = () => {
   )
 }
 
-const PreferencesAppIconScreen = () => (
-  <SettingsInputLayout>
-    <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ gap: 24, paddingTop: 24, paddingBottom: 120 }}
-      >
-        <ArtistCallout />
-        <View>
-          <IsSupporter feature='customAppIcon'>
-            <PreferencesAppIconPicker />
-          </IsSupporter>
-        </View>
-      </KeyboardAwareScrollView>
-    </Wrapper>
-  </SettingsInputLayout>
-)
+const PreferencesAppIconScreen = () => {
+  const viewportRef = useRef<Pick<View, 'measureInWindow'> | null>(null)
+  return (
+    <SettingsInputLayout>
+      <Wrapper insets='bottom'>
+        <VisibilityViewportContext value={viewportRef}>
+          <KeyboardAwareScrollView
+            innerRef={(node: ScrollView | null) => {
+              viewportRef.current = node?.getNativeScrollRef() ?? null
+            }}
+            contentContainerStyle={{
+              gap: 24,
+              paddingTop: 24,
+              paddingBottom: 120,
+            }}
+          >
+            <ArtistCallout />
+            <View>
+              <IsSupporter feature='customAppIcon' analyticsSurface='app_icon'>
+                <PreferencesAppIconPicker />
+              </IsSupporter>
+            </View>
+          </KeyboardAwareScrollView>
+        </VisibilityViewportContext>
+      </Wrapper>
+    </SettingsInputLayout>
+  )
+}
 
 export default PreferencesAppIconScreen

@@ -111,6 +111,7 @@ const PickerContents = () => {
 const AccentColorPicker = () => (
   <IsSupporter
     feature='customAccentColor'
+    analyticsSurface='accent_color'
     size='md'
     title={i18n.t('accentColor')}
   >

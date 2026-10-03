@@ -194,9 +194,76 @@ one-time tip from a Supporter purchase. Restore events distinguish success, no
 purchases, and failure. `paywall_closed` includes whether a purchase occurred and
 wall-clock duration; a successful purchase can also close the screen.
 
-Purchase completion is a client StoreKit result, not a renewal/refund/revenue
+Purchase completion is a client RevenueCat purchase result, not a renewal/refund/revenue
 ledger. External billing lifecycle analysis still requires server-side billing
 integration. Closing the app is not a navigation close event.
+
+### Supporter feature conversions
+
+All `IsSupporter` placements use the same ordered journey:
+
+| Stage                  | Event                            | Meaning                                                                                                                                           |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visible locked feature | `supporter_feature_gate_viewed`  | At least half of the gate's header is visible in the window and its nearest scroll/popover viewport, on a focused screen while the app is active. |
+| Feature tap            | `supporter_feature_gate_clicked` | The locked feature was tapped.                                                                                                                    |
+| Supporter sheet        | `supporter_gate_viewed`          | The educational sheet opened. This existing event is a sheet view, not a feature impression.                                                      |
+| Sheet action           | `supporter_gate_clicked`         | The sheet's support action was tapped.                                                                                                            |
+| Paywall                | `paywall_viewed`                 | The paywall rendered with `source: feature_gate`. `paywall_opened` records the preceding navigation intent.                                       |
+| Checkout               | `supporter_purchase_started`     | A purchase was requested; filter `tier: supporter`.                                                                                               |
+| Conversion             | `supporter_purchase_completed`   | The purchase succeeded with `tier: supporter` and `source: feature_gate`.                                                                         |
+
+These events carry `feature`, `source_screen` (the originating route name),
+`gate_surface`, `gate_placement` (`feature / source_screen / gate_surface`), and
+`gate_flow_id`. The same attribution accompanies sheet dismissal, paywall
+interaction and close, offering failures, purchase cancellation/failure, and
+restore outcomes. It stays attached to the paywall route, so later screens do
+not overwrite the original screen. Direct paywall entry has no gate attribution.
+
+| Feature             | `gate_surface`       | Placement                                                      |
+| ------------------- | -------------------- | -------------------------------------------------------------- |
+| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                 |
+| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.             |
+| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it. |
+| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                |
+| `iCloudSync`        | `icloud_sync`        | Sync gate in `PreferencesiCloud` (iOS only).                   |
+
+Impressions are sent once per visible placement visit. Scrolling or rerendering
+does not repeat them; returning focus starts a new visit. A tap before the first
+visibility measurement records the impression first. Supporters and other users
+who already have access do not produce locked-feature impressions. Visibility
+is sampled every 500 ms until the first impression, then sampling stops.
+
+`gate_flow_id` is a random, temporary visit identifier carried from impression
+through checkout. It is never persisted, used as identity, or linked to an
+account. It prevents a purchase from being credited to every feature previously
+seen. Only route names and bounded feature/placement keys describe the origin;
+no contact IDs, names, entered text, or route parameters are sent.
+
+The [Supporter feature conversions dashboard](https://us.posthog.com/project/492895/dashboard/2165410)
+contains rankings by feature, source screen, and placement; a feature-wide
+ranking; an ordered visibility-to-purchase funnel; and a legacy tap-to-purchase
+funnel. The rankings sort by view-to-purchase rate descending, then purchaser
+count and viewer count. Compare the audience counts alongside view-to-purchase,
+tap-to-purchase, and checkout-to-purchase rates before choosing a placement.
+
+The [ranking SQL](analytics/supporter-feature-conversions.sql) is a custom
+definition; the governed metric catalog was consulted and had no matching
+metric. It counts unique anonymous app installations, requires all seven steps
+in order on the same `gate_flow_id` within seven days of the impression, and
+filters to production builds with development mode off and emulator status
+false. Tips, restores, and unrelated purchases do not count as conversions.
+The dashboard defaults to the last 30 days and its date filters apply to every
+stage; recent views can still convert, and a purchase outside the selected dates
+is excluded. Installations can appear in more than one placement row; do not
+sum those rows. The feature-wide ranking deduplicates across placements.
+
+Visibility and screen attribution begin with this instrumentation release; old
+events cannot reconstruct them. The legacy chart uses the existing events and
+same-feature breakdown, with approximate attribution because they lack
+`gate_flow_id`. Its denominator is taps, so compare it with the new
+tap-to-purchase rate, not the view-to-purchase rate. Analytics opt-out and device
+identity resets still apply; these are installation counts, not cross-device
+person counts or a billing ledger.
 
 ## Notifications tray
 

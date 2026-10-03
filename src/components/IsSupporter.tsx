@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -7,6 +6,11 @@ import SupporterBadge from '@/components/SupporterBadge'
 import SupporterInfoSheet from '@/components/SupporterInfoSheet'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import type { FeatureKey } from '@/lib/featureAccess'
+import useSupporterGateAnalytics from '@/hooks/useSupporterGateAnalytics'
+import type {
+  SupporterGateAttribution,
+  SupporterGateSurface,
+} from '@/lib/supporterGateAnalytics'
 
 interface Props {
   children: ReactNode
@@ -15,6 +19,8 @@ interface Props {
    * when access is denied.
    */
   feature: FeatureKey
+  /** Stable placement name, independent of localized copy or record data. */
+  analyticsSurface: SupporterGateSurface
   /** Size of the supporter badge. */
   size?: 'sm' | 'md' | 'lg'
   /**
@@ -44,6 +50,7 @@ interface Props {
 const IsSupporter = ({
   children,
   feature,
+  analyticsSurface,
   size = 'sm',
   title,
   fill,
@@ -51,6 +58,12 @@ const IsSupporter = ({
   const theme = useTheme()
   const { hasAccess } = useFeatureAccess(feature)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [attribution, setAttribution] = useState<SupporterGateAttribution>()
+  const { headerRef, recordClick } = useSupporterGateAnalytics(
+    feature,
+    analyticsSurface,
+    hasAccess
+  )
 
   const titleEl = title ? (
     <Text
@@ -77,7 +90,8 @@ const IsSupporter = ({
     <>
       <Pressable
         onPress={() => {
-          analytics.capture('supporter_feature_gate_clicked', { feature })
+          if (sheetOpen) return
+          setAttribution(recordClick())
           setSheetOpen(true)
         }}
         style={{
@@ -92,6 +106,8 @@ const IsSupporter = ({
         }}
       >
         <View
+          ref={headerRef}
+          collapsable={false}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -111,6 +127,7 @@ const IsSupporter = ({
         open={sheetOpen}
         setOpen={setSheetOpen}
         featureKey={feature}
+        attribution={attribution}
       />
     </>
   )

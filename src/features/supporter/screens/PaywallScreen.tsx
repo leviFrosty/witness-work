@@ -90,6 +90,7 @@ const PaywallScreen = ({
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>()
   const source = route.params?.source ?? 'unknown'
   const feature = route.params?.feature
+  const gateAttribution = route.params?.gateAttribution
   const purchased = useRef(false)
   const openedAt = useRef(Date.now())
   const initialTier: Tier = route.params?.initialTier ?? 'supporter'
@@ -112,9 +113,10 @@ const PaywallScreen = ({
     analytics.capture('paywall_viewed', {
       source,
       feature,
+      ...gateAttribution,
       initial_tier: initialTier,
     })
-  }, [source, feature, initialTier])
+  }, [source, feature, gateAttribution, initialTier])
 
   useEffect(
     () =>
@@ -122,13 +124,14 @@ const PaywallScreen = ({
         analytics.capture('paywall_closed', {
           source,
           feature,
+          ...gateAttribution,
           tier,
           billing: tier === 'tip' ? 'one_time' : supporterBilling,
           purchased: purchased.current,
           duration_ms: Date.now() - openedAt.current,
         })
       }),
-    [navigation, source, feature, tier, supporterBilling]
+    [navigation, source, feature, gateAttribution, tier, supporterBilling]
   )
 
   const scrollViewRef = useRef<ScrollView>(null)
@@ -146,6 +149,7 @@ const PaywallScreen = ({
   const handleTierSwitch = (nextTier: Tier) => {
     analytics.capture('paywall_tier_selected', {
       source,
+      ...gateAttribution,
       tier: nextTier,
       previous_tier: tier,
     })
@@ -189,7 +193,10 @@ const PaywallScreen = ({
               size='xl'
               accessibilityLabel={i18n.t('paywallLearnMore')}
               onPress={() => {
-                analytics.capture('paywall_faq_clicked', { source })
+                analytics.capture('paywall_faq_clicked', {
+                  source,
+                  ...gateAttribution,
+                })
                 analytics.capture('help_center_opened', { source: 'paywall' })
                 navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
               }}
@@ -198,7 +205,7 @@ const PaywallScreen = ({
         />
       ),
     })
-  }, [navigation, source])
+  }, [navigation, source, gateAttribution])
 
   const allOfferings = useMemo(() => {
     if (!currentOfferings) return []
@@ -285,6 +292,7 @@ const PaywallScreen = ({
         })
         analytics.capture('paywall_offerings_loaded', {
           source,
+          ...gateAttribution,
           offering_count: Object.keys(offerings.all).length,
           package_count: Object.values(offerings.all).reduce(
             (count, offering) => count + offering.availablePackages.length,
@@ -296,6 +304,7 @@ const PaywallScreen = ({
         const err = error as PurchasesError
         analytics.capture('paywall_offerings_failed', {
           source,
+          ...gateAttribution,
           error_code: err?.code ?? 'unknown',
           offline: isOfflineError(error),
         })
@@ -314,7 +323,7 @@ const PaywallScreen = ({
         throw error
       }
     },
-    [source]
+    [source, gateAttribution]
   )
 
   useEffect(() => {
@@ -426,6 +435,7 @@ const PaywallScreen = ({
     const purchaseProperties = {
       source,
       feature,
+      ...gateAttribution,
       tier,
       billing: tier === 'supporter' ? supporterBilling : 'one_time',
       product_id: selectedPackage.product.identifier,
@@ -477,22 +487,33 @@ const PaywallScreen = ({
     tier,
     source,
     feature,
+    gateAttribution,
   ])
 
   const handleRestore = useCallback(async () => {
-    analytics.capture('supporter_restore_started', { source })
+    analytics.capture('supporter_restore_started', {
+      source,
+      ...gateAttribution,
+    })
     try {
       const restored = await Purchases.restorePurchases()
       if (Object.keys(restored.allPurchaseDates).length === 0) {
-        analytics.capture('supporter_restore_empty', { source })
+        analytics.capture('supporter_restore_empty', {
+          source,
+          ...gateAttribution,
+        })
         Alert.alert(i18n.t('noPurchasesFound'))
       } else {
-        analytics.capture('supporter_purchases_restored', { source })
+        analytics.capture('supporter_purchases_restored', {
+          source,
+          ...gateAttribution,
+        })
       }
       setCustomer(restored)
     } catch (error: unknown) {
       analytics.capture('supporter_restore_failed', {
         source,
+        ...gateAttribution,
         error_code: (error as PurchasesError)?.code ?? 'unknown',
         offline: isOfflineError(error),
       })
@@ -501,7 +522,7 @@ const PaywallScreen = ({
       if (!isOfflineError(error)) errorTracking.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
-  }, [setCustomer, source])
+  }, [setCustomer, source, gateAttribution])
 
   const ctaLabel = useMemo(() => {
     if (!selectedPackage) return i18n.t('paywallCtaSelectPrice')
@@ -548,6 +569,7 @@ const PaywallScreen = ({
         onPress={() => {
           analytics.capture('paywall_price_selected', {
             source,
+            ...gateAttribution,
             tier,
             billing: priceView,
             product_id: pkg.product.identifier,
@@ -663,7 +685,11 @@ const PaywallScreen = ({
           size='sm'
           value={supporterBilling}
           onChange={(billing) => {
-            analytics.capture('paywall_billing_selected', { source, billing })
+            analytics.capture('paywall_billing_selected', {
+              source,
+              ...gateAttribution,
+              billing,
+            })
             setSupporterBilling(billing)
           }}
           style={{ alignSelf: 'center' }}
@@ -687,6 +713,7 @@ const PaywallScreen = ({
             onPress={() => {
               analytics.capture('paywall_all_options_opened', {
                 source,
+                ...gateAttribution,
                 tier,
                 billing: priceView,
               })
@@ -846,6 +873,7 @@ const PaywallScreen = ({
         onClose={() => {
           analytics.capture('paywall_all_options_dismissed', {
             source,
+            ...gateAttribution,
             tier,
             billing: priceView,
           })

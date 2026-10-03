@@ -154,6 +154,8 @@ export function createRelayClient(deps: RelayDeps) {
         deviceId: string
         apnsToken: string
         apnsEnvironment: 'sandbox' | 'production'
+        /** The app's bundle id; the relay defaults to production's. */
+        apnsTopic?: string
         templates: Record<string, PushTemplate>
       }
     ) =>

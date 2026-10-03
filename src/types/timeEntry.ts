@@ -167,6 +167,8 @@ export type DayPlan = {
    * remote IDs as opaque (they cannot be cancelled from another device).
    */
   notifications?: import('@/types/visit').Notification[]
+  /** Minutes before the start the reminder fires. See `Visit.followUp`. */
+  reminderOffsetMinutes?: number
   /**
    * Origin of this plan. `'recommendation'` is stamped by the Assistant when
    * the engine inserts plans on the user's behalf; treated as `'manual'` when

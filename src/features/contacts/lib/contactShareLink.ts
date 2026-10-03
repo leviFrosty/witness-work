@@ -133,6 +133,7 @@ const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
   notifyMe: 'always',
   topic: 'optional',
   notifications: 'optional',
+  reminderOffsetMinutes: 'optional',
   dismissed: 'optional',
   // Buddy inbox ids are this User's own relationships, meaningless elsewhere.
   buddies: 'omit',

@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { ScrollView, useWindowDimensions, View } from 'react-native'
+import {
+  ActivityIndicator,
+  ScrollView,
+  useWindowDimensions,
+  View,
+  type LayoutRectangle,
+} from 'react-native'
 import { Bell as BellIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
@@ -10,49 +16,93 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { NotificationAction } from '@/types/notifications'
 import NotificationRow from '@/features/notifications/components/NotificationRow'
+import TraySyncFailed from '@/features/notifications/components/TraySyncFailed'
 import {
   clearableIds,
   unreadCount,
+  visibleIds,
+  type RowLayout,
   type TrayEntry,
 } from '@/features/notifications/lib/tray'
 import {
   dismissNotifications,
   markSeen,
+  useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 
+/** Whether the tray's remote sources (Buddies) are being checked. */
+export type TraySyncState = 'idle' | 'syncing' | 'failed'
+
 /**
- * The bell's popover, newest first. Everything listed is marked read when it
- * closes.
+ * The bell's popover, newest first. An item counts as read once it's been on
+ * screen: it gets its `onView` then, and is marked read when the tray closes.
  */
 export default function NotificationsList({
   entries,
   closeThen,
   onOpen,
+  syncState = 'idle',
+  onRetrySync,
 }: {
   entries: TrayEntry[]
   /** Closes the popover, then runs the action (e.g. navigating). */
   closeThen: (action: () => void) => void
   onOpen?: () => void
+  syncState?: TraySyncState
+  onRetrySync?: () => void
 }) {
   const theme = useTheme()
   const { height } = useWindowDimensions()
   const listed = useRef(entries)
   const opened = useRef(onOpen)
-  useEffect(() => {
-    listed.current = entries
-  })
+  /** Row positions in the scroll content, by item id. */
+  const layouts = useRef<Record<string, RowLayout>>({})
+  const viewport = useRef({ offset: 0, height: 0 })
+  /** Shown on screen during this opening. */
+  const viewed = useRef(new Set<string>())
 
   // Runs once per opening, with what was listed as it opened.
   useEffect(() => {
     const initial = listed.current
+    const shown = viewed.current
     analytics.capture('notifications_tray_opened', {
       item_count: initial.length,
       unread_count: unreadCount(initial),
     })
-    for (const { item } of initial) item.onView?.()
     opened.current?.()
-    return () => markSeen(listed.current.map(({ item }) => item.id))
+    useNotificationsTray.setState({ open: true })
+    return () => {
+      useNotificationsTray.setState({ open: false })
+      markSeen([...shown])
+    }
   }, [])
+
+  /** Marks rows that just came on screen as viewed. */
+  const reveal = () => {
+    for (const id of visibleIds(layouts.current, viewport.current)) {
+      if (viewed.current.has(id)) continue
+      const entry = entries.find(({ item }) => item.id === id)
+      if (!entry) continue
+      viewed.current.add(id)
+      entry.item.onView?.()
+    }
+  }
+
+  const measureRow = (
+    id: string,
+    { y, height: rowHeight }: LayoutRectangle
+  ) => {
+    layouts.current[id] = { y, height: rowHeight }
+    reveal()
+  }
+
+  // Rows that left the tray no longer count toward what's on screen.
+  const ids = entries.map(({ item }) => item.id).join('\n')
+  useEffect(() => {
+    const current = new Set(ids.split('\n'))
+    for (const id of Object.keys(layouts.current))
+      if (!current.has(id)) delete layouts.current[id]
+  }, [ids])
 
   const dismiss = ({ item }: TrayEntry) => {
     analytics.capture('notification_dismissed', { kind: item.kind })
@@ -60,11 +110,14 @@ export default function NotificationsList({
     item.onDismiss?.()
   }
 
-  const act = ({ item }: TrayEntry, action: NotificationAction) => {
+  const track = ({ item }: TrayEntry, action: string) =>
     analytics.capture('notification_action_tapped', {
       kind: item.kind,
-      action: action.id,
+      action,
     })
+
+  const act = (entry: TrayEntry, action: NotificationAction) => {
+    track(entry, action.id)
     if (action.inPlace) action.onPress()
     else closeThen(action.onPress)
   }
@@ -77,7 +130,21 @@ export default function NotificationsList({
     for (const { item } of cleared) item.onDismiss?.()
   }
 
+  const failed =
+    syncState === 'failed' && onRetrySync ? (
+      <TraySyncFailed onRetry={onRetrySync} />
+    ) : null
+  const spinner =
+    syncState === 'syncing' ? (
+      <ActivityIndicator
+        size='small'
+        color={theme.colors.textAlt}
+        accessibilityLabel={i18n.t('notifications_checking')}
+      />
+    ) : null
+
   if (entries.length === 0) {
+    if (failed) return failed
     return (
       <Empty
         icon={
@@ -85,6 +152,7 @@ export default function NotificationsList({
         }
         title={i18n.t('notifications_emptyTitle')}
         description={i18n.t('notifications_emptyBody')}
+        action={spinner ?? undefined}
       />
     )
   }
@@ -102,9 +170,12 @@ export default function NotificationsList({
           borderColor: theme.colors.border,
         }}
       >
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('notifications_title')}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {i18n.t('notifications_title')}
+          </Text>
+          {spinner}
+        </View>
         {clearableIds(entries).length > 0 && (
           <Button noTransform onPress={clearAll}>
             <Text
@@ -118,36 +189,55 @@ export default function NotificationsList({
           </Button>
         )}
       </View>
-      <ScrollView style={{ maxHeight: height * 0.6 }}>
+      {failed}
+      <ScrollView
+        style={{ maxHeight: height * 0.6 }}
+        scrollEventThrottle={100}
+        onLayout={(event) => {
+          viewport.current.height = event.nativeEvent.layout.height
+          reveal()
+        }}
+        onScroll={(event) => {
+          viewport.current.offset = event.nativeEvent.contentOffset.y
+          reveal()
+        }}
+      >
         {entries.map((entry, index) => {
           const last = index === entries.length - 1
           const { item } = entry
-          if (item.render)
-            return (
-              <View
-                key={item.id}
-                style={{
-                  borderBottomWidth: last ? 0 : 1,
-                  borderColor: theme.colors.border,
-                }}
-              >
-                {item.render({
+          return (
+            <View
+              key={item.id}
+              onLayout={(event) =>
+                measureRow(item.id, event.nativeEvent.layout)
+              }
+              style={
+                item.render
+                  ? {
+                      borderBottomWidth: last ? 0 : 1,
+                      borderColor: theme.colors.border,
+                    }
+                  : undefined
+              }
+            >
+              {item.render ? (
+                item.render({
                   unread: entry.unread,
                   dismiss: () => dismiss(entry),
                   closeThen,
-                })}
-              </View>
-            )
-          return (
-            <NotificationRow
-              key={item.id}
-              item={item}
-              at={entry.at}
-              unread={entry.unread}
-              last={last}
-              onAction={(action) => act(entry, action)}
-              onDismiss={() => dismiss(entry)}
-            />
+                  trackAction: (action) => track(entry, action),
+                })
+              ) : (
+                <NotificationRow
+                  item={item}
+                  at={entry.at}
+                  unread={entry.unread}
+                  last={last}
+                  onAction={(action) => act(entry, action)}
+                  onDismiss={() => dismiss(entry)}
+                />
+              )}
+            </View>
           )
         })}
       </ScrollView>

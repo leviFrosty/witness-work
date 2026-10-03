@@ -1,8 +1,10 @@
 import * as Application from 'expo-application'
 import * as Notifications from 'expo-notifications'
+import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { BuddyPushKind } from '@/features/buddies/lib/engine'
 import type { PushTemplate } from '@/features/buddies/lib/relay'
+import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
@@ -49,20 +51,41 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
 /**
  * Registers this device for Buddies pushes once Buddies has started and iOS
  * allows notifications. With Buddies notifications off here, it registers no
- * templates, so the relay sends this device nothing.
+ * templates, so the relay sends this device nothing. An unchanged registration
+ * is only re-sent once a day, so calling this often is cheap.
  */
 export async function registerBuddiesPush() {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
   if (registeredInboxId === null) return
   const permission = await Notifications.getPermissionsAsync()
-  if (!permission.granted) return
-  const token = await Notifications.getDevicePushTokenAsync()
-  const environment =
-    await Application.getIosPushNotificationServiceEnvironmentAsync()
-  await buddiesEngine.registerPush({
-    apnsToken: String(token.data),
-    // Dev-client and simulator builds talk to the APNs sandbox.
-    apnsEnvironment: environment === 'production' ? 'production' : 'sandbox',
-    templates: notificationsEnabled ? pushTemplates() : {},
-  })
+  if (!permission.granted) {
+    analytics.capture('buddies_push_registration', {
+      outcome: 'skipped',
+      reason: 'permission',
+    })
+    return
+  }
+  try {
+    const token = await Notifications.getDevicePushTokenAsync()
+    const environment =
+      await Application.getIosPushNotificationServiceEnvironmentAsync()
+    const outcome = await buddiesEngine.registerPush({
+      apnsToken: String(token.data),
+      // Dev-client and simulator builds talk to the APNs sandbox.
+      apnsEnvironment: environment === 'production' ? 'production' : 'sandbox',
+      // Beta and production are separate apps with their own APNs topic.
+      ...(Application.applicationId
+        ? { apnsTopic: Application.applicationId }
+        : {}),
+      templates: notificationsEnabled ? pushTemplates() : {},
+    })
+    if (outcome !== 'unchanged')
+      analytics.capture('buddies_push_registration', { outcome })
+  } catch (error) {
+    analytics.capture('buddies_push_registration', {
+      outcome: 'failed',
+      reason: buddiesFailureReason(error),
+    })
+    throw error
+  }
 }

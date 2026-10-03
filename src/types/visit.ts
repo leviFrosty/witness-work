@@ -52,6 +52,12 @@ export type Visit = {
      */
     notifications?: Notification[] // Changing to only one
     /**
+     * How many minutes before `date` the reminder fires: the reminder intent
+     * that syncs. `notifications` keeps the fire time for older app versions;
+     * each device schedules its own OS reminder from these.
+     */
+    reminderOffsetMinutes?: number
+    /**
      * When true, the user has dismissed this follow-up — it should be hidden
      * from "Missed Conversations" and the widget's overdue list, but the
      * follow-up's `topic` and any other data are preserved (non-destructive).

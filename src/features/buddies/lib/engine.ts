@@ -37,18 +37,20 @@ import {
 } from '@/features/buddies/lib/schemas'
 import { buildBuddyCardDays } from '@/features/buddies/lib/card'
 import {
+  awaitsAnswer,
   Buddy,
   BuddyProfile,
   BuddySharing,
   BuddiesState,
   BuddyNotification,
+  cappedQueue,
   IncomingShare,
   incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
   MAX_BUDDIES,
-  MAX_NOTIFICATIONS,
   withoutExpired,
+  withPendingInvitesQueued,
   occupiedBuddySpots,
   OutgoingShareSpec,
   PendingRemoval,
@@ -128,6 +130,19 @@ export const BUDDY_PUSH_KINDS = [
 ] as const
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
+/**
+ * `registered`: the relay got a new or changed registration. `refreshed`: an
+ * unchanged one was re-sent because it was over a day old, which also repairs a
+ * device the relay dropped. `unchanged`: nothing was sent.
+ */
+export type PushRegistrationOutcome = 'registered' | 'refreshed' | 'unchanged'
+
+/**
+ * An unchanged registration is re-sent this often, so a device the relay
+ * evicted or dropped for a rejected token starts receiving pushes again.
+ */
+export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000
+
 const aad = {
   inviteCard: (inviteId: string) => `ww-buddies/v1/invite-card|${inviteId}`,
   claim: (inviteId: string) => `ww-buddies/v1/invite-claim|${inviteId}`,
@@ -162,6 +177,8 @@ function shareTypeOfKind(kind: string): ShareType | null {
 }
 
 type PairKeys = { incoming: DirectionKeys; outgoing: DirectionKeys }
+/** The relay event behind a queue entry. */
+type EventSource = { id: string; seq: number }
 type PairParty = Pick<Buddy, 'inboxId' | 'dhPub' | 'inviteSecret'>
 
 function unionBy<T>(local: T[], remote: T[], key: (item: T) => string) {
@@ -378,10 +395,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   function notify(entry: Omit<BuddyNotification, 'at' | 'read'>) {
     store.setState((state) => ({
-      notifications: [
-        { ...entry, at: deps.now(), read: false },
-        ...state.notifications.filter((n) => n.id !== entry.id),
-      ].slice(0, MAX_NOTIFICATIONS),
+      notifications: cappedQueue(
+        [
+          { ...entry, at: deps.now(), read: false },
+          ...state.notifications.filter((n) => n.id !== entry.id),
+        ],
+        state
+      ),
     }))
   }
 
@@ -797,6 +817,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       kind: 'claim',
       name: card.name,
       inviteId: invite.inviteId,
+      seq: event.seq,
     })
   }
 
@@ -842,6 +863,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         kind: 'paired',
         from: buddy.inboxId,
         name: body.name,
+        seq: event.seq,
       })
       return true
     } catch {
@@ -1127,22 +1149,23 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const action = event.kind.split('.')[1]
     try {
       const body = openEvent(me, buddy, event)
+      const source = { id: event.eventId, seq: event.seq }
       if (event.kind === 'share.reply') {
-        applyReply(buddy, event.eventId, shareReplySchema.parse(body))
+        applyReply(buddy, source, shareReplySchema.parse(body))
       } else if (action === 'cancel') {
         const cancel = shareCancelSchema.parse(body)
-        applyCancel(buddy, event.eventId, cancel.id, cancel.rev)
+        applyCancel(buddy, source, cancel.id, cancel.rev)
       } else if (action === 'invite' || action === 'update') {
         const invite = shareInviteSchema.parse(body)
         if (invite.type !== shareTypeOfKind(event.kind)) return
-        applyInvite(buddy, event.eventId, invite)
+        applyInvite(buddy, source, invite)
       }
     } catch {
       // Undecryptable or malformed events are dropped.
     }
   }
 
-  function applyInvite(buddy: Buddy, eventId: string, invite: ShareInvite) {
+  function applyInvite(buddy: Buddy, source: EventSource, invite: ShareInvite) {
     if (invite.expiresAt <= deps.now()) return
     const key = incomingShareKey(buddy.inboxId, invite.id)
     const existing = store.getState().incomingShares[key]
@@ -1179,7 +1202,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
     }))
     notify({
-      id: eventId,
+      ...source,
       kind: reopened || unseenInvite ? 'shareInvite' : 'shareUpdate',
       from: buddy.inboxId,
       name: buddy.name,
@@ -1190,7 +1213,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   function applyCancel(
     buddy: Buddy,
-    eventId: string,
+    source: EventSource,
     shareId: string,
     rev: number
   ) {
@@ -1207,7 +1230,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
     notify({
-      id: eventId,
+      ...source,
       kind: 'shareCancel',
       from: buddy.inboxId,
       name: buddy.name,
@@ -1218,7 +1241,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   function applyReply(
     buddy: Buddy,
-    eventId: string,
+    source: EventSource,
     reply: { id: string; rev: number; status: ShareReply }
   ) {
     const previous = store.getState().shareReplies[reply.id]?.[buddy.inboxId]
@@ -1248,7 +1271,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
     }))
     notify({
-      id: eventId,
+      ...source,
       kind: 'shareReply',
       from: buddy.inboxId,
       name: buddy.name,
@@ -1341,9 +1364,30 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  function dismissNotification(id: string) {
+  /**
+   * Seen in the tray. A later change to a seen invitation then reads as a
+   * change rather than a new invitation.
+   */
+  function markNotificationRead(id: string) {
+    const entry = store.getState().notifications.find((n) => n.id === id)
+    if (!entry || entry.read) return
     store.setState((state) => ({
-      notifications: state.notifications.filter((n) => n.id !== id),
+      notifications: state.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n
+      ),
+    }))
+  }
+
+  /**
+   * Removes a queue entry, except a request still waiting on an answer: the
+   * tray is where it's answered, and answering is what clears it.
+   */
+  function dismissNotification(id: string) {
+    const state = store.getState()
+    const entry = state.notifications.find((n) => n.id === id)
+    if (!entry || awaitsAnswer(entry, state)) return
+    store.setState((current) => ({
+      notifications: current.notifications.filter((n) => n.id !== id),
     }))
   }
 
@@ -1436,9 +1480,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return added.map((b) => b.inboxId)
   }
 
-  /** Wipes lapsed shares, replies, and queue entries; needs no network. */
+  /**
+   * Wipes lapsed shares, replies, and queue entries, and lists any invitation
+   * still to answer whose entry was lost; needs no network.
+   */
   function expireLocal() {
-    store.setState((state) => withoutExpired(state, deps.now()))
+    const now = deps.now()
+    store.setState((state) => {
+      const unexpired = withoutExpired(state, now)
+      return {
+        ...unexpired,
+        notifications: withPendingInvitesQueued(
+          { ...state, ...unexpired },
+          now
+        ),
+      }
+    })
   }
 
   function expireStale() {
@@ -1550,12 +1607,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return syncInFlight
   }
 
+  /**
+   * Registers this device for pushes when anything about the registration
+   * changed, or when the last one is a day old: the relay may have dropped the
+   * device since (a rejected token, or evicted for a newer device), and a
+   * re-sent registration keeps an active device from being the one evicted.
+   */
   async function registerPush(device: {
     apnsToken: string
     apnsEnvironment: 'sandbox' | 'production'
+    /** The app's bundle id, so Beta and production builds get their own topic. */
+    apnsTopic?: string
     /** A kind left out is never pushed to this device. */
     templates: Partial<Record<BuddyPushKind, PushTemplate>>
-  }) {
+  }): Promise<PushRegistrationOutcome> {
     const me = await ensureInbox()
     let deviceId = store.getState().deviceId
     if (!deviceId) {
@@ -1565,9 +1630,23 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const registrationKey = toB64u(
       sha256(json({ inboxId: me.inboxId, deviceId, ...device }))
     )
-    if (store.getState().pushRegistrationKey === registrationKey) return
-    await relay.registerDevice(ownerAuth(me), { deviceId, ...device })
-    store.setState({ pushRegistrationKey: registrationKey })
+    const { pushRegistrationKey, pushRegisteredAt } = store.getState()
+    const unchanged = pushRegistrationKey === registrationKey
+    const age = deps.now() - pushRegisteredAt
+    if (unchanged && age >= 0 && age < PUSH_REGISTRATION_REFRESH_MS)
+      return 'unchanged'
+    try {
+      await relay.registerDevice(ownerAuth(me), { deviceId, ...device })
+    } catch (error) {
+      // Whatever the relay holds now is unknown; send it again next time.
+      store.setState({ pushRegistrationKey: null })
+      throw error
+    }
+    store.setState({
+      pushRegistrationKey: registrationKey,
+      pushRegisteredAt: deps.now(),
+    })
+    return unchanged ? 'refreshed' : 'registered'
   }
 
   /**
@@ -1622,6 +1701,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     expire: expireLocal,
     shareIdForKey,
     markNotificationsRead,
+    markNotificationRead,
     dismissNotification,
     sync,
     registerPush,

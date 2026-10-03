@@ -39,3 +39,19 @@ export const deriveOffsetFromDates = (
   }
   return { amount: minutes, unit: 'minutes' }
 }
+
+/** The cleanest `{ amount, unit }` for a positive number of minutes. */
+export const offsetFromMinutes = (minutes: number): NotificationOffset | null =>
+  deriveOffsetFromDates(new Date(minutes * 60_000), new Date(0))
+
+/** Whole minutes in an offset; null when it is incomplete. */
+export const offsetToMinutes = (offset: {
+  amount?: number
+  unit?: moment.unitOfTime.DurationConstructor
+}): number | null =>
+  offset.amount === undefined || !offset.unit
+    ? null
+    : Math.max(
+        0,
+        Math.round(moment.duration(offset.amount, offset.unit).asMinutes())
+      )

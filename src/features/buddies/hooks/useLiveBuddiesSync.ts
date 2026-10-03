@@ -7,6 +7,8 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /** Someone may accept or confirm any moment; pushes can be off or delayed. */
 const WAITING_POLL_MS = 15 * 1000
+/** Otherwise, buddies' changes still show up while the list is open. */
+const VISIBLE_POLL_MS = 90 * 1000
 
 const syncQuietly = () =>
   void buddiesEngine
@@ -15,8 +17,9 @@ const syncQuietly = () =>
 
 /**
  * Keeps the visible Buddies list current: syncs when the screen gains focus or
- * the app returns to the foreground, and polls while an invite or request is
- * waiting on the other person. Does nothing before Buddies has started.
+ * the app returns to the foreground, and polls while it's open — more often
+ * while an invite or request is waiting on the other person. Does nothing
+ * before Buddies has started.
  */
 export default function useLiveBuddiesSync() {
   const focused = useIsFocused()
@@ -39,10 +42,13 @@ export default function useLiveBuddiesSync() {
   }, [live])
 
   useEffect(() => {
-    if (!live || !waiting) return
-    const timer = setInterval(() => {
-      if (AppState.currentState === 'active') syncQuietly()
-    }, WAITING_POLL_MS)
+    if (!live) return
+    const timer = setInterval(
+      () => {
+        if (AppState.currentState === 'active') syncQuietly()
+      },
+      waiting ? WAITING_POLL_MS : VISIBLE_POLL_MS
+    )
     return () => clearInterval(timer)
   }, [live, waiting])
 }

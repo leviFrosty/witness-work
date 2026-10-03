@@ -6,17 +6,14 @@ import { ReactNode, useCallback } from 'react'
 import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
-import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { errorTracking } from '@/lib/errorTracking'
-import useContacts from '@/stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
-import { Visit, Notification } from '@/types/visit'
+import { Visit } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -28,7 +25,6 @@ import DateTimePicker from '@/components/ui/DateTimePicker'
 import Select from '@/components/ui/Select'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
-import isEqual from 'lodash/isEqual'
 import Button from '@/components/ui/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -40,7 +36,11 @@ import { maybeRequestStoreReview } from '@/features/visits/lib/storeReview'
 import useNotifications from '@/hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '@/types/rootStack'
-import { deriveOffsetFromDates } from '@/lib/notificationOffset'
+import { offsetFromMinutes, offsetToMinutes } from '@/lib/notificationOffset'
+import {
+  reminderRequestId,
+  savedReminderOffsetMinutes,
+} from '@/lib/reminderSchedule'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 
@@ -65,11 +65,13 @@ const NotificationSection = (props: {
   setConversation: React.Dispatch<React.SetStateAction<Visit>>
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<MomentOffset>>
   notificationsAllowed: boolean
+  turnOnNotifications: () => Promise<boolean>
   notifyMeOffset: MomentOffset
 }) => {
   const {
     conversation,
     notificationsAllowed,
+    turnOnNotifications,
     notifyMeOffset,
     setConversation,
     setNotifyMeOffset,
@@ -85,6 +87,23 @@ const NotificationSection = (props: {
       },
     })
   }
+
+  // Asking here, rather than leaving the switch disabled, matches Buddies.
+  const handleNotifyMeChange = async (notifyMe: boolean) => {
+    if (notifyMe && !notificationsAllowed && !(await turnOnNotifications()))
+      return
+    setNotifyMe(notifyMe)
+  }
+
+  const notifyMe = conversation.followUp?.notifyMe || false
+  const offsetMinutes = offsetToMinutes(notifyMeOffset)
+  const reminderPassed =
+    notifyMe &&
+    notificationsAllowed &&
+    !!conversation.followUp &&
+    offsetMinutes !== null &&
+    new Date(conversation.followUp.date).getTime() - offsetMinutes * 60_000 <=
+      Date.now()
 
   const amountOptions = [...Array(1000).keys()].map((value) => ({
     label: `${value}`,
@@ -103,7 +122,7 @@ const NotificationSection = (props: {
     <>
       <InputRowContainer
         label={i18n.t('notifyMe')}
-        lastInSection={!notificationsAllowed}
+        lastInSection={!notificationsAllowed || !notifyMe}
         description={
           notificationsAllowed ? undefined : i18n.t('notifyMe_description')
         }
@@ -111,16 +130,18 @@ const NotificationSection = (props: {
       >
         <Switch
           accessibilityLabel={i18n.t('notifyMe')}
-          value={conversation.followUp?.notifyMe || false}
-          onValueChange={setNotifyMe}
-          disabled={!notificationsAllowed}
+          value={notifyMe}
+          onValueChange={(value) => void handleNotifyMeChange(value)}
         />
       </InputRowContainer>
-      {notificationsAllowed && (
+      {notificationsAllowed && notifyMe && (
         <InputRowContainer
           label={i18n.t('notification')}
           lastInSection
           controlWidth='full'
+          description={
+            reminderPassed ? i18n.t('reminderTimePassed') : undefined
+          }
         >
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
@@ -170,7 +191,6 @@ const VisitFormScreen = ({
     dataProtectionMode,
   } = usePreferences()
   const { params } = route
-  const { contacts } = useContacts()
   const {
     conversations,
     addConversation,
@@ -197,15 +217,11 @@ const VisitFormScreen = ({
   // default. Falls back to the preference (then a hardcoded default) for new
   // conversations or when no notification was scheduled.
   const initialNotifyMeOffset = (): MomentOffset => {
-    const saved = conversationToUpdate?.followUp?.notifications?.[0]
-    const followUpDate = conversationToUpdate?.followUp?.date
-    if (saved && followUpDate) {
-      const derived = deriveOffsetFromDates(
-        new Date(followUpDate),
-        new Date(saved.date)
-      )
-      if (derived) return derived
-    }
+    const followUp = conversationToUpdate?.followUp
+    const savedMinutes =
+      followUp && savedReminderOffsetMinutes(new Date(followUp.date), followUp)
+    if (typeof savedMinutes === 'number')
+      return offsetFromMinutes(savedMinutes) ?? { amount: 0, unit: 'minutes' }
     return {
       amount:
         returnVisitNotificationOffset?.amount ??
@@ -237,6 +253,8 @@ const VisitFormScreen = ({
           date: new Date(conversationToUpdate.followUp?.date || new Date()),
           notifyMe: conversationToUpdate.followUp?.notifyMe || false,
           notifications: conversationToUpdate.followUp?.notifications,
+          reminderOffsetMinutes:
+            conversationToUpdate.followUp?.reminderOffsetMinutes,
           ...(conversationToUpdate.followUp?.dismissed
             ? { dismissed: true }
             : {}),
@@ -295,10 +313,10 @@ const VisitFormScreen = ({
     }
   }
 
-  const selectedContact = contacts.find((c) => c.id === contactId)
   const isEditing = conversationToUpdate?.contact.id
 
-  const { allowed: notificationsAllowed } = useNotifications()
+  const { allowed: notificationsAllowed, turnOn: turnOnNotifications } =
+    useNotifications()
 
   const handleDateChange = (_: DateTimePickerEvent, date: Date | undefined) => {
     if (!date) {
@@ -327,142 +345,52 @@ const VisitFormScreen = ({
   }
 
   const submit = useCallback(() => {
-    return new Promise((resolve) => {
-      const cancelExistingNotification = () => {
-        conversationToUpdate?.followUp?.notifications?.forEach(
-          async ({ id }) => {
-            await Notifications.cancelScheduledNotificationAsync(id)
-          }
-        )
+    // Saves only the reminder intent. `useReconciledReminders` schedules (or
+    // cancels) this device's OS reminder from it, once permission allows.
+    const buildVisit = (): Visit => {
+      if (!followUpEnabled || !conversation.followUp) {
+        // `followUp: undefined` (not an omitted key) so
+        // `updateConversation`'s spread clears a saved one.
+        return { ...conversation, followUp: undefined }
       }
-
-      // The record that actually gets persisted. With the switch off the
-      // follow-up draft is dropped entirely — `followUp: undefined` (not an
-      // omitted key) so `updateConversation`'s spread clears a saved one.
-      const buildVisit = (notifications?: Notification[]): Visit => {
-        if (!followUpEnabled || !conversation.followUp) {
-          return { ...conversation, followUp: undefined }
-        }
-        if (!notifications) return conversation
-        return {
-          ...conversation,
-          followUp: { ...conversation.followUp, notifications },
-        }
+      const { followUp } = conversation
+      const minutes = followUp.notifyMe ? offsetToMinutes(notifyMeOffset) : null
+      return {
+        ...conversation,
+        followUp: {
+          ...followUp,
+          reminderOffsetMinutes: minutes ?? undefined,
+          // The fire time, for older app versions on other devices.
+          notifications:
+            minutes === null
+              ? []
+              : [
+                  {
+                    id: reminderRequestId('visit', conversation.id),
+                    date: new Date(
+                      new Date(followUp.date).getTime() - minutes * 60_000
+                    ),
+                  },
+                ],
+        },
       }
+    }
 
-      const scheduleNotifications = async () => {
-        if (!followUpEnabled || !conversation.followUp) {
-          cancelExistingNotification()
-          return []
-        }
-
-        const notificationChanged = !isEqual(
-          conversationToUpdate?.followUp,
-          conversation.followUp
-        )
-
-        if (notificationChanged) {
-          cancelExistingNotification()
-        }
-
-        if (!conversation.followUp.notifyMe) {
-          return []
-        }
-
-        const notifications: Notification[] = []
-
-        const selectedDate = moment(conversation.followUp?.date)
-          .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
-          .toDate()
-
-        const getRandomEmoji = () => {
-          const emojis = [
-            '😀',
-            '✨',
-            '🚀',
-            '⭐',
-            '🎉',
-            '💨',
-            '👀',
-            '💪',
-            '⏱️',
-            '🌟',
-          ]
-          const randomIndex = Math.floor(Math.random() * emojis.length)
-          return emojis[randomIndex]
-        }
-
-        if (moment(selectedDate).isAfter(moment())) {
-          try {
-            const id = await Notifications.scheduleNotificationAsync({
-              content: {
-                title: i18n.t('reminder_title'),
-                body: `${i18n.t('notification_part1')} ${
-                  selectedContact!.name
-                } ${i18n.t('notification_part2')} ${notifyMeOffset.amount} ${
-                  notifyMeOffset.unit
-                }. ${getRandomEmoji()}${
-                  conversation.followUp.topic &&
-                  `${i18n.t('reminder_topic')}${conversation.followUp.topic}`
-                }`,
-                sound: true,
-              },
-              trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
-                date: selectedDate,
-              },
-            })
-
-            notifications.push({
-              date: selectedDate,
-              id,
-            })
-          } catch (error) {
-            errorTracking.captureException(error)
-          }
-        }
-
-        return notifications
-      }
-
-      const persist = (visit: Visit) => {
-        params.visitToEditId
-          ? updateConversation(visit)
-          : addConversation(visit)
-      }
-
-      if (notificationsAllowed) {
-        scheduleNotifications()
-          .then((notifications) => {
-            persist(buildVisit(notifications))
-            resolve(conversation)
-          })
-          .catch((error) => {
-            errorTracking.captureException(error)
-            resolve(false)
-          })
-      } else {
-        if (!followUpEnabled) cancelExistingNotification()
-        persist(buildVisit())
-        resolve(conversation)
-      }
-      toast.show(i18n.t('success'), {
-        message: i18n.t(
-          conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
-        ),
-        native: true,
-      })
+    if (params.visitToEditId) updateConversation(buildVisit())
+    else addConversation(buildVisit())
+    toast.show(i18n.t('success'), {
+      message: i18n.t(
+        conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
+      ),
+      native: true,
     })
+    return Promise.resolve(conversation)
   }, [
     addConversation,
     conversation,
-    conversationToUpdate?.followUp,
     followUpEnabled,
-    notificationsAllowed,
-    notifyMeOffset.amount,
-    notifyMeOffset.unit,
+    notifyMeOffset,
     params.visitToEditId,
-    selectedContact,
     toast,
     updateConversation,
   ])
@@ -733,6 +661,7 @@ const VisitFormScreen = ({
               <NotificationSection
                 conversation={conversation}
                 notificationsAllowed={notificationsAllowed}
+                turnOnNotifications={turnOnNotifications}
                 notifyMeOffset={notifyMeOffset}
                 setConversation={setConversation}
                 setNotifyMeOffset={setNotifyMeOffset}

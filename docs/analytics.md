@@ -138,8 +138,8 @@ including resumptions; these are attempts, not unique imported documents.
 
 The reminder lives in the notifications tray. Its events include `source`
 (`notifications_tray`; `home` before the tray), `variant` (`compact` while iCloud
-Sync is on, otherwise `full`), and `frequency_days`. A view means the tray was
-opened with the reminder listed; it does not represent a delivered push
+Sync is on, otherwise `full`), and `frequency_days`. A view means the reminder
+was shown on screen in the open tray; it does not represent a delivered push
 notification. Dismissal snoozes the reminder for another period through
 `backupReminderSnoozedAt`, leaving `lastBackupDate` untouched, so that preference
 now only moves on an export (it still isn't proof of a saved backup). Preference
@@ -180,8 +180,8 @@ Break down by `source`, and `feature` for feature gates. Sources distinguish the
 heart entry, settings, the nudge (`notifications_tray`; `home_nudge` before the
 tray), onboarding, Notes Import limit, and feature gates. Nudge and feature-gate
 view/click/dismiss events measure the earlier funnel. Nudge events carry `source:
-notifications_tray`; an impression means the tray was opened with the nudge
-listed. `supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for
+notifications_tray`; an impression means the nudge was shown on screen in the
+open tray. `supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for
 the Home Screen switch; `home_nudge` for the former Home card's "Don't Show
 Again") records turning the nudge off for good.
 
@@ -203,18 +203,43 @@ backup reminder, the data protection retention reminder, missed Follow-ups,
 Buddies activity, ready Notes Imports, What's New, the Milestone Update replay,
 and the Supporter nudge or feedback invitation.
 
-| Event                        | Properties                                                          |
-| ---------------------------- | ------------------------------------------------------------------- |
-| `notifications_tray_opened`  | `item_count`, `unread_count` (as it opened)                         |
-| `notification_action_tapped` | `kind`, `action` (e.g. `submit`, `already_submitted`, `reschedule`) |
-| `notification_dismissed`     | `kind`                                                              |
-| `notifications_cleared`      | `count` (items cleared; ones waiting on an answer are kept)         |
+| Event                            | Properties                                                          |
+| -------------------------------- | ------------------------------------------------------------------- |
+| `notifications_tray_opened`      | `item_count`, `unread_count` (as it opened)                         |
+| `notification_action_tapped`     | `kind`, `action` (e.g. `submit`, `already_submitted`, `reschedule`) |
+| `buddies_tray_sync_failed`       | `trigger` (`open`, `retry`), `reason`                               |
+| `buddies_tray_sync_retry_tapped` | none                                                                |
+| `notification_dismissed`         | `kind`                                                              |
+| `notifications_cleared`          | `count` (items cleared; ones waiting on an answer are kept)         |
 
 `kind` is one of `rollover`, `previous_report`, `auxiliary_month`, `backup`,
-`data_protection_retention`, `missed_follow_up`, `buddies`, `notes_import`,
+`data_protection_retention`, `missed_follow_up`, `reminder` (a local Follow-up,
+Plan, or returning-Contact reminder that fired; `open` action), `buddies`,
+`notes_import`,
 `whats_new`, `milestone_update`, `supporter_nudge`, `supporter_survey`, or
 `dev_test` (Tools screen test items; `open_tools` and `bump` actions). Items never send their text, names, or
-ids. Tapping a row counts as its first action. An item that disappears because
+ids. Tapping a row counts as its first action. Buddies rows report their own
+actions under `kind: buddies`, once per tap: `open`, `going`, `declined`,
+`change_answer`, `confirm`, and `reject` (after confirming "Not who I invited").
+Their long-press menu also sends `context_menu_action` (`buddy_notification`),
+a separate event. An invitation or request still waiting on an answer can't be
+dismissed and survives Clear All, so it never sends `notification_dismissed`.
+
+Item impressions (`backup_reminder_viewed`, `supporter_nudge_*` views,
+`icloud_sync_resolution_viewed`) fire when the item is shown on screen in the
+open tray — at least half of its row — once per opening, including items that
+arrive while the tray is open. Only items shown on screen are marked read when
+the tray closes; `unread_count` on `notifications_tray_opened` is still what was
+unread as it opened.
+
+Opening the tray checks Buddies for new activity (while Buddies is in use), and
+checks again every 90 seconds while it stays open. A failed check shows a slim
+"Try Again" notice: `buddies_tray_sync_failed` records failures of the opening
+check or a retry (not the quiet periodic checks), and
+`buddies_tray_sync_retry_tapped` the retry. `reason` is `offline`, `disabled`,
+`rate_limited`, or `error` — never a message.
+
+An item that disappears because
 its condition cleared (report submitted, Follow-up rescheduled) sends nothing;
 compare `notifications_tray_opened` to `notification_action_tapped` for
 engagement. Existing item events (`backup_reminder_*`, `supporter_nudge_*`,
@@ -223,6 +248,45 @@ engagement. Existing item events (`backup_reminder_*`, `supporter_nudge_*`,
 The Time Rollover screen no longer opens at launch. Its tray item opens it, and
 it comes up once per session on Progress or on the Service Report for the month
 it changes, so its `time_rollover_*` events keep `source: rollover_screen`.
+
+## Buddies push delivery
+
+Buddies pushes carry no user content, and neither do their events: never tokens,
+device or relay ids, event sequence numbers, names, or Plan details.
+
+| Event                       | Properties                                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `buddies_push_registration` | `outcome` (`registered`, `refreshed`, `failed`, `skipped`); `reason` (`permission` when skipped; failure `reason`)     |
+| `buddies_push_received`     | `kind` (the push kind, e.g. `plan.invite`; `unknown` otherwise) — received while the app is in the foreground          |
+| `buddies_push_sync`         | `kind`, `outcome` (`synced`, `failed`), `reason` when failed, `in_tray` (boolean, when the push named its relay event) |
+
+`registered` means a new or changed registration reached the relay (including
+the app's bundle id as its APNs topic); `refreshed` means an unchanged one was
+re-sent because it was a day old, which repairs a device the relay dropped. An
+unchanged registration that isn't due sends nothing. `buddies_push_sync` follows
+`buddies_push_received`: whether pulling the announced event worked, and whether
+it produced a tray entry (`in_tray: false` can be a change that made no entry).
+Pushes tapped from outside the app are measured by the app-level notification
+response handling.
+
+## System notification taps
+
+Taps on system notifications — local reminders and Buddies pushes — are routed
+at app level, including the tap that launched the app.
+
+| Event                 | Properties                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `notification_opened` | `source` (`local`, `push`), `kind` (`visit`, `plan`, `contact`, or `buddies`), `cold_start`                                                  |
+| `notification_routed` | `source`, `destination` (`visit`, `plan`, `contact`, `buddies`, or `tray` for Buddies activity or a reminder whose record is gone), `waited` |
+
+`waited` is true when the tap had to wait for navigation (or the Buddies flag)
+at startup. Compare `notification_opened` to `notification_routed` to find taps
+that never reached a screen. Neither event sends record ids, names, or push
+sequence numbers.
+
+`contact_dismissed`'s `reminder_scheduled` means notifications are allowed and
+the return date is ahead; `follow_up_rescheduled`'s means the reminder time is
+still ahead. The reminder reconciler does the scheduling on each device.
 
 ## Feature usage
 

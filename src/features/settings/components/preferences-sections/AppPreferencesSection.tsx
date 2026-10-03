@@ -60,7 +60,13 @@ const AppPreferencesSection = () => {
               ? i18n.t('pushNotificationsEnabled')
               : i18n.t('pushNotificationsDisabled')
           }
-          onPress={notifications.allowed ? undefined : askToTakeToSettings}
+          onPress={
+            notifications.allowed
+              ? undefined
+              : notifications.canAskAgain
+                ? () => void notifications.register()
+                : askToTakeToSettings
+          }
         >
           {!notifications.allowed && <IconButton icon={ChevronRightIcon} />}
         </InputRowButton>

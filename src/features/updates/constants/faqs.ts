@@ -177,6 +177,7 @@ export const FAQS: FAQEntry[] = [
     related: [392, 399, 429],
   },
   { id: 'followUpReminders', category: 'contacts', related: [480] },
+  { id: 'reminders', category: 'contacts' },
   { id: 'soundEffects', category: 'customization', related: [365, 486] },
   {
     id: 'shareAddress',

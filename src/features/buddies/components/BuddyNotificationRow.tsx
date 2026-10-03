@@ -50,19 +50,24 @@ function headline(entry: BuddyNotification): string {
 /**
  * One queue entry in the notifications tray; invitations and claims can be
  * answered in place. Long-press the entry to open or dismiss it; the answer
- * buttons stay outside the long-press target.
+ * buttons stay outside the long-press target. A request still waiting on an
+ * answer can't be dismissed: answering is what clears it.
  */
 export default function BuddyNotificationRow({
   entry,
   unread,
   onPress,
   onDismiss,
+  onAction,
 }: {
   entry: BuddyNotification
   unread: boolean
   /** Opens what the entry is about, when there's somewhere to go. */
   onPress?: () => void
-  onDismiss: () => void
+  /** Absent while the entry awaits an answer. */
+  onDismiss?: () => void
+  /** Records a tap on one of the row's actions (bounded name). */
+  onAction: (action: string) => void
 }) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
@@ -94,8 +99,16 @@ export default function BuddyNotificationRow({
       setBusy(false)
     }
   }
-  const reply = (answer: ShareReply) =>
-    run(() => buddiesEngine.replyToShare(entry.shareKey!, answer))
+  const reply = (answer: ShareReply) => {
+    onAction(answer)
+    return run(() => buddiesEngine.replyToShare(entry.shareKey!, answer))
+  }
+  const open = onPress
+    ? () => {
+        onAction('open')
+        onPress()
+      }
+    : undefined
   const rejectClaim = (inviteId: string) =>
     Alert.alert(
       i18n.t('buddies_requestTitle', { name: entry.name }),
@@ -105,7 +118,10 @@ export default function BuddyNotificationRow({
         {
           text: i18n.t('buddies_notWhoIInvited'),
           style: 'destructive',
-          onPress: () => run(() => buddiesEngine.rejectClaim(inviteId)),
+          onPress: () => {
+            onAction('reject')
+            return run(() => buddiesEngine.rejectClaim(inviteId))
+          },
         },
       ]
     )
@@ -121,16 +137,16 @@ export default function BuddyNotificationRow({
         <ContextMenu
           style={{ flex: 1 }}
           analyticsSurface='buddy_notification'
-          onPress={onPress}
+          onPress={open}
           accessibilityLabel={title}
           actions={[
-            onPress && {
+            open && {
               id: 'open',
               title: i18n.t('open'),
               systemImage: 'arrow.up.forward.app',
-              onPress,
+              onPress: open,
             },
-            {
+            onDismiss && {
               id: 'dismiss',
               title: i18n.t('dismiss'),
               systemImage: 'xmark',
@@ -195,14 +211,16 @@ export default function BuddyNotificationRow({
             ) : null}
           </View>
         </ContextMenu>
-        <IconButton
-          icon={XIcon}
-          size={16}
-          hitSlop={12}
-          style={{ paddingTop: 10 }}
-          accessibilityLabel={i18n.t('dismiss')}
-          onPress={onDismiss}
-        />
+        {onDismiss ? (
+          <IconButton
+            icon={XIcon}
+            size={16}
+            hitSlop={12}
+            style={{ paddingTop: 10 }}
+            accessibilityLabel={i18n.t('dismiss')}
+            onPress={onDismiss}
+          />
+        ) : null}
       </XView>
 
       {canAnswer ? (
@@ -231,7 +249,12 @@ export default function BuddyNotificationRow({
                 : 'buddies_answeredDeclined'
             )}
           </Text>
-          <Button onPress={() => setChanging(true)}>
+          <Button
+            onPress={() => {
+              onAction('change_answer')
+              setChanging(true)
+            }}
+          >
             <Text style={{ color: theme.colors.accent }}>
               {i18n.t('buddies_changeAnswer')}
             </Text>
@@ -246,9 +269,10 @@ export default function BuddyNotificationRow({
           </Text>
           <ActionButton
             disabled={busy}
-            onPress={() =>
-              run(() => buddiesEngine.confirmClaim(claim.inviteId))
-            }
+            onPress={() => {
+              onAction('confirm')
+              void run(() => buddiesEngine.confirmClaim(claim.inviteId))
+            }}
           >
             {i18n.t('buddies_confirm')}
           </ActionButton>

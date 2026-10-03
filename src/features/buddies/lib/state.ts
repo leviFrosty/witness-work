@@ -156,6 +156,8 @@ export type BuddyNotification = {
   shareType?: ShareType
   /** `shareReply`. */
   reply?: ShareReply
+  /** The relay event's inbox sequence; absent for restored entries. */
+  seq?: number
 }
 
 export const MAX_NOTIFICATIONS = 50
@@ -199,6 +201,8 @@ export type BuddiesState = {
   notifications: BuddyNotification[]
   /** Hash of the last successful push registration. */
   pushRegistrationKey: string | null
+  /** When the relay last accepted this device's push registration. */
+  pushRegisteredAt: number
   sharing: BuddySharing
   /** Per-device: Buddies pushes on this device (iOS permission aside). */
   notificationsEnabled: boolean
@@ -227,6 +231,7 @@ export const initialBuddiesState: BuddiesState = {
   incomingShares: {},
   notifications: [],
   pushRegistrationKey: null,
+  pushRegisteredAt: 0,
   sharing: { photo: true, tenure: true, updatedAt: 0 },
   notificationsEnabled: true,
   devOverride: false,
@@ -286,11 +291,95 @@ export function withoutExpired(
     ),
     notifications: state.notifications.filter(
       (n) =>
-        recent(n.at) &&
+        (recent(n.at) || awaitsAnswer(n, { incomingClaims, incomingShares })) &&
         (n.kind === 'shareReply' ||
           !n.shareKey ||
           n.shareKey in incomingShares) &&
         (!n.inviteId || incomingClaims.some((c) => c.inviteId === n.inviteId))
     ),
   }
+}
+
+type AnswerState = Pick<BuddiesState, 'incomingClaims' | 'incomingShares'>
+
+/**
+ * A request still waiting on this User: an open claim or an invitation not yet
+ * answered. Answering is what clears it, so it can't be dismissed, evicted, or
+ * aged out of the queue.
+ */
+export function awaitsAnswer(
+  entry: BuddyNotification,
+  state: AnswerState
+): boolean {
+  if (entry.kind === 'claim')
+    return state.incomingClaims.some((c) => c.inviteId === entry.inviteId)
+  if (entry.kind === 'shareInvite' || entry.kind === 'shareUpdate')
+    return state.incomingShares[entry.shareKey ?? '']?.status === 'pending'
+  return false
+}
+
+/**
+ * Holds the queue to `MAX_NOTIFICATIONS`, dropping the oldest entries first but
+ * never one that still awaits an answer.
+ */
+export function cappedQueue(
+  notifications: BuddyNotification[],
+  state: AnswerState
+): BuddyNotification[] {
+  if (notifications.length <= MAX_NOTIFICATIONS) return notifications
+  const room =
+    MAX_NOTIFICATIONS -
+    notifications.filter((n) => awaitsAnswer(n, state)).length
+  let kept = 0
+  return notifications.filter((n) => awaitsAnswer(n, state) || kept++ < room)
+}
+
+/** Queue id for an invitation listed again after its entry was lost. */
+export const pendingInviteNotificationId = (shareKey: string) =>
+  `pending|${shareKey}`
+
+/**
+ * The queue with every unanswered invitation listed. The tray is where
+ * invitations are answered, so one whose entry was lost (dismissed before
+ * dismissal was blocked, say) is listed again.
+ */
+export function withPendingInvitesQueued(
+  state: Pick<BuddiesState, 'notifications' | 'incomingShares' | 'buddies'>,
+  now: number
+): BuddyNotification[] {
+  const listed = new Set(
+    state.notifications
+      .filter((n) => n.kind === 'shareInvite' || n.kind === 'shareUpdate')
+      .map((n) => n.shareKey)
+  )
+  const missing = Object.entries(state.incomingShares).flatMap(
+    ([key, share]): BuddyNotification[] => {
+      if (share.status !== 'pending' || share.expiresAt <= now) return []
+      if (listed.has(key)) return []
+      const buddy = state.buddies.find((b) => b.inboxId === share.from)
+      if (!buddy) return []
+      return [
+        {
+          id: pendingInviteNotificationId(key),
+          kind: 'shareInvite',
+          at: share.receivedAt,
+          read: false,
+          from: share.from,
+          name: buddy.name,
+          shareKey: key,
+          shareType: share.type,
+        },
+      ]
+    }
+  )
+  if (missing.length === 0) return state.notifications
+  return [...state.notifications, ...missing].sort((a, b) => b.at - a.at)
+}
+
+/** The queue entry a relay event (by inbox sequence) produced, if still listed. */
+export function notificationIdForSeq(
+  notifications: BuddyNotification[],
+  seq: number
+): string | null {
+  return notifications.find((n) => n.seq === seq)?.id ?? null
 }

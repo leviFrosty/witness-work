@@ -8,6 +8,8 @@ export type NotificationKind =
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'
+  /** A local Follow-up, Plan, or returning Contact reminder that fired. */
+  | 'reminder'
   | 'auxiliary_month'
   | 'whats_new'
   | 'milestone_update'
@@ -35,6 +37,11 @@ export type NotificationRowProps = {
   dismiss: () => void
   /** Closes the tray, then runs the action (e.g. navigating). */
   closeThen: (action: () => void) => void
+  /**
+   * Records a tap on one of the row's own actions as
+   * `notification_action_tapped`, like a standard row's actions.
+   */
+  trackAction: (action: string) => void
 }
 
 /**
@@ -61,7 +68,11 @@ export type NotificationItem = {
   sticky?: boolean
   /** Source-side effects of a dismissal, like a snooze or cooldown stamp. */
   onDismiss?: () => void
-  /** Runs once each time the tray opens with this item listed. */
+  /**
+   * The item was shown on screen in the open tray: runs once per opening, when
+   * it first scrolls into view (including items that arrive while it's open).
+   * What's shown is marked read when the tray closes.
+   */
   onView?: () => void
   /** Replaces the standard row, for items with their own layout. */
   render?: (props: NotificationRowProps) => ReactNode

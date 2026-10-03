@@ -62,3 +62,26 @@ export function pruned(
     Object.entries(record).filter(([, at]) => now - at < TRAY_BOOK_RETENTION_MS)
   )
 }
+
+/** Where a row sits in the tray's scroll content. */
+export type RowLayout = { y: number; height: number }
+
+/**
+ * Rows shown on screen: at least half visible, or filling half the viewport
+ * when taller than it. This is what "read" means for the tray.
+ */
+export function visibleIds(
+  layouts: Record<string, RowLayout>,
+  viewport: { offset: number; height: number }
+): string[] {
+  if (viewport.height <= 0) return []
+  const top = viewport.offset
+  const bottom = top + viewport.height
+  return Object.entries(layouts)
+    .filter(([, { y, height }]) => {
+      if (height <= 0) return false
+      const shown = Math.min(bottom, y + height) - Math.max(top, y)
+      return shown >= Math.min(height, viewport.height) / 2
+    })
+    .map(([id]) => id)
+}

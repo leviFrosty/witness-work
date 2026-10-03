@@ -80,6 +80,7 @@ const visit = record.extend({
       topic: z.string().optional(),
       dismissed: z.boolean().optional(),
       notifications: z.array(notification).optional(),
+      reminderOffsetMinutes: z.number().finite().nonnegative().optional(),
       buddies: z.array(z.string()).optional(),
     })
     .passthrough()
@@ -116,6 +117,7 @@ const plan = record.extend({
   location: location.optional(),
   source: z.enum(['manual', 'recommendation']).optional(),
   notifications: z.array(notification).optional(),
+  reminderOffsetMinutes: z.number().finite().nonnegative().optional(),
 })
 const recurring = record.extend({
   startDate: date,

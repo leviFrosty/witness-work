@@ -2823,5 +2823,38 @@
   "iCloudImagesToastPaused": "Photo sync paused on this device",
   "faq_syncRecovery_q": "What happens to setup choices, deleted contacts, and reminders during sync?",
   "faq_syncRecovery_a": "Restart onboarding affects only this device. Choosing Set up fresh pauses iCloud sync until you explicitly enable it in Settings; then choose Merge both or Restore from iCloud as appropriate. Restore from iCloud reads other devices’ snapshots and replaces local data after confirmation. Restoring data does not send Buddies declines for plans absent from the backup. Recoverable deleted contact details are retained for up to 90 days, then removed while deletion evidence remains. Reminders are rebuilt on this device after merges and restores, keeping the reminder time chosen for each follow-up and plan; notification permission is required and only future reminders are scheduled. For recovery, keep the device with the latest records and export a backup before replacing data. Use private Help Center support if you need help.",
-  "photoLibraryPurpose": "$(PRODUCT_NAME) uses your photos for profile and contact pictures. Optional iCloud photo sync uploads them to your private iCloud container."
+  "photoLibraryPurpose": "$(PRODUCT_NAME) uses your photos for profile and contact pictures. Optional iCloud photo sync uploads them to your private iCloud container.",
+  "contactDetails": {
+    "upNext": "Up next · {{countdown}}",
+    "reminderOn": "Reminder on",
+    "reminderOff": "No reminder",
+    "upNextWhen": "{{day}} · {{time}}",
+    "studyingSince": "Studying · last study {{date}}",
+    "lastStudy": "Last study {{date}}",
+    "studyRuleTitle": "Bible studies",
+    "visitCount": {
+      "one": "{{count}} visit",
+      "other": "{{count}} visits"
+    },
+    "studyCount": {
+      "one": "{{count}} study",
+      "other": "{{count}} studies"
+    },
+    "journeyNext": "{{date}} · next",
+    "nextVisit": "Next visit · {{date}}",
+    "seeUpNext": "see Up Next",
+    "gapEarlier": "{{gap}} earlier",
+    "sameDay": "Same day",
+    "followUpUpcoming": "Follow-up scheduled",
+    "followUpKept": "Followed up",
+    "followUpMissed": "Follow-up missed",
+    "followUpDismissed": "Follow-up dismissed",
+    "noOneAnswered": "No one answered.",
+    "relationshipBegan": "Relationship began {{date}}",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "text": "Text",
+    "journeySummary": "{{visits}} · {{studies}} · since {{date}}",
+    "contactInfo": "Contact information"
+  }
 }

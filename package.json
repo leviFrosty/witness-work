@@ -3,10 +3,10 @@
   "version": "1.43.0",
   "main": "src/index.js",
   "scripts": {
-    "dev": "APP_VARIANT=development expo start --ios",
+    "dev:ios": "APP_VARIANT=development expo start --ios",
     "dev:android": "APP_VARIANT=development expo start --android",
     "dev:prod": "expo start --no-dev --minify",
-    "ios": "expo run:ios",
+    "ios": "APP_VARIANT=development expo run:ios",
     "android": "APP_VARIANT=development expo run:android",
     "prebuild:android": "APP_VARIANT=development expo prebuild --platform android",
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios",

@@ -315,6 +315,10 @@ Instrumented actions include:
   and `map_location_prompt_skipped`.
 - Dropped-pin card: `map_dropped_pin_navigate_pressed` when its Navigate Here
   button opens directions (no properties, never coordinates).
+- Map cards: `map_cards_toggled` when the carousel (or the wide inspector) is
+  stowed or brought back, with `stowed` and `source` (`button`; `peek_tap` or
+  `peek_swipe` from the stowed cards' peek; `pin` when a pin tap brings them
+  back; or `search` when opening search does).
 - Buddies "Plan the Same Time": `buddy_plan_same_time_opened` when a buddy's
   Plan opens a new prefilled Plan, with `source` (`buddy_detail` or
   `buddy_plans_for_day`) and `has_start_time`. Never the buddy, day, or times;
@@ -340,6 +344,8 @@ destinations in the sidebar, plus Settings.
 | `quick_action_opened`             | Add is opened. `layout_variant`.                                                                                                                                                                                                                          |
 | `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, or `addContact`. Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                                                        |
 | `contacts_view_changed`           | Contacts switches workspace. `view` (`list` or `map`), `source`: `toggle` (the List / Map control), `link` (opened with a view, e.g. Home's map checklist item), or `map_empty_state` (the map's review-contacts button). The choice persists per device. |
+| `contacts_list_header_collapsed`  | Scrolling down the Contacts list first tucks its header away (once per app session). No properties.                                                                                                                                                       |
+| `contacts_header_expanded`        | A compacted Contacts header is brought back by hand. `view` (`list` or `map`), `source`: `title_tap` or `header_swipe`. Scrolling back up isn't counted.                                                                                                  |
 | `buddies_opened`                  | Schedule's Buddies button is tapped. `source: schedule_header`, `has_requests` (a request was waiting).                                                                                                                                                   |
 | `service_report_opened`           | Progress's View Report is tapped. `source: progress_header`, `tab` (`month`, `year`, or `allTime`).                                                                                                                                                       |
 

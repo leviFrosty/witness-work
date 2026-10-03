@@ -554,6 +554,8 @@
   "map_createContact": "Create contact",
   "pinCoordinates": "{{latitude}}, {{longitude}}",
   "map_fitContacts": "Fit contacts on map",
+  "map_hideContactCards": "Hide contact cards",
+  "map_showContactCards": "Show contact cards",
   "map_noSearchResults": "No matches",
   "map_noSearchResults_description": "No mapped contacts match this search.",
   "map_reviewContacts": "Review Contacts",

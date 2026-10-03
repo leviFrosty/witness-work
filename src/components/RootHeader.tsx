@@ -1,6 +1,15 @@
 import { ReactNode } from 'react'
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
+import {
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { BlurView } from 'expo-blur'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -16,6 +25,12 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
+/** Applied to every spacing change when the header compacts or expands. */
+const FLOAT_TRANSITION = {
+  transitionDuration: 260,
+  transitionTimingFunction: 'ease-in-out',
+} as const
+
 type Props = {
   /** Names the section, not its contents (dates belong in `children`). */
   title: string
@@ -25,8 +40,17 @@ type Props = {
   children?: ReactNode
   /** Constrains the header to the screen's content column. */
   contentStyle?: StyleProp<ViewStyle>
+  /** E.g. bringing a compacted header back to full size. */
+  onPressTitle?: () => void
   /** Hidden dev affordances; no visual chrome. */
   onLongPressTitle?: () => void
+  /**
+   * Floats over full-bleed content (e.g. the map): swaps the solid backdrop for
+   * a translucent blur. The caller positions it.
+   */
+  floating?: boolean
+  /** Tightens every spacing so the header gets out of the content's way. */
+  compact?: boolean
 }
 
 /**
@@ -40,60 +64,112 @@ export default function RootHeader({
   actions,
   children,
   contentStyle,
+  onPressTitle,
   onLongPressTitle,
+  floating = false,
+  compact = false,
 }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const isDark = theme.colors.background === '#121212'
 
   return (
-    <View
-      style={[
-        {
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 15,
-          paddingBottom: 8,
-          gap: 12,
-          width: '100%',
-          alignSelf: 'center',
-        },
-        contentStyle,
-      ]}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          minHeight: 44,
-        }}
-      >
-        <AccountMenu />
-        <Pressable
-          onLongPress={onLongPressTitle}
-          disabled={!onLongPressTitle}
-          delayLongPress={800}
-          style={{ flex: 1 }}
+    <View style={{ width: '100%' }}>
+      {floating && (
+        <View
+          pointerEvents='none'
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: theme.colors.border,
+            },
+          ]}
         >
-          <Text
-            accessibilityRole='header'
-            numberOfLines={1}
-            style={{
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('2xl'),
-            }}
+          <BlurView
+            tint={isDark ? 'dark' : 'light'}
+            intensity={60}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Android's BlurView without a blur target is just a tint, so lean
+          on a denser fill there to keep the header legible. */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor:
+                  theme.colors.card + (Platform.OS === 'android' ? 'e6' : '99'),
+              },
+            ]}
+          />
+        </View>
+      )}
+      <Animated.View
+        style={[
+          {
+            paddingTop: insets.top + (compact ? 2 : 8),
+            paddingHorizontal: 15,
+            paddingBottom: compact ? 6 : 8,
+            gap: compact ? 6 : 12,
+            width: '100%',
+            alignSelf: 'center',
+            transitionProperty: ['paddingTop', 'paddingBottom', 'gap'],
+            ...FLOAT_TRANSITION,
+          },
+          contentStyle,
+        ]}
+      >
+        <Animated.View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            minHeight: compact ? 36 : 44,
+            transitionProperty: 'minHeight',
+            ...FLOAT_TRANSITION,
+          }}
+        >
+          <AccountMenu />
+          <Pressable
+            onPress={onPressTitle}
+            onLongPress={onLongPressTitle}
+            disabled={!onPressTitle && !onLongPressTitle}
+            delayLongPress={800}
+            style={{ flex: 1 }}
           >
-            {title}
-          </Text>
-        </Pressable>
-        {actions && (
-          // Wide enough that 12pt slops on neighbouring buttons don't overlap
-          // and steal each other's taps.
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-            {actions}
-          </View>
-        )}
-      </View>
-      {children}
+            {/* Scaled rather than resized so the title shrinks smoothly. */}
+            <Animated.View
+              style={{
+                transformOrigin: 'left center',
+                transform: [{ scale: compact ? 0.82 : 1 }],
+                transitionProperty: 'transform',
+                ...FLOAT_TRANSITION,
+              }}
+            >
+              <Text
+                accessibilityRole='header'
+                numberOfLines={1}
+                style={{
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSize('2xl'),
+                }}
+              >
+                {title}
+              </Text>
+            </Animated.View>
+          </Pressable>
+          {actions && (
+            // Wide enough that 12pt slops on neighbouring buttons don't overlap
+            // and steal each other's taps.
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}
+            >
+              {actions}
+            </View>
+          )}
+        </Animated.View>
+        {children}
+      </Animated.View>
     </View>
   )
 }

@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   fitToSuppliedMarkers: vi.fn(),
   scrollTo: vi.fn(),
   getCurrentIndex: vi.fn(),
+  onExplore: vi.fn(),
   appearance: {} as Record<string, unknown>,
 }))
 // Stands in for a rendered overlay and records the appearance it receives.
@@ -97,6 +98,30 @@ vi.mock('react-native-reanimated', () => ({
   useSharedValue: (value: number) => useRef({ value }).current,
   withSpring: (value: number) => value,
 }))
+vi.mock('react-native-gesture-handler', () => {
+  // Records the handlers so tests can play a gesture's end.
+  const gesture = (type: string) => {
+    const g: Record<string, unknown> = { type }
+    for (const method of ['runOnJS', 'activeOffsetY', 'failOffsetY'])
+      g[method] = () => g
+    g.onEnd = (handler: unknown) => ((g.handler = handler), g)
+    return g
+  }
+  return {
+    Gesture: {
+      Pan: () => gesture('pan'),
+      Tap: () => gesture('tap'),
+      Exclusive: (...gestures: unknown[]) => ({ gestures }),
+    },
+    GestureDetector: ({
+      gesture,
+      children,
+    }: {
+      gesture: unknown
+      children: React.ReactNode
+    }) => React.createElement('GestureDetector', { gesture }, children),
+  }
+})
 vi.mock('tamagui', () => ({ Input: 'Input' }))
 vi.mock('@react-native-menu/menu', () => ({ MenuView: 'MenuView' }))
 vi.mock('expo-blur', () => ({ BlurView: 'BlurView' }))
@@ -118,6 +143,10 @@ vi.mock('lucide-react-native', () => ({
   Layers: 'Layers',
   MapPinned: 'MapPinned',
   Navigation: 'Navigation',
+  PanelBottomClose: 'PanelBottomClose',
+  PanelBottomOpen: 'PanelBottomOpen',
+  PanelRightClose: 'PanelRightClose',
+  PanelRightOpen: 'PanelRightOpen',
   Plus: 'Plus',
   Search: 'Search',
 }))
@@ -209,7 +238,9 @@ import { Carousel } from 'react-native-reanimated-carousel'
 import { Input } from 'tamagui'
 
 let root: ReturnType<typeof create>
-const screen = () => <MapScreen renderContactRow={() => null} />
+const screen = () => (
+  <MapScreen renderContactRow={() => null} onExplore={mocks.onExplore} />
+)
 const emit = (event: string) => {
   for (const listener of [...(mocks.listeners.get(event) ?? [])]) listener()
 }
@@ -413,5 +444,70 @@ describe('Map overlays over satellite imagery', () => {
       glass: 'dark',
       imagery: true,
     })
+  })
+})
+
+describe('Exploring the map', () => {
+  const cardsTray = () => root.root.findByType(Carousel).parent!
+  const stowButton = (label: string) =>
+    root.root.findByProps({ accessibilityLabel: label })
+
+  it('reports exploration when the map is dragged', async () => {
+    expect(mocks.onExplore).not.toHaveBeenCalled()
+    await act(async () => root.root.findByType(MapView).props.onPanDrag())
+    expect(mocks.onExplore).toHaveBeenCalled()
+  })
+
+  it('stows the cards and brings them back on a pin tap', async () => {
+    expect(cardsTray().props.pointerEvents).toBe('box-none')
+
+    await act(async () => stowButton('map_hideContactCards').props.onPress())
+    expect(cardsTray().props.pointerEvents).toBe('none')
+    expect(mocks.onExplore).toHaveBeenCalled()
+
+    const marker = root.root.findByProps({ identifier: 'second' })
+    await act(async () => marker.props.onPress())
+    expect(cardsTray().props.pointerEvents).toBe('box-none')
+    expect(stowButton('map_hideContactCards')).toBeTruthy()
+  })
+})
+
+describe('Stowed cards peek', () => {
+  type PeekGesture = {
+    type: string
+    handler: (e?: { translationY: number; velocityY: number }) => void
+  }
+  const stow = () =>
+    act(async () =>
+      root.root
+        .findByProps({ accessibilityLabel: 'map_hideContactCards' })
+        .props.onPress()
+    )
+  const peek = (type: string) =>
+    (
+      root.root.findByType('GestureDetector' as never).props.gesture as {
+        gestures: PeekGesture[]
+      }
+    ).gestures.find((g) => g.type === type)!
+  const stowed = () =>
+    root.root.findByType(Carousel).parent!.props.pointerEvents === 'none'
+
+  it('brings the cards back on a tap', async () => {
+    await stow()
+    await act(async () => peek('tap').handler())
+    expect(stowed()).toBe(false)
+    expect(root.root.findAllByType('GestureDetector' as never)).toHaveLength(0)
+  })
+
+  it('brings the cards back on an upward swipe, not a nudge', async () => {
+    await stow()
+    await act(async () =>
+      peek('pan').handler({ translationY: -10, velocityY: -50 })
+    )
+    expect(stowed()).toBe(true)
+    await act(async () =>
+      peek('pan').handler({ translationY: -60, velocityY: -50 })
+    )
+    expect(stowed()).toBe(false)
   })
 })

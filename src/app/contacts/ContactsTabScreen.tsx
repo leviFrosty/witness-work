@@ -30,13 +30,15 @@ export default function ContactsTabScreen({ route, navigation }: Props) {
 
   return (
     <ContactsScreen
-      map={
+      renderMap={({ topInset, onExplore }) => (
         <MapScreen
+          topInset={topInset}
+          onExplore={onExplore}
           renderContactRow={(props) => (
             <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
           )}
         />
-      }
+      )}
     />
   )
 }

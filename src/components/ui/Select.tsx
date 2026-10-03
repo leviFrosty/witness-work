@@ -1,7 +1,7 @@
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { StyleProp, View, ViewStyle } from 'react-native'
-import { MenuView, MenuAction } from '@react-native-menu/menu'
+import SelectMenu from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { inputLayout, useInputLayout } from '@/components/ui/inputs/InputLayout'
@@ -34,7 +34,7 @@ const Select = <T,>({
   const theme = useTheme()
   const layout = useInputLayout()
 
-  // UIMenu keys actions by string id. Stringify both sides and map back to
+  // Native menus key options by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
   const items = data as unknown as SelectDataItem<unknown>[]
   const isSelected = (itemValue: unknown) => {
@@ -44,25 +44,23 @@ const Select = <T,>({
   }
   const selectedLabel = items.find((i) => isSelected(i.value))?.label
 
-  const actions: MenuAction[] = items.map((item) => ({
+  const menuItems = items.map((item) => ({
     id: String(item.value),
-    title: item.label,
-    state: isSelected(item.value) ? 'on' : 'off',
+    label: item.label,
+    selected: isSelected(item.value),
   }))
 
   return (
-    <MenuView
-      actions={actions}
-      onPressAction={({ nativeEvent }) => {
-        const item = items.find((i) => String(i.value) === nativeEvent.event)
+    <SelectMenu
+      items={menuItems}
+      accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
+      accessibilityValue={selectedLabel ?? placeholder ?? ''}
+      onSelect={(id) => {
+        const item = items.find((i) => String(i.value) === id)
         if (item) onChange(item as unknown as T)
       }}
     >
       <View
-        accessible
-        accessibilityRole='button'
-        accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
-        accessibilityValue={{ text: selectedLabel ?? placeholder ?? '' }}
         style={[
           {
             backgroundColor: theme.colors.background,
@@ -95,7 +93,7 @@ const Select = <T,>({
           size={14}
         />
       </View>
-    </MenuView>
+    </SelectMenu>
   )
 }
 

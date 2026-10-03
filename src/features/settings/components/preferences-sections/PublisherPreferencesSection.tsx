@@ -1,4 +1,5 @@
 import {
+  Car as CarIcon,
   ChevronRight as ChevronRightIcon,
   History as HistoryIcon,
 } from 'lucide-react-native'
@@ -38,6 +39,7 @@ const PublisherPreferencesSection = () => {
     autoRolloverEnabled,
     rolloverIncludesCredit,
     logsHours,
+    mileageTrackingEnabled,
     publisherHours,
     setAutoRolloverEnabled,
     setRolloverIncludesCredit,
@@ -74,6 +76,14 @@ const PublisherPreferencesSection = () => {
   const handleLogsHoursChange = (enabled: boolean) => {
     set({ logsHours: enabled })
     analytics.capture('hours_logging_changed', { enabled })
+  }
+
+  const handleMileageChange = (enabled: boolean) => {
+    set({ mileageTrackingEnabled: enabled })
+    analytics.capture('mileage_tracking_changed', {
+      enabled,
+      source: 'publisher_preferences',
+    })
   }
 
   const saveLogHoursGoal = () => {
@@ -183,6 +193,27 @@ const PublisherPreferencesSection = () => {
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
+      </Section>
+
+      <Section>
+        <InputRowSwitch
+          label={i18n.t('mileage.trackMileage')}
+          info={i18n.t('mileage.trackMileage_info')}
+          value={mileageTrackingEnabled === true}
+          onValueChange={handleMileageChange}
+          lastInSection={mileageTrackingEnabled !== true}
+        />
+        {mileageTrackingEnabled === true && (
+          <InputRowButton
+            leftIcon={CarIcon}
+            label={i18n.t('mileage.title')}
+            sublabel={i18n.t('mileage.settingsRow_description')}
+            onPress={() => navigation.navigate('Mileage')}
+            lastInSection
+          >
+            <IconButton icon={ChevronRightIcon} />
+          </InputRowButton>
+        )}
       </Section>
 
       {showAdvanced && (

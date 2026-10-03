@@ -1,3 +1,4 @@
+import useMileage from '@/stores/mileage'
 import {
   Bell as BellIcon,
   BellRing as BellRingIcon,
@@ -801,6 +802,7 @@ export default function ToolsScreen() {
       deletedRecurringPlans: [],
     })
     _WARNING_forceDeleteConversations()
+    useMileage.getState()._WARNING_forceDeleteMileage()
     invalidateAllCache()
     setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
     setProfile({ ...PROFILE_DEFAULTS })

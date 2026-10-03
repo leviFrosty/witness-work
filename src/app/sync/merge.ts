@@ -21,6 +21,14 @@ import {
   TimeEntryTombstone,
 } from '@/types/timeEntry'
 import { Category, CategoryTombstone } from '@/types/category'
+import type {
+  Fuel,
+  FuelPrice,
+  MileageTombstone,
+  Trip,
+  Vehicle,
+  VehicleSetup,
+} from '@/types/mileage'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -50,6 +58,12 @@ export type MergeResult = {
   deletedRecurringPlans: PlanTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
+  vehicles: Vehicle[]
+  fuels: Fuel[]
+  fuelPrices: FuelPrice[]
+  vehicleSetups: VehicleSetup[]
+  trips: Trip[]
+  deletedMileageRecords: MileageTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -75,6 +89,12 @@ type LocalState = {
   deletedRecurringPlans?: PlanTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
+  vehicles: Vehicle[]
+  fuels: Fuel[]
+  fuelPrices: FuelPrice[]
+  vehicleSetups: VehicleSetup[]
+  trips: Trip[]
+  deletedMileageRecords: MileageTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -251,6 +271,39 @@ export function mergePayload(
     mergedCategoryTombstones
   )
 
+  // --- Mileage (id-keyed collections + one shared tombstone list) ---
+  const remoteMileage = remote.mileageStore
+  const mergedMileageTombstones = mergeTombstones(
+    local.deletedMileageRecords,
+    remoteMileage?.deletedMileageRecords ?? [],
+    now
+  )
+  const mergeMileage = <T extends WithId>(localRecords: T[], remote?: T[]) =>
+    applyTombstones(
+      mergeById(localRecords, remote ?? []).merged,
+      mergedMileageTombstones
+    )
+  const mergedVehicles = mergeMileage(
+    local.vehicles,
+    remoteMileage?.vehicles as Vehicle[] | undefined
+  )
+  const mergedFuels = mergeMileage(
+    local.fuels,
+    remoteMileage?.fuels as Fuel[] | undefined
+  )
+  const mergedFuelPrices = mergeMileage(
+    local.fuelPrices,
+    remoteMileage?.fuelPrices as FuelPrice[] | undefined
+  )
+  const mergedVehicleSetups = mergeMileage(
+    local.vehicleSetups,
+    remoteMileage?.vehicleSetups as VehicleSetup[] | undefined
+  )
+  const mergedTrips = mergeMileage(
+    local.trips,
+    remoteMileage?.trips as Trip[] | undefined
+  )
+
   // --- Preferences ---
   const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
     mergePreferences(
@@ -297,6 +350,12 @@ export function mergePayload(
     deletedRecurringPlans: mergedRecurringPlanTombstones,
     categories: categoriesAfterTombstones,
     deletedCategories: mergedCategoryTombstones,
+    vehicles: mergedVehicles,
+    fuels: mergedFuels,
+    fuelPrices: mergedFuelPrices,
+    vehicleSetups: mergedVehicleSetups,
+    trips: mergedTrips,
+    deletedMileageRecords: mergedMileageTombstones,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
     profileValues: mergedProfileValues,

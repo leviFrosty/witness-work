@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import IconButton from '@/components/ui/IconButton'
 import QuickActionMenu from '@/components/QuickActionMenu'
+import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 
@@ -23,12 +24,14 @@ export default function QuickActionSheet({
 }: QuickActionSheetProps) {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
+  // Log Trip adds a fourth action when Mileage Tracking is on.
+  const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
 
   return (
     <Sheet
       open={sheetOpen}
       modal
-      snapPoints={[30]}
+      snapPoints={[tracksMileage ? 38 : 30]}
       onOpenChange={(o: boolean) => setSheetOpen(o)}
       dismissOnSnapToBottom
       transition='quick'

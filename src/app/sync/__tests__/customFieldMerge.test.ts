@@ -14,6 +14,7 @@ import type {
   TimeEntryTombstone,
 } from '@/types/timeEntry'
 import type { RecurringPlan } from '@/lib/serviceReport'
+import type { MileageSnapshot } from '@/types/mileage'
 
 type LocalState = {
   contacts: Contact[]
@@ -28,6 +29,12 @@ type LocalState = {
   deletedServiceReports: TimeEntryTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
+  vehicles: MileageSnapshot['vehicles']
+  fuels: MileageSnapshot['fuels']
+  fuelPrices: MileageSnapshot['fuelPrices']
+  vehicleSetups: MileageSnapshot['vehicleSetups']
+  trips: MileageSnapshot['trips']
+  deletedMileageRecords: MileageSnapshot['deletedMileageRecords']
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -47,6 +54,12 @@ const baseLocal = (): LocalState => ({
   deletedServiceReports: [],
   categories: [],
   deletedCategories: [],
+  vehicles: [],
+  fuels: [],
+  fuelPrices: [],
+  vehicleSetups: [],
+  trips: [],
+  deletedMileageRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},

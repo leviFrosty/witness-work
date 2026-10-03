@@ -60,7 +60,12 @@ const HideSupporterNudge = () => {
 }
 
 const HomeElements = () => {
-  const { homeScreenElements, homeScreenElementsOrder, set } = usePreferences()
+  const {
+    homeScreenElements,
+    homeScreenElementsOrder,
+    mileageTrackingEnabled,
+    set,
+  } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
   const { isTablet } = useDevice()
   const theme = useTheme()
@@ -78,9 +83,16 @@ const HomeElements = () => {
       effectiveOrder.filter((k) => {
         if (k === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
         if (k === 'timer') return showsTimer
+        if (k === 'mileage') return mileageTrackingEnabled === true
         return true
       }),
-    [effectiveOrder, isTablet, hasAnnualGoal, showsTimer]
+    [
+      effectiveOrder,
+      isTablet,
+      hasAnnualGoal,
+      showsTimer,
+      mileageTrackingEnabled,
+    ]
   )
 
   const labelFor = (key: HomeScreenElementKey): string => {
@@ -91,6 +103,8 @@ const HomeElements = () => {
         return i18n.t('serviceYearSummary')
       case 'serviceReport':
         return i18n.t('serviceReport')
+      case 'mileage':
+        return i18n.t('mileage.title')
       case 'thisWeek':
         return i18n.t('thisWeek')
       case 'timer':

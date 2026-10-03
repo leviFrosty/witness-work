@@ -29,6 +29,11 @@ import type { ActiveFilter } from '@/lib/contactsFilters'
 import type { ContactsView } from '@/types/homeStack'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
+import type {
+  DistanceUnit,
+  FuelEconomyUnit,
+  MileageEntryMode,
+} from '@/types/mileage'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import {
   isValidMonthlyGoalHours,
@@ -224,6 +229,7 @@ export type HomeScreenElementKey =
   | 'approachingConversations'
   | 'tabletServiceYearSummary'
   | 'serviceReport'
+  | 'mileage'
   | 'thisWeek'
   | 'timer'
   | 'didYouKnow'
@@ -232,16 +238,18 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'approachingConversations',
   'tabletServiceYearSummary',
   'serviceReport',
+  'mileage',
   'thisWeek',
   'timer',
   'didYouKnow',
 ]
 
 /**
- * Returns the user's stored order with any missing keys appended in their
- * default position. Tolerates legacy entries (for example, `monthlyRoutine` or
- * the retired `ministryDashboard`) by dropping anything not in the current key
- * set.
+ * Returns the user's stored order with any missing keys added in their default
+ * position: right after the key that precedes them by default, or at the end
+ * when that key isn't placed yet. Tolerates legacy entries (for example,
+ * `monthlyRoutine` or the retired `ministryDashboard`) by dropping anything not
+ * in the current key set.
  */
 export function getEffectiveHomeScreenOrder(
   stored: string[] | undefined
@@ -260,9 +268,14 @@ export function getEffectiveHomeScreenOrder(
       seen.add(k as HomeScreenElementKey)
     }
   }
-  for (const k of DEFAULT_HOME_SCREEN_ELEMENTS_ORDER) {
-    if (!seen.has(k)) out.push(k)
-  }
+  DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.forEach((k, i) => {
+    if (seen.has(k)) return
+    const previous = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER[i - 1]
+    const at = previous ? out.indexOf(previous) : -1
+    if (at === -1) out.push(k)
+    else out.splice(at + 1, 0, k)
+    seen.add(k)
+  })
   return out
 }
 
@@ -489,6 +502,7 @@ export const PREFERENCE_DEFAULTS = {
     tabletServiceYearSummary: true,
     thisWeek: true,
     serviceReport: true,
+    mileage: true,
     timer: true,
     contacts: true,
     didYouKnow: true,
@@ -993,6 +1007,18 @@ export const PREFERENCE_DEFAULTS = {
   dismissedFollowUpCards: {} as Partial<
     Record<'missed' | 'approaching', string[]>
   >,
+  /**
+   * **Mileage Tracking** opt-in. `undefined` = not answered yet, which shows
+   * the Home prompt; `false` hides the prompt and every Mileage entry point.
+   * Turning it off never deletes mileage data. Syncable.
+   */
+  mileageTrackingEnabled: undefined as boolean | undefined,
+  /** Mileage distance unit. `undefined` = Auto (device region). Syncable. */
+  distanceUnit: undefined as DistanceUnit | undefined,
+  /** Mileage fuel economy unit. `undefined` = Auto (device region). Syncable. */
+  fuelEconomyUnit: undefined as FuelEconomyUnit | undefined,
+  /** The trip form's last-used Distance / Odometer mode. Syncable. */
+  mileageEntryMode: 'distance' as MileageEntryMode,
 }
 
 /**

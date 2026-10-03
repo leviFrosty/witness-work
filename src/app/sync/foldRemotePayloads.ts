@@ -11,6 +11,7 @@ import type {
 } from '@/types/timeEntry'
 import type { Category } from '@/types/category'
 import { atNewestResetEpoch } from '@/lib/syncResetEpoch'
+import { mileageFromPayload } from '@/app/sync/mileagePayload'
 
 type LocalMergeState = Omit<MergeResult, 'changed'>
 
@@ -51,6 +52,7 @@ export function foldRemotePayloads(
     deletedRecurringPlans: first.serviceReportStore.deletedRecurringPlans ?? [],
     categories: (first.categoryStore?.categories ?? []) as Category[],
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
+    ...mileageFromPayload(first),
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
     profileValues: first.profileStore?.values ?? {},
@@ -97,6 +99,14 @@ export function foldRemotePayloads(
     categoryStore: {
       categories: acc.categories,
       deletedCategories: acc.deletedCategories,
+    },
+    mileageStore: {
+      vehicles: acc.vehicles,
+      fuels: acc.fuels,
+      fuelPrices: acc.fuelPrices,
+      vehicleSetups: acc.vehicleSetups,
+      trips: acc.trips,
+      deletedMileageRecords: acc.deletedMileageRecords,
     },
     preferencesStore: {
       values: acc.preferencesValues,

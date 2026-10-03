@@ -1,5 +1,6 @@
 import {
   Calendar as CalendarIcon,
+  Car as CarIcon,
   Clock as ClockIcon,
   IdCard as IdCardIcon,
 } from 'lucide-react-native'
@@ -7,6 +8,8 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import usePublisher from '@/hooks/usePublisher'
+import { usePreferences } from '@/stores/preferences'
+import useMileage from '@/stores/mileage'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
@@ -21,11 +24,13 @@ interface Props {
   onAction: () => void
 }
 
-type QuickActionOption = 'addTime' | 'addContact' | 'addPlan'
+type QuickActionOption = 'addTime' | 'addContact' | 'addPlan' | 'logTrip'
 
 /** One action set for the compact sheet and the iPad anchored menu. */
 export default function QuickActionMenu({ navigation, onAction }: Props) {
   const { showsTimer } = usePublisher()
+  const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
+  const hasActiveCar = useMileage((s) => s.vehicles.some((v) => !v.archived))
   const handleQuickAction = (action: QuickActionOption) => {
     analytics.capture('quick_action_selected', { action })
     onAction()
@@ -38,6 +43,16 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
         break
       case 'addPlan':
         navigation.navigate('PlanDay', {})
+        break
+      case 'logTrip':
+        // Without an active car, add one first; its form continues to the trip.
+        if (hasActiveCar)
+          navigation.navigate('MileageTripForm', { source: 'quick_action' })
+        else
+          navigation.navigate('MileageVehicleForm', {
+            source: 'quick_action',
+            thenLogTrip: true,
+          })
         break
     }
   }
@@ -60,6 +75,13 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
         icon={IdCardIcon}
         onPress={() => handleQuickAction('addContact')}
       />
+      {tracksMileage && (
+        <ActionButton
+          text='mileage.logTrip'
+          icon={CarIcon}
+          onPress={() => handleQuickAction('logTrip')}
+        />
+      )}
     </View>
   )
 }

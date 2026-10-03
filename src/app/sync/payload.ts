@@ -15,6 +15,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import {
@@ -110,6 +111,24 @@ export type SyncPayload = {
     categories: any[]
     deletedCategories?: { id: string; deletedAt: number }[]
   }
+  /**
+   * Mileage Tracking cars, fuels, histories, and trips, plus one shared
+   * tombstone list. Optional in the wire shape because older app versions don't
+   * write it — consumers default every collection to `[]`.
+   */
+  mileageStore?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vehicles: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fuels: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fuelPrices: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vehicleSetups: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trips: any[]
+    deletedMileageRecords?: { id: string; deletedAt: number }[]
+  }
   preferencesStore: {
     // Partial because we only sync the allow-listed, cross-device-safe keys.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,6 +166,7 @@ export function buildPayload(args: {
   const conversations = useConversations.getState()
   const serviceReports = useServiceReport.getState()
   const categories = useCategories.getState()
+  const mileage = useMileage.getState()
   const prefs = usePreferences.getState()
   const profile = useProfile.getState()
 
@@ -218,6 +238,14 @@ export function buildPayload(args: {
     categoryStore: {
       categories: categories.categories,
       deletedCategories: categories.deletedCategories,
+    },
+    mileageStore: {
+      vehicles: mileage.vehicles,
+      fuels: mileage.fuels,
+      fuelPrices: mileage.fuelPrices,
+      vehicleSetups: mileage.vehicleSetups,
+      trips: mileage.trips,
+      deletedMileageRecords: mileage.deletedMileageRecords,
     },
     preferencesStore: {
       values: syncablePrefs,

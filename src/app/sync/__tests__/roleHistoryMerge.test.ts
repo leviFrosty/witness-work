@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mergePayload } from '@/app/sync/merge'
 import { SyncPayload } from '@/app/sync/payload'
 import { Category, CategoryTombstone } from '@/types/category'
+import type { MileageSnapshot } from '@/types/mileage'
 
 type LocalState = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,6 +27,12 @@ type LocalState = {
   deletedServiceReports: any[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
+  vehicles: MileageSnapshot['vehicles']
+  fuels: MileageSnapshot['fuels']
+  fuelPrices: MileageSnapshot['fuelPrices']
+  vehicleSetups: MileageSnapshot['vehicleSetups']
+  trips: MileageSnapshot['trips']
+  deletedMileageRecords: MileageSnapshot['deletedMileageRecords']
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -45,6 +52,12 @@ const emptyLocal = (): LocalState => ({
   deletedServiceReports: [],
   categories: [],
   deletedCategories: [],
+  vehicles: [],
+  fuels: [],
+  fuelPrices: [],
+  vehicleSetups: [],
+  trips: [],
+  deletedMileageRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},

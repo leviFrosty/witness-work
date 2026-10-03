@@ -117,7 +117,30 @@ export type RootStackParamList = {
   'Buddies Settings': undefined
   /** Alpha explainer, opt-in diagnostics, and the Buddies feedback survey. */
   'Buddies Feedback': { source: 'badge' | 'card' | 'settings' } | undefined
+  /** Mileage trip history and report. */
+  Mileage: undefined
+  /** Log or edit a trip. `duplicateOf` seeds a new trip dated today. */
+  MileageTripForm:
+    | { tripId?: string; duplicateOf?: string; source?: MileageSource }
+    | undefined
+  MileageTripDetails: { tripId: string }
+  /** Cars, fuels, units, and delete-all. */
+  MileageSettings: undefined
+  /** Add or edit a car. `thenLogTrip` continues to the trip form on save. */
+  MileageVehicleForm:
+    | { vehicleId?: string; thenLogTrip?: boolean; source?: MileageSource }
+    | undefined
+  MileageFuelForm: { fuelId?: string } | undefined
 }
+
+/** Where a Mileage flow started (analytics). */
+export type MileageSource =
+  | 'home_prompt'
+  | 'home_section'
+  | 'quick_action'
+  | 'mileage_screen'
+  | 'mileage_settings'
+  | 'trip_menu'
 
 /** Where the Service History editor was opened from (analytics). */
 export type ServiceHistorySource =

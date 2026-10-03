@@ -29,6 +29,12 @@ export const emptyDevice = (
   deletedRecurringPlans: [],
   categories: [],
   deletedCategories: [],
+  vehicles: [],
+  fuels: [],
+  fuelPrices: [],
+  vehicleSetups: [],
+  trips: [],
+  deletedMileageRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},
@@ -92,6 +98,14 @@ export const payloadOf = (device: DeviceState): SyncPayload => ({
   categoryStore: {
     categories: device.categories,
     deletedCategories: device.deletedCategories,
+  },
+  mileageStore: {
+    vehicles: device.vehicles,
+    fuels: device.fuels,
+    fuelPrices: device.fuelPrices,
+    vehicleSetups: device.vehicleSetups,
+    trips: device.trips,
+    deletedMileageRecords: device.deletedMileageRecords,
   },
   preferencesStore: {
     values: device.preferencesValues,

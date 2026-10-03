@@ -29,6 +29,12 @@ import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import BuddiesFeedbackScreen from '@/features/buddies/screens/BuddiesFeedbackScreen'
 import BuddiesRouteScreen from '@/app/buddies/BuddiesRouteScreen'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
+import MileageScreen from '@/features/mileage/screens/MileageScreen'
+import MileageTripFormScreen from '@/features/mileage/screens/MileageTripFormScreen'
+import MileageTripDetailsScreen from '@/features/mileage/screens/MileageTripDetailsScreen'
+import MileageSettingsScreen from '@/features/mileage/screens/MileageSettingsScreen'
+import MileageVehicleFormScreen from '@/features/mileage/screens/MileageVehicleFormScreen'
+import MileageFuelFormScreen from '@/features/mileage/screens/MileageFuelFormScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -296,6 +302,73 @@ const RootStackComponent = () => {
           }}
           name='Buddies Feedback'
           component={BuddiesFeedbackScreen}
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='Mileage'
+          component={MileageScreen}
+        />
+        <RootStack.Screen
+          options={({ route }) => ({
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='back'
+                title={i18n.t(
+                  route.params?.tripId ? 'mileage.editTrip' : 'mileage.logTrip'
+                )}
+              />
+            ),
+          })}
+          name='MileageTripForm'
+          component={MileageTripFormScreen}
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='MileageTripDetails'
+          component={MileageTripDetailsScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('mileage.settings')} />
+            ),
+          }}
+          name='MileageSettings'
+          component={MileageSettingsScreen}
+        />
+        <RootStack.Screen
+          options={({ route }) => ({
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='back'
+                title={i18n.t(
+                  route.params?.vehicleId ? 'mileage.editCar' : 'mileage.addCar'
+                )}
+              />
+            ),
+          })}
+          name='MileageVehicleForm'
+          component={MileageVehicleFormScreen}
+        />
+        <RootStack.Screen
+          options={({ route }) => ({
+            presentation: 'modal',
+            header: () => (
+              <Header
+                noInsets
+                buttonType='back'
+                title={i18n.t(
+                  route.params?.fuelId ? 'mileage.editFuel' : 'mileage.addFuel'
+                )}
+              />
+            ),
+          })}
+          name='MileageFuelForm'
+          component={MileageFuelFormScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

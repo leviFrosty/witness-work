@@ -12,13 +12,15 @@ One-shot restore also excludes the current device’s snapshot. Keep legacy JSON
 files after absorbing them: an older app may write between our read and a delete.
 
 JSON carries contacts, visits, time entries, day plans, recurring plans,
-categories, custom field definitions, shared preferences, and profile data.
+categories, custom field definitions, mileage (cars, fuels, price and car setup
+histories, trips, and one shared tombstone list in the optional `mileageStore`
+slice), shared preferences, and profile data.
 Photo references travel even when photo transfer is off; local filesystem paths
 and photo metadata do not. Device identity, onboarding progress, sync controls,
 address prefill, data protection mode, and analytics consent remain local.
 `syncPreferencePolicy.ts` is the incoming/outgoing exclusion policy.
 
-JSON backups additionally include categories and profile. Restoring a backup
+JSON backups additionally include categories, mileage, and profile. Restoring a backup
 preserves installation identity and local consent/settings, including backups
 created by older versions that included them. Missing optional stores are kept.
 Photo bytes are not embedded in JSON backups.

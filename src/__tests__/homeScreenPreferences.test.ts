@@ -37,7 +37,20 @@ describe('Home screen preferences', () => {
     expect(result).not.toContain('ministryDashboard')
     expect(result).not.toContain('unknown')
     expect(new Set(result).size).toBe(result.length)
-    expect(result.slice(0, 2)).toEqual(['serviceReport', 'thisWeek'])
+    expect(
+      result.filter((k) => k === 'serviceReport' || k === 'thisWeek')
+    ).toEqual(['serviceReport', 'thisWeek'])
+    expect(result[0]).toBe('serviceReport')
+  })
+
+  it('places a new section after its default predecessor', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (k) => k !== 'mileage'
+    ).reverse()
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result[result.indexOf('serviceReport') + 1]).toBe('mileage')
+    expect(result.filter((k) => k !== 'mileage')).toEqual(stored)
   })
 
   it('appends missing sections in default order', () => {

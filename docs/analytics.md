@@ -342,7 +342,7 @@ destinations in the sidebar, plus Settings.
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `navigation_destination_selected` | A bottom-bar or sidebar destination is tapped. `from` and `to` (route names), `layout_variant` (`bottom_bar` or `sidebar`), `reselected` (tapped the destination already open).                                                                           |
 | `quick_action_opened`             | Add is opened. `layout_variant`.                                                                                                                                                                                                                          |
-| `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, or `addContact`. Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                                                        |
+| `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, `addContact`, or `logTrip` (Mileage Tracking on). Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                       |
 | `contacts_view_changed`           | Contacts switches workspace. `view` (`list` or `map`), `source`: `toggle` (the List / Map control), `link` (opened with a view, e.g. Home's map checklist item), or `map_empty_state` (the map's review-contacts button). The choice persists per device. |
 | `contacts_list_header_collapsed`  | Scrolling down the Contacts list first tucks its header away (once per app session). No properties.                                                                                                                                                       |
 | `contacts_header_expanded`        | A compacted Contacts header is brought back by hand. `view` (`list` or `map`), `source`: `title_tap` or `header_swipe`. Scrolling back up isn't counted.                                                                                                  |
@@ -448,6 +448,36 @@ Submission itself stays on the existing `service_report_export_requested` /
 `method` and `source`: `report_screen` (the Submit button, including the other
 methods in its long-press menu) or `context_menu` (Copy/Share Report from a
 month's long-press menu on Home or Progress).
+
+## Mileage
+
+Mileage Tracking is opt-in for every role. Events never carry car names, fuel
+names, notes, distances, prices, or costs — only counts, booleans, units, and
+enums. `source` is where a flow started: `home_prompt`, `home_section`,
+`quick_action`, `mileage_screen`, `mileage_settings`, or `trip_menu`.
+
+| Event                                                     | When / properties                                                                                                                                                                                          |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mileage_prompt_answered`                                 | Home's "Track mileage?" card is answered. `enabled`. The card stays until answered, so unanswered is the abandonment signal.                                                                               |
+| `mileage_tracking_changed`                                | The Publisher Preferences switch is flipped. `enabled`, `source: publisher_preferences`.                                                                                                                   |
+| `mileage_vehicle_added` / `mileage_vehicle_updated`       | A car is saved. `has_fuel`, `has_fuel_economy`, `created_fuel` (a fuel was added from the car form), `setup_change` (`starting` or `correct` when an edit changed fuel or fuel economy), `source`.         |
+| `mileage_vehicle_archived` / `mileage_vehicle_unarchived` | A car is archived or restored.                                                                                                                                                                             |
+| `mileage_vehicle_deleted`                                 | A car and its trips are deleted. `trip_count`.                                                                                                                                                             |
+| `mileage_fuel_added` / `mileage_fuel_updated`             | A fuel is saved. `has_price`, `price_change` (`starting` or `correct`).                                                                                                                                    |
+| `mileage_fuel_deleted`                                    | `car_count` (cars whose setup used it).                                                                                                                                                                    |
+| `mileage_trip_added` / `mileage_trip_updated`             | A trip is saved. `entry_mode` (`distance` or `odometer`), `round_trip`, `has_note`, `logged_again` (seeded by Log Again Today), `source`. Opening the form without one of these is the abandonment signal. |
+| `mileage_trip_deleted`                                    | `source` (`row` from the menu or swipe, `details` from the details screen or edit form).                                                                                                                   |
+| `mileage_trip_shared`                                     | A trip's text is shared or copied. `source`, `method` (`share` or `copy`).                                                                                                                                 |
+| `mileage_report_viewed`                                   | The Mileage screen opens or its period changes. `period` (`day`, `week`, `month`, `year`).                                                                                                                 |
+| `mileage_report_exported`                                 | A report is copied, shared, or exported. `method` (`copy`, `share`, `csv`), `period`, `trip_count`.                                                                                                        |
+| `mileage_report_export_dismissed`                         | The share sheet closed without sharing. Same properties.                                                                                                                                                   |
+| `mileage_report_export_failed`                            | Export failed. Same properties plus `reason` (`sharing_unavailable` or `error`).                                                                                                                           |
+| `mileage_units_changed`                                   | `setting` (`distance` or `fuel_economy`), `unit` (the unit key or `auto`).                                                                                                                                 |
+| `mileage_data_deleted`                                    | Delete All Mileage Data is confirmed.                                                                                                                                                                      |
+
+Long-press and pull-down menus report `context_menu_action` with surfaces
+`mileage_trip_row`, `mileage_report_menu`, `home_section_mileage`,
+`mileage_fuel_price_history`, and `mileage_car_setup_history`.
 
 ## iCloud Sync and Help Center
 

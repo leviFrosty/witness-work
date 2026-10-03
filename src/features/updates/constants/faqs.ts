@@ -3,6 +3,7 @@ export type FAQCategory =
   | 'contacts'
   | 'plans'
   | 'buddies'
+  | 'mileage'
   | 'map'
   | 'customization'
   | 'backups'
@@ -83,6 +84,13 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesInvitations', category: 'buddies' },
   { id: 'buddiesMissingPlans', category: 'buddies' },
   { id: 'buddiesRemove', category: 'buddies' },
+  { id: 'mileageStart', category: 'mileage' },
+  { id: 'mileageCost', category: 'mileage' },
+  { id: 'mileageUnits', category: 'mileage' },
+  { id: 'mileageShare', category: 'mileage' },
+  { id: 'mileageCars', category: 'mileage' },
+  { id: 'mileageSync', category: 'mileage' },
+  { id: 'mileageTurnOff', category: 'mileage' },
   { id: 'buddiesRestore', category: 'buddies' },
   {
     id: 'remainingHours',
@@ -247,6 +255,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'contacts',
   'plans',
   'buddies',
+  'mileage',
   'map',
   'customization',
   'backups',

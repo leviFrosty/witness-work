@@ -3,6 +3,8 @@ import { publishers } from '@/constants/publisher'
 
 const timestamp = z.number().finite().nonnegative()
 const date = z.string().refine((value) => Number.isFinite(Date.parse(value)))
+/** Local calendar day, `YYYY-MM-DD`. */
+const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const id = z
   .string()
   .min(1)
@@ -220,6 +222,46 @@ export const payloadSchema = z.object({
       deletedCategories: z.array(tombstone).optional(),
     })
     .optional(),
+  mileageStore: z
+    .object({
+      vehicles: z.array(
+        record.extend({
+          name: z.string(),
+          archived: z.boolean().optional(),
+          createdAt: timestamp,
+        })
+      ),
+      fuels: z.array(record.extend({ name: z.string(), createdAt: timestamp })),
+      fuelPrices: z.array(
+        record.extend({
+          fuelId: id,
+          effectiveFrom: dateKey,
+          pricePerGallon: z.number().finite().nonnegative(),
+        })
+      ),
+      vehicleSetups: z.array(
+        record.extend({
+          vehicleId: id,
+          effectiveFrom: dateKey,
+          fuelId: id.optional(),
+          milesPerGallon: z.number().finite().positive().optional(),
+        })
+      ),
+      trips: z.array(
+        record.extend({
+          vehicleId: id,
+          date: dateKey,
+          distanceMiles: z.number().finite().nonnegative(),
+          roundTrip: z.boolean().optional(),
+          odometerStartMiles: z.number().finite().nonnegative().optional(),
+          odometerEndMiles: z.number().finite().nonnegative().optional(),
+          note: z.string().optional(),
+          createdAt: timestamp,
+        })
+      ),
+      deletedMileageRecords: z.array(tombstone).optional(),
+    })
+    .optional(),
   preferencesStore: values,
   profileStore: values.optional(),
 })
@@ -330,6 +372,12 @@ const preferenceShapes = z
     customAvatarBackground: z.string().nullable().optional(),
     seenTipIds: z.array(z.string()).optional(),
     submittedReportMonths: z.array(z.string()).optional(),
+    mileageTrackingEnabled: z.boolean().optional(),
+    distanceUnit: z.enum(['mi', 'km']).optional(),
+    fuelEconomyUnit: z
+      .enum(['mpgUS', 'mpgUK', 'lPer100km', 'kmPerL'])
+      .optional(),
+    mileageEntryMode: z.enum(['distance', 'odometer']).optional(),
   })
   .passthrough()
 

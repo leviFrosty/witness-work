@@ -3,6 +3,7 @@ import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
 import { useProfile } from '@/stores/profile'
 import {
   syncableValues,
@@ -22,6 +23,7 @@ export type BackupFile = {
   preferencesStore?: unknown
   categoryStore?: unknown
   profileStore?: unknown
+  mileageStore?: unknown
 }
 
 /** The same backup Settings exports, from the stores' current state. */
@@ -32,6 +34,7 @@ export function createBackupFile(): BackupFile {
     conversationStore: useConversations.getState(),
     preferencesStore: syncableValues(usePreferences.getState()),
     categoryStore: useCategories.getState(),
+    mileageStore: useMileage.getState(),
     profileStore: syncableValues(
       useProfile.getState(),
       NON_SYNCABLE_PROFILE_KEYS
@@ -70,6 +73,10 @@ export function restoreBackupFile(data: BackupFile): void {
       useCategories
         .getState()
         .set(knownSlice(data.categoryStore, useCategories.getState()))
+    if (data.mileageStore)
+      useMileage
+        .getState()
+        .set(knownSlice(data.mileageStore, useMileage.getState()))
     const preferences = extractProfileFromPreferences(
       knownSlice(data.preferencesStore, {
         ...usePreferences.getState(),

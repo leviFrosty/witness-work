@@ -33,6 +33,13 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
+import { mileageFromPayload } from '@/app/sync/mileagePayload'
+import {
+  applyMileageSnapshot,
+  hasMileageData,
+  localMileageSnapshot,
+} from '@/app/sync/mileageStoreSync'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
@@ -371,6 +378,7 @@ export function hasMeaningfulLocalData(): boolean {
   const categories = useCategories.getState()
   if (categories.categories.length > 0) return true
   if (categories.deletedCategories.length > 0) return true
+  if (hasMileageData()) return true
   return false
 }
 
@@ -437,6 +445,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       categories: (remote.categoryStore?.categories ?? []) as Category[],
       deletedCategories: remote.categoryStore?.deletedCategories ?? [],
     })
+    applyMileageSnapshot(mileageFromPayload(remote))
 
     const now = Date.now()
     usePreferences.setState({
@@ -1750,6 +1759,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     deletedRecurringPlans: serviceReportState.deletedRecurringPlans,
     categories: categoriesState.categories,
     deletedCategories: categoriesState.deletedCategories,
+    ...localMileageSnapshot(),
     preferencesValues: localPrefValues,
     preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
     profileValues: localProfileValues,
@@ -1828,6 +1838,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     categories: acc.categories,
     deletedCategories: acc.deletedCategories,
   })
+  applyMileageSnapshot(acc)
 
   usePreferences.setState({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2204,6 +2215,7 @@ export function installiCloudSync(): () => void {
   const unsubConversations = useConversations.subscribe(() => schedulePush())
   const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
   const unsubCategories = useCategories.subscribe(() => schedulePush())
+  const unsubMileage = useMileage.subscribe(() => schedulePush())
   // Only schedule a push when a *syncable* preference key changed. The
   // stamping wrapper in `usePreferences` re-allocates `preferenceUpdatedAt`
   // iff a non-bookkeeping key was written, so a reference check on that map
@@ -2290,6 +2302,7 @@ export function installiCloudSync(): () => void {
     unsubConversations()
     unsubServiceReports()
     unsubCategories()
+    unsubMileage()
     unsubPreferences()
     unsubProfile()
     unsubSupporter()

@@ -36,6 +36,8 @@ import { TimerSection } from '@/features/service-reports/components/TimerSection
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
+import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
+import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -76,6 +78,7 @@ export const HomeScreen = () => {
     homeScreenElements,
     homeScreenElementsOrder,
     dismissedFollowUpCards,
+    mileageTrackingEnabled,
   } = usePreferences()
   const effectiveOrder = useMemo(
     () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
@@ -228,6 +231,7 @@ export const HomeScreen = () => {
             }
           />
           {!homeChecklistDismissed && <HomeChecklist />}
+          <MileagePromptCard />
           {effectiveOrder.map((key: HomeScreenElementKey) => {
             const section = (() => {
               switch (key) {
@@ -293,6 +297,13 @@ export const HomeScreen = () => {
                 case 'serviceReport':
                   if (!homeScreenElements.serviceReport) return null
                   return <ServiceReportSection key={key} />
+                case 'mileage':
+                  if (
+                    mileageTrackingEnabled !== true ||
+                    homeScreenElements.mileage === false
+                  )
+                    return null
+                  return <MileageHomeSection key={key} />
 
                 case 'thisWeek':
                   if (!homeScreenElements.thisWeek) return null

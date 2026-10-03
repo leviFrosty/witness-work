@@ -57,7 +57,7 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
           >
             {i18n.t(labels.description)}
           </Text>
-          <View style={{ gap: 6 }}>
+          <View style={{ gap: 6, alignItems: 'flex-start' }}>
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,

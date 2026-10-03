@@ -1,0 +1,19 @@
+{
+  "person.crop.circle": "ww_menu_profile",
+  "gearshape": "ww_menu_settings",
+  "heart": "ww_menu_heart",
+  "questionmark.circle": "ww_menu_help",
+  "square.and.arrow.up": "ww_menu_share",
+  "pencil": "ww_menu_edit",
+  "clock": "ww_menu_clock",
+  "archivebox": "ww_menu_archive",
+  "trash": "ww_menu_delete",
+  "bubble.left.and.bubble.right": "ww_menu_conversation",
+  "door.left.hand.closed": "ww_menu_door",
+  "checkmark.circle": "ww_menu_check",
+  "line.3.horizontal.decrease.circle": "ww_menu_filter",
+  "qrcode": "ww_menu_qr_code",
+  "qrcode.viewfinder": "ww_menu_qr_scan",
+  "arrow.uturn.backward": "ww_menu_undo",
+  "target": "ww_menu_target"
+}

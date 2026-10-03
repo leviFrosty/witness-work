@@ -98,7 +98,7 @@ describe('nativeMenuActions', () => {
     ])
   })
 
-  it('concatenates groups with top-level submenus and no images on Android', () => {
+  it('concatenates groups with tinted drawable icons and top-level submenus on Android', () => {
     const actions = nativeMenuActions(menuGroups(contactMore), {
       ios: false,
       ...colors,
@@ -110,7 +110,79 @@ describe('nativeMenuActions', () => {
       'archive',
     ])
     expect(actions[2].subactions).toHaveLength(2)
-    expect(actions.every((a) => a.image === undefined)).toBe(true)
+    expect(actions[0]).toMatchObject({
+      image: 'ww_menu_share',
+      imageColor: '#text',
+    })
+    expect(actions[2]).toMatchObject({
+      image: 'ww_menu_clock',
+      imageColor: '#text',
+    })
+    expect(actions[2].subactions?.[0].image).toBeUndefined()
+    expect(actions[3]).toMatchObject({
+      image: 'ww_menu_archive',
+      imageColor: '#err',
+    })
     expect(actions[3].titleColor).toBe('#err')
+  })
+
+  it('shows drawable icons for every avatar-menu action on Android', () => {
+    const symbols = [
+      'person.crop.circle',
+      'gearshape',
+      'heart',
+      'questionmark.circle',
+    ] as const
+    const actions = nativeMenuActions(
+      [
+        symbols.map((systemImage) => ({
+          id: systemImage,
+          title: systemImage,
+          systemImage,
+          onPress: noop,
+        })),
+      ],
+      { ios: false, ...colors }
+    )
+    expect(actions.map((action) => action.image)).toEqual([
+      'ww_menu_profile',
+      'ww_menu_settings',
+      'ww_menu_heart',
+      'ww_menu_help',
+    ])
+  })
+
+  it('omits unsupported Android symbols, including in submenus', () => {
+    const actions = nativeMenuActions(
+      [
+        [
+          {
+            id: 'more',
+            title: 'More',
+            systemImage: 'clock',
+            actions: [
+              {
+                id: 'edit',
+                title: 'Edit',
+                systemImage: 'pencil',
+                onPress: noop,
+              },
+              {
+                id: 'custom',
+                title: 'Custom',
+                systemImage: 'ant',
+                onPress: noop,
+              },
+            ],
+          },
+        ],
+      ],
+      { ios: false, ...colors }
+    )
+    expect(actions[0].subactions?.[0]).toMatchObject({
+      image: 'ww_menu_edit',
+      imageColor: '#text',
+    })
+    expect(actions[0].subactions?.[1].image).toBeUndefined()
   })
 })

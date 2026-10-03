@@ -37,6 +37,14 @@ installs it, and starts Metro. For subsequent JavaScript work use
 with `pnpm run prebuild:android` and rebuild. The generated `android/` directory
 is ignored, like `ios/`.
 
+Android `PullDownMenu` icons are packaged by `plugins/with-android-menu-icons.js`.
+The SF Symbol mapping and vector drawables live in
+`src/assets/android-menu-icons/`; changing these assets requires prebuild and a
+native rebuild. The plugin also preserves these dynamically named resources
+when release resource shrinking is enabled.
+The pinned `@react-native-menu/menu` patch uses AndroidX `PopupMenu` so icon
+visibility also works below Android 10.
+
 Development uses `com.leviwilkerson.jwtimedev`; production uses
 `com.leviwilkerson.jwtime`. Configure these values in the appropriate environment:
 

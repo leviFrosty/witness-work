@@ -13,6 +13,7 @@ import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
+import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -282,35 +283,37 @@ const OnboardingBackfillForm = ({
         showsVerticalScrollIndicator={false}
         enableOnAndroid={true}
       >
-        <Text
+        <View
           style={{
-            fontSize: 32,
-            fontFamily: theme.fonts.bold,
-            color: theme.colors.text,
+            flexDirection: 'row',
+            alignItems: 'center',
             marginBottom: 12,
           }}
         >
-          {i18n.t('onboardingBackfillTitle')}
-        </Text>
+          <Text
+            style={{
+              fontSize: 32,
+              fontFamily: theme.fonts.bold,
+              color: theme.colors.text,
+              flexShrink: 1,
+            }}
+          >
+            {i18n.t('onboardingBackfillTitle')}
+          </Text>
+          <InfoPopover
+            title={i18n.t('onboardingBackfillTitle')}
+            description={i18n.t('onboardingBackfillHelper')}
+          />
+        </View>
         <Text
           style={{
             fontSize: 14,
             color: theme.colors.textAlt,
             lineHeight: 20,
-            marginBottom: 16,
-          }}
-        >
-          {i18n.t('onboardingBackfillSubtitle')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 12,
-            color: theme.colors.textAlt,
-            lineHeight: 18,
             marginBottom: 24,
           }}
         >
-          {i18n.t('onboardingBackfillHelper')}
+          {i18n.t('onboardingBackfillSubtitle')}
         </Text>
 
         <View style={{ gap: 12 }}>

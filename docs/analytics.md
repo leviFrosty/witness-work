@@ -92,8 +92,10 @@ Stable step IDs:
 `defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
 
 Notification permission outcomes and import availability/outcomes help distinguish
-friction from an intentional skip. iCloud Restore completes onboarding directly,
-with `completion_method: icloud_restore`; the guided path uses `guided`.
+friction from an intentional skip. iCloud Restore and a JSON backup restore from
+the `pickUpWhereLeftOff` chooser complete onboarding directly, with
+`completion_method: icloud_restore` or `backup_restore`; the guided path uses
+`guided`. "Start fresh" on that chooser records `onboarding_step_skipped`.
 Home checklist interactions cover activation after the guided flow.
 `onboarding_checklist_item_marked` records checking an item off (or back on) by
 hand, with `item_id`, `done` (boolean), and `source` (`circle` for the item's
@@ -106,7 +108,7 @@ Measure drop-off with an observation window and allow resumed onboarding.
 ## Imports
 
 Filter on `import_type` (`notes`, `mytime`, `icloud`, `backup_json`) and `source`.
-The onboarding chooser records `import_type_selected`. Shared lifecycle events
+The onboarding chooser records `import_type_selected` (including `backup_json`). Shared lifecycle events
 include `import_started`, `import_preview_ready`, `import_failed`, and cancellation,
 retry, stop, reset, or undo events where supported.
 

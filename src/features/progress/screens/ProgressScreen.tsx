@@ -40,7 +40,7 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   useRolloverPrompt()
-  const { isWide } = useAdaptiveLayout()
+  const { isWide, contentMaxWidth } = useAdaptiveLayout()
   const rootNavigation = useNavigation<RootStackNavigation>()
   const now = moment()
   const currentYear = now.year()
@@ -133,7 +133,10 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         />
         <RootHeader
           title={i18n.t('Progress')}
-          contentStyle={{ maxWidth: 720 }}
+          contentStyle={{
+            maxWidth: isWide ? contentMaxWidth : 720,
+            paddingHorizontal: isWide ? 24 : 15,
+          }}
           actions={
             <HeaderPillButton
               icon={FileTextIcon}
@@ -152,8 +155,9 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           style={{
             paddingTop: isWide ? 9 : 0,
             paddingBottom: isWide ? 15 : 6,
+            paddingHorizontal: isWide ? 24 : 15,
             width: '100%',
-            maxWidth: 720,
+            maxWidth: isWide ? contentMaxWidth : 720,
             alignSelf: 'center',
             gap: 6,
           }}
@@ -166,10 +170,9 @@ const ProgressScreen = ({ route, navigation }: Props) => {
               { key: 'year', label: i18n.t('year') },
               { key: 'allTime', label: i18n.t('allTime') },
             ]}
-            style={{ marginHorizontal: 15 }}
           />
           {activeTab === 'month' ? (
-            <View style={{ paddingHorizontal: 15 }}>
+            <View>
               <XView style={{ justifyContent: 'space-between' }}>
                 <Button
                   onPress={() => handleMonthNav('back')}

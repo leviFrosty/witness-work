@@ -1,6 +1,6 @@
 import { CalendarCheck as TodayIcon } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
@@ -266,8 +266,8 @@ const MonthRow = ({
           paddingVertical: 12,
         }}
       >
-        <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-          <View style={{ gap: 4, flex: 1, minWidth: 0 }}>
+        <XView style={styles.columns}>
+          <View style={[styles.monthColumn, { gap: 4 }]}>
             <XView style={{ gap: 8 }}>
               <Text
                 style={{
@@ -296,38 +296,38 @@ const MonthRow = ({
               </XView>
             ) : null}
           </View>
-          <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
-            <Text
-              style={{
+          <Text
+            style={[
+              styles.numericColumn,
+              {
                 fontFamily: theme.fonts.semiBold,
                 color: hasActivity ? theme.colors.text : theme.colors.textAlt,
                 letterSpacing: -0.3,
-                flex: 1,
-                minWidth: 0,
                 textAlign: 'right',
-              }}
-            >
-              {showFuturePlanned
-                ? plannedDisplay.formatted
-                : completedDisplay.formatted}
-            </Text>
-            {showDelta ? (
-              <Text
-                style={{
+              },
+            ]}
+          >
+            {showFuturePlanned
+              ? plannedDisplay.formatted
+              : completedDisplay.formatted}
+          </Text>
+          {showDelta ? (
+            <Text
+              style={[
+                styles.numericColumn,
+                {
                   fontFamily: theme.fonts.semiBold,
                   color: deltaColor,
                   letterSpacing: -0.3,
-                  flex: 1,
-                  minWidth: 0,
                   textAlign: 'right',
-                }}
-              >
-                {deltaLabel}
-              </Text>
-            ) : (
-              <View style={{ flex: 1 }} />
-            )}
-          </XView>
+                },
+              ]}
+            >
+              {deltaLabel}
+            </Text>
+          ) : (
+            <View style={styles.numericColumn} />
+          )}
         </XView>
       </View>
     </ContextMenu>
@@ -422,63 +422,62 @@ const ProgressYearTab = ({
         <View style={{ gap: 8, paddingTop: 10 }}>
           <View style={{ gap: 6 }}>
             <XView
-              style={{
-                justifyContent: 'space-between',
-                gap: 12,
-                paddingHorizontal: 15,
-                paddingBottom: 2,
-              }}
+              style={[
+                styles.columns,
+                { paddingHorizontal: 16, paddingBottom: 2 },
+              ]}
             >
               <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                  flex: 1,
-                  minWidth: 0,
-                }}
+                style={[
+                  styles.monthColumn,
+                  {
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('xs'),
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  },
+                ]}
                 numberOfLines={1}
               >
                 {i18n.t('month')}
               </Text>
-              <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
-                <Text
-                  style={{
+              <Text
+                style={[
+                  styles.numericColumn,
+                  {
                     fontFamily: theme.fonts.semiBold,
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('xs'),
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
                     textAlign: 'right',
-                    flex: 1,
-                    minWidth: 0,
-                  }}
-                  numberOfLines={1}
-                >
-                  {i18n.t('hours')}
-                </Text>
-                {showDeltaColumn ? (
-                  <Text
-                    style={{
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {i18n.t('hours')}
+              </Text>
+              {showDeltaColumn ? (
+                <Text
+                  style={[
+                    styles.numericColumn,
+                    {
                       fontFamily: theme.fonts.semiBold,
                       color: theme.colors.textAlt,
                       fontSize: theme.fontSize('xs'),
                       textTransform: 'uppercase',
                       letterSpacing: 0.5,
-                      flex: 1,
-                      minWidth: 0,
                       textAlign: 'right',
-                    }}
-                    numberOfLines={1}
-                  >
-                    {i18n.t('vsGoal')}
-                  </Text>
-                ) : (
-                  <View style={{ flex: 1 }} />
-                )}
-              </XView>
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {i18n.t('vsGoal')}
+                </Text>
+              ) : (
+                <View style={styles.numericColumn} />
+              )}
             </XView>
             {months.map(({ month, year: calendarYear }) => {
               const isCurrent =
@@ -537,5 +536,20 @@ const ProgressYearTab = ({
     />
   )
 }
+
+const styles = StyleSheet.create({
+  columns: {
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  monthColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  numericColumn: {
+    width: '25%',
+    minWidth: 0,
+  },
+})
 
 export default ProgressYearTab

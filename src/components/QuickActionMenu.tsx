@@ -9,6 +9,7 @@ import * as Crypto from 'expo-crypto'
 import usePublisher from '@/hooks/usePublisher'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { analytics } from '@/lib/analytics'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -26,6 +27,7 @@ type QuickActionOption = 'addTime' | 'addContact' | 'addPlan'
 export default function QuickActionMenu({ navigation, onAction }: Props) {
   const { showsTimer } = usePublisher()
   const handleQuickAction = (action: QuickActionOption) => {
+    analytics.capture('quick_action_selected', { action })
     onAction()
     switch (action) {
       case 'addTime':

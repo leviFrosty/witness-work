@@ -30,7 +30,6 @@ import useTheme from '@/contexts/theme'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useNavigation } from '@react-navigation/native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Contact } from '@/types/contact'
 import i18n from '@/lib/locales'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -90,7 +89,6 @@ export default function MapOnboarding() {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const abortController = useRef<AbortController | null>(null)
-  const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
   const [fetching, setFetching] = useState(false)
   const [locationPermissions, setLocationPermissions] = useState<boolean>()
@@ -345,7 +343,7 @@ export default function MapOnboarding() {
         width: '100%',
         maxWidth: 600,
         alignSelf: 'center',
-        paddingTop: insets.top + 60,
+        paddingTop: 24,
         paddingBottom: tabBarHeight + 20,
       }}
     >

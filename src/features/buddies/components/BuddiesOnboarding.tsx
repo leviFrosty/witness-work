@@ -13,7 +13,6 @@ import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
@@ -53,8 +52,8 @@ function Feature({
 }
 
 /**
- * First visit to the Buddies tab: what it is and how it's protected, then the
- * profile buddies will see. The list that follows offers the first invite.
+ * First visit to Buddies: what it is and how it's protected, then the profile
+ * buddies will see. The list that follows offers the first invite.
  */
 export default function BuddiesOnboarding({
   onDone,
@@ -82,8 +81,8 @@ export default function BuddiesOnboarding({
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-        paddingTop: insets.top + 8,
-        paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 16,
+        paddingTop: 8,
+        paddingBottom: insets.bottom + 16,
       }}
     >
       <View

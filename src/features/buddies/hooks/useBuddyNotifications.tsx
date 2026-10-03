@@ -28,7 +28,7 @@ export type BuddyTraySyncTrigger = 'open' | 'retry' | 'poll'
 export async function syncBuddyNotifications(
   trigger: BuddyTraySyncTrigger = 'open'
 ) {
-  // Opening the tray never starts Buddies; that's the Buddies tab's job.
+  // Opening the tray never starts Buddies; that's the Buddies screen's job.
   if (useBuddies.getState().registeredInboxId === null) return
   const startedAt = Date.now()
   if (trigger !== 'poll') useBuddyTraySync.setState({ syncing: true })

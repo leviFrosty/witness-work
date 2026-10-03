@@ -1,7 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import TabBar from '@/components/ui/TabBar'
-import Map from '@/app/navigation/MapRouteScreen'
-import DrawerNavigator from '@/app/navigation/DrawerNavigator'
+import HomeNavigator from '@/app/navigation/HomeNavigator'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
@@ -12,7 +11,7 @@ import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '@/app/navigation/ToolsScreen'
 import ProgressScreen from '@/features/progress/screens/ProgressScreen'
 import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
-import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
+import ContactsTabScreen from '@/app/contacts/ContactsTabScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
@@ -26,9 +25,6 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SettingsSplitScreen from '@/app/navigation/SettingsSplitScreen'
-import BuddiesTabScreen from '@/app/buddies/BuddiesTabScreen'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,
@@ -50,8 +46,6 @@ const HomeTabStack = () => {
   } = usePreferences()
   const { showsYearTabs } = usePublisher()
   const [whatsNewSince, setWhatsNewSince] = useState<string | null>(null)
-  const buddiesEnabled = useBuddiesEnabled()
-  const buddyRequests = useBuddies((state) => state.incomingClaims.length)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
   const requestReveal = useMilestoneRevealStore((s) => s.request)
@@ -163,22 +157,16 @@ const HomeTabStack = () => {
           tabBarPosition: hasSidebar ? 'left' : 'bottom',
         }}
       >
-        <Tab.Screen name='Home' component={DrawerNavigator} />
-        <Tab.Screen name='Contacts' component={ContactsScreen} />
-        {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
+        {/* At most four destinations, in a fixed order. Features join an
+            existing destination (Map in Contacts, Buddies in Schedule) rather
+            than adding or reshuffling tabs. */}
+        <Tab.Screen name='Home' component={HomeNavigator} />
+        <Tab.Screen name='Schedule' component={ScheduleScreen} />
+        <Tab.Screen name='Contacts' component={ContactsTabScreen} />
         {showsYearTabs && (
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
-        <Tab.Screen name='Schedule' component={ScheduleScreen} />
-        {buddiesEnabled && (
-          <Tab.Screen
-            name='Buddies'
-            component={BuddiesTabScreen}
-            options={{ tabBarBadge: buddyRequests || undefined }}
-          />
-        )}
-
-        <Tab.Screen name='Map' component={Map} />
+        {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {hasSidebar && (
           <Tab.Screen name='Settings' component={SettingsSplitScreen} />
         )}

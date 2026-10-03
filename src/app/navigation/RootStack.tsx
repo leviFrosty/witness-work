@@ -27,6 +27,8 @@ import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
 import BuddiesSettingsScreen from '@/features/buddies/screens/BuddiesSettingsScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import BuddiesFeedbackScreen from '@/features/buddies/screens/BuddiesFeedbackScreen'
+import BuddiesRouteScreen from '@/app/buddies/BuddiesRouteScreen'
+import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -215,6 +217,22 @@ const RootStackComponent = () => {
           }}
           name='ServiceHistory'
           component={ServiceHistoryScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => <Header buttonType='back' noBottomBorder />,
+          }}
+          name='SettingsMenu'
+          component={SettingsScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('buddies_title')} />
+            ),
+          }}
+          name='Buddies'
+          component={BuddiesRouteScreen}
         />
         <RootStack.Screen
           options={{

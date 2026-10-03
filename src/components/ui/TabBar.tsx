@@ -4,10 +4,8 @@ import {
   ChartLine as ChartLineIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
   House as HouseIcon,
-  MapPinned as MapPinnedIcon,
   Plus as PlusIcon,
   Settings as SettingsIcon,
-  Users as UsersIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
 import { useRef, useState } from 'react'
@@ -29,11 +27,12 @@ import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import { analytics } from '@/lib/analytics'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
 const PILL_GAP = 8
-const ACCESSORY_DIAMETER = CAPSULE_HEIGHT
+const ACCESSORY_MIN_WIDTH = 60
 const SIDEBAR_INSET = 12
 const SIDEBAR_RADIUS = 28
 const SIDEBAR_PADDING = 12
@@ -57,7 +56,10 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const glassColorScheme = useGlassColorScheme()
   const isDark = theme.colors.background === '#121212'
   const { hasSidebar, sidebarWidth } = useAdaptiveLayout()
-  const overlaysMap = hasSidebar && state.routes[state.index].name === 'Map'
+  const layoutVariant = hasSidebar ? 'sidebar' : 'bottom_bar'
+
+  const openQuickActions = () =>
+    analytics.capture('quick_action_opened', { layout_variant: layoutVariant })
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key]
@@ -68,6 +70,12 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
     const isSettings = label === 'Settings'
 
     const onPress = () => {
+      analytics.capture('navigation_destination_selected', {
+        from: state.routes[state.index].name,
+        to: route.name,
+        layout_variant: layoutVariant,
+        reselected: isFocused,
+      })
       const event = props.navigation.emit({
         type: 'tabPress',
         target: route.key,
@@ -84,8 +92,6 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           return HouseIcon
         case 'Contacts':
           return BookUserIcon
-        case 'Map':
-          return MapPinnedIcon
         case 'Tools':
           return WrenchIcon
         case 'Progress':
@@ -94,8 +100,6 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           return CalendarDaysIcon
         case 'Settings':
           return SettingsIcon
-        case 'Buddies':
-          return UsersIcon
         default:
           return CircleQuestionMarkIcon
       }
@@ -156,21 +160,20 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
             />
           )}
         </View>
-        {(hasSidebar || isFocused) && (
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
-            style={{
-              color,
-              flexShrink: 1,
-              fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t(labelKey)}
-          </Text>
-        )}
+        {/* Every destination keeps its label so none relies on its icon. */}
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+          style={{
+            color,
+            flexShrink: 1,
+            fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
+            fontFamily: isFocused ? theme.fonts.semiBold : theme.fonts.regular,
+          }}
+        >
+          {i18n.t(labelKey)}
+        </Text>
       </Pressable>
     )
   }
@@ -220,26 +223,45 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   )
 
   const accessoryShape = {
-    width: ACCESSORY_DIAMETER,
+    minWidth: ACCESSORY_MIN_WIDTH,
     height: CAPSULE_HEIGHT,
     borderRadius: CAPSULE_HEIGHT / 2,
     borderCurve: 'continuous' as const,
     overflow: 'hidden' as const,
   }
 
+  // An action, not a destination: it never shows a selected state.
   const plusButton = (
     <Button
       noTransform
-      onPress={() => setSheetOpen(true)}
+      onPress={() => {
+        openQuickActions()
+        setSheetOpen(true)
+      }}
+      accessibilityLabel={i18n.t('quickAction')}
       hitSlop={{ top: 20, bottom: 20, left: 12, right: 12 }}
       style={{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 2,
+        paddingHorizontal: 10,
         backgroundColor: 'transparent',
       }}
     >
-      <IconButton icon={PlusIcon} color={theme.colors.textInverse} size={22} />
+      <IconButton icon={PlusIcon} color={theme.colors.textInverse} size={18} />
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+        style={{
+          color: theme.colors.textInverse,
+          fontSize: theme.fontSize('xs'),
+          fontFamily: theme.fonts.semiBold,
+        }}
+      >
+        {i18n.t('add')}
+      </Text>
     </Button>
   )
 
@@ -269,19 +291,12 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         pointerEvents='box-none'
         style={{
           width: sidebarWidth,
-          position: overlaysMap ? 'absolute' : 'relative',
-          top: overlaysMap ? 0 : undefined,
-          bottom: overlaysMap ? 0 : undefined,
-          left: overlaysMap ? 0 : undefined,
-          zIndex: overlaysMap ? 1 : undefined,
           flexGrow: 0,
           flexShrink: 0,
           paddingTop: insets.top + SIDEBAR_INSET,
           paddingBottom: insets.bottom + SIDEBAR_INSET,
           paddingHorizontal: SIDEBAR_INSET,
-          backgroundColor: overlaysMap
-            ? 'transparent'
-            : theme.colors.background,
+          backgroundColor: theme.colors.background,
         }}
       >
         <View
@@ -370,7 +385,10 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                   <View ref={anchorRef} collapsable={false}>
                     <Button
                       noTransform
-                      onPress={onPress}
+                      onPress={() => {
+                        if (!expanded) openQuickActions()
+                        onPress()
+                      }}
                       accessibilityLabel={i18n.t('quickAction')}
                       accessibilityState={{ expanded }}
                       style={{

@@ -177,7 +177,8 @@ backup/restore journeys.
 
 Use `paywall_opened` for entry intent and `paywall_viewed` for the rendered screen.
 Break down by `source`, and `feature` for feature gates. Sources distinguish the
-heart entry, settings, the nudge (`notifications_tray`; `home_nudge` before the
+account menu's Support WitnessWork (`account_menu`; `header_heart` before it
+replaced Home's heart), settings, the nudge (`notifications_tray`; `home_nudge` before the
 tray), onboarding, Notes Import limit, and feature gates. Nudge and feature-gate
 view/click/dismiss events measure the earlier funnel. Nudge events carry `source:
 notifications_tray`; an impression means the nudge was shown on screen in the
@@ -322,6 +323,34 @@ writes as manual feature usage. Contact archive/recovery/favorites and many indi
 preference controls remain outside explicit action coverage. Native widget-only timer interactions do not pass
 through the JavaScript timer hook. Share-sheet presentation or external-app handoff
 does not prove delivery/submission to another person or app.
+
+## Navigation
+
+The bottom bar holds at most four destinations in a fixed order — Home, Schedule,
+Contacts, Progress (Progress only for roles that log hours) — beside a labeled Add
+action. Map is a view inside Contacts and Buddies opens from Schedule's header, so
+flags and features don't add or reorder tabs. Wide layouts show the same
+destinations in the sidebar, plus Settings.
+
+| Event                             | When / properties                                                                                                                                                                                                                                         |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `navigation_destination_selected` | A bottom-bar or sidebar destination is tapped. `from` and `to` (route names), `layout_variant` (`bottom_bar` or `sidebar`), `reselected` (tapped the destination already open).                                                                           |
+| `quick_action_opened`             | Add is opened. `layout_variant`.                                                                                                                                                                                                                          |
+| `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, or `addContact`. Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                                                        |
+| `contacts_view_changed`           | Contacts switches workspace. `view` (`list` or `map`), `source`: `toggle` (the List / Map control), `link` (opened with a view, e.g. Home's map checklist item), or `map_empty_state` (the map's review-contacts button). The choice persists per device. |
+| `buddies_opened`                  | Schedule's Buddies button is tapped. `source: schedule_header`, `has_requests` (a request was waiting).                                                                                                                                                   |
+| `service_report_opened`           | Progress's View Report is tapped. `source: progress_header`, `tab` (`month`, `year`, or `allTime`).                                                                                                                                                       |
+
+The avatar on every root header opens the account menu: Profile, Settings,
+Support WitnessWork, and Help Center. Its choices arrive as `context_menu_action`
+with `surface: account_menu`. On compact layouts Settings is now a pushed
+`SettingsMenu` screen instead of Home's drawer, so its `$screen` reach is
+comparable from this release on; compare older `Settings` counts with care. Home
+still reports as `Dashboard`. The Map no longer has its own route; Contacts sends
+`$screen` `Map` (`previous_screen: Contacts`, same once-per-session rule) whenever it
+is focused on the map, so Map reach continues. Every Map session now also contains
+Contacts, so don't compare Map-without-Contacts shares across the change.
+Buddies is a pushed `Buddies` screen.
 
 ## Context menus
 
@@ -504,7 +533,7 @@ for campaign links, default recurrence/dismissal behavior, and rollout steps.
 
 ### Buddies Alpha feedback
 
-The Buddies tab's Alpha badge, its feedback card, and Buddies Settings open the
+The Buddies screen's Alpha badge, its feedback card, and Buddies Settings open the
 Buddies Feedback screen, which explains Alpha and then opens the API survey
 [WitnessWork Buddies feedback (Alpha)](https://us.posthog.com/project/492895/surveys/01a0f037-23cd-0000-e818-63a4821064d8)
 (`schedule: always`, so testers can send feedback repeatedly). Its ID lives in

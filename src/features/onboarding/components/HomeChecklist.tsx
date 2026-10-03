@@ -246,7 +246,7 @@ const HomeChecklist = () => {
                 break
               case 'tryTheMap':
               case 'mapContacts':
-                homeNavigation.navigate('Map')
+                homeNavigation.navigate('Contacts', { view: 'map' })
                 break
               case 'planWeek':
                 homeNavigation.navigate('Schedule')

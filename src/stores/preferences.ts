@@ -24,6 +24,7 @@ import type { AssistantEvent } from '@/types/assistant'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
+import type { ContactsView } from '@/types/homeStack'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
@@ -326,6 +327,12 @@ export const PREFERENCE_DEFAULTS = {
    * switch so the user doesn't lose their filter set when leaving the screen.
    */
   contactsFilters: [] as ActiveFilter[],
+  /**
+   * The Contacts tab's last chosen workspace. Map lives inside Contacts, so a
+   * returning Map user comes back to the map. Device-local: a phone and an iPad
+   * can each keep their own.
+   */
+  contactsView: 'list' as ContactsView,
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,

@@ -25,7 +25,7 @@ Application source. Organised into the shared / feature / app tiers described in
 App-level infrastructure that boots in `App.tsx` and may reach into any feature.
 
 - [`App.tsx`](/src/app/App.tsx) — application entry point.
-- [`navigation/`](/src/app/navigation) — `RootStack`, `HomeTabStack`, `DrawerNavigator`, `ToolsScreen`.
+- [`navigation/`](/src/app/navigation) — `RootStack`, `HomeTabStack`, `HomeNavigator`, `ToolsScreen`.
 - [`widgets/`](/src/app/widgets) — iOS widget snapshot composition (appointments, calendar, contacts, report, sync).
 - [`sync/`](/src/app/sync) — iCloud sync orchestration (payload, merge, image sync, sync components).
 - [`deep-links/`](/src/app/deep-links) — `DeepLinkListeners`.

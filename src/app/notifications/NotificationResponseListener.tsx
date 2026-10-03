@@ -37,7 +37,7 @@ const MAX_RETRIES = 20
 /** Responses already routed, so a remount doesn't replay the launch tap. */
 const handled = new Set<string>()
 
-/** Requests and new pairings live on the Buddies tab. */
+/** Requests and new pairings live on the Buddies screen. */
 const opensBuddiesTab = (kind: string) =>
   kind === 'invite.claimed' || kind === 'pair.confirmed' || !kind
 
@@ -135,11 +135,11 @@ export default function NotificationResponseListener() {
       routed = openReminderTarget(pending.reminder)
       if (routed) markReminderSeen(pending.reminder)
     } else if (opensBuddiesTab(pending.push.kind) && buddiesEnabled) {
-      navigationRef.navigate('Root', { screen: 'Buddies' } as never)
+      navigationRef.navigate('Buddies')
       routed = true
     } else routed = false
     if (!routed) {
-      // A deleted record or an unavailable Buddies tab: the tray still lists
+      // A deleted record or unavailable Buddies: the tray still lists
       // what's current, including Buddies invitations and changes.
       navigationRef.navigate('Root', { screen: 'Home' } as never)
       requestNotificationsTray()

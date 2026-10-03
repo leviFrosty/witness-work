@@ -200,6 +200,11 @@ export const FAQS: FAQEntry[] = [
     related: [150, 43],
   },
   {
+    id: 'findNavigation',
+    category: 'general',
+    pinned: true,
+  },
+  {
     id: 'reportBug',
     category: 'general',
   },

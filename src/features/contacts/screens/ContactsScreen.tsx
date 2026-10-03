@@ -15,8 +15,16 @@ import {
   useRef,
   useState,
 } from 'react'
-import { TextInput, useWindowDimensions, View } from 'react-native'
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { Input, InputProps } from 'tamagui'
+import Animated from 'react-native-reanimated'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
@@ -32,6 +40,7 @@ import RootHeader from '@/components/RootHeader'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import { ContactsView } from '@/types/homeStack'
 import Card from '@/components/ui/Card'
+import Collapse from '@/components/ui/Collapse'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -51,6 +60,7 @@ import {
   SelectionTextButton,
 } from '@/features/contacts/components/ListSelection'
 import useListSelection from '@/features/contacts/hooks/useListSelection'
+import { trackListScroll } from '@/features/contacts/lib/listHeaderCollapse'
 
 /**
  * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
@@ -61,13 +71,20 @@ import useListSelection from '@/features/contacts/hooks/useListSelection'
  * tucked behind a single sliders icon that opens the modal
  * `ContactsSortAndFilterScreen`. Select mode (batch actions on the rows shown)
  * starts from the header's "…" menu, as in Notes and Files, or from a row's
- * long-press "Select".
+ * long-press "Select". On the Map the header floats translucent over it so the
+ * map runs edge to edge, and compacts once the user starts exploring. On the
+ * List, scrolling down tucks everything but the title and search away;
+ * scrolling up, swiping down on the header, or tapping the title restores it.
  */
+
 const ContactsScreen = ({
-  map,
+  renderMap,
 }: {
-  /** The Map workspace, composed in by the app tier. */
-  map: ReactNode
+  /**
+   * The Map workspace, composed in by the app tier. `topInset` is the height of
+   * the header floating over it; `onExplore` compacts that header.
+   */
+  renderMap: (props: { topInset: number; onExplore: () => void }) => ReactNode
 }) => {
   const theme = useTheme()
   const { isWide, hasSidebar } = useAdaptiveLayout()
@@ -78,6 +95,14 @@ const ContactsScreen = ({
   const contactsView = usePreferences((s) => s.contactsView)
   const setPreferences = usePreferences((s) => s.set)
   const showsMap = contactsView === 'map'
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const [mapExplored, setMapExplored] = useState(false)
+  // Each visit to the Map starts with the full header.
+  if (!showsMap && mapExplored) setMapExplored(false)
+  const [listCollapsed, setListCollapsed] = useState(false)
+  if (showsMap && listCollapsed) setListCollapsed(false)
+  const hasCollapsedList = useRef(false)
+  const listScroll = useRef({ userDriven: false, lastY: 0, anchorY: 0 })
 
   // Map was its own tab; keep reporting its reach as the `Map` screen (sent
   // once per session like every screen).
@@ -149,6 +174,62 @@ const ContactsScreen = ({
     })
     return () => cancelAnimationFrame(frame)
   }, [isWide, selectedContact, searchSortedAndFilteredContacts])
+
+  const collapseList = (collapsed: boolean) => {
+    if (collapsed === listCollapsed) return
+    // Reported once per visit; scrolling toggles it too often to count each.
+    if (collapsed && !hasCollapsedList.current) {
+      hasCollapsedList.current = true
+      analytics.capture('contacts_list_header_collapsed')
+    }
+    setListCollapsed(collapsed)
+  }
+
+  const expandHeader = (source: 'title_tap' | 'header_swipe') => {
+    if (!listCollapsed && !mapExplored) return
+    analytics.capture('contacts_header_expanded', {
+      view: contactsView,
+      source,
+    })
+    setListCollapsed(false)
+    setMapExplored(false)
+  }
+
+  // Only the user's own scrolling counts — the list also jumps to the top on
+  // its own as the search changes.
+  const handleListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent
+    const frame = {
+      y: contentOffset.y,
+      contentHeight: contentSize.height,
+      viewportHeight: layoutMeasurement.height,
+    }
+    if (!listScroll.current.userDriven) {
+      listScroll.current.lastY = frame.y
+      return
+    }
+    const collapsed = trackListScroll(listScroll.current, frame)
+    if (collapsed !== undefined) collapseList(collapsed)
+  }
+  const setListScrollUserDriven = (userDriven: boolean) => () => {
+    listScroll.current.userDriven = userDriven
+  }
+  const handleListDragStart = () => {
+    listScroll.current.userDriven = true
+    listScroll.current.anchorY = listScroll.current.lastY
+  }
+
+  const headerCollapsed = listCollapsed || mapExplored
+  const headerSwipeDown = Gesture.Pan()
+    .runOnJS(true)
+    .enabled(headerCollapsed)
+    .activeOffsetY(12)
+    .failOffsetY(-12)
+    .onEnd((e) => {
+      if (e.translationY > 24 || e.velocityY > 400) {
+        expandHeader('header_swipe')
+      }
+    })
 
   const sortLabel = useMemo(() => {
     const builtIn = builtInContactSortOptions.find(
@@ -268,29 +349,62 @@ const ContactsScreen = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <RootHeader
-        title={
-          selection.selecting
-            ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('selectedCount', { count: selection.ids.length })
-            : i18n.t('contacts_screen_title')
-        }
-        actions={headerActions}
-        contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-      >
-        {!selection.selecting && (
-          <SegmentedControl<ContactsView>
-            value={contactsView}
-            onChange={changeView}
-            options={[
-              { key: 'list', label: i18n.t('contacts_view_list') },
-              { key: 'map', label: i18n.t('map') },
-            ]}
-          />
-        )}
-      </RootHeader>
+      <GestureDetector gesture={headerSwipeDown}>
+        <View
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+          style={
+            showsMap
+              ? { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 }
+              : undefined
+          }
+        >
+          <RootHeader
+            floating={showsMap}
+            compact={headerCollapsed}
+            onPressTitle={
+              headerCollapsed ? () => expandHeader('title_tap') : undefined
+            }
+            title={
+              selection.selecting
+                ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                  i18n.t('selectedCount', { count: selection.ids.length })
+                : i18n.t('contacts_screen_title')
+            }
+            actions={headerActions}
+            contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+          >
+            {!selection.selecting && (
+              <Collapse collapsed={listCollapsed}>
+                <Animated.View
+                  style={{
+                    height: mapExplored ? 34 : 40,
+                    transitionProperty: 'height',
+                    transitionDuration: 260,
+                    transitionTimingFunction: 'ease-in-out',
+                  }}
+                >
+                  <SegmentedControl<ContactsView>
+                    value={contactsView}
+                    onChange={changeView}
+                    style={{ height: '100%' }}
+                    options={[
+                      { key: 'list', label: i18n.t('contacts_view_list') },
+                      { key: 'map', label: i18n.t('map') },
+                    ]}
+                  />
+                </Animated.View>
+              </Collapse>
+            )}
+          </RootHeader>
+        </View>
+      </GestureDetector>
       {showsMap ? (
-        <View style={{ flex: 1 }}>{map}</View>
+        <View style={{ flex: 1 }}>
+          {renderMap({
+            topInset: headerHeight,
+            onExplore: () => setMapExplored(true),
+          })}
+        </View>
       ) : (
         <View
           style={{
@@ -311,14 +425,18 @@ const ContactsScreen = ({
           >
             <View style={{ paddingHorizontal: 12, gap: 12, paddingBottom: 12 }}>
               <Card style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
-                <View style={{ gap: 14 }}>
-                  <ContactsStatsHeader
-                    contacts={contacts}
-                    index={conversationIndex}
-                    onPressDismissed={() =>
-                      navigation.navigate('Dismissed Contacts')
-                    }
-                  />
+                <View>
+                  <Collapse collapsed={listCollapsed}>
+                    <View style={{ paddingBottom: 14 }}>
+                      <ContactsStatsHeader
+                        contacts={contacts}
+                        index={conversationIndex}
+                        onPressDismissed={() =>
+                          navigation.navigate('Dismissed Contacts')
+                        }
+                      />
+                    </View>
+                  </Collapse>
 
                   {/* Search row. Inline TextInput so results update live as the user
                 types. Trailing sliders button opens the Sort & Filter sheet —
@@ -431,36 +549,38 @@ const ContactsScreen = ({
                   {/* Subtle sort indicator. Only shows when the user has changed
                 away from the default — keeps the resting state quiet. */}
                   {isSortNonDefault && sortLabel.length > 0 && (
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        marginTop: -4,
-                      }}
-                    >
-                      <LucideIcon
-                        icon={
-                          contactSortDirection === 'asc'
-                            ? ArrowUpIcon
-                            : ArrowDownIcon
-                        }
-                        size={theme.fontSize('xs')}
-                        style={{ color: theme.colors.textAlt }}
-                      />
-                      <Text
+                    <Collapse collapsed={listCollapsed}>
+                      <View
                         style={{
-                          color: theme.colors.textAlt,
-                          fontSize: theme.fontSize('xs'),
-                          fontFamily: theme.fonts.semiBold,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          paddingTop: 10,
                         }}
-                        numberOfLines={1}
                       >
-                        {i18n.t('contacts_sortAndFilter_sortLabel', {
-                          label: sortLabel,
-                        })}
-                      </Text>
-                    </View>
+                        <LucideIcon
+                          icon={
+                            contactSortDirection === 'asc'
+                              ? ArrowUpIcon
+                              : ArrowDownIcon
+                          }
+                          size={theme.fontSize('xs')}
+                          style={{ color: theme.colors.textAlt }}
+                        />
+                        <Text
+                          style={{
+                            color: theme.colors.textAlt,
+                            fontSize: theme.fontSize('xs'),
+                            fontFamily: theme.fonts.semiBold,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {i18n.t('contacts_sortAndFilter_sortLabel', {
+                            label: sortLabel,
+                          })}
+                        </Text>
+                      </View>
+                    </Collapse>
                   )}
                 </View>
               </Card>
@@ -508,6 +628,14 @@ const ContactsScreen = ({
               keyboardShouldPersistTaps='handled'
               keyboardDismissMode='on-drag'
               drawDistance={flashListDrawDistance}
+              onScroll={handleListScroll}
+              scrollEventThrottle={16}
+              onScrollBeginDrag={handleListDragStart}
+              onScrollEndDrag={setListScrollUserDriven(false)}
+              onMomentumScrollBegin={setListScrollUserDriven(true)}
+              onMomentumScrollEnd={setListScrollUserDriven(false)}
+              // Tapping the status bar returns to the top on iOS.
+              onScrollToTop={() => collapseList(false)}
               contentContainerStyle={{
                 paddingHorizontal: 12,
                 paddingBottom:

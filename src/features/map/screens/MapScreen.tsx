@@ -3,6 +3,10 @@ import {
   Expand as ExpandIcon,
   Info as InfoIcon,
   Navigation as NavigationIcon,
+  PanelBottomClose as PanelBottomCloseIcon,
+  PanelBottomOpen as PanelBottomOpenIcon,
+  PanelRightClose as PanelRightCloseIcon,
+  PanelRightOpen as PanelRightOpenIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -35,6 +39,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import { Carousel, type CarouselRef } from 'react-native-reanimated-carousel'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
@@ -94,11 +99,21 @@ const CAROUSEL_ANIMATION = {
   easing: Easing.bezier(0.25, 1, 0.5, 1),
 }
 
+/** How much of the stowed cards stays on screen to tap or swipe back up. */
+const CARD_PEEK = 28
+
+const STOW_TRANSITION = {
+  transitionDuration: 280,
+  transitionTimingFunction: 'ease-in-out',
+} as const
+
 interface FullMapViewProps {
   renderContactRow: MapContactRowRenderer
   contactMarkers: ContactMarker[]
   activeContactCount: number
   conversationIndex: ConversationIndex
+  topInset: number
+  onExplore?: () => void
 }
 
 const FullMapView = ({
@@ -106,11 +121,14 @@ const FullMapView = ({
   activeContactCount,
   conversationIndex,
   renderContactRow,
+  topInset,
+  onExplore,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
   const { isWide, hasSidebar, contentWidth: width } = useAdaptiveLayout()
-  // Map sits below the Contacts header, so size overlays to its own frame.
+  // Map runs under the floating Contacts header (`topInset`), so size overlays
+  // to its own frame.
   const [height, setHeight] = useState(windowHeight)
   const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
@@ -138,6 +156,9 @@ const FullMapView = ({
   const [noResultsHeight, setNoResultsHeight] = useState(0)
   const [search, setSearch] = useState('')
   const [searchExpanded, setSearchExpanded] = useState(false)
+  // Stowed cards tuck down to a peek (the wide inspector slides off-screen)
+  // for a full map.
+  const [cardsStowed, setCardsStowed] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
   const searchExpand = useSharedValue(0)
   const appTheme = useTheme()
@@ -378,6 +399,7 @@ const FullMapView = ({
   }, [])
 
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
+    setCardsStowed(false)
     // Clear the old filter before reconciliation so the saved Contact can
     // become the selected carousel card (or the revealed iPad inspector row).
     setSearch('')
@@ -502,14 +524,21 @@ const FullMapView = ({
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
   const mapCardBottom = bottomOverlayInset + LEGAL_LABEL_HEIGHT - 5
+  // The parallax layout scales the focused card around its centre, so its top
+  // edge sits this far below the carousel's frame.
+  const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
+  const stowedCardsOffset = CARD_HEIGHT - cardTopGap - CARD_PEEK
 
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, or the carousel.
   // Heights for the variable cards come from onLayout; the carousel is
   // fixed at CARD_HEIGHT.
-  const locationButtonBottom =
-    mapContactCreation.coordinate || visibleContactMarkers.length > 0
-      ? mapCardBottom + CARD_HEIGHT + 8
+  const locationButtonBottom = mapContactCreation.coordinate
+    ? mapCardBottom + CARD_HEIGHT + 8
+    : visibleContactMarkers.length > 0
+      ? cardsStowed
+        ? mapCardBottom + CARD_PEEK + 8
+        : mapCardBottom + CARD_HEIGHT + 8
       : contactMarkers.length === 0
         ? bottomOverlayInset + 12 + emptyStateHeight + 8
         : bottomOverlayInset + 4 + noResultsHeight + 8
@@ -533,7 +562,18 @@ const FullMapView = ({
   const SEARCH_SPRING_OPEN = { damping: 18, stiffness: 180, mass: 0.9 }
   const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
 
+  const toggleCardsStowed = (
+    source: 'button' | 'pin' | 'search' | 'peek_tap' | 'peek_swipe'
+  ) => {
+    const stowed = !cardsStowed
+    analytics.capture('map_cards_toggled', { stowed, source })
+    setCardsStowed(stowed)
+    if (stowed) onExplore?.()
+  }
+
   const expandSearch = () => {
+    // Results show in the cards, so bring them back.
+    if (cardsStowed) toggleCardsStowed('search')
     if (searchExpanded) {
       searchInputRef.current?.focus()
       return
@@ -558,7 +598,24 @@ const FullMapView = ({
     setSearchExpanded(false)
   }
 
+  // The peek brings the cards back on a tap or an upward swipe.
+  const cardsPeekGesture = Gesture.Exclusive(
+    Gesture.Pan()
+      .runOnJS(true)
+      .activeOffsetY(-8)
+      .failOffsetY(8)
+      .onEnd((e) => {
+        if (e.translationY < -24 || e.velocityY < -400) {
+          toggleCardsStowed('peek_swipe')
+        }
+      }),
+    Gesture.Tap()
+      .runOnJS(true)
+      .onEnd(() => toggleCardsStowed('peek_tap'))
+  )
+
   const handlePanDrag = () => {
+    onExplore?.()
     dismissSearchKeyboard()
     if (isTrackingUser) {
       stopTrackingUser()
@@ -601,7 +658,7 @@ const FullMapView = ({
         style={{
           width: '100%',
           maxWidth: isTablet ? 520 : undefined,
-          maxHeight: height - bottomOverlayInset - 80,
+          maxHeight: height - topInset - bottomOverlayInset - 80,
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
@@ -678,9 +735,11 @@ const FullMapView = ({
             }}
             onPanDrag={handlePanDrag}
             mapPadding={{
-              top: 0,
+              top: topInset,
               right:
-                isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
+                isWide && contactMarkers.length > 0 && !cardsStowed
+                  ? inspectorWidth + 32
+                  : 0,
               left: 0,
               bottom:
                 insets.bottom +
@@ -704,6 +763,7 @@ const FullMapView = ({
               <Marker
                 onPress={() => {
                   mapContactCreation.cancel()
+                  if (cardsStowed) toggleCardsStowed('pin')
                   setInspectorRevealRequest((request) => request + 1)
                   handlePinPress(c.id)
                 }}
@@ -733,7 +793,7 @@ const FullMapView = ({
               style={[
                 {
                   position: 'absolute',
-                  top: 8,
+                  top: topInset + 8,
                   left: 16,
                   height: 44,
                   borderRadius: 22,
@@ -891,13 +951,20 @@ const FullMapView = ({
               </View>
             </View>
           ) : isWide ? (
-            <View
+            <Animated.View
+              pointerEvents={cardsStowed ? 'none' : 'box-none'}
               style={{
                 position: 'absolute',
                 right: 16,
-                top: 8,
+                top: topInset + 8,
                 bottom: bottomOverlayInset + 28,
                 width: inspectorWidth,
+                opacity: cardsStowed ? 0 : 1,
+                transform: [
+                  { translateX: cardsStowed ? inspectorWidth + 32 : 0 },
+                ],
+                transitionProperty: ['transform', 'opacity'],
+                ...STOW_TRANSITION,
               }}
             >
               <MapContactInspector
@@ -908,45 +975,94 @@ const FullMapView = ({
                 index={conversationIndex}
                 onSelect={handlePinPress}
               />
-            </View>
+            </Animated.View>
           ) : (
-            <Carousel
-              onSnapToItem={handleCarouselSnap}
-              onScrollStart={handleCarouselScrollStart}
-              defaultIndex={Math.max(
-                0,
-                findContactIndexById(visibleContactMarkers, activeContactId)
-              )}
-              ref={carouselRef}
-              data={visibleContactMarkers}
-              keyExtractor={(contact) => contact.id}
-              renderItem={({ item }) => (
-                <MapCarouselCard contact={item} index={conversationIndex} />
-              )}
-              animation={CAROUSEL_ANIMATION}
-              // Only mount the visible card plus a few neighbors on each side —
-              // without renderWindowSize the v5 renderer mounts every Contact's
-              // card up front, regressing the map screen's first paint.
-              renderWindowSize={7}
-              layout={{
-                type: 'parallax',
-                offset: 100,
-                scale: parallaxScrollingScale,
-                adjacentScale: parallaxScrollingScale ** 2,
-              }}
-              loop={visibleContactMarkers.length !== 1}
+            // Clipped so stowed cards tuck away above the tab bar, leaving only
+            // their top edges peeking out.
+            <View
+              pointerEvents='box-none'
               style={{
                 position: 'absolute',
                 bottom: mapCardBottom,
                 width,
                 height: CARD_HEIGHT,
+                overflow: 'hidden',
               }}
-            />
+            >
+              <Animated.View
+                pointerEvents={cardsStowed ? 'none' : 'box-none'}
+                style={{
+                  flex: 1,
+                  transform: [
+                    { translateY: cardsStowed ? stowedCardsOffset : 0 },
+                  ],
+                  transitionProperty: 'transform',
+                  ...STOW_TRANSITION,
+                }}
+              >
+                <Carousel
+                  onSnapToItem={handleCarouselSnap}
+                  onScrollStart={handleCarouselScrollStart}
+                  defaultIndex={Math.max(
+                    0,
+                    findContactIndexById(visibleContactMarkers, activeContactId)
+                  )}
+                  ref={carouselRef}
+                  data={visibleContactMarkers}
+                  keyExtractor={(contact) => contact.id}
+                  renderItem={({ item }) => (
+                    <MapCarouselCard contact={item} index={conversationIndex} />
+                  )}
+                  animation={CAROUSEL_ANIMATION}
+                  // Only mount the visible card plus a few neighbors on each side —
+                  // without renderWindowSize the v5 renderer mounts every Contact's
+                  // card up front, regressing the map screen's first paint.
+                  renderWindowSize={7}
+                  layout={{
+                    type: 'parallax',
+                    offset: 100,
+                    scale: parallaxScrollingScale,
+                    adjacentScale: parallaxScrollingScale ** 2,
+                  }}
+                  loop={visibleContactMarkers.length !== 1}
+                  style={{ width, height: CARD_HEIGHT }}
+                />
+              </Animated.View>
+              {cardsStowed && (
+                <GestureDetector gesture={cardsPeekGesture}>
+                  <View
+                    accessible
+                    accessibilityRole='button'
+                    accessibilityLabel={i18n.t('map_showContactCards')}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      // Taller than the peek so it's an easy target.
+                      height: CARD_PEEK + 20,
+                      paddingTop: 8,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 36,
+                        height: 5,
+                        borderRadius: 3,
+                        backgroundColor: theme.colors.textAlt,
+                        opacity: 0.6,
+                      }}
+                    />
+                  </View>
+                </GestureDetector>
+              )}
+            </View>
           )}
           <View
             style={{
               position: 'absolute',
-              top: contactMarkers.length > 0 ? 64 : 8,
+              top: topInset + (contactMarkers.length > 0 ? 64 : 8),
               left: 16,
               gap: 8,
             }}
@@ -965,6 +1081,33 @@ const FullMapView = ({
                 />
               </Button>
             )}
+            {visibleContactMarkers.length >= 1 &&
+              !mapContactCreation.coordinate && (
+                <Button
+                  accessibilityLabel={i18n.t(
+                    cardsStowed
+                      ? 'map_showContactCards'
+                      : 'map_hideContactCards'
+                  )}
+                  variant='glass'
+                  onPress={() => toggleCardsStowed('button')}
+                  style={mapControlStyle}
+                >
+                  <LucideIcon
+                    icon={
+                      isWide
+                        ? cardsStowed
+                          ? PanelRightOpenIcon
+                          : PanelRightCloseIcon
+                        : cardsStowed
+                          ? PanelBottomOpenIcon
+                          : PanelBottomCloseIcon
+                    }
+                    size={theme.fontSize('sm')}
+                    style={{ color: theme.colors.text }}
+                  />
+                </Button>
+              )}
             <MapLayerMenu
               value={mapLayer}
               onChange={setMapLayer}
@@ -1010,12 +1153,16 @@ const FullMapView = ({
               <MapKey />
             </AnchoredPopover>
           </View>
-          <View
+          <Animated.View
             style={{
               position: 'absolute',
               right:
-                isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
+                isWide && contactMarkers.length > 0 && !cardsStowed
+                  ? inspectorWidth + 48
+                  : 16,
               bottom: isWide ? bottomOverlayInset + 32 : locationButtonBottom,
+              transitionProperty: ['right', 'bottom'],
+              ...STOW_TRANSITION,
             }}
           >
             <Button
@@ -1038,7 +1185,7 @@ const FullMapView = ({
                 }}
               />
             </Button>
-          </View>
+          </Animated.View>
         </MapImageryContext.Provider>
       </GlassColorSchemeOverrideContext.Provider>
     </ThemeContext.Provider>
@@ -1047,8 +1194,14 @@ const FullMapView = ({
 
 const MapScreen = ({
   renderContactRow,
+  topInset = 0,
+  onExplore,
 }: {
   renderContactRow: MapContactRowRenderer
+  /** Height of any header floating over the top of the map. */
+  topInset?: number
+  /** The user started exploring: dragged the map or stowed the cards. */
+  onExplore?: () => void
 }) => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
@@ -1080,7 +1233,7 @@ const MapScreen = ({
 
   if (!hasCompletedMapOnboarding) {
     return (
-      <Wrapper insets='none' style={{ flexGrow: 1 }}>
+      <Wrapper insets='none' style={{ flexGrow: 1, paddingTop: topInset }}>
         <MapOnboarding />
       </Wrapper>
     )
@@ -1093,6 +1246,8 @@ const MapScreen = ({
         contactMarkers={contactMarkers}
         activeContactCount={activeContacts.length}
         conversationIndex={conversationIndex}
+        topInset={topInset}
+        onExplore={onExplore}
       />
     </Wrapper>
   )

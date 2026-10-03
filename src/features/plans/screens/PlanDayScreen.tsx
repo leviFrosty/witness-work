@@ -523,6 +523,7 @@ const PlanFields = (props: {
           onChangeText={props.setTitle}
           placeholder={i18n.t('planTitle_placeholder')}
           placeholderTextColor={theme.colors.textAlt}
+          textAlign='left'
           maxLength={100}
           style={{
             borderColor: theme.colors.border,

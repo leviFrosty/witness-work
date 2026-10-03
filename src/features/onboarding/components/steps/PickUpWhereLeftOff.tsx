@@ -1,8 +1,10 @@
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
+  ArchiveRestore as ArchiveRestoreIcon,
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
@@ -18,11 +20,13 @@ import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Button from '@/components/ui/Button'
+import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
+import { useBackupImport } from '@/hooks/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
 
@@ -95,12 +99,16 @@ const OptionCard = ({
 /**
  * Onboarding "Pick up where you left off" chooser — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
- * iCloud (decision 9). MyTime + iCloud reuse their existing step components
- * inline; iCloud is grayed when the device has no iCloud. The Notes option
- * navigates to the shared NotesImportComposer screen — the same surface as
- * Settings, not a one-off — whose import persists and resumes, so the user can
- * leave and come back; backing out returns here to keep going. MyTime returns
- * to the flow (`goNext`); iCloud restore completes onboarding on its own.
+ * iCloud / a backup file (decision 9). MyTime + iCloud reuse their existing
+ * step components inline; iCloud is grayed when the device has no iCloud. The
+ * Notes option navigates to the shared NotesImportComposer screen — the same
+ * surface as Settings, not a one-off — whose import persists and resumes, so
+ * the user can leave and come back; backing out returns here to keep going.
+ * MyTime returns to the flow (`goNext`); iCloud restore completes onboarding on
+ * its own. A backup file restores in place via the same flow as Settings →
+ * Backup and, like iCloud, completes onboarding — the backup carries the
+ * profile and preferences the remaining steps would set. "Start fresh" is the
+ * primary action: most users have nothing to bring over.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
@@ -117,6 +125,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const icloudAvailable = ICloudBridge.isAvailable()
   const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
+  const { importing, importBackup } = useBackupImport({ source: 'onboarding' })
 
   useEffect(() => {
     if (!isFocused || mode !== 'choose') return
@@ -125,13 +134,30 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
       notes_available: notesImport.available,
     })
   }, [icloudAvailable, notesImport.available, isFocused, mode])
-  const selectImport = (importType: 'notes' | 'mytime' | 'icloud') => {
+  const restoreBackup = async () => {
+    if (!(await importBackup())) return
+    analytics.capture('onboarding_completed', {
+      completion_method: 'backup_restore',
+    })
+    // Same as iCloud restore: the restored profile replaces the remaining
+    // steps, so don't re-prompt for profile or map setup afterwards.
+    usePreferences.getState().set({
+      onboardingComplete: true,
+      onboardingStepId: null,
+      hasCompletedMapOnboarding: true,
+    })
+    useProfile.getState().set({ hasCompletedProfileSetup: true })
+  }
+  const selectImport = (
+    importType: 'notes' | 'mytime' | 'icloud' | 'backup_json'
+  ) => {
     analytics.capture('import_type_selected', {
       import_type: importType,
       source: 'onboarding',
     })
     if (importType === 'notes')
       navigation.navigate('NotesImportComposer', { fromOnboarding: true })
+    else if (importType === 'backup_json') void restoreBackup()
     else setMode(importType)
   }
 
@@ -205,28 +231,46 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               onPress={() => selectImport('icloud')}
             />
           )}
+          <OptionCard
+            icon={ArchiveRestoreIcon}
+            color={theme.colors.teal}
+            titleKey='onboardingPickUp_backup'
+            descKey='onboardingPickUp_backupDesc'
+            disabled={importing}
+            disabledNoteKey='onboardingPickUp_backupRestoring'
+            onPress={() => selectImport('backup_json')}
+          />
         </View>
-
-        <Button
-          onPress={() => {
-            analytics.capture('onboarding_step_skipped', {
-              step_id: 'pickUpWhereLeftOff',
-            })
-            usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
-            goNext()
-          }}
-          style={{ alignSelf: 'center', paddingVertical: 10 }}
-        >
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('onboardingPickUp_skip')}
-          </Text>
-        </Button>
       </KeyboardAwareScrollView>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          marginVertical: 16,
+        }}
+      >
+        <View
+          style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }}
+        />
+        <Text style={{ color: theme.colors.textAlt }}>{i18n.t('or')}</Text>
+        <View
+          style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }}
+        />
+      </View>
+      <ActionButton
+        disabled={importing}
+        onPress={() => {
+          analytics.capture('onboarding_step_skipped', {
+            step_id: 'pickUpWhereLeftOff',
+          })
+          usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
+          goNext()
+        }}
+      >
+        {i18n.t('onboardingPickUp_skip')}
+      </ActionButton>
     </Wrapper>
   )
 }

@@ -2,18 +2,15 @@ import {
   FileInput as FileInputIcon,
   Upload as UploadIcon,
 } from 'lucide-react-native'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
 import ActionButton from '@/components/ui/ActionButton'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
-import { migrateServiceReports } from '@/stores/serviceReport'
 import * as FileSystem from 'expo-file-system/legacy'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
-import * as DocumentPicker from 'expo-document-picker'
 import { Alert, View } from 'react-native'
 import { Spinner } from 'tamagui'
 import useTheme from '@/contexts/theme'
@@ -23,131 +20,30 @@ import Badge from '@/components/ui/Badge'
 import XView from '@/components/ui/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
-import { useTimeCache } from '@/stores/timeCache'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
-import {
-  BackupFile,
-  createBackupFile,
-  restoreBackupFile,
-} from '@/lib/backupFile'
-
-type ImportFile = BackupFile
+import { createBackupFile } from '@/lib/backupFile'
+import { useBackupImport } from '@/hooks/useBackupImport'
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
   const entryPoint = route.params?.source ?? 'settings'
   const preferencesStore = usePreferences()
-  const timeCache = useTimeCache()
+  const { importing, importBackup } = useBackupImport({
+    source: 'settings',
+    entryPoint,
+  })
 
   const [loading, setLoading] = useState(false)
   const [successfulImport, setSuccessfulImport] = useState(false)
   const exportFileUri = FileSystem.cacheDirectory + `witness-work-backup.json`
   const theme = useTheme()
 
-  const validImportFile = (data: unknown): boolean => {
-    if (typeof data !== 'object') return false
-    if (data === null) return false
-
-    return true
-  }
-
   const handleImport = async () => {
-    const startedAt = Date.now()
-    let stage = 'file_picker'
-    const properties = {
-      import_type: 'backup_json',
-      source: 'settings',
-      entry_point: entryPoint,
-    }
-    setLoading(true)
     setSuccessfulImport(false)
-    analytics.capture('import_started', {
-      ...properties,
-    })
-
-    try {
-      const { assets, canceled } = await DocumentPicker.getDocumentAsync({
-        multiple: false,
-        copyToCacheDirectory: true,
-        type: 'application/json',
-      })
-
-      if (canceled) {
-        analytics.capture('import_cancelled', {
-          ...properties,
-          stage,
-          elapsed_ms: Date.now() - startedAt,
-        })
-        setLoading(false)
-        return
-      }
-
-      const exportFileUri = assets[0].uri
-      analytics.capture('import_file_selected', properties)
-      stage = 'read_file'
-
-      await FileSystem.readAsStringAsync(exportFileUri)
-        .then((contents) => {
-          stage = 'validate_file'
-          const data = JSON.parse(contents) as ImportFile
-
-          if (!validImportFile(data)) {
-            analytics.capture('import_failed', {
-              ...properties,
-              stage,
-              elapsed_ms: Date.now() - startedAt,
-              error_code: 'invalid_file',
-            })
-            Alert.alert(
-              i18n.t('importErrorInvalidFile_title'),
-              i18n.t('importErrorInvalidFile_description')
-            )
-            return
-          }
-
-          stage = 'migrate'
-          if (
-            data.serviceReportStore &&
-            Array.isArray((data.serviceReportStore as any).serviceReports)
-          ) {
-            ;(data.serviceReportStore as any).serviceReports =
-              migrateServiceReports(
-                (data.serviceReportStore as any).serviceReports
-              )
-          }
-          stage = 'restore'
-          analytics.capture('import_commit_started', properties)
-          restoreBackupFile(data)
-          timeCache.invalidateAllCache()
-          setSuccessfulImport(true)
-          analytics.capture('backup_imported', {
-            ...properties,
-            elapsed_ms: Date.now() - startedAt,
-          })
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    } catch (error) {
-      analytics.capture('import_failed', {
-        ...properties,
-        stage,
-        elapsed_ms: Date.now() - startedAt,
-        error_code:
-          stage === 'validate_file' && error instanceof SyntaxError
-            ? 'invalid_json'
-            : 'unexpected',
-      })
-      errorTracking.captureException(error)
-      setLoading(false)
-      Alert.alert(
-        i18n.t('importError_title'),
-        i18n.t('importError_description')
-      )
-    }
+    if (await importBackup()) setSuccessfulImport(true)
   }
 
   const handleExport = async () => {
@@ -227,7 +123,10 @@ const ImportAndExportScreen = () => {
             <Text>{i18n.t('backupRecommendations')}</Text>
           </View>
           <Card>
-            <ActionButton disabled={loading} onPress={handleExport}>
+            <ActionButton
+              disabled={loading || importing}
+              onPress={handleExport}
+            >
               {loading ? (
                 <Spinner />
               ) : (
@@ -258,8 +157,11 @@ const ImportAndExportScreen = () => {
                 </Badge>
               </XView>
             )}
-            <ActionButton disabled={loading} onPress={handleImport}>
-              {loading ? (
+            <ActionButton
+              disabled={loading || importing}
+              onPress={handleImport}
+            >
+              {importing ? (
                 <Spinner />
               ) : (
                 <XView>

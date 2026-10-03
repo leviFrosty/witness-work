@@ -92,9 +92,153 @@ Preserve the existing completed production release when replacing a draft.
 Verify the release version code and draft status again in Play Console after
 upload. Preparing a draft does not submit for review or restore public availability.
 
+### Play access and artifact verification
+
+Enable the Google Play Developer API for the credentials' Cloud project and grant
+the service account access to WitnessWork in Play Console, including production
+release permissions. Configure `PLAY_STORE_JSON_KEY` in `.env.production` as the
+path to its private credentials JSON, stored outside the checkout; never commit
+or print the key. Verify authentication with
+`fastlane run validate_play_store_json_key json_key:"$PLAY_STORE_JSON_KEY"`, then
+verify access to production package `com.leviwilkerson.jwtime` and its tracks.
+Authentication alone does not prove app-specific release permission.
+
+Play API updates require an existing app with at least one manually uploaded
+build. First publication, legal declarations and republishing an unpublished app
+require Play Console. Check app availability, production access, outstanding
+setup tasks and pending reviews before staging; do not replace another release's
+draft or review. See Google's [edits workflow](https://developers.google.com/android-publisher/edits).
+
+Archive any existing `build-production.aab` before rebuilding. EAS production
+uses remote `autoIncrement` for the Android version code independently of the
+iOS build number. Extract the package, `versionName` and `versionCode` from the
+finished AAB (for example, `bundletool dump manifest --bundle=./build-production.aab
+--module=base`), and verify production package, intended marketing version,
+upload signing, all release ABIs and 16 KB native page support. The version code
+must exceed all previously uploaded Play artifacts, including testing tracks.
+Record the source commit, artifact path and SHA-256; after upload compare with
+Play's [bundle resource](https://developers.google.com/android-publisher/api-ref/rest/v3/edits.bundles)
+and verify successful processing and compatibility checks in App bundle explorer.
+
+### Shared App Store and Play release notes
+
+`/cut-release` uses the same finalized localized ASC `whatsNew` text for both
+stores, saved in `.asc/cut-release/store-notes.json`. This is separate from the
+in-app release announcements. Map ASC locales to supported Play locales and
+record the mapping; copy the exact corresponding translations into
+`.asc/cut-release/play-metadata/<play-locale>/changelogs/<versionCode>.txt`.
+Translate additional Play-only locales from the same source when needed.
+
+Google Play allows [500 Unicode characters per language](https://support.google.com/googleplay/android-developer/answer/9859348).
+Keep every shared translation within that limit. If a summary needs shortening,
+update the shared ASC text too; do not truncate only Play or write separate
+Android notes. Label platform-specific availability in the shared notes so they
+remain accurate in both stores. Maintenance releases reuse the generic localized
+ASC notes from the `app-store-release` skill.
+
+### Upload and validate a production draft
+
+Source `.env.production` as in the build command above. Set
+`ANDROID_VERSION_CODE` to the code extracted from the verified AAB; create the
+version-code-specific changelog files first. Check installed `fastlane supply
+--help` for current flags. This upload writes release notes while retaining the
+existing store listing and graphics:
+
+```bash
+fastlane supply --package_name com.leviwilkerson.jwtime \
+  --json_key "$PLAY_STORE_JSON_KEY" --aab ./build-production.aab \
+  --track production --release_status draft \
+  --metadata_path .asc/cut-release/play-metadata \
+  --skip_upload_apk true --skip_upload_metadata true \
+  --skip_upload_images true --skip_upload_screenshots true \
+  --skip_upload_changelogs false --changes_not_sent_for_review true \
+  --rescue_changes_not_sent_for_review false
+```
+
+Read back the exact version code, bundle checksum, draft status and release notes;
+also verify the previous completed release is preserved. Disable Fastlane's
+automatic review-flag rescue for every staging/submission command so it cannot
+silently alter review intent after an API error. If the draft flags are rejected,
+reconcile the error and Console state before retrying; do not switch staging to a
+published release. Preserve unrelated releases and pending publishing changes.
+
+Check required app content, Data safety/privacy, app access, countries,
+screenshots, target API/device support, Play App Signing and 16 KB checks in Play
+Console. Update metadata required by shipped changes; the command above skips
+store-listing/image updates. For an already-published app, validate the intended
+full rollout of this exact existing draft without rebuilding or uploading the AAB
+again:
+
+```bash
+fastlane supply --package_name com.leviwilkerson.jwtime \
+  --json_key "$PLAY_STORE_JSON_KEY" --track production \
+  --version_code "$ANDROID_VERSION_CODE" --rollout 1.0 \
+  --release_status completed --skip_upload_apk true --skip_upload_aab true \
+  --skip_upload_metadata true --skip_upload_changelogs true \
+  --skip_upload_images true --skip_upload_screenshots true \
+  --changes_not_sent_for_review false --rescue_changes_not_sent_for_review false \
+  --validate_only true
+```
+
+`--validate_only true` validates an uncommitted edit; it does not submit the
+release. Check both the API result and Console blockers. Under `/cut-release`,
+ASC preflight must also pass before either store's review submission.
+
+For a first publication, Play may reject non-draft release transitions through
+the API. Use the exact draft's Console preview/release summary to check its full
+production rollout and resolve all setup/readiness errors instead. Record that
+verified readiness as Play preflight without selecting Send for review, Start
+rollout or Publish. Those final actions belong after the shared gate. First
+publication cannot use managed publishing; verify standard automatic publication
+and all required setup in Console. If Console readiness cannot be verified,
+leave the gate closed and ASC unsubmitted.
+
+### Submit for review and automatic production rollout
+
+The draft procedure above ends before review. `/cut-release` additionally
+authorizes this final submission once both platforms pass the shared gate.
+Confirm [managed publishing is off](https://support.google.com/googleplay/android-developer/answer/9859654)
+for automatic publication after approval; resolve Console-only setup for a first
+publication or unpublished app before submitting either store. Reserve final
+publication/republication actions for after the shared gate. Do not release
+unrelated pending changes when adjusting publishing controls.
+
+After recording both preflights, rerun the exact full-rollout command above with
+`--validate_only false`, retaining `--version_code`,
+`--changes_not_sent_for_review false` and
+`--rescue_changes_not_sent_for_review false`. This submits the already-uploaded
+draft without another build or upload for an already-published app. For first
+publication or required republication, perform the Console review/rollout controls
+for the exact draft verified before the gate instead of repeating an unsupported
+API transition. If Play requires an explicit Console action, inspect this release
+in Production, review its errors/changes, and use Publishing overview's Send for
+review. Perform required first-publication or republication controls there;
+the draft upload cannot change app availability.
+
+Verify the exact version code using
+[`applications.tracks.releases.list`](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases/list)
+for `applications/com.leviwilkerson.jwtime/tracks/production`, matching
+`activeArtifacts[].versionCode`. Require
+`RELEASE_LIFECYCLE_STATE_IN_REVIEW` or `RELEASE_LIFECYCLE_STATE_PUBLISHED`, and
+verify the intended full rollout and automatic publishing in Console. Use Console
+if the installed client cannot read this lifecycle API. Track status `completed`
+alone does not prove review submission, approval or public availability; draft,
+not sent for review, rejected and approved awaiting manual publication do not
+complete `/cut-release`.
+
+Record the Play state/link separately from ASC and reconcile both stores on
+timeouts or errors before retrying. Shared build/preflight checks prevent known
+failures from releasing the counterpart, but the stores review and publish
+independently. Follow `.agents/skills/cut-release/recovery.md` for a partial
+submission; never report both platforms released from an upload success alone.
+On resume, reconcile an already-accepted matching submission through read-only
+identity, notes, lifecycle and publishing checks. Skip its upload/draft creation
+and draft-only rollout validation, rerun preflight for the remaining platform,
+and continue only its missing submission.
+
 ## Production build & App Store upload (fully local)
 
-For the complete release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). Tag pushes run validation and create a GitHub Release; they do not build or upload.
+For the complete iOS + Android release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). It runs the iOS build/upload below, immediately builds the Android AAB, then verifies processing and stages/preflights both stores before submitting either for review. Both artifacts use the same release commit and marketing version; any failure before the shared submission gate stops both platforms. Tag pushes run validation and create a GitHub Release; they do not build or upload.
 
 **We intentionally do not use EAS Build cloud services for production.** Every production build runs on our own hardware via `eas build --local` so we never pay for build credits. The EAS CLI is still used as the local build orchestrator and for `autoIncrement` (fetching the next build number from EAS — free; only cloud builder minutes cost money).
 
@@ -108,7 +252,7 @@ This runs `scripts/build-prod-auto-submit.sh`, which:
 2. Builds locally: `eas build -p ios --profile production --local --output ./build-production.ipa` — always the same single artifact path (gitignored), so repeat runs are idempotent.
 3. Uploads the IPA to App Store Connect with `asc builds upload` — also fully local, no EAS Submit involved.
 
-App Store review submission (version, "What's New", submit) is a separate step — see the `app-store-release` skill.
+App Store review submission (version, "What's New", submit) is a separate step — see the `app-store-release` skill. The script above only builds/uploads iOS; `/cut-release` owns the Android build and [Play submission](#submit-for-review-and-automatic-production-rollout), shared store notes and the gate on both preflights.
 
 ### One-time machine prerequisites
 

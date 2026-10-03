@@ -10,6 +10,13 @@ The `asc` CLI (from Rork) is installed and authenticated for WitnessWork (defaul
 - **App ID** `6469723047`
 - **Bundle** `com.leviwilkerson.jwtime`
 
+When called by `/cut-release`, use this skill to stage metadata and run ASC
+preflight, then return to that workflow for submission. Its Android build/upload
+and Play preflight must also pass before either store submission; do not execute
+step 4's submit early. The full release shares the exact localized ASC
+`whatsNew` text with Google Play, using the locale mapping and 500-character
+limit in `docs/build.md`. Standalone ASC operations keep the flow below.
+
 ## Submitting a build that's already uploaded (the normal case)
 
 EAS/Xcode has already pushed the build.
@@ -27,6 +34,12 @@ EAS/Xcode has already pushed the build.
 
 3. **Set "What's New" per locale** (version localizations, `--version` = the **version ID**):
    `asc localizations update --version <VERSION_ID> --locale en-US --whats-new "…"`
+
+   Under `/cut-release`, read back the finalized text (including copied generic
+   maintenance notes) and persist it in `.asc/cut-release/store-notes.json` for
+   Play's changelog files. If a translation exceeds Play's limit, shorten and
+   update the shared ASC text too, then verify both stores use it. In-app
+   announcements remain separate.
 
 4. **Preflight then submit:** `asc review doctor --app 6469723047` (look for `nextAction: No submission blockers`), optionally `asc review submit … --dry-run`, then:
    ```

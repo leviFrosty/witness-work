@@ -26,7 +26,7 @@ EAS preview builds don't run automatically (they're expensive) — kick one off 
 
 ## Cutting a release
 
-Use `/cut-release` for the complete main → local build → App Review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`.
+Use `/cut-release` for the complete main → local iOS build → local Android build → App Store and Google Play review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`. Android builds immediately after the iOS build/upload from the same tagged commit and marketing version. Both stores must finish upload/processing and pass metadata/preflight checks before either review submission; a failure on either platform blocks both. The workflow reuses the exact localized ASC store notes for Play and configures automatic release after approval on both stores.
 
 `scripts/bump-version.js` is a deterministic preparation tool. The invoking agent writes notes and translations; the script does not call a model or Azure.
 
@@ -50,6 +50,15 @@ pnpm run build:prod-auto-submit
 ```
 
 The tag workflow validates and creates a GitHub Release; it does not build or upload. Production builds run locally via `eas build --local`, then upload with `asc builds upload`. Prerequisites are in `docs/build.md`. Upload is separate from Apple processing and App Review submission; see `../app-store-release/SKILL.md` for ASC operations.
+
+`pnpm run build:prod-auto-submit` above remains the iOS build/upload command.
+The release skill immediately follows it with the local Android production AAB
+build from `docs/build.md`, stages a Play production draft with Fastlane `supply`,
+and validates its full rollout alongside ASC preflight. It submits the exact Play
+draft first, verifies review acceptance, then submits ASC; upload or draft success
+alone does not complete a release. See `docs/build.md` for Play credentials,
+shared-note locale/length handling, Console-only setup and automatic publishing,
+and `../cut-release/recovery.md` for per-platform checkpoints and partial failures.
 
 ## Workflows reference
 

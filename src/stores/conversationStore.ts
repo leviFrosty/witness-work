@@ -2,7 +2,6 @@ import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Visit, VisitTombstone } from '@/types/visit'
-import * as Notifications from 'expo-notifications'
 import { PersistStorage } from '@/stores/mmkv'
 import { stripPlaceholderFollowUp } from '@/lib/conversations'
 
@@ -74,11 +73,6 @@ export const useConversations = create(
           if (!foundConversation) {
             return {}
           }
-
-          foundConversation.followUp?.notifications?.forEach(
-            async ({ id }) =>
-              await Notifications.cancelScheduledNotificationAsync(id)
-          )
 
           const now = syncTimestamp(
             conversations.find((conversation) => conversation.id === id)

@@ -19,6 +19,8 @@ import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
+import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
+import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
 import NotesImportAttestPreparation from '@/features/notes-import/components/NotesImportAttestPreparation'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
@@ -123,6 +125,8 @@ export default function App() {
                           <SurveyProvider>
                             <DeepLinkListeners />
                             <BuddiesRuntime />
+                            <NotificationResponseListener />
+                            <SilentForegroundAlerts />
                             <RootStackComponent />
                           </SurveyProvider>
                         </AnimationViewProvider>

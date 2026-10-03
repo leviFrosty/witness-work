@@ -10,7 +10,6 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
 import { formatDateTime, formatRelative } from '@/lib/dates'
-import * as Notifications from 'expo-notifications'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { parsePhoneNumber } from 'awesome-phonenumber'
@@ -35,9 +34,12 @@ import {
 } from '@/stores/preferences'
 import { handleCall, handleMessage } from '@/lib/phone'
 import i18n from '@/lib/locales'
-import { logger } from '@/lib/logger'
 import { RootStackParamList, RootStackNavigation } from '@/types/rootStack'
-import { Notification as ConvNotification } from '@/types/visit'
+import {
+  reminderRequestId,
+  savedReminderOffsetMinutes,
+} from '@/lib/reminderSchedule'
+import { offsetToMinutes } from '@/lib/notificationOffset'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
 
@@ -343,58 +345,32 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   const handleReschedule = useCallback(async () => {
     if (!conversation) return
 
-    // Cancel any existing follow-up notifications. We always rebuild from
-    // scratch so a stale reminder can't fire after rescheduling.
-    await Promise.all(
-      (conversation.followUp?.notifications ?? []).map(async ({ id }) => {
-        try {
-          await Notifications.cancelScheduledNotificationAsync(id)
-        } catch (e) {
-          logger.error('[reschedule] failed to cancel notification', e)
-        }
-      })
-    )
-
-    // If the user had notifications enabled and the new date is still in
-    // the future, schedule a fresh notification using the same offset.
-    const notifications: ConvNotification[] = []
-    if (conversation.followUp?.notifyMe) {
-      const offsetAmount =
-        returnVisitNotificationOffset?.amount ??
-        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.amount
-      const offsetUnit =
-        returnVisitNotificationOffset?.unit ??
-        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.unit
-      const fireAt = moment(newDate).subtract(offsetAmount, offsetUnit).toDate()
-
-      if (moment(fireAt).isAfter(moment())) {
-        try {
-          const id = await Notifications.scheduleNotificationAsync({
-            content: {
-              title: i18n.t('reminder_title'),
-              body: `${i18n.t('notification_part1')} ${
-                contact?.name ?? ''
-              } ${i18n.t('notification_part2')} ${offsetAmount} ${offsetUnit}.`,
-              sound: true,
-            },
-            trigger: {
-              type: Notifications.SchedulableTriggerInputTypes.DATE,
-              date: fireAt,
-            },
-          })
-          notifications.push({ date: fireAt, id })
-        } catch (e) {
-          logger.error('[reschedule] failed to schedule notification', e)
-        }
-      }
-    }
+    // Keep the offset this Follow-up was saved with; the preference is only
+    // the default for one that never had a reminder. `useReconciledReminders`
+    // replaces this device's OS reminder from the saved intent.
+    const followUp = conversation.followUp!
+    const offsetMinutes = followUp.notifyMe
+      ? (savedReminderOffsetMinutes(new Date(followUp.date), followUp) ??
+        offsetToMinutes({
+          ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+          ...returnVisitNotificationOffset,
+        }))
+      : null
+    const fireAt =
+      offsetMinutes === null
+        ? null
+        : new Date(newDate.getTime() - offsetMinutes * 60_000)
 
     updateConversation({
       ...conversation,
       followUp: {
-        ...conversation.followUp!,
+        ...followUp,
         date: newDate,
-        notifications,
+        reminderOffsetMinutes: offsetMinutes ?? undefined,
+        // The fire time, for older app versions on other devices.
+        notifications: fireAt
+          ? [{ id: reminderRequestId('visit', conversation.id), date: fireAt }]
+          : [],
         // Rescheduling re-activates a previously dismissed follow-up — the
         // user has explicitly committed to a new date, so the dismissal no
         // longer applies.
@@ -404,12 +380,11 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
 
     analytics.capture('follow_up_rescheduled', {
       was_dismissed: !!conversation.followUp?.dismissed,
-      reminder_scheduled: notifications.length > 0,
+      reminder_scheduled: !!fireAt && fireAt.getTime() > Date.now(),
     })
     dismiss()
   }, [
     conversation,
-    contact?.name,
     newDate,
     returnVisitNotificationOffset,
     updateConversation,

@@ -3,14 +3,20 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
+import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
+import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import useServiceReport from '@/stores/serviceReport'
-import { navigationRef } from '@/features/contacts/lib/linking'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import {
+  buddyNotificationIdForSeq,
+  syncBuddyNotifications,
+} from '@/features/buddies/hooks/useBuddyNotifications'
+import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import {
@@ -19,36 +25,24 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { Buddy, incomingShareKey } from '@/features/buddies/lib/state'
+import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-import { requestNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
 
-const SYNC_INTERVAL_MS = 10 * 60 * 1000
+/** Returning to the app syncs, but not more often than this. */
+const FOREGROUND_SYNC_FLOOR_MS = 30 * 1000
+/** While the notifications tray is open, buddy events are checked this often. */
+const OPEN_TRAY_REFRESH_MS = 90 * 1000
+/**
+ * Push registration is checked at most this often; the engine only re-sends an
+ * unchanged one once a day.
+ */
+const PUSH_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
 const PUBLISH_DEBOUNCE_MS = 30 * 1000
 
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
-
-/**
- * The push kind of a Buddies push (they carry a `ww` marker and no user
- * content), or null for any other notification.
- */
-function buddiesPushKind(
-  notification: Notifications.Notification
-): string | null {
-  const trigger = notification.request.trigger as {
-    type?: string
-    payload?: Record<string, unknown>
-  } | null
-  const payload = trigger?.type === 'push' ? trigger.payload : undefined
-  const data = notification.request.content.data as
-    | Record<string, unknown>
-    | undefined
-  const marker = payload?.ww ?? data?.ww
-  if (typeof marker !== 'object' || marker === null) return null
-  const { kind } = marker as { kind?: unknown }
-  return typeof kind === 'string' ? kind : ''
-}
 
 /** Adds, updates, and removes the Plans that follow buddies' invitations. */
 function syncLinkedPlans() {
@@ -100,11 +94,43 @@ function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
   for (const visit of changes.visits) visits.updateConversation(visit)
 }
 
+/** A push kind as a bounded analytics value. */
+const pushKindProperty = (kind: string) =>
+  (BUDDY_PUSH_KINDS as readonly string[]).includes(kind) ? kind : 'unknown'
+
+/**
+ * A Buddies push arrived while the app is open: pull the event it announced,
+ * and record whether that reached the tray (kind and outcome only).
+ */
+function syncAfterPush(push: { kind: string; seq?: number }) {
+  const kind = pushKindProperty(push.kind)
+  analytics.capture('buddies_push_received', { kind })
+  void buddiesEngine.sync().then(
+    () =>
+      analytics.capture('buddies_push_sync', {
+        kind,
+        outcome: 'synced',
+        ...(push.seq === undefined
+          ? {}
+          : { in_tray: buddyNotificationIdForSeq(push.seq) !== null }),
+      }),
+    (error: unknown) => {
+      logFailure(error)
+      analytics.capture('buddies_push_sync', {
+        kind,
+        outcome: 'failed',
+        reason: buddiesFailureReason(error),
+      })
+    }
+  )
+}
+
 /**
  * The background half of Buddies. Renders nothing; runs only once the User has
  * started using Buddies (an inbox exists), so everyone else pays no network or
- * battery cost. Pulls on foreground rather than polling, and publishes a Buddy
- * Card and shared Plans only after the data behind them changes.
+ * battery cost. Pulls on launch and on every return to the app, and every 90
+ * seconds while the notifications tray is open; publishes a Buddy Card and
+ * shared Plans only after the data behind them changes.
  */
 export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
@@ -114,6 +140,9 @@ export default function BuddiesRuntime() {
   useEffect(() => {
     if (!running) return
     let publishTimer: ReturnType<typeof setTimeout> | null = null
+    let trayTimer: ReturnType<typeof setInterval> | null = null
+    let lastSyncAttempt = 0
+    let lastPushCheck = 0
 
     const publishNow = () => {
       if (publishTimer) clearTimeout(publishTimer)
@@ -122,11 +151,25 @@ export default function BuddiesRuntime() {
       void buddiesEngine.publishShares().catch(logFailure)
       void buddiesEngine.deliverReplies().catch(logFailure)
     }
-    const syncIfStale = () => {
-      if (Date.now() - useBuddies.getState().lastSyncAt < SYNC_INTERVAL_MS)
-        return
+    const syncNow = () => {
+      const last = Math.max(lastSyncAttempt, useBuddies.getState().lastSyncAt)
+      if (Date.now() - last < FOREGROUND_SYNC_FLOOR_MS) return
+      lastSyncAttempt = Date.now()
       void buddiesEngine.sync().catch(logFailure)
+    }
+    const checkPushRegistration = () => {
+      if (Date.now() - lastPushCheck < PUSH_CHECK_INTERVAL_MS) return
+      lastPushCheck = Date.now()
       void registerBuddiesPush().catch(logFailure)
+    }
+    const refreshWhileTrayOpen = (open: boolean) => {
+      if (trayTimer) clearInterval(trayTimer)
+      trayTimer = open
+        ? setInterval(() => {
+            if (AppState.currentState === 'active')
+              void syncBuddyNotifications('poll')
+          }, OPEN_TRAY_REFRESH_MS)
+        : null
     }
 
     const schedulePublish = () => {
@@ -142,12 +185,18 @@ export default function BuddiesRuntime() {
     void refreshAvatar().then((changed) => {
       if (changed) schedulePublish()
     })
-    syncIfStale()
+    syncNow()
+    checkPushRegistration()
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         buddiesEngine.expire()
-        syncIfStale()
+        syncNow()
+        checkPushRegistration()
       } else if (state === 'background' && publishTimer) publishNow()
+    })
+    refreshWhileTrayOpen(useNotificationsTray.getState().open)
+    const tray = useNotificationsTray.subscribe((state, previous) => {
+      if (state.open !== previous.open) refreshWhileTrayOpen(state.open)
     })
     const plans = useServiceReport.subscribe((state, previous) => {
       if (
@@ -188,30 +237,15 @@ export default function BuddiesRuntime() {
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
-        if (buddiesPushKind(notification) !== null)
-          void buddiesEngine.sync().catch(logFailure)
+        const push = buddiesPushData(notification)
+        if (push) syncAfterPush(push)
       }
     )
-    const tapped = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const kind = buddiesPushKind(response.notification)
-        if (kind === null) return
-        void buddiesEngine.sync().catch(logFailure)
-        if (!navigationRef.isReady()) return
-        // Requests and new pairings live on the Buddies tab; invitations,
-        // changes, and replies in the notification queue.
-        if (kind === 'invite.claimed' || kind === 'pair.confirmed' || !kind)
-          navigationRef.navigate('Root', { screen: 'Buddies' } as never)
-        else {
-          navigationRef.navigate('Root', { screen: 'Home' } as never)
-          requestNotificationsTray()
-        }
-      }
-    )
-
     return () => {
       if (publishTimer) clearTimeout(publishTimer)
+      if (trayTimer) clearInterval(trayTimer)
       appState.remove()
+      tray()
       plans()
       profile()
       tenure()
@@ -219,7 +253,6 @@ export default function BuddiesRuntime() {
       contacts()
       buddies()
       received.remove()
-      tapped.remove()
     }
   }, [running])
 

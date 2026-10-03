@@ -10,9 +10,39 @@ import {
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
 } from '@/stores/preferences'
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
+import { reminderContent } from '@/lib/reminderContent'
+import { reminderData } from '@/lib/notificationData'
+import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
-import i18n from '@/lib/locales'
 import { errorTracking } from '@/lib/errorTracking'
+
+/**
+ * Removes already-delivered reminders whose record is gone, so an erased
+ * Contact's name doesn't stay in Notification Center.
+ */
+async function retractErasedReminders() {
+  const presented = await Notifications.getPresentedNotificationsAsync()
+  if (!presented.length) return
+  const contacts = new Set(useContacts.getState().contacts.map((c) => c.id))
+  const visits = new Set(
+    useConversations.getState().conversations.map((v) => v.id)
+  )
+  const plans = new Set(useServiceReport.getState().dayPlans.map((p) => p.id))
+  for (const notification of presented) {
+    const reminder = reminderData(notification)
+    if (!reminder) continue
+    const exists =
+      reminder.kind === 'contact'
+        ? contacts.has(reminder.id)
+        : reminder.kind === 'visit'
+          ? visits.has(reminder.id)
+          : plans.has(reminder.id)
+    if (!exists)
+      await Notifications.dismissNotificationAsync(
+        notification.request.identifier
+      )
+  }
+}
 
 /**
  * OS identifiers belong to this install. Rebuild them from intent after any
@@ -49,7 +79,11 @@ export function useReconciledReminders(ready: boolean | undefined) {
             },
             now: Date.now(),
           })
-          const key = canonicalJson([schedule, prefs.dataProtectionMode])
+          const key = canonicalJson([
+            schedule,
+            prefs.dataProtectionMode,
+            prefs.timeDisplayFormat,
+          ])
           if (key === lastSchedule && obsoleteIds.size === 0) continue
           // Cancellation invalidates the old schedule even if a queued edit
           // has the same reminder intent. Cache only a completed pass.
@@ -72,45 +106,34 @@ export function useReconciledReminders(ready: boolean | undefined) {
           inProgressObsoleteIds = undefined
           const permission = await Notifications.getPermissionsAsync()
           if (permission.granted) {
-            if (Platform.OS === 'android')
-              await Notifications.setNotificationChannelAsync(
-                'expo_notifications_fallback_notification_channel',
-                {
-                  name: i18n.t('notifications'),
-                  importance: Notifications.AndroidImportance.HIGH,
-                }
-              )
+            if (Platform.OS === 'android') await ensureReminderChannel()
             for (const reminder of schedule) {
               if (stopped || queued) break
               await Notifications.scheduleNotificationAsync({
                 identifier: reminder.id,
                 content: {
-                  title: i18n.t(
-                    reminder.kind === 'plan'
-                      ? 'plan_reminder_title'
-                      : 'reminder_title'
-                  ),
-                  body: i18n.t(
-                    reminder.kind === 'contact'
-                      ? 'contactAvailableReminder'
-                      : reminder.kind === 'plan'
-                        ? 'planLocalReminder'
-                        : 'visitLocalReminder',
-                    {
-                      name: prefs.dataProtectionMode
-                        ? ''
-                        : (reminder.name ?? ''),
-                    }
-                  ),
+                  ...reminderContent(reminder, {
+                    dataProtectionMode: prefs.dataProtectionMode,
+                    timeDisplayFormat: prefs.timeDisplayFormat,
+                  }),
                   sound: true,
                 },
                 trigger: {
                   type: Notifications.SchedulableTriggerInputTypes.DATE,
                   date: reminder.date,
+                  ...(Platform.OS === 'android'
+                    ? { channelId: REMINDER_CHANNEL_ID }
+                    : {}),
                 },
               })
             }
           }
+          // Best effort: a failure here mustn't undo the schedule above.
+          await retractErasedReminders().catch((error) =>
+            errorTracking.captureException(error, {
+              localReminders: 'retract',
+            })
+          )
           if (!queued && !stopped) lastSchedule = key
         }
       } catch (error) {
@@ -153,7 +176,8 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.returnVisitNotificationOffset !==
           previous.returnVisitNotificationOffset ||
         state.planNotificationOffset !== previous.planNotificationOffset ||
-        state.dataProtectionMode !== previous.dataProtectionMode
+        state.dataProtectionMode !== previous.dataProtectionMode ||
+        state.timeDisplayFormat !== previous.timeDisplayFormat
       )
         void reconcile()
     })

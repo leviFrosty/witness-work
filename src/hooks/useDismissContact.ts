@@ -4,7 +4,6 @@ import { useToastController } from '@tamagui/toast'
 
 import { analytics } from '@/lib/analytics'
 import { formatDate, formatTime } from '@/lib/dates'
-import { errorTracking } from '@/lib/errorTracking'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
@@ -88,72 +87,22 @@ export const testDismissOptions: DismissOption[] = [
 export const dismissOptionLabel = (option: DismissOption) =>
   option.isTestOption ? option.label : i18n.t(option.label as 'dismissFor1Week')
 
-const REMINDER_EMOJIS = [
-  '🔄',
-  '✨',
-  '👋',
-  '⭐',
-  '🎉',
-  '💫',
-  '👀',
-  '💪',
-  '⏱️',
-  '🌟',
-]
-
-const cancelReminder = async (contact: Contact) => {
-  if (!contact.dismissedNotificationId) return
-  try {
-    await Notifications.cancelScheduledNotificationAsync(
-      contact.dismissedNotificationId
-    )
-  } catch (error) {
-    errorTracking.captureException(error)
-  }
-}
-
 /**
- * Replaces any reminder from an earlier dismissal with one for when the Contact
- * comes back. Returns the new reminder's id, if one was scheduled.
+ * Whether a "available again" reminder will go out. `useReconciledReminders`
+ * schedules it from `dismissedUntil` (and removes any earlier one).
  */
-const replaceReminder = async (
-  contact: Contact,
+const reminderWillSend = (
   dismissedUntil: Date,
   notificationsAllowed: boolean
-) => {
-  await cancelReminder(contact)
-  if (!notificationsAllowed || !moment(dismissedUntil).isAfter(moment()))
-    return undefined
-  try {
-    const emoji =
-      REMINDER_EMOJIS[Math.floor(Math.random() * REMINDER_EMOJIS.length)]
-    return await Notifications.scheduleNotificationAsync({
-      content: {
-        title: i18n.t('contactAvailableAgain'),
-        body: i18n.t('contactAvailableAgainMessage', {
-          name: contact.name,
-          emoji,
-        }),
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: dismissedUntil,
-      },
-    })
-  } catch (error) {
-    errorTracking.captureException(error)
-    return undefined
-  }
-}
+) => notificationsAllowed && moment(dismissedUntil).isAfter(moment())
 
 const dismissedUntilFor = (option: DismissOption) =>
   moment().add(option.duration, option.unit).toDate()
 
-const captureDismissed = (option: DismissOption, notificationId?: string) =>
+const captureDismissed = (option: DismissOption, reminderScheduled: boolean) =>
   analytics.capture('contact_dismissed', {
     duration: option.key,
-    reminder_scheduled: !!notificationId,
+    reminder_scheduled: reminderScheduled,
   })
 
 const formatUntil = (option: DismissOption, dismissedUntil: Date) =>
@@ -177,19 +126,16 @@ export default function useDismissContact() {
 
   return async (contact: Contact, option: DismissOption) => {
     const dismissedUntil = dismissedUntilFor(option)
-    const notificationId = await replaceReminder(
-      contact,
+    const reminder = reminderWillSend(
       dismissedUntil,
       await notificationsAllowed()
     )
-    useContacts
-      .getState()
-      .dismissContact(contact.id, dismissedUntil, notificationId)
-    captureDismissed(option, notificationId)
+    useContacts.getState().dismissContact(contact.id, dismissedUntil)
+    captureDismissed(option, reminder)
     const until = formatUntil(option, dismissedUntil)
 
     toast.show(i18n.t('contactDismissed'), {
-      message: notificationId
+      message: reminder
         ? i18n.t('contactDismissedWithNotificationMessage', {
             name: contact.name,
             until,
@@ -206,23 +152,19 @@ export function useDismissContacts() {
 
   return async (contacts: Contact[], option: DismissOption) => {
     if (!contacts.length) return
-    const allowed = await notificationsAllowed()
     const dismissedUntil = dismissedUntilFor(option)
-    const notificationIds = await Promise.all(
-      contacts.map((contact) =>
-        replaceReminder(contact, dismissedUntil, allowed)
-      )
+    const reminder = reminderWillSend(
+      dismissedUntil,
+      await notificationsAllowed()
     )
     // One store update: per-contact updates re-run the whole Contacts
     // pipeline and persist every contact once per selected contact.
-    useContacts.getState().dismissContacts(
-      contacts.map((contact, index) => ({
-        id: contact.id,
-        dismissedUntil,
-        dismissedNotificationId: notificationIds[index],
-      }))
-    )
-    notificationIds.forEach((id) => captureDismissed(option, id))
+    useContacts
+      .getState()
+      .dismissContacts(
+        contacts.map((contact) => ({ id: contact.id, dismissedUntil }))
+      )
+    contacts.forEach(() => captureDismissed(option, reminder))
     toast.show(i18n.t('contactDismissed'), {
       // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       message: i18n.t('contactsDismissedMessage', {
@@ -235,15 +177,14 @@ export function useDismissContacts() {
 }
 
 /**
- * Puts dismissed Contacts back in the list and cancels their reminders. Nothing
- * is lost, so it runs without confirmation.
+ * Puts dismissed Contacts back in the list, which removes their reminders.
+ * Nothing is lost, so it runs without confirmation.
  */
 export function useUndismissContacts() {
   const toast = useToastController()
 
   return async (contacts: Contact[]) => {
     if (!contacts.length) return
-    await Promise.all(contacts.map(cancelReminder))
     useContacts.getState().undismissContacts(contacts.map((c) => c.id))
     toast.show(
       contacts.length === 1

@@ -11,8 +11,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import * as Notifications from 'expo-notifications'
-import { errorTracking } from '@/lib/errorTracking'
 import { useEffect, useRef, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -34,7 +32,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
-import { formatMinutes } from '@/lib/minutes'
 import {
   combineDateAndStartTime,
   localDayFromUtcCursor,
@@ -46,14 +43,17 @@ import {
   planDayFromRouteDate,
   splitPlanDate,
 } from '@/features/plans/lib/planDayDates'
-import { deriveOffsetFromDates } from '@/lib/notificationOffset'
+import { offsetFromMinutes, offsetToMinutes } from '@/lib/notificationOffset'
+import {
+  reminderRequestId,
+  savedReminderOffsetMinutes,
+} from '@/lib/reminderSchedule'
 import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
   usePreferences,
 } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
 import useNotifications from '@/hooks/notifications'
-import { Notification } from '@/types/visit'
 
 import TextInput from '@/components/ui/TextInput'
 import TypeSelectorRow, {
@@ -62,7 +62,7 @@ import TypeSelectorRow, {
   type TypeSelection,
 } from '@/components/TypeSelectorRow'
 import { RootStackParamList } from '@/types/rootStack'
-import type { PlanLocation } from '@/types/timeEntry'
+import type { DayPlan, PlanLocation } from '@/types/timeEntry'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import PlaceSearchField from '@/features/plans/components/PlaceSearchField'
 import BuddyPicker from '@/features/buddies/components/BuddyPicker'
@@ -254,8 +254,21 @@ const NotificationFields = (props: {
   notifyMeOffset: NotifyMeOffset
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
   notificationsAllowed: boolean
+  turnOnNotifications: () => Promise<boolean>
+  reminderPassed: boolean
 }) => {
   const theme = useTheme()
+
+  // Asking here, rather than leaving the switch disabled, matches Buddies.
+  const handleNotifyMeChange = async (notifyMe: boolean) => {
+    if (
+      notifyMe &&
+      !props.notificationsAllowed &&
+      !(await props.turnOnNotifications())
+    )
+      return
+    props.setNotifyMe(notifyMe)
+  }
 
   return (
     <InputRowContainer lastInSection controlWidth='full' style={{ gap: 8 }}>
@@ -288,8 +301,7 @@ const NotificationFields = (props: {
               <Switch
                 accessibilityLabel={i18n.t('notifyMe')}
                 value={props.notifyMe}
-                onValueChange={props.setNotifyMe}
-                disabled={!props.notificationsAllowed}
+                onValueChange={(value) => void handleNotifyMeChange(value)}
               />
             </View>
             {!props.notificationsAllowed && (
@@ -331,6 +343,13 @@ const NotificationFields = (props: {
             </Text>
           </View>
         )}
+        {props.notificationsAllowed &&
+          props.notifyMe &&
+          props.reminderPassed && (
+            <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+              {i18n.t('reminderTimePassed')}
+            </Text>
+          )}
       </View>
     </InputRowContainer>
   )
@@ -484,6 +503,8 @@ const PlanFields = (props: {
   notifyMeOffset: NotifyMeOffset
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
   notificationsAllowed: boolean
+  turnOnNotifications: () => Promise<boolean>
+  reminderPassed: boolean
 }) => {
   const theme = useTheme()
   const noteInput = useRef<RNTextInput>(null)
@@ -585,6 +606,8 @@ const PlanFields = (props: {
           notifyMeOffset={props.notifyMeOffset}
           setNotifyMeOffset={props.setNotifyMeOffset}
           notificationsAllowed={props.notificationsAllowed}
+          turnOnNotifications={props.turnOnNotifications}
+          reminderPassed={props.reminderPassed}
         />
       )}
     </>
@@ -1045,9 +1068,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       : undefined
   )
 
-  const { planNotificationOffset, planAlwaysNotify, timeDisplayFormat } =
-    usePreferences()
-  const { allowed: notificationsAllowed } = useNotifications()
+  const { planNotificationOffset, planAlwaysNotify } = usePreferences()
+  const { allowed: notificationsAllowed, turnOn: turnOnNotifications } =
+    useNotifications()
 
   const defaultNotifyOffset: NotifyMeOffset = {
     amount:
@@ -1056,15 +1079,17 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const initialNotifyOffset = (): NotifyMeOffset => {
-    const saved = existingDayPlan?.notifications?.[0]
-    if (existingDayPlan && saved) {
-      const anchor = combineDateAndStartTime(
-        existingDayPlan.date,
-        existingDayPlan.startTimeInMinutes
+    const savedMinutes =
+      existingDayPlan &&
+      savedReminderOffsetMinutes(
+        combineDateAndStartTime(
+          existingDayPlan.date,
+          existingDayPlan.startTimeInMinutes
+        ),
+        existingDayPlan
       )
-      const derived = deriveOffsetFromDates(anchor, new Date(saved.date))
-      if (derived) return derived
-    }
+    if (typeof savedMinutes === 'number')
+      return offsetFromMinutes(savedMinutes) ?? { amount: 0, unit: 'minutes' }
     return defaultNotifyOffset
   }
 
@@ -1074,6 +1099,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const [notifyMeOffset, setNotifyMeOffset] = useState<NotifyMeOffset>(
     initialNotifyOffset()
   )
+
+  const reminderMinutes = offsetToMinutes(notifyMeOffset)
+  const reminderPassed =
+    reminderMinutes !== null &&
+    date.getTime() - reminderMinutes * 60_000 <= Date.now()
 
   const toast = useToastController()
   const theme = useTheme()
@@ -1151,55 +1181,29 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContext])
 
-  const scheduleDayPlanNotification = async (
+  /**
+   * The reminder intent to save. `useReconciledReminders` schedules this
+   * device's OS reminder from it, once permission allows.
+   */
+  const planReminderIntent = (
+    planId: string,
     planDate: Date,
-    startTimeInMinutes: number,
-    plannedMinutes: number,
-    plannedNote: string | undefined,
-    existingNotifications: Notification[] | undefined
-  ): Promise<Notification[]> => {
-    if (existingNotifications) {
-      for (const n of existingNotifications) {
-        try {
-          await Notifications.cancelScheduledNotificationAsync(n.id)
-        } catch (error) {
-          errorTracking.captureException(error)
-        }
-      }
-    }
-    if (!notifyMe || !notificationsAllowed) return []
-
+    startTimeInMinutes: number
+  ): Pick<DayPlan, 'notifyMe' | 'reminderOffsetMinutes' | 'notifications'> => {
+    const minutes = notifyMe ? offsetToMinutes(notifyMeOffset) : null
+    if (minutes === null)
+      return { notifyMe, reminderOffsetMinutes: undefined, notifications: [] }
     const planStart = combineDateAndStartTime(planDate, startTimeInMinutes)
-    const fireAt = moment(planStart)
-      .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
-      .toDate()
-    if (!moment(fireAt).isAfter(moment())) {
-      return []
-    }
-
-    const formatDuration = () =>
-      formatMinutes(plannedMinutes, timeDisplayFormat).formatted
-
-    try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: i18n.t('plan_reminder_title'),
-          body: `${i18n.t('plan_notification_part1')} ${
-            notifyMeOffset.amount
-          } ${i18n.t(
-            `${notifyMeOffset.unit}_lowercase` as TranslationKey
-          )}. (${formatDuration()})${plannedNote ? `\n${plannedNote}` : ''}`,
-          sound: true,
+    return {
+      notifyMe,
+      reminderOffsetMinutes: minutes,
+      // The fire time, for older app versions on other devices.
+      notifications: [
+        {
+          id: reminderRequestId('plan', planId),
+          date: new Date(planStart.getTime() - minutes * 60_000),
         },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: fireAt,
-        },
-      })
-      return [{ date: fireAt, id }]
-    } catch (error) {
-      errorTracking.captureException(error)
-      return []
+      ],
     }
   }
 
@@ -1348,13 +1352,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
     if (isEditMode) {
       if (existingDayPlan) {
-        const notifications = await scheduleDayPlanNotification(
-          planDate,
-          startTimeInMinutes,
-          plannedMinutes,
-          plannedNote,
-          existingDayPlan.notifications
-        )
         updateDayPlan({
           id: existingDayPlan.id,
           date: planDate,
@@ -1365,8 +1362,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           location,
           note: plannedNote,
           buddies: plannedBuddies,
-          notifyMe,
-          notifications,
+          ...planReminderIntent(
+            existingDayPlan.id,
+            planDate,
+            startTimeInMinutes
+          ),
         })
       } else if (existingRecurringPlan && scope) {
         saveExistingRecurringPlan(scope)
@@ -1379,15 +1379,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       })
     } else {
       if (oneTime) {
-        const notifications = await scheduleDayPlanNotification(
-          planDate,
-          startTimeInMinutes,
-          plannedMinutes,
-          plannedNote,
-          undefined
-        )
+        const id = Crypto.randomUUID()
         addDayPlan({
-          id: Crypto.randomUUID(),
+          id,
           date: planDate,
           startTimeInMinutes,
           minutes: plannedMinutes,
@@ -1396,8 +1390,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           location,
           note: plannedNote,
           buddies: plannedBuddies,
-          notifyMe,
-          notifications,
+          ...planReminderIntent(id, planDate, startTimeInMinutes),
         })
       } else {
         addRecurringPlan({
@@ -1548,6 +1541,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               notifyMeOffset={notifyMeOffset}
               setNotifyMeOffset={setNotifyMeOffset}
               notificationsAllowed={notificationsAllowed}
+              turnOnNotifications={turnOnNotifications}
+              reminderPassed={reminderPassed}
             />
             {oneTime && !linkedShare && (
               <BuddyPicker

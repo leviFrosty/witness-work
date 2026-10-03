@@ -60,29 +60,35 @@ beforeEach(() => {
   mocks.granted = true
 })
 
+// The OS reminder itself is scheduled and replaced by
+// `useReconciledReminders` from `dismissedUntil`; these hooks only save it.
 describe('useDismissContact', () => {
-  it('replaces an earlier reminder when changing the duration', async () => {
+  it('saves the new duration without touching OS reminders', async () => {
     await useDismissContact()(
       contact('a', { dismissedNotificationId: 'old-reminder' }),
       oneWeek
     )
-    expect(mocks.cancel).toHaveBeenCalledWith('old-reminder')
-    expect(mocks.dismissContact).toHaveBeenCalledWith(
-      'a',
-      expect.any(Date),
-      'new-reminder'
+    expect(mocks.cancel).not.toHaveBeenCalled()
+    expect(mocks.schedule).not.toHaveBeenCalled()
+    expect(mocks.dismissContact).toHaveBeenCalledWith('a', expect.any(Date))
+    expect(mocks.capture).toHaveBeenCalledWith('contact_dismissed', {
+      duration: oneWeek.key,
+      reminder_scheduled: true,
+    })
+    expect(mocks.toast.show.mock.calls[0][1].message).toContain(
+      'contactDismissedWithNotificationMessage'
     )
-    expect(mocks.toast.show).toHaveBeenCalledTimes(1)
   })
 
-  it('skips the reminder without notification permission', async () => {
+  it('says no reminder will come without notification permission', async () => {
     mocks.granted = false
     await useDismissContact()(contact('a'), oneWeek)
-    expect(mocks.schedule).not.toHaveBeenCalled()
-    expect(mocks.dismissContact).toHaveBeenCalledWith(
-      'a',
-      expect.any(Date),
-      undefined
+    expect(mocks.capture).toHaveBeenCalledWith('contact_dismissed', {
+      duration: oneWeek.key,
+      reminder_scheduled: false,
+    })
+    expect(mocks.toast.show.mock.calls[0][1].message).toContain(
+      'contactDismissedMessage'
     )
   })
 })
@@ -93,19 +99,11 @@ describe('useDismissContacts', () => {
       [contact('a', { dismissedNotificationId: 'old' }), contact('b')],
       oneWeek
     )
-    expect(mocks.cancel).toHaveBeenCalledWith('old')
+    expect(mocks.cancel).not.toHaveBeenCalled()
     expect(mocks.dismissContacts).toHaveBeenCalledTimes(1)
     expect(mocks.dismissContacts).toHaveBeenCalledWith([
-      {
-        id: 'a',
-        dismissedUntil: expect.any(Date),
-        dismissedNotificationId: 'new-reminder',
-      },
-      {
-        id: 'b',
-        dismissedUntil: expect.any(Date),
-        dismissedNotificationId: 'new-reminder',
-      },
+      { id: 'a', dismissedUntil: expect.any(Date) },
+      { id: 'b', dismissedUntil: expect.any(Date) },
     ])
     expect(mocks.capture).toHaveBeenCalledTimes(2)
     expect(mocks.toast.show).toHaveBeenCalledTimes(1)
@@ -114,13 +112,12 @@ describe('useDismissContacts', () => {
 })
 
 describe('useUndismissContacts', () => {
-  it('cancels reminders and undismisses every contact at once', async () => {
+  it('undismisses every contact at once', async () => {
     await useUndismissContacts()([
       contact('a', { dismissedNotificationId: 'r1' }),
       contact('b'),
     ])
-    expect(mocks.cancel).toHaveBeenCalledTimes(1)
-    expect(mocks.cancel).toHaveBeenCalledWith('r1')
+    expect(mocks.cancel).not.toHaveBeenCalled()
     expect(mocks.undismissContacts).toHaveBeenCalledTimes(1)
     expect(mocks.undismissContacts).toHaveBeenCalledWith(['a', 'b'])
     expect(mocks.toast.show).toHaveBeenCalledTimes(1)

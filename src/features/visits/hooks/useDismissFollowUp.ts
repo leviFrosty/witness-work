@@ -1,29 +1,19 @@
-import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import i18n from '@/lib/locales'
-import { logger } from '@/lib/logger'
 import useConversations from '@/stores/conversationStore'
 import type { Visit } from '@/types/visit'
 
 /**
- * Silences a Visit's Follow-up after a confirmation: cancels its reminders and
- * marks it dismissed. The Follow-up itself stays on the Visit (topic, date) so
- * history keeps its context; only the reminder and the "due" state go away.
+ * Silences a Visit's Follow-up after a confirmation: marks it dismissed, which
+ * also removes its reminder (see `useReconciledReminders`). The Follow-up
+ * itself stays on the Visit (topic, date) so history keeps its context; only
+ * the reminder and the "due" state go away.
  */
 export default function useDismissFollowUp() {
   const updateConversation = useConversations((s) => s.updateConversation)
 
-  const dismiss = async (visit: Visit, onDismissed?: () => void) => {
-    await Promise.all(
-      (visit.followUp?.notifications ?? []).map(async ({ id }) => {
-        try {
-          await Notifications.cancelScheduledNotificationAsync(id)
-        } catch (e) {
-          logger.error('[followUp] failed to cancel notification', e)
-        }
-      })
-    )
+  const dismiss = (visit: Visit, onDismissed?: () => void) => {
     // Read the latest record: the Visit may have changed while the
     // confirmation was up.
     const latest =
@@ -45,7 +35,7 @@ export default function useDismissFollowUp() {
       title: i18n.t('dismissFollowUpConfirmTitle'),
       description: i18n.t('dismissFollowUpConfirmDesc'),
       confirmLabel: i18n.t('dismiss'),
-      onConfirm: () => void dismiss(visit, onDismissed),
+      onConfirm: () => dismiss(visit, onDismissed),
     })
   }
 }

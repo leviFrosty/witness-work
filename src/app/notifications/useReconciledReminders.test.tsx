@@ -7,6 +7,9 @@ import type { DayPlan } from '@/types/timeEntry'
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
   scheduled: [] as { identifier: string }[],
+  presented: [] as {
+    request: { identifier: string; content: { data: unknown } }
+  }[],
 }))
 vi.mock('react-native', () => ({
   Platform: {
@@ -36,6 +39,7 @@ vi.mock('@/stores/preferences', async () => ({
     returnVisitNotificationOffset: null,
     planNotificationOffset: null,
     dataProtectionMode: false,
+    timeDisplayFormat: 'short',
   })),
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET: { amount: 30, unit: 'minutes' },
   DEFAULT_PLAN_NOTIFICATION_OFFSET: { amount: 30, unit: 'minutes' },
@@ -57,6 +61,12 @@ vi.mock('expo-notifications', () => ({
     return request.identifier
   }),
   setNotificationChannelAsync: vi.fn(async () => {}),
+  getPresentedNotificationsAsync: vi.fn(async () => runtime.presented),
+  dismissNotificationAsync: vi.fn(async (id: string) => {
+    runtime.presented = runtime.presented.filter(
+      (item) => item.request.identifier !== id
+    )
+  }),
   AndroidImportance: { HIGH: 4 },
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
@@ -74,6 +84,7 @@ let renderer: ReactTestRenderer | undefined
 beforeEach(() => {
   vi.clearAllMocks()
   runtime.scheduled = []
+  runtime.presented = []
   useContacts.setState({
     contacts: [{ id: 'c', name: 'Contact', createdAt: new Date() }],
   })
@@ -336,3 +347,93 @@ it.each(['ios', 'android'])(
     )
   }
 )
+
+it('keeps one OS reminder when a Visit is saved again unchanged', async () => {
+  runtime.platform = 'ios'
+  const date = new Date(Date.now() + 24 * 60 * 60_000)
+  const visit: Visit = {
+    id: 'v',
+    date: new Date(),
+    isBibleStudy: false,
+    contact: { id: 'c' },
+    followUp: { date, notifyMe: true, reminderOffsetMinutes: 120 },
+  }
+  useConversations.setState({ conversations: [visit] })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(async () => {
+    // A notes-only edit: a new record with the same reminder intent.
+    useConversations.setState({
+      conversations: [{ ...visit, note: 'Edited' }],
+    })
+  })
+  expect(runtime.scheduled).toEqual([{ identifier: 'witness-work-visit-v' }])
+  expect(Notifications.scheduleNotificationAsync).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      trigger: expect.objectContaining({
+        date: new Date(date.getTime() - 120 * 60_000),
+      }),
+    })
+  )
+})
+
+it('routes taps with record ids and keeps names out in data protection mode', async () => {
+  runtime.platform = 'ios'
+  usePreferences.setState({ dataProtectionMode: true })
+  useContacts.setState({
+    contacts: [
+      {
+        id: 'c',
+        name: 'Contact',
+        createdAt: new Date(),
+        dismissedUntil: new Date(Date.now() + 60 * 60_000),
+      },
+    ],
+  })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  const request = vi.mocked(Notifications.scheduleNotificationAsync).mock
+    .calls[0][0]
+  expect(request.content.data).toEqual({
+    reminder: { kind: 'contact', id: 'c', contactId: 'c' },
+  })
+  expect(JSON.stringify(request.content)).not.toContain('Contact"')
+  expect(request.content.body).toBe('contactAvailableReminderPrivate')
+})
+
+it("cancels and retracts an erased Contact's reminder", async () => {
+  runtime.platform = 'android'
+  useContacts.setState({
+    contacts: [
+      {
+        id: 'c',
+        name: 'Contact',
+        createdAt: new Date(),
+        dismissedUntil: new Date(Date.now() + 60 * 60_000),
+      },
+    ],
+  })
+  runtime.presented = [
+    {
+      request: {
+        identifier: 'delivered',
+        content: { data: { reminder: { kind: 'contact', id: 'c' } } },
+      },
+    },
+  ]
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(runtime.scheduled).toEqual([{ identifier: 'witness-work-contact-c' }])
+  expect(runtime.presented).toHaveLength(1)
+  await act(async () => {
+    useContacts.setState({ contacts: [] })
+  })
+  expect(runtime.scheduled).toEqual([])
+  expect(Notifications.dismissNotificationAsync).toHaveBeenCalledWith(
+    'delivered'
+  )
+  expect(runtime.presented).toEqual([])
+})

@@ -82,6 +82,10 @@ plans. User-initiated plan deletion still declines. Reminders are rebuilt from
 current contact/visit/plan intent on launch, foreground, merges, and restores on
 both platforms, with local OS identifiers, saved custom offsets, permissions,
 and a 60-future-reminder cap. Deletions/reschedules cancel obsolete local ids.
+Reminder intent is `notifyMe` plus `reminderOffsetMinutes` (minutes before the
+start), which syncs; `notifications[0].date` keeps the fire time for older app
+versions. Forms never call the OS: `useReconciledReminders` is the only
+scheduler, and it also removes delivered reminders for erased records.
 
 “Keep this device” and “Rebuild iCloud data” delete saved snapshots and photos,
 reclaim the account file, and write the local snapshot. Failures are surfaced.

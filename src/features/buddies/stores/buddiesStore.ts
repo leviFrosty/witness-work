@@ -5,6 +5,7 @@ import {
   BuddiesState,
   initialBuddiesState,
   withoutExpired,
+  withPendingInvitesQueued,
 } from '@/features/buddies/lib/state'
 
 /**
@@ -17,10 +18,16 @@ export const useBuddies = create<BuddiesState>()(
     name: 'buddies',
     version: 1,
     storage: createJSONStorage(() => MmkvStorage),
-    // Lapsed shares are wiped before anything restored is shown, even offline.
+    // Lapsed shares are wiped before anything restored is shown, even offline,
+    // and every invitation still to answer is listed.
     merge: (persisted, current) => {
+      const now = Date.now()
       const merged = { ...current, ...(persisted as Partial<BuddiesState>) }
-      return { ...merged, ...withoutExpired(merged, Date.now()) }
+      const unexpired = { ...merged, ...withoutExpired(merged, now) }
+      return {
+        ...unexpired,
+        notifications: withPendingInvitesQueued(unexpired, now),
+      }
     },
   })
 )

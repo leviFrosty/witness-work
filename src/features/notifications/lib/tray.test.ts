@@ -8,6 +8,7 @@ import {
   trayEntries,
   TRAY_BOOK_RETENTION_MS,
   unreadCount,
+  visibleIds,
 } from '@/features/notifications/lib/tray'
 
 const now = Date.parse('2026-09-28T12:00:00.000Z')
@@ -71,5 +72,33 @@ describe('pruned', () => {
     expect(
       pruned({ fresh: now - 1000, stale: now - TRAY_BOOK_RETENTION_MS }, now)
     ).toEqual({ fresh: now - 1000 })
+  })
+})
+
+describe('visibleIds', () => {
+  const layouts = {
+    top: { y: 0, height: 100 },
+    half: { y: 250, height: 100 },
+    below: { y: 320, height: 100 },
+    tall: { y: 400, height: 1000 },
+  }
+
+  it('counts rows at least half on screen as shown', () => {
+    expect(visibleIds(layouts, { offset: 0, height: 300 })).toEqual([
+      'top',
+      'half',
+    ])
+  })
+
+  it('follows scrolling, and a row taller than the viewport', () => {
+    expect(visibleIds(layouts, { offset: 300, height: 300 })).toEqual([
+      'half',
+      'below',
+      'tall',
+    ])
+  })
+
+  it('shows nothing before the viewport is measured', () => {
+    expect(visibleIds(layouts, { offset: 0, height: 0 })).toEqual([])
   })
 })

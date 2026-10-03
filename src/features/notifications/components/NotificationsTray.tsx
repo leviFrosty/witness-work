@@ -7,7 +7,9 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
-import NotificationsList from '@/features/notifications/components/NotificationsList'
+import NotificationsList, {
+  type TraySyncState,
+} from '@/features/notifications/components/NotificationsList'
 import { trayEntries, unreadCount } from '@/features/notifications/lib/tray'
 import {
   recordArrivals,
@@ -92,10 +94,15 @@ export default function NotificationsTray({
   items,
   now,
   onOpen,
+  syncState,
+  onRetrySync,
 }: {
   items: NotificationItem[]
   now: number
   onOpen?: () => void
+  /** A remote source (Buddies) being checked, or failing to be. */
+  syncState?: TraySyncState
+  onRetrySync?: () => void
 }) {
   const { width } = useWindowDimensions()
   const arrivals = useNotificationsTray((state) => state.arrivals)
@@ -125,6 +132,8 @@ export default function NotificationsTray({
           entries={entries}
           closeThen={closeThen}
           onOpen={onOpen}
+          syncState={syncState}
+          onRetrySync={onRetrySync}
         />
       )}
     </AnchoredPopover>

@@ -23,7 +23,6 @@ import {
   PersistedServiceReportState,
 } from '@/lib/normalizeDate'
 import { PersistStorage } from '@/stores/mmkv'
-import * as Notifications from 'expo-notifications'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 
 const initialState = {
@@ -198,13 +197,6 @@ export const useServiceReport = create(
           if (!foundDayPlan) {
             return {}
           }
-
-          foundDayPlan.notifications?.forEach(
-            async ({ id: notificationId }) =>
-              await Notifications.cancelScheduledNotificationAsync(
-                notificationId
-              )
-          )
 
           return {
             dayPlans: dayPlans.filter((plan) => plan.id !== id),

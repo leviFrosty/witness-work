@@ -1,17 +1,20 @@
 import moment from 'moment'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import * as Notifications from 'expo-notifications'
-import { deriveOffsetFromDates } from '@/lib/notificationOffset'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  deriveOffsetFromDates,
+  offsetFromMinutes,
+  offsetToMinutes,
+} from '@/lib/notificationOffset'
+import {
+  buildReminderSchedule,
+  savedReminderOffsetMinutes,
+} from '@/lib/reminderSchedule'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
   () => import('@/__tests__/mocks/asyncStorage')
-)
-
-const cancelScheduledNotificationAsync = vi.mocked(
-  Notifications.cancelScheduledNotificationAsync
 )
 
 describe('deriveOffsetFromDates', () => {
@@ -66,56 +69,58 @@ describe('deriveOffsetFromDates', () => {
   })
 })
 
-describe('deleteDayPlan cancels scheduled notifications', () => {
-  beforeEach(async () => {
-    cancelScheduledNotificationAsync.mockClear()
-    const { default: useServiceReport } = await import('@/stores/serviceReport')
-    useServiceReport.setState({ dayPlans: [] })
-  })
-  afterEach(() => {
-    vi.resetModules()
+describe('reminder offsets', () => {
+  const anchor = moment('2026-04-27T09:00:00Z').toDate()
+
+  it('round-trips minutes and the cleanest offset', () => {
+    expect(offsetFromMinutes(120)).toEqual({ amount: 2, unit: 'hours' })
+    expect(offsetFromMinutes(0)).toBeNull()
+    expect(offsetToMinutes({ amount: 2, unit: 'hours' })).toBe(120)
+    expect(offsetToMinutes({ amount: undefined, unit: 'hours' })).toBeNull()
   })
 
-  it('calls cancelScheduledNotificationAsync for each notification on the deleted plan', async () => {
-    const { default: useServiceReport } = await import('@/stores/serviceReport')
-    const { addDayPlan, deleteDayPlan } = useServiceReport.getState()
-    addDayPlan({
-      id: 'np1',
-      date: moment('2026-04-27').toDate(),
-      minutes: 60,
-      startTimeInMinutes: 540,
-      notifyMe: true,
-      notifications: [
-        { id: 'notif-a', date: new Date() },
-        { id: 'notif-b', date: new Date() },
+  it('prefers the saved offset over the saved fire time', () => {
+    expect(
+      savedReminderOffsetMinutes(anchor, {
+        reminderOffsetMinutes: 120,
+        notifications: [{ date: moment(anchor).subtract(5, 'm').toDate() }],
+      })
+    ).toBe(120)
+  })
+
+  it('derives a legacy offset from the saved fire time', () => {
+    expect(
+      savedReminderOffsetMinutes(anchor, {
+        notifications: [{ date: moment(anchor).subtract(2, 'h').toDate() }],
+      })
+    ).toBe(120)
+    expect(savedReminderOffsetMinutes(anchor, {})).toBeUndefined()
+  })
+
+  it("keeps a moved Plan's chosen offset instead of the preference", () => {
+    const now = moment(anchor).subtract(10, 'days').valueOf()
+    const [reminder] = buildReminderSchedule({
+      contacts: [],
+      visits: [],
+      plans: [
+        {
+          id: 'p',
+          // Moved a day later; the saved fire time is for the old start.
+          date: moment(anchor).add(1, 'day').startOf('day').toDate(),
+          startTimeInMinutes: 9 * 60,
+          minutes: 60,
+          notifyMe: true,
+          reminderOffsetMinutes: 120,
+          notifications: [
+            { id: 'x', date: moment(anchor).subtract(2, 'h').toDate() },
+          ],
+        },
       ],
+      visitOffset: { amount: 30, unit: 'minutes' },
+      planOffset: { amount: 30, unit: 'minutes' },
+      now,
     })
-
-    deleteDayPlan('np1')
-
-    // Microtask queue flush — the cancellations are fire-and-forget inside the
-    // reducer, so wait one tick to let the scheduled async calls register.
-    await new Promise((r) => setTimeout(r, 0))
-
-    expect(cancelScheduledNotificationAsync).toHaveBeenCalledTimes(2)
-    expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('notif-a')
-    expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('notif-b')
-    expect(useServiceReport.getState().dayPlans).toHaveLength(0)
-  })
-
-  it('is a no-op when the plan has no notifications', async () => {
-    const { default: useServiceReport } = await import('@/stores/serviceReport')
-    const { addDayPlan, deleteDayPlan } = useServiceReport.getState()
-    addDayPlan({
-      id: 'np2',
-      date: moment('2026-04-28').toDate(),
-      minutes: 30,
-    })
-
-    deleteDayPlan('np2')
-
-    await new Promise((r) => setTimeout(r, 0))
-
-    expect(cancelScheduledNotificationAsync).not.toHaveBeenCalled()
+    const start = moment(anchor).add(1, 'day').startOf('day').add(9, 'hours')
+    expect(reminder.date).toEqual(start.subtract(2, 'hours').toDate())
   })
 })

@@ -19,6 +19,7 @@ import {
   BuddyInviteError,
   BuddyRemovalPendingError,
   createBuddiesEngine,
+  PUSH_REGISTRATION_REFRESH_MS,
 } from '@/features/buddies/lib/engine'
 import {
   BuddiesState,
@@ -26,6 +27,8 @@ import {
   incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
+  MAX_NOTIFICATIONS,
+  notificationIdForSeq,
   OutgoingShareSpec,
 } from '@/features/buddies/lib/state'
 import {
@@ -1046,6 +1049,154 @@ describe('shared Plans and Follow-ups', () => {
     levi.setShares([planSpec([anna.inboxId])])
     await levi.engine.publishShares()
     expect(fake.pushes.some((p) => p.kind === 'plan.invite')).toBe(false)
+  })
+
+  it('keeps a pending invitation in the queue until it is answered', async () => {
+    const { levi, anna } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const entry = anna.store
+      .getState()
+      .notifications.find((n) => n.kind === 'shareInvite')!
+
+    // Dismissing would strand it: the tray is where it's answered.
+    anna.engine.dismissNotification(entry.id)
+    await anna.engine.sync()
+    expect(
+      anna.store.getState().notifications.some((n) => n.id === entry.id)
+    ).toBe(true)
+
+    await anna.engine.replyToShare(entry.shareKey!, 'declined')
+    anna.engine.dismissNotification(entry.id)
+    expect(
+      anna.store.getState().notifications.some((n) => n.id === entry.id)
+    ).toBe(false)
+  })
+
+  it('lists a pending invitation again when its entry was lost', async () => {
+    const { levi, anna } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const key = Object.keys(anna.store.getState().incomingShares)[0]
+    // As an older version's dismissal left it.
+    anna.store.setState((state) => ({
+      notifications: state.notifications.filter((n) => n.shareKey !== key),
+    }))
+    await anna.engine.sync()
+    expect(
+      anna.store.getState().notifications.find((n) => n.shareKey === key)
+    ).toMatchObject({ kind: 'shareInvite', name: 'Levi', read: false })
+
+    // Once answered, nothing more is added.
+    await anna.engine.replyToShare(key, 'going')
+    anna.store.setState({ notifications: [] })
+    anna.engine.expire()
+    expect(anna.store.getState().notifications).toEqual([])
+  })
+
+  it('never evicts a pending invitation from a full queue', async () => {
+    const { levi, anna, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const key = Object.keys(anna.store.getState().incomingShares)[0]
+    const at = anna.store.getState().notifications[0].at
+    // Fill the queue with newer, already-read entries.
+    const filler = Array.from({ length: MAX_NOTIFICATIONS }, (_, i) => ({
+      id: `filler-${i}`,
+      kind: 'paired' as const,
+      at: at + MAX_NOTIFICATIONS - i,
+      read: true,
+      from: levi.inboxId,
+      name: 'Levi',
+    }))
+    anna.store.setState((state) => ({
+      notifications: [...filler, ...state.notifications],
+    }))
+
+    advance(60_000)
+    levi.setShares([
+      planSpec([anna.inboxId]),
+      { ...planSpec([anna.inboxId]), key: planShareKey('sun') },
+    ])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const { notifications } = anna.store.getState()
+    expect(notifications).toHaveLength(MAX_NOTIFICATIONS)
+    expect(notifications.filter((n) => n.kind === 'shareInvite')).toHaveLength(
+      2
+    )
+    expect(notifications.some((n) => n.shareKey === key)).toBe(true)
+  })
+
+  it('reads a change to an invitation seen in the tray as a change', async () => {
+    const { levi, anna, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const [invite] = anna.store.getState().notifications
+    expect(invite.kind).toBe('shareInvite')
+
+    // The tray shows it and reports it seen.
+    anna.engine.markNotificationRead(invite.id)
+    advance(60_000)
+    levi.setShares([planSpec([anna.inboxId], { ...saturday, s: 660 })])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    expect(anna.store.getState().notifications[0].kind).toBe('shareUpdate')
+  })
+
+  it('finds the queue entry a push announced by its event sequence', async () => {
+    const { fake, levi, anna } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const event = fake.inboxes
+      .get(anna.inboxId)!
+      .events.find((e) => e.kind === 'plan.invite')!
+    const { notifications } = anna.store.getState()
+    expect(notificationIdForSeq(notifications, event.seq)).toBe(event.eventId)
+    expect(notificationIdForSeq(notifications, 9999)).toBeNull()
+  })
+
+  it('re-sends an unchanged push registration once a day', async () => {
+    const { fake, anna, advance, offlineOps } = await trio()
+    const device = {
+      apnsToken: 'ab',
+      apnsEnvironment: 'sandbox' as const,
+      apnsTopic: 'com.leviwilkerson.jwtimebeta',
+      templates: { 'plan.invite': { title: 'Invite', body: 'Invite' } },
+    }
+    expect(await anna.engine.registerPush(device)).toBe('registered')
+    const { deviceId } = anna.store.getState()
+    const devices = fake.inboxes.get(anna.inboxId)!.devices
+    expect(devices.get(deviceId!)).toMatchObject({
+      apnsTopic: 'com.leviwilkerson.jwtimebeta',
+    })
+
+    // The relay dropped the device (rejected token, or evicted).
+    devices.delete(deviceId!)
+    expect(await anna.engine.registerPush(device)).toBe('unchanged')
+    advance(PUSH_REGISTRATION_REFRESH_MS)
+    expect(await anna.engine.registerPush(device)).toBe('refreshed')
+    expect(devices.has(deviceId!)).toBe(true)
+
+    // A different topic is a different registration.
+    expect(
+      await anna.engine.registerPush({
+        ...device,
+        apnsTopic: 'com.leviwilkerson.jwtime',
+      })
+    ).toBe('registered')
+
+    // A failed registration is retried next time.
+    offlineOps.add('device/register')
+    await expect(anna.engine.registerPush(device)).rejects.toThrow()
+    expect(anna.store.getState().pushRegistrationKey).toBeNull()
+    offlineOps.clear()
+    expect(await anna.engine.registerPush(device)).toBe('registered')
   })
 
   it('queues claims until they are answered', async () => {

@@ -36,3 +36,13 @@ export function buddiesErrorMessage(error: unknown): string {
     return i18n.t('buddies_limitReached', { max: MAX_BUDDIES })
   return i18n.t('buddies_errorGeneric')
 }
+
+/** A bounded analytics value for a Buddies failure; never its message. */
+export function buddiesFailureReason(
+  error: unknown
+): 'offline' | 'disabled' | 'rate_limited' | 'error' {
+  if (isRelayError(error, 'network')) return 'offline'
+  if (isRelayError(error, 'disabled')) return 'disabled'
+  if (isRelayError(error, 'rate_limited')) return 'rate_limited'
+  return 'error'
+}

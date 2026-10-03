@@ -1,10 +1,12 @@
 import { useSyncResolutionNotification } from '@/app/sync/useSyncResolutionNotification'
 import type { NotificationItem } from '@/types/notifications'
 import useDevNotificationItems from '@/app/notifications/devNotifications'
+import useReminderNotifications from '@/app/notifications/useReminderNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useBuddyNotifications, {
   syncBuddyNotifications,
+  useBuddyTraySyncStatus,
 } from '@/features/buddies/hooks/useBuddyNotifications'
 import useMilestoneUpdateNotification from '@/features/milestones/hooks/useMilestoneUpdateNotification'
 import useNotesImportNotifications from '@/features/notes-import/hooks/useNotesImportNotifications'
@@ -25,6 +27,7 @@ import useMissedFollowUpNotifications from '@/features/visits/hooks/useMissedFol
 export default function NotificationsBell() {
   const { now, refresh } = useNow()
   const buddiesEnabled = useBuddiesEnabled()
+  const buddiesSync = useBuddyTraySyncStatus()
   const items: (NotificationItem | null)[] = [
     // Ahead of last month's report on the same day: decide the rollover first.
     useRolloverNotification(),
@@ -33,6 +36,7 @@ export default function NotificationsBell() {
     useBackupNotification(now),
     useSyncResolutionNotification(),
     useDataProtectionRetentionNotification(now),
+    ...useReminderNotifications(now),
     ...useMissedFollowUpNotifications(now),
     ...useBuddyNotifications(),
     ...useNotesImportNotifications(),
@@ -48,8 +52,10 @@ export default function NotificationsBell() {
       now={now}
       onOpen={() => {
         refresh()
-        if (buddiesEnabled) syncBuddyNotifications()
+        if (buddiesEnabled) void syncBuddyNotifications()
       }}
+      syncState={buddiesSync.state}
+      onRetrySync={buddiesSync.retry}
     />
   )
 }

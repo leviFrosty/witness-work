@@ -10,6 +10,8 @@ import {
 type NotificationsTrayState = TrayBook & {
   /** Set by a tapped push; the Home bell opens once it's on screen. */
   openRequested: boolean
+  /** The tray is open on screen right now (not persisted). */
+  open: boolean
 }
 
 /**
@@ -23,6 +25,7 @@ export const useNotificationsTray = create<NotificationsTrayState>()(
       dismissed: {},
       seen: {},
       openRequested: false,
+      open: false,
     }),
     {
       name: 'notificationsTray',

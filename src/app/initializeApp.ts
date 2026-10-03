@@ -14,8 +14,9 @@ export function initializeApp() {
     handleNotification: async () => ({
       shouldShowAlert: true,
       // Reminders that arrive while the app is open follow the in-app Audio
-      // setting. Delivered in the background, iOS Settings > Notifications
-      // decides.
+      // setting. Delivered in the background, the system's notification
+      // settings decide. Android drops the banner of a silent alert, so
+      // `SilentForegroundAlerts` shows one in the app.
       shouldPlaySound: isAudioEnabled(),
       shouldSetBadge: false,
       shouldShowBanner: true,

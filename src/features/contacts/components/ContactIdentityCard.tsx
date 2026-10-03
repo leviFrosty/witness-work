@@ -113,7 +113,11 @@ const BackgroundEditButton = ({
         </View>
       )}
     >
-      <IsSupporter feature='customAccentColor' size='sm'>
+      <IsSupporter
+        feature='customAccentColor'
+        analyticsSurface='contact_background'
+        size='sm'
+      >
         <BackgroundSwatches value={value} onChange={onChange} />
       </IsSupporter>
     </AnchoredPopover>

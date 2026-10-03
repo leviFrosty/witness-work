@@ -1,6 +1,7 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Coordinate } from '@/types/contact'
 import type { PlanLocation } from '@/types/timeEntry'
+import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
 export type RootStackParamList = {
   Root: undefined
@@ -39,7 +40,12 @@ export type RootStackParamList = {
   Preferences: undefined
   'Whats New': undefined
   Paywall:
-    | { initialTier?: 'supporter' | 'tip'; source?: string; feature?: string }
+    | {
+        initialTier?: 'supporter' | 'tip'
+        source?: string
+        feature?: string
+        gateAttribution?: SupporterGateAttribution
+      }
     | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': { source: 'backup_reminder' } | undefined

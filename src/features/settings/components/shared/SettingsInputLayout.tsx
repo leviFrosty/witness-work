@@ -1,11 +1,13 @@
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, useRef } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 
 /** Applies the shared settings row treatment to every Preferences screen. */
 const SettingsInputLayout = ({ children }: PropsWithChildren) => {
   const theme = useTheme()
+  const viewportRef = useRef<View>(null)
 
   return (
     <View
@@ -16,6 +18,8 @@ const SettingsInputLayout = ({ children }: PropsWithChildren) => {
       }}
     >
       <View
+        ref={viewportRef}
+        collapsable={false}
         style={{
           flex: 1,
           width: '100%',
@@ -24,7 +28,9 @@ const SettingsInputLayout = ({ children }: PropsWithChildren) => {
           paddingHorizontal: inputLayout.horizontalPadding,
         }}
       >
-        {children}
+        <VisibilityViewportContext value={viewportRef}>
+          {children}
+        </VisibilityViewportContext>
       </View>
     </View>
   )

@@ -14,6 +14,8 @@ import SupporterBenefits from '@/components/SupporterBenefits'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import useCheapestSupporterPrice from '@/hooks/useCheapestSupporterPrice'
+import type { FeatureKey } from '@/lib/featureAccess'
+import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
 interface Props {
   open: boolean
@@ -22,10 +24,16 @@ interface Props {
    * Optional key of the specific feature the user tapped. Surfaces slightly
    * different copy acknowledging what they were trying to customize.
    */
-  featureKey?: 'customAccentColor' | 'iCloudSync' | 'customAppIcon'
+  featureKey?: FeatureKey
+  attribution?: SupporterGateAttribution
 }
 
-const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
+const SupporterInfoSheet = ({
+  open,
+  setOpen,
+  featureKey,
+  attribution,
+}: Props) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
   const navigation = useNavigation<RootStackNavigation>()
@@ -40,15 +48,17 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
       interactionHandled.current = false
       analytics.capture('supporter_gate_viewed', {
         feature: featureKey ?? 'general',
+        ...attribution,
       })
     }
-  }, [open, featureKey])
+  }, [open, featureKey, attribution])
 
   const dismiss = (method: string) => {
     if (!open || interactionHandled.current) return
     interactionHandled.current = true
     analytics.capture('supporter_gate_dismissed', {
       feature: featureKey ?? 'general',
+      ...attribution,
       method,
     })
     setOpen(false)
@@ -71,6 +81,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
     : i18n.t('supporterSheetSubtitle')
 
   const handleDonatePress = () => {
+    if (!open || interactionHandled.current) return
     // Close synchronously and skip the 300ms linger. When this sheet is
     // hosted inside another RN Modal (e.g. the AvatarPickerPopover that
     // surfaces the contact-form avatar gate), iOS refuses to unwind the
@@ -81,10 +92,12 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
     interactionHandled.current = true
     analytics.capture('supporter_gate_clicked', {
       feature: featureKey ?? 'general',
+      ...attribution,
     })
     analytics.capture('paywall_opened', {
       source: 'feature_gate',
       feature: featureKey ?? 'general',
+      ...attribution,
     })
     setOpen(false)
     setMounted(false)
@@ -92,6 +105,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
       navigation.navigate('Paywall', {
         source: 'feature_gate',
         feature: featureKey,
+        gateAttribution: attribution,
       })
     )
   }

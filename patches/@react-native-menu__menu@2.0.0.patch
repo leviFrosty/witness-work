@@ -1,0 +1,37 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index f1d2631ff516f0a0d74990166bde985f37816335..76c232d7556a590394f81db5d1c023f51df4262c 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -145,6 +145,7 @@ repositories {
+ def kotlin_version = getExtOrDefault("kotlinVersion")
+ 
+ dependencies {
++  implementation "androidx.appcompat:appcompat:1.7.1"
+   // For < 0.71, this will be from the local maven repo
+   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
+   //noinspection GradleDynamicVersion
+diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src/main/java/com/reactnativemenu/MenuView.kt
+index c45f5cc8ee16db610686fe5b6bef9f3372c6944b..7a709ef3e42581338fbca42c2ce5adf5efb5b7cb 100644
+--- a/android/src/main/java/com/reactnativemenu/MenuView.kt
++++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
+@@ -9,7 +9,7 @@ import android.text.Spannable
+ import android.text.SpannableStringBuilder
+ import android.text.style.ForegroundColorSpan
+ import android.view.*
+-import android.widget.PopupMenu
++import androidx.appcompat.widget.PopupMenu
+ import com.facebook.react.bridge.*
+ import com.facebook.react.uimanager.UIManagerHelper
+ import com.facebook.react.views.view.ReactViewGroup
+@@ -226,9 +226,8 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+           false -> Gravity.LEFT
+         }
+       }
+-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+-        mPopupMenu.setForceShowIcon(true)
+-      }
++      // AndroidX supports icon visibility on every supported Android version.
++      mPopupMenu.setForceShowIcon(true)
+       var i = 0
+       while (i < getActionsCount) {
+         if (!mActions.isNull(i)) {

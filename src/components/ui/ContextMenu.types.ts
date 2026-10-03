@@ -9,7 +9,7 @@ export type ContextMenuAction = {
   onPress: () => void
   /** Red, and listed last in its menu — pair with `confirmDestructive`. */
   destructive?: boolean
-  /** SF Symbol shown beside the title on iOS. Android menus stay text-only. */
+  /** SF Symbol on iOS; PullDownMenu maps supported names to Android drawables. */
   systemImage?: ButtonProps['systemImage']
 }
 

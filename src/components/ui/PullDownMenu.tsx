@@ -16,6 +16,7 @@ import type {
   ContextMenuItem,
 } from '@/components/ui/ContextMenu.types'
 import { usePreferences } from '@/stores/preferences'
+import androidMenuSymbols from '@/assets/android-menu-icons/symbols.json'
 
 type PullDownMenuProps = {
   /** Same entries as `ContextMenu`: falsy items hidden, arrays are groups. */
@@ -48,7 +49,8 @@ type PullDownMenuProps = {
  *   which tints the SF Symbol invisible. Always pass a real color.
  *
  * Android's popup menu has no separators, so its groups are concatenated;
- * submenus open as nested popups. Its items stay text-only.
+ * submenus open as nested popups. Icons use packaged Android vector drawables
+ * mapped from the same SF Symbol names used on iOS.
  */
 export function nativeMenuActions(
   groups: ContextMenuItem[][],
@@ -61,13 +63,15 @@ export function nativeMenuActions(
   const icon = (
     systemImage: ContextMenuItem['systemImage'],
     destructive?: boolean
-  ) =>
-    ios && systemImage
-      ? {
-          image: systemImage,
-          imageColor: destructive ? destructiveColor : color,
-        }
+  ) => {
+    if (!systemImage) return {}
+    const image = ios
+      ? systemImage
+      : (androidMenuSymbols as Partial<Record<string, string>>)[systemImage]
+    return image
+      ? { image, imageColor: destructive ? destructiveColor : color }
       : {}
+  }
 
   const item = (entry: ContextMenuItem): MenuAction =>
     isSubmenu(entry)

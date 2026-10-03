@@ -42,5 +42,6 @@ overrides:
   shell-quote: '^1.10.0'
   'ws@8': '^8.21.3'
 patchedDependencies:
+  '@react-native-menu/menu@2.0.0': patches/@react-native-menu__menu@2.0.0.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
 enableGlobalVirtualStore: true

@@ -23,6 +23,8 @@ vi.mock('react-native', () => ({
 }))
 vi.mock('../../../../modules/icloud-bridge', () => ({
   isAvailable: () => true,
+  supportsUploadStatus: () => false,
+  identityToken: () => null,
   waitForInitialScan: vi.fn(async () => runtime.scanned),
   readFiles: vi.fn(async (include: (filename: string) => boolean) => ({
     files: runtime.files.filter((f) => include(f.filename)),
@@ -30,6 +32,7 @@ vi.mock('../../../../modules/icloud-bridge', () => ({
   })),
 }))
 vi.mock('@/lib/account', () => ({ reclaimAccountFile: vi.fn() }))
+vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'install' }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: {

@@ -1,9 +1,10 @@
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { BuddyShareRef, DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
-import type {
-  IncomingShare,
-  IncomingShareStatus,
+import {
+  incomingShareKey,
+  type IncomingShare,
+  type IncomingShareStatus,
 } from '@/features/buddies/lib/state'
 
 /** Planned minutes when a buddy's Plan has no duration. */
@@ -17,6 +18,28 @@ export type LinkedPlanChanges = {
 
 const sameRef = (ref: BuddyShareRef | undefined, share: IncomingShare) =>
   ref?.from === share.from && ref.shareId === share.shareId
+
+/**
+ * The id every one of this User's devices gives the Plan that follows a share,
+ * so two devices that both answer "Going" add the same Plan rather than two.
+ * Inbox and share ids are base64url relay ids, which never contain the `.`
+ * separator, so the id is unique per share and passes sync validation.
+ */
+export const linkedPlanId = ({ from, shareId }: BuddyShareRef) =>
+  `buddy.${from}.${shareId}`
+
+/**
+ * Orders a share's linked Plans so the one to keep comes first: the one with
+ * `id`, else the lowest id. Every device keeps the same one; keeping each its
+ * own first copy let two devices delete each other's, and the deletions synced
+ * removed both.
+ */
+const byKeepOrder = (id: string) => (a: DayPlan, b: DayPlan) => {
+  if (a.id === b.id) return 0
+  if (a.id === id) return -1
+  if (b.id === id) return 1
+  return a.id < b.id ? -1 : 1
+}
 
 /** The Plan fields a linked Plan mirrors from the buddy's invitation. */
 function mirroredFields(share: IncomingShare) {
@@ -44,11 +67,23 @@ const differs = (plan: DayPlan, fields: ReturnType<typeof mirroredFields>) =>
  * one for each accepted Plan invitation, applies the buddy's changes, and
  * removes it when they cancel or the User changes their answer. A share that
  * has lapsed leaves its Plan alone — it's history by then.
+ *
+ * A linked Plan whose id is in `deletedPlanIds` was deleted, here or on another
+ * of this User's devices (which answered "Can't make it" there), so it's only
+ * added again for a share in `answered`: one the User just said "Going" to on
+ * this device. Each device keeps its own answer, so otherwise a device still
+ * showing "Going" would bring back a Plan deleted elsewhere.
  */
 export function reconcileLinkedPlans(
   dayPlans: DayPlan[],
   shares: IncomingShare[],
-  newId: () => string
+  {
+    deletedPlanIds = new Set<string>(),
+    answered = new Set<string>(),
+  }: {
+    deletedPlanIds?: ReadonlySet<string>
+    answered?: ReadonlySet<string>
+  } = {}
 ): LinkedPlanChanges {
   const changes: LinkedPlanChanges = { add: [], update: [], remove: [] }
   for (const share of shares) {
@@ -62,11 +97,20 @@ export function reconcileLinkedPlans(
     // arrives through iCloud while this device still shows the invitation.
     if (share.status === 'pending' && linked.length === 0) continue
     const fields = mirroredFields(share)
-    const [plan, ...duplicates] = linked
-    changes.remove.push(...duplicates.map((duplicate) => duplicate.id))
+    const id = linkedPlanId(share)
+    const [plan, ...duplicates] = [...linked].sort(byKeepOrder(id))
+    for (const duplicate of duplicates) {
+      // Removing a copy under the kept id would take the kept Plan with it.
+      if (duplicate.id !== plan.id) changes.remove.push(duplicate.id)
+    }
     if (!plan) {
+      if (
+        deletedPlanIds.has(id) &&
+        !answered.has(incomingShareKey(share.from, share.shareId))
+      )
+        continue
       changes.add.push({
-        id: newId(),
+        id,
         ...fields,
         buddyShare: { from: share.from, shareId: share.shareId },
       })
@@ -75,6 +119,52 @@ export function reconcileLinkedPlans(
     }
   }
   return changes
+}
+
+/**
+ * The invitations (by `incomingShareKey`) whose last linked Plan is gone from
+ * `current`. Deleting it means "Can't make it"; a share that still has a Plan
+ * (the copy `reconcileLinkedPlans` kept when it removed a duplicate) doesn't
+ * count, and neither does a Plan that stays but stops following its share.
+ */
+export function sharesLeftUnlinked(
+  previous: DayPlan[],
+  current: DayPlan[]
+): string[] {
+  const remaining = new Set(current.map((plan) => plan.id))
+  const stillLinked = new Set(
+    current.flatMap(({ buddyShare }) =>
+      buddyShare ? [incomingShareKey(buddyShare.from, buddyShare.shareId)] : []
+    )
+  )
+  const unlinked = new Set<string>()
+  for (const plan of previous) {
+    if (!plan.buddyShare || remaining.has(plan.id)) continue
+    const key = incomingShareKey(plan.buddyShare.from, plan.buddyShare.shareId)
+    if (!stillLinked.has(key)) unlinked.add(key)
+  }
+  return [...unlinked]
+}
+
+/**
+ * The invitations (by `incomingShareKey`) the User just answered "Going" to on
+ * this device: answering stamps a new `unsentReplyRev`, which delivery later
+ * clears and a buddy's update keeps.
+ */
+export function sharesJustAccepted(
+  previous: Record<string, IncomingShare>,
+  current: Record<string, IncomingShare>
+): Set<string> {
+  return new Set(
+    Object.entries(current)
+      .filter(
+        ([key, share]) =>
+          share.status === 'going' &&
+          share.unsentReplyRev !== undefined &&
+          share.unsentReplyRev !== previous[key]?.unsentReplyRev
+      )
+      .map(([key]) => key)
+  )
 }
 
 /**

@@ -19,6 +19,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
 import { useToastController } from '@tamagui/toast'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
+import { deleteAvatarFiles } from '@/lib/contactAvatarFiles'
 import type { Contact } from '@/types/contact'
 import {
   SELECTION_BAR_HEIGHT,
@@ -56,7 +57,13 @@ const RecoverContactsScreen = () => {
 
   const removePermanently = (ids: string[]) => {
     const targets = new Set(ids)
-    ids.forEach((id) => removeDeletedContact(id))
+    ids.forEach((id) => {
+      // Leaves a redacted tombstone so other devices drop the contact too.
+      removeDeletedContact(id)
+      // The archive kept every photo revision on disk so Recover could restore
+      // it.
+      void deleteAvatarFiles(id)
+    })
     useConversations
       .getState()
       .conversations.filter((convo) => targets.has(convo.contact.id))

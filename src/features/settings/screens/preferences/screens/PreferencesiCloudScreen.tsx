@@ -3,6 +3,15 @@ import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Linking, View } from 'react-native'
+import {
+  ChevronRight as ChevronRightIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '@/types/rootStack'
+import { listSyncDevices } from '@/lib/syncDevices'
+import IconButton from '@/components/ui/IconButton'
+import Card from '@/components/ui/Card'
 import Switch from '@/components/ui/Switch'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -16,55 +25,20 @@ import IsSupporter from '@/components/IsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
+import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import * as ICloudBridge from '../../../../../../modules/icloud-bridge/index'
-import { iCloudSync } from '@/app/sync/iCloudSync'
+import { ICloudAccount, iCloudSync } from '@/app/sync/iCloudSync'
 import FirstEnableSheet, {
   FirstEnableChoice,
 } from '@/app/sync/components/FirstEnableSheet'
 import { SyncPayload } from '@/app/sync/payload'
 import { useToastController } from '@tamagui/toast'
-import { formatDateTime, formatRelative } from '@/lib/dates'
+import { formatDateTime } from '@/lib/dates'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
-
-type StatusDisplay = { text: string; subtitle?: string }
-
-const buildStatus = (
-  enabled: boolean,
-  available: boolean,
-  lastiCloudPulledAt: number | null,
-  lastiCloudPushedAt: number | null,
-  issue: string | null,
-  pending: boolean,
-  paused: boolean,
-  needsResolution: boolean
-): StatusDisplay => {
-  if (needsResolution) return { text: i18n.t('iCloudStatusNeedsResolution') }
-  if (paused) return { text: i18n.t('iCloudStatusSupporterPaused') }
-  if (!enabled) return { text: i18n.t('iCloudStatusDisabled') }
-  if (!available) return { text: i18n.t('iCloudStatusUnavailable') }
-  if (issue)
-    return {
-      text: i18n.t(
-        issue === 'newer-version'
-          ? 'iCloudStatusNewerVersion'
-          : issue === 'invalid-file'
-            ? 'iCloudStatusInvalidFile'
-            : 'iCloudStatusRetryNeeded'
-      ),
-    }
-  if (pending) return { text: i18n.t('iCloudStatusPendingPush') }
-  const mostRecent = Math.max(lastiCloudPulledAt ?? 0, lastiCloudPushedAt ?? 0)
-  if (!mostRecent) return { text: i18n.t('iCloudStatusWaitingForFirstSync') }
-  return {
-    text: i18n.t('iCloudStatusLastSynced', {
-      relative: formatRelative(mostRecent),
-    }),
-    subtitle: formatDateTime(mostRecent, {
-      style: 'medium',
-      withSeconds: true,
-    }),
-  }
-}
+import {
+  buildICloudStatus,
+  UPLOAD_GRACE_MS,
+} from '@/features/settings/lib/iCloudStatus'
 
 const formatOrDash = (ts: number | null): string =>
   ts ? formatDateTime(ts, { style: 'medium', withSeconds: true }) : '—'
@@ -76,6 +50,9 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncIncludeImages,
     lastiCloudPushedAt,
     lastiCloudPulledAt,
+    lastiCloudUploadedAt,
+    iCloudUploadPendingSince,
+    iCloudUploadIssue,
     lastiCloudRemoteWrittenAt,
     lastiCloudRemoteDeviceId,
     lastiCloudRemoteDeviceName,
@@ -84,6 +61,7 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncPendingPush,
     iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
+    iCloudAccountChangedAt,
     developerTools,
     set,
   } = usePreferences()
@@ -91,6 +69,10 @@ const PreferencesiCloudScreenInner = () => {
   const [available, setAvailable] = useState(() => ICloudBridge.isAvailable())
   const [firstEnableSheetOpen, setFirstEnableSheetOpen] = useState(false)
   const [pendingRemote, setPendingRemote] = useState<SyncPayload | null>(null)
+  // The Apple Account `pendingRemote` was read under.
+  const [pendingAccount, setPendingAccount] = useState<ICloudAccount | null>(
+    null
+  )
   // Optimistic override for the enable switch. Lets the thumb flip immediately
   // on tap while the async enable flow (availability check, conflict sheet,
   // seed/pull) resolves in the background. Null when no flip is in flight.
@@ -101,7 +83,33 @@ const PreferencesiCloudScreenInner = () => {
     boolean | null
   >(null)
   const [migratingImages, setMigratingImages] = useState(false)
+  // Re-renders when an unconfirmed upload passes its grace period, so the
+  // status switches to "Uploading" without another preference change.
+  const [now, setNow] = useState(() => Date.now())
   const toast = useToastController()
+  const navigation = useNavigation<RootStackNavigation>()
+  const deviceCount = usePreferences(
+    (state) =>
+      listSyncDevices(state.iCloudSyncDevices, state.iCloudDeviceId).length
+  )
+
+  useEffect(() => {
+    if (iCloudUploadPendingSince === null) return
+    const remaining = iCloudUploadPendingSince + UPLOAD_GRACE_MS - Date.now()
+    if (remaining <= 0) {
+      setNow(Date.now())
+      return
+    }
+    const timer = setTimeout(() => setNow(Date.now()), remaining)
+    return () => clearTimeout(timer)
+  }, [iCloudUploadPendingSince])
+
+  const showAccountChangedNotice =
+    iCloudAccountChangedAt !== null && !iCloudSyncEnabled
+  useEffect(() => {
+    if (showAccountChangedNotice)
+      analytics.capture('icloud_account_changed_notice_viewed')
+  }, [showAccountChangedNotice])
 
   // Re-check iCloud availability on mount and whenever the identity changes.
   useEffect(() => {
@@ -121,9 +129,31 @@ const PreferencesiCloudScreenInner = () => {
    * decisions.
    */
   const applyFirstEnableChoice = async (choice: FirstEnableChoice) => {
+    // The sheet showed the data of the account it was opened under. After a
+    // switch, every choice would carry that data, or this device's reset, into
+    // the new account's iCloud; turning sync on again asks about that one.
+    if (!pendingAccount || !iCloudSync.confirmICloudAccount(pendingAccount)) {
+      analytics.capture('icloud_sync_first_enable_outcome', {
+        choice,
+        outcome: 'account_changed',
+      })
+      setPendingRemote(null)
+      setPendingAccount(null)
+      setPendingEnable(null)
+      Alert.alert(
+        i18n.t('iCloudAccountChangedNotice_title'),
+        i18n.t('iCloudAccountChangedNotice_description')
+      )
+      return
+    }
     iCloudSync.backfillUpdatedAtIfNeeded()
     const wasEnabled = usePreferences.getState().iCloudSyncEnabled
     analytics.capture('icloud_sync_first_enable_chosen', { choice })
+    // Before sync turns on: joining iCloud's newest reset generation makes the
+    // pull merge with it instead of adopting it and replacing this device's
+    // data.
+    if (choice === 'merge' && pendingRemote)
+      iCloudSync.joinRemoteResetEpoch(pendingRemote)
     if (choice !== 'keepLocal')
       set({
         iCloudSyncEnabled: true,
@@ -173,6 +203,7 @@ const PreferencesiCloudScreenInner = () => {
       Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
     } finally {
       setPendingRemote(null)
+      setPendingAccount(null)
       setSyncing(false)
       setPendingEnable(null)
     }
@@ -239,7 +270,7 @@ const PreferencesiCloudScreenInner = () => {
       )
       return
     }
-    set({ iCloudSyncSetByUser: true })
+    set({ iCloudSyncSetByUser: true, iCloudAccountChangedAt: null })
     setPendingEnable(true)
     if (!ICloudBridge.isAvailable()) {
       setPendingEnable(null)
@@ -262,6 +293,7 @@ const PreferencesiCloudScreenInner = () => {
     // dismiss handler (on cancel).
     if (decision.outcome === 'conflict') {
       setPendingRemote(decision.remote)
+      setPendingAccount(decision.account)
       setSyncing(false)
       analytics.capture('icloud_sync_first_enable_viewed')
       setFirstEnableSheetOpen(true)
@@ -327,10 +359,14 @@ const PreferencesiCloudScreenInner = () => {
       const merged = await iCloudSync.pullAndMerge('manual')
       const pullIssue = usePreferences.getState().iCloudSyncIssue
       const pushed = await iCloudSync.push('manual')
+      // One look, without waiting for the upload: a failure iCloud already
+      // reports (storage full) shouldn't read as "No new changes".
+      if (pushed) await iCloudSync.checkUpload()
       if (
         pullIssue ||
         !pushed ||
-        usePreferences.getState().iCloudSyncPendingPush
+        usePreferences.getState().iCloudSyncPendingPush ||
+        usePreferences.getState().iCloudUploadIssue
       )
         throw new Error('iCloud sync incomplete')
       analytics.capture('icloud_sync_manual_outcome', {
@@ -345,7 +381,14 @@ const PreferencesiCloudScreenInner = () => {
       )
     } catch {
       analytics.capture('icloud_sync_manual_outcome', { outcome: 'failed' })
-      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+      Alert.alert(
+        i18n.t('error'),
+        i18n.t(
+          usePreferences.getState().iCloudUploadIssue === 'icloud-full'
+            ? 'iCloudStorageFullHelp'
+            : 'iCloudOperationFailed'
+        )
+      )
     } finally {
       setSyncing(false)
     }
@@ -355,16 +398,23 @@ const PreferencesiCloudScreenInner = () => {
     void Linking.openSettings()
   }
 
-  const status = buildStatus(
-    iCloudSyncEnabled,
+  const status = buildICloudStatus({
+    enabled: iCloudSyncEnabled,
     available,
-    lastiCloudPulledAt,
-    lastiCloudPushedAt,
-    iCloudSyncIssue,
-    iCloudSyncPendingPush,
-    iCloudSyncPausedForLapse,
-    iCloudSyncNeedsResolution
-  )
+    paused: iCloudSyncPausedForLapse,
+    needsResolution: iCloudSyncNeedsResolution,
+    issue: iCloudSyncIssue,
+    uploadIssue: iCloudUploadIssue,
+    pendingPush: iCloudSyncPendingPush,
+    uploadPendingSince: iCloudUploadPendingSince,
+    uploadConfirmationSupported: ICloudBridge.supportsUploadStatus(),
+    lastPulledAt: lastiCloudPulledAt,
+    lastPushedAt: lastiCloudPushedAt,
+    lastUploadedAt: lastiCloudUploadedAt,
+    now,
+  })
+  const storageFull =
+    iCloudSyncEnabled && available && iCloudUploadIssue === 'icloud-full'
 
   /**
    * Handles photo transfer consent and an explicit shared-file cleanup choice.
@@ -585,6 +635,35 @@ const PreferencesiCloudScreenInner = () => {
           </Text>
         </View>
 
+        {showAccountChangedNotice && (
+          <Card
+            style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}
+          >
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+              }}
+            >
+              <Text style={{ flexShrink: 1, color: theme.colors.text }}>
+                {i18n.t('iCloudAccountChangedNotice')}
+              </Text>
+              <InfoPopover
+                inline
+                title={i18n.t('iCloudAccountChangedNotice_title')}
+                description={i18n.t('iCloudAccountChangedNotice_description')}
+              />
+            </View>
+            <IconButton
+              icon={XIcon}
+              color={theme.colors.textAlt}
+              onPress={dismissICloudAccountChangeNotice}
+              accessibilityLabel={i18n.t('dismiss')}
+            />
+          </Card>
+        )}
+
         <Section>
           <InputRowContainer
             label={i18n.t('iCloudEnableLabel')}
@@ -631,6 +710,19 @@ const PreferencesiCloudScreenInner = () => {
               )}
             </View>
           </InputRowContainer>
+          {storageFull && (
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                paddingTop: 4,
+                paddingHorizontal: 12,
+                paddingBottom: 16,
+              }}
+            >
+              {i18n.t('iCloudStorageFullHelp')}
+            </Text>
+          )}
         </Section>
 
         {!available && (
@@ -743,6 +835,25 @@ const PreferencesiCloudScreenInner = () => {
               <Text style={{ color: theme.colors.accent }}>
                 {syncing ? i18n.t('iCloudSyncing') : i18n.t('sync')}
               </Text>
+            </InputRowButton>
+          </Section>
+        )}
+
+        {iCloudSyncEnabled && (
+          <Section>
+            <InputRowButton
+              label={i18n.t('iCloudDevices')}
+              onPress={() => navigation.navigate('PreferencesiCloudDevices')}
+              lastInSection
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              >
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {deviceCount}
+                </Text>
+                <IconButton icon={ChevronRightIcon} />
+              </View>
             </InputRowButton>
           </Section>
         )}

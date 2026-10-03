@@ -23,6 +23,7 @@ import PreferencesPersonalizationScreen from '@/features/settings/screens/prefer
 import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen'
 import PreferencesPrivacyScreen from '@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen'
 import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
+import PreferencesiCloudDevicesScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudDevicesScreen'
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
 import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
 import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
@@ -144,6 +145,11 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     name: 'PreferencesiCloud',
     component: PreferencesiCloudScreen,
     title: () => i18n.t('iCloudSync'),
+  },
+  {
+    name: 'PreferencesiCloudDevices',
+    component: PreferencesiCloudDevicesScreen,
+    title: () => i18n.t('iCloudDevices'),
   },
   {
     name: 'PreferencesAppIcon',

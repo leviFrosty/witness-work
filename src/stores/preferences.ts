@@ -6,6 +6,8 @@ import {
   entryTimestampKey,
 } from '@/lib/syncPreferencePolicy'
 import { canonicalJson } from '@/lib/canonicalJson'
+import type { ResetEpoch } from '@/lib/syncResetEpoch'
+import type { SyncDeviceFiles } from '@/lib/syncDevices'
 import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { create } from 'zustand'
@@ -598,6 +600,22 @@ export const PREFERENCE_DEFAULTS = {
     | 'push-failed'
     | null,
   iCloudSyncNeedsResolution: false,
+  /**
+   * The iCloud reset generation this device has adopted; null is generation
+   * zero. Device-local: see `src/lib/syncResetEpoch.ts`.
+   */
+  iCloudResetEpoch: null as ResetEpoch | null,
+  /** Set when a pull adopted another device's reset, until dismissed. */
+  iCloudResetAdoptedNotice: null as {
+    epochId: string
+    deviceName: string | null
+    at: number
+  } | null,
+  /**
+   * What the last pulls saw of each device's iCloud snapshot file, for the
+   * Settings Devices list. Device-local: see `src/lib/syncDevices.ts`.
+   */
+  iCloudSyncDevices: {} as SyncDeviceFiles,
   iCloudSyncPausedForLapse: false,
   iCloudFreshSetup: false,
   hasReconciledSyncDefinitions: false,
@@ -688,6 +706,24 @@ export const PREFERENCE_DEFAULTS = {
   lastiCloudPushedAt: null as number | null,
   /** Epoch ms of the most recent successful pull/read from iCloud. */
   lastiCloudPulledAt: null as number | null,
+  /**
+   * Epoch ms when iCloud last confirmed it had uploaded this device's snapshot.
+   * A push only proves a local write; this is what shows the data is off the
+   * device. Never set on a binary without `uploadStatus`.
+   */
+  lastiCloudUploadedAt: null as number | null,
+  /**
+   * Epoch ms of the oldest write iCloud hasn't confirmed uploading yet, or null
+   * when nothing is waiting. Drives "Uploading to iCloud…" and the upload
+   * checks in `iCloudSync`.
+   */
+  iCloudUploadPendingSince: null as number | null,
+  /**
+   * The last upload error iCloud reported for this device's snapshot. Kept
+   * apart from `iCloudSyncIssue`, which every pull rewrites, and cleared only
+   * once an upload is confirmed.
+   */
+  iCloudUploadIssue: null as 'icloud-full' | 'upload-failed' | null,
   /** Epoch ms from `writtenAt` of the last remote payload this device read. */
   lastiCloudRemoteWrittenAt: null as number | null,
   /** DeviceId of the device that wrote the last remote payload this device read. */
@@ -703,6 +739,23 @@ export const PREFERENCE_DEFAULTS = {
    * entries in the "recent devices" display in Settings.
    */
   iCloudDeviceId: null as string | null,
+  /**
+   * The Keychain install id `iCloudDeviceId` was created on. Preferences ride
+   * iOS device backups and Quick Start to a new device; the install id does
+   * not, so a mismatch means this is a copy that needs its own device id.
+   */
+  iCloudDeviceBinding: null as string | null,
+  /**
+   * The archived iCloud identity token (base64) this device last synced with.
+   * Opaque: compared natively with `isEqual:` (`identityTokenMatches`) to
+   * notice the device signing into another Apple Account.
+   */
+  iCloudIdentityToken: null as string | null,
+  /**
+   * Epoch ms when sync was turned off because the Apple Account changed. Drives
+   * the Settings notice; null once dismissed or sync is turned on.
+   */
+  iCloudAccountChangedAt: null as number | null,
   /**
    * Per-key epoch ms of the most recent change for syncable preference keys.
    * Merged last-writer-wins per key so a theme toggle on device A doesn't

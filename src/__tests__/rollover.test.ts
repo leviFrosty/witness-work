@@ -6,6 +6,8 @@ import {
   buildRolloverEntries,
   computeExcludedCreditMinutes,
   computePendingRollovers,
+  restampOverTombstones,
+  rolloverIds,
 } from '@/features/service-reports/lib/rollover'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -332,41 +334,140 @@ describe('buildRolloverEntries', () => {
       { sourceYear: 2026, sourceMonth: 0, minutes: 24 },
       { sourceYear: 2026, sourceMonth: 1, minutes: 30 },
     ]
-    let n = 0
     const entries = buildRolloverEntries({
       pending,
       today,
-      genId: () => `id-${n++}`,
+      serviceReports: {},
     })
 
-    // First genId() reserved for the shared group id; subsequent calls assign
-    // entry ids in order.
+    const group = 'rollover-2026-01_2026-02-to-2026-03'
     expect(entries).toEqual([
       {
-        id: 'id-1',
+        id: `${group}-src-2026-01`,
         hours: 0,
         minutes: -24,
         date: new Date(2026, 0, 31, 12),
         rollover: true,
-        rolloverGroupId: 'id-0',
+        rolloverGroupId: group,
       },
       {
-        id: 'id-2',
+        id: `${group}-src-2026-02`,
         hours: 0,
         minutes: -30,
         date: new Date(2026, 1, 28, 12),
         rollover: true,
-        rolloverGroupId: 'id-0',
+        rolloverGroupId: group,
       },
       {
-        id: 'id-3',
+        id: `${group}-dst`,
         hours: 0,
         minutes: 54,
         date: new Date(2026, 2, 1, 12),
         rollover: true,
-        rolloverGroupId: 'id-0',
+        rolloverGroupId: group,
       },
     ])
+  })
+})
+
+describe('rolloverIds', () => {
+  const pending = [{ sourceYear: 2026, sourceMonth: 8, minutes: 30 }]
+  const today = moment('2026-10-01T09:00:00')
+  const base = 'rollover-2026-09-to-2026-10'
+  const liveEntry = (id: string, rolloverGroupId?: string): TimeEntry => ({
+    id,
+    hours: 0,
+    minutes: 30,
+    date: new Date(2026, 8, 30, 12),
+    rollover: true,
+    rolloverGroupId,
+  })
+
+  it('derives the ids from the source and destination months', () => {
+    expect(rolloverIds({ pending, today, serviceReports: {} })).toEqual({
+      groupId: base,
+      sourceIds: [`${base}-src`],
+      destinationId: `${base}-dst`,
+    })
+  })
+
+  it('ignores live entries that use other ids', () => {
+    const serviceReports = reports(2026, 8, [{ id: 'sep-entry' }])
+    expect(rolloverIds({ pending, today, serviceReports }).groupId).toBe(base)
+  })
+
+  it('adds an ordinal only while a live entry uses one of the ids', () => {
+    const first = merge(
+      reports(2026, 8, [liveEntry(`${base}-src`, base)]),
+      reports(2026, 9, [liveEntry(`${base}-dst`, base)])
+    )
+    expect(rolloverIds({ pending, today, serviceReports: first })).toEqual({
+      groupId: `${base}-2`,
+      sourceIds: [`${base}-2-src`],
+      destinationId: `${base}-2-dst`,
+    })
+
+    const second = merge(
+      first,
+      reports(2026, 7, [liveEntry(`${base}-2-dst`, `${base}-2`)])
+    )
+    expect(
+      rolloverIds({ pending, today, serviceReports: second }).groupId
+    ).toBe(`${base}-3`)
+  })
+
+  it('treats a live group id as taken, so deleting one pair spares the other', () => {
+    const serviceReports = reports(2026, 8, [liveEntry('legacy-id', base)])
+    expect(rolloverIds({ pending, today, serviceReports }).groupId).toBe(
+      `${base}-2`
+    )
+  })
+})
+
+describe('restampOverTombstones', () => {
+  const entry = (id: string, updatedAt: number): TimeEntry => ({
+    id,
+    hours: 0,
+    minutes: 30,
+    date: new Date(2026, 8, 30, 12),
+    updatedAt,
+  })
+
+  it('stamps a reused id strictly newer than its tombstone', () => {
+    const serviceReports = reports(2026, 8, [
+      entry('reused', 1_000),
+      entry('other', 1_000),
+    ])
+
+    // From a device whose clock runs ahead of this one.
+    const deletedAt = Date.now() + 60_000
+    const result = restampOverTombstones({
+      serviceReports,
+      ids: ['reused', 'other'],
+      tombstones: [{ id: 'reused', deletedAt }],
+    })
+
+    expect(result.changed).toBe(true)
+    const [reused, other] = result.serviceReports[2026][8]
+    expect(reused.updatedAt).toBeGreaterThan(deletedAt)
+    expect(other).toBe(serviceReports[2026][8][1])
+  })
+
+  it('leaves entries already newer than the tombstone, and other ids, alone', () => {
+    const serviceReports = reports(2026, 8, [entry('fresh', 2_000)])
+
+    for (const tombstones of [
+      [{ id: 'fresh', deletedAt: 1_999 }],
+      [{ id: 'unrelated', deletedAt: 9_999 }],
+    ]) {
+      const result = restampOverTombstones({
+        serviceReports,
+        ids: ['fresh'],
+        tombstones,
+      })
+      expect(result.changed).toBe(false)
+      expect(result.serviceReports).toBe(serviceReports)
+    }
   })
 })
 
@@ -374,14 +475,12 @@ describe('applyRollover', () => {
   it('returns entries and the marker key when rollover is pending', () => {
     const today = moment('2026-04-15')
     const serviceReports = reports(2026, 2, [{ hours: 1, minutes: 24 }])
-    let n = 0
 
     const result = applyRollover({
       serviceReports,
       today,
       hasAnnualGoal: true,
       lastRolloverYearMonth: null,
-      genId: () => `id-${n++}`,
     })
 
     expect(result).not.toBeNull()
@@ -389,6 +488,28 @@ describe('applyRollover', () => {
     expect(result?.entries).toHaveLength(2)
     expect(result?.entries[0].minutes).toBe(-24)
     expect(result?.entries[1].minutes).toBe(24)
+    expect(result?.entries.map((e) => e.id)).toEqual([
+      'rollover-2026-03-to-2026-04-src',
+      'rollover-2026-03-to-2026-04-dst',
+    ])
+  })
+
+  it('produces identical entries on two devices with the same data', () => {
+    const input = {
+      serviceReports: reports(2026, 2, [{ hours: 1, minutes: 24 }]),
+      today: moment('2026-04-01T08:00:00'),
+      hasAnnualGoal: true,
+      lastRolloverYearMonth: null,
+    }
+
+    const phone = applyRollover(input)
+    const tablet = applyRollover({
+      ...input,
+      today: moment('2026-04-01T21:30:00'),
+    })
+
+    expect(phone?.entries).toHaveLength(2)
+    expect(tablet?.entries).toEqual(phone?.entries)
   })
 
   it('returns null when no rollover is pending', () => {
@@ -400,7 +521,6 @@ describe('applyRollover', () => {
       today,
       hasAnnualGoal: true,
       lastRolloverYearMonth: null,
-      genId: () => 'id',
     })
 
     expect(result).toBeNull()

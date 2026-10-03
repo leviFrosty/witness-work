@@ -22,6 +22,7 @@ import {
 } from '@/lib/account'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
+import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 
 interface Props {}
 
@@ -86,6 +87,27 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       try {
         if (!ICloudBridge.isAvailable()) {
           setICloudSharingAvailable(false)
+          return
+        }
+
+        // A different Apple Account clears the adopted id. Until RevenueCat
+        // is back on this device's own id, the previous account's id (and
+        // its entitlement) must not claim the new account's file.
+        checkICloudIdentity('account_reconcile')
+        const current = getOrCreateAccountId()
+        if (current !== accountId) {
+          const { customerInfo } = await Purchases.logIn(current)
+          setAccountId(current)
+          setCustomer(customerInfo)
+          logger.log('[Account] re-identified after account id reset', {
+            reason,
+          })
+          errorTracking.addBreadcrumb({
+            category: 'account',
+            message: `re-identify (${reason})`,
+            level: 'info',
+          })
+          // The new id re-runs reconcile with matching customer state.
           return
         }
 

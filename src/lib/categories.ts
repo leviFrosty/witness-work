@@ -1,4 +1,5 @@
 import { legacyDefinitionId } from '@/lib/legacyDefinitionId'
+import { syncTimestamp } from '@/lib/syncClock'
 import { Category } from '@/types/category'
 import {
   LegacyTimeEntry,
@@ -365,40 +366,40 @@ export function migrateLdcToCategory(
 }
 
 export type CreditRestampResult = {
-  /** False when no entry references the Category — nothing to write back. */
+  /** False when no entry needed rewriting — nothing to write back. */
   changed: boolean
   serviceReports: TimeEntriesByYear
 }
 
 /**
- * Re-stamps the legacy per-entry `credit` boolean on every TimeEntry
- * referencing `categoryId` after the Category's `isCredit` flips. The Category
- * record is the source of truth; the stamp only keeps legacy credit-math
- * readers consistent during the transition window. (Plans are never re-stamped
- * — they derive credit-ness from the Category at read time.)
- *
- * Pure and identity-preserving: untouched month buckets keep their array
- * identity (so report-keyed memoization survives), nothing in the input tree is
- * mutated, and `changed: false` tells the caller to skip the store write
- * entirely.
+ * Rewrites the per-entry `credit` flag of every entry `targetIsCredit` returns
+ * a value for, when it differs. Readers treat a missing flag as non-credit, so
+ * an unset flag already matches `false`. Untouched month buckets keep their
+ * array identity, and nothing in the input tree is mutated.
  */
-export function restampTimeEntriesCredit(
+const rewriteTimeEntriesCredit = (
   serviceReports: TimeEntriesByYear,
-  categoryId: string,
-  isCredit: boolean
-): CreditRestampResult {
+  targetIsCredit: (entry: TimeEntry) => boolean | undefined,
+  stamp: (entry: TimeEntry) => TimeEntry
+): CreditRestampResult => {
   let changed = false
   const next: TimeEntriesByYear = {}
+  const needsRewrite = (entry: TimeEntry) => {
+    const isCredit = targetIsCredit(entry)
+    return isCredit !== undefined && (entry.credit === true) !== isCredit
+  }
 
   for (const year of Object.keys(serviceReports)) {
     const months = serviceReports[year]
     const nextMonths: TimeEntriesByYear[string] = {}
     for (const month of Object.keys(months)) {
       const bucket = months[month]
-      if (bucket.some((r) => r.categoryId === categoryId)) {
+      if (bucket.some(needsRewrite)) {
         changed = true
-        nextMonths[month] = bucket.map((r) =>
-          r.categoryId === categoryId ? { ...r, credit: isCredit } : r
+        nextMonths[month] = bucket.map((entry) =>
+          needsRewrite(entry)
+            ? stamp({ ...entry, credit: targetIsCredit(entry) })
+            : entry
         )
       } else {
         nextMonths[month] = bucket
@@ -407,5 +408,64 @@ export function restampTimeEntriesCredit(
     next[year] = nextMonths
   }
 
-  return { changed, serviceReports: next }
+  return changed
+    ? { changed, serviceReports: next }
+    : { changed, serviceReports }
+}
+
+/**
+ * Re-stamps the per-entry `credit` boolean on every TimeEntry referencing
+ * `categoryId` after the Category's `isCredit` flips. The Category record is
+ * the source of truth, but Service Report totals still read the per-entry flag.
+ * (Plans are never re-stamped — they derive credit-ness from the Category at
+ * read time.)
+ *
+ * Every rewritten entry gets a new `updatedAt`, so the flip reaches devices
+ * that sync this entry but haven't pulled the Category yet. Entries whose flag
+ * already matches keep their timestamp, so it can't override another device's
+ * newer edit. `normalizeTimeEntriesCredit` covers the rest.
+ *
+ * Pure and identity-preserving: `changed: false` tells the caller to skip the
+ * store write entirely.
+ */
+export function restampTimeEntriesCredit(
+  serviceReports: TimeEntriesByYear,
+  categoryId: string,
+  isCredit: boolean
+): CreditRestampResult {
+  return rewriteTimeEntriesCredit(
+    serviceReports,
+    (entry) => (entry.categoryId === categoryId ? isCredit : undefined),
+    (entry) => ({ ...entry, updatedAt: syncTimestamp(entry.updatedAt) })
+  )
+}
+
+/**
+ * Aligns every TimeEntry's `credit` flag with its Category's current
+ * `isCredit`, without touching `updatedAt`. Entries with no Category, or whose
+ * Category isn't on this device, keep their flag.
+ *
+ * Totals read the per-entry flag, and an entry can arrive carrying a stale one:
+ * logged or edited on a device that hadn't pulled the Category's credit change
+ * yet, it is newer than the restamp and wins the merge everywhere. Every device
+ * runs this locally after its stores change
+ * (`useTimeEntryCreditNormalization`), so totals follow the Category. The
+ * rewrite isn't stamped because there is nothing to propagate: each device
+ * derives the same flags from the same synced Categories, and a stamp would let
+ * a device with a stale Category override the others.
+ */
+export function normalizeTimeEntriesCredit(
+  serviceReports: TimeEntriesByYear,
+  categories: Category[]
+): CreditRestampResult {
+  if (categories.length === 0) return { changed: false, serviceReports }
+  const isCreditById = new Map(categories.map((c) => [c.id, c.isCredit]))
+  return rewriteTimeEntriesCredit(
+    serviceReports,
+    (entry) =>
+      entry.categoryId === undefined
+        ? undefined
+        : isCreditById.get(entry.categoryId),
+    (entry) => entry
+  )
 }

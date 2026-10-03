@@ -56,11 +56,10 @@ describe('rollover entries', () => {
     for (const tz of tzs) {
       setTZ(tz)
       useServiceReport.getState()._WARNING_forceDeleteServiceReports()
-      let n = 0
       buildRolloverEntries({
         pending: [{ sourceYear: 2026, sourceMonth: 7, minutes: 30 }],
         today: moment('2026-09-03'),
-        genId: () => `id-${n++}`,
+        serviceReports: {},
       }).forEach((e) => useServiceReport.getState().addServiceReport(e))
 
       const byMonth = useServiceReport.getState().serviceReports[2026]

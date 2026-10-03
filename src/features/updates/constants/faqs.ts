@@ -173,6 +173,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'syncTroubleshooting', category: 'backups', related: [118] },
   { id: 'syncPhotos', category: 'backups' },
   { id: 'syncRecovery', category: 'backups' },
+  { id: 'syncRemoveDevice', category: 'backups' },
   { id: 'notesImportHelp', category: 'backups', related: [360, 378] },
   { id: 'notesImportRetry', category: 'backups' },
   { id: 'mytimeTrouble', category: 'backups', related: [360] },

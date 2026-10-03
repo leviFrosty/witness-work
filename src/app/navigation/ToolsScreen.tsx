@@ -794,7 +794,12 @@ export default function ToolsScreen() {
     _WARNING_forceDeleteContacts()
     _WARNING_clearDeleted()
     _WARNING_forceDeleteServiceReports()
-    setServiceReports({ dayPlans: [], recurringPlans: [] })
+    setServiceReports({
+      dayPlans: [],
+      recurringPlans: [],
+      deletedDayPlans: [],
+      deletedRecurringPlans: [],
+    })
     _WARNING_forceDeleteConversations()
     invalidateAllCache()
     setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })

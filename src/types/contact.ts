@@ -76,6 +76,15 @@ export type Contact = {
    */
   redacted?: boolean
   /**
+   * Sync stamp of the `addContact` call that replaced this id's redacted
+   * tombstone (a deliberate re-add after a permanent delete or an import Undo).
+   * Equal to that write's `updatedAt`, and kept through later edits and a
+   * normal delete. The iCloud merge keeps an archived copy whose re-add is at
+   * least as new as the latest redaction, instead of redacting it again. See
+   * `app/sync/merge.mergeDeletedContacts`.
+   */
+  readdedAt?: number
+  /**
    * Retention deadline for legacy deleted contacts without a deletion
    * timestamp.
    */

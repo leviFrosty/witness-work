@@ -34,6 +34,7 @@ const contact = record.extend({
   gender: z.enum(['male', 'female', 'unknown']).optional(),
   consentGivenAt: date.optional(),
   redacted: z.boolean().optional(),
+  readdedAt: timestamp.optional(),
   detailsRetainUntil: timestamp.optional(),
   isFavorite: z.boolean().optional(),
   userDraggedCoordinate: z.boolean().optional(),
@@ -168,6 +169,15 @@ export const payloadSchema = z.object({
   writtenAt: timestamp,
   deviceId: z.string().min(1),
   deviceName: z.string().optional(),
+  // Absent from payloads written before reset generations existed.
+  resetEpoch: z
+    .object({
+      id,
+      at: timestamp,
+      deviceId: z.string().min(1),
+      deviceName: z.string().optional(),
+    })
+    .optional(),
   contactStore: z.object({
     contacts: z.array(contact),
     deletedContacts: z.array(contact),
@@ -194,6 +204,9 @@ export const payloadSchema = z.object({
     dayPlans: z.array(plan),
     recurringPlans: z.array(recurring),
     deletedServiceReports: z.array(tombstone).optional(),
+    // Absent from payloads written before Plan deletions synced.
+    deletedDayPlans: z.array(tombstone).optional(),
+    deletedRecurringPlans: z.array(tombstone).optional(),
   }),
   categoryStore: z
     .object({

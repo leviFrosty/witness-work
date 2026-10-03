@@ -12,7 +12,10 @@ import {
   stripTombstonedCustomFields,
 } from '@/lib/customFields'
 import { PersistStorage } from '@/stores/mmkv'
-import { stripContactForTombstone } from '@/lib/dataProtection'
+import {
+  isRedactedContactTombstone,
+  stripContactForTombstone,
+} from '@/lib/dataProtection'
 
 const initialState = {
   contacts: [] as Contact[],
@@ -30,6 +33,20 @@ export const useContacts = create(
   persist(
     combine(initialState, (set) => ({
       set,
+      /**
+       * Adds a contact unless an active contact, or one still waiting in
+       * Recover Contacts, already has its id.
+       *
+       * A redacted tombstone (Delete permanently, an import Undo, data
+       * protection, or details expired after 90 days) holds nothing to recover,
+       * so it doesn't block the id. The contact replaces it, which keeps
+       * deterministic imports re-runnable. The new record is stamped strictly
+       * newer than the tombstone, because the iCloud merge keeps an active
+       * contact only when it is newer than its deleted copy
+       * (`reconcileActiveAndDeletedContacts`), and it carries `readdedAt` so a
+       * stale copy of the tombstone can't redact it once it is archived again
+       * (`mergeDeletedContacts`).
+       */
       addContact: (contact: Contact) =>
         set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
           const foundCurrentContact = contacts.find((c) => c.id === contact.id)
@@ -37,18 +54,32 @@ export const useContacts = create(
             (delC) => delC.id === contact.id
           )
 
-          if (foundCurrentContact || foundDeleteContact) {
+          if (
+            foundCurrentContact ||
+            (foundDeleteContact &&
+              !isRedactedContactTombstone(foundDeleteContact))
+          ) {
             return { contacts, deletedContacts }
           }
 
+          const { readdedAt: _incoming, ...fields } = contact
+          const updatedAt = syncTimestamp(foundDeleteContact?.updatedAt)
+          const added = stripTombstonedCustomFields(
+            {
+              ...fields,
+              updatedAt,
+              // Only this store marks a re-add; an imported file's marker
+              // describes another device's history.
+              ...(foundDeleteContact ? { readdedAt: updatedAt } : {}),
+            },
+            deletedCustomFieldDefs
+          )
+          if (!foundDeleteContact) return { contacts: [...contacts, added] }
           return {
-            contacts: [
-              ...contacts,
-              stripTombstonedCustomFields(
-                { ...contact, updatedAt: syncTimestamp() },
-                deletedCustomFieldDefs
-              ),
-            ],
+            contacts: [...contacts, added],
+            deletedContacts: deletedContacts.filter(
+              (delC) => delC.id !== contact.id
+            ),
           }
         }),
       /**
@@ -377,10 +408,31 @@ export const useContacts = create(
           }
         })
       },
+      /**
+       * "Delete permanently" in Recover Contacts, and the second half of an
+       * import Undo. Swaps the archived contact for a redacted tombstone
+       * (`stripContactForTombstone`) instead of dropping it. Other devices may
+       * still hold the contact, archived with every householder detail or
+       * active in a stale file, and the iCloud merge brings it back unless a
+       * newer deletion beats it. Nothing about the householder survives, and
+       * Recover Contacts hides the tombstone.
+       *
+       * Photo files, every revision included, are the caller's to erase with
+       * `deleteAvatarFiles`, which keeps this store free of expo dependencies.
+       */
       removeDeletedContact: (id: string) => {
         set(({ deletedContacts }) => {
+          const archived = deletedContacts.find((dC) => dC.id === id)
+          if (!archived || isRedactedContactTombstone(archived)) {
+            return { deletedContacts }
+          }
+          // Strictly newer than the archived copy, even when both are written
+          // in the same millisecond (an import Undo archives, then redacts).
+          const deletedAt = syncTimestamp(archived.updatedAt)
           return {
-            deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
+            deletedContacts: deletedContacts.map((dC) =>
+              dC.id === id ? stripContactForTombstone(dC, deletedAt) : dC
+            ),
           }
         })
       },

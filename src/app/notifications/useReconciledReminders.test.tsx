@@ -437,3 +437,63 @@ it("cancels and retracts an erased Contact's reminder", async () => {
   )
   expect(runtime.presented).toEqual([])
 })
+
+it("drops a Plan's reminder once another device's deletion merges in", async () => {
+  runtime.platform = 'ios'
+  const { mergePayload } = await import('@/app/sync/merge')
+  const plan: DayPlan = {
+    id: 'p',
+    date: new Date(Date.now() + 2 * 24 * 60 * 60_000),
+    startTimeInMinutes: 600,
+    minutes: 60,
+    notifyMe: true,
+    updatedAt: Date.now() - 5_000,
+  }
+  useServiceReport.setState({ dayPlans: [plan] })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(runtime.scheduled).toEqual([{ identifier: 'witness-work-plan-p' }])
+
+  const merged = mergePayload(
+    {
+      contacts: [],
+      deletedContacts: [],
+      customFieldDefs: [],
+      deletedCustomFieldDefs: [],
+      conversations: [],
+      deletedConversations: [],
+      serviceReports: {},
+      dayPlans: [plan],
+      recurringPlans: [],
+      deletedServiceReports: [],
+      categories: [],
+      deletedCategories: [],
+      preferencesValues: {},
+      preferenceUpdatedAt: {},
+      profileValues: {},
+      profileUpdatedAt: {},
+    },
+    {
+      version: 1,
+      writtenAt: Date.now(),
+      deviceId: 'phone',
+      contactStore: { contacts: [], deletedContacts: [] },
+      conversationStore: { conversations: [] },
+      serviceReportStore: {
+        serviceReports: {},
+        dayPlans: [],
+        recurringPlans: [],
+        deletedDayPlans: [{ id: 'p', deletedAt: Date.now() - 1_000 }],
+      },
+      preferencesStore: { values: {}, updatedAt: {} },
+    }
+  )
+  // What a pull applies to the store.
+  await act(async () => {
+    useServiceReport.setState({ dayPlans: merged.dayPlans })
+  })
+
+  expect(merged.dayPlans).toEqual([])
+  expect(runtime.scheduled).toEqual([])
+})

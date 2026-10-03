@@ -47,12 +47,22 @@ public class ICloudBridgeModule: Module {
   /// this, the first-launch onboarding probe can return "no backup" before
   /// iCloud has surfaced an existing per-device file. Once set, it stays set
   /// even if the query is later stopped and restarted; a completed initial
-  /// scan doesn't become incomplete again.
+  /// scan doesn't become incomplete again — except after an Apple Account
+  /// change, which points the query at a different container.
   private var initialGatheringDidFinish: Bool = false
   /// Pending promises from `waitForInitialScan` calls that arrived before the
   /// first `DidFinishGathering`. Resolved all at once when gathering finishes,
   /// or individually by their own timeout timer. Also guarded by `stateQueue`.
   private var pendingScanWaiters: [UUID: (Bool) -> Void] = [:]
+  /// The last identity token archived (`identityTokenArchive`) and the last
+  /// `identityTokenMatches` answer, each with the token it was computed from.
+  /// `canSync` checks the account before every read and write, so they're
+  /// reused, but only while the live token is still `isEqual:` to theirs: a
+  /// switch whose `NSUbiquityIdentityDidChange` never arrives (made while the
+  /// app was suspended) must not leave the old account's answer in place.
+  /// Also guarded by `stateQueue`.
+  private var identityArchiveCache: (token: NSObject, archive: Data)?
+  private var identityMatchCache: (token: NSObject, stored: String, matches: Bool?)?
 
   private func getLastObserved(_ filename: String) -> Date? {
     return stateQueue.sync { self.lastObservedModifiedAt[filename] }
@@ -94,6 +104,19 @@ public class ICloudBridgeModule: Module {
 
     Function("isAvailable") { () -> Bool in
       return FileManager.default.ubiquityIdentityToken != nil
+    }
+
+    /// The archived identity token, base64-encoded, or nil when signed out.
+    /// JS stores it to notice a different Apple Account, including a switch
+    /// made while the app wasn't running.
+    Function("identityToken") { () -> String? in
+      return self.identityTokenArchive()?.base64EncodedString()
+    }
+
+    /// Whether `stored` (an earlier `identityToken`) is the current Apple
+    /// Account, or nil when signed out or `stored` can't be decoded.
+    Function("identityTokenMatches") { (stored: String) -> Bool? in
+      return self.identityTokenMatches(stored)
     }
 
     Function("getContainerPath") { () -> String? in
@@ -286,6 +309,56 @@ public class ICloudBridgeModule: Module {
           promise.resolve(modifiedAt.timeIntervalSince1970 * 1000)
         case .failure(let error):
           promise.reject("ICLOUD_WRITE", "Failed to write iCloud file: \(error.localizedDescription)")
+        }
+      }
+    }
+
+    /// Whether iCloud has uploaded the current version of one sync file — a
+    /// coordinated write only proves the bytes reached the local container.
+    /// Resolves `{ uploaded, uploading, error: { domain, code } | null }`, or
+    /// nil when the container or file is missing. `error` is iCloud's last
+    /// upload failure: `NSUbiquitousFileNotUploadedDueToQuotaError` (storage
+    /// full) or `NSUbiquitousFileUbiquityServerNotAvailable` (servers out of
+    /// reach, usually temporary); iCloud retries the upload itself either way.
+    AsyncFunction("uploadStatus") { (filename: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.resolve(nil)
+        return
+      }
+      guard self.isValidSyncFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to inspect outside sync namespace: \(filename)")
+        return
+      }
+
+      DispatchQueue.global(qos: .utility).async {
+        var url = documentsURL.appendingPathComponent(filename)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+          promise.resolve(nil)
+          return
+        }
+        // Ubiquity values change underneath us as the daemon uploads; drop
+        // anything cached so the answer reflects the daemon's current state.
+        url.removeAllCachedResourceValues()
+        do {
+          let values = try url.resourceValues(forKeys: [
+            .ubiquitousItemIsUploadedKey,
+            .ubiquitousItemIsUploadingKey,
+            .ubiquitousItemUploadingErrorKey,
+          ])
+          var error: Any = NSNull()
+          if let uploadError = values.ubiquitousItemUploadingError {
+            error = ["domain": uploadError.domain, "code": uploadError.code]
+          }
+          promise.resolve([
+            "uploaded": values.ubiquitousItemIsUploaded ?? false,
+            "uploading": values.ubiquitousItemIsUploading ?? false,
+            "error": error,
+          ])
+        } catch {
+          promise.reject(
+            "ICLOUD_UPLOAD_STATUS",
+            "Failed to read upload status: \(error.localizedDescription)"
+          )
         }
       }
     }
@@ -971,7 +1044,69 @@ public class ICloudBridgeModule: Module {
     }
   }
 
+  /// The identity token archived the way Apple documents for persisting it.
+  /// The token is opaque, so its archive is only ever compared through
+  /// `identityTokenMatches`, never byte for byte.
+  private func identityTokenArchive() -> Data? {
+    guard let token = FileManager.default.ubiquityIdentityToken as? NSObject else {
+      return nil
+    }
+    if let cached = stateQueue.sync(execute: { self.identityArchiveCache }),
+       cached.token.isEqual(token) {
+      return cached.archive
+    }
+    guard let archive = try? NSKeyedArchiver.archivedData(
+      withRootObject: token,
+      requiringSecureCoding: false
+    ) else {
+      return nil
+    }
+    stateQueue.sync { self.identityArchiveCache = (token, archive) }
+    return archive
+  }
+
+  private func identityTokenMatches(_ stored: String) -> Bool? {
+    guard let token = FileManager.default.ubiquityIdentityToken as? NSObject else {
+      return nil
+    }
+    if let cached = stateQueue.sync(execute: { self.identityMatchCache }),
+       cached.stored == stored,
+       cached.token.isEqual(token) {
+      return cached.matches
+    }
+    let matches = compareIdentityToken(stored, with: token)
+    stateQueue.sync { self.identityMatchCache = (token, stored, matches) }
+    return matches
+  }
+
+  /// Apple documents `isEqual:` for comparing identity tokens. Archives of one
+  /// token aren't guaranteed to stay byte-identical across iOS versions, and a
+  /// false "account changed" would turn sync off.
+  private func compareIdentityToken(_ stored: String, with current: NSObject) -> Bool? {
+    guard let data = Data(base64Encoded: stored),
+          let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: data) else {
+      return nil
+    }
+    // Written by this app into its own device-local preferences.
+    unarchiver.requiresSecureCoding = false
+    let decoded = unarchiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey)
+    unarchiver.finishDecoding()
+    guard let previous = decoded as? NSObject else { return nil }
+    return previous.isEqual(current)
+  }
+
+  /// A different account means a different container: observed dates and the
+  /// initial-scan flag describe the old one, so forget them and rescan before
+  /// telling JS, which checks the account before any further read or write.
   @objc private func identityDidChange() {
+    clearAllLastObserved()
+    stateQueue.sync {
+      self.initialGatheringDidFinish = false
+      self.identityArchiveCache = nil
+      self.identityMatchCache = nil
+    }
+    stopMetadataQuery()
+    startMetadataQuery()
     self.sendEvent("onAvailabilityChange", [
       "available": FileManager.default.ubiquityIdentityToken != nil,
     ])

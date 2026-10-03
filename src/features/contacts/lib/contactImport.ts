@@ -6,6 +6,7 @@ import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { isRedactedContactTombstone } from '@/lib/dataProtection'
 
 export type ContactImportData = {
   version: '1.0'
@@ -183,8 +184,10 @@ export const processContactImport = (
   const existingContact = existingContacts.find(
     (c) => c.id === importData.contact.id
   )
+  // A redacted tombstone (a permanent delete) has nothing to recover, so the
+  // contact is imported afresh instead; `addContact` replaces the tombstone.
   const deletedContact = deletedContacts.find(
-    (c) => c.id === importData.contact.id
+    (c) => c.id === importData.contact.id && !isRedactedContactTombstone(c)
   )
 
   return {

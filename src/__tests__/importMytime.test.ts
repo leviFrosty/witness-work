@@ -5,6 +5,7 @@ vi.mock('react-native', () => ({
   Platform: { OS: 'ios' },
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'test-uuid' }))
+vi.mock('@/lib/contactAvatarFiles', () => ({ deleteAvatarFiles: vi.fn() }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(

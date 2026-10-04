@@ -40,6 +40,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 import LocationPreview from '@/features/map/components/LocationPreview'
 import { analytics } from '@/lib/analytics'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -90,6 +91,7 @@ export default function MapOnboarding() {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const abortController = useRef<AbortController | null>(null)
   const tabBarHeight = useBottomTabBarHeight()
+  const { isWide } = useAdaptiveLayout()
   const [fetching, setFetching] = useState(false)
   const [locationPermissions, setLocationPermissions] = useState<boolean>()
   const [statuses, setStatuses] = useState<Record<string, FetchStatus>>({})
@@ -338,7 +340,9 @@ export default function MapOnboarding() {
     <Wrapper
       insets='none'
       style={{
-        flexGrow: 1,
+        // Bounded to the pane so the step's list/scroll view scrolls instead
+        // of pushing the actions off a short window.
+        flex: 1,
         paddingHorizontal: 20,
         width: '100%',
         maxWidth: 600,
@@ -469,8 +473,10 @@ export default function MapOnboarding() {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: 'space-between',
-            gap: 20,
+            // Wide panes keep the actions with the content instead of
+            // stranding them at the bottom of a tall window.
+            justifyContent: isWide ? 'center' : 'space-between',
+            gap: isWide ? 32 : 20,
           }}
         >
           <View style={{ gap: 20 }}>
@@ -542,8 +548,10 @@ export default function MapOnboarding() {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: 'space-between',
-            gap: 20,
+            // Wide panes keep the actions with the content instead of
+            // stranding them at the bottom of a tall window.
+            justifyContent: isWide ? 'center' : 'space-between',
+            gap: isWide ? 32 : 20,
           }}
         >
           <View style={{ gap: 20 }}>

@@ -4,12 +4,14 @@ export const SIDEBAR_DEFAULT_WIDTH = 240
 export const SIDEBAR_LABEL_MIN_WIDTH = 220
 export const SIDEBAR_RESIZE_STEP = 24
 
-export const clampSidebarWidth = (width: number) =>
-  Number.isFinite(width)
+export const clampSidebarWidth = (width: number) => {
+  'worklet'
+  return Number.isFinite(width)
     ? Math.round(
         Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width))
       )
     : SIDEBAR_DEFAULT_WIDTH
+}
 
 export function getAdaptiveLayout(
   width: number,

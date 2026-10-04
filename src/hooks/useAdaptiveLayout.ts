@@ -4,14 +4,18 @@ import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
 
 /**
  * Window-based so multitasking and Dynamic Type can use compact layouts. Only
- * navigation previews live drag widths. Content breakpoints settle on release
- * so dragging does not repeatedly rebuild navigators and sheet portals.
+ * navigation previews the live label mode; the drag width itself animates on
+ * the UI thread. Content breakpoints settle on release so dragging does not
+ * repeatedly rebuild navigators and sheet portals.
  */
 export default function useAdaptiveLayout({ liveResize = false } = {}) {
   const { width, fontScale } = useWindowDimensions()
   const savedWidth = useSidebarPreferences((s) => s.width)
   const hidden = useSidebarPreferences((s) => s.hidden)
-  const dragWidth = useSidebarResize((s) => (liveResize ? s.width : null))
+  const dragCompact = useSidebarResize((s) => (liveResize ? s.compact : null))
+  const layout = getAdaptiveLayout(width, fontScale, savedWidth, hidden)
 
-  return getAdaptiveLayout(width, fontScale, dragWidth ?? savedWidth, hidden)
+  return dragCompact === null
+    ? layout
+    : { ...layout, sidebarCompact: layout.sidebarVisible && dragCompact }
 }

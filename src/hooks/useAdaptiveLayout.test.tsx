@@ -14,20 +14,20 @@ describe('live sidebar layout subscriptions', () => {
   let renderer: ReactTestRenderer | undefined
   afterEach(() => act(() => renderer?.unmount()))
 
-  it('resizes navigation live without rebuilding screen navigators and sheet portals on each frame', () => {
+  it('previews label mode in navigation without rebuilding screen navigators and sheet portals', () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     useSidebarPreferences.setState({ width: 240, hidden: false })
     useSidebarResize.getState().preview(null)
     const screenWidths: number[] = []
-    const navigationWidths: number[] = []
+    const navigationModes: boolean[] = []
 
     function ScreenLayout() {
       screenWidths.push(useAdaptiveLayout().sidebarWidth)
       return null
     }
     function NavigationLayout() {
-      navigationWidths.push(
-        useAdaptiveLayout({ liveResize: true }).sidebarWidth
+      navigationModes.push(
+        useAdaptiveLayout({ liveResize: true }).sidebarCompact
       )
       return null
     }
@@ -40,16 +40,15 @@ describe('live sidebar layout subscriptions', () => {
         </>
       )
     })
-    act(() => useSidebarResize.getState().preview(160))
-    act(() => useSidebarResize.getState().preview(112))
+    act(() => useSidebarResize.getState().preview(true))
     expect(screenWidths).toEqual([240])
-    expect(navigationWidths).toEqual([240, 160, 112])
+    expect(navigationModes).toEqual([false, true])
 
     act(() => {
       useSidebarPreferences.getState().setWidth(112)
       useSidebarResize.getState().preview(null)
     })
     expect(screenWidths).toEqual([240, 112])
-    expect(navigationWidths.at(-1)).toBe(112)
+    expect(navigationModes.at(-1)).toBe(true)
   })
 })

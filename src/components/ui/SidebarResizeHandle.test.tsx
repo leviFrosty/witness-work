@@ -16,13 +16,37 @@ const runtime = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native-reanimated', async () => {
+  const { useRef } = await import('react')
+  return {
+    default: { View: 'AnimatedView' },
+    Extrapolation: { CLAMP: 'clamp' },
+    interpolate: () => 0,
+    interpolateColor: () => '#000',
+    useAnimatedStyle: () => ({}),
+    useDerivedValue: () => ({ value: 0 }),
+    useSharedValue: <T,>(value: T) => useRef({ value }).current,
+    withTiming: <T,>(value: T) => value,
+  }
+})
+vi.mock('react-native-worklets', () => ({
+  scheduleOnRN: <A extends unknown[]>(fn: (...args: A) => void, ...args: A) =>
+    fn(...args),
+}))
 vi.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   Gesture: {
+    Simultaneous: () => ({}),
+    Hover: () => {
+      const builder = {
+        onBegin: () => builder,
+        onFinalize: () => builder,
+      }
+      return builder
+    },
     Pan: () => {
       const builder = {
         activeOffsetX: () => builder,
-        runOnJS: () => builder,
         onStart: (handler: typeof runtime.pan.start) => {
           runtime.pan.start = handler
           return builder
@@ -62,6 +86,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
 import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
+import type { SharedValue } from 'react-native-reanimated'
 
 describe('sidebar resizing and saved position', () => {
   let renderer: ReactTestRenderer | undefined
@@ -79,17 +104,28 @@ describe('sidebar resizing and saved position', () => {
     renderer = undefined
   })
 
+  let liveWidth: { value: number }
   const renderHandle = () => {
+    liveWidth = { value: 240 }
     act(() => {
-      renderer = create(<SidebarResizeHandle width={240} />)
+      renderer = create(
+        <SidebarResizeHandle
+          width={240}
+          liveWidth={liveWidth as SharedValue<number>}
+        />
+      )
     })
   }
 
   it('previews a drag without writing storage and saves the width once on release', () => {
     renderHandle()
     act(() => runtime.pan.start())
+    act(() => runtime.pan.update({ translationX: -10 }))
+    expect(liveWidth.value).toBe(230)
+    expect(useSidebarResize.getState().compact).toBeNull()
     act(() => runtime.pan.update({ translationX: -152 }))
-    expect(useSidebarResize.getState().width).toBe(88)
+    expect(liveWidth.value).toBe(88)
+    expect(useSidebarResize.getState().compact).toBe(true)
     expect(useSidebarPreferences.getState().width).toBe(240)
     expect(runtime.write).not.toHaveBeenCalled()
 
@@ -98,7 +134,7 @@ describe('sidebar resizing and saved position', () => {
       runtime.pan.finalize()
     })
     expect(useSidebarPreferences.getState().width).toBe(88)
-    expect(useSidebarResize.getState().width).toBeNull()
+    expect(useSidebarResize.getState().compact).toBeNull()
     expect(runtime.write).toHaveBeenCalledTimes(1)
     expect(runtime.capture).toHaveBeenCalledWith('sidebar_resized', {
       source: 'drag',
@@ -116,7 +152,8 @@ describe('sidebar resizing and saved position', () => {
       runtime.pan.finalize()
     })
     expect(useSidebarPreferences.getState().width).toBe(240)
-    expect(useSidebarResize.getState().width).toBeNull()
+    expect(liveWidth.value).toBe(240)
+    expect(useSidebarResize.getState().compact).toBeNull()
     expect(runtime.write).not.toHaveBeenCalled()
     expect(runtime.capture).toHaveBeenCalledWith('sidebar_resize_cancelled')
   })
@@ -129,7 +166,8 @@ describe('sidebar resizing and saved position', () => {
     })
     act(() => renderer?.unmount())
     renderer = undefined
-    expect(useSidebarResize.getState().width).toBeNull()
+    expect(liveWidth.value).toBe(240)
+    expect(useSidebarResize.getState().compact).toBeNull()
     expect(useSidebarPreferences.getState().width).toBe(240)
     expect(runtime.capture).toHaveBeenCalledWith('sidebar_resize_cancelled')
   })
@@ -148,7 +186,7 @@ describe('sidebar resizing and saved position', () => {
       lateUpdate({ translationX: -152 })
       lateEnd({ translationX: -152 }, true)
     })
-    expect(useSidebarResize.getState().width).toBeNull()
+    expect(useSidebarResize.getState().compact).toBeNull()
     expect(useSidebarPreferences.getState().width).toBe(240)
     expect(runtime.write).not.toHaveBeenCalled()
   })

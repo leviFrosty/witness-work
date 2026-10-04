@@ -37,7 +37,7 @@ function Stat({
         >
           {label}
         </Text>
-        {info && <InfoPopover title={label} description={info} />}
+        {info && <InfoPopover title={label} description={info} inline />}
       </View>
       <Text
         style={{ fontSize: theme.fontSize('xl'), fontFamily: theme.fonts.bold }}

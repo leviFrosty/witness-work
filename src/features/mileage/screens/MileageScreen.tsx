@@ -74,7 +74,15 @@ export default function MileageScreen() {
         buttonType='back'
         title={i18n.t('mileage.title')}
         rightElement={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <View
+            style={{
+              position: 'absolute',
+              right: 0,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
             <PullDownMenu
               analyticsSurface='mileage_report_menu'
               accessibilityLabel={i18n.t('mileage.shareReport')}

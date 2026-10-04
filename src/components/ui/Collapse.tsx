@@ -27,7 +27,12 @@ export default function Collapse({
         transitionTimingFunction: 'ease-in-out',
       }}
     >
-      <View onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
+      {/* Measure outside normal flow so the animated height cannot squash the
+      children and overwrite their natural height while collapsed. */}
+      <View
+        style={{ position: 'absolute', width: '100%' }}
+        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+      >
         {children}
       </View>
     </Animated.View>

@@ -5,13 +5,11 @@ import {
   Car as CarIcon,
   ChevronRight as ChevronRightIcon,
   Fuel as FuelIcon,
-  Plus as PlusIcon,
   Route as RouteIcon,
 } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import useMileage from '@/stores/mileage'
-import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -24,6 +22,7 @@ import {
 } from '@/lib/mileage/calc'
 import MileageDailyChart from '@/features/mileage/components/MileageDailyChart'
 import MileageEmptyState from '@/features/mileage/components/MileageEmptyState'
+import LogTripButton from '@/features/mileage/components/LogTripButton'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import useLogTrip from '@/features/mileage/hooks/useLogTrip'
@@ -213,36 +212,10 @@ export default function MileageHomeSection() {
                   )}
                 </View>
               </View>
-              <Button
-                variant='glass'
-                glassTint={theme.colors.accentTranslucent}
-                accessibilityLabel={i18n.t('mileage.logTrip')}
+              <LogTripButton
                 onPress={logTrip}
-                style={{
-                  minHeight: 40,
-                  paddingHorizontal: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  backgroundColor: theme.colors.accentTranslucent,
-                  borderRadius: 20,
-                }}
-              >
-                <LucideIcon
-                  icon={PlusIcon}
-                  size={16}
-                  color={theme.colors.accent}
-                />
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('mileage.logTrip')}
-                </Text>
-              </Button>
+                style={{ paddingHorizontal: 14 }}
+              />
             </View>
             <MileageDailyChart period={month} trips={monthTrips} />
             {monthTrips.length > 0 && summary.cost === undefined && (

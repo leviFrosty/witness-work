@@ -7,9 +7,10 @@ type CalendarContact = { id: string; name: string; address?: string }
 const CALENDAR_END_LIMIT = Date.parse('2100-01-01T00:00:00Z')
 
 /**
- * Only explicit domain deletions remove events; partial cloud loads cannot.
- * Removals are limited to published keys, so the payload doesn't grow with
- * every Visit ever recorded.
+ * A follow-up without its own choice follows the shared `defaultInclude`. Only
+ * explicit domain deletions remove events; partial cloud loads cannot. Removals
+ * are limited to published keys, so the payload doesn't grow with every Visit
+ * ever recorded.
  */
 export function buildCalendarSnapshot({
   visits,
@@ -18,6 +19,8 @@ export function buildCalendarSnapshot({
   deletedContactIds,
   publishedKeys,
   includeDetails,
+  defaultInclude,
+  alertMinutes,
   title,
 }: {
   visits: Visit[]
@@ -26,6 +29,9 @@ export function buildCalendarSnapshot({
   deletedContactIds: string[]
   publishedKeys: string[]
   includeDetails: boolean
+  defaultInclude: boolean
+  /** Visit id → minutes before the follow-up its Notify Me reminder fires. */
+  alertMinutes: Map<string, number>
   title: string
 }): CalendarSnapshot {
   const byId = new Map(contacts.map((contact) => [contact.id, contact]))
@@ -35,16 +41,21 @@ export function buildCalendarSnapshot({
   const entries: CalendarSnapshot['entries'] = []
   for (const visit of visits) {
     const followUp = visit.followUp
+    // Malformed values from old payloads fall back to the default too.
+    const included =
+      typeof followUp?.calendarIncluded === 'boolean'
+        ? followUp.calendarIncluded
+        : defaultInclude
     if (
       !followUp ||
       followUp.dismissed ||
-      followUp.calendarIncluded === false ||
+      !included ||
       deletedContacts.has(visit.contact.id)
     ) {
       removed.add(visit.id)
       continue
     }
-    if (followUp.calendarIncluded !== true || removed.has(visit.id)) continue
+    if (removed.has(visit.id)) continue
     const contact = byId.get(visit.contact.id)
     if (!contact) continue
     const start = new Date(followUp.date).getTime()
@@ -61,7 +72,9 @@ export function buildCalendarSnapshot({
       duration > 480
     )
       continue
+    const alert = alertMinutes.get(visit.id)
     entries.push({
+      ...(alert !== undefined && { alertMinutes: alert }),
       key: visit.id,
       title: includeDetails ? `${title}: ${contact.name}` : title,
       start,

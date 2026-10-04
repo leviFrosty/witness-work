@@ -329,7 +329,9 @@ and the Supporter nudge or feedback invitation.
 `data_protection_retention`, `missed_follow_up`, `reminder` (a local Follow-up,
 Plan, or returning-Contact reminder that fired; `open` action), `buddies`,
 `notes_import`,
-`whats_new`, `milestone_update`, `supporter_nudge`, `supporter_survey`, or
+`whats_new`, `milestone_update`, `supporter_nudge`, `supporter_survey`,
+`calendar_sync` (the one-time Calendar Sync invitation; `set_up` and `not_now`
+actions, outcome in `calendar_connected` / `calendar_sync_failed`), or
 `dev_test` (Tools screen test items; `open_tools` and `bump` actions). Items never send their text, names, or
 ids. Tapping a row counts as its first action. Buddies rows report their own
 actions under `kind: buddies`, once per tap: `open`, `going`, `declined`,
@@ -822,3 +824,9 @@ appointment dates, contact/Visit IDs, raw errors, or calendar contents are sent.
 `calendar_follow_up_inclusion_changed` (`included`, `configured`: booleans) and
 `calendar_follow_up_duration_changed` (`duration_minutes`: number) record draft
 choices in the Follow-up form. They do not imply the Visit was saved or published.
+
+The onboarding `calendarSync` step (iOS builds with the calendar module only)
+records `onboarding_calendar_setup_result` after **Add to Calendar** (`status`:
+`connected`, `elsewhere` when another device already updates the calendar, or
+`error` with a bounded `error_key`). Skip records `onboarding_step_skipped` with
+`step_id: calendarSync`. A successful setup also records `calendar_connected`.

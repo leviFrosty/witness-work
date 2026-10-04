@@ -7,6 +7,7 @@ const bridge = vi.hoisted(() => ({
   selectPrimary: vi.fn(),
   requestAccess: vi.fn(),
   destinations: vi.fn(),
+  sources: vi.fn(),
   createCalendar: vi.fn(),
   setDestination: vi.fn(),
   forgetDestination: vi.fn(),
@@ -17,6 +18,10 @@ const device = vi.hoisted(() => ({
   modelName: 'iPhone 16 Pro' as string | null,
 }))
 const supporter = vi.hoisted(() => ({ isSupporter: true }))
+const data = vi.hoisted(() => ({
+  contacts: [] as { id: string; name: string }[],
+  conversations: [] as unknown[],
+}))
 vi.mock('../../../modules/calendar-bridge', () => ({
   calendarBridge: () => bridge,
 }))
@@ -64,15 +69,27 @@ vi.mock('@/stores/calendarSync', async () => {
   }
 })
 vi.mock('@/stores/contactsStore', () => ({
-  default: { getState: () => ({ contacts: [], deletedContacts: [] }) },
+  default: {
+    getState: () => ({ contacts: data.contacts, deletedContacts: [] }),
+  },
 }))
 vi.mock('@/stores/conversationStore', () => ({
   default: {
-    getState: () => ({ conversations: [], deletedConversations: [] }),
+    getState: () => ({
+      conversations: data.conversations,
+      deletedConversations: [],
+    }),
   },
 }))
 vi.mock('@/stores/preferences', () => ({
-  usePreferences: { getState: () => ({ iCloudSyncEnabled: true }) },
+  DEFAULT_PLAN_NOTIFICATION_OFFSET: { amount: 30, unit: 'minutes' },
+  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET: { amount: 2, unit: 'hours' },
+  usePreferences: {
+    getState: () => ({
+      iCloudSyncEnabled: true,
+      returnVisitNotificationOffset: null,
+    }),
+  },
 }))
 
 import {
@@ -84,6 +101,7 @@ import {
   connectCalendar,
   createCalendar,
   deviceLabel,
+  quickConnectCalendar,
   reconnectSharedCalendar,
   setSharedOptions,
 } from '@/app/calendar/calendarSync'
@@ -115,6 +133,8 @@ describe('calendar publishing orchestration', () => {
     bridge.publish.mockResolvedValue(0)
     bridge.removePublished.mockResolvedValue(undefined)
     supporter.isSupporter = true
+    data.contacts = []
+    data.conversations = []
     device.deviceName = 'This iPhone'
     useCalendarSync.setState({
       enabled: true,
@@ -198,6 +218,40 @@ describe('calendar publishing orchestration', () => {
     await publishCalendar({ pull: false })
     expect(iCloudSync.pullBeforeCalendarPublish).not.toHaveBeenCalled()
     expect(bridge.publish).toHaveBeenCalled()
+  })
+  it('publishes follow-ups without their own choice by default and counts upcoming ones', async () => {
+    const day = 86_400_000
+    data.contacts = [{ id: 'contact', name: 'Name' }]
+    data.conversations = [-1, 1, 2].map((offset) => ({
+      id: `visit${offset}`,
+      contact: { id: 'contact' },
+      date: new Date(),
+      followUp: { date: new Date(Date.now() + offset * day), notifyMe: false },
+    }))
+    await publishCalendar({ pull: false })
+    expect(bridge.publish.mock.calls[0][3].entries).toHaveLength(3)
+    expect(useCalendarSync.getState().upcomingCount).toBe(2)
+  })
+  it('gives each event the same alert as its in-app reminder', async () => {
+    data.contacts = [{ id: 'contact', name: 'Name' }]
+    const date = new Date(Date.now() + 86_400_000)
+    data.conversations = [
+      { notifyMe: true, reminderOffsetMinutes: 15 },
+      // No saved offset: the default reminder time applies.
+      { notifyMe: true },
+      { notifyMe: false, reminderOffsetMinutes: 15 },
+    ].map((followUp, index) => ({
+      id: `visit${index}`,
+      contact: { id: 'contact' },
+      date: new Date(),
+      followUp: { date, ...followUp },
+    }))
+    await publishCalendar({ pull: false })
+    expect(
+      bridge.publish.mock.calls[0][3].entries.map(
+        (entry: { alertMinutes?: number }) => entry.alertMinutes
+      )
+    ).toEqual([15, 120, undefined])
   })
   it('publishes with the shared detail setting, not this device’s cache', async () => {
     bridge.registerDevice.mockResolvedValue({ ...owned, includeDetails: true })
@@ -295,6 +349,43 @@ describe('calendar publishing orchestration', () => {
     useCalendarSync.setState({ enabled: false })
     await createCalendar('source')
     expect(bridge.setDestination.mock.calls[1][5]).toBe(true)
+  })
+  it('one-tap setup reuses an existing WitnessWork calendar', async () => {
+    useCalendarSync.setState({ enabled: false, destination: null })
+    bridge.requestAccess.mockResolvedValue(true)
+    await expect(quickConnectCalendar()).resolves.toBe('connected')
+    expect(bridge.createCalendar).not.toHaveBeenCalled()
+    expect(bridge.setDestination.mock.calls[0][2]).toBe('calendar')
+  })
+  it('one-tap setup creates a calendar in iCloud when none exists', async () => {
+    useCalendarSync.setState({ enabled: false, destination: null })
+    const fresh = {
+      ...owned,
+      primary: null,
+      calendarTitle: undefined,
+      calendarAccount: undefined,
+    }
+    bridge.registerDevice
+      .mockResolvedValueOnce(fresh)
+      .mockResolvedValueOnce(fresh)
+    bridge.requestAccess.mockResolvedValue(true)
+    bridge.destinations.mockResolvedValueOnce([])
+    bridge.sources.mockResolvedValueOnce([
+      { id: 'google', title: 'Google' },
+      { id: 'icloud', title: 'iCloud' },
+    ])
+    bridge.createCalendar.mockResolvedValueOnce(calendar)
+    await expect(quickConnectCalendar()).resolves.toBe('connected')
+    expect(bridge.createCalendar.mock.calls[0][2]).toBe('icloud')
+  })
+  it('one-tap setup leaves a calendar published by another device alone', async () => {
+    bridge.registerDevice.mockResolvedValue({
+      ...owned,
+      primary: 'other-device',
+    })
+    await expect(quickConnectCalendar()).resolves.toBe('elsewhere')
+    expect(bridge.requestAccess).not.toHaveBeenCalled()
+    expect(bridge.setDestination).not.toHaveBeenCalled()
   })
   it('explains accounts that cannot create calendars', async () => {
     bridge.createCalendar.mockRejectedValueOnce(

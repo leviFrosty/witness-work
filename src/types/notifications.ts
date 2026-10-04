@@ -18,6 +18,8 @@ export type NotificationKind =
   | 'supporter_survey'
   | 'data_protection_retention'
   | 'buddies'
+  /** One-time invitation for existing users to set up Calendar Sync. */
+  | 'calendar_sync'
   /** Test items from the Tools screen. */
   | 'dev_test'
 

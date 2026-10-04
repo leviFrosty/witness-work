@@ -27,6 +27,10 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SettingsSplitScreen from '@/app/navigation/SettingsSplitScreen'
+import {
+  getEffectiveTabOrder,
+  type TabOrderKey,
+} from '@/lib/tabOrderPreferences'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,
@@ -37,6 +41,21 @@ import SettingsSplitScreen from '@/app/navigation/SettingsSplitScreen'
 const MILESTONE_UPDATE_VERSION = '1.38.2'
 const Tab = createBottomTabNavigator<HomeTabStackParamList>()
 
+// Called inline, not rendered as a component: the navigator only reads
+// `Tab.Screen` elements among its direct children.
+const renderTabScreen = (name: TabOrderKey) => {
+  switch (name) {
+    case 'Home':
+      return <Tab.Screen key={name} name={name} component={HomeNavigator} />
+    case 'Schedule':
+      return <Tab.Screen key={name} name={name} component={ScheduleScreen} />
+    case 'Contacts':
+      return <Tab.Screen key={name} name={name} component={ContactsTabScreen} />
+    case 'Progress':
+      return <Tab.Screen key={name} name={name} component={ProgressScreen} />
+  }
+}
+
 const HomeTabStack = () => {
   const { hasSidebar } = useAdaptiveLayout()
   const {
@@ -44,9 +63,13 @@ const HomeTabStack = () => {
     developerTools,
     seenMilestoneUpdateReveal,
     dismissedMilestoneRevealOnce,
+    tabOrder: storedTabOrder,
     set,
   } = usePreferences()
   const { showsYearTabs } = usePublisher()
+  const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
+    (name) => name !== 'Progress' || showsYearTabs
+  )
   const [whatsNewSince, setWhatsNewSince] = useState<string | null>(null)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
@@ -163,15 +186,10 @@ const HomeTabStack = () => {
           tabBarPosition: hasSidebar ? 'left' : 'bottom',
         }}
       >
-        {/* At most four destinations, in a fixed order. Features join an
-            existing destination (Map in Contacts, Buddies in Schedule) rather
-            than adding or reshuffling tabs. */}
-        <Tab.Screen name='Home' component={HomeNavigator} />
-        <Tab.Screen name='Schedule' component={ScheduleScreen} />
-        <Tab.Screen name='Contacts' component={ContactsTabScreen} />
-        {showsYearTabs && (
-          <Tab.Screen name='Progress' component={ProgressScreen} />
-        )}
+        {/* At most four destinations, in the user's order (Preferences →
+            Tab Order). Features join an existing destination (Map in
+            Contacts, Buddies in Schedule) rather than adding tabs. */}
+        {tabOrder.map(renderTabScreen)}
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {hasSidebar && (
           <Tab.Screen name='Settings' component={SettingsSplitScreen} />

@@ -450,10 +450,11 @@ does not prove delivery/submission to another person or app.
 
 ## Navigation
 
-The bottom bar holds at most four destinations in a fixed order — Home, Schedule,
-Contacts, Progress (Progress only for roles that log hours) — beside a labeled Add
-action. Map is a view inside Contacts and Buddies opens from Schedule's header, so
-flags and features don't add or reorder tabs. Wide layouts show the same
+The bottom bar holds at most four destinations — Home, Schedule, Contacts,
+Progress (Progress only for roles that log hours) — beside a labeled Add action.
+Users can reorder (not hide) them in Preferences → Tab Order; Home stays the
+launch tab. Map is a view inside Contacts and Buddies opens from Schedule's
+header, so flags and features don't add tabs. Wide layouts show the same
 destinations in the sidebar, plus Settings.
 
 The tablet sidebar has a centered resize handle, switches to icons at narrow
@@ -470,16 +471,17 @@ or personal data:
 | `sidebar_resized`            | A drag finishes or a screen reader adjustment changes the saved width. `mode` (`icons` or `labels`), `source` (`drag` or `accessibility`). Live drag frames do not emit events. |
 | `sidebar_resize_cancelled`   | An active drag is interrupted or its handle unmounts; the saved width is restored. No properties.                                                                               |
 
-| Event                             | When / properties                                                                                                                                                                                                                                         |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `navigation_destination_selected` | A bottom-bar or sidebar destination is tapped. `from` and `to` (route names), `layout_variant` (`bottom_bar` or `sidebar`), `reselected` (tapped the destination already open).                                                                           |
-| `quick_action_opened`             | Add is opened. `layout_variant`.                                                                                                                                                                                                                          |
-| `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, `addContact`, or `logTrip` (Mileage Tracking on). Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                       |
-| `contacts_view_changed`           | Contacts switches workspace. `view` (`list` or `map`), `source`: `toggle` (the List / Map control), `link` (opened with a view, e.g. Home's map checklist item), or `map_empty_state` (the map's review-contacts button). The choice persists per device. |
-| `contacts_list_header_collapsed`  | Scrolling down the Contacts list first tucks its header away (once per app session). No properties.                                                                                                                                                       |
-| `contacts_header_expanded`        | A compacted Contacts header is brought back by hand. `view` (`list` or `map`), `source`: `title_tap` or `header_swipe`. Scrolling back up isn't counted.                                                                                                  |
-| `buddies_opened`                  | Schedule's Buddies button is tapped. `source: schedule_header`, `has_requests` (a request was waiting).                                                                                                                                                   |
-| `service_report_opened`           | Progress's View Report is tapped. `source: progress_header`, `tab` (`month`, `year`, or `allTime`).                                                                                                                                                       |
+| Event                             | When / properties                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `navigation_destination_selected` | A bottom-bar or sidebar destination is tapped. `from` and `to` (route names), `layout_variant` (`bottom_bar` or `sidebar`), `reselected` (tapped the destination already open).                                                                                                                    |
+| `tab_order_changed`               | A tab is moved in Preferences → Tab Order. `order` (resulting comma-separated route names, e.g. `Home,Contacts,Schedule,Progress`; includes Progress even when hidden), `source` (`arrows` or `menu`). Long-press moves also send `context_menu_action` with `surface: tab_order_preferences_row`. |
+| `quick_action_opened`             | Add is opened. `layout_variant`.                                                                                                                                                                                                                                                                   |
+| `quick_action_selected`           | An Add option is chosen. `action`: `addTime`, `addPlan`, `addContact`, or `logTrip` (Mileage Tracking on). Opened without a selection is the abandonment signal; the form's own events record whether it was saved.                                                                                |
+| `contacts_view_changed`           | Contacts switches workspace. `view` (`list` or `map`), `source`: `toggle` (the List / Map control), `link` (opened with a view, e.g. Home's map checklist item), or `map_empty_state` (the map's review-contacts button). The choice persists per device.                                          |
+| `contacts_list_header_collapsed`  | Scrolling down the Contacts list first tucks its header away (once per app session). No properties.                                                                                                                                                                                                |
+| `contacts_header_expanded`        | A compacted Contacts header is brought back by hand. `view` (`list` or `map`), `source`: `title_tap` or `header_swipe`. Scrolling back up isn't counted.                                                                                                                                           |
+| `buddies_opened`                  | Schedule's Buddies button is tapped. `source: schedule_header`, `has_requests` (a request was waiting).                                                                                                                                                                                            |
+| `service_report_opened`           | Progress's View Report is tapped. `source: progress_header`, `tab` (`month`, `year`, or `allTime`).                                                                                                                                                                                                |
 
 The avatar on every root header opens the account menu: Profile, Settings,
 Support WitnessWork, and Help Center. Its choices arrive as `context_menu_action`

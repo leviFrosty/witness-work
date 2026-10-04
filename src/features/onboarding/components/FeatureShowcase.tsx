@@ -355,7 +355,6 @@ type HighlightId = 'goal' | 'check' | 'conversations' | 'report' | 'reminders'
 interface Highlight {
   id: HighlightId
   titleKey: TranslationKey
-  descriptionKey: TranslationKey
   Preview: React.ComponentType<{ color: string }>
   getColor: (theme: ReturnType<typeof useTheme>) => string
 }
@@ -364,35 +363,30 @@ const HIGHLIGHTS: Record<HighlightId, Highlight> = {
   goal: {
     id: 'goal',
     titleKey: 'highlightGoalTitle',
-    descriptionKey: 'highlightGoalDesc',
     Preview: GoalProgressPreview,
     getColor: (t) => t.colors.accent,
   },
   check: {
     id: 'check',
     titleKey: 'highlightCheckTitle',
-    descriptionKey: 'highlightCheckDesc',
     Preview: TimeCheckPreview,
     getColor: (t) => t.colors.accent,
   },
   conversations: {
     id: 'conversations',
     titleKey: 'highlightConversationsTitle',
-    descriptionKey: 'highlightConversationsDesc',
     Preview: ConversationsPreview,
     getColor: (t) => t.colors.cyan,
   },
   report: {
     id: 'report',
     titleKey: 'highlightReportTitle',
-    descriptionKey: 'highlightReportDesc',
     Preview: ReportPreview,
     getColor: (t) => t.colors.indigo,
   },
   reminders: {
     id: 'reminders',
     titleKey: 'highlightRemindersTitle',
-    descriptionKey: 'highlightRemindersDesc',
     Preview: RemindersPreview,
     getColor: (t) => t.colors.pink,
   },
@@ -415,16 +409,16 @@ const HighlightCard = ({ highlight }: { highlight: Highlight }) => {
       flexDirection='row'
       style={{
         alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 14,
-        marginBottom: 10,
-        gap: 14,
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        marginBottom: 8,
+        gap: 12,
       }}
     >
       <View
         style={{
-          width: 64,
-          height: 64,
+          width: 56,
+          height: 56,
           borderRadius: 14,
           backgroundColor: theme.colors.background,
           justifyContent: 'center',
@@ -433,27 +427,16 @@ const HighlightCard = ({ highlight }: { highlight: Highlight }) => {
       >
         <Preview color={color} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text
-          style={{
-            fontSize: 16,
-            fontFamily: 'Inter_600SemiBold',
-            color: theme.colors.text,
-            marginBottom: 3,
-          }}
-        >
-          {i18n.t(highlight.titleKey)}
-        </Text>
-        <Text
-          style={{
-            fontSize: 13,
-            color: theme.colors.textAlt,
-            lineHeight: 17,
-          }}
-        >
-          {i18n.t(highlight.descriptionKey)}
-        </Text>
-      </View>
+      <Text
+        style={{
+          flex: 1,
+          fontSize: 15,
+          fontFamily: 'Inter_600SemiBold',
+          color: theme.colors.text,
+        }}
+      >
+        {i18n.t(highlight.titleKey)}
+      </Text>
     </Card>
   )
 }
@@ -472,7 +455,7 @@ const FeatureShowcase = ({ style }: FeatureShowcaseProps) => {
   )
 
   return (
-    <View style={[{ marginTop: 36 }, style]}>
+    <View style={[{ marginTop: 32 }, style]}>
       <Text
         style={{
           fontSize: 16,

@@ -7,6 +7,7 @@ import i18n from '@/lib/locales'
 import PublisherTypeSelector from '@/components/PublisherTypeSelector'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
+import InfoPopover from '@/components/ui/InfoPopover'
 import FeatureShowcase from '@/features/onboarding/components/FeatureShowcase'
 import { usePreferences } from '@/stores/preferences'
 
@@ -47,10 +48,24 @@ const StepTwo = ({ goBack, goNext }: Props) => {
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-              <Text style={styles.stepTitle}>
-                {i18n.t('whatTypePublisherAreYou')}
-              </Text>
-              <PublisherTypeSelector />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                }}
+              >
+                <Text
+                  style={[styles.stepTitle, { marginBottom: 0, flexShrink: 1 }]}
+                >
+                  {i18n.t('whatTypePublisherAreYou')}
+                </Text>
+                <InfoPopover
+                  title={i18n.t('status')}
+                  description={i18n.t('publisherStatus_info')}
+                />
+              </View>
+              <PublisherTypeSelector variant='list' />
               <FeatureShowcase />
             </View>
           </KeyboardAwareScrollView>

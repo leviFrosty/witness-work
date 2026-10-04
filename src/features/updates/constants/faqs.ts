@@ -193,6 +193,7 @@ export const FAQS: FAQEntry[] = [
     category: 'time',
     related: [392, 399, 429],
   },
+  { id: 'followUpCard', category: 'contacts' },
   { id: 'followUpReminders', category: 'contacts', related: [480] },
   { id: 'reminders', category: 'contacts' },
   { id: 'soundEffects', category: 'customization', related: [365, 486] },

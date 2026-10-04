@@ -403,6 +403,14 @@ Instrumented actions include:
   (`approaching`; `missed` before missed Follow-ups moved to the notifications
   tray) and `count` (Follow-ups on it). The card stays closed until a new or
   rescheduled Follow-up joins it.
+- Acting on the Home Follow-up card: `follow_up_card_action` with `action`
+  (`talked` opens the Visit form, `not_at_home` logs one right away, `undo`
+  removes that Not at Home, `reschedule`). Its menus report through
+  `context_menu_action` with surface `follow_up_card`. The Not at Home it logs
+  sends `visit_created` (and Undo `visit_deleted`) with `source:
+'follow_up_card'`. `follow_up_card_completed` (`count`) fires when the last
+  Follow-up on the card is answered while it's open; compare it to
+  `follow_up_card_action` to see how often people work through the card.
 - Time Entries, checkbox participation (including the widget deep link), timer
   actions, Time Rollover requests/dismissal/undo, and Service Report export actions.
 - Day and Recurring Plans, including edit/delete scope, and Assistant preview,

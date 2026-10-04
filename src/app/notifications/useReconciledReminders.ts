@@ -15,6 +15,8 @@ import { reminderData } from '@/lib/notificationData'
 import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { errorTracking } from '@/lib/errorTracking'
+import { supportsAppIconBadge } from '@/features/notifications/lib/appIconBadge'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 
 /**
  * Removes already-delivered reminders whose record is gone, so an erased
@@ -79,10 +81,17 @@ export function useReconciledReminders(ready: boolean | undefined) {
             },
             now: Date.now(),
           })
+          // A fired reminder adds an unread bell item, so each one sets the
+          // app icon badge it would leave if nothing is read before then. The
+          // bell restores the exact count once the app is used again.
+          const unread = supportsAppIconBadge()
+            ? useNotificationsTray.getState().unread
+            : null
           const key = canonicalJson([
             schedule,
             prefs.dataProtectionMode,
             prefs.timeDisplayFormat,
+            unread,
           ])
           if (key === lastSchedule && obsoleteIds.size === 0) continue
           // Cancellation invalidates the old schedule even if a queued edit
@@ -107,7 +116,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
           const permission = await Notifications.getPermissionsAsync()
           if (permission.granted) {
             if (Platform.OS === 'android') await ensureReminderChannel()
-            for (const reminder of schedule) {
+            for (const [index, reminder] of schedule.entries()) {
               if (stopped || queued) break
               await Notifications.scheduleNotificationAsync({
                 identifier: reminder.id,
@@ -117,6 +126,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
                     timeDisplayFormat: prefs.timeDisplayFormat,
                   }),
                   sound: true,
+                  ...(unread === null ? {} : { badge: unread + index + 1 }),
                 },
                 trigger: {
                   type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -181,6 +191,10 @@ export function useReconciledReminders(ready: boolean | undefined) {
       )
         void reconcile()
     })
+    const tray = useNotificationsTray.subscribe((state, previous) => {
+      if (state.unread !== previous.unread && supportsAppIconBadge())
+        void reconcile()
+    })
     const foreground = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         lastSchedule = ''
@@ -213,6 +227,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
       visits()
       plans()
       preferences()
+      tray()
       foreground.remove()
     }
   }, [ready])

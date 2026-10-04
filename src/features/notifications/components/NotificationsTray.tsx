@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { AppState, useWindowDimensions, View } from 'react-native'
 import { Bell as BellIcon } from 'lucide-react-native'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import IconButton from '@/components/ui/IconButton'
@@ -10,9 +10,11 @@ import type { NotificationItem } from '@/types/notifications'
 import NotificationsList, {
   type TraySyncState,
 } from '@/features/notifications/components/NotificationsList'
+import { setAppIconBadge } from '@/features/notifications/lib/appIconBadge'
 import { trayEntries, unreadCount } from '@/features/notifications/lib/tray'
 import {
   recordArrivals,
+  setUnreadCount,
   useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 
@@ -26,6 +28,22 @@ function useOpenOnRequest(open: () => void) {
     useNotificationsTray.setState({ openRequested: false })
     open()
   }, [requested, open])
+}
+
+/** Keeps the app icon badge on the unread count. */
+function useAppIconBadge(unread: number) {
+  useEffect(() => {
+    setUnreadCount(unread)
+  }, [unread])
+  useEffect(() => {
+    // A reminder that fired in the background set an estimated badge (see
+    // useReconciledReminders), so restore the exact count on leaving the app.
+    const subscription = AppState.addEventListener('change', (state) => {
+      const { unread } = useNotificationsTray.getState()
+      if (state === 'background' && unread !== null) setAppIconBadge(unread)
+    })
+    return () => subscription.remove()
+  }, [])
 }
 
 function BellTrigger({
@@ -109,6 +127,8 @@ export default function NotificationsTray({
   const dismissed = useNotificationsTray((state) => state.dismissed)
   const seen = useNotificationsTray((state) => state.seen)
   const entries = trayEntries(items, { arrivals, dismissed, seen }, now)
+  const unread = unreadCount(entries)
+  useAppIconBadge(unread)
 
   const ids = items.map((item) => item.id).join('\n')
   useEffect(() => {
@@ -120,11 +140,7 @@ export default function NotificationsTray({
       contentWidth={Math.min(POPOVER_WIDTH, width - 24)}
       contentStyle={{ padding: 0 }}
       renderTrigger={({ onPress, anchorRef }) => (
-        <BellTrigger
-          onPress={onPress}
-          anchorRef={anchorRef}
-          unread={unreadCount(entries)}
-        />
+        <BellTrigger onPress={onPress} anchorRef={anchorRef} unread={unread} />
       )}
     >
       {({ closeThen }) => (

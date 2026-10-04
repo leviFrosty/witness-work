@@ -203,6 +203,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'followUpCard', category: 'contacts' },
   { id: 'followUpReminders', category: 'contacts', related: [480] },
   { id: 'reminders', category: 'contacts' },
+  { id: 'appIconBadge', category: 'general' },
   { id: 'soundEffects', category: 'customization', related: [365, 486] },
   {
     id: 'shareAddress',

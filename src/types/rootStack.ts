@@ -10,7 +10,7 @@ export type RootStackParamList = {
     visitToEditId?: string
     notAtHome?: boolean
     fromContactForm?: boolean
-    /** Return to the persistent Contacts detail pane after saving. */
+    /** Go back to the opener (Contact Details or Contacts) after saving. */
     returnToContacts?: boolean
     /** Go back to the opener after saving, e.g. Home's Follow-up card. */
     returnOnSave?: boolean

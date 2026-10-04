@@ -28,14 +28,11 @@ export type ContactDetailsNavigation = Pick<
 export function AddVisitMenu({
   contactId,
   navigation,
-  embedded,
   color,
   compact = false,
 }: {
   contactId: string
   navigation: ContactDetailsNavigation
-  /** In the iPad detail pane: push the form and return to Contacts after. */
-  embedded: boolean
   color: string
   compact?: boolean
 }) {
@@ -43,9 +40,12 @@ export function AddVisitMenu({
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   const add = (notAtHome: boolean) => {
-    const params = { contactId, notAtHome, returnToContacts: embedded }
-    if (embedded) navigation.navigate('Visit Form', params)
-    else navigation.replace('Visit Form', params)
+    // Push over the details so Back and Save both return here.
+    navigation.navigate('Visit Form', {
+      contactId,
+      notAtHome,
+      returnToContacts: true,
+    })
   }
 
   const trigger = (
@@ -140,15 +140,12 @@ export default function ContactDetailsActions({
     },
   })
 
-  const edit = () => {
-    if (embedded)
-      navigation.navigate('Contact Form', {
-        id: contact.id,
-        edit: true,
-        returnToContacts: true,
-      })
-    else navigation.replace('Contact Form', { id: contact.id, edit: true })
-  }
+  const edit = () =>
+    navigation.navigate('Contact Form', {
+      id: contact.id,
+      edit: true,
+      returnToContacts: true,
+    })
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
@@ -187,7 +184,6 @@ export default function ContactDetailsActions({
       <AddVisitMenu
         contactId={contact.id}
         navigation={navigation}
-        embedded={embedded}
         color={color}
       />
     </View>

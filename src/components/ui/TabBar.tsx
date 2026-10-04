@@ -14,6 +14,11 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 
 import useTheme from '@/contexts/theme'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
@@ -67,6 +72,20 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   const { hasSidebar, sidebarVisible, sidebarCompact, sidebarWidth } =
     useAdaptiveLayout({ liveResize: true })
   const layoutVariant = hasSidebar ? 'sidebar' : 'bottom_bar'
+  // Drags write this on the UI thread; React only sets it from saved changes.
+  const liveSidebarWidth = useSharedValue(sidebarWidth)
+  const sidebarWidthStyle = useAnimatedStyle(() => ({
+    width: liveSidebarWidth.value,
+  }))
+
+  useEffect(() => {
+    if (sidebarWidth === 0) return
+    // Animate accessibility steps; appear at full width when a sidebar first fits.
+    liveSidebarWidth.value =
+      liveSidebarWidth.value > 0
+        ? withTiming(sidebarWidth, { duration: 200 })
+        : sidebarWidth
+  }, [liveSidebarWidth, sidebarWidth])
 
   useEffect(() => {
     if (!hasSidebar) return
@@ -345,17 +364,19 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
 
   if (hasSidebar) {
     return (
-      <View
+      <Animated.View
         pointerEvents='box-none'
-        style={{
-          width: sidebarWidth,
-          flexGrow: 0,
-          flexShrink: 0,
-          paddingTop: insets.top + SIDEBAR_INSET,
-          paddingBottom: insets.bottom + SIDEBAR_INSET,
-          paddingHorizontal: SIDEBAR_INSET,
-          backgroundColor: theme.colors.background,
-        }}
+        style={[
+          sidebarWidthStyle,
+          {
+            flexGrow: 0,
+            flexShrink: 0,
+            paddingTop: insets.top + SIDEBAR_INSET,
+            paddingBottom: insets.bottom + SIDEBAR_INSET,
+            paddingHorizontal: SIDEBAR_INSET,
+            backgroundColor: theme.colors.background,
+          },
+        ]}
       >
         <View
           style={{
@@ -522,8 +543,11 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
             </View>
           </ScrollView>
         </View>
-        <SidebarResizeHandle width={sidebarWidth} />
-      </View>
+        <SidebarResizeHandle
+          width={sidebarWidth}
+          liveWidth={liveSidebarWidth}
+        />
+      </Animated.View>
     )
   }
 

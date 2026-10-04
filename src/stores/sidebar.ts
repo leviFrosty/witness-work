@@ -27,12 +27,14 @@ export const useSidebarPreferences = create<SidebarPreferences>()(
   )
 )
 
-/** Live navigation width; content breakpoints adopt the saved width on release. */
+/**
+ * Label mode while a drag is live. The width itself animates on the UI thread,
+ * so React only hears about a drag when it crosses the icon/label threshold.
+ */
 export const useSidebarResize = create<{
-  width: number | null
-  preview: (width: number | null) => void
+  compact: boolean | null
+  preview: (compact: boolean | null) => void
 }>((set) => ({
-  width: null,
-  preview: (width) =>
-    set({ width: width === null ? null : clampSidebarWidth(width) }),
+  compact: null,
+  preview: (compact) => set({ compact }),
 }))

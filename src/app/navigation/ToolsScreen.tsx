@@ -21,6 +21,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import SidebarToggle from '@/components/ui/SidebarToggle'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, View } from 'react-native'
@@ -924,6 +925,7 @@ export default function ToolsScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 10, paddingTop: 30, paddingBottom: 300 }}
       >
+        <SidebarToggle mode='show' />
         <View style={{ gap: 2, marginBottom: 6 }}>
           <Text
             style={{

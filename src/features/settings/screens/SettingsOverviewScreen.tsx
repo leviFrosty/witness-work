@@ -5,6 +5,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import { InputLayoutProvider } from '@/components/ui/inputs/InputLayout'
 import SettingsContents from '@/features/settings/components/SettingsContents'
+import SidebarToggle from '@/components/ui/SidebarToggle'
 
 export default function SettingsOverviewScreen() {
   const theme = useTheme()
@@ -31,6 +32,7 @@ export default function SettingsOverviewScreen() {
               paddingHorizontal: 24,
             }}
           >
+            <SidebarToggle mode='show' />
             <SettingsContents />
           </View>
         </ScrollView>

@@ -14,6 +14,7 @@ import SettingsContents from '@/features/settings/components/SettingsContents'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
+import SidebarToggle from '@/components/ui/SidebarToggle'
 
 const SettingsDetailStack = createNativeStackNavigator<RootStackParamList>()
 
@@ -53,6 +54,7 @@ const SettingsSplitLayout = ({
               paddingHorizontal: 12,
             }}
           >
+            <SidebarToggle mode='show' />
             <SettingsContents
               onNavigate={onNavigate}
               selectedDestination={selectedDestination}

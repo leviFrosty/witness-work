@@ -22,6 +22,7 @@ import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
+import SidebarToggle from '@/components/ui/SidebarToggle'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
@@ -129,6 +130,7 @@ export default function RootHeader({
             ...FLOAT_TRANSITION,
           }}
         >
+          <SidebarToggle mode='show' />
           <AccountMenu />
           <Pressable
             onPress={onPressTitle}

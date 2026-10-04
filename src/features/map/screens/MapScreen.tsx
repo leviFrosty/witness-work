@@ -1239,7 +1239,7 @@ const MapScreen = ({
 
   if (!hasCompletedMapOnboarding) {
     return (
-      <Wrapper insets='none' style={{ flexGrow: 1, paddingTop: topInset }}>
+      <Wrapper insets='none' style={{ flex: 1, paddingTop: topInset }}>
         <MapOnboarding />
       </Wrapper>
     )

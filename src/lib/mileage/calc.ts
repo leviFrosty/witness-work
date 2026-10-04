@@ -202,6 +202,53 @@ export function shiftPeriod(
 export const periodContainsDate = (period: MileagePeriod, date: string) =>
   date >= toDateKey(period.start) && date <= toDateKey(period.end)
 
+export type MileageBucket = {
+  /** First day of the bucket. */
+  start: string
+  /** The period the bucket opens: a day of a week or month, a month of a year. */
+  kind: 'day' | 'month'
+  distanceMiles: number
+  /** Distance per car id; cars without trips are absent. */
+  byVehicle: Record<string, number>
+}
+
+/**
+ * Splits a period into chart buckets — days for a Week or Month, months for a
+ * Service Year, none for a Day — and totals each bucket's trips.
+ */
+export function bucketTrips(
+  period: MileagePeriod,
+  trips: readonly Trip[]
+): MileageBucket[] {
+  if (period.kind === 'day') return []
+  const kind = period.kind === 'year' ? 'month' : 'day'
+  const buckets: MileageBucket[] = []
+  for (
+    const cursor = period.start.clone();
+    cursor.isSameOrBefore(period.end, 'day');
+    cursor.add(1, kind)
+  ) {
+    buckets.push({
+      start: toDateKey(cursor),
+      kind,
+      distanceMiles: 0,
+      byVehicle: {},
+    })
+  }
+  const end = toDateKey(period.end)
+  for (const trip of trips) {
+    if (trip.date < buckets[0].start || trip.date > end) continue
+    // Buckets are in date order; the trip belongs to the last one it reaches.
+    let index = buckets.length - 1
+    while (buckets[index].start > trip.date) index--
+    const bucket = buckets[index]
+    bucket.distanceMiles += trip.distanceMiles
+    bucket.byVehicle[trip.vehicleId] =
+      (bucket.byVehicle[trip.vehicleId] ?? 0) + trip.distanceMiles
+  }
+  return buckets
+}
+
 // --- Trips -----------------------------------------------------------------
 
 /** Newest date first; same-day trips newest-created first. */

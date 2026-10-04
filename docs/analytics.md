@@ -549,6 +549,15 @@ without saving is the abandonment signal.
 `source` (`month_card` from the color key under the month bar, `year_card` from
 the Service Year breakdown) and `categories` (how many categories have time).
 
+## Year tab
+
+`service_year_pace_scrubbed` records the first press-and-hold on the Service
+Year Pace chart each time the Year tab mounts, with `tense` (`past`, `present`,
+or `future` Service Year) and `has_last_year` (last Service Year's line was
+shown). Further scrubbing in the same visit sends nothing. No hours, goals, or
+months are sent. The chart replaced the Year tab's Projected Total card, so that
+card no longer appears there.
+
 ## Service Report screen
 
 The report screen has a month dropdown in its header and a submission-method
@@ -585,6 +594,7 @@ enums. `source` is where a flow started: `home_prompt`, `home_section`,
 | `mileage_trip_deleted`                                    | `source` (`row` from the menu or swipe, `details` from the details screen or edit form).                                                                                                                   |
 | `mileage_trip_shared`                                     | A trip's text is shared or copied. `source`, `method` (`share` or `copy`).                                                                                                                                 |
 | `mileage_report_viewed`                                   | The Mileage screen opens or its period changes. `period` (`day`, `week`, `month`, `year`).                                                                                                                 |
+| `mileage_chart_bar_tapped`                                | A bar on the Mileage screen's chart opens its day or month. `period` is the view it was tapped in (`week`, `month`, `year`); `mileage_report_viewed` follows with the new period.                          |
 | `mileage_report_exported`                                 | A report is copied, shared, or exported. `method` (`copy`, `share`, `csv`), `period`, `trip_count`.                                                                                                        |
 | `mileage_report_export_dismissed`                         | The share sheet closed without sharing. Same properties.                                                                                                                                                   |
 | `mileage_report_export_failed`                            | Export failed. Same properties plus `reason` (`sharing_unavailable` or `error`).                                                                                                                           |

@@ -92,6 +92,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'mileageUnits', category: 'mileage' },
   { id: 'mileageShare', category: 'mileage' },
   { id: 'mileageCars', category: 'mileage' },
+  { id: 'mileageChart', category: 'mileage' },
   { id: 'mileageSync', category: 'mileage' },
   { id: 'mileageTurnOff', category: 'mileage' },
   { id: 'buddiesRestore', category: 'buddies' },
@@ -104,6 +105,11 @@ export const FAQS: FAQEntry[] = [
     id: 'goalPacing',
     category: 'time',
     related: [113, 250],
+  },
+  {
+    id: 'serviceYearPace',
+    category: 'time',
+    related: [250, 196],
   },
   {
     id: 'timeFormat',

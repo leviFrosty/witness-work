@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   addCalendarMonths,
+  annualGoalHoursByMonth,
   annualGoalHoursForServiceYear,
   normalizeRoleHistory,
   publisherCapabilitiesForMonth,
@@ -245,6 +246,66 @@ describe('annualGoalHoursForServiceYear', () => {
         currentRole: 'regularPioneer',
       })
     ).toBe(550)
+  })
+})
+
+describe('annualGoalHoursByMonth', () => {
+  const base = {
+    publisherHours,
+    userSpecifiedHasAnnualGoal: 'default' as const,
+    serviceYear: 2025,
+  }
+
+  it("splits the Annual Goal into each month's share, September first", () => {
+    const history = setRoleForPeriod(
+      null,
+      'publisher',
+      mar2026,
+      null,
+      'regularPioneer'
+    )
+    const input = { ...base, history, currentRole: 'regularPioneer' as const }
+    const shares = annualGoalHoursByMonth(input)
+
+    // Sep–Feb as a publisher, Mar–Aug as a pioneer.
+    expect(shares).toEqual([0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50])
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(
+      annualGoalHoursForServiceYear(input)
+    )
+  })
+
+  it('gives an auxiliary month no share of a pioneer Annual Goal', () => {
+    const pioneer = setRoleForPeriod(
+      null,
+      'publisher',
+      sep2025,
+      null,
+      'regularPioneer'
+    )
+    const history = setRoleForPeriod(
+      pioneer,
+      'regularPioneer',
+      mar2026,
+      mar2026,
+      'regularAuxiliary'
+    )
+    expect(
+      annualGoalHoursByMonth({
+        ...base,
+        history,
+        currentRole: 'regularPioneer',
+      })
+    ).toEqual([50, 50, 50, 50, 50, 50, 0, 50, 50, 50, 50, 50])
+  })
+
+  it("is the role's monthly goal every month without a history", () => {
+    expect(
+      annualGoalHoursByMonth({
+        ...base,
+        history: null,
+        currentRole: 'regularPioneer',
+      })
+    ).toEqual(Array(12).fill(50))
   })
 })
 

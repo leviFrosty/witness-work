@@ -535,6 +535,71 @@ describe('computeProjectedTotal', () => {
       expect(result.projectedMinutes).toBe(60 * 60)
     })
 
+    it('reports every month of the service year, September first', () => {
+      const result = computeProjectedTotal({
+        scope: { kind: 'serviceYear', serviceYear: 2025 },
+        today: normalizeDateForStorage('2025-10-10'),
+        goalMinutes: 600 * 60,
+        loggedMonths: [
+          logged(2025, 8, 50 * 60, 10 * 60),
+          logged(2025, 9, 20 * 60),
+        ],
+        dayPlans: [
+          dayPlan('2025-10-20', 4 * 60),
+          dayPlan('2025-11-03', 3 * 60),
+        ],
+        recurringPlans: [],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.months).toHaveLength(12)
+      expect(result.months[0]).toEqual({
+        year: 2025,
+        month: 8,
+        loggedMinutes: 55 * 60,
+        projectedMinutes: 55 * 60,
+      })
+      expect(result.months[1]).toEqual({
+        year: 2025,
+        month: 9,
+        loggedMinutes: 20 * 60,
+        projectedMinutes: 24 * 60,
+      })
+      expect(result.months[2].projectedMinutes).toBe(3 * 60)
+      expect(result.months[11]).toEqual({
+        year: 2026,
+        month: 7,
+        loggedMinutes: 0,
+        projectedMinutes: 0,
+      })
+      expect(
+        result.months.reduce((sum, m) => sum + m.projectedMinutes, 0)
+      ).toBe(result.projectedMinutes)
+    })
+
+    it('caps each month by the cap the resolver gives that month', () => {
+      // Sep 2025 under an unlimited cap keeps all 70h; Oct 2025 under 55h
+      // drops the credit above it.
+      const result = computeProjectedTotal({
+        scope: { kind: 'serviceYear', serviceYear: 2025 },
+        today: normalizeDateForStorage('2026-09-01'),
+        goalMinutes: 600 * 60,
+        loggedMonths: [
+          logged(2025, 8, 40 * 60, 30 * 60),
+          logged(2025, 9, 40 * 60, 30 * 60),
+        ],
+        dayPlans: [],
+        recurringPlans: [],
+        categories: [],
+        creditCapMinutes: ({ month }) => (month === 8 ? null : 55 * 60),
+      })
+
+      expect(result.months[0].loggedMinutes).toBe(70 * 60)
+      expect(result.months[1].loggedMinutes).toBe(55 * 60)
+      expect(result.loggedMinutes).toBe((70 + 55) * 60)
+    })
+
     it('buckets planned minutes into their own months', () => {
       // Sep plans cannot eat into October's cap headroom (and vice versa).
       // Sep 2025: logged 53h standard + planned 4h → 57h (pure standard,

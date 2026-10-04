@@ -2438,7 +2438,9 @@
   "faq_remainingHours_q": "How do I see how many hours I have left this month or year?",
   "faq_remainingHours_a": "Open the Progress tab from the bottom bar. The Month sub-screen shows time so far and hours left for the current month. Pioneers can switch to the Year sub-screen to see annual goal progress, time so far, remaining hours, and a per-month breakdown comparing actual hours to plan.",
   "faq_goalPacing_q": "How can I tell if I'm ahead or behind on my hour goal?",
-  "faq_goalPacing_a": "Open the Progress tab from the bottom bar. The Month sub-screen shows your daily target so you can see if you're on track for the current month. Pioneers can switch to the Year sub-screen to see monthly pace toward the annual goal at a glance.",
+  "faq_goalPacing_a": "Open the Progress tab from the bottom bar. The Month sub-screen shows your daily target so you can see if you're on track for the current month. Pioneers can switch to the Year sub-screen, where the Service Year Pace chart shows how far ahead or behind your Annual Goal you are today, and each month's bar shows how that month did against its goal.",
+  "faq_serviceYearPace_q": "How do I read the Service Year Pace chart?",
+  "faq_serviceYearPace_a": "Open the Progress tab and switch to Year. If your status has an Annual Goal, such as regular pioneer, the Service Year Pace card appears below your milestones. The dashed gray line is where your Annual Goal puts you by the end of each month. It is built from each month's own goal, so a mid-year appointment or an auxiliary pioneer month changes it, but a Monthly Goal you changed yourself does not. The green line is your time so far, counted the same way as your Service Report, including each month's credit limit. The dashed green line adds the time you have planned. The faint line is last service year, shown when you logged time in it, and the number at its end is last year's total. If a line runs well past your Annual Goal, the space above the goal is drawn on a compressed (logarithmic) scale so the months below stay readable. Press and hold the chart, then slide your finger, to see any month's totals. \"Ahead of pace\" compares your time with where the goal line is today. Below the card, each month has a bar: solid for logged time, lighter for credit time, and striped for plans, with a tick at that month's goal. The key above the months explains these marks, and the Hours and vs Goal columns give the numbers. Every bar uses the same scale, so you can compare months. Without an Annual Goal you see the month bars but not the chart. If a month looks wrong, check its status and goal with Edit Service History. The chart is drawn on your device from your own entries and isn't shared.",
   "faq_timeFormat_q": "Can I display time as \"1h 30m\" instead of \"1.5\"?",
   "faq_timeFormat_a": "Yes. Open Preferences → Appearance and choose your preferred time format. Both formats are available everywhere time is shown.",
   "faq_weekStart_q": "Can I start the week on Monday instead of Sunday?",
@@ -2551,6 +2553,8 @@
   "faq_mileageSync_q": "Does my mileage sync, and does it work on Android?",
   "faq_mileageSync_a": "Mileage works on iOS and Android. Cars, fuels, prices, and trips sync between iOS devices with iCloud Sync, which is a Supporter feature, and they're included in backups from Settings → Backup & Restore on both platforms. iCloud Sync isn't available on Android, so use a backup to move your mileage between devices. Mileage is never shared with Buddies and doesn't appear on your calendar or Service Report.",
   "faq_mileageTurnOff_q": "How do I turn mileage tracking on or off?",
+  "faq_mileageChart_q": "What does the chart on the Mileage screen show?",
+  "faq_mileageChart_a": "Open the Mileage screen and choose Week, Month, or Year. The chart shows how far you drove each day, or each month of the service year (September through August). When more than one car has trips in that period, each bar is split by car, using the colors next to each car's total. Tap a bar to open that day or month and see its trips. The Day view has no chart, and a period without trips shows none. Bars show distance, not estimated cost.",
   "faq_mileageTurnOff_a": "Use the Track Mileage switch in Settings → Preferences → Publisher. Turning it off hides the Home card, the Log Trip action, and the Mileage screen, but keeps your trips; turn it back on and everything returns. If you chose No Thanks on the Home card, this switch turns it on anytime. To erase your mileage, open Mileage → Settings → Delete All Mileage Data. This deletes it on every device that syncs with this one and can't be undone. You can also hide only the Home card with Settings → Preferences → Home Screen.",
   "availability": {
     "settingsRow": "Availability",
@@ -2713,6 +2717,29 @@
         "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
+  },
+  "serviceYearPace": {
+    "title": "Service Year Pace",
+    "info": "The dashed gray line is where your Annual Goal puts you by the end of each month, built from each month's own goal. The green line is your time so far, after each month's credit limit, and the dashed green line adds your plans. The faint line is last service year, when you have time logged for it, with its total at the end. Totals far above your goal are drawn on a compressed scale so the rest of the year stays readable. Press and hold the chart to see any month.",
+    "aheadOfPace": "{{value}} ahead of pace",
+    "behindPace": "{{value}} behind pace",
+    "aheadOfLastYear": "{{value}} ahead of last year",
+    "behindLastYear": "{{value}} behind last year",
+    "evenWithLastYear": "Even with last year",
+    "lastYearValue": "Last year · {{value}}",
+    "summary": "{{logged}} logged toward your {{goal}} goal.",
+    "legend": {
+      "logged": "Logged",
+      "planned": "Planned",
+      "goal": "Goal",
+      "lastYear": "Last year"
+    }
+  },
+  "goalBar": {
+    "logged": "Logged",
+    "credit": "Credit",
+    "planned": "Planned",
+    "goal": "Goal"
   },
   "dataProtectionTitle": "Data protection",
   "dataProtectionDesc": "Recommended in the EU, the UK and Switzerland.",

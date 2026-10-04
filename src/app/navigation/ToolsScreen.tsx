@@ -4,6 +4,7 @@ import {
   BellRing as BellRingIcon,
   Braces as BracesIcon,
   CalendarClock as CalendarClockIcon,
+  Car as CarIcon,
   Cloud as CloudIcon,
   CloudOff as CloudOffIcon,
   Database as DatabaseIcon,
@@ -110,6 +111,11 @@ import {
   buildUniqueContactFixture,
   UNIQUE_CONTACT_CUSTOM_FIELD_LABELS,
 } from '@/app/dev-fixtures/uniqueContact'
+import {
+  buildMileageFixture,
+  MILEAGE_FIXTURE_ID_PREFIX,
+} from '@/app/dev-fixtures/mileage'
+import { toDateKey } from '@/lib/mileage/calc'
 
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
@@ -183,8 +189,10 @@ export default function ToolsScreen() {
     celebratedTiers,
     celebratedMilestones,
     submittedReportMonths,
+    mileageTrackingEnabled,
     set: setPreferences,
   } = preferences
+  const mileage = useMileage()
   // Profile-shaped fields live in the dedicated Profile store after wave-3.
   const { hasCompletedProfileSetup, name, set: setProfile } = useProfile()
   const celebrationQueue = useCelebrationQueue()
@@ -657,6 +665,49 @@ export default function ToolsScreen() {
     }
   }
 
+  // Upserts the fixture under stable ids, so re-running refreshes it rather
+  // than duplicating. Opts in so every Mileage entry point is visible.
+  const generateMileage = () => {
+    const fixture = buildMileageFixture({ now: moment() })
+    fixture.fuels.forEach(mileage.saveFuel)
+    fixture.fuelPrices.forEach(mileage.saveFuelPrice)
+    fixture.vehicles.forEach(mileage.saveVehicle)
+    fixture.vehicleSetups.forEach(mileage.saveVehicleSetup)
+    fixture.trips.forEach(mileage.saveTrip)
+    setPreferences({ mileageTrackingEnabled: true })
+    return fixture
+  }
+
+  // One trip on today's date with the first active car, to check live
+  // summaries and the Home card without regenerating everything.
+  const addTodayMileageTrip = () => {
+    const vehicle = mileage.vehicles.find((v) => !v.archived)
+    if (!vehicle) {
+      showDone('No active car — generate mileage first')
+      return
+    }
+    mileage.saveTrip({
+      id: `${MILEAGE_FIXTURE_ID_PREFIX}today-${Date.now()}`,
+      vehicleId: vehicle.id,
+      date: toDateKey(new Date()),
+      distanceMiles: 12.5,
+      note: 'Dev tools trip',
+      createdAt: Date.now(),
+    })
+    showDone(`Added 12.5 mi trip · ${vehicle.name}`)
+  }
+
+  const deleteFixtureMileage = () => {
+    const isFixture = (record: { id: string }) =>
+      record.id.startsWith(MILEAGE_FIXTURE_ID_PREFIX)
+    // Deleting a car also tombstones its setups and trips.
+    mileage.vehicles
+      .filter(isFixture)
+      .forEach((v) => mileage.deleteVehicle(v.id))
+    mileage.fuels.filter(isFixture).forEach((f) => mileage.deleteFuel(f.id))
+    mileage.trips.filter(isFixture).forEach((t) => mileage.deleteTrip(t.id))
+  }
+
   const [scheduledNotifications, setScheduledNotifications] = useState<
     Notifications.NotificationRequest[]
   >([])
@@ -816,6 +867,7 @@ export default function ToolsScreen() {
     generateServiceReports()
     generateServicePlans()
     generateOverdueFollowUps()
+    generateMileage()
     showDone(i18n.t('generated'))
   }
 
@@ -953,7 +1005,7 @@ export default function ToolsScreen() {
             <QuickTile
               icon={FlaskConicalIcon}
               label='Generate all mock data'
-              caption={`${mockContactCount} contacts, reports, plans`}
+              caption={`${mockContactCount} contacts, reports, plans, mileage`}
               onPress={generateAllMockData}
             />
             <QuickTile
@@ -1082,6 +1134,14 @@ export default function ToolsScreen() {
               onPress={generateUniqueContact}
             />
             <ToolRow
+              label='Mileage'
+              info='Four cars (one archived, one without fuel), gasoline and electric fuels with a mid-history price change, and ~6 months of trips mixing distance, odometer, round-trip, and noted entries. Turns Mileage Tracking on.'
+              onPress={() => {
+                const { trips } = generateMileage()
+                showDone(`Generated ${trips.length} trips`)
+              }}
+            />
+            <ToolRow
               label='Oversized share contact'
               info='One contact whose share link exceeds the 4 KB URL cap, to exercise the file-export fallback.'
               onPress={() => {
@@ -1116,6 +1176,98 @@ export default function ToolsScreen() {
         </ToolSection>
 
         {/* ---- App state ---- */}
+        <ToolSection
+          title='Mileage'
+          icon={CarIcon}
+          summary={`${mileage.vehicles.length} cars · ${mileage.trips.length} trips`}
+        >
+          <ToolList>
+            <ToolRow
+              label='Tracking enabled'
+              info='Off hides every Mileage entry point but keeps data. Reset the prompt to see the Home opt-in card again.'
+              trailing={
+                <Switch
+                  value={!!mileageTrackingEnabled}
+                  onValueChange={(value) =>
+                    setPreferences({ mileageTrackingEnabled: value })
+                  }
+                />
+              }
+            />
+            <ToolRow
+              label='Opt-in answer'
+              value={
+                mileageTrackingEnabled === undefined
+                  ? 'Unanswered'
+                  : onOff(mileageTrackingEnabled)
+              }
+            />
+            <ToolRow
+              label='Reset opt-in prompt'
+              onPress={() => {
+                setPreferences({ mileageTrackingEnabled: undefined })
+                showDone('Mileage prompt reset')
+              }}
+            />
+            <ToolRow
+              label='Units'
+              value={`${preferences.distanceUnit ?? 'auto'} · ${preferences.fuelEconomyUnit ?? 'auto'} · ${preferences.mileageEntryMode}`}
+            />
+            <ToolRow
+              label='Reset units to Auto'
+              onPress={() => {
+                setPreferences({
+                  distanceUnit: undefined,
+                  fuelEconomyUnit: undefined,
+                })
+                showDone('Units reset to Auto')
+              }}
+            />
+            <ToolRow
+              label='Open Mileage'
+              onPress={() => navigation.navigate('Mileage')}
+            />
+            <ToolRow label="Add today's trip" onPress={addTodayMileageTrip} />
+            <ToolRow
+              label='Tombstones'
+              value={`${mileage.deletedMileageRecords.length}`}
+            />
+            <ToolRow
+              label='Delete generated mileage'
+              info='Deletes only fixture records (dev-mileage- ids), leaving tombstones so iCloud sync propagates it.'
+              tone='destructive'
+              onPress={() =>
+                confirmDevAction('Delete generated mileage', () => {
+                  deleteFixtureMileage()
+                  showDone(i18n.t('deleted'))
+                })
+              }
+            />
+            <ToolRow
+              label='Delete all mileage (synced)'
+              info='Same path as the in-app delete: tombstones every record so other devices delete it too.'
+              tone='destructive'
+              onPress={() =>
+                confirmDevAction('Delete all mileage', () => {
+                  mileage.deleteAllMileageData()
+                  showDone(i18n.t('deleted'))
+                })
+              }
+            />
+            <ToolRow
+              label='Wipe mileage store (local)'
+              info='Clears records and tombstones on this device only. iCloud may restore the data on next sync.'
+              tone='destructive'
+              onPress={() =>
+                confirmDevAction('Wipe mileage store', () => {
+                  mileage._WARNING_forceDeleteMileage()
+                  showDone(i18n.t('deleted'))
+                })
+              }
+            />
+          </ToolList>
+        </ToolSection>
+
         <ToolSection title='Buddies' icon={UsersRoundIcon}>
           <ToolList>
             {__DEV__ && (

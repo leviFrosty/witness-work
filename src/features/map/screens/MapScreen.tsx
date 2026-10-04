@@ -1,10 +1,9 @@
 import { analytics } from '@/lib/analytics'
 import {
+  ChevronUp as ChevronUpIcon,
   Expand as ExpandIcon,
   Info as InfoIcon,
   Navigation as NavigationIcon,
-  PanelBottomClose as PanelBottomCloseIcon,
-  PanelBottomOpen as PanelBottomOpenIcon,
   PanelRightClose as PanelRightCloseIcon,
   PanelRightOpen as PanelRightOpenIcon,
   Search as SearchIcon,
@@ -37,6 +36,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated'
 import { Carousel, type CarouselRef } from 'react-native-reanimated-carousel'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -99,8 +99,10 @@ const CAROUSEL_ANIMATION = {
   easing: Easing.bezier(0.25, 1, 0.5, 1),
 }
 
-/** How much of the stowed cards stays on screen to tap or swipe back up. */
-const CARD_PEEK = 28
+/** Height of the handle left above the tab bar while the cards are stowed. */
+const STOWED_HANDLE_HEIGHT = 28
+
+const STOW_TIMING = { duration: 280, easing: Easing.inOut(Easing.ease) }
 
 const STOW_TRANSITION = {
   transitionDuration: 280,
@@ -159,6 +161,9 @@ const FullMapView = ({
   // Stowed cards tuck down to a peek (the wide inspector slides off-screen)
   // for a full map.
   const [cardsStowed, setCardsStowed] = useState(false)
+  // 0 = cards shown, 1 = stowed. Driven by the swipe while dragging, then
+  // animated to rest.
+  const stowProgress = useSharedValue(0)
   const searchInputRef = useRef<TextInput>(null)
   const searchExpand = useSharedValue(0)
   const appTheme = useTheme()
@@ -527,7 +532,9 @@ const FullMapView = ({
   // The parallax layout scales the focused card around its centre, so its top
   // edge sits this far below the carousel's frame.
   const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
-  const stowedCardsOffset = CARD_HEIGHT - cardTopGap - CARD_PEEK
+  // Stowed cards slide down and fade out completely rather than leaving a
+  // clipped sliver above the tab bar.
+  const stowDistance = (CARD_HEIGHT - cardTopGap) / 2
 
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, or the carousel.
@@ -537,7 +544,7 @@ const FullMapView = ({
     ? mapCardBottom + CARD_HEIGHT + 8
     : visibleContactMarkers.length > 0
       ? cardsStowed
-        ? mapCardBottom + CARD_PEEK + 8
+        ? mapCardBottom + STOWED_HANDLE_HEIGHT + 8
         : mapCardBottom + CARD_HEIGHT + 8
       : contactMarkers.length === 0
         ? bottomOverlayInset + 12 + emptyStateHeight + 8
@@ -563,13 +570,37 @@ const FullMapView = ({
   const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
 
   const toggleCardsStowed = (
-    source: 'button' | 'pin' | 'search' | 'peek_tap' | 'peek_swipe'
+    source: 'button' | 'pin' | 'search' | 'swipe' | 'peek_tap' | 'peek_swipe'
   ) => {
     const stowed = !cardsStowed
     analytics.capture('map_cards_toggled', { stowed, source })
     setCardsStowed(stowed)
+    stowProgress.value = withTiming(stowed ? 1 : 0, STOW_TIMING)
     if (stowed) onExplore?.()
   }
+
+  const settleStowProgress = () => {
+    stowProgress.value = withTiming(cardsStowed ? 1 : 0, STOW_TIMING)
+  }
+
+  const clampProgress = (value: number) => Math.min(1, Math.max(0, value))
+
+  // Dragging the cards down follows the finger and stows them past a third of
+  // the way or on a flick. Horizontal drags stay with the carousel.
+  const cardsStowGesture = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetY(12)
+    .failOffsetX([-12, 12])
+    .onUpdate((e) => {
+      stowProgress.value = clampProgress(e.translationY / stowDistance)
+    })
+    .onEnd((e) => {
+      if (e.translationY > stowDistance / 3 || e.velocityY > 500) {
+        toggleCardsStowed('swipe')
+      } else {
+        settleStowProgress()
+      }
+    })
 
   const expandSearch = () => {
     // Results show in the cards, so bring them back.
@@ -598,15 +629,20 @@ const FullMapView = ({
     setSearchExpanded(false)
   }
 
-  // The peek brings the cards back on a tap or an upward swipe.
+  // The stowed handle brings the cards back on a tap or an upward swipe.
   const cardsPeekGesture = Gesture.Exclusive(
     Gesture.Pan()
       .runOnJS(true)
       .activeOffsetY(-8)
       .failOffsetY(8)
+      .onUpdate((e) => {
+        stowProgress.value = clampProgress(1 + e.translationY / stowDistance)
+      })
       .onEnd((e) => {
         if (e.translationY < -24 || e.velocityY < -400) {
           toggleCardsStowed('peek_swipe')
+        } else {
+          settleStowProgress()
         }
       }),
     Gesture.Tap()
@@ -630,6 +666,15 @@ const FullMapView = ({
 
   const animatedSearchInputStyle = useAnimatedStyle(() => ({
     opacity: searchExpand.value,
+  }))
+
+  const animatedCardsStyle = useAnimatedStyle(() => ({
+    opacity: 1 - stowProgress.value,
+    transform: [{ translateY: stowProgress.value * stowDistance }],
+  }))
+
+  const animatedStowedHandleStyle = useAnimatedStyle(() => ({
+    opacity: stowProgress.value,
   }))
 
   const addContact = () =>
@@ -983,8 +1028,6 @@ const FullMapView = ({
               />
             </Animated.View>
           ) : (
-            // Clipped so stowed cards tuck away above the tab bar, leaving only
-            // their top edges peeking out.
             <View
               pointerEvents='box-none'
               style={{
@@ -992,75 +1035,109 @@ const FullMapView = ({
                 bottom: mapCardBottom,
                 width,
                 height: CARD_HEIGHT,
-                overflow: 'hidden',
               }}
             >
-              <Animated.View
-                pointerEvents={cardsStowed ? 'none' : 'box-none'}
-                style={{
-                  flex: 1,
-                  transform: [
-                    { translateY: cardsStowed ? stowedCardsOffset : 0 },
-                  ],
-                  transitionProperty: 'transform',
-                  ...STOW_TRANSITION,
-                }}
-              >
-                <Carousel
-                  onSnapToItem={handleCarouselSnap}
-                  onScrollStart={handleCarouselScrollStart}
-                  defaultIndex={Math.max(
-                    0,
-                    findContactIndexById(visibleContactMarkers, activeContactId)
-                  )}
-                  ref={carouselRef}
-                  data={visibleContactMarkers}
-                  keyExtractor={(contact) => contact.id}
-                  renderItem={({ item }) => (
-                    <MapCarouselCard contact={item} index={conversationIndex} />
-                  )}
-                  animation={CAROUSEL_ANIMATION}
-                  // Only mount the visible card plus a few neighbors on each side —
-                  // without renderWindowSize the v5 renderer mounts every Contact's
-                  // card up front, regressing the map screen's first paint.
-                  renderWindowSize={7}
-                  layout={{
-                    type: 'parallax',
-                    offset: 100,
-                    scale: parallaxScrollingScale,
-                    adjacentScale: parallaxScrollingScale ** 2,
-                  }}
-                  loop={visibleContactMarkers.length !== 1}
-                  style={{ width, height: CARD_HEIGHT }}
-                />
-              </Animated.View>
+              <GestureDetector gesture={cardsStowGesture}>
+                <Animated.View
+                  pointerEvents={cardsStowed ? 'none' : 'box-none'}
+                  style={[{ flex: 1 }, animatedCardsStyle]}
+                >
+                  <Carousel
+                    onSnapToItem={handleCarouselSnap}
+                    onScrollStart={handleCarouselScrollStart}
+                    defaultIndex={Math.max(
+                      0,
+                      findContactIndexById(
+                        visibleContactMarkers,
+                        activeContactId
+                      )
+                    )}
+                    ref={carouselRef}
+                    data={visibleContactMarkers}
+                    keyExtractor={(contact) => contact.id}
+                    renderItem={({ item }) => (
+                      <MapCarouselCard
+                        contact={item}
+                        index={conversationIndex}
+                      />
+                    )}
+                    animation={CAROUSEL_ANIMATION}
+                    // Leave vertical drags to the swipe-down-to-stow gesture.
+                    onConfigurePanGesture={(gesture) => {
+                      gesture.activeOffsetX([-10, 10])
+                    }}
+                    // Only mount the visible card plus a few neighbors on each side —
+                    // without renderWindowSize the v5 renderer mounts every Contact's
+                    // card up front, regressing the map screen's first paint.
+                    renderWindowSize={7}
+                    layout={{
+                      type: 'parallax',
+                      offset: 100,
+                      scale: parallaxScrollingScale,
+                      adjacentScale: parallaxScrollingScale ** 2,
+                    }}
+                    loop={visibleContactMarkers.length !== 1}
+                    style={{ width, height: CARD_HEIGHT }}
+                  />
+                </Animated.View>
+              </GestureDetector>
               {cardsStowed && (
                 <GestureDetector gesture={cardsPeekGesture}>
-                  <View
+                  <Animated.View
                     accessible
                     accessibilityRole='button'
                     accessibilityLabel={i18n.t('map_showContactCards')}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      // Taller than the peek so it's an easy target.
-                      height: CARD_PEEK + 20,
-                      paddingTop: 8,
-                      alignItems: 'center',
-                    }}
+                    style={[
+                      {
+                        position: 'absolute',
+                        bottom: 0,
+                        alignSelf: 'center',
+                        // Wider and taller than the handle so it's an easy target.
+                        paddingHorizontal: 32,
+                        paddingTop: 16,
+                      },
+                      animatedStowedHandleStyle,
+                    ]}
                   >
                     <View
                       style={{
-                        width: 36,
-                        height: 5,
-                        borderRadius: 3,
-                        backgroundColor: theme.colors.textAlt,
-                        opacity: 0.6,
+                        width: 56,
+                        height: STOWED_HANDLE_HEIGHT,
+                        borderRadius: STOWED_HANDLE_HEIGHT / 2,
+                        borderCurve: 'continuous',
+                        overflow: 'hidden',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: liquidGlass
+                          ? undefined
+                          : theme.colors.card + 'dd',
                       }}
-                    />
-                  </View>
+                    >
+                      {liquidGlass ? (
+                        <GlassView
+                          pointerEvents='none'
+                          glassEffectStyle='regular'
+                          colorScheme={glassColorScheme}
+                          style={[
+                            StyleSheet.absoluteFill,
+                            { borderRadius: STOWED_HANDLE_HEIGHT / 2 },
+                          ]}
+                        />
+                      ) : (
+                        <BlurView
+                          pointerEvents='none'
+                          tint={isDark ? 'dark' : 'light'}
+                          intensity={60}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      )}
+                      <LucideIcon
+                        icon={ChevronUpIcon}
+                        size={theme.fontSize('md')}
+                        style={{ color: theme.colors.text }}
+                      />
+                    </View>
+                  </Animated.View>
                 </GestureDetector>
               )}
             </View>
@@ -1087,7 +1164,9 @@ const FullMapView = ({
                 />
               </Button>
             )}
-            {visibleContactMarkers.length >= 1 &&
+            {/* Phone cards stow with a swipe down instead. */}
+            {isWide &&
+              visibleContactMarkers.length >= 1 &&
               !mapContactCreation.coordinate && (
                 <Button
                   accessibilityLabel={i18n.t(
@@ -1101,13 +1180,7 @@ const FullMapView = ({
                 >
                   <LucideIcon
                     icon={
-                      isWide
-                        ? cardsStowed
-                          ? PanelRightOpenIcon
-                          : PanelRightCloseIcon
-                        : cardsStowed
-                          ? PanelBottomOpenIcon
-                          : PanelBottomCloseIcon
+                      cardsStowed ? PanelRightOpenIcon : PanelRightCloseIcon
                     }
                     size={theme.fontSize('sm')}
                     style={{ color: theme.colors.text }}

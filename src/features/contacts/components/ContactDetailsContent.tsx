@@ -171,21 +171,19 @@ const ContactDetailsContent = ({
       (def) => !def.archived && !!contact.customFields?.[def.id]?.trim()
     )
 
-  const editContact = () => {
-    if (embedded)
-      navigation.navigate('Contact Form', {
-        id: contact.id,
-        edit: true,
-        returnToContacts: true,
-      })
-    else navigation.replace('Contact Form', { id: contact.id, edit: true })
-  }
+  // Push forms over the details so Back and Save both return here.
+  const editContact = () =>
+    navigation.navigate('Contact Form', {
+      id: contact.id,
+      edit: true,
+      returnToContacts: true,
+    })
 
-  const logVisit = () => {
-    const params = { contactId: contact.id, returnToContacts: embedded }
-    if (embedded) navigation.navigate('Visit Form', params)
-    else navigation.replace('Visit Form', params)
-  }
+  const logVisit = () =>
+    navigation.navigate('Visit Form', {
+      contactId: contact.id,
+      returnToContacts: true,
+    })
 
   const isActiveStudy = contactStudiedForGivenMonth({
     contact,
@@ -312,7 +310,6 @@ const ContactDetailsContent = ({
               <AddVisitMenu
                 contactId={contact.id}
                 navigation={navigation}
-                embedded={embedded}
                 color={theme.colors.text}
                 compact
               />

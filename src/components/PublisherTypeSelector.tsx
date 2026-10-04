@@ -1,4 +1,5 @@
-import { TextInput as RNTextInput, View } from 'react-native'
+import { CircleCheck as CircleCheckIcon } from 'lucide-react-native'
+import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { publishers } from '@/constants/publisher'
@@ -15,6 +16,10 @@ import RoleStartSheet, {
 } from '@/components/RoleStartSheet'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
+import { useCardStyle } from '@/components/ui/Card'
+import LucideIcon from '@/components/ui/LucideIcon'
+import Text from '@/components/ui/MyText'
+import useTheme from '@/contexts/theme'
 
 /** How far back the role-change sheet offers a start month. */
 const MAX_START_MONTHS = 36
@@ -38,8 +43,14 @@ const earliestLoggedMonth = (
 const PublisherTypeSelector = ({
   showGoalDescription = true,
   askStartMonth = false,
+  variant = 'select',
 }: {
   showGoalDescription?: boolean
+  /**
+   * `list` shows every status as a tappable row (onboarding), so Users can't
+   * miss the choice and accept the default by accident.
+   */
+  variant?: 'select' | 'list'
   /**
    * Ask which month a role change starts from (Settings). Onboarding leaves
    * this off: a new User's role applies to every month.
@@ -73,6 +84,8 @@ const PublisherTypeSelector = ({
     },
   ]
 
+  const theme = useTheme()
+  const cardStyle = useCardStyle()
   const { publisherHours, role, monthlyGoalOverrides, setRole, set } =
     usePreferences()
   const serviceReports = useServiceReport((s) => s.serviceReports)
@@ -167,19 +180,109 @@ const PublisherTypeSelector = ({
     />
   )
 
+  const list = (
+    <View
+      accessibilityRole='radiogroup'
+      accessibilityLabel={i18n.t('status')}
+      style={{ ...cardStyle, overflow: 'hidden' }}
+    >
+      {items.map(({ label, value }, index) => {
+        const selected = value === role
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole='radio'
+            accessibilityState={{ selected }}
+            onPress={() => handleRoleChange(value)}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              minHeight: 52,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderTopWidth: index === 0 ? 0 : 1,
+              borderColor: theme.colors.border,
+              backgroundColor: selected
+                ? theme.colors.accentTranslucent
+                : undefined,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: theme.fontSize('md'),
+                fontFamily: selected
+                  ? theme.fonts.semiBold
+                  : theme.fonts.medium,
+              }}
+            >
+              {label}
+            </Text>
+            {value !== 'custom' && (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {value === publishers[0]
+                  ? i18n.t('noHourRequirement')
+                  : i18n.t('yourPlanMonthlyGoal', {
+                      hours: publisherHours[value],
+                    })}
+              </Text>
+            )}
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {selected ? (
+                <LucideIcon
+                  icon={CircleCheckIcon}
+                  size={22}
+                  color={theme.colors.accent}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: theme.colors.border,
+                  }}
+                />
+              )}
+            </View>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+
   return (
     <View>
-      <InputRowContainer
-        label={i18n.t('status')}
-        info={
-          showGoalDescription && role !== publishers[0]
-            ? i18n.t('defaultMonthlyGoal_description')
-            : undefined
-        }
-        description={requirement}
-      >
-        {select}
-      </InputRowContainer>
+      {variant === 'list' ? (
+        list
+      ) : (
+        <InputRowContainer
+          label={i18n.t('status')}
+          info={
+            showGoalDescription && role !== publishers[0]
+              ? i18n.t('defaultMonthlyGoal_description')
+              : undefined
+          }
+          description={requirement}
+        >
+          {select}
+        </InputRowContainer>
+      )}
 
       {askStartMonth && (
         <RoleStartSheet

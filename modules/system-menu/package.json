@@ -1,0 +1,7 @@
+{
+  "name": "system-menu",
+  "version": "0.1.0",
+  "description": "Local Expo module for the iPadOS app menu bar.",
+  "main": "index.ts",
+  "private": true
+}

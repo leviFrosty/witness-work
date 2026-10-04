@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import TabBar from '@/components/ui/TabBar'
+import NavigationTabBar from '@/app/navigation/NavigationTabBar'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
@@ -156,7 +156,7 @@ const HomeTabStack = () => {
       )}
       <Tab.Navigator
         initialRouteName='Home'
-        tabBar={(props) => <TabBar {...props} />}
+        tabBar={(props) => <NavigationTabBar {...props} />}
         screenOptions={{
           header: () => null,
           tabBarPosition: hasSidebar ? 'left' : 'bottom',

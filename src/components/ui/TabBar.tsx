@@ -9,7 +9,7 @@ import {
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
@@ -50,7 +50,12 @@ export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT
 
 const liquidGlass = isLiquidGlassAvailable()
 
-const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
+type Props = BottomTabBarProps & {
+  /** Only supplied while hardware Command is held and shortcuts are active. */
+  shortcutHints?: Record<string, string>
+}
+
+const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   const [sheetOpen, setSheetOpen] = useState(false)
   const quickActionFocusRef = useRef<View>(null)
   const rootNavigation = props.navigation as unknown as RootStackNavigation &
@@ -82,6 +87,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
       label === 'Settings' ? 'settings' : (label as TranslationKey)
     const isFocused = state.index === index
     const isSettings = label === 'Settings'
+    const shortcut = shortcutHints?.[route.key]
 
     const onPress = () => {
       analytics.capture('navigation_destination_selected', {
@@ -175,23 +181,55 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
             />
           )}
         </View>
-        {!sidebarCompact && (
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-            style={{
-              color,
-              flexShrink: 1,
-              fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
-              fontFamily: isFocused
-                ? theme.fonts.semiBold
-                : theme.fonts.regular,
-            }}
-          >
-            {i18n.t(labelKey)}
-          </Text>
-        )}
+        <View
+          style={{
+            flex: hasSidebar && !sidebarCompact ? 1 : undefined,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: sidebarCompact ? 'center' : undefined,
+            position: sidebarCompact ? 'absolute' : undefined,
+            bottom: sidebarCompact ? 1 : undefined,
+            left: sidebarCompact ? 0 : undefined,
+            right: sidebarCompact ? 0 : undefined,
+            maxWidth: '100%',
+            gap: 4,
+          }}
+        >
+          {!sidebarCompact && (
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              style={{
+                color,
+                flexShrink: 1,
+                flex: hasSidebar ? 1 : undefined,
+                fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
+                fontFamily: isFocused
+                  ? theme.fonts.semiBold
+                  : theme.fonts.regular,
+              }}
+            >
+              {i18n.t(labelKey)}
+            </Text>
+          )}
+          {shortcut && (
+            <Text
+              accessible={false}
+              numberOfLines={1}
+              style={{
+                color: theme.colors.textAlt,
+                fontFamily: Platform.select({
+                  ios: 'Menlo',
+                  default: 'monospace',
+                }),
+                fontSize: theme.fontSize('xs') - 2,
+              }}
+            >
+              {i18n.t('navigationShortcut', { number: shortcut })}
+            </Text>
+          )}
+        </View>
       </Pressable>
     )
   }

@@ -238,7 +238,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
 
 const PreferencesiCloudDevicesScreen = () => (
   <SettingsInputLayout>
-    <IsSupporter feature='iCloudSync' fill>
+    <IsSupporter feature='iCloudSync' analyticsSurface='icloud_sync' fill>
       <PreferencesiCloudDevicesScreenInner />
     </IsSupporter>
   </SettingsInputLayout>

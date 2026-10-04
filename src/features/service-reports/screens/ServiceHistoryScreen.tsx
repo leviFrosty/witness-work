@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Keyboard, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
@@ -126,14 +126,6 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
   const dirtyYears = dirtyServiceYears(drafts)
   const otherDirtyYears = dirtyYears.filter((sy) => sy !== serviceYear)
 
-  // Once per opened Service Year.
-  useEffect(() => {
-    analytics.capture('service_history_viewed', {
-      source,
-      service_years_back: newestServiceYear - serviceYear,
-    })
-  }, [source, newestServiceYear, serviceYear])
-
   const changeServiceYear = (next: number) => {
     Keyboard.dismiss()
     setServiceYear(next)
@@ -259,7 +251,6 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
               {/* Long-press the month's header to copy or clear it. Both
                 only change the unsaved form, so leaving undoes them. */}
               <ContextMenu
-                analyticsSurface='service_history_month'
                 actions={[
                   rowsDiffer(copiedRow, row) && {
                     id: 'copy_previous_month',
@@ -400,7 +391,6 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
             onPress={() =>
               confirmDeleteYear({
                 endYear: serviceYear + 1,
-                source: 'service_history',
                 // The year's rows rebuild without its time; its draft goes too.
                 onDeleted: () =>
                   setDrafts((prev) => discardDraft(prev, serviceYear)),

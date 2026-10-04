@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   Check as CheckIcon,
   ChevronDown as ChevronDownIcon,
@@ -173,11 +172,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     // Year submenus are containers, not months.
     if (id.startsWith('year-')) return
     const next = parseReportMonthId(id)
-    analytics.capture('service_report_month_selected', {
-      months_ago: moment()
-        .startOf('month')
-        .diff(moment({ year: next.year, month: next.month }), 'months'),
-    })
+
     navigation.setParams(next)
   }
 
@@ -476,7 +471,6 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         <Section>
           <DefaultExportMethodSelector
             lastInSection
-            source='report_screen'
             description={
               submitDisabled
                 ? i18n.t('nwPublisherOnlyAllowsLastMonth')

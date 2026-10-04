@@ -114,8 +114,8 @@ const BackgroundEditButton = ({
       )}
     >
       <IsSupporter
-        feature='customAccentColor'
         analyticsSurface='contact_background'
+        feature='customAccentColor'
         size='sm'
       >
         <BackgroundSwatches value={value} onChange={onChange} />

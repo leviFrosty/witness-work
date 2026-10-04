@@ -19,7 +19,6 @@ export default function BuddyListRow({
   trailing,
   onPress,
   actions = [],
-  analyticsSurface = 'buddy_list_row',
   last,
   muted,
 }: {
@@ -36,8 +35,6 @@ export default function BuddyListRow({
   onPress?: () => void
   /** Long-press menu for the row. */
   actions?: ContextMenuEntries
-  /** `context_menu_action` surface, e.g. `buddy_row`. */
-  analyticsSurface?: string
   last: boolean
   /** Fades the avatar and title for rows nobody has acted on yet. */
   muted?: boolean
@@ -55,7 +52,6 @@ export default function BuddyListRow({
       <ContextMenu
         style={{ flex: 1 }}
         actions={actions}
-        analyticsSurface={analyticsSurface}
         onPress={onPress}
         accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
       >

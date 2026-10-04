@@ -37,11 +37,6 @@ export type NotificationRowProps = {
   dismiss: () => void
   /** Closes the tray, then runs the action (e.g. navigating). */
   closeThen: (action: () => void) => void
-  /**
-   * Records a tap on one of the row's own actions as
-   * `notification_action_tapped`, like a standard row's actions.
-   */
-  trackAction: (action: string) => void
 }
 
 /**

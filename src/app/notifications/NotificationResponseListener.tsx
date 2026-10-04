@@ -144,15 +144,7 @@ export default function NotificationResponseListener() {
       navigationRef.navigate('Root', { screen: 'Home' } as never)
       requestNotificationsTray()
     }
-    analytics.capture('notification_routed', {
-      source: pending.type === 'reminder' ? 'local' : 'push',
-      destination: !routed
-        ? 'tray'
-        : pending.type === 'reminder'
-          ? pending.reminder.kind
-          : 'buddies',
-      waited: retry > 0,
-    })
+
     setPending(null)
   }, [pending, retry, buddiesEnabled])
 

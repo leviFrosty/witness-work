@@ -106,10 +106,6 @@ const PreferencesiCloudScreenInner = () => {
 
   const showAccountChangedNotice =
     iCloudAccountChangedAt !== null && !iCloudSyncEnabled
-  useEffect(() => {
-    if (showAccountChangedNotice)
-      analytics.capture('icloud_account_changed_notice_viewed')
-  }, [showAccountChangedNotice])
 
   // Re-check iCloud availability on mount and whenever the identity changes.
   useEffect(() => {
@@ -964,7 +960,7 @@ const PreferencesiCloudScreenInner = () => {
 
 const PreferencesiCloudScreen = () => (
   <SettingsInputLayout>
-    <IsSupporter feature='iCloudSync' analyticsSurface='icloud_sync' fill>
+    <IsSupporter analyticsSurface='icloud_sync' feature='iCloudSync' fill>
       <PreferencesiCloudScreenInner />
     </IsSupporter>
   </SettingsInputLayout>

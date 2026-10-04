@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   Expand as ExpandIcon,
   Info as InfoIcon,
@@ -212,7 +211,6 @@ const FullMapView = ({
       coordinate,
       userDraggedCoordinate: true,
     })
-    analytics.capture('map_marker_moved')
   }
 
   const fitToMarkers = useCallback(() => {
@@ -293,7 +291,7 @@ const FullMapView = ({
       // render and tap scrolls the carousel to the wrong card.
       const idx = findContactIndexById(visibleContactMarkers, id)
       if (idx < 0) return
-      analytics.capture('map_contact_selected')
+
       lastReconciledIndexRef.current = idx
 
       // Re-tap on the already-active pin: the carousel is already on this
@@ -562,23 +560,21 @@ const FullMapView = ({
   const SEARCH_SPRING_OPEN = { damping: 18, stiffness: 180, mass: 0.9 }
   const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
 
-  const toggleCardsStowed = (
-    source: 'button' | 'pin' | 'search' | 'peek_tap' | 'peek_swipe'
-  ) => {
+  const toggleCardsStowed = () => {
     const stowed = !cardsStowed
-    analytics.capture('map_cards_toggled', { stowed, source })
+
     setCardsStowed(stowed)
     if (stowed) onExplore?.()
   }
 
   const expandSearch = () => {
     // Results show in the cards, so bring them back.
-    if (cardsStowed) toggleCardsStowed('search')
+    if (cardsStowed) toggleCardsStowed()
     if (searchExpanded) {
       searchInputRef.current?.focus()
       return
     }
-    analytics.capture('map_search_opened')
+
     setSearchExpanded(true)
     searchExpand.value = withSpring(1, SEARCH_SPRING_OPEN)
     requestAnimationFrame(() => searchInputRef.current?.focus())
@@ -606,12 +602,12 @@ const FullMapView = ({
       .failOffsetY(8)
       .onEnd((e) => {
         if (e.translationY < -24 || e.velocityY < -400) {
-          toggleCardsStowed('peek_swipe')
+          toggleCardsStowed()
         }
       }),
     Gesture.Tap()
       .runOnJS(true)
-      .onEnd(() => toggleCardsStowed('peek_tap'))
+      .onEnd(() => toggleCardsStowed())
   )
 
   const handlePanDrag = () => {
@@ -688,10 +684,6 @@ const FullMapView = ({
           <MapEmptyState
             activeContactCount={activeContactCount}
             onReviewContacts={() => {
-              analytics.capture('contacts_view_changed', {
-                view: 'list',
-                source: 'map_empty_state',
-              })
               setPreferences({ contactsView: 'list' })
             }}
             onAddContact={addContact}
@@ -769,7 +761,7 @@ const FullMapView = ({
               <Marker
                 onPress={() => {
                   mapContactCreation.cancel()
-                  if (cardsStowed) toggleCardsStowed('pin')
+                  if (cardsStowed) toggleCardsStowed()
                   setInspectorRevealRequest((request) => request + 1)
                   handlePinPress(c.id)
                 }}
@@ -1096,7 +1088,7 @@ const FullMapView = ({
                       : 'map_hideContactCards'
                   )}
                   variant='glass'
-                  onPress={() => toggleCardsStowed('button')}
+                  onPress={() => toggleCardsStowed()}
                   style={mapControlStyle}
                 >
                   <LucideIcon

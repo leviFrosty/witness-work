@@ -141,14 +141,7 @@ it('respects prevented tab presses', async () => {
   await mount(props)
   runtime.shortcut?.({ input: '2' })
   expect(props.navigation.navigate).not.toHaveBeenCalled()
-  expect(runtime.capture).toHaveBeenCalledWith(
-    'navigation_shortcut_completed',
-    {
-      destination: 'Schedule',
-      layout_variant: 'sidebar',
-      outcome: 'prevented',
-    }
-  )
+  expect(runtime.capture).not.toHaveBeenCalled()
 })
 
 it('disables navigation and clears hints when another root screen is open', async () => {

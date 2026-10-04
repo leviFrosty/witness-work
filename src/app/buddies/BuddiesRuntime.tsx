@@ -2,7 +2,7 @@ import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Notifications from 'expo-notifications'
-import { analytics } from '@/lib/analytics'
+
 import { logger } from '@/lib/logger'
 import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
@@ -11,11 +11,8 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import useServiceReport from '@/stores/serviceReport'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import {
-  buddyNotificationIdForSeq,
-  syncBuddyNotifications,
-} from '@/features/buddies/hooks/useBuddyNotifications'
-import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
+import { syncBuddyNotifications } from '@/features/buddies/hooks/useBuddyNotifications'
+
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import {
@@ -26,7 +23,6 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { Buddy } from '@/features/buddies/lib/state'
-import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
@@ -102,35 +98,12 @@ function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
   for (const visit of changes.visits) visits.updateConversation(visit)
 }
 
-/** A push kind as a bounded analytics value. */
-const pushKindProperty = (kind: string) =>
-  (BUDDY_PUSH_KINDS as readonly string[]).includes(kind) ? kind : 'unknown'
-
 /**
  * A Buddies push arrived while the app is open: pull the event it announced,
- * and record whether that reached the tray (kind and outcome only).
+ * and report failures through diagnostics.
  */
-function syncAfterPush(push: { kind: string; seq?: number }) {
-  const kind = pushKindProperty(push.kind)
-  analytics.capture('buddies_push_received', { kind })
-  void buddiesEngine.sync().then(
-    () =>
-      analytics.capture('buddies_push_sync', {
-        kind,
-        outcome: 'synced',
-        ...(push.seq === undefined
-          ? {}
-          : { in_tray: buddyNotificationIdForSeq(push.seq) !== null }),
-      }),
-    (error: unknown) => {
-      logFailure(error)
-      analytics.capture('buddies_push_sync', {
-        kind,
-        outcome: 'failed',
-        reason: buddiesFailureReason(error),
-      })
-    }
-  )
+function syncAfterPush() {
+  void buddiesEngine.sync().catch(logFailure)
 }
 
 /**
@@ -249,7 +222,7 @@ export default function BuddiesRuntime() {
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
         const push = buddiesPushData(notification)
-        if (push) syncAfterPush(push)
+        if (push) syncAfterPush()
       }
     )
     return () => {

@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useUser from '@/hooks/useUser'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -210,7 +210,6 @@ function AccountMenu() {
 
   return (
     <PullDownMenu
-      analyticsSurface='account_menu'
       accessibilityLabel={
         hasCompletedProfileSetup
           ? i18n.t('accountMenu')
@@ -248,7 +247,6 @@ function AccountMenu() {
             title: i18n.t('accountMenu_support'),
             systemImage: 'heart',
             onPress: () => {
-              analytics.capture('paywall_opened', { source: 'account_menu' })
               navigation.navigate('Paywall', { source: 'account_menu' })
             },
           },

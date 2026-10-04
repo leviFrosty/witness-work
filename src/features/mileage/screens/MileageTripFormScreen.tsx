@@ -49,7 +49,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const { trips, vehicles, saveTrip } = useMileage()
   const { mileageEntryMode, set: setPreferences } = usePreferences()
   const format = useMileageFormatter()
-  const { requestDelete } = useTripActions('details')
+  const { requestDelete } = useTripActions()
   const existing = trips.find((t) => t.id === route.params?.tripId)
   const template =
     existing ?? trips.find((t) => t.id === route.params?.duplicateOf)
@@ -145,16 +145,14 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
     saveTrip(trip)
     if (mode !== mileageEntryMode) setPreferences({ mileageEntryMode: mode })
     Haptics.success().catch(() => {})
-    analytics.capture(
-      existing ? 'mileage_trip_updated' : 'mileage_trip_added',
-      {
+    if (!existing)
+      analytics.capture('mileage_trip_added', {
         entry_mode: mode,
         round_trip: !!trip.roundTrip,
         has_note: !!trip.note,
         logged_again: !existing && !!template,
         source: route.params?.source,
-      }
-    )
+      })
     navigation.goBack()
   }
 

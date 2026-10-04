@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   ChevronRight as ChevronRightIcon,
   ExternalLink as ExternalLinkIcon,
@@ -100,7 +99,6 @@ const SupportSection = () => {
           leftIconFill={theme.colors.supporter}
           label={i18n.t('becomeSupporter')}
           onPress={() => {
-            analytics.capture('paywall_opened', { source: 'settings_support' })
             navigation.navigate('Paywall', { source: 'settings_support' })
           }}
         >

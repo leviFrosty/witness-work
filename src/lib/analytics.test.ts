@@ -8,6 +8,14 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   debug: vi.fn(),
   construct: vi.fn(),
+  frequency: new Map<string, string>(),
+}))
+vi.mock('react-native-mmkv', () => ({
+  MMKV: class {
+    getString = (key: string) => mocks.frequency.get(key)
+    set = (key: string, value: string) => mocks.frequency.set(key, value)
+    delete = (key: string) => mocks.frequency.delete(key)
+  },
 }))
 vi.mock('expo-constants', () => ({ default: { expoConfig: mocks.config } }))
 vi.mock('posthog-react-native', () => ({
@@ -26,11 +34,13 @@ vi.mock('posthog-react-native', () => ({
 beforeEach(async () => {
   vi.resetModules()
   vi.resetAllMocks()
+  mocks.frequency.clear()
   const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
   setAnalyticsEventsAllowed(true)
   mocks.config.extra = {
     posthogProjectToken: 'test-token',
     posthogHost: 'https://example.com',
+    appVariant: 'production',
   }
 })
 
@@ -38,7 +48,7 @@ describe('analytics boundary', () => {
   it('is safe to call without analytics configuration', async () => {
     mocks.config.extra = {}
     const { analytics } = await import('./analytics')
-    analytics.capture('action')
+    analytics.capture('time_entry_created')
     analytics.screen('Home')
     analytics.reset()
     expect(mocks.construct).not.toHaveBeenCalled()
@@ -93,7 +103,7 @@ describe('analytics boundary', () => {
       }
     }
     const result = options.before_send({
-      event: 'Application Opened',
+      event: '$exception',
       properties: {
         count: 0,
       },
@@ -107,13 +117,13 @@ describe('analytics boundary', () => {
 
   it('omits undefined properties while preserving false, zero and null', async () => {
     const { analytics } = await import('./analytics')
-    analytics.capture('action', {
+    analytics.capture('time_entry_created', {
       missing: undefined,
       enabled: false,
       count: 0,
       value: null,
     })
-    expect(mocks.capture).toHaveBeenCalledWith('action', {
+    expect(mocks.capture).toHaveBeenCalledWith('time_entry_created', {
       enabled: false,
       count: 0,
       value: null,
@@ -154,7 +164,7 @@ describe('analytics boundary', () => {
       throw new Error('storage unavailable')
     })
     const { analytics } = await import('./analytics')
-    expect(() => analytics.capture('action')).not.toThrow()
+    expect(() => analytics.capture('time_entry_created')).not.toThrow()
   })
 
   it('isolates synchronous and asynchronous provider failures from user actions', async () => {
@@ -166,9 +176,21 @@ describe('analytics boundary', () => {
       throw new Error('reset failure')
     })
     const { analytics } = await import('./analytics')
-    expect(() => analytics.capture('action')).not.toThrow()
+    expect(() => analytics.capture('time_entry_created')).not.toThrow()
     expect(() => analytics.screen('Home')).not.toThrow()
     expect(() => analytics.reset()).not.toThrow()
     await Promise.resolve()
   })
+})
+
+it('does not consume screen reach while consent is off', async () => {
+  const { analytics } = await import('./analytics')
+  const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
+  mocks.getSessionId.mockReturnValue('session')
+  setAnalyticsEventsAllowed(false)
+  analytics.screen('Home')
+  expect(mocks.screen).not.toHaveBeenCalled()
+  setAnalyticsEventsAllowed(true)
+  analytics.screen('Home')
+  expect(mocks.screen).toHaveBeenCalledOnce()
 })

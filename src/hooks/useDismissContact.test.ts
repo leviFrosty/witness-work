@@ -71,10 +71,7 @@ describe('useDismissContact', () => {
     expect(mocks.cancel).not.toHaveBeenCalled()
     expect(mocks.schedule).not.toHaveBeenCalled()
     expect(mocks.dismissContact).toHaveBeenCalledWith('a', expect.any(Date))
-    expect(mocks.capture).toHaveBeenCalledWith('contact_dismissed', {
-      duration: oneWeek.key,
-      reminder_scheduled: true,
-    })
+    expect(mocks.capture).not.toHaveBeenCalled()
     expect(mocks.toast.show.mock.calls[0][1].message).toContain(
       'contactDismissedWithNotificationMessage'
     )
@@ -83,10 +80,7 @@ describe('useDismissContact', () => {
   it('says no reminder will come without notification permission', async () => {
     mocks.granted = false
     await useDismissContact()(contact('a'), oneWeek)
-    expect(mocks.capture).toHaveBeenCalledWith('contact_dismissed', {
-      duration: oneWeek.key,
-      reminder_scheduled: false,
-    })
+    expect(mocks.capture).not.toHaveBeenCalled()
     expect(mocks.toast.show.mock.calls[0][1].message).toContain(
       'contactDismissedMessage'
     )
@@ -105,7 +99,7 @@ describe('useDismissContacts', () => {
       { id: 'a', dismissedUntil: expect.any(Date) },
       { id: 'b', dismissedUntil: expect.any(Date) },
     ])
-    expect(mocks.capture).toHaveBeenCalledTimes(2)
+    expect(mocks.capture).not.toHaveBeenCalled()
     expect(mocks.toast.show).toHaveBeenCalledTimes(1)
     expect(mocks.toast.show.mock.calls[0][1].message).toContain('"count":2')
   })

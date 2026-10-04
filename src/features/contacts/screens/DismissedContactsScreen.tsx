@@ -33,7 +33,6 @@ const DismissedContactsScreen = ({ navigation }: Props) => {
   })
 
   const selection = useListSelection(
-    'dismissed_contacts',
     dismissedContacts.map((contact) => contact.id)
   )
   const selectedIds = new Set(selection.ids)

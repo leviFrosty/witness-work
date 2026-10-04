@@ -7,7 +7,7 @@ import {
 } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import { analytics } from '@/lib/analytics'
+
 import Header from '@/components/ui/layout/Header'
 import { InputLayoutProvider } from '@/components/ui/inputs/InputLayout'
 import SettingsContents from '@/features/settings/components/SettingsContents'
@@ -99,9 +99,6 @@ export default function SettingsSplitScreen() {
         <SettingsSplitLayout
           selectedDestination={state.routes[0]?.name}
           onNavigate={(destination) => {
-            analytics.capture('settings_split_destination_selected', {
-              destination,
-            })
             navigation.reset({ index: 0, routes: [{ name: destination }] })
           }}
         >

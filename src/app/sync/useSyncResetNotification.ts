@@ -2,7 +2,7 @@ import { Cloud as CloudIcon } from 'lucide-react-native'
 import { Platform } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import type { NotificationItem } from '@/types/notifications'
 
 /** Tells the user this device switched to another device's rebuilt data. */
@@ -21,13 +21,6 @@ export function useSyncResetNotification(): NotificationItem | null {
       : i18n.t('iCloudResetAdopted_descriptionUnknown'),
     onDismiss: () => {
       usePreferences.setState({ iCloudResetAdoptedNotice: null })
-      analytics.capture('icloud_sync_reset_adopted_dismissed', {
-        source: 'notifications_tray',
-      })
     },
-    onView: () =>
-      analytics.capture('icloud_sync_reset_adopted_viewed', {
-        source: 'notifications_tray',
-      }),
   }
 }

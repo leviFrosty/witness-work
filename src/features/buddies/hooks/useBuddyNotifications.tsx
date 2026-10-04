@@ -62,7 +62,6 @@ export function useBuddyTraySyncStatus() {
   const syncing = useBuddyTraySync((state) => state.syncing)
   const failedAt = useBuddyTraySync((state) => state.failedAt)
   const retry = () => {
-    analytics.capture('buddies_tray_sync_retry_tapped')
     void syncBuddyNotifications('retry')
   }
   if (!enabled || !started) return { state: 'idle' as const, retry }
@@ -151,13 +150,12 @@ export default function useBuddyNotifications(): NotificationItem[] {
       sticky: needsAnswer,
       onView: () => buddiesEngine.markNotificationRead(entry.id),
       onDismiss: () => buddiesEngine.dismissNotification(entry.id),
-      render: ({ unread, dismiss, closeThen, trackAction }) => (
+      render: ({ unread, dismiss, closeThen }) => (
         <BuddyNotificationRow
           entry={entry}
           unread={unread}
           // Answering is what clears a request; it can't be dismissed.
           onDismiss={needsAnswer ? undefined : dismiss}
-          onAction={trackAction}
           onPress={target ? () => closeThen(target) : undefined}
         />
       ),

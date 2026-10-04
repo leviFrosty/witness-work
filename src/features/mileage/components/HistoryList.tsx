@@ -15,18 +15,13 @@ type Props = {
   /** Ascending by `effectiveFrom`. */
   entries: Entry[]
   onDelete: (id: string) => void
-  analyticsSurface: string
 }
 
 /**
  * Past values, newest first. The oldest applies to every earlier trip, so it
  * reads "Initial". Long-press to delete any entry but the last one standing.
  */
-export default function HistoryList({
-  entries,
-  onDelete,
-  analyticsSurface,
-}: Props) {
+export default function HistoryList({ entries, onDelete }: Props) {
   const theme = useTheme()
   if (entries.length < 2) return null
   const newestFirst = [...entries].reverse()
@@ -48,7 +43,6 @@ export default function HistoryList({
           return (
             <ContextMenu
               key={entry.id}
-              analyticsSurface={analyticsSurface}
               actions={[
                 {
                   id: 'delete',

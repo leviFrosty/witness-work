@@ -54,7 +54,6 @@ export function useBackupImport({ source, entryPoint }: Options) {
         return false
       }
 
-      analytics.capture('import_file_selected', properties)
       stage = 'read_file'
       const contents = await FileSystem.readAsStringAsync(assets[0].uri)
 
@@ -83,7 +82,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
           migrateServiceReports((data.serviceReportStore as any).serviceReports)
       }
       stage = 'restore'
-      analytics.capture('import_commit_started', properties)
+
       restoreBackupFile(data)
       useTimeCache.getState().invalidateAllCache()
       analytics.capture('backup_imported', {

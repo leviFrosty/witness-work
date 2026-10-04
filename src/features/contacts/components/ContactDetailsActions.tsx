@@ -89,7 +89,6 @@ export function AddVisitMenu({
 
   return (
     <PullDownMenu
-      analyticsSurface='contact_add_visit'
       accessibilityLabel={i18n.t('add')}
       actions={[
         {
@@ -153,7 +152,6 @@ export default function ContactDetailsActions({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
       <PullDownMenu
-        analyticsSurface='contact_details_more'
         accessibilityLabel={i18n.t('moreActions')}
         triggerColor={color}
         triggerSize={22}

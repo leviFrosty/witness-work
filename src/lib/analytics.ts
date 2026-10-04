@@ -1,5 +1,8 @@
 import { posthogClient as client } from '@/lib/posthogClient'
 import { logger } from '@/lib/logger'
+import type { AnalyticsEventName } from '@/lib/analyticsEvents'
+import { analyticsEventsAllowed } from '@/lib/analyticsPolicy'
+import { resetAnalyticsFrequency } from '@/lib/analyticsFrequency'
 
 // Surveys use the SDK's renderer and response contract, separate from ordinary
 // structural analytics. Reuse this instance so responses have the same identity.
@@ -51,13 +54,14 @@ let screenSessionId: string | undefined
 const screensSentThisSession = new Set<string>()
 
 export const analytics = {
-  capture(event: string, properties?: AnalyticsProperties): void {
+  capture(event: AnalyticsEventName, properties?: AnalyticsProperties): void {
     safely(`capture "${event}"`, () =>
       client?.capture(event, definedProperties(properties))
     )
   },
   screen(name: string, properties?: AnalyticsProperties): void {
     safely(`screen "${name}"`, () => {
+      if (!analyticsEventsAllowed()) return
       const sessionId = client?.getSessionId()
       if (sessionId !== screenSessionId) {
         screenSessionId = sessionId
@@ -76,6 +80,9 @@ export const analytics = {
    */
   reset(): void {
     safely('reset', () => {
+      screenSessionId = undefined
+      screensSentThisSession.clear()
+      resetAnalyticsFrequency()
       logger.debug('[Analytics] Resetting identity')
       return client?.reset()
     })

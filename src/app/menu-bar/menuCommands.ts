@@ -3,7 +3,7 @@ import { CommonActions } from '@react-navigation/native'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { fetchUpdate } from '@/features/updates/lib/updates'
-import { analytics } from '@/lib/analytics'
+
 import { openURL } from '@/lib/links'
 import { email } from '@/constants/contactInformation'
 import type { SystemMenuGroup } from '../../../modules/system-menu'
@@ -117,20 +117,15 @@ export async function runMenuCommand(
       )
       break
     case 'help_center':
-      analytics.capture('help_center_opened', { source: 'menu_bar' })
       navigationRef.navigate('FAQ')
       break
     case 'whats_new':
       navigationRef.navigate('Whats New')
       break
     case 'contact_support':
-      analytics.capture('help_center_resource_clicked', {
-        resource: 'email',
-        source: 'menu_bar',
-      })
       await openURL(`mailto:${email}`)
       break
     case 'check_update':
-      return fetchUpdate(() => navigationRef.navigate('Update'), 'menu_bar')
+      return fetchUpdate(() => navigationRef.navigate('Update'))
   }
 }

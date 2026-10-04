@@ -39,12 +39,8 @@ export default function useMileageExport() {
       }
       if (method === 'share') {
         const result = await Share.share({ message: buildReportText(input) })
-        analytics.capture(
-          result.action === Share.sharedAction
-            ? 'mileage_report_exported'
-            : 'mileage_report_export_dismissed',
-          properties
-        )
+        if (result.action === Share.sharedAction)
+          analytics.capture('mileage_report_exported', properties)
         return
       }
       if (!(await Sharing.isAvailableAsync())) {

@@ -98,7 +98,6 @@ export default function BuddyRow({
             : i18n.t('buddies_sharingPlans')
       }
       onPress={awaiting ? undefined : open}
-      analyticsSurface='buddy_row'
       actions={awaiting ? withdraw : actions}
       accessory={
         awaiting ? undefined : (
@@ -115,7 +114,6 @@ export default function BuddyRow({
         awaiting ? (
           <PullDownMenu
             actions={withdraw}
-            analyticsSurface='buddy_row'
             accessibilityLabel={i18n.t('moreActionsFor', { name: buddy.name })}
             triggerSize={16}
           />

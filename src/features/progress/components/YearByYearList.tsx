@@ -159,7 +159,6 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
             return (
               <ContextMenu
                 key={endYear}
-                analyticsSurface='progress_year_row'
                 onPress={() => onYearPress(endYear)}
                 accessibilityLabel={`${label}, ${totalDisplay}`}
                 preview={<YearSummaryPreview endYear={endYear} />}
@@ -188,8 +187,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                       title: i18n.t('deleteThisYearsTime'),
                       systemImage: 'trash',
                       destructive: true,
-                      onPress: () =>
-                        confirmDeleteYear({ endYear, source: 'year_row_menu' }),
+                      onPress: () => confirmDeleteYear({ endYear }),
                     },
                   ],
                 ]}

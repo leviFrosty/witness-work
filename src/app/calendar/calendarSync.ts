@@ -115,16 +115,11 @@ export async function selectPrimary(primary: string) {
   applyState(await calendarBridge().selectPrimary(id, name, primary))
   // Choosing this device is consent to publish from it again.
   if (primary === id) useCalendarSync.setState({ optedOut: false })
-  analytics.capture('calendar_primary_selected', {
-    this_device: primary === id,
-    pending: !!useCalendarPublishing.getState().state?.pending,
-  })
 }
 
 export async function removeDevice(target: string) {
   const { id, name } = identity()
   applyState(await calendarBridge().removeDevice(id, name, target))
-  analytics.capture('calendar_device_removed')
 }
 
 /** Shared by all devices so switching primary never changes what's published. */
@@ -134,7 +129,6 @@ export async function setSharedOptions(options: SharedCalendarOptions) {
   useCalendarSync.setState(options)
   try {
     applyState(await calendarBridge().configure(id, name, options))
-    analytics.capture('calendar_options_changed', options)
   } catch (error) {
     useCalendarSync.setState({
       includeDetails: previous.includeDetails,
@@ -369,7 +363,7 @@ async function publishCurrentCalendar({
     includeDetails: state.includeDetails ?? false,
     title: i18n.t('calendarFollowUpTitle'),
   })
-  const published = await calendarBridge().publish(
+  await calendarBridge().publish(
     id,
     name,
     destination.id,
@@ -379,10 +373,4 @@ async function publishCurrentCalendar({
   )
   useCalendarSync.setState({ lastSyncedAt: Date.now() })
   useCalendarPublishing.setState({ error: null })
-  analytics.capture('calendar_published', {
-    entries: snapshot.entries.length,
-    removals: snapshot.removed.length,
-    published,
-    repair,
-  })
 }

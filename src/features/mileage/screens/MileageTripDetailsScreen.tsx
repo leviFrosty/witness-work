@@ -50,7 +50,7 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const { trips, vehicles, fuels } = useMileage()
   const format = useMileageFormatter()
   const index = useMileageIndex()
-  const actions = useTripActions('details')
+  const actions = useTripActions()
   const trip = trips.find((t) => t.id === route.params.tripId)
 
   // Deleted here, from the edit form, or on another device.

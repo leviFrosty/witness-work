@@ -157,7 +157,6 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
                       return (
                         <ContextMenu
                           key={planIndex}
-                          analyticsSurface='buddy_upcoming_plan'
                           onPress={same}
                           accessibilityLabel={i18n.t(
                             'buddies_planSameTimeA11y',

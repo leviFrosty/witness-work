@@ -151,16 +151,14 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
       })
     }
 
-    analytics.capture(
-      existing ? 'mileage_vehicle_updated' : 'mileage_vehicle_added',
-      {
+    if (!existing)
+      analytics.capture('mileage_vehicle_added', {
         has_fuel: !!fuelId,
         has_fuel_economy: milesPerGallon !== undefined,
         created_fuel: creatingFuel,
         setup_change: askHowToApply ? changeMode : undefined,
         source: route.params?.source,
-      }
-    )
+      })
     if (route.params?.thenLogTrip)
       navigation.replace('MileageTripForm', { source: route.params.source })
     else navigation.goBack()
@@ -173,9 +171,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
   const setArchived = (archived: boolean) => {
     if (!existing) return
     saveVehicle({ ...existing, archived: archived || undefined })
-    analytics.capture(
-      archived ? 'mileage_vehicle_archived' : 'mileage_vehicle_unarchived'
-    )
+
     toast.show(
       i18n.t(archived ? 'mileage.carArchived' : 'mileage.carUnarchived'),
       { native: true }
@@ -186,7 +182,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
   const remove = () => {
     if (!existing) return
     deleteVehicle(existing.id)
-    analytics.capture('mileage_vehicle_deleted', { trip_count: tripCount })
+
     navigation.goBack()
   }
 
@@ -316,7 +312,6 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
         )}
 
         <HistoryList
-          analyticsSurface='mileage_car_setup_history'
           entries={history.map((entry) => ({
             id: entry.id,
             effectiveFrom: entry.effectiveFrom,

@@ -27,7 +27,7 @@ export default function TripRow({ trip, vehicleName }: Props) {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const navigation = useNavigation<RootStackNavigation>()
-  const actions = useTripActions('row')
+  const actions = useTripActions()
   const format = useMileageFormatter()
   const cost = estimateTrip(trip, useMileageIndex()).cost
   const subtitle = [
@@ -52,7 +52,6 @@ export default function TripRow({ trip, vehicleName }: Props) {
       }}
     >
       <ContextMenu
-        analyticsSurface='mileage_trip_row'
         actions={actions.menu(trip)}
         onPress={() =>
           navigation.navigate('MileageTripDetails', { tripId: trip.id })

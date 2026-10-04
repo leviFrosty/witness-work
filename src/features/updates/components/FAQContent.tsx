@@ -22,19 +22,13 @@ import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import { FAQEntry } from '@/features/updates/constants/faqs'
-import { analytics } from '@/lib/analytics'
-
-const openHelpResource = (resource: string, url: string) => {
-  analytics.capture('help_center_resource_clicked', { resource })
-  openURL(url)
-}
 
 const ReportLinks = () => {
   const theme = useTheme()
   return (
     <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
       <Button
-        onPress={() => openHelpResource('bug_report', links.bugReport)}
+        onPress={() => openURL(links.bugReport)}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -53,9 +47,7 @@ const ReportLinks = () => {
         </Text>
       </Button>
       <Button
-        onPress={() =>
-          openHelpResource('feature_request', links.featureRequest)
-        }
+        onPress={() => openURL(links.featureRequest)}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -95,14 +87,6 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
   return (
     <Accordion
       style={{ flexShrink: 1 }}
-      onExpand={(wasExpanded) => {
-        if (!wasExpanded) {
-          analytics.capture('help_center_question_opened', {
-            question_id: entry.id,
-            category: entry.category,
-          })
-        }
-      }}
       header={
         <Text
           style={{
@@ -117,7 +101,6 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
     >
       <View style={{ gap: 12 }}>
         <ContextMenu
-          analyticsSurface='faq_answer'
           actions={[
             {
               id: 'copy_answer',
@@ -283,7 +266,7 @@ export const FAQSupport = ({
                 key={resource}
                 noTransform
                 accessibilityRole='link'
-                onPress={() => openHelpResource(resource, url)}
+                onPress={() => openURL(url)}
                 style={{ minHeight: 44, justifyContent: 'center' }}
               >
                 <Text
@@ -306,7 +289,7 @@ export const FAQSupport = ({
           >
             {i18n.t('faq_emailLevi')}{' '}
             <Text
-              onPress={() => openHelpResource('email', `mailto:${email}`)}
+              onPress={() => openURL(`mailto:${email}`)}
               style={{
                 fontSize: theme.fontSize('xs'),
                 color: theme.colors.accent,

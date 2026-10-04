@@ -7,7 +7,9 @@ import {
   type PostHogQueueItem,
   type RetriableOptions,
 } from '@posthog/core'
-import { analyticsEventsAllowed, isAnalyticsEvent } from '@/lib/analyticsPolicy'
+import { analyticsEventAllowed, isAnalyticsEvent } from '@/lib/analyticsPolicy'
+import { resetAnalyticsFrequency } from '@/lib/analyticsFrequency'
+import { scrubAnalyticsEventProperties } from '@/lib/shareLinkScrub'
 
 const surveyHistory = [P.SurveysSeen, P.SurveyLastSeenDate]
 const appVersion = [P.InstalledAppBuild, P.InstalledAppVersion]
@@ -23,6 +25,7 @@ export class AnonymousPostHog extends PostHog {
     // initialization. reset() here would defer until after those requests.
     // Anonymous clients never persist DistinctId, so clearing it is one-time.
     if (this.getPersistedProperty(P.DistinctId)) {
+      resetAnalyticsFrequency()
       const keep = [
         ...surveyHistory,
         ...appVersion,
@@ -38,7 +41,15 @@ export class AnonymousPostHog extends PostHog {
       // This also discards old queues: even diagnostic/survey payloads can
       // contain the old account ID. Never replay them into anonymous analytics.
     }
-    if (!analyticsEventsAllowed()) this.discardPendingUsage()
+    const queue = this.getPersistedProperty<PostHogQueueItem[]>(P.Queue) ?? []
+    this.setPersistedProperty(
+      P.Queue,
+      queue.filter(
+        (item) =>
+          typeof item.message?.event === 'string' &&
+          analyticsEventAllowed(item.message.event, item.message.properties)
+      )
+    )
     super.setupBootstrap(options)
   }
 
@@ -73,14 +84,25 @@ export class AnonymousPostHog extends PostHog {
     await retriable(
       async () => {
         const allowed = messages.filter(
-          (message) =>
-            (analyticsEventsAllowed() && revision === this.consentRevision) ||
-            (typeof message?.event === 'string' &&
-              !isAnalyticsEvent(message.event))
+          (message): message is PostHogEventProperties & { event: string } =>
+            typeof message?.event === 'string' &&
+            analyticsEventAllowed(message.event, message.properties) &&
+            (!isAnalyticsEvent(message.event) ||
+              revision === this.consentRevision)
         )
         if (allowed.length) {
           await super.sendBatch(
-            allowed,
+            allowed.map((message) => ({
+              ...message,
+              properties: scrubAnalyticsEventProperties(
+                message.event,
+                message.properties &&
+                  typeof message.properties === 'object' &&
+                  !Array.isArray(message.properties)
+                  ? message.properties
+                  : {}
+              ),
+            })),
             { ...retryOptions, retryCount: 0 },
             route
           )

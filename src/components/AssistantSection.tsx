@@ -280,7 +280,6 @@ const AssistantSection = ({
   const menuArea = (gap: number, children: ReactNode) =>
     standalone ? (
       <ContextMenu
-        analyticsSurface='schedule_assistant'
         actions={[
           {
             id: 'assistant_settings',

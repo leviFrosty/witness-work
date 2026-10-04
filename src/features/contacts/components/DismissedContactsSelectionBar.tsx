@@ -39,7 +39,6 @@ export default function DismissedContactsSelectionBar({
   const none = count === 0
 
   const undismissSelected = () => {
-    selection.track('undismiss', count)
     selection.finish()
     void undismiss(contacts)
   }
@@ -63,7 +62,6 @@ export default function DismissedContactsSelectionBar({
           message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
           native: true,
         })
-        selection.track(dataProtectionMode ? 'delete' : 'archive', count)
         selection.finish()
       },
     })

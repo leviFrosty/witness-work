@@ -15,7 +15,6 @@ import {
   isSubmenu,
   menuAccessibilityProps,
   menuGroups,
-  runMenuAction,
 } from '@/components/ui/menuEntries'
 import type {
   ContextMenuAction,
@@ -30,7 +29,6 @@ import type {
  */
 export default function ContextMenu({
   actions,
-  analyticsSurface,
   children,
   onPress,
   accessibilityLabel,
@@ -58,9 +56,9 @@ export default function ContextMenu({
     setSubmenu(null)
   }
 
-  const select = (action: ContextMenuAction, key: string) => {
+  const select = (action: ContextMenuAction) => {
     close()
-    runMenuAction(action, key, analyticsSurface, 'long_press')
+    action.onPress()
   }
 
   if (!groups.length) {
@@ -80,7 +78,7 @@ export default function ContextMenu({
 
   const a11y =
     accessible && !disabled
-      ? menuAccessibilityProps(groups, analyticsSurface)
+      ? menuAccessibilityProps(groups)
       : { accessible: false }
 
   const item = (
@@ -141,7 +139,7 @@ export default function ContextMenu({
                   item(
                     action.id,
                     action.title,
-                    () => select(action, `${submenu.id}.${action.id}`),
+                    () => select(action),
                     action.destructive
                   )
                 )}
@@ -160,7 +158,7 @@ export default function ContextMenu({
                       : item(
                           entry.id,
                           entry.title,
-                          () => select(entry, entry.id),
+                          () => select(entry),
                           entry.destructive
                         )
                   )}

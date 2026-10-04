@@ -345,6 +345,9 @@ arrive while the tray is open. Only items shown on screen are marked read when
 the tray closes; `unread_count` on `notifications_tray_opened` is still what was
 unread as it opened.
 
+On iOS the app icon badge shows the tray's unread count. It sends no events of
+its own, since updating it isn't something the User does.
+
 Opening the tray checks Buddies for new activity (while Buddies is in use), and
 checks again every 90 seconds while it stays open. A failed check shows a slim
 "Try Again" notice: `buddies_tray_sync_failed` records failures of the opening

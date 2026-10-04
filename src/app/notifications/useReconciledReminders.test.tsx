@@ -44,6 +44,11 @@ vi.mock('@/stores/preferences', async () => ({
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET: { amount: 30, unit: 'minutes' },
   DEFAULT_PLAN_NOTIFICATION_OFFSET: { amount: 30, unit: 'minutes' },
 }))
+vi.mock('@/features/notifications/stores/notificationsTray', async () => ({
+  useNotificationsTray: (await import('zustand')).create(() => ({
+    unread: null as number | null,
+  })),
+}))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
@@ -75,6 +80,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useReconciledReminders } from './useReconciledReminders'
 const Harness = () => {
   useReconciledReminders(true)
@@ -91,6 +97,7 @@ beforeEach(() => {
   useConversations.setState({ conversations: [] })
   useServiceReport.setState({ dayPlans: [] })
   usePreferences.setState({ dataProtectionMode: false })
+  useNotificationsTray.setState({ unread: null })
 })
 afterEach(() => {
   act(() => renderer?.unmount())
@@ -502,4 +509,68 @@ it("drops a Plan's reminder once another device's deletion merges in", async () 
 
   expect(merged.dayPlans).toEqual([])
   expect(runtime.scheduled).toEqual([])
+})
+
+const badges = () =>
+  vi
+    .mocked(Notifications.scheduleNotificationAsync)
+    .mock.calls.map(([request]) => [
+      request.identifier,
+      (request.content as { badge?: number }).badge,
+    ])
+
+const followUps = (ids: string[]): Visit[] =>
+  ids.map((id, index) => ({
+    id,
+    date: new Date(),
+    isBibleStudy: false,
+    contact: { id: 'c' },
+    followUp: {
+      date: new Date(Date.now() + (index + 1) * 24 * 60 * 60_000),
+      notifyMe: true,
+    },
+  }))
+
+it('badges each iOS reminder with the unread count it will leave', async () => {
+  runtime.platform = 'ios'
+  useConversations.setState({ conversations: followUps(['first', 'second']) })
+  useNotificationsTray.setState({ unread: 2 })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(badges()).toEqual([
+    ['witness-work-visit-first', 3],
+    ['witness-work-visit-second', 4],
+  ])
+  vi.mocked(Notifications.scheduleNotificationAsync).mockClear()
+  await act(async () => {
+    useNotificationsTray.setState({ unread: 0 })
+  })
+  expect(badges()).toEqual([
+    ['witness-work-visit-first', 1],
+    ['witness-work-visit-second', 2],
+  ])
+})
+
+it('leaves the badge alone until the bell has counted', async () => {
+  runtime.platform = 'ios'
+  useConversations.setState({ conversations: followUps(['one']) })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(badges()).toEqual([['witness-work-visit-one', undefined]])
+})
+
+it('never badges Android reminders or reschedules for the unread count', async () => {
+  runtime.platform = 'android'
+  useConversations.setState({ conversations: followUps(['one']) })
+  useNotificationsTray.setState({ unread: 2 })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(badges()).toEqual([['witness-work-visit-one', undefined]])
+  await act(async () => {
+    useNotificationsTray.setState({ unread: 0 })
+  })
+  expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledOnce()
 })

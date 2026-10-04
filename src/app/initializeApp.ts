@@ -18,6 +18,7 @@ export function initializeApp() {
       // settings decide. Android drops the banner of a silent alert, so
       // `SilentForegroundAlerts` shows one in the app.
       shouldPlaySound: isAudioEnabled(),
+      // While the app is open, the bell's unread count sets the badge.
       shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,

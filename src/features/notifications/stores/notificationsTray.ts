@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { MmkvStorage } from '@/stores/mmkv'
+import { setAppIconBadge } from '@/features/notifications/lib/appIconBadge'
 import {
   pruned,
   stamped,
@@ -12,6 +13,11 @@ type NotificationsTrayState = TrayBook & {
   openRequested: boolean
   /** The tray is open on screen right now (not persisted). */
   open: boolean
+  /**
+   * Unread items as the Home bell last counted them, shown on the app icon;
+   * null until it has counted this launch (not persisted).
+   */
+  unread: number | null
 }
 
 /**
@@ -26,6 +32,7 @@ export const useNotificationsTray = create<NotificationsTrayState>()(
       seen: {},
       openRequested: false,
       open: false,
+      unread: null,
     }),
     {
       name: 'notificationsTray',
@@ -66,6 +73,13 @@ export function dismissNotifications(ids: string[], now = Date.now()) {
   const { dismissed } = useNotificationsTray.getState()
   const next = stamped(dismissed, ids, now)
   if (next !== dismissed) useNotificationsTray.setState({ dismissed: next })
+}
+
+/** Records the bell's unread count and shows it on the app icon. */
+export function setUnreadCount(unread: number) {
+  if (useNotificationsTray.getState().unread === unread) return
+  useNotificationsTray.setState({ unread })
+  setAppIconBadge(unread)
 }
 
 /** Asks the Home bell to open, e.g. after tapping a push. */

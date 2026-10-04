@@ -231,7 +231,6 @@ export const HomeScreen = () => {
             }
           />
           {!homeChecklistDismissed && <HomeChecklist />}
-          <MileagePromptCard />
           {effectiveOrder.map((key: HomeScreenElementKey) => {
             const section = (() => {
               switch (key) {
@@ -298,6 +297,9 @@ export const HomeScreen = () => {
                   if (!homeScreenElements.serviceReport) return null
                   return <ServiceReportSection key={key} />
                 case 'mileage':
+                  // Until answered, the opt-in prompt holds Mileage's slot.
+                  if (mileageTrackingEnabled === undefined)
+                    return <MileagePromptCard key={key} />
                   if (
                     mileageTrackingEnabled !== true ||
                     homeScreenElements.mileage === false

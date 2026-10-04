@@ -3081,7 +3081,7 @@
     "optional": "Optional",
     "next": "Next",
     "estimatedCost": "Est. Fuel Cost",
-    "estimatedCost_info": "Distance ÷ fuel economy × fuel price, using the values in effect on each trip's date. It's an estimate. Any reimbursement is calculated by whoever reimburses you.",
+    "estimatedCost_info": "Distance ÷ fuel economy × fuel price",
     "costIncomplete": "Some trips aren't included in the estimated cost because their car has no fuel price or fuel economy.",
     "costHint": "Add a fuel price and fuel economy to estimate cost.",
     "byCar": "By car",

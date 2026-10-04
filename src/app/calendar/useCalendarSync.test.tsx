@@ -64,6 +64,14 @@ vi.mock('@/stores/conversationStore', async () => ({
     deletedConversations: [] as VisitTombstone[],
   })),
 }))
+vi.mock('@/stores/preferences', async () => ({
+  usePreferences: (await import('zustand')).create(() => ({
+    returnVisitNotificationOffset: null as {
+      amount: number
+      unit: string
+    } | null,
+  })),
+}))
 vi.mock('@/stores/calendarSync', async () => {
   const { create } = await import('zustand')
   return {
@@ -86,6 +94,7 @@ vi.mock('@/stores/calendarSync', async () => {
 
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import {
   useCalendarPublishing,
   useCalendarSync as useCalendarSettings,
@@ -263,7 +272,7 @@ describe('foreground calendar maintenance', () => {
     expect(publishing.publish).toHaveBeenLastCalledWith({ pull: false })
   })
 
-  it('ignores edits to private notes and reminder-only fields', async () => {
+  it('ignores edits to private notes and topics', async () => {
     await mount()
     await advance(1500)
     publishing.publish.mockClear()
@@ -286,7 +295,6 @@ describe('foreground calendar maintenance', () => {
             followUp: {
               ...visit().followUp!,
               topic: 'Private topic',
-              notifyMe: true,
             },
           },
         ],
@@ -294,6 +302,27 @@ describe('foreground calendar maintenance', () => {
     })
     await advance(60_000)
     expect(publishing.publish).not.toHaveBeenCalled()
+  })
+  it('republishes when a reminder or the default reminder time changes', async () => {
+    await mount()
+    await advance(1500)
+    publishing.publish.mockClear()
+    await act(async () => {
+      useConversations.setState({
+        conversations: [
+          { ...visit(), followUp: { ...visit().followUp!, notifyMe: true } },
+        ],
+      })
+    })
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      usePreferences.setState({
+        returnVisitNotificationOffset: { amount: 1, unit: 'days' },
+      })
+    })
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledTimes(2)
   })
 
   it('cancels retries and removes subscriptions after unmount', async () => {

@@ -25,6 +25,8 @@ const input = () => ({
   deletedContactIds: [] as string[],
   publishedKeys: ['visit-1'],
   includeDetails: false,
+  defaultInclude: false,
+  alertMinutes: new Map<string, number>(),
   title: 'Follow-up',
 })
 
@@ -92,33 +94,62 @@ describe('calendar projection', () => {
         removed: ['visit-1'],
       })
   })
-  it('does not infer deletion from missing data or a legacy inclusion field', () => {
+  it('does not infer deletion from missing data', () => {
     expect(buildCalendarSnapshot({ ...input(), contacts: [] })).toEqual({
       title: 'Follow-up',
       deletedContactIds: [],
       entries: [],
       removed: [],
     })
+  })
+  it('follow-ups without their own choice follow the shared default', () => {
+    const unset = {
+      ...input(),
+      visits: [visit({ calendarIncluded: undefined })],
+    }
+    expect(
+      buildCalendarSnapshot({ ...unset, defaultInclude: true }).entries
+    ).toHaveLength(1)
+    // Turning the default off removes events it added.
+    expect(buildCalendarSnapshot(unset)).toMatchObject({
+      entries: [],
+      removed: ['visit-1'],
+    })
+    // An explicit choice wins over the default either way.
     expect(
       buildCalendarSnapshot({
         ...input(),
-        visits: [visit({ calendarIncluded: undefined })],
-      })
-    ).toEqual({
-      title: 'Follow-up',
-      deletedContactIds: [],
-      entries: [],
-      removed: [],
-    })
+        defaultInclude: true,
+        visits: [visit({ calendarIncluded: false })],
+      }).entries
+    ).toEqual([])
   })
-  it('requires boolean consent even when an old payload carries malformed inclusion', () => {
+  it('treats a malformed inclusion from an old payload as unset', () => {
     const malformed = visit()
     Object.assign(malformed.followUp!, { calendarIncluded: 'false' })
     expect(
       buildCalendarSnapshot({ ...input(), visits: [malformed] }).entries
     ).toEqual([])
+    expect(
+      buildCalendarSnapshot({
+        ...input(),
+        defaultInclude: true,
+        visits: [malformed],
+      }).entries
+    ).toHaveLength(1)
   })
 
+  it('carries the follow-up reminder as the event alert, and none without one', () => {
+    expect(buildCalendarSnapshot(input()).entries[0]).not.toHaveProperty(
+      'alertMinutes'
+    )
+    expect(
+      buildCalendarSnapshot({
+        ...input(),
+        alertMinutes: new Map([['visit-1', 0]]),
+      }).entries[0].alertMinutes
+    ).toBe(0)
+  })
   it('includes contact details only when selected, never notes or topics', () => {
     const result = buildCalendarSnapshot({
       ...input(),

@@ -8,7 +8,11 @@ import {
 import { getOrCreate } from '../../../modules/keychain-uuid'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
-import { usePreferences } from '@/stores/preferences'
+import {
+  DEFAULT_PLAN_NOTIFICATION_OFFSET,
+  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+  usePreferences,
+} from '@/stores/preferences'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -16,6 +20,7 @@ import { buildCalendarSnapshot } from '@/app/calendar/snapshot'
 import i18n from '@/lib/locales'
 import { addressToString } from '@/lib/address'
 import { analytics } from '@/lib/analytics'
+import { reminderOccurrences } from '@/lib/reminderSchedule'
 
 /** IOS 16+ reports a generic "iPhone" without a special entitlement. */
 const GENERIC_DEVICE_NAMES = ['iPhone', 'iPad', 'iPod touch']
@@ -98,9 +103,9 @@ function applyState(state: PublishingState) {
     sharedCalendar: title
       ? { title, account: state.calendarAccount ?? '' }
       : null,
-    // Older records have no shared consent: use the conservative defaults.
+    // Absent until first set: details stay private, follow-ups are included.
     includeDetails: state.includeDetails ?? false,
-    defaultInclude: state.defaultInclude ?? false,
+    defaultInclude: state.defaultInclude ?? true,
   })
   return state
 }
@@ -220,6 +225,37 @@ export async function createCalendar(sourceId: string) {
     throw error
   }
   await connectCalendar(destination, { fresh: true })
+}
+
+/**
+ * One-tap setup for onboarding. Reuses the shared or an existing WitnessWork
+ * calendar, otherwise creates one, preferring iCloud.
+ */
+export async function quickConnectCalendar(): Promise<
+  'connected' | 'elsewhere'
+> {
+  const { id } = identity()
+  const state = await refreshPublishing()
+  if (state.primary && state.primary !== id && state.calendarTitle)
+    return 'elsewhere'
+  const calendars = await calendarDestinations()
+  const title = state.calendarTitle ?? i18n.t('calendarName')
+  const existing = calendars.filter(
+    (calendar) =>
+      calendar.title === title &&
+      (!state.calendarAccount || calendar.account === state.calendarAccount)
+  )
+  if (existing.length > 1) throw new Error('CALENDAR_CHOOSE_EXISTING')
+  if (existing.length === 1) {
+    await connectCalendar(existing[0])
+  } else {
+    const sources = await calendarBridge().sources()
+    const source =
+      sources.find((candidate) => candidate.title === 'iCloud') ?? sources[0]
+    if (!source) throw new Error('CALENDAR_CREATE_FAILED')
+    await createCalendar(source.id)
+  }
+  return 'connected'
 }
 
 /** Resolve a shared destination without changing its manifest or prompting. */
@@ -357,6 +393,25 @@ async function publishCurrentCalendar({
     await iCloudSync.pullBeforeCalendarPublish()
   const contacts = useContacts.getState()
   const visits = useConversations.getState()
+  const preferences = usePreferences.getState()
+  // The same reminders the app schedules, so calendar alerts always match.
+  const alertMinutes = new Map<string, number>()
+  for (const reminder of reminderOccurrences({
+    contacts: contacts.contacts,
+    visits: visits.conversations,
+    plans: [],
+    visitOffset: {
+      ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+      ...preferences.returnVisitNotificationOffset,
+    },
+    planOffset: DEFAULT_PLAN_NOTIFICATION_OFFSET,
+  })) {
+    const minutes = Math.round(
+      (reminder.anchor.getTime() - reminder.date.getTime()) / 60_000
+    )
+    if (reminder.kind === 'visit' && minutes >= 0)
+      alertMinutes.set(reminder.targetId, minutes)
+  }
   const snapshot = buildCalendarSnapshot({
     visits: visits.conversations,
     deletedVisits: visits.deletedConversations,
@@ -367,6 +422,8 @@ async function publishCurrentCalendar({
     deletedContactIds: contacts.deletedContacts.map((contact) => contact.id),
     publishedKeys: state.publishedKeys,
     includeDetails: state.includeDetails ?? false,
+    defaultInclude: state.defaultInclude ?? true,
+    alertMinutes,
     title: i18n.t('calendarFollowUpTitle'),
   })
   const published = await calendarBridge().publish(
@@ -377,7 +434,13 @@ async function publishCurrentCalendar({
     repair,
     state.configurationToken ?? state.namespace
   )
-  useCalendarSync.setState({ lastSyncedAt: Date.now() })
+  const now = Date.now()
+  // Past follow-ups are never backfilled, so only upcoming ones are counted.
+  useCalendarSync.setState({
+    lastSyncedAt: now,
+    upcomingCount: snapshot.entries.filter((entry) => entry.start >= now)
+      .length,
+  })
   useCalendarPublishing.setState({ error: null })
   analytics.capture('calendar_published', {
     entries: snapshot.entries.length,

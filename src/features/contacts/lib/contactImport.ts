@@ -102,14 +102,15 @@ export const validateContactImport = (data: unknown): ImportResult => {
       ...possibleImport,
       contact: sanitizedContact,
     }
-    // Contact sharing does not transfer consent to publish appointments.
-    // Keep iCloud restore separate: that is the same user's own domain data.
+    // The sender's calendar choice doesn't transfer; the receiver's own Calendar
+    // Sync default applies. Keep iCloud restore separate: that is the same
+    // user's own domain data.
     if (Array.isArray(possibleImport.conversations)) {
       sanitized.conversations = possibleImport.conversations.map(
         (visit: Visit) => ({
           ...visit,
           ...(visit.followUp
-            ? { followUp: { ...visit.followUp, calendarIncluded: false } }
+            ? { followUp: { ...visit.followUp, calendarIncluded: undefined } }
             : {}),
         })
       )

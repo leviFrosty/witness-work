@@ -26,10 +26,14 @@ export const useCalendarSync = create(
       defaultInclude: false,
       includeDetails: false,
       lastSyncedAt: null as number | null,
+      /** Upcoming follow-ups in the calendar after the last update. */
+      upcomingCount: 0,
       /** The calendar connected on the primary device, if any. */
       sharedCalendar: null as { title: string; account: string } | null,
       /** Disconnected here: don't reconnect automatically after a handoff. */
       optedOut: false,
+      /** Answered the setup invitation (onboarding step or tray item). */
+      promptAnswered: false,
     }),
     {
       name: 'calendar-sync',

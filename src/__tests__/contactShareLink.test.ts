@@ -67,9 +67,9 @@ describe('contactShareLink round-trip', () => {
       contact: makeContact(),
       conversations: [conversation],
     })
-    expect(imported.data?.conversations?.[0].followUp?.calendarIncluded).toBe(
-      false
-    )
+    expect(
+      imported.data?.conversations?.[0].followUp?.calendarIncluded
+    ).toBeUndefined()
   })
   it('encodes a contact into a URL that parses back to the same contact', () => {
     const contact = makeContact({ phone: '+1 555 123 4567' })

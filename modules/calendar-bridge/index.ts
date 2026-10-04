@@ -36,6 +36,8 @@ export type CalendarEntry = {
   end: number
   url: string
   location: string
+  /** The follow-up's in-app reminder, in minutes before `start`. */
+  alertMinutes?: number
 }
 export type CalendarSnapshot = {
   /** Generic localized title, also used to redact events missing from app data. */
@@ -109,6 +111,9 @@ interface CalendarBridgeNative {
 
 const native =
   requireOptionalNativeModule<CalendarBridgeNative>('CalendarBridge')
+
+/** False on binaries built before Calendar Sync; hide entry points there. */
+export const calendarBridgeAvailable = !!native
 
 /** Fail closed on older binaries; every native mutation checks cloud ownership. */
 export function calendarBridge(): CalendarBridgeNative {

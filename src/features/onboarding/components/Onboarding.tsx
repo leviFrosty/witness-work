@@ -7,10 +7,12 @@ import {
   useRef,
   useState,
 } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
+import { calendarBridgeAvailable } from '../../../../modules/calendar-bridge'
 import StepOne from '@/features/onboarding/components/steps/One'
 import StepTwo from '@/features/onboarding/components/steps/Two'
 import StepThree from '@/features/onboarding/components/steps/Three'
+import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
 import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
@@ -51,6 +53,7 @@ type StepId =
   | 'pioneerDate'
   | 'yourPlanPreview'
   | 'notifications'
+  | 'calendarSync'
   | 'defaultNav'
   | 'defaultExportMethod'
   | 'onboardingBackfill'
@@ -114,6 +117,13 @@ const allSteps: StepDef[] = [
     countsTowardProgress: true,
   },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
+  {
+    id: 'calendarSync',
+    Component: CalendarSync,
+    countsTowardProgress: true,
+    // Calendar Sync is iOS-only and needs a binary with the native module.
+    showIf: () => Platform.OS === 'ios' && calendarBridgeAvailable,
+  },
   { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
   {
     id: 'defaultExportMethod',

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, Linking, View } from 'react-native'
+import { useToastController } from '@tamagui/toast'
 import {
   calendarBridge,
   type CalendarDestination,
@@ -30,6 +31,7 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 
 export default function CalendarSettings() {
   const theme = useTheme()
+  const toast = useToastController()
   const settings = useCalendarSync()
   const { state, deviceId, working, error } = useCalendarPublishing()
   const [destinations, setDestinations] = useState<CalendarDestination[]>([])
@@ -117,6 +119,16 @@ export default function CalendarSettings() {
       throw new Error('CALENDAR_SHARED_NOT_FOUND')
     })
   }
+  const syncNow = () =>
+    run(async () => {
+      await publishCalendar()
+      toast.show(i18n.t('calendarSynced'), {
+        message: i18n.t('calendarUpcomingCount' as TranslationKey, {
+          count: useCalendarSync.getState().upcomingCount,
+        }),
+        native: true,
+      })
+    })
   const disconnect = () =>
     Alert.alert(
       i18n.t('calendarDisconnect'),
@@ -141,9 +153,14 @@ export default function CalendarSettings() {
   const status = settings.enabled
     ? isPrimary
       ? settings.lastSyncedAt
-        ? i18n.t('calendarLastSynced', {
-            when: formatRelative(settings.lastSyncedAt),
-          })
+        ? [
+            i18n.t('calendarUpcomingCount' as TranslationKey, {
+              count: settings.upcomingCount,
+            }),
+            i18n.t('calendarLastSynced', {
+              when: formatRelative(settings.lastSyncedAt),
+            }),
+          ].join(' · ')
         : i18n.t('calendarWaiting')
       : i18n.t('calendarPublishedElsewhere', {
           device: primaryName ?? i18n.t('calendarNotConfigured'),
@@ -157,15 +174,16 @@ export default function CalendarSettings() {
   const padded = { paddingHorizontal: inputLayout.horizontalPadding }
   return (
     <View style={{ gap: 30 }}>
-      <View style={[padded, { gap: 6 }]}>
-        <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-          {i18n.t('calendarDescription')}
-        </Text>
-      </View>
+      <Text style={[padded, { fontSize: 13, color: theme.colors.textAlt }]}>
+        {i18n.t('calendarDescription')}
+      </Text>
 
       <View style={{ gap: 8 }}>
         <View>
-          <SectionTitle text={i18n.t('calendar')} />
+          <SectionTitle
+            text={i18n.t('calendar')}
+            info={i18n.t('calendarHowItWorks')}
+          />
           <Section>
             {settings.enabled && settings.destination && (
               <InputRowButton
@@ -176,9 +194,9 @@ export default function CalendarSettings() {
             {settings.enabled ? (
               <>
                 <InputRowButton
-                  label={i18n.t('iCloudSyncNow')}
+                  label={i18n.t(working ? 'calendarSyncing' : 'iCloudSyncNow')}
                   disabled={working || !isPrimary}
-                  onPress={() => run(publishCalendar)}
+                  onPress={syncNow}
                 />
                 <InputRowButton
                   label={i18n.t('calendarDisconnect')}
@@ -208,8 +226,11 @@ export default function CalendarSettings() {
               </>
             ) : !state ? (
               <InputRowButton
-                label={i18n.t('calendarChecking')}
-                disabled
+                label={i18n.t(
+                  error && !working ? 'calendarTryAgain' : 'calendarChecking'
+                )}
+                disabled={working || !error}
+                onPress={() => run(refreshPublishing)}
                 lastInSection
               />
             ) : (
@@ -274,7 +295,10 @@ export default function CalendarSettings() {
         <View style={{ gap: 8 }}>
           {destinations.length > 0 && (
             <View>
-              <SectionTitle text={i18n.t('calendarExistingCalendars')} />
+              <SectionTitle
+                text={i18n.t('calendarExistingCalendars')}
+                info={i18n.t('calendarGoogleSetup')}
+              />
               <Section>
                 {destinations.map((destination, index) => (
                   <InputRowButton
@@ -291,7 +315,14 @@ export default function CalendarSettings() {
           )}
           {sources.length > 0 && (
             <View>
-              <SectionTitle text={i18n.t('calendarNewCalendar')} />
+              <SectionTitle
+                text={i18n.t('calendarNewCalendar')}
+                info={
+                  destinations.length
+                    ? undefined
+                    : i18n.t('calendarGoogleSetup')
+                }
+              />
               <Section>
                 {sources.map((source, index) => (
                   <InputRowButton
@@ -307,7 +338,6 @@ export default function CalendarSettings() {
               </Section>
             </View>
           )}
-          <Text style={[note, padded]}>{i18n.t('calendarGoogleSetup')}</Text>
         </View>
       )}
 
@@ -316,6 +346,7 @@ export default function CalendarSettings() {
         <Section>
           <InputRowSwitch
             label={i18n.t('calendarDefaultInclude')}
+            info={i18n.t('calendarDefaultInclude_info')}
             value={settings.defaultInclude}
             onValueChange={(defaultInclude) =>
               run(() => setSharedOptions({ defaultInclude }))
@@ -323,7 +354,7 @@ export default function CalendarSettings() {
           />
           <InputRowSwitch
             label={i18n.t('calendarIncludeDetails')}
-            description={i18n.t('calendarDetailsDescription')}
+            info={i18n.t('calendarDetailsDescription')}
             value={settings.includeDetails}
             onValueChange={(includeDetails) =>
               run(() => setSharedOptions({ includeDetails }))
@@ -334,11 +365,6 @@ export default function CalendarSettings() {
       </View>
 
       <PrimaryDeviceSection />
-
-      <View style={[padded, { gap: 8 }]}>
-        <Text style={note}>{i18n.t('calendarOwnershipExplanation')}</Text>
-        <Text style={note}>{i18n.t('calendarUninstallExplanation')}</Text>
-      </View>
     </View>
   )
 }

@@ -25,6 +25,9 @@ export default function FollowUpCalendarControls({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const enabled = useCalendarSync((state) => state.enabled)
+  // Without its own choice, a follow-up follows the shared default.
+  const defaultInclude = useCalendarSync((state) => state.defaultInclude)
+  const included = followUp.calendarIncluded ?? defaultInclude
   // Set up on another (primary) device: nothing to do here.
   const configuredElsewhere = useCalendarSync((state) => !!state.sharedCalendar)
   const error = useCalendarPublishing((state) => state.error)
@@ -39,11 +42,11 @@ export default function FollowUpCalendarControls({
       <InputRowSwitch
         label={i18n.t('calendarShowFollowUp')}
         description={i18n.t(
-          followUp.calendarIncluded && past
+          included && past
             ? 'calendarPastFollowUp'
             : 'calendarFollowUpDescription'
         )}
-        value={followUp.calendarIncluded ?? false}
+        value={included}
         onValueChange={(calendarIncluded) => {
           analytics.capture('calendar_follow_up_inclusion_changed', {
             included: calendarIncluded,
@@ -56,7 +59,7 @@ export default function FollowUpCalendarControls({
           })
         }}
       />
-      {followUp.calendarIncluded && (
+      {included && (
         <>
           <InputRowSelect
             label={i18n.t('calendarDuration')}

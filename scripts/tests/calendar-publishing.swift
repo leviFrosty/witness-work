@@ -105,6 +105,18 @@ import Foundation
     invalid.end = 4_102_444_800_000
     let snapshot = CalendarSnapshot(title: "Follow-up", entries: [future, past, invalid], removed: ["deleted"], deletedContactIds: ["c/id"])
     precondition(future.validDates && past.validDates && !invalid.validDates)
+    var alerted = future
+    precondition(alerted.alert == nil, "No Notify Me means no calendar alert")
+    alerted.alertMinutes = 30
+    precondition(alerted.alert == 30)
+    alerted.alertMinutes = 0
+    precondition(alerted.alert == 0, "An at-start reminder is still an alert")
+    for invalidMinutes in [-1, .nan, .infinity, 40321] as [Double] {
+      alerted.alertMinutes = invalidMinutes
+      precondition(alerted.alert == nil, "Out-of-range reminders must not reach EventKit")
+    }
+    let legacyEntry = try JSONDecoder().decode(CalendarEntry.self, from: Data(#"{"key":"k","title":"t","start":0,"end":1800000,"url":"u","location":""}"#.utf8))
+    precondition(legacyEntry.alert == nil, "Snapshots from older JS bundles still decode")
     precondition(snapshot.missingKeys(published: ["future", "past", "seen", "deleted", "invalid"], existing: [], now: 1_000_000) == ["future", "seen", "invalid"], "Cached local identifiers must never turn a moved event into an automatic duplicate")
     precondition(snapshot.missingKeys(published: ["future", "past"], existing: ["future"], now: 1_000_000).isEmpty)
     precondition(CalendarSnapshot.contactId(from: URL(string: "witnesswork://contact/c%2Fid/v?calendar=n&followUp=v")) == "c/id", "Explicit contact tombstones must match escaped IDs without the source Visit")

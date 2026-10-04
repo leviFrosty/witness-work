@@ -7,6 +7,15 @@ struct CalendarEntry: Codable {
   var end: Double
   var url: String
   var location: String
+  /// The follow-up's Notify Me reminder, in minutes before `start`. Absent
+  /// when it has none, and from JS bundles that predate calendar alerts.
+  var alertMinutes: Double?
+
+  /// Whole minutes, at most four weeks ahead; anything else means no alert.
+  var alert: Int? {
+    guard let minutes = alertMinutes, minutes.isFinite, minutes >= 0, minutes <= 40320 else { return nil }
+    return Int(minutes.rounded())
+  }
 
   var validDates: Bool {
     let duration = end - start

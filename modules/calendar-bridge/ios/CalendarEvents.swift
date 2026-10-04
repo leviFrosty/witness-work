@@ -179,7 +179,15 @@ final class CalendarEvents {
         if matches.isEmpty && item.start < now { continue }
         let event = matches.first ?? EKEvent(eventStore: store)
         var parts = URLComponents(string: item.url)
-        parts?.queryItems = [URLQueryItem(name: "calendar", value: state.namespace), URLQueryItem(name: "followUp", value: item.key)]
+        // The alert is part of the marker, so changing Notify Me rewrites the
+        // event, while alerts a provider adds itself (Google's default
+        // notifications) don't trigger a rewrite on every check. Always present,
+        // so events written by earlier builds are brought in line once.
+        parts?.queryItems = [
+          URLQueryItem(name: "calendar", value: state.namespace),
+          URLQueryItem(name: "followUp", value: item.key),
+          URLQueryItem(name: "alert", value: item.alert.map(String.init) ?? "none"),
+        ]
         guard let url = parts?.url else { throw CalendarFailure("CALENDAR_INVALID_URL") }
         let start = Date(timeIntervalSince1970: item.start / 1000)
         let end = Date(timeIntervalSince1970: item.end / 1000)
@@ -194,7 +202,8 @@ final class CalendarEvents {
           event.isAllDay = false
           event.url = url
           event.location = location.isEmpty ? nil : location
-          if matches.isEmpty { event.alarms = [] }
+          // Match the follow-up's in-app reminder whenever the event is written.
+          event.alarms = item.alert.map { [EKAlarm(relativeOffset: -Double($0) * 60)] } ?? []
           try store.save(event, span: .thisEvent, commit: false)
           changed = true
         }

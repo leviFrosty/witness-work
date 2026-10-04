@@ -17,7 +17,6 @@ import { Visit } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import FollowUpCalendarControls from '@/features/visits/components/FollowUpCalendarControls'
-import { useCalendarSync } from '@/stores/calendarSync'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import moment from 'moment'
@@ -279,7 +278,6 @@ const VisitFormScreen = ({
       date: new Date(),
       note: '',
       followUp: {
-        calendarIncluded: useCalendarSync.getState().defaultInclude,
         calendarDurationMinutes: 30,
         date: moment()
           .add(

@@ -3,6 +3,7 @@ import { AppState, Platform } from 'react-native'
 import { subscribeCalendarChanges } from '../../../modules/calendar-bridge'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import {
   useCalendarPublishing,
   useCalendarSync as useCalendarSettings,
@@ -40,6 +41,9 @@ export function useCalendarSync(ready: boolean | undefined) {
             visit.followUp?.dismissed,
             visit.followUp?.calendarIncluded,
             visit.followUp?.calendarDurationMinutes,
+            visit.followUp?.notifyMe,
+            visit.followUp?.reminderOffsetMinutes,
+            visit.followUp?.notifications?.[0]?.date,
           ]),
         useConversations.getState().deletedConversations,
         useContacts
@@ -51,7 +55,10 @@ export function useCalendarSync(ready: boolean | undefined) {
           ]),
         useContacts.getState().deletedContacts,
         useCalendarSettings.getState().includeDetails,
+        useCalendarSettings.getState().defaultInclude,
         useCalendarSettings.getState().enabled,
+        // Follow-ups without their own reminder offset use this default.
+        usePreferences.getState().returnVisitNotificationOffset,
       ])
     const run = () => {
       if (stopped || running || AppState.currentState !== 'active') return
@@ -119,10 +126,12 @@ export function useCalendarSync(ready: boolean | undefined) {
     const subscriptions = [
       useContacts.subscribe(onDataChange),
       useConversations.subscribe(onDataChange),
+      usePreferences.subscribe(onDataChange),
       useCalendarSettings.subscribe((state, previous) => {
         if (
           state.enabled !== previous.enabled ||
-          state.includeDetails !== previous.includeDetails
+          state.includeDetails !== previous.includeDetails ||
+          state.defaultInclude !== previous.defaultInclude
         )
           schedule()
       }),

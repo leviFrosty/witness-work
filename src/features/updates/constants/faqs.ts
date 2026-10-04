@@ -31,6 +31,7 @@ export interface FAQEntry {
  * The screen is search-friendly, so write the answer to be self-contained.
  */
 export const FAQS: FAQEntry[] = [
+  { id: 'tabletSidebar', category: 'customization' },
   {
     id: 'timeRollover',
     category: 'time',

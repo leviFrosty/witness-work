@@ -338,6 +338,20 @@ action. Map is a view inside Contacts and Buddies opens from Schedule's header, 
 flags and features don't add or reorder tabs. Wide layouts show the same
 destinations in the sidebar, plus Settings.
 
+The tablet sidebar has a centered resize handle, switches to icons at narrow
+widths, and can be hidden and restored from the page header. Width and visibility
+are device-local. Hiding it keeps tablet routes and does not show the bottom bar.
+Sidebar instrumentation uses only bounded modes and sources, never saved widths
+or personal data:
+
+| Event                        | When / properties                                                                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidebar_viewed`             | A sidebar-capable layout mounts or becomes available. `visible` (boolean), `mode` (`icons` or `labels`), including a previously hidden sidebar.                                 |
+| `sidebar_visibility_changed` | The toggle is tapped. `visible` (resulting boolean), `mode` (`icons` or `labels`), `source` (`sidebar` or `header`).                                                            |
+| `sidebar_resize_started`     | A horizontal drag activates on the resize handle. No properties.                                                                                                                |
+| `sidebar_resized`            | A drag finishes or a screen reader adjustment changes the saved width. `mode` (`icons` or `labels`), `source` (`drag` or `accessibility`). Live drag frames do not emit events. |
+| `sidebar_resize_cancelled`   | An active drag is interrupted or its handle unmounts; the saved width is restored. No properties.                                                                               |
+
 | Event                             | When / properties                                                                                                                                                                                                                                         |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `navigation_destination_selected` | A bottom-bar or sidebar destination is tapped. `from` and `to` (route names), `layout_variant` (`bottom_bar` or `sidebar`), `reselected` (tapped the destination already open).                                                                           |

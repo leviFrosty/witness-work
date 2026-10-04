@@ -1,17 +1,17 @@
 import { useWindowDimensions } from 'react-native'
+import { getAdaptiveLayout } from '@/lib/sidebarLayout'
+import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
 
-/** Window-based so iPad multitasking and Dynamic Type can use compact layouts. */
-export default function useAdaptiveLayout() {
+/**
+ * Window-based so multitasking and Dynamic Type can use compact layouts. Only
+ * navigation previews live drag widths. Content breakpoints settle on release
+ * so dragging does not repeatedly rebuild navigators and sheet portals.
+ */
+export default function useAdaptiveLayout({ liveResize = false } = {}) {
   const { width, fontScale } = useWindowDimensions()
-  const hasSidebar = width >= 1000 && fontScale <= 1.3
-  const sidebarWidth = hasSidebar ? 200 : 0
-  const contentWidth = width - sidebarWidth
+  const savedWidth = useSidebarPreferences((s) => s.width)
+  const hidden = useSidebarPreferences((s) => s.hidden)
+  const dragWidth = useSidebarResize((s) => (liveResize ? s.width : null))
 
-  return {
-    hasSidebar,
-    sidebarWidth,
-    contentWidth,
-    isWide: contentWidth >= 760 && fontScale <= 1.3,
-    contentMaxWidth: 1200,
-  }
+  return getAdaptiveLayout(width, fontScale, dragWidth ?? savedWidth, hidden)
 }

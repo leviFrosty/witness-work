@@ -8,7 +8,7 @@ import {
   Settings as SettingsIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
@@ -28,6 +28,10 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { analytics } from '@/lib/analytics'
+import SidebarToggle from '@/components/ui/SidebarToggle'
+import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
+import { useSidebarPreferences } from '@/stores/sidebar'
+import { SIDEBAR_LABEL_MIN_WIDTH } from '@/lib/sidebarLayout'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -55,8 +59,18 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets()
   const glassColorScheme = useGlassColorScheme()
   const isDark = theme.colors.background === '#121212'
-  const { hasSidebar, sidebarWidth } = useAdaptiveLayout()
+  const { hasSidebar, sidebarVisible, sidebarCompact, sidebarWidth } =
+    useAdaptiveLayout({ liveResize: true })
   const layoutVariant = hasSidebar ? 'sidebar' : 'bottom_bar'
+
+  useEffect(() => {
+    if (!hasSidebar) return
+    const { width, hidden } = useSidebarPreferences.getState()
+    analytics.capture('sidebar_viewed', {
+      visible: !hidden,
+      mode: width < SIDEBAR_LABEL_MIN_WIDTH ? 'icons' : 'labels',
+    })
+  }, [hasSidebar])
 
   const openQuickActions = () =>
     analytics.capture('quick_action_opened', { layout_variant: layoutVariant })
@@ -122,9 +136,10 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           flex: hasSidebar ? undefined : 1,
           flexDirection: hasSidebar ? 'row' : 'column',
           alignItems: 'center',
-          justifyContent: hasSidebar ? 'flex-start' : 'center',
+          justifyContent:
+            hasSidebar && !sidebarCompact ? 'flex-start' : 'center',
           gap: hasSidebar ? 12 : 2,
-          paddingHorizontal: hasSidebar ? 14 : 2,
+          paddingHorizontal: hasSidebar ? (sidebarCompact ? 0 : 14) : 2,
           paddingVertical: hasSidebar ? 14 : 0,
           minHeight: hasSidebar ? 50 : undefined,
           borderRadius: hasSidebar
@@ -160,20 +175,23 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
             />
           )}
         </View>
-        {/* Every destination keeps its label so none relies on its icon. */}
-        <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-          style={{
-            color,
-            flexShrink: 1,
-            fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
-            fontFamily: isFocused ? theme.fonts.semiBold : theme.fonts.regular,
-          }}
-        >
-          {i18n.t(labelKey)}
-        </Text>
+        {!sidebarCompact && (
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+            style={{
+              color,
+              flexShrink: 1,
+              fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
+              fontFamily: isFocused
+                ? theme.fonts.semiBold
+                : theme.fonts.regular,
+            }}
+          >
+            {i18n.t(labelKey)}
+          </Text>
+        )}
       </Pressable>
     )
   }
@@ -285,6 +303,8 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
     </View>
   )
 
+  if (hasSidebar && !sidebarVisible) return null
+
   if (hasSidebar) {
     return (
       <View
@@ -331,19 +351,35 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
               // Safe areas belong to the floating panel's outer frame.
               paddingTop: SIDEBAR_PADDING,
               paddingBottom: SIDEBAR_PADDING,
-              paddingHorizontal: SIDEBAR_PADDING,
+              paddingHorizontal: sidebarCompact ? 8 : SIDEBAR_PADDING,
               gap: 24,
             }}
           >
-            <Text
+            <View
               style={{
-                paddingHorizontal: 14,
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSize('lg'),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: sidebarCompact ? 'center' : 'space-between',
+                gap: 4,
               }}
             >
-              WitnessWork
-            </Text>
+              {!sidebarCompact && (
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                  style={{
+                    flex: 1,
+                    paddingLeft: 4,
+                    fontFamily: theme.fonts.bold,
+                    fontSize: theme.fontSize('lg'),
+                  }}
+                >
+                  {i18n.t('witnessWork')}
+                </Text>
+              )}
+              <SidebarToggle mode='hide' />
+            </View>
             <View style={{ gap: 6 }}>
               {state.routes.map((route, index) =>
                 route.name !== 'Settings' ? renderTab(route, index) : null
@@ -393,7 +429,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                       accessibilityState={{ expanded }}
                       style={{
                         minHeight: 48,
-                        padding: 12,
+                        padding: sidebarCompact ? 0 : 12,
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -408,14 +444,16 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                         color={theme.colors.textInverse}
                         size={20}
                       />
-                      <Text
-                        style={{
-                          color: theme.colors.textInverse,
-                          fontFamily: theme.fonts.semiBold,
-                        }}
-                      >
-                        {i18n.t('add')}
-                      </Text>
+                      {!sidebarCompact && (
+                        <Text
+                          style={{
+                            color: theme.colors.textInverse,
+                            fontFamily: theme.fonts.semiBold,
+                          }}
+                        >
+                          {i18n.t('add')}
+                        </Text>
+                      )}
                     </Button>
                   </View>
                 )}
@@ -446,6 +484,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
             </View>
           </ScrollView>
         </View>
+        <SidebarResizeHandle width={sidebarWidth} />
       </View>
     )
   }

@@ -94,11 +94,7 @@ const SupporterInfoSheet = ({
       feature: featureKey ?? 'general',
       ...attribution,
     })
-    analytics.capture('paywall_opened', {
-      source: 'feature_gate',
-      feature: featureKey ?? 'general',
-      ...attribution,
-    })
+
     setOpen(false)
     setMounted(false)
     requestAnimationFrame(() =>

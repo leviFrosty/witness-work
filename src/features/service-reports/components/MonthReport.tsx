@@ -74,7 +74,7 @@ import useMonthReportExport from '@/features/service-reports/hooks/useMonthRepor
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
-import { analytics } from '@/lib/analytics'
+
 import MonthStatusGoalButton from '@/features/service-reports/components/MonthStatusGoalButton'
 import { monthStatusShortLabel } from '@/lib/monthStatus'
 import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
@@ -453,7 +453,6 @@ const MonthReport = ({
   // also a visible control on the card or the report screen.
   const editable = monthEditTargets({ month, year, baseGoalHours })
   const editFromMenu = (target: MonthEditTarget) => {
-    analytics.capture('month_card_edit_opened', { target, via: 'context_menu' })
     setEditing(target)
   }
   const cardMenu: ContextMenuEntries = [
@@ -671,23 +670,14 @@ const MonthReport = ({
 
           {/* Long-pressing the hero opens the month's menu on Progress. */}
           {allowGoalEditing ? (
-            <ContextMenu
-              analyticsSurface='month_report_card'
-              actions={cardMenu}
-            >
-              {hero}
-            </ContextMenu>
+            <ContextMenu actions={cardMenu}>{hero}</ContextMenu>
           ) : (
             hero
           )}
 
           {/* The color key doubles as the way into the category breakdown. */}
           {!noDetails && hasCategorySegments && (
-            <CategoriesSection
-              segments={categorySegments}
-              trigger='legend'
-              source='month_card'
-            />
+            <CategoriesSection segments={categorySegments} trigger='legend' />
           )}
 
           {!noDetails && adjustedMinutes.creditOverage > 0 && (

@@ -61,7 +61,6 @@ export default function PendingInviteRow({
         time: moment(invite.expiresAt).fromNow(),
       })}
       onPress={showCode}
-      analyticsSurface='buddy_invite_row'
       actions={[
         [
           {

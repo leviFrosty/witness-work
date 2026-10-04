@@ -151,10 +151,7 @@ it('lists this device first with its label and the others with hints', async () 
   expect(row('Mac').props.description).toContain(
     'iCloudDeviceHint_newerVersion'
   )
-  expect(mocks.capture).toHaveBeenCalledExactlyOnceWith(
-    'icloud_sync_devices_viewed',
-    { device_count: 5, flagged_count: 3 }
-  )
+  expect(mocks.capture).not.toHaveBeenCalled()
 })
 
 it('shows an empty state before any pull recorded devices', async () => {
@@ -229,15 +226,12 @@ it('reports a failed delete', async () => {
   )
 })
 
-it('records a cancelled confirmation', async () => {
+it('does not remove a device after cancelling confirmation', async () => {
   await mount()
   await act(async () => row('iPhone').findByType(Button).props.onPress())
-  await act(async () => alertButton('cancel').onPress!())
+  await act(async () => alertButton('cancel').onPress?.())
   expect(mocks.removeSyncDevice).not.toHaveBeenCalled()
-  expect(mocks.capture).toHaveBeenLastCalledWith(
-    'icloud_sync_device_remove_cancelled',
-    { status: 'ok', age_bucket: '<30d', legacy: false }
-  )
+  expect(mocks.capture).not.toHaveBeenCalled()
 })
 
 it('asks for an app update instead of confirming a newer-version device', async () => {

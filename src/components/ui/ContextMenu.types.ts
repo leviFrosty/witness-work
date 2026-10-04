@@ -40,11 +40,6 @@ export type ContextMenuEntries = (
 export type ContextMenuProps = {
   actions: ContextMenuEntries
   /**
-   * Where the menu lives, e.g. `contact_row`. Sent with every chosen action as
-   * `context_menu_action` — see docs/analytics.md.
-   */
-  analyticsSurface: string
-  /**
    * The long-pressable content. Keep it non-interactive and use `onPress` for
    * its tap action, so taps and long presses don't compete for the touch.
    */

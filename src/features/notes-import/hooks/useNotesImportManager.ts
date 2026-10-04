@@ -933,10 +933,6 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       },
 
       retry: (hash) => {
-        analytics.capture('import_retried', {
-          import_type: 'notes',
-          source: getLedgerEntry(hash)?.analyticsSource ?? 'unknown',
-        })
         cooldownUntil.delete(hash)
         patchRuntime(hash, { error: null, paused: false })
         get().tick()

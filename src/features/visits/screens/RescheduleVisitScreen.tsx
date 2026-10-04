@@ -466,7 +466,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           <ContextMenu
             style={{ flex: 1 }}
             actions={contactActions}
-            analyticsSurface='reschedule_contact_card'
             onPress={openContactDetails}
             preview={
               <ContactPreview contact={contact} lastVisit={conversation} />

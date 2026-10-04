@@ -68,7 +68,6 @@ const ContactCustomFieldsCard = ({ contact }: { contact: Contact }) => {
               {definition.label}
             </Text>
             <Copyeable
-              analyticsSurface='contact_custom_field'
               textProps={{
                 style: {
                   fontSize: theme.fontSize('md') + 0.5,

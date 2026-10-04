@@ -120,7 +120,6 @@ export default function BuddiesScreen({
           <BuddiesAlphaBadge />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <PullDownMenu
-              analyticsSurface='buddies_header'
               accessibilityLabel={i18n.t('moreActions')}
               actions={[
                 [

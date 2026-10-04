@@ -105,7 +105,6 @@ const MapCarouselCard = ({ contact, index, inspector = false }: Props) => {
     <MapCard fill={!inspector}>
       <ContextMenu
         actions={actions}
-        analyticsSurface='map_contact_card'
         onPress={() =>
           navigation.navigate('Contact Details', { id: contact.id })
         }

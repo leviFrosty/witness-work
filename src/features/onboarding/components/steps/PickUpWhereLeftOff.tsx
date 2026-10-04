@@ -116,10 +116,6 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const isFocused = useIsFocused()
   const [mode, setMode] = useState<Mode>('choose')
   const toChooser = () => {
-    analytics.capture('import_flow_back', {
-      import_type: mode,
-      source: 'onboarding',
-    })
     setMode('choose')
   }
   const icloudAvailable = ICloudBridge.isAvailable()

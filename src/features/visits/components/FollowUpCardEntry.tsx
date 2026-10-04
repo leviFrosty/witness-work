@@ -22,7 +22,7 @@ import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import ContactPreview from '@/components/ContactPreview'
 import { addressToString, navigateTo } from '@/lib/address'
-import { analytics } from '@/lib/analytics'
+
 import { formatCalendar, formatRelative } from '@/lib/dates'
 import type { FollowUpCardItem } from '@/lib/conversations'
 import i18n from '@/lib/locales'
@@ -74,14 +74,12 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
       highlightedVisitId: answeredBy?.id ?? visit.id,
     })
   const talked = () => {
-    analytics.capture('follow_up_card_action', { action: 'talked' })
     navigation.navigate('Visit Form', {
       contactId: contact.id,
       returnOnSave: true,
     })
   }
   const reschedule = () => {
-    analytics.capture('follow_up_card_action', { action: 'reschedule' })
     navigation.navigate('RescheduleVisit', {
       contactId: contact.id,
       visitId: visit.id,
@@ -269,7 +267,6 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
         {/* The buttons stay outside so the long press has no rivals. */}
         <ContextMenu
           actions={actions}
-          analyticsSurface='follow_up_card'
           onPress={openContact}
           accessibilityLabel={contact.name}
           preview={<ContactPreview contact={contact} lastVisit={visit} />}
@@ -313,7 +310,6 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
         </ContextMenu>
         <PullDownMenu
           actions={actions}
-          analyticsSurface='follow_up_card'
           accessibilityLabel={i18n.t('more')}
           style={{ height: 40, justifyContent: 'center' }}
         />

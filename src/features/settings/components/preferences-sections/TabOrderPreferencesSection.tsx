@@ -60,7 +60,6 @@ const TabOrderPreferencesSection = () => {
                   trigger. Tabs can't be hidden, so the menu only moves. */}
               <ContextMenu
                 style={{ flex: 1, minWidth: 0 }}
-                analyticsSurface='tab_order_preferences_row'
                 actions={reorderMenuActions({
                   index,
                   count: visible.length,

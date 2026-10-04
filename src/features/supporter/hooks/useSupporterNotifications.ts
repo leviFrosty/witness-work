@@ -113,9 +113,7 @@ export default function useSupporterNotifications(
             analytics.capture('supporter_nudge_clicked', {
               source: 'notifications_tray',
             })
-            analytics.capture('paywall_opened', {
-              source: 'notifications_tray',
-            })
+
             navigation.navigate('Paywall', { source: 'notifications_tray' })
           },
         },

@@ -17,7 +17,7 @@ import {
   setSharedOptions,
 } from '@/app/calendar/calendarSync'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
-import { analytics } from '@/lib/analytics'
+
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -62,8 +62,6 @@ export default function CalendarSettings() {
       {
         text: i18n.t('cancel'),
         style: 'cancel',
-        onPress: () =>
-          analytics.capture('calendar_setup_cancelled', { stage: 'access' }),
       },
       {
         text: i18n.t('continue'),
@@ -87,10 +85,6 @@ export default function CalendarSettings() {
         {
           text: i18n.t('cancel'),
           style: 'cancel',
-          onPress: () =>
-            analytics.capture('calendar_setup_cancelled', {
-              stage: 'destination',
-            }),
         },
         {
           text: i18n.t('continue'),

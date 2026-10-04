@@ -7,14 +7,28 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   read: vi.fn(),
   retryCount: 0,
+  frequency: new Map<string, string>(),
+  platform: 'ios',
+  launchUrl: null as string | null,
+  variant: 'production',
 }))
 
+vi.mock('react-native-mmkv', () => ({
+  MMKV: class {
+    getString = (key: string) => mocks.frequency.get(key)
+    set = (key: string, value: string) => mocks.frequency.set(key, value)
+    delete = (key: string) => mocks.frequency.delete(key)
+  },
+}))
 vi.mock('expo-constants', () => ({
   default: {
     expoConfig: {
       extra: {
         posthogProjectToken: 'test-token',
         posthogHost: 'https://example.com',
+        get appVariant() {
+          return mocks.variant
+        },
       },
     },
   },
@@ -34,8 +48,12 @@ vi.mock('posthog-react-native', async () => {
   const nativeModules: Record<string, unknown> = {
     'react-native': {
       AppState: { currentState: 'active', addEventListener: vi.fn() },
-      Linking: { getInitialURL: async () => null },
-      Platform: { OS: 'ios' },
+      Linking: { getInitialURL: async () => mocks.launchUrl },
+      Platform: {
+        get OS() {
+          return mocks.platform
+        },
+      },
       Dimensions: { get: () => ({ width: 390, height: 844 }) },
     },
     './native-deps': {
@@ -99,6 +117,10 @@ beforeEach(() => {
   vi.resetModules()
   mocks.retryCount = 0
   mocks.stored.clear()
+  mocks.frequency.clear()
+  mocks.platform = 'ios'
+  mocks.launchUrl = null
+  mocks.variant = 'production'
   mocks.read.mockImplementation(
     async (key: string) => mocks.stored.get(key) ?? null
   )
@@ -144,7 +166,7 @@ describe('PostHog consent with persisted SDK state', () => {
       const sdk = await start()
       const { analytics } = await import('./analytics')
       const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
-      sdk.capture('usage_before_retry')
+      sdk.capture('contact_created')
       sdk.capture('$exception')
       sdk.capture('survey sent')
       let failAttempt!: (error: Error) => void
@@ -193,7 +215,7 @@ describe('PostHog consent with persisted SDK state', () => {
         [P.SurveysSeen]: [{ surveyId: 'completed-survey' }],
       })
       const sdk = await start()
-      sdk.capture('new_usage')
+      sdk.capture('time_entry_created')
       await sdk.reloadFeatureFlagsAsync()
       await sdk.flush()
       expect(sdk.getDistinctId()).not.toBe('existing-account-id')
@@ -209,7 +231,7 @@ describe('PostHog consent with persisted SDK state', () => {
       )
       expect(
         sentEvents().map((event: { event: string }) => event.event)
-      ).toContain('new_usage')
+      ).toContain('time_entry_created')
       expect(sdk.getPersistedProperty(P.SurveysSeen)).toEqual([
         { surveyId: 'completed-survey' },
       ])
@@ -223,7 +245,7 @@ describe('PostHog consent with persisted SDK state', () => {
 
   it('removes queued offline usage on opt-out, keeping crashes and survey responses', async () => {
     const sdk = await start()
-    sdk.capture('queued_usage')
+    sdk.capture('plan_created')
     sdk.capture('$exception')
     sdk.capture('survey sent')
     sdk.capture('survey dismissed')
@@ -243,7 +265,7 @@ describe('PostHog consent with persisted SDK state', () => {
     await sdk.flush()
     expect(
       sentEvents().some(
-        (event: { event: string }) => event.event === 'queued_usage'
+        (event: { event: string }) => event.event === 'plan_created'
       )
     ).toBe(false)
   })
@@ -283,13 +305,15 @@ describe('PostHog consent with persisted SDK state', () => {
   it('prunes a restored offline queue before consent is known without losing diagnostics', async () => {
     seed({
       [P.AnonymousId]: 'anonymous-installation',
-      [P.Queue]: ['old_usage', '$exception', 'survey sent'].map((event) => ({
-        message: {
-          event,
-          distinct_id: 'anonymous-installation',
-          properties: {},
-        },
-      })),
+      [P.Queue]: ['contact_created', '$exception', 'survey sent'].map(
+        (event) => ({
+          message: {
+            event,
+            distinct_id: 'anonymous-installation',
+            properties: {},
+          },
+        })
+      ),
     })
     const sdk = await start(false)
     const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
@@ -324,7 +348,7 @@ describe('PostHog consent with persisted SDK state', () => {
           [P.Queue]: [
             {
               message: {
-                event: 'old_usage',
+                event: 'contact_created',
                 distinct_id: 'anonymous-installation',
                 properties: {},
               },
@@ -337,8 +361,186 @@ describe('PostHog consent with persisted SDK state', () => {
     await client!.flush()
     expect(
       sentEvents().some(
-        (event: { event: string }) => event.event === 'old_usage'
+        (event: { event: string }) => event.event === 'contact_created'
       )
     ).toBe(false)
   })
+})
+
+describe('PostHog volume and privacy policy', () => {
+  it.each(['ios', 'android'])(
+    'preserves outcomes and flags while dropping noise on %s',
+    async (platform) => {
+      mocks.platform = platform
+      const sdk = await start()
+      for (let i = 0; i < 3; i++) {
+        sdk.capture('contact_created')
+        sdk.capture('Application Became Active')
+        sdk.capture('Application Backgrounded')
+        sdk.capture('$set', { $set: { is_supporter: true } })
+        sdk.capture('navigation_destination_selected')
+        sdk.capture('unregistered_event')
+        sdk.capture('timer_action_completed', { action: 'paused' })
+        sdk.capture('timer_action_completed', { action: 'started' })
+      }
+      sdk.capture('$feature_flag_called', {
+        $feature_flag: 'buddies',
+        $feature_flag_response: true,
+      })
+      await sdk.flush()
+      const names = sentEvents().map((event: { event: string }) => event.event)
+      expect(
+        names.filter((name: string) => name === 'contact_created')
+      ).toHaveLength(3)
+      expect(
+        names.filter((name: string) => name === 'Application Became Active')
+      ).toHaveLength(1)
+      expect(
+        names.filter((name: string) => name === 'timer_action_completed')
+      ).toHaveLength(1)
+      expect(names).toContain('$feature_flag_called')
+      for (const name of [
+        'Application Backgrounded',
+        '$set',
+        'navigation_destination_selected',
+        'unregistered_event',
+      ])
+        expect(names).not.toContain(name)
+      sdk.resetSessionId()
+      sdk.capture('timer_action_completed', { action: 'started' })
+      mocks.fetch.mockClear()
+      await sdk.flush()
+      expect(
+        sentEvents().filter(
+          (event: { event: string }) => event.event === 'timer_action_completed'
+        )
+      ).toHaveLength(1)
+    }
+  )
+
+  it.each(['ios', 'android'])(
+    'removes private launch URLs from cold-start capture on %s',
+    async (platform) => {
+      mocks.platform = platform
+      mocks.launchUrl =
+        'witnesswork://contact/private-id?token=private-secret#notes'
+      const sdk = await start()
+      await vi.waitFor(() =>
+        expect(
+          sdk
+            .getPersistedProperty<{ message: { event: string } }[]>(P.Queue)
+            ?.some((item) => item.message.event === 'Application Opened')
+        ).toBe(true)
+      )
+      await sdk.flush()
+      const opened = sentEvents().find(
+        (event: { event: string }) => event.event === 'Application Opened'
+      )
+      expect(opened.properties.url).toBeUndefined()
+      expect(JSON.stringify(sentEvents())).not.toContain('private-secret')
+      expect(JSON.stringify(sentEvents())).not.toContain('private-id')
+    }
+  )
+
+  it('prunes restored noise and scrubs retained legacy launch URLs before delivery', async () => {
+    seed({
+      [P.AnonymousId]: 'anonymous-installation',
+      [P.InstalledAppBuild]: '1',
+      [P.InstalledAppVersion]: '1.0.0',
+      [P.Queue]: [
+        'Application Opened',
+        '$set',
+        'context_menu_action',
+        'contact_created',
+        'survey sent',
+      ].map((event) => ({
+        message: {
+          event,
+          distinct_id: 'anonymous-installation',
+          properties:
+            event === 'Application Opened'
+              ? { url: 'witnesswork://contact/private-id?token=private-secret' }
+              : {},
+        },
+      })),
+    })
+    const sdk = await start()
+    await sdk.flush()
+    const events = sentEvents()
+    expect(events.map((event: { event: string }) => event.event)).toEqual([
+      'Application Opened',
+      'contact_created',
+      'survey sent',
+      'Application Opened',
+    ])
+    expect(events[0].properties.url).toBeUndefined()
+    expect(JSON.stringify(events)).not.toContain('private-secret')
+  })
+
+  it.each(['development', 'beta', 'unknown'])(
+    'keeps flags and surveys available in %s without usage ingestion',
+    async (variant) => {
+      mocks.variant = variant
+      const sdk = await start()
+      sdk.capture('contact_created')
+      sdk.capture('$screen')
+      sdk.capture('survey sent')
+      sdk.capture('$exception')
+      await sdk.reloadFeatureFlagsAsync()
+      await sdk.flush()
+      expect(
+        sentEvents().map((event: { event: string }) => event.event)
+      ).toEqual(['survey sent', '$exception'])
+      expect(
+        mocks.fetch.mock.calls.some(([url]) => url.includes('/flags/'))
+      ).toBe(true)
+    }
+  )
+})
+
+it('reports each SDK flag/variant once while preserving the assigned value', async () => {
+  const sdk = await start()
+  sdk.updateFlags({ 'notes-import': 'variant-a' })
+  expect(sdk.getFeatureFlag('notes-import', { sendEvent: false })).toBe(
+    'variant-a'
+  )
+  expect(sdk.getFeatureFlag('notes-import')).toBe('variant-a')
+  sdk.getFeatureFlag('notes-import')
+  sdk.updateFlags({ 'notes-import': 'variant-b' })
+  expect(sdk.getFeatureFlag('notes-import')).toBe('variant-b')
+  sdk.getFeatureFlag('notes-import')
+  await sdk.flush()
+  const exposures = sentEvents().filter(
+    (event: { event: string }) => event.event === '$feature_flag_called'
+  )
+  expect(
+    exposures.map(
+      (event: { properties: Record<string, unknown> }) =>
+        event.properties.$feature_flag_response
+    )
+  ).toEqual(['variant-a', 'variant-b'])
+})
+
+it('drops legacy queued pause/reset timer commands while retaining starts', async () => {
+  seed({
+    [P.AnonymousId]: 'anonymous-installation',
+    [P.Queue]: ['paused', 'reset', 'started'].map((action) => ({
+      message: {
+        event: 'timer_action_completed',
+        distinct_id: 'anonymous-installation',
+        properties: { action },
+      },
+    })),
+  })
+  const sdk = await start()
+  await sdk.flush()
+  const timers = sentEvents().filter(
+    (event: { event: string }) => event.event === 'timer_action_completed'
+  )
+  expect(
+    timers.map(
+      (event: { properties: Record<string, unknown> }) =>
+        event.properties.action
+    )
+  ).toEqual(['started'])
 })

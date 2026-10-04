@@ -16,7 +16,7 @@ import CategorySegmentBar, {
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
@@ -29,14 +29,12 @@ type Props = {
    * for sitting directly under a bar that already carries those colors.
    */
   trigger?: 'header' | 'legend'
-  source: 'month_card' | 'year_card'
 }
 
 const CategoriesSection = ({
   segments,
   description = i18n.t('categoryBreakdown_description'),
   trigger = 'header',
-  source,
 }: Props) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
@@ -46,10 +44,6 @@ const CategoriesSection = ({
   if (visible.length === 0) return null
 
   const openBreakdown = () => {
-    analytics.capture('category_breakdown_opened', {
-      source,
-      categories: visible.length,
-    })
     setOpen(true)
   }
 

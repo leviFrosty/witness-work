@@ -185,7 +185,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       source: 'onboarding',
       merge_offered: canEnableICloudSync,
     }
-    analytics.capture('icloud_restore_replace_prompted', properties)
+
     const choose = (mode: RestoreMode) => () => {
       analytics.capture('icloud_restore_replace_confirmed', {
         ...properties,
@@ -204,8 +204,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         {
           text: i18n.t('cancel'),
           style: 'cancel',
-          onPress: () =>
-            analytics.capture('icloud_restore_replace_cancelled', properties),
         },
         ...(canEnableICloudSync
           ? [
@@ -699,10 +697,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           probe.state === 'incomplete') && (
           <Button
             onPress={() => {
-              analytics.capture('icloud_restore_search_again_clicked', {
-                source: 'onboarding',
-                status: probe.state,
-              })
               setSearch((n) => n + 1)
             }}
             style={{

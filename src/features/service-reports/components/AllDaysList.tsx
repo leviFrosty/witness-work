@@ -71,7 +71,6 @@ const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
 
   return (
     <ContextMenu
-      analyticsSurface='day_row'
       actions={menu}
       onPress={onPress}
       preview={

@@ -1,5 +1,4 @@
 import type { AccessibilityActionEvent } from 'react-native'
-import { analytics } from '@/lib/analytics'
 import type {
   ContextMenuAction,
   ContextMenuEntries,
@@ -55,29 +54,11 @@ export function flattenMenu(groups: ContextMenuItem[][]): ChosenAction[] {
   )
 }
 
-/** Runs a chosen action and records it. */
-export function runMenuAction(
-  action: ContextMenuAction,
-  key: string,
-  surface: string,
-  trigger: 'long_press' | 'tap' | 'accessibility'
-) {
-  analytics.capture('context_menu_action', {
-    surface,
-    action: key,
-    trigger,
-  })
-  action.onPress()
-}
-
 /**
  * Screen-reader custom actions mirroring the menu, so VoiceOver's Actions rotor
  * and TalkBack's actions menu reach every item without the gesture.
  */
-export function menuAccessibilityProps(
-  groups: ContextMenuItem[][],
-  surface: string
-) {
+export function menuAccessibilityProps(groups: ContextMenuItem[][]) {
   const leaves = flattenMenu(groups)
   if (!leaves.length) return {}
   return {
@@ -89,8 +70,7 @@ export function menuAccessibilityProps(
       const chosen = leaves.find(
         ({ key }) => key === event.nativeEvent.actionName
       )
-      if (chosen)
-        runMenuAction(chosen.action, chosen.key, surface, 'accessibility')
+      if (chosen) chosen.action.onPress()
     },
   }
 }

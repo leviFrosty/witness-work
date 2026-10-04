@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
 import type { Visit } from '@/types/visit'
 import {
@@ -29,10 +28,6 @@ export default function useFollowUpCardDismissal(
         ...dismissedFollowUpCards,
         [card]: visits.map(followUpCardKey),
       },
-    })
-    analytics.capture('follow_up_card_dismissed', {
-      card,
-      count: visits.length,
     })
   }
 

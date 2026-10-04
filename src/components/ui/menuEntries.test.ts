@@ -43,22 +43,18 @@ describe('flattenMenu', () => {
 })
 
 describe('menuAccessibilityProps', () => {
-  it('runs and records the chosen custom action', () => {
+  it('runs the chosen custom action without generic analytics', () => {
     const a = item('a')
-    const props = menuAccessibilityProps([[a]], 'row')
+    const props = menuAccessibilityProps([[a]])
     expect(props.accessibilityActions).toEqual([{ name: 'a', label: 'A' }])
     props.onAccessibilityAction?.({
       nativeEvent: { actionName: 'a' },
     } as never)
     expect(a.onPress).toHaveBeenCalledOnce()
-    expect(analytics.capture).toHaveBeenCalledWith('context_menu_action', {
-      surface: 'row',
-      action: 'a',
-      trigger: 'accessibility',
-    })
+    expect(analytics.capture).not.toHaveBeenCalled()
   })
 
   it('adds nothing when the menu is empty', () => {
-    expect(menuAccessibilityProps([], 'row')).toEqual({})
+    expect(menuAccessibilityProps([])).toEqual({})
   })
 })

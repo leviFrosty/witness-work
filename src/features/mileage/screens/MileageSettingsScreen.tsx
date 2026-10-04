@@ -189,10 +189,6 @@ export default function MileageSettingsScreen() {
                   distanceUnit:
                     value === AUTO ? undefined : (value as DistanceUnit),
                 })
-                analytics.capture('mileage_units_changed', {
-                  setting: 'distance',
-                  unit: value,
-                })
               },
               accessibilityLabel: i18n.t('mileage.distanceUnit'),
             }}
@@ -218,10 +214,6 @@ export default function MileageSettingsScreen() {
                 set({
                   fuelEconomyUnit:
                     value === AUTO ? undefined : (value as FuelEconomyUnit),
-                })
-                analytics.capture('mileage_units_changed', {
-                  setting: 'fuel_economy',
-                  unit: value,
                 })
               },
               accessibilityLabel: i18n.t('mileage.fuelEconomyUnit'),

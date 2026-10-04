@@ -371,7 +371,6 @@ const ContactsSortAndFilterScreen = () => {
                     >
                       <ContextMenu
                         style={{ flex: 1 }}
-                        analyticsSurface='contacts_filter_chip'
                         onPress={() => handleEditFilter(index)}
                         accessibilityLabel={label}
                         actions={[

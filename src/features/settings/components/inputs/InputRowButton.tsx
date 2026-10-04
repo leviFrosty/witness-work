@@ -43,8 +43,6 @@ interface Props {
   url?: string
   /** Extra long-press menu items, listed after the link actions. */
   contextActions?: ContextMenuEntries
-  /** Sent with long-press menu choices. Defaults to `settings_link_row`. */
-  analyticsSurface?: string
   /** When true, dims the row and blocks the press. */
   disabled?: boolean
   /** Optional secondary line under the label (e.g. a reason it's disabled). */
@@ -70,7 +68,6 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   leftIconFill,
   url,
   contextActions,
-  analyticsSurface = 'settings_link_row',
 }: Props) => {
   const theme = useTheme()
   const layout = useInputLayout()
@@ -119,7 +116,6 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   // plain View inside ContextMenu, which owns both the tap and the long press.
   const withMenu = (row: React.ReactElement) => (
     <ContextMenu
-      analyticsSurface={analyticsSurface}
       accessibilityLabel={label}
       onPress={() => {
         Haptics.light()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import useMileage from '@/stores/mileage'
 import Header from '@/components/ui/layout/Header'
@@ -66,10 +66,6 @@ export default function MileageScreen() {
     summary.byVehicle.map((car) => car.vehicleId)
   )
 
-  useEffect(() => {
-    analytics.capture('mileage_report_viewed', { period: kind })
-  }, [kind])
-
   const shift = (delta: number) =>
     setAnchor(toDateKey(shiftPeriod(period, delta, startOfWeek).start))
 
@@ -77,7 +73,6 @@ export default function MileageScreen() {
 
   // A bar opens its day (Week, Month) or month (Service Year).
   const openBucket = (bucket: MileageBucket) => {
-    analytics.capture('mileage_chart_bar_tapped', { period: kind })
     setKind(bucket.kind)
     setAnchor(bucket.start)
   }
@@ -98,7 +93,6 @@ export default function MileageScreen() {
             }}
           >
             <PullDownMenu
-              analyticsSurface='mileage_report_menu'
               accessibilityLabel={i18n.t('mileage.shareReport')}
               actions={[
                 {

@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { CalendarPlus as CalendarPlusIcon } from 'lucide-react-native'
 import usePublisher from '@/hooks/usePublisher'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import useAuxiliaryMonths from '@/features/service-reports/hooks/useAuxiliaryMonths'
@@ -31,10 +31,6 @@ export default function useAuxiliaryMonthNotification(
         id: 'set_up',
         label: i18n.t('auxiliaryMonth.setUp'),
         onPress: () => {
-          analytics.capture('auxiliary_month_sheet_viewed', {
-            source: 'notifications_tray',
-            state: 'none',
-          })
           openAuxiliaryMonthSheet()
         },
       },

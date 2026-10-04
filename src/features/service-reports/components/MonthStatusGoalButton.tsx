@@ -6,7 +6,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 
@@ -53,8 +53,7 @@ const MonthStatusGoalButton = ({
   const highlighted = isStatusDifferent || isGoalOverridden
   const color = highlighted ? theme.colors.accent : theme.colors.textAlt
 
-  const open = (target: EditTarget, via: 'menu' | 'direct') => {
-    analytics.capture('month_card_edit_opened', { target, via })
+  const open = (target: EditTarget) => {
     if (target === 'status') onEditStatus()
     else onEditGoal()
   }
@@ -83,7 +82,6 @@ const MonthStatusGoalButton = ({
   if (statusLabel && hasGoal) {
     return (
       <PullDownMenu
-        analyticsSurface='month_card_status_goal'
         accessibilityLabel={accessibilityLabel}
         style={{ flexShrink: 1 }}
         actions={[
@@ -91,13 +89,13 @@ const MonthStatusGoalButton = ({
             id: 'change_status',
             title: i18n.t('changeStatusEllipsis'),
             systemImage: 'person.crop.circle',
-            onPress: () => open('status', 'menu'),
+            onPress: () => open('status'),
           },
           {
             id: 'change_goal',
             title: i18n.t('changeGoalEllipsis'),
             systemImage: 'target',
-            onPress: () => open('goal', 'menu'),
+            onPress: () => open('goal'),
           },
         ]}
       >
@@ -120,7 +118,7 @@ const MonthStatusGoalButton = ({
       noTransform
       accessibilityRole='button'
       accessibilityLabel={accessibilityLabel}
-      onPress={() => open(statusLabel ? 'status' : 'goal', 'direct')}
+      onPress={() => open(statusLabel ? 'status' : 'goal')}
       hitSlop={8}
       style={{
         flexDirection: 'row',

@@ -441,16 +441,14 @@ const VisitFormScreen = ({
                     return
                   }
 
-                  analytics.capture(
-                    isEditing ? 'visit_updated' : 'visit_created',
-                    {
+                  if (!isEditing)
+                    analytics.capture('visit_created', {
                       not_at_home: !!conversation.notAtHome,
                       bible_study: !!conversation.isBibleStudy,
                       has_follow_up: followUpEnabled,
                       reminder_enabled:
                         followUpEnabled && !!conversation.followUp?.notifyMe,
-                    }
-                  )
+                    })
 
                   await maybeRequestStoreReview({
                     calledGoecodeApiTimes,
@@ -512,7 +510,7 @@ const VisitFormScreen = ({
       description: i18n.t('deleteConversation_description'),
       onConfirm: () => {
         deleteConversation(conversation.id)
-        analytics.capture('visit_deleted')
+
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,

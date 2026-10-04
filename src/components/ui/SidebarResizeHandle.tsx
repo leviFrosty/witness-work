@@ -13,7 +13,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import {
   clampSidebarWidth,
@@ -57,23 +56,17 @@ export default function SidebarResizeHandle({
         dragging.value = false
         liveWidth.value = useSidebarPreferences.getState().width
         preview(null)
-        analytics.capture('sidebar_resize_cancelled')
       }
     },
     [dragging, liveWidth, preview]
   )
 
-  const commitWidth = (nextWidth: number, source: 'drag' | 'accessibility') => {
+  const commitWidth = (nextWidth: number) => {
     setWidth(nextWidth)
-    analytics.capture('sidebar_resized', {
-      mode: nextWidth < SIDEBAR_LABEL_MIN_WIDTH ? 'icons' : 'labels',
-      source,
-    })
   }
 
   const beginDrag = () => {
     dragActive.current = true
-    analytics.capture('sidebar_resize_started')
   }
   const previewCompact = (nextCompact: boolean) => {
     if (dragActive.current) preview(nextCompact)
@@ -81,10 +74,9 @@ export default function SidebarResizeHandle({
   const endDrag = (nextWidth: number) => {
     if (!dragActive.current) return
     dragActive.current = false
-    commitWidth(nextWidth, 'drag')
+    commitWidth(nextWidth)
   }
   const finalizeDrag = () => {
-    if (dragActive.current) analytics.capture('sidebar_resize_cancelled')
     dragActive.current = false
     preview(null)
   }
@@ -181,7 +173,7 @@ export default function SidebarResizeHandle({
           const nextWidth = clampSidebarWidth(
             width + (actionName === 'increment' ? 1 : -1) * SIDEBAR_RESIZE_STEP
           )
-          if (nextWidth !== width) commitWidth(nextWidth, 'accessibility')
+          if (nextWidth !== width) commitWidth(nextWidth)
         }}
         style={{
           position: 'absolute',

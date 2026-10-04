@@ -58,7 +58,6 @@ export default function BuddyNotificationRow({
   unread,
   onPress,
   onDismiss,
-  onAction,
 }: {
   entry: BuddyNotification
   unread: boolean
@@ -66,8 +65,6 @@ export default function BuddyNotificationRow({
   onPress?: () => void
   /** Absent while the entry awaits an answer. */
   onDismiss?: () => void
-  /** Records a tap on one of the row's actions (bounded name). */
-  onAction: (action: string) => void
 }) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
@@ -100,12 +97,10 @@ export default function BuddyNotificationRow({
     }
   }
   const reply = (answer: ShareReply) => {
-    onAction(answer)
     return run(() => buddiesEngine.replyToShare(entry.shareKey!, answer))
   }
   const open = onPress
     ? () => {
-        onAction('open')
         onPress()
       }
     : undefined
@@ -119,7 +114,6 @@ export default function BuddyNotificationRow({
           text: i18n.t('buddies_notWhoIInvited'),
           style: 'destructive',
           onPress: () => {
-            onAction('reject')
             return run(() => buddiesEngine.rejectClaim(inviteId))
           },
         },
@@ -136,7 +130,6 @@ export default function BuddyNotificationRow({
       <XView style={{ gap: 10, alignItems: 'flex-start' }}>
         <ContextMenu
           style={{ flex: 1 }}
-          analyticsSurface='buddy_notification'
           onPress={open}
           accessibilityLabel={title}
           actions={[
@@ -251,7 +244,6 @@ export default function BuddyNotificationRow({
           </Text>
           <Button
             onPress={() => {
-              onAction('change_answer')
               setChanging(true)
             }}
           >
@@ -270,7 +262,6 @@ export default function BuddyNotificationRow({
           <ActionButton
             disabled={busy}
             onPress={() => {
-              onAction('confirm')
               void run(() => buddiesEngine.confirmClaim(claim.inviteId))
             }}
           >

@@ -8,7 +8,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import { AUXILIARY_REDUCED_GOAL_HOURS } from '@/lib/monthStatus'
 import { usePreferences } from '@/stores/preferences'
@@ -69,7 +69,6 @@ const AuxiliaryMonthRow = ({
   const activeMonth = thisMonth.isAuxiliary ? thisMonth : nextMonth
 
   const openSheet = () => {
-    analytics.capture('auxiliary_month_sheet_viewed', { source, state })
     setOpen(true)
   }
 
@@ -90,7 +89,6 @@ const AuxiliaryMonthRow = ({
   return (
     <>
       <ContextMenu
-        analyticsSurface='auxiliary_month_row'
         accessibilityLabel={label}
         onPress={openSheet}
         actions={[

@@ -288,5 +288,4 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
 /** Hides the Settings notice explaining the account-change turn-off. */
 export function dismissICloudAccountChangeNotice(): void {
   usePreferences.setState({ iCloudAccountChangedAt: null })
-  analytics.capture('icloud_account_changed_notice_dismissed')
 }

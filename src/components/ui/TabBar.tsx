@@ -32,11 +32,8 @@ import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import { analytics } from '@/lib/analytics'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
-import { useSidebarPreferences } from '@/stores/sidebar'
-import { SIDEBAR_LABEL_MIN_WIDTH } from '@/lib/sidebarLayout'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -71,7 +68,6 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   const isDark = theme.colors.background === '#121212'
   const { hasSidebar, sidebarVisible, sidebarCompact, sidebarWidth } =
     useAdaptiveLayout({ liveResize: true })
-  const layoutVariant = hasSidebar ? 'sidebar' : 'bottom_bar'
   // Drags write this on the UI thread; React only sets it from saved changes.
   const liveSidebarWidth = useSharedValue(sidebarWidth)
   const sidebarWidthStyle = useAnimatedStyle(() => ({
@@ -87,18 +83,6 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
         : sidebarWidth
   }, [liveSidebarWidth, sidebarWidth])
 
-  useEffect(() => {
-    if (!hasSidebar) return
-    const { width, hidden } = useSidebarPreferences.getState()
-    analytics.capture('sidebar_viewed', {
-      visible: !hidden,
-      mode: width < SIDEBAR_LABEL_MIN_WIDTH ? 'icons' : 'labels',
-    })
-  }, [hasSidebar])
-
-  const openQuickActions = () =>
-    analytics.capture('quick_action_opened', { layout_variant: layoutVariant })
-
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key]
     const label = route.name
@@ -109,12 +93,6 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
     const shortcut = shortcutHints?.[route.key]
 
     const onPress = () => {
-      analytics.capture('navigation_destination_selected', {
-        from: state.routes[state.index].name,
-        to: route.name,
-        layout_variant: layoutVariant,
-        reselected: isFocused,
-      })
       const event = props.navigation.emit({
         type: 'tabPress',
         target: route.key,
@@ -310,7 +288,6 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
     <Button
       noTransform
       onPress={() => {
-        openQuickActions()
         setSheetOpen(true)
       }}
       accessibilityLabel={i18n.t('quickAction')}
@@ -481,7 +458,6 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                     <Button
                       noTransform
                       onPress={() => {
-                        if (!expanded) openQuickActions()
                         onPress()
                       }}
                       accessibilityLabel={i18n.t('quickAction')}

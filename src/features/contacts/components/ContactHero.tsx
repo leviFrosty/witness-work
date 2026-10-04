@@ -83,7 +83,6 @@ const ContactHero = ({
       >
         {isImageAvatar ? (
           <ContextMenu
-            analyticsSurface='contact_avatar'
             onPress={() => setViewerOpen(true)}
             accessibilityLabel={i18n.t('profilePicture')}
             actions={[
@@ -125,7 +124,6 @@ const ContactHero = ({
           // tap handler would swallow the long press, so Edit stays in the
           // More menu there.
           <ContextMenu
-            analyticsSurface='contact_avatar'
             actions={[
               {
                 id: 'edit',

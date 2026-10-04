@@ -5,12 +5,7 @@ import { Platform, View, type StyleProp, type ViewStyle } from 'react-native'
 
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
-import {
-  flattenMenu,
-  isSubmenu,
-  menuGroups,
-  runMenuAction,
-} from '@/components/ui/menuEntries'
+import { flattenMenu, isSubmenu, menuGroups } from '@/components/ui/menuEntries'
 import type {
   ContextMenuEntries,
   ContextMenuItem,
@@ -21,8 +16,6 @@ import androidMenuSymbols from '@/assets/android-menu-icons/symbols.json'
 type PullDownMenuProps = {
   /** Same entries as `ContextMenu`: falsy items hidden, arrays are groups. */
   actions: ContextMenuEntries
-  /** Sent with every chosen action as `context_menu_action`. */
-  analyticsSurface: string
   /** Announced on the trigger. */
   accessibilityLabel: string
   /** Custom trigger. Defaults to a plain ellipsis "More" button. */
@@ -120,7 +113,6 @@ export function nativeMenuActions(
  */
 const PullDownMenu = ({
   actions,
-  analyticsSurface,
   accessibilityLabel,
   children,
   triggerSize = 20,
@@ -146,8 +138,7 @@ const PullDownMenu = ({
       themeVariant={colorScheme ?? undefined}
       onPressAction={({ nativeEvent }) => {
         const chosen = leaves.find(({ key }) => key === nativeEvent.event)
-        if (chosen)
-          runMenuAction(chosen.action, chosen.key, analyticsSurface, 'tap')
+        if (chosen) chosen.action.onPress()
       }}
     >
       <View

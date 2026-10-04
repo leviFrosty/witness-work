@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import {
   Platform,
   Pressable,
@@ -17,6 +17,8 @@ import useUser from '@/hooks/useUser'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
+import { useProfileOverlay } from '@/stores/profileOverlay'
 import Avatar from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -181,21 +183,54 @@ function AccountMenu() {
     RootStackNavigation & HomeTabStackNavigation
   >()
   const { hasSidebar } = useAdaptiveLayout()
+  const theme = useTheme()
   const { name, avatar } = useUser()
   const hideDonateHeart = usePreferences((s) => s.hideDonateHeart)
+  const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
+  const setOverlayOrigin = useProfileOverlay((s) => s.setOrigin)
+  const showOverlay = useProfileOverlay((s) => s.show)
+  const avatarRef = useRef<View>(null)
+
+  // Hands the overlay its origin on idle so it can mount its heavy subtree
+  // before any tap — without this, the open spring snaps content in.
+  useEffect(() => {
+    if (!hasCompletedProfileSetup) return
+    const handle = requestIdleCallback(() => {
+      avatarRef.current?.measureInWindow((x, y, width, height) =>
+        setOverlayOrigin({ x, y, width, height })
+      )
+    })
+    return () => cancelIdleCallback(handle)
+  }, [hasCompletedProfileSetup, setOverlayOrigin])
+
+  const openProfile = () =>
+    avatarRef.current?.measureInWindow((x, y, width, height) =>
+      showOverlay({ x, y, width, height })
+    )
 
   return (
     <PullDownMenu
       analyticsSurface='account_menu'
-      accessibilityLabel={i18n.t('accountMenu')}
+      accessibilityLabel={
+        hasCompletedProfileSetup
+          ? i18n.t('accountMenu')
+          : `${i18n.t('accountMenu')}, ${i18n.t('profileIncompleteTitle')}`
+      }
       actions={[
         [
-          {
-            id: 'profile',
-            title: i18n.t('accountMenu_profile'),
-            systemImage: 'person.crop.circle',
-            onPress: () => navigation.navigate('PreferencesPublisher'),
-          },
+          hasCompletedProfileSetup
+            ? {
+                id: 'profile',
+                title: i18n.t('accountMenu_profile'),
+                systemImage: 'person.crop.circle',
+                onPress: openProfile,
+              }
+            : {
+                id: 'profile_setup',
+                title: i18n.t('profileIncompleteTitle'),
+                systemImage: 'person.crop.circle.badge.plus',
+                onPress: () => navigation.navigate('PreferencesPublisher'),
+              },
           {
             id: 'settings',
             title: i18n.t('settings'),
@@ -226,8 +261,24 @@ function AccountMenu() {
         ],
       ]}
     >
-      <View hitSlop={8}>
+      <View ref={avatarRef} hitSlop={8} collapsable={false}>
         <Avatar avatar={avatar} name={name} size={ROOT_HEADER_AVATAR_SIZE} />
+        {!hasCompletedProfileSetup && (
+          // Asks for profile setup until it's done.
+          <View
+            style={{
+              position: 'absolute',
+              top: -1,
+              right: -1,
+              width: 11,
+              height: 11,
+              borderRadius: 6,
+              borderWidth: 2,
+              borderColor: theme.colors.background,
+              backgroundColor: theme.colors.accent,
+            }}
+          />
+        )}
       </View>
     </PullDownMenu>
   )

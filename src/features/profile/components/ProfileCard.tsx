@@ -1,12 +1,10 @@
 import {
-  ChevronRight as ChevronRightIcon,
   Clock as ClockIcon,
   Heart as HeartIcon,
   Star as StarIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { useEffect, useRef, useState } from 'react'
-import { AppState, Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { InputProps } from 'tamagui'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
@@ -17,34 +15,9 @@ import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
-import Avatar from '@/components/ui/Avatar'
-import ProfileDetailOverlay, {
-  OriginRect,
-} from '@/features/profile/components/ProfileDetailOverlay'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
-import { pickGreeting } from '@/features/profile/lib/greeting'
 import MyTextInput from '@/components/ui/TextInput'
-import ContextMenu from '@/components/ui/ContextMenu'
-import { useNavigation } from '@react-navigation/native'
-import type { RootStackNavigation } from '@/types/rootStack'
-import type { HomeTabStackNavigation } from '@/types/homeStack'
-
-interface Props {
-  /** Disables interaction; used for the live preview inside onboarding. */
-  preview?: boolean
-  /**
-   * Turns the card into an inline editor: avatar becomes a picker trigger and
-   * name becomes a text input. Used by the profile setup sheet + onboarding
-   * step so the preview _is_ the form.
-   */
-  editable?: boolean
-  /**
-   * Called when the card is tapped in its incomplete state. The home screen
-   * wires this to open the existing-user profile setup sheet.
-   */
-  onPressIncomplete?: () => void
-}
 
 const daysSince = (from: Date): number =>
   Math.max(1, moment().diff(moment(from), 'days'))
@@ -97,115 +70,20 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
 const CARD_PADDING_V = 14
 const CARD_PADDING_H = 16
 
-const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
+/**
+ * Inline profile editor: the avatar is a picker and the name a text input, so
+ * the preview _is_ the form. Used by profile setup, onboarding, and Buddies.
+ */
+const ProfileCard = () => {
   const theme = useTheme()
   const { installedOn, tenureStartDate } = usePreferences()
   // Profile-shaped fields live in the Profile store (wave-3 store split).
   // ProfileCard reads + writes both stores because the card is the editing
   // surface for Profile while tenure remains a Preference.
-  const {
-    name,
-    avatar,
-    customAvatarBackground,
-    hasCompletedProfileSetup,
-    set: setProfile,
-  } = useProfile()
-  const { name: trimmedName, hasName } = useUser()
-  const { type: publisher, isInFullTimeService, showsYearTabs } = usePublisher()
+  const { name, avatar, customAvatarBackground, set: setProfile } = useProfile()
+  const { name: trimmedName } = useUser()
+  const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [origin, setOrigin] = useState<OriginRect | null>(null)
-  const [now, setNow] = useState(() => new Date())
-  const anchorRef = useRef<View>(null)
-  const navigation = useNavigation<RootStackNavigation>()
-  const homeNavigation = useNavigation<HomeTabStackNavigation>()
-
-  const isIncomplete = !preview && !editable && !hasCompletedProfileSetup
-
-  const handlePress = () => {
-    if (preview) return
-    if (isIncomplete) onPressIncomplete?.()
-  }
-
-  const handleTap = () => {
-    anchorRef.current?.measureInWindow((x, y, width, height) => {
-      setOrigin({ x, y, width, height })
-      setDetailOpen(true)
-    })
-  }
-
-  // Measures the card on home idle so ProfileDetailOverlay can mount its heavy
-  // subtree before any tap — without this, the open spring snaps content in.
-  useEffect(() => {
-    if (preview || editable || isIncomplete) return
-    const handle = requestIdleCallback(() => {
-      anchorRef.current?.measureInWindow((x, y, width, height) => {
-        setOrigin({ x, y, width, height })
-      })
-    })
-    return () => cancelIdleCallback(handle)
-  }, [preview, editable, isIncomplete])
-
-  // Re-read the clock on return so a card left open since morning doesn't
-  // still say "Good morning" in the evening.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setNow(new Date())
-    })
-    return () => subscription.remove()
-  }, [])
-
-  if (isIncomplete) {
-    return (
-      <Pressable onPress={handlePress}>
-        <Card
-          flexDirection='row'
-          style={{
-            alignItems: 'center',
-            gap: 12,
-            paddingVertical: CARD_PADDING_V,
-            paddingHorizontal: CARD_PADDING_H,
-          }}
-        >
-          <Avatar
-            avatar={{ type: 'none', value: '' }}
-            size={40}
-            background={theme.colors.accentBackground}
-          />
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: 15,
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t('profileIncompleteTitle')}
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.colors.textAlt,
-                marginTop: 1,
-              }}
-            >
-              {i18n.t('profileIncompleteSubtitle')}
-            </Text>
-          </View>
-          <LucideIcon
-            icon={ChevronRightIcon}
-            size={16}
-            color={theme.colors.textAlt}
-          />
-        </Card>
-      </Pressable>
-    )
-  }
-
-  const greetingVariant = pickGreeting(now)
-  const greeting = hasName
-    ? i18n.t(greetingVariant.key, { name: trimmedName })
-    : i18n.t(greetingVariant.noNameKey)
 
   const tenure: Tenure = (() => {
     if (isInFullTimeService && tenureStartDate) {
@@ -249,75 +127,50 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     }
   })()
 
-  const titleColor = theme.colors.text
-  const subtitleColor = theme.colors.textAlt
-  const tenureIconTint = tenure.tint
-
-  // The header already shows the avatar on Home; only the editor needs one.
-  const avatarEl = editable ? (
-    <AvatarPickerPopover
-      value={avatar}
-      onChange={(next) => setProfile({ avatar: next })}
-      name={trimmedName}
-      size={44}
-      backgroundValue={customAvatarBackground}
-      onBackgroundChange={(next) =>
-        setProfile({ customAvatarBackground: next })
-      }
-    />
-  ) : null
-
-  const nameEl = editable ? (
-    <MyTextInput
-      value={name}
-      onChangeText={(val) => setProfile({ name: val })}
-      placeholder={i18n.t('firstNamePlaceholder')}
-      placeholderTextColor={
-        theme.colors.textAlt as InputProps['placeholderTextColor']
-      }
-      autoCapitalize='words'
-      autoCorrect={false}
-      autoFocus={!name}
-      autoFocusNative={!name}
-      maxLength={40}
-      enterKeyHint='done'
-      textAlign='left'
-      style={{
-        fontFamily: theme.fonts.semiBold,
-        fontSize: 16,
-        color: titleColor,
-      }}
-    />
-  ) : (
-    <Text
-      style={{
-        fontFamily: theme.fonts.semiBold,
-        fontSize: 16,
-        color: titleColor,
-      }}
-      numberOfLines={2}
-    >
-      {greeting}
-    </Text>
-  )
-
-  const cardBody = (
+  return (
     <Card
       style={{
         paddingVertical: CARD_PADDING_V,
         paddingHorizontal: CARD_PADDING_H,
-        paddingRight: !preview && !editable ? 40 : CARD_PADDING_H,
         gap: 10,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        {avatarEl}
+        <AvatarPickerPopover
+          value={avatar}
+          onChange={(next) => setProfile({ avatar: next })}
+          name={trimmedName}
+          size={44}
+          backgroundValue={customAvatarBackground}
+          onBackgroundChange={(next) =>
+            setProfile({ customAvatarBackground: next })
+          }
+        />
         <View style={{ flex: 1 }}>
-          {nameEl}
+          <MyTextInput
+            value={name}
+            onChangeText={(val) => setProfile({ name: val })}
+            placeholder={i18n.t('firstNamePlaceholder')}
+            placeholderTextColor={
+              theme.colors.textAlt as InputProps['placeholderTextColor']
+            }
+            autoCapitalize='words'
+            autoCorrect={false}
+            autoFocus={!name}
+            autoFocusNative={!name}
+            maxLength={40}
+            enterKeyHint='done'
+            textAlign='left'
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              fontSize: 16,
+              color: theme.colors.text,
+            }}
+          />
           <Text
             style={{
               fontSize: 12,
-              color: subtitleColor,
+              color: theme.colors.textAlt,
               marginTop: 1,
             }}
           >
@@ -329,65 +182,14 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         <LucideIcon
           icon={tenure.icon}
           size={11}
-          color={tenureIconTint}
-          fill={tenure.tone === 'supporter' ? tenureIconTint : undefined}
+          color={tenure.tint}
+          fill={tenure.tone === 'supporter' ? tenure.tint : undefined}
         />
-        <Text style={{ fontSize: 12, color: subtitleColor }}>
+        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
           {tenure.text}
         </Text>
       </View>
-      {!preview && !editable && (
-        <View
-          style={{
-            position: 'absolute',
-            right: CARD_PADDING_H,
-            top: 0,
-            bottom: 0,
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon icon={ChevronRightIcon} size={16} color={subtitleColor} />
-        </View>
-      )}
     </Card>
-  )
-
-  if (preview || editable) {
-    return <View>{cardBody}</View>
-  }
-
-  return (
-    <>
-      <View ref={anchorRef} collapsable={false}>
-        <ContextMenu
-          analyticsSurface='profile_card'
-          onPress={handleTap}
-          accessibilityLabel={`${greeting}. ${i18n.t(publisher)}. ${tenure.text}`}
-          actions={[
-            {
-              id: 'edit_profile',
-              title: i18n.t('editProfile'),
-              systemImage: 'square.and.pencil',
-              onPress: () => navigation.navigate('PreferencesPublisher'),
-            },
-            // The Progress tab only exists for publishers who track time.
-            showsYearTabs && {
-              id: 'view_progress',
-              title: i18n.t('viewProgress'),
-              systemImage: 'chart.line.uptrend.xyaxis',
-              onPress: () => homeNavigation.navigate('Progress'),
-            },
-          ]}
-        >
-          {cardBody}
-        </ContextMenu>
-      </View>
-      <ProfileDetailOverlay
-        origin={origin}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      />
-    </>
   )
 }
 

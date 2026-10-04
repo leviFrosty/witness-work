@@ -55,7 +55,7 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           >
             {i18n.t('profileSetupDesc')}
           </Text>
-          <ProfileCard editable />
+          <ProfileCard />
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={handleContinue}>{i18n.t('continue')}</ActionButton>

@@ -434,9 +434,10 @@ Instrumented actions include:
 - Dropped-pin card: `map_dropped_pin_navigate_pressed` when its Navigate Here
   button opens directions (no properties, never coordinates).
 - Map cards: `map_cards_toggled` when the carousel (or the wide inspector) is
-  stowed or brought back, with `stowed` and `source` (`button`; `peek_tap` or
-  `peek_swipe` from the stowed cards' peek; `pin` when a pin tap brings them
-  back; or `search` when opening search does).
+  stowed or brought back, with `stowed` and `source` (`swipe` when the phone
+  carousel is swiped down; `button` from the wide inspector's control;
+  `peek_tap` or `peek_swipe` from the stowed cards' handle; `pin` when a pin
+  tap brings them back; or `search` when opening search does).
 - Buddies "Plan the Same Time": `buddy_plan_same_time_opened` when a buddy's
   Plan opens a new prefilled Plan, with `source` (`buddy_detail` or
   `buddy_plans_for_day`) and `has_start_time`. Never the buddy, day, or times;

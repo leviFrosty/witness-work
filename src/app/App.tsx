@@ -4,7 +4,7 @@ import 'react-native-gesture-handler'
 import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { ActivityIndicator, useColorScheme, View } from 'react-native'
+import { useColorScheme } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
@@ -17,6 +17,8 @@ import SurveyProvider from '@/providers/SurveyProvider'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
+import LaunchSplash from '@/app/launch/LaunchSplash'
+import { markLaunched } from '@/app/launch/launchState'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
@@ -67,16 +69,10 @@ export default function App() {
   useDeletedContactRetention(hasMigrated)
   useTimeEntryCreditNormalization(hasMigrated)
 
-  if (!hasMigrated) {
-    return (
-      <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-        <ActivityIndicator />
-      </View>
-    )
-  }
-
-  if (!fontsLoaded) {
-    return null
+  // Rendering anything hides the native splash, so keep showing its exact
+  // replica until the app is ready — the first screen then picks up from it.
+  if (!hasMigrated || !fontsLoaded) {
+    return <LaunchSplash />
   }
 
   try {
@@ -95,7 +91,10 @@ export default function App() {
                   key={devRemountKey}
                   ref={navigationRef}
                   linking={linking}
+                  // Shown while deep links resolve, before the first screen.
+                  fallback={<LaunchSplash />}
                   onReady={() => {
+                    markLaunched()
                     const initialScreen =
                       navigationRef.current?.getCurrentRoute()?.name
                     routeNameRef.current = initialScreen

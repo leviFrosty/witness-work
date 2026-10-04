@@ -255,6 +255,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           image: './src/assets/splash.png',
           resizeMode: 'contain',
+          // Keep in sync with SPLASH_BACKGROUND_COLOR (src/constants/brandMark.ts),
+          // which the in-app splash replica and onboarding welcome draw.
           backgroundColor: '#4BD27C',
           android: {
             // A 160dp mark on Android's 288dp canvas, inside its 192dp safe circle.

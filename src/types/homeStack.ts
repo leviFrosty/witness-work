@@ -6,7 +6,7 @@ export type ContactsView = 'list' | 'map'
 export type HomeTabStackParamList = {
   Home: undefined
   /** `view` opens a workspace and remembers it, e.g. the Map from Home. */
-  Contacts: { view?: ContactsView } | undefined
+  Contacts: { view?: ContactsView; focusSearch?: boolean } | undefined
   Tools: undefined
   Progress:
     | {

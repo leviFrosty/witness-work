@@ -20,6 +20,41 @@ Lifecycle autocapture sends `Application Installed`, `Updated`, `Opened` and
 `Became Active`; `Application Backgrounded` is dropped in `before_send` to save
 event volume.
 
+## iPad menu bar
+
+`menu_bar_available` records when the native iPadOS menu is configured after
+setup, once per app mount. It means the commands were available, not that someone
+opened a menu. `menu_bar_action_selected` and `menu_bar_action_completed` carry
+only the bounded `action` identifier: `preferences`, `add_time`, `new_contact`,
+`new_plan`, `backup_restore`, `find_contact`, `help_center`, `whats_new`,
+`contact_support`, or `check_update`. Completion means a destination was opened
+or an update check returned; it does not mean a form was saved, a backup was
+restored, or an email was sent. `outcome` is `opened`, `available`, `up_to_date`,
+`unavailable`, `failed`, or `busy`. `menu_bar_failed` identifies `stage`
+(`configure` or `action`) and optionally the action, without exception text.
+Native menu opening/dismissal is not exposed by this bridge; do not infer
+abandonment from availability without a selection.
+
+The existing Help Center events also accept `source: menu_bar`. Update checks
+from Settings and Help share `update_check_started`, `update_check_completed`
+(`outcome: available`, `up_to_date`, or `unavailable`), and
+`update_check_failed` (`error_code: check_failed`), with `source: settings` or
+`menu_bar`. These measure checking for a compatible Expo update; installation
+is handled by the existing Update screen. No search terms, contact IDs, email
+contents, navigation parameters, or update exception messages are captured.
+
+### Navigation keyboard shortcuts
+
+`navigation_shortcuts_revealed` records each Command hold that reveals the
+navigation hints, with `layout_variant: sidebar` or `bottom_bar`. Keyboard
+navigation also uses `navigation_destination_selected` with `source: keyboard`.
+`navigation_shortcut_completed` carries the visible `destination`, layout
+variant, and `outcome: navigated`, `reselected`, or `prevented`. Completion means
+the navigation action was dispatched, not that data was saved. A Command hold
+without a selection is discovery, so it is not treated as abandonment.
+`navigation_shortcuts_failed` carries only `stage: configure` or `action`.
+No normal key presses, typed text, or navigation parameters are captured.
+
 ## Development logging
 
 Analytics uses the shared `logger` for diagnostics and its enablement policy for
@@ -219,13 +254,13 @@ interaction and close, offering failures, purchase cancellation/failure, and
 restore outcomes. It stays attached to the paywall route, so later screens do
 not overwrite the original screen. Direct paywall entry has no gate attribution.
 
-| Feature             | `gate_surface`       | Placement                                                      |
-| ------------------- | -------------------- | -------------------------------------------------------------- |
-| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                 |
-| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.             |
-| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it. |
-| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                |
-| `iCloudSync`        | `icloud_sync`        | Sync gate in `PreferencesiCloud` (iOS only).                   |
+| Feature             | `gate_surface`       | Placement                                                                    |
+| ------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                               |
+| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                           |
+| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
+| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
+| `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first

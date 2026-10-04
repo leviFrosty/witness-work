@@ -26,7 +26,11 @@ import { Input, InputProps } from 'tamagui'
 import Animated from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
-import { useFocusEffect, useNavigation } from '@react-navigation/native'
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
@@ -79,12 +83,16 @@ import { trackListScroll } from '@/features/contacts/lib/listHeaderCollapse'
 
 const ContactsScreen = ({
   renderMap,
+  focusSearch,
+  onSearchFocused,
 }: {
   /**
    * The Map workspace, composed in by the app tier. `topInset` is the height of
    * the header floating over it; `onExplore` compacts that header.
    */
   renderMap: (props: { topInset: number; onExplore: () => void }) => ReactNode
+  focusSearch?: boolean
+  onSearchFocused?: () => void
 }) => {
   const theme = useTheme()
   const { isWide, hasSidebar } = useAdaptiveLayout()
@@ -124,6 +132,17 @@ const ContactsScreen = ({
   const search = useContactsSearchStore((s) => s.search)
   const setSearch = useContactsSearchStore((s) => s.setSearch)
   const searchInputRef = useRef<TextInput>(null)
+  const isFocused = useIsFocused()
+
+  useEffect(() => {
+    if (!focusSearch || !isFocused || showsMap) return
+    const frame = requestAnimationFrame(() => {
+      if (!searchInputRef.current) return
+      searchInputRef.current.focus()
+      onSearchFocused?.()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusSearch, isFocused, showsMap, onSearchFocused])
   const listRef = useRef<FlashListRef<Contact>>(null)
   const previousIsWide = useRef(isWide)
   const flashListDrawDistance = Math.ceil(windowHeight)

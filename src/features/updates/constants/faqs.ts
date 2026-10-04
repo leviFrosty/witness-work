@@ -33,6 +33,8 @@ export interface FAQEntry {
  */
 export const FAQS: FAQEntry[] = [
   { id: 'tabletSidebar', category: 'customization' },
+  { id: 'menuBar', category: 'general' },
+  { id: 'navigationShortcuts', category: 'general' },
   {
     id: 'timeRollover',
     category: 'time',

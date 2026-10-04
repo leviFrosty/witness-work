@@ -21,6 +21,7 @@ import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
 import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
+import SystemMenu from '@/app/menu-bar/SystemMenu'
 import NotesImportAttestPreparation from '@/features/notes-import/components/NotesImportAttestPreparation'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
@@ -52,7 +53,7 @@ export default function App() {
   useInitializeFeatureFlags()
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
-  useUserLocalePrefs()
+  const { loadedLocale } = useUserLocalePrefs()
   const fontsLoaded = useAppFonts()
   const routeNameRef = useRef<string | undefined>(undefined)
   const devRemountKey = useDevRemountKey()
@@ -131,6 +132,7 @@ export default function App() {
                             <BuddiesRuntime />
                             <NotificationResponseListener />
                             <SilentForegroundAlerts />
+                            <SystemMenu language={loadedLocale} />
                             <RootStackComponent />
                           </SurveyProvider>
                         </AnimationViewProvider>

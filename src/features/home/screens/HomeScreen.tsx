@@ -1,11 +1,7 @@
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import useConversations from '@/stores/conversationStore'
-import { upcomingFollowUpConversations } from '@/lib/conversations'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
-import { isFollowUpCardDismissed } from '@/features/visits/lib/followUpCards'
-import useContacts from '@/stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
@@ -70,14 +66,11 @@ export const HomeScreen = () => {
       setRefreshing(false)
     }
   }, [])
-  const { conversations } = useConversations()
-  const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
   const {
     homeScreenElements,
     homeScreenElementsOrder,
-    dismissedFollowUpCards,
     mileageTrackingEnabled,
   } = usePreferences()
   const effectiveOrder = useMemo(
@@ -174,24 +167,6 @@ export const HomeScreen = () => {
   // the sheet stays mounted-but-inert for one release window; removing the
   // component entirely is deferred to a follow-up.
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
-  const approachingConversations = useMemo(
-    () =>
-      upcomingFollowUpConversations({
-        currentTime: new Date(),
-        conversations,
-        withinNextDays: 1,
-      }),
-    [conversations]
-  )
-
-  // `upcomingFollowUpConversations` already drops visits without an active
-  // follow-up via `isAppointment`, so we only need to narrow to active
-  // (non-deleted/non-dismissed) contacts here.
-  const approachingConvosWithActiveContacts = useMemo(() => {
-    const activeIds = new Set(contacts.map((c) => c.id))
-    return approachingConversations.filter((c) => activeIds.has(c.contact.id))
-  }, [contacts, approachingConversations])
-
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
@@ -237,21 +212,8 @@ export const HomeScreen = () => {
               switch (key) {
                 case 'approachingConversations':
                   // Missed Follow-ups live in the notifications tray.
-                  if (
-                    !homeScreenElements.approachingConversations ||
-                    approachingConvosWithActiveContacts.length === 0 ||
-                    isFollowUpCardDismissed(
-                      approachingConvosWithActiveContacts,
-                      dismissedFollowUpCards?.approaching
-                    )
-                  )
-                    return null
-                  return (
-                    <ApproachingConversations
-                      key={key}
-                      conversations={approachingConvosWithActiveContacts}
-                    />
-                  )
+                  if (!homeScreenElements.approachingConversations) return null
+                  return <ApproachingConversations key={key} />
                 case 'tabletServiceYearSummary':
                   if (
                     !isTablet ||

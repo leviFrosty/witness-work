@@ -461,7 +461,7 @@ const VisitFormScreen = ({
                     updateLastTimeRequestedStoreReview,
                   })
 
-                  if (params.returnToContacts) {
+                  if (params.returnToContacts || params.returnOnSave) {
                     navigation.goBack()
                   } else if (isEditing) {
                     navigation.pop()

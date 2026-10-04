@@ -4,11 +4,12 @@ import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
+  followUpAnswer,
+  followUpCardItems,
   isAppointment,
   isPlaceholderFollowUp,
   overdueFollowUpConversations,
   stripPlaceholderFollowUp,
-  upcomingFollowUpConversations,
 } from '@/lib/conversations'
 import { Visit } from '@/types/visit'
 import { describe, expect, it } from 'vitest'
@@ -130,6 +131,29 @@ describe('lib/conversations', () => {
         overdueFollowUpConversations({
           currentTime: now,
           conversations: [none, dismissed],
+          lookbackDays: 30,
+        })
+      ).toEqual([])
+    })
+
+    it('excludes a follow-up answered by a Visit earlier that day', () => {
+      const visit = baseVisit({
+        id: 'a',
+        date: moment(now).subtract(3, 'days').toDate(),
+        followUp: {
+          date: moment(now).subtract(1, 'day').hour(14).toDate(),
+          notifyMe: false,
+        },
+      })
+      const early = baseVisit({
+        id: 'b',
+        date: moment(now).subtract(1, 'day').hour(13).toDate(),
+        notAtHome: true,
+      })
+      expect(
+        overdueFollowUpConversations({
+          currentTime: now,
+          conversations: [visit, early],
           lookbackDays: 30,
         })
       ).toEqual([])
@@ -307,157 +331,117 @@ describe('lib/conversations', () => {
     })
   })
 
-  describe('upcomingFollowUpConversations', () => {
-    const startOfDay = moment().startOf('day').toDate()
-    const conversationsYesterday: Visit[] = [
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).subtract(3, 'days').toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '-1',
-        isBibleStudy: true,
-      },
-    ]
-    const morningConversations: Visit[] = [
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).hour(10).toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '2',
-        isBibleStudy: true,
-      },
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).hour(3).toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '1',
-        isBibleStudy: true,
-      },
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).hour(16).toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '3',
-        isBibleStudy: true,
-      },
-    ]
-    const conversationsInTheEvening: Visit[] = [
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).hour(17).toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '4',
-        isBibleStudy: true,
-      },
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).hour(18).toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-
-        id: '5',
-        isBibleStudy: true,
-      },
-    ]
-    const conversationsTomorrow: Visit[] = [
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay).add('1', 'day').toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '6',
-        isBibleStudy: true,
-      },
-      {
-        contact: {
-          id: contact.id,
-        },
-        followUp: {
-          date: moment(startOfDay)
-            .add('1', 'day')
-            .endOf('day')
-            .subtract(1, 'second')
-            .toDate(),
-          notifyMe: true,
-        },
-        date: new Date(),
-        id: '7',
-        isBibleStudy: true,
-      },
-    ]
-
-    const allConversations: Visit[] = [
-      ...conversationsYesterday,
-      ...morningConversations,
-      ...conversationsInTheEvening,
-      ...conversationsTomorrow,
-    ]
-
-    const conversationsToday = [
-      ...morningConversations,
-      ...conversationsInTheEvening,
-    ]
-
-    describe('in the morning', () => {
-      it('should returns the conversations for the entire day', () => {
-        const upcoming = upcomingFollowUpConversations({
-          currentTime: startOfDay,
-          conversations: allConversations,
-          withinNextDays: 1,
-        })
-        expect(upcoming).toEqual(conversationsToday)
-      })
+  describe('followUpAnswer', () => {
+    const followUpAt = moment('2026-09-20T14:30:00').toDate()
+    const source = baseVisit({
+      id: 'source',
+      date: moment('2026-09-13T10:00:00').toDate(),
+      followUp: { date: followUpAt, notifyMe: true },
     })
 
-    describe('in the evening', () => {
-      it('should only return the conversations for this evening and tomorrow', () => {
-        const upcoming = upcomingFollowUpConversations({
-          currentTime: moment(startOfDay).hour(17).toDate(),
-          conversations: allConversations,
-          withinNextDays: 1,
-        })
-
-        const thisEveningAndTomorrow = [
-          ...[morningConversations[2]],
-          ...conversationsInTheEvening,
-          ...conversationsTomorrow,
-        ]
-
-        expect(upcoming).toEqual(thisEveningAndTomorrow)
+    it('is the earliest later Visit on the Follow-up day or after', () => {
+      const early = baseVisit({
+        id: 'early',
+        date: moment('2026-09-20T14:00:00').toDate(),
+        notAtHome: true,
       })
+      const later = baseVisit({
+        id: 'later',
+        date: moment('2026-09-21T10:00:00').toDate(),
+      })
+      expect(followUpAnswer(source, [source, later, early])).toBe(early)
+    })
+
+    it('ignores Visits before the Follow-up day', () => {
+      const dayBefore = baseVisit({
+        id: 'before',
+        date: moment('2026-09-19T18:00:00').toDate(),
+      })
+      expect(followUpAnswer(source, [source, dayBefore])).toBeUndefined()
+    })
+
+    it('ignores Visits not after the one that set the Follow-up', () => {
+      const sameDay = baseVisit({
+        id: 'sameDaySource',
+        date: moment('2026-09-20T10:00:00').toDate(),
+        followUp: { date: followUpAt, notifyMe: true },
+      })
+      const earlier = baseVisit({
+        id: 'earlier',
+        date: moment('2026-09-20T09:00:00').toDate(),
+      })
+      expect(followUpAnswer(sameDay, [sameDay, earlier])).toBeUndefined()
+    })
+  })
+
+  describe('followUpCardItems', () => {
+    const day = moment('2026-09-20T00:00:00')
+    const at = (hour: number, dayOffset = 0) =>
+      day.clone().add(dayOffset, 'days').hour(hour).toDate()
+    const followUp = (id: string, contactId: string, date: Date): Visit => ({
+      id,
+      contact: { id: contactId },
+      date: moment(date).subtract(7, 'days').toDate(),
+      isBibleStudy: false,
+      followUp: { date, notifyMe: true },
+    })
+    const visit = (id: string, contactId: string, date: Date): Visit => ({
+      id,
+      contact: { id: contactId },
+      date,
+      isBibleStudy: false,
+    })
+
+    const morning = followUp('morning', 'a', at(9))
+    const noon = followUp('noon', 'b', at(12))
+    const evening = followUp('evening', 'c', at(19))
+    const tomorrow = followUp('tomorrow', 'd', at(10, 1))
+    const yesterday = followUp('yesterday', 'e', at(10, -1))
+    const answer = visit('answer', 'a', at(9))
+    const all = [tomorrow, evening, noon, morning, yesterday, answer]
+
+    it("lists today's Follow-ups in time order, with their answers", () => {
+      const items = followUpCardItems({
+        currentTime: at(11),
+        conversations: all,
+      })
+      expect(items).toEqual([
+        { visit: morning, answeredBy: answer },
+        { visit: noon, answeredBy: undefined },
+        { visit: evening, answeredBy: undefined },
+      ])
+    })
+
+    it('drops open Follow-ups once missed but keeps answered ones', () => {
+      const items = followUpCardItems({
+        currentTime: moment(at(16)).add(30, 'minutes').toDate(),
+        conversations: all,
+      })
+      expect(items.map((i) => i.visit.id)).toEqual(['morning', 'evening'])
+    })
+
+    it("adds tomorrow's Follow-ups from 5 PM", () => {
+      const items = followUpCardItems({
+        currentTime: at(17),
+        conversations: all,
+      })
+      expect(items.map((i) => i.visit.id)).toEqual([
+        'morning',
+        'evening',
+        'tomorrow',
+      ])
+    })
+
+    it('skips dismissed Follow-ups', () => {
+      const dismissed: Visit = {
+        ...noon,
+        followUp: { ...noon.followUp!, dismissed: true },
+      }
+      const items = followUpCardItems({
+        currentTime: at(11),
+        conversations: [dismissed],
+      })
+      expect(items).toEqual([])
     })
   })
 })

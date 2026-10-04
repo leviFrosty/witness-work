@@ -1,7 +1,11 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
-import { isAppointment } from '@/lib/conversations'
+import {
+  followUpAnswer,
+  isAppointment,
+  visitsByContact,
+} from '@/lib/conversations'
 import { formatCalendar, formatMonthDayCompact, formatTime } from '@/lib/dates'
 
 export type WidgetAppointment = {
@@ -86,15 +90,9 @@ export function buildAppointments(
 
   const contactsById = new Map(args.contacts.map((c) => [c.id, c]))
 
-  // Index conversation start dates per contact so we can suppress overdue
-  // follow-ups that have been superseded by a later visit. Mirrors
-  // `overdueFollowUpConversations` in src/lib/conversations.ts.
-  const datesByContact = new Map<string, Array<{ id: string; ts: number }>>()
-  for (const c of args.conversations) {
-    const list = datesByContact.get(c.contact.id) ?? []
-    list.push({ id: c.id, ts: moment(c.date).valueOf() })
-    datesByContact.set(c.contact.id, list)
-  }
+  // Answered follow-ups (a later visit that day) are done, matching the app's
+  // Home card and missed list.
+  const byContact = visitsByContact(args.conversations)
 
   const inWindow = args.conversations
     .filter((conv) => {
@@ -102,16 +100,7 @@ export function buildAppointments(
       const date = conv.followUp?.date
       if (!date) return false
       if (!moment(date).isBetween(min, max, undefined, '[]')) return false
-
-      // Only the overdue side can be "already handled" by a later
-      // conversation — future follow-ups can't be superseded yet.
-      const followUpTs = moment(date).valueOf()
-      if (followUpTs >= now.valueOf()) return true
-      const siblings = datesByContact.get(conv.contact.id) ?? []
-      const superseded = siblings.some(
-        (s) => s.id !== conv.id && s.ts >= followUpTs
-      )
-      return !superseded
+      return !followUpAnswer(conv, byContact.get(conv.contact.id) ?? [])
     })
     .map((conv): WidgetAppointment | null => {
       const contact = contactsById.get(conv.contact.id)

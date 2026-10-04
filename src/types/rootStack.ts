@@ -12,6 +12,8 @@ export type RootStackParamList = {
     fromContactForm?: boolean
     /** Return to the persistent Contacts detail pane after saving. */
     returnToContacts?: boolean
+    /** Go back to the opener after saving, e.g. Home's Follow-up card. */
+    returnOnSave?: boolean
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
   'Contact Form': {

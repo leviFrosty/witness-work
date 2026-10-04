@@ -2651,7 +2651,7 @@
     "title": "Service History",
     "edit": "Edit Service History",
     "settingsRow": "Service History",
-    "settingsRow_description": "Set your status for past months and add time you didn't log.",
+    "settingsRow_description": "Fix past months' status and hours so your year totals and goals are accurate.",
     "description": "Set your status for each month and add time you didn't log. Each month's goal and Service Report follow its status.",
     "previousYear": "Previous service year",
     "nextYear": "Next service year",

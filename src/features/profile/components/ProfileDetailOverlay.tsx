@@ -26,14 +26,12 @@ import Animated, {
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
-import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
-import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useConversations from '@/stores/conversationStore'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
-import Avatar from '@/components/ui/Avatar'
+import ProfileCard from '@/features/profile/components/ProfileCard'
 import { RootStackNavigation } from '@/types/rootStack'
 import ContributionGraph from '@/features/profile/components/ContributionGraph'
 import MonthlyRoutine from '@/features/profile/components/MonthlyRoutine'
@@ -110,14 +108,12 @@ const ProfileDetailOverlay = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
   const { tenureStartDate } = usePreferences()
-  const { avatar } = useProfile()
 
   const handleEdit = () => {
     onClose()
     navigation.navigate('PreferencesPublisher')
   }
   const { type: publisher, tracksTenure, entryMode } = usePublisher()
-  const { name: trimmedName } = useUser()
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
   const daily = useDailyMinutes()
@@ -262,32 +258,7 @@ const ProfileDetailOverlay = () => {
                 />
                 <IconButton icon={XIcon} size='xl' onPress={onClose} />
               </View>
-              <View
-                style={{
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 4,
-                }}
-              >
-                <Avatar avatar={avatar} name={trimmedName} size={96} />
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: 22,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {trimmedName || i18n.t('profileGreetingNoName')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t(publisher)}
-                </Text>
-              </View>
+              <ProfileCard readOnly />
 
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Stat

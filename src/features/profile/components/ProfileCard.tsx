@@ -16,6 +16,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
+import Avatar from '@/components/ui/Avatar'
 import i18n from '@/lib/locales'
 import MyTextInput from '@/components/ui/TextInput'
 
@@ -70,11 +71,17 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
 const CARD_PADDING_V = 14
 const CARD_PADDING_H = 16
 
+interface Props {
+  /** Shows the profile without editing; used by the profile overlay. */
+  readOnly?: boolean
+}
+
 /**
  * Inline profile editor: the avatar is a picker and the name a text input, so
  * the preview _is_ the form. Used by profile setup, onboarding, and Buddies.
+ * `readOnly` renders the same card as a plain display.
  */
-const ProfileCard = () => {
+const ProfileCard = ({ readOnly }: Props) => {
   const theme = useTheme()
   const { installedOn, tenureStartDate } = usePreferences()
   // Profile-shaped fields live in the Profile store (wave-3 store split).
@@ -136,37 +143,54 @@ const ProfileCard = () => {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <AvatarPickerPopover
-          value={avatar}
-          onChange={(next) => setProfile({ avatar: next })}
-          name={trimmedName}
-          size={44}
-          backgroundValue={customAvatarBackground}
-          onBackgroundChange={(next) =>
-            setProfile({ customAvatarBackground: next })
-          }
-        />
-        <View style={{ flex: 1 }}>
-          <MyTextInput
-            value={name}
-            onChangeText={(val) => setProfile({ name: val })}
-            placeholder={i18n.t('firstNamePlaceholder')}
-            placeholderTextColor={
-              theme.colors.textAlt as InputProps['placeholderTextColor']
+        {readOnly ? (
+          <Avatar avatar={avatar} name={trimmedName} size={44} />
+        ) : (
+          <AvatarPickerPopover
+            value={avatar}
+            onChange={(next) => setProfile({ avatar: next })}
+            name={trimmedName}
+            size={44}
+            backgroundValue={customAvatarBackground}
+            onBackgroundChange={(next) =>
+              setProfile({ customAvatarBackground: next })
             }
-            autoCapitalize='words'
-            autoCorrect={false}
-            autoFocus={!name}
-            autoFocusNative={!name}
-            maxLength={40}
-            enterKeyHint='done'
-            textAlign='left'
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 16,
-              color: theme.colors.text,
-            }}
           />
+        )}
+        <View style={{ flex: 1 }}>
+          {readOnly ? (
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 16,
+                color: theme.colors.text,
+              }}
+              numberOfLines={1}
+            >
+              {trimmedName || i18n.t('profileGreetingNoName')}
+            </Text>
+          ) : (
+            <MyTextInput
+              value={name}
+              onChangeText={(val) => setProfile({ name: val })}
+              placeholder={i18n.t('firstNamePlaceholder')}
+              placeholderTextColor={
+                theme.colors.textAlt as InputProps['placeholderTextColor']
+              }
+              autoCapitalize='words'
+              autoCorrect={false}
+              autoFocus={!name}
+              autoFocusNative={!name}
+              maxLength={40}
+              enterKeyHint='done'
+              textAlign='left'
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 16,
+                color: theme.colors.text,
+              }}
+            />
+          )}
           <Text
             style={{
               fontSize: 12,

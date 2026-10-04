@@ -126,6 +126,14 @@ Stable step IDs:
 `intentPicker`, `profileSetup`, `pioneerDate`, `yourPlanPreview`, `notifications`,
 `defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
 
+The `hero` step opens with a welcome animation that picks up from the splash
+screen when it is the first screen after launch. `onboarding_hero_intro_skipped`
+records a tap that fast-forwards it, with `elapsed_ms` since the hero mounted.
+It fires at most once per launch; any other visit to the hero (Back from the
+next step, a restarted onboarding) settles in quickly and cannot be skipped.
+Compare it with the hero's `onboarding_step_completed` `elapsed_ms` to judge
+whether the animation is holding people up.
+
 Notification permission outcomes and import availability/outcomes help distinguish
 friction from an intentional skip. iCloud Restore and a JSON backup restore from
 the `pickUpWhereLeftOff` chooser complete onboarding directly, with

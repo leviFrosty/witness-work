@@ -7,6 +7,7 @@ import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '@/features/updates/components/WhatsNewSheet'
 import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
+import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
 import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '@/app/navigation/ToolsScreen'
 import ProgressScreen from '@/features/progress/screens/ProgressScreen'
@@ -176,6 +177,8 @@ const HomeTabStack = () => {
           <Tab.Screen name='Settings' component={SettingsSplitScreen} />
         )}
       </Tab.Navigator>
+      {/* One instance for every root header's account menu. */}
+      <ProfileDetailOverlay />
       {/* Mounted last so it overlays the tab bar. The global ConfettiProvider
           renders above this tree, so confetti drifts in front of the title — a
           deliberate cinematic choice. */}

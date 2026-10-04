@@ -1,13 +1,24 @@
 /**
- * Picks the Home profile card's greeting from the clock alone — time of day,
- * weekday, and day of month. Never from usage history ("long time no see"), and
- * never from holidays.
+ * Picks Home's greeting. It never names the publisher (only a full name is
+ * stored) and never reads absence ("long time no see") or holidays. In order:
+ * monthly goal reached, a logging streak, a calendar moment, the time of day.
  */
 
 import type { TranslationKey } from '@/lib/locales'
 
-/** `key` takes `{{name}}`; `noNameKey` is for publishers without a name. */
-export type GreetingVariant = { key: TranslationKey; noNameKey: TranslationKey }
+export type GreetingContext = {
+  now: Date
+  /** Consecutive days with logged time, ending today or yesterday. */
+  streakDays: number
+  /** This month's Monthly Goal is set and met. */
+  goalReached: boolean
+}
+
+/** `count` fills `{{count}}` in streak greetings. */
+export type Greeting = { key: TranslationKey; count?: number }
+
+export const STREAK_MIN_DAYS = 3
+export const LONG_STREAK_DAYS = 7
 
 type Period =
   | 'lateNight'
@@ -17,52 +28,40 @@ type Period =
   | 'evening'
   | 'night'
 
-const named = (key: TranslationKey, noNameKey: TranslationKey) => ({
-  key,
-  noNameKey,
-})
-const unnamed = (key: TranslationKey) => ({ key, noNameKey: key })
-
-const VARIANTS: Record<Period, GreetingVariant[]> = {
-  lateNight: [
-    named('greetingStillUp', 'greetingStillUpNoName'),
-    unnamed('greetingNightOwl'),
-    named('greetingMidnightOil', 'greetingMidnightOilNoName'),
-  ],
+const BY_PERIOD: Record<Period, TranslationKey[]> = {
+  lateNight: ['greetingNightOwl', 'greetingStillUp', 'greetingMidnightOil'],
   earlyMorning: [
-    named('greetingUpEarly', 'greetingUpEarlyNoName'),
-    named('greetingRiseAndShine', 'greetingRiseAndShineNoName'),
-    unnamed('greetingEarlyBird'),
+    'greetingUpEarly',
+    'greetingRiseAndShine',
+    'greetingEarlyBird',
   ],
   morning: [
-    named('greetingGoodMorning', 'greetingGoodMorningNoName'),
-    named('greetingMorning', 'greetingMorningNoName'),
-    named('greetingMorningGoingWell', 'greetingMorningGoingWellNoName'),
+    'greetingGoodMorning',
+    'greetingFreshStart',
+    'greetingMorningGoingWell',
   ],
   afternoon: [
-    named('greetingGoodAfternoon', 'greetingGoodAfternoonNoName'),
-    named('greetingHeyThere', 'greetingHeyThereNoName'),
-    named('greetingDayGoingWell', 'greetingDayGoingWellNoName'),
+    'greetingGoodAfternoon',
+    'greetingHeyThere',
+    'greetingDayGoingWell',
   ],
   evening: [
-    named('greetingGoodEvening', 'greetingGoodEveningNoName'),
-    named('greetingEvening', 'greetingEveningNoName'),
-    named('greetingHadGoodDay', 'greetingHadGoodDayNoName'),
+    'greetingGoodEvening',
+    'greetingHadGoodDay',
+    'greetingEveningWelcome',
   ],
-  night: [
-    named('greetingWindingDown', 'greetingWindingDownNoName'),
-    named('greetingGoodEvening', 'greetingGoodEveningNoName'),
-    unnamed('greetingNightOwl'),
-  ],
+  night: ['greetingWindingDown', 'greetingGoodEvening', 'greetingNightOwl'],
 }
 
-const PERIOD_ORDER: Period[] = [
-  'lateNight',
-  'earlyMorning',
-  'morning',
-  'afternoon',
-  'evening',
-  'night',
+const GOAL_REACHED: TranslationKey[] = [
+  'greetingGoalReached',
+  'greetingGoalNicelyDone',
+  'greetingGoalWayToGo',
+]
+const STREAK: TranslationKey[] = ['greetingBusyBee', 'greetingOnARoll']
+const LONG_STREAK: TranslationKey[] = [
+  'greetingLongStreak',
+  'greetingLookAtYouGo',
 ]
 
 const periodOf = (hour: number): Period => {
@@ -74,41 +73,48 @@ const periodOf = (hour: number): Period => {
   return 'night'
 }
 
-const SPECIALS = {
-  newMonth: named('greetingNewMonth', 'greetingNewMonthNoName'),
-  sunday: named('greetingHappySunday', 'greetingHappySundayNoName'),
-  monday: named('greetingHappyMonday', 'greetingHappyMondayNoName'),
-  friday: named('greetingHappyFriday', 'greetingHappyFridayNoName'),
-  saturday: named('greetingHappySaturday', 'greetingHappySaturdayNoName'),
-}
-
 /** Calendar moments that outrank the period's rotation while they last. */
-const specialFor = (now: Date, period: Period): GreetingVariant | null => {
-  const isDaytimeStart = period === 'earlyMorning' || period === 'morning'
-  if (isDaytimeStart && now.getDate() === 1) return SPECIALS.newMonth
+const calendarKey = (now: Date, period: Period): TranslationKey | null => {
+  const isDayStart = period === 'earlyMorning' || period === 'morning'
+  if (isDayStart && now.getDate() === 1) return 'greetingNewMonth'
   switch (now.getDay()) {
     case 0:
-      return isDaytimeStart ? SPECIALS.sunday : null
+      return isDayStart ? 'greetingHappySunday' : null
     case 1:
-      return isDaytimeStart ? SPECIALS.monday : null
+      return isDayStart ? 'greetingHappyMonday' : null
     case 5:
       return period === 'afternoon' || period === 'evening'
-        ? SPECIALS.friday
+        ? 'greetingHappyFriday'
         : null
     case 6:
-      return isDaytimeStart ? SPECIALS.saturday : null
+      return isDayStart ? 'greetingHappySaturday' : null
     default:
       return null
   }
 }
 
-export function pickGreeting(now: Date): GreetingVariant {
-  const period = periodOf(now.getHours())
-  const special = specialFor(now, period)
-  if (special) return special
-  // Stable for the whole period, so the card doesn't reshuffle on re-render,
-  // and rotates day to day.
+/**
+ * Stable for the whole day, so the greeting doesn't reshuffle on re-render, and
+ * rotates day to day. `salt` keeps lists from moving in lockstep.
+ */
+const ofTheDay = (keys: TranslationKey[], now: Date, salt: number) => {
   const day = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 864e5
-  const variants = VARIANTS[period]
-  return variants[(day + PERIOD_ORDER.indexOf(period)) % variants.length]
+  return keys[(day + salt) % keys.length]
+}
+
+export function pickGreeting({
+  now,
+  streakDays,
+  goalReached,
+}: GreetingContext): Greeting {
+  if (goalReached) return { key: ofTheDay(GOAL_REACHED, now, 0) }
+  if (streakDays >= LONG_STREAK_DAYS)
+    return { key: ofTheDay(LONG_STREAK, now, 0), count: streakDays }
+  if (streakDays >= STREAK_MIN_DAYS)
+    return { key: ofTheDay(STREAK, now, 0), count: streakDays }
+  const period = periodOf(now.getHours())
+  const calendar = calendarKey(now, period)
+  if (calendar) return { key: calendar }
+  const salt = Object.keys(BY_PERIOD).indexOf(period)
+  return { key: ofTheDay(BY_PERIOD[period], now, salt) }
 }

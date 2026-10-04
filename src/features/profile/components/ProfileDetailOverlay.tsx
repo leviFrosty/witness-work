@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
+import { useProfileOverlay } from '@/stores/profileOverlay'
 import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
@@ -48,16 +49,8 @@ import {
 } from '@/features/profile/lib/profileStats'
 import { useFormattedMinutes } from '@/lib/minutes'
 
-export type OriginRect = { x: number; y: number; width: number; height: number }
-
-interface Props {
-  origin: OriginRect | null
-  open: boolean
-  onClose: () => void
-}
-
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
-const ORIGIN_RADIUS = 15
+const SHEET_RADIUS = 15
 const EXPANDED_MARGIN = 12
 
 const Stat = ({
@@ -106,7 +99,12 @@ const Stat = ({
   )
 }
 
-const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
+/**
+ * Profile, role, and stats, grown out of the header avatar. Opened from the
+ * account menu; HomeTabStack mounts the single instance.
+ */
+const ProfileDetailOverlay = () => {
+  const { origin, open, close: onClose } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -163,7 +161,12 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
       top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
       width: interpolate(progress.value, [0, 1], [origin.width, targetW]),
       height: interpolate(progress.value, [0, 1], [origin.height, targetH]),
-      borderRadius: ORIGIN_RADIUS,
+      // Starts as the round avatar, settles into the sheet's corners.
+      borderRadius: interpolate(
+        progress.value,
+        [0, 1],
+        [origin.width / 2, SHEET_RADIUS]
+      ),
     }
   })
 
@@ -240,9 +243,9 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                 gap: 20,
               }}
               scrollIndicatorInsets={{
-                top: ORIGIN_RADIUS,
+                top: SHEET_RADIUS,
                 right: 4,
-                bottom: ORIGIN_RADIUS,
+                bottom: SHEET_RADIUS,
               }}
             >
               <View

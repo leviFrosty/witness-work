@@ -475,7 +475,12 @@ or personal data:
 
 The avatar on every root header opens the account menu: Profile, Settings,
 Support WitnessWork, and Help Center. Its choices arrive as `context_menu_action`
-with `surface: account_menu`. On compact layouts Settings is now a pushed
+with `surface: account_menu`. Profile opens the profile overlay (role, tenure,
+and stats) from the avatar; until profile setup is done the item is
+`profile_setup` instead and opens setup. That overlay used to open from Home's
+profile card, which is gone along with its `profile_card` surface, so read
+overlay reach from `account_menu` / `profile` from this release on. Home's
+greeting line is display-only and sends nothing. On compact layouts Settings is now a pushed
 `SettingsMenu` screen instead of Home's drawer, so its `$screen` reach is
 comparable from this release on; compare older `Settings` counts with care. Home
 still reports as `Dashboard`. The Map no longer has its own route; Contacts sends

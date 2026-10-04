@@ -22,6 +22,25 @@ export const flattenDailyMinutes = (
 }
 
 /**
+ * Counts trailing days of logged service, ending today. An empty today doesn't
+ * break the streak — the day isn't over yet.
+ */
+export const consecutiveDaysStreak = (
+  daily: Map<string, number>,
+  now: Date = new Date()
+): number => {
+  const cursor = moment(now).startOf('day')
+  if (!((daily.get(dayKey(cursor)) || 0) > 0)) cursor.subtract(1, 'day')
+  let streak = 0
+  // Cap iterations to avoid infinite loops on bad data.
+  while (streak < 3650 && (daily.get(dayKey(cursor)) || 0) > 0) {
+    streak++
+    cursor.subtract(1, 'day')
+  }
+  return streak
+}
+
+/**
  * Counts trailing weeks with at least one day of logged service, ending with
  * the current ISO week. Stops counting at the first empty week.
  */

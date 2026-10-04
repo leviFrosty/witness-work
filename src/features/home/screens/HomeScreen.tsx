@@ -30,7 +30,7 @@ import {
 } from '@/stores/preferences'
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
-import ProfileCard from '@/features/profile/components/ProfileCard'
+import HomeGreeting from '@/features/profile/components/HomeGreeting'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
@@ -199,12 +199,8 @@ export const HomeScreen = () => {
           ) : undefined
         }
       >
+        <HomeGreeting />
         <AdaptiveColumns wide={isWide} style={{ paddingBottom: insets.bottom }}>
-          <ProfileCard
-            onPressIncomplete={() =>
-              rootNavigation.navigate('PreferencesPublisher')
-            }
-          />
           {!homeChecklistDismissed && <HomeChecklist />}
           {effectiveOrder.map((key: HomeScreenElementKey) => {
             const section = (() => {

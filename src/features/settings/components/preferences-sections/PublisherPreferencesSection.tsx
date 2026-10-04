@@ -103,7 +103,7 @@ const PublisherPreferencesSection = () => {
   return (
     <View style={{ gap: 20 }}>
       <View>
-        <ProfileCard editable />
+        <ProfileCard />
       </View>
 
       {publisherType === 'custom' && (

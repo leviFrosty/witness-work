@@ -136,6 +136,7 @@ export const FAQS: FAQEntry[] = [
     category: 'customization',
     related: [119, 259],
   },
+  { id: 'reorderTabs', category: 'customization' },
   {
     id: 'timerRounding',
     category: 'time',

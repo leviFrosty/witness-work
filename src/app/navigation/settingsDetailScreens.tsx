@@ -16,6 +16,7 @@ import PreferencesPlansScreen from '@/features/settings/screens/preferences/scre
 import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
 import PreferencesAudioAndHapticsScreen from '@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen'
 import PreferencesScheduleScreen from '@/features/settings/screens/preferences/screens/PreferencesScheduleScreen'
+import PreferencesTabOrderScreen from '@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen'
 import PreferencesHomeScreen from '@/features/settings/screens/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '@/features/settings/screens/preferences/screens/PreferencesBackupsScreen'
 import PreferencesAppearanceScreen from '@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen'
@@ -105,6 +106,11 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     name: 'PreferencesAudioAndHaptics',
     component: PreferencesAudioAndHapticsScreen,
     title: () => i18n.t('audioAndHaptics'),
+  },
+  {
+    name: 'PreferencesTabOrder',
+    component: PreferencesTabOrderScreen,
+    title: () => i18n.t('tabOrder'),
   },
   {
     name: 'PreferencesHomeScreen',

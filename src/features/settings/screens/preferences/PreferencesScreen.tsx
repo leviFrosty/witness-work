@@ -5,6 +5,7 @@ import {
   Globe as GlobeIcon,
   House as HouseIcon,
   LayoutGrid as LayoutGridIcon,
+  PanelBottom as PanelBottomIcon,
   MessagesSquare as MessagesSquareIcon,
   Route as RouteIcon,
   ShieldCheck as ShieldCheckIcon,
@@ -75,6 +76,13 @@ const PreferencesScreen = () => {
                 leftIcon={SlidersHorizontalIcon}
                 label={i18n.t('contactFields')}
                 onPress={() => navigation.navigate('PreferencesCustomFields')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={PanelBottomIcon}
+                label={i18n.t('tabOrder')}
+                onPress={() => navigation.navigate('PreferencesTabOrder')}
               >
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>

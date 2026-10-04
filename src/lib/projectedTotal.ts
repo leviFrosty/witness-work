@@ -12,6 +12,7 @@ import {
 import { resolvePlannedContributionsForDay } from '@/lib/recurrence'
 import { periodBounds } from '@/lib/serviceYear'
 import { isPlanCreditTime } from '@/lib/serviceReportCategory'
+import type { CalendarMonth } from '@/lib/monthlyGoals'
 
 export type ProjectedTotalScope =
   | { kind: 'month'; year: number; month: number }
@@ -58,9 +59,10 @@ export type ProjectedTotalInput = {
   /**
    * Resolved monthly credit cap in minutes, or null for unlimited. Applied per
    * month for both scopes — the month is the unit the cap governs; there is no
-   * annual cap.
+   * annual cap. Pass a resolver to cap each month by the role that applied then
+   * (Role History).
    */
-  creditCapMinutes: number | null
+  creditCapMinutes: number | null | ((target: CalendarMonth) => number | null)
   /**
    * Off Days the user marked — passed through so the "is the gap reachable?"
    * heuristic only counts days the user is actually willing to go out.
@@ -88,6 +90,8 @@ export type ProjectedTotalResult = {
    * (Standard-only) recommendations with this.
    */
   standardGapMinutes: number
+  /** Every month in scope, oldest first — the per-month terms of the totals. */
+  months: ProjectedTotalMonth[]
   /**
    * Month scope only: the combined logged+planned buckets and the cap the
    * formula ran on — lets month-scoped consumers (Assistant preview) re-run the
@@ -99,6 +103,13 @@ export type ProjectedTotalResult = {
     credit: number
     creditCapMinutes: number | null
   }
+}
+
+export type ProjectedTotalMonth = CalendarMonth & {
+  /** Logged minutes after this month's credit cap. */
+  loggedMinutes: number
+  /** Logged plus planned minutes after this month's credit cap. */
+  projectedMinutes: number
 }
 
 /**
@@ -252,16 +263,22 @@ export const computeProjectedTotal = (
   const loggedByMonth = new Map(
     input.loggedMonths.map((m) => [monthKey(m.year, m.month), m])
   )
-  const cap = input.creditCapMinutes
+  const capFor = (target: CalendarMonth) =>
+    typeof input.creditCapMinutes === 'function'
+      ? input.creditCapMinutes(target)
+      : input.creditCapMinutes
 
   const { start, end } = periodBounds(input.scope)
   let logged = 0
   let projected = 0
   let combinedStandard = 0
   let combinedCredit = 0
+  const months: ProjectedTotalMonth[] = []
   const cursor = start.clone()
   while (cursor.isSameOrBefore(end, 'month')) {
-    const key = monthKey(cursor.year(), cursor.month())
+    const target = { year: cursor.year(), month: cursor.month() }
+    const cap = capFor(target)
+    const key = monthKey(target.year, target.month)
     const loggedMonth = loggedByMonth.get(key)
     const loggedStandard = loggedMonth?.standard ?? 0
     const loggedCredit = loggedMonth?.credit ?? 0
@@ -271,12 +288,19 @@ export const computeProjectedTotal = (
 
     combinedStandard += loggedStandard + plannedStandard
     combinedCredit += loggedCredit + plannedCredit
-    logged += applyMonthCreditCap(loggedStandard, loggedCredit, cap)
-    projected += applyMonthCreditCap(
+    const monthLogged = applyMonthCreditCap(loggedStandard, loggedCredit, cap)
+    const monthProjected = applyMonthCreditCap(
       loggedStandard + plannedStandard,
       loggedCredit + plannedCredit,
       cap
     )
+    logged += monthLogged
+    projected += monthProjected
+    months.push({
+      ...target,
+      loggedMinutes: monthLogged,
+      projectedMinutes: monthProjected,
+    })
     cursor.add(1, 'month')
   }
 
@@ -290,7 +314,7 @@ export const computeProjectedTotal = (
       ? {
           standard: combinedStandard,
           credit: combinedCredit,
-          creditCapMinutes: cap,
+          creditCapMinutes: capFor(input.scope),
         }
       : undefined
 
@@ -299,7 +323,11 @@ export const computeProjectedTotal = (
   // standard first displaces whatever credit the cap was admitting.
   const standardGap = (() => {
     if (projected >= goal) return 0
-    if (month && cap !== null && goal > cap) {
+    if (
+      month &&
+      month.creditCapMinutes !== null &&
+      goal > month.creditCapMinutes
+    ) {
       return Math.max(0, goal - month.standard)
     }
     return goal - projected
@@ -331,6 +359,7 @@ export const computeProjectedTotal = (
     gapMinutes: gap,
     overMinutes: over,
     standardGapMinutes: standardGap,
+    months,
     month,
   }
 }

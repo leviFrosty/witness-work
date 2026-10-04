@@ -19,6 +19,7 @@ import PullDownMenu from '@/components/ui/PullDownMenu'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import {
   fromDateKey,
+  type MileageBucket,
   periodContaining,
   periodContainsDate,
   shiftPeriod,
@@ -28,6 +29,8 @@ import {
 } from '@/lib/mileage/calc'
 import PeriodNavigator from '@/features/mileage/components/PeriodNavigator'
 import MileageSummary from '@/features/mileage/components/MileageSummary'
+import MileagePeriodChart from '@/features/mileage/components/MileagePeriodChart'
+import { getVehicleChartColors } from '@/features/mileage/lib/chartColors'
 import TripRow from '@/features/mileage/components/TripRow'
 import MileageEmptyState from '@/features/mileage/components/MileageEmptyState'
 import LogTripButton from '@/features/mileage/components/LogTripButton'
@@ -58,6 +61,10 @@ export default function MileageScreen() {
   const summary = summarizeTrips(periodTrips, index, vehicles)
   const report = { period, trips: periodTrips, vehicles, fuels, index, format }
   const showCarNames = vehicles.length > 1
+  const vehicleColors = getVehicleChartColors(
+    theme.colors,
+    summary.byVehicle.map((car) => car.vehicleId)
+  )
 
   useEffect(() => {
     analytics.capture('mileage_report_viewed', { period: kind })
@@ -67,6 +74,13 @@ export default function MileageScreen() {
     setAnchor(toDateKey(shiftPeriod(period, delta, startOfWeek).start))
 
   const openSettings = () => navigation.navigate('MileageSettings')
+
+  // A bar opens its day (Week, Month) or month (Service Year).
+  const openBucket = (bucket: MileageBucket) => {
+    analytics.capture('mileage_chart_bar_tapped', { period: kind })
+    setKind(bucket.kind)
+    setAnchor(bucket.start)
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -152,6 +166,18 @@ export default function MileageScreen() {
                   vehicles={vehicles}
                   format={format}
                   showBreakdown
+                  vehicleColors={
+                    vehicleColors.length > 1 ? vehicleColors : undefined
+                  }
+                  chart={
+                    <MileagePeriodChart
+                      period={period}
+                      trips={periodTrips}
+                      vehicleColors={vehicleColors}
+                      format={format}
+                      onSelectBucket={openBucket}
+                    />
+                  }
                 />
               </Card>
               {periodTrips.length > 0 && summary.cost === undefined && (

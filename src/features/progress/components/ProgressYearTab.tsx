@@ -14,13 +14,10 @@ import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
-import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
-import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
-import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import YearTotalCard from '@/features/progress/components/YearTotalCard'
 import YearCategoryBreakdownSection from '@/features/progress/components/YearCategoryBreakdownSection'
 import Text from '@/components/ui/MyText'
@@ -41,6 +38,9 @@ import {
 } from '@/features/service-reports/lib/monthEditTargets'
 import MonthSummaryPreview from '@/features/service-reports/components/MonthSummaryPreview'
 import ContextMenu from '@/components/ui/ContextMenu'
+import ServiceYearPaceCard from '@/features/progress/components/ServiceYearPaceCard'
+import GoalBar, { GoalBarKey } from '@/components/GoalBar'
+import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -104,15 +104,17 @@ const RowBadge = ({ label }: { label: string }) => {
 }
 
 /**
- * One row per month in the service year. Compact single-liner matching the
- * wireframe: `{MMM} {hours}h {+delta}`. Tap → Month tab for that month;
- * long-press → the month's report preview and actions.
+ * One row per month in the service year: `{MMM} {hours}h {+delta}` over a bar
+ * drawn on the year's shared scale. Tap → Month tab for that month; long-press
+ * → the month's report preview and actions.
  */
 const MonthRow = ({
   month,
   year,
   isCurrent,
   isFuture,
+  plannedMinutes,
+  barScaleMinutes,
   onPress,
   onEdit,
 }: {
@@ -120,6 +122,9 @@ const MonthRow = ({
   year: number
   isCurrent: boolean
   isFuture: boolean
+  /** What remaining Plans add to the month after its credit cap. */
+  plannedMinutes: number
+  barScaleMinutes: number
   onPress: () => void
   onEdit: (target: MonthEditTarget) => void
 }) => {
@@ -131,8 +136,6 @@ const MonthRow = ({
   const { type: role, showsTimeEntry } = usePublisher({ month, year })
   const monthStatus = useMonthStatus({ month, year })
   const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
 
   const {
     baseGoalHours,
@@ -148,33 +151,22 @@ const MonthRow = ({
     [serviceReports, month, year]
   )
 
-  const completedMinutes = useMemo(() => {
-    const adjusted = adjustedMinutesForSpecificMonth(
+  const adjusted = useMemo(
+    () =>
+      adjustedMinutesForSpecificMonth(monthsReports, month, year, role, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }),
+    [
       monthsReports,
       month,
       year,
       role,
-      { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
-    )
-    return adjusted.value
-  }, [
-    monthsReports,
-    month,
-    year,
-    role,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  ])
-
-  const plannedMinutes = useMemo(() => {
-    if (!isFuture) return 0
-    return calculateMonthlyPlannedMinutesOptimized(
-      month,
-      year,
-      dayPlans,
-      recurringPlans
-    )
-  }, [isFuture, month, year, dayPlans, recurringPlans])
+      overrideCreditLimit,
+      customCreditLimitHours,
+    ]
+  )
+  const completedMinutes = adjusted.value
 
   const completedDisplay = useFormattedMinutes(completedMinutes)
   const plannedDisplay = useFormattedMinutes(plannedMinutes)
@@ -264,6 +256,7 @@ const MonthRow = ({
           ...cardStyle,
           paddingHorizontal: 15,
           paddingVertical: 12,
+          gap: 8,
         }}
       >
         <XView style={styles.columns}>
@@ -329,6 +322,17 @@ const MonthRow = ({
             <View style={styles.numericColumn} />
           )}
         </XView>
+        {/* Every row shares one scale, so the bars compare down the list. The
+          columns above carry the numbers; the key under the header explains
+          the marks. */}
+        <GoalBar
+          loggedMinutes={completedMinutes}
+          creditMinutes={adjusted.credit}
+          plannedMinutes={plannedMinutes}
+          goalMinutes={goalMinutes}
+          scaleMinutes={barScaleMinutes}
+          labels={false}
+        />
       </View>
     </ContextMenu>
   )
@@ -379,17 +383,12 @@ const ProgressYearTab = ({
     return list
   }, [year])
 
-  const { hasAnnualGoal, monthlyGoalHours } = usePublisher(
+  const { hasAnnualGoal, monthlyGoalHours, milestones } = usePublisher(
     serviceYearFocusMonth(year - 1)
   )
   const showDeltaColumn = monthlyGoalHours > 0
-
-  // Stable reference so ProjectedTotalCard's memoized derivations don't
-  // invalidate every render of this tab.
-  const projectedScope = useMemo<ProjectedTotalScope>(
-    () => ({ kind: 'serviceYear', serviceYear: year - 1 }),
-    [year]
-  )
+  const paceData = useServiceYearPace(year - 1)
+  const { monthBars } = paceData
 
   return (
     <AdaptiveSplitScrollView
@@ -408,7 +407,7 @@ const ProgressYearTab = ({
                 categoriesSlot={<YearCategoryBreakdownSection year={year} />}
                 separateMilestones
               />
-              <ProjectedTotalCard scope={projectedScope} />
+              <ServiceYearPaceCard data={paceData} milestones={milestones} />
             </>
           ) : (
             <YearTotalCard
@@ -479,12 +478,26 @@ const ProgressYearTab = ({
                 <View style={styles.numericColumn} />
               )}
             </XView>
+            {monthBars.scaleMinutes > 0 ? (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 2 }}>
+                <GoalBarKey
+                  credit={monthBars.hasCredit}
+                  planned={monthBars.hasPlanned}
+                  goal={monthBars.hasGoal}
+                />
+              </View>
+            ) : null}
             {months.map(({ month, year: calendarYear }) => {
               const isCurrent =
                 month === currentMonth && calendarYear === currentYear
               const isFuture =
                 calendarYear > currentYear ||
                 (calendarYear === currentYear && month > currentMonth)
+              // Service Year months run September (0) through August (11).
+              const paceMonth =
+                paceData.pace.months[
+                  calendarYear * 12 + month - ((year - 1) * 12 + 8)
+                ]
               return (
                 <MonthRow
                   key={`${calendarYear}-${month}`}
@@ -492,6 +505,8 @@ const ProgressYearTab = ({
                   year={calendarYear}
                   isCurrent={isCurrent}
                   isFuture={isFuture}
+                  plannedMinutes={paceMonth?.plannedMinutes ?? 0}
+                  barScaleMinutes={monthBars.scaleMinutes}
                   onPress={() => onMonthPress(month, calendarYear)}
                   onEdit={(target) =>
                     setEditing({ month, year: calendarYear, target })

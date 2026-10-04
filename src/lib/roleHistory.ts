@@ -176,23 +176,31 @@ export type AnnualGoalInput = {
  * count against it. Monthly Goal overrides are personal targets and stay out of
  * the Annual Goal, as before.
  */
-export const annualGoalHoursForServiceYear = ({
+export const annualGoalHoursForServiceYear = (input: AnnualGoalInput): number =>
+  annualGoalHoursByMonth(input).reduce((total, hours) => total + hours, 0)
+
+/**
+ * Each month's share of the Annual Goal, September through August — the
+ * per-month terms `annualGoalHoursForServiceYear` sums, so a running goal line
+ * steps by exactly the amounts the Annual Goal is built from.
+ */
+export const annualGoalHoursByMonth = ({
   history,
   currentRole,
   publisherHours,
   userSpecifiedHasAnnualGoal,
   serviceYear,
-}: AnnualGoalInput): number => {
+}: AnnualGoalInput): number[] => {
   const months = serviceYearMonths(serviceYear)
   const roles = months.map((m) => roleForMonth(history, currentRole, m))
-  if (roles.every((r) => r === roles[0])) return publisherHours[roles[0]] * 12
+  if (roles.every((r) => r === roles[0])) {
+    return roles.map((role) => publisherHours[role])
+  }
 
-  return roles.reduce(
-    (total, role) =>
-      effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal)
-        ? total + publisherHours[role]
-        : total,
-    0
+  return roles.map((role) =>
+    effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal)
+      ? publisherHours[role]
+      : 0
   )
 }
 

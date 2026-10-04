@@ -6,6 +6,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import StripedFill from '@/components/ui/StripedFill'
+import GoalBar from '@/components/GoalBar'
 import useTheme from '@/contexts/theme'
 
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -60,7 +61,6 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
 
   const loggedDisplay = formatHours(result.loggedMinutes)
   const plannedDisplay = formatHours(result.plannedMinutes)
-  const goalDisplay = formatHours(result.goalMinutes)
   const projectedDisplay = formatHours(result.projectedMinutes)
   const gapDisplay = formatHours(result.gapMinutes)
   const overDisplay = formatHours(result.overMinutes)
@@ -84,16 +84,6 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
     over: overDisplay,
   })
   const segments = segmentBoldMarkup(statusText)
-
-  // Bar geometry: logged (solid) then planned (hatched/translucent),
-  // capped at the goal. Any over-amount lives in the status text only.
-  const goalMin = result.goalMinutes
-  const loggedPct =
-    goalMin > 0 ? Math.min(100, (result.loggedMinutes / goalMin) * 100) : 0
-  const plannedPct =
-    goalMin > 0
-      ? Math.min(100 - loggedPct, (result.plannedMinutes / goalMin) * 100)
-      : 0
 
   return (
     <Card>
@@ -140,36 +130,14 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
         </Text>
       </View>
 
-      {/* Stacked bar: logged (solid) + planned (translucent), capped at goal. */}
-      <View
-        style={{
-          height: 10,
-          width: '100%',
-          backgroundColor: theme.colors.border,
-          borderRadius: 999,
-          overflow: 'hidden',
-          flexDirection: 'row',
-        }}
-      >
-        {loggedPct > 0 && (
-          <View
-            style={{
-              width: `${loggedPct}%`,
-              backgroundColor: theme.colors.accent,
-            }}
-          />
-        )}
-        {plannedPct > 0 && (
-          <View
-            style={{
-              width: `${plannedPct}%`,
-              height: '100%',
-            }}
-          >
-            <StripedFill color={theme.colors.accent} />
-          </View>
-        )}
-      </View>
+      {/* Logged (solid) then planned (striped), running past the goal marker
+          when the plans go beyond it. */}
+      <GoalBar
+        loggedMinutes={result.loggedMinutes}
+        plannedMinutes={result.plannedMinutes}
+        goalMinutes={result.goalMinutes}
+        size='md'
+      />
 
       <View
         style={{
@@ -192,16 +160,6 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           })}
           striped
         />
-        <Text
-          style={{
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-          }}
-          adjustsFontSizeToFit
-          numberOfLines={1}
-        >
-          {i18n.t('projectedTotal.legend.goal', { value: goalDisplay })}
-        </Text>
       </View>
 
       {result.state !== 'empty' && !hideStatus && (

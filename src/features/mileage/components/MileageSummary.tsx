@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -5,6 +6,7 @@ import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import type { MileageSummary as Summary } from '@/lib/mileage/calc'
 import type { MileageFormatter } from '@/features/mileage/lib/format'
+import type { VehicleChartColor } from '@/features/mileage/lib/chartColors'
 import type { Vehicle } from '@/types/mileage'
 
 type Props = {
@@ -13,6 +15,10 @@ type Props = {
   format: MileageFormatter
   /** List per-car totals when more than one car has trips. */
   showBreakdown?: boolean
+  /** Shown between the totals and the per-car breakdown. */
+  chart?: ReactNode
+  /** Keys each car in the breakdown to its color in `chart`. */
+  vehicleColors?: VehicleChartColor[]
 }
 
 function Stat({
@@ -56,6 +62,8 @@ export default function MileageSummary({
   vehicles,
   format,
   showBreakdown,
+  chart,
+  vehicleColors,
 }: Props) {
   const theme = useTheme()
   const breakdown = showBreakdown && summary.byVehicle.length > 1
@@ -89,6 +97,7 @@ export default function MileageSummary({
           {i18n.t('mileage.costIncomplete')}
         </Text>
       )}
+      {chart}
       {breakdown && (
         <View
           style={{
@@ -98,28 +107,43 @@ export default function MileageSummary({
             borderTopColor: theme.colors.border,
           }}
         >
-          {summary.byVehicle.map((car) => (
-            <View
-              key={car.vehicleId}
-              style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
-            >
-              <Text
-                style={{ flex: 1, fontFamily: theme.fonts.medium }}
-                numberOfLines={1}
+          {summary.byVehicle.map((car) => {
+            const color = vehicleColors?.find(
+              (c) => c.vehicleId === car.vehicleId
+            )?.color
+            return (
+              <View
+                key={car.vehicleId}
+                style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
               >
-                {vehicles.find((v) => v.id === car.vehicleId)?.name ??
-                  i18n.t('mileage.unknownCar')}
-              </Text>
-              <Text style={{ color: theme.colors.textAlt }}>
-                {[
-                  format.distance(car.distanceMiles),
-                  car.cost !== undefined && format.cost(car.cost),
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
-          ))}
+                {color && (
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: color,
+                    }}
+                  />
+                )}
+                <Text
+                  style={{ flex: 1, fontFamily: theme.fonts.medium }}
+                  numberOfLines={1}
+                >
+                  {vehicles.find((v) => v.id === car.vehicleId)?.name ??
+                    i18n.t('mileage.unknownCar')}
+                </Text>
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {[
+                    format.distance(car.distanceMiles),
+                    car.cost !== undefined && format.cost(car.cost),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Text>
+              </View>
+            )
+          })}
         </View>
       )}
     </View>

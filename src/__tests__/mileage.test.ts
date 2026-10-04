@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import moment from 'moment'
 import {
+  bucketTrips,
   buildMileageIndex,
   defaultVehicleId,
   effectiveEntry,
@@ -203,6 +204,64 @@ describe('mileage periods', () => {
       'same-day-newer',
       'early',
     ])
+  })
+})
+
+describe('mileage buckets', () => {
+  it('splits a week into days, totaling distance per car', () => {
+    const week = periodContaining('week', moment('2026-03-11'))
+    const buckets = bucketTrips(week, [
+      trip({ id: 'a', date: '2026-03-09', distanceMiles: 4 }),
+      trip({ id: 'b', date: '2026-03-09', distanceMiles: 6, vehicleId: 'van' }),
+      trip({ id: 'c', date: '2026-03-14', distanceMiles: 3 }),
+      trip({ id: 'outside', date: '2026-03-15', distanceMiles: 99 }),
+    ])
+
+    expect(buckets.map((b) => b.start)).toEqual([
+      '2026-03-08',
+      '2026-03-09',
+      '2026-03-10',
+      '2026-03-11',
+      '2026-03-12',
+      '2026-03-13',
+      '2026-03-14',
+    ])
+    expect(buckets[1]).toMatchObject({
+      kind: 'day',
+      distanceMiles: 10,
+      byVehicle: { car: 4, van: 6 },
+    })
+    expect(buckets[6].distanceMiles).toBe(3)
+    expect(buckets[0]).toMatchObject({ distanceMiles: 0, byVehicle: {} })
+  })
+
+  it('gives a month one bucket per day', () => {
+    const february = periodContaining('month', moment('2026-02-10'))
+    expect(bucketTrips(february, [])).toHaveLength(28)
+  })
+
+  it('splits a Service Year into months, September first', () => {
+    const year = periodContaining('year', moment('2026-03-11'))
+    const buckets = bucketTrips(year, [
+      trip({ id: 'sep', date: '2025-09-30', distanceMiles: 5 }),
+      trip({ id: 'mar', date: '2026-03-01', distanceMiles: 7 }),
+      trip({ id: 'mar2', date: '2026-03-31', distanceMiles: 1 }),
+    ])
+
+    expect(buckets).toHaveLength(12)
+    expect(buckets[0]).toMatchObject({
+      start: '2025-09-01',
+      kind: 'month',
+      distanceMiles: 5,
+    })
+    expect(buckets[6]).toMatchObject({ start: '2026-03-01', distanceMiles: 8 })
+    expect(buckets[11].start).toBe('2026-08-01')
+  })
+
+  it('has no buckets for a single day', () => {
+    expect(
+      bucketTrips(periodContaining('day', moment('2026-03-11')), [])
+    ).toEqual([])
   })
 })
 

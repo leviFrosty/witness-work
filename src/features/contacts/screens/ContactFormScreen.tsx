@@ -509,16 +509,14 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return false
                   }
                   await submit()
-                  analytics.capture(
-                    editMode ? 'contact_updated' : 'contact_created',
-                    {
+                  if (!editMode)
+                    analytics.capture('contact_created', {
                       custom_field_count: Object.keys(
                         contact.customFields ?? {}
                       ).length,
                       has_address: !!contact.address,
                       has_location: !!contact.coordinate,
-                    }
-                  )
+                    })
                   if (editMode && route.params.returnToContacts) {
                     navigation.goBack()
                     return

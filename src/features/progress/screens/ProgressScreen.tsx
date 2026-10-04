@@ -13,7 +13,7 @@ import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import i18n from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import RootHeader from '@/components/RootHeader'
 import HeaderPillButton from '@/components/ui/HeaderPillButton'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -142,10 +142,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
               icon={FileTextIcon}
               label={i18n.t('viewReport')}
               onPress={() => {
-                analytics.capture('service_report_opened', {
-                  source: 'progress_header',
-                  tab: activeTab,
-                })
                 rootNavigation.navigate('ServiceReportView', { month, year })
               }}
             />

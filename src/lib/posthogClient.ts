@@ -7,8 +7,13 @@ import {
   getErrorContext,
   shouldIgnoreExceptionProperties,
 } from '@/lib/errorTrackingPolicy'
-import { scrubShareLinkProperties } from '@/lib/shareLinkScrub'
-import { analyticsEventsAllowed, isAnalyticsEvent } from '@/lib/analyticsPolicy'
+import { scrubAnalyticsEventProperties } from '@/lib/shareLinkScrub'
+import {
+  analyticsEventAllowed,
+  isAnalyticsEvent,
+  setAnalyticsProduction,
+} from '@/lib/analyticsPolicy'
+import { allowAnalyticsFrequency } from '@/lib/analyticsFrequency'
 
 const extra = Constants.expoConfig?.extra as
   | { posthogProjectToken?: string; posthogHost?: string; appVariant?: string }
@@ -17,6 +22,12 @@ const projectToken = extra?.posthogProjectToken
 const host = extra?.posthogHost
 
 function createClient(): PostHog | null {
+  // Keep flags/surveys available in Beta and development without ingesting
+  // their usage, including restored queues and later network retries.
+  setAnalyticsProduction(
+    extra?.appVariant === 'production' &&
+      (typeof __DEV__ === 'undefined' || !__DEV__)
+  )
   if (!projectToken || !host) {
     logger.debug('[Analytics] Disabled: missing configuration', {
       hasProjectToken: Boolean(projectToken),
@@ -47,12 +58,12 @@ function createClient(): PostHog | null {
       },
       before_send: (event) => {
         if (!event) return event
-        // Lifecycle capture has no per-event switch; nothing uses this one.
-        if (event.event === 'Application Backgrounded') return null
         // The user's analytics switch. Crash reports and survey responses pass;
         // feature flag requests do not go through here and are unaffected.
-        if (isAnalyticsEvent(event.event) && !analyticsEventsAllowed()) {
-          return null
+        if (!analyticsEventAllowed(event.event, event.properties)) return null
+        if (isAnalyticsEvent(event.event)) {
+          if (!allowAnalyticsFrequency(event.event, event.properties))
+            return null
         }
         const isException = event.event === '$exception'
         if (
@@ -69,9 +80,7 @@ function createClient(): PostHog | null {
         }
         return {
           ...event,
-          // `Application Opened` records the launch URL, which for a share
-          // link carries contact data or an invite secret.
-          properties: scrubShareLinkProperties({
+          properties: scrubAnalyticsEventProperties(event.event, {
             ...(isException ? getErrorContext() : {}),
             ...event.properties,
             app_variant: extra?.appVariant ?? 'unknown',

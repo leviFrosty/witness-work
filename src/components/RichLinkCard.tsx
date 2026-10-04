@@ -176,7 +176,6 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
 
   return (
     <ContextMenu
-      analyticsSurface='link'
       actions={menu(url)}
       onPress={() => open(url)}
       accessibilityLabel={title}

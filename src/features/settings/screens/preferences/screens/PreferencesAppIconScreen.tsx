@@ -264,7 +264,7 @@ const PreferencesAppIconScreen = () => {
           >
             <ArtistCallout />
             <View>
-              <IsSupporter feature='customAppIcon' analyticsSurface='app_icon'>
+              <IsSupporter analyticsSurface='app_icon' feature='customAppIcon'>
                 <PreferencesAppIconPicker />
               </IsSupporter>
             </View>

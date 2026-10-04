@@ -24,7 +24,6 @@ export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
 
   return (
     <ContextMenu
-      analyticsSurface='buddy_linked_plan_banner'
       actions={[
         {
           id: 'view_buddy',

@@ -200,7 +200,6 @@ const MonthRow = ({
 
   return (
     <ContextMenu
-      analyticsSurface='progress_month_row'
       onPress={onPress}
       accessibilityLabel={monthYearLabel}
       preview={

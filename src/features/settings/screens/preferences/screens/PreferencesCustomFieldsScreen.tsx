@@ -88,7 +88,6 @@ const PreferencesCustomFieldsScreen = () => {
       confirmLabel: i18n.t('archive'),
       onConfirm: () => {
         archiveCustomFieldDef(id)
-        analytics.capture('custom_field_archived')
       },
     })
   }
@@ -100,7 +99,6 @@ const PreferencesCustomFieldsScreen = () => {
       confirmLabel: i18n.t('delete'),
       onConfirm: () => {
         purgeCustomFieldDef(id)
-        analytics.capture('custom_field_deleted')
       },
     })
   }
@@ -233,7 +231,6 @@ const PreferencesCustomFieldsScreen = () => {
                           const trimmed = value.trim()
                           if (trimmed && trimmed !== def.label) {
                             renameCustomFieldDef(def.id, trimmed)
-                            analytics.capture('custom_field_renamed')
                           }
                           // Clear local edit so future label changes from
                           // sync show through.
@@ -295,7 +292,6 @@ const PreferencesCustomFieldsScreen = () => {
                           icon: RotateCcwIcon,
                           onPress: () => {
                             restoreCustomFieldDef(def.id)
-                            analytics.capture('custom_field_restored')
                           },
                         },
                         {

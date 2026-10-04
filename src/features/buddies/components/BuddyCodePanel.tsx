@@ -198,7 +198,6 @@ export default function BuddyCodePanel({
       ) : (
         <>
           <ContextMenu
-            analyticsSurface='buddy_code_qr'
             accessibilityLabel={i18n.t('buddies_codeTitle')}
             actions={[
               {

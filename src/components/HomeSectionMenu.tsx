@@ -46,7 +46,6 @@ export default function HomeSectionMenu({
 
   return (
     <ContextMenu
-      analyticsSurface={`home_section_${section}`}
       actions={[
         ...actions,
         [

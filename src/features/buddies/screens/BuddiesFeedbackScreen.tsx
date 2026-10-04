@@ -62,7 +62,6 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
   } | null>(null)
 
   useEffect(() => {
-    analytics.capture('buddies_feedback_viewed', { source })
     const client = surveyClient
     if (!client) return
     let cancelled = false
@@ -95,7 +94,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
       Alert.alert(i18n.t('buddies_feedbackUnavailable'))
       return
     }
-    analytics.capture('buddies_feedback_started', { source, diagnostics })
+
     const feedbackId = createFeedbackId()
     // Session-only (never persisted), so it tags just this survey response.
     surveyClient?.registerForSession({ feedback_id: feedbackId })
@@ -113,7 +112,6 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
     closeSurvey(client, opened.survey, submitted)
     setOpened(null)
     if (!submitted) {
-      analytics.capture('buddies_feedback_abandoned', { source })
       return
     }
     analytics.capture('buddies_feedback_submitted', {
@@ -122,7 +120,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
     })
     if (opened.diagnostics) {
       void sendFeedbackAttachments(client, opened.survey, opened.feedbackId)
-        .then(() => analytics.capture('buddies_feedback_attached', { source }))
+        .then(() => undefined)
         .catch((error) => {
           analytics.capture('buddies_feedback_attachment_failed', { source })
           errorTracking.captureException(error)

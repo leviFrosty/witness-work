@@ -106,13 +106,12 @@ export const useMytimeImport = ({
   const mappedRef = useRef<MappedImport | null>(null)
 
   const reset = useCallback(() => {
-    analytics.capture('import_reset', { import_type: 'mytime', source })
     mappedRef.current = null
     setPreview(null)
     setErrorKind(null)
     setSelection(ALL_SELECTED)
     setStatus('idle')
-  }, [source])
+  }, [])
 
   const toggleSelection = useCallback((key: MytimeImportSelectionKey) => {
     setSelection((s) => ({ ...s, [key]: !s[key] }))
@@ -177,10 +176,7 @@ export const useMytimeImport = ({
     const mapped = mappedRef.current
     if (!mapped) return
     setStatus('committing')
-    analytics.capture('import_commit_started', {
-      import_type: 'mytime',
-      source,
-    })
+
     // Defer the synchronous store writes one frame so the spinner paints before
     // the setState cascade blocks the JS thread (mirrors iCloudRestore).
     requestAnimationFrame(() => {

@@ -59,7 +59,7 @@ const RolloverScreen = () => {
 
   const handleSkip = () => {
     dismiss()
-    analytics.capture('time_rollover_dismissed', { source: 'rollover_screen' })
+
     navigation.goBack()
   }
 
@@ -178,7 +178,6 @@ const RolloverScreen = () => {
               value={autoEnabled}
               onValueChange={(enabled) => {
                 setAutoEnabled(enabled)
-                analytics.capture('time_rollover_auto_changed', { enabled })
               }}
             />
           </View>

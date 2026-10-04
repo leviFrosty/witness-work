@@ -12,7 +12,7 @@ import { usePreferences } from '@/stores/preferences'
 import useMileage from '@/stores/mileage'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -32,7 +32,6 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
   const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
   const hasActiveCar = useMileage((s) => s.vehicles.some((v) => !v.archived))
   const handleQuickAction = (action: QuickActionOption) => {
-    analytics.capture('quick_action_selected', { action })
     onAction()
     switch (action) {
       case 'addTime':

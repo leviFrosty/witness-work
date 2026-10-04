@@ -8,7 +8,7 @@ import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import InfoPopover from '@/components/ui/InfoPopover'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import { formatMinutes } from '@/lib/minutes'
 import { getStatusKey, segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { usePreferences } from '@/stores/preferences'
@@ -34,20 +34,12 @@ const ServiceYearPaceCard = ({ data, milestones }: Props) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
   const [scrubbed, setScrubbed] = useState<PacePoint | null>(null)
-  const [hasScrubbed, setHasScrubbed] = useState(false)
   const { pace, projection } = data
   const format = (minutes: number) =>
     formatMinutes(Math.abs(minutes), timeDisplayFormat).formatted
 
   const handleScrub = (point: PacePoint | null) => {
     setScrubbed(point)
-    if (point && !hasScrubbed) {
-      setHasScrubbed(true)
-      analytics.capture('service_year_pace_scrubbed', {
-        tense: pace.tense,
-        has_last_year: pace.hasLastYear,
-      })
-    }
   }
 
   const paceDelta = pace.loggedMinutes - pace.goalToDateMinutes

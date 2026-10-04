@@ -74,8 +74,6 @@ interface Props {
   onPress?: () => void
   /** Extra menu items after Copy, e.g. Navigate for an address. */
   actions?: ContextMenuEntries
-  /** Sent with chosen items as `context_menu_action`. */
-  analyticsSurface?: string
   accessibilityLabel?: string
   preview?: ReactElement
   /** Outer style. Its margins replace the lift padding's negative margins. */
@@ -93,7 +91,6 @@ const Copyeable = ({
   text,
   onPress,
   actions = [],
-  analyticsSurface = 'copyable',
   accessibilityLabel,
   preview,
   style,
@@ -104,7 +101,6 @@ const Copyeable = ({
   return (
     <ContextMenu
       actions={[[copyText ? copyAction(copyText) : null], ...actions]}
-      analyticsSurface={analyticsSurface}
       onPress={onPress}
       accessibilityLabel={
         accessibilityLabel ??

@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   Calendar as CalendarIcon,
   CalendarCheck as CalendarCheckIcon,
@@ -77,10 +76,7 @@ const IntentPicker = ({ goBack, goNext }: Props) => {
     const next = onboardingIntents.includes(id)
       ? onboardingIntents.filter((v) => v !== id)
       : [...onboardingIntents, id]
-    analytics.capture('onboarding_intent_toggled', {
-      intent: id,
-      selected: next.includes(id),
-    })
+
     set({ onboardingIntents: next })
   }
 

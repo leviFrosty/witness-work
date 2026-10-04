@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   ChevronRight as ChevronRightIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
@@ -25,7 +24,6 @@ const ContactSection = ({
           label={i18n.t('helpCenter')}
           selected={selectedDestination === 'FAQ'}
           onPress={() => {
-            analytics.capture('help_center_opened', { source: 'settings' })
             handleNavigate('FAQ')
           }}
         >

@@ -56,7 +56,6 @@ const OnboardingBackfillBanner = () => {
       }}
     >
       <ContextMenu
-        analyticsSurface='onboarding_backfill_banner'
         onPress={startBackfill}
         accessibilityLabel={i18n.t('onboardingBackfillBannerTitle')}
         style={{ flex: 1 }}

@@ -63,7 +63,6 @@ const StudyContactRow = ({
   return (
     <ContextMenu
       actions={actions}
-      analyticsSurface='studies_contact_row'
       onPress={onPress}
       accessibilityLabel={i18n.t('serviceReportInsights.openContact', {
         name: contact.name,

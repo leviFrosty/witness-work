@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useToastController } from '@tamagui/toast'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
-import { analytics } from '@/lib/analytics'
+
 import confirmDestructive from '@/lib/confirmDestructive'
 import useMileage from '@/stores/mileage'
 import { buildTripText } from '@/features/mileage/lib/report'
@@ -15,7 +15,7 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
 
 /** Edit, Log Again, Share, Copy, and Delete for one trip — row and details. */
-export default function useTripActions(source: 'row' | 'details') {
+export default function useTripActions() {
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
   const deleteTrip = useMileage((s) => s.deleteTrip)
@@ -30,18 +30,15 @@ export default function useTripActions(source: 'row' | 'details') {
     navigation.navigate('MileageTripForm', { duplicateOf: trip.id })
 
   const share = async (trip: Trip) => {
-    const result = await Share.share({
+    await Share.share({
       message: buildTripText(trip, vehicles, index, format),
     })
-    if (result.action === Share.sharedAction)
-      analytics.capture('mileage_trip_shared', { source, method: 'share' })
   }
 
   const copy = async (trip: Trip) => {
     await Clipboard.setStringAsync(buildTripText(trip, vehicles, index, format))
     Haptics.success().catch(() => {})
     toast.show(i18n.t('copied'), { native: true, duration: 2000 })
-    analytics.capture('mileage_trip_shared', { source, method: 'copy' })
   }
 
   const requestDelete = (trip: Trip, onDeleted?: () => void) =>
@@ -50,7 +47,7 @@ export default function useTripActions(source: 'row' | 'details') {
       description: i18n.t('mileage.deleteTrip_description'),
       onConfirm: () => {
         deleteTrip(trip.id)
-        analytics.capture('mileage_trip_deleted', { source })
+
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,

@@ -246,7 +246,6 @@ const ContactReachCard = ({
                 </View>
                 <ContextMenu
                   style={[{ flex: 1, minWidth: 0 }, liftedContent.outset]}
-                  analyticsSurface={`contact_${line.id}`}
                   onPress={line.onPress}
                   accessibilityLabel={line.text}
                   actions={line.menu}

@@ -416,7 +416,6 @@ const CalendarDay = (
   return (
     <View style={{ position: 'relative' }}>
       <ContextMenu
-        analyticsSurface='calendar_day'
         actions={menu}
         onPress={() => {
           props.onPress?.(props.date)

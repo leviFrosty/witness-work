@@ -10,7 +10,6 @@ import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import type { Visit } from '@/types/visit'
 import type { RootStackNavigation } from '@/types/rootStack'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120]
 
@@ -48,10 +47,6 @@ export default function FollowUpCalendarControls({
         )}
         value={included}
         onValueChange={(calendarIncluded) => {
-          analytics.capture('calendar_follow_up_inclusion_changed', {
-            included: calendarIncluded,
-            configured: enabled || configuredElsewhere,
-          })
           onChange({
             ...followUp,
             calendarIncluded,
@@ -70,9 +65,6 @@ export default function FollowUpCalendarControls({
               })),
               value: duration,
               onChange: ({ value }) => {
-                analytics.capture('calendar_follow_up_duration_changed', {
-                  duration_minutes: value,
-                })
                 onChange({ ...followUp, calendarDurationMinutes: value })
               },
             }}

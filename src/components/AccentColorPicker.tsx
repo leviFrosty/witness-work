@@ -98,7 +98,6 @@ const PickerContents = () => {
           presetValues={ACCENT_PRESETS.map((p) => p.value)}
           onChange={(hex) => set({ customAccentColor: hex })}
           onRemove={() => set({ customAccentColor: null })}
-          analyticsSurface='accent_color_swatch'
           title={i18n.t('accentColor')}
           sheetInitialColor={selectedValue}
           size={36}
@@ -110,8 +109,8 @@ const PickerContents = () => {
 
 const AccentColorPicker = () => (
   <IsSupporter
-    feature='customAccentColor'
     analyticsSurface='accent_color'
+    feature='customAccentColor'
     size='md'
     title={i18n.t('accentColor')}
   >

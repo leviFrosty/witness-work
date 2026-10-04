@@ -60,7 +60,6 @@ export default function BuddyRequestRow({
       subtitle={i18n.t('buddies_requestRowSubtitle', {
         time: moment(claim.receivedAt).fromNow(),
       })}
-      analyticsSurface='buddy_request_row'
       actions={
         busy
           ? []

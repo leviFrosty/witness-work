@@ -222,9 +222,6 @@ const HomeChecklist = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: i18n.t(labelKey as any),
           onPress: () => {
-            analytics.capture('onboarding_checklist_item_opened', {
-              item_id: id,
-            })
             switch (id) {
               case 'logFirstMinute':
               case 'trackTime':
@@ -270,18 +267,9 @@ const HomeChecklist = () => {
   // Items the app can't detect (or the user did another way) can be checked
   // off by hand from the circle or the item's long-press menu. Auto-completed
   // items stay done.
-  const setManuallyDone = (
-    id: HomeChecklistItemId,
-    done: boolean,
-    source: 'circle' | 'menu'
-  ) => {
+  const setManuallyDone = (id: HomeChecklistItemId, done: boolean) => {
     const others = homeChecklistManualCompletions.filter((it) => it !== id)
     setPref({ homeChecklistManualCompletions: done ? [...others, id] : others })
-    analytics.capture('onboarding_checklist_item_marked', {
-      item_id: id,
-      done,
-      source,
-    })
   }
 
   const handleDismiss = () => {
@@ -334,7 +322,6 @@ const HomeChecklist = () => {
       title={
         // Only the header is long-pressable: the items have their own menus.
         <ContextMenu
-          analyticsSurface='onboarding_checklist'
           actions={[
             {
               id: 'hide_checklist',
@@ -362,7 +349,7 @@ const HomeChecklist = () => {
           return (
             <XView key={item.id} style={{ gap: 12 }}>
               <Pressable
-                onPress={() => setManuallyDone(item.id, !done, 'circle')}
+                onPress={() => setManuallyDone(item.id, !done)}
                 disabled={autoDone}
                 hitSlop={8}
                 accessibilityRole='checkbox'
@@ -379,7 +366,6 @@ const HomeChecklist = () => {
               </Pressable>
               <ContextMenu
                 style={{ flex: 1 }}
-                analyticsSurface='onboarding_checklist_item'
                 onPress={item.onPress}
                 accessibilityLabel={item.label}
                 actions={[
@@ -393,14 +379,14 @@ const HomeChecklist = () => {
                     id: 'mark_done',
                     title: i18n.t('markAsDone'),
                     systemImage: 'checkmark.circle',
-                    onPress: () => setManuallyDone(item.id, true, 'menu'),
+                    onPress: () => setManuallyDone(item.id, true),
                   },
                   done &&
                     !autoDone && {
                       id: 'mark_not_done',
                       title: i18n.t('markAsNotDone'),
                       systemImage: 'circle',
-                      onPress: () => setManuallyDone(item.id, false, 'menu'),
+                      onPress: () => setManuallyDone(item.id, false),
                     },
                 ]}
               >

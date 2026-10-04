@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useToastController } from '@tamagui/toast'
@@ -52,19 +52,6 @@ const PreferencesiCloudDevicesScreenInner = () => {
   const [removing, setRemoving] = useState<string | null>(null)
   const toast = useToastController()
   const devices = listSyncDevices(files, ownDeviceId)
-
-  useEffect(() => {
-    const listed = listSyncDevices(
-      usePreferences.getState().iCloudSyncDevices,
-      usePreferences.getState().iCloudDeviceId
-    )
-    analytics.capture('icloud_sync_devices_viewed', {
-      device_count: listed.length,
-      flagged_count: listed.filter(
-        (d) => syncDeviceHint(d.filename, d) !== null
-      ).length,
-    })
-  }, [])
 
   const showBlocked = (
     device: SyncDeviceListItem,
@@ -132,11 +119,6 @@ const PreferencesiCloudDevicesScreenInner = () => {
         {
           text: i18n.t('cancel'),
           style: 'cancel',
-          onPress: () =>
-            analytics.capture(
-              'icloud_sync_device_remove_cancelled',
-              removalProperties(device.filename, device)
-            ),
         },
         {
           text: i18n.t('remove'),
@@ -238,7 +220,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
 
 const PreferencesiCloudDevicesScreen = () => (
   <SettingsInputLayout>
-    <IsSupporter feature='iCloudSync' analyticsSurface='icloud_sync' fill>
+    <IsSupporter analyticsSurface='icloud_sync' feature='iCloudSync' fill>
       <PreferencesiCloudDevicesScreenInner />
     </IsSupporter>
   </SettingsInputLayout>

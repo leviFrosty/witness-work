@@ -584,7 +584,6 @@ const YearMilestoneCard = ({
           them (Progress); both stay reachable from the visible links. */}
         {onAdjustMilestones ? (
           <ContextMenu
-            analyticsSurface='year_milestone_card'
             actions={[
               {
                 id: 'adjust_milestones',

@@ -17,7 +17,7 @@ import MapCard from '@/features/map/components/MapCard'
 import useCopyText from '@/features/map/hooks/useCopyText'
 import { formatCoordinate, mapLinks } from '@/lib/mapLinks'
 import { navigateTo } from '@/lib/address'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import { shareUrl } from '@/lib/share'
 import { usePreferences } from '@/stores/preferences'
@@ -97,7 +97,7 @@ export default function CreateContactCard({
     <MapCard fill={fill} onAccessibilityEscape={onCancel}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View ref={focusRef} style={{ flex: 1 }}>
-          <ContextMenu actions={actions} analyticsSurface='map_dropped_pin'>
+          <ContextMenu actions={actions}>
             <View style={{ gap: 4 }}>
               <View
                 accessibilityRole='header'
@@ -217,7 +217,6 @@ export default function CreateContactCard({
           accessibilityRole='button'
           variant='outline'
           onPress={() => {
-            analytics.capture('map_dropped_pin_navigate_pressed')
             navigate()
           }}
           style={{

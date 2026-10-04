@@ -2,7 +2,6 @@ import * as Notifications from 'expo-notifications'
 import moment from 'moment'
 import { useToastController } from '@tamagui/toast'
 
-import { analytics } from '@/lib/analytics'
 import { formatDate, formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
@@ -99,12 +98,6 @@ const reminderWillSend = (
 const dismissedUntilFor = (option: DismissOption) =>
   moment().add(option.duration, option.unit).toDate()
 
-const captureDismissed = (option: DismissOption, reminderScheduled: boolean) =>
-  analytics.capture('contact_dismissed', {
-    duration: option.key,
-    reminder_scheduled: reminderScheduled,
-  })
-
 const formatUntil = (option: DismissOption, dismissedUntil: Date) =>
   option.unit === 'seconds' || option.unit === 'minutes'
     ? formatTime(dismissedUntil, { withSeconds: true })
@@ -131,7 +124,6 @@ export default function useDismissContact() {
       await notificationsAllowed()
     )
     useContacts.getState().dismissContact(contact.id, dismissedUntil)
-    captureDismissed(option, reminder)
     const until = formatUntil(option, dismissedUntil)
 
     toast.show(i18n.t('contactDismissed'), {
@@ -153,10 +145,6 @@ export function useDismissContacts() {
   return async (contacts: Contact[], option: DismissOption) => {
     if (!contacts.length) return
     const dismissedUntil = dismissedUntilFor(option)
-    const reminder = reminderWillSend(
-      dismissedUntil,
-      await notificationsAllowed()
-    )
     // One store update: per-contact updates re-run the whole Contacts
     // pipeline and persist every contact once per selected contact.
     useContacts
@@ -164,7 +152,6 @@ export function useDismissContacts() {
       .dismissContacts(
         contacts.map((contact) => ({ id: contact.id, dismissedUntil }))
       )
-    contacts.forEach(() => captureDismissed(option, reminder))
     toast.show(i18n.t('contactDismissed'), {
       // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       message: i18n.t('contactsDismissedMessage', {

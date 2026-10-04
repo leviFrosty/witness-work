@@ -86,7 +86,7 @@ import IconButton from '@/components/ui/IconButton'
 
 let renderer: ReactTestRenderer | undefined
 const gate = () => (
-  <IsSupporter feature='customAccentColor' analyticsSurface='accent_color'>
+  <IsSupporter analyticsSurface='accent_color' feature='customAccentColor'>
     <React.Fragment>Palette</React.Fragment>
   </IsSupporter>
 )
@@ -171,9 +171,7 @@ describe.each(['ios', 'android'])('supporter gate on %s', (platform) => {
       vi.advanceTimersByTime(0)
     })
     expect(events('supporter_gate_clicked')).toHaveLength(1)
-    expect(events('paywall_opened')).toEqual([
-      ['paywall_opened', { source: 'feature_gate', ...attribution }],
-    ])
+    expect(events('paywall_opened')).toEqual([])
     expect(runtime.navigate).toHaveBeenCalledExactlyOnceWith('Paywall', {
       source: 'feature_gate',
       feature: 'customAccentColor',

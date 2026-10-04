@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import { Linking, View } from 'react-native'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -56,11 +55,9 @@ export default function PaywallPurchaseFooter({
 }
 
 export function PaywallLegalFooter({
-  source,
   onRestore,
   showRestore,
 }: {
-  source: string
   onRestore: () => unknown
   showRestore: boolean
 }) {
@@ -93,10 +90,6 @@ export function PaywallLegalFooter({
       )}
       <Button
         onPress={() => {
-          analytics.capture('paywall_legal_link_clicked', {
-            source,
-            link: 'terms',
-          })
           Linking.openURL(links.termsOfUse)
         }}
         style={{ minHeight: 44, justifyContent: 'center' }}
@@ -113,10 +106,6 @@ export function PaywallLegalFooter({
       </Button>
       <Button
         onPress={() => {
-          analytics.capture('paywall_legal_link_clicked', {
-            source,
-            link: 'privacy',
-          })
           Linking.openURL(links.privacyPolicy)
         }}
         style={{ minHeight: 44, justifyContent: 'center' }}

@@ -398,8 +398,6 @@ describe('checkICloudIdentity', () => {
     dismissICloudAccountChangeNotice()
 
     expect(usePreferences.getState().iCloudAccountChangedAt).toBeNull()
-    expect(analytics.capture).toHaveBeenCalledWith(
-      'icloud_account_changed_notice_dismissed'
-    )
+    expect(analytics.capture).not.toHaveBeenCalled()
   })
 })

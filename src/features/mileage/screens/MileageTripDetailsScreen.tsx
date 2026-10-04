@@ -112,7 +112,15 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
         buttonType='back'
         title={i18n.t('mileage.trip')}
         rightElement={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <View
+            style={{
+              position: 'absolute',
+              right: 0,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
             <IconButton
               icon={ShareIcon}
               size={20}

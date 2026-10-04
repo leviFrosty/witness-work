@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { AppState, Pressable, View } from 'react-native'
 import { InputProps } from 'tamagui'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
@@ -23,6 +23,7 @@ import ProfileDetailOverlay, {
 } from '@/features/profile/components/ProfileDetailOverlay'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
+import { pickGreeting } from '@/features/profile/lib/greeting'
 import MyTextInput from '@/components/ui/TextInput'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useNavigation } from '@react-navigation/native'
@@ -114,6 +115,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)
+  const [now, setNow] = useState(() => new Date())
   const anchorRef = useRef<View>(null)
   const navigation = useNavigation<RootStackNavigation>()
   const homeNavigation = useNavigation<HomeTabStackNavigation>()
@@ -143,6 +145,15 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     })
     return () => cancelIdleCallback(handle)
   }, [preview, editable, isIncomplete])
+
+  // Re-read the clock on return so a card left open since morning doesn't
+  // still say "Good morning" in the evening.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setNow(new Date())
+    })
+    return () => subscription.remove()
+  }, [])
 
   if (isIncomplete) {
     return (
@@ -191,9 +202,10 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     )
   }
 
+  const greetingVariant = pickGreeting(now)
   const greeting = hasName
-    ? i18n.t('profileGreeting', { name: trimmedName })
-    : i18n.t('profileGreetingNoName')
+    ? i18n.t(greetingVariant.key, { name: trimmedName })
+    : i18n.t(greetingVariant.noNameKey)
 
   const tenure: Tenure = (() => {
     if (isInFullTimeService && tenureStartDate) {
@@ -241,6 +253,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const subtitleColor = theme.colors.textAlt
   const tenureIconTint = tenure.tint
 
+  // The header already shows the avatar on Home; only the editor needs one.
   const avatarEl = editable ? (
     <AvatarPickerPopover
       value={avatar}
@@ -252,9 +265,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         setProfile({ customAvatarBackground: next })
       }
     />
-  ) : (
-    <Avatar avatar={avatar} name={trimmedName} size={44} />
-  )
+  ) : null
 
   const nameEl = editable ? (
     <MyTextInput
@@ -284,7 +295,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         fontSize: 16,
         color: titleColor,
       }}
-      numberOfLines={1}
+      numberOfLines={2}
     >
       {greeting}
     </Text>

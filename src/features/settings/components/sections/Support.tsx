@@ -1,4 +1,5 @@
 import {
+  CalendarClock as CalendarClockIcon,
   ChevronRight as ChevronRightIcon,
   ExternalLink as ExternalLinkIcon,
   Globe as GlobeIcon,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, Platform, View } from 'react-native'
+import { useState } from 'react'
 import moment from 'moment'
 import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
@@ -23,6 +25,8 @@ import { openURL } from '@/lib/links'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
+import ManageSubscriptionSheet from '@/features/supporter/components/ManageSubscriptionSheet'
+import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
 
 const SupporterCard = () => {
   const theme = useTheme()
@@ -95,6 +99,8 @@ const SupportSection = ({
 }: SettingsSectionProps) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const subscription = useSubscriptionStatus()
+  const [manageOpen, setManageOpen] = useState(false)
 
   return (
     <View style={{ gap: 3 }}>
@@ -114,6 +120,16 @@ const SupportSection = ({
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
+        {subscription.state.kind !== 'none' && (
+          <InputRowButton
+            leftIcon={CalendarClockIcon}
+            label={i18n.t('manageSubscription')}
+            sublabel={subscription.label ?? undefined}
+            onPress={() => setManageOpen(true)}
+          >
+            <IconButton icon={ChevronRightIcon} />
+          </InputRowButton>
+        )}
         <InputRowButton
           leftIcon={Share2Icon}
           label={i18n.t('shareApp_title')}
@@ -166,6 +182,11 @@ const SupportSection = ({
           <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
       </Section>
+      <ManageSubscriptionSheet
+        open={manageOpen}
+        setOpen={setManageOpen}
+        source='settings'
+      />
     </View>
   )
 }

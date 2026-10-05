@@ -14,29 +14,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import Badge from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
-
-/**
- * Billing cadence we display, derived from a store product's ISO-8601
- * `subscriptionPeriod`. The App Store reports `P1M` for monthly and `P1Y` for
- * annual; the paywall only sells those two, so anything else falls back to a
- * neutral label rather than guessing.
- */
-type SubscriptionPeriodKind = 'monthly' | 'annual' | 'other'
-
-const periodKindFromProduct = (
-  subscriptionPeriod: string | null | undefined
-): SubscriptionPeriodKind => {
-  switch (subscriptionPeriod) {
-    case 'P1M':
-      return 'monthly'
-    case 'P1Y':
-      return 'annual'
-    default:
-      return 'other'
-  }
-}
+import {
+  billingKind,
+  matchStoreProduct,
+} from '@/features/supporter/lib/supporterPause'
+import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
+import ManageSubscriptionSheet from '@/features/supporter/components/ManageSubscriptionSheet'
 
 interface PreviousDonationsProps {
   customer: CustomerInfo
@@ -49,6 +35,10 @@ const PreviousDonations = ({
 }: PreviousDonationsProps) => {
   const theme = useTheme()
   const [products, setProducts] = useState<PurchasesStoreProduct[]>([])
+  const [manageOpen, setManageOpen] = useState(false)
+  const status = useSubscriptionStatus()
+  const manageableProduct =
+    status.state.kind === 'none' ? null : status.state.sub.productIdentifier
 
   useEffect(() => {
     const getProducts = async () => {
@@ -75,8 +65,9 @@ const PreviousDonations = ({
   const nonSubscriptions = useMemo(() => {
     return customer.nonSubscriptionTransactions
       .map((transaction) => {
-        const matchingProduct = products.find(
-          (p) => p.identifier === transaction.productIdentifier
+        const matchingProduct = matchStoreProduct(
+          products,
+          transaction.productIdentifier
         )
 
         return {
@@ -103,13 +94,11 @@ const PreviousDonations = ({
   const subscriptions = useMemo(() => {
     return Object.values(customer.subscriptionsByProductIdentifier ?? {})
       .map((sub) => {
-        const product = products.find(
-          (p) => p.identifier === sub.productIdentifier
-        )
+        const product = matchStoreProduct(products, sub.productIdentifier)
         return {
           sub,
           product,
-          kind: periodKindFromProduct(product?.subscriptionPeriod),
+          kind: billingKind(product?.subscriptionPeriod),
         }
       })
       .sort((a, b) => {
@@ -209,15 +198,38 @@ const PreviousDonations = ({
                   {sub.isActive ? i18n.t('active') : i18n.t('inactive')}
                 </Badge>
               </XView>
-              {sub.isActive && (
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t('goToAppStoreToUpdateSubscriptions')}
-                </Text>
+              {sub.productIdentifier === manageableProduct && (
+                <>
+                  {status.label && (
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {status.label}
+                    </Text>
+                  )}
+                  <Button
+                    variant='outline'
+                    onPress={() => setManageOpen(true)}
+                    style={{
+                      alignSelf: 'flex-start',
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {i18n.t('manageSubscription')}
+                    </Text>
+                  </Button>
+                </>
               )}
             </Card>
           </View>
@@ -248,6 +260,11 @@ const PreviousDonations = ({
           })}
         </Card>
       )}
+      <ManageSubscriptionSheet
+        open={manageOpen}
+        setOpen={setManageOpen}
+        source='paywall'
+      />
     </View>
   )
 }

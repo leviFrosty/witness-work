@@ -256,6 +256,7 @@ export const FAQS: FAQEntry[] = [
     id: 'stopSupporting',
     category: 'supporter',
   },
+  { id: 'pauseSupport', category: 'supporter' },
   {
     id: 'acceptDonations',
     category: 'supporter',

@@ -194,6 +194,8 @@ export default function ToolsScreen() {
     devShowAppIconAlerts,
     supporterNudgeDismissedAt,
     hideSupporterNudge,
+    supporterPauseStartedAt,
+    supporterPauseResumesAt,
     devRolloverDateOverride,
     lastRolloverYearMonth,
     autoRolloverEnabled,
@@ -1419,6 +1421,39 @@ export default function ToolsScreen() {
                 onPress={() => {
                   setPreferences({ supporterNudgeDismissedAt: null })
                   showDone('Nudge dismissal cleared')
+                }}
+              />
+            </ToolList>
+
+            <ToolSubheading
+              title='Supporter pause'
+              info='App Store pause redemption, synced across devices. Drives the "Payments paused until" status and the once-per-12-months limit. Reset to retest a sandbox pause; it does not change the store subscription.'
+            />
+            <ToolList>
+              <ToolRow
+                label='Paused at'
+                value={
+                  supporterPauseStartedAt
+                    ? moment(supporterPauseStartedAt).format('lll')
+                    : '—'
+                }
+              />
+              <ToolRow
+                label='Resumes'
+                value={
+                  supporterPauseResumesAt
+                    ? moment(supporterPauseResumesAt).format('lll')
+                    : '—'
+                }
+              />
+              <ToolRow
+                label='Reset pause'
+                onPress={() => {
+                  setPreferences({
+                    supporterPauseStartedAt: null,
+                    supporterPauseResumesAt: null,
+                  })
+                  showDone('Supporter pause cleared')
                 }}
               />
             </ToolList>

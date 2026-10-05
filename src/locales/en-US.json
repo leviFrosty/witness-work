@@ -3065,13 +3065,17 @@
     "studyingSince": "Studying · last study {{date}}",
     "lastStudy": "Last study {{date}}",
     "studyRuleTitle": "Bible studies",
-    "visitCount": {
-      "one": "{{count}} visit",
-      "other": "{{count}} visits"
-    },
     "studyCount": {
       "one": "{{count}} study",
       "other": "{{count}} studies"
+    },
+    "conversationCount": {
+      "one": "{{count}} conversation",
+      "other": "{{count}} conversations"
+    },
+    "notAtHomeCount": {
+      "one": "{{count}} not at home",
+      "other": "{{count}} not at home"
     },
     "journeyNext": "{{date}} · next",
     "nextVisit": "Next visit · {{date}}",
@@ -3087,7 +3091,8 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "text": "Text",
-    "journeySummary": "{{visits}} · {{studies}} · since {{date}}",
+    "journeySince": "since {{date}}",
+    "historyInfo": "The graph shows the last six months. A filled dot is a Bible study, an outlined dot is a conversation, and a square means no one was home. The dark line marks today, and the dashed line leads to the next follow-up. Below, each visit shows whether its follow-up was kept, missed, or dismissed.",
     "contactInfo": "Contact information"
   },
   "calendarSync": "Calendar Sync",

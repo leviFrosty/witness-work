@@ -1,12 +1,9 @@
 import {
   Bell as BellIcon,
   BellOff as BellOffIcon,
-  BookOpen as BookOpenIcon,
   Check as CheckIcon,
   ChevronRight as ChevronRightIcon,
   Clock as ClockIcon,
-  DoorClosed as DoorClosedIcon,
-  MessageCircle as MessageCircleIcon,
   TriangleAlert as TriangleAlertIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
@@ -21,6 +18,7 @@ import { withAlpha } from '@/lib/color'
 import { formatDate, formatMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { Visit } from '@/types/visit'
+import VisitOutcomeMarker from '@/features/contacts/components/VisitOutcomeMarker'
 import VisitTimelineCard from '@/features/contacts/components/VisitTimelineCard'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
 import {
@@ -34,12 +32,6 @@ import {
 /** Width of the rail column left of the cards; the line runs at its center. */
 const RAIL = 26
 const NODE = 24
-
-const OUTCOME_ICON = {
-  study: BookOpenIcon,
-  conversation: MessageCircleIcon,
-  notAtHome: DoorClosedIcon,
-} as const
 
 const FOLLOW_UP: Record<
   FollowUpState,
@@ -56,52 +48,6 @@ const FOLLOW_UP: Record<
   kept: { icon: CheckIcon, label: 'followUpKept' },
   missed: { icon: TriangleAlertIcon, label: 'followUpMissed' },
   dismissed: { icon: BellOffIcon, label: 'followUpDismissed' },
-}
-
-/**
- * Outcome node: filled for a study, outlined for a talk, dashed when no one
- * answered.
- */
-const VisitNode = ({ visit }: { visit: Visit }) => {
-  const theme = useTheme()
-  const outcome = visitOutcome(visit)
-  const style = {
-    study: {
-      backgroundColor: theme.colors.accent,
-      borderColor: theme.colors.accent,
-      borderStyle: 'solid' as const,
-      color: theme.colors.card,
-    },
-    conversation: {
-      backgroundColor: theme.colors.card,
-      borderColor: theme.colors.accent3,
-      borderStyle: 'solid' as const,
-      color: theme.colors.accent3,
-    },
-    notAtHome: {
-      backgroundColor: theme.colors.backgroundLighter,
-      borderColor: theme.colors.textAlt,
-      borderStyle: 'dashed' as const,
-      color: theme.colors.textAlt,
-    },
-  }[outcome]
-  return (
-    <View
-      style={{
-        width: NODE,
-        height: NODE,
-        borderRadius: NODE / 2,
-        borderWidth: 1.5,
-        borderColor: style.borderColor,
-        borderStyle: style.borderStyle,
-        backgroundColor: style.backgroundColor,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <LucideIcon icon={OUTCOME_ICON[outcome]} size={11} color={style.color} />
-    </View>
-  )
 }
 
 const FollowUpNode = ({ state }: { state: FollowUpState }) => {
@@ -360,7 +306,11 @@ const VisitTimeline = ({
               <View
                 style={{ width: RAIL, alignItems: 'center', paddingTop: 13 }}
               >
-                <VisitNode visit={visit} />
+                <VisitOutcomeMarker
+                  outcome={visitOutcome(visit)}
+                  size={NODE}
+                  withIcon
+                />
               </View>
               <View style={{ flex: 1, minWidth: 0, paddingLeft: 6 }}>
                 <VisitTimelineCard visit={visit} highlighted={highlighted} />

@@ -91,7 +91,8 @@ export const JOURNEY_PAST_SHARE = 0.8
 
 export type Journey = {
   visitCount: number
-  studyCount: number
+  /** Whole-history totals per outcome; together they make the rail's key. */
+  outcomeCounts: Record<VisitOutcome, number>
   /** The very first visit, for the "since" caption. */
   first: Date
   /** Start of the rail window (`now` minus the window). */
@@ -133,9 +134,11 @@ export const getJourney = (
   }
 
   const inWindow = sorted.filter((v) => ms(v.date) >= startMs)
+  const outcomeCounts = { study: 0, conversation: 0, notAtHome: 0 }
+  for (const v of sorted) outcomeCounts[visitOutcome(v)]++
   return {
     visitCount: sorted.length,
-    studyCount: sorted.filter((v) => visitOutcome(v) === 'study').length,
+    outcomeCounts,
     first: new Date(sorted[0].date),
     windowStart: windowStart.toDate(),
     olderCount: sorted.length - inWindow.length,

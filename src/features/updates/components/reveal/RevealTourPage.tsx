@@ -8,8 +8,11 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated'
+import { Mic as MicIcon } from 'lucide-react-native'
 import Text from '@/components/ui/MyText'
+import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 import {
   DISPLAY_FONT_SCALE_CAP,
   EASE_OUT,
@@ -33,6 +36,8 @@ import YearPaceVisual from '@/features/updates/components/reveal/visuals/YearPac
 import MileageVisual from '@/features/updates/components/reveal/visuals/MileageVisual'
 import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
 import MoreVisual from '@/features/updates/components/reveal/visuals/MoreVisual'
+import WatchVisual from '@/features/updates/components/reveal/visuals/WatchVisual'
+import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
 import AndroidShareVisual from '@/features/updates/components/reveal/visuals/AndroidShareVisual'
 
 /** How small or large an illustration may draw to fill its stage. */
@@ -125,6 +130,13 @@ const RevealTourPage = ({
       transform: [{ translateY: (1 - p) * 12 * drift }],
     }
   })
+  const calloutStyle = useAnimatedStyle(() => {
+    const p = clamp((appear.value - 0.45) / 0.55, 0, 1)
+    return {
+      opacity: p,
+      transform: [{ translateY: (1 - p) * 10 * drift }],
+    }
+  })
 
   const visualProps = { palette, active, reduceMotion }
 
@@ -161,6 +173,8 @@ const RevealTourPage = ({
             {page.id === 'year' && <YearPaceVisual {...visualProps} />}
             {page.id === 'mileage' && <MileageVisual {...visualProps} />}
             {page.id === 'calendar' && <CalendarVisual {...visualProps} />}
+            {page.id === 'watch' && <WatchVisual {...visualProps} />}
+            {page.id === 'siri' && <SiriVisual {...visualProps} />}
             {page.id === 'more' && (
               <MoreVisual {...visualProps} tiles={moreTiles} />
             )}
@@ -209,6 +223,55 @@ const RevealTourPage = ({
             {page.caption}
           </Text>
         </Animated.View>
+        {page.callout && (
+          <Animated.View
+            accessible
+            accessibilityLabel={`${i18n.t('updateReveal_siri_tryLabel')} ${page.callout}`}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                alignSelf: 'flex-start',
+                gap: 10,
+                marginTop: 4,
+                paddingVertical: 10,
+                paddingLeft: 12,
+                paddingRight: 16,
+                borderRadius: 16,
+                borderCurve: 'continuous',
+                backgroundColor: palette.surface,
+                borderWidth: 1,
+                borderColor: palette.surfaceBorder,
+              },
+              calloutStyle,
+            ]}
+          >
+            <LucideIcon icon={MicIcon} size={18} color={page.color} />
+            <View style={{ flexShrink: 1 }}>
+              <Text
+                maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
+                style={{
+                  fontSize: 12,
+                  fontFamily: theme.fonts.semiBold,
+                  color: palette.textAlt,
+                }}
+              >
+                {i18n.t('updateReveal_siri_tryLabel')}
+              </Text>
+              <Text
+                maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
+                style={{
+                  fontSize: 16,
+                  lineHeight: 21,
+                  fontFamily: theme.fonts.bold,
+                  color: palette.text,
+                }}
+              >
+                {page.callout}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
       </View>
     </View>
   )

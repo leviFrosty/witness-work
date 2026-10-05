@@ -311,9 +311,11 @@ release. `update_reveal_opened` fires when it appears, with `source` (`launch`,
 `reveal_version`. `update_reveal_closed` fires once when it closes, with
 `source`, `method` (`later`, `close`, `done`, or `back` for Android's back
 button), `stage` (`intro` if it closed before the tour, `tour` otherwise),
-`pages_viewed` and `page_count` (pages shown for this platform, role, and
-Buddies availability, fixed when the tour opens), `last_page` (a bounded page
-id such as `navigation`, `buddies`, or `android`), and `elapsed_ms` (wall
+`pages_viewed` and `page_count` (pages shown for this platform, role, Buddies
+availability, and Apple Watch support, fixed when the tour opens; `watch` and
+`siri` show only on an iPhone, `siri` only for roles that log hours),
+`last_page` (a bounded page id such as `navigation`, `buddies`, `watch`, or
+`android`), and `elapsed_ms` (wall
 clock, including time in the share sheet). Compare
 `stage: intro` with `method: later` to see who skips the tour, and
 `last_page`/`pages_viewed` to see where tours end. A tour closed by quitting the

@@ -1,40 +1,14 @@
-import AppIntents
 import Foundation
 import Observation
 import WatchConnectivity
 
-/// Why a watch action couldn't finish. Shown in the app and spoken by Siri.
-enum WatchActionError: Error, CustomLocalizedStringResourceConvertible {
-  case notSetUp
-  case hoursLoggingOff
-  case invalidDuration
-  case phoneUnreachable
-  case timerChanged
-  case failed
-
-  var key: String {
-    switch self {
-    case .notSetUp: "watchSetUp"
-    case .hoursLoggingOff: "watchHoursLoggingOff"
-    case .invalidDuration: "watchInvalidDuration"
-    case .phoneUnreachable: "watchPhoneUnreachable"
-    case .timerChanged: "watchTimerChanged"
-    case .failed: "watchRequestFailed"
-    }
-  }
-
-  var localizedStringResource: LocalizedStringResource {
-    LocalizedStringResource(String.LocalizationValue(key))
-  }
-}
-
 /// State behind the watch UI and App Intents.
 ///
-/// Entries are kept in a stored outbox until the iPhone app has saved them:
-/// sent as a message when the iPhone is reachable, and as a queued transfer
-/// otherwise. Each entry's id is its Time Entry id on the iPhone, so sending
-/// it more than once is safe. Timer commands need the iPhone right away and
-/// aren't queued.
+/// Entries and trips are kept in a stored outbox until the iPhone app has
+/// saved them: sent as a message when the iPhone is reachable, and as a queued
+/// transfer otherwise. Each one's id is its id on the iPhone, so sending it
+/// more than once is safe. Timer commands need the iPhone right away and
+/// aren't queued. Errors are `ServiceActionError`s (`ServiceIntents.swift`).
 @MainActor
 @Observable
 final class WatchModel {
@@ -103,7 +77,20 @@ final class WatchModel {
     let entry = WatchEntryDraft(
       id: UUID().uuidString, date: Self.today(), hours: hours, minutes: minutes,
       categoryId: categoryId, origin: origin)
-    let request = WatchRequest(kind: .addEntry, id: entry.id, entry: entry, origin: origin)
+    await enqueue(WatchRequest(kind: .addEntry, id: entry.id, entry: entry, origin: origin))
+  }
+
+  /// Logs a mileage trip for today, delivered like an entry.
+  func addTrip(
+    vehicleId: String, distanceMiles: Double, roundTrip: Bool, origin: WatchOrigin
+  ) async {
+    let trip = WatchTripDraft(
+      id: UUID().uuidString, date: Self.today(), vehicleId: vehicleId,
+      distanceMiles: distanceMiles, roundTrip: roundTrip, origin: origin)
+    await enqueue(WatchRequest(kind: .addTrip, id: trip.id, trip: trip, origin: origin))
+  }
+
+  private func enqueue(_ request: WatchRequest) async {
     outbox.append(OutboxItem(request: request, createdAt: .now, delivered: false))
     WatchStorage.saveOutbox(outbox)
 
@@ -133,23 +120,51 @@ final class WatchModel {
   // MARK: Timer
 
   func setTimer(_ action: WatchTimerAction, origin: WatchOrigin) async throws {
-    guard PhoneSession.shared.isReachable else { throw WatchActionError.phoneUnreachable }
+    guard PhoneSession.shared.isReachable else { throw ServiceActionError.phoneUnreachable }
     let reply: WatchReply
     do {
       reply = try await PhoneSession.shared.send(
         WatchRequest(kind: .timer, timerAction: action, origin: origin))
     } catch {
-      throw WatchActionError.phoneUnreachable
+      throw ServiceActionError.phoneUnreachable
     }
     reply.context.map(PhoneSession.shared.receive)
-    guard reply.status == .accepted else { throw WatchActionError.failed }
+    guard reply.status == .accepted else { throw ServiceActionError.failed }
+  }
+
+  /// Pauses the timer and saves whatever it holds as an entry for today, then
+  /// resets it. The iPhone works out the time when it handles the request.
+  func stopTimer(categoryId: String?, origin: WatchOrigin) async throws {
+    guard PhoneSession.shared.isReachable else { throw ServiceActionError.phoneUnreachable }
+    let template = WatchEntryDraft(
+      id: UUID().uuidString, date: Self.today(), hours: 0, minutes: 0,
+      categoryId: categoryId, origin: origin)
+    let request = WatchRequest(kind: .stopTimer, id: template.id, entry: template, origin: origin)
+    let reply: WatchReply
+    do {
+      reply = try await PhoneSession.shared.send(request)
+    } catch {
+      throw ServiceActionError.phoneUnreachable
+    }
+    reply.context.map(PhoneSession.shared.receive)
+    switch (reply.status, reply.reason) {
+    case (.accepted, _):
+      outbox.append(OutboxItem(request: request, createdAt: .now, delivered: true))
+      WatchStorage.saveOutbox(outbox)
+    case (.rejected, .timerEmpty):
+      throw ServiceActionError.timerEmpty
+    case (.rejected, .timerTooLong):
+      throw ServiceActionError.timerTooLong
+    case (.rejected, _):
+      throw ServiceActionError.failed
+    }
   }
 
   /// Saves the paused timer's time as an entry and resets the timer. The
   /// iPhone refuses if its timer changed since the watch showed it.
   func saveTimer(hours: Int, minutes: Int, categoryId: String?) async throws {
     guard let timer, PhoneSession.shared.isReachable else {
-      throw WatchActionError.phoneUnreachable
+      throw ServiceActionError.phoneUnreachable
     }
     let entry = WatchEntryDraft(
       id: UUID().uuidString, date: Self.today(), hours: hours, minutes: minutes,
@@ -161,7 +176,7 @@ final class WatchModel {
     do {
       reply = try await PhoneSession.shared.send(request)
     } catch {
-      throw WatchActionError.phoneUnreachable
+      throw ServiceActionError.phoneUnreachable
     }
     reply.context.map(PhoneSession.shared.receive)
     switch (reply.status, reply.reason) {
@@ -169,9 +184,9 @@ final class WatchModel {
       outbox.append(OutboxItem(request: request, createdAt: .now, delivered: true))
       WatchStorage.saveOutbox(outbox)
     case (.rejected, .timerChanged):
-      throw WatchActionError.timerChanged
+      throw ServiceActionError.timerChanged
     case (.rejected, _):
-      throw WatchActionError.failed
+      throw ServiceActionError.failed
     }
   }
 
@@ -185,6 +200,6 @@ final class WatchModel {
   }
 
   func show(_ error: Error) {
-    alertKey = (error as? WatchActionError ?? .failed).key
+    alertKey = (error as? ServiceActionError ?? .failed).key
   }
 }

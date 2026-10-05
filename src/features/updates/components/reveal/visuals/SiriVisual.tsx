@@ -44,22 +44,22 @@ interface Command {
 }
 
 /**
- * The watch's Siri phrases (`targets/watch/WatchShortcuts.swift`), in a day's
- * order.
+ * The watch's Siri phrases (`targets/intents/ServiceShortcuts.swift`), in a
+ * day's order.
  */
 const COMMANDS: Command[] = [
   {
-    phraseKey: 'watchShortcutStartTimer',
-    replyKey: 'watchTimerStarted',
+    phraseKey: 'siriShortcutStartTimer',
+    replyKey: 'siriTimerStarted',
     icon: PlayIcon,
   },
   {
-    phraseKey: 'watchShortcutPauseTimer',
-    replyKey: 'watchTimerPaused',
+    phraseKey: 'siriShortcutPauseTimer',
+    replyKey: 'siriTimerPaused',
     icon: PauseIcon,
   },
   {
-    phraseKey: 'watchShortcutAddTime',
+    phraseKey: 'siriShortcutAddTime',
     replyKey: 'timeAdded',
     icon: CircleCheckIcon,
     asksDuration: true,
@@ -335,7 +335,7 @@ const Reply = ({
             textAlign: 'center',
           }}
         >
-          {i18n.t('watchDuration')}
+          {i18n.t('siriDuration')}
         </VisualText>
       </Animated.View>
       <Animated.View style={[replyFrame, replyStyle]}>

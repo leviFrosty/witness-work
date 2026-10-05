@@ -152,7 +152,7 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
     color: 'pink',
     titleKey: 'updateReveal_siri_title',
     captionKey: 'updateReveal_siri_caption',
-    siriPhraseKey: 'watchShortcutStartTimer',
+    siriPhraseKey: 'siriShortcutStartTimer',
     platform: 'ios',
     watchOnly: true,
     // Every Siri action adds or times hours.

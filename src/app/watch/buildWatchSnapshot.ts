@@ -7,6 +7,8 @@ import {
   ReportFields,
 } from '@/app/widgets/buildReport'
 import { Category } from '@/types/category'
+import type { DistanceUnit, Trip, Vehicle } from '@/types/mileage'
+import { defaultVehicleId } from '@/lib/mileage/calc'
 import watchStringKeys from '@/app/watch/watchStringKeys.json'
 
 /**
@@ -17,8 +19,9 @@ import watchStringKeys from '@/app/watch/watchStringKeys.json'
 export const WATCH_SNAPSHOT_VERSION = 1
 
 /**
- * What the Apple Watch app and its complications show. Mirrors `WatchSnapshot`
- * in `WatchProtocol.swift`. Strings are translated into the app's language and
+ * What the Apple Watch app and its complications show, and what Siri needs on
+ * the watch and on this device. Mirrors `WatchSnapshot` in
+ * `WatchProtocol.swift`. Strings are translated into the app's language and
  * durations formatted here, so the watch never formats measured time.
  */
 export type WatchSnapshot = {
@@ -37,12 +40,32 @@ export type WatchSnapshot = {
   publisherState: ReportFields['publisherState']
   paceText: string | null
   categories: { id: string; name: string }[]
+  /** What Siri needs to log a trip. */
+  mileage: {
+    /** Mileage Tracking isn't turned off. */
+    enabled: boolean
+    distanceUnit: DistanceUnit
+    /** Cars that aren't archived, the one a new trip uses first. */
+    vehicles: { id: string; name: string }[]
+  }
   strings: Record<string, string>
 }
 
 export type BuildWatchSnapshotArgs = BuildReportArgs & {
   showsTimeEntry: boolean
   categories: Category[]
+  mileageTrackingEnabled: boolean | undefined
+  distanceUnit: DistanceUnit
+  vehicles: Vehicle[]
+  trips: Trip[]
+}
+
+function activeVehicles(vehicles: Vehicle[], trips: Trip[]) {
+  const firstId = defaultVehicleId(trips, vehicles)
+  return vehicles
+    .filter((v) => !v.archived)
+    .sort((a, b) => Number(b.id === firstId) - Number(a.id === firstId))
+    .map(({ id, name }) => ({ id, name }))
 }
 
 /** Same pace line as the Report widget's badge. */
@@ -84,6 +107,11 @@ export function buildWatchSnapshot(
     publisherState: report.publisherState,
     paceText: paceText(report),
     categories: args.categories.map(({ id, name }) => ({ id, name })),
+    mileage: {
+      enabled: args.mileageTrackingEnabled !== false,
+      distanceUnit: args.distanceUnit,
+      vehicles: activeVehicles(args.vehicles, args.trips),
+    },
     strings: Object.fromEntries(
       watchStringKeys.strings.map((key) => [key, i18n.t(key as TranslationKey)])
     ),

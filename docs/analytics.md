@@ -450,10 +450,27 @@ Events never carry entry ids, dates, durations, Type names or timer values.
 | Event                          | When / properties                                                                                                                                                                                                                                                                                                             |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `time_entry_created`           | An entry made on the watch is saved on the iPhone. `source: watch`, `watch_origin` (`app`, `shortcut` for Siri/Shortcuts, `timer` for a saved timer), `entry_mode` (`hours`, or `checkbox` for the shared-in-ministry marker), `has_category`, `has_note: false`. A repeated delivery of the same entry is not counted again. |
+| `mileage_trip_added`           | A trip logged with Siri on the watch is saved on the iPhone. `source: watch`, `entry_mode: distance`, `round_trip`, `has_note: false`, `logged_again: false`.                                                                                                                                                                 |
 | `watch_timer_action_completed` | The watch started or paused the iPhone's timer. `action` (`started`, `paused`), `origin` (`app`, `shortcut`). Watch requests the iPhone never received aren't recorded.                                                                                                                                                       |
-| `watch_entry_skipped`          | A watch entry wasn't saved. `reason` (`deleted` when it was deleted on a device before it arrived, `invalid`).                                                                                                                                                                                                                |
-| `watch_entry_adjusted`         | A watch entry was saved as Standard because its Type was deleted first. `reason: category_removed`.                                                                                                                                                                                                                           |
+| `watch_entry_skipped`          | A watch or Siri entry wasn't saved. `reason` (`deleted` when it was deleted on a device before it arrived, `invalid`).                                                                                                                                                                                                        |
+| `watch_entry_adjusted`         | A watch or Siri entry was saved as Standard because its Type was deleted first. `reason: category_removed`.                                                                                                                                                                                                                   |
 | `watch_app_status`             | At most once a week per iPhone while the watch app is installed: the adoption baseline. `complication_enabled` (a WitnessWork complication is on the active watch face).                                                                                                                                                      |
+
+## Siri and Shortcuts
+
+Answers which Siri actions people use, on which device, and what stops them.
+Siri on the iPhone and iPad runs in an App Intents extension that can't reach
+analytics, so it leaves events for the app to capture when its JavaScript next
+runs. The watch's actions are recorded by the iPhone when it receives them;
+failures on the watch aren't recorded. Events never carry ids, dates,
+durations, distances, Type or car names.
+
+| Event                   | When / properties                                                                                                                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `siri_action_completed` | A Siri or Shortcuts action finished. `action` (`add_time`, `start_timer`, `pause_timer`, `stop_timer`, `log_trip`), `device` (`iphone`, `ipad`, `watch`). On the watch, timer actions also send `watch_timer_action_completed` with `origin: shortcut`. |
+| `siri_action_failed`    | An action on the iPhone or iPad couldn't finish. `action`, `device`, `reason` (`not_set_up`, `hours_logging_off`, `invalid_duration`, `timer_empty`, `timer_too_long`, `mileage_off`, `no_car`, `invalid_distance`, `failed`).                          |
+| `time_entry_created`    | An entry made with Siri on the iPhone or iPad is saved. `source: siri`, `entry_mode: hours`, `has_category`, `has_note: false`. Watch entries use `source: watch` (above).                                                                              |
+| `mileage_trip_added`    | A trip logged with Siri on the iPhone or iPad is saved. `source: siri`, `entry_mode: distance`, `round_trip`, `has_note: false`, `logged_again: false`.                                                                                                 |
 
 ## Development logging and validation
 

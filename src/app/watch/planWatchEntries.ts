@@ -31,7 +31,12 @@ type Existing = {
   categories: Category[]
 }
 
-const ORIGINS: readonly WatchOrigin[] = ['app', 'shortcut', 'timer']
+export const WATCH_ORIGINS: readonly WatchOrigin[] = [
+  'app',
+  'shortcut',
+  'timer',
+  'phoneShortcut',
+]
 
 const isWholeNumberIn = (value: unknown, min: number, max: number) =>
   typeof value === 'number' &&
@@ -48,15 +53,15 @@ function isValidDraft(draft: WatchEntryDraft): boolean {
     moment(draft.date, 'YYYY-MM-DD', true).isValid() &&
     isWholeNumberIn(draft.hours, 0, 23) &&
     isWholeNumberIn(draft.minutes, 0, 59) &&
-    ORIGINS.includes(draft.origin)
+    WATCH_ORIGINS.includes(draft.origin)
   )
 }
 
 /**
- * Decides what to do with each Time Entry made on the Apple Watch. The draft's
- * id becomes the entry's id, so a delivery that repeats — or that iCloud Sync
- * already brought in from another device — is recognized, and an entry deleted
- * before it arrived stays deleted.
+ * Decides what to do with each Time Entry made on the Apple Watch or with Siri
+ * on this device. The draft's id becomes the entry's id, so a delivery that
+ * repeats — or that iCloud Sync already brought in from another device — is
+ * recognized, and an entry deleted before it arrived stays deleted.
  *
  * A Category deleted in the meantime is dropped rather than losing the time;
  * the entry then counts as Standard.

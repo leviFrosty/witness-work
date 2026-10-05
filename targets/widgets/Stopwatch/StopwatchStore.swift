@@ -2,9 +2,10 @@ import Foundation
 
 /// Source-of-truth persistence + mutation helpers for the stopwatch state.
 ///
-/// Shared between the main app (expo module) and the widget extension (App
-/// Intents). State is stored in App Group `UserDefaults` (see `AppGroup`) so
-/// all processes read the same value.
+/// Shared between the main app (expo module), the widget extension (Live
+/// Activity buttons) and the Siri extension (`targets/intents`). State is
+/// stored in App Group `UserDefaults` (see `AppGroup`) so all processes read
+/// the same value.
 @available(iOS 16.1, *)
 public enum StopwatchStore {
   private static let stateKey = "stopwatch.state.v1"
@@ -12,8 +13,15 @@ public enum StopwatchStore {
 
   /// Posted in the saving process after every state change, so observers in
   /// that process (the JS event emitter, the watch connection) react at once.
-  /// Other processes notice through `commandCounter`.
+  /// Other processes notice through `commandCounter`, and while running through
+  /// `changedElsewhereNotificationName` (see `StopwatchExternalChanges`).
   public static let didChangeNotification = Notification.Name("StopwatchStore.didChange")
+
+  /// Darwin notification posted after every state change, across processes.
+  /// Includes the App Group so app variants don't hear each other.
+  public static var changedElsewhereNotificationName: String? {
+    AppGroup.identifier.map { "\($0).stopwatch.didChange" }
+  }
 
   // MARK: App Group
 
@@ -44,6 +52,11 @@ public enum StopwatchStore {
     defaults.set(data, forKey: stateKey)
     bumpCommandCounter()
     NotificationCenter.default.post(name: didChangeNotification, object: nil)
+    if let name = changedElsewhereNotificationName {
+      CFNotificationCenterPostNotification(
+        CFNotificationCenterGetDarwinNotifyCenter(), CFNotificationName(name as CFString),
+        nil, nil, true)
+    }
     return true
   }
 

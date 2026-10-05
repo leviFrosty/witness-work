@@ -17,7 +17,8 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  # Timer commands from the watch run against the shared StopwatchStore.
+  # Timer commands from the watch run against the shared StopwatchStore, and
+  # AppGroup locates the Siri extension's inbox.
   s.dependency 'StopwatchBridge'
   s.frameworks = 'WatchConnectivity'
 
@@ -26,7 +27,7 @@ Pod::Spec.new do |s|
     'SWIFT_COMPILATION_MODE' => 'wholemodule'
   }
 
-  # `WatchProtocol.swift` is canonical here and copied into the watch targets
-  # by `scripts/sync-widget-shared.mjs`.
+  # `WatchProtocol.swift` and `IntentInbox.swift` are canonical here and copied
+  # into the watch and Siri targets by `scripts/sync-widget-shared.mjs`.
   s.source_files = '**/*.{h,m,swift}'
 end

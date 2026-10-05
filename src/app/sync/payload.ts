@@ -75,6 +75,14 @@ export type SyncPayload = {
     conversations: any[]
     deletedConversations?: { id: string; deletedAt: number }[]
     /**
+     * Conversation field definitions and their tombstones. Absent from payloads
+     * written before conversation fields shipped; consumers default to `[]`.
+     * Merged like `contactStore.customFieldDefs`.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    conversationFieldDefs?: any[]
+    deletedConversationFieldDefs?: CustomFieldTombstone[]
+    /**
      * `true` when written by a build with the visit form's Follow Up switch,
      * where a Visit carries `followUp` only if the user wants one. Absent on
      * payloads from older builds, which attached a placeholder follow-up to
@@ -225,6 +233,8 @@ export function buildPayload(args: {
     conversationStore: {
       conversations: conversations.conversations,
       deletedConversations: conversations.deletedConversations,
+      conversationFieldDefs: conversations.conversationFieldDefs,
+      deletedConversationFieldDefs: conversations.deletedConversationFieldDefs,
       explicitFollowUps: true,
     },
     serviceReportStore: {

@@ -17,6 +17,7 @@ import { Visit } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import FollowUpCalendarControls from '@/features/visits/components/FollowUpCalendarControls'
+import VisitCustomFieldsSection from '@/features/visits/components/VisitCustomFieldsSection'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import moment from 'moment'
@@ -268,6 +269,9 @@ const VisitFormScreen = ({
         },
         note: conversationToUpdate.note,
         notAtHome: conversationToUpdate.notAtHome,
+        ...(conversationToUpdate.customFields
+          ? { customFields: conversationToUpdate.customFields }
+          : {}),
       }
     }
     return {
@@ -316,6 +320,13 @@ const VisitFormScreen = ({
         followUp: { ...conversation.followUp, dismissed: false },
       })
     }
+  }
+
+  const setCustomField = (id: string, value: string) => {
+    const customFields = { ...conversation.customFields }
+    if (value.length === 0) delete customFields[id]
+    else customFields[id] = value
+    setConversation({ ...conversation, customFields })
   }
 
   const isEditing = conversationToUpdate?.contact.id
@@ -448,6 +459,9 @@ const VisitFormScreen = ({
                       has_follow_up: followUpEnabled,
                       reminder_enabled:
                         followUpEnabled && !!conversation.followUp?.notifyMe,
+                      custom_field_count: Object.keys(
+                        conversation.customFields ?? {}
+                      ).length,
                     })
 
                   await maybeRequestStoreReview({
@@ -491,6 +505,7 @@ const VisitFormScreen = ({
     conversation.followUp,
     conversation.isBibleStudy,
     conversation.notAtHome,
+    conversation.customFields,
     conversationToUpdate?.contact.id,
     followUpEnabled,
     installedOn,
@@ -609,6 +624,10 @@ const VisitFormScreen = ({
             />
           )}
         </Section>
+        <VisitCustomFieldsSection
+          customFields={conversation.customFields}
+          setCustomField={setCustomField}
+        />
         <Section>
           <InputRowSwitch
             label={i18n.t('followUp')}

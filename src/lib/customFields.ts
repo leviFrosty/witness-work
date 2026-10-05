@@ -1,24 +1,28 @@
-import { Contact } from '@/types/contact'
-import { CustomFieldTombstone } from '@/types/customField'
+import {
+  CustomFieldDefinition,
+  CustomFieldTombstone,
+} from '@/types/customField'
 
 /**
- * Removes values for permanently deleted custom fields from a contact. A
- * contact without a matching value is returned by identity so unrelated records
- * keep their existing timestamps and object shape.
+ * Removes values for permanently deleted custom fields from a record (a contact
+ * or a visit). A record without a matching value is returned by identity so
+ * unrelated records keep their existing timestamps and object shape.
  */
-export function stripTombstonedCustomFields(
-  contact: Contact,
+export function stripTombstonedCustomFields<
+  T extends { customFields?: Record<string, string> },
+>(
+  record: T,
   tombstones: readonly CustomFieldTombstone[],
   updatedAt?: number
-): Contact {
+): T {
   const customFields = stripTombstonedCustomFieldValues(
-    contact.customFields,
+    record.customFields,
     tombstones
   )
-  if (customFields === contact.customFields) return contact
+  if (customFields === record.customFields) return record
   return updatedAt === undefined
-    ? { ...contact, customFields }
-    : { ...contact, customFields, updatedAt }
+    ? { ...record, customFields }
+    : { ...record, customFields, updatedAt }
 }
 
 /** Returns the same map when no tombstoned value is present. */
@@ -44,4 +48,11 @@ export function stripTombstonedCustomFieldValues(
   }
 
   return changed ? next : customFields
+}
+
+/** Non-archived definitions in their display order. */
+export function activeCustomFieldDefs(
+  defs: readonly CustomFieldDefinition[]
+): CustomFieldDefinition[] {
+  return defs.filter((d) => !d.archived).sort((a, b) => a.order - b.order)
 }

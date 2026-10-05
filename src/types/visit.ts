@@ -78,4 +78,10 @@ export type Visit = {
   }
   isBibleStudy: boolean
   notAtHome?: boolean
+  /**
+   * Per-visit custom field values. Keyed by `CustomFieldDefinition.id` from
+   * `conversationFieldDefs` in the conversation store; the renderer joins the
+   * two by id.
+   */
+  customFields?: Record<string, string>
 }

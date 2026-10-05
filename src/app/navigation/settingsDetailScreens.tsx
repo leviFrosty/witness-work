@@ -29,6 +29,7 @@ import PreferencesiCloudDevicesScreen from '@/features/settings/screens/preferen
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
 import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
 import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
+import PreferencesConversationFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationFieldsScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const NotesImportHeaderRight = () =>
@@ -97,6 +98,11 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     name: 'PreferencesCustomFields',
     component: PreferencesCustomFieldsScreen,
     title: () => i18n.t('contactFields'),
+  },
+  {
+    name: 'PreferencesConversationFields',
+    component: PreferencesConversationFieldsScreen,
+    title: () => i18n.t('conversationFields'),
   },
   {
     name: 'PreferencesNavigation',

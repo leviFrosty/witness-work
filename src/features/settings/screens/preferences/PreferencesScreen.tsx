@@ -80,6 +80,15 @@ const PreferencesScreen = () => {
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>
               <InputRowButton
+                leftIcon={SlidersHorizontalIcon}
+                label={i18n.t('conversationFields')}
+                onPress={() =>
+                  navigation.navigate('PreferencesConversationFields')
+                }
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
                 leftIcon={PanelBottomIcon}
                 label={i18n.t('tabOrder')}
                 onPress={() => navigation.navigate('PreferencesTabOrder')}

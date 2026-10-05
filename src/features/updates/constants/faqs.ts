@@ -206,6 +206,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'reminders', category: 'contacts' },
   { id: 'appIconBadge', category: 'general' },
   { id: 'soundEffects', category: 'customization', related: [365, 486] },
+  { id: 'haptics', category: 'customization' },
   {
     id: 'shareAddress',
     category: 'map',

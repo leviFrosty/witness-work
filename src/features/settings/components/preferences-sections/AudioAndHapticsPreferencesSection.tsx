@@ -5,7 +5,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { usePreferences } from '@/stores/preferences'
 
 const AudioAndHapticsPreferencesSection = () => {
-  const { audioEnabled, set } = usePreferences()
+  const { audioEnabled, hapticsEnabled, set } = usePreferences()
 
   return (
     <View style={{ gap: 3 }}>
@@ -19,6 +19,12 @@ const AudioAndHapticsPreferencesSection = () => {
           )}
           value={audioEnabled}
           onValueChange={(value) => set({ audioEnabled: value })}
+        />
+        <InputRowSwitch
+          label={i18n.t('haptics')}
+          description={i18n.t('haptics_description')}
+          value={hapticsEnabled}
+          onValueChange={(value) => set({ hapticsEnabled: value })}
           lastInSection
         />
       </Section>

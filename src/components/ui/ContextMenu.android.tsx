@@ -1,6 +1,5 @@
 import { Fragment, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { AndroidHaptics, performAndroidHapticsAsync } from 'expo-haptics'
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -10,6 +9,7 @@ import {
   Text,
 } from '@expo/ui/jetpack-compose'
 import useTheme from '@/contexts/theme'
+import Haptics from '@/lib/haptics'
 import { usePreferences } from '@/stores/preferences'
 import {
   isSubmenu,
@@ -54,7 +54,7 @@ export default function ContextMenu({
   const tint = <HoverTint visible={hovered} borderRadius={hoverRadius} />
 
   const open = () => {
-    void performAndroidHapticsAsync(AndroidHaptics.Long_Press)
+    void Haptics.androidLongPress()
     setSubmenu(null)
     setExpanded(true)
   }

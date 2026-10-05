@@ -6,6 +6,26 @@ import reactCompiler from 'eslint-plugin-react-compiler'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
 
+const soundImports = {
+  group: [
+    'expo-audio',
+    'expo-audio/*',
+    'expo-av',
+    'expo-av/*',
+    '*.mp3',
+    '*.wav',
+    '*.caf',
+    '*.m4a',
+    '*.aiff',
+  ],
+  message: 'Register sounds in @/lib/audio and play with useSound.',
+}
+
+const hapticImports = {
+  group: ['expo-haptics', 'expo-haptics/*'],
+  message: 'Play haptics through @/lib/haptics.',
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -163,35 +183,20 @@ export default tseslint.config(
       ],
     },
   },
-  {
-    // Sounds go through `useSound` so the Audio & Haptics setting can't be
-    // bypassed.
-    files: ['src/**/*.{js,jsx,ts,tsx}'],
-    ignores: ['src/lib/audio.ts', 'src/__tests__/**'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: [
-                'expo-audio',
-                'expo-audio/*',
-                'expo-av',
-                'expo-av/*',
-                '*.mp3',
-                '*.wav',
-                '*.caf',
-                '*.m4a',
-                '*.aiff',
-              ],
-              message: 'Register sounds in @/lib/audio and play with useSound.',
-            },
-          ],
-        },
-      ],
-    },
-  },
+  // Sounds and haptics go through `@/lib/audio` and `@/lib/haptics` so the
+  // Audio & Haptics settings can't be bypassed. Flat config replaces (rather
+  // than merges) a rule's options, so each file gets one combined list.
+  ...[
+    { file: undefined, patterns: [soundImports, hapticImports] },
+    { file: 'src/lib/audio.ts', patterns: [hapticImports] },
+    { file: 'src/lib/haptics.ts', patterns: [soundImports] },
+  ].map(({ file, patterns }) => ({
+    files: [file ?? 'src/**/*.{js,jsx,ts,tsx}'],
+    ignores: file
+      ? []
+      : ['src/lib/audio.ts', 'src/lib/haptics.ts', 'src/__tests__/**'],
+    rules: { 'no-restricted-imports': ['error', { patterns }] },
+  })),
   {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],
     languageOptions: {

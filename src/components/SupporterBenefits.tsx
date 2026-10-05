@@ -136,17 +136,6 @@ const SupporterBenefits = ({ compact }: Props) => {
       </Text>
       {!compact && Platform.OS === 'ios' && <HeroCard />}
       <View style={{ gap: 14 }}>
-        {/* <Text
-          style={{
-            fontSize: 12,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-          }}
-        >
-          {i18n.t('supporterPerksLabel')}
-        </Text> */}
         {Platform.OS === 'ios' && (
           <PerkRow
             icon={FileTextIcon}

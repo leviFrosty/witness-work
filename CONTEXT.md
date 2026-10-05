@@ -1,6 +1,6 @@
 # WitnessWork
 
-WitnessWork is an iOS app that helps a Jehovah's Witness track their personal field-ministry activity — time spent, conversations had, contacts visited, and progress toward monthly and annual goals. The glossary below pins the language used across the codebase.
+WitnessWork is an iOS and Android app that helps a Jehovah's Witness track their personal field-ministry activity — time spent, conversations had, contacts visited, and progress toward monthly and annual goals. The glossary below pins the language used across the codebase.
 
 ## Language
 
@@ -201,8 +201,8 @@ _Avoid_: "meeting weekday", "Kingdom Hall day".
 ### Sync
 
 **iCloud Sync**:
-Cross-device replication of the User's data via Apple's iCloud (CloudKit / ubiquity container). Gated behind **Supporter** status — the only feature truly Supporter-gated.
-_Avoid_: "cloud sync" (use iCloud Sync; the app is iOS-only and only syncs through iCloud).
+Cross-device replication of the User's data via Apple's iCloud (CloudKit / ubiquity container). A **Supporter** feature, available on iOS only; Android has no cross-device sync and moves data with backup files.
+_Avoid_: "cloud sync" (use iCloud Sync; iCloud is the only sync the app has).
 
 **Image Sync**:
 A separable, opt-in subsystem that replicates avatar binaries (the User's profile avatar and per-Contact avatars) through the iCloud ubiquity container. Distinct from iCloud Sync of structured data — Image Sync can be turned off independently, and a sender disabling Image Sync leaves receivers with iCloud Markers that never resolve.
@@ -221,7 +221,7 @@ _Avoid_: "pin" alone (Marker is the canonical term and it carries the staleness 
 ### Monetization
 
 **Supporter**:
-A User with an active qualifying subscription entitlement or a manually gifted Lifetime Supporter promotional entitlement. Unlocks iCloud sync (the only feature truly gated) and a set of personalization options (custom accent color, custom app icon, and others). Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
+A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus the Supporter **Notes Import** allowance, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
 _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, donation-framed term used throughout the UI).
 
 **Subscription Cancellation**:
@@ -331,8 +331,8 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 - A **Plan** is forecast; a **Time Entry** is history. They are not joined by data.
 - The **Assistant** produces **Recommendations**; an accepted Recommendation becomes one or more **Day Plans**.
 - An **Off Day** is a hard exclusion for the **Assistant**; a **Meeting Day** is a soft cap. If a day is both, **Off Day** wins.
-- **iCloud Sync** is the only **Supporter**-gated feature. **Image Sync** is opt-in within iCloud Sync and toggles independently per device.
-- A **User** can independently be a **Supporter**, a **Donor**, both, or neither. Donor status comes from one or more **Tips**; Supporter status comes from an active subscription entitlement.
+- **iCloud Sync** is one of the **Supporter**-gated features (see **Supporter** for the full set). **Image Sync** is opt-in within iCloud Sync and toggles independently per device.
+- A **User** can independently be a **Supporter**, a **Donor**, both, or neither. Donor status comes from one or more **Tips**; Supporter status comes from an active subscription or a Lifetime Supporter grant (ADR 0014).
 - A **Publisher** maps to at most one **Tenure Type**. **Full-Time Service** covers regular pioneer, special pioneer, and circuit overseer. **Auxiliary Pioneer** covers only regularAuxiliary. Regular Publisher and Custom map to no Tenure Type.
 - The **Tenure Start Date** persists across Publisher changes within the same Tenure Type and resets across Tenure Type changes.
 - Each calendar month has exactly one **Publisher** role, resolved from the **Role History**; a **Service Report** is always exported in its month's role.
@@ -356,9 +356,9 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 >
 > **Domain expert:** No. Accepting a Recommendation creates **Day Plans** — Plans are forecast, not history. Only Time Entries count toward the goal. The User still has to actually go out and log the time.
 >
-> **Dev:** A User makes a **Tip** during onboarding. Are they a **Supporter**?
+> **Dev:** A User sends a **Tip** from the **Paywall**. Are they a **Supporter**?
 >
-> **Domain expert:** They're a **Donor** — gets the heart icon. Tips don't grant Supporter features. Supporter is the recurring entitlement that unlocks **iCloud Sync** and personalization.
+> **Domain expert:** They're a **Donor** — gets the heart icon. Tips don't grant Supporter features. Supporter status comes from an active subscription (or a gifted Lifetime grant) and unlocks **iCloud Sync** and personalization.
 
 ## Flagged ambiguities
 

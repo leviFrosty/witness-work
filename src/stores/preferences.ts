@@ -402,16 +402,16 @@ export const PREFERENCE_DEFAULTS = {
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
   /**
-   * Epoch ms of the last time the Home supporter-nudge card was dismissed (via
-   * "Not right now" or the CTA). `null` means never dismissed. Drives the
+   * Epoch ms of the last time the supporter nudge in the notifications tray was
+   * dismissed or its CTA tapped. `null` means never dismissed. Drives the
    * 365-day cooldown in `isSupporterNudgeEligible`. Syncable — dismissal is
    * user intent and should follow the user.
    */
   supporterNudgeDismissedAt: null as number | null,
   /**
-   * Explicit opt-out for the Home supporter-nudge card. Separate from
-   * `hideDonateHeart` so a user can keep the heart icon but silence the larger
-   * periodic card, or vice versa. Syncable.
+   * Explicit opt-out for the supporter nudge. Separate from `hideDonateHeart`
+   * so a user can keep the heart icon but silence the larger periodic card, or
+   * vice versa. Syncable.
    */
   hideSupporterNudge: false,
   /**

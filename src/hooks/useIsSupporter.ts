@@ -9,9 +9,9 @@ export type SupporterStatus = {
 }
 
 /**
- * Canonical supporter check. `isSupporter` is true when the user has any active
- * subscription entitlement (one-time donations do not count). `since` is the
- * earliest active-entitlement purchase date.
+ * Canonical supporter check. `isSupporter` is true when the user has an active
+ * subscription or a Lifetime Supporter grant; one-time donations do not count
+ * (ADR 0014). `since` is the earliest qualifying purchase date.
  *
  * When the developer-tools override (`devSupporterOverride`) is set, it
  * short-circuits RevenueCat and forces the user into the supporter state using

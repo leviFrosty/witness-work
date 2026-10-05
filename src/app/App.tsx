@@ -37,6 +37,7 @@ import { useNotesImportResume } from '@/features/notes-import/hooks/useNotesImpo
 import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
 import { useAppMigrations } from '@/app/migrations/useAppMigrations'
 import { useWidgetSync } from '@/app/widgets/useWidgetSync'
+import { useWatchSync } from '@/app/watch/useWatchSync'
 import { useReconciledReminders } from '@/app/notifications/useReconciledReminders'
 import { useLocalAvatarCleanup } from '@/app/sync/useLocalAvatarCleanup'
 import { useDeletedContactRetention } from '@/app/useDeletedContactRetention'
@@ -62,6 +63,7 @@ export default function App() {
   useNotesImportResume()
   const hasMigrated = useAppMigrations()
   useWidgetSync(hasMigrated)
+  useWatchSync(hasMigrated)
   useICloudSync(hasMigrated)
   useCalendarSync(hasMigrated)
   useReconciledReminders(hasMigrated)

@@ -27,10 +27,10 @@ Pod::Spec.new do |s|
     'SWIFT_COMPILATION_MODE' => 'wholemodule'
   }
 
-  # Shared Swift files (StopwatchAttributes/Store/Intents/ActivityController)
-  # are canonical here and symlinked into `targets/widgets/Stopwatch/` so the
-  # widget extension compiles the same sources. Same type name on both sides
-  # is what ActivityKit requires for the host app + extension to recognise the
-  # activity.
+  # Shared Swift files (StopwatchAttributes/Store/Intents/ActivityController,
+  # AppGroup) are canonical here and copied into `targets/` by
+  # `scripts/sync-widget-shared.mjs` so the widget extension compiles the same
+  # sources. Same type name on both sides is what ActivityKit requires for the
+  # host app + extension to recognise the activity.
   s.source_files = '**/*.{h,m,swift}'
 end

@@ -36,6 +36,7 @@ const LOCAL_MODULES = [
   { importName: 'AppAttest', className: 'AppAttestModule' },
   { importName: 'BuddiesKeychain', className: 'BuddiesKeychainModule' },
   { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
+  { importName: 'WatchBridge', className: 'WatchBridgeModule' },
 ]
 
 const IMPORT_MARKER = '// with-force-load-local-modules:imports'

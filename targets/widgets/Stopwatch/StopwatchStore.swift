@@ -3,38 +3,22 @@ import Foundation
 /// Source-of-truth persistence + mutation helpers for the stopwatch state.
 ///
 /// Shared between the main app (expo module) and the widget extension (App
-/// Intents). State is stored in App Group `UserDefaults` so all processes read
-/// the same value. The App Group id is derived from the current bundle id:
-///
-/// - main app bundle `com.x.y`          → `group.com.x.y`
-/// - widget bundle  `com.x.y.widgets`   → `group.com.x.y`
-///
-/// Mirrors the convention used by `WidgetBridgeModule` + `SnapshotLoader`.
+/// Intents). State is stored in App Group `UserDefaults` (see `AppGroup`) so
+/// all processes read the same value.
 @available(iOS 16.1, *)
 public enum StopwatchStore {
   private static let stateKey = "stopwatch.state.v1"
   private static let commandCounterKey = "stopwatch.commandCounter.v1"
 
+  /// Posted in the saving process after every state change, so observers in
+  /// that process (the JS event emitter, the watch connection) react at once.
+  /// Other processes notice through `commandCounter`.
+  public static let didChangeNotification = Notification.Name("StopwatchStore.didChange")
+
   // MARK: App Group
 
-  public static func appGroupIdentifier() -> String? {
-    guard let bundleId = Bundle.main.bundleIdentifier else { return nil }
-
-    // Strip trailing `.widgets` (or any extension suffix) to recover the host
-    // app bundle id — mirrors SnapshotLoader. Two dots → host; three dots →
-    // strip the last segment.
-    let components = bundleId.split(separator: ".")
-    let host: String
-    if components.count >= 4 {
-      host = components.dropLast().joined(separator: ".")
-    } else {
-      host = bundleId
-    }
-    return "group.\(host)"
-  }
-
   public static func defaults() -> UserDefaults? {
-    guard let group = appGroupIdentifier() else { return nil }
+    guard let group = AppGroup.identifier else { return nil }
     return UserDefaults(suiteName: group)
   }
 
@@ -59,6 +43,7 @@ public enum StopwatchStore {
     else { return false }
     defaults.set(data, forKey: stateKey)
     bumpCommandCounter()
+    NotificationCenter.default.post(name: didChangeNotification, object: nil)
     return true
   }
 

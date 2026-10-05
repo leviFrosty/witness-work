@@ -1,0 +1,7 @@
+{
+  "name": "watch-bridge",
+  "version": "0.1.0",
+  "description": "Local Expo module connecting the iPhone app to the WitnessWork Apple Watch app over WatchConnectivity.",
+  "main": "index.ts",
+  "private": true
+}

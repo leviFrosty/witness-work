@@ -15,6 +15,9 @@ onlyBuiltDependencies:
   - protobufjs
   - '@shopify/react-native-skia'
 overrides:
+  # apple-targets 5.0.0 pins SDK 55's prebuild-config, which would displace
+  # SDK 57's hoisted copy. It only uses `writeContentsJsonAsync` from it.
+  '@bacons/apple-targets>@expo/prebuild-config': 57.0.16
   expo-modules-autolinking: 57.0.6
   react-native-safe-area-context: $react-native-safe-area-context
   axios: '>=1.15.2'

@@ -1,4 +1,5 @@
 /**
+ * @type {import('@bacons/apple-targets/app.plugin').ConfigFunction}
  * @bacons/apple-targets configuration for the WitnessWork widget extension.
  *
  * One iOS extension hosts a `WidgetBundle` of multiple widgets:
@@ -6,21 +7,16 @@
  *   - ContactsWidget     (top contacts with quick actions)
  *   - AppointmentsWidget (upcoming follow-ups)
  *
- * The App Group identifier is mirrored from the host app's bundle id so each
- * variant (dev `jwtimedev`, beta `jwtimebeta`, prod `jwtime`) points at its
- * own `group.<bundle id>` automatically. Keep in sync with `app.config.ts`.
+ * `name` and `bundleIdentifier` are pinned to what has always shipped
+ * (`widgets` / `<host>.widget`). Changing either orphans widgets users have
+ * placed. The App Group comes from the host app's entitlements, so each variant
+ * (dev `jwtimedev`, beta `jwtimebeta`, prod `jwtime`) points at its own
+ * `group.<bundle id>`.
  */
-const BUNDLE_ID =
-  {
-    development: 'com.leviwilkerson.jwtimedev',
-    beta: 'com.leviwilkerson.jwtimebeta',
-  }[process.env.APP_VARIANT] ?? 'com.leviwilkerson.jwtime'
-
-const APP_GROUP = `group.${BUNDLE_ID}`
-
-/** @type {import('@bacons/apple-targets').Config} */
-module.exports = {
+module.exports = (config) => ({
   type: 'widget',
+  name: 'widgets',
+  bundleIdentifier: '.widget',
   icon:
     process.env.APP_VARIANT === 'beta'
       ? '../../src/assets/icon-beta.png'
@@ -31,6 +27,7 @@ module.exports = {
     $widgetBackground: '#FFFFFF',
   },
   entitlements: {
-    'com.apple.security.application-groups': [APP_GROUP],
+    'com.apple.security.application-groups':
+      config.ios.entitlements['com.apple.security.application-groups'],
   },
-}
+})

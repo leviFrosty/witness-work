@@ -17,7 +17,6 @@ let lastSeenProgress = 0
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import { useOnboardingProgress } from '@/features/onboarding/components/OnboardingProgressContext'
@@ -116,8 +115,15 @@ const OnboardingNav = ({
       </View>
       <View style={styles.navTitleRow}>
         {!noActions ? (
-          <Button style={styles.navBack} onPress={goBack}>
-            <IconButton icon={ChevronLeftIcon} />
+          <Button
+            variant='outline'
+            style={styles.navBack}
+            onPress={goBack}
+            hitSlop={24}
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t('goBack')}
+          >
+            <ChevronLeftIcon color={theme.colors.text} size={22} />
           </Button>
         ) : null}
         <Text style={styles.navTitle}>{i18n.t('witnessWork')}</Text>

@@ -1,4 +1,5 @@
 import {
+  AudioLines as AudioLinesIcon,
   BookUser as BookUserIcon,
   Bell as BellIcon,
   CalendarSync as CalendarSyncIcon,
@@ -19,6 +20,7 @@ import {
   Smartphone as SmartphoneIcon,
   Timer as TimerIcon,
   Users as UsersIcon,
+  Watch as WatchIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import type { Theme } from '@/constants/theme'
@@ -37,6 +39,8 @@ export type RevealPageId =
   | 'year'
   | 'mileage'
   | 'calendar'
+  | 'watch'
+  | 'siri'
   | 'more'
   | 'android'
 
@@ -54,6 +58,14 @@ export interface RevealPageSpec {
   annualGoalOnly?: boolean
   /** Only where Buddies shows: its flag, on a binary that supports it. */
   buddiesOnly?: boolean
+  /** Only on an iPhone that can pair an Apple Watch. */
+  watchOnly?: boolean
+  /** Only for roles that log hours (`showsTimeEntry`). */
+  timeEntryOnly?: boolean
+  /** Caption for roles that report with the checkbox instead of hours. */
+  checkboxCaptionKey?: TranslationKey
+  /** A Siri phrase to call out beneath the caption. */
+  siriPhraseKey?: TranslationKey
 }
 
 /** The tour, in order. `useRevealPages` drops the ones that don't apply. */
@@ -123,6 +135,28 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
     titleKey: 'updateReveal_calendar_title',
     captionKey: 'updateReveal_calendar_caption',
     platform: 'ios',
+  },
+  {
+    id: 'watch',
+    icon: WatchIcon,
+    color: 'accent',
+    titleKey: 'updateReveal_watch_title',
+    captionKey: 'updateReveal_watch_caption',
+    checkboxCaptionKey: 'updateReveal_watch_captionCheckbox',
+    platform: 'ios',
+    watchOnly: true,
+  },
+  {
+    id: 'siri',
+    icon: AudioLinesIcon,
+    color: 'pink',
+    titleKey: 'updateReveal_siri_title',
+    captionKey: 'updateReveal_siri_caption',
+    siriPhraseKey: 'watchShortcutStartTimer',
+    platform: 'ios',
+    watchOnly: true,
+    // Every Siri action adds or times hours.
+    timeEntryOnly: true,
   },
   {
     id: 'more',

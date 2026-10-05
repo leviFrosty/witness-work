@@ -3,6 +3,7 @@ import moment from 'moment'
 import {
   SUPPORTER_NUDGE_THRESHOLDS,
   isSupporterNudgeEligible,
+  supporterNudgePath,
   type SupporterNudgeEligibilityInput,
 } from '@/features/supporter/lib/supporterNudge'
 import { TimeEntriesByYear } from '@/types/timeEntry'
@@ -126,5 +127,83 @@ describe('isSupporterNudgeEligible — intro grace gate', () => {
         isDev: false,
       })
     ).toBe(false)
+  })
+})
+
+describe('supporterNudgePath — tenure and engagement', () => {
+  const installedDaysAgo = (days: number) =>
+    moment(now).subtract(days, 'days').toDate()
+  // A new install stamps the nudge on its first launch.
+  const newInstall = (days: number) => ({
+    installedOn: installedDaysAgo(days),
+    supporterNudgeAvailableSince: installedDaysAgo(days).getTime(),
+  })
+  const oneMonthOfHours: TimeEntriesByYear = {
+    2026: {
+      4: [{ id: 'a', hours: 55, minutes: 0, date: new Date() } as never],
+    },
+  }
+
+  it('asks long-tenure users who meet one engagement floor', () => {
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        serviceReports: oneMonthOfHours,
+      })
+    ).toBe('standard')
+  })
+
+  it('asks heavy users early once two engagement floors are met', () => {
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        ...newInstall(SUPPORTER_NUDGE_THRESHOLDS.earlyTenureDays),
+        serviceReports: oneMonthOfHours,
+        contactsCount: SUPPORTER_NUDGE_THRESHOLDS.contacts,
+        conversationsCount: SUPPORTER_NUDGE_THRESHOLDS.conversations,
+      })
+    ).toBe('early')
+  })
+
+  it('waits for full tenure when only one floor is met', () => {
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        ...newInstall(SUPPORTER_NUDGE_THRESHOLDS.earlyTenureDays),
+        serviceReports: oneMonthOfHours,
+      })
+    ).toBeNull()
+  })
+
+  it('never asks before the early tenure', () => {
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        ...newInstall(SUPPORTER_NUDGE_THRESHOLDS.earlyTenureDays - 1),
+        contactsCount: SUPPORTER_NUDGE_THRESHOLDS.contacts,
+        conversationsCount: SUPPORTER_NUDGE_THRESHOLDS.conversations,
+      })
+    ).toBeNull()
+  })
+
+  it('skips the intro grace for installs that already had the nudge', () => {
+    // The stamp is younger than the grace period, but the user never updated
+    // into the nudge, so only tenure applies.
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        ...newInstall(SUPPORTER_NUDGE_THRESHOLDS.introGraceDays - 10),
+      })
+    ).toBe('early')
+  })
+
+  it('still respects the dismissal cooldown on the early path', () => {
+    expect(
+      supporterNudgePath({
+        ...eligibleBaseline,
+        ...newInstall(SUPPORTER_NUDGE_THRESHOLDS.earlyTenureDays + 10),
+        supporterNudgeDismissedAt: installedDaysAgo(1).getTime(),
+      })
+    ).toBeNull()
   })
 })

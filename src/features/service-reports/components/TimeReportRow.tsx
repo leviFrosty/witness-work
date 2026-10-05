@@ -253,11 +253,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
         handleSwipeOpen(direction, swipeable)
       }
     >
-      <ContextMenu
-        analyticsSurface='time_entry_row'
-        actions={actions}
-        onPress={handlePress}
-      >
+      <ContextMenu actions={actions} onPress={handlePress}>
         <View
           style={
             isRollover

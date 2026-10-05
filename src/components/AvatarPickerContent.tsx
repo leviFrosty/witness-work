@@ -365,8 +365,8 @@ const AvatarPickerContent = ({
   return (
     <View style={{ width: gridWidth, gap: 12 }}>
       <IsSupporter
-        feature='customAccentColor'
         analyticsSurface='avatar_background'
+        feature='customAccentColor'
         size='sm'
         title={i18n.t('avatarBackgroundColor')}
       >

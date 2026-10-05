@@ -147,12 +147,6 @@ const PaywallScreen = ({
   }, [isWide, tier])
 
   const handleTierSwitch = (nextTier: Tier) => {
-    analytics.capture('paywall_tier_selected', {
-      source,
-      ...gateAttribution,
-      tier: nextTier,
-      previous_tier: tier,
-    })
     pendingTierScroll.current = isWide ? null : nextTier
     setTier(nextTier)
   }
@@ -193,11 +187,6 @@ const PaywallScreen = ({
               size='xl'
               accessibilityLabel={i18n.t('paywallLearnMore')}
               onPress={() => {
-                analytics.capture('paywall_faq_clicked', {
-                  source,
-                  ...gateAttribution,
-                })
-                analytics.capture('help_center_opened', { source: 'paywall' })
                 navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
               }}
             />
@@ -290,15 +279,7 @@ const PaywallScreen = ({
           allCount: Object.keys(offerings.all).length,
           allIdentifiers: Object.keys(offerings.all),
         })
-        analytics.capture('paywall_offerings_loaded', {
-          source,
-          ...gateAttribution,
-          offering_count: Object.keys(offerings.all).length,
-          package_count: Object.values(offerings.all).reduce(
-            (count, offering) => count + offering.availablePackages.length,
-            0
-          ),
-        })
+
         setCurrentOfferings(offerings)
       } catch (error) {
         const err = error as PurchasesError
@@ -567,16 +548,6 @@ const PaywallScreen = ({
         pkg={pkg}
         selected={selectedKey === key}
         onPress={() => {
-          analytics.capture('paywall_price_selected', {
-            source,
-            ...gateAttribution,
-            tier,
-            billing: priceView,
-            product_id: pkg.product.identifier,
-            price: pkg.product.price,
-            currency: pkg.product.currencyCode,
-            expanded_options: showAllOptions,
-          })
           setSelectedPackage(pkg)
           afterSelect?.()
         }}
@@ -685,11 +656,6 @@ const PaywallScreen = ({
           size='sm'
           value={supporterBilling}
           onChange={(billing) => {
-            analytics.capture('paywall_billing_selected', {
-              source,
-              ...gateAttribution,
-              billing,
-            })
             setSupporterBilling(billing)
           }}
           style={{ alignSelf: 'center' }}
@@ -711,12 +677,6 @@ const PaywallScreen = ({
         {hasHiddenOptions && !(isWide && showAllOptions) && (
           <Button
             onPress={() => {
-              analytics.capture('paywall_all_options_opened', {
-                source,
-                ...gateAttribution,
-                tier,
-                billing: priceView,
-              })
               setShowAllOptions(true)
             }}
             style={{
@@ -757,7 +717,6 @@ const PaywallScreen = ({
       />
       <Divider />
       <PaywallLegalFooter
-        source={source}
         onRestore={handleRestore}
         showRestore={!hasPurchasedBefore}
       />
@@ -871,12 +830,6 @@ const PaywallScreen = ({
       <AllOptionsSheet
         visible={!isWide && showAllOptions}
         onClose={() => {
-          analytics.capture('paywall_all_options_dismissed', {
-            source,
-            ...gateAttribution,
-            tier,
-            billing: priceView,
-          })
           setShowAllOptions(false)
         }}
       >

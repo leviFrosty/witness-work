@@ -1,0 +1,160 @@
+// Every permanent usage event needs a concrete product question. Register new
+// feature outcomes here; temporary experiment details need an explicit expiry.
+// Cosmetic UI actions and background maintenance successes are deliberately absent.
+export const analyticsEventNames = [
+  // Core service activity and planning.
+  'assistant_preview_opened',
+  'assistant_recommendation_accepted',
+  'assistant_recommendation_dismissed',
+  'assistant_recommendation_undone',
+  'contact_created',
+  'follow_up_card_completed',
+  'follow_up_dismissed',
+  'follow_up_rescheduled',
+  'hours_logging_changed',
+  'map_location_permission_result',
+  'plan_created',
+  'role_period_set',
+  'service_history_saved',
+  'service_report_export_dismissed',
+  'service_report_export_requested',
+  'service_report_exported',
+  'time_entry_created',
+  'time_entry_deleted',
+  'time_entry_updated',
+  'time_rollover_apply_requested',
+  'time_rollover_undone',
+  'timer_action_completed',
+  'timer_action_failed',
+  'visit_created',
+  // Import and backup outcomes.
+  'backup_export_failed',
+  'backup_export_started',
+  'backup_exported',
+  'backup_imported',
+  'backup_reminder_clicked',
+  'backup_reminder_dismissed',
+  'backup_reminder_viewed',
+  'import_cancelled',
+  'import_completed',
+  'import_failed',
+  'import_preview_ready',
+  'import_started',
+  'import_stopped',
+  'import_type_selected',
+  'import_undone',
+  'notes_import_accepted',
+  'notes_import_refined',
+  'notes_import_submitted',
+  // Feature adoption and actionable outcomes.
+  'buddies_feedback_attachment_failed',
+  'buddies_feedback_submitted',
+  'buddies_feedback_unavailable',
+  'buddies_opened',
+  'buddies_push_registration',
+  'buddies_tray_sync_failed',
+  'buddy_plan_same_time_opened',
+  'calendar_connected',
+  'calendar_disconnected',
+  'calendar_sync_failed',
+  'custom_field_created',
+  'mileage_data_deleted',
+  'mileage_fuel_added',
+  'mileage_report_export_failed',
+  'mileage_report_exported',
+  'mileage_tracking_changed',
+  'mileage_trip_added',
+  'mileage_vehicle_added',
+  'notification_opened',
+  // Supporter iCloud adoption and recovery.
+  'icloud_account_changed',
+  'icloud_restore_images_prompted',
+  'icloud_restore_images_requested',
+  'icloud_restore_images_skipped',
+  'icloud_restore_probe_result',
+  'icloud_restore_replace_confirmed',
+  'icloud_sync_auto_enable_outcome',
+  'icloud_sync_cloud_photos_removed',
+  'icloud_sync_device_remove_failed',
+  'icloud_sync_device_removed',
+  'icloud_sync_enable_deferred',
+  'icloud_sync_enabled_changed',
+  'icloud_sync_first_enable_chosen',
+  'icloud_sync_first_enable_dismissed',
+  'icloud_sync_first_enable_outcome',
+  'icloud_sync_first_enable_viewed',
+  'icloud_sync_images_changed',
+  'icloud_sync_images_outcome',
+  'icloud_sync_manual_outcome',
+  'icloud_sync_manual_started',
+  'icloud_sync_paused',
+  'icloud_sync_reset_adopted',
+  'icloud_sync_reset_outcome',
+  'icloud_sync_reset_started',
+  'icloud_sync_upload_failed',
+  'icloud_sync_upload_recovered',
+  // Onboarding and activation.
+  'onboarding_backfill_completed',
+  'onboarding_checklist_completed',
+  'onboarding_checklist_dismissed',
+  'onboarding_checklist_viewed',
+  'onboarding_completed',
+  'onboarding_import_options_viewed',
+  'onboarding_import_skipped',
+  'onboarding_notification_permission_requested',
+  'onboarding_notification_permission_result',
+  'onboarding_resumed',
+  'onboarding_started',
+  'onboarding_step_completed',
+  'onboarding_step_skipped',
+  'onboarding_step_viewed',
+  // Supporter conversion and purchase outcomes.
+  'paywall_closed',
+  'paywall_offerings_failed',
+  'paywall_viewed',
+  'supporter_feature_gate_clicked',
+  'supporter_feature_gate_viewed',
+  'supporter_gate_clicked',
+  'supporter_gate_dismissed',
+  'supporter_gate_viewed',
+  'supporter_nudge_clicked',
+  'supporter_nudge_dismissed',
+  'supporter_nudge_viewed',
+  'supporter_nudge_visibility_changed',
+  'supporter_purchase_cancelled',
+  'supporter_purchase_completed',
+  'supporter_purchase_failed',
+  'supporter_purchase_started',
+  'supporter_purchases_restored',
+  'supporter_restore_empty',
+  'supporter_restore_failed',
+  'supporter_restore_started',
+] as const
+
+export type AnalyticsEventName = (typeof analyticsEventNames)[number]
+
+const retainedEvents = new Set<string>([
+  ...analyticsEventNames,
+  '$screen',
+  '$feature_flag_called',
+  'Application Installed',
+  'Application Opened',
+  'Application Became Active',
+])
+
+/** Covers SDK events as well as the app contract, including restored queues. */
+export function isRetainedAnalyticsEvent(
+  event: string,
+  properties?: unknown
+): boolean {
+  if (!retainedEvents.has(event)) return false
+  if (event !== 'timer_action_completed') return true
+  // This outcome name formerly also covered pauses/resets. Enforce adoption
+  // semantics on old queues as well as new captures, without reapplying caps.
+  return (
+    properties !== null &&
+    typeof properties === 'object' &&
+    'action' in properties &&
+    properties.action === 'started'
+  )
+}

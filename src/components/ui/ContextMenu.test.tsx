@@ -78,8 +78,6 @@ const render = async (element: React.ReactElement) => {
   })
 }
 
-const S = 'test_surface'
-
 describe('Android context menu', () => {
   const menu = () => root.root.findByType('DropdownMenu' as never)
   const items = () => root.root.findAllByType('DropdownMenuItem' as never)
@@ -87,11 +85,11 @@ describe('Android context menu', () => {
     root.root.findAllByType('ComposeText' as never).map((t) => t.props.children)
   const trigger = () => root.root.findByType('Pressable' as never)
 
-  it('opens on long press, runs and records the chosen action, and closes', async () => {
+  it('opens on long press, runs the chosen action, and closes', async () => {
     const onPress = vi.fn()
     const list = actions()
     await render(
-      <AndroidContextMenu actions={list} analyticsSurface={S} onPress={onPress}>
+      <AndroidContextMenu actions={list} onPress={onPress}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -107,18 +105,14 @@ describe('Android context menu', () => {
 
     await act(async () => items()[2].props.onClick())
     expect(list[2].onPress).toHaveBeenCalledOnce()
-    expect(analytics.capture).toHaveBeenCalledWith('context_menu_action', {
-      surface: S,
-      action: 'delete',
-      trigger: 'long_press',
-    })
+    expect(analytics.capture).not.toHaveBeenCalled()
     expect(menu().props.expanded).toBe(false)
   })
 
   it('closes on dismiss without running an action', async () => {
     const list = actions()
     await render(
-      <AndroidContextMenu actions={list} analyticsSurface={S}>
+      <AndroidContextMenu actions={list}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -134,7 +128,7 @@ describe('Android context menu', () => {
       [{ ...remove, onPress: vi.fn() }],
     ]
     await render(
-      <AndroidContextMenu actions={entries} analyticsSurface={S}>
+      <AndroidContextMenu actions={entries}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -150,7 +144,6 @@ describe('Android context menu', () => {
     const eachPlan = vi.fn()
     await render(
       <AndroidContextMenu
-        analyticsSurface={S}
         actions={[
           {
             id: 'delete',
@@ -170,16 +163,13 @@ describe('Android context menu', () => {
     expect(titles()).toEqual(['‹  Delete', 'This plan', 'All plans'])
     await act(async () => items()[2].props.onClick())
     expect(eachPlan).toHaveBeenCalledOnce()
-    expect(analytics.capture).toHaveBeenCalledWith(
-      'context_menu_action',
-      expect.objectContaining({ action: 'delete.all' })
-    )
+    expect(analytics.capture).not.toHaveBeenCalled()
   })
 
   it('exposes every action to screen readers', async () => {
     const list = actions()
     await render(
-      <AndroidContextMenu actions={list} analyticsSurface={S}>
+      <AndroidContextMenu actions={list}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -199,11 +189,7 @@ describe('Android context menu', () => {
   it('renders the content without a menu when there are no actions', async () => {
     const onPress = vi.fn()
     await render(
-      <AndroidContextMenu
-        actions={[false]}
-        analyticsSurface={S}
-        onPress={onPress}
-      >
+      <AndroidContextMenu actions={[false]} onPress={onPress}>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -216,7 +202,7 @@ describe('Android context menu', () => {
 describe('disabled context menu', () => {
   it('keeps the native host but opens nothing on Android', async () => {
     await render(
-      <AndroidContextMenu actions={actions()} analyticsSurface={S} disabled>
+      <AndroidContextMenu actions={actions()} disabled>
         <React.Fragment />
       </AndroidContextMenu>
     )
@@ -228,12 +214,7 @@ describe('disabled context menu', () => {
 
   it('keeps the native host but offers no items on iOS', async () => {
     await render(
-      <IOSContextMenu
-        actions={actions()}
-        analyticsSurface={S}
-        preview={<React.Fragment />}
-        disabled
-      >
+      <IOSContextMenu actions={actions()} preview={<React.Fragment />} disabled>
         <React.Fragment />
       </IOSContextMenu>
     )
@@ -247,11 +228,7 @@ describe('iOS context menu', () => {
   it('maps actions to native buttons and hosts the preview', async () => {
     const list = actions()
     await render(
-      <IOSContextMenu
-        actions={list}
-        analyticsSurface={S}
-        preview={<React.Fragment />}
-      >
+      <IOSContextMenu actions={list} preview={<React.Fragment />}>
         <React.Fragment />
       </IOSContextMenu>
     )
@@ -267,17 +244,12 @@ describe('iOS context menu', () => {
 
     buttons[0].props.onPress()
     expect(list[0].onPress).toHaveBeenCalledOnce()
-    expect(analytics.capture).toHaveBeenCalledWith('context_menu_action', {
-      surface: S,
-      action: 'pin',
-      trigger: 'long_press',
-    })
+    expect(analytics.capture).not.toHaveBeenCalled()
   })
 
   it('renders groups with dividers and submenus as nested menus', async () => {
     await render(
       <IOSContextMenu
-        analyticsSurface={S}
         actions={[
           [{ ...pin, onPress: vi.fn() }],
           [
@@ -301,7 +273,7 @@ describe('iOS context menu', () => {
   it('mirrors actions as accessibility actions on the tappable trigger', async () => {
     const list = actions()
     await render(
-      <IOSContextMenu actions={list} analyticsSurface={S} onPress={vi.fn()}>
+      <IOSContextMenu actions={list} onPress={vi.fn()}>
         <React.Fragment />
       </IOSContextMenu>
     )
@@ -311,15 +283,12 @@ describe('iOS context menu', () => {
       nativeEvent: { actionName: 'delete' },
     })
     expect(list[2].onPress).toHaveBeenCalledOnce()
-    expect(analytics.capture).toHaveBeenCalledWith(
-      'context_menu_action',
-      expect.objectContaining({ trigger: 'accessibility' })
-    )
+    expect(analytics.capture).not.toHaveBeenCalled()
   })
 
   it('renders the content without a menu when there are no actions', async () => {
     await render(
-      <IOSContextMenu actions={[]} analyticsSurface={S}>
+      <IOSContextMenu actions={[]}>
         <React.Fragment />
       </IOSContextMenu>
     )

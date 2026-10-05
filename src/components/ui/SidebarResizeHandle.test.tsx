@@ -100,10 +100,7 @@ describe('sidebar resizing and saved position', () => {
     expect(useSidebarPreferences.getState().width).toBe(88)
     expect(useSidebarResize.getState().width).toBeNull()
     expect(runtime.write).toHaveBeenCalledTimes(1)
-    expect(runtime.capture).toHaveBeenCalledWith('sidebar_resized', {
-      source: 'drag',
-      mode: 'icons',
-    })
+    expect(runtime.capture).not.toHaveBeenCalled()
     expect(runtime.capture).not.toHaveBeenCalledWith('sidebar_resize_cancelled')
   })
 
@@ -118,7 +115,7 @@ describe('sidebar resizing and saved position', () => {
     expect(useSidebarPreferences.getState().width).toBe(240)
     expect(useSidebarResize.getState().width).toBeNull()
     expect(runtime.write).not.toHaveBeenCalled()
-    expect(runtime.capture).toHaveBeenCalledWith('sidebar_resize_cancelled')
+    expect(runtime.capture).not.toHaveBeenCalled()
   })
 
   it('cleans up a live preview if the tablet layout disappears mid-drag', () => {
@@ -131,7 +128,7 @@ describe('sidebar resizing and saved position', () => {
     renderer = undefined
     expect(useSidebarResize.getState().width).toBeNull()
     expect(useSidebarPreferences.getState().width).toBe(240)
-    expect(runtime.capture).toHaveBeenCalledWith('sidebar_resize_cancelled')
+    expect(runtime.capture).not.toHaveBeenCalled()
   })
 
   it('ignores gesture frames delivered after the handle has unmounted', () => {
@@ -192,9 +189,6 @@ describe('sidebar resizing and saved position', () => {
       })
     )
     expect(useSidebarPreferences.getState().width).toBe(216)
-    expect(runtime.capture).toHaveBeenCalledWith('sidebar_resized', {
-      source: 'accessibility',
-      mode: 'icons',
-    })
+    expect(runtime.capture).not.toHaveBeenCalled()
   })
 })

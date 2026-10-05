@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import {
   clampSidebarWidth,
@@ -26,18 +26,13 @@ export default function SidebarResizeHandle({ width }: { width: number }) {
         // Queued native frames must not revive a drag after unmount/refresh.
         drag.current = null
         preview(null)
-        analytics.capture('sidebar_resize_cancelled')
       }
     },
     [preview]
   )
 
-  const commitWidth = (nextWidth: number, source: 'drag' | 'accessibility') => {
+  const commitWidth = (nextWidth: number) => {
     setWidth(nextWidth)
-    analytics.capture('sidebar_resized', {
-      mode: nextWidth < SIDEBAR_LABEL_MIN_WIDTH ? 'icons' : 'labels',
-      source,
-    })
   }
 
   const pan = Gesture.Pan()
@@ -46,7 +41,6 @@ export default function SidebarResizeHandle({ width }: { width: number }) {
     .onStart(() => {
       drag.current = { startWidth: width }
       setDragging(true)
-      analytics.capture('sidebar_resize_started')
     })
     .onUpdate(({ translationX }) => {
       if (!drag.current) return
@@ -57,15 +51,11 @@ export default function SidebarResizeHandle({ width }: { width: number }) {
     })
     .onEnd(({ translationX }, success) => {
       if (success && drag.current) {
-        commitWidth(
-          clampSidebarWidth(drag.current.startWidth + translationX),
-          'drag'
-        )
+        commitWidth(clampSidebarWidth(drag.current.startWidth + translationX))
         drag.current = null
       }
     })
     .onFinalize(() => {
-      if (drag.current) analytics.capture('sidebar_resize_cancelled')
       drag.current = null
       preview(null)
       setDragging(false)
@@ -92,7 +82,7 @@ export default function SidebarResizeHandle({ width }: { width: number }) {
           const nextWidth = clampSidebarWidth(
             width + (actionName === 'increment' ? 1 : -1) * SIDEBAR_RESIZE_STEP
           )
-          if (nextWidth !== width) commitWidth(nextWidth, 'accessibility')
+          if (nextWidth !== width) commitWidth(nextWidth)
         }}
         style={{
           position: 'absolute',

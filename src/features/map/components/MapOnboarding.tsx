@@ -105,7 +105,6 @@ export default function MapOnboarding() {
   }
 
   const handleSkipLocation = () => {
-    analytics.capture('map_location_prompt_skipped')
     goNext()
   }
 
@@ -124,10 +123,6 @@ export default function MapOnboarding() {
   const [step, setStep] = useState(
     oldContactsWithAddressWithoutCoordinates.length === 0 ? 1 : 0
   )
-
-  useEffect(() => {
-    if (step === 1) analytics.capture('map_location_prompt_viewed')
-  }, [step])
 
   const hasFetched = Object.keys(statuses).length > 0
   const listData = hasFetched

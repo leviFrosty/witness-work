@@ -323,18 +323,18 @@ describe('restoring over data already on this device', () => {
       'iCloudRestoreReplaceConfirm_replace',
     ])
     expect(iCloudSync.replaceLocalWithRemote).not.toHaveBeenCalled()
-    expect(analytics.capture).toHaveBeenCalledWith(
-      'icloud_restore_replace_prompted',
-      { source: 'onboarding', merge_offered: false }
+    expect(analytics.capture).not.toHaveBeenCalledWith(
+      'import_started',
+      expect.anything()
     )
 
     await press('cancel')
 
     expect(iCloudSync.replaceLocalWithRemote).not.toHaveBeenCalled()
     expect(completed()).toBe(false)
-    expect(analytics.capture).toHaveBeenCalledWith(
-      'icloud_restore_replace_cancelled',
-      { source: 'onboarding', merge_offered: false }
+    expect(analytics.capture).not.toHaveBeenCalledWith(
+      'import_started',
+      expect.anything()
     )
   })
 

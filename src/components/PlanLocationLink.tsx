@@ -77,7 +77,6 @@ export default function PlanLocationLink({
 
   return (
     <ContextMenu
-      analyticsSurface='plan_location'
       accessibilityLabel={secondary ? `${primary}, ${secondary}` : primary}
       onPress={url ? () => void openURL(url) : undefined}
       actions={[

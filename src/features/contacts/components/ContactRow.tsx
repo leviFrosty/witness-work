@@ -294,7 +294,6 @@ const ContactRow = ({
       >
         <ContextMenu
           actions={menu}
-          analyticsSurface='contact_row'
           onPress={onPress}
           accessibilityLabel={contact.name}
           accessible={!selectionMode}

@@ -55,7 +55,6 @@ export default function ContactsSelectionBar({
       contacts.map((c) => c.id),
       !allFavorite
     )
-    selection.track(allFavorite ? 'unfavorite' : 'favorite')
     selection.finish()
   }
 
@@ -78,7 +77,6 @@ export default function ContactsSelectionBar({
           message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
           native: true,
         })
-        selection.track(dataProtectionMode ? 'delete' : 'archive', count)
         selection.finish()
       },
     })
@@ -103,13 +101,11 @@ export default function ContactsSelectionBar({
         dismissItem
       ) : (
         <PullDownMenu
-          analyticsSurface='contacts_selection'
           accessibilityLabel={i18n.t('dismissFor')}
           actions={durations.map((option) => ({
             id: option.key,
             title: dismissOptionLabel(option),
             onPress: () => {
-              selection.track('dismiss', count)
               selection.finish()
               void dismissContacts(contacts, option)
             },

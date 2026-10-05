@@ -1269,11 +1269,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           notifyMe: false,
           notifications: [],
         })
-        analytics.capture('recurring_plan_instance_replaced', {
-          date_changed: !selectedDateMatchesInstance,
-          category_changed: categoryChanged,
-          details_changed: detailsChanged,
-        })
+
         return
       }
 
@@ -1407,18 +1403,19 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       })
     }
 
-    analytics.capture(isEditMode ? 'plan_updated' : 'plan_created', {
-      plan_kind: oneTime ? 'day' : 'recurring',
-      scope: scope ?? 'all',
-      frequency: oneTime ? undefined : frequency,
-      has_category: !!selectedCategoryId,
-      has_note: !!plannedNote,
-      has_title: !!plannedTitle,
-      has_location: !!location,
-      invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
-      reminder_enabled: oneTime && notifyMe,
-      prefilled: !!prefill,
-    })
+    if (!isEditMode)
+      analytics.capture('plan_created', {
+        plan_kind: oneTime ? 'day' : 'recurring',
+        scope: scope ?? 'all',
+        frequency: oneTime ? undefined : frequency,
+        has_category: !!selectedCategoryId,
+        has_note: !!plannedNote,
+        has_title: !!plannedTitle,
+        has_location: !!location,
+        invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
+        reminder_enabled: oneTime && notifyMe,
+        prefilled: !!prefill,
+      })
     setSaveScopeModalOpen(false)
     navigation.goBack()
   }
@@ -1455,10 +1452,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           return
         }
 
-        analytics.capture('plan_deleted', {
-          plan_kind: existingDayPlan ? 'day' : 'recurring',
-          scope,
-        })
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,

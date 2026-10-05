@@ -32,7 +32,6 @@ export default function useLogNotAtHome() {
 
   const undo = (visit: Visit) => {
     deleteConversation(visit.id)
-    analytics.capture('visit_deleted', { source: 'follow_up_card' })
   }
 
   return { log, undo }

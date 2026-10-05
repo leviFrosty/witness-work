@@ -13,7 +13,6 @@ import {
   isSubmenu,
   menuAccessibilityProps,
   menuGroups,
-  runMenuAction,
 } from '@/components/ui/menuEntries'
 import type {
   ContextMenuAction,
@@ -23,7 +22,6 @@ import type {
 /** Native SwiftUI context menu: long-press lifts the preview above the menu. */
 export default function ContextMenu({
   actions,
-  analyticsSurface,
   children,
   onPress,
   accessibilityLabel,
@@ -45,7 +43,7 @@ export default function ContextMenu({
   // native menu doesn't open.
   const groups = disabled ? [] : allGroups
   const a11y = accessible
-    ? menuAccessibilityProps(groups, analyticsSurface)
+    ? menuAccessibilityProps(groups)
     : { accessible: false }
 
   const trigger = onPress ? (
@@ -72,7 +70,7 @@ export default function ContextMenu({
       label={action.title}
       systemImage={action.systemImage}
       role={action.destructive ? 'destructive' : undefined}
-      onPress={() => runMenuAction(action, key, analyticsSurface, 'long_press')}
+      onPress={() => action.onPress()}
     />
   )
 

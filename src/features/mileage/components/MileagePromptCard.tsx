@@ -4,7 +4,7 @@ import { useToastController } from '@tamagui/toast'
 import { Car as CarIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { analytics } from '@/lib/analytics'
+
 import { usePreferences } from '@/stores/preferences'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -26,7 +26,7 @@ export default function MileagePromptCard() {
 
   const answer = (enabled: boolean) => {
     set({ mileageTrackingEnabled: enabled })
-    analytics.capture('mileage_prompt_answered', { enabled })
+
     if (enabled) {
       navigation.navigate('MileageVehicleForm', { source: 'home_prompt' })
       return

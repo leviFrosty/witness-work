@@ -78,7 +78,6 @@ const ScheduleScreenPreferencesSection = () => {
                   the menu's trigger. */}
               <ContextMenu
                 style={{ flex: 1, minWidth: 0 }}
-                analyticsSurface='schedule_screen_preferences_row'
                 actions={reorderMenuActions({
                   index,
                   count: order.length,

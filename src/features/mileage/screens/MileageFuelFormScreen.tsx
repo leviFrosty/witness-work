@@ -87,13 +87,11 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
         pricePerGallon: displayToPricePerGallon(priceValue, format.economyUnit),
       })
     }
-    analytics.capture(
-      existing ? 'mileage_fuel_updated' : 'mileage_fuel_added',
-      {
+    if (!existing)
+      analytics.capture('mileage_fuel_added', {
         has_price: priceValue !== undefined,
         price_change: askHowToApply ? changeMode : undefined,
-      }
-    )
+      })
     navigation.goBack()
   }
 
@@ -111,7 +109,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
       }),
       onConfirm: () => {
         deleteFuel(existing.id)
-        analytics.capture('mileage_fuel_deleted', { car_count: carCount })
+
         navigation.goBack()
       },
     })
@@ -169,7 +167,6 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
         )}
 
         <HistoryList
-          analyticsSurface='mileage_fuel_price_history'
           entries={history.map((entry) => ({
             id: entry.id,
             effectiveFrom: entry.effectiveFrom,

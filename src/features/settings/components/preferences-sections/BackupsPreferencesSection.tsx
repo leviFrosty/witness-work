@@ -5,7 +5,6 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import i18n from '@/lib/locales'
 import Select from '@/components/ui/Select'
-import { analytics } from '@/lib/analytics'
 
 const RemindMeAboutBackups = () => {
   const { remindMeAboutBackups, set } = usePreferences()
@@ -17,10 +16,6 @@ const RemindMeAboutBackups = () => {
       onValueChange={(value) => {
         if (value === remindMeAboutBackups) return
         set({ remindMeAboutBackups: value })
-        analytics.capture('backup_reminders_enabled_changed', {
-          source: 'settings',
-          enabled: value,
-        })
       }}
     />
   )
@@ -47,11 +42,6 @@ const ReminderFrequency = () => {
         onChange={({ value }) => {
           if (value === backupNotificationFrequencyAsDays) return
           set({ backupNotificationFrequencyAsDays: value })
-          analytics.capture('backup_reminder_frequency_changed', {
-            source: 'settings',
-            frequency_days: value,
-            previous_frequency_days: backupNotificationFrequencyAsDays,
-          })
         }}
       />
     </InputRowContainer>

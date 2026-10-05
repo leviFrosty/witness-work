@@ -11,7 +11,7 @@ import {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { isLaunching } from '@/app/launch/launchState'
-import { analytics } from '@/lib/analytics'
+
 import Haptics from '@/lib/haptics'
 import {
   BURST_TOTAL_MS,
@@ -145,7 +145,6 @@ const useWelcomeChoreography = ({
   )
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-  const mountedAt = useRef(Date.now())
   const started = useRef(false)
   const storyCycles = useRef(0)
   useEffect(() => {
@@ -318,9 +317,7 @@ const useWelcomeChoreography = ({
 
   const skipIntro = () => {
     if (!started.current || introDone) return
-    analytics.capture('onboarding_hero_intro_skipped', {
-      elapsed_ms: Date.now() - mountedAt.current,
-    })
+
     timers.current.splice(0).forEach(clearTimeout)
     const quick = { duration: 240, easing: EASE_OUT }
     splash.value = 0

@@ -1,245 +1,194 @@
 # Analytics journeys
 
 App and feature code use `analytics` from `@/lib/analytics`. Its scalar-property
-contract (`capture`, `screen`, `reset`) is independent of the SDK.
-The adapter owns provider configuration and serialization; replacing the provider
-should require no changes to feature instrumentation. Missing configuration or
-provider errors must not block startup or user actions.
+contract (`capture`, `screen`, `reset`) is independent of the SDK. Missing
+configuration or provider errors must never block startup or user actions.
 
-Events describe actions and outcomes, with bounded feature flags, counts, sources,
-and error codes. Never send names, notes, imported text, addresses, coordinates,
-contact identifiers, share tokens, or raw exception messages. Crash diagnostics
-use the separate `errorTracking` module from `@/lib/errorTracking`.
-Screen tracking sends route names only, including the initial route; it does not
-send route parameters. Each route sends at most one `$screen` per PostHog session
-(sessions end after 30 minutes idle), so screen insights measure reach — users and
-sessions — not repeat visits. `previous_screen` is the route before the first
-visit in that session. Touch/text autocapture is not enabled.
+## Event budget and retention policy
 
-Lifecycle autocapture sends `Application Installed`, `Updated`, `Opened` and
-`Became Active`; `Application Backgrounded` is dropped in `before_send` to save
-event volume.
+Permanent events must answer a concrete question about activation, Supporter
+conversion, completion of a core workflow, meaningful feature adoption, or an
+actionable failure. Register their names in
+[`analyticsEvents.ts`](../src/lib/analyticsEvents.ts); `analytics.capture` accepts
+only that union, and the provider rejects any other usage event before ingestion.
+The registry is the complete current business-event catalog. Review added names
+and properties in the same change as the feature and document the product
+question here. Prefer one successful outcome to a separate event for every click,
+intermediate step, preference, or background success.
 
-## iPad menu bar
+The October 2026 reduction retains 121 business event types and removes 133.
+Generic menu actions, navigation/keyboard/sidebar interactions, search/FAQ actions,
+cosmetic preferences, repetitive background maintenance, duplicate notification
+routing, and speculative paywall experiments have no permanent event. Data
+creation outcomes remain; ordinary Contact, Visit, Plan, and mileage edits no
+longer send separate update events. Time Entry edits/deletes remain because they
+measure changes to the app's core recorded service activity.
 
-`menu_bar_available` records when the native iPadOS menu is configured after
-setup, once per app mount. It means the commands were available, not that someone
-opened a menu. `menu_bar_action_selected` and `menu_bar_action_completed` carry
-only the bounded `action` identifier: `preferences`, `add_time`, `new_contact`,
-`new_plan`, `backup_restore`, `find_contact`, `help_center`, `whats_new`,
-`contact_support`, or `check_update`. Completion means a destination was opened
-or an update check returned; it does not mean a form was saved, a backup was
-restored, or an email was sent. `outcome` is `opened`, `available`, `up_to_date`,
-`unavailable`, `failed`, or `busy`. `menu_bar_failed` identifies `stage`
-(`configure` or `action`) and optionally the action, without exception text.
-Native menu opening/dismissal is not exposed by this bridge; do not infer
-abandonment from availability without a selection.
+Usage requires `appVariant: production`, development mode off, and hydrated
+analytics consent. Beta, development, and missing/unknown variants do not ingest
+usage, including restored queues. Feature flag requests, surveys, and crash
+reporting retain their independent behavior. This is enforced in `before_send`,
+queue restoration, and every delivery/retry attempt. SDK `$set`, `$identify`,
+`Application Updated`, `Application Backgrounded`, and other unregistered
+automatic events are discarded. Touch/text autocapture and session replay stay off.
 
-The existing Help Center events also accept `source: menu_bar`. Update checks
-from Settings and Help share `update_check_started`, `update_check_completed`
-(`outcome: available`, `up_to_date`, or `unavailable`), and
-`update_check_failed` (`error_code: check_failed`), with `source: settings` or
-`menu_bar`. These measure checking for a compatible Expo update; installation
-is handled by the existing Update screen. No search terms, contact IDs, email
-contents, navigation parameters, or update exception messages are captured.
+| Event                                                                             | Retained frequency / interpretation                                                                                           |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `$screen`                                                                         | One route per PostHog session; reach rather than repeated navigation. Sessions expire after 30 minutes idle.                  |
+| `Application Installed`, `Application Opened`                                     | Installation and cold-launch signals. All launch URLs are removed at capture and delivery, including legacy anonymous queues. |
+| `Application Became Active`                                                       | Once per UTC day per anonymous installation; daily active reach, not foreground count.                                        |
+| `onboarding_checklist_viewed`, `supporter_nudge_viewed`, `backup_reminder_viewed` | Once per UTC day and bounded source/variant context. Measure daily reach.                                                     |
+| `timer_action_completed`                                                          | `action: started` only, once per session. Measures timer adoption, not pauses/resets or exact timer-start counts.             |
+| `buddies_opened`                                                                  | Once per session and source.                                                                                                  |
+| `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                      |
+| `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                            |
+| Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                   |
+| `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                |
 
-### Navigation keyboard shortcuts
+[`analyticsFrequency.ts`](../src/lib/analyticsFrequency.ts) persists only the UTC
+day and bounded event/context keys in a separate MMKV store; it stores no identity
+or private payloads. Daily caps survive app restarts. Session caps are in memory.
+Resetting the anonymous identity clears both. A storage failure falls back to the
+in-memory daily cap. Caps are applied at capture, never reapplied during retries.
 
-`navigation_shortcuts_revealed` records each Command hold that reveals the
-navigation hints, with `layout_variant: sidebar` or `bottom_bar`. Keyboard
-navigation also uses `navigation_destination_selected` with `source: keyboard`.
-`navigation_shortcut_completed` carries the visible `destination`, layout
-variant, and `outcome: navigated`, `reselected`, or `prevented`. Completion means
-the navigation action was dispatched, not that data was saved. A Command hold
-without a selection is discovery, so it is not treated as abandonment.
-`navigation_shortcuts_failed` carries only `stage: configure` or `action`.
-No normal key presses, typed text, or navigation parameters are captured.
+Changed impression frequencies affect denominators: nudge/checklist insights now
+measure daily reach, and screen insights measure session reach. Do not compare raw
+event counts across this rollout without accounting for the change. Locked
+Supporter placement impressions deliberately remain once per visible visit.
 
-## Development logging
+## Privacy and user choice
 
-Analytics uses the shared `logger` for diagnostics and its enablement policy for
-PostHog's SDK debug logs. Development builds enable logging automatically; the
-Developer Tools preference also enables it in production. Filter the dev
-server console for `[PostHog]` to see event names and payloads (including screens,
-identity, lifecycle, and surveys), feature flags, flushes, and transport errors.
-Capture logs indicate queued events; flush logs show successful batch requests.
-`[Analytics]` logs show initialization, enabled/opted-out status, missing
-configuration, skipped calls, identity resets, and provider failures.
+Event properties are structural: bounded sources, feature/variant keys, counts,
+booleans, and error codes. Never send names, notes, imported text, addresses,
+coordinates, contact/Visit IDs, share tokens, URLs, or raw exception messages.
+Screens send route names and the previous route only, never route parameters.
+Diagnostics use `errorTracking` from `@/lib/errorTracking`.
 
-These diagnostics are off in production unless Developer Tools is enabled.
-Set `EXPO_PUBLIC_SILENT=true` or `1`
-before starting the dev server to silence them without disabling analytics.
-
-## Anonymous by design
-
-Analytics are anonymous usage statistics, not user tracking. The provider is
-configured with `personProfiles: 'never'`, the contract has no `identify`, and
-the account ID is never sent. Events carry only the SDK's random on-device
-identifier so that sessions can be counted and rollouts stay stable. Do not add
-`identify`, `alias`, `group`, or person properties; if a breakdown is needed,
-send it as a bounded event property instead. GeoIP stays on for abuse detection;
-disclose country-level location in the privacy policy.
+The provider uses `personProfiles: never`; the adapter has no `identify`, and
+account/RevenueCat IDs are never usage identities. The SDK's random on-device
+identifier supports sessions and stable rollouts. Do not add identify/alias/group
+or person updates; put bounded breakdowns on the outcome event instead. GeoIP
+remains available; disclose country-level location in the privacy policy.
 
 On upgrade, `AnonymousPostHog.setupBootstrap` clears legacy identified state
-after SDK storage loads and before any startup requests. It rotates the old
-linked identifiers and drops legacy queues, which may contain account IDs even
-on crash or survey events. App-version metadata and survey history survive.
-Anonymous installations keep their identifier on later launches.
+before startup requests, rotates linked identifiers, and drops that legacy queue,
+including diagnostics/surveys which may carry the account ID. App-version metadata
+and survey history survive. Anonymous installations keep their identifiers on
+later launches; their queued events are pruned by the current retention policy.
+Every delivered batch also scrubs share links and removes launch URLs.
 
-## User choice
+`analyticsEnabled` (default on, per device, not synced) controls usage only.
+`analyticsConsent.ts` publishes the preference at module load, after hydration,
+and on changes into the store-free policy module; the gate starts closed.
+Withdrawal synchronously resets the random identifier and prunes pending usage;
+a rapid off/on cannot revive it on a network retry. Survey history and normal
+retained SDK properties survive. The separate SDK `DeviceId` remains for flag
+requests/native integrations; it is not the usage-event identity. Flag requests
+remain outside the usage switch. An HTTP request already underway cannot be recalled. The switch lives in Settings under Misc and is explained in onboarding.
+Keep copy accurate: structural analytics exist, and intentional survey text or
+opt-in diagnostic attachments are exceptions described below.
 
-`analyticsEnabled` in the preferences store (default on, per device, not synced)
-controls usage events only. `analyticsEventsAllowed` in
-`src/lib/analyticsPolicy.ts` is checked in the provider's `before_send`, which
-covers feature events, screen events, and the SDK's own lifecycle events. The
-policy module holds a plain flag rather than reading the store, because the
-client is imported below the store in the module graph; `analyticsConsent.ts`
-publishes the store value into it at module load, after hydration, and on every
-change, and the flag is false until then so nothing is sent before the choice is
-known. The client also checks consent on every batch attempt, including retries,
-and removes pending
-usage events synchronously on withdrawal. Restored queues are pruned if consent
-is still unknown or disabled when SDK storage finishes loading. Crash reports
-(`$exception`), survey events, and feature flag requests
-are deliberately unaffected: flags gate access and rollouts, and surveys and crash
-reports are needed for a good experience. Turning analytics off resets the
-provider's random identifier from the preference subscription; survey seen dates,
-completed/dismissed survey history, and the SDK's normal retained properties
-survive. An HTTP request already underway cannot be recalled. The RevenueCat
-customer and the account ID are separate. The switch lives in Settings under Misc next to
-the Privacy Policy link, and the onboarding privacy step tells the user it
-exists. Keep in-app copy consistent: the app may say no personal data leaves the
-device, but must not claim there is no analytics at all.
+## Feature flags and experiments
+
+`useInitializeFeatureFlags` fetches flags without reporting exposure. It keeps
+flags closed when unavailable and never restores visibility from stale SDK cache.
+`useFeatureFlag` uses boolean rollouts; `useFeatureFlagValue` exposes boolean or
+string values for multivariate experiences. The loader subscribes to SDK flag updates, including identity-reset reloads,
+while rejecting cached values from failed, partial, or quota-limited refreshes.
+Those failures close the gates until a successful evaluation. A request already
+in flight when identity resets can briefly publish its earlier assignment before
+the SDK reload for the new identity completes. Only a
+consuming hook with a loaded value for the current anonymous identity asks the SDK to report `$feature_flag_called`; repeated reads of the same
+flag/value are deduplicated by the SDK and capped to daily reach across launches. The read is checked against the rendered
+variant before reporting. Consent and the production gate apply to
+exposure events, while flag requests and visibility remain available when usage
+is disabled. These are evaluated readers, not proof someone tapped the feature.
+
+Read experimental flags at the experience boundary. Use a retained completion
+outcome as the primary metric; add a bounded variant property only when needed.
+Additional micro-interactions require an active experiment, a named question,
+and an expiry/removal plan. The audit found no active PostHog experiments, so
+speculative tier/billing/price/options/legal-link paywall events were removed.
+
+## Core workflows and feature adoption
+
+| Product question                                  | Retained events / context                                                                                                                                                                |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Are people recording meaningful service activity? | `time_entry_created`, `time_entry_updated`, `time_entry_deleted`, `contact_created`, `visit_created`, `plan_created`, `service_history_saved`. Counts and bounded workflow sources only. |
+| Are follow-ups completed or rescheduled?          | `follow_up_card_completed`, `follow_up_dismissed`, `follow_up_rescheduled`.                                                                                                              |
+| Is the scheduling assistant useful?               | `assistant_preview_opened`, recommendation accepted/dismissed/undone.                                                                                                                    |
+| Are publisher settings and year rollover used?    | `role_period_set`, `hours_logging_changed`, `time_rollover_apply_requested`, `time_rollover_undone`.                                                                                     |
+| Are reports exported?                             | `service_report_export_requested`, `service_report_exported`, `service_report_export_dismissed`. Share-sheet resolution has platform limitations; it is not proof of submission.         |
+| Are new features adopted?                         | Timer start/failure, Buddies open/same-time planning, `custom_field_created`, calendar connection/disconnection/failure, and map permission results.                                     |
+| Is mileage used and exported?                     | Tracking changed, vehicle/trip/fuel added, data deleted, report exported/export failed. Low-value row actions, unit preferences, and edits are dropped.                                  |
+
+Existing structural properties and sources remain on retained events. No saved
+content, record identifiers, appointment dates, or exception text is attached.
+Buddies and Notes Import are rollout-gated; iCloud and Calendar Sync features
+retain their iOS availability rules.
 
 ## Onboarding and activation
 
 Use `onboarding_started` / `onboarding_resumed`, `onboarding_step_viewed`,
-`onboarding_step_completed`, and `onboarding_completed` for the main funnel.
-Break down by `step_id`, rather than numeric position: conditional steps mean
-position and total vary. Back, jump, and skip events explain deliberate navigation.
-A skipped step can also have a completed event: completed means the user advanced,
-not that they filled in every optional field. Time on step (`elapsed_ms`) is wall
-clock time and may include time spent in another screen or in the background.
+`onboarding_step_completed`, `onboarding_step_skipped`, and `onboarding_completed`.
+Break down by stable `step_id`, since conditional steps change numeric positions.
+Back/jump/button micro-interactions and hero-animation skipping are dropped.
+A skipped step can also complete: completion means advancing, not filling every
+optional field. `elapsed_ms` includes background time and time on other screens.
 
-Stable step IDs:
-`hero`, `founderNote`, `privacyFirst`, `pickUpWhereLeftOff`, `publisherType`,
-`intentPicker`, `profileSetup`, `pioneerDate`, `yourPlanPreview`, `notifications`,
-`defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
+Stable step IDs: `hero`, `founderNote`, `privacyFirst`, `pickUpWhereLeftOff`,
+`publisherType`, `intentPicker`, `profileSetup`, `pioneerDate`, `yourPlanPreview`,
+`notifications`, `defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
 
-The `hero` step opens with a welcome animation that picks up from the splash
-screen when it is the first screen after launch. `onboarding_hero_intro_skipped`
-records a tap that fast-forwards it, with `elapsed_ms` since the hero mounted.
-It fires at most once per launch; any other visit to the hero (Back from the
-next step, a restarted onboarding) settles in quickly and cannot be skipped.
-Compare it with the hero's `onboarding_step_completed` `elapsed_ms` to judge
-whether the animation is holding people up.
+Notification permission request/result, import availability/skip, and backfill
+completion distinguish friction from deliberate choices. `completion_method` is
+`guided`, `icloud_restore`, or `backup_restore`. Home checklist view/completed/
+dismissed remains; individual manual checkbox toggles are dropped. Measure
+onboarding drop-off over an observation window that allows resumption.
 
-Notification permission outcomes and import availability/outcomes help distinguish
-friction from an intentional skip. iCloud Restore and a JSON backup restore from
-the `pickUpWhereLeftOff` chooser complete onboarding directly, with
-`completion_method: icloud_restore` or `backup_restore`; the guided path uses
-`guided`. "Start fresh" on that chooser records `onboarding_step_skipped`.
-Home checklist interactions cover activation after the guided flow.
-`onboarding_checklist_item_marked` records checking an item off (or back on) by
-hand, with `item_id`, `done` (boolean), and `source` (`circle` for the item's
-circle, `menu` for its long-press menu). Items the app detects on its own never
-send it.
+## Imports and backups
 
-Do not interpret absence of an immediate completion as an explicit abandonment.
-Measure drop-off with an observation window and allow resumed onboarding.
+Filter by `import_type` (`notes`, `mytime`, `icloud`, `backup_json`) and `source`.
+Retain type selection, start, preview readiness, completion, failure, cancellation,
+stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
+preview edits, prompt toggles, and warning openings are dropped.
 
-## Imports
+| Flow                    | Outcomes                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Notes Import            | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data.                        |
+| MyTime / iCloud Restore | `import_completed` with the import type.                                                                                           |
+| JSON restore            | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                       |
+| JSON export             | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped. |
+| Backup reminder         | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                    |
+| iCloud photo consent    | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                |
 
-Filter on `import_type` (`notes`, `mytime`, `icloud`, `backup_json`) and `source`.
-The onboarding chooser records `import_type_selected` (including `backup_json`). Shared lifecycle events
-include `import_started`, `import_preview_ready`, `import_failed`, and cancellation,
-retry, stop, reset, or undo events where supported.
+Notes previews retain `empty`/warning counts and the ledger's original source
+across background work, relaunches, and refinements. Each processing attempt can
+start, so start counts are attempts, not unique documents. Export/restore retains
+bounded `entry_point` (`settings` or `backup_reminder`), failure stage/error code,
+and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved;
+`outcome: unknown` covers both sharing and cancellation and cannot establish that
+a backup was saved. Reminder dismissal snoozes without changing `lastBackupDate`.
 
-Completion events retain existing useful names:
-
-| Import         | Committed data event                      |
-| -------------- | ----------------------------------------- |
-| Notes Import   | `notes_import_accepted`                   |
-| MyTime         | `import_completed`, `import_type: mytime` |
-| iCloud Restore | `import_completed`, `import_type: icloud` |
-| JSON backup    | `backup_imported`                         |
-
-A Notes Import preview is not a completed import. Its `empty` and warning counts
-separate an empty result from a failure. The ledger persists original onboarding
-attribution across background work, relaunches, and refinements. Legacy entries
-without attribution use `unknown`. Each processing attempt may emit a start,
-including resumptions; these are attempts, not unique imported documents.
-
-## Backups and reminders
-
-| Journey                      | Events                                                                                                                                   |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Tray reminder                | `backup_reminder_viewed`, `backup_reminder_clicked`, `backup_reminder_dismissed`                                                         |
-| Reminder preferences         | `backup_reminders_enabled_changed`, `backup_reminder_frequency_changed`                                                                  |
-| JSON export                  | `backup_export_started` → `backup_file_created` → `backup_share_sheet_requested` → `backup_exported`; `backup_export_failed` on failure  |
-| JSON restore                 | `import_started` → `import_file_selected` → `import_commit_started` → `backup_imported`; `import_cancelled` or `import_failed` otherwise |
-| iCloud restore               | Existing `icloud_restore_probe_result`, `import_started`, `import_completed`, `import_failed`, and `onboarding_import_skipped`           |
-| iCloud photo restore consent | `icloud_restore_images_prompted`, `icloud_restore_images_requested`, `icloud_restore_images_skipped`                                     |
-
-The reminder lives in the notifications tray. Its events include `source`
-(`notifications_tray`; `home` before the tray), `variant` (`compact` while iCloud
-Sync is on, otherwise `full`), and `frequency_days`. A view means the reminder
-was shown on screen in the open tray; it does not represent a delivered push
-notification. Dismissal snoozes the reminder for another period through
-`backupReminderSnoozedAt`, leaving `lastBackupDate` untouched, so that preference
-now only moves on an export (it still isn't proof of a saved backup). Preference
-events only fire for changed values from the controls, not hydration or restored
-preferences.
-
-JSON export and restore events retain `source: settings` and add
-`entry_point: settings | backup_reminder` to connect reminder clicks to subsequent
-actions. JSON restore events use `import_type: backup_json`. Export failures carry
-`stage: sharing_availability | write_file | share_sheet`; restore failures carry
-`stage: file_picker | read_file | validate_file | migrate | restore` and bounded
-`error_code` values. Terminal export/restore events include wall-clock `elapsed_ms`
-(including time spent in a picker, share sheet, or background).
-
-`backup_file_created` means the temporary export file was written.
-`backup_share_sheet_requested` precedes the native sharing call. The historical
-`backup_exported` event means that call resolved; its `outcome: unknown` explicitly
-reflects that Expo resolves on both sharing and cancellation. It cannot establish
-that a backup was saved or distinguish an export cancellation. File names, paths,
-contents, and raw errors are never attached to these analytics events.
-
-`icloud_restore_probe_result` `status` is `probing`, `found`, `noBackup`,
-`unavailable`, or `incomplete` — iCloud couldn't be read in full (still
-scanning, a file still downloading, or a newer app version's data), so the step
-shows "iCloud isn't ready yet" instead of "nothing to restore". The step
-re-probes on its own when a file lands, so one visit can record several results.
-`icloud_restore_search_again_clicked` records the manual retry with
-`source: onboarding` and the `status` shown when tapped.
-
-iCloud photo consent events measure the choice only, not successful image
-downloads. Background iCloud replication remains separate from these manual
-backup/restore journeys.
+Restore probe status is `probing`, `found`, `noBackup`, `unavailable`, or
+`incomplete`; each distinct status survives the session cap. Photo consent does
+not establish that photos downloaded. No file paths, filenames, or contents are
+usage properties.
 
 ## Paywall and Supporter
 
-Use `paywall_opened` for entry intent and `paywall_viewed` for the rendered screen.
-Break down by `source`, and `feature` for feature gates. Sources distinguish the
-account menu's Support WitnessWork (`account_menu`; `header_heart` before it
-replaced Home's heart), settings, the nudge (`notifications_tray`; `home_nudge` before the
-tray), onboarding, Notes Import limit, and feature gates. Nudge and feature-gate
-view/click/dismiss events measure the earlier funnel. Nudge events carry `source:
-notifications_tray`; an impression means the nudge was shown on screen in the
-open tray. `supporter_nudge_visibility_changed` (`hidden`, `source`: `settings` for
-the Home Screen switch; `home_nudge` for the former Home card's "Don't Show
-Again") records turning the nudge off for good.
+Use `paywall_viewed` for rendered entry and its `source`/`feature` for attribution.
+The preceding navigation-intent event `paywall_opened` is removed. Nudge and
+feature-gate view/click/dismiss events retain the earlier funnel. Nudge visibility
+changes record permanent hiding. Daily nudge impressions measure daily reach,
+while clicks/dismissals remain uncapped.
 
-Selection events cover tier, billing, price, and expanded options. Purchase events
-cover start, completion, cancellation, and failure. Use `tier` to distinguish a
-one-time tip from a Supporter purchase. Restore events distinguish success, no
-purchases, and failure. `paywall_closed` includes whether a purchase occurred and
-wall-clock duration; a successful purchase can also close the screen.
-
-Purchase completion is a client RevenueCat purchase result, not a renewal/refund/revenue
-ledger. External billing lifecycle analysis still requires server-side billing
-integration. Closing the app is not a navigation close event.
+Retain purchase start/completion/cancellation/failure, offering failure, restore
+start/success/empty/failure, and `paywall_closed`. Keep `tier` to distinguish tips
+from Supporter access, with final billing/product choice on purchase events.
+Intermediate tier, billing, price, expansion, FAQ, and legal-link clicks are
+removed. Closing the app is not a navigation-close event. A completed purchase
+is a client RevenueCat result, not a renewal/refund or revenue ledger.
 
 ### Supporter feature conversions
 
@@ -251,7 +200,7 @@ All `IsSupporter` placements use the same ordered journey:
 | Feature tap            | `supporter_feature_gate_clicked` | The locked feature was tapped.                                                                                                                    |
 | Supporter sheet        | `supporter_gate_viewed`          | The educational sheet opened. This existing event is a sheet view, not a feature impression.                                                      |
 | Sheet action           | `supporter_gate_clicked`         | The sheet's support action was tapped.                                                                                                            |
-| Paywall                | `paywall_viewed`                 | The paywall rendered with `source: feature_gate`. `paywall_opened` records the preceding navigation intent.                                       |
+| Paywall                | `paywall_viewed`                 | The paywall rendered with `source: feature_gate`.                                                                                                 |
 | Checkout               | `supporter_purchase_started`     | A purchase was requested; filter `tier: supporter`.                                                                                               |
 | Conversion             | `supporter_purchase_completed`   | The purchase succeeded with `tier: supporter` and `source: feature_gate`.                                                                         |
 
@@ -308,23 +257,22 @@ tap-to-purchase rate, not the view-to-purchase rate. Analytics opt-out and devic
 identity resets still apply; these are installation counts, not cross-device
 person counts or a billing ledger.
 
-## Notifications tray
+## iCloud Sync and recovery
 
-The Home header bell lists time- and event-based notices: a pending Time
-Rollover, last month's Service Report, the auxiliary pioneering question, the
-backup reminder, the data protection retention reminder, missed Follow-ups,
-Buddies activity, ready Notes Imports, What's New, the Milestone Update replay,
-and the Supporter nudge or feedback invitation.
+Retain committed enable/disable transitions (`icloud_sync_enabled_changed`) and
+bounded `source`: settings, supporter default/lapse, or onboarding restore.
+Unchanged values, hydration, and developer resets do not emit transitions.
+`icloud_sync_enable_deferred` keeps the bounded incomplete-read reason; paused,
+upload failed/recovered, and account-changed outcomes remain.
 
-| Event                            | Properties                                                          |
-| -------------------------------- | ------------------------------------------------------------------- |
-| `notifications_tray_opened`      | `item_count`, `unread_count` (as it opened)                         |
-| `notification_action_tapped`     | `kind`, `action` (e.g. `submit`, `already_submitted`, `reschedule`) |
-| `buddies_tray_sync_failed`       | `trigger` (`open`, `retry`), `reason`                               |
-| `buddies_tray_sync_retry_tapped` | none                                                                |
-| `notification_dismissed`         | `kind`                                                              |
-| `notifications_cleared`          | `count` (items cleared; ones waiting on an answer are kept)         |
+First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
+sync and reset retain started/outcome; reset adoption remains. Image toggle/outcome,
+automatic enable outcome, cloud photo removal, and device remove/failure remain.
+Device list views, generic sync notices, and resolution-link clicks are removed.
+A local manual-sync completion does not prove Apple's cloud replication finished.
+No device IDs/names, filenames, records, or payloads are included.
 
+<<<<<<< HEAD
 `kind` is one of `rollover`, `previous_report`, `auxiliary_month`, `backup`,
 `data_protection_retention`, `missed_follow_up`, `reminder` (a local Follow-up,
 Plan, or returning-Contact reminder that fired; `open` action), `buddies`,
@@ -339,14 +287,17 @@ actions under `kind: buddies`, once per tap: `open`, `going`, `declined`,
 Their long-press menu also sends `context_menu_action` (`buddy_notification`),
 a separate event. An invitation or request still waiting on an answer can't be
 dismissed and survives Clear All, so it never sends `notification_dismissed`.
+=======
+## Development logging and validation
+>>>>>>> 00111145 (chore: reduce analytics event volume)
 
-Item impressions (`backup_reminder_viewed`, `supporter_nudge_*` views,
-`icloud_sync_resolution_viewed`) fire when the item is shown on screen in the
-open tray — at least half of its row — once per opening, including items that
-arrive while the tray is open. Only items shown on screen are marked read when
-the tray closes; `unread_count` on `notifications_tray_opened` is still what was
-unread as it opened.
+The shared logger controls SDK debug output. Development logs are on by default;
+production logs require Developer Tools. `EXPO_PUBLIC_SILENT=true` or `1` silences
+logs without changing analytics consent. Capture logs indicate queued events,
+not proof of ingestion. Do not copy secret configuration or diagnostic payloads
+into public reports.
 
+<<<<<<< HEAD
 On iOS the app icon badge shows the tray's unread count. It sends no events of
 its own, since updating it isn't something the User does.
 
@@ -694,6 +645,22 @@ with the analytics project token/host: complete and resume onboarding, try each
 import path, cancel a purchase, dismiss a nudge, and perform representative feature
 actions. Filter `app_variant: development` or `development_mode: true` from production analysis. No hosted dashboards
 or live ingestion verification are created by this code change.
+=======
+Run `pnpm run typecheck`, `pnpm run lint`, and the Vitest suite. Tests against the
+pinned SDK cover iOS/Android capture, production filtering, unknown events, daily
+and session limits, consent hydration/withdrawal/retries, legacy identity/queue
+migration, URL removal, and survey history. Hook tests cover flag exposure versus
+fetching, multivariate values, and opt-in behavior. Native menu tests preserve
+selection and accessibility actions on both platforms after generic telemetry
+removal.
+
+This change requires an app/OTA release to reduce deployed traffic. Existing
+clients continue sending their old events. No hosted dashboards, billing limits,
+or campaigns are mutated by the code change. Use
+[`posthog-audit-events-report.md`](../posthog-audit-events-report.md) for the
+pre-change event volumes and dashboard dependencies. Review dashboard denominators
+at rollout and compare production event counts by app/build/update version.
+>>>>>>> 00111145 (chore: reduce analytics event volume)
 
 ## Surveys
 
@@ -732,11 +699,12 @@ Buddies Feedback screen, which explains Alpha and then opens the API survey
 (`schedule: always`, so testers can send feedback repeatedly). Its ID lives in
 `src/features/buddies/lib/feedback.ts`; edit questions in PostHog.
 
-Usage events (all with `source`: `badge`, `card`, or `settings`):
-`buddies_feedback_viewed`, `buddies_feedback_started` (`diagnostics` boolean),
-`buddies_feedback_submitted` (`diagnostics` boolean), `buddies_feedback_abandoned`,
-`buddies_feedback_unavailable` (survey not loaded, e.g. offline),
-`buddies_feedback_attached`, and `buddies_feedback_attachment_failed`.
+Usage events retain `buddies_feedback_submitted` (`diagnostics` boolean),
+`buddies_feedback_unavailable` (survey not loaded, for example offline), and
+`buddies_feedback_attachment_failed`, all with bounded `source`. Badge taps,
+feedback screen views, survey starts, abandonment, and successful attachment
+bookkeeping are no longer separate usage events. Explicit responses and
+attachments still use the survey contract below.
 
 **Opt-in diagnostics are the one place app data leaves the device through
 PostHog.** Off by default; only when the user turns on Include Diagnostics _and_
@@ -783,6 +751,7 @@ addresses, notes, credentials, file contents, or share links.
 PostHog is the current implementation. Provider configuration, automatic capture,
 and source-map/native-symbol uploads belong to the shared implementation and
 build setup, so changing providers does not require changing feature call sites.
+<<<<<<< HEAD
 
 ## iCloud sync controls and recovery
 
@@ -836,3 +805,5 @@ records `onboarding_calendar_setup_result` after **Add to Calendar** (`status`:
 `connected`, `elsewhere` when another device already updates the calendar, or
 `error` with a bounded `error_key`). Skip records `onboarding_step_skipped` with
 `step_id: calendarSync`. A successful setup also records `calendar_connected`.
+=======
+>>>>>>> 00111145 (chore: reduce analytics event volume)

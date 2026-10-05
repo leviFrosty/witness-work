@@ -1,4 +1,3 @@
-import { analytics } from '@/lib/analytics'
 import {
   Calendar1 as Calendar1Icon,
   Repeat as RepeatIcon,
@@ -244,11 +243,6 @@ const PlanRow = (props: {
         scope
       )
     }
-    analytics.capture('plan_deleted', {
-      plan_kind: props.item.type,
-      scope: props.item.type === 'day' ? 'all' : (scope ?? 'all'),
-      source: 'plan_row',
-    })
   }
 
   /**
@@ -401,7 +395,6 @@ const PlanRow = (props: {
       }
     >
       <ContextMenu
-        analyticsSurface='plan_row'
         actions={menu}
         onPress={props.onPress}
         preview={

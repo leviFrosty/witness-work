@@ -271,26 +271,17 @@ const OnBoarding = () => {
   }, [stepIndex, visibleSteps, set])
 
   const goBack = useCallback(() => {
-    analytics.capture('onboarding_step_back', {
-      step_id: visibleSteps[stepIndex]?.id,
-      destination_step_id: visibleSteps[Math.max(0, stepIndex - 1)]?.id,
-      elapsed_ms: Date.now() - stepViewedAt.current,
-    })
     setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))
-  }, [stepIndex, visibleSteps])
+  }, [])
 
   const goToStep = useCallback(
     (id: StepId) => {
       const target = visibleSteps.findIndex((s) => s.id === id)
       if (target >= 0) {
-        analytics.capture('onboarding_step_jumped', {
-          step_id: visibleSteps[stepIndex]?.id,
-          destination_step_id: id,
-        })
         setStepIndex(target)
       }
     },
-    [visibleSteps, stepIndex]
+    [visibleSteps]
   )
 
   // A screen pushed over onboarding (the Notes Import composer, opened from the

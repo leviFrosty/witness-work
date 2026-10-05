@@ -12,14 +12,13 @@ import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
 import type { NotificationAction } from '@/types/notifications'
 import NotificationRow from '@/features/notifications/components/NotificationRow'
 import TraySyncFailed from '@/features/notifications/components/TraySyncFailed'
 import {
   clearableIds,
-  unreadCount,
   visibleIds,
   type RowLayout,
   type TrayEntry,
@@ -53,7 +52,6 @@ export default function NotificationsList({
 }) {
   const theme = useTheme()
   const { height } = useWindowDimensions()
-  const listed = useRef(entries)
   const opened = useRef(onOpen)
   /** Row positions in the scroll content, by item id. */
   const layouts = useRef<Record<string, RowLayout>>({})
@@ -63,12 +61,8 @@ export default function NotificationsList({
 
   // Runs once per opening, with what was listed as it opened.
   useEffect(() => {
-    const initial = listed.current
     const shown = viewed.current
-    analytics.capture('notifications_tray_opened', {
-      item_count: initial.length,
-      unread_count: unreadCount(initial),
-    })
+
     opened.current?.()
     useNotificationsTray.setState({ open: true })
     return () => {
@@ -105,19 +99,11 @@ export default function NotificationsList({
   }, [ids])
 
   const dismiss = ({ item }: TrayEntry) => {
-    analytics.capture('notification_dismissed', { kind: item.kind })
     dismissNotifications([item.id])
     item.onDismiss?.()
   }
 
-  const track = ({ item }: TrayEntry, action: string) =>
-    analytics.capture('notification_action_tapped', {
-      kind: item.kind,
-      action,
-    })
-
   const act = (entry: TrayEntry, action: NotificationAction) => {
-    track(entry, action.id)
     if (action.inPlace) action.onPress()
     else closeThen(action.onPress)
   }
@@ -125,7 +111,7 @@ export default function NotificationsList({
   const clearAll = () => {
     const ids = new Set(clearableIds(entries))
     const cleared = entries.filter(({ item }) => ids.has(item.id))
-    analytics.capture('notifications_cleared', { count: cleared.length })
+
     dismissNotifications([...ids])
     for (const { item } of cleared) item.onDismiss?.()
   }
@@ -225,7 +211,6 @@ export default function NotificationsList({
                   unread: entry.unread,
                   dismiss: () => dismiss(entry),
                   closeThen,
-                  trackAction: (action) => track(entry, action),
                 })
               ) : (
                 <NotificationRow

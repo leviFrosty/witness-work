@@ -8,7 +8,7 @@ import { useCopyAction } from '@/components/ui/Copyeable'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
+
 import confirmDestructive from '@/lib/confirmDestructive'
 import { isAppointment } from '@/lib/conversations'
 import { formatTime } from '@/lib/dates'
@@ -57,7 +57,7 @@ const VisitTimelineCard = ({
       description: i18n.t('deleteConversation_description'),
       onConfirm: () => {
         deleteConversation(visit.id)
-        analytics.capture('visit_deleted')
+
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,
@@ -77,7 +77,6 @@ const VisitTimelineCard = ({
       containerStyle={{ borderRadius: theme.numbers.borderRadiusLg }}
     >
       <ContextMenu
-        analyticsSurface='conversation_row'
         onPress={edit}
         accessibilityLabel={dayLabel}
         // Keep Show more / Show less reachable by screen readers.

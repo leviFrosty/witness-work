@@ -3,7 +3,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import MapScreen from '@/features/map/screens/MapScreen'
-import { analytics } from '@/lib/analytics'
+
 import { usePreferences } from '@/stores/preferences'
 import { HomeTabStackParamList } from '@/types/homeStack'
 
@@ -19,10 +19,6 @@ export default function ContactsTabScreen({ route, navigation }: Props) {
     if (!requestedView) return
     const { contactsView, set } = usePreferences.getState()
     if (requestedView !== contactsView) {
-      analytics.capture('contacts_view_changed', {
-        view: requestedView,
-        source: 'link',
-      })
       set({ contactsView: requestedView })
     }
     navigation.setParams({ view: undefined })

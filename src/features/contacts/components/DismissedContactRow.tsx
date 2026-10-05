@@ -148,7 +148,6 @@ export default function DismissedContactRow({
           Undismiss button sits beside it so the two never compete. */}
       <ContextMenu
         style={{ flex: 1 }}
-        analyticsSurface='dismissed_contact_row'
         onPress={onPress}
         accessibilityLabel={contact.name}
         preview={<DismissedContactPreview contact={contact} />}

@@ -340,12 +340,6 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   }, [fromOnboarding, isWorking, errorCode, isPaused, activeHash])
 
   const continueOnboarding = () => {
-    analytics.capture('onboarding_import_continued', {
-      import_type: 'notes',
-      working: isWorking,
-      ready: isReady,
-      error_code: errorCode ?? null,
-    })
     requestContinueOnboarding()
     navigation.goBack()
   }
@@ -396,16 +390,13 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   autoScrollRef.current = submitting || (isWorking && !errorCode && !isPaused)
 
   const onRequestUpgrade = () => {
-    analytics.capture('paywall_opened', { source: 'notes_import_limit' })
     navigation.navigate('Paywall', { source: 'notes_import_limit' })
   }
 
   const openHelp = () => {
     inputRef.current?.blur()
     Keyboard.dismiss()
-    analytics.capture('notes_import_help_opened', {
-      source: fromOnboarding ? 'onboarding' : 'app',
-    })
+
     setHelpOpen(true)
   }
 

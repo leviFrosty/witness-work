@@ -93,7 +93,6 @@ export default function BuddyPlansForDay({
         return (
           <ContextMenu
             key={rowKey}
-            analyticsSurface='buddy_day_plan'
             actions={[
               viewBuddy(buddy.inboxId),
               onNavigate &&
@@ -130,7 +129,6 @@ export default function BuddyPlansForDay({
       {followUps.map(({ buddy, share }) => (
         <ContextMenu
           key={`${share.from}-${share.shareId}`}
-          analyticsSurface='buddy_day_follow_up'
           actions={[viewBuddy(buddy.inboxId)]}
         >
           <XView style={{ gap: 10 }}>

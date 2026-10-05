@@ -121,7 +121,6 @@ const ApproachingConversations = () => {
   const logNotAtHome = (item: FollowUpCardItem) => {
     Haptics.light()
     setLastNotAtHome(notAtHome.log(item.visit.contact.id))
-    analytics.capture('follow_up_card_action', { action: 'not_at_home' })
   }
 
   const undoNotAtHome = () => {
@@ -134,7 +133,6 @@ const ApproachingConversations = () => {
     setAdvanceTo(undefined)
     // Bring the reopened Follow-up back into view.
     if (target >= 0) scrollTo(target, !reduceMotion)
-    analytics.capture('follow_up_card_action', { action: 'undo' })
   }
 
   const isMorning = moment().isBefore(moment().endOf('day').hour(16)) // 4:59:59 PM

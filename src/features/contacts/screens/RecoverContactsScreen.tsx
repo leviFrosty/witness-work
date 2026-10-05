@@ -51,7 +51,6 @@ const RecoverContactsScreen = () => {
   )
 
   const selection = useListSelection(
-    'recover_contacts',
     sortedContacts.map((contact) => contact.id)
   )
 
@@ -101,7 +100,6 @@ const RecoverContactsScreen = () => {
     })
 
   const recoverSelected = () => {
-    selection.track('recover')
     const ids = selection.ids
     selection.finish()
     recover(ids)
@@ -109,7 +107,6 @@ const RecoverContactsScreen = () => {
 
   const deleteSelected = () =>
     confirmRemove(selection.ids, () => {
-      selection.track('delete_permanently')
       selection.finish()
     })
 
@@ -170,7 +167,6 @@ const RecoverContactsScreen = () => {
         />
         <ContextMenu
           style={{ flex: 1 }}
-          analyticsSurface='recover_contact_row'
           accessibilityLabel={item.name}
           actions={[
             [

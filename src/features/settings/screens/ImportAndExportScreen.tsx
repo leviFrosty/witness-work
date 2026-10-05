@@ -76,9 +76,8 @@ const ImportAndExportScreen = () => {
       stage = 'write_file'
       await FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
         .then(async () => {
-          analytics.capture('backup_file_created', properties)
           stage = 'share_sheet'
-          analytics.capture('backup_share_sheet_requested', properties)
+
           await Sharing.shareAsync(exportFileUri)
           // Expo resolves on both sharing and cancellation; this is not proof
           // that the user saved a backup outside the app.

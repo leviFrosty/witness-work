@@ -41,13 +41,10 @@ beforeEach(() => {
 it('checks Expo and enters the existing Update screen only for an available update', async () => {
   runtime.check.mockResolvedValue({ isAvailable: true })
   const navigate = vi.fn()
-  expect(await fetchUpdate(navigate, 'menu_bar')).toBe('available')
+  expect(await fetchUpdate(navigate)).toBe('available')
   expect(runtime.check).toHaveBeenCalledOnce()
   expect(navigate).toHaveBeenCalledWith('Update')
-  expect(runtime.capture).toHaveBeenCalledWith('update_check_completed', {
-    source: 'menu_bar',
-    outcome: 'available',
-  })
+  expect(runtime.capture).not.toHaveBeenCalled()
 })
 
 it('reports up-to-date without opening the download screen', async () => {
@@ -75,8 +72,8 @@ it('prevents simultaneous checks from Settings and the menu bar', async () => {
       finish = resolve
     })
   )
-  const pending = fetchUpdate(vi.fn(), 'settings')
-  expect(await fetchUpdate(vi.fn(), 'menu_bar')).toBe('busy')
+  const pending = fetchUpdate(vi.fn())
+  expect(await fetchUpdate(vi.fn())).toBe('busy')
   expect(runtime.check).toHaveBeenCalledOnce()
   finish({ isAvailable: false })
   await pending
@@ -89,15 +86,12 @@ it.each(['ios', 'android'])(
     runtime.platform = platform
     const error = new Error('private network details')
     runtime.check.mockRejectedValue(error)
-    expect(await fetchUpdate(vi.fn(), 'menu_bar')).toBe('failed')
+    expect(await fetchUpdate(vi.fn())).toBe('failed')
     expect(runtime.alert).toHaveBeenCalledWith(
       platform === 'android' ? 'updateViaTheStoreAndroid' : 'updateViaTheStore',
       'update_error'
     )
-    expect(runtime.capture).toHaveBeenCalledWith('update_check_failed', {
-      source: 'menu_bar',
-      error_code: 'check_failed',
-    })
+    expect(runtime.capture).not.toHaveBeenCalled()
     expect(runtime.captureException).toHaveBeenCalledWith(error)
   }
 )

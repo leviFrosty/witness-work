@@ -28,9 +28,6 @@ const HideDonateHeart = () => {
       label={i18n.t('hideDonateHeart')}
       value={hideDonateHeart}
       onValueChange={(value) => {
-        analytics.capture('supporter_heart_visibility_changed', {
-          hidden: value,
-        })
         set({ hideDonateHeart: value })
       }}
     />
@@ -214,7 +211,6 @@ const HomeElements = () => {
                       switch stay outside the menu's trigger. */}
                   <ContextMenu
                     style={{ flexShrink: 1 }}
-                    analyticsSurface='home_screen_preferences_row'
                     actions={reorderMenuActions({
                       index: idx,
                       count: visibleKeys.length,

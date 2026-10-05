@@ -110,7 +110,6 @@ export default function PublisherCheckBoxCard() {
       >
         {/* The inline Undo stays outside so it keeps its own tap. */}
         <ContextMenu
-          analyticsSurface='participation_checkbox'
           actions={[
             undoReport && {
               id: 'undo',

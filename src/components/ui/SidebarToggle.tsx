@@ -2,9 +2,9 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import IconButton from '@/components/ui/IconButton'
-import { analytics } from '@/lib/analytics'
+
 import i18n from '@/lib/locales'
-import { SIDEBAR_LABEL_MIN_WIDTH } from '@/lib/sidebarLayout'
+
 import { useSidebarPreferences } from '@/stores/sidebar'
 
 export default function SidebarToggle({ mode }: { mode: 'hide' | 'show' }) {
@@ -31,13 +31,7 @@ export default function SidebarToggle({ mode }: { mode: 'hide' | 'show' }) {
         justifyContent: 'center',
       }}
       onPress={() => {
-        const { width } = useSidebarPreferences.getState()
         toggle()
-        analytics.capture('sidebar_visibility_changed', {
-          visible: !sidebarVisible,
-          mode: width < SIDEBAR_LABEL_MIN_WIDTH ? 'icons' : 'labels',
-          source: mode === 'hide' ? 'sidebar' : 'header',
-        })
       }}
     />
   )

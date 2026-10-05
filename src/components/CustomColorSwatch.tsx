@@ -29,8 +29,6 @@ interface Props {
    * offers Edit… and Remove (Remove is also reachable by picking a preset).
    */
   onRemove?: () => void
-  /** Sent with long-press menu choices; defaults to `custom_color_swatch`. */
-  analyticsSurface?: string
 }
 
 /**
@@ -47,7 +45,6 @@ const CustomColorSwatch = ({
   sheetInitialColor,
   size = 24,
   onRemove,
-  analyticsSurface = 'custom_color_swatch',
 }: Props) => {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
@@ -60,7 +57,6 @@ const CustomColorSwatch = ({
       {/* Only an active custom color that can be removed gets a menu; the
           idle eyedropper just opens the picker. */}
       <ContextMenu
-        analyticsSurface={analyticsSurface}
         onPress={() => setOpen(true)}
         accessibilityLabel={title}
         actions={

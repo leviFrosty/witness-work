@@ -109,7 +109,6 @@ const ContactsScreen = ({
   if (!showsMap && mapExplored) setMapExplored(false)
   const [listCollapsed, setListCollapsed] = useState(false)
   if (showsMap && listCollapsed) setListCollapsed(false)
-  const hasCollapsedList = useRef(false)
   const listScroll = useRef({ userDriven: false, lastY: 0, anchorY: 0 })
 
   // Map was its own tab; keep reporting its reach as the `Map` screen (sent
@@ -122,7 +121,7 @@ const ContactsScreen = ({
 
   const changeView = (view: ContactsView) => {
     if (view === contactsView) return
-    analytics.capture('contacts_view_changed', { view, source: 'toggle' })
+
     setPreferences({ contactsView: view })
   }
 
@@ -159,7 +158,6 @@ const ContactsScreen = ({
   } = useContactsSorted()
 
   const selection = useListSelection(
-    'contacts',
     searchSortedAndFilteredContacts.map((contact) => contact.id)
   )
   const selectedContacts = searchSortedAndFilteredContacts.filter((contact) =>
@@ -196,20 +194,12 @@ const ContactsScreen = ({
 
   const collapseList = (collapsed: boolean) => {
     if (collapsed === listCollapsed) return
-    // Reported once per visit; scrolling toggles it too often to count each.
-    if (collapsed && !hasCollapsedList.current) {
-      hasCollapsedList.current = true
-      analytics.capture('contacts_list_header_collapsed')
-    }
     setListCollapsed(collapsed)
   }
 
-  const expandHeader = (source: 'title_tap' | 'header_swipe') => {
+  const expandHeader = () => {
     if (!listCollapsed && !mapExplored) return
-    analytics.capture('contacts_header_expanded', {
-      view: contactsView,
-      source,
-    })
+
     setListCollapsed(false)
     setMapExplored(false)
   }
@@ -246,7 +236,7 @@ const ContactsScreen = ({
     .failOffsetY(-12)
     .onEnd((e) => {
       if (e.translationY > 24 || e.velocityY > 400) {
-        expandHeader('header_swipe')
+        expandHeader()
       }
     })
 
@@ -309,7 +299,6 @@ const ContactsScreen = ({
   ) : (
     <>
       <PullDownMenu
-        analyticsSurface='contacts_header'
         accessibilityLabel={i18n.t('moreActions')}
         triggerColor={theme.colors.accent}
         triggerSize={22}
@@ -380,9 +369,7 @@ const ContactsScreen = ({
           <RootHeader
             floating={showsMap}
             compact={headerCollapsed}
-            onPressTitle={
-              headerCollapsed ? () => expandHeader('title_tap') : undefined
-            }
+            onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
             title={
               selection.selecting
                 ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
@@ -630,7 +617,7 @@ const ContactsScreen = ({
                   showsDisclosure={!isWide}
                   selectionMode={selection.selecting}
                   checked={selection.isSelected(item.id)}
-                  onSelect={() => selection.start(item.id, 'row')}
+                  onSelect={() => selection.start(item.id)}
                   onPress={() => {
                     if (selection.selecting) {
                       selection.toggle(item.id)

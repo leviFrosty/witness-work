@@ -17,6 +17,7 @@ import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import Text from '@/components/ui/MyText'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useTheme from '@/contexts/theme'
 import { openURL } from '@/lib/links'
 import { useNavigation } from '@react-navigation/native'
@@ -27,6 +28,7 @@ const SupporterCard = () => {
   const theme = useTheme()
   const { since } = useIsSupporter()
   if (!since) return null
+  const isFounding = isFoundingSupporter(since)
   return (
     <View
       style={{
@@ -67,7 +69,9 @@ const SupporterCard = () => {
             color: theme.colors.text,
           }}
         >
-          {i18n.t('supporterCardTitle')}
+          {i18n.t(
+            isFounding ? 'supporterCardFoundingTitle' : 'supporterCardTitle'
+          )}
         </Text>
         <Text
           style={{
@@ -75,9 +79,10 @@ const SupporterCard = () => {
             color: theme.colors.textAlt,
           }}
         >
-          {i18n.t('supporterCardSince', {
-            year: moment(since).format('YYYY'),
-          })}
+          {i18n.t(
+            isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
+            { year: moment(since).format('YYYY') }
+          )}
         </Text>
       </View>
     </View>

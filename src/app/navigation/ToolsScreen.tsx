@@ -54,6 +54,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { mmkvStorage } from '@/stores/mmkv'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import SupporterBadge from '@/components/SupporterBadge'
+import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import { useNavigation } from '@react-navigation/native'
@@ -1339,6 +1340,10 @@ export default function ToolsScreen() {
                 value={
                   supporterSince ? moment(supporterSince).format('ll') : '—'
                 }
+              />
+              <ToolRow
+                label='isFoundingSupporter'
+                value={String(isFoundingSupporter(supporterSince))}
               />
               {devSupporterOverride ? (
                 <ToolRow

@@ -28,6 +28,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -317,7 +318,11 @@ const ProfileDetailOverlay = () => {
                   {supporterSince && (
                     <SinceBadge
                       icon={HeartIcon}
-                      label={i18n.t('profileStatSupporter')}
+                      label={i18n.t(
+                        isFoundingSupporter(supporterSince)
+                          ? 'profileStatFoundingSupporter'
+                          : 'profileStatSupporter'
+                      )}
                       value={moment(supporterSince).format('MMMM YYYY')}
                       tint={theme.colors.supporter}
                       tintBg={theme.colors.supporterTranslucent}

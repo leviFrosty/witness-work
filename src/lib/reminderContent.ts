@@ -1,3 +1,5 @@
+import moment from 'moment'
+import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import { formatMinutes } from '@/lib/minutes'
@@ -72,6 +74,28 @@ export function reminderContent(
         body: body + note,
         data,
       }
+    }
+    case 'unloggedDay': {
+      const days = reminder.days?.length ?? 1
+      const day = moment(reminder.targetId, 'YYYY-MM-DD')
+      const daysAgo = moment(reminder.date).startOf('day').diff(day, 'days')
+      const duration = formatMinutes(
+        reminder.minutes ?? 0,
+        options.timeDisplayFormat
+      ).formatted
+      const body =
+        days > 1
+          ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+            i18n.t('unloggedDayReminderBodyDays', { count: days })
+          : daysAgo === 0
+            ? i18n.t('unloggedDayReminderBodyToday', { duration })
+            : daysAgo === 1
+              ? i18n.t('unloggedDayReminderBodyYesterday', { duration })
+              : i18n.t('unloggedDayReminderBodyOnDate', {
+                  duration,
+                  date: formatWeekdayMonthDayCompact(day),
+                })
+      return { title: i18n.t('unloggedDayReminder_title'), body, data }
     }
     case 'contact':
       return {

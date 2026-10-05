@@ -1,9 +1,11 @@
 import React from 'react'
+import moment from 'moment'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
-import type { DayPlan } from '@/types/timeEntry'
+import type { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
   scheduled: [] as { identifier: string }[],
@@ -50,6 +52,10 @@ vi.mock('@/features/notifications/stores/notificationsTray', async () => ({
   })),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('expo-localization', () => ({
+  getLocales: () => [{ languageTag: 'en-US' }],
+  getCalendars: () => [],
+}))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
@@ -95,8 +101,15 @@ beforeEach(() => {
     contacts: [{ id: 'c', name: 'Contact', createdAt: new Date() }],
   })
   useConversations.setState({ conversations: [] })
-  useServiceReport.setState({ dayPlans: [] })
-  usePreferences.setState({ dataProtectionMode: false })
+  useServiceReport.setState({
+    dayPlans: [],
+    recurringPlans: [],
+    serviceReports: {},
+  })
+  usePreferences.setState({
+    dataProtectionMode: false,
+    unloggedDayReminders: false,
+  })
   useNotificationsTray.setState({ unread: null })
 })
 afterEach(() => {
@@ -573,4 +586,132 @@ it('never badges Android reminders or reschedules for the unread count', async (
     useNotificationsTray.setState({ unread: 0 })
   })
   expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledOnce()
+})
+
+it('cancels and clears reminders to log time once the day has time', async () => {
+  runtime.platform = 'ios'
+  const today = new Date()
+  const day = (offset: number) =>
+    new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset)
+  const key = (date: Date) => moment(date).format('YYYY-MM-DD')
+  const logged = (dates: Date[]): TimeEntriesByYear => {
+    const years: TimeEntriesByYear = {}
+    for (const date of dates.map(normalizeDateForStorage)) {
+      const months = (years[date.getUTCFullYear()] ??= {})
+      ;(months[date.getUTCMonth()] ??= []).push({
+        id: date.toISOString(),
+        hours: 1,
+        minutes: 0,
+        date,
+      })
+    }
+    return years
+  }
+  const plan = (offset: number): DayPlan => ({
+    id: `p${offset}`,
+    date: normalizeDateForStorage(day(offset)),
+    minutes: 120,
+    startTimeInMinutes: 9 * 60,
+  })
+  useServiceReport.setState({ dayPlans: [plan(-1), plan(2)] })
+  usePreferences.setState({
+    unloggedDayReminders: true,
+    unloggedDayReminderTime: 20 * 60,
+    unloggedDayRemindersEnabledAt: 0,
+    role: 'regularPioneer',
+    roleHistory: null,
+    logsHours: false,
+  })
+  // Yesterday's reminder was already delivered.
+  runtime.presented = [
+    {
+      request: {
+        identifier: 'delivered',
+        content: {
+          data: { reminder: { kind: 'unloggedDay', id: key(day(-1)) } },
+        },
+      },
+    },
+  ]
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(runtime.scheduled).toEqual([
+    { identifier: `witness-work-unloggedDay-${key(day(2))}` },
+  ])
+  expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+    expect.objectContaining({
+      trigger: expect.objectContaining({
+        date: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 2,
+          20
+        ),
+      }),
+    })
+  )
+  expect(runtime.presented).toHaveLength(1)
+  await act(async () => {
+    useServiceReport.setState({ serviceReports: logged([day(-1), day(2)]) })
+  })
+  expect(runtime.scheduled).toEqual([])
+  expect(runtime.presented).toEqual([])
+})
+
+it.each([
+  ['the Plan is deleted', () => useServiceReport.setState({ dayPlans: [] })],
+  [
+    'the setting is turned off',
+    () => usePreferences.setState({ unloggedDayReminders: false }),
+  ],
+])('clears a delivered reminder to log time when %s', async (_, change) => {
+  runtime.platform = 'ios'
+  const today = new Date()
+  const yesterday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - 1
+  )
+  useServiceReport.setState({
+    dayPlans: [
+      {
+        id: 'p',
+        date: normalizeDateForStorage(yesterday),
+        minutes: 60,
+        startTimeInMinutes: 9 * 60,
+      },
+    ],
+  })
+  usePreferences.setState({
+    unloggedDayReminders: true,
+    unloggedDayReminderTime: 20 * 60,
+    unloggedDayRemindersEnabledAt: 0,
+    role: 'regularPioneer',
+    roleHistory: null,
+    logsHours: false,
+  })
+  runtime.presented = [
+    {
+      request: {
+        identifier: 'delivered',
+        content: {
+          data: {
+            reminder: {
+              kind: 'unloggedDay',
+              id: moment(yesterday).format('YYYY-MM-DD'),
+            },
+          },
+        },
+      },
+    },
+  ]
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(runtime.presented).toHaveLength(1)
+  await act(async () => {
+    change()
+  })
+  expect(runtime.presented).toEqual([])
 })

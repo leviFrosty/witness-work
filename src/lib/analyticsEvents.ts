@@ -26,6 +26,7 @@ export const analyticsEventNames = [
   'time_rollover_undone',
   'timer_action_completed',
   'timer_action_failed',
+  'unlogged_day_reminders_changed',
   'visit_created',
   // Import and backup outcomes.
   'backup_export_failed',

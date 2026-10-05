@@ -12,6 +12,7 @@ import {
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
 import { reminderContent } from '@/lib/reminderContent'
 import { reminderData } from '@/lib/notificationData'
+import { unloggedDay, unloggedDaySources } from '@/lib/unloggedDayReminders'
 import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { errorTracking } from '@/lib/errorTracking'
@@ -20,7 +21,8 @@ import { useNotificationsTray } from '@/features/notifications/stores/notificati
 
 /**
  * Removes already-delivered reminders whose record is gone, so an erased
- * Contact's name doesn't stay in Notification Center.
+ * Contact's name doesn't stay in Notification Center. A reminder to log time
+ * goes once the day has time, its Plans are gone, or the setting is off.
  */
 async function retractErasedReminders() {
   const presented = await Notifications.getPresentedNotificationsAsync()
@@ -29,7 +31,9 @@ async function retractErasedReminders() {
   const visits = new Set(
     useConversations.getState().conversations.map((v) => v.id)
   )
-  const plans = new Set(useServiceReport.getState().dayPlans.map((p) => p.id))
+  const records = useServiceReport.getState()
+  const plans = new Set(records.dayPlans.map((p) => p.id))
+  const unloggedDays = unloggedDaySources(records, usePreferences.getState())
   for (const notification of presented) {
     const reminder = reminderData(notification)
     if (!reminder) continue
@@ -38,7 +42,9 @@ async function retractErasedReminders() {
         ? contacts.has(reminder.id)
         : reminder.kind === 'visit'
           ? visits.has(reminder.id)
-          : plans.has(reminder.id)
+          : reminder.kind === 'unloggedDay'
+            ? !!unloggedDays && !!unloggedDay(reminder.id, unloggedDays)
+            : plans.has(reminder.id)
     if (!exists)
       await Notifications.dismissNotificationAsync(
         notification.request.identifier
@@ -67,10 +73,12 @@ export function useReconciledReminders(ready: boolean | undefined) {
         while (queued && !stopped) {
           queued = false
           const prefs = usePreferences.getState()
+          const records = useServiceReport.getState()
           const schedule = buildReminderSchedule({
             contacts: useContacts.getState().contacts,
             visits: useConversations.getState().conversations,
-            plans: useServiceReport.getState().dayPlans,
+            plans: records.dayPlans,
+            unloggedDays: unloggedDaySources(records, prefs),
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -172,20 +180,46 @@ export function useReconciledReminders(ready: boolean | undefined) {
       )
       void reconcile()
     })
-    const plans = useServiceReport.subscribe((state, previous) => {
-      if (state.dayPlans === previous.dayPlans) return
-      ;[...previous.dayPlans, ...state.dayPlans].forEach((plan) =>
-        plan.notifications?.forEach((notification) =>
-          obsoleteIds.add(notification.id)
-        )
+    // Logging time, removing a Plan, or turning reminders to log time off
+    // clears a delivered one, even when nothing ahead changes.
+    const retract = () =>
+      void retractErasedReminders().catch((error) =>
+        errorTracking.captureException(error, { localReminders: 'retract' })
       )
+    const plans = useServiceReport.subscribe((state, previous) => {
+      if (
+        state.serviceReports !== previous.serviceReports ||
+        state.dayPlans !== previous.dayPlans ||
+        state.recurringPlans !== previous.recurringPlans
+      )
+        retract()
+      if (state.dayPlans !== previous.dayPlans)
+        [...previous.dayPlans, ...state.dayPlans].forEach((plan) =>
+          plan.notifications?.forEach((notification) =>
+            obsoleteIds.add(notification.id)
+          )
+        )
+      else if (
+        state.serviceReports === previous.serviceReports &&
+        state.recurringPlans === previous.recurringPlans
+      )
+        return
       void reconcile()
     })
     const preferences = usePreferences.subscribe((state, previous) => {
+      if (state.unloggedDayReminders !== previous.unloggedDayReminders)
+        retract()
       if (
         state.returnVisitNotificationOffset !==
           previous.returnVisitNotificationOffset ||
         state.planNotificationOffset !== previous.planNotificationOffset ||
+        state.unloggedDayReminders !== previous.unloggedDayReminders ||
+        state.unloggedDayReminderTime !== previous.unloggedDayReminderTime ||
+        state.unloggedDayRemindersEnabledAt !==
+          previous.unloggedDayRemindersEnabledAt ||
+        state.role !== previous.role ||
+        state.roleHistory !== previous.roleHistory ||
+        state.logsHours !== previous.logsHours ||
         state.dataProtectionMode !== previous.dataProtectionMode ||
         state.timeDisplayFormat !== previous.timeDisplayFormat
       )

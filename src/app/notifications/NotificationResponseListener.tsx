@@ -15,6 +15,7 @@ import {
   type ReminderData,
 } from '@/lib/notificationData'
 import { reminderOccurrences } from '@/lib/reminderSchedule'
+import { unloggedDaySources } from '@/lib/unloggedDayReminders'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import {
@@ -44,10 +45,12 @@ const opensBuddiesTab = (kind: string) =>
 /** The reminder's tray item counts as read once its alert was opened. */
 function markReminderSeen(target: ReminderData) {
   const prefs = usePreferences.getState()
+  const records = useServiceReport.getState()
   const ids = reminderOccurrences({
     contacts: useContacts.getState().contacts,
     visits: useConversations.getState().conversations,
-    plans: useServiceReport.getState().dayPlans,
+    plans: records.dayPlans,
+    unloggedDays: unloggedDaySources(records, prefs),
     visitOffset: {
       ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
       ...prefs.returnVisitNotificationOffset,

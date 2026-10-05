@@ -36,6 +36,7 @@ import type {
   MileageEntryMode,
 } from '@/types/mileage'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
+import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
 import {
   isValidMonthlyGoalHours,
   monthlyGoalOverridesFromLegacy,
@@ -379,6 +380,18 @@ export const PREFERENCE_DEFAULTS = {
    * touched when this preference changes.
    */
   planAlwaysNotify: false,
+  /**
+   * Remind the User to log time for a planned day that has none, at
+   * `unloggedDayReminderTime` after that day's Plans end. Off by default.
+   */
+  unloggedDayReminders: false,
+  /** Local minutes after midnight reminders to log time go out. */
+  unloggedDayReminderTime: DEFAULT_UNLOGGED_DAY_REMINDER_TIME,
+  /**
+   * Epoch ms the reminders to log time were last turned on, so days missed
+   * before then aren't listed in the tray.
+   */
+  unloggedDayRemindersEnabledAt: null as number | null,
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,

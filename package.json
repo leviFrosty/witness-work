@@ -40,7 +40,7 @@
     "test:local-env": "node --test scripts/tests/local-env.node.mjs"
   },
   "dependencies": {
-    "@bacons/apple-targets": "0.2.1",
+    "@bacons/apple-targets": "5.0.0",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/kalam": "^0.4.1",
     "@expo/dom-webview": "57.0.1",

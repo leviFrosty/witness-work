@@ -65,6 +65,8 @@ export const FAQS: FAQEntry[] = [
     pinned: true,
     related: [273, 247, 222, 229, 214],
   },
+  { id: 'appleWatch', category: 'time' },
+  { id: 'appleWatchSync', category: 'time' },
   {
     id: 'switchingPioneer',
     category: 'time',

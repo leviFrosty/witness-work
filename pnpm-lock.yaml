@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@bacons/apple-targets>@expo/prebuild-config': 57.0.16
   expo-modules-autolinking: 57.0.6
   react-native-safe-area-context: 5.7.0
   axios: '>=1.15.2'
@@ -41,8 +42,8 @@ importers:
   .:
     dependencies:
       '@bacons/apple-targets':
-        specifier: 0.2.1
-        version: 0.2.1
+        specifier: 5.0.0
+        version: 5.0.0(expo@57.0.23)(typescript@6.0.3)
       '@expo-google-fonts/inter':
         specifier: ^0.2.3
         version: 0.2.3
@@ -1164,16 +1165,18 @@ packages:
       }
     engines: { node: '>=6.9.0' }
 
-  '@bacons/apple-targets@0.2.1':
+  '@bacons/apple-targets@5.0.0':
     resolution:
       {
-        integrity: sha512-ZaTBk6kjgY34BnYjbo2+i4cLyUjd3LxJFodKDQdTaoETgk2CXwfdnsWK4bK3jOYZEy/Z+v/Es3TnWEOWlkg9ag==,
+        integrity: sha512-03LEidnuAAccH5ueL03sOaauQMnpJ7ZGwrVUlzNc5K3BrlfGE9SDUJs1ITkXC7YLKfFPJyiB7VzoZYiRxJmUdA==,
       }
+    peerDependencies:
+      expo: '>=52'
 
-  '@bacons/xcode@1.0.0-alpha.24':
+  '@bacons/xcode@1.0.0-alpha.32':
     resolution:
       {
-        integrity: sha512-RaYUNsGBJVp0t2vgXaT4L668WIvbhtdl1JFJHedPkebIPR6h/+E2Kq32O49t+8f4LUPW9UF4CfXBrDc+XdXUUQ==,
+        integrity: sha512-OGpH7+yMbWC2cgYZon5B+VVadH9HsB2V/abtEiplA65XnSuV4GAYAVixOCDc5k182WkfoakfdM0zW6U9cbcsbw==,
       }
 
   '@bcoe/v8-coverage@0.2.3':
@@ -2617,10 +2620,10 @@ packages:
         integrity: sha512-qoMMXddVKVhZ8PA1AbUCk83trpd6N+1nF2A6k1i6LsQObyS92fELuk8kU/lQs6M7BsMHwqyLCpQJ1uFgNvIQXg==,
       }
 
-  '@react-native/normalize-colors@0.76.9':
+  '@react-native/normalize-colors@0.79.7':
     resolution:
       {
-        integrity: sha512-TUdMG2JGk72M9d8DYbubdOlrzTYjw+YMe/xOnLU4viDgWRHsCbtRS9x0IAxRjs3amj/7zmK3Atm8jUPvdAc8qw==,
+        integrity: sha512-RrvewhdanEWhlyrHNWGXGZCc6MY0JGpNgRzA8y6OomDz0JmlnlIsbBHbNpPnIrt9Jh2KaV10KTscD1Ry8xU9gQ==,
       }
 
   '@react-native/normalize-colors@0.86.3':
@@ -13231,16 +13234,19 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@bacons/apple-targets@0.2.1':
+  '@bacons/apple-targets@5.0.0(expo@57.0.23)(typescript@6.0.3)':
     dependencies:
-      '@bacons/xcode': 1.0.0-alpha.24
-      '@react-native/normalize-colors': 0.76.9
+      '@bacons/xcode': 1.0.0-alpha.32
+      '@expo/prebuild-config': 57.0.16(typescript@6.0.3)
+      '@react-native/normalize-colors': 0.79.7
       debug: 4.4.3
+      expo: 57.0.23(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.10.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)(typescript@6.0.3)
       glob: 13.0.6
     transitivePeerDependencies:
       - supports-color
+      - typescript
 
-  '@bacons/xcode@1.0.0-alpha.24':
+  '@bacons/xcode@1.0.0-alpha.32':
     dependencies:
       '@expo/plist': 0.0.18
       debug: 4.4.3
@@ -14430,7 +14436,7 @@ snapshots:
 
   '@react-native/normalize-colors@0.74.89': {}
 
-  '@react-native/normalize-colors@0.76.9': {}
+  '@react-native/normalize-colors@0.79.7': {}
 
   '@react-native/normalize-colors@0.86.3': {}
 

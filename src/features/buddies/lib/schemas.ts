@@ -167,6 +167,7 @@ export const rosterSchema = z.object({
       z.object({
         inboxId: relayId,
         name: displayName,
+        nickname: displayName.optional(),
         ...profileFields,
         dhPub: b64uKey,
         inviteSecret: b64uSecret,

@@ -7,6 +7,7 @@ export type SupporterGateSurface =
   | 'contact_background'
   | 'app_icon'
   | 'icloud_sync'
+  | 'buddy_color'
 
 /** Anonymous, ephemeral attribution for one visible gate visit. */
 export type SupporterGateAttribution = {

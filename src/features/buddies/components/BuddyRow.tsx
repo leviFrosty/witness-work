@@ -13,7 +13,10 @@ import {
   confirmRemoveBuddy,
   confirmWithdrawRequest,
 } from '@/features/buddies/lib/buddyConfirmations'
-import { buddyTenureLabel } from '@/features/buddies/lib/buddyProfile'
+import {
+  buddyDisplayName,
+  buddyTenureLabel,
+} from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
 
 /**
@@ -85,14 +88,14 @@ export default function BuddyRow({
       leading={
         <BuddyAvatar
           avatar={buddy.avatar}
-          name={buddy.name}
+          name={buddyDisplayName(buddy)}
           colorIndex={buddy.colorIndex}
         />
       }
-      title={buddy.name}
+      title={buddyDisplayName(buddy)}
       subtitle={
         awaiting
-          ? i18n.t('buddies_awaitingConfirm', { name: buddy.name })
+          ? i18n.t('buddies_awaitingConfirm', { name: buddyDisplayName(buddy) })
           : buddy.tenure
             ? buddyTenureLabel(buddy.tenure)
             : i18n.t('buddies_sharingPlans')
@@ -114,7 +117,9 @@ export default function BuddyRow({
         awaiting ? (
           <PullDownMenu
             actions={withdraw}
-            accessibilityLabel={i18n.t('moreActionsFor', { name: buddy.name })}
+            accessibilityLabel={i18n.t('moreActionsFor', {
+              name: buddyDisplayName(buddy),
+            })}
             triggerSize={16}
           />
         ) : undefined

@@ -1060,7 +1060,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       prefill?.location
   )
   const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
-    existingDayPlan?.buddies ?? []
+    existingDayPlan?.buddies ?? prefill?.buddies ?? []
   )
   const linkedShare = existingDayPlan?.buddyShare
   const shareReplies = useShareReplies(
@@ -1172,7 +1172,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         existingRecurringPlan?.location ??
         prefill?.location
     )
-    setInvitedBuddies(existingDayPlan?.buddies ?? [])
+    setInvitedBuddies(existingDayPlan?.buddies ?? prefill?.buddies ?? [])
     setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
     setNotifyMeOffset(initialNotifyOffset())
     setTypeValue(resolveInitialTypeValue())

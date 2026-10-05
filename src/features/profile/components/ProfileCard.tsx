@@ -3,8 +3,7 @@ import {
   Heart as HeartIcon,
   Star as StarIcon,
 } from 'lucide-react-native'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import { InputProps } from 'tamagui'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
@@ -13,8 +12,7 @@ import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
-import Card from '@/components/ui/Card'
-import Text from '@/components/ui/MyText'
+import ProfileCardLayout from '@/components/ProfileCardLayout'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import Avatar from '@/components/ui/Avatar'
 import i18n from '@/lib/locales'
@@ -67,9 +65,6 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
         : i18n.t('profileUsingForDays', { days: formatted })
   }
 }
-
-const CARD_PADDING_V = 14
-const CARD_PADDING_H = 16
 
 interface Props {
   /** Shows the profile without editing; used by the profile overlay. */
@@ -135,15 +130,9 @@ const ProfileCard = ({ readOnly }: Props) => {
   })()
 
   return (
-    <Card
-      style={{
-        paddingVertical: CARD_PADDING_V,
-        paddingHorizontal: CARD_PADDING_H,
-        gap: 10,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        {readOnly ? (
+    <ProfileCardLayout
+      avatar={
+        readOnly ? (
           <Avatar avatar={avatar} name={trimmedName} size={44} />
         ) : (
           <AvatarPickerPopover
@@ -156,64 +145,44 @@ const ProfileCard = ({ readOnly }: Props) => {
               setProfile({ customAvatarBackground: next })
             }
           />
-        )}
-        <View style={{ flex: 1 }}>
-          {readOnly ? (
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: 16,
-                color: theme.colors.text,
-              }}
-              numberOfLines={1}
-            >
-              {trimmedName || i18n.t('profileGreetingNoName')}
-            </Text>
-          ) : (
-            <MyTextInput
-              value={name}
-              onChangeText={(val) => setProfile({ name: val })}
-              placeholder={i18n.t('firstNamePlaceholder')}
-              placeholderTextColor={
-                theme.colors.textAlt as InputProps['placeholderTextColor']
-              }
-              autoCapitalize='words'
-              autoCorrect={false}
-              autoFocus={!name}
-              autoFocusNative={!name}
-              maxLength={40}
-              enterKeyHint='done'
-              textAlign='left'
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: 16,
-                color: theme.colors.text,
-              }}
-            />
-          )}
-          <Text
+        )
+      }
+      title={
+        readOnly ? (
+          trimmedName || i18n.t('profileGreetingNoName')
+        ) : (
+          <MyTextInput
+            value={name}
+            onChangeText={(val) => setProfile({ name: val })}
+            placeholder={i18n.t('firstNamePlaceholder')}
+            placeholderTextColor={
+              theme.colors.textAlt as InputProps['placeholderTextColor']
+            }
+            autoCapitalize='words'
+            autoCorrect={false}
+            autoFocus={!name}
+            autoFocusNative={!name}
+            maxLength={40}
+            enterKeyHint='done'
+            textAlign='left'
             style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              marginTop: 1,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: 16,
+              color: theme.colors.text,
             }}
-          >
-            {i18n.t(publisher)}
-          </Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <LucideIcon
-          icon={tenure.icon}
-          size={11}
-          color={tenure.tint}
-          fill={tenure.tone === 'supporter' ? tenure.tint : undefined}
-        />
-        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-          {tenure.text}
-        </Text>
-      </View>
-    </Card>
+          />
+        )
+      }
+      subtitle={i18n.t(publisher)}
+      details={[
+        {
+          icon: tenure.icon,
+          tint: tenure.tint,
+          filled: tenure.tone === 'supporter',
+          text: tenure.text,
+        },
+      ]}
+    />
   )
 }
 

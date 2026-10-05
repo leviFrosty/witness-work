@@ -9,6 +9,7 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import type { BuddyShareRef } from '@/types/timeEntry'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /**
  * Tells the User a Plan follows a buddy's, so their edits may be replaced.
@@ -45,13 +46,13 @@ export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
       >
         <BuddyAvatar
           avatar={buddy.avatar}
-          name={buddy.name}
+          name={buddyDisplayName(buddy)}
           colorIndex={buddy.colorIndex}
           size={24}
         />
         <View style={{ flex: 1 }}>
           <Text style={{ color: theme.colors.text }}>
-            {i18n.t('buddies_sharedBy', { name: buddy.name })}
+            {i18n.t('buddies_sharedBy', { name: buddyDisplayName(buddy) })}
           </Text>
         </View>
       </XView>

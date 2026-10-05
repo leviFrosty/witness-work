@@ -38,6 +38,8 @@ export type Buddy = {
   inboxId: string
   /** The buddy's own display name, refreshed from every Buddy Card. */
   name: string
+  /** A private name only this User sees, shown in place of `name`. */
+  nickname?: string
   avatar?: BuddyAvatar
   tenure?: BuddyTenure
   dhPub: string

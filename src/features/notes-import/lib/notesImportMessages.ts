@@ -19,6 +19,10 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
     case 'attestation_failed':
     case 'attestation_required':
       return 'notesImport_attestationError'
+    case 'device_ineligible':
+      return 'notesImport_deviceIneligibleAndroid'
+    case 'play_services_required':
+      return 'notesImport_playServicesRequiredAndroid'
     case 'refinement_limit':
       return 'notesImport_refinementLimit'
     case 'unavailable':
@@ -33,6 +37,7 @@ const MACHINE_UNAVAILABLE_REASONS = new Set([
   'disabled',
   'no_provider',
   'version_below_min',
+  'android_unavailable',
 ])
 
 /**

@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger'
 import { usePreferences } from '@/stores/preferences'
 
 // Add future flag keys to this union so call sites stay type-checked.
-export type FeatureFlag = 'notes-import' | 'buddies'
+export type FeatureFlag = 'notes-import' | 'notes-import-android' | 'buddies'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 const useFlags = create<{
   values: FlagValues

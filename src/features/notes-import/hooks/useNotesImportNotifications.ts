@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { isUnviewedReady } from '@/features/notes-import/lib/notesImportLedger'
 

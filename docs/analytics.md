@@ -171,6 +171,15 @@ preview edits, prompt toggles, and warning openings are dropped.
 | Backup reminder         | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                    |
 | iCloud photo consent    | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                |
 
+Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
+and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
+platforms during the `notes-import-android` rollout. Android verification failures
+use bounded `error_code` values: `device_ineligible` (Play Integrity rejected the
+device or app build), `play_services_required` (Play Store/services missing or
+outdated), or `attestation_failed` (temporary). Their share of Android attempts
+shows whether the device requirement blocks real users. No verdicts, tokens, or
+identifiers are attached.
+
 Notes previews retain `empty`/warning counts and the ledger's original source
 across background work, relaunches, and refinements. Each processing attempt can
 start, so start counts are attempts, not unique documents. Export/restore retains

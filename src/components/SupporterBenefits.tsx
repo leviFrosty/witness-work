@@ -11,6 +11,7 @@ import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 
 const HeroCard = () => {
   const theme = useTheme()
@@ -121,6 +122,9 @@ interface Props {
 
 const SupporterBenefits = ({ compact }: Props) => {
   const theme = useTheme()
+  const notesImportEnabled = useNotesImportEnabled()
+  // iOS always lists the perk; Android only once its Scribe AI rollout is on.
+  const scribeAiPerk = Platform.OS === 'ios' || notesImportEnabled
 
   return (
     <View style={{ gap: 16 }}>
@@ -137,7 +141,7 @@ const SupporterBenefits = ({ compact }: Props) => {
       </Text>
       {!compact && Platform.OS === 'ios' && <HeroCard />}
       <View style={{ gap: 14 }}>
-        {Platform.OS === 'ios' && (
+        {scribeAiPerk && (
           <PerkRow
             icon={FileTextIcon}
             title={i18n.t('supporterPerkAiTitle')}

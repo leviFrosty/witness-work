@@ -98,7 +98,7 @@ import {
   runNotesImportAuthRepair,
   type NotesImportAuthDebugReport,
   type NotesImportAuthRepairReport,
-} from '@/features/notes-import/lib/notesImportAppAttestRuntime'
+} from '@/features/notes-import/lib/notesImportAuthRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
@@ -1948,10 +1948,17 @@ export default function ToolsScreen() {
               label='Dev bypass'
               value={String(authSnapshot.devBypassEnabled)}
             />
-            <ToolRow
-              label='App Attest supported'
-              value={String(authSnapshot.appAttestSupported)}
-            />
+            {authSnapshot.provider === 'play-integrity' ? (
+              <ToolRow
+                label='Play Integrity supported'
+                value={String(authSnapshot.playIntegritySupported)}
+              />
+            ) : (
+              <ToolRow
+                label='App Attest supported'
+                value={String(authSnapshot.appAttestSupported)}
+              />
+            )}
             <ToolRow
               label='Protocol'
               value={
@@ -1960,15 +1967,19 @@ export default function ToolsScreen() {
                   : 'not negotiated'
               }
             />
-            <ToolRow label='Active key' value={authSnapshot.activeKey} />
-            <ToolRow
-              label='Recovery token'
-              value={authSnapshot.recoveryToken}
-            />
-            <ToolRow
-              label='Recovery enrollment'
-              value={authSnapshot.recoveryEnrollment}
-            />
+            {authSnapshot.provider === 'app-attest' && (
+              <>
+                <ToolRow label='Active key' value={authSnapshot.activeKey} />
+                <ToolRow
+                  label='Recovery token'
+                  value={authSnapshot.recoveryToken}
+                />
+                <ToolRow
+                  label='Recovery enrollment'
+                  value={authSnapshot.recoveryEnrollment}
+                />
+              </>
+            )}
             <ToolRow
               label='Install identity'
               value={authSnapshot.installIdentity}
@@ -1977,14 +1988,16 @@ export default function ToolsScreen() {
               label='Account identity'
               value={authSnapshot.accountIdentity}
             />
-            <ToolRow
-              label='Pending lifecycle op'
-              value={
-                authSnapshot.pendingOperation
-                  ? `${authSnapshot.pendingOperation.kind}/${authSnapshot.pendingOperation.stage}`
-                  : 'none'
-              }
-            />
+            {authSnapshot.provider === 'app-attest' && (
+              <ToolRow
+                label='Pending lifecycle op'
+                value={
+                  authSnapshot.pendingOperation
+                    ? `${authSnapshot.pendingOperation.kind}/${authSnapshot.pendingOperation.stage}`
+                    : 'none'
+                }
+              />
+            )}
           </ToolList>
           <View style={{ gap: 8, paddingTop: 8 }}>
             <JsonViewer

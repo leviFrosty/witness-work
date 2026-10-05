@@ -1,5 +1,6 @@
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { useEffect, useState } from 'react'
+import { Platform } from 'react-native'
 import Constants from 'expo-constants'
 import { create } from 'zustand'
 import { getNotesImportStatus } from '@/features/notes-import/lib/notesImportClient'
@@ -90,6 +91,17 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
           reason: 'version_below_min',
           schedule: null,
           updateRequired,
+          loading: false,
+        })
+        return
+      }
+      // Android needs a worker that can verify Play Integrity tokens.
+      if (Platform.OS === 'android' && !status.playIntegrity) {
+        set({
+          available: false,
+          reason: 'android_unavailable',
+          schedule: null,
+          updateRequired: null,
           loading: false,
         })
         return

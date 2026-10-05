@@ -171,6 +171,30 @@ describe('normalizeNotesImportStatus', () => {
     })
   })
 
+  it('surfaces Play Integrity support only for a well-formed capability', () => {
+    const capabilities = (playIntegrity: unknown) => ({
+      available: true,
+      limits,
+      capabilities: { appAttest: { protocolVersions: [1, 2] }, playIntegrity },
+    })
+    expect(
+      normalizeNotesImportStatus(
+        capabilities({ protocolVersions: [1], cloudProjectNumber: '1234' })
+      )
+    ).toEqual({ available: true, limits, playIntegrity: true })
+    for (const malformed of [
+      undefined,
+      { protocolVersions: [2], cloudProjectNumber: '1234' },
+      { protocolVersions: [1] },
+      'yes',
+    ]) {
+      expect(normalizeNotesImportStatus(capabilities(malformed))).toEqual({
+        available: true,
+        limits,
+      })
+    }
+  })
+
   it('accepts positive fractional window days', () => {
     expect(
       normalizeNotesImportStatus({

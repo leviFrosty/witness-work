@@ -14,8 +14,8 @@ vi.mock('expo/fetch', () => ({ fetch: vi.fn() }))
 vi.mock('@/features/notes-import/lib/notesContentHash', () => ({
   notesContentHash: vi.fn(async () => 'a'.repeat(64)),
 }))
-vi.mock('@/features/notes-import/lib/notesImportAppAttestRuntime', () => ({
-  notesImportAppAttest: { post: harness.post },
+vi.mock('@/features/notes-import/lib/notesImportAuthRuntime', () => ({
+  notesImportAuth: { post: harness.post },
 }))
 
 import {
@@ -56,6 +56,28 @@ describe('Notes Import client authorization errors', () => {
       action: 'start_new_operation',
     })
   })
+
+  it.each([
+    ['deviceIneligible', 'device_ineligible'],
+    ['playServicesUnavailable', 'play_services_required'],
+  ] as const)(
+    'maps Android verification failure %s to %s',
+    async (authCode, clientCode) => {
+      harness.post.mockRejectedValueOnce(
+        new NotesImportAppAttestError(authCode, {
+          status: 403,
+          reason: 'device_integrity_failed',
+          action: 'none',
+        })
+      )
+
+      await expect(runNotesImportStreaming(request)).rejects.toMatchObject({
+        name: 'NotesImportClientError',
+        code: clientCode,
+        reason: 'device_integrity_failed',
+      })
+    }
+  )
 
   it('keeps cancellation distinct from a network failure', async () => {
     harness.post.mockRejectedValueOnce(

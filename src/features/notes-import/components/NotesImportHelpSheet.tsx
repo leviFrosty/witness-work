@@ -5,7 +5,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Sheet } from 'tamagui'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -23,7 +23,9 @@ interface Props {
 
 const STEP_KEYS: TranslationKey[] = [
   'notesImport_helpNotesStep1',
-  'notesImport_helpNotesStep2',
+  Platform.OS === 'android'
+    ? 'notesImport_helpNotesStep2Android'
+    : 'notesImport_helpNotesStep2',
   'notesImport_helpNotesStep3',
 ]
 
@@ -109,7 +111,7 @@ const NotesImportHelpSheet = ({ open, setOpen, schedule }: Props) => {
               />
             </View>
 
-            {/* Copy from Apple Notes — numbered steps. */}
+            {/* Copy from a notes app — numbered steps. */}
             <View style={{ gap: 14 }}>
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
@@ -119,7 +121,13 @@ const NotesImportHelpSheet = ({ open, setOpen, schedule }: Props) => {
                   size={16}
                   color={theme.colors.accent}
                 />
-                {sectionTitle(i18n.t('notesImport_helpNotesTitle'))}
+                {sectionTitle(
+                  i18n.t(
+                    Platform.OS === 'android'
+                      ? 'notesImport_helpNotesTitleAndroid'
+                      : 'notesImport_helpNotesTitle'
+                  )
+                )}
               </View>
               {STEP_KEYS.map((key, i) => (
                 <View

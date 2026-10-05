@@ -3,6 +3,7 @@ import type { NotesImportAvailability } from '@/features/notes-import/hooks/useN
 
 const mocks = vi.hoisted(() => ({
   enabled: false,
+  androidEnabled: false,
   status: vi.fn(),
   platform: 'ios',
 }))
@@ -13,7 +14,10 @@ vi.mock('react-native', () => ({
     },
   },
 }))
-vi.mock('@/lib/featureFlags', () => ({ useFeatureFlag: () => mocks.enabled }))
+vi.mock('@/lib/featureFlags', () => ({
+  useFeatureFlag: (flag: string) =>
+    flag === 'notes-import-android' ? mocks.androidEnabled : mocks.enabled,
+}))
 vi.mock('@/features/notes-import/lib/notesImportClient', () => ({
   getNotesImportStatus: mocks.status,
 }))
@@ -25,6 +29,7 @@ beforeEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
   mocks.enabled = false
+  mocks.androidEnabled = false
   mocks.platform = 'ios'
 })
 
@@ -63,10 +68,14 @@ async function mount() {
 }
 
 describe('Notes Import availability', () => {
-  it('keeps Android unavailable even when the flag and server allow imports', async () => {
+  it('keeps Android closed without its rollout flag', async () => {
     mocks.platform = 'android'
     mocks.enabled = true
-    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    mocks.status.mockResolvedValue({
+      available: true,
+      limits: schedule,
+      playIntegrity: true,
+    })
     const { snapshots, close } = await mount()
     expect(mocks.status).not.toHaveBeenCalled()
     expect(snapshots.at(-1)).toMatchObject({
@@ -75,6 +84,44 @@ describe('Notes Import availability', () => {
       loading: false,
       updateRequired: null,
     })
+    await close()
+  })
+  it('keeps Android unavailable until the server can verify Play Integrity', async () => {
+    mocks.platform = 'android'
+    mocks.enabled = true
+    mocks.androidEnabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({
+      available: false,
+      reason: 'android_unavailable',
+      schedule: null,
+      loading: false,
+    })
+    await close()
+  })
+  it('opens Android with both flags and server support', async () => {
+    mocks.platform = 'android'
+    mocks.enabled = true
+    mocks.androidEnabled = true
+    mocks.status.mockResolvedValue({
+      available: true,
+      limits: schedule,
+      playIntegrity: true,
+    })
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({
+      available: true,
+      schedule,
+      loading: false,
+    })
+    await close()
+  })
+  it('ignores the Android rollout flag on iOS', async () => {
+    mocks.enabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({ available: true, schedule })
     await close()
   })
   it('does not probe or expose a schedule while the flag is closed', async () => {

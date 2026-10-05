@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
 import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposerRouteScreen'
 import PreferencesScreen from '@/features/settings/screens/preferences/PreferencesScreen'

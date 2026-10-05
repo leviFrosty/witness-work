@@ -93,11 +93,18 @@ Automatic Android App Links additionally require the backend's
 Contact attachments use the `application/witnesswork+json` MIME type and are
 validated and confirmed before import, including opaque Android content URIs.
 
-iCloud sync/restore, widgets, Live Activities, the Apple Watch app, alternate
-app icons, and Notes Import remain unavailable on Android. Notes Import's backend currently requires
-Apple App Attest; there is no Android authentication bypass. Local backups,
-MyTime import, contacts/visits, plans, service reports, preferences, and the
-persistent in-app stopwatch use the shared app flows.
+iCloud sync/restore, widgets, Live Activities, the Apple Watch app, and
+alternate app icons remain unavailable on Android. Local backups, MyTime import,
+contacts/visits, plans, service reports, preferences, and the persistent in-app
+stopwatch use the shared app flows.
+
+Notes Import on Android authenticates with Google Play Integrity instead of App
+Attest (ADR 0017, `modules/play-integrity`). It opens only when both the
+`notes-import` and `notes-import-android` flags are on and ww-api advertises
+`capabilities.playIntegrity`. Real tokens need a Play-installed build of
+`com.leviwilkerson.jwtime` (an internal testing track works); development builds
+and emulators can't pass, so use `EXPO_PUBLIC_API_DEV_BYPASS` against a dev
+worker, as on the iOS simulator.
 
 ## Android production build and Play draft
 

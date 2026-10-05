@@ -5,7 +5,7 @@ import {
   NotesImportAppAttestError,
   NotesImportAppAttestHttpError,
 } from '@/features/notes-import/lib/notesImportAppAttest'
-import { notesImportAppAttest } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
+import { notesImportAuth } from '@/features/notes-import/lib/notesImportAuthRuntime'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import type {
   NotesImportContext,
@@ -81,6 +81,10 @@ export type NotesImportErrorCode =
   | 'network'
   | 'cancelled'
   | 'unknown'
+  /** Android: Play Integrity says this device or app build can't be verified. */
+  | 'device_ineligible'
+  /** Android: Play Store / Play services are missing or need an update. */
+  | 'play_services_required'
 
 /**
  * A typed failure the hook can branch on (e.g. show the paywall on
@@ -197,12 +201,16 @@ const developerDebug = (value: string): string | undefined =>
 const toClientError = (e: unknown): NotesImportClientError => {
   if (e instanceof NotesImportClientError) return e
   if (e instanceof NotesImportAppAttestError) {
-    const code =
+    const code: NotesImportErrorCode =
       e.code === 'cancelled'
         ? 'cancelled'
         : e.code === 'network'
           ? 'network'
-          : 'attestation_failed'
+          : e.code === 'deviceIneligible'
+            ? 'device_ineligible'
+            : e.code === 'playServicesUnavailable'
+              ? 'play_services_required'
+              : 'attestation_failed'
     const message =
       code === 'cancelled'
         ? 'Import cancelled'
@@ -314,7 +322,7 @@ const postAttested = <T>(
   contentHash: string,
   signal?: AbortSignal
 ): Promise<T> =>
-  notesImportAppAttest.post<T>({
+  notesImportAuth.post<T>({
     endpoint,
     payload,
     contentHash,

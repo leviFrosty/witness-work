@@ -1,7 +1,7 @@
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
   ArchiveRestore as ArchiveRestoreIcon,

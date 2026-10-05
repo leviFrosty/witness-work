@@ -49,6 +49,12 @@ describe('errorMessageKey', () => {
     expect(errorMessageKey('refinement_limit')).toBe(
       'notesImport_refinementLimit'
     )
+    expect(errorMessageKey('device_ineligible')).toBe(
+      'notesImport_deviceIneligibleAndroid'
+    )
+    expect(errorMessageKey('play_services_required')).toBe(
+      'notesImport_playServicesRequiredAndroid'
+    )
   })
 
   it('falls back to the generic error key', () => {

@@ -34,6 +34,13 @@ export type NotesImportAppAttestErrorCode =
   | 'network'
   | 'cancelled'
   | 'invalidState'
+  /** Android only: Play Integrity says this device or app build isn't genuine. */
+  | 'deviceIneligible'
+  /**
+   * Android only: Play Store / Play services are missing, outdated, or
+   * unreachable.
+   */
+  | 'playServicesUnavailable'
 
 interface NotesImportAppAttestSemanticMetadata {
   status?: number
@@ -163,6 +170,7 @@ export interface NotesImportProtectedPost {
 }
 
 export interface NotesImportAuthSnapshot {
+  provider: 'app-attest'
   baseUrl: string
   devBypassEnabled: boolean
   appAttestSupported: boolean
@@ -230,7 +238,7 @@ const APP_ATTEST_PROTOCOL = 'witnesswork.app-attest'
 const JOURNAL_VERSION = 2 as const
 const JOURNAL_MAX_AGE_MS = 24 * 60 * 60 * 1000
 const JOURNAL_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000
-const DIAGNOSTIC_CONTENT_HASH =
+export const DIAGNOSTIC_CONTENT_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 const RECOVERY_SERVER_REASONS = new Set([
@@ -256,7 +264,7 @@ const START_NEW_OPERATION_REASONS = new Set([
 const cancellationError = (): NotesImportAppAttestError =>
   new NotesImportAppAttestError('cancelled')
 
-const throwIfAborted = (signal?: AbortSignal): void => {
+export const throwIfAborted = (signal?: AbortSignal): void => {
   if (signal?.aborted) throw cancellationError()
 }
 
@@ -264,7 +272,7 @@ const throwIfAborted = (signal?: AbortSignal): void => {
  * Lets one caller stop waiting for shared work without cancelling that work for
  * every other caller using the same cached promise.
  */
-const waitForSignal = <T>(
+export const waitForSignal = <T>(
   promise: Promise<T>,
   signal?: AbortSignal
 ): Promise<T> => {
@@ -427,7 +435,7 @@ const stableCanonicalJson = (value: unknown): string => {
   }
 }
 
-const canonicalProtectedRequest = (
+export const canonicalProtectedRequest = (
   payload: Record<string, unknown>
 ): string => {
   if (typeof payload.notesText !== 'string' || !isRecord(payload.context)) {
@@ -2127,6 +2135,7 @@ export const createNotesImportAppAttest = (
     }
 
     return {
+      provider: 'app-attest',
       baseUrl: dependencies.baseUrl,
       devBypassEnabled: dependencies.devBypass.enabled,
       appAttestSupported,

@@ -37,9 +37,9 @@ interface Props {
  * Mirrors the `SupporterInfoSheet` presentation pattern: an RN `Modal`
  * (transparent + `statusBarTranslucent`) wraps a tamagui `Sheet` so callers can
  * present this from inside another RN `Modal` (AvatarPickerPopover) and from
- * inside a tamagui `Popover.Content` (ContactsStatsHeader) — both cases portal
- * correctly because the outer RN Modal hoists the sheet into a fresh UIWindow
- * above any host portal.
+ * inside a tamagui `Popover.Content` (ContactsStalenessChips) — both cases
+ * portal correctly because the outer RN Modal hoists the sheet into a fresh
+ * UIWindow above any host portal.
  */
 const ColorPickerSheet = ({
   visible,

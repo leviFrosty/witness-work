@@ -643,3 +643,20 @@ describe('preferences persist migrate v7 → v8 (remove Milestone reveal flags)'
     expect(migratePreferencesPersistedState(v8State, 8)).toBe(v8State)
   })
 })
+
+describe('preferences persist migrate v8 → v9 (remove Founding Supporter reveal flag)', () => {
+  it('drops the never-set reveal flag', () => {
+    const migrated = migratePreferencesPersistedState(
+      { seenFoundingSupporterReveal: false, role: 'regularPioneer' },
+      8
+    )
+
+    expect(migrated).not.toHaveProperty('seenFoundingSupporterReveal')
+    expect(migrated.role).toBe('regularPioneer')
+  })
+
+  it('is idempotent on an already-v9 state', () => {
+    const v9State = { role: 'publisher' }
+    expect(migratePreferencesPersistedState(v9State, 9)).toBe(v9State)
+  })
+})

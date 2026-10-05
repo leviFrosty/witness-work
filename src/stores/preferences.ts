@@ -937,17 +937,6 @@ export const PREFERENCE_DEFAULTS = {
    */
   updateReveal: null as UpdateRevealState | null,
   /**
-   * Sticky one-shot flag set on dismissal of the Founding Supporter reveal
-   * (chained after the Milestone reveal for users who were active Supporters at
-   * upgrade time). Gates the Founding badge variant and prevents re-firing the
-   * reveal across future launches. **Never cleared.** A re-subscribing Founding
-   * Supporter regains the badge automatically; an erroneously-granted flag
-   * cannot be revoked without a migration. Per-device — a user crossing the
-   * Reveal version on a second device can re-experience the reveal there
-   * independently.
-   */
-  seenFoundingSupporterReveal: false,
-  /**
    * Stable IDs of "Did you know?" tips the user has dismissed from the
    * home-screen tip card. The card surfaces the first tip in
    * `DID_YOU_KNOW_TIPS` whose id isn't here; once all are present the card
@@ -1142,7 +1131,25 @@ export const migratePreferencesPersistedState = (
   if (version < 8) {
     next = migrateDropMilestoneRevealPreferences(next)
   }
+  if (version < 9) {
+    next = migrateDropFoundingSupporterRevealPreference(next)
+  }
   return next
+}
+
+/**
+ * V8 → v9: remove the never-set Founding Supporter reveal flag. Founding
+ * recognition is now derived from the Supporter `since` date. Device-local, so
+ * no timestamp.
+ */
+export const migrateDropFoundingSupporterRevealPreference = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  if (!('seenFoundingSupporterReveal' in record)) return state
+  const { seenFoundingSupporterReveal: _seen, ...rest } = record
+  return rest
 }
 
 /**
@@ -1826,7 +1833,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createJSONStorage(() => PersistStorage),
-      version: 8,
+      version: 9,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

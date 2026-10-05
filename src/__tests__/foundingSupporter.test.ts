@@ -1,43 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { isFoundingSupporter } from '@/features/supporter/lib/foundingSupporter'
+import {
+  FOUNDING_SUPPORTER_CUTOFF,
+  isFoundingSupporter,
+} from '@/lib/foundingSupporter'
 
 describe('isFoundingSupporter', () => {
-  it('returns false when the user is not a Supporter and has no flag', () => {
-    expect(
-      isFoundingSupporter({
-        isSupporter: false,
-        seenFoundingSupporterReveal: false,
-      })
-    ).toBe(false)
+  it('returns false for a non-Supporter (no since date)', () => {
+    expect(isFoundingSupporter(null)).toBe(false)
   })
 
-  it('returns false for a current Supporter who has not seen the Founding reveal', () => {
-    expect(
-      isFoundingSupporter({
-        isSupporter: true,
-        seenFoundingSupporterReveal: false,
-      })
-    ).toBe(false)
+  it('returns true for a Supporter since before the Supporter tier launched', () => {
+    expect(isFoundingSupporter(new Date('2025-03-15T00:00:00Z'))).toBe(true)
   })
 
-  it('returns true for a current Supporter who has dismissed the Founding reveal', () => {
+  it('returns false for a Supporter who joined on or after the cutoff', () => {
+    expect(isFoundingSupporter(FOUNDING_SUPPORTER_CUTOFF)).toBe(false)
+    expect(isFoundingSupporter(new Date('2026-08-01T00:00:00Z'))).toBe(false)
+  })
+
+  it('treats the instant just before the cutoff as founding', () => {
     expect(
-      isFoundingSupporter({
-        isSupporter: true,
-        seenFoundingSupporterReveal: true,
-      })
+      isFoundingSupporter(new Date(FOUNDING_SUPPORTER_CUTOFF.getTime() - 1))
     ).toBe(true)
-  })
-
-  // A previously-Founding user whose subscription has lapsed loses the visual
-  // recognition along with every other Supporter UI. The sticky flag stays set
-  // so the badge returns automatically on re-subscription — see the ADR.
-  it('returns false for a lapsed Founding Supporter (flag set but not currently a Supporter)', () => {
-    expect(
-      isFoundingSupporter({
-        isSupporter: false,
-        seenFoundingSupporterReveal: true,
-      })
-    ).toBe(false)
   })
 })

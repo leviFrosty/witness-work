@@ -20,3 +20,7 @@ A **Reveal update** is an app version that earns its own dedicated full-screen r
 ## Addendum (1.44 update reveal)
 
 The 1.44 update reveal replaced the Milestone Update on launch; its overlay and showcase stay only as replays in Developer Tools → Special updates. The reveal's gate is now a single `UPDATE_REVEAL_VERSION` (`src/features/updates/constants/updateReveal.ts`), and engagement is stored against that version in `updateReveal` instead of per-reveal `seen…` booleans, so a future Reveal update only raises the constant. Reveal updates are named releases: `UPDATE_REVEAL_NAME` (The Together Update for 1.44) titles the reveal, its tray replay item, and the release's What's New badge. The suppression rule above is unchanged: crossing the version shows the reveal instead of `WhatsNewSheet` or the passive tray item, and release notes stay in Settings → What's New.
+
+## Addendum (Founding Supporter from `since` date)
+
+The Founding reveal never shipped, so no install ever set `seenFoundingSupporterReveal`. Founding Supporter recognition is now derived from the Supporter `since` date and a fixed cutoff, and the flag is removed. See ADR 0015; the flag-gated rule above is superseded.

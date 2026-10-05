@@ -245,6 +245,7 @@ export const FAQS: FAQEntry[] = [
     category: 'supporter',
   },
   { id: 'restoreSupporter', category: 'supporter' },
+  { id: 'foundingSupporter', category: 'supporter' },
   {
     id: 'stillFree',
     category: 'supporter',

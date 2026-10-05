@@ -13,6 +13,7 @@ import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
@@ -25,6 +26,7 @@ const daysSince = (from: Date): number =>
 
 type TenureTone =
   | 'supporter'
+  | 'foundingSupporter'
   | 'pioneer'
   | 'specialPioneer'
   | 'circuitOverseer'
@@ -45,6 +47,10 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
       return days === 1
         ? i18n.t('profileSupporterForDay')
         : i18n.t('profileSupporterForDays', { days: formatted })
+    case 'foundingSupporter':
+      return days === 1
+        ? i18n.t('profileFoundingSupporterForDay')
+        : i18n.t('profileFoundingSupporterForDays', { days: formatted })
     case 'pioneer':
       return days === 1
         ? i18n.t('profilePioneeringForDay')
@@ -119,11 +125,14 @@ const ProfileCard = ({ readOnly }: Props) => {
       }
     }
     if (supporterSince) {
+      const tone: TenureTone = isFoundingSupporter(supporterSince)
+        ? 'foundingSupporter'
+        : 'supporter'
       return {
-        tone: 'supporter',
+        tone,
         icon: HeartIcon,
         tint: theme.colors.supporter,
-        text: buildTenureText('supporter', daysSince(supporterSince)),
+        text: buildTenureText(tone, daysSince(supporterSince)),
       }
     }
     return {
@@ -207,7 +216,11 @@ const ProfileCard = ({ readOnly }: Props) => {
           icon={tenure.icon}
           size={11}
           color={tenure.tint}
-          fill={tenure.tone === 'supporter' ? tenure.tint : undefined}
+          fill={
+            tenure.tone === 'supporter' || tenure.tone === 'foundingSupporter'
+              ? tenure.tint
+              : undefined
+          }
         />
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
           {tenure.text}

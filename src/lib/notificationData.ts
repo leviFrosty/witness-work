@@ -1,6 +1,6 @@
 import type * as Notifications from 'expo-notifications'
 
-export type ReminderKind = 'visit' | 'plan' | 'contact'
+export type ReminderKind = 'visit' | 'plan' | 'contact' | 'unloggedDay'
 
 /**
  * What a local reminder carries so a tap can open its record. Ids only — the
@@ -8,7 +8,7 @@ export type ReminderKind = 'visit' | 'plan' | 'contact'
  */
 export type ReminderData = {
   kind: ReminderKind
-  /** Visit, Plan, or Contact id. */
+  /** Visit, Plan, or Contact id; a planned day (`YYYY-MM-DD`) to log time. */
   id: string
   /** The Visit's Contact, so a Follow-up reminder opens its Contact. */
   contactId?: string
@@ -54,7 +54,13 @@ export function reminderData(
   const reminder = record(record(notification.request.content.data)?.reminder)
   if (!reminder || typeof reminder.id !== 'string') return null
   const kind = reminder.kind
-  if (kind !== 'visit' && kind !== 'plan' && kind !== 'contact') return null
+  if (
+    kind !== 'visit' &&
+    kind !== 'plan' &&
+    kind !== 'contact' &&
+    kind !== 'unloggedDay'
+  )
+    return null
   return {
     kind,
     id: reminder.id,

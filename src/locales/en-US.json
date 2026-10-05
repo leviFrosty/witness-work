@@ -1,4 +1,23 @@
 {
+  "unloggedDayReminders": "Remind Me to Log Time",
+  "unloggedDayReminders_info": "If you planned service for a day but haven't logged any time for it, you'll get one reminder at your chosen time after that day's plans end.",
+  "unloggedDayReminderTime": "Remind At",
+  "unloggedDayReminder_title": "Log Your Time",
+  "unloggedDayReminderBodyToday": "You planned {{duration}} today and haven't logged any time yet.",
+  "unloggedDayReminderBodyYesterday": "You planned {{duration}} yesterday and haven't logged any time yet.",
+  "unloggedDayReminderBodyOnDate": "You planned {{duration}} on {{date}} and haven't logged any time yet.",
+  "unloggedDayReminderBodyDays": {
+    "one": "%{count} planned day doesn't have any time logged yet.",
+    "other": "%{count} planned days don't have any time logged yet."
+  },
+  "notifications_reminderUnloggedDay": "Log your time for {{date}}",
+  "notifications_reminderUnloggedDays": {
+    "one": "Log your time for %{count} planned day",
+    "other": "Log your time for %{count} planned days"
+  },
+  "notifications_reminderUnloggedDayPlanned": "{{duration}} planned",
+  "faq_logTimeReminders_q": "Can WitnessWork remind me to log time for a day I planned?",
+  "faq_logTimeReminders_a": "Yes. Go to Preferences → Plans, turn on Remind Me to Log Time, and choose a Remind At time (8:00 PM unless you change it). If a day has a plan but no time logged, you get one reminder at that time after the day's plans end: a morning plan reminds you that evening, and a plan still going at your Remind At time reminds you the next day. Several plans on the same day give one reminder, and when two days' reminders would arrive at the same time they're combined. Logging any time for that day stops its reminder and clears one you've already received; removing that day's plans or turning the setting off does too. A day planned with no time doesn't remind you, and days you missed before turning the setting on aren't included. Tapping the reminder opens Add Time with the date, planned time, and type already filled in. The reminder is also listed in the Home bell for a week, even if system notifications are off. The setting appears when you track hours; Regular Publishers turn on Log my hours first. Turning it on asks for notification permission, or opens your device settings if you've declined before. Reminders are worked out on your device from your own plans and time and aren't sent anywhere. Each device schedules its own reminders up to two weeks ahead, so open WitnessWork at least every two weeks to keep them coming. If you log time on another device, open WitnessWork on this one so it can cancel that day's reminder. On Android, the system may deliver a reminder a few minutes late to save battery. If reminders don't arrive, check that notifications are allowed for WitnessWork in your device settings and that Focus or Do Not Disturb isn't silencing them. If they still don't arrive, report the problem from the Help Center without including names or other private details.",
   "navigationShortcut": "⌘{{number}}",
   "faq_navigationShortcuts_q": "How do I navigate with keyboard shortcuts on iPad?",
   "faq_navigationShortcuts_a": "Connect a hardware keyboard to an iPad running iPadOS 26 or later, then hold Command while the main navigation is visible. Small shortcut labels appear beside the bottom tabs or sidebar items. Press Command and the displayed number to open that screen; release Command to hide the labels. Numbers follow the visible navigation order, so Home is Command 1, Schedule is Command 2, and Contacts is Command 3. Other numbers depend on which items are visible, including Settings in the sidebar. Close any open form or other screen before using these navigation shortcuts; they do not save or discard records. Only shortcut use is measured, not what you type. Support requires an installed app build with the keyboard feature and is unavailable on iPhone and Android. If labels do not appear, check that the keyboard is connected, return to the main navigation, and update and reopen the app. You can always tap navigation items instead. For other problems, use the Help Center's private support link and keep contact details out of public reports.",

@@ -4,24 +4,36 @@ import type { Visit } from '@/types/visit'
 import type { DayPlan } from '@/types/timeEntry'
 import type { NotificationOffset } from '@/lib/notificationOffset'
 import { combineDateAndStartTime } from '@/lib/normalizeDate'
+import {
+  unloggedDayReminderGroups,
+  type UnloggedDaySources,
+} from '@/lib/unloggedDayReminders'
 
 export type LocalReminder = {
   /** The OS request id. Stable per record, so reconciling replaces it. */
   id: string
   date: Date
-  kind: 'visit' | 'plan' | 'contact'
-  /** The Visit, Plan, or Contact the reminder opens. */
+  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay'
+  /**
+   * The Visit, Plan, or Contact the reminder opens; for a reminder to log time,
+   * its earliest planned day (`YYYY-MM-DD`).
+   */
   targetId: string
   /** The Visit's Contact. */
   contactId?: string
-  /** When the Follow-up or Plan starts; the Contact's return otherwise. */
+  /**
+   * When the Follow-up or Plan starts, or the planned day's Plans end; the
+   * Contact's return otherwise.
+   */
   anchor: Date
   name?: string
   /** A Follow-up's topic or a Plan's note. */
   note?: string
-  /** A Plan's title and planned minutes. */
+  /** A Plan's title and planned minutes (the earliest day's, to log time). */
   title?: string
   minutes?: number
+  /** The planned days a reminder to log time covers, earliest first. */
+  days?: string[]
 }
 
 export const reminderRequestId = (
@@ -72,14 +84,19 @@ type ReminderSources = {
   plans: DayPlan[]
   visitOffset: NotificationOffset
   planOffset: NotificationOffset
+  /** Planned days still without time logged; absent when that's off. */
+  unloggedDays?: UnloggedDaySources
 }
 
 /**
  * Every reminder the records ask for, past or future, in no order. Built from
  * records alone, so it is the same after an edit, sync, or restore. The OS
- * schedule and the notifications tray both read it.
+ * schedule and the notifications tray both read it. Reminders to log time are
+ * the exception: they run from a week back to two weeks after `now`.
  */
-export function reminderOccurrences(args: ReminderSources): LocalReminder[] {
+export function reminderOccurrences(
+  args: ReminderSources & { now?: number }
+): LocalReminder[] {
   const reminders: LocalReminder[] = []
   const contacts = new Map(
     args.contacts.map((contact) => [contact.id, contact])
@@ -126,6 +143,24 @@ export function reminderOccurrences(args: ReminderSources): LocalReminder[] {
       anchor: date,
       name: contact.name,
     })
+  }
+  if (args.unloggedDays) {
+    const groups = unloggedDayReminderGroups(
+      args.unloggedDays,
+      args.now ?? Date.now()
+    )
+    for (const { date, days } of groups) {
+      const [first] = days
+      reminders.push({
+        id: reminderRequestId('unloggedDay', first.key),
+        date,
+        kind: 'unloggedDay',
+        targetId: first.key,
+        anchor: first.end,
+        minutes: first.minutes,
+        days: days.map((day) => day.key),
+      })
+    }
   }
   return reminders.filter((reminder) =>
     Number.isFinite(reminder.date.getTime())

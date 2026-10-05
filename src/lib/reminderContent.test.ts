@@ -8,6 +8,11 @@ vi.mock('@/lib/locales', () => ({
   },
 }))
 
+vi.mock('expo-localization', () => ({
+  getLocales: () => [{ languageTag: 'en-US' }],
+  getCalendars: () => [],
+}))
+
 vi.mock('@/lib/minutes', () => ({
   formatMinutes: (minutes: number) => ({ formatted: `${minutes}m` }),
 }))
@@ -70,5 +75,44 @@ describe('reminderContent', () => {
     expect(content.title).toBe('Cart')
     expect(content.body).toContain('planReminderBodyNow')
     expect(content.data).toEqual({ reminder: { kind: 'plan', id: 'p' } })
+  })
+
+  describe('a reminder to log time', () => {
+    const unlogged: LocalReminder = {
+      id: 'witness-work-unloggedDay-2026-05-01',
+      kind: 'unloggedDay',
+      targetId: '2026-05-01',
+      date: new Date(2026, 4, 1, 20),
+      anchor: new Date(2026, 4, 1, 11),
+      minutes: 120,
+      days: ['2026-05-01'],
+    }
+
+    it('names the planned time for the same day and opens that day', () => {
+      const content = reminderContent(unlogged, options)
+      expect(content.title).toBe('unloggedDayReminder_title')
+      expect(content.body).toBe(
+        'unloggedDayReminderBodyToday {"duration":"120m"}'
+      )
+      expect(content.data).toEqual({
+        reminder: { kind: 'unloggedDay', id: '2026-05-01' },
+      })
+    })
+
+    it('says yesterday when a late plan reminds the next day', () => {
+      const content = reminderContent(
+        { ...unlogged, date: new Date(2026, 4, 2, 20) },
+        options
+      )
+      expect(content.body).toContain('unloggedDayReminderBodyYesterday')
+    })
+
+    it('counts the days a combined reminder covers', () => {
+      const content = reminderContent(
+        { ...unlogged, days: ['2026-05-01', '2026-05-02'] },
+        options
+      )
+      expect(content.body).toBe('unloggedDayReminderBodyDays {"count":2}')
+    })
   })
 })

@@ -14,17 +14,24 @@ vi.mock('@/app/notifications/reminderTargets', () => ({
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/minutes', () => ({ formatMinutes: () => ({ formatted: '' }) }))
-vi.mock('@/lib/dates', () => ({ formatTime: () => '3:00 PM' }))
+vi.mock('@/lib/dates', () => ({
+  formatTime: () => '3:00 PM',
+  formatWeekdayMonthDayCompact: () => 'Fri, May 1',
+}))
 vi.mock('lucide-react-native', () => ({
   BellRing: 'BellRing',
   CalendarClock: 'CalendarClock',
+  ClockAlert: 'ClockAlert',
   UserCheck: 'UserCheck',
 }))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import {
   firedReminders,
   reminderTrayId,
 } from '@/app/notifications/useReminderNotifications'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import type { UnloggedDaySources } from '@/lib/unloggedDayReminders'
 
 const HOUR = 60 * 60_000
 const start = Date.UTC(2026, 4, 1, 15)
@@ -71,5 +78,56 @@ describe('firedReminders', () => {
   it('lists a reminder whether or not system alerts were allowed', () => {
     // Nothing here reads OS permission: the tray mirrors intent.
     expect(firedReminders(args(start - 30 * 60_000))).toHaveLength(1)
+  })
+})
+
+describe('reminders to log time', () => {
+  const DAY = 24 * HOUR
+  const remindsAt = new Date(2026, 4, 1, 20).getTime()
+  const unloggedDays = (
+    overrides: Partial<UnloggedDaySources> = {}
+  ): UnloggedDaySources => ({
+    dayPlans: [
+      {
+        id: 'p',
+        date: normalizeDateForStorage(new Date(2026, 4, 1, 12)),
+        minutes: 60,
+        startTimeInMinutes: 9 * 60,
+      },
+    ],
+    recurringPlans: [],
+    timeEntries: {},
+    remindAt: 20 * 60,
+    enabledAt: 0,
+    tracksHoursIn: () => true,
+    ...overrides,
+  })
+  const fired = (now: number, overrides?: Partial<UnloggedDaySources>) =>
+    firedReminders({
+      ...args(now, []),
+      unloggedDays: unloggedDays(overrides),
+    })
+
+  it('lists a planned day for a week after its reminder', () => {
+    expect(fired(remindsAt - 1)).toEqual([])
+    const [reminder] = fired(remindsAt)
+    expect(reminderTrayId(reminder)).toBe(
+      `reminder:unloggedDay:2026-05-01:${remindsAt}`
+    )
+    expect(fired(remindsAt + 7 * DAY - 1)).toHaveLength(1)
+    expect(fired(remindsAt + 7 * DAY)).toEqual([])
+  })
+
+  it('leaves the tray once the day has time', () => {
+    const date = normalizeDateForStorage(new Date(2026, 4, 1, 12))
+    expect(
+      fired(remindsAt + HOUR, {
+        timeEntries: {
+          [date.getUTCFullYear()]: {
+            [date.getUTCMonth()]: [{ id: 'e', hours: 1, minutes: 0, date }],
+          },
+        },
+      })
+    ).toEqual([])
   })
 })

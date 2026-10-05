@@ -1,12 +1,18 @@
 import {
   BellRing as BellRingIcon,
   CalendarClock as CalendarClockIcon,
+  ClockAlert as ClockAlertIcon,
   UserCheck as UserCheckIcon,
 } from 'lucide-react-native'
-import { formatTime } from '@/lib/dates'
+import moment from 'moment'
+import { formatTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { reminderOccurrences, type LocalReminder } from '@/lib/reminderSchedule'
+import {
+  UNLOGGED_DAY_LISTED_MS,
+  unloggedDaySources,
+} from '@/lib/unloggedDayReminders'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import {
@@ -39,6 +45,9 @@ function listedUntil(reminder: LocalReminder): number {
       return anchor + Math.max(reminder.minutes ?? 0, 60) * 60_000
     case 'contact':
       return anchor + RETURNED_CONTACT_DAYS * 24 * HOUR
+    case 'unloggedDay':
+      // Leaves sooner once the day has time logged.
+      return reminder.date.getTime() + UNLOGGED_DAY_LISTED_MS
   }
 }
 
@@ -65,9 +74,10 @@ export function firedReminders(
 }
 
 /**
- * The tray copy of each local reminder that has fired: Follow-ups, Plans, and
- * returning Contacts. Listed whether or not the system alert was allowed, so
- * the tray is the same record of what reminded the User.
+ * The tray copy of each local reminder that has fired: Follow-ups, Plans,
+ * returning Contacts, and planned days to log time for. Listed whether or not
+ * the system alert was allowed, so the tray is the same record of what reminded
+ * the User.
  */
 export default function useReminderNotifications(
   now: number
@@ -75,9 +85,21 @@ export default function useReminderNotifications(
   const contacts = useContacts((state) => state.contacts)
   const visits = useConversations((state) => state.conversations)
   const plans = useServiceReport((state) => state.dayPlans)
+  const recurringPlans = useServiceReport((state) => state.recurringPlans)
+  const serviceReports = useServiceReport((state) => state.serviceReports)
   const visitOffset = usePreferences((s) => s.returnVisitNotificationOffset)
   const planOffset = usePreferences((s) => s.planNotificationOffset)
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
+  const unloggedDayReminders = usePreferences((s) => s.unloggedDayReminders)
+  const unloggedDayReminderTime = usePreferences(
+    (s) => s.unloggedDayReminderTime
+  )
+  const unloggedDayRemindersEnabledAt = usePreferences(
+    (s) => s.unloggedDayRemindersEnabledAt
+  )
+  const role = usePreferences((s) => s.role)
+  const roleHistory = usePreferences((s) => s.roleHistory)
+  const logsHours = usePreferences((s) => s.logsHours)
 
   const open = (reminder: LocalReminder) => () =>
     void openReminderTarget({
@@ -95,6 +117,17 @@ export default function useReminderNotifications(
       ...visitOffset,
     },
     planOffset: { ...DEFAULT_PLAN_NOTIFICATION_OFFSET, ...planOffset },
+    unloggedDays: unloggedDaySources(
+      { dayPlans: plans, recurringPlans, serviceReports },
+      {
+        unloggedDayReminders,
+        unloggedDayReminderTime,
+        unloggedDayRemindersEnabledAt,
+        role,
+        roleHistory,
+        logsHours,
+      }
+    ),
     now,
   }).map((reminder): NotificationItem => {
     const base = {
@@ -136,6 +169,38 @@ export default function useReminderNotifications(
             { id: 'open', label: i18n.t('open'), onPress: open(reminder) },
           ],
         }
+      case 'unloggedDay': {
+        const days = reminder.days?.length ?? 1
+        return {
+          ...base,
+          icon: ClockAlertIcon,
+          title:
+            days > 1
+              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                i18n.t('notifications_reminderUnloggedDays', { count: days })
+              : i18n.t('notifications_reminderUnloggedDay', {
+                  date: formatWeekdayMonthDayCompact(
+                    moment(reminder.targetId, 'YYYY-MM-DD')
+                  ),
+                }),
+          description:
+            days > 1
+              ? undefined
+              : i18n.t('notifications_reminderUnloggedDayPlanned', {
+                  duration: formatMinutes(
+                    reminder.minutes ?? 0,
+                    timeDisplayFormat
+                  ).formatted,
+                }),
+          actions: [
+            {
+              id: 'add_time',
+              label: i18n.t('addTime'),
+              onPress: open(reminder),
+            },
+          ],
+        }
+      }
       case 'contact':
         return {
           ...base,

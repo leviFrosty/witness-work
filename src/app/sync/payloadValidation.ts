@@ -349,6 +349,8 @@ const preferenceShapes = z
     returnVisitTimeOffset: offset.nullable().optional(),
     returnVisitNotificationOffset: offset.nullable().optional(),
     planNotificationOffset: offset.nullable().optional(),
+    unloggedDayReminderTime: z.number().int().min(0).max(1439).optional(),
+    unloggedDayRemindersEnabledAt: timestamp.nullable().optional(),
     serviceYearCatchUpStatus: z
       .enum(['pending', 'skipped', 'completed', 'dismissed'])
       .nullable()

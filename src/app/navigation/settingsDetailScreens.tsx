@@ -9,6 +9,7 @@ import FAQScreen from '@/features/updates/screens/FAQScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
 import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ShareAppScreen from '@/features/settings/screens/ShareAppScreen'
+import OpenSourceLicensesScreen from '@/features/settings/screens/OpenSourceLicensesScreen'
 import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
 import PreferencesCalendarScreen from '@/features/settings/screens/preferences/screens/PreferencesCalendarScreen'
@@ -178,6 +179,11 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     name: 'ShareApp',
     component: ShareAppScreen,
     title: () => i18n.t('shareApp_title'),
+  },
+  {
+    name: 'OpenSourceLicenses',
+    component: OpenSourceLicensesScreen,
+    title: () => i18n.t('openSourceLicenses'),
   },
   { name: 'FAQ', component: FAQScreen, title: () => i18n.t('helpCenter') },
   { name: 'More', component: MoreScreen, title: () => i18n.t('more') },

@@ -244,42 +244,6 @@ export const FAQSupport = ({
             {i18n.t('faq_stillNeedHelp_description')}
           </Text>
           <ReportLinks />
-          <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
-            {[
-              {
-                resource: 'privacy_policy',
-                url: links.privacyPolicy,
-                label: 'privacyPolicy',
-              },
-              {
-                resource: 'source_code',
-                url: links.githubRepo,
-                label: 'faq_sourceCode',
-              },
-              {
-                resource: 'notes_import_data_policy',
-                url: links.openRouterZdr,
-                label: 'notesImport_privacyLink',
-              },
-            ].map(({ resource, url, label }) => (
-              <Button
-                key={resource}
-                noTransform
-                accessibilityRole='link'
-                onPress={() => openURL(url)}
-                style={{ minHeight: 44, justifyContent: 'center' }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    textDecorationLine: 'underline',
-                  }}
-                >
-                  {i18n.t(label as TranslationKey)}
-                </Text>
-              </Button>
-            ))}
-          </View>
           <Text
             style={{
               fontSize: theme.fontSize('xs'),

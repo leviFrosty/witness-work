@@ -9,6 +9,7 @@ import { View, Pressable } from 'react-native'
 import i18n from '@/lib/locales'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import ActionButton from '@/components/ui/ActionButton'
+import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import links from '@/constants/links'
@@ -52,14 +53,21 @@ const StepDefaultExportMethod = ({ goNext, goBack }: Props) => {
       <OnboardingNav goBack={goBack} />
       <View style={{ gap: 20 }}>
         <View style={{ gap: 6 }}>
-          <Text
-            style={{
-              fontSize: 32,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('howDoYouSubmitYourReport')}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text
+              style={{
+                fontSize: 32,
+                fontFamily: theme.fonts.bold,
+                flexShrink: 1,
+              }}
+            >
+              {i18n.t('howDoYouSubmitYourReport')}
+            </Text>
+            <InfoPopover
+              title={i18n.t('defaultExportMethod')}
+              description={i18n.t('howDoYouSubmitYourReport_info')}
+            />
+          </View>
           <Text
             style={{
               fontSize: 14,

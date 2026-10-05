@@ -27,6 +27,8 @@ struct WatchInbox: Codable {
   /// Latest snapshot built by JS, kept so the iPhone can answer the watch
   /// without starting JS.
   var snapshot: WatchSnapshot?
+  /// Widget kinds of the complications in use, as the watch last reported.
+  var complications: [String]?
 }
 
 /// Owns the iPhone side of WatchConnectivity for the life of the process.
@@ -58,7 +60,7 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
   /// inbox is never overwritten with an empty one.
   private var loaded = false
   private var activated = false
-  private var lastComplicationSignature: String?
+  private var lastComplicationSignature: Data?
   private var stopwatchObserver: NSObjectProtocol?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
@@ -119,6 +121,13 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
     }
   }
 
+  func activeComplications() -> [String]? {
+    queue.sync {
+      loadIfNeeded()
+      return inbox.complications
+    }
+  }
+
   func takeEvents() -> [WatchInbox.Event] {
     queue.sync {
       guard loaded, !inbox.events.isEmpty else { return [] }
@@ -145,6 +154,10 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
 
     switch request.kind {
     case .hello:
+      if let complications = request.complications, complications != inbox.complications {
+        inbox.complications = complications
+        persist()
+      }
       return WatchReply(status: .accepted, context: makeContext())
 
     case .addEntry:
@@ -262,17 +275,24 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
     try? session.updateApplicationContext(payload)
 
     // Complications refresh on a daily budget; spend it only when what they
-    // show changed.
+    // show changed. JS sends a snapshot only when its content changed, unless
+    // forced.
     guard session.isComplicationEnabled, let snapshot = context.snapshot else { return }
-    let signature = [
-      snapshot.monthKey, snapshot.monthCompact, snapshot.publisherState,
-      String(snapshot.progress), String(snapshot.goalHours),
-    ].joined(separator: "|")
+    let signature = Self.contentSignature(snapshot)
     if signature != lastComplicationSignature,
        session.remainingComplicationUserInfoTransfers > 0 {
       session.transferCurrentComplicationUserInfo(payload)
       lastComplicationSignature = signature
     }
+  }
+
+  /// Everything in `snapshot` except when it was built.
+  private static func contentSignature(_ snapshot: WatchSnapshot) -> Data? {
+    guard let data = try? JSONEncoder().encode(snapshot),
+          var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else { return nil }
+    object["generatedAt"] = nil
+    return try? JSONSerialization.data(withJSONObject: object, options: .sortedKeys)
   }
 
   // MARK: Storage

@@ -66,6 +66,13 @@ extension WatchSnapshot {
     return String(format: "%04d-%02d", parts.year ?? 0, parts.month ?? 0)
   }
 
+  /// `YYYY-MM-DD` of `date` in the Gregorian calendar, whatever calendar the
+  /// user has chosen. Watch entries carry this day.
+  static func dayKey(for date: Date) -> String {
+    let parts = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+  }
+
   /// False once the month the progress describes has ended, until the iPhone
   /// sends a new snapshot.
   func isCurrent(at date: Date = .now) -> Bool {

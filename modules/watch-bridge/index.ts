@@ -24,6 +24,11 @@ export type WatchStatus = {
   isPaired: boolean
   isWatchAppInstalled: boolean
   isComplicationEnabled: boolean
+  /**
+   * Widget kinds of the complications on the watch's faces and Smart Stack, as
+   * the watch app last reported them; `null` before it has.
+   */
+  activeComplications: string[] | null
 }
 
 export type WatchEvent = {
@@ -60,6 +65,7 @@ export function getStatus(): WatchStatus {
       isPaired: false,
       isWatchAppInstalled: false,
       isComplicationEnabled: false,
+      activeComplications: null,
     }
   )
 }

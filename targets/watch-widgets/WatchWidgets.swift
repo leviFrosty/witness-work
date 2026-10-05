@@ -5,44 +5,50 @@ import WidgetKit
 struct WitnessWorkWatchWidgets: WidgetBundle {
   var body: some Widget {
     ProgressComplication()
+    UpNextComplication()
   }
 }
 
 struct ProgressEntry: TimelineEntry {
   let date: Date
+  /// For strings.
   let snapshot: WatchSnapshot?
-
-  /// The snapshot, or `nil` when there's none or its month has ended.
-  var current: WatchSnapshot? {
-    snapshot.flatMap { $0.isCurrent(at: date) ? $0 : nil }
-  }
+  /// `nil` before the first snapshot, or once its month and the next have
+  /// ended.
+  let progress: MonthProgress?
 }
 
-/// Reads what the watch app stored. The app reloads timelines when a new
-/// snapshot arrives; a second entry at midnight moves "reported today" along
-/// and retires last month's progress without the iPhone.
+/// Reads what the watch app stored, including time added on the watch that the
+/// iPhone hasn't saved yet. The app reloads timelines when either changes; a
+/// second entry at midnight moves "reported today" and the pace along, and
+/// starts the next month, without the iPhone.
 struct ProgressProvider: TimelineProvider {
   func placeholder(in context: Context) -> ProgressEntry {
-    ProgressEntry(date: .now, snapshot: nil)
+    ProgressEntry(date: .now, snapshot: nil, progress: nil)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (ProgressEntry) -> Void) {
-    completion(ProgressEntry(date: .now, snapshot: WatchStorage.loadContext()?.snapshot))
+    completion(entry(at: .now))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<ProgressEntry>) -> Void) {
     let now = Date.now
-    let snapshot = WatchStorage.loadContext()?.snapshot
     let midnight = Calendar.current.nextDate(
       after: now, matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime
     ) ?? now.addingTimeInterval(24 * 60 * 60)
-    completion(
-      Timeline(
-        entries: [
-          ProgressEntry(date: now, snapshot: snapshot),
-          ProgressEntry(date: midnight, snapshot: snapshot),
-        ],
-        policy: .after(midnight)))
+    completion(Timeline(entries: [entry(at: now), entry(at: midnight)], policy: .after(midnight)))
+  }
+
+  private func entry(at date: Date) -> ProgressEntry {
+    guard let context = WatchStorage.loadContext(), let snapshot = context.snapshot else {
+      return ProgressEntry(date: date, snapshot: nil, progress: nil)
+    }
+    return ProgressEntry(
+      date: date,
+      snapshot: snapshot,
+      progress: MonthProgress(
+        snapshot: snapshot, outbox: WatchStorage.loadOutbox(),
+        resolvedEntryIds: context.resolvedEntryIds, at: date))
   }
 }
 
@@ -63,48 +69,43 @@ struct ProgressComplicationView: View {
   let entry: ProgressEntry
 
   var body: some View {
-    let snapshot = entry.current
+    let progress = entry.progress
+    let snapshot = entry.snapshot
     switch family {
-    case .accessoryCircular: CircularView(snapshot: snapshot, date: entry.date)
-    case .accessoryCorner: CornerView(snapshot: snapshot, date: entry.date)
-    case .accessoryInline: InlineView(snapshot: snapshot, date: entry.date)
-    default: RectangularView(snapshot: snapshot, date: entry.date)
+    case .accessoryCircular: CircularView(progress: progress)
+    case .accessoryCorner: CornerView(progress: progress, snapshot: snapshot)
+    case .accessoryInline: InlineView(progress: progress, snapshot: snapshot)
+    default: RectangularView(progress: progress, snapshot: snapshot)
     }
   }
 }
 
-/// Progress toward the goal, or `nil` for a role without an hours goal.
-private func goalProgress(_ snapshot: WatchSnapshot) -> Double? {
-  guard snapshot.showsTimeEntry, snapshot.goalHours > 0 else { return nil }
-  return min(max(snapshot.progress, 0), 1)
-}
-
-private func reportIcon(_ snapshot: WatchSnapshot, _ date: Date) -> String {
-  snapshot.publisherState(at: date) == "unreported" ? "circle.dashed" : "checkmark.circle.fill"
+private func reportIcon(_ progress: MonthProgress) -> String {
+  progress.publisherState == "unreported" ? "circle.dashed" : "checkmark.circle.fill"
 }
 
 private struct CircularView: View {
-  let snapshot: WatchSnapshot?
-  let date: Date
+  let progress: MonthProgress?
 
   var body: some View {
-    if let snapshot, let progress = goalProgress(snapshot) {
-      Gauge(value: progress) {
+    if let progress, progress.showsTimeEntry, let fraction = progress.fraction {
+      Gauge(value: fraction) {
         Image(systemName: "clock")
       } currentValueLabel: {
-        Text(snapshot.monthCompact)
+        Text(progress.total)
       }
       .gaugeStyle(.accessoryCircularCapacity)
+      .tint(.accentColor)
       .widgetAccentable()
     } else {
       ZStack {
         AccessoryWidgetBackground()
-        if let snapshot, snapshot.showsTimeEntry {
-          Text(snapshot.monthCompact)
+        if let progress, progress.showsTimeEntry {
+          Text(progress.total)
             .font(.headline)
             .minimumScaleFactor(0.6)
-        } else if let snapshot {
-          Image(systemName: reportIcon(snapshot, date))
+        } else if let progress {
+          Image(systemName: reportIcon(progress))
             .font(.title2)
             .widgetAccentable()
         } else {
@@ -116,24 +117,24 @@ private struct CircularView: View {
 }
 
 private struct CornerView: View {
+  let progress: MonthProgress?
   let snapshot: WatchSnapshot?
-  let date: Date
 
   var body: some View {
-    if let snapshot, snapshot.showsTimeEntry {
-      Text(snapshot.monthCompact)
+    if let progress, progress.showsTimeEntry {
+      Text(progress.total)
         .font(.title3)
         .widgetCurvesContent()
         .widgetLabel {
-          if let progress = goalProgress(snapshot) {
-            Gauge(value: progress) {
+          if let fraction = progress.fraction {
+            Gauge(value: fraction) {
               EmptyView()
             }
             .tint(.accentColor)
           }
         }
-    } else if let snapshot {
-      Image(systemName: reportIcon(snapshot, date))
+    } else if let progress {
+      Image(systemName: reportIcon(progress))
         .font(.title2)
         .widgetAccentable()
         .widgetLabel(L10n.line("sharedTheGoodNews", snapshot))
@@ -143,36 +144,29 @@ private struct CornerView: View {
   }
 }
 
+/// Fills whatever room the slot has: the month on its own line where there's
+/// room, the pace line under a smaller total in mid-size slots (a 42mm Modular
+/// Duo), and in the smallest (Modular, two lines tall) a large total and the
+/// bar, whose mark shows the pace.
 private struct RectangularView: View {
+  let progress: MonthProgress?
   let snapshot: WatchSnapshot?
-  let date: Date
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 2) {
-      Text(L10n.t("month", snapshot))
-        .font(.headline)
-        .widgetAccentable()
-      if let snapshot, snapshot.showsTimeEntry {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
-          Text(snapshot.monthFormatted)
-            .font(.title3.bold())
-          if snapshot.goalHours > 0 {
-            Text(verbatim: "/\(snapshot.goalHours)")
-              .foregroundStyle(.secondary)
-          }
+    Group {
+      if let progress, progress.showsTimeEntry {
+        ViewThatFits(in: .vertical) {
+          hours(progress, monthOnOwnLine: true, showsFooter: true)
+          hours(progress, monthOnOwnLine: false, showsFooter: true)
+          hours(progress, monthOnOwnLine: false, showsFooter: false)
         }
-        .minimumScaleFactor(0.7)
-        if let progress = goalProgress(snapshot) {
-          ProgressView(value: progress)
-            .tint(.accentColor)
-        }
-      } else if let snapshot {
-        Label(L10n.line("sharedTheGoodNews", snapshot), systemImage: reportIcon(snapshot, date))
-          .font(.footnote)
-        if snapshot.publisherState(at: date) == "reportedToday" {
-          Text(L10n.t("reportedToday", snapshot))
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+      } else if let progress {
+        // The label keeps its two lines; a small slot drops the month rather
+        // than cut it short.
+        ViewThatFits(in: .vertical) {
+          report(progress, showsMonth: true, showsToday: true)
+          report(progress, showsMonth: true, showsToday: false)
+          report(progress, showsMonth: false, showsToday: false)
         }
       } else {
         Text(verbatim: "—")
@@ -180,21 +174,87 @@ private struct RectangularView: View {
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
+
+  private func report(_ progress: MonthProgress, showsMonth: Bool, showsToday: Bool) -> some View {
+    VStack(alignment: .leading, spacing: 2) {
+      if showsMonth {
+        Text(progress.monthName)
+          .font(.headline)
+          .widgetAccentable()
+      }
+      Label(L10n.t("sharedTheGoodNews", snapshot), systemImage: reportIcon(progress))
+        .font(.footnote)
+      if showsToday, progress.publisherState == "reportedToday" {
+        Text(L10n.t("reportedToday", snapshot))
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .accessibilityElement(children: .combine)
+  }
+
+  private func hours(
+    _ progress: MonthProgress, monthOnOwnLine: Bool, showsFooter: Bool
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 2) {
+      if monthOnOwnLine {
+        Text(progress.monthName)
+          .font(.headline)
+          .widgetAccentable()
+      }
+      HStack(alignment: .firstTextBaseline, spacing: 2) {
+        // Large on its own; smaller when the pace line needs the room.
+        Text(progress.total)
+          .font(monthOnOwnLine || showsFooter ? .headline : .title3.bold())
+        if progress.goalHours > 0 {
+          Text(verbatim: "/\(progress.goalHours)")
+            .foregroundStyle(.secondary)
+        }
+        if !monthOnOwnLine {
+          Spacer(minLength: 4)
+          Text(progress.monthName)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .widgetAccentable()
+        }
+      }
+      .lineLimit(1)
+      .minimumScaleFactor(0.7)
+      if let fraction = progress.fraction {
+        PaceBar(fraction: fraction, paceFraction: progress.paceFraction)
+          .padding(.vertical, 1)
+      }
+      if showsFooter {
+        if progress.goalReached {
+          Label(L10n.t("goalReached", snapshot), systemImage: "checkmark.circle.fill")
+            .font(.footnote)
+            .lineLimit(1)
+        } else if let pace = progress.paceText {
+          Text(pace)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+      }
+    }
+    .accessibilityElement(children: .combine)
+  }
 }
 
 private struct InlineView: View {
+  let progress: MonthProgress?
   let snapshot: WatchSnapshot?
-  let date: Date
 
   var body: some View {
-    if let snapshot, snapshot.showsTimeEntry {
-      if snapshot.goalHours > 0 {
-        Text(verbatim: "\(snapshot.monthCompact) / \(snapshot.goalHours)")
+    if let progress, progress.showsTimeEntry {
+      if progress.goalHours > 0 {
+        Text(verbatim: "\(progress.total) / \(progress.goalHours)")
       } else {
-        Text(snapshot.monthCompact)
+        Text(progress.total)
       }
-    } else if let snapshot {
-      Label(L10n.line("sharedTheGoodNews", snapshot), systemImage: reportIcon(snapshot, date))
+    } else if let progress {
+      Label(L10n.line("sharedTheGoodNews", snapshot), systemImage: reportIcon(progress))
     } else {
       Text(verbatim: "—")
     }

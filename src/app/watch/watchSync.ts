@@ -4,12 +4,17 @@ import * as WatchBridge from '../../../modules/watch-bridge'
 import { useServiceReport } from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useConversations } from '@/stores/conversationStore'
+import useContacts from '@/stores/contactsStore'
 import useCategories from '@/stores/categories'
 import { mmkvStorage } from '@/stores/mmkv'
 import { analytics } from '@/lib/analytics'
 import type { AnalyticsEventName } from '@/lib/analyticsEvents'
 import { logger } from '@/lib/logger'
-import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
+import {
+  addCalendarMonths,
+  calendarMonthOf,
+  roleForMonth,
+} from '@/lib/roleHistory'
 import { tracksHours } from '@/lib/publisherCapabilities'
 import { buildWatchSnapshot } from '@/app/watch/buildWatchSnapshot'
 import { planWatchEntries } from '@/app/watch/planWatchEntries'
@@ -19,6 +24,9 @@ const FORWARDED_EVENTS = new Set<string>([
   'watch_timer_action_completed',
 ] satisfies AnalyticsEventName[])
 const STATUS_CAPTURED_AT_KEY = 'watchStatusCapturedAt'
+/** Widget kinds in `targets/watch-widgets`. */
+const PROGRESS_COMPLICATION = 'WitnessWorkProgress'
+const UP_NEXT_COMPLICATION = 'WitnessWorkUpNext'
 const STATUS_CAPTURE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
 
 let installed = false
@@ -29,18 +37,25 @@ let draining = false
  * Builds the watch snapshot from the stores and hands it to the native layer,
  * which keeps it and sends it to a paired Apple Watch. Skipped when no watch is
  * paired, and when nothing the watch shows changed unless `force`d.
+ * `reflectedEntryIds` are watch entries just saved but not yet resolved.
  */
-export function pushWatchSnapshot(reason: string, force = false): void {
+export function pushWatchSnapshot(
+  reason: string,
+  force = false,
+  reflectedEntryIds: string[] = []
+): void {
   if (!WatchBridge.isAvailable() || !WatchBridge.getStatus().isPaired) return
 
   try {
     const sr = useServiceReport.getState()
     const prefs = usePreferences.getState()
     // The watch shows this month, so it uses this month's role (Role History).
-    const publisher = roleForMonth(
+    const month = calendarMonthOf()
+    const publisher = roleForMonth(prefs.roleHistory, prefs.role, month)
+    const nextPublisher = roleForMonth(
       prefs.roleHistory,
       prefs.role,
-      calendarMonthOf()
+      addCalendarMonths(month, 1)
     )
     const snapshot = buildWatchSnapshot({
       serviceReports: sr.serviceReports,
@@ -53,8 +68,14 @@ export function pushWatchSnapshot(reason: string, force = false): void {
       dayPlans: sr.dayPlans,
       recurringPlans: sr.recurringPlans,
       conversations: useConversations.getState().conversations,
+      contacts: useContacts.getState().contacts,
       showsTimeEntry: tracksHours(publisher, prefs.logsHours),
+      nextMonth: {
+        publisher: nextPublisher,
+        showsTimeEntry: tracksHours(nextPublisher, prefs.logsHours),
+      },
       categories: useCategories.getState().categories,
+      reflectedEntryIds,
     })
 
     const { generatedAt, ...content } = snapshot
@@ -105,9 +126,11 @@ function drainInbox(): void {
         }
       }
       // Send the updated progress before the watch stops showing these
-      // entries as syncing, so its total never dips.
-      pushWatchSnapshot('watch-entries', true)
-      WatchBridge.resolveEntries(plans.map((plan) => plan.id))
+      // entries as syncing, so its total never dips. Until they're resolved
+      // the watch also adds them itself, so name them as already counted.
+      const ids = plans.map((plan) => plan.id)
+      pushWatchSnapshot('watch-entries', true, ids)
+      WatchBridge.resolveEntries(ids)
     }
 
     for (const event of WatchBridge.takeEvents()) {
@@ -128,8 +151,12 @@ function captureWatchStatus(): void {
   if (!status.isWatchAppInstalled) return
   const capturedAt = mmkvStorage.getNumber(STATUS_CAPTURED_AT_KEY) ?? 0
   if (Date.now() - capturedAt < STATUS_CAPTURE_INTERVAL_MS) return
+  // Unknown until the watch app reports the complications in use.
+  const kinds = status.activeComplications
   analytics.capture('watch_app_status', {
     complication_enabled: status.isComplicationEnabled,
+    progress_complication: kinds?.includes(PROGRESS_COMPLICATION),
+    up_next_complication: kinds?.includes(UP_NEXT_COMPLICATION),
   })
   mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())
 }
@@ -152,6 +179,9 @@ export function installWatchSync(): () => void {
     useServiceReport.subscribe(() => debouncedPush()),
     usePreferences.subscribe(() => debouncedPush()),
     useCategories.subscribe(() => debouncedPush()),
+    // Up Next shows Follow-ups and their Contacts.
+    useConversations.subscribe(() => debouncedPush()),
+    useContacts.subscribe(() => debouncedPush()),
   ]
 
   // Foreground covers midnight and month rollover, language changes, and

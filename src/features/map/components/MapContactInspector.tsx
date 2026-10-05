@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { ReactElement, useEffect, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -27,6 +28,8 @@ interface Props {
   revealRequest: number
   index: ConversationIndex
   onSelect: (id: string) => void
+  /** A pointer entered or left a contact's row; points out its pin. */
+  onHoverContact?: (id: string, hovered: boolean) => void
 }
 
 /** Keep the map visible while browsing and acting on contacts. */
@@ -36,6 +39,7 @@ export default function MapContactInspector({
   revealRequest,
   index,
   onSelect,
+  onHoverContact,
   renderContactRow,
 }: Props) {
   const theme = useTheme()
@@ -119,14 +123,23 @@ export default function MapContactInspector({
         keyExtractor={(contact) => contact.id}
         extraData={activeContact?.id}
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
-        renderItem={({ item }) =>
-          renderContactRow({
-            contact: item,
-            index,
-            selected: item.id === activeContact?.id,
-            onPress: () => onSelect(item.id),
-          })
-        }
+        renderItem={({ item }) => (
+          <PointerHover
+            onHoverChange={
+              onHoverContact && ((hovered) => onHoverContact(item.id, hovered))
+            }
+          >
+            {/* Its own view, so this hover never shares one with the row's. */}
+            <View collapsable={false}>
+              {renderContactRow({
+                contact: item,
+                index,
+                selected: item.id === activeContact?.id,
+                onPress: () => onSelect(item.id),
+              })}
+            </View>
+          </PointerHover>
+        )}
       />
       {activeContact && (
         <View

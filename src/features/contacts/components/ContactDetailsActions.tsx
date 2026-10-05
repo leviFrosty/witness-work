@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
@@ -75,15 +76,20 @@ export function AddVisitMenu({
 
   if (dataProtectionMode) {
     return (
-      <Pressable
-        onPress={() => add(false)}
-        accessibilityRole='button'
-        accessibilityLabel={i18n.t('addConversation')}
-        hitSlop={8}
-        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-      >
-        {trigger}
-      </Pressable>
+      <PointerHover effect='highlight'>
+        <Pressable
+          onPress={() => add(false)}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('addConversation')}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            borderRadius: theme.numbers.borderRadiusSm,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          {trigger}
+        </Pressable>
+      </PointerHover>
     )
   }
 

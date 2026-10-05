@@ -1,5 +1,5 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import React, { PropsWithChildren, ReactNode } from 'react'
+import React, { PropsWithChildren, ReactNode, useState } from 'react'
 import { Pressable, StyleProp, ViewStyle, View } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useToastController } from '@tamagui/toast'
@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import {
   drawerLayout,
   inputLayout,
@@ -72,6 +73,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   const theme = useTheme()
   const layout = useInputLayout()
   const toast = useToastController()
+  const [hovered, setHovered] = useState(false)
 
   const copyLink = async (link: string) => {
     try {
@@ -114,9 +116,10 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
 
   // A long-press menu needs non-interactive content, so the row renders as a
   // plain View inside ContextMenu, which owns both the tap and the long press.
-  const withMenu = (row: React.ReactElement) => (
+  const withMenu = (row: React.ReactElement, hoverRadius?: number) => (
     <ContextMenu
       accessibilityLabel={label}
+      hoverRadius={hoverRadius}
       onPress={() => {
         Haptics.light()
         onPress?.()
@@ -181,24 +184,31 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
 
     if (hasMenu) {
       return withMenu(
-        <View style={drawerRowStyle(false)}>{drawerContent}</View>
+        <View style={drawerRowStyle(false)}>{drawerContent}</View>,
+        theme.numbers.borderRadiusLg
       )
     }
 
     return (
-      <Pressable
-        accessibilityRole='button'
-        accessibilityLabel={label}
-        accessibilityState={{ disabled: !!disabled, selected: !!selected }}
-        disabled={disabled}
-        onPress={() => {
-          Haptics.light()
-          onPress?.()
-        }}
-        style={({ pressed }) => drawerRowStyle(pressed)}
-      >
-        {drawerContent}
-      </Pressable>
+      <PointerHover enabled={!disabled} onHoverChange={setHovered}>
+        <Pressable
+          accessibilityRole='button'
+          accessibilityLabel={label}
+          accessibilityState={{ disabled: !!disabled, selected: !!selected }}
+          disabled={disabled}
+          onPress={() => {
+            Haptics.light()
+            onPress?.()
+          }}
+          style={({ pressed }) => drawerRowStyle(pressed)}
+        >
+          {drawerContent}
+          <HoverTint
+            visible={hovered && !disabled}
+            borderRadius={theme.numbers.borderRadiusLg}
+          />
+        </Pressable>
+      </PointerHover>
     )
   }
 

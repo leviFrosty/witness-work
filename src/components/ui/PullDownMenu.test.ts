@@ -7,6 +7,10 @@ vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/contexts/theme', () => ({ default: () => ({ colors: {} }) }))
 vi.mock('@/stores/preferences', () => ({ usePreferences: () => undefined }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: ({ children }: { children: unknown }) => children,
+  HoverTint: () => null,
+}))
 
 import { nativeMenuActions } from '@/components/ui/PullDownMenu'
 import { menuGroups } from '@/components/ui/menuEntries'

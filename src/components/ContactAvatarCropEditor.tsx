@@ -26,6 +26,7 @@ import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import ActionButton from '@/components/ui/ActionButton'
 import i18n from '@/lib/locales'
 import {
@@ -79,35 +80,38 @@ const GlassHeaderButton = ({
     overflow: 'hidden' as const,
   }
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={12}
-      accessibilityLabel={label}
-      accessibilityRole='button'
-    >
-      <View style={shape}>
-        <BlurView
-          tint='systemThickMaterialDark'
-          intensity={50}
-          style={StyleSheet.absoluteFill}
-        />
-        <GlassView
-          glassEffectStyle='regular'
-          colorScheme='dark'
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={{
-            ...shape,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'transparent',
-          }}
-        >
-          <LucideIcon icon={icon} size={iconSize} color='#fff' />
+    <PointerHover effect='highlight'>
+      <Pressable
+        onPress={onPress}
+        hitSlop={12}
+        accessibilityLabel={label}
+        accessibilityRole='button'
+        style={{ borderRadius: shape.borderRadius }}
+      >
+        <View style={shape}>
+          <BlurView
+            tint='systemThickMaterialDark'
+            intensity={50}
+            style={StyleSheet.absoluteFill}
+          />
+          <GlassView
+            glassEffectStyle='regular'
+            colorScheme='dark'
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            style={{
+              ...shape,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
+            }}
+          >
+            <LucideIcon icon={icon} size={iconSize} color='#fff' />
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </PointerHover>
   )
 }
 
@@ -228,7 +232,10 @@ const ContactAvatarCropEditor = ({
     }
   }
 
+  // Two-finger trackpad scrolls pan too (iPad); trackpad pinches already
+  // reach the pinch.
   const pan = Gesture.Pan()
+    .enableTrackpadTwoFingerGesture(true)
     .onUpdate((e) => {
       const next = clampTranslate(
         scale.value,

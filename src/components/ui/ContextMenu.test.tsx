@@ -42,6 +42,10 @@ vi.mock('@expo/ui/swift-ui', () => ({
   }),
 }))
 vi.mock('@/lib/analytics', () => ({ analytics }))
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: slot('PointerHover'),
+  HoverTint: slot('HoverTint'),
+}))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: { card: '#card', text: '#text', textAlt: '#alt', error: '#err' },
@@ -294,4 +298,44 @@ describe('iOS context menu', () => {
     )
     expect(root.root.findAllByType('ContextMenu' as never)).toHaveLength(0)
   })
+  it('arms the preview and tints tappable content while a pointer hovers', async () => {
+    await render(
+      <IOSContextMenu
+        actions={actions()}
+        onPress={vi.fn()}
+        preview={<PreviewContent />}
+      >
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const hover = () => root.root.findByType('PointerHover' as never)
+    const tint = () => root.root.findByType('HoverTint' as never)
+    expect(root.root.findAllByType(PreviewContent)).toHaveLength(0)
+    expect(tint().props.visible).toBe(false)
+
+    // A trackpad's secondary click never sends a touch to arm it.
+    await act(async () => hover().props.onHoverChange(true))
+    expect(root.root.findAllByType(PreviewContent)).toHaveLength(1)
+    expect(tint().props.visible).toBe(true)
+
+    await act(async () => hover().props.onHoverChange(false))
+    expect(tint().props.visible).toBe(false)
+    expect(root.root.findAllByType(PreviewContent)).toHaveLength(1)
+  })
+
+  it('leaves content without a tap action untinted', async () => {
+    await render(
+      <IOSContextMenu actions={actions()}>
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const hover = root.root.findByType('PointerHover' as never)
+    expect(hover.props.effect).toBe('none')
+    await act(async () => hover.props.onHoverChange(true))
+    expect(root.root.findByType('HoverTint' as never).props.visible).toBe(false)
+  })
 })
+
+function PreviewContent() {
+  return null
+}

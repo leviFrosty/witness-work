@@ -18,6 +18,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import { useCardStyle } from '@/components/ui/Card'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
@@ -92,6 +93,7 @@ const PublisherTypeSelector = ({
   const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
   const customHoursInput = useRef<RNTextInput>(null)
   const [pendingRole, setPendingRole] = useState<Publisher | null>(null)
+  const [hoveredRole, setHoveredRole] = useState<Publisher | null>(null)
 
   const thisMonth = calendarMonthOf()
   const currentMonthKey = monthlyGoalKey(thisMonth)
@@ -189,78 +191,87 @@ const PublisherTypeSelector = ({
       {items.map(({ label, value }, index) => {
         const selected = value === role
         return (
-          <Pressable
+          <PointerHover
             key={value}
-            accessibilityRole='radio'
-            accessibilityState={{ selected }}
-            onPress={() => handleRoleChange(value)}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              minHeight: 52,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderTopWidth: index === 0 ? 0 : 1,
-              borderColor: theme.colors.border,
-              backgroundColor: selected
-                ? theme.colors.accentTranslucent
-                : undefined,
-              opacity: pressed ? 0.7 : 1,
-            })}
+            onHoverChange={(hovered) =>
+              setHoveredRole((current) =>
+                hovered ? value : current === value ? null : current
+              )
+            }
           >
-            <Text
-              style={{
-                flex: 1,
-                fontSize: theme.fontSize('md'),
-                fontFamily: selected
-                  ? theme.fonts.semiBold
-                  : theme.fonts.medium,
-              }}
+            <Pressable
+              accessibilityRole='radio'
+              accessibilityState={{ selected }}
+              onPress={() => handleRoleChange(value)}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                minHeight: 52,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                borderTopWidth: index === 0 ? 0 : 1,
+                borderColor: theme.colors.border,
+                backgroundColor: selected
+                  ? theme.colors.accentTranslucent
+                  : undefined,
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
-              {label}
-            </Text>
-            {value !== 'custom' && (
               <Text
                 style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
+                  flex: 1,
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: selected
+                    ? theme.fonts.semiBold
+                    : theme.fonts.medium,
                 }}
               >
-                {value === publishers[0]
-                  ? i18n.t('noHourRequirement')
-                  : i18n.t('yourPlanMonthlyGoal', {
-                      hours: publisherHours[value],
-                    })}
+                {label}
               </Text>
-            )}
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {selected ? (
-                <LucideIcon
-                  icon={CircleCheckIcon}
-                  size={22}
-                  color={theme.colors.accent}
-                />
-              ) : (
-                <View
+              {value !== 'custom' && (
+                <Text
                   style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    borderWidth: 1.5,
-                    borderColor: theme.colors.border,
+                    fontSize: theme.fontSize('sm'),
+                    color: theme.colors.textAlt,
                   }}
-                />
+                >
+                  {value === publishers[0]
+                    ? i18n.t('noHourRequirement')
+                    : i18n.t('yourPlanMonthlyGoal', {
+                        hours: publisherHours[value],
+                      })}
+                </Text>
               )}
-            </View>
-          </Pressable>
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {selected ? (
+                  <LucideIcon
+                    icon={CircleCheckIcon}
+                    size={22}
+                    color={theme.colors.accent}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      borderWidth: 1.5,
+                      borderColor: theme.colors.border,
+                    }}
+                  />
+                )}
+              </View>
+              <HoverTint visible={hoveredRole === value} />
+            </Pressable>
+          </PointerHover>
         )
       })}
     </View>

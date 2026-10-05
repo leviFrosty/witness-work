@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 
@@ -398,63 +399,67 @@ const AnchoredPopover = ({
           if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
         }}
       >
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.2)',
-            },
-            backdropAnimatedStyle,
-          ]}
-        >
-          <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
-        </Animated.View>
-        <Animated.View
-          ref={viewportRef}
-          collapsable={false}
-          accessibilityViewIsModal
-          onAccessibilityEscape={close}
-          style={[
-            {
-              position: 'absolute',
-              width: contentWidth,
-              borderRadius: theme.numbers.borderRadiusMd,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.card,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 8,
-            },
-            // A capped popover clips its scroll content to the rounded corners;
-            // an uncapped one keeps padding on the box and renders children flat.
-            maxHeight != null
-              ? { overflow: 'hidden' }
-              : [{ padding: 12 }, contentStyle],
-            placement,
-            contentAnimatedStyle,
-          ]}
-        >
-          <VisibilityViewportContext value={viewportRef}>
-            {maxHeight != null ? (
-              <ScrollView
-                style={{ maxHeight }}
-                contentContainerStyle={[{ padding: 12 }, contentStyle]}
-                showsVerticalScrollIndicator
-              >
-                {content}
-              </ScrollView>
-            ) : (
-              content
-            )}
-          </VisibilityViewportContext>
-        </Animated.View>
+        {/* A Modal is its own native root; gestures inside (including
+            pointer hover on its buttons) need their own handler root. */}
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.2)',
+              },
+              backdropAnimatedStyle,
+            ]}
+          >
+            <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
+          </Animated.View>
+          <Animated.View
+            ref={viewportRef}
+            collapsable={false}
+            accessibilityViewIsModal
+            onAccessibilityEscape={close}
+            style={[
+              {
+                position: 'absolute',
+                width: contentWidth,
+                borderRadius: theme.numbers.borderRadiusMd,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                elevation: 8,
+              },
+              // A capped popover clips its scroll content to the rounded corners;
+              // an uncapped one keeps padding on the box and renders children flat.
+              maxHeight != null
+                ? { overflow: 'hidden' }
+                : [{ padding: 12 }, contentStyle],
+              placement,
+              contentAnimatedStyle,
+            ]}
+          >
+            <VisibilityViewportContext value={viewportRef}>
+              {maxHeight != null ? (
+                <ScrollView
+                  style={{ maxHeight }}
+                  contentContainerStyle={[{ padding: 12 }, contentStyle]}
+                  showsVerticalScrollIndicator
+                >
+                  {content}
+                </ScrollView>
+              ) : (
+                content
+              )}
+            </VisibilityViewportContext>
+          </Animated.View>
+        </GestureHandlerRootView>
         <StatusBar translucent />
       </Modal>
     </>

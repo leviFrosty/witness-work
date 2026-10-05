@@ -253,7 +253,11 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
         handleSwipeOpen(direction, swipeable)
       }
     >
-      <ContextMenu actions={actions} onPress={handlePress}>
+      <ContextMenu
+        actions={actions}
+        onPress={handlePress}
+        hoverRadius={cardStyle.borderRadius}
+      >
         <View
           style={
             isRollover

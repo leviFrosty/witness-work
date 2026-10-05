@@ -429,6 +429,8 @@ const CalendarDay = (
             <DayPreview date={localDay} {...previewData} />
           ) : undefined
         }
+        pointerEffect={disabled ? 'none' : 'highlight'}
+        hoverRadius={theme.numbers.borderRadiusSm}
         style={{
           opacity: disabled ? 0.4 : isOffDay ? 0.55 : 1,
         }}

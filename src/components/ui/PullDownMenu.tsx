@@ -5,6 +5,7 @@ import { Platform, View, type StyleProp, type ViewStyle } from 'react-native'
 
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { type PointerEffect } from '@/components/ui/PointerHover'
 import { flattenMenu, isSubmenu, menuGroups } from '@/components/ui/menuEntries'
 import type {
   ContextMenuEntries,
@@ -24,6 +25,8 @@ type PullDownMenuProps = {
   triggerSize?: number
   /** Default trigger's icon color. Defaults to `theme.colors.textAlt`. */
   triggerColor?: string
+  /** IPad pointer effect on the trigger; `lift` suits opaque ones. */
+  pointerEffect?: PointerEffect
   style?: StyleProp<ViewStyle>
 }
 
@@ -117,6 +120,7 @@ const PullDownMenu = ({
   children,
   triggerSize = 20,
   triggerColor,
+  pointerEffect = 'highlight',
   style,
 }: PullDownMenuProps) => {
   const theme = useTheme()
@@ -141,21 +145,24 @@ const PullDownMenu = ({
         if (chosen) chosen.action.onPress()
       }}
     >
-      <View
-        accessible
-        accessibilityRole='button'
-        accessibilityLabel={accessibilityLabel}
-        hitSlop={10}
-        collapsable={false}
-      >
-        {children ?? (
-          <LucideIcon
-            icon={EllipsisIcon}
-            color={triggerColor ?? theme.colors.textAlt}
-            size={triggerSize}
-          />
-        )}
-      </View>
+      {/* MenuView's UIButton leaves pointer interaction off. */}
+      <PointerHover effect={pointerEffect}>
+        <View
+          accessible
+          accessibilityRole='button'
+          accessibilityLabel={accessibilityLabel}
+          hitSlop={10}
+          collapsable={false}
+        >
+          {children ?? (
+            <LucideIcon
+              icon={EllipsisIcon}
+              color={triggerColor ?? theme.colors.textAlt}
+              size={triggerSize}
+            />
+          )}
+        </View>
+      </PointerHover>
     </MenuView>
   )
 }

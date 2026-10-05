@@ -82,6 +82,11 @@ import {
 import MapLayerMenu, {
   type MapLayer,
 } from '@/features/map/components/MapLayerMenu'
+import MapPinLabel, {
+  PinHoverArea,
+} from '@/features/map/components/MapPinLabel'
+import usePinHover from '@/features/map/hooks/usePinHover'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -194,6 +199,27 @@ const FullMapView = ({
         : contactMarkers,
     [contactMarkers, normalizedSearch]
   )
+
+  // Pin labels stay on the open map, clear of the floating header, inspector
+  // and bottom bar.
+  const pinLabelBounds = {
+    left: 0,
+    top: topInset,
+    right:
+      width -
+      (isWide && contactMarkers.length > 0 && !cardsStowed
+        ? inspectorWidth + 32
+        : 0),
+    bottom: height - bottomOverlayInset,
+  }
+  const pinHover = usePinHover({
+    mapRef,
+    contacts: visibleContactMarkers,
+    bounds: pinLabelBounds,
+  })
+  const hoveredPinContact =
+    pinHover.pin &&
+    visibleContactMarkers.find((contact) => contact.id === pinHover.pin?.id)
 
   // Track the active contact by id rather than carousel index. Indices shift
   // whenever the source list reorders (dismiss/undismiss, sync inserts, etc.),
@@ -560,6 +586,14 @@ const FullMapView = ({
     backgroundColor: liquidGlass ? undefined : theme.colors.card + 'dd',
   }
 
+  // Icon-only controls in the left column; their labels open toward the map.
+  // `Button` already supplies the pointer effect.
+  const controlTooltipProps = {
+    placement: 'right',
+    effect: 'none',
+    style: { borderRadius: 22 },
+  } as const
+
   const SEARCH_COLLAPSED_WIDTH = 44
   const SEARCH_EXPANDED_WIDTH = isWide
     ? Math.min(360, width - inspectorWidth - 96)
@@ -744,92 +778,109 @@ const FullMapView = ({
         value={overImagery ? 'dark' : undefined}
       >
         <MapImageryContext.Provider value={overImagery}>
-          <MapView
-            mapType={mapLayer}
-            userInterfaceStyle={colorScheme ? colorScheme : undefined}
-            showsUserLocation={locationPermission}
-            showsMyLocationButton={false}
-            ref={mapRef}
-            onLayout={(e) => {
-              setHeight(e.nativeEvent.layout.height)
-              setHasMapLayout(true)
-            }}
-            onMapReady={() => setIsMapReady(true)}
-            onPress={() => {
-              collapseSearch()
-              mapContactCreation.cancel()
-            }}
-            onLongPress={(e) => {
-              if (draggingContactRef.current) return
-              collapseSearch()
-              stopTrackingUser()
-              pendingMarkerSnapIdRef.current = undefined
-              mapContactCreation.dropPin(e.nativeEvent.coordinate)
-              mapRef.current?.animateCamera(
-                { center: e.nativeEvent.coordinate },
-                { duration: 225 }
-              )
-            }}
-            onPanDrag={handlePanDrag}
-            mapPadding={
-              // Android calls GoogleMap.setPadding synchronously; the native
-              // map can still be null when Fabric applies initial props.
-              Platform.OS === 'android' && !isMapReady
-                ? undefined
-                : {
-                    top: topInset,
-                    right:
-                      isWide && contactMarkers.length > 0 && !cardsStowed
-                        ? inspectorWidth + 32
-                        : 0,
-                    left: 0,
-                    bottom:
-                      insets.bottom +
-                      (Platform.OS === 'android'
-                        ? bottomBarHeight
-                        : bottomBarHeight / 4),
-                  }
-            }
-            style={{ height: '100%', width: '100%' }}
+          <PinHoverArea
+            gesture={pinHover.hover}
+            onTouchStart={pinHover.dismiss}
           >
-            {mapContactCreation.coordinate && (
-              <Marker
-                identifier='new-contact-location'
-                coordinate={mapContactCreation.coordinate}
-                pinColor={theme.colors.accent}
-                title={i18n.t('map_droppedPin')}
-                zIndex={1}
-                stopPropagation
-              />
-            )}
-            {visibleContactMarkers.map((c) => (
-              <Marker
-                onPress={() => {
-                  mapContactCreation.cancel()
+            <MapView
+              mapType={mapLayer}
+              userInterfaceStyle={colorScheme ? colorScheme : undefined}
+              showsUserLocation={locationPermission}
+              showsMyLocationButton={false}
+              ref={mapRef}
+              onLayout={(e) => {
+                setHeight(e.nativeEvent.layout.height)
+                setHasMapLayout(true)
+              }}
+              onMapReady={() => setIsMapReady(true)}
+              onPress={() => {
+                collapseSearch()
+                mapContactCreation.cancel()
+              }}
+              onLongPress={(e) => {
+                if (draggingContactRef.current) return
+                collapseSearch()
+                stopTrackingUser()
+                pendingMarkerSnapIdRef.current = undefined
+                mapContactCreation.dropPin(e.nativeEvent.coordinate)
+                mapRef.current?.animateCamera(
+                  { center: e.nativeEvent.coordinate },
+                  { duration: 225 }
+                )
+              }}
+              onPanDrag={handlePanDrag}
+              onRegionChangeStart={pinHover.onRegionChangeStart}
+              onRegionChangeComplete={pinHover.onRegionChangeComplete}
+              mapPadding={
+                // Android calls GoogleMap.setPadding synchronously; the native
+                // map can still be null when Fabric applies initial props.
+                Platform.OS === 'android' && !isMapReady
+                  ? undefined
+                  : {
+                      top: topInset,
+                      right:
+                        isWide && contactMarkers.length > 0 && !cardsStowed
+                          ? inspectorWidth + 32
+                          : 0,
+                      left: 0,
+                      bottom:
+                        insets.bottom +
+                        (Platform.OS === 'android'
+                          ? bottomBarHeight
+                          : bottomBarHeight / 4),
+                    }
+              }
+              style={{ height: '100%', width: '100%' }}
+            >
+              {mapContactCreation.coordinate && (
+                <Marker
+                  identifier='new-contact-location'
+                  coordinate={mapContactCreation.coordinate}
+                  pinColor={theme.colors.accent}
+                  title={i18n.t('map_droppedPin')}
+                  zIndex={1}
+                  stopPropagation
+                />
+              )}
+              {visibleContactMarkers.map((c) => (
+                <Marker
+                  onPress={() => {
+                    mapContactCreation.cancel()
                   if (cardsStowed) toggleCardsStowed()
-                  setInspectorRevealRequest((request) => request + 1)
-                  handlePinPress(c.id)
-                }}
-                identifier={c.id}
-                // Include pinColor in the key so the marker remounts when its
-                // staleness color changes. react-native-maps only applies
-                // `pinColor` at mount on iOS — without the remount, logging a
-                // conversation never updates the pin tint until reload.
-                key={`${c.id}-${c.pinColor}`}
-                coordinate={c.coordinate!}
-                pinColor={c.pinColor}
-                draggable
-                onDragStart={() => {
-                  draggingContactRef.current = true
-                  mapContactCreation.cancel()
-                }}
-                onDragEnd={(e) => {
-                  draggingContactRef.current = false
-                  handleDragContactPin(c.id, e.nativeEvent.coordinate)
-                }}
-              />
-            ))}
-          </MapView>
+                    setInspectorRevealRequest((request) => request + 1)
+                    handlePinPress(c.id)
+                  }}
+                  identifier={c.id}
+                  // Include pinColor in the key so the marker remounts when its
+                  // staleness color changes. react-native-maps only applies
+                  // `pinColor` at mount on iOS — without the remount, logging a
+                  // conversation never updates the pin tint until reload.
+                  key={`${c.id}-${c.pinColor}`}
+                  coordinate={c.coordinate!}
+                  pinColor={c.pinColor}
+                  draggable
+                  onDragStart={() => {
+                    draggingContactRef.current = true
+                    pinHover.setDragging(true)
+                    mapContactCreation.cancel()
+                  }}
+                  onDragEnd={(e) => {
+                    draggingContactRef.current = false
+                    pinHover.setDragging(false)
+                    handleDragContactPin(c.id, e.nativeEvent.coordinate)
+                  }}
+                />
+              ))}
+            </MapView>
+          </PinHoverArea>
+          {pinHover.pin && hoveredPinContact && (
+            <MapPinLabel
+              key={hoveredPinContact.id}
+              name={hoveredPinContact.name}
+              box={pinHover.pin.box}
+              bounds={pinLabelBounds}
+            />
+          )}
 
           {contactMarkers.length > 0 && (
             <Animated.View
@@ -866,23 +917,31 @@ const FullMapView = ({
                   style={StyleSheet.absoluteFill}
                 />
               )}
-              <Pressable
-                onPress={expandSearch}
-                accessibilityLabel={i18n.t('map_searchContacts')}
-                accessibilityRole='button'
-                style={{
-                  width: 44,
-                  height: 44,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+              {/* The expanded field shows its own placeholder. */}
+              <PointerTooltip
+                label={i18n.t('map_searchContacts')}
+                placement='right'
+                enabled={!searchExpanded}
+                style={{ borderRadius: 22 }}
               >
-                <LucideIcon
-                  icon={SearchIcon}
-                  size={theme.fontSize('sm')}
-                  style={{ color: theme.colors.text }}
-                />
-              </Pressable>
+                <Pressable
+                  onPress={expandSearch}
+                  accessibilityLabel={i18n.t('map_searchContacts')}
+                  accessibilityRole='button'
+                  style={{
+                    width: 44,
+                    height: 44,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LucideIcon
+                    icon={SearchIcon}
+                    size={theme.fontSize('sm')}
+                    style={{ color: theme.colors.text }}
+                  />
+                </Pressable>
+              </PointerTooltip>
               <Animated.View
                 style={[
                   { flex: 1, paddingRight: 14 },
@@ -1017,6 +1076,7 @@ const FullMapView = ({
                 revealRequest={inspectorRevealRequest}
                 index={conversationIndex}
                 onSelect={handlePinPress}
+                onHoverContact={pinHover.linkContact}
               />
             </Animated.View>
           ) : (
@@ -1143,47 +1203,67 @@ const FullMapView = ({
             }}
           >
             {visibleContactMarkers.length >= 1 && (
-              <Button
-                accessibilityLabel={i18n.t('map_fitContacts')}
-                variant='glass'
-                onPress={fitToMarkers}
-                style={mapControlStyle}
+              <PointerTooltip
+                label={i18n.t('map_fitContacts')}
+                {...controlTooltipProps}
               >
-                <LucideIcon
-                  icon={ExpandIcon}
-                  size={theme.fontSize('sm')}
-                  style={{ color: theme.colors.text }}
-                />
-              </Button>
+                <Button
+                  accessibilityLabel={i18n.t('map_fitContacts')}
+                  variant='glass'
+                  onPress={fitToMarkers}
+                  style={mapControlStyle}
+                >
+                  <LucideIcon
+                    icon={ExpandIcon}
+                    size={theme.fontSize('sm')}
+                    style={{ color: theme.colors.text }}
+                  />
+                </Button>
+              </PointerTooltip>
             )}
             {/* Phone cards stow with a swipe down instead. */}
             {isWide &&
               visibleContactMarkers.length >= 1 &&
               !mapContactCreation.coordinate && (
-                <Button
-                  accessibilityLabel={i18n.t(
+                <PointerTooltip
+                  label={i18n.t(
                     cardsStowed
                       ? 'map_showContactCards'
                       : 'map_hideContactCards'
                   )}
-                  variant='glass'
-                  onPress={() => toggleCardsStowed()}
-                  style={mapControlStyle}
+                  {...controlTooltipProps}
                 >
-                  <LucideIcon
-                    icon={
-                      cardsStowed ? PanelRightOpenIcon : PanelRightCloseIcon
-                    }
-                    size={theme.fontSize('sm')}
-                    style={{ color: theme.colors.text }}
-                  />
-                </Button>
+                  <Button
+                    accessibilityLabel={i18n.t(
+                      cardsStowed
+                        ? 'map_showContactCards'
+                        : 'map_hideContactCards'
+                    )}
+                    variant='glass'
+                  onPress={() => toggleCardsStowed()}
+                    style={mapControlStyle}
+                  >
+                    <LucideIcon
+                      icon={
+                        cardsStowed ? PanelRightOpenIcon : PanelRightCloseIcon
+                      }
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.text }}
+                    />
+                  </Button>
+                </PointerTooltip>
               )}
-            <MapLayerMenu
-              value={mapLayer}
-              onChange={setMapLayer}
-              style={mapControlStyle}
-            />
+            {/* A click hides the label before the menu opens. */}
+            <PointerTooltip
+              label={i18n.t('map_chooseLayer')}
+              {...controlTooltipProps}
+            >
+              <MapLayerMenu
+                value={mapLayer}
+                onChange={setMapLayer}
+                style={mapControlStyle}
+              />
+            </PointerTooltip>
             <AnchoredPopover
               contentWidth={280}
               // Legend opens to the right of the control column, top-aligned to the
@@ -1206,18 +1286,23 @@ const FullMapView = ({
               }}
               renderTrigger={({ onPress, anchorRef }) => (
                 <View ref={anchorRef} collapsable={false}>
-                  <Button
-                    accessibilityLabel={i18n.t('map_showLegend')}
-                    variant='glass'
-                    onPress={onPress}
-                    style={mapControlStyle}
+                  <PointerTooltip
+                    label={i18n.t('map_showLegend')}
+                    {...controlTooltipProps}
                   >
-                    <LucideIcon
-                      icon={InfoIcon}
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.text }}
-                    />
-                  </Button>
+                    <Button
+                      accessibilityLabel={i18n.t('map_showLegend')}
+                      variant='glass'
+                      onPress={onPress}
+                      style={mapControlStyle}
+                    >
+                      <LucideIcon
+                        icon={InfoIcon}
+                        size={theme.fontSize('sm')}
+                        style={{ color: theme.colors.text }}
+                      />
+                    </Button>
+                  </PointerTooltip>
                 </View>
               )}
             >
@@ -1236,26 +1321,37 @@ const FullMapView = ({
               ...STOW_TRANSITION,
             }}
           >
-            <Button
-              accessibilityLabel={
+            {/* Left, so the label stays clear of the inspector beside it. */}
+            <PointerTooltip
+              label={i18n.t(
                 isTrackingUser
-                  ? i18n.t('map_stopFollowingLocation')
-                  : i18n.t('map_centerOnMyLocation')
-              }
-              variant='glass'
-              onPress={toggleLocationTracking}
-              style={mapControlStyle}
+                  ? 'map_stopFollowingLocation'
+                  : 'map_centerOnMyLocation'
+              )}
+              {...controlTooltipProps}
+              placement='left'
             >
-              <LucideIcon
-                icon={NavigationIcon}
-                size={theme.fontSize('sm')}
-                style={{
-                  color: isTrackingUser
-                    ? theme.colors.accent
-                    : theme.colors.text,
-                }}
-              />
-            </Button>
+              <Button
+                accessibilityLabel={
+                  isTrackingUser
+                    ? i18n.t('map_stopFollowingLocation')
+                    : i18n.t('map_centerOnMyLocation')
+                }
+                variant='glass'
+                onPress={toggleLocationTracking}
+                style={mapControlStyle}
+              >
+                <LucideIcon
+                  icon={NavigationIcon}
+                  size={theme.fontSize('sm')}
+                  style={{
+                    color: isTrackingUser
+                      ? theme.colors.accent
+                      : theme.colors.text,
+                  }}
+                />
+              </Button>
+            </PointerTooltip>
           </Animated.View>
         </MapImageryContext.Provider>
       </GlassColorSchemeOverrideContext.Provider>

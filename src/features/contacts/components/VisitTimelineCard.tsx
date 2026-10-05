@@ -78,6 +78,7 @@ const VisitTimelineCard = ({
     >
       <ContextMenu
         onPress={edit}
+        hoverRadius={theme.numbers.borderRadiusLg}
         accessibilityLabel={dayLabel}
         // Keep Show more / Show less reachable by screen readers.
         accessible={!(truncates || expanded)}

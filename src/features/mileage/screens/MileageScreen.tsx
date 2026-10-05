@@ -16,6 +16,7 @@ import Header from '@/components/ui/layout/Header'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import {
   fromDateKey,
@@ -92,39 +93,43 @@ export default function MileageScreen() {
               gap: 16,
             }}
           >
-            <PullDownMenu
-              accessibilityLabel={i18n.t('mileage.shareReport')}
-              actions={[
-                {
-                  id: 'copy',
-                  title: i18n.t('copy'),
-                  systemImage: 'doc.on.doc',
-                  onPress: () => void exportReport('copy', report),
-                },
-                {
-                  id: 'share',
-                  title: i18n.t('shareEllipsis'),
-                  systemImage: 'square.and.arrow.up',
-                  onPress: () => void exportReport('share', report),
-                },
-                {
-                  id: 'csv',
-                  title: i18n.t('mileage.exportCsv'),
-                  systemImage: 'tablecells',
-                  onPress: () => void exportReport('csv', report),
-                },
-              ]}
-            >
-              <View>
-                <IconButton icon={ShareIcon} size={20} />
-              </View>
-            </PullDownMenu>
-            <IconButton
-              icon={SettingsIcon}
-              size={20}
-              onPress={openSettings}
-              accessibilityLabel={i18n.t('mileage.settings')}
-            />
+            <PointerTooltip label={i18n.t('mileage.shareReport')} effect='none'>
+              <PullDownMenu
+                accessibilityLabel={i18n.t('mileage.shareReport')}
+                actions={[
+                  {
+                    id: 'copy',
+                    title: i18n.t('copy'),
+                    systemImage: 'doc.on.doc',
+                    onPress: () => void exportReport('copy', report),
+                  },
+                  {
+                    id: 'share',
+                    title: i18n.t('shareEllipsis'),
+                    systemImage: 'square.and.arrow.up',
+                    onPress: () => void exportReport('share', report),
+                  },
+                  {
+                    id: 'csv',
+                    title: i18n.t('mileage.exportCsv'),
+                    systemImage: 'tablecells',
+                    onPress: () => void exportReport('csv', report),
+                  },
+                ]}
+              >
+                <View>
+                  <IconButton icon={ShareIcon} size={20} />
+                </View>
+              </PullDownMenu>
+            </PointerTooltip>
+            <PointerTooltip label={i18n.t('mileage.settings')} effect='none'>
+              <IconButton
+                icon={SettingsIcon}
+                size={20}
+                onPress={openSettings}
+                accessibilityLabel={i18n.t('mileage.settings')}
+              />
+            </PointerTooltip>
           </View>
         }
       />

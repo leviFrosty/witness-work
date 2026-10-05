@@ -1,6 +1,10 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import {
+  Gesture,
+  GestureDetector,
+  PointerType,
+} from 'react-native-gesture-handler'
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -11,6 +15,7 @@ import { formatDate } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Haptics from '@/lib/haptics'
+import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
 import { formatMinutesCompact } from '@/lib/minutes'
 import {
   ContributionCell,
@@ -180,69 +185,88 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   // with useCallback so worklet closures don't churn — though gesture-handler
   // captures by value, recreating the closure on each render still allocates.
   const applyHover = useCallback(
-    (col: number, row: number) => {
+    (col: number, row: number, haptic: boolean) => {
       const cellData = grid[col]?.[row]
       if (!cellData || cellData.future) {
         setHovered(null)
         return
       }
       setHovered({ col, row })
-      Haptics.selection()
+      if (haptic) Haptics.selection()
     },
     [grid]
   )
 
   const clearHover = useCallback(() => setHovered(null), [])
 
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .minDistance(0)
-        .activateAfterLongPress(SCRUB_LONG_PRESS_MS)
-        .onStart((e) => {
-          'worklet'
-          const col = Math.floor(e.x / stride)
-          const row = Math.floor(e.y / stride)
-          const valid = col >= 0 && col < weeks && row >= 0 && row <= 6
-          const idx = valid ? col * 7 + row : -1
-          if (idx === lastIdx.value) return
-          lastIdx.value = idx
-          if (idx < 0) {
-            ringOpacity.value = 0
-            runOnJS(clearHover)()
-            return
-          }
-          ringX.value = col * stride
-          ringY.value = row * stride
-          ringOpacity.value = 1
-          runOnJS(applyHover)(col, row)
-        })
-        .onUpdate((e) => {
-          'worklet'
-          const col = Math.floor(e.x / stride)
-          const row = Math.floor(e.y / stride)
-          const valid = col >= 0 && col < weeks && row >= 0 && row <= 6
-          const idx = valid ? col * 7 + row : -1
-          if (idx === lastIdx.value) return
-          lastIdx.value = idx
-          if (idx < 0) {
-            ringOpacity.value = 0
-            runOnJS(clearHover)()
-            return
-          }
-          ringX.value = col * stride
-          ringY.value = row * stride
-          ringOpacity.value = 1
-          runOnJS(applyHover)(col, row)
-        })
-        .onFinalize(() => {
-          'worklet'
-          lastIdx.value = -1
-          ringOpacity.value = 0
-          runOnJS(clearHover)()
-        }),
-    [applyHover, clearHover, ringOpacity, ringX, ringY, lastIdx, stride, weeks]
-  )
+  const gesture = useMemo(() => {
+    // Moves the ring and popover to the cell under (x, y). Haptics are for
+    // touch, so a hovering pointer skips them.
+    const scrubTo = (x: number, y: number, haptic: boolean) => {
+      'worklet'
+      const col = Math.floor(x / stride)
+      const row = Math.floor(y / stride)
+      const valid = col >= 0 && col < weeks && row >= 0 && row <= 6
+      const idx = valid ? col * 7 + row : -1
+      if (idx === lastIdx.value) return
+      lastIdx.value = idx
+      if (idx < 0) {
+        ringOpacity.value = 0
+        runOnJS(clearHover)()
+        return
+      }
+      ringX.value = col * stride
+      ringY.value = row * stride
+      ringOpacity.value = 1
+      runOnJS(applyHover)(col, row, haptic)
+    }
+    const endScrub = () => {
+      'worklet'
+      lastIdx.value = -1
+      ringOpacity.value = 0
+      runOnJS(clearHover)()
+    }
+
+    const pan = Gesture.Pan()
+      .minDistance(0)
+      .activateAfterLongPress(SCRUB_LONG_PRESS_MS)
+      .onStart((e) => {
+        'worklet'
+        scrubTo(e.x, e.y, true)
+      })
+      .onUpdate((e) => {
+        'worklet'
+        scrubTo(e.x, e.y, true)
+      })
+      .onFinalize(endScrub)
+    if (!supportsPointerHover) return pan
+
+    // A trackpad, mouse, or Pencil hovering over the grid shows the same ring
+    // and popover as a held finger.
+    const hover = Gesture.Hover()
+      .onBegin((e) => {
+        'worklet'
+        runOnJS(notePointerHover)(
+          e.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
+        )
+        scrubTo(e.x, e.y, false)
+      })
+      .onUpdate((e) => {
+        'worklet'
+        scrubTo(e.x, e.y, false)
+      })
+      .onFinalize(endScrub)
+    return Gesture.Simultaneous(pan, hover)
+  }, [
+    applyHover,
+    clearHover,
+    ringOpacity,
+    ringX,
+    ringY,
+    lastIdx,
+    stride,
+    weeks,
+  ])
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: ringX.value }, { translateY: ringY.value }],
@@ -311,7 +335,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
             ) : null
           )}
         </View>
-        <GestureDetector gesture={pan}>
+        <GestureDetector gesture={gesture}>
           <View style={{ position: 'relative' }}>
             <CellGrid grid={grid} cell={cell} colorByLevel={colorByLevel} />
             <Animated.View

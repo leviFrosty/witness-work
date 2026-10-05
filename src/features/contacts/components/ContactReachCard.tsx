@@ -17,6 +17,7 @@ import { liftedContent, useCopyAction } from '@/components/ui/Copyeable'
 import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import { addressToString, coordinateAsString } from '@/lib/address'
 import i18n from '@/lib/locales'
@@ -63,6 +64,7 @@ const ContactReachCard = ({
   const theme = useTheme()
   const { showContactPhone, showContactEmail } = usePreferences()
   const [expanded, setExpanded] = useState(false)
+  const [summaryHovered, setSummaryHovered] = useState(false)
   const copyAction = useCopyAction()
 
   const addressLines = contactAddressLines(contact)
@@ -248,6 +250,7 @@ const ContactReachCard = ({
                   style={[{ flex: 1, minWidth: 0 }, liftedContent.outset]}
                   onPress={line.onPress}
                   accessibilityLabel={line.text}
+                  hoverRadius={theme.numbers.borderRadiusSm}
                   actions={line.menu}
                 >
                   <Text style={[textStyle, liftedContent.inset]}>
@@ -255,64 +258,84 @@ const ContactReachCard = ({
                   </Text>
                 </ContextMenu>
                 {index === 0 && (
-                  <Pressable
-                    onPress={() => setExpanded(false)}
-                    hitSlop={10}
-                    accessibilityRole='button'
-                    accessibilityLabel={`${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showLess')}`}
-                    accessibilityState={{ expanded }}
-                  >
-                    <LucideIcon
-                      icon={ChevronUpIcon}
-                      size={18}
-                      color={theme.colors.textAlt}
-                    />
-                  </Pressable>
+                  <PointerHover effect='highlight'>
+                    <Pressable
+                      onPress={() => setExpanded(false)}
+                      hitSlop={10}
+                      accessibilityRole='button'
+                      accessibilityLabel={`${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showLess')}`}
+                      accessibilityState={{ expanded }}
+                      // Room around the chevron for the pointer highlight;
+                      // the negative margin keeps the layout unchanged.
+                      style={{
+                        padding: 4,
+                        margin: -4,
+                        borderRadius: theme.numbers.borderRadiusSm,
+                      }}
+                    >
+                      <LucideIcon
+                        icon={ChevronUpIcon}
+                        size={18}
+                        color={theme.colors.textAlt}
+                      />
+                    </Pressable>
+                  </PointerHover>
                 )}
               </View>
             ))}
           </View>
         ) : (
-          <Pressable
-            disabled={!expandable}
-            onPress={() => setExpanded(true)}
-            accessibilityRole='button'
-            accessibilityLabel={
-              expandable
-                ? `${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showMore')}`
-                : undefined
-            }
-            accessibilityState={{ expanded }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: 10,
-              paddingHorizontal: 2,
-            }}
-          >
-            <View style={{ paddingTop: 2 }}>
-              <LucideIcon
-                icon={summary.icon}
-                size={16}
-                color={theme.colors.textAlt}
+          <PointerHover enabled={expandable} onHoverChange={setSummaryHovered}>
+            <Pressable
+              disabled={!expandable}
+              onPress={() => setExpanded(true)}
+              accessibilityRole='button'
+              accessibilityLabel={
+                expandable
+                  ? `${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showMore')}`
+                  : undefined
+              }
+              accessibilityState={{ expanded }}
+              style={[
+                {
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  paddingHorizontal: 2,
+                },
+                // Breathing room for the hover tint without moving the row.
+                liftedContent.outset,
+                { paddingHorizontal: 10, paddingVertical: 4 },
+              ]}
+            >
+              <View style={{ paddingTop: 2 }}>
+                <LucideIcon
+                  icon={summary.icon}
+                  size={16}
+                  color={theme.colors.textAlt}
+                />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  numberOfLines={1}
+                  style={{ ...textStyle, fontFamily: theme.fonts.medium }}
+                >
+                  {summaryText}
+                </Text>
+              </View>
+              {expandable && (
+                <LucideIcon
+                  icon={ChevronDownIcon}
+                  size={18}
+                  color={theme.colors.textAlt}
+                />
+              )}
+              <HoverTint
+                visible={summaryHovered && expandable}
+                borderRadius={theme.numbers.borderRadiusSm}
               />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text
-                numberOfLines={1}
-                style={{ ...textStyle, fontFamily: theme.fonts.medium }}
-              >
-                {summaryText}
-              </Text>
-            </View>
-            {expandable && (
-              <LucideIcon
-                icon={ChevronDownIcon}
-                size={18}
-                color={theme.colors.textAlt}
-              />
-            )}
-          </Pressable>
+            </Pressable>
+          </PointerHover>
         ))}
       {actions.length > 0 && (
         <View style={{ flexDirection: 'row', gap: 8 }}>

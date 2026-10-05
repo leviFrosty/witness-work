@@ -47,6 +47,10 @@ vi.mock('@/stores/preferences', () => ({
     selector({ colorScheme: 'dark' }),
 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: ({ children }: { children: unknown }) => children,
+  HoverTint: () => null,
+}))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 // Exercise the shared control with each implementation Metro selects natively.
 vi.mock('@/components/ui/SelectMenu', async (importOriginal) => {

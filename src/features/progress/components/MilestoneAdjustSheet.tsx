@@ -6,6 +6,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import { Sheet } from 'tamagui'
@@ -105,6 +106,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   // only sort/dedupe on blur. Keyed by the numeric milestone value at the time
   // the row was rendered.
   const [inputBuffers, setInputBuffers] = useState<Record<number, string>>({})
+  const [lockedRowHovered, setLockedRowHovered] = useState(false)
 
   useEffect(() => {
     if (!visible) return
@@ -447,24 +449,26 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       />
 
                       {/* Stepper */}
-                      <Pressable
-                        onPress={() => handleStep(value, -1)}
-                        hitSlop={8}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme.colors.card,
-                        }}
-                      >
-                        <LucideIcon
-                          icon={MinusIcon}
-                          size={theme.fontSize('xs')}
-                          style={{ color: theme.colors.textAlt }}
-                        />
-                      </Pressable>
+                      <PointerHover effect='lift'>
+                        <Pressable
+                          onPress={() => handleStep(value, -1)}
+                          hitSlop={8}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: theme.numbers.borderRadiusSm,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.colors.card,
+                          }}
+                        >
+                          <LucideIcon
+                            icon={MinusIcon}
+                            size={theme.fontSize('xs')}
+                            style={{ color: theme.colors.textAlt }}
+                          />
+                        </Pressable>
+                      </PointerHover>
 
                       {/* Numeric input */}
                       <View
@@ -504,24 +508,26 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         />
                       </View>
 
-                      <Pressable
-                        onPress={() => handleStep(value, 1)}
-                        hitSlop={8}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme.colors.card,
-                        }}
-                      >
-                        <LucideIcon
-                          icon={PlusIcon}
-                          size={theme.fontSize('xs')}
-                          style={{ color: theme.colors.textAlt }}
-                        />
-                      </Pressable>
+                      <PointerHover effect='lift'>
+                        <Pressable
+                          onPress={() => handleStep(value, 1)}
+                          hitSlop={8}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: theme.numbers.borderRadiusSm,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.colors.card,
+                          }}
+                        >
+                          <LucideIcon
+                            icon={PlusIcon}
+                            size={theme.fontSize('xs')}
+                            style={{ color: theme.colors.textAlt }}
+                          />
+                        </Pressable>
+                      </PointerHover>
 
                       <Text
                         style={{
@@ -546,65 +552,71 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                 })}
 
                 {/* Locked annual-goal row */}
-                <Pressable
-                  onPress={handleNavigateToSettings}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    paddingHorizontal: 12,
-                    paddingVertical: 12,
-                    borderRadius: theme.numbers.borderRadiusMd,
-                    backgroundColor: theme.colors.card,
-                  }}
-                >
-                  <View
+                <PointerHover onHoverChange={setLockedRowHovered}>
+                  <Pressable
+                    onPress={handleNavigateToSettings}
                     style={{
-                      width: 22,
-                      height: 22,
+                      flexDirection: 'row',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      gap: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 12,
+                      borderRadius: theme.numbers.borderRadiusMd,
+                      backgroundColor: theme.colors.card,
                     }}
                   >
-                    <LucideIcon
-                      icon={LockIcon}
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.textAlt }}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      color: theme.colors.text,
-                      fontSize: theme.fontSize('md'),
-                      fontFamily: theme.fonts.semiBold,
-                      minWidth: 56,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {annualGoalHours}
-                  </Text>
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {i18n.t('hours_lowercase')}
-                  </Text>
-                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <LucideIcon
+                        icon={LockIcon}
+                        size={theme.fontSize('sm')}
+                        style={{ color: theme.colors.textAlt }}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: theme.fontSize('md'),
+                        fontFamily: theme.fonts.semiBold,
+                        minWidth: 56,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {annualGoalHours}
+                    </Text>
                     <Text
                       style={{
                         color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('xs'),
-                        fontFamily: theme.fonts.semiBold,
-                        letterSpacing: 0.5,
+                        fontSize: theme.fontSize('sm'),
                       }}
-                      numberOfLines={1}
                     >
-                      {i18n.t('yearGoalSetInSettings')}
+                      {i18n.t('hours_lowercase')}
                     </Text>
-                  </View>
-                </Pressable>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: theme.fontSize('xs'),
+                          fontFamily: theme.fonts.semiBold,
+                          letterSpacing: 0.5,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {i18n.t('yearGoalSetInSettings')}
+                      </Text>
+                    </View>
+                    <HoverTint
+                      visible={lockedRowHovered}
+                      borderRadius={theme.numbers.borderRadiusMd}
+                    />
+                  </Pressable>
+                </PointerHover>
               </View>
 
               {/* Footer actions */}

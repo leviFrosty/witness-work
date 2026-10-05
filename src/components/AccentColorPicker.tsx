@@ -1,5 +1,6 @@
 import { Check as CheckIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover from '@/components/ui/PointerHover'
 import { Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import IsSupporter from '@/components/IsSupporter'
@@ -36,27 +37,29 @@ const Swatch = ({
 }) => {
   const theme = useTheme()
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: color,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: selected ? 3 : isDefault ? 1 : 0,
-        borderColor: selected ? theme.colors.text : theme.colors.border,
-      }}
-    >
-      {selected && (
-        <LucideIcon
-          icon={CheckIcon}
-          size={14}
-          color={theme.colors.textInverse}
-        />
-      )}
-    </Pressable>
+    <PointerHover effect='lift'>
+      <Pressable
+        onPress={onPress}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: color,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: selected ? 3 : isDefault ? 1 : 0,
+          borderColor: selected ? theme.colors.text : theme.colors.border,
+        }}
+      >
+        {selected && (
+          <LucideIcon
+            icon={CheckIcon}
+            size={14}
+            color={theme.colors.textInverse}
+          />
+        )}
+      </Pressable>
+    </PointerHover>
   )
 }
 

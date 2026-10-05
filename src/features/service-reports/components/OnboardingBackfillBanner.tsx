@@ -58,6 +58,7 @@ const OnboardingBackfillBanner = () => {
       <ContextMenu
         onPress={startBackfill}
         accessibilityLabel={i18n.t('onboardingBackfillBannerTitle')}
+        hoverRadius={theme.numbers.borderRadiusSm}
         style={{ flex: 1 }}
         actions={[
           {

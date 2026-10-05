@@ -82,6 +82,9 @@ vi.mock('@tamagui/toast', () => ({
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'Icon' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+}))
 vi.mock('@/components/IsSupporter', () => ({ default: 'IsSupporter' }))
 vi.mock('@/components/AccentColorPicker', () => ({ ACCENT_PRESETS: [] }))
 vi.mock('@/components/CustomColorSwatch', () => ({

@@ -1,10 +1,12 @@
 import { Ellipsis as EllipsisIcon } from 'lucide-react-native'
+import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import useTheme from '@/contexts/theme'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 
 export interface RowAction {
   /** Stable key for the row. */
@@ -59,61 +61,87 @@ const RowActionsMenu = ({
       contentStyle={{ padding: 4 }}
       renderTrigger={({ onPress, anchorRef }) => (
         <View ref={anchorRef} collapsable={false}>
-          <Pressable
-            accessibilityRole='button'
-            accessibilityLabel={accessibilityLabel}
-            onPress={onPress}
-            hitSlop={10}
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.7 : 1,
-              paddingLeft: 2,
-            })}
-          >
-            <LucideIcon
-              icon={EllipsisIcon}
-              color={triggerColor ?? theme.colors.textAlt}
-              size={triggerSize}
-            />
-          </Pressable>
+          <PointerHover effect='highlight'>
+            <Pressable
+              accessibilityRole='button'
+              accessibilityLabel={accessibilityLabel}
+              onPress={onPress}
+              hitSlop={10}
+              // Padding (cancelled by the margin) gives the pointer highlight
+              // room around the icon without moving it.
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.7 : 1,
+                padding: 4,
+                paddingLeft: 6,
+                margin: -4,
+                borderRadius: theme.numbers.borderRadiusSm,
+              })}
+            >
+              <LucideIcon
+                icon={EllipsisIcon}
+                color={triggerColor ?? theme.colors.textAlt}
+                size={triggerSize}
+              />
+            </Pressable>
+          </PointerHover>
         </View>
       )}
     >
       {({ closeThen }) =>
-        actions.map((action) => {
-          const color = action.destructive
-            ? theme.colors.error
-            : theme.colors.text
-
-          return (
-            <Pressable
-              key={action.id}
-              accessibilityRole='button'
-              onPress={() => closeThen(action.onPress)}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 10,
-                borderRadius: theme.numbers.borderRadiusSm,
-              })}
-            >
-              <LucideIcon icon={action.icon} color={color} size={14} />
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {action.label}
-              </Text>
-            </Pressable>
-          )
-        })
+        actions.map((action) => (
+          <ActionRow
+            key={action.id}
+            action={action}
+            onPress={() => closeThen(action.onPress)}
+          />
+        ))
       }
     </AnchoredPopover>
+  )
+}
+
+const ActionRow = ({
+  action,
+  onPress,
+}: {
+  action: RowAction
+  onPress: () => void
+}) => {
+  const theme = useTheme()
+  const [hovered, setHovered] = useState(false)
+  const color = action.destructive ? theme.colors.error : theme.colors.text
+
+  return (
+    <PointerHover onHoverChange={setHovered}>
+      <Pressable
+        accessibilityRole='button'
+        onPress={onPress}
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.7 : 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          paddingVertical: 10,
+          paddingHorizontal: 10,
+          borderRadius: theme.numbers.borderRadiusSm,
+        })}
+      >
+        <LucideIcon icon={action.icon} color={color} size={14} />
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {action.label}
+        </Text>
+        <HoverTint
+          visible={hovered}
+          borderRadius={theme.numbers.borderRadiusSm}
+        />
+      </Pressable>
+    </PointerHover>
   )
 }
 

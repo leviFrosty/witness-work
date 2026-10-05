@@ -48,6 +48,7 @@ import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
+import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 
 initializeApp()
 
@@ -133,6 +134,7 @@ export default function App() {
                             <SilentForegroundAlerts />
                             <SystemMenu language={loadedLocale} />
                             <RootStackComponent />
+                            <PointerTooltipLayer />
                           </SurveyProvider>
                         </AnimationViewProvider>
                       </ConfettiProvider>

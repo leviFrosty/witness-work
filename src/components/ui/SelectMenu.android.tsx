@@ -13,6 +13,7 @@ import { selectable, selectableGroup } from '@expo/ui/jetpack-compose/modifiers'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import type { SelectMenuProps } from '@/components/ui/SelectMenu'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import checkIcon from '@/assets/icons/check.xml'
 
 export default function SelectMenu({
@@ -20,11 +21,13 @@ export default function SelectMenu({
   onSelect,
   accessibilityLabel,
   accessibilityValue,
+  hoverRadius,
   children,
 }: SelectMenuProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
+  const [hovered, setHovered] = useState(false)
   // Carry the form's control width into the hosted React Native content.
   const [width, setWidth] = useState<number>()
 
@@ -43,16 +46,19 @@ export default function SelectMenu({
         >
           <DropdownMenu.Trigger>
             <RNHostView matchContents>
-              <Pressable
-                onPress={() => setExpanded(true)}
-                accessibilityRole='button'
-                accessibilityLabel={accessibilityLabel}
-                accessibilityState={{ expanded }}
-                accessibilityValue={{ text: accessibilityValue }}
-                style={{ width }}
-              >
-                {children}
-              </Pressable>
+              <PointerHover onHoverChange={setHovered}>
+                <Pressable
+                  onPress={() => setExpanded(true)}
+                  accessibilityRole='button'
+                  accessibilityLabel={accessibilityLabel}
+                  accessibilityState={{ expanded }}
+                  accessibilityValue={{ text: accessibilityValue }}
+                  style={{ width }}
+                >
+                  {children}
+                  <HoverTint visible={hovered} borderRadius={hoverRadius} />
+                </Pressable>
+              </PointerHover>
             </RNHostView>
           </DropdownMenu.Trigger>
           <DropdownMenu.Items>

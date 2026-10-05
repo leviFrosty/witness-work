@@ -132,6 +132,7 @@ export default function BuddyNotificationRow({
           style={{ flex: 1 }}
           onPress={open}
           accessibilityLabel={title}
+          hoverRadius={theme.numbers.borderRadiusSm}
           actions={[
             open && {
               id: 'open',

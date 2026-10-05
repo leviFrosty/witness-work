@@ -16,6 +16,7 @@ import {
   menuAccessibilityProps,
   menuGroups,
 } from '@/components/ui/menuEntries'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import type {
   ContextMenuAction,
   ContextMenuProps,
@@ -34,6 +35,8 @@ export default function ContextMenu({
   accessibilityLabel,
   accessible = true,
   disabled = false,
+  pointerEffect = 'tint',
+  hoverRadius,
   style,
 }: ContextMenuProps) {
   const theme = useTheme()
@@ -44,6 +47,11 @@ export default function ContextMenu({
   // surrounding layout gives us down to it explicitly.
   const [width, setWidth] = useState<number>()
   const groups = menuGroups(actions)
+  // Android has no system pointer effects, so mouse hover always tints.
+  const [hovered, setHovered] = useState(false)
+  const onHoverChange =
+    onPress && pointerEffect !== 'none' ? setHovered : undefined
+  const tint = <HoverTint visible={hovered} borderRadius={hoverRadius} />
 
   const open = () => {
     void performAndroidHapticsAsync(AndroidHaptics.Long_Press)
@@ -63,14 +71,17 @@ export default function ContextMenu({
 
   if (!groups.length) {
     return onPress ? (
-      <Pressable
-        style={({ pressed }) => [style, pressed && { opacity: 0.7 }]}
-        onPress={onPress}
-        accessibilityRole='button'
-        accessibilityLabel={accessibilityLabel}
-      >
-        {children}
-      </Pressable>
+      <PointerHover onHoverChange={onHoverChange}>
+        <Pressable
+          style={({ pressed }) => [style, pressed && { opacity: 0.7 }]}
+          onPress={onPress}
+          accessibilityRole='button'
+          accessibilityLabel={accessibilityLabel}
+        >
+          {children}
+          {tint}
+        </Pressable>
+      </PointerHover>
     ) : (
       <View style={style}>{children}</View>
     )
@@ -115,19 +126,22 @@ export default function ContextMenu({
             <RNHostView matchContents>
               {/* Compose click modifiers never see touches on hosted RN
                   views, so the RN side owns both gestures. */}
-              <Pressable
-                style={({ pressed }) => [
-                  { width },
-                  pressed && onPress ? { opacity: 0.7 } : null,
-                ]}
-                onPress={onPress}
-                onLongPress={disabled ? undefined : open}
-                accessibilityRole={onPress ? 'button' : undefined}
-                accessibilityLabel={accessibilityLabel}
-                {...a11y}
-              >
-                {children}
-              </Pressable>
+              <PointerHover onHoverChange={onHoverChange}>
+                <Pressable
+                  style={({ pressed }) => [
+                    { width },
+                    pressed && onPress ? { opacity: 0.7 } : null,
+                  ]}
+                  onPress={onPress}
+                  onLongPress={disabled ? undefined : open}
+                  accessibilityRole={onPress ? 'button' : undefined}
+                  accessibilityLabel={accessibilityLabel}
+                  {...a11y}
+                >
+                  {children}
+                  {tint}
+                </Pressable>
+              </PointerHover>
             </RNHostView>
           </DropdownMenu.Trigger>
           <DropdownMenu.Items>

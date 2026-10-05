@@ -8,12 +8,27 @@ ww-api is the backend api. Find the code at ~/dev/ww-api.
 
 ## Platforms
 
-iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md).
+iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). For running, inspecting, and testing changes on iOS simulators (including iPad pointer hover), follow [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md).
 
 - **Test both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too — or be gated with `Platform.OS` and degrade gracefully.
 - **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
 - **iOS-only features.** iCloud sync/restore, widgets, Live Activities, alternate app icons, and Notes Import (needs Apple App Attest) stay unavailable on Android. Hide their entry points there instead of showing a broken state.
 - **Platform copy.** Don't write "iOS Settings", "iPhone", "App Store", etc. into shared copy; add an `…Android` i18n variant when the wording differs.
+
+## Pointer hover (iPad trackpad, mouse, Pencil)
+
+iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and an Android mouse gets hover callbacks but no system effects. The primitives below do nothing where hover isn't supported, so don't gate them yourself. Apply them where people would naturally hover. Follow Apple's [pointer guidance](https://developer.apple.com/design/human-interface-guidelines/pointing-devices).
+
+- **Already covered:** `Button` picks a pointer effect automatically. Small clear controls highlight, small opaque ones lift, and large surfaces tint. Set `pointerEffect='none'` only when a parent already handles hover. `ContextMenu` content with `onPress` tints on hover; set `hoverRadius` to match its shape, or `pointerEffect='highlight'` for small cells.
+- **Custom pressables** (raw `Pressable`, gesture-driven controls): wrap them in `PointerHover`. Use `effect` for small controls, and `onHoverChange` plus `HoverTint` for rows and cards. Never scale rows or cards.
+- **Icon-only controls** whose meaning isn't obvious get a `PointerTooltip` with the control's name. Leave it out when the label is already visible, and never put instructions in it.
+- **Charts and other scrubbed data:** if a value appears on press-and-drag, show the same readout when the pointer hovers there (`Gesture.Hover` `onUpdate`).
+- **Resize and drag handles:** use `PointerStyleView` from `modules/pointer-style` to show directional arrows next to the pointer.
+- **Don't:**
+  - add decorative effects to non-interactive content;
+  - make hover the only way to reach information or an action (touch has no hover);
+  - build hover-only UI that behaves differently from touch.
+- **Test:** with a real pointer on an iPad simulator. See [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#ipad-pointer-and-pencil-hover). Unit tests can't show whether hover actually works.
 
 ## Domain Specific Language
 

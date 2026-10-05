@@ -7,6 +7,7 @@ import {
 
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 
 /** The checkmark circle a row shows in Select mode. */
@@ -37,27 +38,30 @@ export function SelectionTextButton({
 }) {
   const theme = useTheme()
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole='button'
-      hitSlop={8}
-      style={({ pressed }) => ({
-        minHeight: 40,
-        justifyContent: 'center',
-        paddingHorizontal: 4,
-        opacity: pressed ? 0.6 : 1,
-      })}
-    >
-      <Text
-        style={{
-          color: theme.colors.accent,
-          fontSize: theme.fontSize('md'),
-          fontFamily: emphasized ? theme.fonts.bold : theme.fonts.semiBold,
-        }}
+    <PointerHover effect='highlight'>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole='button'
+        hitSlop={8}
+        style={({ pressed }) => ({
+          minHeight: 40,
+          justifyContent: 'center',
+          paddingHorizontal: 4,
+          borderRadius: theme.numbers.borderRadiusSm,
+          opacity: pressed ? 0.6 : 1,
+        })}
       >
-        {label}
-      </Text>
-    </Pressable>
+        <Text
+          style={{
+            color: theme.colors.accent,
+            fontSize: theme.fontSize('md'),
+            fontFamily: emphasized ? theme.fonts.bold : theme.fonts.semiBold,
+          }}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </PointerHover>
   )
 }
 
@@ -109,17 +113,23 @@ export function SelectionBarButton({
   onPress,
   ...item
 }: Parameters<typeof SelectionBarItem>[0] & { onPress: () => void }) {
+  const theme = useTheme()
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={item.disabled}
-      accessibilityRole='button'
-      accessibilityLabel={item.label}
-      accessibilityState={{ disabled: !!item.disabled }}
-      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-    >
-      <SelectionBarItem {...item} />
-    </Pressable>
+    <PointerHover effect='highlight' enabled={!item.disabled}>
+      <Pressable
+        onPress={onPress}
+        disabled={item.disabled}
+        accessibilityRole='button'
+        accessibilityLabel={item.label}
+        accessibilityState={{ disabled: !!item.disabled }}
+        style={({ pressed }) => ({
+          borderRadius: theme.numbers.borderRadiusSm,
+          opacity: pressed ? 0.6 : 1,
+        })}
+      >
+        <SelectionBarItem {...item} />
+      </Pressable>
+    </PointerHover>
   )
 }
 

@@ -4,6 +4,7 @@ import { Bell as BellIcon } from 'lucide-react-native'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
@@ -60,18 +61,20 @@ function BellTrigger({
 
   return (
     <View ref={anchorRef} collapsable={false} style={{ position: 'relative' }}>
-      <IconButton
-        icon={BellIcon}
-        size='xl'
-        hitSlop={12}
-        color={theme.colors.text}
-        accessibilityLabel={
-          unread > 0
-            ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_unreadCount', { count: unread })}.`
-            : i18n.t('notifications_a11y')
-        }
-        onPress={onPress}
-      />
+      <PointerTooltip label={i18n.t('notifications_a11y')} effect='none'>
+        <IconButton
+          icon={BellIcon}
+          size='xl'
+          hitSlop={12}
+          color={theme.colors.text}
+          accessibilityLabel={
+            unread > 0
+              ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_unreadCount', { count: unread })}.`
+              : i18n.t('notifications_a11y')
+          }
+          onPress={onPress}
+        />
+      </PointerTooltip>
       {unread > 0 && (
         <View
           pointerEvents='none'

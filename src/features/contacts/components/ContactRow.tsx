@@ -298,6 +298,7 @@ const ContactRow = ({
           accessibilityLabel={contact.name}
           accessible={!selectionMode}
           disabled={selectionMode}
+          hoverRadius={theme.numbers.borderRadiusSm}
           preview={
             <ContactPreview
               contact={contact}

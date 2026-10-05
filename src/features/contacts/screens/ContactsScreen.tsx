@@ -48,6 +48,7 @@ import Collapse from '@/components/ui/Collapse'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import Text from '@/components/ui/MyText'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsStatsHeader from '@/features/contacts/components/ContactsStatsHeader'
@@ -328,30 +329,33 @@ const ContactsScreen = ({
           ],
         ]}
       />
-      <IconButton
-        icon={PlusIcon}
-        size='lg'
-        accessibilityLabel={i18n.t('addContact')}
-        style={{
-          backgroundColor: theme.colors.accentTranslucent,
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: theme.colors.accent,
-        }}
-        color={theme.colors.accent}
-        onPress={() => {
-          const id = Crypto.randomUUID()
-          if (isWide && !showsMap) setSelectedId(id)
-          navigation.navigate('Contact Form', {
-            id,
-            returnToContacts: isWide && !showsMap,
-          })
-        }}
-      />
+      {/* Beside the open contact's own "+ Add", this one needs its name. */}
+      <PointerTooltip label={i18n.t('addContact')} effect='none'>
+        <IconButton
+          icon={PlusIcon}
+          size='lg'
+          accessibilityLabel={i18n.t('addContact')}
+          style={{
+            backgroundColor: theme.colors.accentTranslucent,
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: theme.colors.accent,
+          }}
+          color={theme.colors.accent}
+          onPress={() => {
+            const id = Crypto.randomUUID()
+            if (isWide && !showsMap) setSelectedId(id)
+            navigation.navigate('Contact Form', {
+              id,
+              returnToContacts: isWide && !showsMap,
+            })
+          }}
+        />
+      </PointerTooltip>
     </>
   )
 

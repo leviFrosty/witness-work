@@ -397,6 +397,7 @@ const PlanRow = (props: {
       <ContextMenu
         actions={menu}
         onPress={props.onPress}
+        hoverRadius={cardStyle.borderRadius}
         preview={
           longNote && displayNote ? (
             <PlanPreview

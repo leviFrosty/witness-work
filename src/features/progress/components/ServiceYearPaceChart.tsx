@@ -8,22 +8,26 @@ import {
   Line as SkiaLine,
   vec,
 } from '@shopify/react-native-skia'
+import { Gesture, PointerType } from 'react-native-gesture-handler'
 import {
   runOnJS,
   useAnimatedReaction,
   useDerivedValue,
+  useSharedValue,
 } from 'react-native-reanimated'
 import {
   Area,
   CartesianChart,
   Line,
   useChartPressState,
+  type CartesianActionsHandle,
   type Scale,
 } from 'victory-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import ChartXLabels from '@/components/charts/ChartXLabels'
 import Haptics from '@/lib/haptics'
+import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
 import { withAlpha } from '@/lib/color'
 import { formatMinutesCompact } from '@/lib/minutes'
 import {
@@ -50,7 +54,10 @@ type Props = {
   pace: ServiceYearPace
   /** Running totals, in hours, to mark with labeled gridlines. */
   gridHours: number[]
-  /** Called with the point under the finger, or null when scrubbing ends. */
+  /**
+   * Called with the point under the finger or pointer, or null when scrubbing
+   * ends.
+   */
   onScrub: (point: PacePoint | null) => void
   accessibilityLabel: string
 }
@@ -58,7 +65,7 @@ type Props = {
 /**
  * Running totals across the Service Year: the goal (dashed), logged time
  * (filled), Plans from today on (dashed), and last year (faint). Press and hold
- * to scrub month by month; the parent shows the values.
+ * (or hover a pointer) to scrub month by month; the parent shows the values.
  */
 const ServiceYearPaceChart = ({
   pace,
@@ -72,6 +79,12 @@ const ServiceYearPaceChart = ({
     y: { goal: 0, logged: 0, planned: 0, lastYear: 0 },
   })
   const lastIndex = useRef(-1)
+  // Victory's own touch handling, reused so a hovering pointer scrubs exactly
+  // like a held finger.
+  const chartActions = useSharedValue<CartesianActionsHandle<
+    typeof state
+  > | null>(null)
+  const hovering = useSharedValue(false)
   // Victory rounds the top of its y domain up to a "nice" value, so labels and
   // gridlines place themselves with its scale rather than re-deriving it.
   const [yScale, setYScale] = useState<Scale | null>(null)
@@ -127,7 +140,7 @@ const ServiceYearPaceChart = ({
     p.logged !== null ? 'logged' : p.planned !== null ? 'planned' : 'goal'
   )
 
-  const handleIndex = (index: number) => {
+  const handleIndex = (index: number, hovered: boolean) => {
     if (index === lastIndex.current) return
     lastIndex.current = index
     const point = index >= 0 ? pace.points[index] : undefined
@@ -135,16 +148,48 @@ const ServiceYearPaceChart = ({
       onScrub(null)
       return
     }
-    Haptics.selection()
+    // Haptics are for touch.
+    if (!hovered) Haptics.selection()
     onScrub(point)
   }
 
   useAnimatedReaction(
     () => (state.isActive.value ? state.matchedIndex.value : -1),
     (index, previous) => {
-      if (index !== previous) runOnJS(handleIndex)(index)
+      if (index !== previous) runOnJS(handleIndex)(index, hovering.value)
     }
   )
+
+  // A trackpad, mouse, or Pencil hovering over the chart drives the same press
+  // state as a held finger, so the scrub line and readout follow it.
+  const hoverTo = (x: number, y: number) => {
+    'worklet'
+    hovering.value = true
+    chartActions.value?.handleTouch(state, x, y)
+    state.isActive.value = true
+  }
+  const hoverGesture = supportsPointerHover
+    ? Gesture.Race(
+        Gesture.Hover()
+          .onBegin((e) => {
+            'worklet'
+            runOnJS(notePointerHover)(
+              e.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
+            )
+            hoverTo(e.x, e.y)
+          })
+          .onUpdate((e) => {
+            'worklet'
+            hoverTo(e.x, e.y)
+          })
+          .onFinalize(() => {
+            'worklet'
+            if (!hovering.value) return
+            hovering.value = false
+            state.isActive.value = false
+          })
+      )
+    : undefined
 
   const scrubTop = useDerivedValue(() => vec(state.x.position.value, PLOT_TOP))
   const scrubBottom = useDerivedValue(() =>
@@ -186,6 +231,8 @@ const ServiceYearPaceChart = ({
           chartPressConfig={{
             pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
           }}
+          customGestures={hoverGesture}
+          actionsRef={chartActions}
         >
           {({ points, chartBounds, yScale: chartYScale }) => (
             <>

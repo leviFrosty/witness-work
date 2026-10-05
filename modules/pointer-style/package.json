@@ -1,0 +1,7 @@
+{
+  "name": "pointer-style",
+  "version": "0.1.0",
+  "description": "Local Expo module for iPadOS pointer shapes and accessories.",
+  "main": "index.tsx",
+  "private": true
+}

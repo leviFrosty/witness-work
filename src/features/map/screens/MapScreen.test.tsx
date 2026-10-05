@@ -221,6 +221,9 @@ vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/components/ui/layout/Wrapper', () => ({ default: 'Wrapper' }))
+vi.mock('@/components/ui/PointerTooltip', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+}))
 vi.mock('@/components/ui/AnchoredPopover', () => ({
   default: 'AnchoredPopover',
 }))

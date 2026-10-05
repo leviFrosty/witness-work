@@ -85,6 +85,8 @@ const ContactHero = ({
           <ContextMenu
             onPress={() => setViewerOpen(true)}
             accessibilityLabel={i18n.t('profilePicture')}
+            pointerEffect='lift'
+            hoverRadius={29}
             actions={[
               [
                 {

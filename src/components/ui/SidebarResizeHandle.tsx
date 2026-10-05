@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Extrapolation,
@@ -22,6 +22,7 @@ import {
   SIDEBAR_RESIZE_STEP,
 } from '@/lib/sidebarLayout'
 import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
+import PointerStyleView from '../../../modules/pointer-style'
 
 /**
  * Drags run on the UI thread and write `liveWidth` directly, so the sidebar
@@ -187,6 +188,14 @@ export default function SidebarResizeHandle({
           justifyContent: 'center',
         }}
       >
+        {/* iPad pointer shows which ways the sidebar can still resize. */}
+        <PointerStyleView
+          accessories={[
+            ...(width > SIDEBAR_MIN_WIDTH ? (['left'] as const) : []),
+            ...(width < SIDEBAR_MAX_WIDTH ? (['right'] as const) : []),
+          ]}
+          style={StyleSheet.absoluteFill}
+        />
         <Animated.View
           pointerEvents='none'
           style={[{ width: 4, height: 36, borderRadius: 3 }, thumbStyle]}

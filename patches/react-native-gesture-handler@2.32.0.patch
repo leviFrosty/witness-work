@@ -1,0 +1,30 @@
+diff --git a/apple/Handlers/RNHoverHandler.m b/apple/Handlers/RNHoverHandler.m
+index 320cb8cb2652bfcfe1ecc65ebd81a8d208e4260f..0241aabb6ea71b78598d460f1d05fb56793b4949 100644
+--- a/apple/Handlers/RNHoverHandler.m
++++ b/apple/Handlers/RNHoverHandler.m
+@@ -75,13 +75,23 @@ - (void)reset
+ - (UIPointerStyle *)pointerInteraction:(UIPointerInteraction *)interaction styleForRegion:(UIPointerRegion *)region
+ {
+   if (interaction.view != nil && _hoverEffect != RNGestureHandlerHoverEffectNone) {
+-    UITargetedPreview *preview = [[UITargetedPreview alloc] initWithView:interaction.view];
++    UIView *view = interaction.view;
++    UITargetedPreview *preview = nil;
++    if (view.layer.cornerRadius > 0) {
++      // Follow the view's own rounding so circles and pills keep their shape.
++      UIPreviewParameters *parameters = [UIPreviewParameters new];
++      parameters.visiblePath = [UIBezierPath bezierPathWithRoundedRect:view.bounds
++                                                          cornerRadius:view.layer.cornerRadius];
++      preview = [[UITargetedPreview alloc] initWithView:view parameters:parameters];
++    } else {
++      preview = [[UITargetedPreview alloc] initWithView:view];
++    }
+     UIPointerEffect *effect = nil;
+ 
+     if (_hoverEffect == RNGestureHandlerHoverEffectLift) {
+       effect = [UIPointerLiftEffect effectWithPreview:preview];
+     } else if (_hoverEffect == RNGestureHandlerHoverEffectHightlight) {
+-      effect = [UIPointerHoverEffect effectWithPreview:preview];
++      effect = [UIPointerHighlightEffect effectWithPreview:preview];
+     }
+ 
+     return [UIPointerStyle styleWithEffect:effect shape:nil];

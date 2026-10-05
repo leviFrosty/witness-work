@@ -188,6 +188,25 @@ beforeEach(async () => {
 })
 
 describe('useNotesImportManager credit lifecycle', () => {
+  it('records how the notes were captured on submit and on the ledger row', async () => {
+    const { analytics } = await import('@/lib/analytics')
+    vi.mocked(analytics.capture).mockClear()
+    const hash = await useNotesImportManager
+      .getState()
+      .submit('voice log notes', 'app', 'voice')
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'notes_import_submitted',
+      expect.objectContaining({ source: 'app', input_method: 'voice' })
+    )
+    expect(
+      useNotesImportManager
+        .getState()
+        .entries.find((entry) => entry.hash === hash)?.inputMethod
+    ).toBe('voice')
+    harness.pending[0].resolve(terminal(snapshot()))
+    await settle()
+  })
+
   it('attributes background previews to onboarding without claiming data was accepted', async () => {
     const { analytics } = await import('@/lib/analytics')
     vi.mocked(analytics.capture).mockClear()

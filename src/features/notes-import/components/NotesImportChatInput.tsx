@@ -36,6 +36,11 @@ export interface NotesImportChatInputProps {
    * Import Credit balance lives here instead of in a pinned banner.
    */
   accessory?: ReactNode
+  /**
+   * Replaces the trailing Send/Stop action, e.g. the voice-log mic while the
+   * draft is empty, or its finish button while recording.
+   */
+  trailingAction?: ReactNode
 }
 
 /**
@@ -64,13 +69,16 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       stopAccessibilityLabel,
       leading,
       accessory,
+      trailingAction,
     },
     ref
   ) => {
     const theme = useTheme()
     const canSubmit = !!value.trim() && editable
 
-    const trailing = onStop ? (
+    const trailing = trailingAction ? (
+      trailingAction
+    ) : onStop ? (
       <Button
         onPress={onStop}
         accessibilityRole='button'

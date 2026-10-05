@@ -283,6 +283,31 @@ describe('ledger lifecycle transitions (pure)', () => {
       ).toBeUndefined()
     })
 
+    it('keeps the original input method through parse and refinement, dropping unknown values', () => {
+      const working = beginWorkingTransition(null, {
+        notesText: 'Talked with Maria',
+        activeRun: null,
+        nowMs: 100,
+        inputMethod: 'voice',
+      })
+      const ready = putParsedTransition(
+        migrateLedgerEntry(JSON.parse(JSON.stringify(working)), 110),
+        result(),
+        120
+      )
+      const refined = beginWorkingTransition(ready, {
+        notesText: 'Talked with Maria',
+        activeRun: null,
+        nowMs: 130,
+        inputMethod: 'text',
+      })
+      expect(refined.inputMethod).toBe('voice')
+      expect(
+        migrateLedgerEntry({ ...refined, inputMethod: 'audio' }, 140)
+          ?.inputMethod
+      ).toBeUndefined()
+    })
+
     it('on null creates a fresh Working row (createdAt = nowMs, no result/commit)', () => {
       const e = beginWorkingTransition(null, {
         notesText: 'Visited Maria\nrest',

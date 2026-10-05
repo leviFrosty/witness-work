@@ -1,6 +1,10 @@
 import { MMKV } from 'react-native-mmkv'
 import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
+import {
+  NOTES_IMPORT_INPUT_METHODS,
+  type NotesImportInputMethod,
+} from '@/features/notes-import/lib/notesImportCapture'
 
 /**
  * Client-only Import ledger (ADR 0008/0009). Keyed by content hash, it is the
@@ -62,6 +66,11 @@ export interface NotesImportChatMessage {
 export interface NotesImportLedgerEntry {
   /** Original entry point, retained through background runs and refinements. */
   analyticsSource?: 'onboarding' | 'app'
+  /**
+   * How the original notes were produced (typed, voice log, photo), for
+   * analytics.
+   */
+  inputMethod?: NotesImportInputMethod
   hash: string
   /** Lifecycle state. The list renders this, not the backend run status. */
   state: NotesImportState
@@ -247,6 +256,7 @@ export const migrateLedgerEntry = (
       o.analyticsSource === 'onboarding' || o.analyticsSource === 'app'
         ? o.analyticsSource
         : undefined,
+    inputMethod: NOTES_IMPORT_INPUT_METHODS.find((m) => m === o.inputMethod),
     state,
     notesText,
     provisionalTitle,
@@ -288,6 +298,7 @@ export const beginWorkingTransition = (
   args: {
     notesText: string
     analyticsSource?: 'onboarding' | 'app'
+    inputMethod?: NotesImportInputMethod
     activeRun: NotesImportActiveRun | null
     nowMs: number
   }
@@ -297,6 +308,7 @@ export const beginWorkingTransition = (
     hash: existing?.hash ?? '',
     state: 'working',
     analyticsSource: existing?.analyticsSource ?? args.analyticsSource,
+    inputMethod: existing?.inputMethod ?? args.inputMethod,
     notesText,
     provisionalTitle:
       provisionalTitleFromNotes(notesText) || existing?.provisionalTitle || '',
@@ -334,6 +346,7 @@ export const putParsedTransition = (
   hash: existing?.hash ?? '',
   state: 'ready',
   analyticsSource: existing?.analyticsSource,
+  inputMethod: existing?.inputMethod,
   notesText: existing?.notesText ?? '',
   provisionalTitle: existing?.provisionalTitle ?? '',
   result,
@@ -505,6 +518,7 @@ export const beginWorkingEntry = (
   args: {
     notesText: string
     analyticsSource?: 'onboarding' | 'app'
+    inputMethod?: NotesImportInputMethod
     activeRun: NotesImportActiveRun | null
     nowMs: number
   }

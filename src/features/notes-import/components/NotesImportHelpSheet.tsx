@@ -12,6 +12,7 @@ import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import type { TranslationKey } from '@/lib/locales'
 import NotesImportDataHandling from '@/features/notes-import/components/NotesImportDataHandling'
+import NotesImportCaptureHelp from '@/features/notes-import/components/NotesImportCaptureHelp'
 import { notesImportScheduleCopy } from '@/features/notes-import/lib/notesImportScheduleCopy'
 import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/notesImportUsage'
 
@@ -19,6 +20,8 @@ interface Props {
   open: boolean
   setOpen: (open: boolean) => void
   schedule: NotesImportPublicSchedule | null
+  voiceAvailable?: boolean
+  photoAvailable?: boolean
 }
 
 const STEP_KEYS: TranslationKey[] = [
@@ -41,7 +44,13 @@ const INCLUDE_KEYS: TranslationKey[] = [
  * useful to paste. Keeps the import screen itself visual — the step-by-step
  * detail lives here instead of as inline walls of text.
  */
-const NotesImportHelpSheet = ({ open, setOpen, schedule }: Props) => {
+const NotesImportHelpSheet = ({
+  open,
+  setOpen,
+  schedule,
+  voiceAvailable = false,
+  photoAvailable = false,
+}: Props) => {
   const theme = useTheme()
   const scheduleCopy = schedule ? notesImportScheduleCopy(schedule) : null
 
@@ -171,6 +180,11 @@ const NotesImportHelpSheet = ({ open, setOpen, schedule }: Props) => {
                 </View>
               ))}
             </View>
+
+            <NotesImportCaptureHelp
+              voiceAvailable={voiceAvailable}
+              photoAvailable={photoAvailable}
+            />
 
             {/* What's helpful to include — bullet list. */}
             <View style={{ gap: 14 }}>

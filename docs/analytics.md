@@ -162,14 +162,15 @@ Retain type selection, start, preview readiness, completion, failure, cancellati
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
 
-| Flow                    | Outcomes                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Notes Import            | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data.                        |
-| MyTime / iCloud Restore | `import_completed` with the import type.                                                                                           |
-| JSON restore            | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                       |
-| JSON export             | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped. |
-| Backup reminder         | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                    |
-| iCloud photo consent    | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                |
+| Flow                    | Outcomes                                                                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notes Import            | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`. |
+| Notes Import capture    | `notes_import_capture_finished` once per voice log or photo attempt.                                                                                 |
+| MyTime / iCloud Restore | `import_completed` with the import type.                                                                                                             |
+| JSON restore            | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                                         |
+| JSON export             | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                   |
+| Backup reminder         | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                      |
+| iCloud photo consent    | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                  |
 
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
@@ -181,8 +182,21 @@ shows whether the device requirement blocks real users. No verdicts, tokens, or
 identifiers are attached.
 
 Notes previews retain `empty`/warning counts and the ledger's original source
-across background work, relaunches, and refinements. Each processing attempt can
-start, so start counts are attempts, not unique documents. Export/restore retains
+across background work, relaunches, and refinements. `input_method` (`text`,
+`voice`, `photo`, `mixed`) records how the submitted notes were produced and is
+kept on the ledger row, so acceptance stays attributed after a relaunch. Each
+processing attempt can start, so start counts are attempts, not unique
+documents.
+
+Voice logs and photo imports (ADR 0018) send one `notes_import_capture_finished`
+per attempt with `method` (`voice` or `photo`) and `outcome` (`inserted`,
+`empty`, `cancelled`, `failed`, `permission_denied`). Voice adds the recognizer
+`engine` and a coarse `duration` bucket; photos add `photo_source` (`scan` or
+`library`) and `page_count`; failures add a stable `error_code`. Transcripts,
+images, and languages are never sent. `inserted` means text reached the draft,
+not that it was imported: follow `input_method` on submitted/accepted for that.
+
+Export/restore retains
 bounded `entry_point` (`settings` or `backup_reminder`), failure stage/error code,
 and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved;
 `outcome: unknown` covers both sharing and cancellation and cannot establish that

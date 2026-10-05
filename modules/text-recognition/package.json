@@ -1,0 +1,7 @@
+{
+  "name": "text-recognition",
+  "version": "0.1.0",
+  "description": "Local Expo module for on-device text recognition (Vision, including handwriting) and the VisionKit document camera, used by Scribe AI photo imports.",
+  "main": "index.ts",
+  "private": true
+}

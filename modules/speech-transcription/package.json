@@ -1,0 +1,7 @@
+{
+  "name": "speech-transcription",
+  "version": "0.1.0",
+  "description": "Local Expo module for on-device speech-to-text (SpeechAnalyzer, with an on-device SFSpeechRecognizer fallback) used by Scribe AI voice logs.",
+  "main": "index.ts",
+  "private": true
+}

@@ -64,6 +64,13 @@ export const styles = StyleSheet.create({
   navBack: {
     position: 'absolute',
     left: 0,
+    width: 40,
+    height: 40,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chevronLeft: {
     color: '#9B9B9B',

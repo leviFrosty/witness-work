@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { Sheet } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
-import { TimeEntry } from '@/types/timeEntry'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 
@@ -32,6 +32,8 @@ interface Props {
     date: Date,
     onNavigate: (navigate: () => void) => void
   ) => React.ReactNode
+  /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
+  renderDayPlanFooter?: (plan: DayPlan) => React.ReactNode
 }
 
 const SelectedDateSheet: React.FC<Props> = ({
@@ -44,6 +46,7 @@ const SelectedDateSheet: React.FC<Props> = ({
   onNavigateToRecurringPlan,
   onEditTimeReport,
   renderFooter,
+  renderDayPlanFooter,
 }) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
@@ -118,6 +121,7 @@ const SelectedDateSheet: React.FC<Props> = ({
                 onPlanDay?.()
               }}
               onNavigate={navigateAfterClosing}
+              renderDayPlanFooter={renderDayPlanFooter}
             />
             {renderFooter?.(sheet.date, navigateAfterClosing)}
           </KeyboardAwareScrollView>

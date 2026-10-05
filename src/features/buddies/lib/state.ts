@@ -131,6 +131,68 @@ export type IncomingShare = {
 
 export type ReceivedReply = { status: ShareReply; rev: number; at: number }
 
+/** A buddy asking to be invited to one of this User's Plans. */
+export type IncomingJoinRequest = {
+  /** The asking buddy's inbox id. */
+  from: string
+  id: string
+  rev: number
+  /** The Plan as the buddy saw it on this User's Buddy Card. */
+  d: string
+  s?: number
+  m?: number
+  expiresAt: number
+  receivedAt: number
+  /**
+   * Not Now: kept until it lapses so the same request stays quiet. Never sent
+   * anywhere; the buddy can't tell it apart from a request not yet answered.
+   */
+  dismissed?: boolean
+  /** The buddy took it back; kept so asking again is listed quietly. */
+  withdrawn?: boolean
+}
+
+/** This User asking a buddy to be invited to their Plan. */
+export type OutgoingJoinRequest = {
+  /** The Plan owner's inbox id. */
+  to: string
+  id: string
+  d: string
+  s?: number
+  m?: number
+  expiresAt: number
+  askedAt: number
+  /** This User's clock when they last asked or withdrew; newer wins. */
+  rev: number
+  /** The `rev` the relay last accepted; anything else is still to send. */
+  sentRev?: number
+  /**
+   * A request was handed to the relay, so the buddy may hold it even if the
+   * send seemed to fail: withdrawing has to tell them.
+   */
+  attempted: boolean
+  /**
+   * The event that carries this request's one alert, and the ask it belongs to.
+   * A failed send is retried under the same event id, which the relay never
+   * alerts for twice.
+   */
+  alertEventId?: string
+  alertRev?: number
+  /** The relay accepted the alert: asking again arrives quietly. */
+  pushed: boolean
+  /** Withdrawn; kept until it lapses so asking again stays quiet. */
+  withdrawn?: boolean
+}
+
+/** Asking to join closes this long before the Plan starts. */
+export const JOIN_REQUEST_LEAD_MS = 2 * 60 * 60 * 1000
+
+/** Open requests to one buddy at a time. */
+export const MAX_OPEN_JOIN_REQUESTS = 3
+
+/** Requests to one buddy that alert them per rolling day; the rest are quiet. */
+export const JOIN_REQUEST_ALERTS_PER_DAY = 3
+
 export type BuddyNotificationKind =
   | 'claim'
   | 'paired'
@@ -138,6 +200,7 @@ export type BuddyNotificationKind =
   | 'shareUpdate'
   | 'shareCancel'
   | 'shareReply'
+  | 'joinRequest'
 
 /** One entry in the Home notification queue. Holds references, not content. */
 export type BuddyNotification = {
@@ -151,7 +214,10 @@ export type BuddyNotification = {
   name: string
   /** `claim`: the invite that was claimed. */
   inviteId?: string
-  /** `share*`: the incoming share key (`from|shareId`) or outgoing shareId. */
+  /**
+   * `share*`: the incoming share key (`from|shareId`) or outgoing shareId.
+   * `joinRequest`: the incoming join request key (`from|id`).
+   */
   shareKey?: string
   shareType?: ShareType
   /** `shareReply`. */
@@ -165,6 +231,9 @@ export const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 export const incomingShareKey = (from: string, shareId: string) =>
   `${from}|${shareId}`
+
+export const incomingJoinRequestKey = (from: string, id: string) =>
+  `${from}|${id}`
 
 export type BuddiesState = {
   /** The first-visit Buddies onboarding was finished or skipped here. */
@@ -197,6 +266,13 @@ export type BuddiesState = {
   shareReplies: Record<string, Record<string, ReceivedReply>>
   /** Invitations from buddies, by `incomingShareKey`. */
   incomingShares: Record<string, IncomingShare>
+  /** Buddies asking to join this User's Plans, by `incomingJoinRequestKey`. */
+  joinRequests: Record<string, IncomingJoinRequest>
+  /**
+   * This User's requests to join buddies' Plans, by id. Per device: another
+   * device of this User doesn't show them as asked.
+   */
+  askedToJoin: Record<string, OutgoingJoinRequest>
   /** Newest first. */
   notifications: BuddyNotification[]
   /** Hash of the last successful push registration. */
@@ -206,6 +282,10 @@ export type BuddiesState = {
   sharing: BuddySharing
   /** Per-device: Buddies pushes on this device (iOS permission aside). */
   notificationsEnabled: boolean
+  /** Per-device: pushes for buddies asking to join this User's Plans. */
+  joinRequestNotifications: boolean
+  /** Per-device: buddies whose requests to join don't push here. */
+  mutedJoinRequests: string[]
   /** Dev builds only: show Buddies without the remote feature flag. */
   devOverride: boolean
   /** The Profile photo shrunk for Buddy Cards, keyed by its source URI. */
@@ -229,11 +309,15 @@ export const initialBuddiesState: BuddiesState = {
   outgoingShares: {},
   shareReplies: {},
   incomingShares: {},
+  joinRequests: {},
+  askedToJoin: {},
   notifications: [],
   pushRegistrationKey: null,
   pushRegisteredAt: 0,
   sharing: { photo: true, tenure: true, updatedAt: 0 },
   notificationsEnabled: true,
+  joinRequestNotifications: true,
+  mutedJoinRequests: [],
   devOverride: false,
   avatarThumbnail: null,
 }
@@ -251,6 +335,8 @@ type ExpiringState = Pick<
   | 'closedInviteIds'
   | 'incomingShares'
   | 'shareReplies'
+  | 'joinRequests'
+  | 'askedToJoin'
   | 'notifications'
 >
 
@@ -269,6 +355,11 @@ export function withoutExpired(
       ([, share]) => share.expiresAt > now
     )
   )
+  const joinRequests = Object.fromEntries(
+    Object.entries(state.joinRequests).filter(
+      ([, request]) => request.expiresAt > now
+    )
+  )
   const recent = (at: number) => at + NOTIFICATION_TTL_MS > now
   return {
     outgoingInvites: state.outgoingInvites.filter((i) => i.expiresAt > now),
@@ -279,6 +370,12 @@ export function withoutExpired(
       )
     ),
     incomingShares,
+    joinRequests,
+    askedToJoin: Object.fromEntries(
+      Object.entries(state.askedToJoin).filter(
+        ([, request]) => request.expiresAt > now
+      )
+    ),
     shareReplies: Object.fromEntries(
       Object.entries(state.shareReplies)
         .map(([shareId, replies]) => [
@@ -292,9 +389,14 @@ export function withoutExpired(
     notifications: state.notifications.filter(
       (n) =>
         (recent(n.at) || awaitsAnswer(n, { incomingClaims, incomingShares })) &&
-        (n.kind === 'shareReply' ||
-          !n.shareKey ||
-          n.shareKey in incomingShares) &&
+        (n.kind === 'joinRequest'
+          ? !!n.shareKey &&
+            n.shareKey in joinRequests &&
+            !joinRequests[n.shareKey].dismissed &&
+            !joinRequests[n.shareKey].withdrawn
+          : n.kind === 'shareReply' ||
+            !n.shareKey ||
+            n.shareKey in incomingShares) &&
         (!n.inviteId || incomingClaims.some((c) => c.inviteId === n.inviteId))
     ),
   }

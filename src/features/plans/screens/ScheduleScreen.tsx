@@ -57,6 +57,7 @@ import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
+import BuddyDayBadge from '@/features/buddies/components/BuddyDayBadge'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import BuddiesHeaderButton from '@/features/buddies/components/BuddiesHeaderButton'
 import RootHeader from '@/components/RootHeader'
@@ -390,7 +391,14 @@ const ScheduleScreen = ({ route }: Props) => {
                   onChangeViewMode={setCalendarViewMode}
                 />
                 <View>
-                  <CalendarKey />
+                  <CalendarKey
+                    showBuddiesOut={Object.entries(buddyMarkers).some(
+                      ([day, marker]) =>
+                        day.startsWith(selectedMonth.format('YYYY-MM')) &&
+                        marker.withBuddies.length === 0 &&
+                        marker.goingOut.length > 0
+                    )}
+                  />
                   <MonthTimeReportsCalendar
                     month={month}
                     year={year}
@@ -404,7 +412,11 @@ const ScheduleScreen = ({ route }: Props) => {
                     }
                     selectedDate={isWide ? selectedDateSheet.date : undefined}
                     viewMode={calendarViewMode}
-                    markerColorsByDate={buddyMarkers}
+                    renderDayOverlay={(date) =>
+                      buddyMarkers[date] ? (
+                        <BuddyDayBadge marker={buddyMarkers[date]} />
+                      ) : null
+                    }
                   />
                 </View>
                 <ActionButton
@@ -518,6 +530,7 @@ const ScheduleScreen = ({ route }: Props) => {
           renderFooter={(date, onNavigate) => (
             <BuddyPlansForDay date={date} onNavigate={onNavigate} />
           )}
+          renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
         />
       )}
       {baseGoalHours > 0 && !isPastMonth ? (

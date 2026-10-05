@@ -1,5 +1,6 @@
 import { View } from 'react-native'
 import i18n from '@/lib/locales'
+import { BuddiesOutDot } from '@/features/buddies/components/BuddyDayBadge'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
@@ -24,7 +25,8 @@ const KeyText = (props: { text: string }) => {
   return <Text style={{ fontSize: theme.fontSize('sm') }}>{props.text}</Text>
 }
 
-const CalendarKey = () => {
+/** `showBuddiesOut` adds the "buddies going out" dot's entry. */
+const CalendarKey = ({ showBuddiesOut }: { showBuddiesOut?: boolean }) => {
   const theme = useTheme()
 
   return (
@@ -54,6 +56,12 @@ const CalendarKey = () => {
           <KeyText text={i18n.t('planned')} />
           <Box color={theme.colors.background} />
         </XView>
+        {showBuddiesOut && (
+          <XView>
+            <KeyText text={i18n.t('buddies_calendarKey')} />
+            <BuddiesOutDot />
+          </XView>
+        )}
       </XView>
     </View>
   )

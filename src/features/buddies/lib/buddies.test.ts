@@ -1488,3 +1488,327 @@ describe('reconcileLinkedPlans', () => {
     ])
   })
 })
+
+describe('asking to join', () => {
+  const HOUR = 60 * 60 * 1000
+  const saturday = '2026-09-26'
+  const sunday = '2026-09-27'
+  const nine = { s: 540, m: 120 }
+  // Local, as the app derives it from the day and start time.
+  const startsAt = new Date(`${saturday}T09:00:00`).getTime()
+  const device = { apnsToken: 'ab', apnsEnvironment: 'sandbox' as const }
+  const template = { title: 't', body: 'b' }
+  const isJoinAlert = (alert: { kind: string }) =>
+    alert.kind.startsWith('join.')
+
+  type User = { store: { getState: () => BuddiesState } }
+  const requestsOf = (user: User) =>
+    Object.values(user.store.getState().joinRequests)
+  const askedOf = (user: User) =>
+    Object.values(user.store.getState().askedToJoin)
+  /** The tray's join request entries (pairing leaves a "paired" entry too). */
+  const joinEntries = (user: User) =>
+    user.store
+      .getState()
+      .notifications.filter((entry) => entry.kind === 'joinRequest')
+
+  async function duo(annaPlans?: Plans) {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna', annaPlans)
+    await pair(levi, anna)
+    const registerAnna = () =>
+      anna.engine.registerPush({
+        ...device,
+        templates: Object.fromEntries(
+          anna.engine.joinRequestPushKinds().map((kind) => [kind, template])
+        ),
+      })
+    await registerAnna()
+    const joinEventsTo = (inboxId: string) =>
+      env.fake.inboxes
+        .get(inboxId)!
+        .events.filter((event) => event.kind.startsWith('join.'))
+    return { ...env, levi, anna, registerAnna, joinEventsTo }
+  }
+
+  it('asks once, and the buddy is alerted and sees it in the tray', async () => {
+    const { fake, levi, anna } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    expect(fake.alerts.filter(isJoinAlert)).toHaveLength(1)
+    expect(askedOf(levi)).toMatchObject([
+      { to: anna.inboxId, d: saturday, ...nine, attempted: true, pushed: true },
+    ])
+    expect(askedOf(levi)[0].sentRev).toBe(askedOf(levi)[0].rev)
+
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toMatchObject([
+      { from: levi.inboxId, d: saturday, ...nine },
+    ])
+    expect(joinEntries(anna)).toMatchObject([
+      { kind: 'joinRequest', name: 'Levi', read: false },
+    ])
+  })
+
+  it('gives each buddy their own alert kind', async () => {
+    const env = setup()
+    const anna = env.user('Anna')
+    await pair(env.user('Levi'), anna)
+    await pair(env.user('Mom'), anna)
+    const kinds = anna.engine.joinRequestPushKinds()
+    expect(new Set(kinds).size).toBe(2)
+    for (const kind of kinds) expect(kind).toMatch(/^join\.request\.[0-9a-f]+$/)
+    expect(kinds[0].length).toBeLessThanOrEqual(40)
+  })
+
+  it('sends one request when asked twice at once', async () => {
+    const { levi, anna, joinEventsTo } = await duo()
+    await Promise.all([
+      levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt),
+      levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt),
+      levi.engine.sync(),
+    ])
+    expect(joinEventsTo(anna.inboxId)).toHaveLength(1)
+  })
+
+  it('lets Not Now pass quietly: the asker hears nothing, and asking again neither alerts nor lists it', async () => {
+    const { fake, levi, anna, advance, joinEventsTo } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await anna.engine.sync()
+    anna.engine.dismissNotification(joinEntries(anna)[0].id)
+    expect(joinEntries(anna)).toEqual([])
+
+    await anna.engine.sync()
+    await levi.engine.sync()
+    expect(joinEventsTo(levi.inboxId)).toEqual([])
+    expect(askedOf(levi)[0].withdrawn).toBeFalsy()
+
+    const [request] = askedOf(levi)
+    await levi.engine.withdrawJoinRequest(request.id)
+    advance(2 * 60_000)
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    expect(fake.alerts.filter(isJoinAlert)).toHaveLength(1)
+    await anna.engine.sync()
+    expect(joinEntries(anna)).toEqual([])
+  })
+
+  it('takes a withdrawn request out of the buddy’s tray without an alert, and asking again stays quiet', async () => {
+    const { fake, levi, anna, advance } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await anna.engine.sync()
+    const [request] = askedOf(levi)
+    await levi.engine.withdrawJoinRequest(request.id)
+    expect(askedOf(levi)).toMatchObject([{ withdrawn: true }])
+
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toMatchObject([{ withdrawn: true }])
+    expect(joinEntries(anna)).toEqual([])
+
+    advance(2 * 60_000)
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    expect(fake.alerts.filter(isJoinAlert)).toHaveLength(1)
+    await anna.engine.sync()
+    // Listed again, but read: asking again doesn't call for attention.
+    expect(requestsOf(anna)).toHaveLength(1)
+    expect(requestsOf(anna)[0].withdrawn).toBeFalsy()
+    expect(joinEntries(anna)).toMatchObject([{ read: true }])
+  })
+
+  it('withdraws a request whose send seemed to fail, in case it landed', async () => {
+    const { offlineOps, levi, anna, joinEventsTo } = await duo()
+    offlineOps.add('event/put')
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    const [request] = askedOf(levi)
+    expect(request.attempted).toBe(true)
+    expect(request.sentRev).toBeUndefined()
+    await levi.engine.withdrawJoinRequest(request.id)
+    offlineOps.clear()
+    await levi.engine.sync()
+    expect(joinEventsTo(anna.inboxId).map((event) => event.kind)).toEqual([
+      'join.cancel',
+    ])
+  })
+
+  it('keeps a request asked offline and alerts once it goes out', async () => {
+    const { fake, offlineOps, levi, anna } = await duo()
+    offlineOps.add('event/put')
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    offlineOps.clear()
+    await levi.engine.sync()
+    await levi.engine.sync()
+    expect(fake.alerts.filter(isJoinAlert)).toHaveLength(1)
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toHaveLength(1)
+    expect(joinEntries(anna)).toMatchObject([{ read: false }])
+  })
+
+  it('takes back a request still unsent once the Plan is too close', async () => {
+    const { fake, offlineOps, levi, anna, advance, joinEventsTo } = await duo()
+    offlineOps.add('event/put')
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    offlineOps.clear()
+    advance(startsAt - Date.parse('2026-09-23T15:00:00Z') - HOUR)
+    await levi.engine.sync()
+    expect(askedOf(levi)).toMatchObject([{ withdrawn: true }])
+    // Only the quiet withdrawal goes out, in case the first try landed.
+    expect(joinEventsTo(anna.inboxId).map((event) => event.kind)).toEqual([
+      'join.cancel',
+    ])
+    expect(fake.alerts.filter(isJoinAlert)).toEqual([])
+  })
+
+  it('alerts a buddy for at most three requests a day', async () => {
+    const { fake, levi, anna, advance } = await duo()
+    for (const d of ['2026-09-26', '2026-09-27', '2026-09-28', '2026-09-29']) {
+      await levi.engine.askToJoin(
+        anna.inboxId,
+        d,
+        nine,
+        startsAt + 4 * 24 * HOUR
+      )
+      const [open] = askedOf(levi).filter((request) => !request.withdrawn)
+      await levi.engine.withdrawJoinRequest(open.id)
+      advance(2 * 60_000)
+    }
+    expect(fake.alerts.filter(isJoinAlert)).toHaveLength(3)
+  })
+
+  it('treats inviting the buddy that day as the answer, on both phones', async () => {
+    const { levi, anna } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await levi.engine.askToJoin(
+      anna.inboxId,
+      sunday,
+      nine,
+      startsAt + 24 * HOUR
+    )
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toHaveLength(2)
+
+    anna.setShares([
+      {
+        key: planShareKey('sat'),
+        type: 'plan',
+        details: { d: saturday, ...nine },
+        recipients: [levi.inboxId],
+        expiresAt: startsAt + 3 * HOUR,
+      },
+    ])
+    await anna.engine.publishShares()
+    expect(requestsOf(anna)).toMatchObject([{ d: sunday }])
+    expect(joinEntries(anna)).toHaveLength(1)
+
+    await levi.engine.sync()
+    expect(askedOf(levi)).toMatchObject([{ d: sunday }])
+    expect(levi.store.getState().notifications[0]).toMatchObject({
+      kind: 'shareInvite',
+      name: 'Anna',
+    })
+  })
+
+  it('takes a request back when the buddy moves or drops that Plan', async () => {
+    const annaPlans: Plans = {
+      dayPlans: [dayPlan(`${saturday}T12:00:00`, 120, 540)],
+      recurringPlans: [],
+    }
+    const { levi, anna, joinEventsTo } = await duo(annaPlans)
+    await anna.engine.publishCards()
+    await levi.engine.sync()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+
+    annaPlans.dayPlans = [dayPlan(`${saturday}T12:00:00`, 120, 600)]
+    await anna.engine.publishCards()
+    await levi.engine.sync()
+    expect(askedOf(levi)).toMatchObject([{ withdrawn: true }])
+    expect(joinEventsTo(anna.inboxId).map((event) => event.kind)).toContain(
+      'join.cancel'
+    )
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toMatchObject([{ withdrawn: true }])
+    expect(joinEntries(anna)).toEqual([])
+  })
+
+  it('stops alerting for a muted buddy or with Ask to Join alerts off, and lists theirs as read', async () => {
+    const { fake, levi, anna, registerAnna, advance } = await duo()
+    anna.store.setState({ mutedJoinRequests: [levi.inboxId] })
+    expect(anna.engine.joinRequestPushKinds()).toEqual([])
+    advance(PUSH_REGISTRATION_REFRESH_MS)
+    await registerAnna()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    expect(fake.alerts.filter(isJoinAlert)).toEqual([])
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toHaveLength(1)
+    expect(joinEntries(anna)).toMatchObject([{ read: true }])
+
+    anna.store.setState({
+      mutedJoinRequests: [],
+      joinRequestNotifications: false,
+    })
+    expect(anna.engine.joinRequestPushKinds()).toEqual([])
+  })
+
+  it('closes asking two hours before the start and caps open requests per buddy', async () => {
+    const { levi, anna, advance } = await duo()
+    advance(startsAt - Date.parse('2026-09-23T15:00:00Z') - HOUR)
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    expect(askedOf(levi)).toEqual([])
+
+    for (const [index, d] of [
+      '2026-09-28',
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+    ].entries())
+      await levi.engine.askToJoin(
+        anna.inboxId,
+        d,
+        nine,
+        startsAt + (index + 2) * 24 * HOUR
+      )
+    expect(askedOf(levi)).toHaveLength(3)
+  })
+
+  it('holds a request to the Plan’s own start and the Buddy Card’s window', async () => {
+    const { levi, anna } = await duo()
+    await levi.engine.askToJoin(
+      anna.inboxId,
+      saturday,
+      nine,
+      startsAt + 30 * 24 * HOUR
+    )
+    await levi.engine.askToJoin(
+      anna.inboxId,
+      '2026-12-31',
+      nine,
+      Date.parse('2027-01-01')
+    )
+    await anna.engine.sync()
+    expect(requestsOf(anna)).toHaveLength(1)
+    expect(requestsOf(anna)[0].expiresAt).toBeLessThanOrEqual(
+      startsAt + 24 * HOUR
+    )
+  })
+
+  it('lets requests lapse on both phones when the Plan starts, offline', async () => {
+    const { levi, anna, advance } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await anna.engine.sync()
+    advance(startsAt - Date.parse('2026-09-23T15:00:00Z'))
+    levi.engine.expire()
+    anna.engine.expire()
+    expect(levi.store.getState().askedToJoin).toEqual({})
+    expect(anna.store.getState().joinRequests).toEqual({})
+    expect(joinEntries(anna)).toEqual([])
+  })
+
+  it('forgets requests both ways when the pairing ends', async () => {
+    const { levi, anna } = await duo()
+    await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
+    await anna.engine.sync()
+    await anna.engine.removeBuddy(levi.inboxId)
+    expect(anna.store.getState().joinRequests).toEqual({})
+    await levi.engine.sync()
+    expect(levi.store.getState().askedToJoin).toEqual({})
+  })
+})

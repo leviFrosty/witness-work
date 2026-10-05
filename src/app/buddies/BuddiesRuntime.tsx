@@ -211,9 +211,22 @@ export default function BuddiesRuntime() {
       if (state.contacts !== previous.contacts) schedulePublish()
     })
     syncLinkedPlans()
+    /** Whose requests to join may alert this device. */
+    const joinRequestAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
+      JSON.stringify([
+        state.joinRequestNotifications,
+        state.mutedJoinRequests,
+        state.buddies
+          .filter((buddy) => buddy.status === 'active')
+          .map((buddy) => buddy.inboxId),
+      ])
     const buddies = useBuddies.subscribe((state, previous) => {
       if (state.buddies !== previous.buddies)
         forgetRemovedBuddies(previous.buddies, state.buddies)
+      // A new buddy's requests need their own push template, and a muted
+      // buddy's template is dropped.
+      if (joinRequestAlerts(state) !== joinRequestAlerts(previous))
+        void registerBuddiesPush().catch(logFailure)
       if (state.incomingShares !== previous.incomingShares)
         syncLinkedPlans(
           sharesJustAccepted(previous.incomingShares, state.incomingShares)

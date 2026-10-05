@@ -2,7 +2,10 @@ import * as Application from 'expo-application'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import type { BuddyPushKind } from '@/features/buddies/lib/engine'
+import type {
+  BuddyPushKind,
+  JoinRequestPushKind,
+} from '@/features/buddies/lib/engine'
 import type { PushTemplate } from '@/features/buddies/lib/relay'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
@@ -49,12 +52,55 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
 })
 
 /**
+ * One template per buddy whose requests to join may alert this device, all with
+ * the same text; a muted buddy's kind is left out.
+ */
+const joinRequestTemplates = (): Record<JoinRequestPushKind, PushTemplate> => {
+  const template = {
+    title: i18n.t('buddies_pushJoinRequestTitle'),
+    body: i18n.t('buddies_pushJoinRequestBody'),
+  }
+  return Object.fromEntries(
+    buddiesEngine.joinRequestPushKinds().map((kind) => [kind, template])
+  ) as Record<JoinRequestPushKind, PushTemplate>
+}
+
+/**
+ * Registrations run one after another, so the last change is what the relay
+ * keeps.
+ */
+let registration: Promise<void> = Promise.resolve()
+
+/** A registration that hangs (the APNs token can) stops holding up the next. */
+const REGISTRATION_TIMEOUT_MS = 30 * 1000
+
+function withTimeout(work: Promise<void>): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Buddies push registration timed out')),
+      REGISTRATION_TIMEOUT_MS
+    )
+  })
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+}
+
+/**
  * Registers this device for Buddies pushes once Buddies has started and iOS
  * allows notifications. With Buddies notifications off here, it registers no
  * templates, so the relay sends this device nothing. An unchanged registration
- * is only re-sent once a day, so calling this often is cheap.
+ * is only re-sent once a day, so calling this often is cheap. Call it again
+ * when buddies or join request mutes change.
  */
-export async function registerBuddiesPush() {
+export function registerBuddiesPush(): Promise<void> {
+  const run = registration.then(() => withTimeout(register()))
+  registration = run.catch(() => {
+    // The caller sees the failure; the next registration still runs.
+  })
+  return run
+}
+
+async function register() {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
   if (registeredInboxId === null) return
   const permission = await Notifications.getPermissionsAsync()
@@ -77,7 +123,9 @@ export async function registerBuddiesPush() {
       ...(Application.applicationId
         ? { apnsTopic: Application.applicationId }
         : {}),
-      templates: notificationsEnabled ? pushTemplates() : {},
+      templates: notificationsEnabled
+        ? { ...pushTemplates(), ...joinRequestTemplates() }
+        : {},
     })
     if (outcome !== 'unchanged')
       analytics.capture('buddies_push_registration', { outcome })

@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import useConversations from '@/stores/conversationStore'
+import { storedDayKey } from '@/lib/normalizeDate'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -9,6 +10,10 @@ import BuddyNotificationRow from '@/features/buddies/components/BuddyNotificatio
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import {
+  findJoinRequestPlan,
+  joinRequestInvite,
+} from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import {
@@ -84,8 +89,8 @@ export function buddyNotificationIdForSeq(seq: number): string | null {
 
 /**
  * The buddy notification queue as tray items: invitations, changes,
- * cancellations, replies, and new pairings. Only once the User has started
- * using Buddies.
+ * cancellations, replies, requests to join, and new pairings. Only once the
+ * User has started using Buddies.
  */
 export default function useBuddyNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
@@ -95,7 +100,9 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const buddies = useBuddies((state) => state.buddies)
   const incomingClaims = useBuddies((state) => state.incomingClaims)
   const incomingShares = useBuddies((state) => state.incomingShares)
+  const joinRequests = useBuddies((state) => state.joinRequests)
   const dayPlans = useServiceReport((state) => state.dayPlans)
+  const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
   if (!enabled || !started) return []
 
@@ -142,6 +149,24 @@ export default function useBuddyNotifications(): NotificationItem[] {
       !!share && effectiveShareStatus(share, dayPlans) !== 'pending'
     const needsAnswer =
       awaitsAnswer(entry, { incomingClaims, incomingShares }) && !answered
+    const joinRequest =
+      entry.kind === 'joinRequest' && entry.shareKey
+        ? joinRequests[entry.shareKey]
+        : undefined
+    const ownPlan = joinRequest
+      ? findJoinRequestPlan(joinRequest, dayPlans, recurringPlans)
+      : undefined
+    const invite = joinRequest
+      ? joinRequestInvite(joinRequest, dayPlans, recurringPlans)
+      : undefined
+    // Inviting the buddy to a Plan that day answers the request.
+    const invited =
+      !!joinRequest &&
+      dayPlans.some(
+        (plan) =>
+          storedDayKey(plan.date) === joinRequest.d &&
+          !!plan.buddies?.includes(joinRequest.from)
+      )
     return {
       id: entry.id,
       kind: 'buddies',
@@ -149,7 +174,15 @@ export default function useBuddyNotifications(): NotificationItem[] {
       title: entry.name,
       sticky: needsAnswer,
       onView: () => buddiesEngine.markNotificationRead(entry.id),
-      onDismiss: () => buddiesEngine.dismissNotification(entry.id),
+      onDismiss: () => {
+        // X, Not Now, and Clear All all pass on a request to join that could
+        // have been answered with Invite.
+        if (invite?.kind === 'invite' && !invited)
+          analytics.capture('buddy_join_request_answered', {
+            action: 'not_now',
+          })
+        buddiesEngine.dismissNotification(entry.id)
+      },
       render: ({ unread, dismiss, closeThen }) => (
         <BuddyNotificationRow
           entry={entry}
@@ -157,6 +190,25 @@ export default function useBuddyNotifications(): NotificationItem[] {
           // Answering is what clears a request; it can't be dismissed.
           onDismiss={needsAnswer ? undefined : dismiss}
           onPress={target ? () => closeThen(target) : undefined}
+          ownPlan={ownPlan?.plan}
+          invited={invited}
+          cantInvite={
+            invite?.kind === 'linked'
+              ? {
+                  reason: 'linked',
+                  organizer: buddies.find((b) => b.inboxId === invite.organizer)
+                    ?.name,
+                }
+              : invite?.kind === 'changed'
+                ? { reason: 'changed' }
+                : undefined
+          }
+          onInvite={
+            invite?.kind === 'invite'
+              ? () =>
+                  closeThen(() => navigation.navigate('PlanDay', invite.target))
+              : undefined
+          }
         />
       ),
     }

@@ -84,7 +84,7 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
         {overflow > 0 ? <AvatarGroupCount count={overflow} /> : null}
       </AvatarGroup>
       <Text
-        style={{ fontSize: theme.fontSize('sm'), flexShrink: 1 }}
+        style={{ fontSize: theme.fontSize('sm'), flex: 1, width: 0 }}
         numberOfLines={1}
       >
         {plan.buddyShare ? i18n.t('buddies_withName', { name: names }) : names}

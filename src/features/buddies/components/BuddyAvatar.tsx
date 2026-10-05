@@ -17,6 +17,7 @@ export default function BuddyAvatar({
   avatar,
   name,
   colorIndex,
+  background,
   size,
   focusable,
   children,
@@ -24,6 +25,8 @@ export default function BuddyAvatar({
   avatar?: SharedAvatar
   name: string
   colorIndex?: number
+  /** Replaces the buddy's color behind an initial or emoji. */
+  background?: string
   size?: number
   focusable?: boolean
   /** E.g. an `AvatarBadge`. */
@@ -37,7 +40,8 @@ export default function BuddyAvatar({
       size={size}
       focusable={focusable}
       background={
-        colorIndex === undefined ? undefined : buddyColor(theme, colorIndex)
+        background ??
+        (colorIndex === undefined ? undefined : buddyColor(theme, colorIndex))
       }
     >
       {children}

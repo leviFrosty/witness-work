@@ -10,14 +10,18 @@ import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
+import AskToJoinButton from '@/features/buddies/components/AskToJoinButton'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
+import useAskToJoin from '@/features/buddies/hooks/useAskToJoin'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
+import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Faded, read-only buddy Plans for one day — they never mix with the User's
- * own. Long-press a row to view the buddy or plan the same time.
+ * own. Each can be asked to join; long-press a row to view the buddy or plan
+ * the same time.
  */
 export default function BuddyPlansForDay({
   date,
@@ -33,16 +37,24 @@ export default function BuddyPlansForDay({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const planSameTime = usePlanSameTime('buddy_plans_for_day')
+  const askToJoin = useAskToJoin('buddy_plans_for_day')
   const enabled = useBuddiesEnabled()
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const buddies = useBuddies((state) => state.buddies)
   const cards = useBuddies((state) => state.cards)
   const incomingShares = useBuddies((state) => state.incomingShares)
+  const key = moment(date).format('YYYY-MM-DD')
+  // Buddies the User goes out with show on the User's own Plans instead.
+  const withBuddies = useBuddyCalendarMarkers()[key]?.withBuddies ?? []
   if (!enabled) return null
 
-  const key = moment(date).format('YYYY-MM-DD')
   const rows = buddies
-    .filter((buddy) => buddy.status === 'active' && buddy.showOnCalendar)
+    .filter(
+      (buddy) =>
+        buddy.status === 'active' &&
+        buddy.showOnCalendar &&
+        !withBuddies.some((other) => other.inboxId === buddy.inboxId)
+    )
     .flatMap((buddy) =>
       (cards[buddy.inboxId]?.days.find((day) => day.d === key)?.p ?? []).map(
         (plan, index) => ({ buddy, plan, key: `${buddy.inboxId}-${index}` })
@@ -76,9 +88,10 @@ export default function BuddyPlansForDay({
     }
 
   return (
-    <View style={{ gap: 8, opacity: 0.7, paddingTop: 10 }}>
+    <View style={{ gap: 8, paddingTop: 10 }}>
       <Text
         style={{
+          opacity: 0.7,
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
           fontSize: theme.fontSize('sm'),
@@ -90,40 +103,54 @@ export default function BuddyPlansForDay({
       </Text>
       {rows.map(({ buddy, plan, key: rowKey }) => {
         const duration = formatMinutes(plan.m, timeDisplayFormat).formatted
+        const label =
+          plan.s === undefined
+            ? i18n.t('buddies_dayPlanAnyTime', { duration })
+            : i18n.t('buddies_dayPlanAtTime', {
+                time: formatStartTime(plan.s),
+                duration,
+              })
         return (
-          <ContextMenu
-            key={rowKey}
-            actions={[
-              viewBuddy(buddy.inboxId),
-              onNavigate &&
-                !past && {
-                  id: 'plan_same_time',
-                  title: i18n.t('buddies_planSameTime'),
-                  systemImage: 'calendar.badge.plus',
-                  onPress: () => onNavigate(() => planSameTime(key, plan)),
-                },
-            ]}
-          >
-            <XView style={{ gap: 10 }}>
-              <BuddyAvatar
-                avatar={buddy.avatar}
-                name={buddy.name}
-                colorIndex={buddy.colorIndex}
-                size={22}
+          <XView key={rowKey} style={{ gap: 10 }}>
+            <ContextMenu
+              style={{ flex: 1 }}
+              actions={[
+                viewBuddy(buddy.inboxId),
+                !past && askToJoin.menuAction(buddy, key, plan),
+                onNavigate &&
+                  !past && {
+                    id: 'plan_same_time',
+                    title: i18n.t('buddies_planSameTime'),
+                    systemImage: 'calendar.badge.plus',
+                    onPress: () => onNavigate(() => planSameTime(key, plan)),
+                  },
+              ]}
+            >
+              <XView style={{ gap: 10, opacity: 0.7 }}>
+                <BuddyAvatar
+                  avatar={buddy.avatar}
+                  name={buddy.name}
+                  colorIndex={buddy.colorIndex}
+                  size={22}
+                />
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                  {buddy.name}
+                </Text>
+                <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+                  {label}
+                </Text>
+              </XView>
+            </ContextMenu>
+            {past ? null : (
+              <AskToJoinButton
+                buddy={buddy}
+                d={key}
+                plan={plan}
+                label={`${moment(date).format('ddd, MMM D')}, ${label}`}
+                askToJoin={askToJoin}
               />
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {buddy.name}
-              </Text>
-              <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-                {plan.s === undefined
-                  ? i18n.t('buddies_dayPlanAnyTime', { duration })
-                  : i18n.t('buddies_dayPlanAtTime', {
-                      time: formatStartTime(plan.s),
-                      duration,
-                    })}
-              </Text>
-            </XView>
-          </ContextMenu>
+            )}
+          </XView>
         )
       })}
       {followUps.map(({ buddy, share }) => (
@@ -131,7 +158,7 @@ export default function BuddyPlansForDay({
           key={`${share.from}-${share.shareId}`}
           actions={[viewBuddy(buddy.inboxId)]}
         >
-          <XView style={{ gap: 10 }}>
+          <XView style={{ gap: 10, opacity: 0.7 }}>
             <BuddyAvatar
               avatar={buddy.avatar}
               name={buddy.name}

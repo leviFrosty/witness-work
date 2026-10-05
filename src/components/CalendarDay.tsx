@@ -1,6 +1,6 @@
 import { ArrowUp as ArrowUpIcon } from 'lucide-react-native'
-import { useCallback, useEffect, useMemo } from 'react'
-import { View } from 'react-native'
+import { ReactNode, useCallback, useEffect, useMemo } from 'react'
+import { StyleSheet, View } from 'react-native'
 import { DateData } from 'react-native-calendars'
 import { DayProps } from 'react-native-calendars/src/calendar/day'
 import Text from '@/components/ui/MyText'
@@ -335,8 +335,11 @@ const CalendarDay = (
      */
     dayPlansOverride?: DayPlan[]
     recurringPlansOverride?: RecurringPlan[]
-    /** Small dots along the bottom edge, one per color (e.g. Buddies' plans). */
-    markerColors?: string[]
+    /**
+     * Drawn over the cell, positioned within its box, e.g. who a Plan is with.
+     * Read by VoiceOver along with the day.
+     */
+    overlay?: ReactNode
   }
 ) => {
   const store = useServiceReport()
@@ -435,43 +438,25 @@ const CalendarDay = (
           opacity: disabled ? 0.4 : isOffDay ? 0.55 : 1,
         }}
       >
-        {dayPlansForDay.length || recurringPlansForDay?.length ? (
-          <PlannedDay
-            {...props}
-            serviceReports={reportsForDay}
-            dayPlans={dayPlansForDay}
-            recurringPlans={recurringPlansForDay}
-          />
-        ) : (
-          <NonPlannedDay {...props} serviceReports={reportsForDay} />
-        )}
-      </ContextMenu>
-      {props.markerColors && props.markerColors.length > 0 && (
-        <View
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            bottom: 1,
-            left: 0,
-            right: 0,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 2,
-          }}
-        >
-          {props.markerColors.slice(0, 3).map((color, index) => (
-            <View
-              key={`${color}-${index}`}
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 2.5,
-                backgroundColor: color,
-              }}
+        {/* The overlay sits inside the trigger so VoiceOver reads it with its day. */}
+        <View>
+          {dayPlansForDay.length || recurringPlansForDay?.length ? (
+            <PlannedDay
+              {...props}
+              serviceReports={reportsForDay}
+              dayPlans={dayPlansForDay}
+              recurringPlans={recurringPlansForDay}
             />
-          ))}
+          ) : (
+            <NonPlannedDay {...props} serviceReports={reportsForDay} />
+          )}
+          {props.overlay ? (
+            <View pointerEvents='none' style={StyleSheet.absoluteFill}>
+              {props.overlay}
+            </View>
+          ) : null}
         </View>
-      )}
+      </ContextMenu>
       {props.planMode && isToday && howToAddPlan && (
         <Animated.View
           style={[

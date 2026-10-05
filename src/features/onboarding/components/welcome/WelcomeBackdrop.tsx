@@ -195,6 +195,8 @@ interface Props {
   ringEnd: SharedValue<number>
   /** Extra bloom behind the hub. */
   pulse: SharedValue<number>
+  /** Opacity of the orbits and ring, to clear them off the aurora. */
+  chrome?: SharedValue<number>
 }
 
 /**
@@ -214,6 +216,7 @@ const WelcomeBackdrop = ({
   ringStart,
   ringEnd,
   pulse,
+  chrome,
 }: Props) => {
   const { aurora } = palette
   const uniforms = useDerivedValue(() => ({
@@ -248,7 +251,7 @@ const WelcomeBackdrop = ({
       ) : (
         <Fill color={palette.base} />
       )}
-      <Group transform={hubShift}>
+      <Group transform={hubShift} opacity={chrome ?? 1}>
         <Orbit
           cx={hub.x}
           cy={hub.y}

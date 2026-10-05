@@ -47,6 +47,9 @@ export const analyticsEventNames = [
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.
+  'app_share_completed',
+  'app_share_failed',
+  'app_share_tapped',
   'buddies_feedback_attachment_failed',
   'buddies_feedback_submitted',
   'buddies_feedback_unavailable',
@@ -68,6 +71,8 @@ export const analyticsEventNames = [
   'notification_opened',
   'pointer_hover_detected',
   'tab_order_changed',
+  'update_reveal_closed',
+  'update_reveal_opened',
   // Supporter iCloud adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',

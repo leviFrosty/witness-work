@@ -1,5 +1,6 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { WhatsNewContent } from '@/features/updates/components/WhatsNewSheet'
+import UpdateTourCard from '@/features/updates/components/UpdateTourCard'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { usePreferences } from '@/stores/preferences'
 import { useEffect, useState } from 'react'
@@ -21,6 +22,7 @@ const WhatsNewScreen = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 30 }}
       >
+        <UpdateTourCard />
         <WhatsNewContent lastVersion={lastVersion} />
       </KeyboardAwareScrollView>
     </Wrapper>

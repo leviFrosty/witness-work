@@ -13,6 +13,7 @@ import NotificationsBell from '@/app/notifications/NotificationsBell'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 
 // A single-screen stack keeps the route named `Dashboard`, which screen
 // analytics has always reported for Home.
@@ -24,25 +25,25 @@ const HomeNavigator = () => {
   const theme = useTheme()
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
   const focusNotesImports = useNotesImportManager((s) => s.focus)
+  const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
 
   // Populate settings-level status immediately and resume persisted work.
   useEffect(() => {
     if (notesImportEnabled) focusNotesImports()
   }, [focusNotesImports, notesImportEnabled])
 
-  // Dev-only reset for the milestone-reveal flow. Long-press the header title
-  // to clear both flags so the grand reveal fires fresh on next mount. Wired in
-  // __DEV__ only; the prop is undefined in production so production callers
-  // see no behaviour change on long-press.
+  // Dev-only reset for the update reveal. Long-press the header title to clear
+  // its state and play it again, launch version and all. Wired in __DEV__
+  // only; the prop is undefined in production so production callers see no
+  // behaviour change on long-press.
   const onLongPressTitle = __DEV__
     ? () => {
         set({
-          seenMilestoneUpdateReveal: false,
-          dismissedMilestoneRevealOnce: false,
-          lastAppVersion: '1.36.0',
+          updateReveal: null,
           unreadReleaseNotes: null,
           homeChecklistAllDoneCelebrated: false,
         })
+        requestUpdateReveal('dev')
       }
     : undefined
 

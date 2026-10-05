@@ -87,7 +87,7 @@ export const WhatsNewContent = ({
                     </Text>
                   </Badge>
                 )}
-                {item.milestone && (
+                {item.name && (
                   <View
                     style={{
                       flexDirection: 'row',
@@ -112,7 +112,7 @@ export const WhatsNewContent = ({
                         letterSpacing: 0.4,
                       }}
                     >
-                      {i18n.t('milestoneReveal_title')}
+                      {i18n.t(item.name)}
                     </Text>
                   </View>
                 )}

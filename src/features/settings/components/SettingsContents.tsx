@@ -61,7 +61,7 @@ export default function SettingsContents({
       <View style={{ gap: drawerLayout.sectionGap }}>
         <PreferencesSection {...sectionProps} />
         <AppSection {...sectionProps} />
-        <SupportSection />
+        <SupportSection {...sectionProps} />
         <ContactSection {...sectionProps} />
         <MiscSection {...sectionProps} />
       </View>

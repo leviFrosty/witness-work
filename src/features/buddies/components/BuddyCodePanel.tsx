@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, AppState, View } from 'react-native'
-import * as Brightness from 'expo-brightness'
+import { ActivityIndicator, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import moment from 'moment'
 import { Copy as CopyIcon, Share as ShareIcon } from 'lucide-react-native'
@@ -13,7 +12,7 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { logger } from '@/lib/logger'
+import useFullBrightness from '@/hooks/useFullBrightness'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyRequestRow from '@/features/buddies/components/BuddyRequestRow'
 import useInviteLinkActions from '@/features/buddies/hooks/useInviteLinkActions'
@@ -35,36 +34,6 @@ type CodeState =
   | { state: 'ready'; inviteId: string; link: string }
   | { state: 'full' }
   | { state: 'error' }
-
-/**
- * Full brightness while the code is on screen; the User's level comes back when
- * it closes or the app leaves the foreground.
- */
-function useFullBrightness() {
-  useEffect(() => {
-    let previous: number | null = null
-    const raise = async () => {
-      previous ??= await Brightness.getBrightnessAsync()
-      await Brightness.setBrightnessAsync(1)
-    }
-    const restore = async () => {
-      if (previous === null) return
-      const level = previous
-      previous = null
-      await Brightness.setBrightnessAsync(level)
-    }
-    const log = (error: unknown) => logger.warn('[buddies] brightness', error)
-    void raise().catch(log)
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void raise().catch(log)
-      else void restore().catch(log)
-    })
-    return () => {
-      subscription.remove()
-      void restore().catch(log)
-    }
-  }, [])
-}
 
 /** Reuses the invite passed in or the last code shown, else creates one. */
 async function resolveCodeInvite(inviteId?: string): Promise<CodeState> {

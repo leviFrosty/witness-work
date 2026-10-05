@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { useNavigation } from '@react-navigation/native'
 import NavigationTabBar from '@/app/navigation/NavigationTabBar'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
 import { usePreferences } from '@/stores/preferences'
@@ -6,22 +7,26 @@ import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '@/features/updates/components/WhatsNewSheet'
-import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
+import UpdateRevealOverlay from '@/features/updates/components/reveal/UpdateRevealOverlay'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
+import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
+import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '@/app/navigation/ToolsScreen'
 import ProgressScreen from '@/features/progress/screens/ProgressScreen'
 import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
 import ContactsTabScreen from '@/app/contacts/ContactsTabScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
+import { RootStackNavigation } from '@/types/rootStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
-import { useNavigation } from '@react-navigation/native'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import useICloudPullSettled from '@/hooks/useICloudPullSettled'
-import { RootStackNavigation } from '@/types/rootStack'
-import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
+import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
+import { isLaunchRevealArmed } from '@/features/updates/lib/devLaunchReveal'
 import {
+  RevealAction,
   evaluateRevealOnLaunch,
   getReleaseAnnounceBetween,
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
@@ -32,13 +37,49 @@ import {
   type TabOrderKey,
 } from '@/lib/tabOrderPreferences'
 
+type LaunchDecision = {
+  action: RevealAction
+  currentVersion?: string
+  /** The version the user last saw release notes for. */
+  notesSince?: string
+}
+
 /**
- * Version that, on a returning install with `lastAppVersion` strictly less,
- * triggers The Milestone Update grand-reveal flow instead of the standard
- * `WhatsNewSheet`. Bump this if a future release wants its own dedicated reveal
- * — and reset the matching preference flags in the same migration.
+ * What this launch announces: the update reveal (returning installs crossing
+ * `UPDATE_REVEAL_VERSION`), the WhatsNewSheet (releases announced as 'sheet'),
+ * the passive tray item (every other transition with notes), or nothing.
  */
-const MILESTONE_UPDATE_VERSION = '1.38.2'
+const decideLaunch = (): LaunchDecision => {
+  const currentVersion = Constants.expoConfig?.version
+  const { lastAppVersion, updateReveal, unreadReleaseNotes } =
+    usePreferences.getState()
+  if (!currentVersion || !lastAppVersion) return { action: 'none' }
+  // Armed from Developer Tools; holds until that reveal has been closed.
+  if (isLaunchRevealArmed() && !updateReveal) {
+    return { action: 'update-reveal', currentVersion }
+  }
+  logger.log('[HomeTabStack] currentVersion', currentVersion)
+  logger.log('[HomeTabStack] lastVersion', lastAppVersion)
+  const action = evaluateRevealOnLaunch({
+    currentVersion,
+    lastAppVersion,
+    revealVersion: UPDATE_REVEAL_VERSION,
+    revealEngaged: updateReveal?.version === UPDATE_REVEAL_VERSION,
+    releaseAnnounce: getReleaseAnnounceBetween(
+      releaseNotes,
+      lastAppVersion,
+      currentVersion
+    ),
+  })
+  logger.log('[HomeTabStack] launch reveal action', action)
+  // Earlier unread updates stack onto this one.
+  return {
+    action,
+    currentVersion,
+    notesSince: unreadReleaseNotes?.since ?? lastAppVersion,
+  }
+}
+
 const Tab = createBottomTabNavigator<HomeTabStackParamList>()
 
 // Called inline, not rendered as a component: the navigator only reads
@@ -58,98 +99,57 @@ const renderTabScreen = (name: TabOrderKey) => {
 
 const HomeTabStack = () => {
   const { hasSidebar } = useAdaptiveLayout()
-  const {
-    lastAppVersion,
-    developerTools,
-    seenMilestoneUpdateReveal,
-    dismissedMilestoneRevealOnce,
-    tabOrder: storedTabOrder,
-    set,
-  } = usePreferences()
+  const { developerTools, tabOrder: storedTabOrder, set } = usePreferences()
   const { showsYearTabs } = usePublisher()
   const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
     (name) => name !== 'Progress' || showsYearTabs
   )
-  const [whatsNewSince, setWhatsNewSince] = useState<string | null>(null)
-  const [showWhatsNew, setShowWhatsNew] = useState(false)
-  const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
-  const requestReveal = useMilestoneRevealStore((s) => s.request)
-  const dismissReveal = useMilestoneRevealStore((s) => s.dismiss)
-
+  // Decided during the first render rather than in an effect: the update
+  // reveal has to be on screen in the very first frame to pick up from the
+  // splash.
+  const [launch] = useState(decideLaunch)
+  const [whatsNewSince] = useState(
+    launch.action === 'whats-new' ? launch.notesSince : undefined
+  )
+  const [showWhatsNew, setShowWhatsNew] = useState(
+    launch.action === 'whats-new'
+  )
+  const [launchReveal, setLaunchReveal] = useState(
+    launch.action === 'update-reveal'
+  )
+  // Replays from the tray, What's New, or Developer Tools.
+  const replaySource = useUpdateRevealStore((s) => s.source)
+  const dismissReplay = useUpdateRevealStore((s) => s.dismiss)
+  const revealSource = launchReveal ? 'launch' : replaySource
+  // The Milestone Update (1.38.2) is replay-only, from Developer Tools.
   const rootNavigation = useNavigation<RootStackNavigation>()
+  const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
+  const dismissMilestoneReveal = useMilestoneRevealStore((s) => s.dismiss)
 
-  // Decide between the grand-reveal overlay (one-time, returning users coming
-  // up to MILESTONE_UPDATE_VERSION), the WhatsNewSheet (releases announced as
-  // 'sheet') and the passive tray item (every other transition with notes).
+  // Record the launch's version transition once.
   useEffect(() => {
-    const currentVersion = Constants.expoConfig?.version
-    if (!currentVersion || !lastAppVersion) return
-    logger.log('[HomeTabStack] currentVersion', currentVersion)
-    logger.log('[HomeTabStack] lastVersion', lastAppVersion)
-
-    const releaseAnnounce = getReleaseAnnounceBetween(
-      releaseNotes,
-      lastAppVersion,
-      currentVersion
-    )
-    // Read outside the render snapshot so stamping it below doesn't re-run
-    // this effect. Earlier unread updates stack onto this one.
-    const { unreadReleaseNotes } = usePreferences.getState()
-    const notesSince = unreadReleaseNotes?.since ?? lastAppVersion
-
-    const action = evaluateRevealOnLaunch({
-      currentVersion,
-      lastAppVersion,
-      milestoneRevealVersion: MILESTONE_UPDATE_VERSION,
-      seenMilestoneUpdateReveal,
-      dismissedMilestoneRevealOnce,
-      releaseAnnounce,
-    })
-    logger.log('[HomeTabStack] launch reveal action', action)
-
+    const { action, currentVersion, notesSince } = launch
+    if (action === 'none' || !currentVersion) return
     switch (action) {
-      case 'milestone-reveal':
-        requestReveal()
+      case 'update-reveal':
+      case 'stamp-only':
         set({ lastAppVersion: currentVersion })
         return
       case 'whats-new':
-        setWhatsNewSince(notesSince)
-        setShowWhatsNew(true)
         set({ lastAppVersion: currentVersion, unreadReleaseNotes: null })
         return
       case 'whats-new-card':
         set({
           lastAppVersion: currentVersion,
           unreadReleaseNotes: {
-            since: notesSince,
+            since: notesSince ?? currentVersion,
             at: Date.now(),
             cardDismissed: false,
           },
         })
         return
-      case 'stamp-only':
-        set({ lastAppVersion: currentVersion })
-        return
-      case 'none':
-        return
     }
-  }, [
-    lastAppVersion,
-    seenMilestoneUpdateReveal,
-    dismissedMilestoneRevealOnce,
-    requestReveal,
-    set,
-  ])
-
-  const handleRevealDismiss = () => {
-    dismissReveal()
-    set({ dismissedMilestoneRevealOnce: true })
-  }
-
-  const handleRevealSeeWhatsNew = () => {
-    dismissReveal()
-    rootNavigation.navigate('MilestoneShowcase')
-  }
+  }, [launch, set])
 
   const rollover = useRollover()
   const { autoRolloverEnabled } = usePreferences()
@@ -197,13 +197,24 @@ const HomeTabStack = () => {
       </Tab.Navigator>
       {/* One instance for every root header's account menu. */}
       <ProfileDetailOverlay />
-      {/* Mounted last so it overlays the tab bar. The global ConfettiProvider
-          renders above this tree, so confetti drifts in front of the title — a
-          deliberate cinematic choice. */}
+      {/* Mounted last so it overlays the tab bar. */}
+      {revealSource && (
+        <UpdateRevealOverlay
+          key={revealSource}
+          source={revealSource}
+          onClosed={() => {
+            setLaunchReveal(false)
+            dismissReplay()
+          }}
+        />
+      )}
       <MilestoneRevealOverlay
         show={showMilestoneReveal}
-        onDismiss={handleRevealDismiss}
-        onSeeWhatsNew={handleRevealSeeWhatsNew}
+        onDismiss={dismissMilestoneReveal}
+        onSeeWhatsNew={() => {
+          dismissMilestoneReveal()
+          rootNavigation.navigate('MilestoneShowcase')
+        }}
       />
     </View>
   )

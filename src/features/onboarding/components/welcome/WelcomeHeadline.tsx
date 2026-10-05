@@ -119,7 +119,12 @@ interface LineProps {
   onHeight: (height: number) => void
 }
 
-const HeadlineLine = ({
+/**
+ * One headline line whose words rise in while `current` and leave once it
+ * isn't. Lines share a box and sit on its floor; `onHeight` reports the line's
+ * height so the box can reserve the tallest.
+ */
+export const HeadlineLine = ({
   text,
   current,
   enterDelay,

@@ -16,3 +16,7 @@ A **Reveal update** is an app version that earns its own dedicated full-screen r
 - Future Reveal updates must explicitly opt into the suppression rule by adding their own gate alongside `MILESTONE_UPDATE_VERSION` / `FOUNDING_SUPPORTER_REVEAL_VERSION` in `HomeTabStack`.
 - TestFlight users who installed a build with the Reveal version _before_ this work shipped have `lastAppVersion` already stamped at the target version; they will not cross the gate. Replay via the dev-tools "Reset reveals" control is the documented workaround.
 - The Founding flag is **never cleared**. A re-subscribing Founding Supporter regains their badge automatically; an erroneously-granted flag cannot be revoked without a migration.
+
+## Addendum (1.44 update reveal)
+
+The 1.44 update reveal replaced the Milestone Update on launch; its overlay and showcase stay only as replays in Developer Tools → Special updates. The reveal's gate is now a single `UPDATE_REVEAL_VERSION` (`src/features/updates/constants/updateReveal.ts`), and engagement is stored against that version in `updateReveal` instead of per-reveal `seen…` booleans, so a future Reveal update only raises the constant. Reveal updates are named releases: `UPDATE_REVEAL_NAME` (The Together Update for 1.44) titles the reveal, its tray replay item, and the release's What's New badge. The suppression rule above is unchanged: crossing the version shows the reveal instead of `WhatsNewSheet` or the passive tray item, and release notes stay in Settings → What's New.

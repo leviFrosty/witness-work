@@ -1,4 +1,5 @@
 import moment from 'moment'
+import type { TranslationKey } from '@/lib/locales'
 import type { ReleaseAnnounce } from '@/features/updates/lib/evaluateRevealOnLaunch'
 
 export type ReleaseNote = {
@@ -23,12 +24,12 @@ export type ReleaseNote = {
    */
   content: string[]
   /**
-   * Marks this release as a "milestone" — a major rollup release that gets a
-   * dedicated grand-reveal flow on first launch and is visually flagged in the
-   * What's New list. Only one milestone release exists at a time; future major
-   * rollups should set this on the new entry and clear it on prior ones.
+   * A named release — a Reveal update, like The Milestone Update (1.38.2) —
+   * wears its name as a badge in the What's New list. The launch reveal is
+   * configured separately in `constants/updateReveal.ts`; its release takes
+   * `name: UPDATE_REVEAL_NAME`.
    */
-  milestone?: boolean
+  name?: TranslationKey
   /**
    * How loudly to announce this release on first launch after updating.
    * Defaults to `'passive'` (a notifications tray item). Use `'silent'` for
@@ -67,7 +68,7 @@ export const releaseNotes: ReleaseNote[] = [
   {
     version: '1.38.2',
     date: moment('2026-05-06').toDate(),
-    milestone: true,
+    name: 'milestoneReveal_title',
     content: [
       'c1',
       'c2',

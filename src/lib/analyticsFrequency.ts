@@ -14,6 +14,7 @@ const dailyEvents = new Set([
 const sessionEvents = new Set([
   'timer_action_completed',
   'buddies_opened',
+  'contacts_staleness_chip_applied',
   'buddies_push_registration',
   'icloud_restore_probe_result',
 ])

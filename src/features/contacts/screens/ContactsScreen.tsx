@@ -2,6 +2,7 @@ import {
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
   BookUser as BookUserIcon,
+  ChevronRight as ChevronRightIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
   SlidersHorizontal as SlidersHorizontalIcon,
@@ -23,7 +24,6 @@ import {
   View,
 } from 'react-native'
 import { Input, InputProps } from 'tamagui'
-import Animated from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import {
@@ -35,15 +35,16 @@ import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
-import { isContactDismissed } from '@/lib/dismissedContacts'
+import {
+  filterActivesContacts,
+  isContactDismissed,
+} from '@/lib/dismissedContacts'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
 import { builtInContactSortOptions, usePreferences } from '@/stores/preferences'
-import i18n from '@/lib/locales'
+import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import RootHeader from '@/components/RootHeader'
-import SegmentedControl from '@/components/ui/SegmentedControl'
 import { ContactsView } from '@/types/homeStack'
-import Card from '@/components/ui/Card'
 import Collapse from '@/components/ui/Collapse'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
@@ -51,7 +52,8 @@ import IconButton from '@/components/ui/IconButton'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import Text from '@/components/ui/MyText'
 import ContactRow from '@/features/contacts/components/ContactRow'
-import ContactsStatsHeader from '@/features/contacts/components/ContactsStatsHeader'
+import ContactsStalenessChips from '@/features/contacts/components/ContactsStalenessChips'
+import ContactsViewToggle from '@/features/contacts/components/ContactsViewToggle'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
@@ -128,6 +130,7 @@ const ContactsScreen = ({
 
   const { contacts, customFieldDefs } = useContacts()
   const dismissedCount = contacts.filter(isContactDismissed).length
+  const activeContacts = filterActivesContacts(contacts)
 
   const search = useContactsSearchStore((s) => s.search)
   const setSearch = useContactsSearchStore((s) => s.setSearch)
@@ -299,6 +302,7 @@ const ContactsScreen = ({
     </>
   ) : (
     <>
+      <ContactsViewToggle value={contactsView} onChange={changeView} />
       <PullDownMenu
         accessibilityLabel={i18n.t('moreActions')}
         triggerColor={theme.colors.accent}
@@ -382,30 +386,7 @@ const ContactsScreen = ({
             }
             actions={headerActions}
             contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-          >
-            {!selection.selecting && (
-              <Collapse collapsed={listCollapsed}>
-                <Animated.View
-                  style={{
-                    height: mapExplored ? 34 : 40,
-                    transitionProperty: 'height',
-                    transitionDuration: 260,
-                    transitionTimingFunction: 'ease-in-out',
-                  }}
-                >
-                  <SegmentedControl<ContactsView>
-                    value={contactsView}
-                    onChange={changeView}
-                    style={{ height: '100%' }}
-                    options={[
-                      { key: 'list', label: i18n.t('contacts_view_list') },
-                      { key: 'map', label: i18n.t('map') },
-                    ]}
-                  />
-                </Animated.View>
-              </Collapse>
-            )}
-          </RootHeader>
+          />
         </View>
       </GestureDetector>
       {showsMap ? (
@@ -433,167 +414,172 @@ const ContactsScreen = ({
               width: isWide ? 350 : undefined,
             }}
           >
-            <View style={{ paddingHorizontal: 12, gap: 12, paddingBottom: 12 }}>
-              <Card style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
-                <View>
-                  <Collapse collapsed={listCollapsed}>
-                    <View style={{ paddingBottom: 14 }}>
-                      <ContactsStatsHeader
-                        contacts={contacts}
-                        index={conversationIndex}
-                        onPressDismissed={() =>
-                          navigation.navigate('Dismissed Contacts')
-                        }
-                      />
-                    </View>
-                  </Collapse>
-
-                  {/* Search row. Inline TextInput so results update live as the user
-                types. Trailing sliders button opens the Sort & Filter sheet —
-                a small badge shows the active filter count when set. */}
-                  <View
+            {/* No side padding here: the staleness chips scroll edge to edge. */}
+            <View style={{ paddingBottom: 12 }}>
+              {/* Search row. Inline TextInput so results update live as the user
+              types; its placeholder carries the contact count. Trailing sliders
+              button opens the Sort & Filter sheet — a small badge shows the
+              active filter count when set. */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingHorizontal: 12,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingHorizontal: 12,
+                    minHeight: 44,
+                    height: 44,
+                    borderRadius: theme.numbers.borderRadiusMd,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.backgroundLighter,
+                  }}
+                >
+                  <LucideIcon
+                    icon={SearchIcon}
+                    size={theme.fontSize('xs')}
+                    style={{ color: theme.colors.textAlt }}
+                  />
+                  <Input
+                    unstyled
+                    ref={searchInputRef}
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder={
+                      activeContacts.length > 0
+                        ? i18n.t(
+                            'contacts_searchPlaceholder' as TranslationKey,
+                            {
+                              count: activeContacts.length,
+                            }
+                          )
+                        : i18n.t('searchForContact')
+                    }
+                    placeholderTextColor={
+                      theme.colors.textAlt as InputProps['placeholderTextColor']
+                    }
+                    clearButtonMode='while-editing'
+                    enterKeyHint='search'
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
+                      flex: 1,
+                      color: theme.colors.text,
+                      fontFamily: theme.fonts.regular,
+                      fontSize: theme.fontSize('md'),
                     }}
-                  >
+                  />
+                </View>
+                <Button
+                  onPress={() =>
+                    navigation.navigate('Contacts Sort And Filter')
+                  }
+                  noTransform
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: theme.numbers.borderRadiusMd,
+                    borderWidth: 1,
+                    borderColor: hasActiveFilters
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: hasActiveFilters
+                      ? theme.colors.accentTranslucent
+                      : theme.colors.backgroundLighter,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LucideIcon
+                    icon={SlidersHorizontalIcon}
+                    size={theme.fontSize('sm')}
+                    style={{
+                      color: hasActiveFilters
+                        ? theme.colors.accent
+                        : theme.colors.textAlt,
+                    }}
+                  />
+                  {hasActiveFilters && (
                     <View
                       style={{
-                        flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 10,
-                        paddingHorizontal: 12,
-                        minHeight: 44,
-                        height: 44,
-                        borderRadius: theme.numbers.borderRadiusMd,
-                        borderWidth: 1,
-                        borderColor: theme.colors.border,
-                        backgroundColor: theme.colors.background,
-                      }}
-                    >
-                      <LucideIcon
-                        icon={SearchIcon}
-                        size={theme.fontSize('xs')}
-                        style={{ color: theme.colors.textAlt }}
-                      />
-                      <Input
-                        unstyled
-                        ref={searchInputRef}
-                        value={search}
-                        onChangeText={setSearch}
-                        placeholder={i18n.t('searchForContact')}
-                        placeholderTextColor={
-                          theme.colors
-                            .textAlt as InputProps['placeholderTextColor']
-                        }
-                        clearButtonMode='while-editing'
-                        enterKeyHint='search'
-                        style={{
-                          flex: 1,
-                          color: theme.colors.text,
-                          fontFamily: theme.fonts.regular,
-                          fontSize: theme.fontSize('md'),
-                        }}
-                      />
-                    </View>
-                    <Button
-                      onPress={() =>
-                        navigation.navigate('Contacts Sort And Filter')
-                      }
-                      noTransform
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                        borderWidth: 1,
-                        borderColor: hasActiveFilters
-                          ? theme.colors.accent
-                          : theme.colors.border,
-                        backgroundColor: hasActiveFilters
-                          ? theme.colors.accentTranslucent
-                          : theme.colors.backgroundLighter,
+                        position: 'absolute',
+                        top: -4,
+                        right: -4,
+                        minWidth: 16,
+                        height: 16,
+                        paddingHorizontal: 4,
+                        borderRadius: 8,
+                        backgroundColor: theme.colors.accent,
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <LucideIcon
-                        icon={SlidersHorizontalIcon}
-                        size={theme.fontSize('sm')}
+                      <Text
                         style={{
-                          color: hasActiveFilters
-                            ? theme.colors.accent
-                            : theme.colors.textAlt,
-                        }}
-                      />
-                      {hasActiveFilters && (
-                        <View
-                          style={{
-                            position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            minWidth: 16,
-                            height: 16,
-                            paddingHorizontal: 4,
-                            borderRadius: 8,
-                            backgroundColor: theme.colors.accent,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: theme.colors.textInverse,
-                              fontFamily: theme.fonts.semiBold,
-                              fontSize: theme.fontSize('xs'),
-                            }}
-                          >
-                            {contactsFilters.length}
-                          </Text>
-                        </View>
-                      )}
-                    </Button>
-                  </View>
-
-                  {/* Subtle sort indicator. Only shows when the user has changed
-                away from the default — keeps the resting state quiet. */}
-                  {isSortNonDefault && sortLabel.length > 0 && (
-                    <Collapse collapsed={listCollapsed}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 6,
-                          paddingTop: 10,
+                          color: theme.colors.textInverse,
+                          fontFamily: theme.fonts.semiBold,
+                          fontSize: theme.fontSize('xs'),
                         }}
                       >
-                        <LucideIcon
-                          icon={
-                            contactSortDirection === 'asc'
-                              ? ArrowUpIcon
-                              : ArrowDownIcon
-                          }
-                          size={theme.fontSize('xs')}
-                          style={{ color: theme.colors.textAlt }}
-                        />
-                        <Text
-                          style={{
-                            color: theme.colors.textAlt,
-                            fontSize: theme.fontSize('xs'),
-                            fontFamily: theme.fonts.semiBold,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {i18n.t('contacts_sortAndFilter_sortLabel', {
-                            label: sortLabel,
-                          })}
-                        </Text>
-                      </View>
-                    </Collapse>
+                        {contactsFilters.length}
+                      </Text>
+                    </View>
                   )}
+                </Button>
+              </View>
+
+              <Collapse collapsed={listCollapsed}>
+                <View style={{ paddingTop: 10 }}>
+                  <ContactsStalenessChips
+                    contacts={activeContacts}
+                    index={conversationIndex}
+                  />
                 </View>
-              </Card>
+              </Collapse>
+
+              {/* Subtle sort indicator. Only shows when the user has changed
+              away from the default — keeps the resting state quiet. */}
+              {isSortNonDefault && sortLabel.length > 0 && (
+                <Collapse collapsed={listCollapsed}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingTop: 10,
+                      paddingHorizontal: 12,
+                    }}
+                  >
+                    <LucideIcon
+                      icon={
+                        contactSortDirection === 'asc'
+                          ? ArrowUpIcon
+                          : ArrowDownIcon
+                      }
+                      size={theme.fontSize('xs')}
+                      style={{ color: theme.colors.textAlt }}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('xs'),
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {i18n.t('contacts_sortAndFilter_sortLabel', {
+                        label: sortLabel,
+                      })}
+                    </Text>
+                  </View>
+                </Collapse>
+              )}
             </View>
 
             <FlashList
@@ -635,6 +621,41 @@ const ContactsScreen = ({
               )}
               ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
               ListEmptyComponent={renderEmpty()}
+              // Down here so its late-arriving count can't shift the list.
+              ListFooterComponent={
+                dismissedCount > 0 && !selection.selecting ? (
+                  <Button
+                    onPress={() => navigation.navigate('Dismissed Contacts')}
+                    hitSlop={8}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      alignSelf: 'center',
+                      gap: 4,
+                      marginTop: 20,
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {i18n.t('contacts_dismissed' as TranslationKey, {
+                        count: dismissedCount,
+                      })}
+                    </Text>
+                    <LucideIcon
+                      icon={ChevronRightIcon}
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.textAlt }}
+                    />
+                  </Button>
+                ) : null
+              }
               keyboardShouldPersistTaps='handled'
               keyboardDismissMode='on-drag'
               drawDistance={flashListDrawDistance}

@@ -66,6 +66,7 @@ export const analyticsEventNames = [
   'calendar_connected',
   'calendar_disconnected',
   'calendar_sync_failed',
+  'contacts_staleness_chip_applied',
   'custom_field_created',
   'mileage_data_deleted',
   'mileage_fuel_added',

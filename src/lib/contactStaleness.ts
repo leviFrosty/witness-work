@@ -11,7 +11,7 @@ export type ContactStaleness = 'never' | 'recent' | 'week' | 'month'
 /**
  * Display order shared by the color key and the Color Key settings screen: most
  * stale first so the eye lands on red (needs attention) before grey (no data).
- * Mirrors ContactsStatsHeader.
+ * Mirrors ContactsStalenessChips.
  */
 export const STALENESS_DISPLAY_ORDER: ContactStaleness[] = [
   'month',

@@ -4,6 +4,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
+import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import { applyFilters } from '@/lib/contactsFilters'
 import { buildContactComparator } from '@/lib/contactsSort'
 import {
@@ -17,7 +18,8 @@ import { buildConversationIndex } from '@/lib/conversationIndex'
  * Single source of truth for the active contacts pipeline. The Contacts tab and
  * the modal Search & Filter screen both need the same sorted result — this hook
  * runs the pipeline once per mount via `useMemo` chains so each call site stays
- * cheap.
+ * cheap. Filters and sort come from `useContactsQuery`: the active Saved View,
+ * or the User's own.
  *
  * Reads everything from stores directly so consumers don't need to thread
  * dependencies through props.
@@ -25,12 +27,13 @@ import { buildConversationIndex } from '@/lib/conversationIndex'
 export function useContactsSorted() {
   const { contacts, customFieldDefs } = useContacts()
   const { conversations } = useConversations()
+  const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
+  const { query, hasActiveFilters, isSortNonDefault } = useContactsQuery()
   const {
-    contactSort,
-    contactSortDirection,
-    contactsFilters,
-    stalenessBreakpoints,
-  } = usePreferences()
+    filters: contactsFilters,
+    sort: contactSort,
+    direction: contactSortDirection,
+  } = query
   const search = useContactsSearchStore((s) => s.search)
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
@@ -125,9 +128,8 @@ export function useContactsSorted() {
     contactSort,
     contactSortDirection,
     hasSearch,
-    hasActiveFilters: contactsFilters.length > 0,
-    isSortNonDefault:
-      contactSort !== 'suggested' || contactSortDirection !== 'desc',
+    hasActiveFilters,
+    isSortNonDefault,
   }
 }
 

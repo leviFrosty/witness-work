@@ -37,6 +37,8 @@ export type RootStackParamList = {
   'Recover Contacts': undefined
   'Dismissed Contacts': undefined
   'Contacts Sort And Filter': undefined
+  /** `focusId` starts renaming that Saved View. */
+  'Saved Contact Views': { focusId?: string } | undefined
   Onboarding: undefined
   Update: undefined
   Preferences: undefined

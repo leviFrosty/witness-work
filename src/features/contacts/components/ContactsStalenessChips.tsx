@@ -11,7 +11,7 @@ import {
 } from '@/lib/contactStaleness'
 import { ConversationIndex } from '@/lib/conversationIndex'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
-import { usePreferences } from '@/stores/preferences'
+import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import { Contact } from '@/types/contact'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -30,8 +30,9 @@ export type ContactsStalenessChipsProps = {
  * Swipeable row of quick filters by time since the last visit: All, then each
  * staleness bucket with its count, most stale first. A chip swaps any
  * `pinStaleness` filter for its own and leaves other filters alone, so the Sort
- * & Filter sheet still shows (and can clear) what a chip set. The trailing info
- * button explains the colors and links to their settings.
+ * & Filter sheet still shows (and can clear) what a chip set. With a Saved View
+ * showing, the chips edit that view's filters. The trailing info button
+ * explains the colors and links to their settings.
  */
 const ContactsStalenessChips = ({
   contacts,
@@ -39,8 +40,10 @@ const ContactsStalenessChips = ({
 }: ContactsStalenessChipsProps) => {
   const theme = useTheme()
   const markerColors = useMarkerColors()
-  const contactsFilters = usePreferences((s) => s.contactsFilters)
-  const setContactsFilters = usePreferences((s) => s.setContactsFilters)
+  const {
+    query: { filters: contactsFilters },
+    setFilters: setContactsFilters,
+  } = useContactsQuery()
 
   const counts: Record<ContactStaleness, number> = {
     never: 0,

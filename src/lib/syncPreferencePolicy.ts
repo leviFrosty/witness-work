@@ -64,6 +64,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'devRolloverDateOverride',
   'updateReveal',
   'contactsView',
+  'activeSavedContactView',
 ])
 
 export const NON_SYNCABLE_PROFILE_KEYS = new Set(['profileUpdatedAt'])
@@ -81,6 +82,7 @@ export const SYNC_MAP_KEYS = new Set([
   'monthlyGoalOverrides',
   'reportCommentOverrides',
   'publisherHours',
+  'savedContactViews',
 ])
 export const SYNC_SET_KEYS = new Set(['seenTipIds', 'submittedReportMonths'])
 export const entryTimestampKey = (key: string, entry: string) =>

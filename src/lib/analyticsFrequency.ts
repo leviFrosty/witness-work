@@ -17,6 +17,7 @@ const sessionEvents = new Set([
   'contacts_staleness_chip_applied',
   'buddies_push_registration',
   'icloud_restore_probe_result',
+  'saved_view_applied',
 ])
 
 let storage: MMKV | undefined

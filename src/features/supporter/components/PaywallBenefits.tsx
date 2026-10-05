@@ -31,6 +31,7 @@ const FEATURE_ROWS: ReadonlyArray<{
     iosOnly: true,
   },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
+  { labelKey: 'paywallFeatureContactViews', free: false, supporter: true },
   {
     labelKey: 'paywallFeatureAppIcons',
     free: false,

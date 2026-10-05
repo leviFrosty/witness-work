@@ -27,6 +27,10 @@ import type { AssistantEvent } from '@/types/assistant'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
+import type {
+  ActiveSavedContactView,
+  SavedContactView,
+} from '@/types/savedContactView'
 import type { ContactsView } from '@/types/homeStack'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
@@ -349,6 +353,19 @@ export const PREFERENCE_DEFAULTS = {
    * switch so the user doesn't lose their filter set when leaving the screen.
    */
   contactsFilters: [] as ActiveFilter[],
+  /**
+   * Supporter-only Saved Views for the Contacts list, keyed by view id.
+   * Preserved when supporter status lapses — `useContactsQuery` stops applying
+   * them until access returns. Syncable, merged per view (`SYNC_MAP_KEYS`).
+   */
+  savedContactViews: {} as Record<string, SavedContactView>,
+  /**
+   * The Saved View the Contacts list shows on this device, if any. While one is
+   * active the list uses the view instead of `contactsFilters` / `contactSort`,
+   * which keep the User's own ad-hoc choices for when they leave the view.
+   * Device-local, like `contactsView`.
+   */
+  activeSavedContactView: null as ActiveSavedContactView | null,
   /**
    * The Contacts tab's last chosen workspace. Map lives inside Contacts, so a
    * returning Map user comes back to the map. Device-local: a phone and an iPad
@@ -1645,11 +1662,6 @@ export const usePreferences = create(
           })),
         updateLastTimeRequestedStoreReview: () =>
           set({ lastTimeRequestedAReview: new Date() }),
-        setContactSort: (contactSort: ContactSortKey) => set({ contactSort }),
-        setContactSortDirection: (contactSortDirection: ContactSortDirection) =>
-          set({ contactSortDirection }),
-        setContactsFilters: (contactsFilters: ActiveFilter[]) =>
-          set({ contactsFilters }),
         setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
           set({ defaultPhoneRegionCode }),
         /**

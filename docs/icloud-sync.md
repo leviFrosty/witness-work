@@ -15,6 +15,10 @@ JSON carries contacts, visits, time entries, day plans, recurring plans,
 categories, custom field definitions, mileage (cars, fuels, price and car setup
 histories, trips, and one shared tombstone list in the optional `mileageStore`
 slice), shared preferences, and profile data.
+Saved Views for the Contacts list are a shared preference; which view a device
+is showing, and its unsaved edits, stay on that device. A view this build can't
+read (e.g. a filter from a newer version) is skipped with its stamp, leaving the
+local copy as is, rather than failing the payload.
 Photo references travel even when photo transfer is off; local filesystem paths
 and photo metadata do not. Device identity, onboarding progress, sync controls,
 address prefill, data protection mode, and analytics consent remain local.
@@ -35,8 +39,8 @@ the final result, including tombstone contents, after deletions are applied.
 Deletion ids are retained without a wall-clock expiry; recoverable contact details
 have a separate expiry below.
 
-Goal overrides, report comments, publisher hours, and Role History merge per
-entry. `preferenceUpdatedAt["<key>:<entry>"]` records a value change or removal.
+Goal overrides, report comments, publisher hours, Saved Views, and Role History
+merge per entry. `preferenceUpdatedAt["<key>:<entry>"]` records a value change or removal.
 Membership changes in submitted-report months and seen-tip ids use the same
 rule. Older payloads fall back to the enclosing preference timestamp.
 

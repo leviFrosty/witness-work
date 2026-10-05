@@ -8,14 +8,7 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -40,7 +33,7 @@ import {
   isContactDismissed,
 } from '@/lib/dismissedContacts'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
-import { builtInContactSortOptions, usePreferences } from '@/stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import RootHeader from '@/components/RootHeader'
@@ -68,6 +61,9 @@ import {
 } from '@/features/contacts/components/ListSelection'
 import useListSelection from '@/features/contacts/hooks/useListSelection'
 import { trackListScroll } from '@/features/contacts/lib/listHeaderCollapse'
+import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
+import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
+import SavedViewsBar from '@/features/contacts/components/SavedViewsBar'
 
 /**
  * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
@@ -160,6 +156,7 @@ const ContactsScreen = ({
     searchMatchesById,
     conversationIndex,
   } = useContactsSorted()
+  const savedViews = useSavedContactViews()
 
   const selection = useListSelection(
     searchSortedAndFilteredContacts.map((contact) => contact.id)
@@ -244,21 +241,7 @@ const ContactsScreen = ({
       }
     })
 
-  const sortLabel = useMemo(() => {
-    const builtIn = builtInContactSortOptions.find(
-      (o) => o.value === contactSort
-    )
-    if (builtIn) return builtIn.label()
-    if (
-      typeof contactSort === 'string' &&
-      contactSort.startsWith('customField:')
-    ) {
-      const defId = contactSort.slice('customField:'.length)
-      const def = customFieldDefs.find((d) => d.id === defId)
-      return def?.label ?? ''
-    }
-    return ''
-  }, [contactSort, customFieldDefs])
+  const sortLabel = contactSortLabel(contactSort, customFieldDefs)
 
   const renderEmpty = () => {
     const hasSearch = search.trim().length > 0
@@ -324,6 +307,13 @@ const ContactsScreen = ({
               systemImage: 'line.3.horizontal.decrease.circle',
               onPress: () => navigation.navigate('Contacts Sort And Filter'),
             },
+            savedViews.hasAccess &&
+              savedViews.views.length > 0 && {
+                id: 'saved_views',
+                title: i18n.t('savedViews_menu_edit'),
+                systemImage: 'pencil',
+                onPress: () => navigation.navigate('Saved Contact Views'),
+              },
             dismissedCount > 0 && {
               id: 'dismissed_contacts',
               title: i18n.t('dismissedContacts'),
@@ -480,6 +470,7 @@ const ContactsScreen = ({
                   onPress={() =>
                     navigation.navigate('Contacts Sort And Filter')
                   }
+                  accessibilityLabel={i18n.t('contacts_sortAndFilter_title')}
                   noTransform
                   style={{
                     width: 44,
@@ -533,6 +524,14 @@ const ContactsScreen = ({
                   )}
                 </Button>
               </View>
+
+              {savedViews.views.length > 0 && !savedViews.locked && (
+                <Collapse collapsed={listCollapsed}>
+                  <View style={{ paddingTop: 10 }}>
+                    <SavedViewsBar />
+                  </View>
+                </Collapse>
+              )}
 
               <Collapse collapsed={listCollapsed}>
                 <View style={{ paddingTop: 10 }}>

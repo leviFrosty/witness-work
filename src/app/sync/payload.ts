@@ -4,6 +4,7 @@ import { expireDeletedContactDetails } from '@/lib/contactRetention'
 import {
   payloadSchema,
   hasUnsafeKeys,
+  dropUnreadableSavedViews,
   validSettingValues,
   validProfileValues,
 } from '@/app/sync/payloadValidation'
@@ -297,6 +298,7 @@ export function parsePayload(json: string): SyncPayload | null {
     const d = result.data
     normalizeLegacyPayloadFieldNames(d)
     normalizeLegacyFollowUps(d)
+    dropUnreadableSavedViews(d.preferencesStore)
     if (
       !validSettingValues(d.preferencesStore.values, PREFERENCE_DEFAULTS) ||
       (d.profileStore && !validProfileValues(d.profileStore.values))

@@ -136,6 +136,10 @@ _Avoid_: "appointment" (used colloquially but not in code).
 A User-defined structured attribute on Contacts (e.g. "Language", "Best time to visit"). The User creates a Custom Field Definition (label, type, sort order); per-Contact values reference the definition by id, so renaming the label doesn't orphan data. Definitions can be archived — hidden from the form but values preserved. Distinct from a Note: Notes are unstructured free-text on a single record; Custom Fields are schema-defined attributes shared across all Contacts.
 _Avoid_: "extra field", "user field" (Custom Field is the canonical term).
 
+**Saved View**:
+A named filter + sort combination for the Contacts list (e.g. "Bible studies", "Spanish territory"), switched to with one tap from the Contacts screen. A Supporter feature: building filters stays free, saving them as a view needs Supporter access, and a lapse keeps the views but hides them and stops applying them. References Custom Fields by definition id, so renaming or archiving a field keeps the view working. Doesn't capture the search text.
+_Avoid_: "view" alone near the Contacts List/Map switch — that's the Contacts workspace (`contactsView`), not a Saved View; "smart list", "saved search".
+
 ### Plans
 
 **Plan**:

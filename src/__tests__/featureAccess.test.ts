@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { evaluateFeatureAccess, type FeatureKey } from '@/lib/featureAccess'
 
-const allFeatures: FeatureKey[] = ['customAccentColor', 'iCloudSync']
+const allFeatures: FeatureKey[] = [
+  'customAccentColor',
+  'iCloudSync',
+  'customAppIcon',
+  'savedContactViews',
+]
 
 describe('evaluateFeatureAccess', () => {
   describe('supporter-gated features', () => {

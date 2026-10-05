@@ -44,6 +44,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `contacts_staleness_chip_applied`                                                 | Once per session and group (`variant`); reach of the Contacts quick filters, not every tap.                                   |
 | `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                      |
 | `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                            |
+| `saved_view_applied`                                                              | Once per session; reach of Saved View switching, not how often people switch.                                                 |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                   |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                |
 
@@ -125,10 +126,13 @@ speculative tier/billing/price/options/legal-link paywall events were removed.
 | Are new features adopted?                                    | Timer start/failure, Buddies open/same-time planning, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                                                                                                                                               |
 | Do buddies use Ask to Join, and does it lead to joint Plans? | `buddy_join_requested` and `buddy_join_request_withdrawn` (`source`: `buddy_plans_for_day` \| `buddy_detail`), `buddy_join_request_answered` (`action`: `invite_opened` \| `invited` \| `not_now`; `invited` when a Plan saved from Invite still includes the buddy, `not_now` for Not Now, dismiss, or Clear All), `buddy_join_request_notifications_changed` (`scope`: `all` \| `buddy`, `enabled`), `buddy_invite_overlap_resolved` (`choice`: `replace` \| `keep_both`). Never names, relay ids, or Plan dates and times. |
 | Do people filter Contacts by last visit?                     | `contacts_staleness_chip_applied` (`variant`: `month`, `week`, `recent`, or `never`) when a Contacts chip turns on that group. Once per session per group; clearing a chip sends nothing.                                                                                                                                                                                                                                                                                                                                     |
+| Are Saved Views adopted and used?                            | `saved_view_created` (`filter_count`, `sort`, `view_count`) and `saved_view_applied` (`view_count`, once per session). Updating, renaming, reordering and deleting a view are ordinary edits and send nothing.                                                                                                                                                                                                                                                                                                                |
 | Is mileage used and exported?                                | Tracking changed, vehicle/trip/fuel added, data deleted, report exported/export failed. Low-value row actions, unit preferences, and edits are dropped.                                                                                                                                                                                                                                                                                                                                                                       |
 
 Existing structural properties and sources remain on retained events. No saved
 content, record identifiers, appointment dates, or exception text is attached.
+Saved View `sort` is a built-in sort key or just `customField`; the events never
+carry view names, filter values, or custom field ids.
 Buddies and Notes Import are rollout-gated; iCloud and Calendar Sync features
 retain their iOS availability rules.
 
@@ -223,6 +227,7 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
 | `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
 | `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
+| `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first

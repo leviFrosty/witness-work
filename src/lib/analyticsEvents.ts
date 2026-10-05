@@ -77,6 +77,8 @@ export const analyticsEventNames = [
   'mileage_vehicle_added',
   'notification_opened',
   'pointer_hover_detected',
+  'saved_view_applied',
+  'saved_view_created',
   'tab_order_changed',
   'update_reveal_closed',
   'update_reveal_opened',

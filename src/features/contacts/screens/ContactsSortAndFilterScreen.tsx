@@ -7,7 +7,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -16,7 +16,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useContacts from '@/stores/contactsStore'
-import { builtInContactSortOptions, usePreferences } from '@/stores/preferences'
+import { builtInContactSortOptions } from '@/stores/preferences'
 import {
   ActiveFilter,
   ComparableOperator,
@@ -25,6 +25,8 @@ import {
 import { ContactSortKey } from '@/lib/contactsSort'
 import { CustomFieldDefinition } from '@/types/customField'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
+import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
+import SavedViewSection from '@/features/contacts/components/SavedViewSection'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
@@ -99,8 +101,9 @@ const describeFilter = (
  * tucking them behind a single icon button keeps the tab UI quiet without
  * burying the affordance.
  *
- * Filters/sort are persisted via `usePreferences`, so dismissing the screen
- * leaves all selections intact for the underlying Contacts list.
+ * Filters/sort are persisted via `useContactsQuery`, so dismissing the screen
+ * leaves all selections intact for the underlying Contacts list. While a Saved
+ * View is showing, edits here go to that view until saved back to it.
  */
 const ContactsSortAndFilterScreen = () => {
   const theme = useTheme()
@@ -109,13 +112,18 @@ const ContactsSortAndFilterScreen = () => {
 
   const { customFieldDefs } = useContacts()
   const {
-    contactSort,
-    contactSortDirection,
-    contactsFilters,
-    setContactSort,
-    setContactSortDirection,
-    setContactsFilters,
-  } = usePreferences()
+    query: {
+      filters: contactsFilters,
+      sort: contactSort,
+      direction: contactSortDirection,
+    },
+    view,
+    edited,
+    setFilters: setContactsFilters,
+    setSort: setContactSort,
+    setDirection: setContactSortDirection,
+    reset,
+  } = useContactsQuery()
 
   const { searchSortedAndFilteredContacts } = useContactsSorted()
   const resultCount = searchSortedAndFilteredContacts.length
@@ -125,14 +133,11 @@ const ContactsSortAndFilterScreen = () => {
     null
   )
 
-  const activeCustomFieldDefs = useMemo(
-    () =>
-      customFieldDefs
-        .filter((d) => d.archived !== true)
-        .slice()
-        .sort((a, b) => a.order - b.order),
-    [customFieldDefs]
-  )
+  // An archived field stays listed while it's the current sort (e.g. a Saved
+  // View's), so the selection is visible.
+  const activeCustomFieldDefs = customFieldDefs
+    .filter((d) => d.archived !== true || contactSort === `customField:${d.id}`)
+    .sort((a, b) => a.order - b.order)
 
   const handleClose = () => {
     if (navigation.canGoBack()) navigation.goBack()
@@ -157,10 +162,7 @@ const ContactsSortAndFilterScreen = () => {
       onConfirm: () => setContactsFilters([]),
     })
   }
-  const handleSaveFilter = (
-    filter: Parameters<typeof setContactsFilters>[0][number],
-    index: number | null
-  ) => {
+  const handleSaveFilter = (filter: ActiveFilter, index: number | null) => {
     if (index === null) {
       setContactsFilters([...contactsFilters, filter])
     } else {
@@ -169,11 +171,8 @@ const ContactsSortAndFilterScreen = () => {
       )
     }
   }
-  const handleReset = () => {
-    setContactsFilters([])
-    setContactSort('suggested')
-    setContactSortDirection('desc')
-  }
+  // With a Saved View showing, Reset discards its unsaved edits.
+  const canReset = !view || edited
 
   const sectionTitleStyle = {
     fontSize: theme.fontSize('xs'),
@@ -320,6 +319,8 @@ const ContactsSortAndFilterScreen = () => {
         showsVerticalScrollIndicator
       >
         <View style={{ gap: 22 }}>
+          <SavedViewSection />
+
           {/* Filters section. */}
           <View style={{ gap: 10 }}>
             <View
@@ -519,7 +520,8 @@ const ContactsSortAndFilterScreen = () => {
       </ScrollView>
 
       {/* Sticky footer: result count on the left, Reset + Done on the right.
-          Reset clears filters/sort back to defaults; Done dismisses the sheet
+          Reset clears filters/sort back to defaults (or a Saved View's unsaved
+          edits); Done dismisses the sheet
           because every change above is already live in store state.
 
           Absolutely positioned (matching ContactsFilterSheet's pattern) so the
@@ -562,7 +564,8 @@ const ContactsSortAndFilterScreen = () => {
           </Text>
         </View>
         <Button
-          onPress={handleReset}
+          onPress={reset}
+          disabled={!canReset}
           noTransform
           style={{
             paddingVertical: 12,
@@ -573,6 +576,7 @@ const ContactsSortAndFilterScreen = () => {
             borderWidth: 1,
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.backgroundLighter,
+            opacity: canReset ? 1 : 0.5,
           }}
         >
           <Text

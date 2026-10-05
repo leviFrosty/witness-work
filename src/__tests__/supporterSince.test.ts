@@ -83,9 +83,84 @@ describe('supporterSinceDate', () => {
     expect(result?.toISOString()).toBe('2025-03-15T00:00:00.000Z')
   })
 
+  it('returns the purchase date for an active annual subscription', () => {
+    const result = supporterSinceDate(
+      customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'jwtime_4799_1yr',
+            originalPurchaseDate: '2025-04-01T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: ['jwtime_4799_1yr'],
+      })
+    )
+    expect(result?.toISOString()).toBe('2025-04-01T00:00:00.000Z')
+  })
+
+  it('matches a Google Play subscription listed as productId:basePlanId', () => {
+    // Google Play lists active subscriptions with the base plan appended, but
+    // the entitlement carries the bare product id.
+    const result = supporterSinceDate(
+      customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'witnesswork_supporter',
+            productPlanIdentifier: 'annual-2899',
+            store: 'PLAY_STORE',
+            originalPurchaseDate: '2026-02-01T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: ['witnesswork_supporter:annual-2899'],
+      })
+    )
+    expect(result?.toISOString()).toBe('2026-02-01T00:00:00.000Z')
+  })
+
+  it('returns the grant date for an active promotional subscription grant', () => {
+    // RC lists dashboard grants among subscriptions, so any active grant counts.
+    const result = supporterSinceDate(
+      customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'rc_promo_Monthly Donator_monthly',
+            store: 'PROMOTIONAL',
+            originalPurchaseDate: '2026-03-01T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: ['rc_promo_Monthly Donator_monthly'],
+      })
+    )
+    expect(result?.toISOString()).toBe('2026-03-01T00:00:00.000Z')
+  })
+
+  it('counts the subscription, not the tip, when a user has both', () => {
+    const result = supporterSinceDate(
+      customer({
+        active: {
+          'One Time Donator': entitlement({
+            identifier: 'One Time Donator',
+            productIdentifier: 'tip_product_1',
+            originalPurchaseDate: '2024-06-01T00:00:00Z',
+          }),
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'monthly_supporter',
+            originalPurchaseDate: '2025-03-15T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: ['monthly_supporter'],
+      })
+    )
+    expect(result?.toISOString()).toBe('2025-03-15T00:00:00.000Z')
+  })
+
   it('returns the grant date for a Lifetime Supporter promotional entitlement', () => {
-    // Promotional lifetime entitlements have no real App Store product and so
-    // never appear in `activeSubscriptions` — they must still grant supporter.
+    // The Lifetime grant qualifies on its identifier alone, even when its
+    // promotional product isn't in `activeSubscriptions`.
     const result = supporterSinceDate(
       customer({
         active: {

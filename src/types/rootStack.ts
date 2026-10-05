@@ -155,7 +155,6 @@ export type MileageSource =
 
 /** Where the Service History editor was opened from (analytics). */
 export type ServiceHistorySource =
-  | 'year_tab'
   | 'year_row_menu'
   | 'add_earlier_year'
   | 'settings'

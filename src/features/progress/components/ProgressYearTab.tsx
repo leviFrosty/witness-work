@@ -23,7 +23,6 @@ import YearCategoryBreakdownSection from '@/features/progress/components/YearCat
 import Text from '@/components/ui/MyText'
 import { useNavigation } from '@react-navigation/native'
 import type { RootStackNavigation } from '@/types/rootStack'
-import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import { useCardStyle } from '@/components/ui/Card'
@@ -353,7 +352,6 @@ const ProgressYearTab = ({
   const insets = useSafeAreaInsets()
   const { hasSidebar } = useAdaptiveLayout()
 
-  const navigation = useNavigation<RootStackNavigation>()
   // One pair of status/goal sheets for every row; `target` null = closed.
   const [editing, setEditing] = useState<{
     month: number
@@ -363,11 +361,6 @@ const ProgressYearTab = ({
   const now = moment()
   const currentMonth = now.month()
   const currentYear = now.year()
-  // Service History covers finished months only.
-  const hasPastMonths = moment({ year: year - 1, month: 8 }).isBefore(
-    now,
-    'month'
-  )
 
   // Pairs of (monthIndex, calendarYear) for the service year span.
   const months = useMemo(() => {
@@ -515,30 +508,6 @@ const ProgressYearTab = ({
               )
             })}
           </View>
-          {hasPastMonths ? (
-            <Button
-              noTransform
-              accessibilityRole='button'
-              variant='outline'
-              onPress={() =>
-                navigation.navigate('ServiceHistory', {
-                  serviceYear: year - 1,
-                  source: 'year_tab',
-                })
-              }
-              style={{ justifyContent: 'center', paddingVertical: 12 }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('serviceHistory.edit')}
-              </Text>
-            </Button>
-          ) : null}
           <MonthStatusGoalSheets
             month={editing.month}
             year={editing.year}

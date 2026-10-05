@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Empty from '@/components/ui/Empty'
+import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Header from '@/components/ui/layout/Header'
@@ -286,25 +287,34 @@ const ContactDetailsContent = ({
             <XView
               style={{ justifyContent: 'space-between', paddingHorizontal: 2 }}
             >
-              <XView style={{ gap: 8, alignItems: 'baseline' }}>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('lg') - 1,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('conversationHistory')}
-                </Text>
-                {contactVisits.length > 0 && (
+              <XView style={{ alignItems: 'center' }}>
+                <XView style={{ gap: 8, alignItems: 'baseline' }}>
                   <Text
                     style={{
-                      fontSize: theme.fontSize('sm'),
-                      fontFamily: theme.fonts.medium,
-                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('lg') - 1,
+                      fontFamily: theme.fonts.semiBold,
                     }}
                   >
-                    {contactVisits.length}
+                    {i18n.t('conversationHistory')}
                   </Text>
+                  {contactVisits.length > 0 && (
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        fontFamily: theme.fonts.medium,
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {contactVisits.length}
+                    </Text>
+                  )}
+                </XView>
+                {journey && (
+                  <InfoPopover
+                    inline
+                    title={i18n.t('conversationHistory')}
+                    description={i18n.t('contactDetails.historyInfo')}
+                  />
                 )}
               </XView>
               <AddVisitMenu

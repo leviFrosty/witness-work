@@ -7,7 +7,12 @@ import useTheme from '@/contexts/theme'
 import { getReadableTextColor } from '@/lib/color'
 import { formatDate, formatMonthDayCompact, formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { Journey, UpNext } from '@/features/contacts/lib/visitTimeline'
+import VisitOutcomeMarker from '@/features/contacts/components/VisitOutcomeMarker'
+import {
+  Journey,
+  UpNext,
+  VisitOutcome,
+} from '@/features/contacts/lib/visitTimeline'
 
 const RAIL_HEIGHT = 30
 const LINE_TOP = 13
@@ -15,10 +20,20 @@ const PILL_SLOT = 120
 
 const pct = (value: number) => `${value * 100}%` as const
 
+/** Studies stand out on the rail a little larger than other visits. */
+const dotSize = (outcome: VisitOutcome) => (outcome === 'study' ? 11 : 9)
+
+const KEY_OUTCOMES: VisitOutcome[] = ['study', 'conversation', 'notAtHome']
+const COUNT_KEY = {
+  study: 'studyCount',
+  conversation: 'conversationCount',
+  notAtHome: 'notAtHomeCount',
+} as const
+
 /**
  * The last six months at a glance: a dot per visit, a "Today" marker, and a
- * dashed run to the next follow-up. Whole-history totals sit in a quiet caption
- * underneath.
+ * dashed run to the next follow-up. Underneath, whole-history totals per
+ * outcome double as the rail's key.
  */
 const VisitJourneyCard = ({
   journey,
@@ -28,15 +43,16 @@ const VisitJourneyCard = ({
   upNext: UpNext | null
 }) => {
   const theme = useTheme()
-  const plural = (key: 'visitCount' | 'studyCount', count: number) =>
-    // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-    i18n.t(`contactDetails.${key}`, { count }) as string
   const today = journey.todayPosition
   const labelStyle = {
     fontSize: theme.fontSize('xs') + 0.5,
     fontFamily: theme.fonts.semiBold,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.3,
+    color: theme.colors.textAlt,
+  }
+  const captionStyle = {
+    fontSize: theme.fontSize('sm'),
     color: theme.colors.textAlt,
   }
 
@@ -119,7 +135,7 @@ const VisitJourneyCard = ({
           />
         )}
         {journey.dots.map((dot) => {
-          const size = dot.outcome === 'study' ? 11 : 9
+          const size = dotSize(dot.outcome)
           return (
             <View
               key={dot.id}
@@ -130,17 +146,10 @@ const VisitJourneyCard = ({
                 // Shift by the dot's own width in proportion so both ends
                 // stay inside the rail.
                 marginLeft: -size * dot.position,
-                width: size,
-                height: size,
-                borderRadius: dot.outcome === 'notAtHome' ? 2 : size / 2,
-                backgroundColor:
-                  dot.outcome === 'study'
-                    ? theme.colors.accent
-                    : theme.colors.card,
-                borderWidth: dot.outcome === 'study' ? 0 : 2,
-                borderColor: theme.colors.textAlt,
               }}
-            />
+            >
+              <VisitOutcomeMarker outcome={dot.outcome} size={size} />
+            </View>
           )
         })}
         <View
@@ -195,18 +204,38 @@ const VisitJourneyCard = ({
           </Text>
         )}
       </View>
-      <Text
+      {/* The key: each outcome's marker beside its whole-history count. */}
+      <View
         style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.textAlt,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          columnGap: 12,
+          rowGap: 4,
         }}
       >
-        {i18n.t('contactDetails.journeySummary', {
-          visits: plural('visitCount', journey.visitCount),
-          studies: plural('studyCount', journey.studyCount),
-          date: formatDate(journey.first, { style: 'medium' }),
-        })}
-      </Text>
+        {KEY_OUTCOMES.filter((outcome) => journey.outcomeCounts[outcome]).map(
+          (outcome) => (
+            <View
+              key={outcome}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+            >
+              <VisitOutcomeMarker outcome={outcome} size={dotSize(outcome)} />
+              <Text style={captionStyle}>
+                {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+                {i18n.t(`contactDetails.${COUNT_KEY[outcome]}`, {
+                  count: journey.outcomeCounts[outcome],
+                })}
+              </Text>
+            </View>
+          )
+        )}
+        <Text style={captionStyle}>
+          {i18n.t('contactDetails.journeySince', {
+            date: formatDate(journey.first, { style: 'medium' }),
+          })}
+        </Text>
+      </View>
     </View>
   )
 }

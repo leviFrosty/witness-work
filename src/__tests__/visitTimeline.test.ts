@@ -121,7 +121,11 @@ describe('getJourney', () => {
   it('totals the whole history but only places the last six months', () => {
     const journey = getJourney(visits, now)!
     expect(journey.visitCount).toBe(4)
-    expect(journey.studyCount).toBe(2)
+    expect(journey.outcomeCounts).toEqual({
+      study: 2,
+      conversation: 1,
+      notAtHome: 1,
+    })
     expect(journey.first).toEqual(at('2025-01-17'))
     expect(journey.olderCount).toBe(1)
     expect(journey.dots.map((d) => d.id)).toEqual([

@@ -4,6 +4,7 @@ import {
   FileText as FileTextIcon,
   Palette as PaletteIcon,
   Plus as PlusIcon,
+  Route as RouteIcon,
   Shapes as ShapesIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -148,6 +149,11 @@ const SupporterBenefits = ({ compact }: Props) => {
             desc={i18n.t('supporterPerkAiDesc')}
           />
         )}
+        <PerkRow
+          icon={RouteIcon}
+          title={i18n.t('supporterPerkRouteTitle')}
+          desc={i18n.t('supporterPerkRouteDesc')}
+        />
         <PerkRow
           icon={PaletteIcon}
           title={i18n.t('supporterPerkAccentTitle')}

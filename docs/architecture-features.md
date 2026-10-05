@@ -23,6 +23,7 @@ src/
     plans/           screens/ components/               (treated as app — composes plans + service-reports)
     profile/         components/ hooks/ lib/            (profile card, contribution graph, profile stats)
     progress/        screens/ components/               (treated as app — composes reports + milestones)
+    route-planning/  screens/ components/ hooks/ lib/   (Supporter: today's stops in the shortest driving order)
     service-reports/ screens/ components/ hooks/ lib/ stores/
     settings/        screens/ components/ hooks/ lib/   (treated as app — composes every other feature)
     supporter/       screens/ components/ lib/ stores/

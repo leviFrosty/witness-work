@@ -67,6 +67,11 @@ coordinates, contact/Visit IDs, share tokens, URLs, or raw exception messages.
 Screens send route names and the previous route only, never route parameters.
 Diagnostics use `errorTracking` from `@/lib/errorTracking`.
 
+Features that call ww-api disclose that traffic in their own Help Center
+entries; it is not analytics. Route planning, for example, sends the stops'
+coordinates and the account id to ww-api, which passes only the coordinates to
+HERE and stores neither (see `faq_routePlanningPrivacy_a`).
+
 The provider uses `personProfiles: never`; the adapter has no `identify`, and
 account/RevenueCat IDs are never usage identities. The SDK's random on-device
 identifier supports sessions and stable rollouts. Do not add identify/alias/group
@@ -237,6 +242,7 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
 | `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
 | `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
+| `routePlanning`     | `today_route`        | Plan Today's Route in Schedule's day sheet or iPad inspector (today only).   |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first
@@ -381,6 +387,24 @@ Users can reorder the Home, Schedule, Contacts, and Progress tabs in Preferences
 of this preference with `order` (comma-separated bounded route names, including
 Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and
 navigation interactions remain removed.
+
+## Route planning
+
+Plan Today's Route is a Supporter feature on iOS and Android. Its gate placement
+is `today_route` (see Supporter feature conversions). Three outcome events
+answer whether Supporters use it, whether a planned route turns into a drive,
+and why planning fails:
+
+| Event                           | When / properties                                                                                                                                                                                                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                               |
+| `route_plan_failed`             | Planning stopped with `error_code`: `location`, `offline`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift.             |
+| `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened. |
+
+Opening the screen is covered by screen tracking (`TodayRoute`), so
+`$screen` → `route_plan_created` → `route_plan_navigation_started` is the
+adoption funnel. Stop names, addresses, coordinates, times, and record ids are
+never sent; only counts and the bounded keys above.
 
 ## Apple Watch
 

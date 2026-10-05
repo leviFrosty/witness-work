@@ -158,6 +158,10 @@ _Avoid_: "repeat plan", "schedule rule".
 A per-instance modification to a Recurring Plan for a specific date — adjusts minutes, start time, or note for that one occurrence without changing the underlying pattern. An Override cannot change the Plan's Category: Type is pattern-level. To do a different kind of work on one occurrence, the User skips that instance and creates a Day Plan in its place.
 _Avoid_: "exception" (sounds error-related; an override is intentional).
 
+**Route Planning**:
+The Supporter feature behind "Plan today's route": today's open **Follow-ups** and **Day Plan** / **Recurring Plan** locations that have map coordinates become stops, which ww-api puts in the shortest driving order before the route opens in the User's default navigation app. A route is a one-off answer, never saved, and it doesn't change the Follow-ups or Plans it came from.
+_Avoid_: "trip" (that's a mileage record), "itinerary".
+
 ### Buddies
 
 **Buddies**:
@@ -229,7 +233,7 @@ _Avoid_: "pin" alone (Marker is the canonical term and it carries the staleness 
 ### Monetization
 
 **Supporter**:
-A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus the Supporter **Notes Import** allowance, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
+A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, **Route Planning** (which ww-api also refuses to non-Supporters), custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus the Supporter **Notes Import** allowance, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
 _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, donation-framed term used throughout the UI).
 
 **Subscription Cancellation**:

@@ -87,6 +87,10 @@ export const analyticsEventNames = [
   'watch_entry_adjusted',
   'watch_entry_skipped',
   'watch_timer_action_completed',
+  // Supporter route planning outcomes.
+  'route_plan_created',
+  'route_plan_failed',
+  'route_plan_navigation_started',
   // Supporter iCloud adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',

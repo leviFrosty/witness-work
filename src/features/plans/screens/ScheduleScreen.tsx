@@ -58,6 +58,7 @@ import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoa
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
 import BuddyDayBadge from '@/features/buddies/components/BuddyDayBadge'
+import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import BuddiesHeaderButton from '@/features/buddies/components/BuddiesHeaderButton'
 import RootHeader from '@/components/RootHeader'
@@ -528,7 +529,10 @@ const ScheduleScreen = ({ route }: Props) => {
           onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
           onEditTimeReport={handleEditTimeReport}
           renderFooter={(date, onNavigate) => (
-            <BuddyPlansForDay date={date} onNavigate={onNavigate} />
+            <>
+              <TodayRouteEntry date={date} onNavigate={onNavigate} />
+              <BuddyPlansForDay date={date} onNavigate={onNavigate} />
+            </>
           )}
           renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
         />

@@ -14,6 +14,7 @@ export type FeatureKey =
   | 'iCloudSync'
   | 'customAppIcon'
   | 'savedContactViews'
+  | 'routePlanning'
 
 type GateRule = { gate: 'supporter-only' }
 
@@ -22,6 +23,8 @@ export const FEATURES: Record<FeatureKey, GateRule> = {
   iCloudSync: { gate: 'supporter-only' },
   customAppIcon: { gate: 'supporter-only' },
   savedContactViews: { gate: 'supporter-only' },
+  // Also enforced server-side: ww-api refuses to optimize for non-Supporters.
+  routePlanning: { gate: 'supporter-only' },
 }
 
 export type FeatureAccess = {

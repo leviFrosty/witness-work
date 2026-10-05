@@ -2,7 +2,11 @@ import { useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Pencil as PencilIcon, Share as ShareIcon } from 'lucide-react-native'
+import {
+  Pencil as PencilIcon,
+  Share as ShareIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
@@ -11,7 +15,6 @@ import Header from '@/components/ui/layout/Header'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import IconButton from '@/components/ui/IconButton'
-import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import { estimateTrip, fromDateKey } from '@/lib/mileage/calc'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
@@ -133,6 +136,13 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
               onPress={() => actions.edit(trip)}
               accessibilityLabel={i18n.t('edit')}
             />
+            <IconButton
+              icon={Trash2Icon}
+              size={20}
+              color={theme.colors.error}
+              onPress={() => actions.requestDelete(trip)}
+              accessibilityLabel={i18n.t('delete')}
+            />
           </View>
         }
       />
@@ -173,22 +183,6 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
             </InputRowContainer>
           </Section>
         ) : null}
-        <Button
-          noTransform
-          accessibilityRole='button'
-          onPress={() => actions.requestDelete(trip)}
-          style={{ alignItems: 'center', paddingVertical: 12 }}
-        >
-          <Text
-            style={{
-              color: theme.colors.error,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-            }}
-          >
-            {i18n.t('deleteEllipsis')}
-          </Text>
-        </Button>
       </ScrollView>
     </View>
   )

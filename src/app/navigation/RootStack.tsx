@@ -252,10 +252,12 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             presentation: 'modal',
-            header: () => (
+            // Dismiss back to Buddies; `exit` pops to the root tabs.
+            header: ({ navigation }) => (
               <Header
                 noInsets
                 buttonType='exit'
+                onPressLeftIcon={() => navigation.goBack()}
                 title={i18n.t('buddies_codeTitle')}
               />
             ),
@@ -292,10 +294,12 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             presentation: 'modal',
-            header: () => (
+            // Dismiss back to Buddies; `exit` pops to the root tabs.
+            header: ({ navigation }) => (
               <Header
                 noInsets
                 buttonType='exit'
+                onPressLeftIcon={() => navigation.goBack()}
                 title={i18n.t('buddies_feedbackTitle')}
               />
             ),

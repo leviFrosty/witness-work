@@ -6,7 +6,7 @@ import useTheme from '@/contexts/theme'
 import type { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from '@/features/service-reports/components/SelectedDateSheet'
 import CalendarDay from '@/components/CalendarDay'
-import { useMemo } from 'react'
+import { ReactNode, useMemo } from 'react'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import type { CalendarViewMode } from '@/components/CalendarHeader'
 import useServiceReport from '@/stores/serviceReport'
@@ -19,8 +19,8 @@ type MonthTimeReportsCalendarProps = {
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
   selectedDate?: Date
   viewMode?: CalendarViewMode
-  /** `YYYY-MM-DD` → marker dot colors rendered under that day. */
-  markerColorsByDate?: Record<string, string[]>
+  /** Drawn over a day's cell, by `YYYY-MM-DD`. */
+  renderDayOverlay?: (dateString: string) => ReactNode
 }
 
 const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
@@ -30,7 +30,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   setSheet,
   viewMode = 'planned',
   selectedDate,
-  markerColorsByDate,
+  renderDayOverlay,
 }) => {
   const startOfWeek = useStartOfWeek()
   const dayPlans = useServiceReport((s) => s.dayPlans)
@@ -92,9 +92,9 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
             viewMode={viewMode}
             dayPlansOverride={dayPlans}
             recurringPlansOverride={recurringPlans}
-            markerColors={
-              props.date?.dateString
-                ? markerColorsByDate?.[props.date.dateString]
+            overlay={
+              props.date?.dateString && props.state !== 'disabled'
+                ? renderDayOverlay?.(props.date.dateString)
                 : undefined
             }
             {...props}

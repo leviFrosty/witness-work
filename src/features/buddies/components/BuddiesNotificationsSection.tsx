@@ -4,6 +4,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import useNotificationPermission from '@/features/buddies/hooks/useNotificationPermission'
@@ -12,12 +13,13 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Buddies pushes on this device: a switch once iOS allows notifications,
- * otherwise a way to allow them.
+ * otherwise a way to allow them, and one for buddies asking to join.
  */
 export default function BuddiesNotificationsSection() {
   const theme = useTheme()
   const { granted, needsSettings, turnOn } = useNotificationPermission()
   const enabled = useBuddies((state) => state.notificationsEnabled)
+  const joinRequests = useBuddies((state) => state.joinRequestNotifications)
 
   if (granted === null) return null
 
@@ -60,8 +62,24 @@ export default function BuddiesNotificationsSection() {
             logger.warn('[buddies] push registration', error)
           )
         }}
-        lastInSection
+        lastInSection={!enabled}
       />
+      {enabled ? (
+        <InputRowSwitch
+          label={i18n.t('buddies_askToJoinAlerts')}
+          info={i18n.t('buddies_askToJoinAlertsInfo')}
+          value={joinRequests}
+          onValueChange={(joinRequestNotifications) => {
+            analytics.capture('buddy_join_request_notifications_changed', {
+              scope: 'all',
+              enabled: joinRequestNotifications,
+            })
+            // The Buddies runtime re-registers this device's push templates.
+            useBuddies.setState({ joinRequestNotifications })
+          }}
+          lastInSection
+        />
+      ) : null}
     </Section>
   )
 }

@@ -157,6 +157,24 @@ export const shareReplySchema = z.object({
   status: z.enum(SHARE_REPLIES),
 })
 
+/**
+ * `join.request.<tag>` (asking buddy → Plan owner): asks to be invited to the
+ * owner's Plan at `d`/`s`, as the asker saw it on the owner's Buddy Card.
+ * Carries nothing the card didn't. A `join.cancel` withdraws it, with the
+ * `shareCancelSchema` shape.
+ */
+export const joinRequestSchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  rev: z.number(),
+  d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  s: z.number().int().min(0).max(1439).optional(),
+  m: z.number().int().min(1).max(1440).optional(),
+  /** The Plan's start: both phones drop the request then. */
+  expiresAt: z.number(),
+})
+export type JoinRequest = z.infer<typeof joinRequestSchema>
+
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
 
 /** The encrypted multi-device roster: everything needed to rebuild pairings. */

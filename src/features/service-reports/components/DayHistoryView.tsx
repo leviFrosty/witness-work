@@ -20,7 +20,7 @@ import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { useMemo, useState } from 'react'
+import { ReactNode, useMemo, useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
 import { useFormattedMinutes } from '@/lib/minutes'
@@ -48,6 +48,8 @@ interface DayHistoryViewProps {
    * closes itself first.
    */
   onNavigate?: (navigate: () => void) => void
+  /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
+  renderDayPlanFooter?: (plan: DayPlan) => ReactNode
 }
 
 const contributionToPlanListItem = (
@@ -102,6 +104,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   onAddTime: onAddTimeProp,
   onPlanDay,
   onNavigate,
+  renderDayPlanFooter,
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
@@ -325,6 +328,11 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               <PlanRow
                 item={item}
                 onNavigate={onNavigate}
+                footer={
+                  item.type === 'day'
+                    ? renderDayPlanFooter?.(item.plan)
+                    : undefined
+                }
                 onPress={() => {
                   if (item.type === 'day') {
                     onDayPlanPress?.(item.plan, item.date)
@@ -428,6 +436,11 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                       item={item}
                       countingStatus='notCounted'
                       onNavigate={onNavigate}
+                      footer={
+                        item.type === 'day'
+                          ? renderDayPlanFooter?.(item.plan)
+                          : undefined
+                      }
                       onPress={() => {
                         if (item.type === 'day') {
                           onDayPlanPress?.(item.plan, item.date)

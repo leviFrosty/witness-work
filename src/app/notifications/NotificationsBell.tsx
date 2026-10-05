@@ -12,7 +12,7 @@ import useBuddyNotifications, {
 } from '@/features/buddies/hooks/useBuddyNotifications'
 import useNotesImportNotifications from '@/features/notes-import/hooks/useNotesImportNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
-import useNow from '@/features/notifications/hooks/useNow'
+import useNow from '@/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
 import usePreviousReportNotification from '@/features/service-reports/hooks/usePreviousReportNotification'
 import useRolloverNotification from '@/features/service-reports/hooks/useRolloverNotification'

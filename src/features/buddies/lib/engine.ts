@@ -1,3 +1,4 @@
+import moment from 'moment'
 import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
 import {
@@ -22,7 +23,9 @@ import {
 } from '@/features/buddies/lib/relay'
 import {
   BuddyAvatar,
+  BuddyCardDay,
   buddyCardSchema,
+  joinRequestSchema,
   pairConfirmedSchema,
   PairingCard,
   pairingCardSchema,
@@ -35,7 +38,10 @@ import {
   shareReplySchema,
   ShareType,
 } from '@/features/buddies/lib/schemas'
-import { buildBuddyCardDays } from '@/features/buddies/lib/card'
+import {
+  BUDDY_CARD_HORIZON_DAYS,
+  buildBuddyCardDays,
+} from '@/features/buddies/lib/card'
 import {
   awaitsAnswer,
   Buddy,
@@ -45,6 +51,11 @@ import {
   BuddyNotification,
   cappedQueue,
   IncomingShare,
+  incomingJoinRequestKey,
+  JOIN_REQUEST_ALERTS_PER_DAY,
+  JOIN_REQUEST_LEAD_MS,
+  MAX_OPEN_JOIN_REQUESTS,
+  OutgoingJoinRequest,
   incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
@@ -55,6 +66,7 @@ import {
   OutgoingShareSpec,
   PendingRemoval,
 } from '@/features/buddies/lib/state'
+import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import type { RecurringPlan } from '@/lib/recurrence'
 import type { DayPlan } from '@/types/timeEntry'
 
@@ -163,10 +175,32 @@ const MAX_EVENT_PLAINTEXT_BYTES = 8 * 1024 - 29
  */
 const SHARE_EVENTS_PER_HOUR = 30
 const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
 
 const SHARE_KIND_PREFIX: Record<ShareType, string> = {
   plan: 'plan',
   followUp: 'followup',
+}
+
+/**
+ * A join request's kind ends in a tag for the pair (see `joinRequestKind`), so
+ * a device can let one buddy's requests alert it and not another's.
+ */
+const JOIN_REQUEST_KIND_PREFIX = 'join.request.'
+const JOIN_CANCEL_KIND = 'join.cancel'
+export type JoinRequestPushKind = `${typeof JOIN_REQUEST_KIND_PREFIX}${string}`
+
+const toHex = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+
+/**
+ * The kind of a join request written into `slotId`. Both people derive it from
+ * the pair's slot, which the relay already knows, so the tag tells the relay
+ * nothing new.
+ */
+function joinRequestKind(slotId: string): JoinRequestPushKind {
+  const tag = sha256(utf8(`ww-buddies/v1/join-kind|${slotId}`)).slice(0, 6)
+  return `${JOIN_REQUEST_KIND_PREFIX}${toHex(tag)}`
 }
 
 function shareTypeOfKind(kind: string): ShareType | null {
@@ -235,6 +269,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const shareSends = new Map<string, number[]>()
   /** Slots added while a sync is in flight are missing from its response. */
   const slotsAddedDuringSync = new Set<string>()
+  /** Join request deliveries run one after another. */
+  let joinDelivery: Promise<void> = Promise.resolve()
 
   const json = (value: unknown) => utf8(JSON.stringify(value))
   const nonce = () => deps.randomBytes(12)
@@ -389,15 +425,26 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           omitKey(replies, inboxId),
         ])
       ),
+      joinRequests: Object.fromEntries(
+        Object.entries(state.joinRequests).filter(
+          ([, request]) => request.from !== inboxId
+        )
+      ),
+      askedToJoin: Object.fromEntries(
+        Object.entries(state.askedToJoin).filter(
+          ([, request]) => request.to !== inboxId
+        )
+      ),
+      mutedJoinRequests: state.mutedJoinRequests.filter((id) => id !== inboxId),
       notifications: state.notifications.filter((n) => n.from !== inboxId),
     }))
   }
 
-  function notify(entry: Omit<BuddyNotification, 'at' | 'read'>) {
+  function notify(entry: Omit<BuddyNotification, 'at' | 'read'>, read = false) {
     store.setState((state) => ({
       notifications: cappedQueue(
         [
-          { ...entry, at: deps.now(), read: false },
+          { ...entry, at: deps.now(), read },
           ...state.notifications.filter((n) => n.id !== entry.id),
         ],
         state
@@ -894,6 +941,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           )
         )
       )
+      // A request for a Plan the buddy moved or dropped can't be seen or
+      // answered anymore; it's taken back on the next delivery.
+      withdrawJoinRequests(
+        Object.values(store.getState().askedToJoin)
+          .filter(
+            (request) =>
+              request.to === buddy.inboxId &&
+              !request.withdrawn &&
+              !parsed.days.some(
+                (day) =>
+                  day.d === request.d &&
+                  day.p.some((plan) => plan.s === request.s)
+              )
+          )
+          .map((request) => request.id)
+      )
       store.setState((state) => ({
         cards: {
           ...state.cards,
@@ -948,10 +1011,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     buddy: Buddy,
     kind: string,
     body: unknown,
-    push = true
+    push = true,
+    eventId = newId()
   ) {
     const { outgoing } = pairKeys(me, buddy)
-    const eventId = newId()
     await relay.putEvent(writerAuth(buddy.inboxId, outgoing), {
       eventId,
       kind,
@@ -993,6 +1056,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!deps.getShares || !displayName()) return
     const now = deps.now()
     const specs = deps.getShares().filter((spec) => spec.expiresAt > now)
+    resolveJoinRequests(specs)
     const state = store.getState()
     if (specs.length === 0 && Object.keys(state.outgoingShares).length === 0)
       return
@@ -1187,6 +1251,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     store.setState((state) => ({
       incomingShares: { ...state.incomingShares, [key]: share },
+      // Being invited that day answers this User's request to join.
+      askedToJoin:
+        invite.type === 'plan'
+          ? Object.fromEntries(
+              Object.entries(state.askedToJoin).filter(
+                ([, request]) =>
+                  request.to !== buddy.inboxId || request.d !== invite.details.d
+              )
+            )
+          : state.askedToJoin,
     }))
     if (!changed) return
     // A change to an invitation not yet seen is still news of an invitation.
@@ -1355,6 +1429,362 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
+  /** Stable per buddy and Plan, so asking again for the same Plan is a no-op. */
+  function joinRequestIdFor(
+    me: BuddyIdentity,
+    to: string,
+    d: string,
+    s: number | undefined
+  ): string {
+    return toB64u(
+      sha256(
+        utf8(`ww-buddies/v1/join|${me.inboxId}|${to}|${d}|${s ?? ''}`)
+      ).slice(0, 16)
+    )
+  }
+
+  /**
+   * Asks a buddy to invite this User to their Plan, as seen on their Buddy
+   * Card. Saved first, so it holds offline, and sent now or on a later sync.
+   * The buddy answers by inviting, or not at all: nothing tells this User a
+   * request was passed over, and it lapses when the Plan starts. Only the first
+   * ask for a Plan alerts the buddy; asking again after withdrawing arrives
+   * quietly.
+   */
+  async function askToJoin(
+    to: string,
+    d: string,
+    plan: BuddyCardDay['p'][number],
+    expiresAt: number
+  ) {
+    if (expiresAt - deps.now() < JOIN_REQUEST_LEAD_MS) return
+    const me = await ensureInbox()
+    const id = joinRequestIdFor(me, to, d, plan.s)
+    store.setState((state) => {
+      const existing = state.askedToJoin[id]
+      if (existing && !existing.withdrawn) return state
+      const open = Object.values(state.askedToJoin).filter(
+        (request) => request.to === to && !request.withdrawn
+      )
+      if (open.length >= MAX_OPEN_JOIN_REQUESTS) return state
+      const rev = nextRev(existing)
+      return {
+        askedToJoin: {
+          ...state.askedToJoin,
+          [id]: existing
+            ? { ...existing, withdrawn: undefined, rev }
+            : {
+                to,
+                id,
+                d,
+                ...(plan.s === undefined ? {} : { s: plan.s }),
+                m: plan.m,
+                expiresAt,
+                askedAt: rev,
+                rev,
+                attempted: false,
+                pushed: false,
+              },
+        },
+      }
+    })
+    await deliverJoinRequests().catch(() => {
+      // Saved; retried on the next sync.
+    })
+  }
+
+  /** Always newer than the last ask or withdrawal, even within a millisecond. */
+  function nextRev(request: OutgoingJoinRequest | undefined) {
+    return Math.max(deps.now(), (request?.rev ?? 0) + 1)
+  }
+
+  /** Takes back a request; the buddy's tray drops it quietly. */
+  async function withdrawJoinRequest(id: string) {
+    withdrawJoinRequests([id])
+    await deliverJoinRequests().catch(() => {
+      // Saved; retried on the next sync.
+    })
+  }
+
+  /** Marks requests withdrawn, keeping them until they lapse. */
+  function withdrawJoinRequests(ids: string[]) {
+    store.setState((state) => {
+      const askedToJoin = { ...state.askedToJoin }
+      for (const id of ids) {
+        const request = askedToJoin[id]
+        if (request && !request.withdrawn)
+          askedToJoin[id] = {
+            ...request,
+            withdrawn: true,
+            rev: nextRev(request),
+          }
+      }
+      return { askedToJoin }
+    })
+  }
+
+  /**
+   * Whether sending this request alerts the buddy: only its first ask, or a
+   * retry of that same ask, and only `JOIN_REQUEST_ALERTS_PER_DAY` requests per
+   * buddy a day. An ask whose alert may already have landed, then was withdrawn
+   * and asked again, goes quietly.
+   */
+  function shouldAlert(request: OutgoingJoinRequest): boolean {
+    if (request.pushed) return false
+    if (request.alertRev !== undefined) return request.alertRev === request.rev
+    const since = deps.now() - DAY_MS
+    const alerted = Object.values(store.getState().askedToJoin).filter(
+      (other) =>
+        other.to === request.to &&
+        other.id !== request.id &&
+        other.alertRev !== undefined &&
+        other.alertRev > since
+    )
+    return alerted.length < JOIN_REQUEST_ALERTS_PER_DAY
+  }
+
+  /**
+   * Sends requests and withdrawals that haven't reached their buddy yet, one
+   * delivery at a time, so asking, withdrawing, and syncing can't race.
+   */
+  function deliverJoinRequests(): Promise<void> {
+    const run = joinDelivery.then(sendJoinRequests)
+    joinDelivery = run.catch(() => {
+      // The caller sees the failure; the queue moves on.
+    })
+    return run
+  }
+
+  async function sendJoinRequests() {
+    const waiting = Object.values(store.getState().askedToJoin).filter(
+      (request) => request.sentRev !== request.rev
+    )
+    if (waiting.length === 0) return
+    const me = await ensureInbox()
+    const update = (
+      id: string,
+      change: (current: OutgoingJoinRequest) => Partial<OutgoingJoinRequest>
+    ) =>
+      store.setState((state) => {
+        const current = state.askedToJoin[id]
+        if (!current) return state
+        return {
+          askedToJoin: {
+            ...state.askedToJoin,
+            [id]: { ...current, ...change(current) },
+          },
+        }
+      })
+    // A newer ask or withdrawal made meanwhile still needs sending.
+    const markSent = (id: string, rev: number) =>
+      update(id, (current) => (current.rev === rev ? { sentRev: rev } : {}))
+    let failure: unknown = null
+    for (const waitingRequest of waiting) {
+      let request = waitingRequest
+      const buddy = store
+        .getState()
+        .buddies.find((b) => b.inboxId === request.to && b.status === 'active')
+      if (!buddy) {
+        store.setState((state) => ({
+          askedToJoin: omitKey(state.askedToJoin, request.id),
+        }))
+        continue
+      }
+      // Still unsent this close to the start: too late to be any use, so
+      // it's taken back (quietly, in case an earlier try landed).
+      if (
+        !request.withdrawn &&
+        request.expiresAt - deps.now() < JOIN_REQUEST_LEAD_MS
+      ) {
+        withdrawJoinRequests([request.id])
+        request = store.getState().askedToJoin[request.id]
+      }
+      // Never reached the relay: there's nothing to take back.
+      if (request.withdrawn && !request.attempted) {
+        markSent(request.id, request.rev)
+        continue
+      }
+      // Waits for the hourly budget; retried on every sync.
+      if (!hasShareBudget(buddy.inboxId)) continue
+      try {
+        if (request.withdrawn) {
+          const cancel = { v: 1, id: request.id, rev: request.rev }
+          await sendEvent(me, buddy, JOIN_CANCEL_KIND, cancel, false)
+        } else {
+          const alert = shouldAlert(request)
+          const eventId = alert ? (request.alertEventId ?? newId()) : newId()
+          // Recorded first: a send that seems to fail may still have landed,
+          // and a retry of the alert reuses its event id.
+          update(request.id, () => ({
+            attempted: true,
+            ...(alert ? { alertEventId: eventId, alertRev: request.rev } : {}),
+          }))
+          const { slotId } = pairKeys(me, buddy).outgoing
+          await sendEvent(
+            me,
+            buddy,
+            joinRequestKind(slotId),
+            {
+              v: 1,
+              id: request.id,
+              rev: request.rev,
+              d: request.d,
+              ...(request.s === undefined ? {} : { s: request.s }),
+              m: request.m,
+              expiresAt: request.expiresAt,
+            },
+            alert,
+            eventId
+          )
+          if (alert) update(request.id, () => ({ pushed: true }))
+        }
+        spendShareBudget(buddy.inboxId)
+        markSent(request.id, request.rev)
+      } catch (error) {
+        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
+        else failure ??= error
+      }
+    }
+    if (failure) throw failure
+  }
+
+  function applyJoinEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number]
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    try {
+      const body = openEvent(me, buddy, event)
+      if (event.kind === JOIN_CANCEL_KIND) {
+        const cancel = shareCancelSchema.parse(body)
+        const key = incomingJoinRequestKey(buddy.inboxId, cancel.id)
+        const existing = store.getState().joinRequests[key]
+        // A withdrawal wins a tie with the request it follows.
+        if (!existing || existing.rev > cancel.rev) return
+        // Kept until it lapses, so asking again is listed quietly.
+        store.setState((state) => ({
+          joinRequests: {
+            ...state.joinRequests,
+            [key]: { ...existing, rev: cancel.rev, withdrawn: true },
+          },
+          notifications: state.notifications.filter((n) => n.shareKey !== key),
+        }))
+        return
+      }
+      const request = joinRequestSchema.parse(body)
+      // The Plan's start here, whatever the asker's clock says: a request
+      // lapses by then (a day's slack for time zones) and can't reach past
+      // the Buddy Card's window.
+      const start = moment(request.d, 'YYYY-MM-DD')
+        .startOf('day')
+        .add(request.s ?? DEFAULT_START_TIME_IN_MINUTES, 'minutes')
+        .valueOf()
+      const expiresAt = Math.min(request.expiresAt, start + DAY_MS)
+      if (expiresAt <= deps.now()) return
+      if (start > deps.now() + (BUDDY_CARD_HORIZON_DAYS + 1) * DAY_MS) return
+      const key = incomingJoinRequestKey(buddy.inboxId, request.id)
+      const existing = store.getState().joinRequests[key]
+      if (existing && existing.rev >= request.rev) return
+      store.setState((state) => ({
+        joinRequests: {
+          ...state.joinRequests,
+          [key]: {
+            from: buddy.inboxId,
+            id: request.id,
+            rev: request.rev,
+            d: request.d,
+            ...(request.s === undefined ? {} : { s: request.s }),
+            ...(request.m === undefined ? {} : { m: request.m }),
+            expiresAt,
+            receivedAt: existing?.receivedAt ?? deps.now(),
+            ...(existing?.dismissed ? { dismissed: true } : {}),
+          },
+        },
+      }))
+      // Listed once; a request this User passed over stays quiet, and one
+      // asked again after a withdrawal comes back already read.
+      if (existing && !existing.withdrawn) return
+      if (existing?.dismissed) return
+      const { joinRequestNotifications, mutedJoinRequests } = store.getState()
+      notify(
+        {
+          id: event.eventId,
+          seq: event.seq,
+          kind: 'joinRequest',
+          from: buddy.inboxId,
+          name: buddy.name,
+          shareKey: key,
+        },
+        // Alerts off for this buddy: listed, but it doesn't call for attention.
+        !!existing ||
+          !joinRequestNotifications ||
+          mutedJoinRequests.includes(buddy.inboxId)
+      )
+    } catch {
+      // Undecryptable or malformed events are dropped.
+    }
+  }
+
+  /**
+   * Not Now: clears a buddy's request here without telling them. It lapses on
+   * their side when the Plan starts, like any request not answered.
+   */
+  function dismissJoinRequest(key: string) {
+    const request = store.getState().joinRequests[key]
+    if (!request) return
+    store.setState((state) => ({
+      joinRequests: {
+        ...state.joinRequests,
+        [key]: { ...request, dismissed: true },
+      },
+      notifications: state.notifications.filter((n) => n.shareKey !== key),
+    }))
+  }
+
+  /** A request is answered once this User invites the buddy to a Plan that day. */
+  function resolveJoinRequests(specs: OutgoingShareSpec[]) {
+    const answered = Object.entries(store.getState().joinRequests)
+      .filter(([, request]) =>
+        specs.some(
+          (spec) =>
+            spec.type === 'plan' &&
+            spec.details.d === request.d &&
+            spec.recipients.includes(request.from)
+        )
+      )
+      .map(([key]) => key)
+    if (answered.length === 0) return
+    store.setState((state) => ({
+      joinRequests: Object.fromEntries(
+        Object.entries(state.joinRequests).filter(
+          ([key]) => !answered.includes(key)
+        )
+      ),
+      notifications: state.notifications.filter(
+        (n) => n.kind !== 'joinRequest' || !answered.includes(n.shareKey ?? '')
+      ),
+    }))
+  }
+
+  /**
+   * Push kinds for join requests from each active buddy whose requests may
+   * alert this device; left out of the push registration otherwise.
+   */
+  function joinRequestPushKinds(): JoinRequestPushKind[] {
+    const { buddies, joinRequestNotifications, mutedJoinRequests } =
+      store.getState()
+    if (!joinRequestNotifications) return []
+    const me = identity()
+    return buddies
+      .filter(
+        (buddy) =>
+          buddy.status === 'active' &&
+          !mutedJoinRequests.includes(buddy.inboxId)
+      )
+      .map((buddy) => joinRequestKind(pairKeys(me, buddy).incoming.slotId))
+  }
+
   function markNotificationsRead() {
     if (store.getState().notifications.every((n) => n.read)) return
     store.setState((state) => ({
@@ -1386,6 +1816,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const state = store.getState()
     const entry = state.notifications.find((n) => n.id === id)
     if (!entry || awaitsAnswer(entry, state)) return
+    if (entry.kind === 'joinRequest' && entry.shareKey) {
+      dismissJoinRequest(entry.shareKey)
+      return
+    }
     store.setState((current) => ({
       notifications: current.notifications.filter((n) => n.id !== id),
     }))
@@ -1564,6 +1998,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         shareTypeOfKind(event.kind) !== null
       ) {
         applyShareEvent(me, event)
+      } else if (
+        event.kind === JOIN_CANCEL_KIND ||
+        event.kind.startsWith(JOIN_REQUEST_KIND_PREFIX)
+      ) {
+        applyJoinEvent(me, event)
       }
     }
     for (const card of response.cards) applyCard(me, card)
@@ -1582,6 +2021,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     rosterChanged = expireStale() || rosterChanged
     await flushRemovals(me)
     await deliverReplies().catch(() => {
+      // Retried on the next sync.
+    })
+    await deliverJoinRequests().catch(() => {
       // Retried on the next sync.
     })
     store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
@@ -1619,7 +2061,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     /** The app's bundle id, so Beta and production builds get their own topic. */
     apnsTopic?: string
     /** A kind left out is never pushed to this device. */
-    templates: Partial<Record<BuddyPushKind, PushTemplate>>
+    templates: Partial<Record<BuddyPushKind, PushTemplate>> &
+      Record<JoinRequestPushKind, PushTemplate>
   }): Promise<PushRegistrationOutcome> {
     const me = await ensureInbox()
     let deviceId = store.getState().deviceId
@@ -1671,13 +2114,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     shareSends.clear()
     // Choices about this device and what to share outlive the data; shared
     // Plans, invitations, replies, and the notification queue don't.
-    const { devOverride, onboardingComplete, notificationsEnabled, sharing } =
-      store.getState()
+    const {
+      devOverride,
+      onboardingComplete,
+      notificationsEnabled,
+      joinRequestNotifications,
+      sharing,
+    } = store.getState()
     store.setState({
       ...initialBuddiesState,
       devOverride,
       onboardingComplete,
       notificationsEnabled,
+      joinRequestNotifications,
       sharing,
     })
   }
@@ -1698,6 +2147,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     publishShares,
     replyToShare,
     deliverReplies,
+    askToJoin,
+    withdrawJoinRequest,
+    dismissJoinRequest,
+    joinRequestPushKinds,
     expire: expireLocal,
     shareIdForKey,
     markNotificationsRead,

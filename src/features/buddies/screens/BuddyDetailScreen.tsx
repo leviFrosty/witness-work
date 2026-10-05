@@ -14,6 +14,7 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
+import { analytics } from '@/lib/analytics'
 import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
@@ -21,6 +22,7 @@ import { usePreferences } from '@/stores/preferences'
 import { RootStackParamList } from '@/types/rootStack'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
+import useAskToJoin from '@/features/buddies/hooks/useAskToJoin'
 import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { confirmRemoveBuddy } from '@/features/buddies/lib/buddyConfirmations'
@@ -30,8 +32,9 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy'>
 
 /**
- * One buddy: who they are, their upcoming Plans (tap one to plan the same
- * time), and ending the pairing.
+ * One buddy: who they are, their upcoming Plans (tap one to plan the same time;
+ * long-press to ask to join), alerts for their requests to join, and ending the
+ * pairing.
  */
 export default function BuddyDetailScreen({ route, navigation }: Props) {
   const theme = useTheme()
@@ -41,7 +44,15 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
     state.buddies.find((candidate) => candidate.inboxId === inboxId)
   )
   const card = useBuddies((state) => state.cards[inboxId])
+  const joinRequestAlerts = useBuddies(
+    (state) =>
+      state.notificationsEnabled &&
+      state.joinRequestNotifications &&
+      state.registeredInboxId !== null
+  )
+  const muted = useBuddies((state) => state.mutedJoinRequests.includes(inboxId))
   const planSameTime = usePlanSameTime('buddy_detail')
+  const askToJoin = useAskToJoin('buddy_detail')
 
   // Removed here, from the other side, or by delete-all.
   useEffect(() => {
@@ -95,8 +106,30 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
             onValueChange={(value) =>
               buddiesEngine.setShowOnCalendar(buddy.inboxId, value)
             }
-            lastInSection
+            lastInSection={!joinRequestAlerts}
           />
+          {joinRequestAlerts ? (
+            <InputRowSwitch
+              label={i18n.t('buddies_askToJoinAlerts')}
+              info={i18n.t('buddies_buddyAskToJoinAlertsInfo', {
+                name: buddy.name,
+              })}
+              value={!muted}
+              onValueChange={(alerts) => {
+                analytics.capture('buddy_join_request_notifications_changed', {
+                  scope: 'buddy',
+                  enabled: alerts,
+                })
+                // The Buddies runtime re-registers this device's push templates.
+                useBuddies.setState((state) => ({
+                  mutedJoinRequests: alerts
+                    ? state.mutedJoinRequests.filter((id) => id !== inboxId)
+                    : [...state.mutedJoinRequests, inboxId],
+                }))
+              }}
+              lastInSection
+            />
+          ) : null}
         </Section>
         <BuddiesSection
           title={i18n.t('buddies_upcomingPlans')}
@@ -154,6 +187,8 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
                               duration,
                             })
                       const same = () => planSameTime(day.d, plan)
+                      const asked =
+                        askToJoin.status(buddy, day.d, plan).kind === 'asked'
                       return (
                         <ContextMenu
                           key={planIndex}
@@ -165,6 +200,7 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
                             { name: buddy.name, plan: `${date}, ${label}` }
                           )}
                           actions={[
+                            askToJoin.menuAction(buddy, day.d, plan),
                             {
                               id: 'plan_same_time',
                               title: i18n.t('buddies_planSameTime'),
@@ -177,6 +213,11 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
                             <Text style={{ color: theme.colors.textAlt }}>
                               {label}
                             </Text>
+                            {asked ? (
+                              <Text style={secondary}>
+                                {i18n.t('buddies_askedToJoin')}
+                              </Text>
+                            ) : null}
                             <LucideIcon
                               icon={CalendarPlusIcon}
                               size={14}

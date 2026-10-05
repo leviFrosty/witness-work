@@ -172,6 +172,10 @@ _Avoid_: "Buddy code", "QR invite", "pairing code".
 A single-use link (or its **Buddies Code**) that lets one person request to become the User's buddy. Expires after 7 days; counts against the five-buddy limit while open.
 _Avoid_: "buddy request" for the link itself (the request is what the invitee sends back after accepting).
 
+**Ask to Join**:
+A User's request to be invited to a buddy's Plan they saw on that buddy's calendar. The buddy answers by inviting them through an ordinary Plan invitation, or chooses Not Now, which the asker is never told about; the request lapses when the Plan starts. "Ask to Join Alerts" is the per-device setting (all buddies, or one) for whether these requests alert.
+_Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pairing).
+
 **Buddy Card**:
 Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, and planned days and times for the next 8 weeks. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).

@@ -8,16 +8,21 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import { formatRelative } from '@/lib/dates'
+import moment from 'moment'
+import { analytics } from '@/lib/analytics'
+import { formatRelative, formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
 import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import type { BuddyNotification } from '@/features/buddies/lib/state'
+import type { DayPlan } from '@/types/timeEntry'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 function headline(entry: BuddyNotification): string {
@@ -44,20 +49,27 @@ function headline(entry: BuddyNotification): string {
       return entry.reply === 'going'
         ? i18n.t('buddies_notifReplyGoing', name)
         : i18n.t('buddies_notifReplyDeclined', name)
+    case 'joinRequest':
+      return i18n.t('buddies_notifJoinRequest', name)
   }
 }
 
 /**
- * One queue entry in the notifications tray; invitations and claims can be
- * answered in place. Long-press the entry to open or dismiss it; the answer
- * buttons stay outside the long-press target. A request still waiting on an
- * answer can't be dismissed: answering is what clears it.
+ * One queue entry in the notifications tray; invitations, claims, and requests
+ * to join can be answered in place. Long-press the entry to open or dismiss it;
+ * the answer buttons stay outside the long-press target. An invitation or claim
+ * still waiting on an answer can't be dismissed: answering is what clears it. A
+ * request to join can: Not Now is dismissing it.
  */
 export default function BuddyNotificationRow({
   entry,
   unread,
   onPress,
   onDismiss,
+  onInvite,
+  ownPlan,
+  invited,
+  cantInvite,
 }: {
   entry: BuddyNotification
   unread: boolean
@@ -65,13 +77,31 @@ export default function BuddyNotificationRow({
   onPress?: () => void
   /** Absent while the entry awaits an answer. */
   onDismiss?: () => void
+  /** A request to join: opens the Plan with the buddy added. */
+  onInvite?: () => void
+  /** A request to join: this User's Plan it's about, for its title and place. */
+  ownPlan?: Pick<DayPlan, 'title' | 'location'>
+  /** A request to join: this User already invited them to a Plan that day. */
+  invited?: boolean
+  /**
+   * A request to join with no Invite: the Plan follows someone else's
+   * invitation (their name, if still a buddy), or this User's Plans that day
+   * changed and none match.
+   */
+  cantInvite?: { reason: 'linked'; organizer?: string } | { reason: 'changed' }
 }) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
   const [changing, setChanging] = useState(false)
+  const isJoinRequest = entry.kind === 'joinRequest'
   const share = useBuddies((state) =>
-    entry.kind !== 'shareReply' && entry.shareKey
+    entry.kind !== 'shareReply' && !isJoinRequest && entry.shareKey
       ? state.incomingShares[entry.shareKey]
+      : undefined
+  )
+  const joinRequest = useBuddies((state) =>
+    isJoinRequest && entry.shareKey
+      ? state.joinRequests[entry.shareKey]
       : undefined
   )
   const claim = useBuddies((state) =>
@@ -96,8 +126,81 @@ export default function BuddyNotificationRow({
       setBusy(false)
     }
   }
+  /**
+   * "Going" adds the buddy's Plan to this User's; one of their own at the same
+   * time would then be counted twice, so offer to replace it.
+   */
+  const offerReplace = () => {
+    if (!share || share.type !== 'plan') return
+    const overlapping = overlappingOwnPlans(share.details, dayPlans)
+    if (overlapping.length === 0) return
+    const [first] = overlapping
+    const date = moment(storedDayKey(first.date), 'YYYY-MM-DD').format(
+      'ddd, MMM D'
+    )
+    const resolve = (choice: 'replace' | 'keep_both') => {
+      analytics.capture('buddy_invite_overlap_resolved', { choice })
+      if (choice !== 'replace') return
+      const { deleteDayPlan } = useServiceReport.getState()
+      for (const plan of overlapping) deleteDayPlan(plan.id)
+    }
+    Alert.alert(
+      i18n.t('buddies_replacePlanTitle'),
+      overlapping.length === 1
+        ? i18n.t('buddies_replacePlanBody', {
+            time: formatStartTime(getStartTimeInMinutes(first)),
+            date,
+            name: buddy?.name ?? entry.name,
+          })
+        : i18n.t('buddies_replacePlansBody', {
+            count: overlapping.length,
+            date,
+            name: buddy?.name ?? entry.name,
+          }),
+      [
+        {
+          text: i18n.t('buddies_keepBoth'),
+          style: 'cancel',
+          onPress: () => resolve('keep_both'),
+        },
+        {
+          text: i18n.t('buddies_replacePlan'),
+          style: 'destructive',
+          onPress: () => resolve('replace'),
+        },
+      ]
+    )
+  }
+  const askerName = buddy?.name ?? entry.name
+  // Nothing to turn off when this buddy's requests already can't alert.
+  const mutedJoinRequests = useBuddies((state) =>
+    state.notificationsEnabled && state.joinRequestNotifications && entry.from
+      ? state.mutedJoinRequests.includes(entry.from)
+      : true
+  )
   const reply = (answer: ShareReply) => {
-    return run(() => buddiesEngine.replyToShare(entry.shareKey!, answer))
+    return run(async () => {
+      await buddiesEngine.replyToShare(entry.shareKey!, answer)
+      if (answer === 'going') offerReplace()
+    })
+  }
+  const openInvite = () => {
+    analytics.capture('buddy_join_request_answered', {
+      action: 'invite_opened',
+    })
+    onInvite?.()
+  }
+  // Muting from where the request is decided; the switch is on their page.
+  const muteJoinRequests = () => {
+    const from = entry.from
+    if (!from) return
+    analytics.capture('buddy_join_request_notifications_changed', {
+      scope: 'buddy',
+      enabled: false,
+    })
+    useBuddies.setState((state) => ({
+      mutedJoinRequests: [...state.mutedJoinRequests, from],
+    }))
   }
   const open = onPress
     ? () => {
@@ -146,6 +249,15 @@ export default function BuddyNotificationRow({
               systemImage: 'xmark',
               onPress: onDismiss,
             },
+            joinRequest &&
+              !mutedJoinRequests && {
+                id: 'mute_join_requests',
+                title: i18n.t('buddies_turnOffAskToJoinAlerts', {
+                  name: askerName,
+                }),
+                systemImage: 'bell.slash',
+                onPress: muteJoinRequests,
+              },
           ]}
         >
           <View style={{ gap: 10 }}>
@@ -189,7 +301,18 @@ export default function BuddyNotificationRow({
               </View>
             </XView>
 
-            {entry.shareKey && entry.kind !== 'shareReply' ? (
+            {joinRequest ? (
+              <SharedEventSummary
+                details={{
+                  d: joinRequest.d,
+                  s: joinRequest.s,
+                  m: joinRequest.m,
+                  title: ownPlan?.title,
+                  location: ownPlan?.location,
+                }}
+                isFollowUp={false}
+              />
+            ) : entry.shareKey && entry.kind !== 'shareReply' ? (
               share ? (
                 <View style={{ opacity: status === 'cancelled' ? 0.5 : 1 }}>
                   <SharedEventSummary
@@ -253,6 +376,48 @@ export default function BuddyNotificationRow({
             </Text>
           </Button>
         </XView>
+      ) : null}
+
+      {joinRequest && invited ? (
+        <Text style={{ color: theme.colors.textAlt }}>
+          {i18n.t('buddies_joinRequestInvited', { name: askerName })}
+        </Text>
+      ) : joinRequest ? (
+        <View style={{ gap: 10 }}>
+          {cantInvite ? (
+            <Text style={{ color: theme.colors.textAlt }}>
+              {cantInvite.reason === 'changed'
+                ? i18n.t('buddies_joinRequestChanged', { name: askerName })
+                : cantInvite.organizer
+                  ? i18n.t('buddies_joinRequestLinked', {
+                      organizer: cantInvite.organizer,
+                      name: askerName,
+                    })
+                  : i18n.t('buddies_joinRequestLinkedUnknown', {
+                      name: askerName,
+                    })}
+            </Text>
+          ) : null}
+          <XView style={{ gap: 10 }}>
+            {onInvite ? (
+              <View style={{ flex: 1 }}>
+                <ActionButton onPress={openInvite}>
+                  {i18n.t('buddies_joinRequestInvite')}
+                </ActionButton>
+              </View>
+            ) : null}
+            {onDismiss ? (
+              <Button
+                style={{ paddingVertical: 10, paddingHorizontal: 12 }}
+                onPress={onDismiss}
+              >
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {i18n.t('buddies_joinRequestNotNow')}
+                </Text>
+              </Button>
+            ) : null}
+          </XView>
+        </View>
       ) : null}
 
       {entry.kind === 'claim' && claim ? (

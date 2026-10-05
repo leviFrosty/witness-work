@@ -2,18 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 
-const { registerPush, buddiesState, app, capture } = vi.hoisted(() => ({
-  registerPush: vi.fn(
-    async (_device: {
-      apnsEnvironment: string
-      apnsTopic?: string
-      templates: Record<string, unknown>
-    }) => 'registered'
-  ),
-  buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
-  app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
-  capture: vi.fn(),
-}))
+const { registerPush, joinKinds, buddiesState, app, capture } = vi.hoisted(
+  () => ({
+    registerPush: vi.fn(
+      async (_device: {
+        apnsEnvironment: string
+        apnsTopic?: string
+        templates: Record<string, unknown>
+      }) => 'registered'
+    ),
+    joinKinds: { current: ['join.request.aaaaaaaaaaaa'] },
+    buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
+    app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
+    capture: vi.fn(),
+  })
+)
 
 vi.mock('expo-notifications', () => ({
   getPermissionsAsync: async () => ({ granted: true }),
@@ -28,7 +31,10 @@ vi.mock('expo-application', () => ({
 vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/features/buddies/lib/buddiesService', () => ({
-  buddiesEngine: { registerPush },
+  buddiesEngine: {
+    registerPush,
+    joinRequestPushKinds: () => joinKinds.current,
+  },
 }))
 vi.mock('@/features/buddies/stores/buddiesStore', () => ({
   useBuddies: { getState: () => buddiesState },
@@ -39,6 +45,7 @@ describe('registerBuddiesPush', () => {
     registerPush.mockClear()
     capture.mockClear()
     buddiesState.notificationsEnabled = true
+    joinKinds.current = ['join.request.aaaaaaaaaaaa']
     app.applicationId = 'com.leviwilkerson.jwtimebeta'
   })
 
@@ -46,7 +53,9 @@ describe('registerBuddiesPush', () => {
     await registerBuddiesPush()
     const { templates, apnsEnvironment } = registerPush.mock.calls[0][0]
     expect(apnsEnvironment).toBe('sandbox')
-    expect(Object.keys(templates).sort()).toEqual([...BUDDY_PUSH_KINDS].sort())
+    expect(Object.keys(templates).sort()).toEqual(
+      [...BUDDY_PUSH_KINDS, ...joinKinds.current].sort()
+    )
     // The relay accepts at most 32 templates per device.
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
     for (const template of Object.values(templates))
@@ -54,6 +63,44 @@ describe('registerBuddiesPush', () => {
         title: expect.stringMatching(/^buddies_push/),
         body: expect.stringMatching(/^buddies_push/),
       })
+  })
+
+  it('adds one template per buddy whose requests to join may alert here', async () => {
+    joinKinds.current = [
+      'join.request.aaaaaaaaaaaa',
+      'join.request.bbbbbbbbbbbb',
+    ]
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[0][0]
+    expect(templates).toMatchObject({
+      'join.request.aaaaaaaaaaaa': {
+        title: 'buddies_pushJoinRequestTitle',
+        body: 'buddies_pushJoinRequestBody',
+      },
+      'join.request.bbbbbbbbbbbb': { title: 'buddies_pushJoinRequestTitle' },
+    })
+    // Every buddy muted, or join requests off on this device.
+    joinKinds.current = []
+    await registerBuddiesPush()
+    expect(Object.keys(registerPush.mock.calls[1][0].templates).sort()).toEqual(
+      [...BUDDY_PUSH_KINDS].sort()
+    )
+  })
+
+  it('moves on from a registration that hangs, so the next one goes through', async () => {
+    vi.useFakeTimers()
+    try {
+      registerPush.mockReturnValueOnce(new Promise(() => {}))
+      const hung = registerBuddiesPush()
+      const next = registerBuddiesPush()
+      const timedOut = expect(hung).rejects.toThrow('timed out')
+      await vi.advanceTimersByTimeAsync(30_000)
+      await timedOut
+      await next
+      expect(registerPush).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('registers no templates with Buddies notifications off', async () => {

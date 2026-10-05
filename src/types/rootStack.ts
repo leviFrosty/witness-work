@@ -94,6 +94,11 @@ export type RootStackParamList = {
       location?: PlanLocation
       categoryId?: string
     }
+    /**
+     * Buddies (inbox ids) to add to the one-time Plan's invitations, e.g. a
+     * buddy who asked to join. Nothing is sent until the Plan is saved.
+     */
+    inviteBuddies?: string[]
     /** Starts a new plan as Recurring instead of One-Time. */
     recurring?: boolean
   }

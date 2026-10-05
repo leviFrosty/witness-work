@@ -11,6 +11,7 @@ import useTheme from '@/contexts/theme'
 
 import confirmDestructive from '@/lib/confirmDestructive'
 import { isAppointment } from '@/lib/conversations'
+import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
@@ -43,6 +44,12 @@ const VisitTimelineCard = ({
   const note = visibleNote(visit.note)
   const topic = visit.followUp?.topic?.trim() ?? ''
   const dayLabel = visitDayLabel(visit.date)
+  const fields = activeCustomFieldDefs(
+    useConversations((state) => state.conversationFieldDefs)
+  ).flatMap((def) => {
+    const value = visit.customFields?.[def.id]?.trim()
+    return value ? [{ id: def.id, label: def.label, value }] : []
+  })
 
   const edit = () =>
     navigation.navigate('Visit Form', {
@@ -219,6 +226,26 @@ const VisitTimelineCard = ({
               {i18n.t('contactDetails.noOneAnswered')}
             </Text>
           ) : null}
+          {fields.length > 0 && (
+            <View style={{ gap: 2 }}>
+              {fields.map((field) => (
+                <Text
+                  key={field.id}
+                  style={{ fontSize: theme.fontSize('sm') + 0.5 }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {`${i18n.t('customFieldLabel', { label: field.label })} `}
+                  </Text>
+                  {field.value}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
       </ContextMenu>
     </Swipeable>

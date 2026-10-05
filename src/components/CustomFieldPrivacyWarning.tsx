@@ -1,6 +1,6 @@
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { hasSensitiveCustomFieldText } from '@/features/contacts/lib/sensitiveCustomFields'
+import { hasSensitiveCustomFieldText } from '@/lib/sensitiveCustomFields'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 

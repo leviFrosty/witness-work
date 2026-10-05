@@ -362,6 +362,8 @@ export function hasMeaningfulLocalData(): boolean {
   const conversations = useConversations.getState()
   if (conversations.conversations.length > 0) return true
   if (conversations.deletedConversations.length > 0) return true
+  if (conversations.conversationFieldDefs.length > 0) return true
+  if (conversations.deletedConversationFieldDefs.length > 0) return true
 
   const reports = useServiceReport.getState()
   if (reports.dayPlans.length > 0) return true
@@ -419,9 +421,14 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       ).filter((def) => !deletedCustomFieldIds.has(def.id)),
       deletedCustomFieldDefs,
     })
+    // The fold above already dropped tombstoned fields and their values.
     useConversations.setState({
       conversations: remote.conversationStore.conversations ?? [],
       deletedConversations: remote.conversationStore.deletedConversations ?? [],
+      conversationFieldDefs: (remote.conversationStore.conversationFieldDefs ??
+        []) as CustomFieldDefinition[],
+      deletedConversationFieldDefs:
+        remote.conversationStore.deletedConversationFieldDefs ?? [],
     })
     // Remote may have been written by a device that pre-dates calendar-day
     // normalization, so re-anchor every Date to noon UTC before persisting it
@@ -1751,6 +1758,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     deletedCustomFieldDefs: contactsState.deletedCustomFieldDefs,
     conversations: conversationsState.conversations,
     deletedConversations: conversationsState.deletedConversations,
+    conversationFieldDefs: conversationsState.conversationFieldDefs,
+    deletedConversationFieldDefs:
+      conversationsState.deletedConversationFieldDefs,
     serviceReports: serviceReportState.serviceReports,
     dayPlans: serviceReportState.dayPlans,
     recurringPlans: serviceReportState.recurringPlans,
@@ -1814,6 +1824,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   conversationsState.set({
     conversations: acc.conversations,
     deletedConversations: acc.deletedConversations,
+    conversationFieldDefs: acc.conversationFieldDefs,
+    deletedConversationFieldDefs: acc.deletedConversationFieldDefs,
   })
   // Same rationale as `replaceLocalWithRemote`: a peer device could have
   // written un-normalized dates. Re-anchor before applying. A Plan another

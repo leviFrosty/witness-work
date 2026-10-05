@@ -1,4 +1,4 @@
-import CustomFieldPrivacyWarning from '@/features/contacts/components/CustomFieldPrivacyWarning'
+import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { usePreferences } from '@/stores/preferences'
@@ -62,7 +62,7 @@ const PreferencesCustomFieldsScreen = () => {
   const handleAdd = () => {
     if (!newFieldName.trim()) return
     addCustomFieldDef(newFieldName)
-    analytics.capture('custom_field_created')
+    analytics.capture('custom_field_created', { scope: 'contact' })
     setNewFieldName('')
   }
 

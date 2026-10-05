@@ -1,7 +1,6 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import * as Crypto from 'expo-crypto'
 import { Contact } from '@/types/contact'
 import {
   CustomFieldDefinition,
@@ -11,6 +10,15 @@ import {
   stripTombstonedCustomFieldValues,
   stripTombstonedCustomFields,
 } from '@/lib/customFields'
+import {
+  addCustomFieldDefinition,
+  archiveCustomFieldDefinition,
+  nextCustomFieldOrder,
+  purgeCustomFieldDefinition,
+  renameCustomFieldDefinition,
+  reorderCustomFieldDefinitions,
+  restoreCustomFieldDefinition,
+} from '@/lib/customFieldDefinitions'
 import { PersistStorage } from '@/stores/mmkv'
 import {
   isRedactedContactTombstone,
@@ -181,105 +189,41 @@ export const useContacts = create(
        *   callers can avoid clobbering form state with a stale id.
        */
       addCustomFieldDef: (label: string): CustomFieldDefinition | null => {
-        const trimmed = label.trim()
-        if (!trimmed) return null
         let result: CustomFieldDefinition | null = null
         set(({ customFieldDefs }) => {
-          const existing = customFieldDefs.find(
-            (d) => !d.archived && d.label === trimmed
-          )
-          if (existing) {
-            result = existing
-            return { customFieldDefs }
-          }
-          const now = syncTimestamp()
-          const def: CustomFieldDefinition = {
-            id: Crypto.randomUUID(),
-            label: trimmed,
-            order: nextOrder(customFieldDefs),
-            createdAt: now,
-            updatedAt: now,
-          }
+          const { defs, def } = addCustomFieldDefinition(customFieldDefs, label)
           result = def
-          return { customFieldDefs: [...customFieldDefs, def] }
+          return { customFieldDefs: defs }
         })
         return result
       },
       renameCustomFieldDef: (id: string, label: string) => {
-        const trimmed = label.trim()
-        if (!trimmed) return
         set(({ customFieldDefs }) => ({
-          customFieldDefs: customFieldDefs.map((d) =>
-            d.id === id
-              ? { ...d, label: trimmed, updatedAt: syncTimestamp(d.updatedAt) }
-              : d
+          customFieldDefs: renameCustomFieldDefinition(
+            customFieldDefs,
+            id,
+            label
           ),
         }))
       },
-      /**
-       * Reorders the active (non-archived) defs. `orderedIds` is the new active
-       * sequence; archived defs keep their existing relative order, slotted
-       * after the active list. `order` is rewritten on every active def so sync
-       * merges have a clean per-def timestamp + position to compare.
-       */
+      /** See `reorderCustomFieldDefinitions`. */
       reorderCustomFieldDefs: (orderedIds: string[]) => {
-        set(({ customFieldDefs }) => {
-          const now = syncTimestamp(
-            customFieldDefs.reduce(
-              (stamp, def) => Math.max(stamp, def.updatedAt),
-              0
-            )
-          )
-          const byId = new Map(customFieldDefs.map((d) => [d.id, d]))
-          const archived = customFieldDefs.filter((d) => d.archived)
-          const reorderedActive: CustomFieldDefinition[] = []
-          orderedIds.forEach((id, idx) => {
-            const def = byId.get(id)
-            if (!def || def.archived) return
-            const next: CustomFieldDefinition = {
-              ...def,
-              order: idx,
-              updatedAt: def.order === idx ? def.updatedAt : now,
-            }
-            reorderedActive.push(next)
-          })
-          // Preserve archived defs as-is, ordered after active.
-          archived.forEach((d, i) => {
-            archived[i] = {
-              ...d,
-              order: orderedIds.length + i,
-              updatedAt: d.order === orderedIds.length + i ? d.updatedAt : now,
-            }
-          })
-          return {
-            customFieldDefs: [...reorderedActive, ...archived],
-          }
-        })
+        set(({ customFieldDefs }) => ({
+          customFieldDefs: reorderCustomFieldDefinitions(
+            customFieldDefs,
+            orderedIds
+          ),
+        }))
       },
       archiveCustomFieldDef: (id: string) => {
         set(({ customFieldDefs }) => ({
-          customFieldDefs: customFieldDefs.map((d) =>
-            d.id === id
-              ? { ...d, archived: true, updatedAt: syncTimestamp(d.updatedAt) }
-              : d
-          ),
+          customFieldDefs: archiveCustomFieldDefinition(customFieldDefs, id),
         }))
       },
       restoreCustomFieldDef: (id: string) => {
-        set(({ customFieldDefs }) => {
-          const target = customFieldDefs.find((d) => d.id === id)
-          if (!target || !target.archived) return { customFieldDefs }
-          // Slot restored def at the end of the active list.
-          const activeCount = customFieldDefs.filter((d) => !d.archived).length
-          const now = syncTimestamp(target.updatedAt)
-          return {
-            customFieldDefs: customFieldDefs.map((d) =>
-              d.id === id
-                ? { ...d, archived: false, order: activeCount, updatedAt: now }
-                : d
-            ),
-          }
-        })
+        set(({ customFieldDefs }) => ({
+          customFieldDefs: restoreCustomFieldDefinition(customFieldDefs, id),
+        }))
       },
       /**
        * Permanently removes a custom field definition AND every contact's value
@@ -294,33 +238,21 @@ export const useContacts = create(
             customFieldDefs,
             deletedCustomFieldDefs,
           }) => {
-            const target = customFieldDefs.find((d) => d.id === id)
-            if (!target || !target.archived) {
-              return {
-                customFieldDefs,
-                deletedCustomFieldDefs,
-              }
-            }
-
-            const deletedAt = syncTimestamp(target.updatedAt)
-            const tombstone: CustomFieldTombstone = {
-              id,
-              deletedAt,
-              ...(target.legacyIds ? { legacyIds: target.legacyIds } : {}),
-            }
-            const tombstones = [
-              ...deletedCustomFieldDefs.filter((t) => t.id !== id),
-              tombstone,
-            ]
-
+            const purged = purgeCustomFieldDefinition(
+              customFieldDefs,
+              deletedCustomFieldDefs,
+              id
+            )
+            if (!purged) return { customFieldDefs, deletedCustomFieldDefs }
+            const { tombstone } = purged
             return {
-              customFieldDefs: customFieldDefs.filter((d) => d.id !== id),
-              deletedCustomFieldDefs: tombstones,
+              customFieldDefs: purged.defs,
+              deletedCustomFieldDefs: purged.tombstones,
               contacts: contacts.map((c) =>
-                stripTombstonedCustomFields(c, [tombstone], deletedAt)
+                stripTombstonedCustomFields(c, [tombstone], tombstone.deletedAt)
               ),
               deletedContacts: deletedContacts.map((c) =>
-                stripTombstonedCustomFields(c, [tombstone], deletedAt)
+                stripTombstonedCustomFields(c, [tombstone], tombstone.deletedAt)
               ),
             }
           }
@@ -376,7 +308,7 @@ export const useContacts = create(
             (d) => !existingIds.has(d.id) && !deletedIds.has(d.id)
           )
           if (additions.length === 0) return { customFieldDefs }
-          const baseOrder = nextOrder(customFieldDefs)
+          const baseOrder = nextCustomFieldOrder(customFieldDefs)
           const stamped = additions.map((d, i) => ({
             ...d,
             order: baseOrder + i,
@@ -552,10 +484,5 @@ export const useContacts = create(
     }
   )
 )
-
-function nextOrder(defs: CustomFieldDefinition[]): number {
-  if (defs.length === 0) return 0
-  return Math.max(...defs.map((d) => d.order)) + 1
-}
 
 export default useContacts

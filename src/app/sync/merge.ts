@@ -50,6 +50,8 @@ export type MergeResult = {
   deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
+  conversationFieldDefs: CustomFieldDefinition[]
+  deletedConversationFieldDefs: CustomFieldTombstone[]
   serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
@@ -79,6 +81,10 @@ type LocalState = {
   deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
+  /** Absent means none (callers that predate conversation fields). */
+  conversationFieldDefs?: CustomFieldDefinition[]
+  /** Absent means none (callers that predate conversation fields). */
+  deletedConversationFieldDefs?: CustomFieldTombstone[]
   serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
@@ -115,8 +121,9 @@ type LocalState = {
  *   `updatedAt` is strictly newer than its `deletedAt` (deletion wins a tie).
  *   Tombstones from either side propagate, newest `deletedAt` per id.
  *   Conversations, time entries, Day Plans, Recurring Plans, Categories, and
- *   custom field definitions carry them. Deleted contacts are records instead,
- *   and their redaction is one-way (see `mergeDeletedContacts`).
+ *   contact and conversation field definitions carry them. Deleted contacts are
+ *   records instead, and their redaction is one-way (see
+ *   `mergeDeletedContacts`).
  * - **Preferences**: per-key last-writer-wins using `preferenceUpdatedAt`.
  */
 export function mergePayload(
@@ -129,6 +136,8 @@ export function mergePayload(
     ...localState,
     deletedDayPlans: localState.deletedDayPlans ?? [],
     deletedRecurringPlans: localState.deletedRecurringPlans ?? [],
+    conversationFieldDefs: localState.conversationFieldDefs ?? [],
+    deletedConversationFieldDefs: localState.deletedConversationFieldDefs ?? [],
   }
   const local = translateSyncTimestamps(originalLocal, 0, now + 5 * 60_000)
   remote = translateSyncTimestamps(remote, 0, now + 5 * 60_000)
@@ -193,6 +202,24 @@ export function mergePayload(
       contact.updatedAt
     )
   )
+  // --- Conversation field definitions (same semantics as contact fields) ---
+  // Absent from payloads written before conversation fields existed.
+  const remoteConversationFieldDefs = (remote.conversationStore
+    .conversationFieldDefs ?? []) as CustomFieldDefinition[]
+  const mergedConversationFieldTombstones = mergeTombstones(
+    local.deletedConversationFieldDefs,
+    remote.conversationStore.deletedConversationFieldDefs ?? [],
+    now
+  )
+  // Permanent deletion always wins, even over a newer rename.
+  const deletedConversationFieldIds = new Set(
+    mergedConversationFieldTombstones.map((tombstone) => tombstone.id)
+  )
+  const conversationFieldDefsAfterTombstones = mergeById(
+    local.conversationFieldDefs,
+    remoteConversationFieldDefs
+  ).merged.filter((def) => !deletedConversationFieldIds.has(def.id))
+
   // --- Conversations ---
   const { merged: mergedConversations } = mergeById(
     local.conversations,
@@ -203,9 +230,17 @@ export function mergePayload(
     remote.conversationStore.deletedConversations ?? [],
     now
   )
+  // Like contacts, strip values for deleted fields only after the LWW winner is
+  // picked, keeping its timestamp.
   const conversationsAfterTombstones = applyTombstones(
     mergedConversations,
     mergedConversationTombstones
+  ).map((visit) =>
+    stripTombstonedCustomFields(
+      visit,
+      mergedConversationFieldTombstones,
+      visit.updatedAt
+    )
   )
 
   // --- Service reports (nested year → month → report[]) ---
@@ -342,6 +377,8 @@ export function mergePayload(
     deletedCustomFieldDefs: mergedCustomFieldTombstones,
     conversations: conversationsAfterTombstones,
     deletedConversations: mergedConversationTombstones,
+    conversationFieldDefs: conversationFieldDefsAfterTombstones,
+    deletedConversationFieldDefs: mergedConversationFieldTombstones,
     serviceReports: reportsAfterTombstones,
     dayPlans: dayPlansAfterTombstones,
     recurringPlans: recurringPlansAfterTombstones,

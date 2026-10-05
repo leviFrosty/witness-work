@@ -42,6 +42,10 @@ export function foldRemotePayloads(
     deletedCustomFieldDefs: first.contactStore.deletedCustomFieldDefs ?? [],
     conversations: (first.conversationStore.conversations ?? []) as Visit[],
     deletedConversations: first.conversationStore.deletedConversations ?? [],
+    conversationFieldDefs: (first.conversationStore.conversationFieldDefs ??
+      []) as CustomFieldDefinition[],
+    deletedConversationFieldDefs:
+      first.conversationStore.deletedConversationFieldDefs ?? [],
     serviceReports:
       (first.serviceReportStore.serviceReports as TimeEntriesByYear) ?? {},
     dayPlans: (first.serviceReportStore.dayPlans ?? []) as DayPlan[],
@@ -87,6 +91,8 @@ export function foldRemotePayloads(
     conversationStore: {
       conversations: acc.conversations,
       deletedConversations: acc.deletedConversations,
+      conversationFieldDefs: acc.conversationFieldDefs,
+      deletedConversationFieldDefs: acc.deletedConversationFieldDefs,
     },
     serviceReportStore: {
       serviceReports: acc.serviceReports,

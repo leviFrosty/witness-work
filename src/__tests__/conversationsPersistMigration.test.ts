@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('expo-crypto', () => ({ randomUUID: () => 'generated-id' }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',

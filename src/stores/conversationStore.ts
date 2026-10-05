@@ -2,6 +2,22 @@ import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Visit, VisitTombstone } from '@/types/visit'
+import {
+  CustomFieldDefinition,
+  CustomFieldTombstone,
+} from '@/types/customField'
+import {
+  stripTombstonedCustomFieldValues,
+  stripTombstonedCustomFields,
+} from '@/lib/customFields'
+import {
+  addCustomFieldDefinition,
+  archiveCustomFieldDefinition,
+  purgeCustomFieldDefinition,
+  renameCustomFieldDefinition,
+  reorderCustomFieldDefinitions,
+  restoreCustomFieldDefinition,
+} from '@/lib/customFieldDefinitions'
 import { PersistStorage } from '@/stores/mmkv'
 import { stripPlaceholderFollowUp } from '@/lib/conversations'
 
@@ -42,6 +58,14 @@ const initialState = {
    * Persisted key kept as `deletedConversations` for backward compatibility.
    */
   deletedConversations: [] as VisitTombstone[],
+  /**
+   * Definitions for the user-customizable conversation fields (e.g.
+   * "Publication"). Same shape and lifecycle as the contact fields in
+   * `contactsStore.customFieldDefs`, but a separate list: Visit `customFields`
+   * records reference these ids.
+   */
+  conversationFieldDefs: [] as CustomFieldDefinition[],
+  deletedConversationFieldDefs: [] as CustomFieldTombstone[],
 }
 
 export const useConversations = create(
@@ -49,7 +73,7 @@ export const useConversations = create(
     combine(initialState, (set) => ({
       set,
       addConversation: (conversation: Visit) =>
-        set(({ conversations }) => {
+        set(({ conversations, deletedConversationFieldDefs }) => {
           const foundCurrentConversation = conversations.find(
             (c) => c.id === conversation.id
           )
@@ -61,7 +85,10 @@ export const useConversations = create(
           return {
             conversations: [
               ...conversations,
-              { ...conversation, updatedAt: syncTimestamp() },
+              stripTombstonedCustomFields(
+                { ...conversation, updatedAt: syncTimestamp() },
+                deletedConversationFieldDefs
+              ),
             ],
           }
         }),
@@ -89,7 +116,11 @@ export const useConversations = create(
           }
         }),
       updateConversation: (conversation: Partial<Visit>) => {
-        set(({ conversations }) => {
+        set(({ conversations, deletedConversationFieldDefs }) => {
+          const updatedCustomFields = stripTombstonedCustomFieldValues(
+            conversation.customFields,
+            deletedConversationFieldDefs
+          )
           return {
             conversations: conversations.map((c) => {
               if (c.id !== conversation.id) {
@@ -98,11 +129,91 @@ export const useConversations = create(
               return {
                 ...c,
                 ...conversation,
+                ...(conversation.customFields
+                  ? { customFields: updatedCustomFields }
+                  : {}),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
           }
         })
+      },
+      /** See `addCustomFieldDefinition`. */
+      addConversationFieldDef: (
+        label: string
+      ): CustomFieldDefinition | null => {
+        let result: CustomFieldDefinition | null = null
+        set(({ conversationFieldDefs }) => {
+          const { defs, def } = addCustomFieldDefinition(
+            conversationFieldDefs,
+            label
+          )
+          result = def
+          return { conversationFieldDefs: defs }
+        })
+        return result
+      },
+      renameConversationFieldDef: (id: string, label: string) => {
+        set(({ conversationFieldDefs }) => ({
+          conversationFieldDefs: renameCustomFieldDefinition(
+            conversationFieldDefs,
+            id,
+            label
+          ),
+        }))
+      },
+      reorderConversationFieldDefs: (orderedIds: string[]) => {
+        set(({ conversationFieldDefs }) => ({
+          conversationFieldDefs: reorderCustomFieldDefinitions(
+            conversationFieldDefs,
+            orderedIds
+          ),
+        }))
+      },
+      archiveConversationFieldDef: (id: string) => {
+        set(({ conversationFieldDefs }) => ({
+          conversationFieldDefs: archiveCustomFieldDefinition(
+            conversationFieldDefs,
+            id
+          ),
+        }))
+      },
+      restoreConversationFieldDef: (id: string) => {
+        set(({ conversationFieldDefs }) => ({
+          conversationFieldDefs: restoreCustomFieldDefinition(
+            conversationFieldDefs,
+            id
+          ),
+        }))
+      },
+      /**
+       * Permanently removes an archived conversation field AND every visit's
+       * value for it. Destructive; expose only from a confirmation flow.
+       */
+      purgeConversationFieldDef: (id: string) => {
+        set(
+          ({
+            conversations,
+            conversationFieldDefs,
+            deletedConversationFieldDefs,
+          }) => {
+            const purged = purgeCustomFieldDefinition(
+              conversationFieldDefs,
+              deletedConversationFieldDefs,
+              id
+            )
+            if (!purged)
+              return { conversationFieldDefs, deletedConversationFieldDefs }
+            const { tombstone } = purged
+            return {
+              conversationFieldDefs: purged.defs,
+              deletedConversationFieldDefs: purged.tombstones,
+              conversations: conversations.map((c) =>
+                stripTombstonedCustomFields(c, [tombstone], tombstone.deletedAt)
+              ),
+            }
+          }
+        )
       },
       _WARNING_forceDeleteConversations: () =>
         set({ conversations: [], deletedConversations: [] }),

@@ -76,6 +76,7 @@ const visit = record.extend({
   isBibleStudy: z.boolean(),
   note: z.string().optional(),
   notAtHome: z.boolean().optional(),
+  customFields: z.record(z.string()).optional(),
   followUp: z
     .object({
       date,
@@ -160,6 +161,13 @@ const tombstone = z.object({
   deletedAt: timestamp,
   legacyIds: z.array(id).optional(),
 })
+const customFieldDef = record.extend({
+  label: z.string(),
+  order: z.number().finite(),
+  createdAt: timestamp,
+  archived: z.boolean().optional(),
+  type: z.enum(['text', 'number', 'date', 'url']).optional(),
+})
 const values = z.object({
   values: z.record(z.unknown()),
   updatedAt: z.record(timestamp).optional().default({}),
@@ -183,22 +191,14 @@ export const payloadSchema = z.object({
   contactStore: z.object({
     contacts: z.array(contact),
     deletedContacts: z.array(contact),
-    customFieldDefs: z
-      .array(
-        record.extend({
-          label: z.string(),
-          order: z.number().finite(),
-          createdAt: timestamp,
-          archived: z.boolean().optional(),
-          type: z.enum(['text', 'number', 'date', 'url']).optional(),
-        })
-      )
-      .optional(),
+    customFieldDefs: z.array(customFieldDef).optional(),
     deletedCustomFieldDefs: z.array(tombstone).optional(),
   }),
   conversationStore: z.object({
     conversations: z.array(visit),
     deletedConversations: z.array(tombstone).optional(),
+    conversationFieldDefs: z.array(customFieldDef).optional(),
+    deletedConversationFieldDefs: z.array(tombstone).optional(),
     explicitFollowUps: z.boolean().optional(),
   }),
   serviceReportStore: z.object({

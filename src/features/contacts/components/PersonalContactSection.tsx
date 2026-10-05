@@ -1,4 +1,4 @@
-import CustomFieldPrivacyWarning from '@/features/contacts/components/CustomFieldPrivacyWarning'
+import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import PhoneInput, {

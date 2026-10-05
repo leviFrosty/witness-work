@@ -151,6 +151,9 @@ const CONVERSATION_POLICY: Record<keyof Visit, FieldPolicy> = {
   note: 'optional',
   followUp: 'optional',
   notAtHome: 'optional',
+  // Conversation field definitions aren't shared, so the recipient couldn't
+  // label these values.
+  customFields: 'omit',
   updatedAt: 'omit',
 }
 

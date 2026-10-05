@@ -13,6 +13,7 @@ import {
   vec,
 } from '@shopify/react-native-skia'
 import Animated, {
+  DerivedValue,
   SharedValue,
   clamp,
   interpolateColor,
@@ -100,7 +101,7 @@ interface Props {
   /** 0 = the full-screen splash, 1 = the settled app tile. */
   collapse: SharedValue<number>
   /** Landing squash on the settled tile. */
-  tileScale: SharedValue<number>
+  tileScale: DerivedValue<number>
   /** 0–1 rings that spread from the tile as it lands. */
   ripple: SharedValue<number>
   tilt: Tilt

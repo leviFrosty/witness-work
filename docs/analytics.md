@@ -300,6 +300,37 @@ work. It is sent the first time a pointer hovers a control, capped to once per
 UTC day, with `input` (`pointer` or `stylus`). Individual hovers, tooltips, and
 chart readouts are not captured.
 
+## Update reveal
+
+Returning installs that update across `UPDATE_REVEAL_VERSION` see the update
+reveal once: the splash collapses into the app tile, then an optional tour of the
+release. `update_reveal_opened` fires when it appears, with `source` (`launch`,
+`tray`, `whats_new`, or `dev`), `entrance` (`intro` picks up from the splash,
+`calm` is the same under Reduce Motion, `replay` fades in over the app), and
+`reveal_version`. `update_reveal_closed` fires once when it closes, with
+`source`, `method` (`later`, `close`, `done`, or `back` for Android's back
+button), `stage` (`intro` if it closed before the tour, `tour` otherwise),
+`pages_viewed` and `page_count` (pages shown for this platform, role, and
+Buddies availability, fixed when the tour opens), `last_page` (a bounded page
+id such as `navigation`, `buddies`, or `android`), and `elapsed_ms` (wall
+clock, including time in the share sheet). Compare
+`stage: intro` with `method: later` to see who skips the tour, and
+`last_page`/`pages_viewed` to see where tours end. A tour closed by quitting the
+app sends no close event. Choosing Later leaves an `update_reveal` tray item
+that replays it.
+
+## Sharing the app
+
+`app_share_tapped` records a tap on Share Link, with `source` (`update_reveal`
+for the tour's last page, `settings` for Settings → Share WitnessWork).
+`app_share_completed` follows with the same `source` and `outcome`: `dismissed`
+when iOS reports the share sheet was closed without sharing, otherwise
+`shared`. Android's share sheet doesn't report a choice, so every Android
+completion reads `shared`; treat it as "the sheet opened". `app_share_failed`
+carries only `source`. The message holds the two store links and nothing about
+the user. QR code scans happen on the friend's phone and can't be measured;
+screen tracking (`ShareApp`) shows how often the code is opened from Settings.
+
 ## Navigation preferences
 
 Users can reorder the Home, Schedule, Contacts, and Progress tabs in Preferences

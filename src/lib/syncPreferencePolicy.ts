@@ -61,8 +61,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'celebratedMilestones',
   'homeChecklistAllDoneCelebrated',
   'devRolloverDateOverride',
-  'seenMilestoneUpdateReveal',
-  'dismissedMilestoneRevealOnce',
+  'updateReveal',
   'seenFoundingSupporterReveal',
   'contactsView',
 ])

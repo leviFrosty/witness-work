@@ -65,6 +65,11 @@ export type UnreadReleaseNotes = {
   cardDismissed: boolean
 }
 
+export type UpdateRevealState = {
+  version: string
+  status: 'seen' | 'skipped'
+}
+
 /**
  * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
  * `customField:<defId>` template literal form on `ContactSortKey` and are
@@ -906,20 +911,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   devRolloverDateOverride: null as Date | null,
   /**
-   * Set to true once the user has fully viewed the Milestone Update showcase
-   * (scrolled to bottom or tapped the closing CTA). Suppresses both the
-   * grand-reveal overlay and the "shaking present" recovery icon on the home
-   * screen. Per-device — a user upgrading on a second device can re-experience
-   * the reveal there independently.
+   * The update reveal (`UPDATE_REVEAL_VERSION`) this device has engaged with.
+   * `skipped` (closed before the tour) keeps a tray item to replay it; `seen`
+   * (the tour was opened, or that tray item dismissed) ends it. A newer reveal
+   * version starts fresh. Per-device — a user upgrading on a second device can
+   * re-experience the reveal there independently.
    */
-  seenMilestoneUpdateReveal: false,
-  /**
-   * Set to true if the user dismissed the grand-reveal overlay without entering
-   * the showcase (tapped "Not now" or skip-anywhere). Used to surface the
-   * "shaking present" icon on the home screen as a recovery affordance so the
-   * reveal can be replayed on demand. Per-device.
-   */
-  dismissedMilestoneRevealOnce: false,
+  updateReveal: null as UpdateRevealState | null,
   /**
    * Sticky one-shot flag set on dismissal of the Founding Supporter reveal
    * (chained after the Milestone reveal for users who were active Supporters at
@@ -1123,7 +1121,33 @@ export const migratePreferencesPersistedState = (
   if (version < 7) {
     next = migrateDropProfileCardShaderPreferences(next)
   }
+  if (version < 8) {
+    next = migrateDropMilestoneRevealPreferences(next)
+  }
   return next
+}
+
+/**
+ * V7 → v8: remove The Milestone Update reveal flags, replaced by the
+ * version-keyed `updateReveal`. Both were device-local, so no timestamps.
+ */
+export const migrateDropMilestoneRevealPreferences = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  if (
+    !('seenMilestoneUpdateReveal' in record) &&
+    !('dismissedMilestoneRevealOnce' in record)
+  ) {
+    return state
+  }
+  const {
+    seenMilestoneUpdateReveal: _seen,
+    dismissedMilestoneRevealOnce: _dismissed,
+    ...rest
+  } = record
+  return rest
 }
 
 /** V6 → v7: remove the retired holographic Profile Card preferences. */
@@ -1784,7 +1808,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createJSONStorage(() => PersistStorage),
-      version: 7,
+      version: 8,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

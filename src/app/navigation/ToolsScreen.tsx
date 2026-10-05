@@ -9,6 +9,7 @@ import {
   CloudOff as CloudOffIcon,
   Database as DatabaseIcon,
   FlaskConical as FlaskConicalIcon,
+  Gift as GiftIcon,
   HeartHandshake as HeartHandshakeIcon,
   KeyRound as KeyRoundIcon,
   PartyPopper as PartyPopperIcon,
@@ -38,6 +39,7 @@ import Card from '@/components/ui/Card'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import Constants from 'expo-constants'
+import semver from 'semver'
 import { hasMigratedFromAsyncStorage } from '@/stores/mmkv'
 import useConversations from '@/stores/conversationStore'
 import axios from 'axios'
@@ -63,6 +65,14 @@ import { splitDateAndStartTime } from '@/lib/normalizeDate'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { monthCelebrationKey } from '@/lib/achievementTier'
 import { milestoneCelebrationKey } from '@/lib/milestones'
+import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import {
+  UPDATE_REVEAL_NAME,
+  UPDATE_REVEAL_VERSION,
+} from '@/features/updates/constants/updateReveal'
+import { armLaunchReveal } from '@/features/updates/lib/devLaunchReveal'
+import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
+import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
 import apis from '@/constants/apis'
 import useAccount from '@/hooks/useAccount'
 import useCustomer from '@/hooks/useCustomer'
@@ -190,8 +200,17 @@ export default function ToolsScreen() {
     celebratedMilestones,
     submittedReportMonths,
     mileageTrackingEnabled,
+    updateReveal,
+    lastAppVersion,
     set: setPreferences,
   } = preferences
+  const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
+  const appVersion = Constants.expoConfig?.version ?? '0.0.0'
+  // The release before the update reveal's, for replaying its trigger.
+  const beforeUpdateReveal =
+    semver.minor(UPDATE_REVEAL_VERSION) > 0
+      ? `${semver.major(UPDATE_REVEAL_VERSION)}.${semver.minor(UPDATE_REVEAL_VERSION) - 1}.0`
+      : `${semver.major(UPDATE_REVEAL_VERSION) - 1}.0.0`
   const mileage = useMileage()
   // Profile-shaped fields live in the dedicated Profile store after wave-3.
   const { hasCompletedProfileSetup, name, set: setProfile } = useProfile()
@@ -1607,6 +1626,60 @@ export default function ToolsScreen() {
               count={Object.keys(celebratedMilestones).length}
             />
           </View>
+        </ToolSection>
+
+        <ToolSection
+          title='Special updates'
+          icon={GiftIcon}
+          summary={updateReveal?.status ?? 'not seen'}
+        >
+          <ToolSubheading
+            title={`${i18n.t(UPDATE_REVEAL_NAME)} · ${UPDATE_REVEAL_VERSION}`}
+            info={`The splash-to-tile reveal and tour for returning installs crossing ${UPDATE_REVEAL_VERSION}. Play now runs the launch version over the app, from a splash replica. Reset trigger clears updateReveal and rewinds lastAppVersion to ${beforeUpdateReveal}, so the next launch plays it exactly as an updating user sees it; on a build below ${UPDATE_REVEAL_VERSION}, it also arms that launch. Closing it with Later marks it skipped, which brings up the tray item that replays it.`}
+          />
+          <ToolList>
+            <ToolRow
+              label='updateReveal'
+              value={
+                updateReveal
+                  ? `${updateReveal.version} · ${updateReveal.status}`
+                  : '—'
+              }
+            />
+            <ToolRow label='lastAppVersion' value={lastAppVersion ?? '—'} />
+            <ToolRow
+              label='Play now'
+              onPress={() => requestUpdateReveal('dev')}
+            />
+            <ToolRow
+              label='Reset trigger'
+              onPress={() => {
+                setPreferences({
+                  updateReveal: null,
+                  lastAppVersion: beforeUpdateReveal,
+                })
+                if (semver.lt(appVersion, UPDATE_REVEAL_VERSION)) {
+                  armLaunchReveal()
+                }
+                showDone('Relaunch to play it')
+              }}
+            />
+          </ToolList>
+
+          <ToolSubheading
+            title={`${i18n.t('milestoneReveal_title')} · ${MILESTONE_UPDATE_VERSION}`}
+            info='Replay only: launches show the current update reveal instead. Play now runs the grand reveal over the app; its See What’s New opens the showcase.'
+          />
+          <ToolList>
+            <ToolRow
+              label='Play now'
+              onPress={() => useMilestoneRevealStore.getState().request()}
+            />
+            <ToolRow
+              label='Open showcase'
+              onPress={() => navigation.navigate('MilestoneShowcase')}
+            />
+          </ToolList>
         </ToolSection>
 
         <ToolSection

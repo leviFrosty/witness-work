@@ -99,6 +99,8 @@ export type RootStackParamList = {
   Rollover: undefined
   MilestoneShowcase: undefined
   FAQ: { scrollToCategory?: string } | undefined
+  /** QR codes and a link for sharing WitnessWork with a friend. */
+  ShareApp: undefined
   More: undefined
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined

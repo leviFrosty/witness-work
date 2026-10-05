@@ -12,7 +12,7 @@ export type NotificationKind =
   | 'reminder'
   | 'auxiliary_month'
   | 'whats_new'
-  | 'milestone_update'
+  | 'update_reveal'
   | 'notes_import'
   | 'supporter_nudge'
   | 'supporter_survey'

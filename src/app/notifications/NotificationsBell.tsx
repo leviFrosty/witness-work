@@ -10,7 +10,6 @@ import useBuddyNotifications, {
   syncBuddyNotifications,
   useBuddyTraySyncStatus,
 } from '@/features/buddies/hooks/useBuddyNotifications'
-import useMilestoneUpdateNotification from '@/features/milestones/hooks/useMilestoneUpdateNotification'
 import useNotesImportNotifications from '@/features/notes-import/hooks/useNotesImportNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
 import useNow from '@/features/notifications/hooks/useNow'
@@ -20,6 +19,7 @@ import useRolloverNotification from '@/features/service-reports/hooks/useRollove
 import useBackupNotification from '@/features/settings/hooks/useBackupNotification'
 import useSupporterNotifications from '@/features/supporter/hooks/useSupporterNotifications'
 import useWhatsNewNotification from '@/features/updates/hooks/useWhatsNewNotification'
+import useUpdateRevealNotification from '@/features/updates/hooks/useUpdateRevealNotification'
 import useMissedFollowUpNotifications from '@/features/visits/hooks/useMissedFollowUpNotifications'
 
 /**
@@ -45,7 +45,7 @@ export default function NotificationsBell() {
     ...useNotesImportNotifications(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),
-    useMilestoneUpdateNotification(),
+    useUpdateRevealNotification(),
     ...useSupporterNotifications(now),
     ...useDevNotificationItems(now),
   ]

@@ -38,7 +38,7 @@ pnpm run bump-version patch --skip-notes --prepare
 
 The notes file contains `{ "notes": ["User-facing change"] }`; `[]` omits the announcement. `--prepare` changes package/app versions and optional `src/features/updates/constants/releaseNotes.ts` / English updates keys, without committing. It requires a clean tree. Validate inputs before mutation; failures retain files/history for recovery.
 
-Each `releaseNotes` entry has an optional `announce` level for first launch after updating. It defaults to `'passive'`: an item in the Home notifications tray, never blocking. Set `'silent'` for fix-only releases, which then appear only in Settings. Reserve `'sheet'` for rare, big releases that justify interrupting the user; the sheet lists only unseen releases.
+Each `releaseNotes` entry has an optional `announce` level for first launch after updating. It defaults to `'passive'`: an item in the Home notifications tray, never blocking. Set `'silent'` for fix-only releases, which then appear only in Settings. Reserve `'sheet'` for rare, big releases that justify interrupting the user; the sheet lists only unseen releases. The first release at or past `UPDATE_REVEAL_VERSION` (`src/features/updates/constants/updateReveal.ts`) is a named Reveal update: give its entry `name: UPDATE_REVEAL_NAME` so What's New shows the same name as its launch reveal.
 
 After translation, run `pnpm run check:locales`, `pnpm run check:all` and `pnpm run deps`. Stage explicit release files, commit `chore: bump version to X.Y.Z`, and create annotated `vX.Y.Z` with message `Release X.Y.Z`. Hooks stay enabled. The helper requires `--prepare` and never commits, tags or generates translations; the release skill owns those stages.
 

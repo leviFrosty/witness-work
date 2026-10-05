@@ -7,9 +7,8 @@ import {
 const baseInput = {
   currentVersion: '1.38.2',
   lastAppVersion: '1.37.0',
-  milestoneRevealVersion: '1.38.2',
-  seenMilestoneUpdateReveal: false,
-  dismissedMilestoneRevealOnce: false,
+  revealVersion: '1.38.2',
+  revealEngaged: false,
   releaseAnnounce: 'passive',
 } as const
 
@@ -30,40 +29,47 @@ describe('evaluateRevealOnLaunch', () => {
     expect(action).toBe('none')
   })
 
-  it('suppresses every intro with "stamp-only" when crossing the Reveal version but the milestone showcase was already seen', () => {
+  it('suppresses every intro with "stamp-only" when crossing the Reveal version but the reveal was already engaged', () => {
     const action = evaluateRevealOnLaunch({
       ...baseInput,
       lastAppVersion: '1.37.0',
       currentVersion: '1.38.2',
-      milestoneRevealVersion: '1.38.2',
-      seenMilestoneUpdateReveal: true,
-      dismissedMilestoneRevealOnce: false,
+      revealVersion: '1.38.2',
+      revealEngaged: true,
     })
     expect(action).toBe('stamp-only')
   })
 
-  it('suppresses every intro with "stamp-only" when crossing and the overlay was skipped (recovery icon path)', () => {
+  it('plays the update reveal when crossing the Reveal version on a fresh first sighting', () => {
     const action = evaluateRevealOnLaunch({
       ...baseInput,
       lastAppVersion: '1.37.0',
       currentVersion: '1.38.2',
-      milestoneRevealVersion: '1.38.2',
-      seenMilestoneUpdateReveal: false,
-      dismissedMilestoneRevealOnce: true,
+      revealVersion: '1.38.2',
+      revealEngaged: false,
     })
-    expect(action).toBe('stamp-only')
+    expect(action).toBe('update-reveal')
   })
 
-  it('fires the milestone reveal when crossing the Reveal version on a fresh first sighting', () => {
+  it('plays the update reveal when jumping past the Reveal version', () => {
     const action = evaluateRevealOnLaunch({
       ...baseInput,
-      lastAppVersion: '1.37.0',
-      currentVersion: '1.38.2',
-      milestoneRevealVersion: '1.38.2',
-      seenMilestoneUpdateReveal: false,
-      dismissedMilestoneRevealOnce: false,
+      lastAppVersion: '1.43.0',
+      currentVersion: '2.0.0',
+      revealVersion: '1.44.0',
     })
-    expect(action).toBe('milestone-reveal')
+    expect(action).toBe('update-reveal')
+  })
+
+  it('does not replay the update reveal on later updates', () => {
+    const action = evaluateRevealOnLaunch({
+      ...baseInput,
+      lastAppVersion: '1.44.0',
+      currentVersion: '1.44.1',
+      revealVersion: '1.44.0',
+      releaseAnnounce: 'passive',
+    })
+    expect(action).toBe('whats-new-card')
   })
 
   it("shows the passive What's New card on a normal version bump with passive release notes between", () => {
@@ -71,7 +77,7 @@ describe('evaluateRevealOnLaunch', () => {
       ...baseInput,
       lastAppVersion: '1.39.0',
       currentVersion: '1.39.1',
-      milestoneRevealVersion: '1.38.2',
+      revealVersion: '1.38.2',
       releaseAnnounce: 'passive',
     })
     expect(action).toBe('whats-new-card')
@@ -82,7 +88,7 @@ describe('evaluateRevealOnLaunch', () => {
       ...baseInput,
       lastAppVersion: '1.39.0',
       currentVersion: '1.40.0',
-      milestoneRevealVersion: '1.38.2',
+      revealVersion: '1.38.2',
       releaseAnnounce: 'sheet',
     })
     expect(action).toBe('whats-new')
@@ -93,7 +99,7 @@ describe('evaluateRevealOnLaunch', () => {
       ...baseInput,
       lastAppVersion: '1.39.0',
       currentVersion: '1.39.1',
-      milestoneRevealVersion: '1.38.2',
+      revealVersion: '1.38.2',
       releaseAnnounce: 'silent',
     })
     expect(action).toBe('stamp-only')
@@ -104,7 +110,7 @@ describe('evaluateRevealOnLaunch', () => {
       ...baseInput,
       lastAppVersion: '1.39.1',
       currentVersion: '1.39.1',
-      milestoneRevealVersion: '1.38.2',
+      revealVersion: '1.38.2',
       releaseAnnounce: null,
     })
     expect(action).toBe('none')
@@ -115,7 +121,7 @@ describe('evaluateRevealOnLaunch', () => {
       ...baseInput,
       lastAppVersion: '1.39.0',
       currentVersion: '1.39.1',
-      milestoneRevealVersion: '1.38.2',
+      revealVersion: '1.38.2',
       releaseAnnounce: null,
     })
     expect(action).toBe('stamp-only')

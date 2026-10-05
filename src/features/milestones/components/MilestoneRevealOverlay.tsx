@@ -10,7 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Constants from 'expo-constants'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -18,6 +17,7 @@ import Haptics from '@/lib/haptics'
 import useFireworks from '@/hooks/useFireworks'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
+import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
 
 interface Props {
   /** Whether the reveal is currently presented. */
@@ -330,9 +330,7 @@ const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
             <Text style={styles.tagline}>
               {i18n.t('milestoneReveal_tagline')}
             </Text>
-            <Text style={styles.version}>
-              {`v${Constants.expoConfig?.version ?? ''}`}
-            </Text>
+            <Text style={styles.version}>{`v${MILESTONE_UPDATE_VERSION}`}</Text>
           </Animated.View>
         </View>
 

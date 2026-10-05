@@ -4,6 +4,7 @@ import {
   Globe as GlobeIcon,
   Heart as HeartIcon,
   Medal as MedalIcon,
+  Share2 as Share2Icon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, Platform, View } from 'react-native'
@@ -20,6 +21,7 @@ import useTheme from '@/contexts/theme'
 import { openURL } from '@/lib/links'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
+import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 
 const SupporterCard = () => {
   const theme = useTheme()
@@ -82,7 +84,10 @@ const SupporterCard = () => {
   )
 }
 
-const SupportSection = () => {
+const SupportSection = ({
+  handleNavigate,
+  selectedDestination,
+}: SettingsSectionProps) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
 
@@ -101,6 +106,14 @@ const SupportSection = () => {
           onPress={() => {
             navigation.navigate('Paywall', { source: 'settings_support' })
           }}
+        >
+          <IconButton icon={ChevronRightIcon} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={Share2Icon}
+          label={i18n.t('shareApp_title')}
+          onPress={() => handleNavigate('ShareApp')}
+          selected={selectedDestination === 'ShareApp'}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>

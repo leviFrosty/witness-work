@@ -17,7 +17,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
@@ -33,15 +33,14 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { BlurView } from 'expo-blur'
-import Constants from 'expo-constants'
 import { Image as ExpoImage } from 'expo-image'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation } from '@/types/rootStack'
+import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
 
 const HERO_FEATURES = (
   ['liquidGlass', 'widgets', 'progress', 'contacts', 'iCloudSync'] as const
@@ -68,39 +67,21 @@ const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
 /**
  * Magazine-style "what's new" presentation for The Milestone Update. Hosts a
  * vertical scroll of hero feature blocks (animated illustrations) followed by a
- * card grid of secondary features and a closing thank-you. Marks the reveal as
- * fully seen on dismiss so the home-screen "shaking present" affordance goes
- * away.
+ * card grid of secondary features and a closing thank-you. Replayed from
+ * Developer Tools; launches show the current update reveal instead.
  */
 const MilestoneShowcaseScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { set } = usePreferences()
 
-  const markSeen = useCallback(() => {
-    set({
-      seenMilestoneUpdateReveal: true,
-      dismissedMilestoneRevealOnce: false,
-    })
-  }, [set])
-
-  // Mark seen on every dismissal path — explicit close, swipe-back, CTA. We
-  // don't wait for scroll-to-bottom because users who skim still saw the
-  // showcase and shouldn't get nagged by the shaking present.
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', markSeen)
-    return unsubscribe
-  }, [navigation, markSeen])
-
-  const handleClose = useCallback(() => {
-    markSeen()
+  const handleClose = () => {
     if (navigation.canGoBack()) {
       navigation.goBack()
     } else {
       navigation.navigate('Root')
     }
-  }, [markSeen, navigation])
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -192,7 +173,7 @@ const ShowcaseHeader = () => {
         {i18n.t('milestoneReveal_title')}
       </Text>
       <Text style={[styles.headerSubtitle, { color: theme.colors.textAlt }]}>
-        {`v${Constants.expoConfig?.version ?? ''} · ${i18n.t('milestoneShowcase_subtitle')}`}
+        {`v${MILESTONE_UPDATE_VERSION} · ${i18n.t('milestoneShowcase_subtitle')}`}
       </Text>
     </Animated.View>
   )

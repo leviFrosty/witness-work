@@ -621,3 +621,25 @@ describe('preferences persist migrate v6 → v7 (remove Profile Card shader)', (
     expect(migratePreferencesPersistedState(v7State, 7)).toBe(v7State)
   })
 })
+
+describe('preferences persist migrate v7 → v8 (remove Milestone reveal flags)', () => {
+  it('drops the retired reveal flags', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        seenMilestoneUpdateReveal: true,
+        dismissedMilestoneRevealOnce: false,
+        role: 'regularPioneer',
+      },
+      7
+    )
+
+    expect(migrated).not.toHaveProperty('seenMilestoneUpdateReveal')
+    expect(migrated).not.toHaveProperty('dismissedMilestoneRevealOnce')
+    expect(migrated.role).toBe('regularPioneer')
+  })
+
+  it('is idempotent on an already-v8 state', () => {
+    const v8State = { role: 'publisher' }
+    expect(migratePreferencesPersistedState(v8State, 8)).toBe(v8State)
+  })
+})

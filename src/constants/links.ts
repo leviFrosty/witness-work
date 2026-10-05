@@ -1,10 +1,12 @@
 const itunesItemId = 6469723047
+const androidPackage = 'com.leviwilkerson.jwtime'
 const githubRepo = 'https://github.com/leviFrosty/witness-work'
 
 export default {
   privacyPolicy: 'https://leviwilkerson.com/witness-work/privacy',
   appStore: `https://apps.apple.com/us/app/jw-time/id${itunesItemId}`,
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
+  playStore: `https://play.google.com/store/apps/details?id=${androidPackage}`,
   githubRepo,
   appleMapsBase: 'http://maps.apple.com/?q=',
   googleMapsBase: 'https://www.google.com/maps/search/?api=1&query=',

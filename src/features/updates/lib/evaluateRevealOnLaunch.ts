@@ -1,10 +1,9 @@
 import semver from 'semver'
 
 /**
- * Pure decision function that decides, on app launch, whether to fire The
- * Milestone Update grand-reveal overlay, the `WhatsNewSheet`, the passive
- * notifications tray item, neither (but still stamp `lastAppVersion`), or do
- * nothing at all.
+ * Pure decision function that decides, on app launch, whether to play the
+ * update reveal, the `WhatsNewSheet`, the passive notifications tray item,
+ * neither (but still stamp `lastAppVersion`), or do nothing at all.
  *
  * Extracted from `HomeTabStack` so the gate is unit-testable and so the rules
  * for crossing a Reveal-update version live in one place. See
@@ -13,8 +12,8 @@ import semver from 'semver'
  *
  * The caller is responsible for the side effects implied by each action:
  *
- * - `'milestone-reveal'` — request the grand-reveal overlay AND stamp
- *   `lastAppVersion` to `currentVersion`.
+ * - `'update-reveal'` — play the update reveal AND stamp `lastAppVersion` to
+ *   `currentVersion`.
  * - `'whats-new'` — show the `WhatsNewSheet` AND stamp. Reserved for releases
  *   announced as `'sheet'`.
  * - `'whats-new-card'` — mark the release notes unread (notifications tray item)
@@ -25,7 +24,7 @@ import semver from 'semver'
  * - `'none'` — do nothing.
  */
 export type RevealAction =
-  | 'milestone-reveal'
+  | 'update-reveal'
   | 'whats-new'
   | 'whats-new-card'
   | 'stamp-only'
@@ -76,9 +75,10 @@ export const getReleaseAnnounceBetween = (
 export type EvaluateRevealOnLaunchInput = {
   currentVersion: string | null | undefined
   lastAppVersion: string | null
-  milestoneRevealVersion: string
-  seenMilestoneUpdateReveal: boolean
-  dismissedMilestoneRevealOnce: boolean
+  /** First version whose launch plays the update reveal. */
+  revealVersion: string
+  /** The user already watched or skipped this reveal (e.g. on a beta). */
+  revealEngaged: boolean
   /**
    * Loudest announce level among the static `releaseNotes` entries whose
    * version is `> lastAppVersion` and `<= currentVersion` (see
@@ -91,26 +91,23 @@ export type EvaluateRevealOnLaunchInput = {
 export const evaluateRevealOnLaunch = ({
   currentVersion,
   lastAppVersion,
-  milestoneRevealVersion,
-  seenMilestoneUpdateReveal,
-  dismissedMilestoneRevealOnce,
+  revealVersion,
+  revealEngaged,
   releaseAnnounce,
 }: EvaluateRevealOnLaunchInput): RevealAction => {
   if (!currentVersion || !lastAppVersion) return 'none'
   if (currentVersion === lastAppVersion) return 'none'
 
-  const crossingMilestone =
-    semver.lt(lastAppVersion, milestoneRevealVersion) &&
-    semver.gte(currentVersion, milestoneRevealVersion)
+  const crossingReveal =
+    semver.lt(lastAppVersion, revealVersion) &&
+    semver.gte(currentVersion, revealVersion)
 
-  if (crossingMilestone) {
-    const isFreshReveal =
-      !seenMilestoneUpdateReveal && !dismissedMilestoneRevealOnce
-    // Crossing the Reveal version but the overlay has already been engaged
-    // (showcase seen OR overlay skipped → recovery icon). Suppress every intro;
+  if (crossingReveal) {
+    // Crossing the Reveal version but the reveal has already been engaged
+    // (watched, or skipped → tray item to replay it). Suppress every intro;
     // the caller still stamps `lastAppVersion` so a subsequent launch falls
     // through to the standard release-notes path.
-    return isFreshReveal ? 'milestone-reveal' : 'stamp-only'
+    return revealEngaged ? 'stamp-only' : 'update-reveal'
   }
 
   switch (releaseAnnounce) {

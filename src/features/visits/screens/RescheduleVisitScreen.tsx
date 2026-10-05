@@ -467,6 +467,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
             style={{ flex: 1 }}
             actions={contactActions}
             onPress={openContactDetails}
+            hoverRadius={theme.numbers.borderRadiusMd}
             preview={
               <ContactPreview contact={contact} lastVisit={conversation} />
             }

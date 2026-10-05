@@ -91,6 +91,9 @@ const AuxiliaryMonthRow = ({
       <ContextMenu
         accessibilityLabel={label}
         onPress={openSheet}
+        hoverRadius={
+          variant === 'row' ? undefined : theme.numbers.borderRadiusMd
+        }
         actions={[
           {
             id: 'edit',

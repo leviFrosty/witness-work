@@ -6,6 +6,7 @@ import {
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover from '@/components/ui/PointerHover'
 import { useState } from 'react'
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
@@ -178,51 +179,54 @@ export const BackgroundSwatches = ({
           paddingVertical: 0,
         }}
       >
-        <Pressable
-          onPress={() => onChange(null)}
-          style={{
-            width: SWATCH_SIZE,
-            height: SWATCH_SIZE,
-            borderRadius: SWATCH_SIZE / 2,
-            backgroundColor: theme.colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: value === null ? 2 : 1,
-            borderColor:
-              value === null ? theme.colors.text : theme.colors.border,
-          }}
-        >
-          <LucideIcon
-            icon={value === null ? CheckIcon : LinkIcon}
-            size={10}
-            color={theme.colors.textInverse}
-          />
-        </Pressable>
+        <PointerHover effect='lift'>
+          <Pressable
+            onPress={() => onChange(null)}
+            style={{
+              width: SWATCH_SIZE,
+              height: SWATCH_SIZE,
+              borderRadius: SWATCH_SIZE / 2,
+              backgroundColor: theme.colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: value === null ? 2 : 1,
+              borderColor:
+                value === null ? theme.colors.text : theme.colors.border,
+            }}
+          >
+            <LucideIcon
+              icon={value === null ? CheckIcon : LinkIcon}
+              size={10}
+              color={theme.colors.textInverse}
+            />
+          </Pressable>
+        </PointerHover>
         {ACCENT_PRESETS.slice(1).map((preset) => {
           const selected = preset.value === value
           return (
-            <Pressable
-              key={preset.value}
-              onPress={() => onChange(preset.value)}
-              style={{
-                width: SWATCH_SIZE,
-                height: SWATCH_SIZE,
-                borderRadius: SWATCH_SIZE / 2,
-                backgroundColor: preset.value,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: selected ? 2 : 0,
-                borderColor: selected ? theme.colors.text : 'transparent',
-              }}
-            >
-              {selected && (
-                <LucideIcon
-                  icon={CheckIcon}
-                  size={10}
-                  color={theme.colors.textInverse}
-                />
-              )}
-            </Pressable>
+            <PointerHover key={preset.value} effect='lift'>
+              <Pressable
+                onPress={() => onChange(preset.value)}
+                style={{
+                  width: SWATCH_SIZE,
+                  height: SWATCH_SIZE,
+                  borderRadius: SWATCH_SIZE / 2,
+                  backgroundColor: preset.value,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: selected ? 2 : 0,
+                  borderColor: selected ? theme.colors.text : 'transparent',
+                }}
+              >
+                {selected && (
+                  <LucideIcon
+                    icon={CheckIcon}
+                    size={10}
+                    color={theme.colors.textInverse}
+                  />
+                )}
+              </Pressable>
+            </PointerHover>
           )
         })}
         <CustomColorSwatch
@@ -385,22 +389,23 @@ const AvatarPickerContent = ({
         {EMOJI_OPTIONS.map((emoji) => {
           const selected = value.type === 'emoji' && value.value === emoji
           return (
-            <Pressable
-              key={emoji}
-              onPress={() => pickEmoji(emoji)}
-              style={{
-                width: EMOJI_CELL,
-                height: EMOJI_CELL,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 8,
-                backgroundColor: selected
-                  ? theme.colors.accentBackground
-                  : 'transparent',
-              }}
-            >
-              <Text style={{ fontSize: 22 }}>{emoji}</Text>
-            </Pressable>
+            <PointerHover key={emoji} effect='highlight'>
+              <Pressable
+                onPress={() => pickEmoji(emoji)}
+                style={{
+                  width: EMOJI_CELL,
+                  height: EMOJI_CELL,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 8,
+                  backgroundColor: selected
+                    ? theme.colors.accentBackground
+                    : 'transparent',
+                }}
+              >
+                <Text style={{ fontSize: 22 }}>{emoji}</Text>
+              </Pressable>
+            </PointerHover>
           )
         })}
       </View>

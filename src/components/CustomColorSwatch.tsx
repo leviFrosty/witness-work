@@ -59,6 +59,8 @@ const CustomColorSwatch = ({
       <ContextMenu
         onPress={() => setOpen(true)}
         accessibilityLabel={title}
+        pointerEffect='lift'
+        hoverRadius={size / 2}
         actions={
           isCustom && onRemove
             ? [

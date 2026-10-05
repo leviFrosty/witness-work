@@ -201,6 +201,7 @@ const MonthRow = ({
   return (
     <ContextMenu
       onPress={onPress}
+      hoverRadius={cardStyle.borderRadius}
       accessibilityLabel={monthYearLabel}
       preview={
         <MonthSummaryPreview

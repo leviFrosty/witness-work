@@ -66,6 +66,7 @@ export const analyticsEventNames = [
   'mileage_trip_added',
   'mileage_vehicle_added',
   'notification_opened',
+  'pointer_hover_detected',
   'tab_order_changed',
   // Supporter iCloud adoption and recovery.
   'icloud_account_changed',

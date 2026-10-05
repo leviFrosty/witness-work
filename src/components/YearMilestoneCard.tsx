@@ -40,6 +40,7 @@ import Card from '@/components/ui/Card'
 import Chip from '@/components/ui/Chip'
 import MilestoneProgressBar from '@/components/MilestoneProgressBar'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import ContextMenu from '@/components/ui/ContextMenu'
 
 interface YearMilestoneCardProps {
@@ -322,6 +323,34 @@ const YearMilestoneCard = ({
       </View>
     ) : null
 
+  const adjustLink = onAdjustMilestones ? (
+    <PointerHover effect='highlight'>
+      <Pressable
+        onPress={onAdjustMilestones}
+        accessibilityRole='button'
+        hitSlop={8}
+        // Room for the pointer highlight; the margin keeps the layout.
+        style={{
+          paddingHorizontal: 6,
+          paddingVertical: 2,
+          marginHorizontal: -6,
+          marginVertical: -2,
+          borderRadius: theme.numbers.borderRadiusSm,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('adjustMilestones')} ›
+        </Text>
+      </Pressable>
+    </PointerHover>
+  ) : null
+
   const milestoneDetails = (
     <>
       <MilestoneProgressBar year={year} />
@@ -379,23 +408,7 @@ const YearMilestoneCard = ({
           >
             {i18n.t('annualGoalCompleteCongrats')}
           </Text>
-          {onAdjustMilestones ? (
-            <Pressable
-              onPress={onAdjustMilestones}
-              accessibilityRole='button'
-              hitSlop={8}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('adjustMilestones')} ›
-              </Text>
-            </Pressable>
-          ) : null}
+          {adjustLink}
         </View>
       ) : hitState.next !== null && nextMilestoneRemainingMinutes !== null ? (
         <View
@@ -428,41 +441,11 @@ const YearMilestoneCard = ({
               })}
             </Text>
           </View>
-          {onAdjustMilestones ? (
-            <Pressable
-              onPress={onAdjustMilestones}
-              accessibilityRole='button'
-              hitSlop={8}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('adjustMilestones')} ›
-              </Text>
-            </Pressable>
-          ) : null}
+          {adjustLink}
         </View>
       ) : onAdjustMilestones ? (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-          <Pressable
-            onPress={onAdjustMilestones}
-            accessibilityRole='button'
-            hitSlop={8}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.accent,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('adjustMilestones')} ›
-            </Text>
-          </Pressable>
+          {adjustLink}
         </View>
       ) : null}
     </>

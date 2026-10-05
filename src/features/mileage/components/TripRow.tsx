@@ -53,6 +53,7 @@ export default function TripRow({ trip, vehicleName }: Props) {
     >
       <ContextMenu
         actions={actions.menu(trip)}
+        hoverRadius={cardStyle.borderRadius}
         onPress={() =>
           navigation.navigate('MileageTripDetails', { tripId: trip.id })
         }

@@ -22,6 +22,7 @@ import { useProfileOverlay } from '@/stores/profileOverlay'
 import Avatar from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
@@ -209,75 +210,78 @@ function AccountMenu() {
     )
 
   return (
-    <PullDownMenu
-      accessibilityLabel={
-        hasCompletedProfileSetup
-          ? i18n.t('accountMenu')
-          : `${i18n.t('accountMenu')}, ${i18n.t('profileIncompleteTitle')}`
-      }
-      actions={[
-        [
+    // The avatar alone doesn't say it holds Settings and Help.
+    <PointerTooltip label={i18n.t('accountMenu')} effect='none'>
+      <PullDownMenu
+        accessibilityLabel={
           hasCompletedProfileSetup
-            ? {
-                id: 'profile',
-                title: i18n.t('accountMenu_profile'),
-                systemImage: 'person.crop.circle',
-                onPress: openProfile,
-              }
-            : {
-                id: 'profile_setup',
-                title: i18n.t('profileIncompleteTitle'),
-                systemImage: 'person.crop.circle.badge.plus',
-                onPress: () => navigation.navigate('PreferencesPublisher'),
-              },
-          {
-            id: 'settings',
-            title: i18n.t('settings'),
-            systemImage: 'gearshape',
-            // Wide layouts keep Settings in the sidebar beside the open page.
-            onPress: () =>
-              hasSidebar
-                ? navigation.navigate('Settings')
-                : navigation.navigate('SettingsMenu'),
-          },
-        ],
-        [
-          !hideDonateHeart && {
-            id: 'support',
-            title: i18n.t('accountMenu_support'),
-            systemImage: 'heart',
-            onPress: () => {
-              navigation.navigate('Paywall', { source: 'account_menu' })
+            ? i18n.t('accountMenu')
+            : `${i18n.t('accountMenu')}, ${i18n.t('profileIncompleteTitle')}`
+        }
+        actions={[
+          [
+            hasCompletedProfileSetup
+              ? {
+                  id: 'profile',
+                  title: i18n.t('accountMenu_profile'),
+                  systemImage: 'person.crop.circle',
+                  onPress: openProfile,
+                }
+              : {
+                  id: 'profile_setup',
+                  title: i18n.t('profileIncompleteTitle'),
+                  systemImage: 'person.crop.circle.badge.plus',
+                  onPress: () => navigation.navigate('PreferencesPublisher'),
+                },
+            {
+              id: 'settings',
+              title: i18n.t('settings'),
+              systemImage: 'gearshape',
+              // Wide layouts keep Settings in the sidebar beside the open page.
+              onPress: () =>
+                hasSidebar
+                  ? navigation.navigate('Settings')
+                  : navigation.navigate('SettingsMenu'),
             },
-          },
-          {
-            id: 'help_center',
-            title: i18n.t('helpCenter'),
-            systemImage: 'questionmark.circle',
-            onPress: () => navigation.navigate('FAQ'),
-          },
-        ],
-      ]}
-    >
-      <View ref={avatarRef} hitSlop={8} collapsable={false}>
-        <Avatar avatar={avatar} name={name} size={ROOT_HEADER_AVATAR_SIZE} />
-        {!hasCompletedProfileSetup && (
-          // Asks for profile setup until it's done.
-          <View
-            style={{
-              position: 'absolute',
-              top: -1,
-              right: -1,
-              width: 11,
-              height: 11,
-              borderRadius: 6,
-              borderWidth: 2,
-              borderColor: theme.colors.background,
-              backgroundColor: theme.colors.accent,
-            }}
-          />
-        )}
-      </View>
-    </PullDownMenu>
+          ],
+          [
+            !hideDonateHeart && {
+              id: 'support',
+              title: i18n.t('accountMenu_support'),
+              systemImage: 'heart',
+              onPress: () => {
+                navigation.navigate('Paywall', { source: 'account_menu' })
+              },
+            },
+            {
+              id: 'help_center',
+              title: i18n.t('helpCenter'),
+              systemImage: 'questionmark.circle',
+              onPress: () => navigation.navigate('FAQ'),
+            },
+          ],
+        ]}
+      >
+        <View ref={avatarRef} hitSlop={8} collapsable={false}>
+          <Avatar avatar={avatar} name={name} size={ROOT_HEADER_AVATAR_SIZE} />
+          {!hasCompletedProfileSetup && (
+            // Asks for profile setup until it's done.
+            <View
+              style={{
+                position: 'absolute',
+                top: -1,
+                right: -1,
+                width: 11,
+                height: 11,
+                borderRadius: 6,
+                borderWidth: 2,
+                borderColor: theme.colors.background,
+                backgroundColor: theme.colors.accent,
+              }}
+            />
+          )}
+        </View>
+      </PullDownMenu>
+    </PointerTooltip>
   )
 }

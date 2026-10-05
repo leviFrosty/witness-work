@@ -34,6 +34,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { formatDateTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import i18n from '@/lib/locales'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
@@ -69,35 +70,38 @@ const HeaderButton = ({
     overflow: 'hidden' as const,
   }
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      hitSlop={10}
-    >
-      <View style={shape}>
-        <BlurView
-          tint='systemThickMaterialDark'
-          intensity={50}
-          style={StyleSheet.absoluteFill}
-        />
-        <GlassView
-          glassEffectStyle='regular'
-          colorScheme='dark'
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={{
-            ...shape,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'transparent',
-          }}
-        >
-          <LucideIcon icon={icon} size={16} color='#fff' />
+    <PointerHover effect='highlight'>
+      <Pressable
+        onPress={onPress}
+        accessibilityLabel={label}
+        accessibilityRole='button'
+        hitSlop={10}
+        style={{ borderRadius: shape.borderRadius }}
+      >
+        <View style={shape}>
+          <BlurView
+            tint='systemThickMaterialDark'
+            intensity={50}
+            style={StyleSheet.absoluteFill}
+          />
+          <GlassView
+            glassEffectStyle='regular'
+            colorScheme='dark'
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            style={{
+              ...shape,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
+            }}
+          >
+            <LucideIcon icon={icon} size={16} color='#fff' />
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </PointerHover>
   )
 }
 
@@ -114,26 +118,30 @@ const ToolbarButton = ({
   disabled?: boolean
   destructive?: boolean
 }) => {
+  const theme = useTheme()
   const tint = destructive ? '#ff6b6b' : '#fff'
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      hitSlop={6}
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 8,
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      <LucideIcon icon={icon} size={20} color={tint} />
-      <Text style={{ color: tint, fontSize: 11 }}>{label}</Text>
-    </Pressable>
+    <PointerHover effect='highlight' enabled={!disabled}>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityLabel={label}
+        accessibilityRole='button'
+        hitSlop={6}
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingVertical: 8,
+          borderRadius: theme.numbers.borderRadiusMd,
+          opacity: disabled ? 0.4 : 1,
+        }}
+      >
+        <LucideIcon icon={icon} size={20} color={tint} />
+        <Text style={{ color: tint, fontSize: 11 }}>{label}</Text>
+      </Pressable>
+    </PointerHover>
   )
 }
 
@@ -206,7 +214,10 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     }
   }
 
+  // Two-finger trackpad scrolls pan too (iPad); trackpad pinches already
+  // reach the pinch.
   const pan = Gesture.Pan()
+    .enableTrackpadTwoFingerGesture(true)
     .onUpdate((e) => {
       const next = clampTranslate(
         scale.value,

@@ -33,6 +33,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
 import ContextMenu from '@/components/ui/ContextMenu'
+import PointerHover from '@/components/ui/PointerHover'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 
@@ -348,26 +349,30 @@ const HomeChecklist = () => {
           const autoDone = autoCompletedIds.has(item.id)
           return (
             <XView key={item.id} style={{ gap: 12 }}>
-              <Pressable
+              <PointerHover effect='highlight' enabled={!autoDone}>
+                <Pressable
                 onPress={() => setManuallyDone(item.id, !done)}
-                disabled={autoDone}
-                hitSlop={8}
-                accessibilityRole='checkbox'
-                accessibilityState={{ checked: done, disabled: autoDone }}
-                accessibilityLabel={item.label}
-              >
-                <LucideIcon
-                  icon={done ? CircleCheckIcon : CircleIcon}
-                  size={theme.fontSize('xl')}
-                  style={{
-                    color: done ? theme.colors.accent : theme.colors.border,
-                  }}
-                />
-              </Pressable>
+                  disabled={autoDone}
+                  hitSlop={8}
+                  accessibilityRole='checkbox'
+                  accessibilityState={{ checked: done, disabled: autoDone }}
+                  accessibilityLabel={item.label}
+                  style={{ borderRadius: theme.fontSize('xl') / 2 }}
+                >
+                  <LucideIcon
+                    icon={done ? CircleCheckIcon : CircleIcon}
+                    size={theme.fontSize('xl')}
+                    style={{
+                      color: done ? theme.colors.accent : theme.colors.border,
+                    }}
+                  />
+                </Pressable>
+              </PointerHover>
               <ContextMenu
                 style={{ flex: 1 }}
                 onPress={item.onPress}
                 accessibilityLabel={item.label}
+                hoverRadius={theme.numbers.borderRadiusSm}
                 actions={[
                   !item.checksOffMonth && {
                     id: 'open',

@@ -5,6 +5,7 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useLinkActions } from '@/components/RichLinkCard'
+import { liftedContent } from '@/components/ui/Copyeable'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { openURL } from '@/lib/links'
@@ -79,6 +80,8 @@ export default function PlanLocationLink({
     <ContextMenu
       accessibilityLabel={secondary ? `${primary}, ${secondary}` : primary}
       onPress={url ? () => void openURL(url) : undefined}
+      hoverRadius={theme.numbers.borderRadiusSm}
+      style={liftedContent.outset}
       actions={[
         url
           ? {
@@ -104,7 +107,7 @@ export default function PlanLocationLink({
           : null,
       ]}
     >
-      {content}
+      <View style={liftedContent.inset}>{content}</View>
     </ContextMenu>
   )
 }

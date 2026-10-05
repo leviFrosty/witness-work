@@ -1,6 +1,7 @@
-import React, { PropsWithChildren } from 'react'
+import React, { PropsWithChildren, ReactElement, useState } from 'react'
 import {
   GestureResponderEvent,
+  LayoutChangeEvent,
   Pressable,
   PressableProps,
   StyleSheet,
@@ -21,6 +22,11 @@ import Animated, {
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
+import PointerHover, {
+  HoverTint,
+  type PointerEffect,
+} from '@/components/ui/PointerHover'
+import { supportsPointerEffects } from '@/lib/pointerHover'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
@@ -109,9 +115,79 @@ export interface ButtonProps extends PressableProps {
   glassTint?: string
   /** Glass appearance scheme override (`variant='glass'` only). */
   glassColorScheme?: GlassColorScheme
+  /**
+   * IPad pointer feedback. `auto` follows Apple's guidance: small clear
+   * controls highlight, small opaque ones lift, and large surfaces get a tint
+   * without scaling into their neighbours. Use `none` when a parent already
+   * owns the hover (e.g. a row that tints as a whole).
+   */
+  pointerEffect?: PointerEffect | 'tint' | 'auto'
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+// Bigger than a control: scaling it would crowd what's around it.
+const LARGE_WIDTH = 200
+const LARGE_HEIGHT = 72
+
+const isOpaque = (color: unknown) =>
+  typeof color === 'string' &&
+  color !== 'transparent' &&
+  !/^rgba|^hsla/.test(color) &&
+  !/^#([0-9a-f]{4}|[0-9a-f]{8})$/i.test(color)
+
+/**
+ * Picks the pointer treatment from the rendered size and fill. Returns a
+ * wrapper for the pressable, the tint overlay to render inside it, and a layout
+ * listener that measures it.
+ */
+const useButtonPointer = (
+  pointerEffect: ButtonProps['pointerEffect'],
+  surfaceStyle: ViewStyle,
+  onLayoutProp: ButtonProps['onLayout'],
+  disabled: boolean | null | undefined
+) => {
+  const [large, setLarge] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const requested = pointerEffect ?? 'auto'
+  if (!supportsPointerEffects || requested === 'none' || disabled) {
+    return {
+      wrap: (pressable: ReactElement) => pressable,
+      overlay: null,
+      onLayout: onLayoutProp,
+    }
+  }
+  const effect =
+    requested !== 'auto'
+      ? requested
+      : large
+        ? 'tint'
+        : isOpaque(surfaceStyle.backgroundColor)
+          ? 'lift'
+          : 'highlight'
+  return {
+    wrap: (pressable: ReactElement) => (
+      <PointerHover
+        effect={effect === 'tint' ? 'none' : effect}
+        onHoverChange={effect === 'tint' ? setHovered : undefined}
+      >
+        {pressable}
+      </PointerHover>
+    ),
+    overlay: (
+      <HoverTint
+        visible={effect === 'tint' && hovered}
+        borderRadius={surfaceStyle.borderRadius}
+        borderCurve={surfaceStyle.borderCurve}
+      />
+    ),
+    onLayout: (event: LayoutChangeEvent) => {
+      onLayoutProp?.(event)
+      const { width, height } = event.nativeEvent.layout
+      setLarge(width > LARGE_WIDTH || height > LARGE_HEIGHT)
+    },
+  }
+}
 
 const useButtonBaseStyle = (
   variant: ButtonProps['variant'],
@@ -153,13 +229,25 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   variant,
   glassTint,
   glassColorScheme,
+  pointerEffect,
+  onLayout,
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
   const resolvedGlassColorScheme = useGlassColorScheme()
-  const glassBorderRadius = isGlass
-    ? StyleSheet.flatten([baseStyle, style as ViewStyle]).borderRadius
-    : undefined
+  const surfaceStyle = StyleSheet.flatten([
+    baseStyle,
+    (typeof style === 'function'
+      ? style({ pressed: false })
+      : style) as ViewStyle,
+  ])
+  const glassBorderRadius = isGlass ? surfaceStyle.borderRadius : undefined
+  const pointer = useButtonPointer(
+    pointerEffect,
+    surfaceStyle,
+    onLayout,
+    disabled
+  )
 
   const _onPress = (event: GestureResponderEvent) => {
     Haptics.light()
@@ -171,12 +259,13 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
     onLongPress?.(event)
   }
 
-  return (
+  return pointer.wrap(
     <Pressable
       hitSlop={10}
       disabled={disabled}
       onPress={onPress ? _onPress : undefined}
       onLongPress={onLongPress ? _onLongPress : undefined}
+      onLayout={pointer.onLayout}
       style={({ pressed }) => [
         baseStyle,
         { opacity: pressed ? 0.7 : 1 },
@@ -195,6 +284,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
         />
       )}
       {children}
+      {pointer.overlay}
     </Pressable>
   )
 }
@@ -208,15 +298,22 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   variant,
   glassTint,
   glassColorScheme,
+  pointerEffect,
+  onLayout,
   ...props
 }) => {
   const translateY = useSharedValue(0)
   const opacity = useSharedValue(1)
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
   const resolvedGlassColorScheme = useGlassColorScheme()
-  const glassBorderRadius = isGlass
-    ? StyleSheet.flatten([baseStyle, style as ViewStyle]).borderRadius
-    : undefined
+  const surfaceStyle = StyleSheet.flatten([baseStyle, style as ViewStyle])
+  const glassBorderRadius = isGlass ? surfaceStyle.borderRadius : undefined
+  const pointer = useButtonPointer(
+    pointerEffect,
+    surfaceStyle,
+    onLayout,
+    disabled
+  )
 
   const _onPress = (event: GestureResponderEvent) => {
     Haptics.light()
@@ -249,7 +346,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
     opacity: opacity.value,
   }))
 
-  return (
+  return pointer.wrap(
     <AnimatedPressable
       hitSlop={10}
       disabled={disabled}
@@ -257,6 +354,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
       onPressOut={onPressOut}
       onPress={onPress ? _onPress : undefined}
       onLongPress={onLongPress ? _onLongPress : undefined}
+      onLayout={pointer.onLayout}
       style={[[baseStyle, animatedStyle], [style]]}
       {...props}
     >
@@ -271,6 +369,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
         />
       )}
       {children}
+      {pointer.overlay}
     </AnimatedPressable>
   )
 }
@@ -289,6 +388,7 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   glassColorScheme,
   noTransform: _noTransform,
   hitSlop: _hitSlop,
+  pointerEffect: _pointerEffect,
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)

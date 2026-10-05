@@ -232,6 +232,7 @@ export const HomeScreen = () => {
                         section='tabletServiceYearSummary'
                         onPress={viewServiceYear}
                         accessibilityLabel={i18n.t('viewYear')}
+                        hoverRadius={theme.numbers.borderRadiusLg}
                         actions={[
                           {
                             id: 'view_year',

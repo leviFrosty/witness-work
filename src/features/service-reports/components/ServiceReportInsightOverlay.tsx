@@ -5,6 +5,8 @@ import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native'
 import ExpandingCardOverlay, {
   type ExpandingCardOrigin,
 } from '@/components/ui/ExpandingCardOverlay'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import useTheme from '@/contexts/theme'
 
 interface Props {
   children: ReactNode
@@ -27,8 +29,10 @@ const ServiceReportInsightOverlay = ({
   containerStyle,
   expandedHeight,
 }: Props) => {
+  const theme = useTheme()
   const triggerRef = useRef<View>(null)
   const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
   const show = () => {
@@ -48,15 +52,21 @@ const ServiceReportInsightOverlay = ({
         collapsable={false}
         style={[{ alignSelf: 'stretch' }, containerStyle]}
       >
-        <Pressable
-          onPress={show}
-          accessibilityRole='button'
-          accessibilityLabel={accessibilityLabel}
-          accessibilityHint={accessibilityHint}
-          style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.6 : 1 })}
-        >
-          {children}
-        </Pressable>
+        <PointerHover onHoverChange={setHovered}>
+          <Pressable
+            onPress={show}
+            accessibilityRole='button'
+            accessibilityLabel={accessibilityLabel}
+            accessibilityHint={accessibilityHint}
+            style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.6 : 1 })}
+          >
+            {children}
+            <HoverTint
+              visible={hovered}
+              borderRadius={theme.numbers.borderRadiusMd}
+            />
+          </Pressable>
+        </PointerHover>
       </View>
 
       <ExpandingCardOverlay

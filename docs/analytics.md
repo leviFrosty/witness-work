@@ -38,6 +38,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `Application Installed`, `Application Opened`                                     | Installation and cold-launch signals. All launch URLs are removed at capture and delivery, including legacy anonymous queues. |
 | `Application Became Active`                                                       | Once per UTC day per anonymous installation; daily active reach, not foreground count.                                        |
 | `onboarding_checklist_viewed`, `supporter_nudge_viewed`, `backup_reminder_viewed` | Once per UTC day and bounded source/variant context. Measure daily reach.                                                     |
+| `pointer_hover_detected`                                                          | Once per UTC day; daily reach of trackpad, mouse, or Pencil hover users.                                                      |
 | `timer_action_completed`                                                          | `action: started` only, once per session. Measures timer adoption, not pauses/resets or exact timer-start counts.             |
 | `buddies_opened`                                                                  | Once per session and source.                                                                                                  |
 | `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                      |
@@ -290,6 +291,14 @@ outside permanent usage coverage.
 
 On iOS the app icon badge shows the tray's unread count. Badge updates send no
 events of their own.
+
+## Pointer input
+
+`pointer_hover_detected` answers whether enough people use a trackpad, mouse, or
+Apple Pencil hover (iPad, or a mouse on Android) to justify pointer-specific
+work. It is sent the first time a pointer hovers a control, capped to once per
+UTC day, with `input` (`pointer` or `stylus`). Individual hovers, tooltips, and
+chart readouts are not captured.
 
 ## Navigation preferences
 

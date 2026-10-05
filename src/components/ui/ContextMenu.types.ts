@@ -67,5 +67,12 @@ export type ContextMenuProps = {
    * lazily on first touch, so it may read stores and derive data freely.
    */
   preview?: ReactElement
+  /**
+   * IPad pointer feedback for content with `onPress`. Rows and cards keep the
+   * default `tint` (no scaling into neighbours); small cells may `highlight`.
+   */
+  pointerEffect?: 'tint' | 'highlight' | 'lift' | 'none'
+  /** Corner radius of the hover tint, to match the content's own shape. */
+  hoverRadius?: number
   style?: StyleProp<ViewStyle>
 }

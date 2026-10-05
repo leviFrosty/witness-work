@@ -269,6 +269,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
           actions={actions}
           onPress={openContact}
           accessibilityLabel={contact.name}
+          hoverRadius={theme.numbers.borderRadiusMd}
           preview={<ContactPreview contact={contact} lastVisit={visit} />}
           style={{ flex: 1, minWidth: 0 }}
         >

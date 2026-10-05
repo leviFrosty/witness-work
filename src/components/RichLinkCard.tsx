@@ -179,6 +179,7 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
       actions={menu(url)}
       onPress={() => open(url)}
       accessibilityLabel={title}
+      hoverRadius={theme.numbers.borderRadiusMd}
     >
       {card}
     </ContextMenu>

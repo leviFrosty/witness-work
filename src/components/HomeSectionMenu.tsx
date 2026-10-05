@@ -19,6 +19,8 @@ type HomeSectionMenuProps = {
   accessibilityLabel?: string
   accessible?: boolean
   preview?: ReactElement
+  /** Corner radius of the hover tint; match the section's card. */
+  hoverRadius?: number
   style?: StyleProp<ViewStyle>
 }
 

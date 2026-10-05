@@ -73,6 +73,7 @@ const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
     <ContextMenu
       actions={menu}
       onPress={onPress}
+      hoverRadius={cardStyle.borderRadius}
       preview={
         dayHasPreview(previewData) ? (
           <DayPreview date={row.date} {...previewData} />

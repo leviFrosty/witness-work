@@ -76,6 +76,14 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: () => null }))
+vi.mock('react-native-gesture-handler', async () => {
+  const { View } = await import('react-native')
+  return { GestureHandlerRootView: View }
+})
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: ({ children }: { children?: ReactNode }) => children,
+  HoverTint: () => null,
+}))
 vi.mock('@/components/ui/MyText', async () => {
   const ReactModule = await import('react')
   return {

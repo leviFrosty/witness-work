@@ -8,6 +8,7 @@ import IconButton from '@/components/ui/IconButton'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import type { RootStackNavigation } from '@/types/rootStack'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
@@ -60,6 +61,7 @@ const PublisherPreferencesSection = () => {
   const theme = useTheme()
   const isCheckboxMode = entryMode === 'checkbox'
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [advancedHovered, setAdvancedHovered] = useState(false)
   // Hours Logging goal input — mirrors the Custom role's goal input in
   // `PublisherTypeSelector`: local text state, persisted on blur.
   const [logHoursGoal, setLogHoursGoal] = useState(
@@ -218,36 +220,42 @@ const PublisherPreferencesSection = () => {
 
       {showAdvanced && (
         <View style={{ marginTop: 10 }}>
-          <Pressable
-            accessibilityRole='button'
-            accessibilityState={{ expanded: advancedOpen }}
-            onPress={() => setAdvancedOpen((v) => !v)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: 16,
-              paddingVertical: 16,
-            }}
-          >
-            <Text
+          <PointerHover onHoverChange={setAdvancedHovered}>
+            <Pressable
+              accessibilityRole='button'
+              accessibilityState={{ expanded: advancedOpen }}
+              onPress={() => setAdvancedOpen((v) => !v)}
               style={{
-                fontSize: theme.fontSize('md'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 16,
+                paddingVertical: 16,
               }}
             >
-              {i18n.t('advanced')}
-            </Text>
-            <LucideIcon
-              icon={ChevronRightIcon}
-              size={12}
-              color={theme.colors.textAlt}
-              style={{
-                transform: [{ rotate: advancedOpen ? '90deg' : '0deg' }],
-              }}
-            />
-          </Pressable>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('advanced')}
+              </Text>
+              <LucideIcon
+                icon={ChevronRightIcon}
+                size={12}
+                color={theme.colors.textAlt}
+                style={{
+                  transform: [{ rotate: advancedOpen ? '90deg' : '0deg' }],
+                }}
+              />
+              <HoverTint
+                visible={advancedHovered}
+                borderRadius={theme.numbers.borderRadiusMd}
+              />
+            </Pressable>
+          </PointerHover>
 
           {advancedOpen && (
             <View style={{ gap: 20 }}>

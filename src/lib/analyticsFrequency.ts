@@ -9,6 +9,7 @@ const dailyEvents = new Set([
   'onboarding_checklist_viewed',
   'supporter_nudge_viewed',
   'backup_reminder_viewed',
+  'pointer_hover_detected',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',

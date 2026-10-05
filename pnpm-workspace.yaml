@@ -44,4 +44,5 @@ overrides:
 patchedDependencies:
   '@react-native-menu/menu@2.0.0': patches/@react-native-menu__menu@2.0.0.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
+  react-native-gesture-handler@2.32.0: patches/react-native-gesture-handler@2.32.0.patch
 enableGlobalVirtualStore: true

@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import { ProfileAvatar } from '@/types/avatar'
 import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
 
@@ -237,15 +238,19 @@ const Avatar = ({
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <Pressable
-          onPress={handlePress}
-          accessibilityRole='imagebutton'
-          hitSlop={4}
-        >
-          {/* Hide the source while the overlay is presenting so we don't
-              briefly see a duplicate next to the animated copy. */}
-          <View style={{ opacity: open ? 0 : 1 }}>{content}</View>
-        </Pressable>
+        <PointerHover effect='lift'>
+          <Pressable
+            onPress={handlePress}
+            accessibilityRole='imagebutton'
+            hitSlop={4}
+            // Shapes the pointer lift to the circle.
+            style={{ borderRadius: size / 2 }}
+          >
+            {/* Hide the source while the overlay is presenting so we don't
+                briefly see a duplicate next to the animated copy. */}
+            <View style={{ opacity: open ? 0 : 1 }}>{content}</View>
+          </Pressable>
+        </PointerHover>
       </View>
       <Modal
         visible={open}

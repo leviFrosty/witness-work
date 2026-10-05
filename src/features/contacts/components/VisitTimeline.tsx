@@ -15,6 +15,7 @@ import { Pressable, View } from 'react-native'
 import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import { withAlpha } from '@/lib/color'
 import { formatDate, formatMonthDayCompact } from '@/lib/dates'
@@ -292,50 +293,52 @@ const VisitTimeline = ({
               />
             </View>
           </View>
-          <Pressable
-            onPress={onPressUpNext}
-            accessibilityRole='button'
-            style={({ pressed }) => ({
-              marginLeft: 6,
-              flexShrink: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingVertical: 6,
-              paddingHorizontal: 11,
-              borderRadius: theme.numbers.borderRadiusSm,
-              borderWidth: 1,
-              borderColor: withAlpha(theme.colors.accent, 0x55),
-              backgroundColor: withAlpha(theme.colors.accent, 0x1a),
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Text
-              numberOfLines={1}
-              style={{
+          <PointerHover effect='highlight'>
+            <Pressable
+              onPress={onPressUpNext}
+              accessibilityRole='button'
+              style={({ pressed }) => ({
+                marginLeft: 6,
                 flexShrink: 1,
-                fontSize: theme.fontSize('sm') + 0.5,
-                color: theme.colors.accent3,
-              }}
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingVertical: 6,
+                paddingHorizontal: 11,
+                borderRadius: theme.numbers.borderRadiusSm,
+                borderWidth: 1,
+                borderColor: withAlpha(theme.colors.accent, 0x55),
+                backgroundColor: withAlpha(theme.colors.accent, 0x1a),
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
               <Text
+                numberOfLines={1}
                 style={{
-                  fontFamily: theme.fonts.bold,
+                  flexShrink: 1,
+                  fontSize: theme.fontSize('sm') + 0.5,
                   color: theme.colors.accent3,
                 }}
               >
-                {i18n.t('contactDetails.nextVisit', {
-                  date: visitDayLabel(upNext.date),
-                })}
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.bold,
+                    color: theme.colors.accent3,
+                  }}
+                >
+                  {i18n.t('contactDetails.nextVisit', {
+                    date: visitDayLabel(upNext.date),
+                  })}
+                </Text>
+                {` · ${i18n.t('contactDetails.seeUpNext')}`}
               </Text>
-              {` · ${i18n.t('contactDetails.seeUpNext')}`}
-            </Text>
-            <LucideIcon
-              icon={ChevronRightIcon}
-              size={11}
-              color={theme.colors.accent3}
-            />
-          </Pressable>
+              <LucideIcon
+                icon={ChevronRightIcon}
+                size={11}
+                color={theme.colors.accent3}
+              />
+            </Pressable>
+          </PointerHover>
         </View>
       )}
       {visits.map((visit, index) => {

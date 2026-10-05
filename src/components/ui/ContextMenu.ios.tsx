@@ -9,6 +9,7 @@ import {
 import { Fragment, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import {
   isSubmenu,
   menuAccessibilityProps,
@@ -28,6 +29,8 @@ export default function ContextMenu({
   accessible = true,
   disabled = false,
   preview,
+  pointerEffect = 'tint',
+  hoverRadius,
   style,
 }: ContextMenuProps) {
   const { colorScheme } = usePreferences()
@@ -38,6 +41,8 @@ export default function ContextMenu({
   // on this trigger — well before the long press completes. The Preview slot
   // itself always exists so the native menu isn't rebuilt mid-gesture.
   const [armed, setArmed] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const tint = onPress && pointerEffect === 'tint'
   const allGroups = menuGroups(actions)
   // Disabled keeps the Host mounted (see below) but offers no items, so the
   // native menu doesn't open.
@@ -62,7 +67,22 @@ export default function ContextMenu({
     </View>
   )
 
-  if (!allGroups.length) return <View style={style}>{trigger}</View>
+  const triggerEffect =
+    onPress && pointerEffect !== 'tint' ? pointerEffect : 'none'
+
+  if (!allGroups.length) {
+    return (
+      <PointerHover
+        effect={triggerEffect}
+        onHoverChange={tint ? setHovered : undefined}
+      >
+        <View style={[style, { borderRadius: hoverRadius }]}>
+          {trigger}
+          <HoverTint visible={!!tint && hovered} borderRadius={hoverRadius} />
+        </View>
+      </PointerHover>
+    )
+  }
 
   const button = (action: ContextMenuAction, key: string) => (
     <Button
@@ -106,14 +126,28 @@ export default function ContextMenu({
           </SwiftContextMenu.Items>
           <SwiftContextMenu.Trigger>
             <RNHostView matchContents>
-              <View
-                style={{ width }}
-                onTouchStart={
-                  preview && !armed ? () => setArmed(true) : undefined
-                }
+              <PointerHover
+                effect={triggerEffect}
+                onHoverChange={(next) => {
+                  // A secondary click never reaches onTouchStart, so a
+                  // hovering pointer arms the preview ahead of it.
+                  if (next && preview && !armed) setArmed(true)
+                  if (tint) setHovered(next)
+                }}
               >
-                {trigger}
-              </View>
+                <View
+                  style={{ width, borderRadius: hoverRadius }}
+                  onTouchStart={
+                    preview && !armed ? () => setArmed(true) : undefined
+                  }
+                >
+                  {trigger}
+                  <HoverTint
+                    visible={!!tint && hovered}
+                    borderRadius={hoverRadius}
+                  />
+                </View>
+              </PointerHover>
             </RNHostView>
           </SwiftContextMenu.Trigger>
           {preview && !disabled ? (

@@ -15,7 +15,13 @@ const runtime = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native', () => ({
+  StyleSheet: { absoluteFill: {} },
+  View: 'View',
+}))
+vi.mock('../../../modules/pointer-style', () => ({
+  default: 'PointerStyleView',
+}))
 vi.mock('react-native-reanimated', async () => {
   const { useRef } = await import('react')
   return {

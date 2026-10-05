@@ -158,6 +158,8 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
                         <ContextMenu
                           key={planIndex}
                           onPress={same}
+                          pointerEffect='highlight'
+                          hoverRadius={theme.numbers.borderRadiusSm}
                           accessibilityLabel={i18n.t(
                             'buddies_planSameTimeA11y',
                             { name: buddy.name, plan: `${date}, ${label}` }

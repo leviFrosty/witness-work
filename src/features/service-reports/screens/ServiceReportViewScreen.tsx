@@ -29,6 +29,7 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import ActionButton from '@/components/ui/ActionButton'
 import { MenuView } from '@react-native-menu/menu'
 import Section from '@/components/ui/inputs/Section'
@@ -421,25 +422,29 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                 style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}
               >
                 {isEditingNotes ? (
-                  <IconButton
-                    icon={CheckIcon}
-                    size={14}
-                    color={PAPER_LABEL}
-                    hitSlop={8}
-                    onPress={handleSaveNotes}
-                    accessibilityLabel={i18n.t('save')}
-                  />
+                  <PointerTooltip label={i18n.t('save')} effect='none'>
+                    <IconButton
+                      icon={CheckIcon}
+                      size={14}
+                      color={PAPER_LABEL}
+                      hitSlop={8}
+                      onPress={handleSaveNotes}
+                      accessibilityLabel={i18n.t('save')}
+                    />
+                  </PointerTooltip>
                 ) : (
                   <>
                     {data.hasNotesOverride && (
-                      <IconButton
-                        icon={RotateCcwIcon}
-                        size={13}
-                        color={PAPER_LABEL}
-                        hitSlop={8}
-                        onPress={handleResetNotes}
-                        accessibilityLabel={i18n.t('reset')}
-                      />
+                      <PointerTooltip label={i18n.t('reset')} effect='none'>
+                        <IconButton
+                          icon={RotateCcwIcon}
+                          size={13}
+                          color={PAPER_LABEL}
+                          hitSlop={8}
+                          onPress={handleResetNotes}
+                          accessibilityLabel={i18n.t('reset')}
+                        />
+                      </PointerTooltip>
                     )}
                     <IconButton
                       icon={PencilIcon}

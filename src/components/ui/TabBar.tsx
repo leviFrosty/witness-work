@@ -34,6 +34,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -126,108 +127,121 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
       isFocused && !isSettings ? theme.colors.text : theme.colors.textAlt
 
     return (
-      <Pressable
+      <PointerTooltip
         key={route.key}
-        accessibilityRole='button'
-        accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={
-          options.tabBarAccessibilityLabel ?? i18n.t(labelKey)
-        }
-        onPress={onPress}
-        hitSlop={hasSidebar ? 0 : { top: 20, bottom: 20, left: 4, right: 4 }}
-        style={({ pressed }) => ({
+        label={i18n.t(labelKey)}
+        placement='right'
+        // Labels are visible unless the sidebar is narrowed to icons.
+        enabled={hasSidebar && sidebarCompact}
+        style={{
           flex: hasSidebar ? undefined : 1,
-          flexDirection: hasSidebar ? 'row' : 'column',
-          alignItems: 'center',
-          justifyContent:
-            hasSidebar && !sidebarCompact ? 'flex-start' : 'center',
-          gap: hasSidebar ? 12 : 2,
-          paddingHorizontal: hasSidebar ? (sidebarCompact ? 0 : 14) : 2,
-          paddingVertical: hasSidebar ? 14 : 0,
-          minHeight: hasSidebar ? 50 : undefined,
           borderRadius: hasSidebar
             ? SIDEBAR_CONTROL_RADIUS
             : theme.numbers.borderRadiusMd,
-          borderCurve: 'continuous',
-          backgroundColor:
-            hasSidebar && isFocused && !isSettings
-              ? theme.colors.accentTranslucent
-              : 'transparent',
-          opacity: pressed ? 0.6 : 1,
-        })}
+        }}
       >
-        <View>
-          <IconButton
-            iconStyle={{
-              color: hasSidebar && !isSettings ? theme.colors.accent : color,
-            }}
-            icon={icon}
-            size={hasSidebar ? 22 : 18}
-          />
-          {options.tabBarBadge !== undefined && (
-            <View
-              style={{
-                position: 'absolute',
-                top: -2,
-                right: -4,
-                width: 9,
-                height: 9,
-                borderRadius: 4.5,
-                backgroundColor: theme.colors.error,
-              }}
-            />
-          )}
-        </View>
-        <View
-          style={{
-            flex: hasSidebar && !sidebarCompact ? 1 : undefined,
-            flexDirection: 'row',
+        <Pressable
+          accessibilityRole='button'
+          accessibilityState={isFocused ? { selected: true } : {}}
+          accessibilityLabel={
+            options.tabBarAccessibilityLabel ?? i18n.t(labelKey)
+          }
+          onPress={onPress}
+          hitSlop={hasSidebar ? 0 : { top: 20, bottom: 20, left: 4, right: 4 }}
+          style={({ pressed }) => ({
+            flex: hasSidebar ? undefined : 1,
+            flexDirection: hasSidebar ? 'row' : 'column',
             alignItems: 'center',
-            justifyContent: sidebarCompact ? 'center' : undefined,
-            position: sidebarCompact ? 'absolute' : undefined,
-            bottom: sidebarCompact ? 1 : undefined,
-            left: sidebarCompact ? 0 : undefined,
-            right: sidebarCompact ? 0 : undefined,
-            maxWidth: '100%',
-            gap: 4,
-          }}
+            justifyContent:
+              hasSidebar && !sidebarCompact ? 'flex-start' : 'center',
+            gap: hasSidebar ? 12 : 2,
+            paddingHorizontal: hasSidebar ? (sidebarCompact ? 0 : 14) : 2,
+            paddingVertical: hasSidebar ? 14 : 0,
+            minHeight: hasSidebar ? 50 : undefined,
+            borderRadius: hasSidebar
+              ? SIDEBAR_CONTROL_RADIUS
+              : theme.numbers.borderRadiusMd,
+            borderCurve: 'continuous',
+            backgroundColor:
+              hasSidebar && isFocused && !isSettings
+                ? theme.colors.accentTranslucent
+                : 'transparent',
+            opacity: pressed ? 0.6 : 1,
+          })}
         >
-          {!sidebarCompact && (
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.85}
-              style={{
-                color,
-                flexShrink: 1,
-                flex: hasSidebar ? 1 : undefined,
-                fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
-                fontFamily: isFocused
-                  ? theme.fonts.semiBold
-                  : theme.fonts.regular,
+          <View>
+            <IconButton
+              iconStyle={{
+                color: hasSidebar && !isSettings ? theme.colors.accent : color,
               }}
-            >
-              {i18n.t(labelKey)}
-            </Text>
-          )}
-          {shortcut && (
-            <Text
-              accessible={false}
-              numberOfLines={1}
-              style={{
-                color: theme.colors.textAlt,
-                fontFamily: Platform.select({
-                  ios: 'Menlo',
-                  default: 'monospace',
-                }),
-                fontSize: theme.fontSize('xs') - 2,
-              }}
-            >
-              {i18n.t('navigationShortcut', { number: shortcut })}
-            </Text>
-          )}
-        </View>
-      </Pressable>
+              icon={icon}
+              size={hasSidebar ? 22 : 18}
+            />
+            {options.tabBarBadge !== undefined && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -4,
+                  width: 9,
+                  height: 9,
+                  borderRadius: 4.5,
+                  backgroundColor: theme.colors.error,
+                }}
+              />
+            )}
+          </View>
+          <View
+            style={{
+              flex: hasSidebar && !sidebarCompact ? 1 : undefined,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: sidebarCompact ? 'center' : undefined,
+              position: sidebarCompact ? 'absolute' : undefined,
+              bottom: sidebarCompact ? 1 : undefined,
+              left: sidebarCompact ? 0 : undefined,
+              right: sidebarCompact ? 0 : undefined,
+              maxWidth: '100%',
+              gap: 4,
+            }}
+          >
+            {!sidebarCompact && (
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                style={{
+                  color,
+                  flexShrink: 1,
+                  flex: hasSidebar ? 1 : undefined,
+                  fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
+                  fontFamily: isFocused
+                    ? theme.fonts.semiBold
+                    : theme.fonts.regular,
+                }}
+              >
+                {i18n.t(labelKey)}
+              </Text>
+            )}
+            {shortcut && (
+              <Text
+                accessible={false}
+                numberOfLines={1}
+                style={{
+                  color: theme.colors.textAlt,
+                  fontFamily: Platform.select({
+                    ios: 'Menlo',
+                    default: 'monospace',
+                  }),
+                  fontSize: theme.fontSize('xs') - 2,
+                }}
+              >
+                {i18n.t('navigationShortcut', { number: shortcut })}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      </PointerTooltip>
     )
   }
 
@@ -455,41 +469,48 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                 })}
                 renderTrigger={({ onPress, anchorRef, expanded }) => (
                   <View ref={anchorRef} collapsable={false}>
-                    <Button
-                      noTransform
-                      onPress={() => {
-                        onPress()
-                      }}
-                      accessibilityLabel={i18n.t('quickAction')}
-                      accessibilityState={{ expanded }}
-                      style={{
-                        minHeight: 48,
-                        padding: sidebarCompact ? 0 : 12,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        borderRadius: SIDEBAR_CONTROL_RADIUS,
-                        borderCurve: 'continuous',
-                        backgroundColor: theme.colors.accent,
-                      }}
+                    <PointerTooltip
+                      label={i18n.t('add')}
+                      placement='right'
+                      enabled={sidebarCompact}
+                      effect='none'
                     >
-                      <IconButton
-                        icon={PlusIcon}
-                        color={theme.colors.textInverse}
-                        size={20}
-                      />
-                      {!sidebarCompact && (
-                        <Text
-                          style={{
-                            color: theme.colors.textInverse,
-                            fontFamily: theme.fonts.semiBold,
-                          }}
-                        >
-                          {i18n.t('add')}
-                        </Text>
-                      )}
-                    </Button>
+                      <Button
+                        noTransform
+                        onPress={() => {
+                          onPress()
+                        }}
+                        accessibilityLabel={i18n.t('quickAction')}
+                        accessibilityState={{ expanded }}
+                        style={{
+                          minHeight: 48,
+                          padding: sidebarCompact ? 0 : 12,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          borderRadius: SIDEBAR_CONTROL_RADIUS,
+                          borderCurve: 'continuous',
+                          backgroundColor: theme.colors.accent,
+                        }}
+                      >
+                        <IconButton
+                          icon={PlusIcon}
+                          color={theme.colors.textInverse}
+                          size={20}
+                        />
+                        {!sidebarCompact && (
+                          <Text
+                            style={{
+                              color: theme.colors.textInverse,
+                              fontFamily: theme.fonts.semiBold,
+                            }}
+                          >
+                            {i18n.t('add')}
+                          </Text>
+                        )}
+                      </Button>
+                    </PointerTooltip>
                   </View>
                 )}
               >

@@ -234,6 +234,7 @@ const WeekStripTeaser = ({
       section='thisWeek'
       onPress={openSchedule}
       accessible={false}
+      hoverRadius={theme.numbers.borderRadiusLg}
       actions={[
         {
           id: 'open_schedule',

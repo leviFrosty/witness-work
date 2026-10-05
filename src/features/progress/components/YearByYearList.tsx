@@ -160,6 +160,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
               <ContextMenu
                 key={endYear}
                 onPress={() => onYearPress(endYear)}
+                hoverRadius={theme.numbers.borderRadiusSm}
                 accessibilityLabel={`${label}, ${totalDisplay}`}
                 preview={<YearSummaryPreview endYear={endYear} />}
                 actions={[

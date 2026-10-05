@@ -1,11 +1,19 @@
 import type { ReactNode } from 'react'
 import { useRef, useState } from 'react'
-import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native'
+import {
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from 'react-native'
 
 import Card from '@/components/ui/Card'
 import ExpandingCardOverlay, {
   type ExpandingCardOrigin,
 } from '@/components/ui/ExpandingCardOverlay'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import useTheme from '@/contexts/theme'
 
 interface Props {
   children: ReactNode
@@ -30,8 +38,10 @@ const PopoverCard = ({
   expandedHeight,
   fill,
 }: Props) => {
+  const theme = useTheme()
   const cardRef = useRef<View>(null)
   const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
   const openPopover = () => {
@@ -54,18 +64,27 @@ const PopoverCard = ({
         collapsable={false}
         style={[containerStyle, fill && { alignSelf: 'stretch' }]}
       >
-        <Pressable
-          onPress={openPopover}
-          accessibilityRole='button'
-          accessibilityLabel={accessibilityLabel}
-          accessibilityHint={accessibilityHint}
-          style={({ pressed }) => [
-            fill && { flex: 1 },
-            { opacity: pressed ? 0.6 : 1 },
-          ]}
-        >
-          <Card style={[fill && { flex: 1 }, cardStyle]}>{children}</Card>
-        </Pressable>
+        <PointerHover onHoverChange={setHovered}>
+          <Pressable
+            onPress={openPopover}
+            accessibilityRole='button'
+            accessibilityLabel={accessibilityLabel}
+            accessibilityHint={accessibilityHint}
+            style={({ pressed }) => [
+              fill && { flex: 1 },
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Card style={[fill && { flex: 1 }, cardStyle]}>{children}</Card>
+            <HoverTint
+              visible={hovered}
+              borderRadius={
+                StyleSheet.flatten(cardStyle)?.borderRadius ??
+                theme.numbers.borderRadiusLg
+              }
+            />
+          </Pressable>
+        </PointerHover>
       </View>
 
       <ExpandingCardOverlay

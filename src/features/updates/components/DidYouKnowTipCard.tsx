@@ -7,6 +7,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { DID_YOU_KNOW_TIPS } from '@/features/updates/lib/didYouKnowTips'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 
 /**
@@ -110,14 +111,22 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         </View>
       </HomeSectionMenu>
 
-      <Pressable
-        onPress={handleDismiss}
-        hitSlop={10}
-        accessibilityLabel={i18n.t('gotIt')}
-        style={{ padding: 2 }}
-      >
-        <LucideIcon icon={XIcon} size={12} color={theme.colors.textAlt} />
-      </Pressable>
+      <PointerHover effect='highlight'>
+        <Pressable
+          onPress={handleDismiss}
+          hitSlop={10}
+          accessibilityLabel={i18n.t('gotIt')}
+          // Extra padding (cancelled by the margin) rounds out the pointer
+          // highlight around the small icon.
+          style={{
+            padding: 4,
+            margin: -2,
+            borderRadius: theme.numbers.borderRadiusSm,
+          }}
+        >
+          <LucideIcon icon={XIcon} size={12} color={theme.colors.textAlt} />
+        </Pressable>
+      </PointerHover>
     </View>
   )
 }

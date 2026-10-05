@@ -3,6 +3,7 @@ import {
   Star as StarIcon,
   Undo2 as Undo2Icon,
 } from 'lucide-react-native'
+import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import ContactPreview from '@/components/ContactPreview'
@@ -12,6 +13,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import { useContactRemovalActions } from '@/hooks/useContactMenuActions'
 import { useUndismissContacts } from '@/hooks/useDismissContact'
@@ -58,6 +60,7 @@ export default function DismissedContactRow({
   const theme = useTheme()
   const undismiss = useUndismissContacts()
   const { archive } = useContactRemovalActions(contact)
+  const [hovered, setHovered] = useState(false)
 
   const cardStyle = {
     borderRadius: theme.numbers.borderRadiusSm,
@@ -116,18 +119,21 @@ export default function DismissedContactRow({
 
   if (selectionMode) {
     return (
-      <Pressable
-        onPress={onPress}
-        accessibilityRole='checkbox'
-        accessibilityState={{ checked }}
-        accessibilityLabel={contact.name}
-      >
-        <Card
-          style={{ ...cardStyle, paddingHorizontal: 18, paddingVertical: 16 }}
+      <PointerHover onHoverChange={setHovered}>
+        <Pressable
+          onPress={onPress}
+          accessibilityRole='checkbox'
+          accessibilityState={{ checked }}
+          accessibilityLabel={contact.name}
         >
-          {details}
-        </Card>
-      </Pressable>
+          <Card
+            style={{ ...cardStyle, paddingHorizontal: 18, paddingVertical: 16 }}
+          >
+            {details}
+          </Card>
+          <HoverTint visible={hovered} borderRadius={cardStyle.borderRadius} />
+        </Pressable>
+      </PointerHover>
     )
   }
 
@@ -150,6 +156,7 @@ export default function DismissedContactRow({
         style={{ flex: 1 }}
         onPress={onPress}
         accessibilityLabel={contact.name}
+        hoverRadius={cardStyle.borderRadius}
         preview={<DismissedContactPreview contact={contact} />}
         actions={[
           [

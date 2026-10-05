@@ -25,9 +25,8 @@ vi.mock('@expo/ui/jetpack-compose', () => ({
     Text: slot('ItemText'),
   }),
 }))
-vi.mock('expo-haptics', () => ({
-  AndroidHaptics: { Long_Press: 'long-press' },
-  performAndroidHapticsAsync: haptics.perform,
+vi.mock('@/lib/haptics', () => ({
+  default: { androidLongPress: haptics.perform },
 }))
 vi.mock('@expo/ui/swift-ui', () => ({
   Host: 'SwiftHost',
@@ -105,7 +104,7 @@ describe('Android context menu', () => {
 
     await act(async () => trigger().props.onLongPress())
     expect(menu().props.expanded).toBe(true)
-    expect(haptics.perform).toHaveBeenCalledWith('long-press')
+    expect(haptics.perform).toHaveBeenCalledOnce()
 
     await act(async () => items()[2].props.onClick())
     expect(list[2].onPress).toHaveBeenCalledOnce()

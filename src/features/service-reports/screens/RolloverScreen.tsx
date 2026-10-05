@@ -4,7 +4,7 @@ import { ScrollView, View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
-import * as Haptics from 'expo-haptics'
+import Haptics from '@/lib/haptics'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
@@ -49,7 +49,7 @@ const RolloverScreen = () => {
   const destinationLabel = today.format('MMMM')
 
   const handleApply = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    Haptics.success()
     apply()
     analytics.capture('time_rollover_apply_requested', {
       source: 'rollover_screen',

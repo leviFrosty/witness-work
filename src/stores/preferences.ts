@@ -701,6 +701,11 @@ export const PREFERENCE_DEFAULTS = {
    */
   audioEnabled: true,
   /**
+   * When false, haptic feedback never plays. Read through `@/lib/haptics`, not
+   * directly. Per-device (non-syncable), like `audioEnabled`.
+   */
+  hapticsEnabled: true,
+  /**
    * Persistent bookkeeping for the image-sync uploader. Keyed by container
    * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
    * upload/retry loop across app restarts so an interrupted migration or a

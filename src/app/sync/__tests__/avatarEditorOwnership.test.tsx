@@ -71,10 +71,12 @@ vi.mock('expo-media-library', () => ({
   requestPermissionsAsync: vi.fn(),
   saveToLibraryAsync: vi.fn(),
 }))
-vi.mock('expo-haptics', () => ({
-  selectionAsync: vi.fn(async () => {}),
-  notificationAsync: vi.fn(async () => {}),
-  NotificationFeedbackType: { Success: 'success' },
+vi.mock('@/lib/haptics', () => ({
+  default: {
+    selection: vi.fn(async () => {}),
+    success: vi.fn(async () => {}),
+    error: vi.fn(async () => {}),
+  },
 }))
 vi.mock('@tamagui/toast', () => ({
   useToastController: () => ({ show: vi.fn() }),

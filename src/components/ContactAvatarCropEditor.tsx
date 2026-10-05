@@ -21,7 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as Haptics from 'expo-haptics'
+import Haptics from '@/lib/haptics'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
 import useTheme from '@/contexts/theme'
@@ -280,7 +280,7 @@ const ContactAvatarCropEditor = ({
   }))
 
   const handleReset = () => {
-    Haptics.selectionAsync().catch(() => {})
+    Haptics.selection().catch(() => {})
     resetTransform(true)
   }
 
@@ -305,9 +305,7 @@ const ContactAvatarCropEditor = ({
         width: sourceWidth,
         height: sourceHeight,
       })
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {}
-      )
+      Haptics.success().catch(() => {})
       onCropped({
         path: withCacheBuster(result.path),
         width: result.width,
@@ -315,9 +313,7 @@ const ContactAvatarCropEditor = ({
       })
     } catch (e) {
       logger.error('Failed to apply crop', e)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {}
-      )
+      Haptics.error().catch(() => {})
     } finally {
       setBusy(false)
     }

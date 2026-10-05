@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Image as RNImage } from 'react-native'
 import { shareAsync } from 'expo-sharing'
 import * as MediaLibrary from 'expo-media-library'
-import * as Haptics from 'expo-haptics'
+import Haptics from '@/lib/haptics'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
 
@@ -107,7 +107,7 @@ export default function useContactAvatarActions(
   }
 
   const edit = async () => {
-    Haptics.selectionAsync().catch(() => {})
+    Haptics.selection().catch(() => {})
     const d = await ensureEditableDims()
     if (!d || !editableSource) {
       Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))
@@ -158,9 +158,7 @@ export default function useContactAvatarActions(
         return
       }
       await MediaLibrary.saveToLibraryAsync(stripCacheBuster(displayedUri))
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {}
-      )
+      Haptics.success().catch(() => {})
       toast.show(i18n.t('success'), {
         message: i18n.t('savedToPhotos'),
         native: true,
@@ -175,7 +173,7 @@ export default function useContactAvatarActions(
 
   const share = async () => {
     if (!displayedUri) return
-    Haptics.selectionAsync().catch(() => {})
+    Haptics.selection().catch(() => {})
     try {
       await shareAsync(stripCacheBuster(displayedUri), {
         dialogTitle: contact.name,
@@ -236,9 +234,7 @@ export default function useContactAvatarActions(
                   croppedAt: new Date().toISOString(),
                 },
               })
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success
-              ).catch(() => {})
+              Haptics.success().catch(() => {})
             } catch (e) {
               logger.error('Failed to reset crop', e)
               Alert.alert(i18n.t('error'), i18n.t('avatarSaveFailed'))

@@ -1,27 +1,11 @@
 import Foundation
 
 /// Loads `snapshot.json` from the App Group container the JS side wrote to.
-///
-/// The App Group identifier is **not** hardcoded — it's derived from the
-/// widget extension's bundle id by stripping the last `.<widget>` segment and
-/// prefixing `group.`. This mirrors the logic in `WidgetBridgeModule.swift`
-/// so the dev (`com.leviwilkerson.jwtimedev`), beta
-/// (`com.leviwilkerson.jwtimebeta`) and prod (`com.leviwilkerson.jwtime`)
-/// variants auto-resolve to their own containers.
+/// The App Group is derived from the bundle id (see `AppGroup`), so each build
+/// variant resolves to its own container.
 enum SnapshotLoader {
-  static var appGroupIdentifier: String? {
-    guard let widgetBundle = Bundle.main.bundleIdentifier else { return nil }
-    let host: String
-    if let dot = widgetBundle.lastIndex(of: ".") {
-      host = String(widgetBundle[..<dot])
-    } else {
-      host = widgetBundle
-    }
-    return "group.\(host)"
-  }
-
   static func load() -> WidgetSnapshot? {
-    guard let group = appGroupIdentifier,
+    guard let group = AppGroup.identifier,
           let container = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: group
           ),

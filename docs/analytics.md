@@ -340,6 +340,20 @@ of this preference with `order` (comma-separated bounded route names, including
 Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and
 navigation interactions remain removed.
 
+## Apple Watch
+
+The watch app has no analytics client. The iPhone captures watch events when
+its JavaScript next runs, which can be well after the action on the watch.
+Events never carry entry ids, dates, durations, Type names or timer values.
+
+| Event                          | When / properties                                                                                                                                                                                                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `time_entry_created`           | An entry made on the watch is saved on the iPhone. `source: watch`, `watch_origin` (`app`, `shortcut` for Siri/Shortcuts, `timer` for a saved timer), `entry_mode` (`hours`, or `checkbox` for the shared-in-ministry marker), `has_category`, `has_note: false`. A repeated delivery of the same entry is not counted again. |
+| `watch_timer_action_completed` | The watch started or paused the iPhone's timer. `action` (`started`, `paused`), `origin` (`app`, `shortcut`). Watch requests the iPhone never received aren't recorded.                                                                                                                                                       |
+| `watch_entry_skipped`          | A watch entry wasn't saved. `reason` (`deleted` when it was deleted on a device before it arrived, `invalid`).                                                                                                                                                                                                                |
+| `watch_entry_adjusted`         | A watch entry was saved as Standard because its Type was deleted first. `reason: category_removed`.                                                                                                                                                                                                                           |
+| `watch_app_status`             | At most once a week per iPhone while the watch app is installed: the adoption baseline. `complication_enabled` (a WitnessWork complication is on the active watch face).                                                                                                                                                      |
+
 ## Development logging and validation
 
 The shared logger controls SDK debug output. Development logs are on by default;

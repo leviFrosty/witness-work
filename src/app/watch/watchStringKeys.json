@@ -1,0 +1,42 @@
+{
+  "strings": [
+    "addTime",
+    "goal",
+    "hours",
+    "minutes",
+    "month",
+    "ok",
+    "reportedToday",
+    "save",
+    "sharedTheGoodNews",
+    "standard",
+    "timeAdded",
+    "timer",
+    "timerPauseAction",
+    "timerSaveAction",
+    "timerStartAction",
+    "today",
+    "type",
+    "watchAddServiceTime",
+    "watchComplicationDescription",
+    "watchComplicationName",
+    "watchDuration",
+    "watchHoursLoggingOff",
+    "watchInvalidDuration",
+    "watchPauseServiceTimer",
+    "watchPhoneUnreachable",
+    "watchRequestFailed",
+    "watchSetUp",
+    "watchStale",
+    "watchStartServiceTimer",
+    "watchSyncing",
+    "watchTimerChanged",
+    "watchTimerPaused",
+    "watchTimerStarted"
+  ],
+  "shortcutPhrases": [
+    "watchShortcutAddTime",
+    "watchShortcutPauseTimer",
+    "watchShortcutStartTimer"
+  ]
+}

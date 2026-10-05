@@ -11,6 +11,7 @@ import UIKit
 /// resolved state is returned to JS and broadcast on the `onStateChange` event.
 public class StopwatchBridgeModule: Module {
   private var didEnterForegroundObserver: NSObjectProtocol?
+  private var stateObserver: NSObjectProtocol?
   private var lastSeenCounter: Int = 0
 
   public func definition() -> ModuleDefinition {
@@ -18,22 +19,35 @@ public class StopwatchBridgeModule: Module {
 
     Events("onStateChange")
 
-    OnCreate {
+    OnCreate { [weak self] in
       if #available(iOS 16.1, *) {
-        self.lastSeenCounter = StopwatchStore.commandCounter
+        self?.lastSeenCounter = StopwatchStore.commandCounter
       }
-      self.didEnterForegroundObserver = NotificationCenter.default.addObserver(
+      self?.didEnterForegroundObserver = NotificationCenter.default.addObserver(
         forName: UIApplication.willEnterForegroundNotification,
         object: nil,
         queue: .main
-      ) { [weak self] _ in
+      ) { _ in
         self?.reemitIfChanged()
+      }
+      // Commands from the Apple Watch change the state in this process while
+      // JS may be in the foreground. Not `queue: .main`: that makes the
+      // poster wait for the main queue, and the watch connection saves from
+      // its own queue.
+      if #available(iOS 16.1, *) {
+        self?.stateObserver = NotificationCenter.default.addObserver(
+          forName: StopwatchStore.didChangeNotification,
+          object: nil,
+          queue: nil
+        ) { _ in
+          DispatchQueue.main.async { self?.reemitIfChanged() }
+        }
       }
     }
 
     OnDestroy {
-      if let observer = self.didEnterForegroundObserver {
-        NotificationCenter.default.removeObserver(observer)
+      for observer in [self.didEnterForegroundObserver, self.stateObserver] {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
       }
     }
 

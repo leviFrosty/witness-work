@@ -2870,6 +2870,7 @@
   "watchSetUp": "Open WitnessWork on your iPhone to finish setting up.",
   "watchStale": "Open WitnessWork on your iPhone to update.",
   "watchSyncing": "Syncing with iPhone…",
+  "watchProjected": "Projected {{value}}",
   "watchPhoneUnreachable": "Can't reach your iPhone. Keep it nearby and try again.",
   "watchTimerChanged": "The timer changed on your iPhone. Check the time and try again.",
   "watchRequestFailed": "Something went wrong. Try again.",

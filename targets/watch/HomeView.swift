@@ -60,8 +60,8 @@ private struct ProgressSection: View {
         ProgressView(value: min(snapshot.progress, 1))
           .tint(.accentColor)
       }
-      if let pace = snapshot.paceText {
-        Text(pace)
+      if let projected = snapshot.projectedText {
+        Text(projected)
           .font(.footnote)
           .foregroundStyle(.secondary)
       }

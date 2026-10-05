@@ -1,6 +1,13 @@
 import moment from 'moment'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
+import { computeProjectedTotal } from '@/lib/projectedTotal'
+import { creditCapMinutesFor } from '@/lib/publisherCapabilities'
+import {
+  getLoggedDayKeys,
+  getMonthsReports,
+  getTotalMinutesDetailedForSpecificMonth,
+} from '@/lib/serviceReport'
 import {
   buildReport,
   BuildReportArgs,
@@ -35,7 +42,8 @@ export type WatchSnapshot = {
   goalHours: number
   progress: number
   publisherState: ReportFields['publisherState']
-  paceText: string | null
+  /** `Projected 52.5 Hrs`; `null` when no Plans are left this month. */
+  projectedText: string | null
   categories: { id: string; name: string }[]
   strings: Record<string, string>
 }
@@ -45,21 +53,44 @@ export type BuildWatchSnapshotArgs = BuildReportArgs & {
   categories: Category[]
 }
 
-/** Same pace line as the Report widget's badge. */
-function paceText(report: ReportFields): string | null {
-  if (report.goalHours <= 0) return null
-  if (report.aheadBehindMinutes != null) {
-    return i18n.t(
-      report.aheadBehindMinutes >= 0 ? 'aheadOfSchedule' : 'behindSchedule'
-    )
-  }
-  if (report.hoursPerDayNeeded != null) {
-    const perDay = formatMinutesCompact(
-      Math.round(report.hoursPerDayNeeded * 60)
-    )
-    return `${perDay} ${i18n.t('hoursPerDayToGoal')}`
-  }
-  return null
+/**
+ * This month's Projected Total — logged time plus the remaining Plans after the
+ * Credit Time cap, the same figure as the Progress tab. Without Plans left it
+ * would just repeat the logged total, so there's nothing to show.
+ */
+function projectedText(
+  args: BuildWatchSnapshotArgs,
+  goalHours: number,
+  now: moment.Moment
+): string | null {
+  const year = now.year()
+  const month = now.month()
+  const reports = getMonthsReports(args.serviceReports, month, year)
+  const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
+    reports,
+    month,
+    year
+  )
+  const projection = computeProjectedTotal({
+    scope: { kind: 'month', year, month },
+    today: now.toDate(),
+    goalMinutes: goalHours * 60,
+    loggedMonths: [{ year, month, standard, credit }],
+    loggedDayKeys: getLoggedDayKeys(reports),
+    dayPlans: args.dayPlans,
+    recurringPlans: args.recurringPlans,
+    categories: args.categories,
+    creditCapMinutes: creditCapMinutesFor(args.publisher, {
+      enabled: args.overrideCreditLimit,
+      customLimitHours: args.customCreditLimitHours,
+    }),
+  })
+  if (projection.plannedMinutes <= 0) return null
+  // Formatted like the iPhone's Projected Total card.
+  return i18n.t('watchProjected', {
+    value: formatMinutes(projection.projectedMinutes, args.timeDisplayFormat)
+      .formatted,
+  })
 }
 
 export function buildWatchSnapshot(
@@ -82,7 +113,7 @@ export function buildWatchSnapshot(
     goalHours: report.goalHours,
     progress: report.progress,
     publisherState: report.publisherState,
-    paceText: paceText(report),
+    projectedText: projectedText(args, report.goalHours, now),
     categories: args.categories.map(({ id, name }) => ({ id, name })),
     strings: Object.fromEntries(
       watchStringKeys.strings.map((key) => [key, i18n.t(key as TranslationKey)])

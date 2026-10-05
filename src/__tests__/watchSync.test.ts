@@ -81,7 +81,14 @@ vi.mock('@/stores/categories', () => ({
   default: storeMock({ categories: [] }),
 }))
 vi.mock('@/lib/locales', () => ({
-  default: { t: (key: string) => key },
+  default: {
+    t: (key: string, options?: { value?: string; count?: number }) =>
+      options?.value
+        ? `${key}(${options.value})`
+        : options?.count != null
+          ? `${options.count} ${key}`
+          : key,
+  },
   DEFAULT_LOCALE: 'en-us',
 }))
 
@@ -111,6 +118,8 @@ describe('watch sync', () => {
     useServiceReport.setState({
       serviceReports: {},
       deletedServiceReports: [],
+      dayPlans: [],
+      recurringPlans: [],
     })
     bridge.pending = []
     bridge.events = []
@@ -150,6 +159,30 @@ describe('watch sync', () => {
     const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
     expect(snapshot.monthKey).toBe('2026-10')
     expect(snapshot.publisherState).toBe('reportedToday')
+  })
+
+  it('projects logged time plus the Plans left this month', () => {
+    useServiceReport.setState({
+      dayPlans: [{ id: 'plan', date: new Date(2026, 9, 10, 12), minutes: 120 }],
+    })
+    bridge.pending = [draft()]
+
+    teardown = installWatchSync()
+
+    // 2h 15m logged today + 2h planned on the 10th.
+    const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
+    expect(snapshot.projectedText).toBe('watchProjected(4.3 hoursShort)')
+  })
+
+  it('shows no projection without Plans left this month', () => {
+    useServiceReport.setState({
+      dayPlans: [{ id: 'past', date: new Date(2026, 9, 1, 12), minutes: 120 }],
+    })
+
+    teardown = installWatchSync()
+
+    const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
+    expect(snapshot.projectedText).toBeNull()
   })
 
   it('adds a redelivered entry once', () => {

@@ -189,8 +189,9 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   public let progress: Double
   /// `unreported`, `reportedToday` or `reportedThisMonth`.
   public let publisherState: String
-  /// Ahead/behind or per-day pace line; `nil` when there's nothing to show.
-  public let paceText: String?
+  /// This month's Projected Total (logged time plus remaining Plans), e.g.
+  /// `Projected 52.5 Hrs`; `nil` when no Plans are left this month.
+  public let projectedText: String?
   public let categories: [Category]
   public let strings: [String: String]
 }

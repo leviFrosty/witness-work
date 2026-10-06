@@ -19,19 +19,21 @@ Gratitude / moment-of-value surfacing, with discoverability-style dismiss discip
 
 ## Eligibility
 
-All of the following must be true. Evaluated reactively — the item appears in the tray whenever the predicate passes. The predicate is `isSupporterNudgeEligible` in `src/features/supporter/lib/supporterNudge.ts`; thresholds live in `SUPPORTER_NUDGE_THRESHOLDS`.
+All of the following must be true. Evaluated reactively — the item appears in the tray whenever the predicate passes. The predicate is `supporterNudgePath` in `src/features/supporter/lib/supporterNudge.ts` (`isSupporterNudgeEligible` wraps it); thresholds live in `SUPPORTER_NUDGE_THRESHOLDS`.
 
-| Gate                                   | Requirement                                                                                                        |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Not a supporter                        | `useIsSupporter().isSupporter === false` (respects `devSupporterOverride`)                                         |
-| Not already opted out via donate heart | `hideDonateHeart === false`                                                                                        |
-| Not explicitly opted out of this nudge | `hideSupporterNudge === false`                                                                                     |
-| Tenure floor                           | `installedOn` ≥ 180 days ago                                                                                       |
-| Engagement floor (any one)             | ≥ 6 distinct months with a service report **or** ≥ 50 total hours logged **or** ≥ 20 contacts + ≥ 10 conversations |
-| Cooldown                               | `supporterNudgeDismissedAt === null` **or** ≥ 365 days since `supporterNudgeDismissedAt`                           |
-| Intro grace                            | `supporterNudgeAvailableSince` is non-null **and** ≥ 45 days have elapsed since it was stamped                     |
+| Gate                                   | Requirement                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Not a supporter                        | `useIsSupporter().isSupporter === false` (respects `devSupporterOverride`)                                                             |
+| Not already opted out via donate heart | `hideDonateHeart === false`                                                                                                            |
+| Not explicitly opted out of this nudge | `hideSupporterNudge === false`                                                                                                         |
+| Tenure and engagement (either path)    | **Standard:** `installedOn` ≥ 180 days ago and ≥ 1 engagement floor. **Early:** `installedOn` ≥ 30 days ago and ≥ 2 engagement floors. |
+| Engagement floors                      | ≥ 6 distinct months with a service report; ≥ 50 total hours logged; ≥ 20 contacts + ≥ 10 conversations                                 |
+| Cooldown                               | `supporterNudgeDismissedAt === null` **or** ≥ 365 days since `supporterNudgeDismissedAt`                                               |
+| Intro grace                            | `supporterNudgeAvailableSince` is non-null, **and**, for users who updated into the nudge, ≥ 45 days have elapsed since it was stamped |
 
-The intro-grace gate exists to protect existing long-tenure users from being asked the moment they update to the nudge-introducing build — at the same time `WhatsNewSheet` and other new surfaces are landing. `useSupporterNotifications` stamps `supporterNudgeAvailableSince` the first time it runs with the value still `null`; the predicate treats null as "not yet eligible" so a single render never both stamps and shows.
+The early path exists so heavy users — a pioneer who logs a full month and keeps a contact list, or someone who imported years of history — can find Supporter in their first months instead of waiting half a year. It still needs two different kinds of engagement, so a single busy month alone doesn't qualify. Analytics distinguish the paths with `variant: standard | early` on the nudge events.
+
+The intro-grace gate exists to protect existing long-tenure users from being asked the moment they update to the nudge-introducing build — at the same time `WhatsNewSheet` and other new surfaces are landing. `useSupporterNotifications` stamps `supporterNudgeAvailableSince` the first time it runs with the value still `null`; the predicate treats null as "not yet eligible" so a single render never both stamps and shows. When the stamp falls within a day of `installedOn`, the user installed a build that already had the nudge and never updated into it, so the grace doesn't apply and the tenure gate alone covers them.
 
 A Supporter feedback survey invitation (ADR 0013) takes precedence: while one is available, the tray shows it instead of the nudge.
 

@@ -1,7 +1,6 @@
 import { analytics } from '@/lib/analytics'
 import {
   Check as CheckIcon,
-  Circle as CircleIcon,
   CircleCheck as CircleCheckIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -19,7 +18,7 @@ import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
-import i18n from '@/lib/locales'
+import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useContacts from '@/stores/contactsStore'
@@ -34,24 +33,34 @@ import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import PointerHover from '@/components/ui/PointerHover'
+import SupporterNote from '@/features/supporter/components/SupporterNote'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 
 /**
- * Canonical checklist item ids. These strings are intentionally stable so Phase
- * 6 (integrator) can coordinate auto-completion signals from other parts of the
- * app.
+ * Checklist item ids. Stable because manual completions are persisted (and
+ * synced) by id.
  */
 export type HomeChecklistItemId =
+  | 'setMonthlyGoal'
   | 'logFirstMinute'
   | 'addFirstContact'
-  | 'setMonthlyGoal'
-  | 'tryTheMap'
-  | 'trackTime'
-  | 'returnVisits'
-  | 'planWeek'
-  | 'monthlyGoal'
-  | 'mapContacts'
+  | 'sendFirstReport'
+
+/** The first month with WitnessWork, in the order it happens. */
+const ITEM_IDS: HomeChecklistItemId[] = [
+  'setMonthlyGoal',
+  'logFirstMinute',
+  'addFirstContact',
+  'sendFirstReport',
+]
+
+const LABEL_I18N_KEY: Record<HomeChecklistItemId, TranslationKey> = {
+  setMonthlyGoal: 'homeChecklistSetMonthlyGoal',
+  logFirstMinute: 'homeChecklistLogFirstMinute',
+  addFirstContact: 'homeChecklistAddFirstContact',
+  sendFirstReport: 'homeChecklistSendFirstReport',
+}
 
 type ChecklistItem = {
   id: HomeChecklistItemId
@@ -61,48 +70,19 @@ type ChecklistItem = {
   checksOffMonth: boolean
 }
 
-/**
- * Map of intent-picker values (owned by Phase 2a) onto the default checklist
- * item ids. Intents live in the preferences store under `onboardingIntents` and
- * are read defensively — Phase 3 does not declare the field.
- */
-const INTENT_TO_ITEM_ID: Record<string, HomeChecklistItemId> = {
-  trackTime: 'logFirstMinute',
-  returnVisits: 'addFirstContact',
-  planWeek: 'planWeek',
-  monthlyGoal: 'setMonthlyGoal',
-  mapContacts: 'tryTheMap',
-}
-
-const DEFAULT_ITEM_IDS: HomeChecklistItemId[] = [
-  'logFirstMinute',
-  'addFirstContact',
-  'setMonthlyGoal',
-  'tryTheMap',
-]
-
-const LABEL_I18N_KEY: Record<HomeChecklistItemId, string> = {
-  logFirstMinute: 'homeChecklistLogFirstMinute',
-  addFirstContact: 'homeChecklistAddFirstContact',
-  setMonthlyGoal: 'homeChecklistSetMonthlyGoal',
-  tryTheMap: 'homeChecklistTryTheMap',
-  trackTime: 'homeChecklistTrackTime',
-  returnVisits: 'homeChecklistReturnVisits',
-  planWeek: 'homeChecklistPlanWeek',
-  monthlyGoal: 'homeChecklistSetMonthlyGoal',
-  mapContacts: 'homeChecklistMapContacts',
-}
+const NODE_SIZE = 26
+const CONNECTOR_WIDTH = 2
+const STEP_GAP = 14
 
 const HomeChecklist = () => {
   const theme = useTheme()
-  const prefs = usePreferences()
   const {
     homeChecklistDismissed,
     homeChecklistManualCompletions,
     homeChecklistAllDoneCelebrated,
-    hasCompletedMapOnboarding,
+    submittedReportMonths,
     set: setPref,
-  } = prefs
+  } = usePreferences()
   const fireworks = useFireworks()
   const sealScale = useSharedValue(1)
   const sealAnimatedStyle = useAnimatedStyle(() => ({
@@ -111,8 +91,7 @@ const HomeChecklist = () => {
   const { serviceReports, dayPlans, recurringPlans, addServiceReport } =
     useServiceReport()
   const { contacts } = useContacts()
-  const { entryMode } = usePublisher()
-  const isCheckboxMode = entryMode === 'checkbox'
+  const { showsTimeEntry } = usePublisher()
   const { playConfetti } = useAnimation()
   const homeNavigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
@@ -122,11 +101,6 @@ const HomeChecklist = () => {
   // by the persisted `homeChecklistAllDoneCelebrated` flag — until the user
   // is actually looking at the Home tab.
   const isFocused = useIsFocused()
-
-  // Phase 2a owns the `onboardingIntents` field — read defensively so this
-  // component compiles before Phase 2a lands. See docs/onboarding-overhaul-plan.md.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onboardingIntentsRaw = (prefs as any).onboardingIntents
 
   // Any TimeEntry row (dayPlans/recurringPlans intentionally excluded —
   // the aha moment is a _logged_ minute, not a planned one).
@@ -142,6 +116,7 @@ const HomeChecklist = () => {
 
   const hasAnyContact = contacts.length > 0
   const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
+  const hasSentReport = submittedReportMonths.length > 0
 
   const hasReportThisMonth = useMemo(
     () =>
@@ -170,126 +145,76 @@ const HomeChecklist = () => {
 
   const autoCompletedIds = useMemo(() => {
     const set = new Set<HomeChecklistItemId>()
+    if (hasAnyPlan) set.add('setMonthlyGoal')
     if (hasAnyServiceReport) set.add('logFirstMinute')
     if (hasAnyContact) set.add('addFirstContact')
-    if (hasCompletedMapOnboarding) {
-      set.add('tryTheMap')
-      set.add('mapContacts')
-    }
-    if (hasAnyPlan) {
-      set.add('setMonthlyGoal')
-      set.add('monthlyGoal')
-      set.add('planWeek')
-    }
+    if (hasSentReport) set.add('sendFirstReport')
     return set
-  }, [
-    hasAnyServiceReport,
-    hasAnyContact,
-    hasCompletedMapOnboarding,
-    hasAnyPlan,
-  ])
+  }, [hasAnyPlan, hasAnyServiceReport, hasAnyContact, hasSentReport])
 
-  const selectedItemIds = useMemo<HomeChecklistItemId[]>(() => {
-    const intents: string[] = Array.isArray(onboardingIntentsRaw)
-      ? onboardingIntentsRaw
-      : []
-    const base =
-      intents.length === 0
-        ? DEFAULT_ITEM_IDS
-        : (() => {
-            const mapped = intents
-              .map((intent) => INTENT_TO_ITEM_ID[intent])
-              .filter((id): id is HomeChecklistItemId => Boolean(id))
-            // Fall back to defaults if every intent is unrecognised (e.g. a
-            // future intent value added upstream) so the user still sees
-            // something useful.
-            return mapped.length > 0 ? mapped : DEFAULT_ITEM_IDS
-          })()
-
-    return base
-  }, [onboardingIntentsRaw])
-
-  const items = useMemo<ChecklistItem[]>(
-    () =>
-      selectedItemIds.map((id) => {
-        const isTrackTime = id === 'logFirstMinute' || id === 'trackTime'
-        const labelKey =
-          isTrackTime && isCheckboxMode
-            ? 'homeChecklistCheckOffFirstMonth'
-            : LABEL_I18N_KEY[id]
-        return {
-          id,
-          checksOffMonth: isTrackTime && isCheckboxMode,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          label: i18n.t(labelKey as any),
-          onPress: () => {
-            switch (id) {
-              case 'logFirstMinute':
-              case 'trackTime':
-                if (isCheckboxMode) {
-                  handleCheckOffMonth()
-                } else {
-                  rootNavigation.navigate('Add Time')
-                }
-                break
-              case 'addFirstContact':
-              case 'returnVisits':
-                rootNavigation.navigate('Contact Form', {
-                  id: '',
-                })
-                break
-              case 'setMonthlyGoal':
-              case 'monthlyGoal':
-                homeNavigation.navigate('Schedule')
-                break
-              case 'tryTheMap':
-              case 'mapContacts':
-                homeNavigation.navigate('Contacts', { view: 'map' })
-                break
-              case 'planWeek':
-                homeNavigation.navigate('Schedule')
-                break
-            }
-          },
+  const items: ChecklistItem[] = ITEM_IDS.map((id) => {
+    const checksOffMonth = id === 'logFirstMinute' && !showsTimeEntry
+    return {
+      id,
+      checksOffMonth,
+      label: i18n.t(
+        checksOffMonth ? 'homeChecklistCheckOffFirstMonth' : LABEL_I18N_KEY[id]
+      ),
+      onPress: () => {
+        switch (id) {
+          case 'setMonthlyGoal':
+            homeNavigation.navigate('Schedule')
+            break
+          case 'logFirstMinute':
+            if (checksOffMonth) handleCheckOffMonth()
+            else rootNavigation.navigate('Add Time')
+            break
+          case 'addFirstContact':
+            rootNavigation.navigate('Contact Form', { id: '' })
+            break
+          case 'sendFirstReport':
+            rootNavigation.navigate('ServiceReportView', {
+              month: moment().month(),
+              year: moment().year(),
+            })
+            break
         }
-      }),
-    [
-      selectedItemIds,
-      homeNavigation,
-      rootNavigation,
-      isCheckboxMode,
-      handleCheckOffMonth,
-    ]
-  )
+      },
+    }
+  })
 
+  // Once celebrated, the checklist stays finished even if its steps change in
+  // a later version.
   const isComplete = (id: HomeChecklistItemId) =>
-    autoCompletedIds.has(id) || homeChecklistManualCompletions.includes(id)
+    homeChecklistAllDoneCelebrated ||
+    autoCompletedIds.has(id) ||
+    homeChecklistManualCompletions.includes(id)
 
   // Items the app can't detect (or the user did another way) can be checked
-  // off by hand from the circle or the item's long-press menu. Auto-completed
-  // items stay done.
+  // off by hand from the step marker or the item's long-press menu.
+  // Auto-completed items stay done.
   const setManuallyDone = (id: HomeChecklistItemId, done: boolean) => {
     const others = homeChecklistManualCompletions.filter((it) => it !== id)
     setPref({ homeChecklistManualCompletions: done ? [...others, id] : others })
   }
+
+  const allDone = items.every((it) => isComplete(it.id))
+  const nextId = items.find((it) => !isComplete(it.id))?.id
 
   const handleDismiss = () => {
     analytics.capture('onboarding_checklist_dismissed', { all_done: allDone })
     setPref({ homeChecklistDismissed: true })
   }
 
-  const allDone = items.length > 0 && items.every((it) => isComplete(it.id))
-
   const viewed = useRef(false)
   useEffect(() => {
-    if (!isFocused || homeChecklistDismissed || !items.length || viewed.current)
-      return
+    if (!isFocused || homeChecklistDismissed || viewed.current) return
     viewed.current = true
     analytics.capture('onboarding_checklist_viewed', {
-      item_count: items.length,
+      item_count: ITEM_IDS.length,
       all_done: allDone,
     })
-  }, [isFocused, homeChecklistDismissed, items.length, allDone])
+  }, [isFocused, homeChecklistDismissed, allDone])
 
   // One-shot celebration. Only fires when the user is actually focused on the
   // Home tab — if `allDone` flips while they're elsewhere (or the app is
@@ -315,7 +240,6 @@ const HomeChecklist = () => {
   ])
 
   if (homeChecklistDismissed) return null
-  if (items.length === 0) return null
 
   return (
     <DismissableCard
@@ -343,29 +267,78 @@ const HomeChecklist = () => {
         </ContextMenu>
       }
     >
-      <View style={{ gap: 10 }}>
-        {items.map((item) => {
+      <View>
+        {items.map((item, index) => {
           const done = isComplete(item.id)
           const autoDone = autoCompletedIds.has(item.id)
+          const isNext = item.id === nextId
+          const isLast = index === items.length - 1
           return (
-            <XView key={item.id} style={{ gap: 12 }}>
+            <XView
+              key={item.id}
+              style={{
+                gap: 12,
+                alignItems: 'flex-start',
+                paddingBottom: isLast ? 0 : STEP_GAP,
+              }}
+            >
+              {!isLast && (
+                // The trail to the next step, filled once this one is done.
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: NODE_SIZE,
+                    bottom: 0,
+                    left: (NODE_SIZE - CONNECTOR_WIDTH) / 2,
+                    width: CONNECTOR_WIDTH,
+                    backgroundColor: done
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                  }}
+                />
+              )}
               <PointerHover effect='highlight' enabled={!autoDone}>
                 <Pressable
-                onPress={() => setManuallyDone(item.id, !done)}
+                  onPress={() => setManuallyDone(item.id, !done)}
                   disabled={autoDone}
                   hitSlop={8}
                   accessibilityRole='checkbox'
                   accessibilityState={{ checked: done, disabled: autoDone }}
                   accessibilityLabel={item.label}
-                  style={{ borderRadius: theme.fontSize('xl') / 2 }}
+                  style={{
+                    width: NODE_SIZE,
+                    height: NODE_SIZE,
+                    borderRadius: NODE_SIZE / 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: done ? 0 : 2,
+                    borderColor: isNext
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: done
+                      ? theme.colors.accent
+                      : theme.colors.card,
+                  }}
                 >
-                  <LucideIcon
-                    icon={done ? CircleCheckIcon : CircleIcon}
-                    size={theme.fontSize('xl')}
-                    style={{
-                      color: done ? theme.colors.accent : theme.colors.border,
-                    }}
-                  />
+                  {done ? (
+                    <LucideIcon
+                      icon={CheckIcon}
+                      size={14}
+                      color={theme.colors.textInverse}
+                    />
+                  ) : (
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('xs'),
+                        fontFamily: theme.fonts.bold,
+                        color: isNext
+                          ? theme.colors.accent
+                          : theme.colors.textAlt,
+                      }}
+                    >
+                      {index + 1}
+                    </Text>
+                  )}
                 </Pressable>
               </PointerHover>
               <ContextMenu
@@ -395,25 +368,17 @@ const HomeChecklist = () => {
                     },
                 ]}
               >
-                <XView style={{ gap: 12, paddingVertical: 4 }}>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontSize: theme.fontSize('md'),
-                      color: done ? theme.colors.textAlt : theme.colors.text,
-                      textDecorationLine: done ? 'line-through' : 'none',
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                  {done && (
-                    <LucideIcon
-                      icon={CheckIcon}
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.accent }}
-                    />
-                  )}
-                </XView>
+                <Text
+                  style={{
+                    minHeight: NODE_SIZE,
+                    paddingTop: 2,
+                    fontSize: theme.fontSize('md'),
+                    fontFamily: isNext ? theme.fonts.semiBold : undefined,
+                    color: done ? theme.colors.textAlt : theme.colors.text,
+                  }}
+                >
+                  {item.label}
+                </Text>
               </ContextMenu>
             </XView>
           )
@@ -450,6 +415,9 @@ const HomeChecklist = () => {
           >
             {i18n.t('homeChecklistFooter')}
           </Text>
+          <View style={{ alignSelf: 'stretch' }}>
+            <SupporterNote source='onboarding_checklist' />
+          </View>
           <Button
             onPress={handleDismiss}
             style={{

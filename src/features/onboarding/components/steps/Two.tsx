@@ -8,7 +8,6 @@ import PublisherTypeSelector from '@/components/PublisherTypeSelector'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import InfoPopover from '@/components/ui/InfoPopover'
-import FeatureShowcase from '@/features/onboarding/components/FeatureShowcase'
 import { usePreferences } from '@/stores/preferences'
 
 interface Props {
@@ -66,7 +65,6 @@ const StepTwo = ({ goBack, goNext }: Props) => {
                 />
               </View>
               <PublisherTypeSelector variant='list' />
-              <FeatureShowcase />
             </View>
           </KeyboardAwareScrollView>
           <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>

@@ -660,3 +660,29 @@ describe('preferences persist migrate v8 → v9 (remove Founding Supporter revea
     expect(migratePreferencesPersistedState(v9State, 9)).toBe(v9State)
   })
 })
+
+describe('preferences persist migrate v9 → v10 (remove onboarding intents)', () => {
+  it('drops the intents and their iCloud timestamp', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        onboardingIntents: ['trackTime', 'planWeek'],
+        role: 'regularPioneer',
+        preferenceUpdatedAt: {
+          onboardingIntents: 1700000000000,
+          role: 1700000002000,
+        },
+      },
+      9
+    )
+
+    expect(migrated).not.toHaveProperty('onboardingIntents')
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('onboardingIntents')
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000002000)
+    expect(migrated.role).toBe('regularPioneer')
+  })
+
+  it('is idempotent on an already-v10 state', () => {
+    const v10State = { role: 'publisher' }
+    expect(migratePreferencesPersistedState(v10State, 10)).toBe(v10State)
+  })
+})

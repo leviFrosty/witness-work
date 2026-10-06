@@ -2653,7 +2653,7 @@
   "faq_awayDay_q": "How do I mark a day I'm not going out without breaking my recurring plan?",
   "faq_awayDay_a": "Tap the day on the Schedule tab and add an override for an \"away\" or empty day. The override only affects that one day, and the recurring plan keeps going from the next day forward.",
   "faq_planFirstMonth_q": "Can WitnessWork plan my month for me?",
-  "faq_planFirstMonth_a": "Yes. During setup, if you log hours and have a monthly goal, tap the days you usually go out and the Assistant spreads your goal across those days for this month, or next month if fewer than seven days are left. Tap Add to my schedule to save them as plans on the Schedule tab, where you can change or delete any of them, or tap Skip to continue without plans. The days you didn't pick become off days, so the Assistant won't suggest plans on them; change this anytime in Settings → Preferences → Plans → Availability. After setup, the Assistant on the Schedule tab suggests plans whenever you're short of your goal. Plans are saved with your other records and don't count toward your report; log the time you actually spend. Kingdom Publishers who don't log hours, and anyone without a monthly goal, skip this step but can still add plans from the Schedule tab.",
+  "faq_planFirstMonth_a": "Yes. During setup, if you log hours and have a monthly goal, you get a quick preview of the Assistant: pick the days you usually go out and it spreads your goal across those days for this month, or next month if fewer than seven days are left. Tap any day to change its plan with the slider, or to plan a day yourself. Tap Add to my schedule to save them as plans on the Schedule tab, where you can change or delete any of them, or tap I'll plan later to continue without plans. The weekdays you didn't pick become off days, so the Assistant won't suggest plans on them; change this anytime in Settings → Preferences → Plans → Availability. After setup, you plan on the Schedule tab by tapping any day, and the Assistant there suggests plans whenever you're short of your goal. Plans are saved with your other records and don't count toward your report; log the time you actually spend. Kingdom Publishers who don't log hours, and anyone without a monthly goal, skip this step but can still add plans from the Schedule tab.",
   "faq_importContacts_q": "Can I import contacts from my phone's address book?",
   "faq_importContacts_a": "Not at this time. Contacts are entered manually in WitnessWork. This keeps your ministry contacts private and avoids accidentally pulling in personal contacts.",
   "faq_importOtherApps_q": "Can I import data from MyTime, Ministry Assistant, or another app?",
@@ -2858,17 +2858,28 @@
   },
   "planMonth": {
     "title": "Let's plan {{month}}",
-    "subtitle": "Which days do you usually go out?",
+    "subtitle": "Try the Assistant: pick the days you usually go out.",
     "infoTitle": "Your first plan",
-    "infoDescription": "The Assistant spreads your monthly goal across the days you pick. Your plans go on the Schedule tab, where you can change or delete them. Days you don't pick become off days, so the Assistant won't plan on them. Change this anytime in Settings → Preferences → Plans → Availability.",
+    "infoDescription": "This is a quick preview of the Assistant. It spreads your monthly goal across the days you pick, and you can tap any day to change it. Your plans go on the Schedule tab, where you can change or delete them. Days you don't pick become off days, so the Assistant won't plan on them. Change this anytime in Settings → Preferences → Plans → Availability.",
     "add": "Add to my schedule",
-    "calendarA11y": "Planned days in {{month}}: {{days}}",
+    "later": "I'll plan later",
+    "editor": {
+      "none": "No plan",
+      "a11y": "Plan for {{date}}"
+    },
     "status": {
-      "pickDays": "Tap a day to see your month.",
+      "pickDays": "Pick your days above, or tap a date to plan it yourself.",
       "reachesGoal": "This plan gets you to your **{{goal}}** goal.",
       "shortOfGoal": "This plan gets you to **{{projected}}** of your **{{goal}}** goal. A strong start.",
+      "tapToEdit": "Tap a day to change it.",
       "onTrack": "You're already on track for {{month}}.",
       "noDaysLeft": "Nothing left to plan on those days in {{month}}. Try another day."
+    },
+    "next": {
+      "title": "After setup",
+      "schedule": "You'll usually plan on the **Schedule** tab. Tap any day to add a plan, and the Assistant suggests more when you're behind.",
+      "buddies": "**Buddies** show you the days friends plan to go out, so you can plan together.",
+      "buddiesInfo": "Pair with up to 5 friends you go out in service with and see each other's planned days on your calendar. Everything is end-to-end encrypted, and nothing is shared until you both agree. Find Buddies at the top of the Schedule tab."
     }
   },
   "monthGoalEditor": {

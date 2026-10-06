@@ -159,7 +159,9 @@ replaced them; compare funnels across that change by step, not position.
 `planMonth` only appears for publishers who log hours and have a monthly goal.
 Its question is whether hands-on planning lands: adding the plan sends
 `assistant_recommendation_accepted` with `source: onboarding`, `shape`,
-`plan_count`, `service_day_count`, `reaches_goal`, and `reminder_enabled`; Skip
+`plan_count`, `edited_day_count`, `service_day_count`, `reaches_goal`, and
+`reminder_enabled`. `edited_day_count` counts days changed by hand with the day
+slider; `shape` is `manual` when every plan was added by hand. "I'll plan later"
 sends `onboarding_step_skipped`. Divide accepted by `onboarding_step_viewed` for
 the step. Exclude `source: onboarding` when measuring the Schedule Assistant.
 

@@ -11,7 +11,10 @@ import { momentStoredDate } from '@/lib/normalizeDate'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useConversations from '@/stores/conversationStore'
-import { otherWeekdays } from '@/features/onboarding/lib/planMonth'
+import {
+  applyDayEdits,
+  otherWeekdays,
+} from '@/features/onboarding/lib/planMonth'
 
 export type PlanMonth = {
   goalMinutes: number
@@ -24,8 +27,12 @@ export type PlanMonth = {
   alreadyOnTrack: boolean
   /** `null` until a day is picked, or when there's nothing left to plan. */
   recommendation: Recommendation | null
+  /** The plans to add: the Assistant's proposal with the publisher's edits. */
+  plans: { day: number; minutes: number; fromAssistant: boolean }[]
   /** Saved and proposed minutes keyed by day of the month. */
   minutesByDay: Map<number, number>
+  /** Days that already have a saved plan, which this step leaves alone. */
+  savedDays: Set<number>
 }
 
 /**
@@ -35,7 +42,9 @@ export type PlanMonth = {
  */
 const usePlanMonth = (
   target: CalendarMonth,
-  serviceDays: readonly number[]
+  serviceDays: readonly number[],
+  /** Minutes the publisher set by hand, keyed by day; 0 clears a day. */
+  edits: ReadonlyMap<number, number>
 ): PlanMonth => {
   const { effectiveGoalHours } = useMonthlyGoal(target)
   const { projection, today } = useProjectedTotal(
@@ -64,6 +73,7 @@ const usePlanMonth = (
         })
 
   const minutesByDay = new Map<number, number>()
+  const savedDays = new Set<number>()
   const addMinutes = (day: number, minutes: number) =>
     minutesByDay.set(day, (minutesByDay.get(day) ?? 0) + minutes)
   // Plans already saved (e.g. when coming back to this step) stay visible.
@@ -71,11 +81,19 @@ const usePlanMonth = (
     const date = momentStoredDate(plan.date)
     if (date.year() === target.year && date.month() === target.month) {
       addMinutes(date.date(), plan.minutes)
+      savedDays.add(date.date())
     }
   }
+  const plans = applyDayEdits(
+    (recommendation?.plans ?? []).map((plan) => ({
+      day: proposedPlanLocalDay(plan).getDate(),
+      minutes: plan.minutes,
+    })),
+    edits
+  )
   let proposedMinutes = 0
-  for (const plan of recommendation?.plans ?? []) {
-    addMinutes(proposedPlanLocalDay(plan).getDate(), plan.minutes)
+  for (const plan of plans) {
+    addMinutes(plan.day, plan.minutes)
     proposedMinutes += plan.minutes
   }
 
@@ -91,7 +109,9 @@ const usePlanMonth = (
     reachesGoal: projectedMinutes >= projection.goalMinutes,
     alreadyOnTrack: projection.standardGapMinutes <= 0,
     recommendation,
+    plans,
     minutesByDay,
+    savedDays,
   }
 }
 

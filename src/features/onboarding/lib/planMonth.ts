@@ -65,3 +65,42 @@ export const monthWeeks = (
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
   return weeks
 }
+
+/** Plan-length steps for a day the publisher changes by hand. */
+export const PLAN_DAY_STEP_MINUTES = 30
+
+/** A day the publisher hasn't planned yet starts here when they tap it. */
+export const PLAN_DAY_DEFAULT_MINUTES = 120
+
+/**
+ * The slider's top end: a long day, stretched to fit a longer plan the
+ * Assistant proposed.
+ */
+export const planDayMaxMinutes = (minutes: number): number =>
+  Math.max(8 * 60, Math.ceil(minutes / 60) * 60)
+
+/**
+ * The Assistant's proposal with the publisher's own changes on top. An edited
+ * day keeps its minutes even when the picked weekdays change, and 0 clears it.
+ * `fromAssistant` is false for days only the publisher planned. Sorted by day
+ * of the month.
+ */
+export const applyDayEdits = (
+  proposed: readonly { day: number; minutes: number }[],
+  edits: ReadonlyMap<number, number>
+): { day: number; minutes: number; fromAssistant: boolean }[] => {
+  const byDay = new Map<number, number>()
+  for (const { day, minutes } of proposed) {
+    byDay.set(day, (byDay.get(day) ?? 0) + minutes)
+  }
+  const assistantDays = new Set(byDay.keys())
+  for (const [day, minutes] of edits) byDay.set(day, minutes)
+  return [...byDay]
+    .filter(([, minutes]) => minutes > 0)
+    .sort(([a], [b]) => a - b)
+    .map(([day, minutes]) => ({
+      day,
+      minutes,
+      fromAssistant: assistantDays.has(day),
+    }))
+}

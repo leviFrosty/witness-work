@@ -6,9 +6,11 @@ import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import ServiceDayPicker from '@/features/onboarding/components/plan-month/ServiceDayPicker'
 import PlanMonthPreview from '@/features/onboarding/components/plan-month/PlanMonthPreview'
+import PlanMonthNextSteps from '@/features/onboarding/components/plan-month/PlanMonthNextSteps'
 import usePlanMonth from '@/features/onboarding/hooks/usePlanMonth'
 import {
   otherWeekdays,
+  PLAN_DAY_DEFAULT_MINUTES,
   planTargetMonth,
 } from '@/features/onboarding/lib/planMonth'
 import Text from '@/components/ui/MyText'
@@ -19,7 +21,6 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { analytics } from '@/lib/analytics'
-import { proposedPlanLocalDay } from '@/lib/assistantRecommendation'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -32,9 +33,10 @@ interface Props {
 
 /**
  * Onboarding's hands-on moment: the publisher taps the days they usually go out
- * and watches the Assistant plan their month toward the goal. Adding the plan
- * saves real Plans and makes the unpicked days Off Days, so the Schedule screen
- * picks up exactly where this leaves off.
+ * and watches the Assistant plan their month toward the goal, then taps any day
+ * to change it. Adding the plan saves real Plans and makes the unpicked days
+ * Off Days, so the Schedule screen picks up exactly where this leaves off.
+ * Leaving it for later is just as fine: planning lives on the Schedule tab.
  */
 const PlanMonth = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
@@ -54,7 +56,11 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
   const [serviceDays, setServiceDays] = useState<number[]>(() =>
     hasSeenAvailabilityOnboarding ? otherWeekdays(offDays) : []
   )
-  const plan = usePlanMonth(target, serviceDays)
+  const [edits, setEdits] = useState<ReadonlyMap<number, number>>(
+    () => new Map()
+  )
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const plan = usePlanMonth(target, serviceDays, edits)
   const monthName = moment({ ...target, day: 1 }).format('MMMM')
 
   const toggleDay = (weekday: number) => {
@@ -66,30 +72,47 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
     )
   }
 
+  const setDayMinutes = (day: number, minutes: number) =>
+    setEdits((current) => new Map(current).set(day, minutes))
+
+  // Tapping a day with nothing planned plans it, so one tap is enough.
+  const selectDay = (day: number | null) => {
+    setSelectedDay(day)
+    if (day !== null && !plan.plans.some((p) => p.day === day)) {
+      setDayMinutes(day, PLAN_DAY_DEFAULT_MINUTES)
+    }
+  }
+
   const addPlan = () => {
-    const { recommendation } = plan
-    if (!recommendation) return
-    for (const proposed of recommendation.plans) {
+    const { recommendation, plans } = plan
+    if (plans.length === 0) return
+    for (const { day, minutes, fromAssistant } of plans) {
       addDayPlan({
         id: Crypto.randomUUID(),
-        date: proposedPlanLocalDay(proposed),
-        minutes: proposed.minutes,
+        date: moment({ ...target, day }).toDate(),
+        minutes,
         notifyMe: planAlwaysNotify,
-        source: 'recommendation',
+        source: fromAssistant ? 'recommendation' : 'manual',
       })
     }
-    setOffDays(otherWeekdays(serviceDays))
-    setHasSeenAvailabilityOnboarding(true)
-    recordAssistantEvent({
-      shape: recommendation.shape,
-      action: 'accepted',
-      at: Date.now(),
-    })
+    // Picked weekdays become availability; hand-planned days alone don't.
+    if (serviceDays.length > 0) {
+      setOffDays(otherWeekdays(serviceDays))
+      setHasSeenAvailabilityOnboarding(true)
+    }
+    if (recommendation) {
+      recordAssistantEvent({
+        shape: recommendation.shape,
+        action: 'accepted',
+        at: Date.now(),
+      })
+    }
     setHasDismissedRecommendationHash(undefined)
     analytics.capture('assistant_recommendation_accepted', {
       source: 'onboarding',
-      shape: recommendation.shape,
-      plan_count: recommendation.plans.length,
+      shape: recommendation?.shape ?? 'manual',
+      plan_count: plans.length,
+      edited_day_count: edits.size,
       service_day_count: serviceDays.length,
       reaches_goal: plan.reachesGoal,
       reminder_enabled: planAlwaysNotify,
@@ -98,7 +121,7 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
     goNext()
   }
 
-  const skip = () => {
+  const later = () => {
     analytics.capture('onboarding_step_skipped', { step_id: 'planMonth' })
     goNext()
   }
@@ -149,18 +172,32 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
           plan={plan}
           serviceDays={serviceDays}
           startOfWeek={startOfWeek}
+          selectedDay={selectedDay}
+          onSelectDay={selectDay}
+          onChangeDay={setDayMinutes}
         />
+        <PlanMonthNextSteps />
       </ScrollView>
       {plan.alreadyOnTrack ? (
         <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
+      ) : plan.plans.length === 0 ? (
+        // Nothing to add yet: moving on is the main action, not a skip.
+        <ActionButton onPress={later}>{i18n.t('planMonth.later')}</ActionButton>
       ) : (
         <View>
-          <ActionButton disabled={!plan.recommendation} onPress={addPlan}>
+          <ActionButton onPress={addPlan}>
             {i18n.t('planMonth.add')}
           </ActionButton>
           <View style={{ alignItems: 'center', marginTop: 15 }}>
-            <Button onPress={skip}>
-              <Text style={styles.navSkip}>{i18n.t('skip')}</Text>
+            <Button onPress={later}>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('planMonth.later')}
+              </Text>
             </Button>
           </View>
         </View>

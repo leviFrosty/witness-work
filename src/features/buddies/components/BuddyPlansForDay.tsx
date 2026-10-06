@@ -17,6 +17,7 @@ import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /**
  * Faded, read-only buddy Plans for one day — they never mix with the User's
@@ -129,12 +130,12 @@ export default function BuddyPlansForDay({
               <XView style={{ gap: 10, opacity: 0.7 }}>
                 <BuddyAvatar
                   avatar={buddy.avatar}
-                  name={buddy.name}
-                  colorIndex={buddy.colorIndex}
+                  name={buddyDisplayName(buddy)}
+                  color={buddy}
                   size={22}
                 />
                 <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                  {buddy.name}
+                  {buddyDisplayName(buddy)}
                 </Text>
                 <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
                   {label}
@@ -161,12 +162,12 @@ export default function BuddyPlansForDay({
           <XView style={{ gap: 10, opacity: 0.7 }}>
             <BuddyAvatar
               avatar={buddy.avatar}
-              name={buddy.name}
-              colorIndex={buddy.colorIndex}
+              name={buddyDisplayName(buddy)}
+              color={buddy}
               size={22}
             />
             <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {buddy.name}
+              {buddyDisplayName(buddy)}
             </Text>
             <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
               {[

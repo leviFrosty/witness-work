@@ -185,12 +185,17 @@ export const rosterSchema = z.object({
       z.object({
         inboxId: relayId,
         name: displayName,
+        nickname: displayName.optional(),
         ...profileFields,
         dhPub: b64uKey,
         inviteSecret: b64uSecret,
         status: z.enum(['active', 'awaitingConfirm']),
         pairedAt: z.number(),
         colorIndex: z.number().int().min(0),
+        color: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/)
+          .optional(),
         showOnCalendar: z.boolean(),
         expiresAt: z.number().optional(),
       })

@@ -2,7 +2,10 @@ import type { ReactNode } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import useTheme from '@/contexts/theme'
 import type { ProfileAvatar } from '@/types/avatar'
-import { buddyColor } from '@/features/buddies/lib/buddyColors'
+import {
+  type BuddyColorSource,
+  buddyColor,
+} from '@/features/buddies/lib/buddyColors'
 import type { BuddyAvatar as SharedAvatar } from '@/features/buddies/lib/schemas'
 
 function toProfileAvatar(avatar: SharedAvatar | undefined): ProfileAvatar {
@@ -16,7 +19,7 @@ function toProfileAvatar(avatar: SharedAvatar | undefined): ProfileAvatar {
 export default function BuddyAvatar({
   avatar,
   name,
-  colorIndex,
+  color,
   background,
   size,
   focusable,
@@ -24,7 +27,8 @@ export default function BuddyAvatar({
 }: {
   avatar?: SharedAvatar
   name: string
-  colorIndex?: number
+  /** The buddy whose color goes behind an initial or emoji. */
+  color?: BuddyColorSource
   /** Replaces the buddy's color behind an initial or emoji. */
   background?: string
   size?: number
@@ -41,7 +45,7 @@ export default function BuddyAvatar({
       focusable={focusable}
       background={
         background ??
-        (colorIndex === undefined ? undefined : buddyColor(theme, colorIndex))
+        (color === undefined ? undefined : buddyColor(theme, color))
       }
     >
       {children}

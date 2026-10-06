@@ -102,3 +102,11 @@ export function buddyTenureLabel(tenure: BuddyTenure): string {
     'YYYY-MM'
   ).format('MMMM YYYY')}`
 }
+
+/** The User's private nickname for a buddy, else the buddy's own name. */
+export function buddyDisplayName(buddy: {
+  name: string
+  nickname?: string
+}): string {
+  return buddy.nickname ?? buddy.name
+}

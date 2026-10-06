@@ -754,6 +754,34 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * Saved to the roster so a restored device keeps it. Two buddies may share a
+   * color; it's this User's choice. `null` goes back to the assigned slot
+   * color.
+   */
+  async function setColor(inboxId: string, color: string | null) {
+    store.setState((state) => ({
+      buddies: state.buddies.map((b) =>
+        b.inboxId === inboxId ? { ...b, color: color ?? undefined } : b
+      ),
+    }))
+    await saveRoster(await ensureInbox())
+  }
+
+  /**
+   * Saved to the roster so a restored device keeps it. A blank nickname goes
+   * back to the buddy's own name.
+   */
+  async function setNickname(inboxId: string, nickname: string) {
+    const trimmed = nickname.trim().slice(0, 60) || undefined
+    store.setState((state) => ({
+      buddies: state.buddies.map((b) =>
+        b.inboxId === inboxId ? { ...b, nickname: trimmed } : b
+      ),
+    }))
+    await saveRoster(await ensureInbox())
+  }
+
+  /**
    * Changes what buddies see and republishes, so their copy of a withheld photo
    * or Tenure clears. Before Buddies has started it only records the choice.
    */
@@ -2142,6 +2170,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     rejectClaim,
     removeBuddy,
     setShowOnCalendar,
+    setColor,
+    setNickname,
     setSharing,
     publishCards,
     publishShares,

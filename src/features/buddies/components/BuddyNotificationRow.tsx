@@ -16,14 +16,17 @@ import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
 import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
+import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
+import { trackShareAnswer } from '@/features/buddies/lib/shareAnswerAnalytics'
 import type { BuddyNotification } from '@/features/buddies/lib/state'
 import type { DayPlan } from '@/types/timeEntry'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 function headline(entry: BuddyNotification): string {
   const name = { name: entry.name }
@@ -171,7 +174,7 @@ export default function BuddyNotificationRow({
       ]
     )
   }
-  const askerName = buddy?.name ?? entry.name
+  const askerName = buddy ? buddyDisplayName(buddy) : entry.name
   // Nothing to turn off when this buddy's requests already can't alert.
   const mutedJoinRequests = useBuddies((state) =>
     state.notificationsEnabled && state.joinRequestNotifications && entry.from
@@ -179,6 +182,7 @@ export default function BuddyNotificationRow({
       : true
   )
   const reply = (answer: ShareReply) => {
+    trackShareAnswer('notifications', entry.shareType, answer)
     return run(async () => {
       await buddiesEngine.replyToShare(entry.shareKey!, answer)
       if (answer === 'going') offerReplace()
@@ -226,7 +230,10 @@ export default function BuddyNotificationRow({
   const canAnswer =
     !!share && status !== 'cancelled' && (status === 'pending' || changing)
 
-  const title = headline({ ...entry, name: buddy?.name ?? entry.name })
+  const title = headline({
+    ...entry,
+    name: buddy ? buddyDisplayName(buddy) : entry.name,
+  })
 
   return (
     <View style={{ gap: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
@@ -265,8 +272,8 @@ export default function BuddyNotificationRow({
               <View>
                 <BuddyAvatar
                   avatar={buddy?.avatar ?? claim?.avatar}
-                  name={buddy?.name ?? entry.name}
-                  colorIndex={buddy?.colorIndex}
+                  name={buddy ? buddyDisplayName(buddy) : entry.name}
+                  color={buddy}
                   size={36}
                 />
                 {unread && (
@@ -341,22 +348,7 @@ export default function BuddyNotificationRow({
       </XView>
 
       {canAnswer ? (
-        <XView style={{ gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <ActionButton disabled={busy} onPress={() => reply('going')}>
-              {i18n.t('buddies_going')}
-            </ActionButton>
-          </View>
-          <Button
-            disabled={busy}
-            style={{ paddingVertical: 10, paddingHorizontal: 12 }}
-            onPress={() => reply('declined')}
-          >
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('buddies_cantMakeIt')}
-            </Text>
-          </Button>
-        </XView>
+        <ShareAnswerButtons disabled={busy} onAnswer={reply} />
       ) : share && (status === 'going' || status === 'declined') ? (
         <XView style={{ gap: 10, justifyContent: 'space-between' }}>
           <Text style={{ color: theme.colors.textAlt }}>

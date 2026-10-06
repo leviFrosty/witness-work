@@ -95,6 +95,8 @@ export type RootStackParamList = {
       title?: string
       location?: PlanLocation
       categoryId?: string
+      /** Buddy inbox ids to invite. */
+      buddies?: string[]
     }
     /**
      * Buddies (inbox ids) to add to the one-time Plan's invitations, e.g. a
@@ -129,7 +131,7 @@ export type RootStackParamList = {
   SettingsMenu: undefined
   /** Roster, requests, and invites. Opened from Schedule's header. */
   Buddies: undefined
-  /** One buddy's profile, upcoming Plans, and remove action. */
+  /** One buddy: what's planned together, their next two weeks, and settings. */
   Buddy: { inboxId: string }
   /** In-person pairing: my single-use QR code, or a scanner for theirs. */
   'Buddy Code': { mode: 'code' | 'scan'; inviteId?: string }

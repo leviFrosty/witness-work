@@ -10,6 +10,7 @@ import ShareReplyBadge from '@/features/buddies/components/ShareReplyBadge'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import type { ReceivedReply } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 type Props = {
   /** Invited buddies' inbox ids. */
@@ -78,7 +79,9 @@ export default function BuddyPicker({
               accessibilityRole='checkbox'
               accessibilityState={{ checked: isSelected }}
               accessibilityLabel={
-                status ? `${buddy.name}, ${status}` : buddy.name
+                status
+                  ? `${buddyDisplayName(buddy)}, ${status}`
+                  : buddyDisplayName(buddy)
               }
               style={{
                 flexDirection: 'row',
@@ -100,8 +103,8 @@ export default function BuddyPicker({
             >
               <BuddyAvatar
                 avatar={buddy.avatar}
-                name={buddy.name}
-                colorIndex={buddy.colorIndex}
+                name={buddyDisplayName(buddy)}
+                color={buddy}
                 size={24}
               >
                 {reply ? (
@@ -111,7 +114,7 @@ export default function BuddyPicker({
                 ) : null}
               </BuddyAvatar>
               <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {buddy.name}
+                {buddyDisplayName(buddy)}
               </Text>
               {status && (
                 <Text

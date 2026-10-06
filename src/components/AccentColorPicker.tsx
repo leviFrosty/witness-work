@@ -1,112 +1,26 @@
-import { Check as CheckIcon } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
-import PointerHover from '@/components/ui/PointerHover'
-import { Pressable, View } from 'react-native'
-import useTheme from '@/contexts/theme'
 import IsSupporter from '@/components/IsSupporter'
-import CustomColorSwatch from '@/components/CustomColorSwatch'
+import ColorSwatchPicker, {
+  COLOR_PRESETS,
+} from '@/components/ColorSwatchPicker'
 import { usePreferences } from '@/stores/preferences'
 import { lightModeColors } from '@/constants/theme'
 import i18n from '@/lib/locales'
 
-/**
- * Curated palette for supporter-selected accent overrides. Hex values are
- * committed explicitly rather than pulled from the active theme so the choice
- * the user sees matches what gets stored — independent of light/dark mode.
- */
+/** The default accent followed by the shared `COLOR_PRESETS`. */
 export const ACCENT_PRESETS: { value: string; label: string }[] = [
   { value: lightModeColors.accent, label: 'default' },
-  { value: '#F59E0B', label: 'amber' },
-  { value: '#EF4444', label: 'crimson' },
-  { value: '#EC4899', label: 'magenta' },
-  { value: '#A855F7', label: 'violet' },
-  { value: '#3B82F6', label: 'blue' },
-  { value: '#14B8A6', label: 'teal' },
+  ...COLOR_PRESETS.map(({ value, label }) => ({ value, label })),
 ]
-
-const Swatch = ({
-  color,
-  selected,
-  onPress,
-  isDefault,
-}: {
-  color: string
-  selected: boolean
-  onPress: () => void
-  isDefault?: boolean
-}) => {
-  const theme = useTheme()
-  return (
-    <PointerHover effect='lift'>
-      <Pressable
-        onPress={onPress}
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: color,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: selected ? 3 : isDefault ? 1 : 0,
-          borderColor: selected ? theme.colors.text : theme.colors.border,
-        }}
-      >
-        {selected && (
-          <LucideIcon
-            icon={CheckIcon}
-            size={14}
-            color={theme.colors.textInverse}
-          />
-        )}
-      </Pressable>
-    </PointerHover>
-  )
-}
 
 const PickerContents = () => {
   const { customAccentColor, set } = usePreferences()
-
-  const selectedValue = customAccentColor ?? ACCENT_PRESETS[0].value
-
   return (
-    <View style={{ gap: 10 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          paddingVertical: 4,
-        }}
-      >
-        {ACCENT_PRESETS.map((preset) => {
-          const isDefault = preset.value === ACCENT_PRESETS[0].value
-          const selected =
-            preset.value === selectedValue ||
-            (isDefault && customAccentColor === null)
-          return (
-            <Swatch
-              key={preset.value}
-              color={preset.value}
-              selected={selected}
-              isDefault={isDefault}
-              onPress={() =>
-                set({
-                  customAccentColor: isDefault ? null : preset.value,
-                })
-              }
-            />
-          )
-        })}
-        <CustomColorSwatch
-          value={customAccentColor}
-          presetValues={ACCENT_PRESETS.map((p) => p.value)}
-          onChange={(hex) => set({ customAccentColor: hex })}
-          onRemove={() => set({ customAccentColor: null })}
-          title={i18n.t('accentColor')}
-          sheetInitialColor={selectedValue}
-          size={36}
-        />
-      </View>
-    </View>
+    <ColorSwatchPicker
+      value={customAccentColor}
+      defaultColor={ACCENT_PRESETS[0].value}
+      onChange={(next) => set({ customAccentColor: next })}
+      title={i18n.t('accentColor')}
+    />
   )
 }
 

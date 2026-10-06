@@ -20,6 +20,7 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
+import { shareRefFromKey } from '@/features/buddies/lib/state'
 import type { TogetherItem } from '@/features/buddies/lib/together'
 
 /**
@@ -74,11 +75,17 @@ export default function BuddyTogetherRow({
 
   const { planId } = item
   const contactId = item.direction === 'outgoing' ? item.contactId : undefined
-  const open = planId
-    ? () => navigation.navigate('PlanDay', { existingDayPlanId: planId })
-    : contactId
-      ? () => navigation.navigate('Contact Details', { id: contactId })
+  // A buddy's Plan opens even after a "Can't make it", to change the answer.
+  const share =
+    item.direction === 'incoming' && !isFollowUp
+      ? shareRefFromKey(item.shareKey)
       : undefined
+  const open =
+    planId || share
+      ? () => navigation.navigate('Plan Details', { dayPlanId: planId, share })
+      : contactId
+        ? () => navigation.navigate('Contact Details', { id: contactId })
+        : undefined
 
   const changeAnswer: ContextMenuEntries =
     item.direction === 'incoming'

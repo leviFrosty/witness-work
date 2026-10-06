@@ -12,6 +12,11 @@ export const SHARE_RETENTION_MS = 24 * 60 * 60 * 1000
 export const planShareKey = (planId: string) => `plan:${planId}`
 export const followUpShareKey = (visitId: string) => `followUp:${visitId}`
 
+/** When a one-time Plan ends (epoch ms); a Plan with no start time is noon. */
+export const planEndsAt = (plan: DayPlan) =>
+  combineDateAndStartTime(plan.date, plan.startTimeInMinutes).getTime() +
+  plan.minutes * 60 * 1000
+
 const clip = (text: string | undefined, max: number) => {
   const trimmed = text?.trim()
   return trimmed ? trimmed.slice(0, max) : undefined
@@ -103,10 +108,7 @@ export function buildOutgoingShares(input: {
   const specs: OutgoingShareSpec[] = []
   for (const plan of input.dayPlans) {
     if (!plan.buddies?.length || plan.buddyShare) continue
-    const end =
-      combineDateAndStartTime(plan.date, plan.startTimeInMinutes).getTime() +
-      plan.minutes * 60 * 1000
-    const expiresAt = end + SHARE_RETENTION_MS
+    const expiresAt = planEndsAt(plan) + SHARE_RETENTION_MS
     if (expiresAt <= input.now) continue
     specs.push({
       key: planShareKey(plan.id),

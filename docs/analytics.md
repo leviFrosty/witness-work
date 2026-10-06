@@ -423,6 +423,24 @@ of this preference with `order` (comma-separated bounded route names, including
 Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and
 navigation interactions remain removed.
 
+## Plan details
+
+Tapping a Plan opens Plan Details: the Plan read-only, with Edit and a More menu
+in the header and its buddies below. Screen tracking (`Plan Details`,
+`previous_screen`) shows its reach and where people come from. Edit,
+Duplicate, and Log as Time are taps, so they send nothing here; what they lead
+to is already counted (`plan_created`, `time_entry_created`). One event counts
+the outcomes nothing else does:
+
+| Event                 | When / properties                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `plan_details_action` | `action`: `delete` (a delete was confirmed) or `invite_buddy` (Invite Buddies added a buddy in place). `plan_kind`: `day` or `recurring`. `linked`: the Plan follows a buddy's invitation. |
+
+Invite for a buddy who asked to join sends `buddy_join_request_answered`
+(`invited`), as it does from the bell. Answering a buddy's invitation here sends
+`buddy_invitation_answered` with `source: plan_details`. Plan titles, dates,
+times, places, notes, ids, and buddy names are never sent.
+
 ## Route planning
 
 Plan Today's Route is a Supporter feature on iOS and Android. Its gate placement
@@ -530,12 +548,12 @@ A buddy's detail screen answers whether people plan together from it and make
 it their own. All properties are bounded enums; no names, nicknames, relay ids,
 or dates are sent.
 
-| Event                         | When                                                                                 | Properties                                                                     |
-| ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `buddy_plan_invite_opened`    | Invite to a Plan opened the Plan form with the buddy preselected.                    | `source: buddy_detail`. Saving still sends `plan_created` (`invited_buddies`). |
-| `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.               |
-| `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail`, `type: plan \| followUp`, `answer`.   |
-| `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                  |
+| Event                         | When                                                                                 | Properties                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `buddy_plan_invite_opened`    | Invite to a Plan opened the Plan form with the buddy preselected.                    | `source: buddy_detail`. Saving still sends `plan_created` (`invited_buddies`).               |
+| `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                             |
+| `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail \| plan_details`, `type: plan \| followUp`, `answer`. |
+| `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                                |
 
 ### Buddies Alpha feedback
 

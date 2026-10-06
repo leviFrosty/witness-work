@@ -8,6 +8,7 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 - `buddies-invite` creates an invite link (`https://ww-proxy.leviwilkerson.com/b#1…`) or code and shares it.
 - `buddies-accept` claims an invite on the second device, which then appears on both rosters.
 - `buddies-plans` marks shared plans on the calendar, and lets the user ask to join.
+- `buddies-plan-details` shows a plan's invited buddies and replies, requests to join (Invite adds them in place), Invite Buddies, and for a plan from a buddy's invitation the organizer and a Going / Can't Make It switch. Can't Make It keeps the page open on the invitation so Going can bring the plan back.
 - `buddies-settings` covers Buddies Settings and Feedback.
 
 ## How to get to it (user POV)
@@ -39,4 +40,5 @@ Steps:
 - Buddies needs the Keychain native module. On a binary without it, the feature stays hidden even with the flag on.
 - Pushes are skipped locally, because APNs keys aren't passed to the isolated worker. Refresh by reopening the screen.
 - The relay's rate limit is 30 requests per minute per IP. Avoid tight loops.
+- For screens that only read Buddies state (Plan Details, the bell), seed made-up buddies, `shareReplies`, `joinRequests`, and `incomingShares` through `__WW_DEV__.stores.buddies.setState(...)` instead of pairing devices. Re-run `wwv flag buddies on` after a reload; the override doesn't survive one.
 - Universal links always point at the production host. Drive invites with `wwv link`, which the app parses locally, rather than a browser.

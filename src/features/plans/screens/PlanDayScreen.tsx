@@ -77,6 +77,8 @@ type NotifyMeOffset = {
 
 type RecurringSaveScope = 'instance' | 'future' | 'all'
 
+type PlanDetailsTarget = RootStackParamList['Plan Details']
+
 const hourOptions = [...Array(24).keys()].map((value) => ({
   label: `${value}`,
   value,
@@ -1232,10 +1234,17 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     }
   }
 
-  const saveExistingRecurringPlan = (scope: RecurringSaveScope) => {
+  /** Saves an edit to a Recurring Plan; returns where the edited date is now. */
+  const saveExistingRecurringPlan = (
+    scope: RecurringSaveScope
+  ): PlanDetailsTarget | undefined => {
     if (!existingRecurringPlan) return
 
     const payload = buildRecurringPayload()
+    const editedDate = {
+      recurringPlanId: existingRecurringPlan.id,
+      date: payload.startDate.toISOString(),
+    }
     const instanceDate = editingWriteDate
     const categoryChanged =
       (payload.categoryId ?? undefined) !==
@@ -1259,8 +1268,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           existingRecurringPlan.id,
           instanceDate
         )
+        const id = Crypto.randomUUID()
         addDayPlan({
-          id: Crypto.randomUUID(),
+          id,
           date: payload.startDate,
           startTimeInMinutes: payload.startTimeInMinutes,
           minutes: payload.minutes,
@@ -1272,7 +1282,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           notifications: [],
         })
 
-        return
+        return { dayPlanId: id }
       }
 
       const override = {
@@ -1291,7 +1301,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       } else {
         addRecurringPlanOverride(existingRecurringPlan.id, override)
       }
-      return
+      return editedDate
     }
 
     if (scope === 'future') {
@@ -1300,7 +1310,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           id: existingRecurringPlan.id,
           ...payload,
         })
-        return
+        return editedDate
       }
 
       const lastOldDate = localDayFromUtcCursor(
@@ -1328,17 +1338,16 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           )
           .map(storedDateToLocalDate),
       })
-      addRecurringPlan({
-        id: Crypto.randomUUID(),
-        ...payload,
-      })
-      return
+      const id = Crypto.randomUUID()
+      addRecurringPlan({ id, ...payload })
+      return { ...editedDate, recurringPlanId: id }
     }
 
     updateRecurringPlan({
       id: existingRecurringPlan.id,
       ...payload,
     })
+    return editedDate
   }
 
   const savePlan = async (scope?: RecurringSaveScope) => {
@@ -1349,8 +1358,12 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     const plannedBuddies =
       !linkedShare && invitedBuddies.length > 0 ? invitedBuddies : undefined
 
+    // Where Plan Details shows the saved Plan: an edit can move it, and one
+    // created from Plan Details (Duplicate, Invite) opens next.
+    let detailsTarget: PlanDetailsTarget | undefined
     if (isEditMode) {
       if (existingDayPlan) {
+        detailsTarget = { dayPlanId: existingDayPlan.id }
         updateDayPlan({
           id: existingDayPlan.id,
           date: planDate,
@@ -1368,7 +1381,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           ),
         })
       } else if (existingRecurringPlan && scope) {
-        saveExistingRecurringPlan(scope)
+        detailsTarget = saveExistingRecurringPlan(scope)
       }
 
       toast.show(i18n.t('success'), {
@@ -1379,6 +1392,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     } else {
       if (oneTime) {
         const id = Crypto.randomUUID()
+        detailsTarget = { dayPlanId: id }
         addDayPlan({
           id,
           date: planDate,
@@ -1392,10 +1406,13 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           ...planReminderIntent(id, planDate, startTimeInMinutes),
         })
       } else {
-        addRecurringPlan({
-          id: Crypto.randomUUID(),
-          ...buildRecurringPayload(),
-        })
+        const id = Crypto.randomUUID()
+        const payload = buildRecurringPayload()
+        detailsTarget = {
+          recurringPlanId: id,
+          date: payload.startDate.toISOString(),
+        }
+        addRecurringPlan({ id, ...payload })
       }
 
       toast.show(i18n.t('success'), {
@@ -1419,7 +1436,13 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         prefilled: !!prefill,
       })
     setSaveScopeModalOpen(false)
-    navigation.goBack()
+    const { routes } = navigation.getState()
+    const opener = routes[routes.length - 2]?.name
+    if (detailsTarget && opener === 'Plan Details') {
+      navigation.popTo('Plan Details', detailsTarget)
+    } else {
+      navigation.goBack()
+    }
   }
 
   const saveDisabled =

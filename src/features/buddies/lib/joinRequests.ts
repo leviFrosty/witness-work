@@ -95,6 +95,30 @@ export function findJoinRequestPlan(
   )
 }
 
+/**
+ * Buddies' requests to join one of this User's Plans on `dayKey` that still
+ * wait on an answer: not passed on, withdrawn, lapsed, or already invited.
+ */
+export function openJoinRequestsForPlan(
+  plan: (DayPlan | RecurringPlan) & { buddies?: string[] },
+  dayKey: string,
+  requests: IncomingJoinRequest[],
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[],
+  now: number
+): IncomingJoinRequest[] {
+  return requests.filter(
+    (request) =>
+      !request.dismissed &&
+      !request.withdrawn &&
+      request.expiresAt > now &&
+      request.d === dayKey &&
+      !plan.buddies?.includes(request.from) &&
+      findJoinRequestPlan(request, dayPlans, recurringPlans)?.plan.id ===
+        plan.id
+  )
+}
+
 function contributionStart(
   contribution: PlannedDayContribution,
   day: Date

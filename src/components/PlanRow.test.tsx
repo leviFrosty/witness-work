@@ -4,7 +4,7 @@ import { act, create, type ReactTestRendererJSON } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Category } from '@/types/category'
-import type { DayPlan } from '@/types/timeEntry'
+import type { DayPlan, PlanListItem } from '@/types/timeEntry'
 
 const categoriesState = vi.hoisted(() => ({
   current: [] as Category[],
@@ -140,7 +140,7 @@ vi.mock('@/lib/recurrence', () => ({
   }) => plan.startTimeInMinutes ?? 12 * 60,
 }))
 
-import PlanRow, { type PlanListItem } from '@/components/PlanRow'
+import PlanRow from '@/components/PlanRow'
 import type { RecurringPlan } from '@/lib/recurrence'
 import { flattenMenu, menuGroups, isSubmenu } from '@/components/ui/menuEntries'
 import type {
@@ -203,15 +203,16 @@ describe('PlanRow', () => {
     expect(text).not.toContain('Type:')
   })
 
-  const renderMenu = (item: PlanListItem, onPress?: () => void) => {
+  const renderMenu = (item: PlanListItem) => {
     let row: ReturnType<typeof create>
     act(() => {
-      row = create(<PlanRow item={item} onPress={onPress} />)
+      row = create(<PlanRow item={item} />)
     })
     const menu = row!.root.findByType('ContextMenu' as never)
     return {
       groups: menuGroups(menu.props.actions as ContextMenuEntries),
       preview: menu.props.preview,
+      press: menu.props.onPress as () => void,
     }
   }
   const ids = (groups: ContextMenuItem[][]) =>
@@ -220,11 +221,45 @@ describe('PlanRow', () => {
   const past = new Date(2026, 7, 27)
   const future = moment().add(3, 'days').toDate()
 
+  it('opens Plan Details on press and the Plan form from Edit', () => {
+    const { groups, press } = renderMenu({
+      type: 'day',
+      date: past,
+      plan: dayPlan('p1'),
+    })
+    press()
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Plan Details', {
+      dayPlanId: 'p1',
+    })
+    flattenMenu(groups)
+      .find(({ key }) => key === 'edit')!
+      .action.onPress()
+    expect(navigation.navigate).toHaveBeenLastCalledWith('PlanDay', {
+      date: past.toISOString(),
+      existingDayPlanId: 'p1',
+    })
+  })
+
+  it("opens a Recurring Plan's date on press", () => {
+    const plan = {
+      id: 'r1',
+      startDate: past,
+      minutes: 60,
+      recurrence: { frequency: 0, interval: 1, endDate: null },
+    } as unknown as RecurringPlan
+    renderMenu({ type: 'recurring', date: past, plan }).press()
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Plan Details', {
+      recurringPlanId: 'r1',
+      date: past.toISOString(),
+    })
+  })
+
   it('offers edit, log, duplicate and delete for a past Day Plan', () => {
-    const { groups } = renderMenu(
-      { type: 'day', date: past, plan: dayPlan('p1') },
-      () => {}
-    )
+    const { groups } = renderMenu({
+      type: 'day',
+      date: past,
+      plan: dayPlan('p1'),
+    })
     expect(ids(groups)).toEqual([
       ['edit', 'log_as_time', 'duplicate'],
       ['delete'],
@@ -238,14 +273,14 @@ describe('PlanRow', () => {
       ids(
         renderMenu({ type: 'day', date: future, plan: dayPlan('p1') }).groups
       )[0]
-    ).toEqual(['duplicate'])
+    ).toEqual(['edit', 'duplicate'])
 
     publisher.showsTimeEntry = false
     expect(
       ids(
         renderMenu({ type: 'day', date: past, plan: dayPlan('p1') }).groups
       )[0]
-    ).toEqual(['duplicate'])
+    ).toEqual(['edit', 'duplicate'])
     publisher.showsTimeEntry = true
   })
 

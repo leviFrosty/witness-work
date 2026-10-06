@@ -1,12 +1,11 @@
 import { useNavigation } from '@react-navigation/native'
-import * as Crypto from 'expo-crypto'
+import useNow from '@/hooks/useNow'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import useConversations from '@/stores/conversationStore'
 import { storedDayKey } from '@/lib/normalizeDate'
 import type { PlannedDayContribution } from '@/lib/recurrence'
-import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -17,9 +16,12 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
   findJoinRequestPlan,
   joinRequestInvite,
-  type JoinRequestInvite,
 } from '@/features/buddies/lib/joinRequests'
-import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
+import sendJoinRequestInvite from '@/features/buddies/lib/sendJoinRequestInvite'
+import {
+  effectiveShareStatus,
+  isOpenPlanInvitation,
+} from '@/features/buddies/lib/linkedPlans'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import {
   awaitsAnswer,
@@ -93,25 +95,6 @@ export function buddyNotificationIdForSeq(seq: number): string | null {
 }
 
 /**
- * Invite answers a request to join in place: the buddy is added to the Plan,
- * which shares it with them like saving it from the Plan's screen would.
- */
-function sendJoinRequestInvite(
-  invite: Extract<JoinRequestInvite, { kind: 'invite' }>
-) {
-  const report = useServiceReport.getState()
-  if ('update' in invite) {
-    report.updateDayPlan(invite.update)
-    return
-  }
-  report.addDayPlan({
-    ...invite.add,
-    id: Crypto.randomUUID(),
-    notifyMe: usePreferences.getState().planAlwaysNotify,
-  })
-}
-
-/**
  * The buddy notification queue as tray items: invitations, changes,
  * cancellations, replies, requests to join, and new pairings. Only once the
  * User has started using Buddies.
@@ -128,6 +111,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
+  const { now } = useNow()
   if (!enabled || !started) return []
 
   /** A reply opens the Plan or Contact it's about. */
@@ -138,8 +122,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
         buddiesEngine.shareIdForKey(planShareKey(candidate.id)) === shareId
     )
     if (plan)
-      return () =>
-        navigation.navigate('PlanDay', { existingDayPlanId: plan.id })
+      return () => navigation.navigate('Plan Details', { dayPlanId: plan.id })
     const visit = visits.find(
       (candidate) =>
         candidate.followUp?.buddies?.length &&
@@ -152,20 +135,22 @@ export default function useBuddyNotifications(): NotificationItem[] {
   }
 
   /** A request to join opens the Plan it's about. */
-  const planTarget = (match: PlannedDayContribution, d: string) => {
-    const date = moment(d, 'YYYY-MM-DD').hour(12).toISOString()
-    return match.source === 'day'
-      ? () =>
-          navigation.navigate('PlanDay', {
-            date,
-            existingDayPlanId: match.plan.id,
-          })
+  const planTarget = (match: PlannedDayContribution, d: string) =>
+    match.source === 'day'
+      ? () => navigation.navigate('Plan Details', { dayPlanId: match.plan.id })
       : () =>
-          navigation.navigate('PlanDay', {
-            date,
-            existingRecurringPlanId: match.plan.id,
-            recurringPlanDate: date,
+          navigation.navigate('Plan Details', {
+            recurringPlanId: match.plan.id,
+            date: moment(d, 'YYYY-MM-DD').hour(12).toISOString(),
           })
+
+  /** A buddy's Plan invitation opens it, answered or not, while it's open. */
+  const invitationTarget = (shareKey: string) => {
+    const share = incomingShares[shareKey]
+    if (!isOpenPlanInvitation(share, now)) return undefined
+    const { from, shareId } = share
+    return () =>
+      navigation.navigate('Plan Details', { share: { from, shareId } })
   }
 
   /** A new pairing opens that buddy, while they're still a buddy. */
@@ -189,7 +174,10 @@ export default function useBuddyNotifications(): NotificationItem[] {
           ? buddyTarget(entry.from)
           : joinRequest && ownPlan
             ? planTarget(ownPlan, joinRequest.d)
-            : undefined
+            : (entry.kind === 'shareInvite' || entry.kind === 'shareUpdate') &&
+                entry.shareKey
+              ? invitationTarget(entry.shareKey)
+              : undefined
     const share =
       entry.kind !== 'shareReply' && entry.shareKey
         ? incomingShares[entry.shareKey]

@@ -5,7 +5,9 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { DayPlan } from '@/types/timeEntry'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
-import ShareReplyBadge from '@/features/buddies/components/ShareReplyBadge'
+import ShareReplyBadge, {
+  shareReplyLabel,
+} from '@/features/buddies/components/ShareReplyBadge'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
@@ -52,16 +54,7 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
     ? i18n.t('buddies_withName', { name: names })
     : people
         .map(({ buddy, reply }) =>
-          [
-            buddyDisplayName(buddy),
-            i18n.t(
-              reply === 'going'
-                ? 'buddies_replyGoing'
-                : reply === 'declined'
-                  ? 'buddies_replyDeclined'
-                  : 'buddies_replyInvited'
-            ),
-          ].join(', ')
+          [buddyDisplayName(buddy), shareReplyLabel(reply)].join(', ')
         )
         .join('; ')
 

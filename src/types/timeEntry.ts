@@ -246,3 +246,8 @@ export type RecurringPlan = {
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }
+
+/** One Plan on one date, as lists and Plan Details show it. */
+export type PlanListItem =
+  | { type: 'day'; date: Date; plan: DayPlan }
+  | { type: 'recurring'; date: Date; plan: RecurringPlan }

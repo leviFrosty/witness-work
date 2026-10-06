@@ -1,6 +1,6 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Coordinate } from '@/types/contact'
-import type { PlanLocation } from '@/types/timeEntry'
+import type { BuddyShareRef, PlanLocation } from '@/types/timeEntry'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
 export type RootStackParamList = {
@@ -76,6 +76,18 @@ export type RootStackParamList = {
   PreferencesCustomFields: undefined
   PreferencesConversationFields: undefined
   RescheduleVisit: { contactId: string; visitId: string }
+  /**
+   * One Plan, read-only: a one-time Plan, one date of a Recurring Plan, or a
+   * buddy's Plan invitation (shown even after the User says they can't make it,
+   * so they can change their mind).
+   */
+  'Plan Details': {
+    dayPlanId?: string
+    recurringPlanId?: string
+    /** ISO; the Recurring Plan's date shown. */
+    date?: string
+    share?: BuddyShareRef
+  }
   PlanDay: {
     date?: string
     /** Existing plan ID for editing mode */

@@ -222,31 +222,6 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
     }
   }, [rootNavigation, sheet.date])
 
-  const handleNavigateToPlanDay = useCallback(
-    (existingDayPlanId: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: sheet.date.toISOString(),
-          existingDayPlanId,
-        })
-      }
-    },
-    [rootNavigation, sheet.date]
-  )
-
-  const handleNavigateToRecurringPlan = useCallback(
-    (existingRecurringPlanId: string, recurringPlanDate: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: sheet.date.toISOString(),
-          existingRecurringPlanId,
-          recurringPlanDate,
-        })
-      }
-    },
-    [rootNavigation, sheet.date]
-  )
-
   const handleEditTimeReport = useCallback(
     (report: TimeEntry) => {
       pendingNavigation.current = () => {
@@ -491,8 +466,6 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
         thisMonthsReports={thisMonthsReports}
         onAddTime={handleAddTime}
         onPlanDay={handlePlanDay}
-        onNavigateToPlanDay={handleNavigateToPlanDay}
-        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
         onEditTimeReport={handleEditTimeReport}
       />
     </View>

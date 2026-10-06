@@ -170,6 +170,7 @@ export const FAQS: FAQEntry[] = [
     category: 'time',
     related: [309, 261],
   },
+  { id: 'planDetails', category: 'plans' },
   {
     id: 'editRecurringPlan',
     category: 'plans',

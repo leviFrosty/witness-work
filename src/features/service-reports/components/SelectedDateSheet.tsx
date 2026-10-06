@@ -18,11 +18,6 @@ interface Props {
   thisMonthsReports: TimeEntry[] | null
   onAddTime?: () => void
   onPlanDay?: () => void
-  onNavigateToPlanDay?: (existingDayPlanId: string) => void
-  onNavigateToRecurringPlan?: (
-    existingRecurringPlanId: string,
-    recurringPlanDate: string
-  ) => void
   onEditTimeReport?: (report: TimeEntry) => void
   /**
    * Extra content under the day's history (e.g. Buddies' plans). Its menus
@@ -42,16 +37,14 @@ const SelectedDateSheet: React.FC<Props> = ({
   thisMonthsReports,
   onAddTime,
   onPlanDay,
-  onNavigateToPlanDay,
-  onNavigateToRecurringPlan,
   onEditTimeReport,
   renderFooter,
   renderDayPlanFooter,
 }) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
-  // Navigation chosen from a row's context menu waits for the sheet to close,
-  // or the pushed screen would land underneath the modal sheet.
+  // Navigation chosen from a row or its context menu waits for the sheet to
+  // close, or the pushed screen would land underneath the modal sheet.
   const pendingNavigation = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -100,14 +93,6 @@ const SelectedDateSheet: React.FC<Props> = ({
               date={sheet.date}
               serviceReports={thisMonthsReports || []}
               showHeader={true}
-              onDayPlanPress={(plan) => {
-                setSheet({ ...sheet, open: false })
-                onNavigateToPlanDay?.(plan.id)
-              }}
-              onRecurringPlanPress={(plan) => {
-                setSheet({ ...sheet, open: false })
-                onNavigateToRecurringPlan?.(plan.id, sheet.date.toISOString())
-              }}
               onTimeReportPress={(report) => {
                 setSheet({ ...sheet, open: false })
                 onEditTimeReport?.(report)

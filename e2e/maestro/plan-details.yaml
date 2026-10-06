@@ -1,0 +1,18 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'PlanDay' && __WW_DEV__.state().route.params.existingDayPlanId === 'verify-plan-0'
+appId: com.leviwilkerson.jwtimedev
+name: Open a Plan's details from Schedule, then edit it
+---
+- extendedWaitUntil:
+    visible: Schedule
+    timeout: 60000
+- tapOn: Schedule
+- scrollUntilVisible:
+    element: Cart witnessing
+# Tapping a Plan opens its details, not the form.
+- tapOn:
+    id: plan-row-verify-plan-0
+- assertVisible: Duration
+- assertVisible: Standard
+- tapOn: Edit
+- assertVisible: Edit Plan

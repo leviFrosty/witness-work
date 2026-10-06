@@ -23,7 +23,8 @@ import i18n from '@/lib/locales'
 /**
  * Full Duration Format, respecting the caller-supplied display preference.
  *
- * @param totalMinutes - Duration in minutes.
+ * @param totalMinutes - Duration in minutes; fractions round to the nearest
+ *   whole minute before formatting.
  * @param format - `'decimal'` → `"1.5h"`, `'short'` → `"1h 30m"`.
  */
 export const formatMinutes = (
@@ -31,9 +32,13 @@ export const formatMinutes = (
   format: MinuteDisplayFormat
 ) => {
   let formatted: string
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = round(totalMinutes % 60, 0)
-  const decimalHours = round(totalMinutes / 60, 1)
+  // Round to a whole minute once, then derive every format from that, so a
+  // fraction like 59.6 carries into the hour ("1h 0m", not "0h 60m") and both
+  // formats describe the same duration.
+  const wholeMinutes = round(totalMinutes, 0)
+  const hours = Math.floor(wholeMinutes / 60)
+  const minutes = wholeMinutes % 60
+  const decimalHours = round(wholeMinutes / 60, 1)
 
   switch (format) {
     case 'decimal': {
@@ -86,7 +91,8 @@ export type CompactDurationOptions = {
  *   formatMinutesCompact(630) // "11h"  (10+ hours rounded)
  *   formatMinutesCompact(2, { unit: 'hours' }) // "2h" (value is already hours)
  *
- * @param value - Duration in minutes, or in whole hours when `unit: 'hours'`.
+ * @param value - Duration in minutes (rounded to the nearest whole minute), or
+ *   in whole hours when `unit: 'hours'`.
  * @param options - See {@link CompactDurationOptions}.
  * @returns Ultra-compact time string (e.g., "30m", "2h", "1.5h", "12h").
  */
@@ -98,7 +104,8 @@ export const formatMinutesCompact = (
     return `${value}${i18n.t('hoursCompact')}`
   }
 
-  const totalMinutes = value
+  // Whole minutes only, so a fraction like 59.6 reads "1h", not "59.6m".
+  const totalMinutes = round(value, 0)
   if (totalMinutes === 0) return ''
 
   const decimalHours = totalMinutes / 60

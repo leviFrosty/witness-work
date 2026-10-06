@@ -243,6 +243,8 @@ export const FAQS: FAQEntry[] = [
     id: 'reportBug',
     category: 'general',
   },
+  { id: 'about', category: 'general' },
+  { id: 'debugTools', category: 'general' },
   {
     id: 'becomeSupporter',
     category: 'supporter',

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { View } from 'react-native'
 import Constants from 'expo-constants'
 import Text from '@/components/ui/MyText'
@@ -9,17 +8,7 @@ import { usePreferences } from '@/stores/preferences'
 
 export default function AppVersionInfo() {
   const theme = useTheme()
-  const { developerTools, set } = usePreferences()
-  const [count, setCount] = useState(0)
-
-  const incrementHiddenCounter = () => {
-    if (count === 4) {
-      set({ developerTools: !developerTools })
-      setCount(0)
-    } else {
-      setCount(count + 1)
-    }
-  }
+  const developerTools = usePreferences((s) => s.developerTools)
 
   return (
     <View style={{ gap: 5, alignItems: 'center' }}>
@@ -30,7 +19,6 @@ export default function AppVersionInfo() {
           fontFamily: theme.fonts.semiBold,
           fontSize: 14,
         }}
-        onPress={incrementHiddenCounter}
       >
         {Constants.expoConfig?.version
           ? `v${Constants.expoConfig.version} (${Constants.expoConfig.extra?.commitHash ?? '?'})`

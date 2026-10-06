@@ -11,7 +11,8 @@ import i18n from '@/lib/locales'
 import PreferencesSection from '@/features/settings/components/sections/Preferences'
 import AppSection from '@/features/settings/components/sections/App'
 import ContactSection from '@/features/settings/components/sections/Contact'
-import MiscSection from '@/features/settings/components/sections/Misc'
+import AboutSection from '@/features/settings/components/sections/About'
+import AdvancedSection from '@/features/settings/components/sections/Advanced'
 import SupportSection from '@/features/settings/components/sections/Support'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
@@ -63,7 +64,8 @@ export default function SettingsContents({
         <AppSection {...sectionProps} />
         <SupportSection {...sectionProps} />
         <ContactSection {...sectionProps} />
-        <MiscSection {...sectionProps} />
+        <AboutSection {...sectionProps} />
+        <AdvancedSection />
       </View>
     </>
   )

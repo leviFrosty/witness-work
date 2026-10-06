@@ -9,6 +9,7 @@ import { joinRequestStatus } from '@/features/buddies/lib/joinRequests'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /** Where Ask to Join was used, for `buddy_join_requested`. */
 type Source = 'buddy_plans_for_day' | 'buddy_detail'
@@ -45,7 +46,9 @@ export default function useAskToJoin(source: Source) {
   const withdraw = (buddy: Buddy, requestId: string) =>
     Alert.alert(
       i18n.t('buddies_withdrawJoinRequestTitle'),
-      i18n.t('buddies_withdrawJoinRequestBody', { name: buddy.name }),
+      i18n.t('buddies_withdrawJoinRequestBody', {
+        name: buddyDisplayName(buddy),
+      }),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {

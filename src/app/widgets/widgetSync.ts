@@ -19,10 +19,42 @@ import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
 import { logger } from '@/lib/logger'
 import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { mmkvStorage } from '@/stores/mmkv'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { currentBuddyDayMarkers } from '@/features/buddies/lib/currentBuddyDayMarkers'
+import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 
 export const WIDGET_REFRESH_TASK = 'com.leviwilkerson.jwtime.widget.refresh'
 
 let installed = false
+
+/**
+ * Whether Buddies shows in the app, remembered for widget pushes made while
+ * feature flags are unknown (backgrounded, offline, or a background task).
+ */
+const BUDDIES_ENABLED_KEY = 'widgetBuddiesEnabled'
+
+/** Called from React whenever the app knows whether Buddies is shown. */
+export function setWidgetBuddiesEnabled(enabled: boolean): void {
+  if (mmkvStorage.getBoolean(BUDDIES_ENABLED_KEY) === enabled) return
+  mmkvStorage.set(BUDDIES_ENABLED_KEY, enabled)
+  debouncedPush()
+}
+
+function buddyMarkers(): Record<string, BuddyDayMarker> {
+  if (!mmkvStorage.getBoolean(BUDDIES_ENABLED_KEY)) return {}
+  try {
+    return currentBuddyDayMarkers({
+      ...useBuddies.getState(),
+      dayPlans: useServiceReport.getState().dayPlans,
+    })
+  } catch (e) {
+    // E.g. the identity seed is unreadable in a background task; the rest of
+    // the snapshot still goes out.
+    logger.warn('[widgetSync] buddy markers unavailable', e)
+    return {}
+  }
+}
 
 /**
  * Reads the current zustand state synchronously and pushes a freshly built
@@ -87,6 +119,7 @@ function pushSnapshot(reason: string): void {
         override: prefs.startOfWeek,
         region: prefs.formatRegion,
       }),
+      buddyMarkers: buddyMarkers(),
       locale: prefs.locale ?? DEFAULT_LOCALE,
       accentColor,
     })
@@ -142,6 +175,18 @@ export function installWidgetSync(): () => void {
   // a newly-active supporter's custom accent appears in widgets without
   // waiting for the next unrelated store write.
   const unsubSupporter = useSupporter.subscribe(() => debouncedPush())
+  // Only the slices the calendar's buddy badges read; the store also holds
+  // notifications and sync bookkeeping that change far more often.
+  const unsubBuddies = useBuddies.subscribe((state, previous) => {
+    if (
+      state.buddies !== previous.buddies ||
+      state.cards !== previous.cards ||
+      state.shareReplies !== previous.shareReplies ||
+      state.incomingShares !== previous.incomingShares ||
+      state.registeredInboxId !== previous.registeredInboxId
+    )
+      debouncedPush()
+  })
 
   // 2. Foreground rewrite — covers locale switches, midnight rollover, and
   //    any other state that changes while the app was backgrounded.
@@ -168,6 +213,7 @@ export function installWidgetSync(): () => void {
     unsubContacts()
     unsubConversations()
     unsubSupporter()
+    unsubBuddies()
     appStateSub.remove()
     BackgroundTask.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
     installed = false

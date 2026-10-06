@@ -86,3 +86,20 @@ export function buildBuddyDayMarkers({
   }
   return markers
 }
+
+/** At most this many circles run up a calendar day's right edge. */
+export const MAX_STACKED_BUDDIES = 3
+
+/**
+ * The avatars a calendar day shows for who the User goes out with, bottom
+ * first. When they don't all fit, the top circle counts the rest instead.
+ */
+export function stackedBuddies(withBuddies: Buddy[]): {
+  shown: Buddy[]
+  more: number
+} {
+  if (withBuddies.length <= MAX_STACKED_BUDDIES)
+    return { shown: withBuddies, more: 0 }
+  const shown = withBuddies.slice(0, MAX_STACKED_BUDDIES - 1)
+  return { shown, more: withBuddies.length - shown.length }
+}

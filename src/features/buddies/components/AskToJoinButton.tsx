@@ -8,6 +8,7 @@ import i18n from '@/lib/locales'
 import type useAskToJoin from '@/features/buddies/hooks/useAskToJoin'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 import type { Buddy } from '@/features/buddies/lib/state'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /**
  * Ask to Join for one of a buddy's Plans, then Asked (tap to withdraw). Nothing
@@ -42,7 +43,7 @@ export default function AskToJoinButton({
       }
       accessibilityLabel={i18n.t(
         asked ? 'buddies_askedToJoinA11y' : 'buddies_askToJoinA11y',
-        { name: buddy.name, plan: label }
+        { name: buddyDisplayName(buddy), plan: label }
       )}
       style={{
         paddingVertical: 4,

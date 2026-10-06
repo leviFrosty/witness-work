@@ -14,7 +14,7 @@ iOS and Android are both supported and share the same app flows. Setup and build
 
 - **Test both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too — or be gated with `Platform.OS` and degrade gracefully.
 - **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
-- **iOS-only features.** iCloud sync/restore, widgets, Live Activities, the Apple Watch app, and alternate app icons stay unavailable on Android. Hide their entry points there instead of showing a broken state. Notes Import uses Play Integrity on Android in place of App Attest (ADR 0017).
+- **iOS-only features.** iCloud sync/restore, widgets, Live Activities, the Apple Watch app, Siri and Shortcuts, and alternate app icons stay unavailable on Android. Hide their entry points there instead of showing a broken state. Notes Import uses Play Integrity on Android in place of App Attest (ADR 0017).
 - **Platform copy.** Don't write "iOS Settings", "iPhone", "App Store", etc. into shared copy; add an `…Android` i18n variant when the wording differs.
 
 ## Verify your own work

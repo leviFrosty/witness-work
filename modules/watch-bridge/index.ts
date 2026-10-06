@@ -4,8 +4,12 @@ import {
   requireOptionalNativeModule,
 } from 'expo-modules-core'
 
-/** How a watch entry was made, reported to analytics. */
-export type WatchOrigin = 'app' | 'shortcut' | 'timer'
+/**
+ * How an entry or trip was made, reported to analytics. `shortcut` is Siri or
+ * Shortcuts on the watch; `phoneShortcut` is Siri or Shortcuts on the iPhone or
+ * iPad (`targets/intents`).
+ */
+export type WatchOrigin = 'app' | 'shortcut' | 'timer' | 'phoneShortcut'
 
 /** A Time Entry made on the Apple Watch, waiting to be saved. */
 export type WatchEntryDraft = {
@@ -16,6 +20,20 @@ export type WatchEntryDraft = {
   hours: number
   minutes: number
   categoryId: string | null
+  origin: WatchOrigin
+}
+
+/** A mileage Trip made with Siri, waiting to be saved. */
+export type WatchTripDraft = {
+  /** Becomes the Trip id, so a repeated delivery is saved once. */
+  id: string
+  /** `YYYY-MM-DD` of the local day when the trip was logged. */
+  date: string
+  /** `null` uses the car a new trip would. */
+  vehicleId: string | null
+  /** Already doubled for a round trip. */
+  distanceMiles: number
+  roundTrip: boolean
   origin: WatchOrigin
 }
 
@@ -35,6 +53,7 @@ type WatchBridgeNative = {
   getStatus(): WatchStatus
   setSnapshot(json: string): void
   getPendingEntries(): WatchEntryDraft[]
+  getPendingTrips(): WatchTripDraft[]
   resolveEntries(ids: string[]): void
   takeEvents(): WatchEvent[]
   addListener(
@@ -48,7 +67,10 @@ const native =
     ? requireOptionalNativeModule<WatchBridgeNative>('WatchBridge')
     : null
 
-/** Whether this binary can talk to an Apple Watch (iOS with the module). */
+/**
+ * Whether this binary has the module (iOS): it talks to an Apple Watch and
+ * receives what Siri made on this device.
+ */
 export function isAvailable(): boolean {
   return native != null
 }
@@ -65,19 +87,24 @@ export function getStatus(): WatchStatus {
 }
 
 /**
- * Stores the snapshot natively and sends it to the watch when one is paired
- * with the app installed. Throws if Swift can't decode it.
+ * Stores the snapshot natively for Siri, and sends it to the watch when one is
+ * paired with the app installed. Throws if Swift can't decode it.
  */
 export function setSnapshot(json: string): void {
   native?.setSnapshot(json)
 }
 
-/** Watch entries received but not yet saved, oldest first. */
+/** Entries from the watch or Siri not yet saved, oldest first. */
 export function getPendingEntries(): WatchEntryDraft[] {
   return native?.getPendingEntries() ?? []
 }
 
-/** Marks entries as handled (saved or refused) and tells the watch. */
+/** Trips from Siri not yet saved, oldest first. */
+export function getPendingTrips(): WatchTripDraft[] {
+  return native?.getPendingTrips() ?? []
+}
+
+/** Marks entries and trips as handled (saved or refused) and tells the watch. */
 export function resolveEntries(ids: string[]): void {
   if (ids.length) native?.resolveEntries(ids)
 }
@@ -87,7 +114,7 @@ export function takeEvents(): WatchEvent[] {
   return native?.takeEvents() ?? []
 }
 
-/** Fires when watch entries or events arrive while JS is running. */
+/** Fires when entries, trips or events arrive while JS is running. */
 export function onInboxChange(listener: () => void): EventSubscription {
   return native?.addListener('onInboxChange', listener) ?? { remove: () => {} }
 }

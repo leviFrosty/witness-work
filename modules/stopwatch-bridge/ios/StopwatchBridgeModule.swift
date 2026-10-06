@@ -31,10 +31,12 @@ public class StopwatchBridgeModule: Module {
         self?.reemitIfChanged()
       }
       // Commands from the Apple Watch change the state in this process while
-      // JS may be in the foreground. Not `queue: .main`: that makes the
-      // poster wait for the main queue, and the watch connection saves from
-      // its own queue.
+      // JS may be in the foreground, and Siri's are reposted here by
+      // `StopwatchExternalChanges`. Not `queue: .main`: that makes the poster
+      // wait for the main queue, and the watch connection saves from its own
+      // queue.
       if #available(iOS 16.1, *) {
+        StopwatchExternalChanges.start()
         self?.stateObserver = NotificationCenter.default.addObserver(
           forName: StopwatchStore.didChangeNotification,
           object: nil,

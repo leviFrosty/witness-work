@@ -83,6 +83,9 @@ export const analyticsEventNames = [
   'pointer_hover_detected',
   'saved_view_applied',
   'saved_view_created',
+  // Siri and Shortcuts on the iPhone, iPad and Apple Watch.
+  'siri_action_completed',
+  'siri_action_failed',
   'tab_order_changed',
   'update_reveal_closed',
   'update_reveal_opened',

@@ -1,8 +1,8 @@
 import ExpoModulesCore
 import WatchConnectivity
 
-/// JS side of the watch connection. See `WatchSessionCoordinator` and
-/// `src/app/watch/watchSync.ts`.
+/// JS side of the watch connection and of Siri on the iPhone. See
+/// `WatchSessionCoordinator` and `src/app/watch/watchSync.ts`.
 public class WatchBridgeModule: Module {
   private var observers: [NSObjectProtocol] = []
 
@@ -61,6 +61,19 @@ public class WatchBridgeModule: Module {
           "minutes": entry.minutes,
           "categoryId": entry.categoryId,
           "origin": entry.origin.rawValue,
+        ]
+      }
+    }
+
+    Function("getPendingTrips") { () -> [[String: Any?]] in
+      WatchSessionCoordinator.shared.pendingTrips().map { trip in
+        [
+          "id": trip.id,
+          "date": trip.date,
+          "vehicleId": trip.vehicleId,
+          "distanceMiles": trip.distanceMiles,
+          "roundTrip": trip.roundTrip,
+          "origin": trip.origin.rawValue,
         ]
       }
     }

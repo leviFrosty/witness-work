@@ -5,18 +5,23 @@ import { useServiceReport } from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useConversations } from '@/stores/conversationStore'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
 import { mmkvStorage } from '@/stores/mmkv'
 import { analytics } from '@/lib/analytics'
 import type { AnalyticsEventName } from '@/lib/analyticsEvents'
 import { logger } from '@/lib/logger'
 import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { tracksHours } from '@/lib/publisherCapabilities'
+import { resolveMileageUnits } from '@/features/mileage/lib/format'
 import { buildWatchSnapshot } from '@/app/watch/buildWatchSnapshot'
 import { planWatchEntries } from '@/app/watch/planWatchEntries'
+import { planWatchTrips } from '@/app/watch/planWatchTrips'
 
 /** Native analytics events JS may forward; anything else is dropped. */
 const FORWARDED_EVENTS = new Set<string>([
   'watch_timer_action_completed',
+  'siri_action_completed',
+  'siri_action_failed',
 ] satisfies AnalyticsEventName[])
 const STATUS_CAPTURED_AT_KEY = 'watchStatusCapturedAt'
 const STATUS_CAPTURE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
@@ -27,15 +32,16 @@ let draining = false
 
 /**
  * Builds the watch snapshot from the stores and hands it to the native layer,
- * which keeps it and sends it to a paired Apple Watch. Skipped when no watch is
- * paired, and when nothing the watch shows changed unless `force`d.
+ * which keeps it for Siri on this device and sends it to a paired Apple Watch.
+ * Skipped when nothing in it changed, unless `force`d.
  */
 export function pushWatchSnapshot(reason: string, force = false): void {
-  if (!WatchBridge.isAvailable() || !WatchBridge.getStatus().isPaired) return
+  if (!WatchBridge.isAvailable()) return
 
   try {
     const sr = useServiceReport.getState()
     const prefs = usePreferences.getState()
+    const mileage = useMileage.getState()
     // The watch shows this month, so it uses this month's role (Role History).
     const publisher = roleForMonth(
       prefs.roleHistory,
@@ -55,6 +61,10 @@ export function pushWatchSnapshot(reason: string, force = false): void {
       conversations: useConversations.getState().conversations,
       showsTimeEntry: tracksHours(publisher, prefs.logsHours),
       categories: useCategories.getState().categories,
+      mileageTrackingEnabled: prefs.mileageTrackingEnabled,
+      distanceUnit: resolveMileageUnits(prefs).distanceUnit,
+      vehicles: mileage.vehicles,
+      trips: mileage.trips,
     })
 
     const { generatedAt, ...content } = snapshot
@@ -68,15 +78,18 @@ export function pushWatchSnapshot(reason: string, force = false): void {
 }
 
 /**
- * Saves Time Entries made on the watch and forwards native analytics events.
- * Each entry is persisted before the native layer is told it's handled, so a
- * crash in between only causes a repeat delivery, which is recognized by id.
+ * Saves Time Entries and Trips made on the watch or with Siri on this device,
+ * and forwards native analytics events. Each one is persisted before the native
+ * layer is told it's handled, so a crash in between only causes a repeat
+ * delivery, which is recognized by id.
  */
 function drainInbox(): void {
   if (!WatchBridge.isAvailable() || draining) return
   draining = true
   try {
     const drafts = WatchBridge.getPendingEntries()
+    const tripDrafts = WatchBridge.getPendingTrips()
+    const handled: string[] = []
     if (drafts.length) {
       const sr = useServiceReport.getState()
       const plans = planWatchEntries(drafts, {
@@ -88,8 +101,9 @@ function drainInbox(): void {
         if (plan.status === 'add') {
           sr.addServiceReport(plan.entry)
           analytics.capture('time_entry_created', {
-            source: 'watch',
-            watch_origin: plan.origin,
+            ...(plan.origin === 'phoneShortcut'
+              ? { source: 'siri' }
+              : { source: 'watch', watch_origin: plan.origin }),
             entry_mode:
               plan.entry.hours || plan.entry.minutes ? 'hours' : 'checkbox',
             has_category: !!plan.entry.categoryId,
@@ -104,10 +118,29 @@ function drainInbox(): void {
           analytics.capture('watch_entry_skipped', { reason: plan.status })
         }
       }
+      handled.push(...plans.map((plan) => plan.id))
+    }
+    if (tripDrafts.length) {
+      const mileage = useMileage.getState()
+      const plans = planWatchTrips(tripDrafts, mileage)
+      for (const plan of plans) {
+        if (plan.status !== 'add') continue
+        mileage.saveTrip(plan.trip)
+        analytics.capture('mileage_trip_added', {
+          entry_mode: 'distance',
+          round_trip: !!plan.trip.roundTrip,
+          has_note: false,
+          logged_again: false,
+          source: plan.origin === 'phoneShortcut' ? 'siri' : 'watch',
+        })
+      }
+      handled.push(...plans.map((plan) => plan.id))
+    }
+    if (handled.length) {
       // Send the updated progress before the watch stops showing these
       // entries as syncing, so its total never dips.
       pushWatchSnapshot('watch-entries', true)
-      WatchBridge.resolveEntries(plans.map((plan) => plan.id))
+      WatchBridge.resolveEntries(handled)
     }
 
     for (const event of WatchBridge.takeEvents()) {
@@ -140,9 +173,9 @@ const debouncedPush = debounce(() => pushWatchSnapshot('store-change'), 500, {
 })
 
 /**
- * Connects the stores to the Apple Watch: saves entries made on the watch and
- * keeps its snapshot current. Install once storage has hydrated. Idempotent;
- * returns a teardown function for tests.
+ * Connects the stores to the Apple Watch and to Siri on this device: saves the
+ * entries and trips they made and keeps their snapshot current. Install once
+ * storage has hydrated. Idempotent; returns a teardown function for tests.
  */
 export function installWatchSync(): () => void {
   if (!WatchBridge.isAvailable() || installed) return () => {}
@@ -152,10 +185,11 @@ export function installWatchSync(): () => void {
     useServiceReport.subscribe(() => debouncedPush()),
     usePreferences.subscribe(() => debouncedPush()),
     useCategories.subscribe(() => debouncedPush()),
+    useMileage.subscribe(() => debouncedPush()),
   ]
 
   // Foreground covers midnight and month rollover, language changes, and
-  // entries delivered while JS couldn't run.
+  // entries delivered or made with Siri while JS couldn't run.
   const onAppState = (state: AppStateStatus) => {
     if (state !== 'active') return
     drainInbox()

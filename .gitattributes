@@ -1,0 +1,5 @@
+# Written by scripts/sync-widget-shared.mjs (`pnpm sync:widget-shared`). Edit
+# the sources it names instead; GitHub collapses these in diffs.
+targets/*/*.xcstrings linguist-generated=true
+targets/*/Shared/*.swift linguist-generated=true
+targets/widgets/Stopwatch/Stopwatch*.swift linguist-generated=true

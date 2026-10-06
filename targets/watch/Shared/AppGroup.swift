@@ -9,6 +9,7 @@ import Foundation
 ///
 /// - host app        `com.x.y`
 /// - iOS widgets     `com.x.y.widget`
+/// - Siri (intents)  `com.x.y.intents`
 /// - watch app       `com.x.y.watchkitapp`
 /// - watch widgets   `com.x.y.watchkitapp.widgets`
 ///
@@ -17,7 +18,7 @@ import Foundation
 /// watch-local container; App Groups never sync between devices.
 public enum AppGroup {
   /// Longest first, so a nested suffix is stripped whole.
-  static let targetSuffixes = [".watchkitapp.widgets", ".watchkitapp", ".widget"]
+  static let targetSuffixes = [".watchkitapp.widgets", ".watchkitapp", ".intents", ".widget"]
 
   public static func hostBundleIdentifier(for bundleId: String) -> String {
     for suffix in targetSuffixes where bundleId.hasSuffix(suffix) {

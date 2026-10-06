@@ -61,8 +61,19 @@ Metro process before restarting with these commands; an already-running process
 cannot inherit the new environment. The generated `android/` directory is
 ignored, like `ios/`.
 
-To run and check changes on an emulator, including headless, see
-[`android-emulator-testing.md`](./android-emulator-testing.md).
+Agents run and check changes on emulators and simulators through the
+[`verify-witnesswork`](../.agents/skills/verify-witnesswork/SKILL.md) skill,
+not these commands.
+
+## Native changes
+
+- To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.
+  The `prebuild` script doesn't go through `with-local-env.mjs`, so without
+  `APP_VARIANT` it generates the production app.
+- After changing a pnpm patch, run `pnpm install` so `node_modules` picks it
+  up, then rebuild. `pnpm install` and `pnpm patch-commit` rewrite
+  `pnpm-lock.yaml` in pnpm's own style. Run `npx prettier --write pnpm-lock.yaml`
+  so the diff stays small.
 
 Android `PullDownMenu` icons are packaged by `plugins/with-android-menu-icons.js`.
 The SF Symbol mapping and vector drawables live in

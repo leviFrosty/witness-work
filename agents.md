@@ -8,7 +8,7 @@ ww-api is the backend api. Find the code at ~/dev/ww-api.
 
 ## Platforms
 
-iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). For running, inspecting, and testing changes on iOS simulators (including iPad pointer hover), follow [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md). For Android emulators, follow [`docs/android-emulator-testing.md`](./docs/android-emulator-testing.md).
+iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). Run, inspect, and test changes on simulators and emulators only through the `verify-witnesswork` skill (see [Verify your own work](#verify-your-own-work)).
 
 - **Test both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too — or be gated with `Platform.OS` and degrade gracefully.
 - **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
@@ -36,7 +36,7 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
   - add decorative effects to non-interactive content;
   - make hover the only way to reach information or an action (touch has no hover);
   - build hover-only UI that behaves differently from touch.
-- **Test:** with a real pointer on an iPad simulator. See [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#ipad-pointer-and-pencil-hover). Unit tests can't show whether hover actually works.
+- **Test:** with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md). Unit tests can't show whether hover actually works.
 
 ## Domain Specific Language
 

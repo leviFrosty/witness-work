@@ -30,7 +30,7 @@ Steps:
 - **Create.** Run these in order:
   - `wwv ad press 'label="Contacts"' --settle`
   - `wwv ad press 'label="Add Contact"' --settle`
-  - `wwv ad press 'label="Name"' --settle` (Android: `wwv ad press "label=\"What's their name?\"" --settle`)
+  - `wwv ad press 'label="Name"' --settle`
   - `wwv ad type "Maestro Verify"`
   - `wwv ad press 'label="Save"' --settle`
   - `wwv ad press 'label="Skip"' --settle`

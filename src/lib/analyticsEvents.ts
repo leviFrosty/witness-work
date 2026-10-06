@@ -45,6 +45,7 @@ export const analyticsEventNames = [
   'import_type_selected',
   'import_undone',
   'notes_import_accepted',
+  'notes_import_capture_finished',
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.

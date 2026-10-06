@@ -95,12 +95,20 @@ Bringing a User's prior field-ministry history into the app from an outside sour
 _Avoid_: "sync" (Import is a one-time backfill; iCloud Sync is ongoing replication), "migration".
 
 **Notes Import**:
-An Import whose source is arbitrary free text the User pastes or shares (handwritten-style logs, an export from another app, scattered notes). **Scribe AI** uses a third-party LLM to translate the text into structured WitnessWork records under a zero-data-retention arrangement. Distinct from MyTime Import (structured database) and iCloud Restore (prior backup) — Notes Import is the only Import that is interpreted rather than mechanically mapped.
+An Import whose source is arbitrary free text the User pastes or shares (handwritten-style logs, an export from another app, scattered notes), or text produced on-device from a **Voice Log** or **Photo Import**. **Scribe AI** uses a third-party LLM to translate the text into structured WitnessWork records under a zero-data-retention arrangement. Distinct from MyTime Import (structured database) and iCloud Restore (prior backup) — Notes Import is the only Import that is interpreted rather than mechanically mapped.
 _Avoid_: "AI import" in user copy where it implies the in-app Assistant (the Assistant is rule-based and unrelated); "paste import" (Notes Import also covers shared/picked text).
 
 **Import Credit**:
-The unit metering free Notes Import usage. A non-**Supporter** gets a fixed number of Import Credits (5); a Supporter is unlimited. One Credit is consumed per distinct source text (identified by content hash) the first time it is parsed — follow-up refinements of that same text and re-imports of an already-seen text cost nothing. An **Empty Import** also costs nothing, up to an anti-abuse limit past which repeated Empty Imports begin consuming Credits again.
+The unit metering free Notes Import usage. A non-**Supporter** gets a server-configured number of Import Credits per rolling window (3 per 30 days); a Supporter is unlimited. Every input method — typed, pasted, **Voice Log**, or **Photo Import** — draws on the same Credits. One Credit is consumed per distinct source text (identified by content hash) the first time it is parsed — follow-up refinements of that same text and re-imports of an already-seen text cost nothing. An **Empty Import** also costs nothing, up to an anti-abuse limit past which repeated Empty Imports begin consuming Credits again.
 _Avoid_: "token" (tokens are the LLM's internal cost unit, separate), "import count" (Credit carries the per-distinct-source and Supporter-exemption semantics).
+
+**Voice Log**:
+A **Notes Import** input where the User dictates notes (typically right after a call) and the device transcribes them on-device into the composer for review and editing before sending. No audio is saved or uploaded; only the text the User sends reaches **Scribe AI** (ADR 0018).
+_Avoid_: "voice note" or "recording" (nothing is kept as audio), "dictation" alone (the iOS keyboard's dictation is a different, system feature).
+
+**Photo Import**:
+A **Notes Import** input where the User scans pages with the document camera or picks photos (handwritten notes, a house-to-house record), and the device reads the text on-device into the composer for review and editing before sending. No image is saved or uploaded (ADR 0018).
+_Avoid_: "image import", "OCR import" in user copy.
 
 **Empty Import**:
 A **Notes Import** that completes successfully but produces zero records — no contacts, visits, time entries, and no detected Publisher (the `isEmptyPreview` predicate; produced Categories and Warnings alone do not count as records). The import ran correctly; the pasted text simply held nothing to bring in. An Empty Import does not consume an **Import Credit**, so a User's Credits are never spent on a paste that yields nothing — subject to an anti-abuse limit, beyond which further Empty Imports within the window consume a Credit again (a **Supporter**, being unmetered, is exempt from the limit entirely). Distinct from an **Import Warning**, which flags a produced record; an Empty Import produces no records at all.

@@ -37,6 +37,16 @@ const LOCAL_MODULES = [
   { importName: 'BuddiesKeychain', className: 'BuddiesKeychainModule' },
   { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
+  {
+    importName: 'SpeechTranscription',
+    className: 'SpeechTranscriptionModule',
+  },
+  // Not `TextRecognition`: Apple's private framework of that name (loaded by
+  // Vision) would share the Swift module name.
+  {
+    importName: 'TextRecognitionBridge',
+    className: 'TextRecognitionBridgeModule',
+  },
 ]
 
 const IMPORT_MARKER = '// with-force-load-local-modules:imports'

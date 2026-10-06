@@ -36,6 +36,7 @@ import {
   type PreviewSelection,
 } from '@/features/notes-import/lib/buildNotesImportPreview'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
+import type { NotesImportInputMethod } from '@/features/notes-import/lib/notesImportCapture'
 import {
   clientImportCap,
   planImportsToStart,
@@ -171,7 +172,8 @@ interface NotesImportManagerState {
   /** Start a new import from pasted notes; returns its contentHash (the row id). */
   submit: (
     notesText: string,
-    source?: 'onboarding' | 'app'
+    source?: 'onboarding' | 'app',
+    inputMethod?: NotesImportInputMethod
   ) => Promise<string | null>
   /**
    * Refine a Ready import (re-parses the SAME notes). Returns false if not
@@ -678,7 +680,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         for (const hash of planImportsToStart(items, cap)) startRun(hash)
       },
 
-      submit: async (notesText, source = 'app') => {
+      submit: async (notesText, source = 'app', inputMethod = 'text') => {
         const text = notesText.trim()
         if (!text) return null
         const hash = await notesContentHash(text)
@@ -686,6 +688,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         analytics.capture('notes_import_submitted', {
           import_type: 'notes',
           source,
+          input_method: inputMethod,
           reused_existing:
             existing?.state === 'ready' || existing?.state === 'done',
         })
@@ -699,6 +702,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         beginWorkingEntry(hash, {
           notesText: text,
           analyticsSource: source,
+          inputMethod,
           activeRun: existing?.activeRun ?? null,
           nowMs: Date.now(),
         })
@@ -830,6 +834,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           analytics.capture('notes_import_accepted', {
             import_type: 'notes',
             source: entry.analyticsSource ?? 'unknown',
+            input_method: entry.inputMethod ?? 'unknown',
             contact_count: reconciled.contacts.length,
             visit_count: reconciled.visits.length,
             time_entry_count: reconciled.timeEntries.length,

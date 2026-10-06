@@ -77,6 +77,10 @@ import {
 import NotesImportUsage, {
   type RenderNotesImportSupporterCta,
 } from '@/features/notes-import/components/NotesImportUsage'
+import NotesImportVoiceButton from '@/features/notes-import/components/NotesImportVoiceButton'
+import NotesImportPhotoButton from '@/features/notes-import/components/NotesImportPhotoButton'
+import NotesImportCaptureStatus from '@/features/notes-import/components/NotesImportCaptureStatus'
+import { useNotesImportCapture } from '@/features/notes-import/hooks/useNotesImportCapture'
 import { WarningLine } from '@/features/notes-import/components/NotesImportRecordRow'
 import {
   highestSeverity,
@@ -213,6 +217,13 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const pendingDraftRef = useRef<string | null>(null)
   const scrollRef = useRef<ScrollView | null>(null)
   const inputRef = useRef<TextInput | null>(null)
+  // Voice logs and photos are transcribed on-device into the draft, where the
+  // user edits them before sending (ADR 0018).
+  const capture = useNotesImportCapture({
+    draft,
+    setDraft,
+    onInserted: () => requestAnimationFrame(() => inputRef.current?.focus()),
+  })
   const autoScrollRef = useRef(false)
   // Land at the newest message on first layout (and whenever a different import
   // loads), so the screen opens at the bottom of the conversation, not the intro.
@@ -378,7 +389,10 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // the brief submit handoff, or while the proxy reports the feature down (the
   // probe is optimistic, so this never blocks the input mid-status-check).
   const composerDisabled =
-    submitting || !availability.available || (isWorking && !isCancellable)
+    submitting ||
+    !availability.available ||
+    (isWorking && !isCancellable) ||
+    capture.busy
   const selectedCount = committedIds.size
   const confirmLabel =
     selectedCount > 0
@@ -415,7 +429,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     setSubmitting(true)
     let hash: string | null = null
     try {
-      hash = await submit(text, fromOnboarding ? 'onboarding' : 'app')
+      hash = await submit(
+        text,
+        fromOnboarding ? 'onboarding' : 'app',
+        capture.inputMethod
+      )
     } finally {
       setSubmitting(false)
     }
@@ -1139,8 +1157,75 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // text as a refinement.
   const isThinking = isCancellable
   const refineMode = (isReady && !emptyPreview) || isThinking
-  const composerValue = draft
+  const composerValue = capture.displayDraft
   const setComposerValue = setDraft
+  // Voice logs and photos start new imports only; refinements stay typed.
+  const canCapture = !refineMode && !composerDisabled
+  const voicePhase = capture.voice.phase
+
+  const startVoiceLog = () => {
+    Keyboard.dismiss()
+    void capture.voice.start()
+  }
+
+  const capturePhoto = (action: () => Promise<void>) => () => {
+    Keyboard.dismiss()
+    void action()
+  }
+
+  // "View imports" callout sits at the LEFT of the control row — the in-chat
+  // entry point to the history list (the header no longer has a clock). Shown
+  // whenever any import is saved; opens upward so it clears the keyboard. Its
+  // dot lights only when another import is in-flight or ready to review.
+  const historyCallout =
+    entries.length > 0 ? (
+      <NotesImportHistoryPopover
+        openDirection='up'
+        align='left'
+        renderTrigger={({ onPress, anchorRef }) => (
+          <View ref={anchorRef} collapsable={false} style={{ flexShrink: 1 }}>
+            <Button
+              onPress={onPress}
+              accessibilityRole='button'
+              accessibilityLabel={i18n.t('notesImport_viewHistory')}
+              noTransform
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: theme.numbers.borderRadiusXl,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
+              }}
+            >
+              <NotesImportReadyDot
+                visible={actionableOther.length > 0}
+                color={calloutInProgress ? theme.colors.warn : undefined}
+              />
+              <Text
+                numberOfLines={1}
+                style={{
+                  flexShrink: 1,
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                }}
+              >
+                {i18n.t('notesImport_viewHistory')}
+              </Text>
+              <LucideIcon
+                icon={HistoryIcon}
+                size={12}
+                color={theme.colors.textAlt}
+              />
+            </Button>
+          </View>
+        )}
+      />
+    ) : null
   const onComposerSubmit = isThinking
     ? onInterruptRefine
     : refineMode
@@ -1208,7 +1293,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                   </Badge>
                 </View>
                 <EmptyDescription>
-                  {i18n.t('notesImport_description')}
+                  {i18n.t(
+                    capture.voice.available && capture.photo.supported
+                      ? 'notesImport_descriptionCapture'
+                      : 'notesImport_description'
+                  )}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -1249,13 +1338,15 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             onSubmit={onComposerSubmit}
             editable={!composerDisabled}
             placeholder={
-              refineMode
-                ? i18n.t('notesImport_refinePlaceholder')
-                : // Once the notes are submitted and the run is in flight, the
-                  // paste prompt is stale — drop it rather than invite a re-paste.
-                  composerDisabled
-                  ? ''
-                  : i18n.t('notesImport_placeholder')
+              voicePhase === 'recording'
+                ? i18n.t('notesImport_voiceListening')
+                : refineMode
+                  ? i18n.t('notesImport_refinePlaceholder')
+                  : // Once the notes are submitted and the run is in flight, the
+                    // paste prompt is stale — drop it rather than invite a re-paste.
+                    composerDisabled
+                    ? ''
+                    : i18n.t('notesImport_placeholder')
             }
             accessibilityLabel={
               refineMode
@@ -1283,75 +1374,55 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                 : undefined
             }
             stopAccessibilityLabel={i18n.t('cancel')}
-            // "View imports" callout sits at the LEFT of the control row — the
-            // in-chat entry point to the history list (the header no longer has
-            // a clock). Shown whenever any import is saved; opens upward so it
-            // clears the keyboard. Its dot lights only when another import is
-            // in-flight or ready to review.
             leading={
-              entries.length > 0 ? (
-                <NotesImportHistoryPopover
-                  openDirection='up'
-                  align='left'
-                  renderTrigger={({ onPress, anchorRef }) => (
-                    <View
-                      ref={anchorRef}
-                      collapsable={false}
-                      style={{ flexShrink: 1 }}
-                    >
-                      <Button
-                        onPress={onPress}
-                        accessibilityRole='button'
-                        accessibilityLabel={i18n.t('notesImport_viewHistory')}
-                        noTransform
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 7,
-                          paddingVertical: 6,
-                          paddingHorizontal: 12,
-                          borderRadius: theme.numbers.borderRadiusXl,
-                          borderWidth: 1,
-                          borderColor: theme.colors.border,
-                          backgroundColor: theme.colors.card,
-                        }}
-                      >
-                        <NotesImportReadyDot
-                          visible={actionableOther.length > 0}
-                          color={
-                            calloutInProgress ? theme.colors.warn : undefined
-                          }
-                        />
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            flexShrink: 1,
-                            color: theme.colors.textAlt,
-                            fontFamily: theme.fonts.semiBold,
-                            fontSize: theme.fontSize('sm'),
-                          }}
-                        >
-                          {i18n.t('notesImport_viewHistory')}
-                        </Text>
-                        <LucideIcon
-                          icon={HistoryIcon}
-                          size={12}
-                          color={theme.colors.textAlt}
-                        />
-                      </Button>
-                    </View>
+              capture.busy ? (
+                <NotesImportCaptureStatus
+                  voicePhase={voicePhase}
+                  startedAt={capture.voice.startedAt}
+                  downloadProgress={capture.voice.downloadProgress}
+                  level={capture.voice.level}
+                  readingPhoto={capture.photo.reading}
+                  onCancelVoice={capture.voice.cancel}
+                />
+              ) : (
+                <>
+                  {canCapture && capture.photo.supported && (
+                    <NotesImportPhotoButton
+                      scanSupported={capture.photo.scanSupported}
+                      onScan={capturePhoto(capture.photo.scan)}
+                      onChoose={capturePhoto(capture.photo.choose)}
+                    />
                   )}
+                  {historyCallout}
+                </>
+              )
+            }
+            trailingAction={
+              voicePhase !== 'idle' ? (
+                <NotesImportVoiceButton
+                  recording
+                  disabled={voicePhase !== 'recording'}
+                  onPress={() => void capture.voice.finish()}
+                />
+              ) : canCapture &&
+                capture.voice.available &&
+                !composerValue.trim() ? (
+                <NotesImportVoiceButton
+                  recording={false}
+                  onPress={startVoiceLog}
                 />
               ) : undefined
             }
             // Compact Import Credit balance rides the composer's control row;
             // refinement limits stay in the active conversation instead.
             accessory={
-              <NotesImportUsage
-                credits={credits}
-                onRequestUpgrade={onRequestUpgrade}
-                renderSupporterCta={renderSupporterCta}
-              />
+              capture.busy ? undefined : (
+                <NotesImportUsage
+                  credits={credits}
+                  onRequestUpgrade={onRequestUpgrade}
+                  renderSupporterCta={renderSupporterCta}
+                />
+              )
             }
           />
         </View>
@@ -1360,6 +1431,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           open={helpOpen}
           setOpen={setHelpOpen}
           schedule={availability.schedule}
+          voiceAvailable={capture.voice.available}
+          photoAvailable={capture.photo.supported}
         />
       </Animated.View>
     </Wrapper>

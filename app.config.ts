@@ -31,8 +31,12 @@ const APP_NAME = {
   beta: 'WitnessWork Beta',
   production: 'WitnessWork',
 }[APP_VARIANT]
-const CAMERA_PERMISSION =
-  '$(PRODUCT_NAME) uses your camera to take a profile or contact photo, and to scan a buddy invite code.'
+// expo-camera, expo-image-picker, and expo-audio each write these keys (or
+// delete them when passed `false`), so every plugin gets the same string and
+// plugin order doesn't matter.
+const CAMERA_PERMISSION = enUS.cameraPermissionPurpose
+// Scribe AI voice logs (ADR 0018). Audio is transcribed on-device only.
+const MICROPHONE_PERMISSION = enUS.microphonePermissionPurpose
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const expoConfig: ExpoConfig = {
@@ -51,6 +55,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Avatar selection uses Android's system photo picker. Saving a photo
       // does not need broad access to the user's media library.
       blockedPermissions: [
+        // Voice logs are iOS-only for now; keep the microphone off on Android
+        // even though expo-audio and expo-image-picker would request it.
+        'android.permission.RECORD_AUDIO',
         'android.permission.READ_MEDIA_IMAGES',
         'android.permission.READ_MEDIA_VIDEO',
         'android.permission.READ_MEDIA_AUDIO',
@@ -103,6 +110,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSSupportsLiveActivities: true,
         NSCalendarsUsageDescription: enUS.calendarPermissionUsage,
         NSCalendarsFullAccessUsageDescription: enUS.calendarPermissionUsage,
+        NSMicrophoneUsageDescription: MICROPHONE_PERMISSION,
+        // Only requested before iOS 26, where on-device voice-log transcription
+        // runs through SFSpeechRecognizer (ADR 0018).
+        NSSpeechRecognitionUsageDescription:
+          enUS.speechRecognitionPermissionPurpose,
         LSSupportsOpeningDocumentsInPlace: true,
         // expo-background-fetch requires this permitted task identifier
         // to register the snapshot refresh task.
@@ -241,10 +253,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // background-audio feature, so keep it off. The chime respects the
           // ring/silent switch (default ambient session category — see #365).
           enableBackgroundPlayback: false,
-          // We only ever play audio, never record. The plugin otherwise adds
-          // a generic NSMicrophoneUsageDescription that App Review flags as an
-          // unused permission. `false` deletes the key from Info.plist.
-          microphonePermission: false,
+          // The microphone is used only by Scribe AI voice logs, in the
+          // foreground, through the SpeechTranscription module.
+          microphonePermission: MICROPHONE_PERMISSION,
         },
       ],
       'expo-localization',
@@ -296,10 +307,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // Shares NSCameraUsageDescription with expo-camera below; keep the
           // two strings identical so plugin order doesn't matter.
           cameraPermission: CAMERA_PERMISSION,
-          // We only pick still images, never video, so the microphone usage
-          // string the plugin adds by default is unused — App Review flags
-          // unused permissions (2.5.4 / 5.1.1). `false` deletes the key.
-          microphonePermission: false,
+          // We only pick still images, never video; the microphone string is
+          // for voice logs. Android's RECORD_AUDIO stays blocked above.
+          microphonePermission: MICROPHONE_PERMISSION,
         },
       ],
       [
@@ -307,7 +317,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           // Scans Buddies invite QR codes. Photos only; never records video.
           cameraPermission: CAMERA_PERMISSION,
-          microphonePermission: false,
+          microphonePermission: MICROPHONE_PERMISSION,
           recordAudioAndroid: false,
         },
       ],

@@ -15,9 +15,26 @@ import { usePreferences } from '@/stores/preferences'
 // Add future flag keys to this union so call sites stay type-checked.
 export type FeatureFlag = 'notes-import' | 'buddies'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
-const useFlags = create<{ values: FlagValues; distinctId?: string }>(() => ({
+const useFlags = create<{
+  values: FlagValues
+  distinctId?: string
+  /** Dev builds only (verification harness); survives remote refreshes. */
+  devOverrides: FlagValues
+}>(() => ({
   values: {},
+  devOverrides: {},
 }))
+
+/** Dev builds only: force a flag on/off, or pass undefined to clear. */
+export function setDevFlagOverride(
+  flag: FeatureFlag,
+  value: boolean | string | undefined
+): void {
+  if (!__DEV__) return
+  useFlags.setState(({ devOverrides }) => ({
+    devOverrides: { ...devOverrides, [flag]: value },
+  }))
+}
 
 const clearFlags = () =>
   useFlags.setState({ values: {}, distinctId: undefined })
@@ -97,6 +114,7 @@ export function useFeatureFlagValue(
 ): boolean | string | undefined {
   const value = useFlags((state) => state.values[flag])
   const distinctId = useFlags((state) => state.distinctId)
+  const devOverride = useFlags((state) => state.devOverrides[flag])
   const currentValue =
     distinctId !== undefined && distinctId === posthogClient?.getDistinctId()
       ? value
@@ -124,6 +142,7 @@ export function useFeatureFlagValue(
       logger.debug('[Analytics] Feature flag exposure unavailable')
     }
   }, [flag, currentValue, distinctId, analyticsEnabled])
+  if (devOverride !== undefined && __DEV__) return devOverride
   return currentValue
 }
 

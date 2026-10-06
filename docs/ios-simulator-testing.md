@@ -3,6 +3,13 @@
 How to run a change on an iOS simulator, collect evidence, and test iPad-only
 input such as pointer hover. For first-time setup, see [`build.md`](./build.md).
 
+For automated verification, use the
+[`verify-witnesswork`](../.agents/skills/verify-witnesswork/SKILL.md) skill
+(`node scripts/verify/ww-verify.mjs up`). It claims a dedicated simulator or
+emulator, runs its own Metro, installs a build that matches the native
+fingerprint, and seeds state over CDP. The manual steps below are its
+underpinnings and the fallback.
+
 Most changes need checking on both an iPhone and an iPad simulator. iPad
 layouts differ: a sidebar from 1,000 pt wide, split views, the menu bar, and
 pointer input.
@@ -84,6 +91,14 @@ before and after the action.
 
 ## Interact with the simulator
 
+- **`ww-verify ad <args>`:** the same `agent-device` CLI, bound to the
+  verification run's device and session. Its interactive snapshots see React
+  Native views on iOS 27; Maestro 2.4's iOS driver and agent-device's replay
+  runner only see the window and status bar, so `ww-verify flow` interprets
+  Maestro-style YAML through the session instead.
+- **Don't reload JS on Xcode 27 dev builds.** A reload leaves the native
+  splash over the running app. Cold-launch through the dev-client link
+  (`ww-verify up`) instead.
 - **T3 Code Device panel:** use `device_open`, then the `agent-device` CLI it
   returns. This is the preferred way to tap, type, and read accessibility
   snapshots. It can fail to list iOS simulators (`simctl list` errors inside

@@ -1,0 +1,11 @@
+# seed: fresh
+# assert: __WW_DEV__.state().route?.name === 'Onboarding'
+appId: com.leviwilkerson.jwtimedev
+name: A fresh install starts onboarding
+---
+- extendedWaitUntil:
+    visible: Your field service assistant.
+    timeout: 60000
+- assertVisible: Your field service assistant.
+- tapOn: Get Started
+- assertNotVisible: Get Started

@@ -191,3 +191,19 @@ test('Android localhost forwarding uses the configured port and requires explici
   forwardAndroidBackend(new URL('https://ww-proxy.leviwilkerson.com'), {}, run)
   assert.equal(calls.length, count)
 })
+
+test('a verification run can point development, and only development, at its own backend', () => {
+  const root = fixture()
+  write(root, '.env', 'EXPO_PUBLIC_API_BASE_URL=http://localhost:8787\n')
+  write(root, '.env.production', 'EXPO_PUBLIC_API_BASE_URL=https://prod\n')
+  const inherited = {
+    WW_VERIFY_API_BASE_URL: 'http://127.0.0.1:8791',
+    WW_VERIFY_API_DEV_BYPASS: 'isolated-token',
+  }
+  const { env } = loadLocalEnv(root, 'development', inherited)
+  assert.equal(env.EXPO_PUBLIC_API_BASE_URL, 'http://127.0.0.1:8791')
+  assert.equal(env.EXPO_PUBLIC_API_DEV_BYPASS, 'isolated-token')
+  const production = loadLocalEnv(root, 'production', inherited).env
+  assert.equal(production.EXPO_PUBLIC_API_BASE_URL, 'https://prod')
+  assert.equal(production.EXPO_PUBLIC_API_DEV_BYPASS, undefined)
+})

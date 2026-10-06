@@ -49,6 +49,11 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
       }
     }
   }
+  // `scripts/verify` points a development run at its own isolated ww-api.
+  if (variant === 'development' && inherited.WW_VERIFY_API_BASE_URL) {
+    env.EXPO_PUBLIC_API_BASE_URL = inherited.WW_VERIFY_API_BASE_URL
+    env.EXPO_PUBLIC_API_DEV_BYPASS = inherited.WW_VERIFY_API_DEV_BYPASS ?? ''
+  }
   Object.assign(env, {
     APP_VARIANT: variant,
     NODE_ENV: variant === 'development' ? 'development' : 'production',

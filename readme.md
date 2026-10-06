@@ -27,11 +27,9 @@ Due to my increased time constraints volunteering, my day job, family, etc., I'm
 <img src="./docs/screenshots/preview6.jpg" width="130">
 </div>
 
-## Help Translate 🌐
+## Languages 🌐
 
-WitnessWork is available in 16 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
-
-[Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
+WitnessWork is available in 18 languages, translated with AI. If a translation looks wrong, please [open an issue](https://github.com/leviFrosty/witness-work/issues/new) with the language, the screen, and the correct wording. Thank you!
 
 ## Building
 

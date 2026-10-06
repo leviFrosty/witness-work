@@ -17,6 +17,5 @@ export default {
   donate: 'https://ko-fi.com/leviwilkerson',
   termsOfUse: 'https://leviwilkerson.com/witness-work/terms',
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
-  crowdin: 'https://crowdin.com/project/jw-time',
   openRouterZdr: 'https://openrouter.ai/docs/guides/features/zdr',
 }

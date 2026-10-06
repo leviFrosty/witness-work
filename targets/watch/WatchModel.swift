@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import WatchConnectivity
+import WidgetKit
 
 /// State behind the watch UI and App Intents.
 ///
@@ -28,11 +29,13 @@ final class WatchModel {
   var timer: TimerSnapshot? { context?.timer }
   var isSyncing: Bool { !outbox.isEmpty }
 
-  /// Whether an entry made today is still on its way, e.g. the "shared in
-  /// ministry" marker just tapped.
-  var hasPendingEntryToday: Bool {
-    let today = Self.today()
-    return outbox.contains { $0.request.entry?.date == today }
+  /// The month as the complications show it, with entries still on their way
+  /// to the iPhone. `nil` when the snapshot is out of date.
+  func progress(at date: Date = .now) -> MonthProgress? {
+    guard let context, let snapshot = context.snapshot else { return nil }
+    return MonthProgress(
+      snapshot: snapshot, outbox: outbox, resolvedEntryIds: context.resolvedEntryIds,
+      at: date)
   }
 
   // MARK: Incoming
@@ -45,7 +48,7 @@ final class WatchModel {
     let remaining = outbox.filter { !resolved.contains($0.id) && $0.createdAt > cutoff }
     if remaining.count != outbox.count {
       outbox = remaining
-      WatchStorage.saveOutbox(remaining)
+      saveOutbox()
     }
   }
 
@@ -58,7 +61,8 @@ final class WatchModel {
   func refresh() async {
     isReachable = PhoneSession.shared.isReachable
     guard isReachable else { return }
-    if let reply = try? await PhoneSession.shared.send(WatchRequest(kind: .hello)) {
+    let hello = WatchRequest(kind: .hello, complications: await Self.complicationKinds())
+    if let reply = try? await PhoneSession.shared.send(hello) {
       reply.context.map(PhoneSession.shared.receive)
     }
     for item in outbox where !item.delivered {
@@ -92,7 +96,7 @@ final class WatchModel {
 
   private func enqueue(_ request: WatchRequest) async {
     outbox.append(OutboxItem(request: request, createdAt: .now, delivered: false))
-    WatchStorage.saveOutbox(outbox)
+    saveOutbox()
 
     if PhoneSession.shared.isReachable,
        let reply = try? await PhoneSession.shared.send(request) {
@@ -114,7 +118,7 @@ final class WatchModel {
     case (.rejected, _):
       outbox.remove(at: index)
     }
-    WatchStorage.saveOutbox(outbox)
+    saveOutbox()
   }
 
   // MARK: Timer
@@ -182,7 +186,7 @@ final class WatchModel {
     switch (reply.status, reply.reason) {
     case (.accepted, _):
       outbox.append(OutboxItem(request: request, createdAt: .now, delivered: true))
-      WatchStorage.saveOutbox(outbox)
+      saveOutbox()
     case (.rejected, .timerChanged):
       throw ServiceActionError.timerChanged
     case (.rejected, _):
@@ -192,11 +196,25 @@ final class WatchModel {
 
   // MARK: Helpers
 
+  /// Complications add unsynced entries to the month's total, so they follow
+  /// the outbox.
+  private func saveOutbox() {
+    WatchStorage.saveOutbox(outbox)
+    WidgetCenter.shared.reloadAllTimelines()
+  }
+
+  /// Widget kinds of the complications in use, for the iPhone's analytics.
+  private static func complicationKinds() async -> [String]? {
+    guard let configurations = try? await WidgetCenter.shared.currentConfigurations() else {
+      return nil
+    }
+    return Set(configurations.map(\.kind)).sorted()
+  }
+
   /// Today on the watch as Gregorian `YYYY-MM-DD`, whatever calendar the user
   /// has chosen.
   static func today(_ date: Date = .now) -> String {
-    let parts = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: date)
-    return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    WatchSnapshot.dayKey(for: date)
   }
 
   func show(_ error: Error) {

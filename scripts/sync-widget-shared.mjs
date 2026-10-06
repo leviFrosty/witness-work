@@ -79,7 +79,13 @@ const syncs = [
   {
     from: 'targets/watch',
     to: ['targets/watch-widgets/Shared'],
-    files: ['WatchStorage.swift', 'WatchStrings.swift'],
+    files: [
+      'MonthProgress.swift',
+      'PaceBar.swift',
+      'UpNext.swift',
+      'WatchStorage.swift',
+      'WatchStrings.swift',
+    ],
   },
 ]
 

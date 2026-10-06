@@ -12,24 +12,9 @@ import * as Location from 'expo-location'
 import { DefaultNavigationMapProvider } from '@/stores/preferences'
 import links from '@/constants/links'
 import { openURL } from '@/lib/links'
+import { addressToString } from '@/lib/addressToString'
 
-export const addressToString = (address?: Address) => {
-  if (!address) {
-    return ''
-  }
-
-  return Object.keys(address)
-    .reduce(
-      (prev, line, index) =>
-        !address[line as keyof Address]?.length
-          ? prev
-          : (prev += `${index !== 0 ? ' ' : ''}${
-              address[line as keyof Address]
-            }`),
-      ''
-    )
-    .replace(/(\r\n|\n|\r)/gm, '')
-}
+export { addressToString }
 
 export const fetchCoordinateFromAddress = async (
   incrementGeocodeApiCallCount: () => void,

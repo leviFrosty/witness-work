@@ -6,6 +6,7 @@ import type {
 
 const bridge = vi.hoisted(() => ({
   isPaired: true,
+  activeComplications: null as string[] | null,
   pending: [] as WatchEntryDraft[],
   pendingTrips: [] as WatchTripDraft[],
   events: [] as { name: string; properties: Record<string, string> }[],
@@ -20,7 +21,8 @@ vi.mock('../../modules/watch-bridge', () => ({
     isSupported: true,
     isPaired: bridge.isPaired,
     isWatchAppInstalled: bridge.isPaired,
-    isComplicationEnabled: false,
+    isComplicationEnabled: bridge.activeComplications != null,
+    activeComplications: bridge.activeComplications,
   }),
   setSnapshot: (json: string) => bridge.snapshots.push(json),
   getPendingEntries: () => bridge.pending,
@@ -88,6 +90,9 @@ vi.mock('@/stores/preferences', () => ({ usePreferences: storeMock(prefs) }))
 vi.mock('@/stores/conversationStore', () => ({
   useConversations: storeMock({ conversations: [] }),
 }))
+vi.mock('@/stores/contactsStore', () => ({
+  default: storeMock({ contacts: [] }),
+}))
 vi.mock('@/stores/categories', () => ({
   default: storeMock({ categories: [] }),
 }))
@@ -97,6 +102,10 @@ vi.mock('expo-localization', () => ({
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
   DEFAULT_LOCALE: 'en-us',
+}))
+vi.mock('expo-localization', () => ({
+  getLocales: () => [{ languageTag: 'en-US' }],
+  getCalendars: () => [{ uses24hourClock: false }],
 }))
 
 import { installWatchSync } from '@/app/watch/watchSync'
@@ -148,6 +157,7 @@ describe('watch sync', () => {
       deletedMileageRecords: [],
     })
     bridge.isPaired = true
+    bridge.activeComplications = null
     bridge.pending = []
     bridge.pendingTrips = []
     bridge.events = []
@@ -251,6 +261,46 @@ describe('watch sync', () => {
     const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
     expect(snapshot.monthKey).toBe('2026-10')
     expect(snapshot.publisherState).toBe('reportedToday')
+    expect(snapshot.monthMinutes).toBe(135)
+  })
+
+  it('names the entries a snapshot counts before they’re resolved', () => {
+    bridge.pending = [draft()]
+
+    teardown = installWatchSync()
+
+    // The watch adds unresolved entries itself, so it mustn't add these.
+    const beforeResolving = JSON.parse(bridge.snapshots[0])
+    expect(beforeResolving.monthMinutes).toBe(135)
+    expect(beforeResolving.reflectedEntryIds).toEqual(['watch-1'])
+  })
+
+  it('sends next month so the watch can start it before syncing', () => {
+    teardown = installWatchSync()
+
+    const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
+    expect(snapshot.monthName).toBe('October')
+    expect(snapshot.nextMonth).toEqual({
+      monthKey: '2026-11',
+      monthName: 'November',
+      goalHours: 50,
+      showsTimeEntry: true,
+    })
+    expect(snapshot.plannedThroughDay).toBeNull()
+    expect(snapshot.reflectedEntryIds).toEqual([])
+    expect(snapshot.upNext).toEqual([])
+  })
+
+  it('reports which complications are in use', () => {
+    bridge.activeComplications = ['WitnessWorkUpNext']
+
+    teardown = installWatchSync()
+
+    expect(capture).toHaveBeenCalledWith('watch_app_status', {
+      complication_enabled: true,
+      progress_complication: false,
+      up_next_complication: true,
+    })
   })
 
   it('adds a redelivered entry once', () => {

@@ -37,12 +37,17 @@ struct WitnessWorkWatchApp: App {
 
 struct RootView: View {
   @Environment(WatchModel.self) private var model
+  /// An Up Next item opened from its complication.
+  @State private var openedItemId: String?
 
   var body: some View {
     @Bindable var model = model
     NavigationStack {
       if let snapshot = model.snapshot {
         HomeView(snapshot: snapshot)
+          .navigationDestination(item: $openedItemId) { id in
+            UpNextView(itemId: id)
+          }
       } else {
         ScrollView {
           Text(L10n.t("watchSetUp", nil))
@@ -50,6 +55,9 @@ struct RootView: View {
             .padding()
         }
       }
+    }
+    .onOpenURL { url in
+      openedItemId = UpNext.itemId(from: url)
     }
     .alert(
       L10n.t(model.alertKey ?? "", model.snapshot),

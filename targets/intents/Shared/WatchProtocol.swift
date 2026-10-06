@@ -36,6 +36,8 @@ public enum WatchOrigin: String, Codable, Sendable {
   case timer
   /// Siri or Shortcuts on the iPhone or iPad, through `targets/intents`.
   case phoneShortcut
+  /// The Up Next screen, opened from the app or its complication.
+  case upNext = "up_next"
 }
 
 /// A Time Entry created on the watch. `id` becomes the Time Entry's id on the
@@ -132,11 +134,14 @@ public struct WatchRequest: Codable, Sendable, Identifiable {
   /// the save if its timer changed since, so no unseen time is discarded.
   public let expectedTimerRevision: Int?
   public let origin: WatchOrigin?
+  /// For `hello`: widget kinds of the complications in use, for analytics.
+  public let complications: [String]?
 
   public init(
     kind: Kind, id: String = UUID().uuidString, entry: WatchEntryDraft? = nil,
     trip: WatchTripDraft? = nil, timerAction: WatchTimerAction? = nil,
-    expectedTimerRevision: Int? = nil, origin: WatchOrigin? = nil
+    expectedTimerRevision: Int? = nil, origin: WatchOrigin? = nil,
+    complications: [String]? = nil
   ) {
     self.protocolVersion = WatchProtocol.version
     self.kind = kind
@@ -146,6 +151,7 @@ public struct WatchRequest: Codable, Sendable, Identifiable {
     self.timerAction = timerAction
     self.expectedTimerRevision = expectedTimerRevision
     self.origin = origin
+    self.complications = complications
   }
 }
 
@@ -210,15 +216,73 @@ public struct TimerSnapshot: Codable, Equatable, Sendable {
   }
 }
 
+/// A Follow-up or Plan for Up Next, built by `src/app/watch/buildUpNext.ts`.
+/// Times arrive formatted in the app's time format; the watch only picks which
+/// label fits the day it's showing.
+public struct UpNextItem: Codable, Equatable, Sendable, Identifiable {
+  public enum Kind: String, Codable, Sendable {
+    case followUp
+    case plan
+  }
+
+  /// Where Directions go.
+  public struct Place: Codable, Equatable, Sendable {
+    public let name: String?
+    /// Searchable address, used when there's no coordinate.
+    public let address: String?
+    public let latitude: Double?
+    public let longitude: Double?
+  }
+
+  /// Visit id, Day Plan id, or `<Recurring Plan id>:<YYYY-MM-DD>`.
+  public let id: String
+  public let kind: Kind
+  /// Epoch ms of the start; local midnight of its day when not `timed`.
+  public let start: Double
+  /// False for a Plan without a start time, which spans its day.
+  public let timed: Bool
+  /// The Contact's name, or the Plan's title or Type.
+  public let title: String
+  /// The Follow-up's topic or street, or the Plan's place.
+  public let detail: String?
+  /// Planned duration, compact (`2h`). Plans only.
+  public let durationText: String?
+  /// E.g. `3:00 PM`; `nil` when not `timed`.
+  public let timeText: String?
+  /// `timeText` without its AM/PM marker, e.g. `3:00`.
+  public let clockText: String?
+  /// The AM/PM marker of 12-hour time, e.g. `PM`.
+  public let periodText: String?
+  /// E.g. `Thu`.
+  public let weekdayText: String
+  /// E.g. `Oct 14`.
+  public let dateText: String
+  public let place: Place?
+
+  public var startDate: Date { Date(timeIntervalSince1970: start / 1000) }
+}
+
 /// What the watch shows, built by the iPhone app's JS (`src/app/watch`).
 /// Display strings arrive translated into the app's language and durations
-/// arrive formatted, so the watch never formats measured time itself.
+/// arrive formatted. The watch formats measured time only to add its own
+/// unsynced entries to the month's total (`MonthProgress`).
+///
+/// Fields added after version 1 are optional, so a snapshot stored by an
+/// older iPhone app still decodes.
 public struct WatchSnapshot: Codable, Equatable, Sendable {
   public static let supportedVersion = 1
 
   public struct Category: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String
+    public let isCredit: Bool?
+  }
+
+  public struct NextMonth: Codable, Equatable, Sendable {
+    public let monthKey: String
+    public let monthName: String
+    public let goalHours: Int
+    public let showsTimeEntry: Bool
   }
 
   /// What Siri needs to log a trip.
@@ -247,16 +311,29 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   /// `hours` or `checkbox` — the Service Report format of this month's role.
   public let entryMode: String
   public let monthFormatted: String
-  /// Single-token duration for complications, e.g. `12.5h`. Empty for zero.
+  /// Single-token duration for complications, e.g. `12.5h`; `0h` for zero.
   public let monthCompact: String
+  /// Credit-capped minutes this month.
+  public let monthMinutes: Int?
+  /// Localized name of the month, e.g. `October`.
+  public let monthName: String?
   /// Monthly goal the user set, in whole hours. 0 means no goal.
   public let goalHours: Int
   /// 0...1 toward the monthly goal.
   public let progress: Double
+  /// Planned minutes through each day of the month (index 0 is the 1st);
+  /// `nil` when the month has no plans.
+  public let plannedThroughDay: [Int]?
   /// `unreported`, `reportedToday` or `reportedThisMonth`.
   public let publisherState: String
   /// Ahead/behind or per-day pace line; `nil` when there's nothing to show.
   public let paceText: String?
+  /// So the watch can start next month at zero before the iPhone syncs.
+  public let nextMonth: NextMonth?
+  /// Watch entries this snapshot already counts although the iPhone hasn't
+  /// reported them resolved yet, so the watch doesn't count them twice.
+  public let reflectedEntryIds: [String]?
+  public let upNext: [UpNextItem]?
   public let categories: [Category]
   /// `nil` from an iPhone app older than Siri trip logging.
   public let mileage: Mileage?

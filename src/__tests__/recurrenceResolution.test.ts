@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  plannedMinutesThroughDayForMonth,
+  plannedMinutesThroughEachDayOfMonth,
   resolvePlannedContributionsForDay,
   resolvePlannedDay,
 } from '@/lib/recurrence'
@@ -102,5 +104,38 @@ describe('resolvePlannedDay', () => {
     expect(
       resolvePlannedContributionsForDay(date, [], [invalidRecurringPlan])
     ).toEqual([])
+  })
+})
+
+describe('plannedMinutesThroughEachDayOfMonth', () => {
+  it('matches plannedMinutesThroughDayForMonth for every day', () => {
+    // Weekly from Wednesday the 5th, replaced on the 12th by a Day Plan.
+    const dayPlans: DayPlan[] = [
+      { id: 'day', date: normalizeDateForStorage('2026-08-12'), minutes: 30 },
+    ]
+    const recurringPlans = [recurringPlan('weekly', 120)]
+
+    const byDay = plannedMinutesThroughEachDayOfMonth(
+      7,
+      2026,
+      dayPlans,
+      recurringPlans
+    )
+
+    expect(byDay).toHaveLength(31)
+    expect([byDay[3], byDay[4], byDay[11], byDay[30]]).toEqual([
+      0, 120, 150, 390,
+    ])
+    byDay.forEach((minutes, i) =>
+      expect(minutes).toBe(
+        plannedMinutesThroughDayForMonth(
+          7,
+          2026,
+          i + 1,
+          dayPlans,
+          recurringPlans
+        )
+      )
+    )
   })
 })

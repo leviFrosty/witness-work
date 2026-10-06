@@ -5,7 +5,7 @@ description: Drive the real WitnessWork app on an iOS simulator or Android emula
 
 # Verify WitnessWork
 
-`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. Nothing here touches the user's own simulators, emulators, Metro on 8081, or ww-api on 8787.
+`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. It never touches the user's own simulators, emulators or Metro on 8081. The app does talk to the user's API, though: without `--api local` it uses `.env`'s `EXPO_PUBLIC_API_BASE_URL`, which on a dev machine is usually their ww-api on 8787, so its reads and writes land in their local dev data.
 
 Alias it: `alias wwv="node scripts/verify/ww-verify.mjs"`. All commands run from the worktree root and print JSON or `ok`/`FAIL` lines.
 
@@ -17,12 +17,21 @@ wwv up --platform android --seed pioneer     # headless emulator, same Metro
 wwv up --platform ios --api local            # also start an isolated ww-api
 ```
 
-What `up` does: it claims a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device and locks it to this worktree (locks live in `~/.ww-verify/locks`). It starts Metro on the first free port from 8090 to 8099. It computes the native fingerprint (`@expo/fingerprint`) and installs a cached build from `~/.ww-verify/builds` if one matches. Otherwise it builds the dev client with the newest installed Xcode or Gradle. Then it launches the app against this Metro and waits until `__WW_DEV__` answers.
+What `up` does, in order:
+
+1. Reaps expired leases and orphaned builds.
+2. Resolves the native app before it leases anything. It computes the native fingerprint (`@expo/fingerprint`) and uses the matching build in `~/.ww-verify/builds`. Otherwise it waits for a build slot, then builds the dev client without a device: a clean dev prebuild, then `xcodebuild` (newest installed Xcode, DerivedData in `.verify/DerivedData`) or `gradlew :app:assembleDebug`. It caches the result and deletes `.verify/DerivedData` or `android/app/build` (`--keep-build-dirs` keeps them). A worktree waiting to build holds no device: if it held one, `up` hands it back first and leases again after the build.
+3. Leases a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device, queueing if the pool is full (see [Concurrency and resources](#concurrency-and-resources)).
+4. Starts Metro on the port reserved with the lease, from 8090 to 8129.
+5. Installs the cached build unless the device already runs exactly that binary.
+6. Launches the app against this Metro and waits until `__WW_DEV__` answers.
+
+If `up` fails or is interrupted, it hands back the lease it took and stops the Metro it started, then says what to do next.
 
 It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes 10 to 25 minutes, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro.
 
 - `--accept-stale-native` skips the build. Use it only when the diff has no native change (`modules/`, `patches/`, `plugins/`, `targets/`, native deps, `app.config.ts`), and report "native binary unverified".
-- `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`) and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL`.
+- `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`), an isolated ww-api, and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Use it whenever the change reads or writes backend data (Buddies, Notes Import, accounts) or when you need isolation. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` (see `wwv up`'s `api` output), shared with the user and every other worktree.
 
 ## Doctor
 
@@ -30,7 +39,7 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 wwv doctor            # exit 1 if anything is off
 ```
 
-Checks: free disk, Metro served from this worktree, API `/health`, device lock owner, booted, app installed, native fingerprint match, JS runtime reachable with zero captured errors, and the bundle calling the run's API (`api-base`). Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`.
+Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, and the bundle calling the run's API (`api-base`). Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`.
 
 ## Drive
 
@@ -93,7 +102,7 @@ wwv monkey --steps 150 --seed 4242 --scenario pioneer   # seeded random walk
 pnpm vitest run src/__tests__/fuzz.parsers.test.ts      # property-based parsers
 ```
 
-The monkey presses random enabled controls, types hostile text (RTL, emoji, 512 chars, format strings), scrolls, and goes back. It never touches delete, purchase, share, export, iCloud or developer controls. It fails on any captured JS error or an unresponsive app. Its JSONL log, screenshot and a replay command land in the run's artifacts.
+The monkey relaunches the app, seeds, then presses random enabled controls, types hostile text (RTL, emoji, 512 chars, format strings), scrolls, and goes back. It never touches delete, purchase, share, export, iCloud or developer controls. It fails on any captured JS error or an unresponsive app. It also fails as `stuck` when more than 25% of steps had to refocus or relaunch the app instead of acting. The summary reports `actions`, `refocused` and `realActionShare`. Its JSONL log, screenshot and a replay command land in the run's artifacts.
 
 On a failure, rerun with the same seed to confirm. Then minimize by lowering `--steps` until it stops reproducing, and turn the path into a Maestro flow or a unit test before fixing. Property tests print a seed; rerun with `FC_SEED=<seed>`.
 
@@ -116,6 +125,42 @@ Proof standards:
 - Check both platforms for anything touching layout, native APIs, maps, notifications, purchases or permissions. iPad-specific layouts need `--ipad`.
 - Report what you verified, on which devices, the artifact paths, and what you couldn't verify and why.
 
+## Concurrency and resources
+
+Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
+
+- **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof. Use Android only when the change is platform-sensitive.
+- **Caps.** At most `WW_VERIFY_MAX_IOS` simulators and `WW_VERIFY_MAX_ANDROID` emulators are leased at once, and the pool never grows past the cap. Only `WW_VERIFY_MAX_BUILDS` native builds run at a time. A worktree waiting for a build slot stops waiting as soon as its fingerprint appears in the cache, and a cached artifact never waits.
+- **Builds.** Always the development variant (`com.leviwilkerson.jwtimedev`); the harness refuses to cache or install anything else and never adds PostHog's symbol upload. A build never installs anything; `up` installs the cached artifact after it holds a lease. A failed build's `.verify/DerivedData` or `android/app/build` is deleted too. Android builds run without a Gradle or Kotlin daemon, so nothing stays resident afterwards.
+- **Orphaned builds.** A build runs in its own process group, recorded with its slot. If its `up` dies (killed, crashed), the next `up` or `wwv gc` kills that group and deletes its build dirs; `wwv status` shows it as `orphaned` until then.
+- **Waiting.** When every device is leased, `up` queues first-come and prints the holders and your place. Builds queue first-come too, and a device request waits behind an earlier build that is only short of memory, so builds aren't starved. `up` gives up after `--wait <minutes>` (default 30). Don't kill another worktree's lease; run `wwv status` (it lists who waits for what, and why) and wait, or work without a device.
+- **Idle expiry.** Every command that touches the device refreshes the lease. A lease that is idle for `WW_VERIFY_LEASE_IDLE_MIN`, or whose worktree was deleted, gets reaped by the next `up` or `wwv gc`: the reaper shuts the device down and stops that worktree's Metro. After that, your commands fail with "no longer holds its lease"; run `wwv up` again.
+- **Memory budget.** A lease or build waits while the estimated total would exceed `WW_VERIFY_MEMORY_BUDGET_GB`; a request bigger than the whole budget fails at once. Emulators boot with 2 GB and 2 cores, and Metro runs with 2 workers.
+- **Always `wwv down` when done**, including after a failed `up`.
+
+```bash
+wwv status     # leases, device and build waiters with reasons, builds, Metros, memory (read-only)
+wwv gc         # reap expired leases and orphaned builds now
+```
+
+Defaults depend on the machine's RAM; env vars always win, and `wwv status` prints the effective policy and where each value came from (`env` or `auto`).
+
+| Variable                                                       | ≤ 16 GB RAM           | Larger machines       |
+| -------------------------------------------------------------- | --------------------- | --------------------- |
+| `WW_VERIFY_MAX_IOS`, `WW_VERIFY_MAX_ANDROID`                   | 1, 1                  | 2, 2                  |
+| `WW_VERIFY_MAX_BUILDS`                                         | 1                     | 1                     |
+| `WW_VERIFY_LEASE_IDLE_MIN`                                     | 15                    | 30                    |
+| `WW_VERIFY_MEMORY_BUDGET_GB`                                   | 8                     | 70% of RAM            |
+| `WW_VERIFY_EST_{IOS,ANDROID,METRO,IOS_BUILD,ANDROID_BUILD}_GB` | 3.4, 3.2, 0.6, 6, 6.5 | 3.4, 3.2, 0.6, 6, 6.5 |
+| `WW_VERIFY_METRO_WORKERS`, `WW_VERIFY_GRADLE_WORKERS`          | 2, 2                  | 2, 2                  |
+| `WW_VERIFY_HOME`                                               | `~/.ww-verify`        | `~/.ww-verify`        |
+
+The estimates are measured memory footprints on a 16 GB Mac Mini: a simulator about 3.4 GB and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. The 8 GB budget fits one iPhone and one Android emulator at once (about 7.8 GB with two Metros), or one build on its own. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
+
+The budget covers only the harness. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. If you run more than about 15 agents on a 16 GB machine, lower `WW_VERIFY_MEMORY_BUDGET_GB` further (to 7 or 6, which allows one device at a time).
+
+**Spotlight.** Spotlight skips hidden folders and folders ending in `.noindex`, so `.verify/` and `~/.ww-verify` are never indexed, and neither is DerivedData; a `.metadata_never_index` file does not stop it on current macOS. Keep worktrees under a hidden folder (such as `~/.t3/worktrees`), or add the worktrees folder in System Settings > Spotlight > Search Privacy, or `mds` indexes every new checkout.
+
 ## Cleanup
 
 ```bash
@@ -123,7 +168,7 @@ wwv down                    # close sessions, shut down claimed devices, stop Me
 wwv down --keep-device      # keep the device booted for a follow-up task
 ```
 
-`down` only stops what this worktree started and keeps `.verify/artifacts/`. Simulators and AVDs stay installed for reuse. Delete them only to reclaim disk: `xcrun simctl delete <udid>` or `avdmanager delete avd -n ww-verify-N`, plus stale builds in `~/.ww-verify/builds`.
+`down` releases this worktree's leases (even if the device is already gone), only stops what this worktree started, and keeps `.verify/artifacts/`. Simulators and AVDs stay installed for reuse. Delete them only to reclaim disk: `xcrun simctl delete <udid>` or `avdmanager delete avd -n ww-verify-N`, plus stale builds in `~/.ww-verify/builds`.
 
 ## Recovering
 
@@ -137,6 +182,9 @@ Each of these was hit for real. Use the fix rather than working around it:
 - **Android shows "Location Accuracy" from Google.** This is a one-time consent per emulator, shown outside the app. Press "Turn on" from the screenshot coordinates (`adb -s <serial> shell input tap <x> <y>`). agent-device can't press it.
 - **Android can't reach Metro, or `eval` says no JS runtime.** The harness reapplies `adb reverse` before driving. If it still fails, run `wwv up --platform android`.
 - **Android dev builds need `EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY` and `GOOGLE_MAPS_ANDROID_API_KEY`.** They're read from the main checkout's `.env.local`; worktree files layer over it.
+- **`up` failed with SimError 405 ("Shutting Down").** `down` now waits until the simulator is Shutdown, and `up` waits out a shutdown and retries the install once. If it still happens, run `wwv down`, then `wwv up`.
+- **A manual fingerprint check doesn't match `up`.** `createFingerprintAsync('.')` hashes differently from the absolute path. Pass the absolute repo root, as the harness does: `createFingerprintAsync(process.cwd(), { platforms: ['ios'] })`.
+- **`status` shows an `orphaned` build.** Its `up` died mid-build. Run `wwv gc` to kill the build's process group and free the slot; never kill builds by process name.
 
 ## Limits
 

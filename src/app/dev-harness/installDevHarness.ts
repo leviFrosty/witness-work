@@ -78,6 +78,8 @@ function summary() {
     timeEntries: timeEntries.length,
     dayPlans: reports.dayPlans.length,
     route: route ? { name: route.name, params: route.params } : null,
+    // false at the app's root, where Android back would leave the app
+    canGoBack: navigationRef.isReady() && navigationRef.canGoBack(),
     errors: errors.length,
     apiBase: new URL(apis.notesImportHealth).origin,
   }

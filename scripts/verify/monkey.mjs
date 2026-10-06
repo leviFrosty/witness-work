@@ -1,7 +1,8 @@
 // Seeded UI fuzzer for `ww-verify monkey`. Walks the app through its
 // accessibility tree (agent-device), types hostile text into fields, and fails
-// on a JS error captured by __WW_DEV__ or on the app leaving the foreground for
-// good. Every step is logged so a failing seed can be replayed and minimized.
+// on a JS error captured by __WW_DEV__, on the app leaving the foreground for
+// good, or on getting stuck (too few real actions). Every step is logged so a
+// failing seed can be replayed and minimized.
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -32,6 +33,35 @@ const FUZZ_TEXT = [
   '‮right-to-left override',
 ]
 
+// More refocus/relaunch steps than this share of the run is a stuck run, not
+// a pass: the monkey wasn't exercising the app.
+export const MAX_REFOCUS_SHARE = 0.25
+
+export function isStuck(refocused, steps) {
+  return refocused > steps * MAX_REFOCUS_SHARE
+}
+
+/**
+ * Who has Android's focus, from `dumpsys window`: `app` (our activity), `popup`
+ * (a popup menu or dialog the app owns: mCurrentFocus is `PopupWindow:...`
+ * while mFocusedApp stays our activity), or `other` (another app, the launcher,
+ * the notification shade).
+ */
+export function androidFocus(dumpsys) {
+  const current = dumpsys.match(/mCurrentFocus=(.*)/)?.[1]?.trim() ?? ''
+  const app = dumpsys.match(/mFocusedApp=(.*)/)?.[1] ?? ''
+  if (current.includes(`${BUNDLE_ID}/`)) return 'app'
+  if (!app.includes(`${BUNDLE_ID}/`)) return 'other'
+  const window = current.match(/^Window\{\S+ \S+ (.+)\}$/)?.[1] ?? current
+  if (!window || window === 'null') return 'app'
+  return !window.includes('/') &&
+    !/NotificationShade|StatusBar|InputMethod|Launcher/i.test(window)
+    ? 'popup'
+    : 'other'
+}
+
+export const focusIsOurs = (dumpsys) => androidFocus(dumpsys) !== 'other'
+
 function mulberry32(seed) {
   let a = seed >>> 0
   return () => {
@@ -55,6 +85,9 @@ function candidates(nodes) {
   return nodes.filter((node) => {
     if (node.enabled === false || node.hittable === false || !node.ref)
       return false
+    // Android snapshots can include the launcher or another app's views.
+    const owner = node.bundleId ?? node.packageName ?? node.package
+    if (owner && owner !== BUNDLE_ID) return false
     const label = `${node.label ?? ''} ${node.identifier ?? ''}`
     if (AVOID.test(label)) return false
     // iOS reports no hittability, so go by element type; Android marks React
@@ -88,11 +121,22 @@ export async function runMonkey(options) {
   const pick = (items) => items[Math.floor(random() * items.length)]
   const logPath = path.join(outDir, `monkey-${platform}-seed${seed}.jsonl`)
   const logStream = fs.openSync(logPath, 'w')
+  const pause = options.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)))
   const write = (entry) => fs.writeSync(logStream, `${JSON.stringify(entry)}\n`)
 
+  // Start clean: a cold relaunch drops native popups or sheets an earlier run
+  // left open, and the seed resets data and navigation to Home.
+  await options.relaunch()
   await evaluate(`__WW_DEV__.seed(${JSON.stringify(scenario)})`)
   await evaluate('__WW_DEV__.clearErrors()')
   write({ step: 0, action: 'seed', scenario, seed })
+
+  const look = () => {
+    const snapshot = agentDevice(['snapshot', '-i', '--json'])
+    return { snapshot, targets: candidates(parseSnapshot(snapshot.stdout)) }
+  }
+  // Right after a relaunch the accessibility tree takes a few seconds to fill.
+  for (let i = 0; i < 10 && !look().targets.length; i++) await pause(1500)
 
   const foreground = () => {
     options.beforeForeground?.()
@@ -116,12 +160,60 @@ export async function runMonkey(options) {
       )
   }
 
+  const focus = () =>
+    platform !== 'android'
+      ? 'app'
+      : androidFocus(
+          run(
+            'adb',
+            [
+              '-s',
+              device.id,
+              'shell',
+              "dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'",
+            ],
+            { check: false }
+          ).stdout
+        )
+
+  // Something keeps covering the app: press back (Android) or dismiss a
+  // system alert (iOS). Never back out of the app's own screen, which on
+  // Android leaves the app.
+  const dismiss = () => {
+    if (platform !== 'android') agentDevice(['alert', 'dismiss'])
+    else if (focus() !== 'app')
+      run('adb', ['-s', device.id, 'shell', 'input', 'keyevent', '4'], {
+        check: false,
+      })
+  }
+
   let failure = null
   let actions = 0
   let refocused = 0
   let deadEnds = 0
+  let inARow = 0
+  const refocus = (step, entry) => {
+    refocused++
+    inARow++
+    write({ step, ...entry })
+    if (inARow >= 2) {
+      write({ step, action: 'dismiss', reason: `${inARow} refocuses in a row` })
+      dismiss()
+    }
+    if (isStuck(refocused, steps))
+      failure = {
+        step,
+        kind: 'stuck',
+        detail: `${refocused} of ${steps} steps had to refocus or relaunch the app (over ${MAX_REFOCUS_SHARE * 100}%); something keeps covering it. See the log and screenshot.`,
+      }
+  }
   for (let step = 1; step <= steps && !failure; step++) {
-    const snapshot = agentDevice(['snapshot', '-i', '--json'])
+    if (focus() === 'other') {
+      refocus(step, { action: 'refocus', reason: 'another app is in front' })
+      foreground()
+      continue
+    }
+    let { snapshot, targets } = look()
     if (
       /circuit-disabled|No snapshot backend could read/.test(
         `${snapshot.stdout}${snapshot.stderr}`
@@ -129,19 +221,28 @@ export async function runMonkey(options) {
     ) {
       // agent-device disables its fast iOS accessibility reader for the rest of
       // an app process after slow screens; a cold relaunch restores it.
-      write({ step, action: 'relaunch', reason: 'snapshot backend disabled' })
+      refocus(step, {
+        action: 'relaunch',
+        reason: 'snapshot backend disabled',
+      })
       await options.relaunch()
-      refocused++
       continue
     }
-    const targets = candidates(parseSnapshot(snapshot.stdout))
+    // A screen mid-transition can read empty; look once more before calling it
+    // a dead end.
+    if (!targets.length) {
+      await pause(1500)
+      ;({ targets } = look())
+    }
     if (!targets.length) {
       // The session's snapshot is scoped to this app, so no targets usually
       // means another app or a system sheet is in front. Come back, and after
       // repeated dead ends restart from Home.
       deadEnds++
-      refocused++
-      write({ step, action: deadEnds >= 3 ? 'reset-home' : 'refocus' })
+      refocus(step, {
+        action: deadEnds >= 3 ? 'reset-home' : 'refocus',
+        reason: 'no targets',
+      })
       foreground()
       if (deadEnds >= 3) {
         await evaluate("__WW_DEV__.navigate('Root')").catch(() => null)
@@ -150,9 +251,14 @@ export async function runMonkey(options) {
       continue
     }
     deadEnds = 0
+    inARow = 0
     const roll = random()
     let entry
-    if (roll < 0.08) {
+    // Back at the app's root would leave the app (Android) or do nothing.
+    const canGoBack =
+      roll < 0.08 &&
+      (await evaluate('__WW_DEV__.state().canGoBack', 5000).catch(() => false))
+    if (canGoBack) {
       entry = { action: 'back' }
       agentDevice(['back', '--settle'])
     } else if (roll < 0.16) {
@@ -227,8 +333,11 @@ export async function runMonkey(options) {
     platform,
     seed,
     scenario,
-    steps: actions,
+    steps,
+    actions,
     refocused,
+    realActionShare:
+      Math.round((actions / Math.max(1, actions + refocused)) * 100) / 100,
     failure,
     log: path.relative(options.root, logPath),
     screenshot,

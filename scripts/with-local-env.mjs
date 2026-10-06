@@ -31,10 +31,13 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
 
   // App configuration comes only from the selected files. Keep toolchain vars,
   // but don't inherit app keys or a dev bypass from another shell environment.
+  // POSTHOG_DISABLE_UPLOAD only ever turns uploads off, so it may pass.
   const env = { ...inherited }
   for (const key of Object.keys(env)) {
     if (
-      /^(EXPO_PUBLIC_|POSTHOG_|__EXPO_ENV_|__EXPO_CONFIG_MODE$)/.test(key) ||
+      /^(EXPO_PUBLIC_|POSTHOG_(?!DISABLE_UPLOAD$)|__EXPO_ENV_|__EXPO_CONFIG_MODE$)/.test(
+        key
+      ) ||
       key === 'GOOGLE_MAPS_ANDROID_API_KEY'
     )
       delete env[key]

@@ -73,9 +73,11 @@ test('production never merges development files, overrides or inherited bypass t
   const { env } = loadLocalEnv(root, 'production', {
     EXPO_PUBLIC_API_DEV_BYPASS: 'stale',
     POSTHOG_CLI_API_KEY: 'stale',
+    POSTHOG_DISABLE_UPLOAD: 'true',
   })
   assert.equal(env.EXPO_PUBLIC_API_DEV_BYPASS, undefined)
   assert.equal(env.POSTHOG_CLI_API_KEY, undefined)
+  assert.equal(env.POSTHOG_DISABLE_UPLOAD, 'true')
   assert.equal(
     validateLocalEnv(env, 'ios').hostname,
     'ww-proxy.leviwilkerson.com'

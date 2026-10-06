@@ -7,8 +7,30 @@ import os from 'node:os'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import { spawn, spawnSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import crypto from 'node:crypto'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { readFlow, runSteps } from './flows.mjs'
+import {
+  CONFIG,
+  HOME as GLOBAL_DIR,
+  POLICY,
+  RAM_GB,
+  acquireBuild,
+  claimLease,
+  gc,
+  heartbeat,
+  killTree,
+  readLeases,
+  reapBuilds,
+  release,
+  releaseBuild,
+  removeDirs,
+  reservePort,
+  setBuildGroup,
+  snapshot,
+  updateLeases,
+  withMutex,
+} from './leases.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(
   /\/$/,
@@ -16,38 +38,52 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(
 )
 const STATE_DIR = path.join(ROOT, '.verify')
 const STATE_FILE = path.join(STATE_DIR, 'state.json')
-const GLOBAL_DIR = path.join(os.homedir(), '.ww-verify')
-const LOCK_DIR = path.join(GLOBAL_DIR, 'locks')
 const BUILD_DIR = path.join(GLOBAL_DIR, 'builds')
 const BUILD_INDEX = path.join(GLOBAL_DIR, 'builds.json')
 const INSTALLS = path.join(GLOBAL_DIR, 'installs.json')
 
 const BUNDLE_ID = 'com.leviwilkerson.jwtimedev'
 const AGENT_DEVICE_VERSION = '0.21.12'
-const METRO_PORTS = [8090, 8091, 8092, 8093, 8094, 8095, 8096, 8097, 8098, 8099]
+const METRO_WORKERS = process.env.WW_VERIFY_METRO_WORKERS || '2'
+const GRADLE_WORKERS = process.env.WW_VERIFY_GRADLE_WORKERS || '2'
+const EMULATOR_MEMORY_MB = 2048
 const ANDROID_HOME =
   process.env.ANDROID_HOME || path.join(os.homedir(), 'Library/Android/sdk')
 const ANDROID_AVD_HOME =
   process.env.ANDROID_AVD_HOME || path.join(os.homedir(), '.android/avd')
-const LOCK_STALE_MS = 24 * 60 * 60 * 1000
 const KEEP_BUILDS = 3
 
-const SLUG = path
-  .basename(ROOT)
-  .replace(/[^a-zA-Z0-9]+/g, '-')
-  .toLowerCase()
+const slugOf = (root) =>
+  path
+    .basename(root)
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .toLowerCase()
 
 // ---------- small utilities ----------
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// Throws, so `finally` blocks (build slots, build dirs) still clean up; the
+// top-level handler prints the message and exits 1.
+class Failure extends Error {}
 function fail(message) {
-  console.error(`ww-verify: ${message}`)
-  process.exit(1)
+  throw new Failure(message)
 }
 
 function log(message) {
   console.error(`[ww-verify] ${message}`)
+}
+
+/** Logs a wait message when it changes, and at most once a minute otherwise. */
+function waitLogger() {
+  let last = ''
+  let at = 0
+  return (message) => {
+    if (message === last && Date.now() - at < 60_000) return
+    last = message
+    at = Date.now()
+    log(message)
+  }
 }
 
 function run(cmd, args, options = {}) {
@@ -191,32 +227,268 @@ function artifactsDir(state) {
   return dir
 }
 
-// ---------- device locks (one worktree per device) ----------
+// ---------- device leases (scripts/verify/leases.mjs) ----------
 
-function lockFile(deviceKey) {
-  return path.join(LOCK_DIR, `${deviceKey.replace(/[^a-zA-Z0-9-]/g, '_')}.json`)
+const idleMin = (lease) => Math.round(lease.idleMs / 60_000)
+
+function describeHolder(lease) {
+  return `${path.basename(lease.worktree)} (${lease.legacy ? 'old harness' : `idle ${idleMin(lease)}m`})`
 }
 
-function lockOwner(deviceKey) {
-  const lock = readJson(lockFile(deviceKey), null)
-  if (!lock) return null
-  const stale =
-    !fs.existsSync(lock.worktree) || Date.now() - lock.at > LOCK_STALE_MS
-  return stale ? null : lock
+/** The device a lease points at; old-harness locks only carry the key. */
+function leaseDevice(lease) {
+  const android = lease.platform === 'android'
+  const name =
+    lease.deviceName ?? (android ? lease.key.replace(/^avd-/, '') : lease.key)
+  const id = lease.deviceId ?? (android ? emulatorSerial(name) : lease.key)
+  return {
+    platform: lease.platform,
+    kind: lease.kind,
+    id,
+    name,
+    lockKey: lease.key,
+  }
 }
 
-function canTake(deviceKey) {
-  const owner = lockOwner(deviceKey)
-  return !owner || owner.worktree === ROOT
+async function takeLease(platform, kind, flags) {
+  const waitMin = Number(flags.wait ?? 30)
+  const waitLog = waitLogger()
+  const result = await claimLease(
+    {
+      worktree: ROOT,
+      platform,
+      kind,
+      pool: platform === 'ios' ? () => iosPool(kind) : androidPool,
+      create:
+        platform === 'ios' ? (pool) => createIosDevice(kind, pool) : createAvd,
+      busyPorts: () => new Set(listeningPorts().keys()),
+    },
+    {
+      waitMs: waitMin * 60_000,
+      beforeTry: reapExpired,
+      onWait: (r) =>
+        waitLog(
+          `waiting for a ${platform} device (#${r.position} of ${r.queued} waiting): ${r.wait}${r.holders.length ? `; ${platform} leases held by ${r.holders.map(describeHolder).join(', ')}` : ''} (see wwv status)`
+        ),
+    }
+  )
+  if (result.lease) return result
+  if (result.impossible)
+    fail(
+      `No ${platform} device can ever fit: ${result.wait}. Raise the budget or lower the WW_VERIFY_EST_* estimates (see wwv status).`
+    )
+  fail(
+    `No ${platform} device after ${waitMin} min: ${result.wait}.${result.holders.length ? ` ${platform} leases held by ${result.holders.map(describeHolder).join(', ')}; idle leases expire after ${CONFIG.idleMin} min.` : ''} Run wwv status to see leases, builds and both queues.`
+  )
 }
 
-function takeLock(deviceKey) {
-  writeJson(lockFile(deviceKey), { worktree: ROOT, at: Date.now() })
+let heartbeatTimer
+function startHeartbeat() {
+  heartbeatTimer ??= setInterval(() => {
+    try {
+      heartbeat(ROOT)
+    } catch {
+      // the next command retries
+    }
+  }, 5 * 60_000)
+  heartbeatTimer.unref()
 }
 
-function releaseLock(deviceKey) {
-  const owner = lockOwner(deviceKey)
-  if (owner?.worktree === ROOT) fs.rmSync(lockFile(deviceKey), { force: true })
+/** Fails unless this worktree still holds the platform's lease; refreshes it. */
+function holdLease(state, platform) {
+  const key = state.devices?.[platform]?.lockKey
+  if (key && !heartbeat(ROOT).includes(key))
+    fail(
+      `This worktree no longer holds its ${platform} lease (${state.reapedReason ?? `expired after ${CONFIG.idleMin} min idle, or reaped`}); run ww-verify up --platform ${platform}`
+    )
+  startHeartbeat()
+}
+
+const simState = (udid) => simctlDevices().find((d) => d.udid === udid)?.state
+
+/** Polls until the simulator leaves `states`; returns the state it settled in. */
+function waitSimLeaves(udid, states, timeoutMs = 60_000) {
+  const deadline = Date.now() + timeoutMs
+  let state = simState(udid)
+  while (states.includes(state) && Date.now() < deadline) {
+    sleepSync(1000)
+    state = simState(udid)
+  }
+  return state
+}
+
+const sleepSync = (ms) =>
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+
+/**
+ * Agent-device's XCUITest runner (`xcodebuild test-without-building ...
+ * id=<UDID>`) can outlive `close` and keep the simulator half-booted. Kills it
+ * by the exact UDID in its command line, never by name.
+ */
+function killIosRunner(udid) {
+  const runners = () =>
+    run('ps', ['-axww', '-o', 'pid=,command='], { check: false })
+      .stdout.split('\n')
+      .map((line) => line.trim().match(/^(\d+)\s+(.*)$/))
+      .filter(
+        (m) =>
+          m &&
+          /\bxcodebuild\b/.test(m[2]) &&
+          new RegExp(`id=${udid}(?![0-9A-Fa-f-])`).test(m[2])
+      )
+      .map((m) => Number(m[1]))
+  for (let i = 0; i < 5 && runners().length; i++) sleepSync(1000)
+  for (const pid of runners()) {
+    try {
+      process.kill(pid, 'SIGTERM')
+      log(`stopped agent-device runner ${pid} for ${udid}`)
+    } catch {
+      // already gone
+    }
+  }
+}
+
+/** Shuts down a harness device; never touches devices outside the pool. */
+function shutdownDevice(device, { keepDevice = false } = {}) {
+  if (device.platform === 'ios') {
+    const sim = simctlDevices().find((d) => d.udid === device.id)
+    if (!sim || !/^WW Verify /.test(sim.name)) return
+    killIosRunner(device.id)
+    if (keepDevice) return
+    if (sim.state !== 'Shutdown')
+      run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
+    // `simctl shutdown` returns while the device is still Booted, then
+    // "Shutting Down"; a quick `up` would install onto a dying simulator.
+    const state = waitSimLeaves(device.id, ['Booted', 'Shutting Down'])
+    if (state !== 'Shutdown')
+      log(`${device.name} is still ${state} after 60 s of shutting down`)
+  } else if (keepDevice) return
+  else if (AVD_PATTERN.test(device.name)) {
+    const serial = runningAvds()[device.name]
+    if (serial) run('adb', ['-s', serial, 'emu', 'kill'], { check: false })
+  }
+}
+
+const worktreeState = (worktree) =>
+  readJson(path.join(worktree, '.verify/state.json'), null)
+
+function localApiInUse(except) {
+  return readLeases().some(
+    (l) =>
+      !l.expired &&
+      l.worktree !== except &&
+      worktreeState(l.worktree)?.api?.mode === 'local'
+  )
+}
+
+function stopLocalApi(worktree) {
+  if (localApiInUse(worktree)) return
+  run('node', [path.join(apiDir(), 'scripts/verify/dev.mjs'), 'down'], {
+    cwd: apiDir(),
+    check: false,
+  })
+}
+
+/**
+ * Stops another worktree's Metro (and local API) only when its state recorded
+ * the pid and the port's listener runs from that worktree.
+ */
+function stopWorktreeServices(worktree, reason) {
+  const file = path.join(worktree, '.verify/state.json')
+  const state = worktreeState(worktree)
+  if (!state) return
+  const metro = state.metro
+  if (
+    metro?.pid &&
+    CONFIG.metroPorts.includes(metro.port) &&
+    pidAlive(metro.pid) &&
+    portOwner(metro.port)?.cwd === worktree
+  ) {
+    stopProcessGroup(metro.pid)
+    log(`stopped Metro ${metro.port} of ${path.basename(worktree)}`)
+  }
+  if (state.api?.mode === 'local') stopLocalApi(worktree)
+  delete state.metro
+  state.devices = {}
+  state.reapedAt = Date.now()
+  state.reapedReason = reason
+  writeJson(file, state)
+}
+
+/** Closes the session, shuts the device down, and drops the lease. */
+function releasePlatform(state, platform, flags) {
+  const own = readLeases().filter(
+    (l) => l.worktree === ROOT && l.platform === platform
+  )
+  const device = state.devices?.[platform] ?? (own[0] && leaseDevice(own[0]))
+  if (!device) return
+  agentDevice(['close', '--session', sessionName(platform)])
+  shutdownDevice(device, { keepDevice: Boolean(flags['keep-device']) })
+  release(ROOT, (l) => l.platform === platform || l.key === device.lockKey)
+  delete state.devices?.[platform]
+  log(`released ${device.name}`)
+}
+
+/** Releases every lease of this worktree and stops its Metro; keeps state. */
+function standDown(state) {
+  const platforms = new Set([
+    ...Object.keys(state.devices ?? {}),
+    ...readLeases()
+      .filter((l) => l.worktree === ROOT)
+      .map((l) => l.platform),
+  ])
+  for (const platform of platforms) releasePlatform(state, platform, {})
+  stopOwnMetro(state)
+  writeState(state)
+}
+
+function stopOwnMetro(state) {
+  if (state.metro?.pid && pidAlive(state.metro.pid)) {
+    stopProcessGroup(state.metro.pid)
+    log(`stopped Metro ${state.metro.port}`)
+  }
+  delete state.metro
+}
+
+function printTable(title, headers, rows) {
+  console.log(title)
+  if (!rows.length) {
+    console.log('  (none)\n')
+    return
+  }
+  const all = [headers, ...rows.map((row) => row.map(String))]
+  const widths = headers.map((_, i) => Math.max(...all.map((r) => r[i].length)))
+  for (const row of all)
+    console.log(
+      `  ${row.map((cell, i) => cell.padEnd(widths[i])).join('  ')}`.trimEnd()
+    )
+  console.log('')
+}
+
+async function reapExpired() {
+  await reapBuilds({ log })
+  return gc(async (lease) => {
+    const device = leaseDevice(lease)
+    const gone = !fs.existsSync(lease.worktree)
+    const reason = gone
+      ? 'worktree deleted'
+      : lease.legacy
+        ? 'old lock over 24 h'
+        : `idle ${idleMin(lease)} min, limit ${CONFIG.idleMin}`
+    log(
+      `reaping ${device.name} from ${path.basename(lease.worktree)} (${reason})`
+    )
+    agentDevice([
+      'close',
+      '--session',
+      sessionName(lease.platform, lease.worktree),
+    ])
+    shutdownDevice(device)
+    const others = readLeases().some(
+      (l) => l.worktree === lease.worktree && l.key !== lease.key && !l.expired
+    )
+    if (!others && !gone) stopWorktreeServices(lease.worktree, reason)
+  })
 }
 
 // ---------- agent-device ----------
@@ -231,8 +503,8 @@ function agentDeviceBin() {
   return ['npx', '-y', `agent-device@${AGENT_DEVICE_VERSION}`]
 }
 
-function sessionName(platform) {
-  return `wwv-${SLUG}-${platform}`.slice(0, 60)
+function sessionName(platform, root = ROOT) {
+  return `wwv-${slugOf(root)}-${platform}`.slice(0, 60)
 }
 
 function agentDevice(args, options = {}) {
@@ -285,46 +557,51 @@ function pickDeviceType(runtime, kind) {
   return match.identifier
 }
 
-function ensureIosDevice(kind) {
-  const label = kind === 'ipad' ? 'iPad' : 'iPhone'
-  const pattern = new RegExp(`^WW Verify ${label} (\\d+)$`)
-  const pool = simctlDevices()
+const iosPattern = (kind) =>
+  new RegExp(`^WW Verify ${kind === 'ipad' ? 'iPad' : 'iPhone'} (\\d+)$`)
+
+/** The fixed-size simulator pool for a kind (iphone | ipad). */
+function iosPool(kind) {
+  const pattern = iosPattern(kind)
+  return simctlDevices()
     .filter((d) => pattern.test(d.name))
-    .sort(
-      (a, b) =>
-        Number(a.name.match(pattern)[1]) - Number(b.name.match(pattern)[1])
-    )
-  let device = pool.find((d) => canTake(d.udid))
-  if (!device) {
-    const next = pool.length
-      ? Math.max(...pool.map((d) => Number(d.name.match(pattern)[1]))) + 1
-      : 1
-    const runtime = newestIosRuntime()
-    const name = `WW Verify ${label} ${next}`
-    log(`creating simulator "${name}" (${runtime.name})`)
-    const udid = run('xcrun', [
-      'simctl',
-      'create',
-      name,
-      pickDeviceType(runtime, kind),
-      runtime.identifier,
-    ]).stdout.trim()
-    device = { udid, name, state: 'Shutdown' }
-  }
-  takeLock(device.udid)
-  if (device.state !== 'Booted') {
+    .map((d) => ({
+      key: d.udid,
+      id: d.udid,
+      name: d.name,
+      n: Number(d.name.match(pattern)[1]),
+    }))
+    .sort((a, b) => a.n - b.n)
+}
+
+function createIosDevice(kind, pool) {
+  const next = pool.length ? Math.max(...pool.map((d) => d.n)) + 1 : 1
+  const runtime = newestIosRuntime()
+  const name = `WW Verify ${kind === 'ipad' ? 'iPad' : 'iPhone'} ${next}`
+  log(`creating simulator "${name}" (${runtime.name})`)
+  const udid = run('xcrun', [
+    'simctl',
+    'create',
+    name,
+    pickDeviceType(runtime, kind),
+    runtime.identifier,
+  ]).stdout.trim()
+  return { key: udid, id: udid, name, n: next }
+}
+
+function bootIos(device) {
+  if (!simState(device.id))
+    fail(`Simulator ${device.name} (${device.id}) no longer exists`)
+  // A device still shutting down from the last `down` looks Booted, then
+  // refuses installs with SimError 405; wait it out before booting again.
+  const state = waitSimLeaves(device.id, ['Shutting Down'])
+  if (state !== 'Booted') {
     log(`booting ${device.name}`)
-    run('xcrun', ['simctl', 'boot', device.udid], { check: false })
+    run('xcrun', ['simctl', 'boot', device.id], { check: false })
   }
-  run('xcrun', ['simctl', 'bootstatus', device.udid, '-b'], {
+  run('xcrun', ['simctl', 'bootstatus', device.id, '-b'], {
     timeout: 300_000,
   })
-  return {
-    platform: 'ios',
-    id: device.udid,
-    name: device.name,
-    lockKey: device.udid,
-  }
 }
 
 function iosAppInstalled(udid) {
@@ -335,26 +612,29 @@ function iosAppInstalled(udid) {
   )
 }
 
-function iosDerivedDataApp() {
-  const base = path.join(os.homedir(), 'Library/Developer/Xcode/DerivedData')
-  const workspace = path.join(ROOT, 'ios/WitnessWorkDev.xcworkspace')
-  if (!fs.existsSync(base)) return null
-  for (const dir of fs
-    .readdirSync(base)
-    .filter((d) => d.startsWith('WitnessWorkDev-'))) {
-    const info = path.join(base, dir, 'info.plist')
-    const owner = run('plutil', ['-extract', 'WorkspacePath', 'raw', info], {
-      check: false,
-    }).stdout.trim()
-    const app = path.join(
-      base,
-      dir,
-      'Build/Products/Debug-iphonesimulator/WitnessWorkDev.app'
-    )
-    if (owner === workspace && fs.existsSync(app)) return app
+/** Resolves symlinks (Xcode records /private/tmp for /tmp); keeps missing paths. */
+function realPath(p) {
+  try {
+    return fs.realpathSync(p)
+  } catch {
+    return path.join(realPath(path.dirname(p)), path.basename(p))
   }
-  return null
 }
+
+// Builds use a worktree-local DerivedData, so ownership and cleanup are just
+// this folder (and android/app/build).
+const DERIVED_DATA = path.join(STATE_DIR, 'DerivedData')
+const IOS_PRODUCT = path.join(
+  DERIVED_DATA,
+  'Build/Products/Debug-iphonesimulator/WitnessWorkDev.app'
+)
+const ANDROID_BUILD = path.join(ROOT, 'android/app/build')
+const ANDROID_PRODUCT = path.join(
+  ANDROID_BUILD,
+  'outputs/apk/debug/app-debug.apk'
+)
+const buildDirs = (platform) =>
+  platform === 'ios' ? [DERIVED_DATA] : [ANDROID_BUILD]
 
 // ---------- Android ----------
 
@@ -391,30 +671,52 @@ function newestSystemImage() {
   return `system-images;${images.pop()};google_apis;arm64-v8a`
 }
 
-async function ensureAndroidDevice() {
-  const pattern = /^ww-verify-(\d+)$/
-  const avds = run('emulator', ['-list-avds'], { check: false })
+const AVD_PATTERN = /^ww-verify-(\d+)$/
+const avdNumber = (name) => Number(name.match(AVD_PATTERN)[1])
+const emulatorSerial = (name) => `emulator-${5580 + 2 * (avdNumber(name) - 1)}`
+
+/** The fixed-size `ww-verify-N` AVD pool. */
+function androidPool() {
+  return run('emulator', ['-list-avds'], { check: false })
     .stdout.split('\n')
     .map((s) => s.trim())
-    .filter((s) => pattern.test(s))
-    .sort((a, b) => Number(a.match(pattern)[1]) - Number(b.match(pattern)[1]))
-  let name = avds.find((avd) => canTake(`avd-${avd}`))
-  if (!name) {
-    const next = avds.length
-      ? Math.max(...avds.map((a) => Number(a.match(pattern)[1]))) + 1
-      : 1
-    name = `ww-verify-${next}`
-    log(`creating emulator ${name} (needs ~6 GB)`)
-    run(
-      'avdmanager',
-      ['create', 'avd', '-n', name, '-k', newestSystemImage(), '-d', 'pixel_8'],
-      { input: 'no\n' }
-    )
-  }
-  takeLock(`avd-${name}`)
+    .filter((s) => AVD_PATTERN.test(s))
+    .map((name) => ({
+      key: `avd-${name}`,
+      id: emulatorSerial(name),
+      name,
+      n: avdNumber(name),
+    }))
+    .sort((a, b) => a.n - b.n)
+}
+
+function createAvd(pool) {
+  const next = pool.length ? Math.max(...pool.map((d) => d.n)) + 1 : 1
+  const name = `ww-verify-${next}`
+  log(`creating emulator ${name} (needs ~6 GB disk)`)
+  run(
+    'avdmanager',
+    ['create', 'avd', '-n', name, '-k', newestSystemImage(), '-d', 'pixel_8'],
+    { input: 'no\n' }
+  )
+  const config = path.join(ANDROID_AVD_HOME, `${name}.avd/config.ini`)
+  const lines = fs
+    .readFileSync(config, 'utf8')
+    .split('\n')
+    .filter((line) => !line.startsWith('hw.ramSize='))
+  fs.writeFileSync(
+    config,
+    [...lines, `hw.ramSize=${EMULATOR_MEMORY_MB}`].join('\n')
+  )
+  return { key: `avd-${name}`, id: emulatorSerial(name), name, n: next }
+}
+
+/** Boots the leased AVD headless and lean; returns its adb serial. */
+async function bootAndroid(device) {
+  const name = device.name
   let serial = runningAvds()[name]
   if (!serial) {
-    const port = 5580 + 2 * (Number(name.match(pattern)[1]) - 1)
+    const port = 5580 + 2 * (avdNumber(name) - 1)
     serial = `emulator-${port}`
     log(`booting ${name} headless on ${serial}`)
     const logFile = fs.openSync(
@@ -432,6 +734,10 @@ async function ensureAndroidDevice() {
         '-no-audio',
         '-no-boot-anim',
         '-no-snapshot-save',
+        '-memory',
+        String(EMULATOR_MEMORY_MB),
+        '-cores',
+        '2',
       ],
       { detached: true, stdio: ['ignore', logFile, logFile], env: toolEnv() }
     ).unref()
@@ -448,7 +754,7 @@ async function ensureAndroidDevice() {
       await sleep(2000)
     }
   }
-  return { platform: 'android', id: serial, name, lockKey: `avd-${name}` }
+  return serial
 }
 
 function androidAppInstalled(serial) {
@@ -473,77 +779,229 @@ function cachedBuild(platform, fingerprint) {
   return entry && fs.existsSync(entry.path) ? entry : null
 }
 
+/**
+ * Copies the artifact to a temp path, then renames it into the cache and
+ * updates the index under the machine mutex.
+ */
 function cacheBuild(platform, fingerprint, artifact) {
+  assertDevArtifact(artifact)
   fs.mkdirSync(BUILD_DIR, { recursive: true })
   const ext = platform === 'ios' ? 'app' : 'apk'
   const target = path.join(BUILD_DIR, `${platform}-${fingerprint}.${ext}`)
-  fs.rmSync(target, { recursive: true, force: true })
-  run('ditto', [artifact, target])
-  const index = readJson(BUILD_INDEX, {})
-  index[`${platform}-${fingerprint}`] = {
-    path: target,
-    builtAt: Date.now(),
-    worktree: ROOT,
-  }
-  const stale = Object.entries(index)
-    .filter(([key]) => key.startsWith(`${platform}-`))
-    .sort((a, b) => b[1].builtAt - a[1].builtAt)
-    .slice(KEEP_BUILDS)
-  for (const [key, entry] of stale) {
-    fs.rmSync(entry.path, { recursive: true, force: true })
-    delete index[key]
-  }
-  writeJson(BUILD_INDEX, index)
+  const tmp = `${target}.tmp-${process.pid}`
+  fs.rmSync(tmp, { recursive: true, force: true })
+  run('ditto', [artifact, tmp])
+  withMutex(() => {
+    const old = `${target}.old-${process.pid}`
+    if (fs.existsSync(target)) fs.renameSync(target, old)
+    fs.renameSync(tmp, target)
+    fs.rmSync(old, { recursive: true, force: true })
+    const index = readJson(BUILD_INDEX, {})
+    index[`${platform}-${fingerprint}`] = {
+      path: target,
+      builtAt: Date.now(),
+      worktree: ROOT,
+    }
+    const stale = Object.entries(index)
+      .filter(([key]) => key.startsWith(`${platform}-`))
+      .sort((a, b) => b[1].builtAt - a[1].builtAt)
+      .slice(KEEP_BUILDS)
+    for (const [key, entry] of stale) {
+      fs.rmSync(entry.path, { recursive: true, force: true })
+      delete index[key]
+    }
+    writeJson(BUILD_INDEX, index)
+  })
   return target
 }
 
-function buildNative(device, metroPort) {
-  const logPath = path.join(STATE_DIR, `build-${device.platform}.log`)
-  log(
-    `building ${device.platform} dev client (several minutes); log: ${path.relative(ROOT, logPath)}`
+/** Frees this worktree's build output (after caching, or after a failure). */
+function removeBuildDirs(platform) {
+  removeDirs(buildDirs(platform), (message) =>
+    log(`${message} (keep build dirs with --keep-build-dirs)`)
   )
-  const out = fs.openSync(logPath, 'w')
-  const step = (args, env = {}) => {
-    const result = spawnSync('pnpm', args, {
-      cwd: ROOT,
-      stdio: ['ignore', out, out],
-      env: { ...toolEnv(), ...env },
-    })
-    if (result.status !== 0)
-      fail(`pnpm ${args.join(' ')} failed; tail ${logPath}`)
-  }
-  if (device.platform === 'ios') {
-    if (!fs.existsSync(path.join(ROOT, 'ios'))) step(['run', 'prebuild'])
-    // --port with this worktree's Metro already running makes Expo reuse it
-    // (no second bundler) and open the dev client on it, never on 8081.
-    step(['run', 'ios', '--device', device.id, '--port', String(metroPort)])
-    const app = iosDerivedDataApp()
-    if (!app)
-      fail(
-        'Build finished but no WitnessWorkDev.app was found for this worktree'
-      )
-    return app
-  }
-  step(
-    ['run', 'android', '--device', device.name, '--port', String(metroPort)],
-    { ANDROID_SERIAL: device.id }
-  )
-  const apk = path.join(
-    ROOT,
-    'android/app/build/outputs/apk/debug/app-debug.apk'
-  )
-  if (!fs.existsSync(apk)) fail('Build finished but app-debug.apk is missing')
-  return apk
 }
 
+/** The bundle id (iOS) or application id (Android) an artifact was built with. */
+function artifactId(artifact) {
+  if (artifact.endsWith('.app'))
+    return run('plutil', [
+      '-extract',
+      'CFBundleIdentifier',
+      'raw',
+      path.join(artifact, 'Info.plist'),
+    ]).stdout.trim()
+  const tools = path.join(ANDROID_HOME, 'build-tools')
+  const version = fs.existsSync(tools)
+    ? fs
+        .readdirSync(tools)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .pop()
+    : undefined
+  if (!version) fail(`No Android build-tools in ${tools} to read ${artifact}`)
+  return run(path.join(tools, version, 'aapt2'), [
+    'dump',
+    'packagename',
+    artifact,
+  ]).stdout.trim()
+}
+
+/** Never cache or install anything but the development variant. */
+export function assertDevArtifact(artifact) {
+  const id = artifactId(artifact)
+  if (id !== BUNDLE_ID)
+    fail(
+      `${path.basename(artifact)} is ${id || 'unidentified'}, not ${BUNDLE_ID}; refusing to cache or install a non-development build`
+    )
+}
+
+/**
+ * The build steps; run by `_build` inside the detached build process group,
+ * never against a device (the artifact is installed after a lease).
+ */
+function buildSteps(platform) {
+  const env = (variant) => [
+    'pnpm',
+    'exec',
+    'node',
+    'scripts/with-local-env.mjs',
+    'development',
+    variant,
+    '--',
+  ]
+  if (platform === 'ios')
+    return [
+      // A clean development prebuild: without APP_VARIANT=development,
+      // app.config.ts builds the production app, and a stale ios/ would miss
+      // config changes the fingerprint saw.
+      [...env('ios'), 'pnpm', 'run', 'prebuild'],
+      [
+        ...env('ios'),
+        'xcodebuild',
+        '-workspace',
+        'ios/WitnessWorkDev.xcworkspace',
+        '-scheme',
+        'WitnessWorkDev',
+        '-configuration',
+        'Debug',
+        '-destination',
+        'generic/platform=iOS Simulator',
+        '-derivedDataPath',
+        DERIVED_DATA,
+        `ARCHS=${os.arch() === 'arm64' ? 'arm64' : 'x86_64'}`,
+        'ONLY_ACTIVE_ARCH=YES',
+        'COMPILER_INDEX_STORE_ENABLE=NO',
+        'build',
+      ],
+    ]
+  return [
+    [
+      ...env('android'),
+      'expo',
+      'prebuild',
+      '--platform',
+      'android',
+      '--no-install',
+    ],
+    [
+      ...env('android'),
+      path.join(ROOT, 'android/gradlew'),
+      '-p',
+      'android',
+      ':app:assembleDebug',
+      '--no-daemon',
+      `--max-workers=${GRADLE_WORKERS}`,
+      `-PreactNativeArchitectures=${os.arch() === 'arm64' ? 'arm64-v8a' : 'x86_64'}`,
+    ],
+  ]
+}
+
+function buildEnv(platform) {
+  return {
+    ...toolEnv(),
+    // with-local-env keeps POSTHOG_DISABLE_UPLOAD: belt and braces, since a
+    // development config never adds PostHog's upload phases.
+    POSTHOG_DISABLE_UPLOAD: 'true',
+    ...(platform === 'android' && {
+      // No resident Gradle or Kotlin daemon (~3 GB) after the build.
+      GRADLE_OPTS: [
+        process.env.GRADLE_OPTS,
+        `-Dorg.gradle.workers.max=${GRADLE_WORKERS}`,
+        '-Dorg.gradle.daemon=false',
+        '-Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    }),
+  }
+}
+
+// Set while this `up` runs a build, so a signal can take the group down too.
+let buildGroup = null
+
+/**
+ * Runs the build in its own detached process group and records the group with
+ * the build slot. If this `up` dies, the reaper (`gc`, or the next `up`) kills
+ * the orphaned group and removes its build dirs.
+ */
+async function buildNative(platform) {
+  const logPath = path.join(STATE_DIR, `build-${platform}.log`)
+  log(
+    `building ${platform} dev client (several minutes); log: ${path.relative(ROOT, logPath)}`
+  )
+  if (
+    platform === 'ios' &&
+    fs.existsSync(path.join(ROOT, 'ios')) &&
+    !fs.existsSync(path.join(ROOT, 'ios/WitnessWorkDev.xcworkspace'))
+  )
+    fail(
+      'ios/ holds a non-development project (no WitnessWorkDev.xcworkspace). Delete ios/ and rerun up; the harness never overwrites another variant'
+    )
+  const out = fs.openSync(logPath, 'w')
+  const child = spawn(
+    process.execPath,
+    [fileURLToPath(import.meta.url), '_build', platform, '--worktree', ROOT],
+    {
+      cwd: ROOT,
+      detached: true,
+      stdio: ['ignore', out, out],
+      env: buildEnv(platform),
+    }
+  )
+  buildGroup = child.pid
+  setBuildGroup(child.pid, buildDirs(platform))
+  const status = await new Promise((resolve) => {
+    child.on('exit', (code, signal) => resolve(signal ? 1 : code))
+    child.on('error', () => resolve(1))
+  })
+  // Anything the steps left behind goes with the build.
+  killTree(child.pid)
+  buildGroup = null
+  if (status !== 0) fail(`${platform} build failed; tail ${logPath}`)
+  const artifact = platform === 'ios' ? IOS_PRODUCT : ANDROID_PRODUCT
+  if (!fs.existsSync(artifact))
+    fail(`Build finished but ${path.relative(ROOT, artifact)} is missing`)
+  return artifact
+}
+
+/** Installs a cached dev artifact; a dying simulator gets one more try. */
 function install(device, artifact) {
+  assertDevArtifact(artifact)
   log(`installing ${path.basename(artifact)} on ${device.name}`)
-  if (device.platform === 'ios')
-    run('xcrun', ['simctl', 'install', device.id, artifact])
-  else
+  if (device.platform === 'android') {
     run('adb', ['-s', device.id, 'install', '-r', '-g', artifact], {
       timeout: 300_000,
     })
+    return
+  }
+  try {
+    run('xcrun', ['simctl', 'install', device.id, artifact])
+  } catch (error) {
+    if (!/code=405/.test(error.message)) throw error
+    log(`${device.name} was not ready (SimError 405); booting it and retrying`)
+    bootIos(device)
+    run('xcrun', ['simctl', 'install', device.id, artifact])
+  }
 }
 
 function appInstalled(device) {
@@ -552,49 +1010,197 @@ function appInstalled(device) {
     : androidAppInstalled(device.id)
 }
 
+function sha256(files) {
+  const hash = crypto.createHash('sha256')
+  for (const file of files) hash.update(fs.readFileSync(file))
+  return hash.digest('hex')
+}
+
+/** The iOS app's main executable plus its debug dylib (where the code is). */
+function appBinaries(app) {
+  const exe = run('plutil', [
+    '-extract',
+    'CFBundleExecutable',
+    'raw',
+    path.join(app, 'Info.plist'),
+  ]).stdout.trim()
+  return [exe, `${exe}.debug.dylib`]
+    .map((f) => path.join(app, f))
+    .filter((f) => fs.existsSync(f))
+}
+
+/** Identifies an artifact's code, to compare with what a device runs. */
+function artifactHash(artifact) {
+  return artifact.endsWith('.app')
+    ? sha256(appBinaries(artifact))
+    : sha256([artifact])
+}
+
+/** The same hash for what is installed on the device, or null. */
+function installedHash(device) {
+  if (device.platform === 'ios') {
+    const app = run(
+      'xcrun',
+      ['simctl', 'get_app_container', device.id, BUNDLE_ID, 'app'],
+      { check: false }
+    ).stdout.trim()
+    return app && fs.existsSync(app) ? sha256(appBinaries(app)) : null
+  }
+  const apk = run('adb', ['-s', device.id, 'shell', 'pm', 'path', BUNDLE_ID], {
+    check: false,
+  })
+    .stdout.split('\n')
+    .map((l) => l.trim().replace(/^package:/, ''))
+    .find((l) => l.endsWith('base.apk'))
+  if (!apk) return null
+  return (
+    run('adb', ['-s', device.id, 'shell', 'sha256sum', apk], {
+      check: false,
+    }).stdout.split(/\s+/)[0] || null
+  )
+}
+
+function updateInstalls(fn) {
+  withMutex(() => {
+    const installs = readJson(INSTALLS, {})
+    fn(installs)
+    writeJson(INSTALLS, installs)
+  })
+}
+
 /**
- * Returns 'verified' when the installed binary matches this tree's native
- * fingerprint.
+ * Resolves the artifact for this tree's native fingerprint before any device is
+ * leased: the cache, or a build under a machine-wide build slot. A build waiter
+ * holds no lease, so two worktrees waiting on each other's memory can't
+ * deadlock.
  */
-async function ensureApp(device, flags, metroPort) {
-  const installs = readJson(INSTALLS, {})
-  if (flags['accept-stale-native']) {
+async function resolveNative(state, platform, flags) {
+  if (flags['accept-stale-native']) return { stale: true }
+  const fingerprint = await nativeFingerprint(platform)
+  const cached = () =>
+    flags.rebuild ? null : cachedBuild(platform, fingerprint)
+  if (cached()) return { fingerprint, artifact: cached().path }
+  const waitMs = Number(flags.wait ?? 30) * 60_000
+  const waitLog = waitLogger()
+  const options = { worktree: ROOT, platform, fingerprint }
+  const handlers = {
+    ready: cached,
+    onWait: (r) =>
+      waitLog(
+        `waiting to build ${platform} ${fingerprint.slice(0, 12)} (#${r.position} of ${r.queued} build waiters, holding no device): ${r.wait} (see wwv status)`
+      ),
+  }
+  // Keep this worktree's devices only if the build can start right now.
+  let slot = await acquireBuild(options, { ...handlers, waitMs: 0 })
+  if (!slot.ok && !slot.cached && !slot.impossible) {
+    if (readLeases().some((l) => l.worktree === ROOT && !l.expired)) {
+      log(
+        `releasing this worktree's devices and Metro while it waits to build (a build waiter holds no lease); up leases again afterwards`
+      )
+      standDown(state)
+    }
+    slot = await acquireBuild(options, { ...handlers, waitMs })
+  }
+  if (slot.cached) {
+    log('another worktree just built this fingerprint; reusing it')
+    return { fingerprint, artifact: slot.cached.path }
+  }
+  if (!slot.ok)
+    fail(
+      `Could not start a ${platform} build${slot.impossible ? '' : ` after ${flags.wait ?? 30} min`}: ${slot.wait}. Run wwv status to see who holds the slot or memory; wait and rerun up, or pass --wait <minutes>.`
+    )
+  try {
+    const hit = cached()
+    if (hit) {
+      log('another worktree just built this fingerprint; reusing it')
+      return { fingerprint, artifact: hit.path }
+    }
+    const artifact = await buildNative(platform)
+    return {
+      fingerprint,
+      artifact: cacheBuild(platform, fingerprint, artifact),
+    }
+  } finally {
+    releaseBuild()
+    // Also after a failure: a failed build leaves several GB of intermediates.
+    if (!flags['keep-build-dirs']) removeBuildDirs(platform)
+  }
+}
+
+/** The newest artifact on hand, for --accept-stale-native. */
+function staleArtifact(platform) {
+  const local = platform === 'ios' ? IOS_PRODUCT : ANDROID_PRODUCT
+  if (fs.existsSync(local)) return local
+  return Object.entries(readJson(BUILD_INDEX, {}))
+    .filter(
+      ([key, e]) => key.startsWith(`${platform}-`) && fs.existsSync(e.path)
+    )
+    .sort((a, b) => b[1].builtAt - a[1].builtAt)[0]?.[1].path
+}
+
+/**
+ * Installs the resolved artifact unless the device already runs exactly that
+ * binary. The install record is cleared first and written only after a
+ * successful install, so it never vouches for a binary it didn't put there.
+ */
+function ensureApp(device, native, flags) {
+  const key = device.lockKey
+  if (native.stale) {
     if (!appInstalled(device)) {
-      const fallback =
-        device.platform === 'ios'
-          ? iosDerivedDataApp()
-          : [
-              path.join(
-                ROOT,
-                'android/app/build/outputs/apk/debug/app-debug.apk'
-              ),
-            ].find((p) => fs.existsSync(p))
+      const fallback = staleArtifact(device.platform)
       if (!fallback)
         fail(
           'No installed or built app to accept; drop --accept-stale-native to build'
         )
+      updateInstalls((i) => delete i[key])
       install(device, fallback)
     }
-    installs[device.lockKey] = { fingerprint: 'unverified', at: Date.now() }
-    writeJson(INSTALLS, installs)
+    updateInstalls(
+      (i) => (i[key] = { fingerprint: 'unverified', at: Date.now() })
+    )
     return 'UNVERIFIED (--accept-stale-native)'
   }
-  const fingerprint = await nativeFingerprint(device.platform)
+  const hash = artifactHash(native.artifact)
+  const record = readJson(INSTALLS, {})[key]
   if (
     !flags.rebuild &&
-    installs[device.lockKey]?.fingerprint === fingerprint &&
-    appInstalled(device)
+    record?.fingerprint === native.fingerprint &&
+    record.hash === hash &&
+    installedHash(device) === hash
   )
     return 'verified'
-  let cached = flags.rebuild ? null : cachedBuild(device.platform, fingerprint)
-  if (!cached) {
-    const artifact = buildNative(device, metroPort)
-    cached = { path: cacheBuild(device.platform, fingerprint, artifact) }
-  }
-  install(device, cached.path)
-  installs[device.lockKey] = { fingerprint, at: Date.now() }
-  writeJson(INSTALLS, installs)
+  installRecorded(
+    key,
+    { ...native, hash },
+    {
+      install: () => install(device, native.artifact),
+      installedHash: () => installedHash(device),
+      name: device.name,
+    }
+  )
   return 'verified'
+}
+
+/**
+ * Clears the device's install record, installs, checks the device now runs the
+ * artifact's binary, and only then records the fingerprint.
+ */
+export function installRecorded(key, native, io) {
+  updateInstalls((i) => delete i[key])
+  io.install()
+  if (io.installedHash() !== native.hash)
+    fail(
+      `${io.name} does not run the binary just installed (${path.basename(native.artifact)}); run wwv down, then wwv up`
+    )
+  updateInstalls(
+    (i) =>
+      (i[key] = {
+        fingerprint: native.fingerprint,
+        hash: native.hash,
+        artifact: native.artifact,
+        at: Date.now(),
+      })
+  )
 }
 
 // ---------- Metro ----------
@@ -618,29 +1224,55 @@ function portOwner(port) {
   return { pid: Number(pid), cwd }
 }
 
-async function ensureMetro(state, api) {
+/** Listening ports in the Metro range, port -> pid (one lsof call). */
+function listeningPorts() {
+  const range = `${CONFIG.metroPorts[0]}-${CONFIG.metroPorts.at(-1)}`
+  const out = run('lsof', ['-nP', `-iTCP:${range}`, '-sTCP:LISTEN', '-Fpn'], {
+    check: false,
+  }).stdout
+  const ports = new Map()
+  let pid
+  for (const line of out.split('\n')) {
+    if (line[0] === 'p') pid = Number(line.slice(1))
+    else if (line[0] === 'n') ports.set(Number(line.split(':').pop()), pid)
+  }
+  return ports
+}
+
+/**
+ * Runs this worktree's Metro on its leased port. If another process wins the
+ * port, it moves to a fresh reservation instead of adopting that server.
+ */
+async function ensureMetro(state, api, leasePort) {
   const apiUrl = api?.url
   const current = state.metro
   if (
     current &&
     pidAlive(current.pid) &&
     (await metroRunning(current.port)) &&
+    portOwner(current.port)?.cwd === ROOT &&
     (current.apiUrl ?? undefined) === apiUrl
   ) {
+    if (current.port !== leasePort)
+      updateLeases(ROOT, { metroPort: current.port })
     return current
   }
   if (current && pidAlive(current.pid)) stopProcessGroup(current.pid)
-  let port
-  for (const candidate of METRO_PORTS) {
-    if (!portOwner(candidate)) {
-      port = candidate
-      break
-    }
+  const tried = []
+  let port = leasePort
+  while (port && tried.length < 5) {
+    const started = await startMetro(port, api)
+    if (started) return started
+    tried.push(port)
+    port = reservePort(ROOT, tried, () => new Set(listeningPorts().keys()))
+    if (port) log(`port ${tried.at(-1)} is taken; moving Metro to ${port}`)
   }
-  if (!port)
-    fail(
-      `All Metro ports ${METRO_PORTS[0]}-${METRO_PORTS.at(-1)} are busy; run ww-verify down in idle worktrees`
-    )
+  fail(`No free Metro port (tried ${tried.join(', ')}); see ww-verify status`)
+}
+
+async function startMetro(port, api) {
+  if (portOwner(port)) return null
+  const apiUrl = api?.url
   const logPath = path.join(STATE_DIR, 'metro.log')
   const out = fs.openSync(logPath, 'w')
   const env = { ...toolEnv(), EXPO_NO_TELEMETRY: '1' }
@@ -649,7 +1281,7 @@ async function ensureMetro(state, api) {
     env.WW_VERIFY_API_BASE_URL = apiUrl
     env.WW_VERIFY_API_DEV_BYPASS = api.devBypass ?? ''
   }
-  log(`starting Metro on ${port}`)
+  log(`starting Metro on ${port} (${METRO_WORKERS} workers)`)
   const child = spawn(
     'pnpm',
     [
@@ -664,14 +1296,24 @@ async function ensureMetro(state, api) {
       '--dev-client',
       '--port',
       String(port),
+      '--max-workers',
+      METRO_WORKERS,
     ],
     { cwd: ROOT, detached: true, stdio: ['ignore', out, out], env }
   )
   child.unref()
   for (let i = 0; !(await metroRunning(port)); i++) {
-    if (i > 90 || !pidAlive(child.pid))
-      fail(`Metro did not start; tail ${logPath}`)
+    if (!pidAlive(child.pid)) {
+      if (portOwner(port)) return null
+      fail(`Metro exited; tail ${logPath}`)
+    }
+    if (i > 90) fail(`Metro did not start; tail ${logPath}`)
     await sleep(1000)
+  }
+  // Another worktree's Metro may have bound the port first.
+  if (portOwner(port)?.cwd !== ROOT) {
+    stopProcessGroup(child.pid)
+    return null
   }
   return {
     pid: child.pid,
@@ -1007,18 +1649,27 @@ function deviceArgs(state, platform, command) {
     : ['--platform', 'android', '--serial', device.id]
 }
 
+/** Resolves the platform and refreshes (or demands) this worktree's lease. */
 function currentPlatform(state, flags) {
-  if (flags.platform) return flags.platform
   const platforms = Object.keys(state.devices ?? {})
-  if (platforms.length === 1) return platforms[0]
-  if (!platforms.length) fail('Nothing is up; run ww-verify up first')
-  fail(`Several platforms are up (${platforms.join(', ')}); pass --platform`)
+  const platform =
+    flags.platform ?? (platforms.length === 1 ? platforms[0] : undefined)
+  if (!platform && !platforms.length)
+    fail('Nothing is up; run ww-verify up first')
+  if (!platform)
+    fail(`Several platforms are up (${platforms.join(', ')}); pass --platform`)
+  holdLease(state, platform)
+  return platform
 }
 
 function requireUp() {
   const state = readState()
   if (!state.metro || !state.devices)
-    fail('Nothing is up; run ww-verify up first')
+    fail(
+      state.reapedAt
+        ? `This worktree's leases were reaped (${state.reapedReason ?? `idle over ${CONFIG.idleMin} min`}); run ww-verify up`
+        : 'Nothing is up; run ww-verify up first'
+    )
   return state
 }
 
@@ -1060,41 +1711,113 @@ const commands = {
     fs.mkdirSync(STATE_DIR, { recursive: true })
     const state = readState()
     state.runId ??= runId()
-    if (flags.api === 'local') {
-      const { url, devBypass } = startLocalApi()
-      state.api = {
-        mode: 'local',
-        url,
-        port: Number(new URL(url).port),
-        devBypass,
-      }
-    } else if (!state.api) {
-      state.api = { mode: 'env', url: envApiUrl(), port: null }
-      const parsed = new URL(state.api.url)
-      if (['localhost', '127.0.0.1'].includes(parsed.hostname))
-        state.api.port = Number(parsed.port || 80)
-    }
-    state.metro = await ensureMetro(
-      state,
-      state.api.mode === 'local' ? state.api : undefined
+    delete state.reapedAt
+    delete state.reapedReason
+    const kind =
+      platform === 'ios' ? (flags.ipad ? 'ipad' : 'iphone') : 'emulator'
+    heartbeat(ROOT) // an idle agent coming back keeps its device
+    await reapExpired()
+    // Switching iPhone <-> iPad: hand back the other kind's lease first.
+    const held = readLeases().find(
+      (l) => l.worktree === ROOT && l.platform === platform && !l.expired
     )
-    writeState(state)
-    const device =
-      platform === 'ios'
-        ? ensureIosDevice(flags.ipad ? 'ipad' : 'iphone')
-        : await ensureAndroidDevice()
-    state.devices = { ...state.devices, [platform]: device }
-    writeState(state)
-    device.native = await ensureApp(device, flags, state.metro.port)
-    state.devices[platform] = device
-    writeState(state)
-    await launch(state, device)
-    if (flags.seed)
-      await cdpEval(
+    if (held?.kind && held.kind !== kind) releasePlatform(state, platform, {})
+
+    // What this `up` took, so a failure or a signal hands it back.
+    const took = { lease: null, metroPid: null }
+    let done = false
+    const cleanup = () => {
+      if (done) return
+      done = true
+      if (buildGroup) {
+        killTree(buildGroup)
+        releaseBuild()
+        if (!flags['keep-build-dirs']) removeBuildDirs(platform)
+      }
+      const undone = []
+      if (took.lease) {
+        releasePlatform(state, platform, {})
+        undone.push(`released ${took.lease.deviceName}`)
+      }
+      if (
+        took.metroPid &&
+        state.metro?.pid === took.metroPid &&
+        !readLeases().some((l) => l.worktree === ROOT)
+      ) {
+        stopOwnMetro(state)
+        undone.push('stopped the Metro it started')
+      }
+      writeState(state)
+      return undone
+    }
+    const onSignal = (signal) => {
+      log(`${signal}: cleaning up`)
+      cleanup()
+      process.exit(130)
+    }
+    for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'])
+      process.on(signal, onSignal)
+
+    let device
+    try {
+      // Resolve (or build) the native artifact before leasing: a build needs
+      // no device, and a build waiter must hold none.
+      const native = await resolveNative(state, platform, flags)
+      const claim = await takeLease(platform, kind, flags)
+      if (!claim.existing) took.lease = claim.lease
+      startHeartbeat()
+      device = leaseDevice(claim.lease)
+      state.devices = { ...state.devices, [platform]: device }
+      writeState(state)
+      if (flags.api === 'local') {
+        const { url, devBypass } = startLocalApi()
+        state.api = {
+          mode: 'local',
+          url,
+          port: Number(new URL(url).port),
+          devBypass,
+        }
+      } else if (!state.api) {
+        state.api = { mode: 'env', url: envApiUrl(), port: null }
+        const parsed = new URL(state.api.url)
+        if (['localhost', '127.0.0.1'].includes(parsed.hostname))
+          state.api.port = Number(parsed.port || 80)
+      }
+      const before = state.metro?.pid
+      state.metro = await ensureMetro(
         state,
-        platform,
-        `__WW_DEV__.seed(${JSON.stringify(flags.seed)})`
+        state.api.mode === 'local' ? state.api : undefined,
+        claim.lease.metroPort
       )
+      if (state.metro.pid !== before) took.metroPid = state.metro.pid
+      writeState(state)
+      if (platform === 'ios') bootIos(device)
+      else {
+        device.id = await bootAndroid(device)
+        updateLeases(ROOT, { deviceId: device.id }, [device.lockKey])
+      }
+      writeState(state)
+      device.native = ensureApp(device, native, flags)
+      state.devices[platform] = device
+      writeState(state)
+      await launch(state, device)
+      if (flags.seed)
+        await cdpEval(
+          state,
+          platform,
+          `__WW_DEV__.seed(${JSON.stringify(flags.seed)})`
+        )
+      done = true
+    } catch (error) {
+      const undone = cleanup() ?? []
+      const message = error instanceof Failure ? error.message : error.stack
+      fail(
+        `${message}\nup failed${undone.length ? `; ${undone.join(' and ')}` : ''}. Next: fix the cause above (or wait, pass --wait <minutes>, or keep working without a device) and rerun wwv up; wwv down drops everything this worktree still holds.`
+      )
+    } finally {
+      for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'])
+        process.off(signal, onSignal)
+    }
     console.log(
       JSON.stringify(
         {
@@ -1111,6 +1834,16 @@ const commands = {
         2
       )
     )
+  },
+
+  // Internal: the build steps, run detached in their own process group.
+  async _build({ positional }) {
+    const platform = positional[0]
+    for (const [cmd, ...args] of buildSteps(platform)) {
+      console.log(`$ ${cmd} ${args.join(' ')}`)
+      const result = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit' })
+      if (result.status !== 0) process.exit(result.status ?? 1)
+    }
   },
 
   async doctor({ flags }) {
@@ -1153,11 +1886,15 @@ const commands = {
         check(`${platform}:device`, false, 'not up')
         continue
       }
-      const owner = lockOwner(device.lockKey)
+      const lease = readLeases().find((l) => l.key === device.lockKey)
       check(
-        `${platform}:lock`,
-        owner?.worktree === ROOT,
-        owner ? `held by ${owner.worktree}` : 'unlocked'
+        `${platform}:lease`,
+        lease?.worktree === ROOT && !lease.expired,
+        !lease
+          ? 'no lease; run ww-verify up'
+          : lease.worktree !== ROOT
+            ? `held by ${lease.worktree}`
+            : `held by this worktree, idle ${idleMin(lease)} of ${CONFIG.idleMin} min${lease.expired ? ' (expired)' : ''}`
       )
       const booted =
         platform === 'ios'
@@ -1167,14 +1904,24 @@ const commands = {
       check(`${platform}:booted`, booted, device.name)
       if (!booted) continue
       check(`${platform}:installed`, appInstalled(device), BUNDLE_ID)
-      const installed = readJson(INSTALLS, {})[device.lockKey]?.fingerprint
+      const record = readJson(INSTALLS, {})[device.lockKey]
+      const installed = record?.fingerprint
       const current = await nativeFingerprint(platform)
+      // The record must also match the binary on the device: a build or
+      // install outside this harness can replace it.
+      const onDevice = record?.hash ? installedHash(device) : null
+      const ok =
+        installed === current &&
+        Boolean(record?.hash) &&
+        onDevice === record.hash
       check(
         `${platform}:native`,
-        installed === current,
-        installed === current
-          ? 'binary matches native fingerprint'
-          : `installed ${installed ?? 'unknown'} != tree ${current}; run ww-verify up --platform ${platform}`
+        ok,
+        ok
+          ? 'installed binary is the cached build for this native fingerprint'
+          : installed !== current
+            ? `installed ${installed ?? 'unknown'} != tree ${current}; run ww-verify up --platform ${platform}`
+            : `the binary on ${device.name} is not the one up installed; run ww-verify up --platform ${platform}`
       )
       try {
         const summary = await cdpEval(
@@ -1437,43 +2184,135 @@ const commands = {
 
   async down({ flags }) {
     const state = readState()
+    const own = readLeases().filter((l) => l.worktree === ROOT)
     const platforms = flags.platform
       ? [flags.platform]
-      : Object.keys(state.devices ?? {})
-    for (const platform of platforms) {
-      const device = state.devices?.[platform]
-      if (!device) continue
-      agentDevice(['close', '--session', sessionName(platform)])
-      if (!flags['keep-device']) {
-        if (platform === 'ios')
-          run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
-        else run('adb', ['-s', device.id, 'emu', 'kill'], { check: false })
-      }
-      releaseLock(device.lockKey)
-      delete state.devices[platform]
-      log(`released ${device.name}`)
+      : [
+          ...new Set([
+            ...Object.keys(state.devices ?? {}),
+            ...own.map((l) => l.platform),
+          ]),
+        ]
+    for (const platform of platforms) releasePlatform(state, platform, flags)
+    if (readLeases().some((l) => l.worktree === ROOT)) {
+      writeState(state)
+      return
     }
-    if (!Object.keys(state.devices ?? {}).length) {
-      if (state.metro?.pid && pidAlive(state.metro.pid))
-        stopProcessGroup(state.metro.pid)
-      if (state.api?.mode === 'local')
-        run('node', [path.join(apiDir(), 'scripts/verify/dev.mjs'), 'down'], {
-          cwd: apiDir(),
-          check: false,
-        })
-      const evidence = state.runId
-        ? path.relative(ROOT, path.join(STATE_DIR, 'artifacts', state.runId))
-        : null
-      fs.rmSync(STATE_FILE, { force: true })
-      log(`stopped Metro; evidence kept in ${evidence ?? '.verify/artifacts'}`)
-    } else writeState(state)
+    if (state.metro?.pid && pidAlive(state.metro.pid))
+      stopProcessGroup(state.metro.pid)
+    if (state.api?.mode === 'local') stopLocalApi(ROOT)
+    const evidence = state.runId
+      ? path.relative(ROOT, path.join(STATE_DIR, 'artifacts', state.runId))
+      : null
+    fs.rmSync(STATE_FILE, { force: true })
+    log(`stopped Metro; evidence kept in ${evidence ?? '.verify/artifacts'}`)
+  },
+
+  async gc() {
+    const builds = await reapBuilds({ log })
+    const reaped = await reapExpired()
+    const lines = [
+      ...builds.map(
+        (b) =>
+          `reaped orphaned ${b.platform} build of ${b.worktree} (process group ${b.pgid ?? 'none'})`
+      ),
+      ...reaped.map((l) => `reaped ${leaseDevice(l).name} (${l.worktree})`),
+    ]
+    console.log(lines.length ? lines.join('\n') : 'nothing expired')
+  },
+
+  async status() {
+    const { leases, builds, waiters, buildWaiters, usedGb } = snapshot()
+    const names = Object.fromEntries(
+      simctlDevices().map((d) => [d.udid, d.name])
+    )
+    const ago = (ms) => `${Math.round((Date.now() - ms) / 60_000)}m`
+    console.log(`memory ${usedGb} / ${CONFIG.budgetGb} GB budgeted\n`)
+    const policy = {
+      WW_VERIFY_MEMORY_BUDGET_GB: CONFIG.budgetGb,
+      WW_VERIFY_MAX_IOS: CONFIG.max.ios,
+      WW_VERIFY_MAX_ANDROID: CONFIG.max.android,
+      WW_VERIFY_MAX_BUILDS: CONFIG.maxBuilds,
+      WW_VERIFY_LEASE_IDLE_MIN: CONFIG.idleMin,
+      WW_VERIFY_EST_IOS_GB: CONFIG.est.ios,
+      WW_VERIFY_EST_ANDROID_GB: CONFIG.est.android,
+      WW_VERIFY_EST_METRO_GB: CONFIG.est.metro,
+      WW_VERIFY_EST_IOS_BUILD_GB: CONFIG.est['build-ios'],
+      WW_VERIFY_EST_ANDROID_BUILD_GB: CONFIG.est['build-android'],
+    }
+    printTable(
+      `POLICY (${Math.round(RAM_GB)} GB RAM; auto = default for this machine)`,
+      ['setting', 'value', 'from'],
+      Object.entries(policy).map(([name, value]) => [name, value, POLICY[name]])
+    )
+    printTable(
+      'LEASES',
+      ['platform', 'device', 'worktree', 'metro', 'idle', 'state'],
+      leases.map((l) => [
+        l.platform,
+        names[leaseDevice(l).id] ?? leaseDevice(l).name,
+        path.basename(l.worktree),
+        l.metroPort ?? '-',
+        `${idleMin(l)}m`,
+        l.reaping
+          ? 'reaping'
+          : l.expired
+            ? 'expired'
+            : l.legacy
+              ? 'held (old harness)'
+              : 'held',
+      ])
+    )
+    printTable(
+      'WAITING FOR A DEVICE',
+      ['#', 'platform', 'worktree', 'waited', 'reason'],
+      waiters.map((w, i) => [
+        i + 1,
+        w.platform,
+        path.basename(w.worktree),
+        ago(w.since),
+        w.reason ?? '-',
+      ])
+    )
+    printTable(
+      'WAITING TO BUILD (no lease held)',
+      ['#', 'platform', 'worktree', 'fingerprint', 'waited', 'reason'],
+      buildWaiters.map((w, i) => [
+        i + 1,
+        w.platform,
+        path.basename(w.worktree),
+        String(w.fingerprint).slice(0, 12),
+        ago(w.since),
+        w.reason ?? '-',
+      ])
+    )
+    printTable(
+      'BUILDS',
+      ['platform', 'worktree', 'fingerprint', 'running', 'group', 'state'],
+      builds.map((b) => [
+        b.platform,
+        path.basename(b.worktree),
+        String(b.fingerprint).slice(0, 12),
+        ago(b.startedAt),
+        b.pgid ?? '-',
+        b.orphaned ? 'orphaned (wwv gc kills it)' : `building (up ${b.pid})`,
+      ])
+    )
+    printTable(
+      'METRO (listeners on 8090-8129)',
+      ['port', 'pid', 'serving'],
+      [...listeningPorts()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([port, pid]) => [port, pid, portOwner(port)?.cwd ?? '?'])
+    )
   },
 
   async help() {
     console.log(`ww-verify <command> [--platform ios|android]
 
   up [--platform ios|android] [--ipad] [--api local] [--seed <scenario>]
-     [--rebuild] [--accept-stale-native]   claim a device, start Metro, install, launch
+     [--rebuild] [--accept-stale-native] [--wait 30] [--keep-build-dirs]
+                                           lease a device, start Metro, install, launch
   doctor                                   read-only health check (exit 1 on failure)
   seed <fresh|onboarded|publisher|pioneer|busy>
   eval '<js expression>'                   run JS in the app, print JSON
@@ -1485,12 +2324,26 @@ const commands = {
   errors [--clear]                         JS errors captured since launch
   flow [files or dirs]                     Maestro flows (default e2e/maestro)
   monkey [--steps 120] [--seed N] [--scenario pioneer]
-  down [--platform p] [--keep-device]      release devices, stop Metro, keep evidence`)
+  down [--platform p] [--keep-device]      release devices, stop Metro, keep evidence
+  status                                   machine-wide leases, queue, builds, Metros, memory
+  gc                                       reap expired leases (also runs on every up)`)
   },
 }
 
 const [command = 'help', ...rest] = process.argv.slice(2)
-if (!commands[command]) fail(`Unknown command "${command}"; run ww-verify help`)
-commands[command]({ ...parseFlags(rest), raw: rest }).catch((error) =>
-  fail(error.stack || error.message)
-)
+// Imported by tests: run a command only when executed directly.
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(realPath(process.argv[1])).href
+) {
+  if (!commands[command]) {
+    console.error(`ww-verify: Unknown command "${command}"; run ww-verify help`)
+    process.exit(1)
+  }
+  commands[command]({ ...parseFlags(rest), raw: rest }).catch((error) => {
+    console.error(
+      `ww-verify: ${error instanceof Failure ? error.message : error.stack || error.message}`
+    )
+    process.exit(1)
+  })
+}

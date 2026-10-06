@@ -135,24 +135,32 @@ describe('joinRequestStatus', () => {
 
 describe('joinRequestInvite', () => {
   const request = { from: 'levi', d: thursday, ...nine }
-  const targetOf = (invite: ReturnType<typeof joinRequestInvite>) =>
-    invite.kind === 'invite' ? invite.target : undefined
+  const addOf = (invite: ReturnType<typeof joinRequestInvite>) =>
+    invite.kind === 'invite' && 'add' in invite ? invite.add : undefined
 
-  it("opens the owner's one-time Plan at that time with the buddy added", () => {
-    const target = targetOf(
+  it("adds the buddy to the owner's one-time Plan at that time", () => {
+    const morning = dayPlan('morning', { buddies: ['anna'] })
+    expect(
       joinRequestInvite(
         request,
-        [dayPlan('afternoon', { startTimeInMinutes: 900 }), dayPlan('morning')],
+        [dayPlan('afternoon', { startTimeInMinutes: 900 }), morning],
         []
       )
-    )
-    expect(target).toMatchObject({
-      existingDayPlanId: 'morning',
-      inviteBuddies: ['levi'],
+    ).toEqual({
+      kind: 'invite',
+      update: { id: 'morning', buddies: ['anna', 'levi'] },
     })
   })
 
-  it('seeds a new one-time Plan from the recurring instance there', () => {
+  it('keeps the buddy once when the Plan already invites them', () => {
+    const invited = dayPlan('morning', { buddies: ['levi'] })
+    expect(joinRequestInvite(request, [invited], [])).toEqual({
+      kind: 'invite',
+      update: { id: 'morning', buddies: ['levi'] },
+    })
+  })
+
+  it('adds a one-time Plan seeded from the recurring instance there', () => {
     const weekly: RecurringPlan = {
       id: 'weekly',
       startDate: normalizeDateForStorage('2026-10-01T12:00:00'),
@@ -166,13 +174,15 @@ describe('joinRequestInvite', () => {
         endDate: null,
       },
     }
-    const target = targetOf(joinRequestInvite(request, [], [weekly]))
-    expect(target?.existingDayPlanId).toBeUndefined()
-    expect(target).toMatchObject({
-      inviteBuddies: ['levi'],
-      prefill: { minutes: 120, title: 'Cart witnessing', categoryId: 'cart' },
+    const add = addOf(joinRequestInvite(request, [], [weekly]))
+    expect(add).toMatchObject({
+      startTimeInMinutes: 540,
+      minutes: 120,
+      title: 'Cart witnessing',
+      categoryId: 'cart',
+      buddies: ['levi'],
     })
-    expect(moment(target?.prefill?.startTime).format('HH:mm')).toBe('09:00')
+    expect(moment(add?.date).format('YYYY-MM-DD')).toBe(thursday)
   })
 
   it("can't invite to a Plan that follows someone else's invitation", () => {
@@ -195,13 +205,14 @@ describe('joinRequestInvite', () => {
     expect(joinRequestInvite(request, moved, [])).toEqual({ kind: 'changed' })
   })
 
-  it('starts a new Plan when the owner no longer has one then', () => {
-    const target = targetOf(joinRequestInvite(request, [], []))
-    expect(target).toMatchObject({
-      inviteBuddies: ['levi'],
-      prefill: { minutes: 120 },
+  it('adds a new Plan when the owner no longer has one then', () => {
+    const add = addOf(joinRequestInvite(request, [], []))
+    expect(add).toMatchObject({
+      startTimeInMinutes: 540,
+      minutes: 120,
+      buddies: ['levi'],
     })
-    expect(moment(target?.prefill?.startTime).format('HH:mm')).toBe('09:00')
+    expect(moment(add?.date).format('YYYY-MM-DD')).toBe(thursday)
   })
 })
 

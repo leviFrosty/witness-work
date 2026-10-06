@@ -1,8 +1,12 @@
 import { useNavigation } from '@react-navigation/native'
+import * as Crypto from 'expo-crypto'
+import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import useConversations from '@/stores/conversationStore'
 import { storedDayKey } from '@/lib/normalizeDate'
+import type { PlannedDayContribution } from '@/lib/recurrence'
+import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -13,6 +17,7 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
   findJoinRequestPlan,
   joinRequestInvite,
+  type JoinRequestInvite,
 } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
@@ -88,6 +93,25 @@ export function buddyNotificationIdForSeq(seq: number): string | null {
 }
 
 /**
+ * Invite answers a request to join in place: the buddy is added to the Plan,
+ * which shares it with them like saving it from the Plan's screen would.
+ */
+function sendJoinRequestInvite(
+  invite: Extract<JoinRequestInvite, { kind: 'invite' }>
+) {
+  const report = useServiceReport.getState()
+  if ('update' in invite) {
+    report.updateDayPlan(invite.update)
+    return
+  }
+  report.addDayPlan({
+    ...invite.add,
+    id: Crypto.randomUUID(),
+    notifyMe: usePreferences.getState().planAlwaysNotify,
+  })
+}
+
+/**
  * The buddy notification queue as tray items: invitations, changes,
  * cancellations, replies, requests to join, and new pairings. Only once the
  * User has started using Buddies.
@@ -127,6 +151,23 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return undefined
   }
 
+  /** A request to join opens the Plan it's about. */
+  const planTarget = (match: PlannedDayContribution, d: string) => {
+    const date = moment(d, 'YYYY-MM-DD').hour(12).toISOString()
+    return match.source === 'day'
+      ? () =>
+          navigation.navigate('PlanDay', {
+            date,
+            existingDayPlanId: match.plan.id,
+          })
+      : () =>
+          navigation.navigate('PlanDay', {
+            date,
+            existingRecurringPlanId: match.plan.id,
+            recurringPlanDate: date,
+          })
+  }
+
   /** A new pairing opens that buddy, while they're still a buddy. */
   const buddyTarget = (inboxId: string) =>
     buddies.some((b) => b.inboxId === inboxId)
@@ -134,12 +175,21 @@ export default function useBuddyNotifications(): NotificationItem[] {
       : undefined
 
   return notifications.map((entry) => {
+    const joinRequest =
+      entry.kind === 'joinRequest' && entry.shareKey
+        ? joinRequests[entry.shareKey]
+        : undefined
+    const ownPlan = joinRequest
+      ? findJoinRequestPlan(joinRequest, dayPlans, recurringPlans)
+      : undefined
     const target =
       entry.kind === 'shareReply' && entry.shareKey
         ? replyTarget(entry.shareKey)
         : entry.kind === 'paired' && entry.from
           ? buddyTarget(entry.from)
-          : undefined
+          : joinRequest && ownPlan
+            ? planTarget(ownPlan, joinRequest.d)
+            : undefined
     const share =
       entry.kind !== 'shareReply' && entry.shareKey
         ? incomingShares[entry.shareKey]
@@ -149,13 +199,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
       !!share && effectiveShareStatus(share, dayPlans) !== 'pending'
     const needsAnswer =
       awaitsAnswer(entry, { incomingClaims, incomingShares }) && !answered
-    const joinRequest =
-      entry.kind === 'joinRequest' && entry.shareKey
-        ? joinRequests[entry.shareKey]
-        : undefined
-    const ownPlan = joinRequest
-      ? findJoinRequestPlan(joinRequest, dayPlans, recurringPlans)
-      : undefined
     const invite = joinRequest
       ? joinRequestInvite(joinRequest, dayPlans, recurringPlans)
       : undefined
@@ -205,8 +248,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
           }
           onInvite={
             invite?.kind === 'invite'
-              ? () =>
-                  closeThen(() => navigation.navigate('PlanDay', invite.target))
+              ? () => sendJoinRequestInvite(invite)
               : undefined
           }
         />

@@ -10,7 +10,6 @@ import {
   type PlannedDayContribution,
   type RecurringPlan,
 } from '@/lib/recurrence'
-import type { RootStackParamList } from '@/types/rootStack'
 import type { DayPlan } from '@/types/timeEntry'
 import type { BuddyCardDay, ShareDetails } from '@/features/buddies/lib/schemas'
 import {
@@ -106,15 +105,16 @@ function contributionStart(
 }
 
 /**
- * What Invite can do for a request: open the owner's one-time Plan at that time
- * with the buddy added, or a new one-time Plan seeded from the recurring
+ * What Invite does for a request: add the buddy to the owner's one-time Plan at
+ * that time, or add a one-time Plan with them, seeded from the recurring
  * instance there (a one-time Plan replaces that day's recurring ones, so it
  * isn't counted twice). Nothing when the Plan follows someone else's invitation
  * (only its organizer can invite), or when the owner's Plans that day changed
  * and none match: a new Plan beside them would count twice.
  */
 export type JoinRequestInvite =
-  | { kind: 'invite'; target: RootStackParamList['PlanDay'] }
+  | { kind: 'invite'; update: Pick<DayPlan, 'id' | 'buddies'> }
+  | { kind: 'invite'; add: Omit<DayPlan, 'id' | 'notifyMe'> }
   | { kind: 'linked'; organizer: string }
   | { kind: 'changed' }
 
@@ -126,32 +126,34 @@ export function joinRequestInvite(
   const match = findJoinRequestPlan(request, dayPlans, recurringPlans)
   if (match?.source === 'day' && match.plan.buddyShare)
     return { kind: 'linked', organizer: match.plan.buddyShare.from }
-  const day = moment(request.d, 'YYYY-MM-DD')
-  const date = day.clone().hour(12).toISOString()
-  const inviteBuddies = [request.from]
-  if (match?.source === 'day')
+  if (match?.source === 'day') {
+    const buddies = match.plan.buddies ?? []
     return {
       kind: 'invite',
-      target: { date, existingDayPlanId: match.plan.id, inviteBuddies },
+      update: {
+        id: match.plan.id,
+        buddies: buddies.includes(request.from)
+          ? buddies
+          : [...buddies, request.from],
+      },
     }
+  }
   if (!match && dayPlans.some((plan) => storedDayKey(plan.date) === request.d))
     return { kind: 'changed' }
-  const start = match ? contributionStart(match, day.toDate()) : request.s
+  const day = moment(request.d, 'YYYY-MM-DD')
   return {
     kind: 'invite',
-    target: {
-      date,
-      inviteBuddies,
-      prefill: {
-        startTime:
-          start === undefined
-            ? undefined
-            : day.clone().startOf('day').add(start, 'minutes').toISOString(),
-        minutes: match?.minutes ?? request.m,
-        title: match?.plan.title,
-        location: match?.plan.location,
-        categoryId: match?.plan.categoryId,
-      },
+    add: {
+      date: day.toDate(),
+      startTimeInMinutes: match
+        ? contributionStart(match, day.toDate())
+        : request.s,
+      minutes: match?.minutes ?? request.m ?? 60,
+      title: match?.plan.title,
+      location: match?.plan.location,
+      categoryId: match?.plan.categoryId,
+      buddies: [request.from],
+      notifications: [],
     },
   }
 }

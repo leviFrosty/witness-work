@@ -9,9 +9,7 @@ name: Create a contact from the Contacts tab
 - tapOn: Contacts
 - assertVisible: No contacts yet
 - tapOn: Add Contact
-# The field's accessible name is "Name" on iOS and its placeholder on Android.
-- tapOn:
-    text: [Name, "What's their name?"]
+- tapOn: Name
 - inputText: Maestro Verify
 - hideKeyboard
 - tapOn: Save

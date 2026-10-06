@@ -8,7 +8,8 @@ name: Log time from the Home service report card
     timeout: 60000
 - tapOn: Add Time
 - assertVisible: Entering time information below will log service time for that day
-# Android appends the current value to the wheel button's name.
+# React Native on Android folds accessibilityValue into the name ("Hours, 0"),
+# so TalkBack and VoiceOver both read "Hours, 0, button".
 - tapOn:
     text: [Hours, 'Hours, 0']
     traits: button

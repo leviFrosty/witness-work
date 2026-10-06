@@ -26,7 +26,7 @@ Preconditions:
 Steps:
 
 - **Open.** Run `wwv ad press 'label="Add Time"' --settle`. The text "Entering time information below will log service time for that day" appears, and Submit is disabled.
-- **Pick hours.** Run `wwv ad press 'role="button" label="Hours"' --settle`, then `wwv ad press 'label="2"' --settle`, then `wwv ad press 'label="Done"' --settle`. Submit is enabled.
+- **Pick hours.** Run `wwv ad press 'role="button" label="Hours"' --settle` (Android: `label="Hours, 0"`), then `wwv ad press 'label="2"' --settle`, then `wwv ad press 'label="Done"' --settle`. Submit is enabled.
 - **Submit.** Run `wwv ad press 'label="Submit"' --settle`. The app returns to Home.
 - **Read back.** Run `wwv eval 'Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap(m => Object.values(m).flat()).filter(e => !e.id.startsWith("verify-") && new Date(e.date).toDateString() === new Date().toDateString())'`. One entry with `hours: 2`.
 - **Second view.** Run `wwv ad press 'label="Progress"' --settle`. The month cell's logged hours went up by 2.
@@ -37,7 +37,7 @@ Steps:
 
 ## Gotchas
 
-- "Hours" and "Minutes" are both a text label and a wheel button. Select with `role="button"`.
+- "Hours" and "Minutes" are both a text label and a wheel button. Select with `role="button"`. On Android the button's name includes its value ("Hours, 0"), because React Native folds `accessibilityValue` into the content description there; TalkBack reads it the same way VoiceOver does.
 - Wheel values below the visible window need a scroll inside the sheet. Pick visible values. On Android a tap can settle one row short, so check the button's name ("Hours, 2") or read the stored entry rather than trusting the tap.
 - Time display follows the user's format preference (decimal or "1h 30m"). Assert with the store, not a formatted string.
 - The `pioneer` scenario already has today's entries on Tuesdays and Saturdays. Filter out `verify-` ids when reading back.

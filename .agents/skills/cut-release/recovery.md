@@ -7,6 +7,7 @@ Record as known:
 - Run ID, phase, timestamps, last error, retry counts and log paths.
 - Original branch/HEAD, user stash name/object ID, preparation stash IDs.
 - Fetched remote SHA, source SHA, public baseline version/tag, bump/target version.
+- ww-api `API_RESULT` status/tag/SHA and its log path.
 - Notes decision, changed English keys and refreshed keys per locale, release files/check results.
 - Release commit/tag and verified remote identities.
 - IPA path/SHA-256, marketing version, build number, ASC build/version/submission IDs.

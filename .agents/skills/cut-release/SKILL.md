@@ -20,7 +20,7 @@ Record original branch and HEAD. Preserve an in-progress merge/rebase and report
 
 Fetch `origin` and tags. Switch to local `main` (create tracking main if absent), then rebase it onto fetched `origin/main`. Include unpushed local main commits; leave feature-branch commits on their branch. Conflicts stop the release with recoverable state. Record fetched remote SHA and reconciled source SHA.
 
-Check Git push access and documented local build prerequisites, production environment presence, EAS authentication, and `asc doctor` without printing secrets. Verify the tag workflow has no cloud production build/upload.
+Check Git push access (this repo and `~/dev/ww-api`), `gh` access to `leviFrosty/ww-api`, documented local build prerequisites, production environment presence, EAS authentication, and `asc doctor` without printing secrets. Verify the tag workflow has no cloud production build/upload.
 
 Also verify the Android prerequisites and Play access in `docs/build.md`: JDK 17/SDK, production environment and signing credentials, Fastlane, and Google Play Developer API access for `com.leviwilkerson.jwtime` with production release permissions. Inspect Play Console app availability, outstanding setup/review requirements, and managed publishing. Resolve first-release or unpublished-app setup requirements before either store submission; reserve final publication/republication controls for step 7 after the shared gate. A draft upload cannot publish or republish the app. Missing Android access or prerequisites stop the entire release.
 
@@ -48,7 +48,9 @@ Run `pnpm run check:locales`; this checks every nonempty English leaf at its exa
 
 **Complete:** every locale covers every required English key, changed source keys refreshed, placeholders/plurals verified, checks pass.
 
-## 4. Publish the release commit and tag
+## 4. Release ww-api, then publish the release commit and tag
+
+Ship the backend before any app artifact: run `scripts/release-api.sh` with persistent output and a log path in the journal. If ww-api `main` has commits since its latest `v*` tag, it tests them, tags and pushes the next ww-api version, then waits for its deploy and production `/health`; otherwise it confirms the latest tag deployed. Record its `API_RESULT` (status, tag, SHA). A failure stops the release before the app tag; fix the cause and rerun the script rather than tagging ww-api by hand.
 
 Fetch again before committing. If remote main advanced, preserve preparation in a separately named stash; rebase main, restore preparation without dropping that stash, and reconcile version collisions, notes and translations. Include new remote work; rerun affected preparation and all checks. Preserve conflicting preparation for inspection.
 
@@ -58,7 +60,7 @@ Push main and ONLY this tag together with `git push --atomic origin main refs/ta
 
 Verify remote main contains the release commit and the peeled remote tag matches it. Monitor tag workflow checks/GitHub Release before building; surface failures. Record immutable release SHA/tag.
 
-**Complete:** verified release commit/tag remote, checks pass, local HEAD equals tagged commit, tree clean.
+**Complete:** ww-api `main` released and deployed, verified release commit/tag remote, checks pass, local HEAD equals tagged commit, tree clean.
 
 ## 5. Build iOS, then Android, and verify both artifacts
 

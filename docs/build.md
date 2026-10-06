@@ -277,7 +277,7 @@ and continue only its missing submission.
 
 ## Production build & App Store upload (fully local)
 
-For the complete iOS + Android release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). It runs the iOS build/upload below, immediately builds the Android AAB, then verifies processing and stages/preflights both stores before submitting either for review. Both artifacts use the same release commit and marketing version; any failure before the shared submission gate stops both platforms. Tag pushes run validation and create a GitHub Release; they do not build or upload.
+For the complete iOS + Android release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). It runs the iOS build/upload below, immediately builds the Android AAB, then verifies processing and stages/preflights both stores before submitting either for review. Both artifacts use the same release commit and marketing version; any failure before the shared submission gate stops both platforms. Tag pushes run validation and create a GitHub Release; they do not build or upload. Before tagging, `/cut-release` runs `scripts/release-api.sh` so unreleased ww-api commits deploy first.
 
 **We intentionally do not use EAS Build cloud services for production.** Every production build runs on our own hardware via `eas build --local` so we never pay for build credits. The EAS CLI is still used as the local build orchestrator and for `autoIncrement` (fetching the next build number from EAS — free; only cloud builder minutes cost money).
 
@@ -415,6 +415,7 @@ Invoke `/beta-build` (see `.agents/skills/beta-build/SKILL.md`) to put any branc
 
 - **Native build + TestFlight** when native code changed: `eas build --profile beta --local`, then `asc builds upload --wait`. The upload sets What to Test to the branch, commit and `Runtime: <fingerprint>`.
 - **EAS Update** to the `beta` channel when it didn't. Beta uses the `fingerprint` runtime policy (`fingerprint.config.js`), and the script compares HEAD's fingerprint with the latest TestFlight build's `Runtime:` line. Beta launches wait up to 10 s for a new update, so a relaunch picks it up.
+- **Backend first:** Beta calls the production API, so before either path `scripts/release-api.sh` releases ww-api `main` if it has unreleased commits. It stops if ww-api has an unmerged branch with this branch's name. See the `release-process` skill.
 
 Prerequisites are the same as production builds, plus:
 

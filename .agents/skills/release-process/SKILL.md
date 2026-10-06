@@ -60,6 +60,17 @@ alone does not complete a release. See `docs/build.md` for Play credentials,
 shared-note locale/length handling, Console-only setup and automatic publishing,
 and `../cut-release/recovery.md` for per-platform checkpoints and partial failures.
 
+## Backend first (ww-api)
+
+Beta and production builds both call the production ww-api Worker, so a feature's backend half must be deployed before any app build that relies on it. `scripts/release-api.sh` does this; `scripts/build-beta.sh` and `/cut-release` run it before building.
+
+- ww-api's `v*` tags are the release state; no file tracks it. With no commits on ww-api `origin/main` since the latest tag, the script only confirms that tag's deploy run succeeded and production `/health` isn't older.
+- Otherwise it installs, tests and typechecks ww-api in a throwaway worktree (`~/dev/ww-api-worktrees/`), commits `chore: release vX.Y.Z` (package.json only), tags, and pushes ww-api `main` and the tag atomically. Then it waits for ww-api's `deploy.yml` run and checks `/health`. Any `feat:` commit means a minor bump, otherwise patch; `--bump` overrides.
+- `--branch <name>` (beta passes the app branch) fails when ww-api's branch of the same name has commits not on its `main`.
+- `--dry-run` reports the pending release. Rerunning after any failure is safe.
+
+The backend goes live before store review and stays live for older app versions, so keep its changes backward compatible.
+
 ## Workflows reference
 
 | File                     | Trigger                                         | Does                                                                           |

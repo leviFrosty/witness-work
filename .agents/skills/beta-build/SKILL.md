@@ -5,7 +5,7 @@ description: Ship the current branch to the WitnessWork Beta app on the user's p
 
 # Beta build
 
-WitnessWork Beta (`com.leviwilkerson.jwtimebeta`, orange icon) is an internal-TestFlight-only app with its own App Group, iCloud container and data, so any branch can ship to it without touching the App Store app or the user's real records. Invocation authorizes committing the thread's work and publishing it to Beta. It never bumps versions, tags, pushes Git or touches the production app.
+WitnessWork Beta (`com.leviwilkerson.jwtimebeta`, orange icon) is an internal-TestFlight-only app with its own App Group, iCloud container and data, so any branch can ship to it without touching the App Store app or the user's real records. Invocation authorizes committing the thread's work and publishing it to Beta. Beta calls the production API, so it also authorizes releasing ww-api's `main` when it has unreleased commits. It never bumps the app's version, tags or pushes this repo, or touches the production app.
 
 Optional argument: `ota` or `native` forces the path; default `auto`. `scripts/build-beta.sh --dry-run` reports the path without shipping.
 
@@ -26,6 +26,8 @@ The script takes a per-machine lock, syncs widget sources, loads `.env.beta` (fa
 - **Match → OTA**: `eas update --channel beta` (about 1–2 min) plus PostHog source maps.
 - **Differs → native**: `eas build --profile beta --local` then `asc builds upload --wait` with What to Test = branch, commit, subject, runtime (about 15–30 min).
 
+Before either path ships, `scripts/release-api.sh --branch <branch>` puts the backend out first (see `../release-process/SKILL.md`). It stops if ww-api's branch with this branch's name has commits that aren't on ww-api `main`. If ww-api `main` has commits since its latest `v*` tag, it tags and deploys the next ww-api version (about 1 min). Its `API_RESULT` line says `released` or `current`.
+
 Tell the user which path it took. Watch the log to completion; relay only milestones (build started, upload, processing) and failures. The last line is `BETA_RESULT …`.
 
 ## 3. Report
@@ -34,6 +36,7 @@ Send a short summary the user can act on from their phone:
 
 - **OTA:** commit and update group. "Swipe WitnessWork Beta away and reopen it." Launch waits up to 10 s for the update. Settings → version row shows the new commit hash.
 - **Native:** version (build), commit. "Update WitnessWork Beta in TestFlight." Processing is already complete when the script exits.
+- **ww-api:** the tag, when `API_RESULT status=released`.
 
 ## Failures
 
@@ -43,6 +46,8 @@ Read the log, diagnose, and report plainly. Fix code problems on the branch and 
 - **Signing/provisioning errors** (missing profile, capability or App Group/iCloud container not assigned): signing needs a one-time Apple login. The user must run `scripts/build-beta.sh --mode native --interactive` in a Terminal on this Mac. You can't do this remotely.
 - **`errSecInternalComponent` / codesign can't access key:** the login keychain is locked (e.g. SSH session). The user must unlock it at the Mac, or run `security unlock-keychain ~/Library/Keychains/login.keychain-db` in their own terminal.
 - **`--mode ota` refused:** native code changed since the latest TestFlight build; rerun with `native`.
+- **Unmerged ww-api branch:** this feature's backend half isn't on ww-api `main`, so Beta would call a production API without it. Tell the user; don't merge or delete ww-api branches yourself. Rerun once it lands.
+- **ww-api tests, push or deploy failed:** nothing app-side shipped. Report the error or run URL. Rerunning is safe.
 - **Missing `.env.beta`, `asc`/`eas` auth, Xcode or WWDR certificates:** see `docs/build.md` → Beta builds.
 
 A native build that uploaded but failed Apple processing is not a success; report the processing state from the log.

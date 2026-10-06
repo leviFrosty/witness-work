@@ -3,12 +3,13 @@
 #
 # Publishes an EAS Update to the `beta` channel when HEAD's native fingerprint
 # matches the latest TestFlight beta build; otherwise builds locally and
-# uploads a new TestFlight build. Driven by the `/beta-build` skill.
+# uploads a new TestFlight build. Releases ww-api first when it has unreleased
+# commits (scripts/release-api.sh). Driven by the `/beta-build` skill.
 #
 # Usage: scripts/build-beta.sh [--mode auto|ota|native] [--interactive] [--dry-run]
 #   --mode         auto (default) picks OTA vs native from the fingerprint.
 #   --interactive  Let EAS prompt (Apple login for first-time signing setup).
-#   --dry-run      Report the chosen mode without shipping anything.
+#   --dry-run      Report the chosen mode and pending API release without shipping anything.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -123,6 +124,12 @@ if [ "$MODE" = ota ] && [ "$RUNTIME" != "$LATEST_RUNTIME" ]; then
   exit 1
 fi
 echo "Mode:     $MODE"
+
+# Beta calls the production API, so unreleased backend work ships first.
+API_ARGS=(--branch "$BRANCH")
+[ "$DRY_RUN" = true ] && API_ARGS+=(--dry-run)
+scripts/release-api.sh "${API_ARGS[@]}"
+
 if [ "$DRY_RUN" = true ]; then
   echo "BETA_RESULT mode=$MODE sha=$SHA runtime=$RUNTIME dry_run=true"
   exit 0

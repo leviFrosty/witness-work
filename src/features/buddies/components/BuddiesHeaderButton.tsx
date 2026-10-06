@@ -4,27 +4,36 @@ import HeaderPillButton from '@/components/ui/HeaderPillButton'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Schedule's way into Buddies, who share planned days. Shows a dot while
- * requests wait for confirmation.
+ * requests wait for confirmation, a spinner while Buddies is confirmed for the
+ * first time this session, and dims while Buddies is turned off on the server.
  */
 export default function BuddiesHeaderButton() {
   const navigation = useNavigation<RootStackNavigation>()
-  const enabled = useBuddiesEnabled()
+  const availability = useBuddiesAvailability()
   const requests = useBuddies((state) => state.incomingClaims.length)
 
-  if (!enabled) return null
+  if (availability === 'hidden') return null
+  const disabled = availability === 'disabled'
 
   return (
     <HeaderPillButton
       icon={UsersIcon}
       label={i18n.t('buddies_title')}
-      badge={requests > 0}
+      loading={availability === 'loading'}
+      disabled={disabled}
+      // Requests can't be confirmed while Buddies is off.
+      badge={requests > 0 && !disabled}
       accessibilityLabel={
-        requests > 0 ? i18n.t('buddies_requestsWaitingA11y') : undefined
+        disabled
+          ? i18n.t('buddies_unavailableA11y')
+          : requests > 0
+            ? i18n.t('buddies_requestsWaitingA11y')
+            : undefined
       }
       onPress={() => {
         analytics.capture('buddies_opened', {

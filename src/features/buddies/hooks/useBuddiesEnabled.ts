@@ -1,14 +1,10 @@
-import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
-import { useFeatureFlag } from '@/lib/featureFlags'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
 
 /**
- * Buddies UI visibility: the `buddies` remote flag (or the dev-build override
- * in Tools) on a binary that ships the Keychain module. OTA updates can land on
- * older binaries, so the native check is not optional.
+ * Whether Buddies shows at all. Stays on while flags reload or can't load and
+ * while the relay is turned off, so its markers, pickers, and background work
+ * don't flicker; `useBuddiesAvailability` tells those states apart.
  */
 export default function useBuddiesEnabled(): boolean {
-  const flag = useFeatureFlag('buddies')
-  const devOverride = useBuddies((state) => state.devOverride)
-  return (flag || (__DEV__ && devOverride)) && BuddiesKeychain.isAvailable()
+  return useBuddiesAvailability() !== 'hidden'
 }

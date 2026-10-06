@@ -19,6 +19,7 @@ import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
+import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { shareRefFromKey } from '@/features/buddies/lib/state'
 import type { TogetherItem } from '@/features/buddies/lib/together'
@@ -63,6 +64,9 @@ export default function BuddyTogetherRow({
     .join(' · ')
 
   const going = item.status === 'going'
+  const replyDelivery = useReplyDelivery(
+    item.direction === 'incoming' ? item.shareKey : undefined
+  )
   const status =
     item.direction === 'incoming'
       ? i18n.t(going ? 'buddies_answeredGoing' : 'buddies_answeredDeclined')
@@ -126,7 +130,9 @@ export default function BuddyTogetherRow({
           },
           ...changeAnswer,
         ]}
-        accessibilityLabel={[title, when, status].join(', ')}
+        accessibilityLabel={[title, when, status, replyDelivery]
+          .filter(Boolean)
+          .join(', ')}
       >
         <XView
           style={{
@@ -165,6 +171,11 @@ export default function BuddyTogetherRow({
               }}
             >
               {status}
+              {replyDelivery ? (
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {` · ${replyDelivery}`}
+                </Text>
+              ) : null}
             </Text>
           </View>
           {open ? (

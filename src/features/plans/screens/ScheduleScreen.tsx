@@ -60,6 +60,7 @@ import BuddyDayBadge from '@/features/buddies/components/BuddyDayBadge'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import BuddiesHeaderButton from '@/features/buddies/components/BuddiesHeaderButton'
+import useSyncBuddiesOnFocus from '@/features/buddies/hooks/useSyncBuddiesOnFocus'
 import RootHeader from '@/components/RootHeader'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
@@ -73,6 +74,7 @@ const ScheduleScreen = ({ route }: Props) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  useSyncBuddiesOnFocus()
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
   const [calendarViewMode, setCalendarViewMode] =

@@ -10,6 +10,8 @@ import { useProfile } from '@/stores/profile'
 import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
+import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
@@ -148,6 +150,14 @@ export function installDevHarness() {
       setDevFlagOverride(flag, value)
       return value
     },
+    /**
+     * Starts the Buddies relay check; read the report afterwards from
+     * `stores.buddiesDiagnostics.getState().relayCheck` (eval doesn't await).
+     */
+    checkBuddiesRelay: () => {
+      void checkBuddiesRelay()
+      return 'started'
+    },
     setSupporter: (on: boolean) => {
       usePreferences
         .getState()
@@ -167,6 +177,7 @@ export function installDevHarness() {
       serviceReports: useServiceReport,
       mileage: useMileage,
       buddies: useBuddies,
+      buddiesDiagnostics: useBuddiesDiagnostics,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

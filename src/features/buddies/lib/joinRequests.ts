@@ -32,14 +32,25 @@ export function joinRequestExpiry(d: string, s: number | undefined): number {
 
 /**
  * What this User can do about a buddy's Plan: ask to join it, take back a
- * request (`asked`), or nothing: once the buddy has invited them that day, the
- * Plan is too close to start, or they already have `MAX_OPEN_JOIN_REQUESTS`
- * waiting with that buddy.
+ * request (`asked`, `unsent` until it reaches the buddy), or nothing: once the
+ * buddy has invited them that day, the Plan is too close to start, or they
+ * already have `MAX_OPEN_JOIN_REQUESTS` waiting with that buddy.
  */
 export type JoinRequestStatus =
   | { kind: 'canAsk'; expiresAt: number }
-  | { kind: 'asked'; request: OutgoingJoinRequest }
+  | { kind: 'asked'; request: OutgoingJoinRequest; unsent: boolean }
   | { kind: 'none' }
+
+/**
+ * Whether the latest ask or withdrawal hasn't reached the buddy yet; it's sent
+ * again on every sync. A withdrawal of a request that never reached the relay
+ * has nothing to send, though it counts as unsent until delivery next runs.
+ */
+export function joinRequestUnsent(
+  request: Pick<OutgoingJoinRequest, 'rev' | 'sentRev'>
+): boolean {
+  return request.sentRev !== request.rev
+}
 
 export function joinRequestStatus(
   state: Pick<BuddiesState, 'askedToJoin' | 'incomingShares'>,
@@ -64,7 +75,8 @@ export function joinRequestStatus(
     (candidate) =>
       candidate.to === to && candidate.d === d && candidate.s === plan.s
   )
-  if (request) return { kind: 'asked', request }
+  if (request)
+    return { kind: 'asked', request, unsent: joinRequestUnsent(request) }
   const expiresAt = joinRequestExpiry(d, plan.s)
   if (expiresAt - now < JOIN_REQUEST_LEAD_MS) return { kind: 'none' }
   const open = live.filter((candidate) => candidate.to === to)

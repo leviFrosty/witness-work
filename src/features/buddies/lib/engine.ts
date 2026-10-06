@@ -265,6 +265,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   let cachedIdentity: { seed: string; identity: BuddyIdentity } | null = null
   const pairCache = new Map<string, PairKeys>()
   let syncInFlight: Promise<void> | null = null
+  let syncQueued: Promise<void> | null = null
   /** Share events sent per buddy inboxId in the last hour. */
   const shareSends = new Map<string, number[]>()
   /** Slots added while a sync is in flight are missing from its response. */
@@ -1386,29 +1387,59 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   /**
    * Answers a buddy's invitation; "going" is what adds the linked Plan. The
    * answer is saved first, so it holds offline, and sent when the relay is
-   * reachable — now or on a later sync.
+   * reachable — now or on a later sync. With `holdMs` it waits that long first,
+   * so the User can still change it; answering again restarts the wait.
    */
-  async function replyToShare(key: string, status: ShareReply) {
+  async function replyToShare(
+    key: string,
+    status: ShareReply,
+    { holdMs = 0 }: { holdMs?: number } = {}
+  ) {
     const share = store.getState().incomingShares[key]
     if (!share || share.status === 'cancelled') return
+    const now = deps.now()
     store.setState((state) => ({
       incomingShares: {
         ...state.incomingShares,
-        [key]: { ...share, status, unsentReplyRev: deps.now() },
+        [key]: {
+          ...share,
+          status,
+          unsentReplyRev: now,
+          replySendAt: holdMs > 0 ? now + holdMs : undefined,
+        },
       },
       notifications: state.notifications.map((n) =>
         n.shareKey === key ? { ...n, read: true } : n
       ),
     }))
+    if (holdMs > 0) return
     await deliverReplies().catch(() => {
       // Saved; retried on the next sync.
     })
   }
 
-  /** Sends the answers that haven't reached their buddy yet. */
+  /** Sends held answers now, e.g. as the app leaves the foreground. */
+  async function sendHeldReplies() {
+    store.setState((state) => ({
+      incomingShares: Object.fromEntries(
+        Object.entries(state.incomingShares).map(([key, share]) => [
+          key,
+          share.replySendAt === undefined
+            ? share
+            : { ...share, replySendAt: undefined },
+        ])
+      ),
+    }))
+    await deliverReplies()
+  }
+
+  /** Sends the answers that haven't reached their buddy yet and are due. */
   async function deliverReplies() {
+    const now = deps.now()
     const unsent = Object.entries(store.getState().incomingShares).filter(
-      ([, share]) => share.unsentReplyRev !== undefined
+      ([, share]) =>
+        share.unsentReplyRev !== undefined &&
+        (share.replySendAt === undefined || share.replySendAt <= now)
     )
     if (unsent.length === 0) return
     const me = await ensureInbox()
@@ -1420,7 +1451,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         return {
           incomingShares: {
             ...state.incomingShares,
-            [key]: { ...current, unsentReplyRev: undefined },
+            [key]: {
+              ...current,
+              unsentReplyRev: undefined,
+              replySendAt: undefined,
+            },
           },
         }
       })
@@ -2067,14 +2102,50 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishShares()
   }
 
-  /** Coalesces concurrent callers onto one in-flight sync. */
+  /**
+   * Coalesces concurrent callers. A call made while a sync runs may announce an
+   * event that sync already fetched past, so it gets one more sync afterwards,
+   * shared by everyone who asked meanwhile.
+   */
   function sync(): Promise<void> {
     if (!syncInFlight) {
       syncInFlight = runSync().finally(() => {
         syncInFlight = null
       })
+      return syncInFlight
     }
-    return syncInFlight
+    syncQueued ??= syncInFlight
+      .catch(() => {
+        // The follow-up runs either way; its own outcome is what callers see.
+      })
+      .then(() => {
+        syncQueued = null
+        return sync()
+      })
+    return syncQueued
+  }
+
+  /** Opens this inbox's live signal, which says when to sync. */
+  async function openLive() {
+    return relay.openLive(ownerAuth(await ensureInbox()))
+  }
+
+  /**
+   * Reads the inbox from this device's cursor and applies nothing: proof the
+   * relay accepts this device's signature, for Tools' relay check.
+   */
+  async function probeInbox() {
+    const me = await ensureInbox()
+    const since = store.getState().syncSeq
+    const response = await relay.syncInbox(ownerAuth(me), since)
+    return {
+      since,
+      seq: response.seq,
+      slots: response.slots.length,
+      cards: response.cards.length,
+      events: response.events.length,
+      rosterChanged: response.roster !== null,
+    }
   }
 
   /**
@@ -2144,6 +2215,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     // Plans, invitations, replies, and the notification queue don't.
     const {
       devOverride,
+      flagLastKnown,
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,
@@ -2152,6 +2224,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     store.setState({
       ...initialBuddiesState,
       devOverride,
+      flagLastKnown,
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,
@@ -2177,6 +2250,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     publishShares,
     replyToShare,
     deliverReplies,
+    sendHeldReplies,
     askToJoin,
     withdrawJoinRequest,
     dismissJoinRequest,
@@ -2187,6 +2261,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotificationRead,
     dismissNotification,
     sync,
+    openLive,
+    probeInbox,
     registerPush,
     deleteEverything,
   }

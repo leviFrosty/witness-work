@@ -239,6 +239,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-asset',
       'expo-background-task',
+      // Buddies pushes carry `content-available`, so iOS wakes the app to pull
+      // what they announced before it's opened (buddiesBackgroundSync.ts).
+      // Otherwise the defaults Expo already applies for this package.
+      ['expo-notifications', { enableBackgroundRemoteNotifications: true }],
       'expo-sqlite',
       'expo-font',
       'expo-image',

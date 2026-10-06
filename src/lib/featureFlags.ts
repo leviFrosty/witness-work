@@ -15,13 +15,29 @@ import { usePreferences } from '@/stores/preferences'
 // Add future flag keys to this union so call sites stay type-checked.
 export type FeatureFlag = 'notes-import' | 'notes-import-android' | 'buddies'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
+
+/**
+ * Where flag values stand: `loading` until a load settles (including while the
+ * network state is still unknown), `loaded` with values for the current
+ * identity, `failed` with every flag closed, or not attempted because the app
+ * isn't active (`idle`) or is `offline`. Only `loaded` carries values.
+ */
+export type FeatureFlagsStatus =
+  | 'idle'
+  | 'offline'
+  | 'loading'
+  | 'loaded'
+  | 'failed'
+
 const useFlags = create<{
   values: FlagValues
   distinctId?: string
+  status: FeatureFlagsStatus
   /** Dev builds only (verification harness); survives remote refreshes. */
   devOverrides: FlagValues
 }>(() => ({
   values: {},
+  status: 'idle',
   devOverrides: {},
 }))
 
@@ -36,8 +52,8 @@ export function setDevFlagOverride(
   }))
 }
 
-const clearFlags = () =>
-  useFlags.setState({ values: {}, distinctId: undefined })
+const clearFlags = (status: FeatureFlagsStatus) =>
+  useFlags.setState({ values: {}, distinctId: undefined, status })
 
 function publishLoadedFlags(): void {
   const details =
@@ -52,7 +68,7 @@ function publishLoadedFlags(): void {
     details.errorsWhileComputingFlags ||
     details.quotaLimited?.includes(QuotaLimitedFeature.FeatureFlags)
   ) {
-    clearFlags()
+    clearFlags('failed')
     return
   }
   // An SDK request already in flight at reset can publish its previous
@@ -60,6 +76,7 @@ function publishLoadedFlags(): void {
   useFlags.setState({
     values: posthogClient?.getFeatureFlags() ?? {},
     distinctId: posthogClient?.getDistinctId(),
+    status: 'loaded',
   })
 }
 
@@ -74,8 +91,19 @@ export function useInitializeFeatureFlags(): void {
   }, [])
 
   useEffect(() => {
-    clearFlags()
-    if (appState !== 'active' || !isConnected || !isInternetReachable) return
+    if (appState !== 'active' || !isConnected || !isInternetReachable) {
+      // A network state that's still unknown counts as loading; this runs
+      // again once it arrives.
+      clearFlags(
+        appState !== 'active'
+          ? 'idle'
+          : isConnected === false || isInternetReachable === false
+            ? 'offline'
+            : 'loading'
+      )
+      return
+    }
+    clearFlags('loading')
 
     let cancelled = false
     const unsubscribeFlags = posthogClient?.on(
@@ -86,15 +114,16 @@ export function useInitializeFeatureFlags(): void {
       (state, previous) => {
         // Consent withdrawal resets the SDK identity synchronously, even if React
         // batches a rapid off/on into one render. Its reload will publish new flags.
-        if (previous.analyticsEnabled && !state.analyticsEnabled) clearFlags()
+        if (previous.analyticsEnabled && !state.analyticsEnabled)
+          clearFlags('loading')
       }
     )
     async function load() {
       try {
         const values = await posthogClient?.reloadFeatureFlagsAsync()
-        if (!cancelled && values === undefined) clearFlags()
+        if (!cancelled && values === undefined) clearFlags('failed')
       } catch {
-        if (!cancelled) clearFlags()
+        if (!cancelled) clearFlags('failed')
         // Loading and provider failures leave every flag closed.
       }
     }
@@ -103,7 +132,7 @@ export function useInitializeFeatureFlags(): void {
       cancelled = true
       unsubscribeFlags?.()
       unsubscribePreferences()
-      clearFlags()
+      clearFlags('idle')
     }
   }, [appState, isConnected, isInternetReachable])
 }
@@ -144,6 +173,18 @@ export function useFeatureFlagValue(
   }, [flag, currentValue, distinctId, analyticsEnabled])
   if (devOverride !== undefined && __DEV__) return devOverride
   return currentValue
+}
+
+/**
+ * Whether flag values are loading or have settled. `loaded` only once values
+ * for the current identity are in, matching what `useFeatureFlagValue` reads.
+ */
+export function useFeatureFlagsStatus(): FeatureFlagsStatus {
+  const status = useFlags((state) => state.status)
+  const distinctId = useFlags((state) => state.distinctId)
+  if (status === 'loaded' && distinctId !== posthogClient?.getDistinctId())
+    return 'loading'
+  return status
 }
 
 /** UI visibility only; access control belongs on the server. */

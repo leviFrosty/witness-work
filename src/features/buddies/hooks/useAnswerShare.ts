@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import { Alert } from 'react-native'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import type { ShareReply, ShareType } from '@/features/buddies/lib/schemas'
+import { replyHoldMs } from '@/features/buddies/lib/state'
 import {
   type ShareAnswerSource,
   trackShareAnswer,
 } from '@/features/buddies/lib/shareAnswerAnalytics'
 
-/** Answers a buddy's invitation, saying why when it couldn't be sent. */
+/**
+ * Answers a buddy's invitation. The answer is saved at once; Going is sent
+ * right away, Can't Make It after a short wait so it can still change
+ * (`replyHoldMs`, counted down by `useReplyDelivery`). One that can't be sent
+ * goes out on a later sync.
+ */
 export default function useAnswerShare(source: ShareAnswerSource) {
   const [busy, setBusy] = useState(false)
   const answer = async (
@@ -19,9 +23,9 @@ export default function useAnswerShare(source: ShareAnswerSource) {
     trackShareAnswer(source, type, reply)
     setBusy(true)
     try {
-      await buddiesEngine.replyToShare(shareKey, reply)
-    } catch (error) {
-      Alert.alert(buddiesErrorMessage(error))
+      await buddiesEngine.replyToShare(shareKey, reply, {
+        holdMs: replyHoldMs(reply),
+      })
     } finally {
       setBusy(false)
     }

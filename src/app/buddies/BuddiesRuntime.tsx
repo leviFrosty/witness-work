@@ -21,9 +21,15 @@ import {
   sharesJustAccepted,
   sharesLeftUnlinked,
 } from '@/features/buddies/lib/linkedPlans'
+import { createLiveInbox } from '@/features/buddies/lib/liveInbox'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
+import { shareRecipientsKey } from '@/features/buddies/lib/shares'
 import { Buddy } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import {
+  recordLiveEvent,
+  useBuddiesDiagnostics,
+} from '@/features/buddies/stores/buddiesDiagnostics'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
 
@@ -106,12 +112,21 @@ function syncAfterPush() {
   void buddiesEngine.sync().catch(logFailure)
 }
 
+/** Who this User has invited to what; see `shareRecipientsKey`. */
+const currentRecipients = () =>
+  shareRecipientsKey(
+    useServiceReport.getState().dayPlans,
+    useConversations.getState().conversations
+  )
+
 /**
  * The background half of Buddies. Renders nothing; runs only once the User has
  * started using Buddies (an inbox exists), so everyone else pays no network or
- * battery cost. Pulls on launch and on every return to the app, and every 90
- * seconds while the notifications tray is open; publishes a Buddy Card and
- * shared Plans only after the data behind them changes.
+ * battery cost. Pulls on launch, on every return to the app, and whenever the
+ * relay's live signal says the inbox changed while the app is open (plus every
+ * 90 seconds while the notifications tray is open). Publishes a Buddy Card and
+ * shared Plans after the data behind them changes: at once when who's invited
+ * changes, so a buddy sees an invitation as it's sent, otherwise debounced.
  */
 export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
@@ -121,9 +136,11 @@ export default function BuddiesRuntime() {
   useEffect(() => {
     if (!running) return
     let publishTimer: ReturnType<typeof setTimeout> | null = null
+    let replyTimer: ReturnType<typeof setTimeout> | null = null
     let trayTimer: ReturnType<typeof setInterval> | null = null
     let lastSyncAttempt = 0
     let lastPushCheck = 0
+    let recipients = currentRecipients()
 
     const publishNow = () => {
       if (publishTimer) clearTimeout(publishTimer)
@@ -157,6 +174,43 @@ export default function BuddiesRuntime() {
       if (publishTimer) clearTimeout(publishTimer)
       publishTimer = setTimeout(publishNow, PUBLISH_DEBOUNCE_MS)
     }
+    /** Plans or Follow-ups changed: invitations go now, edits can wait. */
+    const publishSharesChange = () => {
+      const next = currentRecipients()
+      if (next === recipients) {
+        schedulePublish()
+        return
+      }
+      recipients = next
+      publishNow()
+    }
+    /** Sends each held answer when its wait ends (see `replyHoldMs`). */
+    const scheduleHeldReplies = () => {
+      if (replyTimer) clearTimeout(replyTimer)
+      replyTimer = null
+      const now = Date.now()
+      // Past-due answers that failed are retried by syncs, not in a loop here.
+      const due = Object.values(useBuddies.getState().incomingShares)
+        .map((share) => share.replySendAt)
+        .filter((at): at is number => at !== undefined && at > now)
+      if (due.length === 0) return
+      replyTimer = setTimeout(
+        () => {
+          replyTimer = null
+          void buddiesEngine.deliverReplies().catch(logFailure)
+        },
+        Math.min(...due) - now
+      )
+    }
+    const live = createLiveInbox({
+      open: () => buddiesEngine.openLive(),
+      syncedSeq: () => useBuddies.getState().syncSeq,
+      onChange: () => void buddiesEngine.sync().catch(logFailure),
+      onEvent: recordLiveEvent,
+    })
+    useBuddiesDiagnostics.setState({
+      controls: { reconnect: live.reconnect, ping: live.ping },
+    })
     const refreshAvatar = () =>
       refreshBuddyAvatarThumbnail().catch((error) => {
         logFailure(error)
@@ -168,12 +222,19 @@ export default function BuddiesRuntime() {
     })
     syncNow()
     checkPushRegistration()
+    if (AppState.currentState === 'active') live.start()
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         buddiesEngine.expire()
         syncNow()
         checkPushRegistration()
-      } else if (state === 'background' && publishTimer) publishNow()
+        live.start()
+      } else if (state === 'background') {
+        live.stop()
+        if (publishTimer) publishNow()
+        // A held answer goes out now; the app may not run again for a while.
+        void buddiesEngine.sendHeldReplies().catch(logFailure)
+      }
     })
     refreshWhileTrayOpen(useNotificationsTray.getState().open)
     const tray = useNotificationsTray.subscribe((state, previous) => {
@@ -187,7 +248,7 @@ export default function BuddiesRuntime() {
         return
       if (!isApplyingRemoteData())
         declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
-      schedulePublish()
+      publishSharesChange()
     })
     // Name, photo, and Tenure travel in Buddy Cards too.
     const profile = useProfile.subscribe((state, previous) => {
@@ -205,12 +266,13 @@ export default function BuddiesRuntime() {
     // Follow-up invitations carry the Visit's date and topic and the
     // Contact's first name and address.
     const visits = useConversations.subscribe((state, previous) => {
-      if (state.conversations !== previous.conversations) schedulePublish()
+      if (state.conversations !== previous.conversations) publishSharesChange()
     })
     const contacts = useContacts.subscribe((state, previous) => {
       if (state.contacts !== previous.contacts) schedulePublish()
     })
     syncLinkedPlans()
+    scheduleHeldReplies()
     /** Whose requests to join may alert this device. */
     const joinRequestAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
       JSON.stringify([
@@ -227,10 +289,12 @@ export default function BuddiesRuntime() {
       // buddy's template is dropped.
       if (joinRequestAlerts(state) !== joinRequestAlerts(previous))
         void registerBuddiesPush().catch(logFailure)
-      if (state.incomingShares !== previous.incomingShares)
+      if (state.incomingShares !== previous.incomingShares) {
         syncLinkedPlans(
           sharesJustAccepted(previous.incomingShares, state.incomingShares)
         )
+        scheduleHeldReplies()
+      }
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
@@ -241,6 +305,9 @@ export default function BuddiesRuntime() {
     return () => {
       if (publishTimer) clearTimeout(publishTimer)
       if (trayTimer) clearInterval(trayTimer)
+      if (replyTimer) clearTimeout(replyTimer)
+      live.stop()
+      useBuddiesDiagnostics.setState({ controls: null })
       appState.remove()
       tray()
       plans()

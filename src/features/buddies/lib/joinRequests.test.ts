@@ -8,6 +8,7 @@ import {
   joinRequestExpiry,
   joinRequestInvite,
   joinRequestStatus,
+  joinRequestUnsent,
   overlappingOwnPlans,
 } from '@/features/buddies/lib/joinRequests'
 import type {
@@ -231,5 +232,34 @@ describe('overlappingOwnPlans', () => {
     expect(
       overlappingOwnPlans({ d: thursday, ...nine }, plans).map((p) => p.id)
     ).toEqual(['same', 'overlaps'])
+  })
+})
+
+describe('joinRequestUnsent', () => {
+  it('is unsent until the relay accepts its latest ask or withdrawal', () => {
+    expect(joinRequestUnsent(asked())).toBe(false)
+    expect(joinRequestUnsent(asked({ rev: 2, sentRev: 1 }))).toBe(true)
+    expect(joinRequestUnsent(asked({ rev: 1, sentRev: undefined }))).toBe(true)
+  })
+
+  it('shows on a request still waiting to send', () => {
+    const now = moment(thursday).subtract(1, 'day').valueOf()
+    const status = (request: OutgoingJoinRequest) =>
+      joinRequestStatus(
+        { askedToJoin: { r1: request }, incomingShares: {} },
+        'anna',
+        thursday,
+        nine,
+        now
+      )
+    expect(status(asked())).toMatchObject({ kind: 'asked', unsent: false })
+    expect(
+      status(asked({ sentRev: undefined, attempted: false, pushed: false }))
+    ).toMatchObject({ kind: 'asked', unsent: true })
+    // Asked again after withdrawing, not yet sent.
+    expect(status(asked({ rev: 3, sentRev: 2 }))).toMatchObject({
+      kind: 'asked',
+      unsent: true,
+    })
   })
 })

@@ -10,6 +10,7 @@ import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 
 /** Where Ask to Join was used, for `buddy_join_requested`. */
 type Source = 'buddy_plans_for_day' | 'buddy_detail'
@@ -26,15 +27,21 @@ export default function useAskToJoin(source: Source) {
   const { now } = useNow()
   const askedToJoin = useBuddies((state) => state.askedToJoin)
   const incomingShares = useBuddies((state) => state.incomingShares)
+  const sending = useBuddiesSession((state) => state.sending > 0)
 
-  const status = (buddy: Buddy, d: string, plan: CardPlan) =>
-    joinRequestStatus(
+  const status = (buddy: Buddy, d: string, plan: CardPlan) => {
+    const current = joinRequestStatus(
       { askedToJoin, incomingShares },
       buddy.inboxId,
       d,
       plan,
       now
     )
+    // Not unsent while its first try is still on its way.
+    return current.kind === 'asked' && sending
+      ? { ...current, unsent: false }
+      : current
+  }
 
   const ask = (buddy: Buddy, d: string, plan: CardPlan, expiresAt: number) => {
     analytics.capture('buddy_join_requested', { source })

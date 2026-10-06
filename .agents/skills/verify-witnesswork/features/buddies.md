@@ -34,6 +34,16 @@ Steps:
 - **Backend proof.** In ww-api, `.verify/wrangler.log` shows the `invite/claim` and `inbox/sync` calls.
 - **Proof.** Run `wwv shot buddies-ios --platform ios` and `wwv shot buddies-android --platform android`, then `wwv errors` on both.
 
+## Live updates and relay diagnostics
+
+While the app is in the foreground, Buddies keeps a WebSocket to the relay (`inbox/live`, see `docs/buddies-protocol.md`) and syncs on every `changed` signal. To prove it, or to debug a buddy's change that didn't arrive:
+
+- **Read the live state.** `wwv eval '__WW_DEV__.stores.buddiesDiagnostics.getState().live'` returns the status (`open`, `connecting`, `reconnecting`, `stopped`), the last hello and changed seq, ping round trip, last close code, counts, and the last 100 events.
+- **Check the relay.** `wwv eval '__WW_DEV__.checkBuddiesRelay()'` starts a check. Read it back a second later with `wwv eval '__WW_DEV__.stores.buddiesDiagnostics.getState().relayCheck'`. It checks `/health`, a signed read-only inbox read, and a separate live socket's hello and ping, with timings and relay error codes (for example `relay disabled (HTTP 503)` when the kill switch is off).
+- **In the app.** Tools → Buddies shows the same data, plus Ping now, Reconnect now, Sync now, Re-register push, and a copyable debug dump with no names or content.
+- **Timing a live update.** Have the other side write (accept, invite, reply, ask to join), then poll the store with `wwv eval` until the change lands. Over the local relay it takes under a second. The relay's `.verify/wrangler.log` shows the `event/put` followed right away by this device's `inbox/sync`.
+- **Kill switch.** `node scripts/verify/dev.mjs kv put buddies:enabled false` in ww-api turns Buddies off. The value is cached for 60 s.
+
 ## Gotchas
 
 - The flag override only applies to dev builds and survives remote flag refreshes. `wwv flag buddies clear` restores the remote value.

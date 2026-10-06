@@ -189,4 +189,4 @@ off.
 
 - Odometer-only mode per car, purpose tags, tolls/parking, saved places.
 - PDF export, per-period submitted state.
-- Translations (en-US only until human-approved).
+- Translations (en-US only until the release cut translates them).

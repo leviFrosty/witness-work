@@ -1,7 +1,7 @@
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
-import ReorderControls from '@/features/settings/components/shared/ReorderControls'
+import ReorderControls from '@/components/ui/ReorderControls'
 import {
   Archive as ArchiveIcon,
   RotateCcw as RotateCcwIcon,

@@ -7,6 +7,7 @@ import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'
 import RecoverContactsScreen from '@/features/contacts/screens/RecoverContactsScreen'
 import DismissedContactsScreen from '@/features/contacts/screens/DismissedContactsScreen'
 import ContactsSortAndFilterScreen from '@/features/contacts/screens/ContactsSortAndFilterScreen'
+import SavedViewsScreen from '@/features/contacts/screens/SavedViewsScreen'
 import OnBoarding from '@/features/onboarding/components/Onboarding'
 import { usePreferences } from '@/stores/preferences'
 import UpdateScreen from '@/features/updates/screens/UpdateScreen'
@@ -112,6 +113,18 @@ const RootStackComponent = () => {
           }}
           name='Contacts Sort And Filter'
           component={ContactsSortAndFilterScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('savedViews_screenTitle')}
+              />
+            ),
+          }}
+          name='Saved Contact Views'
+          component={SavedViewsScreen}
         />
         <RootStack.Screen
           options={{ header: () => null }}

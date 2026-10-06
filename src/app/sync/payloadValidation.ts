@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { publishers } from '@/constants/publisher'
+import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
 
 const timestamp = z.number().finite().nonnegative()
 const date = z.string().refine((value) => Number.isFinite(Date.parse(value)))
@@ -309,9 +310,19 @@ const filter = z.union([
   z.object({ kind: z.enum(['isFavorite', 'hasStudy', 'isActiveStudy']) }),
 ])
 
+const savedContactView = z.object({
+  name: z.string(),
+  order: z.number().finite(),
+  createdAt: timestamp,
+  filters: z.array(filter),
+  sort: z.string().min(1),
+  direction: z.enum(['asc', 'desc']),
+})
+
 const preferenceShapes = z
   .object({
     contactsFilters: z.array(filter).optional(),
+    savedContactViews: z.record(id, savedContactView).optional(),
     assistantHistory: z
       .array(
         z.object({
@@ -384,6 +395,29 @@ const preferenceShapes = z
     mileageEntryMode: z.enum(['distance', 'odometer']).optional(),
   })
   .passthrough()
+
+/**
+ * Drops Saved Views this build can't read (e.g. one using a filter from a later
+ * version) along with their stamps, so the merge leaves the local copy alone
+ * rather than rejecting the whole payload or treating them as deleted.
+ */
+export function dropUnreadableSavedViews(store: {
+  values: Record<string, unknown>
+  updatedAt: Record<string, number>
+}): void {
+  const views = store.values.savedContactViews
+  if (!views || typeof views !== 'object' || Array.isArray(views)) return
+  const readable: Record<string, unknown> = {}
+  for (const [viewId, view] of Object.entries(views)) {
+    if (
+      id.safeParse(viewId).success &&
+      savedContactView.safeParse(view).success
+    )
+      readable[viewId] = view
+    else delete store.updatedAt[entryTimestampKey('savedContactViews', viewId)]
+  }
+  store.values.savedContactViews = readable
+}
 
 /** Reject bad types for every known setting; future unknown keys stay unused. */
 export function validSettingValues(

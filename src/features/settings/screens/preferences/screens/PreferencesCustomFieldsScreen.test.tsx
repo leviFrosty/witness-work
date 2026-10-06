@@ -47,7 +47,7 @@ vi.mock('@/features/settings/components/shared/SettingsInputLayout', () => ({
 vi.mock('@/features/settings/components/shared/SectionTitle', () => ({
   default: 'SectionTitle',
 }))
-vi.mock('@/features/settings/components/shared/ReorderControls', () => ({
+vi.mock('@/components/ui/ReorderControls', () => ({
   default: 'ReorderControls',
 }))
 

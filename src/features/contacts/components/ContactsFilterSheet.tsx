@@ -275,18 +275,21 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     }
   }, [field, value])
 
-  const availableFields = useMemo<Exclude<FieldKey, null>[]>(() => {
-    const base: Exclude<FieldKey, null>[] = [
-      ...TEXT_FIELD_KEYS,
-      'pinStaleness',
-      ...BOOLEAN_FIELD_KEYS,
-    ]
-    const customs = customFieldDefs
-      .filter((d) => !d.archived)
+  // An archived field stays listed for the filter on it being edited (e.g. a
+  // Saved View's), so that filter can still be changed.
+  const availableFields: Exclude<FieldKey, null>[] = [
+    ...TEXT_FIELD_KEYS,
+    'pinStaleness',
+    ...BOOLEAN_FIELD_KEYS,
+    ...customFieldDefs
+      .filter(
+        (d) =>
+          !d.archived ||
+          (initial?.kind === 'customField' && initial.defId === d.id)
+      )
       .sort((a, b) => a.order - b.order)
-      .map((d) => `customField:${d.id}` as CustomFieldKey)
-    return [...base, ...customs]
-  }, [customFieldDefs])
+      .map((d) => `customField:${d.id}` as CustomFieldKey),
+  ]
 
   const validOperators = useMemo(
     () => operatorsForField(field, customFieldDefs),

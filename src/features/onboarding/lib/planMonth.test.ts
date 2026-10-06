@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyDayEdits,
   monthWeeks,
   otherWeekdays,
   orderedWeekdays,
+  planDayMaxMinutes,
   planTargetMonth,
 } from '@/features/onboarding/lib/planMonth'
 
@@ -75,5 +77,41 @@ describe('monthWeeks', () => {
     const weeks = monthWeeks({ year: 2026, month: 9 }, 1, new Date(2026, 9, 5))
     expect(weeks[0].slice(0, 3)).toEqual([null, null, null])
     expect(weeks[0][3]?.day).toBe(1)
+  })
+})
+
+describe('applyDayEdits', () => {
+  const proposed = [
+    { day: 9, minutes: 360 },
+    { day: 3, minutes: 360 },
+    { day: 10, minutes: 120 },
+  ]
+
+  it('returns the proposal sorted by day when nothing is edited', () => {
+    expect(applyDayEdits(proposed, new Map())).toEqual([
+      { day: 3, minutes: 360, fromAssistant: true },
+      { day: 9, minutes: 360, fromAssistant: true },
+      { day: 10, minutes: 120, fromAssistant: true },
+    ])
+  })
+
+  it('replaces, clears and adds days, marking hand-planned ones', () => {
+    const edits = new Map([
+      [3, 90],
+      [9, 0],
+      [14, 120],
+    ])
+    expect(applyDayEdits(proposed, edits)).toEqual([
+      { day: 3, minutes: 90, fromAssistant: true },
+      { day: 10, minutes: 120, fromAssistant: true },
+      { day: 14, minutes: 120, fromAssistant: false },
+    ])
+  })
+})
+
+describe('planDayMaxMinutes', () => {
+  it('covers a long day and stretches for longer plans', () => {
+    expect(planDayMaxMinutes(120)).toBe(480)
+    expect(planDayMaxMinutes(570)).toBe(600)
   })
 })

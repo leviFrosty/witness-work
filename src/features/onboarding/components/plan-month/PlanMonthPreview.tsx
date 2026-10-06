@@ -1,10 +1,13 @@
-import { View } from 'react-native'
-import Animated, { ZoomIn } from 'react-native-reanimated'
+import { Pressable, View } from 'react-native'
+import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated'
 import moment from 'moment'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
+import PointerHover from '@/components/ui/PointerHover'
 import GoalBar from '@/components/GoalBar'
 import useTheme from '@/contexts/theme'
+import { formatWeekdayMonthDayCompact } from '@/lib/dates'
+import Haptics from '@/lib/haptics'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
@@ -15,6 +18,7 @@ import {
   monthWeeks,
   orderedWeekdays,
 } from '@/features/onboarding/lib/planMonth'
+import PlanDaySlider from '@/features/onboarding/components/plan-month/PlanDaySlider'
 
 const WEEKDAY_KEYS: readonly TranslationKey[] = [
   'availability.weekday.sun',
@@ -33,17 +37,26 @@ type Props = {
   plan: PlanMonth
   serviceDays: readonly number[]
   startOfWeek: number
+  /** The day open in the editor, if any. */
+  selectedDay: number | null
+  onSelectDay: (day: number | null) => void
+  /** Sets a day's plan by hand; 0 clears it. */
+  onChangeDay: (day: number, minutes: number) => void
 }
 
 /**
  * The month the Assistant just planned: projected total against the goal, then
- * a calendar with each proposed session on its day.
+ * a calendar with each proposed session on its day. Tapping a day opens a
+ * slider to change its plan, or to plan a day the Assistant left out.
  */
 const PlanMonthPreview = ({
   target,
   plan,
   serviceDays,
   startOfWeek,
+  selectedDay,
+  onSelectDay,
+  onChangeDay,
 }: Props) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
@@ -51,14 +64,21 @@ const PlanMonthPreview = ({
     formatMinutes(minutes, timeDisplayFormat).formatted
   const monthName = moment({ ...target, day: 1 }).format('MMMM')
   const weeks = monthWeeks(target, startOfWeek, new Date())
-  const hasPlan = plan.minutesByDay.size > 0
+  const hasPlan = plan.plans.length > 0
+  const dateOf = (day: number) => moment({ ...target, day })
+  const selectedMinutes =
+    selectedDay === null
+      ? 0
+      : (plan.plans.find((p) => p.day === selectedDay)?.minutes ?? 0)
 
   const status = (() => {
     if (plan.alreadyOnTrack) {
       return i18n.t('planMonth.status.onTrack', { month: monthName })
     }
-    if (serviceDays.length === 0) return i18n.t('planMonth.status.pickDays')
-    if (!plan.recommendation) {
+    if (serviceDays.length === 0 && !hasPlan) {
+      return i18n.t('planMonth.status.pickDays')
+    }
+    if (!hasPlan) {
       return i18n.t('planMonth.status.noDaysLeft', { month: monthName })
     }
     return i18n.t(
@@ -81,24 +101,12 @@ const PlanMonthPreview = ({
         size='md'
       />
 
-      {/* Read as one summary; with nothing planned the status says it all. */}
-      <View
-        style={{ gap: 4 }}
-        accessible={hasPlan}
-        accessibilityElementsHidden={!hasPlan}
-        importantForAccessibility={hasPlan ? 'yes' : 'no-hide-descendants'}
-        accessibilityLabel={
-          hasPlan
-            ? i18n.t('planMonth.calendarA11y', {
-                month: monthName,
-                days: [...plan.minutesByDay.keys()]
-                  .sort((a, b) => a - b)
-                  .join(', '),
-              })
-            : undefined
-        }
-      >
-        <View style={{ flexDirection: 'row' }}>
+      <View style={{ gap: 4 }}>
+        <View
+          style={{ flexDirection: 'row' }}
+          accessibilityElementsHidden
+          importantForAccessibility='no-hide-descendants'
+        >
           {orderedWeekdays(startOfWeek).map((weekday) => (
             <Text
               key={weekday}
@@ -126,63 +134,146 @@ const PlanMonthPreview = ({
               const minutes = plan.minutesByDay.get(cell.day)
               const isServiceDay =
                 !cell.isPast && serviceDays.includes(cell.weekday)
+              // Saved plans are changed on the Schedule tab, not here.
+              const editable =
+                !cell.isPast &&
+                !plan.alreadyOnTrack &&
+                !plan.savedDays.has(cell.day)
+              const isSelected = selectedDay === cell.day
               return (
-                <View
-                  key={col}
-                  style={{
-                    flex: 1,
-                    height: CELL_HEIGHT,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    backgroundColor: isServiceDay
-                      ? theme.colors.accentTranslucent
-                      : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: cell.isPast ? 0.35 : 1,
-                  }}
-                >
-                  {minutes ? (
-                    <Animated.View
-                      // Re-keyed so a changed session pops in again.
-                      key={`${cell.day}-${minutes}`}
-                      entering={ZoomIn.duration(220)}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                        backgroundColor: theme.colors.accent,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
+                <PointerHover key={col} effect='highlight' enabled={editable}>
+                  <Pressable
+                    disabled={!editable}
+                    onPress={() => {
+                      Haptics.selection()
+                      onSelectDay(isSelected ? null : cell.day)
+                    }}
+                    accessibilityRole='button'
+                    accessibilityLabel={formatWeekdayMonthDayCompact(
+                      dateOf(cell.day)
+                    )}
+                    accessibilityValue={
+                      minutes ? { text: format(minutes) } : undefined
+                    }
+                    accessibilityState={{
+                      selected: isSelected,
+                      disabled: !editable,
+                    }}
+                    style={{
+                      flex: 1,
+                      height: CELL_HEIGHT,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      backgroundColor: isServiceDay
+                        ? theme.colors.accentTranslucent
+                        : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: cell.isPast ? 0.35 : 1,
+                    }}
+                  >
+                    {minutes ? (
+                      <Animated.View
+                        // Re-keyed so a changed session pops in again.
+                        key={`${cell.day}-${minutes}`}
+                        entering={ZoomIn.duration(220)}
                         style={{
-                          fontSize: theme.fontSize('xs'),
-                          fontFamily: theme.fonts.bold,
-                          color: theme.colors.textInverse,
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: theme.numbers.borderRadiusSm,
+                          backgroundColor: theme.colors.accent,
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        {formatMinutesCompact(minutes)}
+                        <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          style={{
+                            fontSize: theme.fontSize('xs'),
+                            fontFamily: theme.fonts.bold,
+                            color: theme.colors.textInverse,
+                          }}
+                        >
+                          {formatMinutesCompact(minutes)}
+                        </Text>
+                      </Animated.View>
+                    ) : (
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('xs'),
+                          color: theme.colors.textAlt,
+                        }}
+                      >
+                        {cell.day}
                       </Text>
-                    </Animated.View>
-                  ) : (
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {cell.day}
-                    </Text>
-                  )}
-                </View>
+                    )}
+                    {isSelected ? (
+                      <View
+                        pointerEvents='none'
+                        style={{
+                          position: 'absolute',
+                          inset: -3,
+                          borderRadius: theme.numbers.borderRadiusSm + 3,
+                          borderWidth: 2,
+                          borderColor: theme.colors.text,
+                        }}
+                      />
+                    ) : null}
+                  </Pressable>
+                </PointerHover>
               )
             })}
           </View>
         ))}
       </View>
+
+      {selectedDay !== null ? (
+        <Animated.View entering={FadeIn.duration(180)} style={{ gap: 2 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {formatWeekdayMonthDayCompact(dateOf(selectedDay))}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                fontFamily: theme.fonts.bold,
+                color: selectedMinutes
+                  ? theme.colors.accent
+                  : theme.colors.textAlt,
+              }}
+            >
+              {selectedMinutes
+                ? format(selectedMinutes)
+                : i18n.t('planMonth.editor.none')}
+            </Text>
+          </View>
+          <PlanDaySlider
+            // Remounts per day so a drag can't carry over to the next one.
+            key={selectedDay}
+            minutes={selectedMinutes}
+            onChange={(minutes) => onChangeDay(selectedDay, minutes)}
+            accessibilityLabel={i18n.t('planMonth.editor.a11y', {
+              date: formatWeekdayMonthDayCompact(dateOf(selectedDay)),
+            })}
+            accessibilityValueText={
+              selectedMinutes
+                ? format(selectedMinutes)
+                : i18n.t('planMonth.editor.none')
+            }
+          />
+        </Animated.View>
+      ) : null}
 
       <Text
         style={{
@@ -202,6 +293,16 @@ const PlanMonthPreview = ({
             {segment.text}
           </Text>
         ))}
+        {hasPlan && selectedDay === null ? (
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {` ${i18n.t('planMonth.status.tapToEdit')}`}
+          </Text>
+        ) : null}
       </Text>
     </Card>
   )

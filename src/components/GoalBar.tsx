@@ -133,6 +133,9 @@ const GoalBar = ({
           {plannedPercent > 0 && (
             <View style={{ width: `${plannedPercent}%`, height: '100%' }}>
               <StripedFill
+                // The SVG keeps its first size when the fill grows; remount it
+                // so planned time drawn live (e.g. while planning) stays full.
+                key={plannedPercent}
                 color={theme.colors.accent}
                 size={dims.stripe}
                 strokeWidth={dims.stripeWidth}

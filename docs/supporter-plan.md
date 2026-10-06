@@ -17,7 +17,7 @@ Plumbing for a "Supporter" concept: optional donations unlock extra customizatio
 - **Non-upsetting UX ("show, don't gate")**: gated options stay visible in the UI, tagged with a small amber `Supporter` chip. Tapping a gated option as a non-supporter opens a soft **educational sheet** — never a direct paywall.
 - **Graceful degradation**: if a subscription lapses, custom settings are preserved but not applied; defaults take over; data is never lost.
 - **Tone**: "Support is optional. The app is, and will always be, free." / "Supporters help fund ongoing development." / "Little thank-yous for supporters."
-- **Onboarding**: pure education, no direct paywall link. Paywall remains reachable from Settings > Support.
+- **Onboarding**: no Supporter step and no ask. The founder note's P.S. says the app is free and supporters keep it that way. The only link is a quiet `SupporterNote` after a MyTime import succeeds, because someone bringing years of records over already knows the app's value. After onboarding, the same note appears when the Home "Get started" checklist is complete. Paywall remains reachable from Settings > Support.
 
 ## Visual identity
 
@@ -98,5 +98,6 @@ When iCloud sync lands, it becomes the first real caller of `SupporterGate`.
 
 - **iOS only**: RevenueCat integration is iOS-only.
 - **Pure-education onboarding**: onboarding screen does not link to paywall. Reduces friction, keeps the "all features free" promise loud. Paywall is already reachable from Settings > Support.
+- **Earned moments (Oct 2026)**: the dedicated onboarding step was removed. Supporter now appears only after value: the MyTime import success state and the completed Home checklist (`SupporterNote`, sources `onboarding_mytime_import` and `onboarding_checklist`). Both hide for supporters and when the donate heart is hidden.
 - **One gated cosmetic this PR**: custom accent color picker. Everything else stacks on top in follow-ups.
 - **Amber color**: chosen over purple/rose for the universal premium signal and clear contrast with green primary.

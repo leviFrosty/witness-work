@@ -13,7 +13,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
-import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
+import { supporterNudgePath } from '@/features/supporter/lib/supporterNudge'
 import {
   finishSupporterSurvey,
   openSupporterSurvey,
@@ -78,7 +78,7 @@ export default function useSupporterNotifications(
     ]
   }
 
-  const eligible = isSupporterNudgeEligible({
+  const path = supporterNudgePath({
     isSupporter,
     hideDonateHeart,
     hideSupporterNudge,
@@ -92,7 +92,7 @@ export default function useSupporterNotifications(
     isDev: __DEV__,
     now: new Date(now),
   })
-  if (!eligible) return []
+  if (!path) return []
 
   const stampDismissal = () => set({ supporterNudgeDismissedAt: Date.now() })
   return [
@@ -112,6 +112,7 @@ export default function useSupporterNotifications(
             stampDismissal()
             analytics.capture('supporter_nudge_clicked', {
               source: 'notifications_tray',
+              variant: path,
             })
 
             navigation.navigate('Paywall', { source: 'notifications_tray' })
@@ -121,10 +122,12 @@ export default function useSupporterNotifications(
       onView: () =>
         analytics.capture('supporter_nudge_viewed', {
           source: 'notifications_tray',
+          variant: path,
         }),
       onDismiss: () => {
         analytics.capture('supporter_nudge_dismissed', {
           source: 'notifications_tray',
+          variant: path,
         })
         stampDismissal()
       },

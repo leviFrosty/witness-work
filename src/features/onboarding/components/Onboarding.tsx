@@ -21,8 +21,7 @@ import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
-import IntentPicker from '@/features/onboarding/components/steps/IntentPicker'
-import YourPlanPreview from '@/features/onboarding/components/steps/YourPlanPreview'
+import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
@@ -30,9 +29,10 @@ import useServiceReport from '@/stores/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import {
   effectiveHasAnnualGoal,
+  tracksHours,
   tracksTenure,
 } from '@/lib/publisherCapabilities'
-import { Publisher } from '@/types/publisher'
+import { Publisher, PublisherHours } from '@/types/publisher'
 import moment from 'moment'
 import {
   OnboardingProgress,
@@ -48,10 +48,9 @@ type StepId =
   | 'dataProtection'
   | 'pickUpWhereLeftOff'
   | 'publisherType'
-  | 'intentPicker'
   | 'profileSetup'
   | 'pioneerDate'
-  | 'yourPlanPreview'
+  | 'planMonth'
   | 'notifications'
   | 'calendarSync'
   | 'defaultNav'
@@ -70,6 +69,8 @@ interface StepProps {
  */
 interface StepShowIfContext {
   publisher: Publisher
+  publisherHours: PublisherHours
+  logsHours: boolean
   installedOn: Date
   userSpecifiedHasAnnualGoal: boolean | 'default'
   serviceReports: TimeEntriesByYear
@@ -103,7 +104,6 @@ const allSteps: StepDef[] = [
     countsTowardProgress: true,
   },
   { id: 'publisherType', Component: StepTwo, countsTowardProgress: true },
-  { id: 'intentPicker', Component: IntentPicker, countsTowardProgress: true },
   { id: 'profileSetup', Component: ProfileSetup, countsTowardProgress: true },
   {
     id: 'pioneerDate',
@@ -112,9 +112,12 @@ const allSteps: StepDef[] = [
     showIf: ({ publisher }) => tracksTenure(publisher),
   },
   {
-    id: 'yourPlanPreview',
-    Component: YourPlanPreview,
+    id: 'planMonth',
+    Component: PlanMonth,
     countsTowardProgress: true,
+    // Planning toward a goal needs hours and a goal to plan toward.
+    showIf: ({ publisher, publisherHours, logsHours }) =>
+      tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   {
@@ -155,6 +158,8 @@ const OnBoarding = () => {
   const {
     set,
     role,
+    publisherHours,
+    logsHours,
     onboardingStepId,
     installedOn,
     userSpecifiedHasAnnualGoal,
@@ -164,11 +169,20 @@ const OnBoarding = () => {
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
       publisher: role,
+      publisherHours,
+      logsHours,
       installedOn,
       userSpecifiedHasAnnualGoal,
       serviceReports,
     }),
-    [role, installedOn, userSpecifiedHasAnnualGoal, serviceReports]
+    [
+      role,
+      publisherHours,
+      logsHours,
+      installedOn,
+      userSpecifiedHasAnnualGoal,
+      serviceReports,
+    ]
   )
 
   const visibleSteps = useMemo(
@@ -188,7 +202,18 @@ const OnBoarding = () => {
     // 'supporter' was the final step before it was removed; resume on the
     // new final step rather than restarting from the hero.
     if (onboardingStepId === 'supporter') return initialVisible.length - 1
-    const idx = initialVisible.findIndex((s) => s.id === onboardingStepId)
+    // The intent picker and plan preview were removed; resume on the step
+    // that now sits where each one was.
+    const hasPlanMonth = initialVisible.some((s) => s.id === 'planMonth')
+    const resumeId =
+      onboardingStepId === 'intentPicker'
+        ? 'profileSetup'
+        : onboardingStepId === 'yourPlanPreview'
+          ? hasPlanMonth
+            ? 'planMonth'
+            : 'notifications'
+          : onboardingStepId
+    const idx = initialVisible.findIndex((s) => s.id === resumeId)
     return idx >= 0 ? idx : 0
   })
 

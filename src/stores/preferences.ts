@@ -200,19 +200,6 @@ export type PrefillAddress = {
 }
 
 /**
- * Intents selected by the user during onboarding (`IntentPicker` step). Drives
- * the post-onboarding HomeChecklist and personalization of the plan-preview /
- * supporter reframe screens. Additive-only; consumers should treat an empty
- * array as "no preference expressed" and fall back to sensible defaults.
- */
-export type OnboardingIntent =
-  | 'trackTime'
-  | 'returnVisits'
-  | 'planWeek'
-  | 'monthlyGoal'
-  | 'mapContacts'
-
-/**
  * User-visible alternate app icon options. `'Seasonal'` is resolved to one of
  * the four bundled `SeasonalXxx` PascalCase plugin names at apply time
  * depending on hemisphere + date — see `lib/appIcon.ts`.
@@ -311,13 +298,6 @@ export const PREFERENCE_DEFAULTS = {
   // and the boot runner in `src/stores/migrations/profile.ts`. Glossary disambiguation: those
   // four fields are the User's *identity* (Profile), not the User's *settings*
   // (Preferences).
-  /**
-   * Multi-select intents captured during onboarding (`IntentPicker` step).
-   * Drives the post-onboarding `HomeChecklist` and personalizes later
-   * onboarding screens. Empty array means the user skipped or the step hasn't
-   * run yet — consumers must treat that case defensively.
-   */
-  onboardingIntents: [] as OnboardingIntent[],
   /**
    * **Tenure Start Date** — the date the User's current consecutive tenure in
    * their current **Tenure Type** began. Persists across role changes _within_
@@ -1096,6 +1076,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   key is renamed alongside the value.
  * - V6 → v7: remove the retired holographic Profile Card preferences and their
  *   iCloud LWW timestamps.
+ * - V9 → v10: remove the retired onboarding intents and their iCloud LWW
+ *   timestamp.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1133,6 +1115,32 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 9) {
     next = migrateDropFoundingSupporterRevealPreference(next)
+  }
+  if (version < 10) {
+    next = migrateDropOnboardingIntents(next)
+  }
+  return next
+}
+
+/**
+ * V9 → v10: remove the onboarding intents. The intent picker was replaced by
+ * the plan step, and the Home checklist no longer varies by intent.
+ */
+export const migrateDropOnboardingIntents = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  const timestamps =
+    record.preferenceUpdatedAt && typeof record.preferenceUpdatedAt === 'object'
+      ? (record.preferenceUpdatedAt as Record<string, unknown>)
+      : null
+  const hasTimestamp = timestamps !== null && 'onboardingIntents' in timestamps
+  if (!('onboardingIntents' in record) && !hasTimestamp) return state
+
+  const { onboardingIntents: _intents, ...rest } = record
+  const next: Record<string, unknown> = { ...rest }
+  if (timestamps) {
+    const { onboardingIntents: _intentsTs, ...restTs } = timestamps
+    next.preferenceUpdatedAt = restTs
   }
   return next
 }
@@ -1833,7 +1841,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createJSONStorage(() => PersistStorage),
-      version: 9,
+      version: 10,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

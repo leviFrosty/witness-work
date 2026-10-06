@@ -157,6 +157,28 @@ describe('generateRecommendation', () => {
       expect(rec!.plans.every((p) => p.minutes % 60 === 0)).toBe(true)
     })
 
+    it('sizes a recurring pattern to the weeks left, not the eligible-day count', () => {
+      // Oct 5–31, 2026 spans four weeks. With Sun/Thu/Fri off, only 16 days
+      // are eligible — counting those as 16/7 → 3 weeks oversized every
+      // session (6h × 12 = 72h for a 50h gap).
+      const rec = generateRecommendation({
+        ...baseInput,
+        year: 2026,
+        month: 9,
+        today: normalizeDateForStorage('2026-10-05'),
+        standardGapMinutes: 50 * 60,
+        offDays: [0, 4, 5],
+      })
+
+      expect(rec).not.toBeNull()
+      expect(rec!.shape).toBe('recurring')
+      expect(rec!.headline.values.weeks).toBe(4)
+      const total = rec!.plans.reduce((s, p) => s + p.minutes, 0)
+      expect(total).toBeGreaterThanOrEqual(50 * 60)
+      // Whole-hour sessions can overshoot by under an hour each, no more.
+      expect(total - 50 * 60).toBeLessThan(rec!.plans.length * 60)
+    })
+
     it('excludes weekdays in offDays from the eligible pool', () => {
       // May 22, 2026 is a Friday. Marking Friday as an Off Day means the first
       // eligible day must not be a Friday.

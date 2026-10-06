@@ -450,14 +450,15 @@ const buildRecurring = (ctx: BuildContext): Recommendation | null => {
   if (eligible.length < params.recurringMinHorizonDays) return null
   if (gapMinutes > eligible.length * stretchCapMinutes) return null
 
-  const weeks = Math.max(1, Math.ceil(eligible.length / 7))
+  // Calendar weeks the eligible days span — not `eligible.length / 7`, which
+  // undercounts once Off Days thin out the pool.
+  const spanDays =
+    eligible[eligible.length - 1].m.diff(eligible[0].m, 'days') + 1
+  const weeks = Math.max(1, Math.ceil(spanDays / 7))
   const weekdaysPerWeek = Math.min(
     7,
     Math.max(2, Math.ceil(gapMinutes / (stretchCapMinutes * weeks)))
   )
-  const perSessionHours = Math.ceil(gapMinutes / (weekdaysPerWeek * weeks) / 60)
-  const perSessionMinutes = perSessionHours * 60
-  if (perSessionMinutes > absoluteCapMinutes) return null
 
   // Recurring asks the user to commit to the same weekdays week after week,
   // so meeting weekdays are unsuitable — pulling the pattern from the
@@ -476,9 +477,19 @@ const buildRecurring = (ctx: BuildContext): Recommendation | null => {
   }
   if (patternWeekdays.length < weekdaysPerWeek) return null
 
-  const plans: ProposedDayPlan[] = eligible
-    .filter((d) => patternWeekdays.includes(d.m.day()))
-    .map((d) => ({ date: d.m.toDate(), minutes: perSessionMinutes }))
+  // Size sessions from the days the pattern actually lands on, so the total
+  // overshoots the gap by less than an hour per session.
+  const patternDays = eligible.filter((d) =>
+    patternWeekdays.includes(d.m.day())
+  )
+  const perSessionHours = Math.ceil(gapMinutes / patternDays.length / 60)
+  const perSessionMinutes = perSessionHours * 60
+  if (perSessionMinutes > absoluteCapMinutes) return null
+
+  const plans: ProposedDayPlan[] = patternDays.map((d) => ({
+    date: d.m.toDate(),
+    minutes: perSessionMinutes,
+  }))
 
   const weekdayList = patternWeekdays
     .slice()

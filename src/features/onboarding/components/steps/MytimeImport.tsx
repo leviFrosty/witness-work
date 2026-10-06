@@ -18,6 +18,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useMytimeImport } from '@/features/mytime-import/hooks/useMytimeImport'
 import MytimeImportPreview from '@/features/mytime-import/components/MytimeImportPreview'
+import SupporterNote from '@/features/supporter/components/SupporterNote'
 
 interface Props {
   goBack: () => void
@@ -120,24 +121,29 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
         )}
 
         {status === 'success' && (
-          <Card
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: 12,
-              borderWidth: 1,
-              borderColor: theme.colors.accentTranslucent,
-            }}
-          >
-            <LucideIcon
-              icon={CircleCheckIcon}
-              size={18}
-              color={theme.colors.accent}
-            />
-            <Text style={{ flex: 1, color: theme.colors.text }}>
-              {i18n.t('mytimeImport_success')}
-            </Text>
-          </Card>
+          <View style={{ gap: 12 }}>
+            <Card
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 12,
+                borderWidth: 1,
+                borderColor: theme.colors.accentTranslucent,
+              }}
+            >
+              <LucideIcon
+                icon={CircleCheckIcon}
+                size={18}
+                color={theme.colors.accent}
+              />
+              <Text style={{ flex: 1, color: theme.colors.text }}>
+                {i18n.t('mytimeImport_success')}
+              </Text>
+            </Card>
+            {/* Someone bringing years of records over already knows the
+                value — let them find Supporter without hunting for it. */}
+            <SupporterNote source='onboarding_mytime_import' />
+          </View>
         )}
 
         {status === 'error' && (

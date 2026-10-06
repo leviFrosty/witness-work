@@ -233,6 +233,17 @@ const FounderNote = ({ goBack, goNext }: Props) => {
               />
             </View>
           </View>
+
+          <Text
+            style={{
+              marginTop: 16,
+              fontSize: 14,
+              color: theme.colors.textAlt,
+              lineHeight: 20,
+            }}
+          >
+            {i18n.t('founderNotePostscript')}
+          </Text>
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>

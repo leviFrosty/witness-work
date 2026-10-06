@@ -8,6 +8,13 @@ import { TimeEntriesByYear } from '@/types/timeEntry'
  */
 export const SUPPORTER_NUDGE_THRESHOLDS = {
   tenureDays: 180,
+  /**
+   * Install age at which a heavy user — one who meets at least
+   * `earlyEngagementFloors` of the engagement floors — can already be asked.
+   * Power users find value in weeks and shouldn't wait half a year.
+   */
+  earlyTenureDays: 30,
+  earlyEngagementFloors: 2,
   reportMonths: 6,
   totalHours: 50,
   contacts: 20,
@@ -79,48 +86,53 @@ const sumTotalHours = (reports: TimeEntriesByYear): number => {
   return total
 }
 
-const meetsEngagementFloor = (
+/** How many of the three engagement floors are met (0–3). */
+const engagementFloorsMet = (
   reports: TimeEntriesByYear,
   contactsCount: number,
   conversationsCount: number
-): boolean => {
-  if (countReportMonths(reports) >= SUPPORTER_NUDGE_THRESHOLDS.reportMonths) {
-    return true
-  }
-  if (sumTotalHours(reports) >= SUPPORTER_NUDGE_THRESHOLDS.totalHours) {
-    return true
-  }
-  if (
+): number =>
+  [
+    countReportMonths(reports) >= SUPPORTER_NUDGE_THRESHOLDS.reportMonths,
+    sumTotalHours(reports) >= SUPPORTER_NUDGE_THRESHOLDS.totalHours,
     contactsCount >= SUPPORTER_NUDGE_THRESHOLDS.contacts &&
-    conversationsCount >= SUPPORTER_NUDGE_THRESHOLDS.conversations
-  ) {
-    return true
-  }
-  return false
-}
+      conversationsCount >= SUPPORTER_NUDGE_THRESHOLDS.conversations,
+  ].filter(Boolean).length
 
 /**
- * Pure predicate: should the supporter nudge be in the notifications tray now?
+ * Which tenure/engagement path qualified the user: `standard` (long tenure, any
+ * engagement floor) or `early` (short tenure, heavy engagement).
+ */
+export type SupporterNudgePath = 'standard' | 'early'
+
+/**
+ * Pure predicate: should the supporter nudge be in the notifications tray now,
+ * and through which path? `null` means no.
  *
  * Gates, all of which must pass:
  *
  * 1. User is not currently a supporter.
  * 2. User hasn't pre-expressed disinterest via `hideDonateHeart` or the dedicated
  *    `hideSupporterNudge` toggle.
- * 3. Install age ≥ `tenureDays`.
- * 4. At least one engagement floor is met (report-months, hours, or contacts +
- *    conversations).
- * 5. Either no prior dismissal, or ≥ `cooldownDays` since the last dismissal.
- * 6. The feature-intro grace period (`introGraceDays`) has elapsed since the first
+ * 3. Either no prior dismissal, or ≥ `cooldownDays` since the last dismissal.
+ * 4. The feature-intro grace period (`introGraceDays`) has elapsed since the first
  *    launch of a build that has the nudge — protects existing long-tenure users
- *    from seeing the card the moment they update.
+ *    from seeing the card the moment they update. Someone who installed a build
+ *    that already had the nudge never updated into it, so the tenure gate alone
+ *    covers them.
+ * 5. One tenure/engagement path:
  *
- * The dev force-show flag (only under `__DEV__`) bypasses gates 3, 4, 5, and 6
- * but still respects gate 1 — a supporter never sees the nudge.
+ *    - `standard`: install age ≥ `tenureDays` and at least one engagement floor
+ *         (report-months, hours, or contacts + conversations).
+ *    - `early`: install age ≥ `earlyTenureDays` and at least `earlyEngagementFloors`
+ *         floors.
+ *
+ * The dev force-show flag (only under `__DEV__`) bypasses gates 3–5 but still
+ * respects gate 1 — a supporter never sees the nudge.
  */
-export const isSupporterNudgeEligible = (
+export const supporterNudgePath = (
   input: SupporterNudgeEligibilityInput
-): boolean => {
+): SupporterNudgePath | null => {
   const {
     isSupporter,
     hideDonateHeart,
@@ -136,37 +148,49 @@ export const isSupporterNudgeEligible = (
     now = new Date(),
   } = input
 
-  if (isSupporter) return false
-  if (hideDonateHeart) return false
-  if (hideSupporterNudge) return false
+  if (isSupporter) return null
+  if (hideDonateHeart) return null
+  if (hideSupporterNudge) return null
 
-  if (isDev && devForceShow) return true
-
-  const tenureMet = moment(installedOn)
-    .add(SUPPORTER_NUDGE_THRESHOLDS.tenureDays, 'days')
-    .isSameOrBefore(moment(now))
-  if (!tenureMet) return false
-
-  if (
-    !meetsEngagementFloor(serviceReports, contactsCount, conversationsCount)
-  ) {
-    return false
-  }
+  if (isDev && devForceShow) return 'standard'
 
   if (supporterNudgeDismissedAt !== null) {
     const cooldownOver = moment(supporterNudgeDismissedAt)
       .add(SUPPORTER_NUDGE_THRESHOLDS.cooldownDays, 'days')
       .isSameOrBefore(moment(now))
-    if (!cooldownOver) return false
+    if (!cooldownOver) return null
   }
 
   // Stamp hasn't run yet on this device — wait for the tray hook to set it on
   // next render rather than firing the card mid-stamp.
-  if (supporterNudgeAvailableSince === null) return false
-  const introGraceOver = moment(supporterNudgeAvailableSince)
-    .add(SUPPORTER_NUDGE_THRESHOLDS.introGraceDays, 'days')
-    .isSameOrBefore(moment(now))
-  if (!introGraceOver) return false
+  if (supporterNudgeAvailableSince === null) return null
+  const updatedIntoNudge =
+    moment(supporterNudgeAvailableSince).diff(moment(installedOn), 'days') >= 1
+  if (updatedIntoNudge) {
+    const introGraceOver = moment(supporterNudgeAvailableSince)
+      .add(SUPPORTER_NUDGE_THRESHOLDS.introGraceDays, 'days')
+      .isSameOrBefore(moment(now))
+    if (!introGraceOver) return null
+  }
 
-  return true
+  const tenureDays = moment(now).diff(moment(installedOn), 'days', true)
+  const floors = engagementFloorsMet(
+    serviceReports,
+    contactsCount,
+    conversationsCount
+  )
+  if (tenureDays >= SUPPORTER_NUDGE_THRESHOLDS.tenureDays && floors >= 1) {
+    return 'standard'
+  }
+  if (
+    tenureDays >= SUPPORTER_NUDGE_THRESHOLDS.earlyTenureDays &&
+    floors >= SUPPORTER_NUDGE_THRESHOLDS.earlyEngagementFloors
+  ) {
+    return 'early'
+  }
+  return null
 }
+
+export const isSupporterNudgeEligible = (
+  input: SupporterNudgeEligibilityInput
+): boolean => supporterNudgePath(input) !== null

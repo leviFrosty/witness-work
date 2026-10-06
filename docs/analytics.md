@@ -141,15 +141,27 @@ Back/jump/button micro-interactions and hero-animation skipping are dropped.
 A skipped step can also complete: completion means advancing, not filling every
 optional field. `elapsed_ms` includes background time and time on other screens.
 
-Stable step IDs: `hero`, `founderNote`, `privacyFirst`, `pickUpWhereLeftOff`,
-`publisherType`, `intentPicker`, `profileSetup`, `pioneerDate`, `yourPlanPreview`,
+Stable step IDs: `hero`, `founderNote`, `privacyFirst`, `dataProtection`,
+`pickUpWhereLeftOff`, `publisherType`, `profileSetup`, `pioneerDate`, `planMonth`,
 `notifications`, `calendarSync`, `defaultNav`, `defaultExportMethod`, `onboardingBackfill`.
+`intentPicker` and `yourPlanPreview` were retired in October 2026 when `planMonth`
+replaced them; compare funnels across that change by step, not position.
+
+`planMonth` only appears for publishers who log hours and have a monthly goal.
+Its question is whether hands-on planning lands: adding the plan sends
+`assistant_recommendation_accepted` with `source: onboarding`, `shape`,
+`plan_count`, `service_day_count`, `reaches_goal`, and `reminder_enabled`; Skip
+sends `onboarding_step_skipped`. Divide accepted by `onboarding_step_viewed` for
+the step. Exclude `source: onboarding` when measuring the Schedule Assistant.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
 `guided`, `icloud_restore`, or `backup_restore`. Home checklist view/completed/
-dismissed remains; individual manual checkbox toggles are dropped. Measure
-onboarding drop-off over an observation window that allows resumption.
+dismissed remains; individual manual checkbox toggles are dropped. The checklist
+is the same four steps for everyone (plan, log time or check off the month, add
+a return visit, send the first report), so completion now spans a full report
+cycle and is comparable across users. Measure onboarding drop-off over an
+observation window that allows resumption.
 
 ## Imports and backups
 
@@ -186,7 +198,15 @@ Use `paywall_viewed` for rendered entry and its `source`/`feature` for attributi
 The preceding navigation-intent event `paywall_opened` is removed. Nudge and
 feature-gate view/click/dismiss events retain the earlier funnel. Nudge visibility
 changes record permanent hiding. Daily nudge impressions measure daily reach,
-while clicks/dismissals remain uncapped.
+while clicks/dismissals remain uncapped. Nudge view/click/dismiss carry
+`variant: standard | early` — whether the user qualified through long tenure or
+the early heavy-use path (see `docs/supporter-nudge-plan.md`). Compare the two
+paths' click-through and purchase rates before changing either threshold.
+
+Quiet Supporter notes after a moment of value open the paywall with `source`
+`onboarding_checklist` (completed Home "Get started" checklist) or
+`onboarding_mytime_import` (MyTime import success during setup). They have no
+impression event; measure them from `paywall_viewed` and purchases by source.
 
 Retain purchase start/completion/cancellation/failure, offering failure, restore
 start/success/empty/failure, and `paywall_closed`. Keep `tier` to distinguish tips

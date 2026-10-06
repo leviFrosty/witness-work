@@ -39,6 +39,25 @@ enum WidgetColor {
   static let warn = Color(red: 0xFA / 255, green: 0xC2 / 255, blue: 0x20 / 255)
   /// Hard error red used for overdue follow-ups and longerThanAMonthAgo.
   static let error = Color(red: 0xE3 / 255, green: 0x09 / 255, blue: 0x09 / 255)
+  /// `theme.colors.textAlt` — behind a buddy's emoji or initial on the
+  /// calendar, so the day's status colors stay readable.
+  static let buddyAvatarBackground = Color(UIColor { traits in
+    traits.userInterfaceStyle == .dark
+      ? UIColor(red: 0x7D / 255, green: 0x7D / 255, blue: 0x7D / 255, alpha: 1)
+      : UIColor(red: 0x9B / 255, green: 0x9B / 255, blue: 0x9B / 255, alpha: 1)
+  })
+  /// `theme.colors.border` — behind the "+N" atop a buddy stack.
+  static let buddyCountBackground = Color(UIColor { traits in
+    traits.userInterfaceStyle == .dark
+      ? UIColor(red: 0x33 / 255, green: 0x33 / 255, blue: 0x33 / 255, alpha: 1)
+      : UIColor(red: 0xDB / 255, green: 0xDB / 255, blue: 0xDB / 255, alpha: 1)
+  })
+  /// `theme.colors.textInverse` — a buddy's initial.
+  static let buddyAvatarText = Color(UIColor { traits in
+    traits.userInterfaceStyle == .dark
+      ? UIColor(red: 0x14 / 255, green: 0x14 / 255, blue: 0x14 / 255, alpha: 1)
+      : .white
+  })
 }
 
 extension WidgetSnapshot.ContactStaleness {

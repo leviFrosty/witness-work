@@ -25,9 +25,11 @@ import {
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import {
   awaitsAnswer,
+  type BuddyNotification,
   notificationIdForSeq,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddyTraySync } from '@/features/buddies/stores/buddyTraySync'
 
 /**
@@ -159,6 +161,12 @@ export default function useBuddyNotifications(): NotificationItem[] {
       ? () => navigation.navigate('Buddy', { inboxId })
       : undefined
 
+  // Entries keep the name they arrived with; a nickname given since applies.
+  const buddyName = (entry: BuddyNotification) => {
+    const buddy = buddies.find((b) => b.inboxId === entry.from)
+    return buddy ? buddyDisplayName(buddy) : entry.name
+  }
+
   return notifications.map((entry) => {
     const joinRequest =
       entry.kind === 'joinRequest' && entry.shareKey
@@ -202,7 +210,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
       id: entry.id,
       kind: 'buddies',
       at: entry.at,
-      title: entry.name,
+      title: buddyName(entry),
       sticky: needsAnswer,
       onView: () => buddiesEngine.markNotificationRead(entry.id),
       onDismiss: () => {

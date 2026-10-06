@@ -11,6 +11,38 @@ import {
   getPlansIntersectingDay,
 } from '@/lib/recurrence'
 import { formatMinutesCompact } from '@/lib/minutes'
+import i18n from '@/lib/locales'
+import {
+  type BuddyDayMarker,
+  stackedBuddies,
+} from '@/features/buddies/lib/calendarMarkers'
+import type { Buddy } from '@/features/buddies/lib/state'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+
+/** A buddy drawn on the calendar, mirroring the in-app `BuddyAvatar`. */
+export type WidgetCalendarBuddy = {
+  id: string
+  /** Drawn when there's no photo or emoji. Empty when the name has none. */
+  initial: string
+  emoji: string | null
+  /** Base64 JPEG thumbnail (at most ~10 KB). */
+  image: string | null
+}
+
+/** Mirrors `BuddyDayBadge`'s inputs for one day. */
+export type WidgetCalendarDayBuddies = {
+  /**
+   * Ids into `WidgetCalendar.buddies` of who the User goes out with, stacked up
+   * the cell's right edge from the corner (`stackedBuddies`).
+   */
+  withIds: string[]
+  /** Buddies left out of `withIds`, counted in a "+N" circle atop the stack. */
+  more: number
+  /** Other buddies plan to go out; drawn as a dot when `withIds` is empty. */
+  goingOut: boolean
+  /** Pre-translated VoiceOver label naming the buddies. */
+  label: string
+}
 
 /** Pre-computed calendar cell mirroring `CalendarDay.tsx`'s render inputs. */
 export type WidgetCalendarDay = {
@@ -41,6 +73,8 @@ export type WidgetCalendarDay = {
   workedMinutes: number
   hitGoal: boolean
   hasNote: boolean
+  /** Buddy badge for the day, or `null` when there's nothing to show. */
+  buddies: WidgetCalendarDayBuddies | null
 }
 
 export type WidgetCalendar = {
@@ -70,6 +104,8 @@ export type WidgetCalendar = {
    * slice without re-computing dates in Swift.
    */
   currentWeekStart: number
+  /** Every buddy referenced by a day's `buddies.withIds`. */
+  buddies: WidgetCalendarBuddy[]
 }
 
 export type BuildCalendarArgs = {
@@ -80,9 +116,57 @@ export type BuildCalendarArgs = {
   /** Mirrors `preferences.logsHours` — see `tracksHours`. */
   logsHours: boolean
   startOfWeek: number
+  /**
+   * `YYYY-MM-DD` → buddy marker, as on the Schedule calendar. Empty when
+   * Buddies is off.
+   */
+  buddyMarkers: Record<string, BuddyDayMarker>
 }
 
 const TOTAL_CELLS = 42
+
+const buddyNames = (buddies: Buddy[]) =>
+  buddies.map(buddyDisplayName).join(', ')
+
+/**
+ * Mirrors `BuddyDayBadge`: the avatar stack when going out together, else a
+ * dot.
+ */
+function dayBuddies(
+  marker: BuddyDayMarker | undefined
+): WidgetCalendarDayBuddies | null {
+  if (!marker) return null
+  if (marker.withBuddies.length > 0) {
+    const { shown, more } = stackedBuddies(marker.withBuddies)
+    return {
+      withIds: shown.map((buddy) => buddy.inboxId),
+      more,
+      goingOut: false,
+      label: i18n.t('buddies_withName', {
+        name: buddyNames(marker.withBuddies),
+      }),
+    }
+  }
+  if (marker.goingOut.length === 0) return null
+  return {
+    withIds: [],
+    more: 0,
+    goingOut: true,
+    label: i18n.t('buddies_calendarGoingOut', {
+      names: buddyNames(marker.goingOut),
+    }),
+  }
+}
+
+/** Mirrors `toProfileAvatar` + `Avatar`'s photo → emoji → initial fallback. */
+function widgetBuddy(buddy: Buddy): WidgetCalendarBuddy {
+  return {
+    id: buddy.inboxId,
+    initial: buddyDisplayName(buddy).trim().charAt(0).toUpperCase(),
+    emoji: buddy.avatar?.t === 'emoji' ? buddy.avatar.v : null,
+    image: buddy.avatar?.t === 'image' ? buddy.avatar.v : null,
+  }
+}
 
 export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
   const now = moment()
@@ -110,6 +194,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       monthTitle: monthStart.format('MMMM YYYY'),
       days: [],
       currentWeekStart: 0,
+      buddies: [],
     }
   }
 
@@ -124,6 +209,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
   const monthReports = getMonthsReports(args.serviceReports, month, year)
 
   const days: WidgetCalendarDay[] = []
+  const buddies = new Map<string, WidgetCalendarBuddy>()
   let currentWeekStart = 0
 
   for (let i = 0; i < TOTAL_CELLS; i++) {
@@ -173,6 +259,14 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
 
     const hitGoal = wentInService && hasPlan && workedMinutes >= plannedMinutes
 
+    // Like the in-app calendar, other months' days get no buddy badge.
+    const marker = isCurrentMonth ? args.buddyMarkers[iso] : undefined
+    const badge = dayBuddies(marker)
+    for (const buddy of marker?.withBuddies ?? []) {
+      if (badge?.withIds.includes(buddy.inboxId) && !buddies.has(buddy.inboxId))
+        buddies.set(buddy.inboxId, widgetBuddy(buddy))
+    }
+
     days.push({
       date: iso,
       day: d.date(),
@@ -185,6 +279,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       workedMinutes,
       hitGoal,
       hasNote,
+      buddies: badge,
     })
 
     if (isToday) {
@@ -207,5 +302,6 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
     monthTitle: monthStart.format('MMMM YYYY'),
     days,
     currentWeekStart,
+    buddies: [...buddies.values()],
   }
 }

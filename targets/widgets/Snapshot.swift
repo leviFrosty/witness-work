@@ -7,7 +7,7 @@ import Foundation
 // way Swift cares about. The widget refuses to render snapshots whose version
 // doesn't match — the placeholder UI is shown instead.
 
-let SUPPORTED_VERSION = 5
+let SUPPORTED_VERSION = 6
 
 struct WidgetSnapshot: Decodable {
   // MARK: Strings (pre-translated by JS)
@@ -165,8 +165,32 @@ struct WidgetSnapshot: Decodable {
     let workedMinutes: Int
     let hitGoal: Bool
     let hasNote: Bool
+    /// Buddy badge for the day; `nil` when there's nothing to show.
+    let buddies: DayBuddies?
 
     var id: String { date }
+  }
+
+  /// Mirrors `BuddyDayBadge`'s inputs for one day.
+  struct DayBuddies: Decodable {
+    /// Ids into `Calendar.buddies`, stacked up the cell's right edge from the
+    /// corner. At most three.
+    let withIds: [String]
+    /// Buddies left out of `withIds`, counted in a "+N" circle atop the stack.
+    let more: Int
+    /// Other buddies plan to go out; a dot when `withIds` is empty.
+    let goingOut: Bool
+    /// Pre-translated VoiceOver label naming the buddies.
+    let label: String
+  }
+
+  /// A buddy drawn on the calendar: photo, else emoji, else initial.
+  struct CalendarBuddy: Decodable, Identifiable {
+    let id: String
+    let initial: String
+    let emoji: String?
+    /// Base64 JPEG thumbnail.
+    let image: String?
   }
 
   struct Calendar: Decodable {
@@ -182,6 +206,8 @@ struct WidgetSnapshot: Decodable {
     /// Index into `days` where the current week starts. Used by the medium
     /// widget to slice out a single row without re-deriving dates.
     let currentWeekStart: Int
+    /// Every buddy referenced by a day's `buddies.withIds`.
+    let buddies: [CalendarBuddy]
   }
 
   let version: Int

@@ -23,6 +23,7 @@ import {
   WidgetAppointment,
 } from '@/app/widgets/buildAppointments'
 import { buildCalendar, WidgetCalendar } from '@/app/widgets/buildCalendar'
+import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 
 /**
  * Bumped whenever the snapshot shape changes in a way the Swift decoder cares
@@ -39,9 +40,11 @@ import { buildCalendar, WidgetCalendar } from '@/app/widgets/buildCalendar'
  * `startOfWeek` from BuildSnapshotArgs. 5 — Adds the `calendar` slice powering
  * the month-calendar widget (locked for publishers) and its pre-translated
  * label strings. Re-introduces `startOfWeek` on BuildSnapshotArgs so JS can
- * pre-build the grid with the user's preferred first column.
+ * pre-build the grid with the user's preferred first column. 6 — Adds Buddies
+ * to the calendar: per-day `buddies` badges and the `calendar.buddies` avatars
+ * they reference.
  */
-export const SNAPSHOT_VERSION = 5
+export const SNAPSHOT_VERSION = 6
 
 export type WidgetStrings = {
   // Report widget
@@ -171,6 +174,8 @@ export type BuildSnapshotArgs = {
 
   /** Mirrors `preferences.startOfWeek` — drives the calendar grid layout. */
   startOfWeek: number
+  /** Schedule calendar's buddy markers; empty when Buddies is off. */
+  buddyMarkers: Record<string, BuddyDayMarker>
 
   // Locale
   locale: string
@@ -218,6 +223,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     publisher: args.publisher,
     logsHours: args.logsHours,
     startOfWeek: args.startOfWeek,
+    buddyMarkers: args.buddyMarkers,
   })
 
   return {

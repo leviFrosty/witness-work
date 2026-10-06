@@ -156,12 +156,12 @@ export default function BuddyNotificationRow({
         ? i18n.t('buddies_replacePlanBody', {
             time: formatStartTime(getStartTimeInMinutes(first)),
             date,
-            name: buddy?.name ?? entry.name,
+            name: buddy ? buddyDisplayName(buddy) : entry.name,
           })
         : i18n.t('buddies_replacePlansBody', {
             count: overlapping.length,
             date,
-            name: buddy?.name ?? entry.name,
+            name: buddy ? buddyDisplayName(buddy) : entry.name,
           }),
       [
         {

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { DayPlan } from '@/types/timeEntry'
-import { buildBuddyDayMarkers } from '@/features/buddies/lib/calendarMarkers'
+import {
+  buildBuddyDayMarkers,
+  stackedBuddies,
+} from '@/features/buddies/lib/calendarMarkers'
 import type {
   Buddy,
   IncomingShare,
@@ -172,5 +175,21 @@ describe('buildBuddyDayMarkers', () => {
       dayPlans: [plan('p', '2026-10-01', { buddies: ['sarah'] })],
     })
     expect(markers).toEqual({ [today]: { withBuddies: [], goingOut: [sarah] } })
+  })
+})
+
+describe('stackedBuddies', () => {
+  const people = (count: number) =>
+    Array.from({ length: count }, (_, i) => buddy(`b${i}`))
+
+  it('shows everyone when three or fewer go out together', () => {
+    expect(stackedBuddies(people(3))).toEqual({ shown: people(3), more: 0 })
+  })
+
+  it('shows two and counts the rest past three', () => {
+    expect(stackedBuddies(people(5))).toEqual({
+      shown: people(2),
+      more: 3,
+    })
   })
 })

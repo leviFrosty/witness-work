@@ -105,11 +105,155 @@ private func palette(for day: WidgetSnapshot.CalendarDay, accent: Color) -> Cell
   )
 }
 
+// MARK: - Buddies
+//
+// Mirrors `BuddyDayBadge.tsx`: going out with buddies stacks their avatars up
+// the cell's right edge, first one in front at the corner; past three, the top
+// circle counts the rest. Other buddies going out show a dot under the day.
+// Avatars use no buddy colors so the day's status colors stay readable.
+
+/// Each buddy's photo is decoded once per render, not once per cell.
+private struct CalendarBuddies {
+  private let buddies: [String: WidgetSnapshot.CalendarBuddy]
+  private let images: [String: UIImage]
+
+  init(_ list: [WidgetSnapshot.CalendarBuddy]) {
+    var buddies: [String: WidgetSnapshot.CalendarBuddy] = [:]
+    var images: [String: UIImage] = [:]
+    for buddy in list {
+      buddies[buddy.id] = buddy
+      if let base64 = buddy.image,
+         let data = Data(base64Encoded: base64),
+         let image = UIImage(data: data) {
+        images[buddy.id] = image
+      }
+    }
+    self.buddies = buddies
+    self.images = images
+  }
+
+  func buddy(_ id: String) -> WidgetSnapshot.CalendarBuddy? { buddies[id] }
+  func image(_ id: String) -> UIImage? { images[id] }
+}
+
+private let buddyAvatarSize: CGFloat = 16
+private let buddyAvatarRing: CGFloat = 2
+/// How far the stack hangs past the cell's right and bottom edges.
+private let buddyStackOverhang = CGSize(width: 5, height: 6)
+/// Each circle up the stack sits this much higher than the one below.
+private let buddyStackStep: CGFloat = 13
+
+/// The ring that separates a stacked circle from the cell and the one below.
+private struct BuddyRing: ViewModifier {
+  func body(content: Content) -> some View {
+    content
+      .frame(width: buddyAvatarSize, height: buddyAvatarSize)
+      .clipShape(Circle())
+      .padding(buddyAvatarRing)
+      .background(Circle().fill(.background))
+  }
+}
+
+/// Mirrors `Avatar.tsx`'s fallbacks: photo, else emoji, else initial, else a
+/// person icon, on the in-app badge's grey.
+private struct BuddyAvatarView: View {
+  let buddy: WidgetSnapshot.CalendarBuddy
+  let image: UIImage?
+
+  var body: some View {
+    Group {
+      if let image {
+        Image(uiImage: image)
+          .resizable()
+          .scaledToFill()
+      } else {
+        ZStack {
+          Circle().fill(WidgetColor.buddyAvatarBackground)
+          if let emoji = buddy.emoji, !emoji.isEmpty {
+            Text(emoji)
+              .font(.system(size: buddyAvatarSize * 0.5))
+          } else if !buddy.initial.isEmpty {
+            Text(buddy.initial)
+              .font(.system(size: buddyAvatarSize * 0.42, weight: .semibold))
+              .foregroundColor(WidgetColor.buddyAvatarText)
+          } else {
+            Image(systemName: "person.fill")
+              .font(.system(size: buddyAvatarSize * 0.42))
+              .foregroundColor(WidgetColor.buddyAvatarText)
+          }
+        }
+      }
+    }
+    .modifier(BuddyRing())
+  }
+}
+
+/// Mirrors `AvatarGroupCount`: how many buddies didn't fit in the stack.
+private struct BuddyCountView: View {
+  let count: Int
+
+  var body: some View {
+    ZStack {
+      Circle().fill(WidgetColor.buddyCountBackground)
+      Text("+\(count)")
+        .font(.system(size: buddyAvatarSize * 0.38, weight: .semibold))
+        .foregroundStyle(.primary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+    }
+    .modifier(BuddyRing())
+  }
+}
+
+private struct BuddyDayBadge: View {
+  let badge: WidgetSnapshot.DayBuddies
+  let buddies: CalendarBuddies
+
+  private func stackOffset(_ index: Int) -> CGSize {
+    CGSize(
+      width: buddyStackOverhang.width,
+      height: buddyStackOverhang.height - CGFloat(index) * buddyStackStep
+    )
+  }
+
+  var body: some View {
+    let shown = badge.withIds.compactMap { id in
+      buddies.buddy(id).map { ($0, buddies.image(id)) }
+    }
+    let slots = shown.count + (badge.more > 0 ? 1 : 0)
+    Group {
+      if !shown.isEmpty {
+        // Drawn top-down so the first buddy, at the corner, is in front.
+        ZStack(alignment: .bottomTrailing) {
+          if badge.more > 0 {
+            BuddyCountView(count: badge.more)
+              .offset(stackOffset(slots - 1))
+          }
+          ForEach(Array(shown.enumerated().reversed()), id: \.offset) { index, item in
+            BuddyAvatarView(buddy: item.0, image: item.1)
+              .offset(stackOffset(index))
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+      } else if badge.goingOut {
+        Circle()
+          .fill(WidgetColor.buddyAvatarBackground)
+          .frame(width: 5, height: 5)
+          .offset(y: 7)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+      }
+    }
+    .accessibilityElement()
+    .accessibilityLabel(badge.label)
+  }
+}
+
 // MARK: - Cell view
 
 private struct CalendarCell: View {
   let day: WidgetSnapshot.CalendarDay
   let isCompact: Bool
+  let buddies: CalendarBuddies
   @Environment(\.widgetAccent) private var accent
 
   var body: some View {
@@ -152,6 +296,13 @@ private struct CalendarCell: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+    // Drawn past the cell's edges, like the in-app calendar; rows and cells
+    // stack so it stays above the neighbors it overlaps.
+    .overlay {
+      if let badge = day.buddies {
+        BuddyDayBadge(badge: badge, buddies: buddies)
+      }
+    }
     // Disabled cells (previous/next month tail) still get a link so users can
     // jump straight to that day — the screen handles the cross-month date.
   }
@@ -222,12 +373,19 @@ private struct WeekdayRow: View {
 private struct CellLink: View {
   let day: WidgetSnapshot.CalendarDay
   let isCompact: Bool
+  let buddies: CalendarBuddies
 
   var body: some View {
     Link(destination: WidgetURLs.addTime(date: day.date)) {
-      CalendarCell(day: day, isCompact: isCompact)
+      CalendarCell(day: day, isCompact: isCompact, buddies: buddies)
     }
   }
+}
+
+/// Earlier cells and rows draw on top, so a buddy badge hanging past a cell's
+/// bottom-right corner isn't covered by the next cell's fill.
+private func badgeZIndex(_ index: Int, of count: Int) -> Double {
+  Double(count - index)
 }
 
 // MARK: - Medium (current week only)
@@ -239,6 +397,7 @@ private struct MediumCalendarView: View {
     let cal = snapshot.calendar
     let start = min(max(cal.currentWeekStart, 0), max(cal.days.count - 7, 0))
     let weekDays = Array(cal.days[start..<min(start + 7, cal.days.count)])
+    let buddies = CalendarBuddies(cal.buddies)
 
     VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
       CalendarHeader(
@@ -250,8 +409,9 @@ private struct MediumCalendarView: View {
       VStack(spacing: WidgetSpacing.md) {
         WeekdayRow(labels: cal.weekdayLabels)
         HStack(spacing: cellGap) {
-          ForEach(weekDays) { day in
-            CellLink(day: day, isCompact: true)
+          ForEach(Array(weekDays.enumerated()), id: \.element.id) { index, day in
+            CellLink(day: day, isCompact: true, buddies: buddies)
+              .zIndex(badgeZIndex(index, of: weekDays.count))
           }
         }
         // Constrain the single-row height so a cell stays roughly square
@@ -275,6 +435,7 @@ private struct LargeCalendarView: View {
     let rows = stride(from: 0, to: cal.days.count, by: 7).map {
       Array(cal.days[$0..<min($0 + 7, cal.days.count)])
     }
+    let buddies = CalendarBuddies(cal.buddies)
 
     VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
       CalendarHeader(
@@ -287,12 +448,15 @@ private struct LargeCalendarView: View {
         WeekdayRow(labels: cal.weekdayLabels)
         VStack(spacing: cellGap) {
           ForEach(0..<rows.count, id: \.self) { rowIndex in
+            let row = rows[rowIndex]
             HStack(spacing: cellGap) {
-              ForEach(rows[rowIndex]) { day in
-                CellLink(day: day, isCompact: false)
+              ForEach(Array(row.enumerated()), id: \.element.id) { index, day in
+                CellLink(day: day, isCompact: false, buddies: buddies)
+                  .zIndex(badgeZIndex(index, of: row.count))
               }
             }
             .frame(maxHeight: .infinity)
+            .zIndex(badgeZIndex(rowIndex, of: rows.count))
           }
         }
         .frame(maxHeight: .infinity)

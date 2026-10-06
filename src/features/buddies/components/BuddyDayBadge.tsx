@@ -1,12 +1,22 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import { AvatarGroupCount } from '@/components/ui/AvatarGroup'
 import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import type { Buddy } from '@/features/buddies/lib/state'
-import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
+import {
+  type BuddyDayMarker,
+  stackedBuddies,
+} from '@/features/buddies/lib/calendarMarkers'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 const AVATAR_SIZE = 16
 const RING = 2
+/** How far the stack hangs past the cell's right and bottom edges. */
+const STACK_RIGHT = -5
+const STACK_BOTTOM = -6
+/** Each circle up the stack sits this much higher than the one below. */
+const STACK_STEP = 13
 
 /** The "buddies going out" mark, also shown in the calendar key. */
 export function BuddiesOutDot() {
@@ -25,38 +35,31 @@ export function BuddiesOutDot() {
 
 /**
  * A calendar day's buddy mark, drawn over the day's cell. Going out with
- * buddies shows the first one's avatar on the corner (a second peeks out behind
- * it for more people); other buddies going out show a dot under the day.
- * Avatars use no buddy colors so the day's status colors stay readable.
- * VoiceOver reads the labels as part of the day.
+ * buddies stacks their avatars up the cell's right edge, first one in front at
+ * the corner; past three, the top circle counts the rest. Other buddies going
+ * out show a dot under the day. Avatars use no buddy colors so the day's status
+ * colors stay readable. VoiceOver reads the labels as part of the day.
  */
 export default function BuddyDayBadge({ marker }: { marker: BuddyDayMarker }) {
   const theme = useTheme()
-  const names = (buddies: Buddy[]) =>
-    buddies.map((buddy) => buddy.name).join(', ')
+  const names = (buddies: Buddy[]) => buddies.map(buddyDisplayName).join(', ')
 
   if (marker.withBuddies.length > 0) {
-    const [first, second] = marker.withBuddies
-    // Kept clear of the day's text; the ring separates it from the cell.
-    const avatar = (buddy: Buddy, right: number) => (
-      <View
-        style={{
-          position: 'absolute',
-          right,
-          bottom: -10,
-          padding: RING,
-          borderRadius: AVATAR_SIZE,
-          backgroundColor: theme.colors.card,
-        }}
-      >
+    const { shown, more } = stackedBuddies(marker.withBuddies)
+    const circles = [
+      ...shown.map((buddy) => (
         <BuddyAvatar
+          key={buddy.inboxId}
           avatar={buddy.avatar}
-          name={buddy.name}
+          name={buddyDisplayName(buddy)}
           background={theme.colors.textAlt}
           size={AVATAR_SIZE}
         />
-      </View>
-    )
+      )),
+      ...(more > 0
+        ? [<AvatarGroupCount key='more' count={more} size={AVATAR_SIZE} />]
+        : []),
+    ]
     return (
       <View
         accessible
@@ -65,8 +68,25 @@ export default function BuddyDayBadge({ marker }: { marker: BuddyDayMarker }) {
         })}
         style={{ flex: 1 }}
       >
-        {second ? avatar(second, -14) : null}
-        {avatar(first, -9)}
+        {/* Drawn top-down so the first buddy, at the corner, is in front. */}
+        {circles
+          .map((circle, index) => (
+            // Each circle's ring separates it from the cell and the one below.
+            <View
+              key={index}
+              style={{
+                position: 'absolute',
+                right: STACK_RIGHT,
+                bottom: STACK_BOTTOM + index * STACK_STEP,
+                padding: RING,
+                borderRadius: AVATAR_SIZE,
+                backgroundColor: theme.colors.card,
+              }}
+            >
+              {circle}
+            </View>
+          ))
+          .reverse()}
       </View>
     )
   }

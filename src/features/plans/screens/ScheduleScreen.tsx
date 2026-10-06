@@ -22,7 +22,6 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import {
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-  RecurringPlan,
 } from '@/lib/recurrence'
 import usePublisher from '@/hooks/usePublisher'
 import {
@@ -31,7 +30,7 @@ import {
 } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
-import { DayPlan, TimeEntry } from '@/types/timeEntry'
+import { TimeEntry } from '@/types/timeEntry'
 
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import CalendarHeader, { CalendarViewMode } from '@/components/CalendarHeader'
@@ -51,7 +50,7 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import PlanRow from '@/components/PlanRow'
 import PlanBuddiesLine from '@/features/buddies/components/PlanBuddiesLine'
-import type { PlanListItem } from '@/components/PlanRow'
+import type { PlanListItem } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
@@ -185,27 +184,6 @@ const ScheduleScreen = ({ route }: Props) => {
     ? [...currentAndFuturePlans, ...[...pastPlans].reverse()]
     : currentAndFuturePlans
 
-  const handleEditDayPlan = useCallback(
-    (plan: DayPlan, date: Date) => {
-      rootNavigation.navigate('PlanDay', {
-        date: date.toISOString(),
-        existingDayPlanId: plan.id,
-      })
-    },
-    [rootNavigation]
-  )
-
-  const handleEditRecurringPlanInstance = useCallback(
-    (plan: RecurringPlan, date: Date) => {
-      rootNavigation.navigate('PlanDay', {
-        date: date.toISOString(),
-        existingRecurringPlanId: plan.id,
-        recurringPlanDate: date.toISOString(),
-      })
-    },
-    [rootNavigation]
-  )
-
   const handleAddTime = useCallback(() => {
     pendingNavigation.current = () => {
       rootNavigation.navigate('Add Time', {
@@ -221,31 +199,6 @@ const ScheduleScreen = ({ route }: Props) => {
       })
     }
   }, [rootNavigation, selectedDateSheet.date])
-
-  const handleNavigateToPlanDay = useCallback(
-    (existingDayPlanId: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: selectedDateSheet.date.toISOString(),
-          existingDayPlanId,
-        })
-      }
-    },
-    [rootNavigation, selectedDateSheet.date]
-  )
-
-  const handleNavigateToRecurringPlan = useCallback(
-    (existingRecurringPlanId: string, recurringPlanDate: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: selectedDateSheet.date.toISOString(),
-          existingRecurringPlanId,
-          recurringPlanDate,
-        })
-      }
-    },
-    [rootNavigation, selectedDateSheet.date]
-  )
 
   const handleEditTimeReport = useCallback(
     (report: TimeEntry) => {
@@ -499,16 +452,6 @@ const ScheduleScreen = ({ route }: Props) => {
                             <PlanBuddiesLine plan={item.plan} />
                           ) : undefined
                         }
-                        onPress={() => {
-                          if (item.type === 'day') {
-                            handleEditDayPlan(item.plan, item.date)
-                          } else {
-                            handleEditRecurringPlanInstance(
-                              item.plan,
-                              item.date
-                            )
-                          }
-                        }}
                       />
                     ))
                   )}
@@ -525,8 +468,6 @@ const ScheduleScreen = ({ route }: Props) => {
           thisMonthsReports={thisMonthsReports}
           onAddTime={handleAddTime}
           onPlanDay={handlePlanDay}
-          onNavigateToPlanDay={handleNavigateToPlanDay}
-          onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
           onEditTimeReport={handleEditTimeReport}
           renderFooter={(date, onNavigate) => (
             <>

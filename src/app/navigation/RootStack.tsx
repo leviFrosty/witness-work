@@ -17,6 +17,7 @@ import PaywallRouteScreen from '@/app/navigation/PaywallRouteScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import RescheduleVisitScreen from '@/features/visits/screens/RescheduleVisitScreen'
 import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
+import PlanDetailsScreen from '@/features/plans/screens/PlanDetailsScreen'
 import TodayRouteScreen from '@/features/route-planning/screens/TodayRouteScreen'
 import RolloverScreen from '@/features/service-reports/screens/RolloverScreen'
 import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShowcaseScreen'
@@ -188,6 +189,11 @@ const RootStackComponent = () => {
           }}
           name='PlanDay'
           component={PlanDayScreen}
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='Plan Details'
+          component={PlanDetailsScreen}
         />
         <RootStack.Screen
           options={{

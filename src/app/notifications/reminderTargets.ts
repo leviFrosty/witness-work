@@ -32,10 +32,7 @@ export function openReminderTarget(target: ReminderData): boolean {
         .getState()
         .dayPlans.find((p) => p.id === target.id)
       if (!plan) return false
-      navigationRef.navigate('PlanDay', {
-        date: new Date(plan.date).toISOString(),
-        existingDayPlanId: plan.id,
-      })
+      navigationRef.navigate('Plan Details', { dayPlanId: plan.id })
       return true
     }
     case 'contact': {

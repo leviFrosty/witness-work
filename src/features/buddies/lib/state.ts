@@ -6,6 +6,7 @@ import type {
   ShareReply,
   ShareType,
 } from '@/features/buddies/lib/schemas'
+import type { BuddyShareRef } from '@/types/timeEntry'
 
 /** Active buddies plus pending invites never exceed this (relay enforces too). */
 export const MAX_BUDDIES = 5
@@ -236,6 +237,12 @@ export const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 export const incomingShareKey = (from: string, shareId: string) =>
   `${from}|${shareId}`
+
+/** The share an `incomingShareKey` names. */
+export const shareRefFromKey = (key: string): BuddyShareRef => {
+  const [from, shareId] = key.split('|')
+  return { from, shareId }
+}
 
 export const incomingJoinRequestKey = (from: string, id: string) =>
   `${from}|${id}`

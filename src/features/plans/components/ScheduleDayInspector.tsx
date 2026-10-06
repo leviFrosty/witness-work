@@ -24,19 +24,6 @@ export default function ScheduleDayInspector({
         date={date}
         serviceReports={reports}
         showHeader
-        onDayPlanPress={(plan) =>
-          navigation.navigate('PlanDay', {
-            date: dateString,
-            existingDayPlanId: plan.id,
-          })
-        }
-        onRecurringPlanPress={(plan) =>
-          navigation.navigate('PlanDay', {
-            date: dateString,
-            existingRecurringPlanId: plan.id,
-            recurringPlanDate: dateString,
-          })
-        }
         onTimeReportPress={(report) =>
           navigation.navigate('Add Time', {
             existingReport: JSON.stringify(report),

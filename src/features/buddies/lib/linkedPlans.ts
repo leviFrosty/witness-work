@@ -168,6 +168,18 @@ export function sharesJustAccepted(
 }
 
 /**
+ * A buddy's Plan invitation that can still be answered: not cancelled, and not
+ * yet past its expiry.
+ */
+export const isOpenPlanInvitation = (
+  share: IncomingShare | undefined,
+  now: number
+): share is IncomingShare =>
+  share?.type === 'plan' &&
+  share.status !== 'cancelled' &&
+  share.expiresAt > now
+
+/**
  * What to show for an invitation: a linked Plan synced from another of this
  * User's devices means they already said "Going".
  */

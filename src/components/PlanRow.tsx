@@ -6,37 +6,21 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { ReactNode } from 'react'
 import { View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
-import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
 import useCategories from '@/stores/categories'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
+import { planTypeLabel } from '@/lib/planTypeLabel'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
-import ContextMenu, {
-  type ContextMenuEntries,
-} from '@/components/ui/ContextMenu'
-import confirmDeletePlan, {
-  confirmDeletePlanScope,
-  deletePlan,
-  RECURRING_DELETE_SCOPES,
-  recurringDeleteScopeLabel,
-  type RecurringDeleteScope,
-} from '@/lib/confirmDeletePlan'
-import { DayPlan } from '@/types/timeEntry'
-import type { RootStackNavigation } from '@/types/rootStack'
+import ContextMenu from '@/components/ui/ContextMenu'
+import type { DayPlan, PlanListItem } from '@/types/timeEntry'
 import { useFormattedMinutes } from '@/lib/minutes'
 import Badge from '@/components/ui/Badge'
-import PlanLocationLink, {
-  planLocationText,
-} from '@/components/PlanLocationLink'
+import PlanLocationLink from '@/components/PlanLocationLink'
 import RichNoteText from '@/components/RichNoteText'
-import { useLinkActions } from '@/components/RichLinkCard'
-import { findLinks, getHostname } from '@/lib/linkPreview'
-import { appleMapsUrl } from '@/lib/placeSearch'
-import { openURL } from '@/lib/links'
-import usePublisher from '@/hooks/usePublisher'
+import usePlanMenuActions from '@/hooks/usePlanMenuActions'
 import {
   formatDate,
   formatStartTime,
@@ -44,28 +28,8 @@ import {
   formatWeekdayMonthDayCompact,
 } from '@/lib/dates'
 import { useCardStyle } from '@/components/ui/Card'
-import {
-  DEFAULT_START_TIME_IN_MINUTES,
-  getStartTimeInMinutes,
-} from '@/lib/normalizeDate'
-import {
-  getEffectiveMinutesForRecurringPlan,
-  getEffectiveNoteForRecurringPlan,
-  getEffectiveStartTimeInMinutesForRecurringPlan,
-  RecurringPlan,
-} from '@/lib/recurrence'
-
-export type PlanListItem =
-  | {
-      type: 'day'
-      date: Date
-      plan: DayPlan
-    }
-  | {
-      type: 'recurring'
-      date: Date
-      plan: RecurringPlan
-    }
+import { getStartTimeInMinutes } from '@/lib/normalizeDate'
+import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
 
 export const getPlanItemStartTime = (item: PlanListItem): number => {
   if (item.type === 'day') {
@@ -157,7 +121,6 @@ const PlanPreview = (props: {
 
 const PlanRow = (props: {
   item: PlanListItem
-  onPress?: () => void
   dateDisplay?: 'full' | 'monthList'
   contextMonth?: number
   contextYear?: number
@@ -165,16 +128,13 @@ const PlanRow = (props: {
   /** Extra lines under the details, e.g. who the Plan is with. */
   footer?: ReactNode
   /**
-   * Runs a navigation from the row's menu. Hosts that present the row in a
+   * Runs a navigation from the row or its menu. Hosts that present the row in a
    * modal sheet pass one that closes the sheet first.
    */
   onNavigate?: (navigate: () => void) => void
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const navigation = useNavigation<RootStackNavigation>()
-  const { showsTimeEntry } = usePublisher()
-  const { open: openLink, copyText } = useLinkActions()
   const categories = useCategories((state) => state.categories)
   const countingStatus = props.countingStatus ?? 'counted'
   const isNotCounted = countingStatus === 'notCounted'
@@ -182,32 +142,18 @@ const PlanRow = (props: {
   const isRecurring = props.item.type === 'recurring'
   const plan = props.item.plan
   const date = props.item.date
-  const recurringPlan = isRecurring ? (plan as RecurringPlan) : null
-  const dayPlan = !isRecurring ? (plan as DayPlan) : null
-  const displayMinutes = recurringPlan
-    ? getEffectiveMinutesForRecurringPlan(recurringPlan, date)
-    : (dayPlan?.minutes ?? 0)
-  const displayNote = recurringPlan
-    ? getEffectiveNoteForRecurringPlan(recurringPlan, date)
-    : dayPlan?.note
+  const { open, menu, requestDelete, effective } = usePlanMenuActions(
+    props.item,
+    { go: props.onNavigate }
+  )
+  const displayNote = effective.note
   const noteStyle = {
     color: theme.colors.textAlt,
     fontSize: theme.fontSize('sm'),
     lineHeight: theme.fontSize('sm') * 1.4,
   }
-  const displayStartTimeInMinutes =
-    (recurringPlan
-      ? getEffectiveStartTimeInMinutesForRecurringPlan(recurringPlan, date)
-      : dayPlan?.startTimeInMinutes) ?? DEFAULT_START_TIME_IN_MINUTES
-  const category = plan.categoryId
-    ? categories.find((candidate) => candidate.id === plan.categoryId)
-    : undefined
-  const categoryLabel = category
-    ? i18n.t(category.name as TranslationKey, {
-        defaultValue: category.name,
-      })
-    : i18n.t('standard')
-  const formattedDuration = useFormattedMinutes(displayMinutes)
+  const categoryLabel = planTypeLabel(plan, categories)
+  const formattedDuration = useFormattedMinutes(effective.minutes)
   const dateMoment = moment(date)
   const isToday = dateMoment.isSame(moment(), 'day')
   const showContextFreeDate =
@@ -222,36 +168,8 @@ const PlanRow = (props: {
         ? formatWeekdayDayCompact(dateMoment)
         : formatWeekdayMonthDayCompact(dateMoment)
       : formatDate(date)
-  const heading = `${dateLabel} · ${formatStartTime(displayStartTimeInMinutes)}`
-  const noteLinks = displayNote ? findLinks(displayNote) : []
-  const mapsUrl = plan.location ? appleMapsUrl(plan.location) : undefined
+  const heading = `${dateLabel} · ${formatStartTime(effective.startTimeInMinutes)}`
   const longNote = !!displayNote && isLongNote(displayNote)
-
-  const go = (navigate: () => void) =>
-    props.onNavigate ? props.onNavigate(navigate) : navigate()
-
-  const removePlan = (scope?: RecurringDeleteScope) => {
-    if (props.item.type === 'day') {
-      deletePlan({ kind: 'day', planId: props.item.plan.id })
-    } else {
-      deletePlan(
-        {
-          kind: 'recurring',
-          planId: props.item.plan.id,
-          date: props.item.date,
-        },
-        scope
-      )
-    }
-  }
-
-  /**
-   * The one delete flow for the swipe and a Day Plan's menu item, so the
-   * confirmation copy and the recurring-scope choices stay identical.
-   */
-  const handleRequestDelete = () => {
-    confirmDeletePlan({ recurring: isRecurring, onDelete: removePlan })
-  }
 
   const handleSwipeOpen = (
     direction: 'left' | 'right',
@@ -262,125 +180,8 @@ const PlanRow = (props: {
     // Snap the row back before the confirmation lands — the alert owns the
     // interaction from here, whichever way the user answers it.
     swipeable.reset()
-    handleRequestDelete()
+    requestDelete()
   }
-
-  const logAsTime = () =>
-    go(() =>
-      navigation.navigate('Add Time', {
-        date: date.toISOString(),
-        hours: Math.floor(displayMinutes / 60),
-        minutes: displayMinutes % 60,
-        categoryId: plan.categoryId,
-      })
-    )
-
-  const duplicate = () =>
-    go(() =>
-      navigation.navigate('PlanDay', {
-        date: date.toISOString(),
-        prefill: {
-          startTime: dateMoment
-            .clone()
-            .startOf('day')
-            .add(displayStartTimeInMinutes, 'minutes')
-            .toISOString(),
-          minutes: displayMinutes,
-          note: displayNote || undefined,
-          title: plan.title,
-          location: plan.location,
-          categoryId: plan.categoryId,
-        },
-      })
-    )
-
-  const menu: ContextMenuEntries = [
-    [
-      props.onPress && {
-        id: 'edit',
-        title: i18n.t('edit'),
-        systemImage: 'pencil',
-        onPress: props.onPress,
-      },
-      // Logging time for a day that hasn't happened yet makes no sense, and
-      // publishers who don't log hours never see Add Time.
-      showsTimeEntry &&
-        !dateMoment.isAfter(moment(), 'day') && {
-          id: 'log_as_time',
-          title: i18n.t('logAsTime'),
-          systemImage: 'clock',
-          onPress: logAsTime,
-        },
-      {
-        id: 'duplicate',
-        title: i18n.t('duplicateEllipsis'),
-        systemImage: 'plus.square.on.square',
-        onPress: duplicate,
-      },
-    ],
-    [
-      mapsUrl
-        ? {
-            id: 'open_in_maps',
-            title: i18n.t('openInMaps'),
-            systemImage: 'map',
-            onPress: () => void openURL(mapsUrl),
-          }
-        : null,
-      plan.location && {
-        id: 'copy_address',
-        title: i18n.t('copyAddress'),
-        systemImage: 'doc.on.doc',
-        onPress: () => void copyText(planLocationText(plan.location!)),
-      },
-      noteLinks.length === 1 && {
-        id: 'open_link',
-        title: i18n.t('openLink'),
-        systemImage: 'safari',
-        onPress: () => openLink(noteLinks[0]),
-      },
-      noteLinks.length > 1 && {
-        id: 'open_link',
-        title: i18n.t('openLink'),
-        systemImage: 'safari',
-        actions: noteLinks.map((url, index) => ({
-          id: `link_${index}`,
-          title: getHostname(url),
-          onPress: () => openLink(url),
-        })),
-      },
-      displayNote
-        ? {
-            id: 'copy_note',
-            title: i18n.t('copyNote'),
-            systemImage: 'doc.on.doc',
-            onPress: () => void copyText(displayNote),
-          }
-        : null,
-    ],
-    [
-      isRecurring
-        ? {
-            id: 'delete',
-            title: i18n.t('delete'),
-            systemImage: 'trash',
-            actions: RECURRING_DELETE_SCOPES.map((scope) => ({
-              id: scope,
-              title: recurringDeleteScopeLabel(scope),
-              destructive: true,
-              onPress: () =>
-                confirmDeletePlanScope({ scope, onDelete: removePlan }),
-            })),
-          }
-        : {
-            id: 'delete',
-            title: i18n.t('delete'),
-            systemImage: 'trash',
-            destructive: true,
-            onPress: handleRequestDelete,
-          },
-    ],
-  ]
 
   return (
     <Swipeable
@@ -396,7 +197,7 @@ const PlanRow = (props: {
     >
       <ContextMenu
         actions={menu}
-        onPress={props.onPress}
+        onPress={open}
         hoverRadius={cardStyle.borderRadius}
         preview={
           longNote && displayNote ? (
@@ -410,6 +211,7 @@ const PlanRow = (props: {
         }
       >
         <View
+          testID={`plan-row-${plan.id}`}
           style={{
             ...cardStyle,
             backgroundColor: isNotCounted

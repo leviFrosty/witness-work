@@ -123,27 +123,6 @@ export const HomeScreen = () => {
     }
   }
 
-  const handleNavigateToPlanDay = (existingDayPlanId: string) => {
-    const date = selectedDateSheet.date.toISOString()
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('PlanDay', { date, existingDayPlanId })
-    }
-  }
-
-  const handleNavigateToRecurringPlan = (
-    existingRecurringPlanId: string,
-    recurringPlanDate: string
-  ) => {
-    const date = selectedDateSheet.date.toISOString()
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('PlanDay', {
-        date,
-        existingRecurringPlanId,
-        recurringPlanDate,
-      })
-    }
-  }
-
   const handleEditTimeReport = (report: TimeEntry) => {
     pendingNavigation.current = () => {
       rootNavigation.navigate('Add Time', {
@@ -319,8 +298,6 @@ export const HomeScreen = () => {
         thisMonthsReports={selectedDateReports}
         onAddTime={handleAddTime}
         onPlanDay={handlePlanDay}
-        onNavigateToPlanDay={handleNavigateToPlanDay}
-        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
         onEditTimeReport={handleEditTimeReport}
       />
     </View>

@@ -24,13 +24,9 @@ import { ReactNode, useMemo, useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
 import { useFormattedMinutes } from '@/lib/minutes'
-import {
-  PlannedDayContribution,
-  RecurringPlan,
-  resolvePlannedDay,
-} from '@/lib/recurrence'
+import { PlannedDayContribution, resolvePlannedDay } from '@/lib/recurrence'
 import PlanRow, { getPlanItemStartTime } from '@/components/PlanRow'
-import type { PlanListItem } from '@/components/PlanRow'
+import type { PlanListItem } from '@/types/timeEntry'
 import Circle from '@/components/ui/Circle'
 import { getDateStatusColor } from '@/components/CalendarDay'
 
@@ -38,14 +34,12 @@ interface DayHistoryViewProps {
   date: Date
   serviceReports?: TimeEntry[]
   showHeader?: boolean
-  onDayPlanPress?: (plan: DayPlan, date: Date) => void
-  onRecurringPlanPress?: (plan: RecurringPlan, date: Date) => void
   onTimeReportPress?: (report: TimeEntry) => void
   onAddTime?: () => void
   onPlanDay?: () => void
   /**
-   * Runs a navigation from a row's context menu. A host sheet passes one that
-   * closes itself first.
+   * Runs a navigation from a row or its context menu. A host sheet passes one
+   * that closes itself first.
    */
   onNavigate?: (navigate: () => void) => void
   /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
@@ -98,8 +92,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   date,
   serviceReports = [],
   showHeader = false,
-  onDayPlanPress,
-  onRecurringPlanPress,
   onTimeReportPress,
   onAddTime: onAddTimeProp,
   onPlanDay,
@@ -333,13 +325,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                     ? renderDayPlanFooter?.(item.plan)
                     : undefined
                 }
-                onPress={() => {
-                  if (item.type === 'day') {
-                    onDayPlanPress?.(item.plan, item.date)
-                  } else {
-                    onRecurringPlanPress?.(item.plan, item.date)
-                  }
-                }}
               />
             )}
             ListEmptyComponent={
@@ -441,13 +426,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                           ? renderDayPlanFooter?.(item.plan)
                           : undefined
                       }
-                      onPress={() => {
-                        if (item.type === 'day') {
-                          onDayPlanPress?.(item.plan, item.date)
-                        } else {
-                          onRecurringPlanPress?.(item.plan, item.date)
-                        }
-                      }}
                     />
                   ))}
                 </View>

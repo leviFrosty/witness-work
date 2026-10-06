@@ -35,6 +35,9 @@ EAS/Xcode has already pushed the build.
 3. **Set "What's New" per locale** (version localizations, `--version` = the **version ID**):
    `asc localizations update --version <VERSION_ID> --locale en-US --whats-new "…"`
 
+   Translate the other locales yourself, following the store-notes rules in
+   `../translate-locales/SKILL.md`.
+
    Under `/cut-release`, read back the finalized text (including copied generic
    maintenance notes) and persist it in `.asc/cut-release/store-notes.json` for
    Play's changelog files. If a translation exceeds Play's limit, shorten and

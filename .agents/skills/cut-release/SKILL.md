@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Cut release
 
-Invocation authorizes committing, tagging, pushing, building both platforms locally, translating all app locales, and submitting to App Review and Google Play production review with automatic release after approval. Optional `patch|minor|major` overrides the inferred bump. Use the invoking agent for prose and translations.
+Invocation authorizes committing, tagging, pushing, building both platforms locally, translating all app locales, and submitting to App Review and Google Play production review with automatic release after approval. Optional `patch|minor|major` overrides the inferred bump. The invoking agent and its subagents write the prose and translations.
 
 Read `CONTEXT.md`, `../release-process/SKILL.md`, `../app-store-release/SKILL.md`, and `docs/build.md`. The release-process skill owns Git conventions; app-store-release owns ASC commands and metadata. Use installed CLI help for current flags. Execute these steps; record evidence before advancing.
 
@@ -40,13 +40,13 @@ Run `pnpm run bump-version <bump> --notes-file .asc/cut-release-notes.json --pre
 
 ## 3. Translate and validate
 
-This invocation explicitly authorizes editing all `src/locales/*.json`, overriding the normal human-approved-only rule for this release. Use the invoking agent, not `pnpm translate` (Azure skips Bemba and does not refresh changed values).
+Feature work changes only `en-US.json`, so the release cut translates every other locale. Follow `../translate-locales/SKILL.md`; it owns the translation rules and tooling.
 
-Compare English leaf strings against the baseline tag. Translate every new/changed English string in every target locale, including Bemba, and fill all other missing, empty or whitespace-only translations. Preserve unrelated existing translations. Respect CONTEXT.md terminology and JW copy sensitivities. Preserve interpolation variables, formatting tokens, markup and plural semantics; inspect plural families and locale-specific forms. Record changed-source keys and coverage for every locale in the journal.
+Run its `todo --since <baseline tag>` for every locale, including Bemba. That covers new, changed, missing, empty and lint-failing keys. Fan out one subagent per locale (or per chunk) as that skill describes. Apply each locale's results, preserving unrelated existing translations. Record each locale's key counts by reason in the journal.
 
-Run `pnpm run check:locales`; this checks every nonempty English leaf at its exact key path, including array indices. Inspect placeholder consistency and translation quality separately. Format the release files, then run `pnpm run check:all` and `pnpm run deps`. Fix release-generated errors; surface product-code failures for the user to address.
+Run the skill's `lint` and `pnpm run check:locales`, which checks every nonempty English leaf at its exact key path, including array indices. Review translation quality separately. Run `pnpm sync:widget-shared` so the watch and Siri catalogs carry the new strings; they are release files too. Format the release files, then run `pnpm run check:all` and `pnpm run deps`. Fix release-generated errors; surface product-code failures for the user to address.
 
-**Complete:** every locale covers every required English key, changed source keys refreshed, placeholders/plurals verified, checks pass.
+**Complete:** every locale covers every English key, changed and broken translations refreshed, lint and checks pass, native catalogs synced.
 
 ## 4. Release ww-api, then publish the release commit and tag
 
@@ -54,7 +54,7 @@ Ship the backend before any app artifact: run `scripts/release-api.sh` with pers
 
 Fetch again before committing. If remote main advanced, preserve preparation in a separately named stash; rebase main, restore preparation without dropping that stash, and reconcile version collisions, notes and translations. Include new remote work; rerun affected preparation and all checks. Preserve conflicting preparation for inspection.
 
-Review the final diff. Stage the explicit release file list only, including translated locales. Commit `chore: bump version to X.Y.Z` with hooks enabled. Verify hooks left a clean tree; inspect hook changes and rerun affected checks. Create annotated `vX.Y.Z` with message `Release X.Y.Z`.
+Review the final diff. Stage the explicit release file list only, including translated locales and synced string catalogs. Commit `chore: bump version to X.Y.Z` with hooks enabled. Verify hooks left a clean tree; inspect hook changes and rerun affected checks. Create annotated `vX.Y.Z` with message `Release X.Y.Z`.
 
 Push main and ONLY this tag together with `git push --atomic origin main refs/tags/vX.Y.Z`. Prefer a normal push after rebasing. If reconciliation truly requires a forced main update, use an explicit `--force-with-lease=refs/heads/main:<freshly verified remote SHA>` only after proving all remote commits are retained. Never force a published tag. A rejected push requires refetch/reconciliation and revalidation; a local-only tag may be recreated after confirming it was never published. If already remote, resume its exact commit.
 
@@ -88,7 +88,7 @@ Follow recovery.md for retries and polling. Wait for this build's successful pro
 
 Follow app-store-release to create/reuse the intended version, copy prior text metadata, attach the verified build, check screenshots/required review information, and run ASC preflight. Set release type explicitly to `AFTER_APPROVAL`.
 
-Maintenance releases use the reusable localized generic ASC notes. Feature/product changes get concise accurate feature summaries translated to every ASC locale using its locale mapping. ASC notes are separate from in-app announcements. Address changed screenshot/review-metadata requirements when shipped features require them.
+Maintenance releases use the reusable localized generic ASC notes. Feature/product changes get concise accurate feature summaries translated to every ASC locale using its locale mapping, following translate-locales' store-notes rules. ASC notes are separate from in-app announcements. Address changed screenshot/review-metadata requirements when shipped features require them.
 
 Persist the finalized localized ASC `whatsNew` text in `.asc/cut-release/store-notes.json`; it is also the source for Google Play release notes. Reuse the exact text and translations on both stores, mapping ASC locale identifiers to supported Play locale identifiers. Keep each shared translation within Play's 500-Unicode-character limit; if shortening is needed, revise that shared text in ASC too, then read it back. Label platform-specific features accurately in the shared copy. Do not write an independent Android summary or silently truncate it. Translate additional Play-only locales from these same notes when needed, and record the locale mapping and notes checksum in the journal.
 

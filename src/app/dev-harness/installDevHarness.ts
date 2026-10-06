@@ -9,6 +9,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
@@ -165,6 +166,7 @@ export function installDevHarness() {
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
+      buddies: useBuddies,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

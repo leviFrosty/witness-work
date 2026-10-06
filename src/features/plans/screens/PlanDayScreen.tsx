@@ -66,7 +66,6 @@ import type { DayPlan, PlanLocation } from '@/types/timeEntry'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import PlaceSearchField from '@/features/plans/components/PlaceSearchField'
 import BuddyPicker from '@/features/buddies/components/BuddyPicker'
-import JoinRequestBanner from '@/features/buddies/components/JoinRequestBanner'
 import LinkedPlanBanner from '@/features/buddies/components/LinkedPlanBanner'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { planShareKey } from '@/features/buddies/lib/shares'
@@ -1060,13 +1059,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       existingRecurringPlan?.location ??
       prefill?.location
   )
-  // A buddy who asked to join comes pre-added; nothing is sent until saved.
-  const initialInvitedBuddies = [
-    ...new Set([
-      ...(existingDayPlan?.buddies ?? prefill?.buddies ?? []),
-      ...(route.params.inviteBuddies ?? []),
-    ]),
-  ]
+  const initialInvitedBuddies =
+    existingDayPlan?.buddies ?? prefill?.buddies ?? []
   const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
     initialInvitedBuddies
   )
@@ -1118,7 +1112,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
 
-  const editingContext = `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}-${route.params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}-${route.params.inviteBuddies?.join(',') ?? ''}`
+  const editingContext = `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}-${route.params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
 
   useEffect(() => {
     setOneTime(initialOneTime)
@@ -1424,12 +1418,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         reminder_enabled: oneTime && notifyMe,
         prefilled: !!prefill,
       })
-    // Saved with a buddy who asked to join: that answers their request.
-    if (
-      oneTime &&
-      route.params.inviteBuddies?.some((id) => plannedBuddies?.includes(id))
-    )
-      analytics.capture('buddy_join_request_answered', { action: 'invited' })
     setSaveScopeModalOpen(false)
     navigation.goBack()
   }
@@ -1510,13 +1498,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           }}
         >
           {linkedShare && <LinkedPlanBanner share={linkedShare} />}
-          {oneTime && !linkedShare && route.params.inviteBuddies?.length ? (
-            <JoinRequestBanner
-              inboxIds={route.params.inviteBuddies.filter((id) =>
-                invitedBuddies.includes(id)
-              )}
-            />
-          ) : null}
           <Section>
             {!isEditMode && (
               <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />

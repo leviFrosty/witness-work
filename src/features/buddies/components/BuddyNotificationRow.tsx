@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { Alert, View } from 'react-native'
-import { X as XIcon } from 'lucide-react-native'
+import { Check as CheckIcon, X as XIcon } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
+import Haptics from '@/lib/haptics'
 import { formatRelative, formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
@@ -62,7 +64,8 @@ function headline(entry: BuddyNotification): string {
  * to join can be answered in place. Long-press the entry to open or dismiss it;
  * the answer buttons stay outside the long-press target. An invitation or claim
  * still waiting on an answer can't be dismissed: answering is what clears it. A
- * request to join can: Not Now is dismissing it.
+ * request to join can: Not Now is dismissing it, and Invite turns into a check
+ * once the buddy is invited.
  */
 export default function BuddyNotificationRow({
   entry,
@@ -80,7 +83,7 @@ export default function BuddyNotificationRow({
   onPress?: () => void
   /** Absent while the entry awaits an answer. */
   onDismiss?: () => void
-  /** A request to join: opens the Plan with the buddy added. */
+  /** A request to join: adds the buddy to the Plan, which invites them. */
   onInvite?: () => void
   /** A request to join: this User's Plan it's about, for its title and place. */
   ownPlan?: Pick<DayPlan, 'title' | 'location'>
@@ -188,10 +191,9 @@ export default function BuddyNotificationRow({
       if (answer === 'going') offerReplace()
     })
   }
-  const openInvite = () => {
-    analytics.capture('buddy_join_request_answered', {
-      action: 'invite_opened',
-    })
+  const invite = () => {
+    analytics.capture('buddy_join_request_answered', { action: 'invited' })
+    void Haptics.success()
     onInvite?.()
   }
   // Muting from where the request is decided; the switch is on their page.
@@ -370,13 +372,9 @@ export default function BuddyNotificationRow({
         </XView>
       ) : null}
 
-      {joinRequest && invited ? (
-        <Text style={{ color: theme.colors.textAlt }}>
-          {i18n.t('buddies_joinRequestInvited', { name: askerName })}
-        </Text>
-      ) : joinRequest ? (
+      {joinRequest ? (
         <View style={{ gap: 10 }}>
-          {cantInvite ? (
+          {cantInvite && !invited ? (
             <Text style={{ color: theme.colors.textAlt }}>
               {cantInvite.reason === 'changed'
                 ? i18n.t('buddies_joinRequestChanged', { name: askerName })
@@ -391,14 +389,35 @@ export default function BuddyNotificationRow({
             </Text>
           ) : null}
           <XView style={{ gap: 10 }}>
-            {onInvite ? (
+            {invited ? (
+              <View
+                accessible
+                accessibilityLabel={i18n.t('buddies_joinRequestInvited', {
+                  name: askerName,
+                })}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  backgroundColor: theme.colors.accentTranslucent,
+                }}
+              >
+                <LucideIcon
+                  icon={CheckIcon}
+                  size={20}
+                  strokeWidth={2.75}
+                  color={theme.colors.accent}
+                />
+              </View>
+            ) : onInvite ? (
               <View style={{ flex: 1 }}>
-                <ActionButton onPress={openInvite}>
+                <ActionButton onPress={invite}>
                   {i18n.t('buddies_joinRequestInvite')}
                 </ActionButton>
               </View>
             ) : null}
-            {onDismiss ? (
+            {onDismiss && !invited ? (
               <Button
                 style={{ paddingVertical: 10, paddingHorizontal: 12 }}
                 onPress={onDismiss}

@@ -37,6 +37,7 @@ export default function ContextMenu({
   disabled = false,
   pointerEffect = 'tint',
   hoverRadius,
+  fitContent = false,
   style,
 }: ContextMenuProps) {
   const theme = useTheme()
@@ -44,7 +45,8 @@ export default function ContextMenu({
   const [expanded, setExpanded] = useState(false)
   const [submenu, setSubmenu] = useState<ContextMenuSubmenu | null>(null)
   // Hosted RN content sizes to its own content, so pass the width the
-  // surrounding layout gives us down to it explicitly.
+  // surrounding layout gives us down to it explicitly, unless the content is
+  // meant to keep its own width.
   const [width, setWidth] = useState<number>()
   const groups = menuGroups(actions)
   // Android has no system pointer effects, so mouse hover always tints.
@@ -114,7 +116,11 @@ export default function ContextMenu({
   return (
     <View
       style={style}
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      onLayout={
+        fitContent
+          ? undefined
+          : (event) => setWidth(event.nativeEvent.layout.width)
+      }
     >
       <Host matchContents colorScheme={colorScheme}>
         <DropdownMenu

@@ -234,6 +234,7 @@ export const FAQS: FAQEntry[] = [
     related: [100, 144, 168, 153, 141, 140],
   },
   { id: 'locationTrouble', category: 'map' },
+  { id: 'mapFilters', category: 'map' },
   {
     id: 'profilePic',
     category: 'contacts',

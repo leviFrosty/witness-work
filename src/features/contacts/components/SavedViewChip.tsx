@@ -41,6 +41,7 @@ const SavedViewChip = ({
       }
       pointerEffect='highlight'
       hoverRadius={CHIP_HEIGHT / 2}
+      fitContent
     >
       <View
         style={{

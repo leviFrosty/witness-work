@@ -209,9 +209,31 @@ export function deleteSavedView(
 }
 
 /**
- * Moves a view one place earlier (`-1`) or later (`1`). Rewrites `order` only
- * on views whose position changed, so sync stamps just those entries.
+ * Puts the views in the order of `ids`, e.g. after a chip is dragged. Ids that
+ * no longer exist are skipped and views missing from `ids` keep their place at
+ * the end. Rewrites `order` only on views whose position changed, so sync
+ * stamps just those entries. Returns the same object when nothing moved.
  */
+export function reorderSavedViews(
+  views: SavedContactViews,
+  ids: string[]
+): SavedContactViews {
+  const ordered = [
+    ...new Set([
+      ...ids.filter((id) => id in views),
+      ...orderedSavedViews(views).map((view) => view.id),
+    ]),
+  ]
+  let next = views
+  ordered.forEach((id, order) => {
+    if (views[id].order === order) return
+    if (next === views) next = { ...views }
+    next[id] = { ...views[id], order }
+  })
+  return next
+}
+
+/** Moves a view one place earlier (`-1`) or later (`1`). */
 export function moveSavedView(
   views: SavedContactViews,
   id: string,
@@ -222,11 +244,7 @@ export function moveSavedView(
   const target = index + direction
   if (index < 0 || target < 0 || target >= ordered.length) return views
   ;[ordered[index], ordered[target]] = [ordered[target], ordered[index]]
-  const next = { ...views }
-  ordered.forEach((viewId, order) => {
-    if (next[viewId].order !== order) next[viewId] = { ...next[viewId], order }
-  })
-  return next
+  return reorderSavedViews(views, ordered)
 }
 
 /** Bounded analytics context: a built-in sort key, or just `customField`. */

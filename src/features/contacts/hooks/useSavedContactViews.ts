@@ -11,6 +11,7 @@ import {
   moveSavedView,
   orderedSavedViews,
   renameSavedView,
+  reorderSavedViews,
   savedViewAnalyticsSort,
   updateSavedViewQuery,
 } from '@/features/contacts/lib/savedViews'
@@ -28,12 +29,18 @@ export function useSavedContactViews() {
 
   const ordered = orderedSavedViews(views)
 
-  /** Shows a view, or the User's own filters again for `null`. */
-  const select = (id: string | null) => {
+  /**
+   * Shows a view, or the User's own filters again for `null`. `source` is the
+   * surface the User switched from, for analytics.
+   */
+  const select = (id: string | null, source?: 'list' | 'map') => {
     if (!hasAccess) return
     setPreferences({ activeSavedContactView: id ? { id } : null })
     if (id)
-      analytics.capture('saved_view_applied', { view_count: ordered.length })
+      analytics.capture('saved_view_applied', {
+        view_count: ordered.length,
+        ...(source ? { source } : {}),
+      })
   }
 
   /**
@@ -85,6 +92,13 @@ export function useSavedContactViews() {
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
+  /** Puts the views in a new order, e.g. after a chip is dragged. */
+  const reorder = (ids: string[]) => {
+    if (!hasAccess) return
+    const next = reorderSavedViews(views, ids)
+    if (next !== views) setPreferences({ savedContactViews: next })
+  }
+
   const remove = (id: string) => {
     if (!hasAccess || !(id in views)) return
     setPreferences({
@@ -116,6 +130,7 @@ export function useSavedContactViews() {
     updateActive,
     rename,
     move,
+    reorder,
     confirmRemove,
   }
 }

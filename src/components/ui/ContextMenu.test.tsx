@@ -112,6 +112,35 @@ describe('Android context menu', () => {
     expect(menu().props.expanded).toBe(false)
   })
 
+  it('fills the width it is given, or keeps its own with fitContent', async () => {
+    const layout = { nativeEvent: { layout: { width: 79.6 } } }
+    const triggerWidth = () => {
+      const style = trigger().props.style({ pressed: false })
+      return style[0].width
+    }
+    const outer = () =>
+      root.root.findAll(
+        (node) => (node.type as unknown) === 'View' && 'onLayout' in node.props
+      )[0]
+
+    await render(
+      <AndroidContextMenu actions={actions()} onPress={vi.fn()}>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    await act(async () => outer().props.onLayout(layout))
+    expect(triggerWidth()).toBe(79.6)
+    await act(async () => root.unmount())
+
+    await render(
+      <AndroidContextMenu actions={actions()} onPress={vi.fn()} fitContent>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(outer().props.onLayout).toBeUndefined()
+    expect(triggerWidth()).toBeUndefined()
+  })
+
   it('closes on dismiss without running an action', async () => {
     const list = actions()
     await render(

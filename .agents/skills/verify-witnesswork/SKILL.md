@@ -111,10 +111,12 @@ On a failure, rerun with the same seed to confirm. Then minimize by lowering `--
 Everything lands in `.verify/artifacts/<run-id>/`, which is gitignored and survives `down`:
 
 ```bash
-wwv shot add-time-saved            # PNG, resized to 1400 px
+wwv shot add-time-saved            # PNG, resized to 1400 px; exits 1 if no image was saved
 wwv errors                         # captured JS errors; exit 1 if any
 wwv ad record start / wwv ad record stop   # video for motion and animation claims
 ```
+
+On iOS the simulator writes captures itself, and it can't write to every volume (a worktree on an external drive fails with "Operation not permitted"). So `shot` and `ad record` capture to a temporary folder and copy the file into the artifacts; `ad record stop` prints where the video went. Don't call `simctl io` yourself to work around a failure.
 
 Proof standards:
 

@@ -1675,25 +1675,88 @@ function requireUp() {
 
 // ---------- evidence ----------
 
+/**
+ * Saves a screenshot into the run's artifacts and returns its repo-relative
+ * path, or null (with the reason logged) when the device gave no image. The
+ * capture lands in a temporary folder first: on iOS the file is written by
+ * CoreSimulator, which macOS bars from volumes it has no access to, such as an
+ * external drive holding the worktree ("Operation not permitted").
+ */
 function screenshot(state, platform, label) {
   const device = state.devices[platform]
-  const file = path.join(
-    artifactsDir(state),
-    `${Date.now()}-${platform}-${label.replace(/[^a-zA-Z0-9-]+/g, '-')}.png`
-  )
-  if (platform === 'ios')
-    run('xcrun', ['simctl', 'io', device.id, 'screenshot', file], {
-      check: false,
-    })
-  else
-    fs.writeFileSync(
-      file,
-      run('adb', ['-s', device.id, 'exec-out', 'screencap', '-p'], {
-        encoding: 'buffer',
-      }).stdout
+  const name = `${Date.now()}-${platform}-${label.replace(/[^a-zA-Z0-9-]+/g, '-')}.png`
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-verify-shot-'))
+  const capture = path.join(tmp, name)
+  try {
+    const result =
+      platform === 'ios'
+        ? run('xcrun', ['simctl', 'io', device.id, 'screenshot', capture], {
+            check: false,
+          })
+        : run('adb', ['-s', device.id, 'exec-out', 'screencap', '-p'], {
+            encoding: 'buffer',
+            check: false,
+          })
+    if (platform === 'android' && result.status === 0 && result.stdout?.length)
+      fs.writeFileSync(capture, result.stdout)
+    if (result.status !== 0 || !fs.existsSync(capture)) {
+      const reason = String(result.stderr || result.stdout || '').trim()
+      log(
+        `screenshot failed (${result.status}): ${reason.split('\n').slice(-3).join(' ') || 'no image'}`
+      )
+      return null
+    }
+    run('sips', ['-Z', '1400', capture], { check: false })
+    const file = path.join(artifactsDir(state), name)
+    fs.copyFileSync(capture, file)
+    return path.relative(ROOT, file)
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true })
+  }
+}
+
+/**
+ * `ad record start|stop` on iOS. CoreSimulator writes the video itself and
+ * can't write to every volume (an external drive holding the worktree fails
+ * with "Operation not permitted"), so it records to a temporary file that
+ * `record stop` copies to the path asked for, or into the run's artifacts.
+ * Other commands, and Android, pass through untouched.
+ */
+function iosRecording(state, platform, args) {
+  if (platform !== 'ios' || args[0] !== 'record') return null
+  if (args[1] === 'start') {
+    const asked = args[2] && !args[2].startsWith('-') ? args[2] : null
+    const dest = asked
+      ? path.resolve(asked)
+      : path.join(artifactsDir(state), `${Date.now()}-ios-recording.mp4`)
+    const tmp = path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'ww-verify-record-')),
+      path.basename(dest)
     )
-  run('sips', ['-Z', '1400', file], { check: false })
-  return path.relative(ROOT, file)
+    return {
+      args: ['record', 'start', tmp, ...args.slice(asked ? 3 : 2)],
+      after: (ok) => {
+        if (!ok) return fs.rmSync(path.dirname(tmp), { recursive: true })
+        writeState({ ...readState(), recording: { tmp, dest } })
+      },
+    }
+  }
+  const pending = state.recording
+  if (args[1] !== 'stop' || !pending) return null
+  return {
+    args,
+    after: () => {
+      const next = readState()
+      delete next.recording
+      writeState(next)
+      if (fs.existsSync(pending.tmp)) {
+        fs.mkdirSync(path.dirname(pending.dest), { recursive: true })
+        fs.copyFileSync(pending.tmp, pending.dest)
+        log(`recording saved to ${path.relative(ROOT, pending.dest)}`)
+      } else log('recording stopped, but no video was written')
+      fs.rmSync(path.dirname(pending.tmp), { recursive: true, force: true })
+    },
+  }
 }
 
 // ---------- commands ----------
@@ -2046,13 +2109,13 @@ const commands = {
 
   async shot({ positional, flags }) {
     const state = requireUp()
-    console.log(
-      screenshot(
-        state,
-        currentPlatform(state, flags),
-        positional[0] || 'screen'
-      )
+    const file = screenshot(
+      state,
+      currentPlatform(state, flags),
+      positional[0] || 'screen'
     )
+    if (!file) fail('No screenshot saved; see the reason above')
+    console.log(file)
   },
 
   async errors({ flags }) {
@@ -2075,12 +2138,13 @@ const commands = {
     const state = requireUp()
     const platform = currentPlatform(state, { platform: platformFlag })
     if (!['open', 'close'].includes(args[0])) ensureSession(state, platform)
+    const recording = iosRecording(state, platform, args)
     const [bin, ...prefix] = agentDeviceBin()
     const result = spawnSync(
       bin,
       [
         ...prefix,
-        ...args,
+        ...(recording?.args ?? args),
         ...deviceArgs(state, platform, args[0]),
         '--session',
         sessionName(platform),
@@ -2088,6 +2152,7 @@ const commands = {
       { stdio: 'inherit', env: toolEnv() }
     )
     process.exitCode = result.status ?? 1
+    recording?.after(result.status === 0)
   },
 
   async flow({ positional, flags }) {

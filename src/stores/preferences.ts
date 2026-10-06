@@ -40,6 +40,7 @@ import type {
   MileageEntryMode,
 } from '@/types/mileage'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
+import { STALENESS_DISPLAY_ORDER } from '@/lib/contactStaleness'
 import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
 import {
   isValidMonthlyGoalHours,
@@ -333,6 +334,11 @@ export const PREFERENCE_DEFAULTS = {
    * switch so the user doesn't lose their filter set when leaving the screen.
    */
   contactsFilters: [] as ActiveFilter[],
+  /**
+   * The User's order for the Contacts last-visit chips, set by dragging them.
+   * Resolved through `getEffectiveStalenessChipOrder` at read time.
+   */
+  stalenessChipOrder: STALENESS_DISPLAY_ORDER,
   /**
    * Supporter-only Saved Views for the Contacts list, keyed by view id.
    * Preserved when supporter status lapses — `useContactsQuery` stops applying

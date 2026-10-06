@@ -1,45 +1,61 @@
 import { Info as InfoIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import {
   ContactStaleness,
-  STALENESS_DISPLAY_ORDER,
+  getEffectiveStalenessChipOrder,
   stalenessToColor,
 } from '@/lib/contactStaleness'
 import { ConversationIndex } from '@/lib/conversationIndex'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
+import { usePreferences } from '@/stores/preferences'
 import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import { Contact } from '@/types/contact'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
+import SortableChipRow from '@/components/ui/SortableChipRow'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import StalenessColorKey from '@/components/StalenessColorKey'
 
 export type ContactsStalenessChipsProps = {
-  /** Active (not dismissed) contacts; the chips count these. */
+  /**
+   * The contacts the chips count: active (not dismissed) ones, and on the map
+   * only those with a location, so the counts match the pins.
+   */
   contacts: Contact[]
   /** Shared per-contact conversation index; staleness is an O(1) lookup. */
   index: ConversationIndex
+  /**
+   * Where the chips sit, for analytics. The map has its own legend button, so
+   * the chips leave theirs out there.
+   */
+  surface: 'list' | 'map'
 }
 
 /**
  * Swipeable row of quick filters by time since the last visit: All, then each
- * staleness bucket with its count, most stale first. A chip swaps any
- * `pinStaleness` filter for its own and leaves other filters alone, so the Sort
- * & Filter sheet still shows (and can clear) what a chip set. With a Saved View
- * showing, the chips edit that view's filters. The trailing info button
- * explains the colors and links to their settings.
+ * staleness bucket with its count, most stale first until the User drags them
+ * into their own order. A chip swaps any `pinStaleness` filter for its own and
+ * leaves other filters alone, so the Sort & Filter sheet still shows (and can
+ * clear) what a chip set. With a Saved View showing, the chips edit that view's
+ * filters. On the list, the trailing info button explains the colors and links
+ * to their settings.
  */
 const ContactsStalenessChips = ({
   contacts,
   index,
+  surface,
 }: ContactsStalenessChipsProps) => {
   const theme = useTheme()
   const markerColors = useMarkerColors()
+  const chipOrder = getEffectiveStalenessChipOrder(
+    usePreferences((s) => s.stalenessChipOrder)
+  )
+  const setPreferences = usePreferences((s) => s.set)
   const {
     query: { filters: contactsFilters },
     setFilters: setContactsFilters,
@@ -67,67 +83,68 @@ const ContactsStalenessChips = ({
       ...otherFilters,
       { kind: 'pinStaleness', value: bucket },
     ])
-    analytics.capture('contacts_staleness_chip_applied', { variant: bucket })
+    analytics.capture('contacts_staleness_chip_applied', {
+      variant: bucket,
+      source: surface,
+    })
   }
 
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps='handled'
-      style={{ flexGrow: 0 }}
-      contentContainerStyle={{
-        paddingHorizontal: 12,
-        gap: 8,
-        alignItems: 'center',
-      }}
+  const colorKey = (
+    <AnchoredPopover
+      contentWidth={280}
+      renderTrigger={({ onPress, anchorRef }) => (
+        <View ref={anchorRef} collapsable={false}>
+          <PointerTooltip label={i18n.t('contacts_stalenessInfo_title')}>
+            <Button
+              onPress={onPress}
+              accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
+              accessibilityRole='button'
+              hitSlop={6}
+              style={{
+                width: 32,
+                height: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={InfoIcon}
+                size={theme.fontSize('md')}
+                style={{ color: theme.colors.textAlt }}
+              />
+            </Button>
+          </PointerTooltip>
+        </View>
+      )}
     >
-      <StalenessChip
-        label={i18n.t('contacts_stalenessChip_all')}
-        count={contacts.length}
-        active={selected.size === 0}
-        onPress={() => select(undefined)}
-      />
-      {STALENESS_DISPLAY_ORDER.map((bucket) => (
+      {({ close }) => <StalenessColorKey onBeforeNavigate={close} />}
+    </AnchoredPopover>
+  )
+
+  return (
+    <SortableChipRow
+      data={chipOrder}
+      keyExtractor={(bucket) => bucket}
+      onReorder={(next) => setPreferences({ stalenessChipOrder: next })}
+      leading={
         <StalenessChip
-          key={bucket}
+          label={i18n.t('contacts_stalenessChip_all')}
+          count={contacts.length}
+          active={selected.size === 0}
+          onPress={() => select(undefined)}
+        />
+      }
+      renderItem={(bucket) => (
+        <StalenessChip
           label={i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
           count={counts[bucket]}
           color={stalenessToColor(bucket, markerColors)}
           active={selected.has(bucket)}
           onPress={() => select(bucket)}
         />
-      ))}
-      <AnchoredPopover
-        contentWidth={280}
-        renderTrigger={({ onPress, anchorRef }) => (
-          <View ref={anchorRef} collapsable={false}>
-            <PointerTooltip label={i18n.t('contacts_stalenessInfo_title')}>
-              <Button
-                onPress={onPress}
-                accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
-                accessibilityRole='button'
-                hitSlop={6}
-                style={{
-                  width: 32,
-                  height: 32,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <LucideIcon
-                  icon={InfoIcon}
-                  size={theme.fontSize('md')}
-                  style={{ color: theme.colors.textAlt }}
-                />
-              </Button>
-            </PointerTooltip>
-          </View>
-        )}
-      >
-        {({ close }) => <StalenessColorKey onBeforeNavigate={close} />}
-      </AnchoredPopover>
-    </ScrollView>
+      )}
+      trailing={surface === 'list' ? colorKey : undefined}
+    />
   )
 }
 

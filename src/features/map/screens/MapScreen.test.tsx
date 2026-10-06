@@ -252,8 +252,13 @@ import { Carousel } from 'react-native-reanimated-carousel'
 import { Input } from 'tamagui'
 
 let root: ReturnType<typeof create>
-const screen = () => (
-  <MapScreen renderContactRow={() => null} onExplore={mocks.onExplore} />
+// `shown` stands in for the contacts the Contacts filters let through.
+const screen = (shown: Contact[] = mocks.contacts) => (
+  <MapScreen
+    contacts={shown}
+    renderContactRow={() => null}
+    onExplore={mocks.onExplore}
+  />
 )
 const emit = (event: string) => {
   for (const listener of [...(mocks.listeners.get(event) ?? [])]) listener()
@@ -421,6 +426,42 @@ describe('Map carousel after contact creation', () => {
     expect(root.root.findByType(Input).props.value).toBe('Second')
     const carousel = root.root.findByType(Carousel)
     expect(carousel.props.data[mocks.getCurrentIndex()].id).toBe('second')
+  })
+})
+
+describe('Map with the Contacts filters', () => {
+  const pins = () =>
+    root.root
+      .findAllByType('Marker' as never)
+      .map((marker) => marker.props.identifier)
+
+  it('pins only the contacts the filters let through', async () => {
+    await act(async () => root.update(screen([mocks.contacts[1]])))
+    expect(pins()).toEqual(['second'])
+  })
+
+  it('says the filters hide every pin instead of showing the empty map', async () => {
+    await act(async () => root.update(screen([])))
+    expect(
+      root.root.findAllByProps({
+        description: 'map_noFilterResults_description',
+      }).length
+    ).toBeGreaterThan(0)
+    expect(
+      root.root.findAllByProps({ children: 'map_emptyNoContactsTitle' })
+    ).toHaveLength(0)
+  })
+
+  it('keeps a contact made from a dropped pin that the filters would hide', async () => {
+    const filtered = [mocks.contacts[0]]
+    await act(async () => root.update(screen(filtered)))
+    await startCreation('')
+    mocks.contacts = [...mocks.contacts, contact('new-contact', 'New contact')]
+    await act(async () => root.update(screen(filtered)))
+    await act(async () => emit('focus'))
+    expect(pins()).toEqual(['first', 'new-contact'])
+    const carousel = root.root.findByType(Carousel)
+    expect(carousel.props.data[mocks.getCurrentIndex()].id).toBe('new-contact')
   })
 })
 

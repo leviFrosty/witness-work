@@ -6,6 +6,8 @@ WitnessWork = iOS + Android field-service tracker for Jehovah's Witnesses. It he
 
 ww-api is the backend api. Find the code at ~/dev/ww-api.
 
+Beta and production app builds release ww-api `main` first (`scripts/release-api.sh`), so land a feature's backend half on ww-api `main` before shipping its app half.
+
 ## Platforms
 
 iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). Run, inspect, and test changes on simulators and emulators only through the `verify-witnesswork` skill (see [Verify your own work](#verify-your-own-work)).

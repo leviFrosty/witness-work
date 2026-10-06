@@ -428,6 +428,15 @@ export const PREFERENCE_DEFAULTS = {
    * ignores it, same pattern as `devSupporterOverride`). Non-syncable.
    */
   devSupporterNudgeForceShow: false,
+  /**
+   * Epoch ms the user last redeemed an App Store Supporter Pause, and when
+   * billing resumes. Drive the "Payments paused until" status and the
+   * once-per-12-months limit in `manageSubscriptionState` (ADR 0016). Syncable
+   * — the pause belongs to the shared subscription, so another device must not
+   * offer a second one.
+   */
+  supporterPauseStartedAt: null as number | null,
+  supporterPauseResumesAt: null as number | null,
   ...hints,
   lastBackupDate: null as Date | null,
   /**

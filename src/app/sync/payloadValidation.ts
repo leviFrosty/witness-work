@@ -357,6 +357,8 @@ const preferenceShapes = z
       .optional(),
     supporterNudgeDismissedAt: timestamp.nullable().optional(),
     supporterNudgeAvailableSince: timestamp.nullable().optional(),
+    supporterPauseStartedAt: timestamp.nullable().optional(),
+    supporterPauseResumesAt: timestamp.nullable().optional(),
     milestoneOverrides: z
       .array(z.number().finite().nonnegative())
       .nullable()

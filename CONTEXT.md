@@ -232,6 +232,10 @@ _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, 
 Turning off renewal of a Supporter subscription. Paid access can continue until expiration. Distinct from abandoning a purchase sheet before completing a purchase.
 _Avoid_: treating cancellation as immediate loss of Supporter access.
 
+**Supporter Pause**:
+A break from paying that a Supporter chooses in Manage Subscription instead of cancelling. It starts when the current period ends and resumes automatically. On iOS it is a free App Store promotional offer for 1, 3, or 6 months, at most once per 12 months; Supporter features, including iCloud Sync, stay on. On Android it is Google Play's native pause for 1–3 months, during which Supporter features pause too. See ADR 0016.
+_Avoid_: confusing it with iCloud sync "pausing" when Supporter access lapses; calling the iOS version a pause of access.
+
 **Subscription Lapse**:
 The end of access provided by a Supporter subscription, including expiration after billing trouble. Lapse feedback applies within 30 days of confirmed expiration, including any billing grace period, and excludes refunds and free trials. Resubscribing removes lapse-feedback eligibility. See ADR 0013.
 _Avoid_: assuming every lapse was an intentional cancellation; treating revocation of a gifted entitlement as a subscription lapse.

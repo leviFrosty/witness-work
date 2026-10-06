@@ -43,6 +43,11 @@ export interface NotesImportPublicSchedule {
  */
 interface NotesImportStatusVersionFloor {
   minAppVersion?: string
+  /**
+   * The worker can verify Android requests (ADR 0017). Absent until Play
+   * Integrity is configured server-side, which keeps Android closed.
+   */
+  playIntegrity?: true
 }
 
 export type NotesImportStatus = NotesImportStatusVersionFloor &
@@ -60,14 +65,28 @@ const MIN_APP_VERSION_PATTERN = /^\d+\.\d+\.\d+$/
  */
 const statusVersionFloor = (
   value: Record<string, unknown>
-): NotesImportStatusVersionFloor =>
-  typeof value.minAppVersion === 'string' &&
+): NotesImportStatusVersionFloor => ({
+  ...(typeof value.minAppVersion === 'string' &&
   MIN_APP_VERSION_PATTERN.test(value.minAppVersion)
     ? { minAppVersion: value.minAppVersion }
-    : {}
+    : {}),
+  ...(supportsPlayIntegrity(value.capabilities)
+    ? { playIntegrity: true as const }
+    : {}),
+})
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const supportsPlayIntegrity = (capabilities: unknown): boolean => {
+  const play = isRecord(capabilities) ? capabilities.playIntegrity : undefined
+  return (
+    isRecord(play) &&
+    Array.isArray(play.protocolVersions) &&
+    play.protocolVersions.includes(1) &&
+    typeof play.cloudProjectNumber === 'string'
+  )
+}
 
 const isAllowanceValue = (value: unknown): value is number | null =>
   value === null ||

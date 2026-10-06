@@ -1,4 +1,4 @@
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import {
   ChevronRight as ChevronRightIcon,
   Cloud as CloudIcon,

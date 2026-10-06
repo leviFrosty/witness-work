@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 
 export function useNotesImportResume() {

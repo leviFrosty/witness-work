@@ -240,6 +240,18 @@ describe('classifyRunOutcome', () => {
     })
   })
 
+  it('keeps an ineligible Android device non-retryable but Play updates retryable', () => {
+    expect(
+      classifyRunOutcome({ aborted: false, code: 'device_ineligible' }, opts)
+    ).toMatchObject({ kind: 'failed', report: false, retryable: false })
+    expect(
+      classifyRunOutcome(
+        { aborted: false, code: 'play_services_required' },
+        opts
+      )
+    ).toMatchObject({ kind: 'failed', report: false, retryable: true })
+  })
+
   it('keeps import and refinement allowance denials non-retryable', () => {
     expect(
       classifyRunOutcome({ aborted: false, code: 'limit_reached' }, opts)

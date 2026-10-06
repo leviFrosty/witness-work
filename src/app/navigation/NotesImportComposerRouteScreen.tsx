@@ -1,4 +1,4 @@
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import Empty from '@/components/ui/Empty'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import i18n from '@/lib/locales'

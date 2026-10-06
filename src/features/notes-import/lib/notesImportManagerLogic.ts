@@ -192,7 +192,9 @@ export const classifyRunOutcome = (
     return { kind: 'cooldown', cooldownMs: opts.cooldownMs }
   const report = args.code === 'unknown' || args.code === 'model_error'
   const retryable =
-    args.code !== 'limit_reached' && args.code !== 'refinement_limit'
+    args.code !== 'limit_reached' &&
+    args.code !== 'refinement_limit' &&
+    args.code !== 'device_ineligible'
   return { kind: 'failed', code: args.code, report, retryable }
 }
 

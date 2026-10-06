@@ -1,0 +1,7 @@
+{
+  "name": "play-integrity",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping Google Play Integrity standard requests for proving requests come from a genuine, unmodified app on a genuine Android device.",
+  "main": "index.ts",
+  "private": true
+}

@@ -1,4 +1,4 @@
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'

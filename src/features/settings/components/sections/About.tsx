@@ -16,7 +16,7 @@ import links from '@/constants/links'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { openURL } from '@/lib/links'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 
 const AboutSection = ({
   handleNavigate,

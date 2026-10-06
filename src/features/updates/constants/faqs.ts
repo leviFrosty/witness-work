@@ -200,6 +200,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'syncRemoveDevice', category: 'backups' },
   { id: 'notesImportHelp', category: 'backups', related: [360, 378] },
   { id: 'notesImportRetry', category: 'backups' },
+  { id: 'notesImportAndroid', category: 'backups' },
   { id: 'mytimeTrouble', category: 'backups', related: [360] },
   {
     id: 'hourglassSetup',

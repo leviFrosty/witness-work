@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNotesImportEnabled } from '@/features/notes-import/hooks/useNotesImportEnabled'
+import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { prepareNotesImportAppAttestRecovery } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 
 // Enroll existing keys after an upgrade; first-time users still prepare lazily.

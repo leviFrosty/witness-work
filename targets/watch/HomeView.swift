@@ -6,33 +6,39 @@ struct HomeView: View {
   let snapshot: WatchSnapshot
 
   var body: some View {
-    List {
-      if !snapshot.isCurrent() {
-        Text(L10n.t("watchStale", snapshot))
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      }
+    // Up Next and the month move on with the clock, not only with new data.
+    TimelineView(.everyMinute) { timeline in
+      let progress = model.progress(at: timeline.date)
+      List {
+        if progress == nil {
+          Text(L10n.t("watchStale", snapshot))
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
 
-      if snapshot.showsTimeEntry {
-        if snapshot.isCurrent() {
-          ProgressSection(snapshot: snapshot)
+        if progress?.showsTimeEntry ?? snapshot.showsTimeEntry {
+          if let progress {
+            ProgressSection(snapshot: snapshot, progress: progress)
+          }
+          if let timer = model.timer {
+            TimerSection(snapshot: snapshot, timer: timer)
+          }
+          NavigationLink {
+            AddTimeView(snapshot: snapshot)
+          } label: {
+            Label(L10n.t("addTime", snapshot), systemImage: "plus")
+          }
+        } else {
+          ReportStatusSection(snapshot: snapshot, progress: progress)
         }
-        if let timer = model.timer {
-          TimerSection(snapshot: snapshot, timer: timer)
-        }
-        NavigationLink {
-          AddTimeView(snapshot: snapshot)
-        } label: {
-          Label(L10n.t("addTime", snapshot), systemImage: "plus")
-        }
-      } else {
-        ReportStatusSection(snapshot: snapshot)
-      }
 
-      if model.isSyncing {
-        Label(L10n.t("watchSyncing", snapshot), systemImage: "arrow.triangle.2.circlepath")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+        UpNextSection(snapshot: snapshot, date: timeline.date)
+
+        if model.isSyncing {
+          Label(L10n.t("watchSyncing", snapshot), systemImage: "arrow.triangle.2.circlepath")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
       }
     }
   }
@@ -40,27 +46,32 @@ struct HomeView: View {
 
 private struct ProgressSection: View {
   let snapshot: WatchSnapshot
+  let progress: MonthProgress
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text(L10n.t("month", snapshot))
+      Text(progress.monthName)
         .font(.caption2)
         .textCase(.uppercase)
         .foregroundStyle(.secondary)
       HStack(alignment: .firstTextBaseline, spacing: 2) {
-        Text(snapshot.monthFormatted)
+        Text(progress.formatted)
           .font(.title2.bold())
         // The goal is whole hours the user entered.
-        if snapshot.goalHours > 0 {
-          Text(verbatim: "/\(snapshot.goalHours)")
+        if progress.goalHours > 0 {
+          Text(verbatim: "/\(progress.goalHours)")
             .foregroundStyle(.secondary)
         }
       }
-      if snapshot.goalHours > 0 {
-        ProgressView(value: min(snapshot.progress, 1))
-          .tint(.accentColor)
+      if let fraction = progress.fraction {
+        PaceBar(fraction: fraction, paceFraction: progress.paceFraction)
+          .padding(.vertical, 2)
       }
-      if let pace = snapshot.paceText {
+      if progress.goalReached {
+        Label(L10n.t("goalReached", snapshot), systemImage: "checkmark.circle.fill")
+          .font(.footnote)
+          .foregroundStyle(Color.accentColor)
+      } else if let pace = progress.paceText {
         Text(pace)
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -141,10 +152,12 @@ private struct TimerSection: View {
 private struct ReportStatusSection: View {
   @Environment(WatchModel.self) private var model
   let snapshot: WatchSnapshot
+  /// Counts the marker while it's still on its way to the iPhone.
+  let progress: MonthProgress?
 
   var body: some View {
-    let state = snapshot.isCurrent() ? snapshot.publisherState() : "unreported"
-    if state == "unreported" && !model.hasPendingEntryToday {
+    let state = progress?.publisherState ?? "unreported"
+    if state == "unreported" {
       Button {
         Task {
           await model.addEntry(hours: 0, minutes: 0, categoryId: nil, origin: .app)
@@ -157,11 +170,58 @@ private struct ReportStatusSection: View {
       VStack(alignment: .leading, spacing: 4) {
         Label(L10n.line("sharedTheGoodNews", snapshot), systemImage: "checkmark.circle.fill")
           .foregroundStyle(Color.accentColor)
-        if state == "reportedToday" || model.hasPendingEntryToday {
+        if state == "reportedToday" {
           Text(L10n.t("reportedToday", snapshot))
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
+      }
+      .accessibilityElement(children: .combine)
+    }
+  }
+}
+
+/// The next Follow-up or Plan; opens it with Directions and the timer.
+private struct UpNextSection: View {
+  /// Wrist down: the screen may be seen by the person you're talking with.
+  @Environment(\.isLuminanceReduced) private var hidesNames
+  let snapshot: WatchSnapshot
+  let date: Date
+
+  var body: some View {
+    let label = Text(L10n.t("watchUpNext", snapshot))
+      .font(.caption2)
+      .textCase(.uppercase)
+      .foregroundStyle(.secondary)
+    if let item = UpNext.items(snapshot, at: date).first {
+      NavigationLink {
+        UpNextView(itemId: item.id)
+      } label: {
+        VStack(alignment: .leading, spacing: 2) {
+          label
+          Label(UpNext.heading(item, at: date, snapshot), systemImage: UpNext.symbol(item))
+            .font(.footnote)
+            .foregroundStyle(Color.accentColor)
+          Text(UpNext.title(item, hidesNames: hidesNames, snapshot))
+            .font(.headline)
+            .lineLimit(2)
+            .privacySensitive(item.kind == .followUp)
+          if let detail = UpNext.detail(item, hidesNames: hidesNames) {
+            Text(detail)
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+              .lineLimit(2)
+              .privacySensitive(item.kind == .followUp)
+          }
+        }
+        .accessibilityElement(children: .combine)
+      }
+    } else {
+      VStack(alignment: .leading, spacing: 2) {
+        label
+        Text(L10n.t("watchNothingScheduled", snapshot))
+          .font(.footnote)
+          .foregroundStyle(.secondary)
       }
       .accessibilityElement(children: .combine)
     }

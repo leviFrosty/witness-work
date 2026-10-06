@@ -33,10 +33,10 @@ public class WatchBridgeModule: Module {
       self.observers = []
     }
 
-    Function("getStatus") { () -> [String: Bool] in
+    Function("getStatus") { () -> [String: Any?] in
       guard WCSession.isSupported() else {
         return ["isSupported": false, "isPaired": false, "isWatchAppInstalled": false,
-                "isComplicationEnabled": false]
+                "isComplicationEnabled": false, "activeComplications": nil]
       }
       let session = WCSession.default
       let activated = session.activationState == .activated
@@ -45,6 +45,7 @@ public class WatchBridgeModule: Module {
         "isPaired": activated && session.isPaired,
         "isWatchAppInstalled": activated && session.isWatchAppInstalled,
         "isComplicationEnabled": activated && session.isComplicationEnabled,
+        "activeComplications": WatchSessionCoordinator.shared.activeComplications(),
       ]
     }
 

@@ -67,6 +67,7 @@ export const FAQS: FAQEntry[] = [
   },
   { id: 'appleWatch', category: 'time' },
   { id: 'appleWatchSync', category: 'time' },
+  { id: 'appleWatchUpNext', category: 'time' },
   { id: 'siri', category: 'time' },
   {
     id: 'switchingPioneer',

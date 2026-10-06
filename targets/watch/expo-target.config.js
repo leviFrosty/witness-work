@@ -26,6 +26,7 @@ module.exports = (config) => ({
     'WatchConnectivity',
     'WidgetKit',
     'AppIntents',
+    'MapKit',
   ],
   entitlements: {
     'com.apple.security.application-groups':

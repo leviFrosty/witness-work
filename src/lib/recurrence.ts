@@ -182,6 +182,17 @@ export const getEffectiveNoteForRecurringPlan = (
 }
 
 /**
+ * The start time (minutes since midnight) set for a recurring plan's instance
+ * on a specific date, accounting for overrides, or `undefined` when neither the
+ * override nor the plan has one.
+ */
+export const getSetStartTimeInMinutesForRecurringPlan = (
+  plan: RecurringPlan,
+  date: Date
+): number | undefined =>
+  findOverrideForDay(plan, date)?.startTimeInMinutes ?? plan.startTimeInMinutes
+
+/**
  * Gets the effective start time (minutes since midnight) for a recurring plan
  * on a specific date, accounting for overrides. Falls back to noon (720) when
  * neither the override nor the plan has a stored time.
@@ -343,6 +354,46 @@ export const plannedMinutesForDay = (
     0
   )
 
+/** {@link plannedMinutesForDay} for day `date` (1-based) of `selectedMonth`. */
+const plannedMinutesOnMonthDay = (
+  selectedMonth: moment.Moment,
+  date: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number => {
+  const dayDate = selectedMonth.clone().date(date).toDate()
+  const dayPlansForDay = dayPlans.filter((plan) =>
+    momentStoredDate(plan.date).isSame(
+      momentStoredDate(normalizeDateForStorage(dayDate)),
+      'day'
+    )
+  )
+  return plannedMinutesForDay(dayDate, dayPlansForDay, recurringPlans)
+}
+
+/**
+ * Cumulative planned minutes through each day of a month: index 0 is the 1st,
+ * and each value matches {@link plannedMinutesThroughDayForMonth} for that day.
+ */
+export const plannedMinutesThroughEachDayOfMonth = (
+  month: number,
+  year: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number[] => {
+  const selectedMonth = moment({ year, month, date: 1 }).startOf('month')
+  let count = 0
+  return Array.from({ length: selectedMonth.daysInMonth() }, (_, i) => {
+    count += plannedMinutesOnMonthDay(
+      selectedMonth,
+      i + 1,
+      dayPlans,
+      recurringPlans
+    )
+    return count
+  })
+}
+
 export const plannedMinutesThroughDayForMonth = (
   month: number,
   year: number,
@@ -361,17 +412,12 @@ export const plannedMinutesThroughDayForMonth = (
   Array(dayOfMonth)
     .fill(1)
     .forEach((_, i) => {
-      const day = selectedMonth.clone().date(i + 1)
-      const dayDate = day.toDate()
-
-      const dayPlansForDay = dayPlans.filter((plan) =>
-        momentStoredDate(plan.date).isSame(
-          momentStoredDate(normalizeDateForStorage(dayDate)),
-          'day'
-        )
+      count += plannedMinutesOnMonthDay(
+        selectedMonth,
+        i + 1,
+        dayPlans,
+        recurringPlans
       )
-
-      count += plannedMinutesForDay(dayDate, dayPlansForDay, recurringPlans)
     })
 
   return count

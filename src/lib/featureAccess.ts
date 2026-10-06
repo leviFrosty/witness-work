@@ -15,6 +15,7 @@ export type FeatureKey =
   | 'customAppIcon'
   | 'savedContactViews'
   | 'routePlanning'
+  | 'buddyColor'
 
 type GateRule = { gate: 'supporter-only' }
 
@@ -25,6 +26,7 @@ export const FEATURES: Record<FeatureKey, GateRule> = {
   savedContactViews: { gate: 'supporter-only' },
   // Also enforced server-side: ww-api refuses to optimize for non-Supporters.
   routePlanning: { gate: 'supporter-only' },
+  buddyColor: { gate: 'supporter-only' },
 }
 
 export type FeatureAccess = {

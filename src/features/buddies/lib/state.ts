@@ -38,6 +38,8 @@ export type Buddy = {
   inboxId: string
   /** The buddy's own display name, refreshed from every Buddy Card. */
   name: string
+  /** A private name only this User sees, shown in place of `name`. */
+  nickname?: string
   avatar?: BuddyAvatar
   tenure?: BuddyTenure
   dhPub: string
@@ -45,7 +47,10 @@ export type Buddy = {
   inviteSecret: string
   status: BuddyStatus
   pairedAt: number
+  /** The palette slot assigned when we paired; the color unless `color` is set. */
   colorIndex: number
+  /** A hex this User picked (Supporter), shown in place of the slot's color. */
+  color?: string
   showOnCalendar: boolean
   /** Only for `awaitingConfirm`: when the unconfirmed request lapses. */
   expiresAt?: number

@@ -11,6 +11,7 @@ import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { planShareKey } from '@/features/buddies/lib/shares'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /** Past this many people, the last avatar slot becomes a "+N" count. */
 const MAX_AVATARS = 4
@@ -46,13 +47,13 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
   const visible =
     people.length > MAX_AVATARS ? people.slice(0, MAX_AVATARS - 1) : people
   const overflow = people.length - visible.length
-  const names = people.map(({ buddy }) => buddy.name).join(', ')
+  const names = people.map(({ buddy }) => buddyDisplayName(buddy)).join(', ')
   const accessibilityLabel = plan.buddyShare
     ? i18n.t('buddies_withName', { name: names })
     : people
         .map(({ buddy, reply }) =>
           [
-            buddy.name,
+            buddyDisplayName(buddy),
             i18n.t(
               reply === 'going'
                 ? 'buddies_replyGoing'
@@ -75,8 +76,8 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
           <BuddyAvatar
             key={buddy.inboxId}
             avatar={buddy.avatar}
-            name={buddy.name}
-            colorIndex={buddy.colorIndex}
+            name={buddyDisplayName(buddy)}
+            color={buddy}
           >
             <ShareReplyBadge status={reply} />
           </BuddyAvatar>

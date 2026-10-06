@@ -34,7 +34,7 @@ export default function JoinRequestBanner({
       <BuddyAvatar
         avatar={first.avatar}
         name={first.name}
-        colorIndex={first.colorIndex}
+        color={first}
         size={24}
       />
       <View style={{ flex: 1 }}>

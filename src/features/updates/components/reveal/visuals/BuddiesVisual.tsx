@@ -15,7 +15,7 @@ import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { withAlpha } from '@/lib/color'
-import { buddyColor } from '@/features/buddies/lib/buddyColors'
+import { buddySlotColor } from '@/features/buddies/lib/buddyColors'
 import {
   Bar,
   RevealVisualProps,
@@ -83,7 +83,7 @@ const BuddiesVisual = ({
     restAt: 0.76,
   })
   const days = Array.from({ length: DAYS }, (_, i) => moment().add(i, 'days'))
-  const colors = BUDDIES.map((_, i) => buddyColor(theme, i))
+  const colors = BUDDIES.map((_, i) => buddySlotColor(theme, i))
   const openColors = BUDDIES.flatMap((buddy, i) =>
     buddy.day === OPEN_DAY ? [colors[i]] : []
   )

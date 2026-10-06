@@ -9,6 +9,7 @@ export type SupporterGateSurface =
   | 'icloud_sync'
   | 'saved_views'
   | 'today_route'
+  | 'buddy_color'
 
 /** Anonymous, ephemeral attribution for one visible gate visit. */
 export type SupporterGateAttribution = {

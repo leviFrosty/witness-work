@@ -546,6 +546,26 @@ describe('buddies pairing', () => {
     ])
   })
 
+  it('restores a nickname and color on a second device', async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+
+    await mom.engine.setNickname(anna.inboxId, '  Annie  ')
+    await mom.engine.setColor(anna.inboxId, '#A855F7')
+    const momsIpad = user('', { dayPlans: [], recurringPlans: [] }, mom.seed)
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().buddies).toMatchObject([
+      { inboxId: anna.inboxId, nickname: 'Annie', color: '#A855F7' },
+    ])
+
+    await mom.engine.setNickname(anna.inboxId, ' ')
+    expect(mom.store.getState().buddies[0].nickname).toBeUndefined()
+    await mom.engine.setColor(anna.inboxId, null)
+    expect(mom.store.getState().buddies[0].color).toBeUndefined()
+  })
+
   it('keeps devices that already have buddies in step through the roster', async () => {
     const { fake, user } = setup()
     const mom = user('Mom')

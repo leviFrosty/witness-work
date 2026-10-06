@@ -1063,7 +1063,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   // A buddy who asked to join comes pre-added; nothing is sent until saved.
   const initialInvitedBuddies = [
     ...new Set([
-      ...(existingDayPlan?.buddies ?? []),
+      ...(existingDayPlan?.buddies ?? prefill?.buddies ?? []),
       ...(route.params.inviteBuddies ?? []),
     ]),
   ]

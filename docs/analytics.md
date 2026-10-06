@@ -128,7 +128,7 @@ speculative tier/billing/price/options/legal-link paywall events were removed.
 | Are publisher settings and year rollover used?               | `role_period_set`, `hours_logging_changed`, `time_rollover_apply_requested`, `time_rollover_undone`.                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Do reminders to log planned time work?                       | `unlogged_day_reminders_changed` (`enabled`); `notification_opened` with `kind: unloggedDay`, then `time_entry_created` from the Add Time it opens.                                                                                                                                                                                                                                                                                                                                                                           |
 | Are reports exported?                                        | `service_report_export_requested`, `service_report_exported`, `service_report_export_dismissed`. Share-sheet resolution has platform limitations; it is not proof of submission.                                                                                                                                                                                                                                                                                                                                              |
-| Are new features adopted?                                    | Timer start/failure, Buddies open/same-time planning, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                                                                                                                                               |
+| Are new features adopted?                                    | Timer start/failure, Buddies open/same-time planning/plan invites/invitation answers/customization, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                                                                                                 |
 | Do buddies use Ask to Join, and does it lead to joint Plans? | `buddy_join_requested` and `buddy_join_request_withdrawn` (`source`: `buddy_plans_for_day` \| `buddy_detail`), `buddy_join_request_answered` (`action`: `invite_opened` \| `invited` \| `not_now`; `invited` when a Plan saved from Invite still includes the buddy, `not_now` for Not Now, dismiss, or Clear All), `buddy_join_request_notifications_changed` (`scope`: `all` \| `buddy`, `enabled`), `buddy_invite_overlap_resolved` (`choice`: `replace` \| `keep_both`). Never names, relay ids, or Plan dates and times. |
 | Do people filter Contacts by last visit?                     | `contacts_staleness_chip_applied` (`variant`: `month`, `week`, `recent`, or `never`) when a Contacts chip turns on that group. Once per session per group; clearing a chip sends nothing.                                                                                                                                                                                                                                                                                                                                     |
 | Are Saved Views adopted and used?                            | `saved_view_created` (`filter_count`, `sort`, `view_count`) and `saved_view_applied` (`view_count`, once per session). Updating, renaming, reordering and deleting a view are ordinary edits and send nothing.                                                                                                                                                                                                                                                                                                                |
@@ -277,6 +277,7 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
 | `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
 | `routePlanning`     | `today_route`        | Plan Today's Route in Schedule's day sheet or iPad inspector (today only).   |
+| `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first
@@ -505,6 +506,19 @@ PostHog manages the two API campaigns, their questions, translations, availabili
 and targeting. RevenueCat-based local eligibility distinguishes current paid
 access from a recent confirmed lapse. See [ADR 0013](adr/0013-supporter-feedback-surveys.md)
 for campaign links, default recurrence/dismissal behavior, and rollout steps.
+
+### Buddy detail
+
+A buddy's detail screen answers whether people plan together from it and make
+it their own. All properties are bounded enums; no names, nicknames, relay ids,
+or dates are sent.
+
+| Event                         | When                                                                                 | Properties                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `buddy_plan_invite_opened`    | Invite to a Plan opened the Plan form with the buddy preselected.                    | `source: buddy_detail`. Saving still sends `plan_created` (`invited_buddies`). |
+| `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.               |
+| `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail`, `type: plan \| followUp`, `answer`.   |
+| `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                  |
 
 ### Buddies Alpha feedback
 

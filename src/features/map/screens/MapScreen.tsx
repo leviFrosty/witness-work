@@ -429,6 +429,7 @@ const FullMapView = ({
 
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
     setCardsStowed(false)
+    stowProgress.value = withTiming(0, STOW_TIMING)
     // Clear the old filter before reconciliation so the saved Contact can
     // become the selected carousel card (or the revealed iPad inspector row).
     setSearch('')
@@ -556,9 +557,13 @@ const FullMapView = ({
   // The parallax layout scales the focused card around its centre, so its top
   // edge sits this far below the carousel's frame.
   const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
-  // Stowed cards slide down and fade out completely rather than leaving a
-  // clipped sliver above the tab bar.
-  const stowDistance = (CARD_HEIGHT - cardTopGap) / 2
+  // Stowed cards slide off the bottom of the screen, behind the tab bar,
+  // rather than leaving a clipped sliver above it. They never fade: iOS can
+  // stop drawing glass for good under a view that sat at opacity 0 while the
+  // app was backgrounded or the tab left, so the cards came back see-through.
+  const stowDistance = mapCardBottom + CARD_HEIGHT - cardTopGap
+  /** How far a drag down has to go to stow the cards, short of a flick. */
+  const stowSwipeDistance = (CARD_HEIGHT - cardTopGap) / 6
 
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, or the carousel.
@@ -615,8 +620,8 @@ const FullMapView = ({
 
   const clampProgress = (value: number) => Math.min(1, Math.max(0, value))
 
-  // Dragging the cards down follows the finger and stows them past a third of
-  // the way or on a flick. Horizontal drags stay with the carousel.
+  // Dragging the cards down follows the finger and stows them past a short
+  // distance or on a flick. Horizontal drags stay with the carousel.
   const cardsStowGesture = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetY(12)
@@ -625,7 +630,7 @@ const FullMapView = ({
       stowProgress.value = clampProgress(e.translationY / stowDistance)
     })
     .onEnd((e) => {
-      if (e.translationY > stowDistance / 3 || e.velocityY > 500) {
+      if (e.translationY > stowSwipeDistance || e.velocityY > 500) {
         toggleCardsStowed()
       } else {
         settleStowProgress()
@@ -699,7 +704,6 @@ const FullMapView = ({
   }))
 
   const animatedCardsStyle = useAnimatedStyle(() => ({
-    opacity: 1 - stowProgress.value,
     transform: [{ translateY: stowProgress.value * stowDistance }],
   }))
 
@@ -846,7 +850,7 @@ const FullMapView = ({
                 <Marker
                   onPress={() => {
                     mapContactCreation.cancel()
-                  if (cardsStowed) toggleCardsStowed()
+                    if (cardsStowed) toggleCardsStowed()
                     setInspectorRevealRequest((request) => request + 1)
                     handlePinPress(c.id)
                   }}
@@ -1240,7 +1244,7 @@ const FullMapView = ({
                         : 'map_hideContactCards'
                     )}
                     variant='glass'
-                  onPress={() => toggleCardsStowed()}
+                    onPress={() => toggleCardsStowed()}
                     style={mapControlStyle}
                   >
                     <LucideIcon

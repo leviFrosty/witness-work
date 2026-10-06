@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
 import PlanBuddiesLine from '@/features/buddies/components/PlanBuddiesLine'
+import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import { RootStackNavigation } from '@/types/rootStack'
 import { TimeEntry } from '@/types/timeEntry'
 
@@ -45,6 +46,7 @@ export default function ScheduleDayInspector({
         onPlanDay={() => navigation.navigate('PlanDay', { date: dateString })}
         renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
       />
+      <TodayRouteEntry date={date} />
       <BuddyPlansForDay date={date} onNavigate={(go) => go()} />
     </Card>
   )

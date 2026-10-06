@@ -6,6 +6,7 @@ const allFeatures: FeatureKey[] = [
   'iCloudSync',
   'customAppIcon',
   'savedContactViews',
+  'routePlanning',
 ]
 
 describe('evaluateFeatureAccess', () => {

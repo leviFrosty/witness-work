@@ -105,6 +105,8 @@ export type RootStackParamList = {
     recurring?: boolean
   }
   Rollover: undefined
+  /** Supporter: today's stops in the shortest driving order. */
+  TodayRoute: undefined
   MilestoneShowcase: undefined
   FAQ: { scrollToCategory?: string } | undefined
   /** QR codes and a link for sharing WitnessWork with a friend. */

@@ -28,6 +28,8 @@ export default {
     `${BASE_URL}/notes-import/${importId}/cancel`,
   notesImportDestroy: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/destroy`,
+  // Supporter-only shortest order for today's stops; coordinates only.
+  routePlanningOptimize: `${BASE_URL}/route-planning/optimize`,
   // Base for the Buddies relay's `/buddies/v1/*` ops (docs/buddies-protocol.md).
   buddies: BASE_URL,
 }

@@ -178,6 +178,9 @@ export const FAQS: FAQEntry[] = [
     related: [105],
   },
   { id: 'logTimeReminders', category: 'plans', related: [203] },
+  { id: 'routePlanning', category: 'plans' },
+  { id: 'routePlanningNavigation', category: 'plans' },
+  { id: 'routePlanningPrivacy', category: 'plans' },
   {
     id: 'importContacts',
     category: 'contacts',

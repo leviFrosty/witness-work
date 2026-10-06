@@ -45,7 +45,8 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).
 
 - **Report back with screenshots.** In your final message, embed the changed screens as Markdown images with absolute paths, e.g. `![Buddy detail](/tmp/ww-shots/buddy-detail.png)`. T3 Code shows them inline. Add one line saying what each shows.
-- **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table. A brand-new screen has no before; label it "New screen".
+- **No images in tables in your messages.** T3 Code doesn't render images inside Markdown tables. For a before/after pair in a chat reply, put each image on its own line under a short label (`Before:`, then the image; `After:`, then the image). Tables of images are for PR bodies only.
+- **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table in the PR body. A brand-new screen has no before; label it "New screen".
 - **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree and capture it there.
 - **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Add dark mode or iPad only where the change looks different there.
 - **Make them readable.** Stage sample data so every changed section has content, since an empty state hides the change. Turn off the floating dev Tools button (dev menu → Tools button). Shrink images to about 1,000 px tall (`sips -Z 1000`). Use made-up names and data; the repo is public.

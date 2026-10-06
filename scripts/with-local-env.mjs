@@ -12,16 +12,18 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   }[variant]
   if (!filenames) throw new Error('Expected development, production or beta')
 
-  let directory = root
-  if (!fs.existsSync(path.join(directory, filenames[0]))) {
-    const worktrees = spawnSync('git', ['worktree', 'list', '--porcelain'], {
-      cwd: root,
-      encoding: 'utf8',
-    })
-    const mainCheckout = worktrees.stdout?.match(/^worktree (.+)$/m)?.[1]
-    if (mainCheckout) directory = mainCheckout
-  }
-  if (!fs.existsSync(path.join(directory, filenames[0]))) {
+  // Worktrees layer their own files over the main checkout's, so a worktree
+  // that only received a copy of `.env` still sees the main `.env.local`.
+  const worktrees = spawnSync('git', ['worktree', 'list', '--porcelain'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+  const mainCheckout = worktrees.stdout?.match(/^worktree (.+)$/m)?.[1]
+  const directories =
+    mainCheckout && path.resolve(mainCheckout) !== path.resolve(root)
+      ? [mainCheckout, root]
+      : [root]
+  if (!directories.some((d) => fs.existsSync(path.join(d, filenames[0])))) {
     throw new Error(
       `${filenames[0]} missing here and in the main checkout; see docs/build.md`
     )
@@ -38,18 +40,14 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
       delete env[key]
   }
   const files = []
-  for (const filename of filenames) {
-    const file = path.join(directory, filename)
-    if (fs.existsSync(file)) {
-      Object.assign(env, dotenv.parse(fs.readFileSync(file)))
-      files.push(file)
+  for (const directory of directories) {
+    for (const filename of filenames) {
+      const file = path.join(directory, filename)
+      if (fs.existsSync(file)) {
+        Object.assign(env, dotenv.parse(fs.readFileSync(file)))
+        files.push(file)
+      }
     }
-  }
-  // A worktree can override the main checkout's config without copying secrets.
-  const localOverride = path.join(root, filenames[1])
-  if (directory !== root && fs.existsSync(localOverride)) {
-    Object.assign(env, dotenv.parse(fs.readFileSync(localOverride)))
-    files.push(localOverride)
   }
   Object.assign(env, {
     APP_VARIANT: variant,

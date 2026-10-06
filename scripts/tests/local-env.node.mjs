@@ -127,6 +127,35 @@ test('worktrees use the main checkout env and allow an override in their own dir
   assert.equal(files.length, 2)
 })
 
+test('a worktree holding a copied .env still layers over the main checkout .env.local', () => {
+  const root = fixture()
+  const worktree = `${root}-worktree`
+  directories.push(worktree)
+  const git = (...args) => {
+    const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+  }
+  git('init', '-q')
+  git(
+    '-c',
+    'user.name=Test',
+    '-c',
+    'user.email=test@example.invalid',
+    'commit',
+    '--allow-empty',
+    '-qm',
+    'initial'
+  )
+  git('worktree', 'add', '-qb', 'env-copy-test', worktree)
+  write(root, '.env', 'EXPO_PUBLIC_API_BASE_URL=http://main\n')
+  write(root, '.env.local', 'GOOGLE_MAPS_ANDROID_API_KEY=main_maps\n')
+  write(worktree, '.env', 'EXPO_PUBLIC_API_BASE_URL=http://worktree\n')
+  const { env, files } = loadLocalEnv(worktree, 'development', {})
+  assert.equal(env.GOOGLE_MAPS_ANDROID_API_KEY, 'main_maps')
+  assert.equal(env.EXPO_PUBLIC_API_BASE_URL, 'http://worktree')
+  assert.equal(files.length, 3)
+})
+
 test('missing environment files and disabled runtime inlining fail clearly', () => {
   const root = fixture()
   assert.throws(

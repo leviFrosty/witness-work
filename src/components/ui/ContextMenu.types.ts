@@ -74,5 +74,12 @@ export type ContextMenuProps = {
   pointerEffect?: 'tint' | 'highlight' | 'lift' | 'none'
   /** Corner radius of the hover tint, to match the content's own shape. */
   hoverRadius?: number
+  /**
+   * The content keeps its own width (a chip) instead of filling the width its
+   * container gives it (a row or card, the default). Set it for short labels:
+   * feeding the measured width back loses up to a pixel to rounding on Android,
+   * which cuts the label off ("Favorit…").
+   */
+  fitContent?: boolean
   style?: StyleProp<ViewStyle>
 }

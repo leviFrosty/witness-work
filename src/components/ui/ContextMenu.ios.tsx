@@ -31,11 +31,13 @@ export default function ContextMenu({
   preview,
   pointerEffect = 'tint',
   hoverRadius,
+  fitContent = false,
   style,
 }: ContextMenuProps) {
   const { colorScheme } = usePreferences()
   // Hosted RN content sizes to its own content, so pass the width the
-  // surrounding layout gives us down to it explicitly.
+  // surrounding layout gives us down to it explicitly, unless the content is
+  // meant to keep its own width.
   const [width, setWidth] = useState<number>()
   // Rows mount by the hundred, so the preview renders only once a touch lands
   // on this trigger — well before the long press completes. The Preview slot
@@ -97,7 +99,11 @@ export default function ContextMenu({
   return (
     <View
       style={style}
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      onLayout={
+        fitContent
+          ? undefined
+          : (event) => setWidth(event.nativeEvent.layout.width)
+      }
     >
       {/* Without this, rows first laid out under the home indicator measure short. */}
       <Host matchContents colorScheme={colorScheme} ignoreSafeArea='all'>

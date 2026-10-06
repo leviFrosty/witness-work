@@ -15,6 +15,14 @@ iOS and Android are both supported and share the same app flows. Setup and build
 - **iOS-only features.** iCloud sync/restore, widgets, Live Activities, the Apple Watch app, alternate app icons, and Notes Import (needs Apple App Attest) stay unavailable on Android. Hide their entry points there instead of showing a broken state.
 - **Platform copy.** Don't write "iOS Settings", "iPhone", "App Store", etc. into shared copy; add an `…Android` i18n variant when the wording differs.
 
+## Verify your own work
+
+Prove a change in the running app before calling it done; don't hand verification back to the user. The [`verify-witnesswork`](./.agents/skills/verify-witnesswork/SKILL.md) skill (`node scripts/verify/ww-verify.mjs`) claims an isolated simulator or emulator, seeds state, drives the UI, fuzzes, and saves evidence to `.verify/artifacts/`. Backend changes use `verify-ww-api` in ww-api.
+
+- **Match the check to the change.** UI → drive the changed flow and read the result back; data → read the store after the action; deep link → `wwv link`; bug → reproduce it first, then show it fixed on the same surface.
+- **Both platforms** for anything in the Platforms list above. "Not tested on Android" is a gap to close, not a footnote.
+- **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits) and why.
+
 ## Pointer hover (iPad trackpad, mouse, Pencil)
 
 iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and an Android mouse gets hover callbacks but no system effects. The primitives below do nothing where hover isn't supported, so don't gate them yourself. Apply them where people would naturally hover. Follow Apple's [pointer guidance](https://developer.apple.com/design/human-interface-guidelines/pointing-devices).

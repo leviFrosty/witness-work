@@ -73,3 +73,7 @@ credentials/ios
 
 # App store connect CLI
 .asc
+
+# agent verification state and evidence (scripts/verify)
+.verify/
+.agent-device/

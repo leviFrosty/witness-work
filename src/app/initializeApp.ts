@@ -39,4 +39,10 @@ export function initializeApp() {
     expoChannel: Updates.channel,
     expoUpdateVersion: Updates.updateId,
   })
+
+  // Verification hooks (scripts/verify). The require keeps them out of release
+  // bundles because Metro drops the dead branch before resolving it.
+  if (__DEV__) {
+    require('@/app/dev-harness/installDevHarness').installDevHarness()
+  }
 }

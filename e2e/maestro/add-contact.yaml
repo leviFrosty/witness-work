@@ -1,0 +1,20 @@
+# seed: onboarded
+# assert: __WW_DEV__.stores.contacts.getState().contacts.some((c) => c.name === 'Maestro Verify')
+appId: com.leviwilkerson.jwtimedev
+name: Create a contact from the Contacts tab
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+- tapOn: Contacts
+- assertVisible: No contacts yet
+- tapOn: Add Contact
+# The field's accessible name is "Name" on iOS and its placeholder on Android.
+- tapOn:
+    text: [Name, "What's their name?"]
+- inputText: Maestro Verify
+- hideKeyboard
+- tapOn: Save
+# Saving offers to log the first visit right away.
+- tapOn: Skip
+- assertVisible: Maestro Verify

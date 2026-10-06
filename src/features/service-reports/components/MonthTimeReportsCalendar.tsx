@@ -54,6 +54,10 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   return (
     <Calendar
       key={`${monthToView}-${theme.colors.background}`}
+      // The library prefixes every inner view's testID with this one
+      // (`${testID}.header`, `${testID}.container`, …); without it those
+      // identifiers leak to accessibility and automation as `undefined.*`.
+      testID='month-calendar'
       current={monthToView}
       firstDay={startOfWeek}
       disableMonthChange

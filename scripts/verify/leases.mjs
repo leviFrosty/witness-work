@@ -1,0 +1,787 @@
+// Machine-wide coordination for ww-verify: a crash-safe mutex, device leases
+// with caps and a FIFO wait queue, native build slots, and a memory budget.
+// State is plain JSON in WW_VERIFY_HOME (default ~/.ww-verify). Lease files
+// keep the old `{ worktree, at }` lock shape so older harness copies still
+// treat leased devices as taken.
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
+const env = process.env
+// Machines with 16 GB or less get a tighter policy (see SKILL.md). Env vars
+// always win; POLICY records where each value came from for `status`.
+export const RAM_GB = Number(env.WW_VERIFY_RAM_GB) || os.totalmem() / 2 ** 30
+const SMALL = RAM_GB <= 16
+export const POLICY = {}
+const num = (name, fallback, small = fallback) => {
+  const value = Number(env[name])
+  const fromEnv = Boolean(env[name]) && Number.isFinite(value)
+  POLICY[name] = fromEnv ? 'env' : 'auto'
+  return fromEnv ? value : SMALL ? small : fallback
+}
+
+export const HOME = env.WW_VERIFY_HOME || path.join(os.homedir(), '.ww-verify')
+export const LOCK_DIR = path.join(HOME, 'locks')
+const MUTEX = path.join(HOME, 'mutex')
+const WAITERS = path.join(HOME, 'waiters.json')
+const BUILDS = path.join(HOME, 'active-builds.json')
+const BUILD_WAITERS = path.join(HOME, 'build-waiters.json')
+
+export const CONFIG = {
+  max: {
+    ios: num('WW_VERIFY_MAX_IOS', 2, 1),
+    android: num('WW_VERIFY_MAX_ANDROID', 2, 1),
+  },
+  maxBuilds: num('WW_VERIFY_MAX_BUILDS', 1),
+  idleMin: num('WW_VERIFY_LEASE_IDLE_MIN', 30, 15),
+  budgetGb: num('WW_VERIFY_MEMORY_BUDGET_GB', Math.round(RAM_GB * 0.7), 8),
+  // GB per item, measured on a 16 GB Mac Mini (footprint, not RSS); calibrate
+  // with the env vars on a new machine.
+  est: {
+    ios: num('WW_VERIFY_EST_IOS_GB', 3.4),
+    android: num('WW_VERIFY_EST_ANDROID_GB', 3.2),
+    metro: num('WW_VERIFY_EST_METRO_GB', 0.6),
+    'build-ios': num('WW_VERIFY_EST_IOS_BUILD_GB', 6),
+    'build-android': num('WW_VERIFY_EST_ANDROID_BUILD_GB', 6.5),
+  },
+  metroPorts: Array.from({ length: 40 }, (_, i) => 8090 + i),
+}
+
+const LEGACY_STALE_MS = 24 * 60 * 60 * 1000
+const MUTEX_STALE_MS = 2 * 60 * 1000
+const REAPER_STALE_MS = 10 * 60 * 1000
+// A build refreshes `seenAt` every minute, so a reused pid can't hold a slot.
+const BUILD_STALE_MS = 5 * 60 * 1000
+
+export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+const sleepSync = (ms) =>
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+
+export function pidAlive(pid) {
+  if (!pid) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return error.code === 'EPERM'
+  }
+}
+
+function readJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return fallback
+  }
+}
+
+function writeJsonAtomic(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  const tmp = `${file}.${process.pid}.tmp`
+  fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`)
+  fs.renameSync(tmp, file)
+}
+
+const round = (gb) => Math.round(gb * 10) / 10
+
+// ---------- mutex ----------
+
+let mutexDepth = 0
+
+function breakStaleMutex() {
+  let stat
+  try {
+    stat = fs.statSync(MUTEX)
+  } catch {
+    return
+  }
+  const owner = readText(path.join(MUTEX, 'owner'))
+  const [pid, at] = owner ? owner.split(' ').map(Number) : [0, stat.mtimeMs]
+  const age = Date.now() - at
+  const stale = owner ? !pidAlive(pid) || age > MUTEX_STALE_MS : age > 5000
+  if (!stale) return
+  const grave = `${MUTEX}.stale-${process.pid}-${Date.now()}`
+  try {
+    fs.renameSync(MUTEX, grave)
+  } catch {
+    return
+  }
+  // Another process may have broken and retaken it between our read and the
+  // rename; if we moved a live mutex, hand it back.
+  if (readText(path.join(grave, 'owner')) !== owner) {
+    try {
+      fs.renameSync(grave, MUTEX)
+    } catch {
+      // someone holds a newer one; theirs wins
+    }
+    return
+  }
+  fs.rmSync(grave, { recursive: true, force: true })
+}
+
+function readText(file) {
+  try {
+    return fs.readFileSync(file, 'utf8')
+  } catch {
+    return undefined
+  }
+}
+
+/** Runs `fn` (synchronous, short) while holding the machine-wide mutex. */
+export function withMutex(fn) {
+  if (mutexDepth) return fn()
+  fs.mkdirSync(HOME, { recursive: true })
+  const token = `${process.pid} ${Date.now()} ${Math.random().toString(36).slice(2)}`
+  const deadline = Date.now() + 2 * MUTEX_STALE_MS
+  for (;;) {
+    try {
+      fs.mkdirSync(MUTEX)
+      break
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error
+    }
+    breakStaleMutex()
+    if (Date.now() > deadline)
+      throw new Error(
+        `${MUTEX} is stuck; remove it if no ww-verify process is running`
+      )
+    sleepSync(20 + Math.random() * 60)
+  }
+  fs.writeFileSync(path.join(MUTEX, 'owner'), token)
+  mutexDepth++
+  try {
+    return fn()
+  } finally {
+    mutexDepth--
+    if (readText(path.join(MUTEX, 'owner')) === token)
+      fs.rmSync(MUTEX, { recursive: true, force: true })
+  }
+}
+
+// ---------- leases ----------
+
+export function lockFile(key) {
+  return path.join(LOCK_DIR, `${key.replace(/[^a-zA-Z0-9-]/g, '_')}.json`)
+}
+
+function load(file, now) {
+  const raw = readJson(file, null)
+  if (!raw?.worktree) return null
+  const key = raw.key ?? path.basename(file, '.json')
+  // Old-harness locks are `{ worktree, at }` and stay held for 24 h.
+  const legacy = !raw.platform
+  const beat = raw.heartbeatAt ?? raw.at ?? 0
+  const limit = legacy ? LEGACY_STALE_MS : CONFIG.idleMin * 60_000
+  return {
+    ...raw,
+    key,
+    file,
+    legacy,
+    platform: raw.platform ?? (key.startsWith('avd-') ? 'android' : 'ios'),
+    idleMs: now - beat,
+    expired: !fs.existsSync(raw.worktree) || now - beat > limit,
+    reaping: Boolean(
+      raw.reaper &&
+        pidAlive(raw.reaper.pid) &&
+        now - raw.reaper.at < REAPER_STALE_MS
+    ),
+  }
+}
+
+export function readLeases(now = Date.now()) {
+  let files = []
+  try {
+    files = fs.readdirSync(LOCK_DIR).filter((f) => f.endsWith('.json'))
+  } catch {
+    // no locks yet
+  }
+  return files.map((f) => load(path.join(LOCK_DIR, f), now)).filter(Boolean)
+}
+
+const DERIVED = ['file', 'legacy', 'idleMs', 'expired', 'reaping', 'reaper']
+
+/** Writes a lease, dropping derived fields and any reaper mark. */
+function save(lease) {
+  const raw = Object.fromEntries(
+    Object.entries(lease).filter(([field]) => !DERIVED.includes(field))
+  )
+  writeJsonAtomic(lease.file ?? lockFile(raw.key), raw)
+}
+
+/** Live leases and builds, the Metro each leasing worktree runs, in GB. */
+export function usage(leases, builds) {
+  const live = leases.filter((l) => !l.expired)
+  const worktrees = new Set(live.map((l) => l.worktree))
+  return round(
+    live.reduce((sum, l) => sum + CONFIG.est[l.platform], 0) +
+      worktrees.size * CONFIG.est.metro +
+      builds.reduce((sum, b) => sum + CONFIG.est[`build-${b.platform}`], 0)
+  )
+}
+
+/** Who holds the budgeted memory, for wait messages. */
+function describeUse(leases, now = Date.now()) {
+  const held = leases
+    .filter((l) => !l.expired)
+    .map((l) => `${l.platform} lease ${path.basename(l.worktree)}`)
+  const builds = liveBuilds(now).map(
+    (b) => `${b.platform} build ${path.basename(b.worktree)}`
+  )
+  const all = [...held, ...builds]
+  return `held by ${all.join(', ') || 'nobody'}`
+}
+
+// A waiter polls every ~12 s; one silent for 2 min is gone (or its pid reused).
+const fresh = (now) => (w) => pidAlive(w.pid) && now - w.seenAt < 2 * 60_000
+const liveWaiters = (now = Date.now()) =>
+  readJson(WAITERS, []).filter(fresh(now))
+const liveBuildWaiters = (now = Date.now()) =>
+  readJson(BUILD_WAITERS, []).filter(fresh(now))
+
+/** True while any process of the group runs. */
+export function groupAlive(pgid) {
+  if (!pgid) return false
+  try {
+    process.kill(-pgid, 0)
+    return true
+  } catch (error) {
+    return error.code === 'EPERM'
+  }
+}
+
+// The `up` that owns a build beats every minute; a reused pid stops beating.
+const ownerAlive = (b, now) =>
+  pidAlive(b.pid) && now - (b.seenAt ?? b.startedAt) < BUILD_STALE_MS
+
+/**
+ * Builds holding a slot: the owning `up` is alive, or the build's process group
+ * still runs (an orphan, until `reapBuilds` kills it).
+ */
+export function liveBuilds(now = Date.now()) {
+  return readJson(BUILDS, []).filter(
+    (b) => ownerAlive(b, now) || groupAlive(b.pgid)
+  )
+}
+
+export const isOrphan = (b, now = Date.now()) => !ownerAlive(b, now)
+
+/**
+ * What the builds file keeps: live builds, plus dead ones whose build dirs
+ * still need the reaper.
+ */
+const storedBuilds = (now = Date.now()) =>
+  readJson(BUILDS, []).filter(
+    (b) =>
+      ownerAlive(b, now) ||
+      groupAlive(b.pgid) ||
+      (b.dirs ?? []).some((d) => fs.existsSync(d))
+  )
+
+function pickPort(leases, worktree, busy, exclude = []) {
+  const own = leases.find(
+    (l) => l.worktree === worktree && !l.expired && l.metroPort
+  )?.metroPort
+  if (own && !exclude.includes(own)) return own
+  const used = new Set(
+    leases.filter((l) => l.worktree !== worktree).map((l) => l.metroPort)
+  )
+  return CONFIG.metroPorts.find(
+    (p) => !used.has(p) && !busy.has(p) && !exclude.includes(p)
+  )
+}
+
+/**
+ * One attempt to lease a device. `pool()` lists existing devices as `{ key, id,
+ * name }`; `create(pool)` makes one more (only while the pool is under the
+ * cap). Returns `{ lease }` or `{ wait, holders, position, queued }`.
+ */
+export function tryClaim({
+  worktree,
+  platform,
+  kind,
+  pool,
+  create,
+  busyPorts = () => new Set(),
+  pid = process.pid,
+}) {
+  return withMutex(() => {
+    const now = Date.now()
+    const leases = readLeases(now)
+    const live = leases.filter((l) => !l.expired)
+    const waiters = liveWaiters(now)
+    const leave = () =>
+      writeJsonAtomic(
+        WAITERS,
+        waiters.filter((w) => w.pid !== pid)
+      )
+    const mine = live.find(
+      (l) => l.worktree === worktree && l.platform === platform && !l.reaping
+    )
+    if (mine) {
+      save({ ...mine, heartbeatAt: now, at: now })
+      leave()
+      return { lease: mine, existing: true }
+    }
+    const me = waiters.find((w) => w.pid === pid)
+    if (me) me.seenAt = now
+    else waiters.push({ pid, worktree, platform, since: now, seenAt: now })
+    const queue = waiters
+      .filter((w) => w.platform === platform)
+      .sort((a, b) => a.since - b.since)
+    const position = queue.findIndex((w) => w.pid === pid) + 1
+    const holders = live.filter((l) => l.platform === platform)
+    const cap = CONFIG.max[platform]
+    const need =
+      CONFIG.est[platform] +
+      (live.some((l) => l.worktree === worktree) ? 0 : CONFIG.est.metro)
+    const used = usage(leases, liveBuilds(now))
+    const wait = (reason, impossible = false) => {
+      const entry = waiters.find((w) => w.pid === pid)
+      entry.reason = reason
+      writeJsonAtomic(WAITERS, waiters)
+      return {
+        wait: reason,
+        impossible,
+        holders,
+        position,
+        queued: queue.length,
+      }
+    }
+    if (need > CONFIG.budgetGb)
+      return wait(
+        `a ${platform} device needs ${need} GB but WW_VERIFY_MEMORY_BUDGET_GB is ${CONFIG.budgetGb}`,
+        true
+      )
+    if (position > 1)
+      return wait(
+        `queued behind ${position - 1} earlier ${platform} request(s)`
+      )
+    if (holders.length >= cap)
+      return wait(
+        `all ${cap} ${platform} leases are held (WW_VERIFY_MAX_${platform.toUpperCase()})`
+      )
+    if (used + need > CONFIG.budgetGb)
+      return wait(
+        `memory budget: ${used} GB in use + ${need} GB > ${CONFIG.budgetGb} GB (WW_VERIFY_MEMORY_BUDGET_GB); ${describeUse(leases, now)}`
+      )
+    // A build that queued earlier and waits only for memory goes first, or a
+    // steady stream of device leases would starve it.
+    const since = waiters.find((w) => w.pid === pid).since
+    const build = liveBuildWaiters(now).find(
+      (w) =>
+        w.since < since &&
+        w.blockedOn === 'memory' &&
+        used + need + CONFIG.est[`build-${w.platform}`] > CONFIG.budgetGb
+    )
+    if (build)
+      return wait(
+        `yielding memory to an earlier ${build.platform} build for ${path.basename(build.worktree)}`
+      )
+    const devices = pool()
+    const taken = new Set(leases.map((l) => l.key))
+    let device = devices.find((d) => !taken.has(d.key))
+    if (!device) {
+      if (devices.length >= cap)
+        return wait(`all ${devices.length} ${platform} devices are taken`)
+      device = create(devices)
+    }
+    const metroPort = pickPort(leases, worktree, busyPorts())
+    if (!metroPort) return wait('no free Metro port in 8090-8129')
+    const lease = {
+      key: device.key,
+      worktree,
+      platform,
+      kind,
+      deviceId: device.id,
+      deviceName: device.name,
+      metroPort,
+      createdAt: now,
+      heartbeatAt: now,
+      at: now,
+    }
+    writeJsonAtomic(lockFile(device.key), lease)
+    leave()
+    return { lease }
+  })
+}
+
+/** Polls `tryClaim` until it succeeds or `waitMs` passes. */
+export async function claimLease(
+  options,
+  { waitMs, pollMs = 12_000, beforeTry = async () => {}, onWait = () => {} }
+) {
+  const deadline = Date.now() + waitMs
+  const pid = options.pid ?? process.pid
+  try {
+    for (;;) {
+      await beforeTry()
+      const result = tryClaim(options)
+      if (result.lease || result.impossible || Date.now() >= deadline)
+        return result
+      onWait(result)
+      await sleep(Math.max(0, Math.min(pollMs, deadline - Date.now())))
+    }
+  } finally {
+    withMutex(() =>
+      writeJsonAtomic(
+        WAITERS,
+        liveWaiters().filter((w) => w.pid !== pid)
+      )
+    )
+  }
+}
+
+/** Refreshes this worktree's leases; returns the keys it still holds. */
+export function heartbeat(worktree) {
+  return withMutex(() => {
+    const now = Date.now()
+    return readLeases(now)
+      .filter((l) => l.worktree === worktree && !l.reaping)
+      .map((l) => {
+        save({ ...l, heartbeatAt: now, at: now })
+        return l.key
+      })
+  })
+}
+
+export function updateLeases(worktree, patch, keys) {
+  withMutex(() => {
+    for (const l of readLeases())
+      if (
+        l.worktree === worktree &&
+        !l.expired &&
+        (!keys || keys.includes(l.key))
+      )
+        save({ ...l, ...patch })
+  })
+}
+
+/** Moves this worktree's Metro to a port no other lease or listener uses. */
+export function reservePort(worktree, exclude, busyPorts) {
+  return withMutex(() => {
+    const leases = readLeases()
+    const port = pickPort(
+      leases.filter((l) => l.worktree !== worktree),
+      worktree,
+      busyPorts(),
+      exclude
+    )
+    if (port) updateLeases(worktree, { metroPort: port })
+    return port
+  })
+}
+
+export function release(worktree, filter = () => true) {
+  return withMutex(() =>
+    readLeases()
+      .filter((l) => l.worktree === worktree && filter(l))
+      .map((l) => {
+        fs.rmSync(l.file, { force: true })
+        return l
+      })
+  )
+}
+
+/**
+ * Reaps expired leases: marks them under the mutex (so no one else reaps or
+ * claims them), runs `cleanup(lease)` outside it, then deletes the lease.
+ */
+export async function gc(cleanup) {
+  const victims = withMutex(() =>
+    readLeases()
+      .filter((l) => l.expired && !l.reaping)
+      .map((l) => {
+        writeJsonAtomic(l.file, {
+          ...readJson(l.file, {}),
+          reaper: { pid: process.pid, at: Date.now() },
+        })
+        return l
+      })
+  )
+  for (const lease of victims) {
+    try {
+      await cleanup(lease)
+    } catch (error) {
+      console.error(`[ww-verify] reaping ${lease.key}: ${error.message}`)
+    } finally {
+      withMutex(() => {
+        if (readJson(lease.file, {}).reaper?.pid === process.pid)
+          fs.rmSync(lease.file, { force: true })
+      })
+    }
+  }
+  return victims
+}
+
+// ---------- native builds ----------
+
+/**
+ * One attempt at a build slot. Build waiters queue first-come among themselves,
+ * and must not hold a device lease (ww-verify releases its own before waiting),
+ * so a waiter can never block the memory it waits for.
+ */
+export function tryAcquireBuild({
+  worktree,
+  platform,
+  fingerprint,
+  pid = process.pid,
+}) {
+  return withMutex(() => {
+    const now = Date.now()
+    const builds = liveBuilds(now)
+    if (builds.some((b) => b.pid === pid)) return { ok: true }
+    const leases = readLeases(now)
+    const need = CONFIG.est[`build-${platform}`]
+    const waiters = liveBuildWaiters(now)
+    let me = waiters.find((w) => w.pid === pid)
+    if (!me) {
+      me = { pid, worktree, platform, fingerprint, since: now }
+      waiters.push(me)
+    }
+    me.seenAt = now
+    const queue = [...waiters].sort((a, b) => a.since - b.since)
+    const position = queue.indexOf(me) + 1
+    const wait = (reason, extra = {}) => {
+      me.reason = reason
+      me.blockedOn = extra.blockedOn ?? null
+      writeJsonAtomic(BUILD_WAITERS, waiters)
+      return { wait: reason, position, queued: queue.length, ...extra }
+    }
+    if (need > CONFIG.budgetGb)
+      return wait(
+        `a ${platform} build needs ${need} GB, over WW_VERIFY_MEMORY_BUDGET_GB=${CONFIG.budgetGb}`,
+        { impossible: true }
+      )
+    if (position > 1)
+      return wait(
+        `queued behind ${position - 1} earlier build(s) (${queue
+          .slice(0, position - 1)
+          .map((w) => `${w.platform} ${path.basename(w.worktree)}`)
+          .join(', ')})`
+      )
+    if (builds.length >= CONFIG.maxBuilds)
+      return wait(
+        `${builds.length} of ${CONFIG.maxBuilds} build slots busy (${builds.map((b) => `${b.platform} ${path.basename(b.worktree)} ${String(b.fingerprint).slice(0, 12)}`).join(', ')}; WW_VERIFY_MAX_BUILDS)`
+      )
+    const used = usage(leases, builds)
+    if (used + need > CONFIG.budgetGb)
+      return wait(
+        `memory budget: ${used} GB in use + ${need} GB build > ${CONFIG.budgetGb} GB; ${describeUse(leases, now)}`,
+        { blockedOn: 'memory' }
+      )
+    writeJsonAtomic(BUILDS, [
+      ...storedBuilds(now),
+      { pid, worktree, platform, fingerprint, startedAt: now, seenAt: now },
+    ])
+    writeJsonAtomic(
+      BUILD_WAITERS,
+      waiters.filter((w) => w.pid !== pid)
+    )
+    return { ok: true }
+  })
+}
+
+function updateBuild(pid, patch) {
+  withMutex(() =>
+    writeJsonAtomic(
+      BUILDS,
+      storedBuilds().map((b) => (b.pid === pid ? { ...b, ...patch } : b))
+    )
+  )
+}
+
+/**
+ * Records the build's detached process group and output dirs, so the reaper can
+ * kill an orphaned build and free its disk.
+ */
+export function setBuildGroup(pgid, dirs, pid = process.pid) {
+  updateBuild(pid, { pgid, dirs })
+}
+
+let buildTimer
+
+/**
+ * Waits for a build slot. `ready()` is checked before every attempt, so a
+ * waiter whose artifact appears (another worktree built it) stops waiting and
+ * gets `{ cached }` back instead of a slot.
+ */
+export async function acquireBuild(
+  options,
+  { waitMs, pollMs = 10_000, onWait = () => {}, ready = () => null }
+) {
+  const deadline = Date.now() + waitMs
+  const pid = options.pid ?? process.pid
+  try {
+    for (;;) {
+      const cached = ready()
+      if (cached) return { cached }
+      const result = tryAcquireBuild(options)
+      if (result.ok) {
+        clearInterval(buildTimer)
+        buildTimer = setInterval(() => {
+          try {
+            updateBuild(pid, { seenAt: Date.now() })
+          } catch {
+            // the next beat retries
+          }
+        }, 60_000)
+        buildTimer.unref()
+      }
+      if (result.ok || result.impossible || Date.now() >= deadline)
+        return result
+      onWait(result)
+      await sleep(Math.max(0, Math.min(pollMs, deadline - Date.now())))
+    }
+  } finally {
+    withMutex(() =>
+      writeJsonAtomic(
+        BUILD_WAITERS,
+        liveBuildWaiters().filter((w) => w.pid !== pid)
+      )
+    )
+  }
+}
+
+export function releaseBuild(pid = process.pid) {
+  clearInterval(buildTimer)
+  withMutex(() =>
+    writeJsonAtomic(
+      BUILDS,
+      storedBuilds().filter((b) => b.pid !== pid)
+    )
+  )
+}
+
+function processTable() {
+  const out = spawnSync('ps', ['-axww', '-o', 'pid=,ppid=,pgid=,command='], {
+    encoding: 'utf8',
+  }).stdout
+  return (out ?? '')
+    .split('\n')
+    .map((line) => line.trim().match(/^(\d+)\s+(\d+)\s+(\d+)\s+(.*)$/))
+    .filter(Boolean)
+    .map((m) => ({
+      pid: Number(m[1]),
+      ppid: Number(m[2]),
+      pgid: Number(m[3]),
+      command: m[4],
+    }))
+}
+
+/** Whether a live process of the group runs something from the worktree. */
+function groupOwnedBy(pgid, worktree) {
+  return processTable().some(
+    (p) => p.pgid === pgid && p.command.includes(worktree)
+  )
+}
+
+/**
+ * Kills a build's process group and every descendant. Xcode runs its build
+ * service and each compiler in process groups of their own, so the group alone
+ * would leave compilers writing into the build dirs. The tree is frozen
+ * (SIGSTOP) until no new descendant appears, so nothing spawns or reparents
+ * away mid-kill, then killed.
+ */
+export function killTree(pgid) {
+  const tree = new Set()
+  const signal = (pid, name) => {
+    try {
+      process.kill(pid, name)
+    } catch {
+      // already gone
+    }
+  }
+  for (let pass = 0; pass < 20; pass++) {
+    const table = processTable()
+    const found = table
+      .filter((p) => p.pgid === pgid || tree.has(p.ppid) || tree.has(p.pid))
+      .map((p) => p.pid)
+    for (let grew = true; grew; ) {
+      grew = false
+      for (const p of table)
+        if (!found.includes(p.pid) && found.includes(p.ppid)) {
+          found.push(p.pid)
+          grew = true
+        }
+    }
+    const fresh = found.filter((pid) => !tree.has(pid))
+    if (!fresh.length) break
+    for (const pid of fresh) {
+      tree.add(pid)
+      signal(pid, 'SIGSTOP')
+    }
+  }
+  for (const pid of tree) signal(pid, 'SIGKILL')
+  for (let i = 0; i < 50 && [...tree].some(pidAlive); i++) sleepSync(200)
+  return tree.size
+}
+
+/** Removes build dirs; a just-killed writer can race the first attempt. */
+export function removeDirs(dirs, log = () => {}) {
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) continue
+    try {
+      fs.rmSync(dir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 500,
+      })
+      log(`removed ${dir}`)
+    } catch (error) {
+      log(`could not remove ${dir}: ${error.message}`)
+    }
+  }
+}
+
+/**
+ * Kills builds whose owning `up` died (killed, crashed, or its pid reused):
+ * their detached process group, then their build dirs. The group must run
+ * something from that worktree, so a reused process group id is never killed.
+ * Returns the reaped entries.
+ */
+export async function reapBuilds({ log = () => {} } = {}) {
+  const now = Date.now()
+  const victims = readJson(BUILDS, []).filter((b) => isOrphan(b, now))
+  for (const b of victims) {
+    if (groupAlive(b.pgid) && groupOwnedBy(b.pgid, b.worktree)) {
+      log(
+        `killing orphaned ${b.platform} build of ${path.basename(b.worktree)} (process group ${b.pgid}; its up ${b.pid} is gone)`
+      )
+      killTree(b.pgid)
+    }
+  }
+  const reaped = withMutex(() => {
+    const all = readJson(BUILDS, [])
+    const gone = (b) =>
+      victims.some((v) => v.pid === b.pid && v.startedAt === b.startedAt) &&
+      (!groupAlive(b.pgid) || !groupOwnedBy(b.pgid, b.worktree))
+    const left = all.filter((b) => !gone(b))
+    if (left.length !== all.length) writeJsonAtomic(BUILDS, left)
+    return all.filter(gone).map((b) => ({
+      ...b,
+      // Another build of the same worktree may be using the same dirs.
+      removeDirs: !left.some((l) => l.worktree === b.worktree),
+    }))
+  })
+  for (const b of reaped) if (b.removeDirs) removeDirs(b.dirs ?? [], log)
+  return reaped
+}
+
+/** Read-only view for `ww-verify status`. */
+export function snapshot() {
+  const now = Date.now()
+  const leases = readLeases(now)
+  const builds = liveBuilds(now).map((b) => ({
+    ...b,
+    orphaned: isOrphan(b, now),
+  }))
+  return {
+    leases,
+    builds,
+    waiters: liveWaiters(now).sort((a, b) => a.since - b.since),
+    buildWaiters: liveBuildWaiters(now).sort((a, b) => a.since - b.since),
+    usedGb: usage(leases, builds),
+  }
+}

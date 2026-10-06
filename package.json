@@ -37,7 +37,8 @@
     "build:android:production": "node scripts/with-local-env.mjs production android -- eas build -p android --profile production --local",
     "check:env:android": "node scripts/with-local-env.mjs development android --check",
     "check:env:ios": "node scripts/with-local-env.mjs development ios --check",
-    "test:local-env": "node --test scripts/tests/local-env.node.mjs"
+    "test:local-env": "node --test scripts/tests/local-env.node.mjs",
+    "test:verify": "node --test scripts/tests/verify-locks.node.mjs"
   },
   "dependencies": {
     "@bacons/apple-targets": "5.0.0",
@@ -161,6 +162,7 @@
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "7.1.1",
     "expo-doctor": "^1.20.0",
+    "fast-check": "4.10.2",
     "globals": "17.7.0",
     "husky": "^9.1.7",
     "i18n-auto-translation": "2.2.3",
@@ -170,7 +172,8 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "8.62.1",
     "typescript-go": "npm:typescript@7.0.1-rc",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "yaml": "2.9.0"
   },
   "private": true,
   "expo": {

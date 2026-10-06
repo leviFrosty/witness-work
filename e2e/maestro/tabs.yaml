@@ -1,0 +1,17 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().contacts === 8
+appId: com.leviwilkerson.jwtimedev
+name: Every tab renders with pioneer data
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- assertVisible: Add Time
+- tapOn: Schedule
+- assertVisible: Planned
+- tapOn: Contacts
+- assertVisible: Ada Reyes
+- tapOn: Progress
+- assertVisible: PROJECTED MONTH
+- tapOn: Home
+- assertVisible: Add Time

@@ -48,10 +48,9 @@ import { useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { useTimeCache } from '@/stores/timeCache'
-import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
-import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { mmkvStorage } from '@/stores/mmkv'
+import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
+import { resetLocalData } from '@/app/dev-harness/resetLocalData'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import SupporterBadge from '@/components/SupporterBadge'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
@@ -857,31 +856,6 @@ export default function ToolsScreen() {
     showDone(label)
   }
 
-  const resetLocal = () => {
-    // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
-    // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
-    // setByUser=false, calls resolveInitialEnable(), gets `pull`, and restores
-    // everything from iCloud — kicking the user back to home instead of
-    // onboarding. Re-applied after the defaults reset so the flag survives.
-    setPreferences({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
-    _WARNING_forceDeleteContacts()
-    _WARNING_clearDeleted()
-    _WARNING_forceDeleteServiceReports()
-    setServiceReports({
-      dayPlans: [],
-      recurringPlans: [],
-      deletedDayPlans: [],
-      deletedRecurringPlans: [],
-    })
-    _WARNING_forceDeleteConversations()
-    useMileage.getState()._WARNING_forceDeleteMileage()
-    invalidateAllCache()
-    setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
-    setProfile({ ...PROFILE_DEFAULTS })
-    mmkvStorage.clearAll()
-    void AsyncStorage.clear()
-  }
-
   const generateAllMockData = async () => {
     await generateContacts(mockContactCount)
     generateServiceReports()
@@ -893,7 +867,7 @@ export default function ToolsScreen() {
 
   const resetAll = () =>
     confirmDevAction('Reset all (fresh install)', () => {
-      resetLocal()
+      resetLocalData()
       showDone('All data cleared — restart the app')
     })
 
@@ -916,7 +890,7 @@ export default function ToolsScreen() {
                 native: true,
               })
             }
-            resetLocal()
+            resetLocalData()
             showDone('All data cleared (local + iCloud) — restart the app')
           },
         },

@@ -12,16 +12,18 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   }[variant]
   if (!filenames) throw new Error('Expected development, production or beta')
 
-  let directory = root
-  if (!fs.existsSync(path.join(directory, filenames[0]))) {
-    const worktrees = spawnSync('git', ['worktree', 'list', '--porcelain'], {
-      cwd: root,
-      encoding: 'utf8',
-    })
-    const mainCheckout = worktrees.stdout?.match(/^worktree (.+)$/m)?.[1]
-    if (mainCheckout) directory = mainCheckout
-  }
-  if (!fs.existsSync(path.join(directory, filenames[0]))) {
+  // Worktrees layer their own files over the main checkout's, so a worktree
+  // that only received a copy of `.env` still sees the main `.env.local`.
+  const worktrees = spawnSync('git', ['worktree', 'list', '--porcelain'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+  const mainCheckout = worktrees.stdout?.match(/^worktree (.+)$/m)?.[1]
+  const directories =
+    mainCheckout && path.resolve(mainCheckout) !== path.resolve(root)
+      ? [mainCheckout, root]
+      : [root]
+  if (!directories.some((d) => fs.existsSync(path.join(d, filenames[0])))) {
     throw new Error(
       `${filenames[0]} missing here and in the main checkout; see docs/build.md`
     )
@@ -29,27 +31,31 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
 
   // App configuration comes only from the selected files. Keep toolchain vars,
   // but don't inherit app keys or a dev bypass from another shell environment.
+  // POSTHOG_DISABLE_UPLOAD only ever turns uploads off, so it may pass.
   const env = { ...inherited }
   for (const key of Object.keys(env)) {
     if (
-      /^(EXPO_PUBLIC_|POSTHOG_|__EXPO_ENV_|__EXPO_CONFIG_MODE$)/.test(key) ||
+      /^(EXPO_PUBLIC_|POSTHOG_(?!DISABLE_UPLOAD$)|__EXPO_ENV_|__EXPO_CONFIG_MODE$)/.test(
+        key
+      ) ||
       key === 'GOOGLE_MAPS_ANDROID_API_KEY'
     )
       delete env[key]
   }
   const files = []
-  for (const filename of filenames) {
-    const file = path.join(directory, filename)
-    if (fs.existsSync(file)) {
-      Object.assign(env, dotenv.parse(fs.readFileSync(file)))
-      files.push(file)
+  for (const directory of directories) {
+    for (const filename of filenames) {
+      const file = path.join(directory, filename)
+      if (fs.existsSync(file)) {
+        Object.assign(env, dotenv.parse(fs.readFileSync(file)))
+        files.push(file)
+      }
     }
   }
-  // A worktree can override the main checkout's config without copying secrets.
-  const localOverride = path.join(root, filenames[1])
-  if (directory !== root && fs.existsSync(localOverride)) {
-    Object.assign(env, dotenv.parse(fs.readFileSync(localOverride)))
-    files.push(localOverride)
+  // `scripts/verify` points a development run at its own isolated ww-api.
+  if (variant === 'development' && inherited.WW_VERIFY_API_BASE_URL) {
+    env.EXPO_PUBLIC_API_BASE_URL = inherited.WW_VERIFY_API_BASE_URL
+    env.EXPO_PUBLIC_API_DEV_BYPASS = inherited.WW_VERIFY_API_DEV_BYPASS ?? ''
   }
   Object.assign(env, {
     APP_VARIANT: variant,

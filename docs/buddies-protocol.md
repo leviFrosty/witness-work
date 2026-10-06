@@ -14,7 +14,7 @@ Since the MVP: shared Plans and Follow-up invitations (event kinds below). They 
 
 ## Conventions
 
-- **Transport:** `POST {BASE}/buddies/v1/{op}` with a JSON body. All ids travel in bodies — **never in URLs** (production persists request URLs in logs).
+- **Transport:** `POST {BASE}/buddies/v1/{op}` with a JSON body. All ids travel in bodies — **never in URLs** (production persists request URLs in logs). The one exception to POST is the [live signal](#live-signal), a WebSocket whose signed envelope travels in headers.
 - **Binary encoding:** base64url without padding everywhere (`b64u`).
 - **Time:** integer milliseconds since the Unix epoch.
 - **Ids:** `inboxId`, `slotId`, `inviteId`, `deviceId`, `eventId` are `b64u` of 16 random or derived bytes (22 chars). Servers validate `^[A-Za-z0-9_-]{22}$`.
@@ -45,18 +45,19 @@ Ed25519 public keys are 32 raw bytes, `b64u`-encoded (43 chars).
 
 Success: HTTP 200 with `{ "ok": true, ... }`. Failure: `{ "error": "<code>" }` with:
 
-| HTTP | `error`         | Meaning                                                               |
-| ---- | --------------- | --------------------------------------------------------------------- |
-| 400  | `bad_request`   | Malformed envelope/payload, wrong sizes, bad ids                      |
-| 401  | `bad_signature` | Signature missing or invalid                                          |
-| 401  | `stale`         | `ts` outside ±5 min                                                   |
-| 409  | `replay`        | Nonce reused                                                          |
-| 404  | `not_found`     | Unknown inbox / invite (includes expired, deleted, or burned invites) |
-| 409  | `conflict`      | Inbox already registered with a different key; invite already claimed |
-| 410  | `gone`          | Slot does not exist (buddy removed you)                               |
-| 429  | `limit`         | A count cap was hit (slots, invites, devices)                         |
-| 429  | `rate_limited`  | A rate limit was hit                                                  |
-| 503  | `disabled`      | Kill switch is off                                                    |
+| HTTP | `error`            | Meaning                                                               |
+| ---- | ------------------ | --------------------------------------------------------------------- |
+| 400  | `bad_request`      | Malformed envelope/payload, wrong sizes, bad ids                      |
+| 401  | `bad_signature`    | Signature missing or invalid                                          |
+| 401  | `stale`            | `ts` outside ±5 min                                                   |
+| 409  | `replay`           | Nonce reused                                                          |
+| 404  | `not_found`        | Unknown inbox / invite (includes expired, deleted, or burned invites) |
+| 409  | `conflict`         | Inbox already registered with a different key; invite already claimed |
+| 410  | `gone`             | Slot does not exist (buddy removed you)                               |
+| 429  | `limit`            | A count cap was hit (slots, invites, devices)                         |
+| 429  | `rate_limited`     | A rate limit was hit                                                  |
+| 503  | `disabled`         | Kill switch is off                                                    |
+| 426  | `upgrade_required` | `inbox/live` requested without a WebSocket upgrade                    |
 
 ## Operations
 
@@ -101,6 +102,17 @@ Payload fields listed are **in addition** to `ts` and `nonce` for signed ops.
 - `cards`, `events`, and `roster` include only items with `seq > since`; `roster` is `null` when unchanged. `slots` is always the complete current list (≤ 5), so a missing slot tells the owner that buddy ended the connection.
 - Events created by the relay itself (invite claims) use `slotId: ""`.
 
+### Live signal
+
+While the app is in the foreground it keeps a WebSocket open to its own inbox, so a buddy's claim, confirmation, invitation, reply, or request to join shows up within a second instead of at the next foreground or push. The socket only says _that_ something changed; the app then runs `inbox/sync` as usual.
+
+- **Request:** `GET {BASE}/buddies/v1/inbox/live` with `Upgrade: websocket`. Owner-signed exactly like a POST owner op, with op `inbox/live` and payload `{ inboxId, ts, nonce }`, but the envelope travels in headers so no id reaches a URL: `x-buddies-p` (the `p` value) and `x-buddies-s` (the `s` value). Same stale and replay checks. Not a POST op (`POST /inbox/live` is 404).
+- **Refusals (before upgrading):** kill switch off → `503 disabled`; not a WebSocket upgrade → `426 upgrade_required`; then the usual `bad_request`, `bad_signature`, `stale`, `replay`, `not_found`.
+- **Messages (server → app):** `{ "type": "hello", "seq": N }` right after the upgrade, where `N` is the inbox's current `seq` (what a full `inbox/sync` returns); then `{ "type": "changed", "seq": N }` after every committed write that changes what `inbox/sync` returns: `event/put` (new events only), `card/put`, `roster/put`, a delivered claim, and `slot/add`, `slot/remove`, `slot/leave` that changed a slot. No content, ever. Slot changes don't advance `seq`, so the app syncs on every `changed` and on a `hello` past its cursor.
+- **Keepalive:** the app sends `ping` about every 25 s; the relay answers `pong` without waking the inbox's Durable Object. No `pong` within 10 s means the connection is dead and the app reconnects. Anything else the app sends is ignored.
+- **Closes:** `4001 "gone"` when the inbox is deleted or wiped for inactivity (the app syncs, which restores it); `4002 "replaced"` when an 11th socket opens, closing the oldest. The app reconnects with backoff (1 s → 60 s, jittered) while in the foreground and closes the socket when backgrounded.
+- An open socket is not owner activity for the 180-day wipe. Turning the kill switch off refuses new sockets but doesn't close open ones.
+
 ### Buddy writes (writer)
 
 | Op           | Payload                                                                                                          | Response      | Notes                                                                                                                                                                                                                                                                                                        |
@@ -139,7 +151,7 @@ Unsigned ops are rate-limited by client IP.
 ## Push delivery
 
 - APNs HTTP/2 with token auth (ES256 JWT, `kid = APNS_KEY_ID`, `iss = APPLE_TEAM_ID`), host chosen by the device's `apnsEnvironment`, `apns-topic` = the device's registered `apnsTopic` (`IOS_BUNDLE_ID` for devices registered without one), `apns-push-type: alert`, `apns-collapse-id` stable across every attempt of the same alert, `apns-expiration` = the alert's retry deadline.
-- Body: `{ "aps": { "alert": { "title", "body" }, "sound": "default", "thread-id": "buddies" }, "ww": { "kind": "<kind>", "seq": <int> } }`. `seq` is the inbox `seq` of the event the alert is about (the latest one, for a coalesced alert); the app finds that event in `inbox/sync`. No user content, names, ids, or tokens — the device supplied the localized strings.
+- Body: `{ "aps": { "alert": { "title", "body" }, "sound": "default", "thread-id": "buddies", "content-available": 1 }, "ww": { "kind": "<kind>", "seq": <int> } }`. `content-available` lets iOS wake the app (remote-notification background mode) to sync what the alert announced before the User opens it; best effort, at iOS's discretion. `seq` is the inbox `seq` of the event the alert is about (the latest one, for a coalesced alert); the app finds that event in `inbox/sync`. No user content, names, ids, or tokens — the device supplied the localized strings.
 - **Durable:** the relay stores the push intent (one outbox row per target device) in the same transaction as the event, attempts it immediately, and retries transient failures (network, 10 s request timeout, 429, 5xx) with exponential backoff (30 s doubling to 1 h) for up to **6 hours** after the event, then gives up (`expired`). Permanent rejections (e.g. `DeviceTokenNotForTopic`, payload errors) are not retried.
 - Delete a device whose token returns HTTP 410 or `BadDeviceToken`; it is not retried.
 - Per inbox, the relay keeps a bounded outcome history (last 200 records, ≤ 30 days): kind, outcome (`sent`, `unregistered`, `failed`, `retrying`, `expired`, `deferred`, `suppressed`), attempt count, and times — never tokens, ids, or text.
@@ -149,6 +161,7 @@ Unsigned ops are rate-limited by client IP.
 Per slot (sender) in the recipient's inbox:
 
 - At most 10 alerts per 24 h, at least 60 s apart.
+- **Immediate kinds** skip the spacing and alert at once, because someone is waiting on them: `pair.confirmed`, `share.reply`, `plan.invite`, `followup.invite`, and `join.request.*`. They still count toward and are limited by the daily cap, and they count as the slot's latest alert for the spacing of other kinds.
 - An alert that arrives inside the 60 s spacing is **deferred**, not dropped: the slot keeps one pending alert and sends it when the spacing allows. A later alert replaces it (latest `kind` and `seq` win), except that a pending cancellation (`*.cancel`, `*.decline`) is kept over a newer non-cancellation.
 - Over the daily cap the alert is suppressed (the event is still stored and synced). Cancellations may use 5 extra alerts per 24 h past the cap so they are not lost to it; they still respect the spacing.
 - Relay events (`invite.claimed`) don't count against any slot.

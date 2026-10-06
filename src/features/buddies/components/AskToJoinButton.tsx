@@ -1,4 +1,4 @@
-import { Check as CheckIcon } from 'lucide-react-native'
+import { Check as CheckIcon, Clock as ClockIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -11,8 +11,9 @@ import type { Buddy } from '@/features/buddies/lib/state'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /**
- * Ask to Join for one of a buddy's Plans, then Asked (tap to withdraw). Nothing
- * once they've invited this User that day or the Plan is about to start.
+ * Ask to Join for one of a buddy's Plans, then Asked (tap to withdraw), or
+ * Waiting to Send until the request reaches them. Nothing once they've invited
+ * this User that day or the Plan is about to start.
  */
 export default function AskToJoinButton({
   buddy,
@@ -33,6 +34,7 @@ export default function AskToJoinButton({
   if (status.kind === 'none') return null
 
   const asked = status.kind === 'asked'
+  const unsent = status.kind === 'asked' && status.unsent
   return (
     <Button
       variant='outline'
@@ -42,7 +44,11 @@ export default function AskToJoinButton({
           : askToJoin.ask(buddy, d, plan, status.expiresAt)
       }
       accessibilityLabel={i18n.t(
-        asked ? 'buddies_askedToJoinA11y' : 'buddies_askToJoinA11y',
+        unsent
+          ? 'buddies_askedToJoinUnsentA11y'
+          : asked
+            ? 'buddies_askedToJoinA11y'
+            : 'buddies_askToJoinA11y',
         { name: buddyDisplayName(buddy), plan: label }
       )}
       style={{
@@ -54,7 +60,11 @@ export default function AskToJoinButton({
     >
       <XView style={{ gap: 4 }}>
         {asked ? (
-          <LucideIcon icon={CheckIcon} size={13} color={theme.colors.textAlt} />
+          <LucideIcon
+            icon={unsent ? ClockIcon : CheckIcon}
+            size={13}
+            color={theme.colors.textAlt}
+          />
         ) : null}
         <Text
           style={{
@@ -63,7 +73,13 @@ export default function AskToJoinButton({
             color: asked ? theme.colors.textAlt : theme.colors.accent,
           }}
         >
-          {i18n.t(asked ? 'buddies_askedToJoin' : 'buddies_askToJoin')}
+          {i18n.t(
+            unsent
+              ? 'buddies_askedToJoinUnsent'
+              : asked
+                ? 'buddies_askedToJoin'
+                : 'buddies_askToJoin'
+          )}
         </Text>
       </XView>
     </Button>

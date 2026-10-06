@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import { Users as UsersIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import ActionButton from '@/components/ui/ActionButton'
@@ -20,7 +20,14 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  * Requests that need my OK first, then buddies, then requests I'm waiting on,
  * then unused invite links. Empty sections are hidden.
  */
-export default function BuddiesList({ onInvite }: { onInvite: () => void }) {
+export default function BuddiesList({
+  onInvite,
+  loading,
+}: {
+  onInvite: () => void
+  /** The first sync is still bringing buddies in; nothing to call empty yet. */
+  loading?: boolean
+}) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const incomingClaims = useBuddies((state) => state.incomingClaims)
@@ -34,6 +41,14 @@ export default function BuddiesList({ onInvite }: { onInvite: () => void }) {
     incomingClaims.length === 0 &&
     outgoingInvites.length === 0
   ) {
+    if (loading)
+      return (
+        <ActivityIndicator
+          color={theme.colors.textAlt}
+          accessibilityLabel={i18n.t('buddies_loading')}
+          style={{ paddingVertical: 40 }}
+        />
+      )
     return (
       <Empty
         dashedOutline

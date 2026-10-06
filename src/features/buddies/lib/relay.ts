@@ -71,12 +71,34 @@ export type RelaySyncResponse = {
   roster: { blob: string; seq: number } | null
 }
 
+/** The part of a WebSocket the live signal uses. */
+export type LiveSocket = {
+  send(data: string): void
+  close(code?: number, reason?: string): void
+  onopen: (() => void) | null
+  onmessage: ((event: { data?: unknown }) => void) | null
+  onerror: ((event: unknown) => void) | null
+  onclose: ((event: { code?: number; reason?: string }) => void) | null
+}
+
 export type RelayDeps = {
   baseUrl: string
   randomBytes: (length: number) => Uint8Array
   fetchImpl?: typeof fetch
   now?: () => number
+  /** React Native's WebSocket, which can send headers, by default. */
+  openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
 }
+
+/** React Native's WebSocket takes headers; the DOM typings don't know it. */
+type HeaderWebSocket = new (
+  url: string,
+  protocols: null,
+  options: { headers: Record<string, string> }
+) => LiveSocket
+
+const openSocket = (url: string, headers: Record<string, string>) =>
+  new (WebSocket as unknown as HeaderWebSocket)(url, null, { headers })
 
 export function createRelayClient(deps: RelayDeps) {
   const fetchImpl = deps.fetchImpl ?? fetch
@@ -106,7 +128,7 @@ export function createRelayClient(deps: RelayDeps) {
     return json as T
   }
 
-  function signed<T>(
+  function envelope(
     op: string,
     seed: Uint8Array,
     fields: Record<string, unknown>
@@ -122,7 +144,15 @@ export function createRelayClient(deps: RelayDeps) {
       concatBytes(utf8(`ww-buddies/v1\n${op}\n`), payload),
       seed
     )
-    return post<T>(op, { p: toB64u(payload), s: toB64u(signature) })
+    return { p: toB64u(payload), s: toB64u(signature) }
+  }
+
+  function signed<T>(
+    op: string,
+    seed: Uint8Array,
+    fields: Record<string, unknown>
+  ) {
+    return post<T>(op, envelope(op, seed, fields))
   }
 
   function unsigned<T>(op: string, fields: Record<string, unknown>) {
@@ -141,6 +171,17 @@ export function createRelayClient(deps: RelayDeps) {
         ...owner(auth),
         ownerPub: auth.ownerPub,
       }),
+    /**
+     * The inbox's live signal: the relay says when something changed, and the
+     * app syncs. Auth rides in headers; ids never go in URLs.
+     */
+    openLive: (auth: OwnerAuth) => {
+      const { p, s } = envelope('inbox/live', auth.ownerSeed, owner(auth))
+      return (deps.openSocket ?? openSocket)(
+        `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
+        { 'x-buddies-p': p, 'x-buddies-s': s }
+      )
+    },
     syncInbox: (auth: OwnerAuth, since: number) =>
       signed<RelaySyncResponse>('inbox/sync', auth.ownerSeed, {
         ...owner(auth),

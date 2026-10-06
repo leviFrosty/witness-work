@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UseBoundStore, StoreApi } from 'zustand'
 
 const mocks = vi.hoisted(() => ({
@@ -18,15 +18,19 @@ const mocks = vi.hoisted(() => ({
   preferences: null as UseBoundStore<
     StoreApi<{ analyticsEnabled: boolean }>
   > | null,
+  appState: 'active',
+  network: {} as { isConnected?: boolean; isInternetReachable?: boolean },
 }))
 vi.mock('react-native', () => ({
   AppState: {
-    currentState: 'active',
+    get currentState() {
+      return mocks.appState
+    },
     addEventListener: () => ({ remove() {} }),
   },
 }))
 vi.mock('expo-network', () => ({
-  useNetworkState: () => ({ isConnected: true, isInternetReachable: true }),
+  useNetworkState: () => mocks.network,
 }))
 vi.mock('@/lib/posthogClient', () => ({
   posthogClient: {
@@ -67,6 +71,8 @@ beforeEach(async () => {
   mocks.failure = undefined
   mocks.exposures = []
   mocks.listeners.clear()
+  mocks.appState = 'active'
+  mocks.network = { isConnected: true, isInternetReachable: true }
   const policy = await import('./analyticsPolicy')
   policy.setAnalyticsEventsAllowed(true)
   policy.setAnalyticsProduction(true)
@@ -233,4 +239,85 @@ it('does not record a cached variant that differs from the rendered value', asyn
       distinctId: 'installation-one',
     },
   ])
+})
+
+describe('useFeatureFlagsStatus', () => {
+  async function mountStatus() {
+    const { useInitializeFeatureFlags, useFeatureFlagsStatus } = await import(
+      './featureFlags'
+    )
+    function Status() {
+      useInitializeFeatureFlags()
+      return <output data-status={useFeatureFlagsStatus()} />
+    }
+    await act(async () => {
+      root = create(<Status />)
+    })
+  }
+  const shownStatus = () => root!.root.findByType('output').props['data-status']
+
+  it('is loaded once values for this identity are in', async () => {
+    await mountStatus()
+    expect(shownStatus()).toBe('loaded')
+  })
+
+  it('is loading until a load settles', async () => {
+    let finish!: () => void
+    mocks.reload.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = () => {
+            publish({ buddies: true })
+            resolve({ buddies: true })
+          }
+        })
+    )
+    await mountStatus()
+    expect(shownStatus()).toBe('loading')
+    await act(async () => finish())
+    expect(shownStatus()).toBe('loaded')
+  })
+
+  it('is failed when loading fails, with every flag closed', async () => {
+    mocks.reload.mockRejectedValue(new Error('offline'))
+    await mountStatus()
+    expect(shownStatus()).toBe('failed')
+  })
+
+  it('is failed when the SDK reports a request error', async () => {
+    await mountStatus()
+    mocks.failure = 'request'
+    await act(async () => publish({ buddies: true }))
+    expect(shownStatus()).toBe('failed')
+  })
+
+  it('is offline without a connection, and loading while that is unknown', async () => {
+    mocks.network = { isConnected: false, isInternetReachable: false }
+    await mountStatus()
+    expect(shownStatus()).toBe('offline')
+    expect(mocks.reload).not.toHaveBeenCalled()
+    await act(async () => root?.unmount())
+    mocks.network = {}
+    await mountStatus()
+    expect(shownStatus()).toBe('loading')
+    expect(mocks.reload).not.toHaveBeenCalled()
+  })
+
+  it('is idle while the app is in the background', async () => {
+    mocks.appState = 'background'
+    await mountStatus()
+    expect(shownStatus()).toBe('idle')
+    expect(mocks.reload).not.toHaveBeenCalled()
+  })
+
+  it('is loading after consent withdrawal until the reset reload publishes', async () => {
+    await mountStatus()
+    await act(async () => {
+      mocks.distinctId = 'installation-two'
+      mocks.preferences!.setState({ analyticsEnabled: false })
+    })
+    expect(shownStatus()).toBe('loading')
+    await act(async () => publish({ buddies: false }))
+    expect(shownStatus()).toBe('loaded')
+  })
 })

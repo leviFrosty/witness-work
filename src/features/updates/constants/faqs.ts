@@ -94,6 +94,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesJoinRequests', category: 'buddies' },
   { id: 'buddiesDetail', category: 'buddies' },
   { id: 'buddiesMissingPlans', category: 'buddies' },
+  { id: 'buddiesNotSent', category: 'buddies' },
   { id: 'buddiesRemove', category: 'buddies' },
   { id: 'mileageStart', category: 'mileage' },
   { id: 'mileageCost', category: 'mileage' },

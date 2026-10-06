@@ -136,3 +136,24 @@ export function buildOutgoingShares(input: {
   }
   return specs
 }
+
+/**
+ * Who is invited to what, comparable as a string. A change here (inviting a
+ * buddy, which includes saying yes to a request to join, uninviting one, or
+ * deleting a shared Plan) is sent at once; detail edits can wait.
+ */
+export function shareRecipientsKey(
+  dayPlans: DayPlan[],
+  visits: Visit[]
+): string {
+  const entries: string[] = []
+  const add = (key: string, buddies: string[]) =>
+    entries.push(`${key}=${[...buddies].sort().join(',')}`)
+  for (const plan of dayPlans)
+    if (plan.buddies?.length && !plan.buddyShare)
+      add(planShareKey(plan.id), plan.buddies)
+  for (const visit of visits)
+    if (visit.followUp?.buddies?.length && !visit.followUp.dismissed)
+      add(followUpShareKey(visit.id), visit.followUp.buddies)
+  return entries.sort().join('|')
+}

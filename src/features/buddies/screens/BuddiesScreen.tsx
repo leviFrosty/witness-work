@@ -15,12 +15,15 @@ import BuddiesFeedbackCard from '@/features/buddies/components/BuddiesFeedbackCa
 import BuddiesList from '@/features/buddies/components/BuddiesList'
 import BuddiesNotificationsCard from '@/features/buddies/components/BuddiesNotificationsCard'
 import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
+import BuddiesSyncNotice from '@/features/buddies/components/BuddiesSyncNotice'
 import EnterInviteLink from '@/features/buddies/components/EnterInviteLink'
+import useBuddiesSyncStatus from '@/features/buddies/hooks/useBuddiesSyncStatus'
 import useLiveBuddiesSync from '@/features/buddies/hooks/useLiveBuddiesSync'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import { createAndShareInvite } from '@/features/buddies/lib/shareInvite'
+import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
@@ -39,16 +42,20 @@ export default function BuddiesScreen({
   const hasInbox = useBuddies((state) => state.registeredInboxId !== null)
   const needsOnboarding = useBuddies((state) => !state.onboardingComplete)
   const [refreshing, setRefreshing] = useState(false)
+  const syncStatus = useBuddiesSyncStatus()
 
   useLiveBuddiesSync()
 
-  // A pull is a deliberate ask, so say why it didn't work.
+  // A pull is a deliberate ask, so say why it didn't work, unless only
+  // publishing failed after everything came in.
   const refresh = async () => {
     setRefreshing(true)
+    const startedAt = Date.now()
     try {
       await buddiesEngine.sync()
     } catch (error) {
-      Alert.alert(buddiesErrorMessage(error))
+      if (!syncReadInbox(useBuddies.getState().lastSyncAt, startedAt))
+        Alert.alert(buddiesErrorMessage(error))
     } finally {
       setRefreshing(false)
     }
@@ -166,8 +173,13 @@ export default function BuddiesScreen({
             />
           </View>
         </View>
+        <BuddiesSyncNotice
+          notice={syncStatus.notice}
+          syncing={syncStatus.syncing}
+          onRetry={syncStatus.retry}
+        />
         <EnterInviteLink />
-        <BuddiesList onInvite={invite} />
+        <BuddiesList onInvite={invite} loading={syncStatus.firstLoad} />
         {hasInbox && <BuddiesNotificationsCard />}
         <BuddiesFeedbackCard />
       </ScrollView>

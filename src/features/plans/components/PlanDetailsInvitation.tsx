@@ -5,11 +5,13 @@ import SegmentedControl from '@/components/ui/SegmentedControl'
 import i18n from '@/lib/locales'
 import type { BuddyShareRef } from '@/types/timeEntry'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
+import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
-import type {
-  IncomingShare,
-  IncomingShareStatus,
+import {
+  incomingShareKey,
+  type IncomingShare,
+  type IncomingShareStatus,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import PlanDetailsBuddyRow from '@/features/plans/components/PlanDetailsBuddyRow'
@@ -40,6 +42,10 @@ export default function PlanDetailsInvitation({
   const buddy = useBuddies((state) =>
     state.buddies.find((candidate) => candidate.inboxId === from)
   )
+  // e.g. "Sending in 12s" while a Can't Make It can still change.
+  const delivery = useReplyDelivery(
+    share ? incomingShareKey(share.from, share.shareId) : undefined
+  )
   if (!buddy) return null
   const name = buddyDisplayName(buddy)
 
@@ -59,6 +65,7 @@ export default function PlanDetailsInvitation({
       {share ? (
         <InputRowContainer
           label={i18n.t('planDetails_yourAnswer')}
+          description={delivery}
           controlWidth='full'
           lastInSection
         >

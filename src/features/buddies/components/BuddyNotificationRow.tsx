@@ -19,13 +19,17 @@ import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
+import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { trackShareAnswer } from '@/features/buddies/lib/shareAnswerAnalytics'
-import type { BuddyNotification } from '@/features/buddies/lib/state'
+import {
+  replyHoldMs,
+  type BuddyNotification,
+} from '@/features/buddies/lib/state'
 import type { DayPlan } from '@/types/timeEntry'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
@@ -120,6 +124,7 @@ export default function BuddyNotificationRow({
   )
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const status = share ? effectiveShareStatus(share, dayPlans) : undefined
+  const replyDelivery = useReplyDelivery(share ? entry.shareKey : undefined)
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true)
@@ -187,7 +192,9 @@ export default function BuddyNotificationRow({
   const reply = (answer: ShareReply) => {
     trackShareAnswer('notifications', entry.shareType, answer)
     return run(async () => {
-      await buddiesEngine.replyToShare(entry.shareKey!, answer)
+      await buddiesEngine.replyToShare(entry.shareKey!, answer, {
+        holdMs: replyHoldMs(answer),
+      })
       if (answer === 'going') offerReplace()
     })
   }
@@ -353,12 +360,16 @@ export default function BuddyNotificationRow({
         <ShareAnswerButtons disabled={busy} onAnswer={reply} />
       ) : share && (status === 'going' || status === 'declined') ? (
         <XView style={{ gap: 10, justifyContent: 'space-between' }}>
-          <Text style={{ color: theme.colors.textAlt }}>
+          <Text
+            numberOfLines={1}
+            style={{ flexShrink: 1, color: theme.colors.textAlt }}
+          >
             {i18n.t(
               status === 'going'
                 ? 'buddies_answeredGoing'
                 : 'buddies_answeredDeclined'
             )}
+            {replyDelivery ? ` · ${replyDelivery}` : null}
           </Text>
           <Button
             onPress={() => {

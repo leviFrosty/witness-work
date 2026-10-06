@@ -1,7 +1,12 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { fromB64u, toB64u, utf8 } from '@/features/buddies/lib/bytes'
-import { open, seal } from '@/features/buddies/lib/crypto'
+import {
+  concatBytes,
+  fromB64u,
+  toB64u,
+  utf8,
+} from '@/features/buddies/lib/bytes'
+import { ed25519Verify, open, seal } from '@/features/buddies/lib/crypto'
 import {
   deriveDirection,
   deriveIdentity,
@@ -30,11 +35,14 @@ import {
   MAX_NOTIFICATIONS,
   notificationIdForSeq,
   OutgoingShareSpec,
+  REPLY_HOLD_MS,
+  replyHoldMs,
 } from '@/features/buddies/lib/state'
 import {
   buildOutgoingShares,
   followUpShareDetails,
   planShareKey,
+  shareRecipientsKey,
 } from '@/features/buddies/lib/shares'
 import {
   effectiveShareStatus,
@@ -46,6 +54,7 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
+import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
@@ -80,13 +89,17 @@ function setup() {
   const fake = createFakeRelay(now)
   /** Ops that fail as if the device were offline. */
   const offlineOps = new Set<string>()
+  /** Runs after the relay handled a request, before its response arrives. */
+  let afterOp: ((op: string) => Promise<void>) | null = null
   const relay = createRelayClient({
     baseUrl: 'https://relay.test',
     randomBytes: random,
-    fetchImpl: ((url: string, init?: RequestInit) => {
-      if (offlineOps.has(String(url).split('/buddies/v1/')[1]))
-        return Promise.reject(new TypeError('Network request failed'))
-      return fake.fetchImpl(url, init)
+    fetchImpl: (async (url: string, init?: RequestInit) => {
+      const op = String(url).split('/buddies/v1/')[1]
+      if (offlineOps.has(op)) throw new TypeError('Network request failed')
+      const response = await fake.fetchImpl(url, init)
+      await afterOp?.(op)
+      return response
     }) as typeof fetch,
     now,
   })
@@ -128,6 +141,9 @@ function setup() {
   return {
     fake,
     offlineOps,
+    setAfterOp: (hook: typeof afterOp) => {
+      afterOp = hook
+    },
     user,
     advance: (ms: number) => {
       clock += ms
@@ -227,6 +243,33 @@ describe('buddies primitives', () => {
   })
 })
 
+describe('shareRecipientsKey', () => {
+  const plan = (buddies?: string[]): DayPlan => ({
+    ...dayPlan('2026-09-24', 60, 600),
+    ...(buddies ? { buddies } : {}),
+  })
+
+  it('changes with who is invited, not with details or order', () => {
+    const base = shareRecipientsKey([plan(['a', 'b'])], [])
+    expect(shareRecipientsKey([plan(['b', 'a'])], [])).toBe(base)
+    expect(shareRecipientsKey([{ ...plan(['a', 'b']), minutes: 90 }], [])).toBe(
+      base
+    )
+    // Saying yes to a request to join adds the buddy.
+    expect(shareRecipientsKey([plan(['a', 'b', 'c'])], [])).not.toBe(base)
+    expect(shareRecipientsKey([plan(['a'])], [])).not.toBe(base)
+    expect(shareRecipientsKey([], [])).not.toBe(base)
+  })
+
+  it("ignores Plans that follow a buddy's invitation", () => {
+    const linked: DayPlan = {
+      ...plan(['a']),
+      buddyShare: { from: 'x', shareId: 'y' },
+    }
+    expect(shareRecipientsKey([linked], [])).toBe('')
+  })
+})
+
 describe('buildBuddyCardDays', () => {
   const today = new Date(2026, 8, 23, 11)
 
@@ -272,6 +315,51 @@ describe('buddies relay client', () => {
     await expect(
       client.syncInbox({ ...impostor, inboxId: me.inboxId }, 0)
     ).rejects.toEqual(new RelayError('bad_signature', 401))
+  })
+
+  it('probes the inbox for the relay check without applying anything', async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const before = anna.store.getState()
+
+    mom.profile.name = 'Mother'
+    await mom.engine.publishCards()
+    const probe = await anna.engine.probeInbox()
+
+    expect(probe).toMatchObject({ since: before.syncSeq, slots: 1, cards: 1 })
+    expect(probe.seq).toBeGreaterThan(before.syncSeq)
+    expect(anna.store.getState().syncSeq).toBe(before.syncSeq)
+    expect(anna.store.getState().buddies[0].name).toBe('Mom')
+  })
+
+  it('opens the live signal with an owner signature in headers, not the URL', () => {
+    const me = deriveIdentity(random(32))
+    const opened: { url: string; headers: Record<string, string> }[] = []
+    const client = createRelayClient({
+      baseUrl: 'https://relay.test',
+      randomBytes: random,
+      openSocket: (url, headers) => {
+        opened.push({ url, headers })
+        return {} as never
+      },
+    })
+    client.openLive(me)
+
+    const [{ url, headers }] = opened
+    expect(url).toBe('wss://relay.test/buddies/v1/inbox/live')
+    const payload = fromB64u(headers['x-buddies-p'])
+    expect(JSON.parse(new TextDecoder().decode(payload))).toMatchObject({
+      inboxId: me.inboxId,
+    })
+    expect(
+      ed25519Verify(
+        fromB64u(headers['x-buddies-s']),
+        concatBytes(utf8('ww-buddies/v1\ninbox/live\n'), payload),
+        fromB64u(me.ownerPub)
+      )
+    ).toBe(true)
   })
 })
 
@@ -394,6 +482,35 @@ describe('buddies pairing', () => {
     advance(INVITE_TTL_MS + 1)
     await anna.engine.sync()
     expect(anna.store.getState().buddies).toEqual([])
+  })
+
+  it('syncs once more for a caller that asked while a sync was running', async () => {
+    const { user, setAfterOp } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+
+    // Anna's sync has read her inbox when Mom's change lands.
+    let reached!: () => void
+    let release!: () => void
+    const atSync = new Promise<void>((resolve) => (reached = resolve))
+    const held = new Promise<void>((resolve) => (release = resolve))
+    setAfterOp(async (op) => {
+      if (op !== 'inbox/sync') return
+      setAfterOp(null)
+      reached()
+      await held
+    })
+    const first = anna.engine.sync()
+    await atSync
+    mom.profile.name = 'Mother'
+    await mom.engine.publishCards()
+    // What a push or live signal for Mom's change does.
+    const second = anna.engine.sync()
+    release()
+    await Promise.all([first, second])
+
+    expect(anna.store.getState().buddies[0].name).toBe('Mother')
   })
 
   it('shares name, photo, and Tenure, keeping photos out of small payloads', async () => {
@@ -800,6 +917,65 @@ describe('shared Plans and Follow-ups', () => {
       kind: 'shareReply',
       reply: 'going',
       name: 'Anna',
+    })
+  })
+
+  it("sends Going at once and holds Can't Make It in case it was a mistake", async () => {
+    const { levi, anna, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const key = incomingShareKey(levi.inboxId, shareId)
+    const reply = (answer: ShareReply) =>
+      anna.engine.replyToShare(key, answer, { holdMs: replyHoldMs(answer) })
+    const received = async () => {
+      await levi.engine.sync()
+      return levi.store.getState().shareReplies[shareId]?.[anna.inboxId]
+    }
+
+    // A mistaken Can't Make It waits; a sync meanwhile sends nothing.
+    await reply('declined')
+    advance(5_000)
+    await anna.engine.sync()
+    expect(await received()).toBeUndefined()
+
+    // Changing it to Going sends that at once, and the decline never goes.
+    await reply('going')
+    expect(await received()).toMatchObject({ status: 'going' })
+    advance(REPLY_HOLD_MS)
+    await anna.engine.deliverReplies()
+    expect(await received()).toMatchObject({ status: 'going' })
+
+    // A deliberate Can't Make It goes once the wait ends.
+    await reply('declined')
+    advance(REPLY_HOLD_MS - 1_000)
+    await anna.engine.deliverReplies()
+    expect(await received()).toMatchObject({ status: 'going' })
+    advance(1_000)
+    await anna.engine.deliverReplies()
+    expect(await received()).toMatchObject({ status: 'declined' })
+    expect(anna.store.getState().incomingShares[key]).toMatchObject({
+      unsentReplyRev: undefined,
+      replySendAt: undefined,
+    })
+  })
+
+  it('sends held answers at once when asked, e.g. leaving the app', async () => {
+    const { levi, anna } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const key = incomingShareKey(levi.inboxId, shareId)
+
+    await anna.engine.replyToShare(key, 'declined', {
+      holdMs: replyHoldMs('declined'),
+    })
+    await anna.engine.sendHeldReplies()
+    await levi.engine.sync()
+    expect(levi.store.getState().shareReplies[shareId]).toMatchObject({
+      [anna.inboxId]: { status: 'declined' },
     })
   })
 

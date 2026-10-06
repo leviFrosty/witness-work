@@ -133,7 +133,22 @@ export type IncomingShare = {
    * delivery is retried on every sync.
    */
   unsentReplyRev?: number
+  /**
+   * When a held answer goes out; until then the User can still change it
+   * (`replyHoldMs`).
+   */
+  replySendAt?: number
 }
+
+/** How long a Can't Make It answer waits before it's sent. */
+export const REPLY_HOLD_MS = 15 * 1000
+
+/**
+ * Going is sent at once. Can't Make It waits `REPLY_HOLD_MS` first, so a
+ * mistaken tap can be changed before the buddy hears about it.
+ */
+export const replyHoldMs = (reply: ShareReply) =>
+  reply === 'declined' ? REPLY_HOLD_MS : 0
 
 export type ReceivedReply = { status: ShareReply; rev: number; at: number }
 
@@ -300,6 +315,12 @@ export type BuddiesState = {
   mutedJoinRequests: string[]
   /** Dev builds only: show Buddies without the remote feature flag. */
   devOverride: boolean
+  /**
+   * The `buddies` flag's value at its last successful load, or null before one.
+   * Keeps Buddies showing while flags reload or can't load (offline); never
+   * opens Buddies by itself.
+   */
+  flagLastKnown: boolean | null
   /** The Profile photo shrunk for Buddy Cards, keyed by its source URI. */
   avatarThumbnail: { source: string; data: string } | null
 }
@@ -331,6 +352,7 @@ export const initialBuddiesState: BuddiesState = {
   joinRequestNotifications: true,
   mutedJoinRequests: [],
   devOverride: false,
+  flagLastKnown: null,
   avatarThumbnail: null,
 }
 

@@ -74,10 +74,13 @@ import SavedViewsBar from '@/features/contacts/components/SavedViewsBar'
  * tucked behind a single sliders icon that opens the modal
  * `ContactsSortAndFilterScreen`. Select mode (batch actions on the rows shown)
  * starts from the header's "…" menu, as in Notes and Files, or from a row's
- * long-press "Select". On the Map the header floats translucent over it so the
- * map runs edge to edge, and compacts once the user starts exploring. On the
- * List, scrolling down tucks everything but the title and search away;
- * scrolling up, swiping down on the header, or tapping the title restores it.
+ * long-press "Select". Filters and sort are shared: the Map pins the contacts
+ * the List shows (it keeps its own search), and its header carries the same
+ * Saved View and last-visit chips. On the Map the header floats translucent
+ * over it so the map runs edge to edge, and compacts once the user starts
+ * exploring. On the List, scrolling down tucks everything but the title and
+ * search away; scrolling up, swiping down on the header, or tapping the title
+ * restores it.
  */
 
 const ContactsScreen = ({
@@ -87,9 +90,14 @@ const ContactsScreen = ({
 }: {
   /**
    * The Map workspace, composed in by the app tier. `topInset` is the height of
-   * the header floating over it; `onExplore` compacts that header.
+   * the header floating over it; `onExplore` compacts that header. `contacts`
+   * are the active contacts the shared filters let through, in sort order.
    */
-  renderMap: (props: { topInset: number; onExplore: () => void }) => ReactNode
+  renderMap: (props: {
+    topInset: number
+    onExplore: () => void
+    contacts: Contact[]
+  }) => ReactNode
   focusSearch?: boolean
   onSearchFocused?: () => void
 }) => {
@@ -100,6 +108,9 @@ const ContactsScreen = ({
   const { height: windowHeight } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
   const contactsView = usePreferences((s) => s.contactsView)
+  const hasCompletedMapOnboarding = usePreferences(
+    (s) => s.hasCompletedMapOnboarding
+  )
   const setPreferences = usePreferences((s) => s.set)
   const showsMap = contactsView === 'map'
   const [headerHeight, setHeaderHeight] = useState(0)
@@ -127,6 +138,7 @@ const ContactsScreen = ({
   const { contacts, customFieldDefs } = useContacts()
   const dismissedCount = contacts.filter(isContactDismissed).length
   const activeContacts = filterActivesContacts(contacts)
+  const mappedContacts = activeContacts.filter((c) => c.coordinate != null)
 
   const search = useContactsSearchStore((s) => s.search)
   const setSearch = useContactsSearchStore((s) => s.setSearch)
@@ -153,10 +165,16 @@ const ContactsScreen = ({
     hasActiveFilters,
     isSortNonDefault,
     searchSortedAndFilteredContacts,
+    sortedAndFilteredContacts,
     searchMatchesById,
     conversationIndex,
   } = useContactsSorted()
   const savedViews = useSavedContactViews()
+  const showsSavedViews = savedViews.views.length > 0 && !savedViews.locked
+  // Over the map once there are pins to filter (not over its onboarding or
+  // empty state).
+  const showsMapFilters =
+    showsMap && hasCompletedMapOnboarding && mappedContacts.length > 0
 
   const selection = useListSelection(
     searchSortedAndFilteredContacts.map((contact) => contact.id)
@@ -376,7 +394,20 @@ const ContactsScreen = ({
             }
             actions={headerActions}
             contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-          />
+          >
+            {showsMapFilters && (
+              <Collapse collapsed={headerCollapsed}>
+                <View style={{ gap: 10, paddingBottom: 10 }}>
+                  {showsSavedViews && <SavedViewsBar surface='map' />}
+                  <ContactsStalenessChips
+                    contacts={mappedContacts}
+                    index={conversationIndex}
+                    surface='map'
+                  />
+                </View>
+              </Collapse>
+            )}
+          </RootHeader>
         </View>
       </GestureDetector>
       {showsMap ? (
@@ -384,6 +415,7 @@ const ContactsScreen = ({
           {renderMap({
             topInset: headerHeight,
             onExplore: () => setMapExplored(true),
+            contacts: sortedAndFilteredContacts,
           })}
         </View>
       ) : (
@@ -525,10 +557,10 @@ const ContactsScreen = ({
                 </Button>
               </View>
 
-              {savedViews.views.length > 0 && !savedViews.locked && (
+              {showsSavedViews && (
                 <Collapse collapsed={listCollapsed}>
                   <View style={{ paddingTop: 10 }}>
-                    <SavedViewsBar />
+                    <SavedViewsBar surface='list' />
                   </View>
                 </Collapse>
               )}
@@ -538,6 +570,7 @@ const ContactsScreen = ({
                   <ContactsStalenessChips
                     contacts={activeContacts}
                     index={conversationIndex}
+                    surface='list'
                   />
                 </View>
               </Collapse>

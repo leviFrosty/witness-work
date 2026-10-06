@@ -28,8 +28,9 @@ export default function ContactsTabScreen({ route, navigation }: Props) {
     <ContactsScreen
       focusSearch={route.params?.focusSearch}
       onSearchFocused={() => navigation.setParams({ focusSearch: undefined })}
-      renderMap={({ topInset, onExplore }) => (
+      renderMap={({ topInset, onExplore, contacts }) => (
         <MapScreen
+          contacts={contacts}
           topInset={topInset}
           onExplore={onExplore}
           renderContactRow={(props) => (

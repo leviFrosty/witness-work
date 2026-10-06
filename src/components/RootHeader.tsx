@@ -40,7 +40,11 @@ type Props = {
   title: string
   /** One or two section-specific actions on the trailing side. */
   actions?: ReactNode
-  /** Local controls under the title: views, date range, search. */
+  /**
+   * Local controls under the title, e.g. rows of filter chips. They span the
+   * header's full width so rows can scroll edge to edge, and bring their own
+   * spacing.
+   */
   children?: ReactNode
   /** Constrains the header to the screen's content column. */
   contentStyle?: StyleProp<ViewStyle>
@@ -173,8 +177,8 @@ export default function RootHeader({
             </View>
           )}
         </Animated.View>
-        {children}
       </Animated.View>
+      {children}
     </View>
   )
 }

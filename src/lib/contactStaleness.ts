@@ -11,7 +11,7 @@ export type ContactStaleness = 'never' | 'recent' | 'week' | 'month'
 /**
  * Display order shared by the color key and the Color Key settings screen: most
  * stale first so the eye lands on red (needs attention) before grey (no data).
- * Mirrors ContactsStalenessChips.
+ * The Contacts chips start in this order until the User drags them.
  */
 export const STALENESS_DISPLAY_ORDER: ContactStaleness[] = [
   'month',
@@ -19,6 +19,19 @@ export const STALENESS_DISPLAY_ORDER: ContactStaleness[] = [
   'recent',
   'never',
 ]
+
+/**
+ * The Contacts chips' order from the saved one: drops unknown buckets and
+ * appends any missing ones in display order.
+ */
+export function getEffectiveStalenessChipOrder(
+  stored: readonly string[] | undefined
+): ContactStaleness[] {
+  return [...new Set([...(stored ?? []), ...STALENESS_DISPLAY_ORDER])].filter(
+    (bucket): bucket is ContactStaleness =>
+      STALENESS_DISPLAY_ORDER.includes(bucket as ContactStaleness)
+  )
+}
 
 /** Which user-overridable marker color each staleness bucket reads from. */
 export const stalenessToMarkerKey: Record<

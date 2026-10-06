@@ -7,6 +7,7 @@ import {
   editActiveSavedView,
   isDefaultContactsQuery,
   moveSavedView,
+  reorderSavedViews,
   orderedSavedViews,
   renameSavedView,
   resolveContactsQuery,
@@ -127,6 +128,35 @@ describe('view edits', () => {
     expect(next.c).toBe(current.c)
     expect(moveSavedView(current, 'a', -1)).toBe(current)
     expect(moveSavedView(current, 'c', 1)).toBe(current)
+  })
+
+  it('reorders views to a dragged order, rewriting only the ones that moved', () => {
+    const current = {
+      ...views(),
+      c: { ...studies, name: 'Third', order: 2, createdAt: 30 },
+    }
+    const next = reorderSavedViews(current, ['c', 'a', 'b'])
+    expect(orderedSavedViews(next).map((view) => view.id)).toEqual([
+      'c',
+      'a',
+      'b',
+    ])
+    expect(reorderSavedViews(current, ['a', 'b', 'c'])).toBe(current)
+  })
+
+  it('keeps views a stale drag missed and skips ones deleted meanwhile', () => {
+    const current = {
+      ...views(),
+      c: { ...studies, name: 'Third', order: 2, createdAt: 30 },
+    }
+    const next = reorderSavedViews(current, ['b', 'gone', 'a'])
+    expect(orderedSavedViews(next).map((view) => view.id)).toEqual([
+      'b',
+      'a',
+      'c',
+    ])
+    expect(next.c).toBe(current.c)
+    expect(next).not.toHaveProperty('gone')
   })
 })
 

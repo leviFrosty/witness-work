@@ -15,11 +15,11 @@ import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { buildConversationIndex } from '@/lib/conversationIndex'
 
 /**
- * Single source of truth for the active contacts pipeline. The Contacts tab and
- * the modal Search & Filter screen both need the same sorted result — this hook
- * runs the pipeline once per mount via `useMemo` chains so each call site stays
- * cheap. Filters and sort come from `useContactsQuery`: the active Saved View,
- * or the User's own.
+ * Single source of truth for the active contacts pipeline. The Contacts tab
+ * (its list and its map) and the modal Search & Filter screen all need the same
+ * sorted result — this hook runs the pipeline once per mount via `useMemo`
+ * chains so each call site stays cheap. Filters and sort come from
+ * `useContactsQuery`: the active Saved View, or the User's own.
  *
  * Reads everything from stores directly so consumers don't need to thread
  * dependencies through props.
@@ -118,8 +118,34 @@ export function useContactsSorted() {
     [filtered, comparator, hasSearch]
   )
 
+  // The same filters and sort without the list's search, for the Map, which
+  // has a search of its own. Without a query that's the list's result as is.
+  const sortedAndFilteredContacts = useMemo(
+    () =>
+      hasSearch
+        ? [
+            ...applyFilters(actives, contactsFilters, {
+              conversations,
+              customFieldDefs,
+              stalenessBreakpoints,
+            }),
+          ].sort(comparator)
+        : searchSortedAndFilteredContacts,
+    [
+      hasSearch,
+      actives,
+      contactsFilters,
+      conversations,
+      customFieldDefs,
+      stalenessBreakpoints,
+      comparator,
+      searchSortedAndFilteredContacts,
+    ]
+  )
+
   return {
     searchSortedAndFilteredContacts,
+    sortedAndFilteredContacts,
     searchMatchesById,
     conversationIndex,
     search,

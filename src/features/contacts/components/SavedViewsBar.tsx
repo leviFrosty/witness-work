@@ -1,16 +1,22 @@
-import { ScrollView } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
+import SortableChipRow from '@/components/ui/SortableChipRow'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import SavedViewChip from '@/features/contacts/components/SavedViewChip'
 
 /**
- * One-tap switching between Saved Views on the Contacts list. Tapping the
- * selected view leaves it, back to the User's own filters. The Contacts screen
- * shows it only while a view exists and isn't locked by a Supporter lapse.
+ * One-tap switching between Saved Views on Contacts, above the list and the
+ * map. Tapping the selected view leaves it, back to the User's own filters.
+ * Dragging a chip reorders the views. The Contacts screen shows it only while a
+ * view exists and isn't locked by a Supporter lapse.
  */
-const SavedViewsBar = () => {
+const SavedViewsBar = ({
+  surface,
+}: {
+  /** Where the bar sits, for analytics. */
+  surface: 'list' | 'map'
+}) => {
   const navigation = useNavigation<RootStackNavigation>()
   const {
     views,
@@ -19,27 +25,28 @@ const SavedViewsBar = () => {
     edited,
     select,
     updateActive,
+    reorder,
     confirmRemove,
   } = useSavedContactViews()
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps='handled'
-      style={{ flexGrow: 0 }}
-      contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
-    >
-      {views.map((view) => {
+    <SortableChipRow
+      data={views}
+      keyExtractor={(view) => view.id}
+      sortEnabled={hasAccess}
+      longPressMenus
+      onReorder={(next) => reorder(next.map((view) => view.id))}
+      renderItem={(view) => {
         const selected = activeView?.id === view.id
         return (
           <SavedViewChip
-            key={view.id}
             name={view.name}
             selected={selected}
             edited={selected && edited}
             onPress={
-              hasAccess ? () => select(selected ? null : view.id) : undefined
+              hasAccess
+                ? () => select(selected ? null : view.id, surface)
+                : undefined
             }
             actions={
               hasAccess
@@ -76,8 +83,8 @@ const SavedViewsBar = () => {
             }
           />
         )
-      })}
-    </ScrollView>
+      }}
+    />
   )
 }
 

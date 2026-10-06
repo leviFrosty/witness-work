@@ -54,6 +54,7 @@ import useDevice from '@/hooks/useDevice'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
+import { Contact } from '@/types/contact'
 import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
@@ -115,20 +116,27 @@ const STOW_TRANSITION = {
 
 interface FullMapViewProps {
   renderContactRow: MapContactRowRenderer
+  /** The pins the Contacts filters let through, in the list's order. */
   contactMarkers: ContactMarker[]
+  /** Any active contact has a location, filtered out or not. */
+  hasMappedContacts: boolean
   activeContactCount: number
   conversationIndex: ConversationIndex
   topInset: number
   onExplore?: () => void
+  /** A contact was saved from a pin dropped on this map. */
+  onContactCreated: (id: string) => void
 }
 
 const FullMapView = ({
   contactMarkers,
+  hasMappedContacts,
   activeContactCount,
   conversationIndex,
   renderContactRow,
   topInset,
   onExplore,
+  onContactCreated,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
@@ -207,9 +215,7 @@ const FullMapView = ({
     top: topInset,
     right:
       width -
-      (isWide && contactMarkers.length > 0 && !cardsStowed
-        ? inspectorWidth + 32
-        : 0),
+      (isWide && hasMappedContacts && !cardsStowed ? inspectorWidth + 32 : 0),
     bottom: height - bottomOverlayInset,
   }
   const pinHover = usePinHover({
@@ -430,9 +436,11 @@ const FullMapView = ({
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
     setCardsStowed(false)
     stowProgress.value = withTiming(0, STOW_TIMING)
-    // Clear the old filter before reconciliation so the saved Contact can
+    // Clear the old search before reconciliation so the saved Contact can
     // become the selected carousel card (or the revealed iPad inspector row).
+    // It stays pinned even if the Contacts filters would hide it.
     setSearch('')
+    onContactCreated(id)
     pendingMarkerSnapIdRef.current = undefined
     setActiveContactId(id)
     setInspectorRevealRequest((request) => request + 1)
@@ -575,7 +583,7 @@ const FullMapView = ({
       ? cardsStowed
         ? mapCardBottom + STOWED_HANDLE_HEIGHT + 8
         : mapCardBottom + CARD_HEIGHT + 8
-      : contactMarkers.length === 0
+      : !hasMappedContacts
         ? bottomOverlayInset + 12 + emptyStateHeight + 8
         : bottomOverlayInset + 4 + noResultsHeight + 8
 
@@ -823,7 +831,7 @@ const FullMapView = ({
                   : {
                       top: topInset,
                       right:
-                        isWide && contactMarkers.length > 0 && !cardsStowed
+                        isWide && hasMappedContacts && !cardsStowed
                           ? inspectorWidth + 32
                           : 0,
                       left: 0,
@@ -886,7 +894,7 @@ const FullMapView = ({
             />
           )}
 
-          {contactMarkers.length > 0 && (
+          {hasMappedContacts && (
             <Animated.View
               style={[
                 {
@@ -990,9 +998,7 @@ const FullMapView = ({
                 transform: isWide
                   ? undefined
                   : [{ scale: parallaxScrollingScale }],
-                ...(isWide && contactMarkers.length === 0
-                  ? emptyCardPlacement
-                  : {}),
+                ...(isWide && !hasMappedContacts ? emptyCardPlacement : {}),
               }}
             >
               <CreateContactCard
@@ -1002,7 +1008,7 @@ const FullMapView = ({
                 onCancel={mapContactCreation.cancel}
               />
             </View>
-          ) : contactMarkers.length === 0 ? (
+          ) : !hasMappedContacts ? (
             renderEmptyState()
           ) : visibleContactMarkers.length === 0 ? (
             <View
@@ -1052,7 +1058,11 @@ const FullMapView = ({
                     />
                   }
                   title={i18n.t('map_noSearchResults')}
-                  description={i18n.t('map_noSearchResults_description')}
+                  description={i18n.t(
+                    contactMarkers.length === 0
+                      ? 'map_noFilterResults_description'
+                      : 'map_noSearchResults_description'
+                  )}
                 />
               </View>
             </View>
@@ -1201,7 +1211,7 @@ const FullMapView = ({
           <View
             style={{
               position: 'absolute',
-              top: topInset + (contactMarkers.length > 0 ? 64 : 8),
+              top: topInset + (hasMappedContacts ? 64 : 8),
               left: 16,
               gap: 8,
             }}
@@ -1317,7 +1327,7 @@ const FullMapView = ({
             style={{
               position: 'absolute',
               right:
-                isWide && contactMarkers.length > 0 && !cardsStowed
+                isWide && hasMappedContacts && !cardsStowed
                   ? inspectorWidth + 48
                   : 16,
               bottom: isWide ? bottomOverlayInset + 32 : locationButtonBottom,
@@ -1364,25 +1374,43 @@ const FullMapView = ({
 }
 
 const MapScreen = ({
+  contacts,
   renderContactRow,
   topInset = 0,
   onExplore,
 }: {
+  /**
+   * Active contacts to pin, with the Contacts filters and sort already applied,
+   * so the map and the list show the same people. Those without a location are
+   * left off.
+   */
+  contacts: Contact[]
   renderContactRow: MapContactRowRenderer
   /** Height of any header floating over the top of the map. */
   topInset?: number
   /** The user started exploring: dragged the map or stowed the cards. */
   onExplore?: () => void
 }) => {
-  const { contacts } = useContacts()
+  const { contacts: allContacts } = useContacts()
   const { conversations } = useConversations()
   const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences()
   const colors = useMarkerColors()
 
-  const activeContacts = useMemo(() => {
-    // First filter out dismissed contacts, then check for coordinates
-    return filterActivesContacts(contacts)
-  }, [contacts])
+  const activeContacts = useMemo(
+    () => filterActivesContacts(allContacts),
+    [allContacts]
+  )
+  const hasMappedContacts = activeContacts.some((c) => c.coordinate != null)
+  // Contacts made from a dropped pin stay on the map for this visit even when
+  // the filters would hide them, so a new pin doesn't vanish once saved.
+  const [droppedIds, setDroppedIds] = useState<string[]>([])
+  const pinnedContacts = useMemo(() => {
+    const shown = new Set(contacts.map((c) => c.id))
+    const dropped = activeContacts.filter(
+      (c) => droppedIds.includes(c.id) && !shown.has(c.id)
+    )
+    return dropped.length > 0 ? [...contacts, ...dropped] : contacts
+  }, [contacts, activeContacts, droppedIds])
 
   // Single O(conversations) index shared by the pin-color loop and every
   // carousel card — replaces the per-contact full-array scans that made the
@@ -1392,15 +1420,19 @@ const MapScreen = ({
     [conversations, stalenessBreakpoints]
   )
 
-  const contactMarkers: ContactMarker[] = useMemo(() => {
-    const contactsWithCoords = activeContacts.filter(
-      (c) => c.coordinate != null
-    )
-    return contactsWithCoords.map((c) => ({
-      ...c,
-      pinColor: stalenessToColor(conversationIndex.stalenessFor(c.id), colors),
-    }))
-  }, [activeContacts, colors, conversationIndex])
+  const contactMarkers: ContactMarker[] = useMemo(
+    () =>
+      pinnedContacts
+        .filter((c) => c.coordinate != null)
+        .map((c) => ({
+          ...c,
+          pinColor: stalenessToColor(
+            conversationIndex.stalenessFor(c.id),
+            colors
+          ),
+        })),
+    [pinnedContacts, colors, conversationIndex]
+  )
 
   if (!hasCompletedMapOnboarding) {
     return (
@@ -1415,10 +1447,12 @@ const MapScreen = ({
       <FullMapView
         renderContactRow={renderContactRow}
         contactMarkers={contactMarkers}
+        hasMappedContacts={hasMappedContacts}
         activeContactCount={activeContacts.length}
         conversationIndex={conversationIndex}
         topInset={topInset}
         onExplore={onExplore}
+        onContactCreated={(id) => setDroppedIds((ids) => [...ids, id])}
       />
     </Wrapper>
   )

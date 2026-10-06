@@ -5,12 +5,17 @@ import { describe, expect, it, vi } from 'vitest'
 
 const calendar = vi.hoisted(() => ({
   onDayPress: undefined as ((day: DateData) => void) | undefined,
+  testID: undefined as string | undefined,
 }))
 
 vi.mock('react-native', () => ({ View: 'div' }))
 vi.mock('react-native-calendars', () => ({
-  Calendar: (props: { onDayPress: (day: DateData) => void }) => {
+  Calendar: (props: {
+    onDayPress: (day: DateData) => void
+    testID?: string
+  }) => {
     calendar.onDayPress = props.onDayPress
+    calendar.testID = props.testID
     return null
   },
 }))
@@ -57,5 +62,21 @@ describe('month calendar selection', () => {
       open: true,
       date: new Date(2026, 0, 20),
     })
+  })
+})
+
+describe('month calendar identifiers', () => {
+  it('passes a testID so the library never derives `undefined.*` identifiers', () => {
+    calendar.testID = undefined
+    renderToStaticMarkup(
+      createElement(MonthTimeReportsCalendar, {
+        month: 0,
+        year: 2026,
+        monthsReports: [],
+        setSheet: vi.fn(),
+      })
+    )
+
+    expect(calendar.testID).toBe('month-calendar')
   })
 })

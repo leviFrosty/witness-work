@@ -61,6 +61,9 @@ Metro process before restarting with these commands; an already-running process
 cannot inherit the new environment. The generated `android/` directory is
 ignored, like `ios/`.
 
+To run and check changes on an emulator, including headless, see
+[`android-emulator-testing.md`](./android-emulator-testing.md).
+
 Android `PullDownMenu` icons are packaged by `plugins/with-android-menu-icons.js`.
 The SF Symbol mapping and vector drawables live in
 `src/assets/android-menu-icons/`; changing these assets requires prebuild and a

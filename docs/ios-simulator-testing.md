@@ -2,6 +2,7 @@
 
 How to run a change on an iOS simulator, collect evidence, and test iPad-only
 input such as pointer hover. For first-time setup, see [`build.md`](./build.md).
+For Android, see [`android-emulator-testing.md`](./android-emulator-testing.md).
 
 Most changes need checking on both an iPhone and an iPad simulator. iPad
 layouts differ: a sidebar from 1,000 pt wide, split views, the menu bar, and
@@ -34,6 +35,12 @@ pnpm run ios --device <UDID> --no-bundler
 
 - Run it through `pnpm run`. Calling `scripts/with-local-env.mjs` directly fails
   with `spawnSync expo ENOENT`, because `expo` isn't on the `PATH` outside pnpm.
+- To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.
+  The `prebuild` script doesn't go through `with-local-env.mjs`, so without
+  `APP_VARIANT` it generates the production app.
+- On a headless machine (no Simulator window), `pnpm run ios` can end with
+  "Simulator app did not open fast enough". The app is already built and
+  installed by then, so ignore it.
 - The first build takes a long time; incremental builds are much faster. Run it
   in the background and log to a file.
 - The built app lands in
@@ -62,6 +69,25 @@ xcrun simctl openurl <UDID> "exp+jw-time://expo-development-client/?url=http%3A%
 
 Run only one Metro. If port 8081 is already taken, reuse that server.
 `curl -s localhost:8081/status` prints `packager-status:running` when it's up.
+
+- Don't start Metro with `--localhost`. It binds only `[::1]`, the app connects
+  to `127.0.0.1`, and you get "Could not connect to development server".
+- `simctl openurl` shows an "Open in WitnessWork Dev?" system prompt, which
+  nothing can tap on a headless machine. Launch straight into the bundle instead:
+
+  ```bash
+  xcrun simctl launch --terminate-running-process <UDID> com.leviwilkerson.jwtimedev --initialUrl http://127.0.0.1:8081
+  ```
+
+- The first launch on a simulator covers the app with the Expo dev-menu intro
+  sheet. Skip it once per simulator:
+
+  ```bash
+  xcrun simctl spawn <UDID> defaults write com.leviwilkerson.jwtimedev EXDevMenuIsOnboardingFinished -bool YES
+  ```
+
+- Metro's log contains control characters, so plain `grep` can miss matches.
+  Use `grep -a`.
 
 Saved files fast-refresh. A syntax error in a half-edited file shows up in the
 Metro log and on screen; fix it before judging any results.

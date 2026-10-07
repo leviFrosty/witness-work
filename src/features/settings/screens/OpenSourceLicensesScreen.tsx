@@ -102,7 +102,7 @@ const OpenSourceLicensesScreen = () => {
           </View>
         </View>
         {results.length ? (
-          <Section style={{ flex: 1, marginBottom: 16 }}>
+          <Section animateRows={false} style={{ flex: 1, marginBottom: 16 }}>
             <FlashList
               data={results}
               keyExtractor={(pkg) => `${pkg.name}@${pkg.version}`}

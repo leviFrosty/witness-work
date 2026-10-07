@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
+import { SectionRows } from '@/components/ui/inputs/Section'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -36,16 +37,18 @@ export default function FollowUpCalendarControls({
     : [...DURATIONS, duration].sort((a, b) => a - b)
   const past = new Date(followUp.date).getTime() < Date.now()
   const openSettings = () => navigation.navigate('PreferencesCalendar')
+  const setupRequired = included && !enabled && !configuredElsewhere
+  const paused = included && enabled && !!error
   return (
-    <>
+    <SectionRows>
       <InputRowSwitch
         label={i18n.t('calendarShowFollowUp')}
-        description={i18n.t(
-          included && past
-            ? 'calendarPastFollowUp'
-            : 'calendarFollowUpDescription'
-        )}
+        info={i18n.t('calendarFollowUpDescription')}
+        description={
+          included && past ? i18n.t('calendarPastFollowUp') : undefined
+        }
         value={included}
+        lastInSection={!included}
         onValueChange={(calendarIncluded) => {
           onChange({
             ...followUp,
@@ -55,43 +58,46 @@ export default function FollowUpCalendarControls({
         }}
       />
       {included && (
-        <>
-          <InputRowSelect
-            label={i18n.t('calendarDuration')}
-            selectProps={{
-              data: durations.map((value) => ({
-                label: formatMinutesCompact(value),
-                value,
-              })),
-              value: duration,
-              onChange: ({ value }) => {
-                onChange({ ...followUp, calendarDurationMinutes: value })
-              },
-            }}
-          />
-          {!enabled && !configuredElsewhere && (
-            <InputRowContainer label={i18n.t('calendarSetupRequired')}>
-              <Button onPress={openSettings}>
-                <Text>{i18n.t('calendarSync')}</Text>
-              </Button>
-            </InputRowContainer>
-          )}
-          {enabled && !!error && (
-            <InputRowContainer
-              label={i18n.t('calendarSyncPaused')}
-              description={
-                <Text style={{ fontSize: 12, color: theme.colors.error }}>
-                  {i18n.t(error as TranslationKey)}
-                </Text>
-              }
-            >
-              <Button onPress={openSettings}>
-                <Text>{i18n.t('calendarSync')}</Text>
-              </Button>
-            </InputRowContainer>
-          )}
-        </>
+        <InputRowSelect
+          label={i18n.t('calendarDuration')}
+          lastInSection={!setupRequired && !paused}
+          selectProps={{
+            data: durations.map((value) => ({
+              label: formatMinutesCompact(value),
+              value,
+            })),
+            value: duration,
+            onChange: ({ value }) => {
+              onChange({ ...followUp, calendarDurationMinutes: value })
+            },
+          }}
+        />
       )}
-    </>
+      {setupRequired && (
+        <InputRowContainer
+          label={i18n.t('calendarSetupRequired')}
+          lastInSection
+        >
+          <Button onPress={openSettings}>
+            <Text>{i18n.t('calendarSync')}</Text>
+          </Button>
+        </InputRowContainer>
+      )}
+      {paused && (
+        <InputRowContainer
+          label={i18n.t('calendarSyncPaused')}
+          lastInSection
+          description={
+            <Text style={{ fontSize: 12, color: theme.colors.error }}>
+              {i18n.t(error as TranslationKey)}
+            </Text>
+          }
+        >
+          <Button onPress={openSettings}>
+            <Text>{i18n.t('calendarSync')}</Text>
+          </Button>
+        </InputRowContainer>
+      )}
+    </SectionRows>
   )
 }

@@ -1,4 +1,5 @@
 import {
+  Award as AwardIcon,
   Car as CarIcon,
   ChevronRight as ChevronRightIcon,
   History as HistoryIcon,
@@ -11,8 +12,9 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
-import i18n from '@/lib/locales'
+import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
+import { earnedBadgeCount } from '@/lib/badges/display'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -42,6 +44,9 @@ const PublisherPreferencesSection = () => {
     logsHours,
     mileageTrackingEnabled,
     publisherHours,
+    showBadges,
+    earnedBadges,
+    setShowBadges,
     setAutoRolloverEnabled,
     setRolloverIncludesCredit,
     set,
@@ -88,6 +93,12 @@ const PublisherPreferencesSection = () => {
     })
   }
 
+  const handleShowBadgesChange = (enabled: boolean) => {
+    setShowBadges(enabled)
+    analytics.capture('badges_setting_changed', { setting: 'show', enabled })
+  }
+  const badgeCount = earnedBadgeCount(earnedBadges)
+
   const saveLogHoursGoal = () => {
     const parsed = parseFloat(logHoursGoal)
     const next = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
@@ -107,6 +118,35 @@ const PublisherPreferencesSection = () => {
       <View>
         <ProfileCard />
       </View>
+
+      <Section>
+        <InputRowSwitch
+          label={i18n.t('badges_showSetting')}
+          info={i18n.t('badges_showSetting_info')}
+          value={showBadges}
+          onValueChange={handleShowBadgesChange}
+          lastInSection={!showBadges}
+        />
+        {showBadges && (
+          <InputRowButton
+            leftIcon={AwardIcon}
+            label={i18n.t('badges_settingsRow')}
+            sublabel={
+              badgeCount > 0
+                ? i18n.t('badges_count' as TranslationKey, {
+                    count: badgeCount,
+                  })
+                : undefined
+            }
+            onPress={() =>
+              navigation.navigate('Badges', { source: 'settings' })
+            }
+            lastInSection
+          >
+            <IconButton icon={ChevronRightIcon} />
+          </InputRowButton>
+        )}
+      </Section>
 
       {publisherType === 'custom' && (
         <>

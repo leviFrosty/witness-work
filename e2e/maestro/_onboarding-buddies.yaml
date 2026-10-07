@@ -1,0 +1,28 @@
+# seed: fresh
+# Buddies on. Before running: `wwv flag buddies on --platform <ios|android>`,
+# from a screen other than onboarding (`wwv seed onboarded` first): seeding
+# `fresh` over onboarding that's already showing keeps its old step. The
+# leading underscore keeps it out of the default `wwv flow` run.
+# assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'badges'
+appId: com.leviwilkerson.jwtimedev
+name: Onboarding explains Buddies, and Continue moves on without inviting
+---
+- extendedWaitUntil:
+    visible: Your field service assistant.
+    timeout: 60000
+- tapOn: Get Started
+- tapOn: Continue
+- tapOn: Continue
+- tapOn: Continue
+- tapOn: Start fresh
+- tapOn: Continue as Kingdom Publisher
+# Closes the keyboard the name field may open.
+- tapOn: Add your name and a picture.
+- tapOn: Continue
+- extendedWaitUntil:
+    visible: Plan together with Buddies
+    timeout: 10000
+- assertVisible: Invite a Buddy
+- assertVisible: Invite buddies anytime from Schedule → Buddies.
+- tapOn: Continue
+- assertNotVisible: Plan together with Buddies

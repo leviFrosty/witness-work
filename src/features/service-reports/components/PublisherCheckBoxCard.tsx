@@ -1,4 +1,5 @@
 import { analytics } from '@/lib/analytics'
+import { noteUserAction } from '@/lib/userAction'
 import {
   CircleCheck as CircleCheckIcon,
   Square as SquareIcon,
@@ -79,6 +80,7 @@ export default function PublisherCheckBoxCard() {
       minutes: 0,
       id: Crypto.randomUUID(),
     }
+    noteUserAction('checkbox')
     addServiceReport(report)
     analytics.capture('time_entry_created', {
       source: 'participation_checkbox',

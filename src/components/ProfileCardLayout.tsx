@@ -24,16 +24,19 @@ export default function ProfileCardLayout({
   avatar,
   title,
   subtitle,
-  badge,
+  trailing,
   details,
+  footer,
 }: {
   avatar: ReactNode
   /** A string renders as the name; pass a node for an editable name. */
   title: ReactNode
   subtitle?: string
   /** Trails the name, e.g. the Service Streak. */
-  badge?: ReactNode
+  trailing?: ReactNode
   details: ProfileCardDetail[]
+  /** Below the detail lines, e.g. a row of badges. */
+  footer?: ReactNode
 }) {
   const theme = useTheme()
   return (
@@ -73,7 +76,7 @@ export default function ProfileCardLayout({
             </Text>
           ) : null}
         </View>
-        {badge}
+        {trailing}
       </View>
       {details.map((detail) => (
         <View
@@ -91,6 +94,7 @@ export default function ProfileCardLayout({
           </Text>
         </View>
       ))}
+      {footer}
     </Card>
   )
 }

@@ -1,6 +1,6 @@
 import { analytics } from '@/lib/analytics'
 import { X as XIcon } from 'lucide-react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import { Modal, ScrollView, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'

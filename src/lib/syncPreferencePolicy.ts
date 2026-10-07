@@ -66,6 +66,10 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'contactsView',
   'activeSavedContactView',
   'mapLayer',
+  'badgesBackfilledAt',
+  'badgesSeenAt',
+  'badgesWelcome',
+  'badgeCardDismissed',
 ])
 
 export const NON_SYNCABLE_PROFILE_KEYS = new Set(['profileUpdatedAt'])
@@ -84,8 +88,13 @@ export const SYNC_MAP_KEYS = new Set([
   'reportCommentOverrides',
   'publisherHours',
   'savedContactViews',
+  'earnedBadges',
 ])
-export const SYNC_SET_KEYS = new Set(['seenTipIds', 'submittedReportMonths'])
+export const SYNC_SET_KEYS = new Set([
+  'seenTipIds',
+  'submittedReportMonths',
+  'badgeLedger',
+])
 export const entryTimestampKey = (key: string, entry: string) =>
   `${key}:${entry}`
 

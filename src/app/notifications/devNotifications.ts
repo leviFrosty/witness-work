@@ -70,7 +70,7 @@ export function clearDevNotifications() {
 /** Switches to Home and opens the bell, like a tapped Buddies push. */
 export function openNotificationsTray() {
   if (navigationRef.isReady())
-    navigationRef.navigate('Root', { screen: 'Home' } as never)
+    navigationRef.navigate('Root', { screen: 'Home' } as never, { pop: true })
   requestNotificationsTray()
 }
 
@@ -104,7 +104,9 @@ export default function useDevNotificationItems(
           id: 'open_tools',
           label: 'Open Tools',
           onPress: () =>
-            navigationRef.navigate('Root', { screen: 'Tools' } as never),
+            navigationRef.navigate('Root', { screen: 'Tools' } as never, {
+              pop: true,
+            }),
         },
         {
           id: 'bump',

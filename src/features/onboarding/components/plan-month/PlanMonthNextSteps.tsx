@@ -1,25 +1,18 @@
 import { View } from 'react-native'
-import {
-  CalendarDays as CalendarDaysIcon,
-  Users as UsersIcon,
-} from 'lucide-react-native'
-import InfoPopover from '@/components/ui/InfoPopover'
+import { CalendarDays as CalendarDaysIcon } from 'lucide-react-native'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 
 const Row = ({
   icon,
   text,
-  info,
 }: {
   icon: AppIcon
   /** May bold a phrase with `**`. */
   text: string
-  info?: { title: string; description: string }
 }) => {
   const theme = useTheme()
   return (
@@ -57,20 +50,16 @@ const Row = ({
           </Text>
         ))}
       </Text>
-      {info ? (
-        <InfoPopover title={info.title} description={info.description} />
-      ) : null}
     </View>
   )
 }
 
 /**
  * Where planning lives after setup, so this step reads as a preview rather than
- * the only chance to plan — and an intro to planning with Buddies.
+ * the only chance to plan. Buddies gets its own step next.
  */
 const PlanMonthNextSteps = () => {
   const theme = useTheme()
-  const buddiesEnabled = useBuddiesEnabled()
 
   return (
     <View style={{ gap: 12, paddingHorizontal: 4 }}>
@@ -87,16 +76,6 @@ const PlanMonthNextSteps = () => {
         {i18n.t('planMonth.next.title')}
       </Text>
       <Row icon={CalendarDaysIcon} text={i18n.t('planMonth.next.schedule')} />
-      {buddiesEnabled ? (
-        <Row
-          icon={UsersIcon}
-          text={i18n.t('planMonth.next.buddies')}
-          info={{
-            title: i18n.t('buddies_onboardingWelcomeTitle'),
-            description: i18n.t('planMonth.next.buddiesInfo'),
-          }}
-        />
-      ) : null}
     </View>
   )
 }

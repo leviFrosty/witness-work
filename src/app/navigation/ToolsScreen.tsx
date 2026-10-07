@@ -100,6 +100,12 @@ import {
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
+import BadgesTools from '@/app/navigation/tools/BadgesTools'
+import {
+  applyBadgeHistoryFixture,
+  earnRandomBadges,
+  evaluateBadgesNow,
+} from '@/app/dev-harness/badges'
 import {
   MONO,
   QuickTile,
@@ -333,6 +339,16 @@ export default function ToolsScreen() {
 
   const showDone = (label: string) =>
     toast.show(label, { message: '', native: true })
+
+  // Mock history reaches badges. Evaluate right away, not quietly, so levels
+  // reached this or last month celebrate and older ones show the summary.
+  const generatedWithBadges = () => {
+    const { added, live } = evaluateBadgesNow()
+    toast.show(i18n.t('generated'), {
+      message: added ? `${added} badges · ${live.length} to celebrate` : '',
+      native: true,
+    })
+  }
 
   const generateContacts = async (count = DEFAULT_MOCK_CONTACT_COUNT) => {
     const { data } = await axios.get(
@@ -636,6 +652,7 @@ export default function ToolsScreen() {
     const exists = contacts.some((c) => c.id === contact.id)
     if (!exists) addContact(contact)
     visits.forEach((visit) => addConversation(visit))
+    evaluateBadgesNow()
 
     showDone(exists ? 'Unique contact exists' : 'Unique contact added')
     navigation.navigate('Contact Details', {
@@ -879,7 +896,8 @@ export default function ToolsScreen() {
     generateOverdueFollowUps()
     generateTodayRoute()
     generateMileage()
-    showDone(i18n.t('generated'))
+    applyBadgeHistoryFixture()
+    generatedWithBadges()
   }
 
   const resetAll = () =>
@@ -1016,7 +1034,7 @@ export default function ToolsScreen() {
             <QuickTile
               icon={FlaskConicalIcon}
               label='Generate all mock data'
-              caption={`${mockContactCount} contacts, reports, plans, mileage`}
+              caption={`${mockContactCount} contacts, reports, plans, mileage, badges`}
               onPress={generateAllMockData}
             />
             <QuickTile
@@ -1112,7 +1130,7 @@ export default function ToolsScreen() {
               info='Pulls names and addresses from jsonplaceholder, scatters them across San Francisco, and spreads creation dates over ~3 years so every staleness band is represented.'
               onPress={async () => {
                 await generateContacts(mockContactCount)
-                showDone(i18n.t('generated'))
+                generatedWithBadges()
               }}
             />
             <ToolRow
@@ -1120,7 +1138,7 @@ export default function ToolsScreen() {
               info='~3 years of daily entries with seeded categories, LDC credit, and realistic gaps between days.'
               onPress={() => {
                 generateServiceReports()
-                showDone(i18n.t('generated'))
+                generatedWithBadges()
               }}
             />
             <ToolRow
@@ -1128,7 +1146,7 @@ export default function ToolsScreen() {
               info='3 weekly recurring plans plus day plans spread across the past two weeks and the coming weeks.'
               onPress={() => {
                 generateServicePlans()
-                showDone(i18n.t('generated'))
+                generatedWithBadges()
               }}
             />
             <ToolRow
@@ -1136,7 +1154,7 @@ export default function ToolsScreen() {
               info='Four contacts whose follow-ups are 5h, 1d, 7d, and 20d overdue, mixing notify and topic combinations.'
               onPress={() => {
                 generateOverdueFollowUps()
-                showDone(i18n.t('generated'))
+                generatedWithBadges()
               }}
             />
             <ToolRow
@@ -1151,6 +1169,21 @@ export default function ToolsScreen() {
               label='Unique contact (edge cases)'
               info='One contact whose visit history covers every Contact Details rendering case, then opens it.'
               onPress={generateUniqueContact}
+            />
+            <ToolRow
+              label='Badges'
+              info='Replaces earned badges with a realistic mixed set: various collections at various levels, two earned just now so they show as new. Whatever your records reach is added quietly too.'
+              onPress={() => {
+                showDone(`${earnRandomBadges()} badges earned`)
+              }}
+            />
+            <ToolRow
+              label='Badge history'
+              info='One contact visited monthly for 8 months (Bible studies, follow-up topics), a time entry every month since the previous service year began, a weekly plan since 3 months ago and 6 sent reports. Earns Bronze or Silver in most collections, Year Round and First Bible Study; two levels reached last month celebrate. Generate all includes it.'
+              onPress={() => {
+                applyBadgeHistoryFixture()
+                generatedWithBadges()
+              }}
             />
             <ToolRow
               label='Mileage'
@@ -1641,6 +1674,8 @@ export default function ToolsScreen() {
             />
           </View>
         </ToolSection>
+
+        <BadgesTools />
 
         <ToolSection
           title='Special updates'

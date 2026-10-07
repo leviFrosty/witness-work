@@ -22,7 +22,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
@@ -37,6 +39,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import ContributionGraph from '@/features/profile/components/ContributionGraph'
 import MonthlyRoutine from '@/features/profile/components/MonthlyRoutine'
 import SinceBadge from '@/features/profile/components/SinceBadge'
+import ProfileBadgesSection from '@/features/profile/components/ProfileBadgesSection'
 import i18n from '@/lib/locales'
 import { getStartDateLabels } from '@/constants/publisher'
 import {
@@ -48,6 +51,8 @@ import {
 import { useFormattedMinutes } from '@/lib/minutes'
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
+/** Fading away for a badge view, which grows out of the tapped medallion. */
+const VANISH_MS = 160
 const SHEET_RADIUS = 15
 const EXPANDED_MARGIN = 12
 
@@ -138,6 +143,7 @@ const ProfileDetailOverlay = () => {
   // hit-test correctly falls through transparent areas, so a closed-but-mounted
   // overlay doesn't eat home-screen taps.
   const progress = useSharedValue(0)
+  const vanish = useSharedValue(1)
 
   const targetX = EXPANDED_MARGIN
   const targetY = insets.top + EXPANDED_MARGIN
@@ -146,8 +152,19 @@ const ProfileDetailOverlay = () => {
 
   useEffect(() => {
     if (!origin) return
-    progress.value = withSpring(open ? 1 : 0, SPRING)
-  }, [open, origin, progress])
+    progress.value = withSpring(open ? 1 : 0, SPRING, (finished) => {
+      // Visible again for the next open once a badge's fade-out is done. Not
+      // on open: Android's Modal remounts the content and misses that write.
+      if (finished && !open) vanish.value = 1
+    })
+  }, [open, origin, progress, vanish])
+
+  // Leaves the medallion's spot to the badge view instead of shrinking past it.
+  const closeForBadge = () => {
+    vanish.value = withTiming(0, { duration: VANISH_MS }, () =>
+      scheduleOnRN(onClose)
+    )
+  }
 
   const containerStyle = useAnimatedStyle(() => {
     if (!origin) return {}
@@ -177,13 +194,15 @@ const ProfileDetailOverlay = () => {
     opacity: interpolate(progress.value, [0, 0.15], [0, 1], 'clamp'),
   }))
 
+  const vanishStyle = useAnimatedStyle(() => ({ opacity: vanish.value }))
+
   if (!origin) return null
 
   return (
     <FullWindowOverlay open={open} onClose={onClose}>
       {open && <StatusBar barStyle='light-content' animated />}
-      <View
-        style={{ flex: 1 }}
+      <Animated.View
+        style={[{ flex: 1 }, vanishStyle]}
         pointerEvents={open ? 'auto' : 'none'}
         accessibilityElementsHidden={!open}
         importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
@@ -257,7 +276,11 @@ const ProfileDetailOverlay = () => {
                 />
                 <IconButton icon={XIcon} size='xl' onPress={onClose} />
               </View>
-              <ProfileCard readOnly />
+              <ProfileCard readOnly hideBadges />
+              <ProfileBadgesSection
+                onBeforeNavigate={onClose}
+                onBeforeOpenBadge={closeForBadge}
+              />
 
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Stat
@@ -355,7 +378,7 @@ const ProfileDetailOverlay = () => {
             </ScrollView>
           </Animated.View>
         </Animated.View>
-      </View>
+      </Animated.View>
     </FullWindowOverlay>
   )
 }

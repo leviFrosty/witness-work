@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { Keyboard, Modal, Platform, View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import RNDateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker'

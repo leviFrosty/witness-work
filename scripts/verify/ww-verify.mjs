@@ -2146,7 +2146,9 @@ const commands = {
     const platform = currentPlatform(state, flags)
     const name = positional[0]
     if (!name)
-      fail('Usage: ww-verify seed <fresh|onboarded|publisher|pioneer|busy>')
+      fail(
+        'Usage: ww-verify seed <fresh|onboarded|publisher|pioneer|busy|badges>'
+      )
     console.log(
       JSON.stringify(
         await cdpEval(
@@ -2534,7 +2536,7 @@ const commands = {
      [--rebuild] [--accept-stale-native] [--wait 30] [--keep-build-dirs]
                                            lease a device, start Metro, install, launch
   doctor                                   read-only health check (exit 1 on failure)
-  seed <fresh|onboarded|publisher|pioneer|busy>
+  seed <fresh|onboarded|publisher|pioneer|busy|badges>
   eval '<js expression>'                   run JS in the app, print JSON
   flag <buddies|notes-import> <on|off|clear>
   nav "<Route Name>" ['{"json":"params"}']

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useId, useRef, useState } from 'react'
 import {
   AccessibilityInfo,
   findNodeHandle,
@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
+import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
@@ -152,6 +153,10 @@ const AnchoredPopover = ({
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const progress = useSharedValue(0)
+  // Nothing takes over the screen while a popover (the bell's tray, the
+  // streak chip's) is open or closing.
+  const holdId = useId()
+  useTakeoverHold(`popover:${holdId}`, mounted)
 
   useEffect(() => {
     if (open) {

@@ -21,6 +21,7 @@ import LaunchSplash from '@/app/launch/LaunchSplash'
 import { markLaunched } from '@/app/launch/launchState'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
+import BadgesRuntime from '@/app/badges/BadgesRuntime'
 import '@/app/buddies/buddiesBackgroundSync'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
 import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
@@ -133,6 +134,7 @@ export default function App() {
                           <SurveyProvider>
                             <DeepLinkListeners />
                             <BuddiesRuntime />
+                            <BadgesRuntime />
                             <NotificationResponseListener />
                             <SilentForegroundAlerts />
                             <SystemMenu language={loadedLocale} />

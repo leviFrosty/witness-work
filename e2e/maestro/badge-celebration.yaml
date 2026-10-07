@@ -1,0 +1,31 @@
+# seed: pioneer
+# assert: !!__WW_DEV__.stores.preferences.getState().earnedBadges['prepared.1']
+# assert: __WW_DEV__.stores.preferences.getState().badgeCardDismissed.includes('prepared.1')
+# assert: __WW_DEV__.badges.state().card.length === 0
+appId: com.leviwilkerson.jwtimedev
+name: Saving a Plan for today celebrates Ready to Go full screen (the User's own action, ADR 0021)
+---
+- extendedWaitUntil:
+    visible: Quick Action
+    timeout: 60000
+- tapOn: Quick Action
+- tapOn: Create Plan
+- assertVisible: Add One Time Plan
+# Today, for 5 minutes (the minutes wheel; the hours digits can collide with the bell's count).
+- tapOn:
+    id: plan-duration-pill
+- tapOn: '5'
+- tapOn:
+    id: plan-picker-done
+- tapOn:
+    id: plan-save
+- assertNotVisible: Add One Time Plan
+# The badge check settles 1.5 s after the save, then waits its turn.
+- extendedWaitUntil:
+    visible: See all badges
+    timeout: 10000
+- assertVisible: Ready to Go, Bronze
+- tapOn: Done
+- assertNotVisible: See all badges
+# Celebrated, so the Home card has nothing to add.
+- assertNotVisible: View Ready to Go, Bronze

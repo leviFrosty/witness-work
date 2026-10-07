@@ -5,24 +5,15 @@ import Constants from 'expo-constants'
 import { LogBox } from 'react-native'
 import { isAudioEnabled } from '@/lib/audio'
 import { configureLogger } from '@/lib/logger'
+import { foregroundPresentation } from '@/app/notifications/foregroundPresentation'
 import { usePreferences } from '@/stores/preferences'
 
 export function initializeApp() {
   configureLogger(() => usePreferences.getState().developerTools)
 
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      // Reminders that arrive while the app is open follow the in-app Audio
-      // setting. Delivered in the background, the system's notification
-      // settings decide. Android drops the banner of a silent alert, so
-      // `SilentForegroundAlerts` shows one in the app.
-      shouldPlaySound: isAudioEnabled(),
-      // While the app is open, the bell's unread count sets the badge.
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async (notification) =>
+      foregroundPresentation(notification, { audioEnabled: isAudioEnabled() }),
   })
 
   // Suppress the known Tamagui animated-listener warning.

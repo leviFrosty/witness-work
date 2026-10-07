@@ -38,6 +38,8 @@ import MileageTripDetailsScreen from '@/features/mileage/screens/MileageTripDeta
 import MileageSettingsScreen from '@/features/mileage/screens/MileageSettingsScreen'
 import MileageVehicleFormScreen from '@/features/mileage/screens/MileageVehicleFormScreen'
 import MileageFuelFormScreen from '@/features/mileage/screens/MileageFuelFormScreen'
+import BadgesRouteScreen from '@/app/badges/BadgesRouteScreen'
+import BadgeViewRouteScreen from '@/app/badges/BadgeViewRouteScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -407,6 +409,28 @@ const RootStackComponent = () => {
           })}
           name='MileageFuelForm'
           component={MileageFuelFormScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('badges_title')} />
+            ),
+          }}
+          name='Badges'
+          component={BadgesRouteScreen}
+        />
+        <RootStack.Screen
+          // Over everything, transparent, and unanimated: the screen grows
+          // the coin out of the tapped medallion and plays its own close.
+          options={{
+            presentation: 'transparentModal',
+            animation: 'none',
+            headerShown: false,
+            gestureEnabled: false,
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+          name='BadgeView'
+          component={BadgeViewRouteScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

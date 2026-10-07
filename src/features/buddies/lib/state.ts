@@ -4,10 +4,13 @@ import type {
   BuddyPlatform,
   BuddyStreak,
   BuddyTenure,
+  Roster,
   ShareDetails,
   ShareReply,
   ShareType,
 } from '@/features/buddies/lib/schemas'
+import type { BadgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
+import type { SharedBadge } from '@/types/badges'
 import type { BuddyShareRef } from '@/types/timeEntry'
 
 /** Active buddies plus pending invites never exceed this (relay enforces too). */
@@ -19,6 +22,8 @@ export type BuddyProfile = {
   name: string
   avatar?: BuddyAvatar
   tenure?: BuddyTenure
+  /** Earned badges for the Buddy Card; empty with Badges turned off. */
+  badges?: SharedBadge[]
 }
 
 /**
@@ -29,7 +34,52 @@ export type BuddySharing = {
   photo: boolean
   tenure: boolean
   streak: boolean
+  /** When photo, Tenure, or the streak last changed. */
   updatedAt: number
+  /** Earned badges on the Buddy Card, and news of new ones. */
+  badges: boolean
+  /**
+   * When `badges` last changed, 0 while it's the default. Its own stamp, since
+   * older apps rewrite the roster without it.
+   */
+  badgesUpdatedAt: number
+}
+
+/**
+ * Folds another device's sharing choices into this one's. Photo, Tenure, and
+ * the streak go to the later `updatedAt`. Badges go to the later
+ * `badgesUpdatedAt`, apart: a roster from an older app leaves them out (keep
+ * this device's), and on a tie withholding wins, so every device settles on the
+ * same answer.
+ */
+export function mergeSharing(
+  local: BuddySharing,
+  remote: Roster['sharing']
+): BuddySharing {
+  const later = remote.updatedAt > local.updatedAt
+  const merged = {
+    photo: later ? remote.photo : local.photo,
+    tenure: later ? remote.tenure : local.tenure,
+    streak: later ? remote.streak : local.streak,
+    updatedAt: later ? remote.updatedAt : local.updatedAt,
+  }
+  if (remote.badges === undefined)
+    return {
+      ...merged,
+      badges: local.badges,
+      badgesUpdatedAt: local.badgesUpdatedAt,
+    }
+  const remoteAt = remote.badgesUpdatedAt ?? 0
+  return {
+    ...merged,
+    badges:
+      remoteAt === local.badgesUpdatedAt
+        ? local.badges && remote.badges
+        : remoteAt > local.badgesUpdatedAt
+          ? remote.badges
+          : local.badges,
+    badgesUpdatedAt: Math.max(remoteAt, local.badgesUpdatedAt),
+  }
 }
 
 /**
@@ -60,6 +110,11 @@ export type Buddy = {
   showOnCalendar: boolean
   /** Only for `awaitingConfirm`: when the unconfirmed request lapses. */
   expiresAt?: number
+  /**
+   * The badges they share, from their latest Buddy Card (plus news of a new one
+   * until the next card). Earned badges only; never progress or counts.
+   */
+  badges?: SharedBadge[]
 }
 
 export type OutgoingInvite = {
@@ -259,6 +314,87 @@ export const MAX_OPEN_JOIN_REQUESTS = 3
 /** Requests to one buddy that alert them per rolling day; the rest are quiet. */
 export const JOIN_REQUEST_ALERTS_PER_DAY = 3
 
+/**
+ * News of badges this User just earned, kept until every buddy it was meant for
+ * has it, or it's `BADGE_ANNOUNCEMENT_TTL_MS` old. Only buddies active when it
+ * was made get it; one paired later sees the badges on the Buddy Card.
+ */
+export type BadgeAnnouncement = {
+  /** The badge keys it carries, sorted and joined. */
+  id: string
+  badges: SharedBadge[]
+  createdAt: number
+  /** Buddy inbox ids. */
+  recipients: string[]
+  /** Recipients the relay accepted it for. */
+  sent: Record<string, true>
+  /**
+   * Recipients whose copy carries this device's alert for the day; a retry
+   * keeps the alert, and the relay never alerts twice for one event.
+   */
+  alerted: Record<string, true>
+}
+
+/** News of a badge is retried for this long, then dropped. */
+export const BADGE_ANNOUNCEMENT_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * At most one badge alert per buddy in this long; the rest arrive quietly.
+ * Reactions have their own allowance of the same size.
+ */
+export const BADGE_ALERT_INTERVAL_MS = 20 * 60 * 60 * 1000
+
+/**
+ * This User's reaction to one of a buddy's badges. Per device: another of this
+ * User's devices doesn't show it as sent.
+ */
+export type SentBadgeReaction = {
+  e: BadgeReactionEmoji
+  /** This User's clock when they chose it, always increasing; newer wins. */
+  rev: number
+  /** When they chose it. */
+  at: number
+  /** The `rev` the relay last accepted; anything else is still to send. */
+  sentRev?: number
+  /**
+   * The `rev` whose event carries this device's reaction alert for the day. A
+   * failed send is retried under the same event id, which the relay never
+   * alerts for twice.
+   */
+  alertRev?: number
+}
+
+/** A buddy's reaction to one of this User's badges. */
+export type ReceivedBadgeReaction = {
+  e: BadgeReactionEmoji
+  /** When the buddy sent it. */
+  at: number
+  rev: number
+}
+
+/** A reaction to one of this User's badges, with the buddy who sent it. */
+export type BadgeReactionFrom = {
+  inboxId: string
+  buddy: Buddy
+  e: BadgeReactionEmoji
+  at: number
+}
+
+/** Reactions to one badge from active buddies, newest first. */
+export function badgeReactionsFrom(
+  reactions: Record<string, ReceivedBadgeReaction> | undefined,
+  buddies: readonly Buddy[]
+): BadgeReactionFrom[] {
+  return Object.entries(reactions ?? {})
+    .flatMap(([inboxId, reaction]) => {
+      const buddy = buddies.find(
+        (b) => b.inboxId === inboxId && b.status === 'active'
+      )
+      return buddy ? [{ inboxId, buddy, e: reaction.e, at: reaction.at }] : []
+    })
+    .sort((a, b) => b.at - a.at || a.inboxId.localeCompare(b.inboxId))
+}
+
 export type BuddyNotificationKind =
   | 'claim'
   | 'paired'
@@ -267,6 +403,8 @@ export type BuddyNotificationKind =
   | 'shareCancel'
   | 'shareReply'
   | 'joinRequest'
+  | 'badge'
+  | 'badgeReaction'
 
 /** One entry in the Home notification queue. Holds references, not content. */
 export type BuddyNotification = {
@@ -288,6 +426,13 @@ export type BuddyNotification = {
   shareType?: ShareType
   /** `shareReply`. */
   reply?: ShareReply
+  /**
+   * `badge`: the buddy's new badges, the one to name first. `badgeReaction`:
+   * the one of this User's badges they reacted to.
+   */
+  badges?: SharedBadge[]
+  /** `badgeReaction`: the reaction they sent. */
+  reaction?: BadgeReactionEmoji
   /** The relay event's inbox sequence; absent for restored entries. */
   seq?: number
 }
@@ -368,6 +513,31 @@ export type BuddiesState = {
   joinRequestNotifications: boolean
   /** Per-device: buddies whose requests to join don't push here. */
   mutedJoinRequests: string[]
+  /** Per-device: pushes for buddies' new badges. */
+  badgeNotifications: boolean
+  /** News of this User's new badges still to deliver. */
+  badgeAnnouncements: BadgeAnnouncement[]
+  /** When each buddy was last alerted to this User's new badges, by inboxId. */
+  lastBadgeAlertAt: Record<string, number>
+  /**
+   * Buddies' badge news already handled (eventId → when), so a sync that reads
+   * the inbox from the start again doesn't list it twice. Kept as long as the
+   * relay keeps events.
+   */
+  seenBadgeEvents: Record<string, number>
+  /**
+   * This User's reactions to buddies' badges: buddy inboxId → badge key →
+   * reaction. Kept after sending, so the reaction bar shows which one was
+   * sent.
+   */
+  sentBadgeReactions: Record<string, Record<string, SentBadgeReaction>>
+  /**
+   * Buddies' reactions to this User's badges: badge key → buddy inboxId →
+   * reaction. The newest per buddy and badge.
+   */
+  badgeReactions: Record<string, Record<string, ReceivedBadgeReaction>>
+  /** When each buddy was last alerted to this User's reactions, by inboxId. */
+  lastBadgeReactionAlertAt: Record<string, number>
   /** Dev builds only: show Buddies without the remote feature flag. */
   devOverride: boolean
   /**
@@ -404,10 +574,24 @@ export const initialBuddiesState: BuddiesState = {
   notifications: [],
   pushRegistrationKey: null,
   pushRegisteredAt: 0,
-  sharing: { photo: true, tenure: true, streak: true, updatedAt: 0 },
+  sharing: {
+    photo: true,
+    tenure: true,
+    streak: true,
+    updatedAt: 0,
+    badges: true,
+    badgesUpdatedAt: 0,
+  },
   notificationsEnabled: true,
   joinRequestNotifications: true,
   mutedJoinRequests: [],
+  badgeNotifications: true,
+  badgeAnnouncements: [],
+  lastBadgeAlertAt: {},
+  seenBadgeEvents: {},
+  sentBadgeReactions: {},
+  badgeReactions: {},
+  lastBadgeReactionAlertAt: {},
   devOverride: false,
   flagLastKnown: null,
   avatarThumbnail: null,
@@ -567,6 +751,22 @@ export function withPendingInvitesQueued(
   )
   if (missing.length === 0) return state.notifications
   return [...state.notifications, ...missing].sort((a, b) => b.at - a.at)
+}
+
+/**
+ * The queue as the tray lists it: buddies' badge news and reactions only while
+ * badges are on here. Turning badges off hides them; turning them back on shows
+ * them again.
+ */
+export function listedNotifications(
+  notifications: BuddyNotification[],
+  { showBadges }: { showBadges: boolean }
+): BuddyNotification[] {
+  return showBadges
+    ? notifications
+    : notifications.filter(
+        (n) => n.kind !== 'badge' && n.kind !== 'badgeReaction'
+      )
 }
 
 /** The queue entry a relay event (by inbox sequence) produced, if still listed. */

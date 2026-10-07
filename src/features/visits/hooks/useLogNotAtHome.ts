@@ -1,4 +1,5 @@
 import * as Crypto from 'expo-crypto'
+import { noteUserAction } from '@/lib/userAction'
 import { analytics } from '@/lib/analytics'
 import useConversations from '@/stores/conversationStore'
 import type { Visit } from '@/types/visit'
@@ -19,6 +20,7 @@ export default function useLogNotAtHome() {
       isBibleStudy: false,
       notAtHome: true,
     }
+    noteUserAction('visit')
     addConversation(visit)
     analytics.capture('visit_created', {
       not_at_home: true,

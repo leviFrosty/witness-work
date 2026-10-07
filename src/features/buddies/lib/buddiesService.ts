@@ -4,6 +4,7 @@ import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
@@ -60,6 +61,11 @@ const engine = createBuddiesEngine({
       role,
       buddy_platform: buddyPlatform ?? 'unknown',
     }),
+  showBadges: () => usePreferences.getState().showBadges,
+  isEnabled: () => useBuddiesSession.getState().running,
+  later: (run, ms) => {
+    setTimeout(run, ms)
+  },
 })
 
 /** Counts a send while its first try is on its way. */

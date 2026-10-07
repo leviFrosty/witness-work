@@ -96,8 +96,9 @@ export default function StreakCelebrationOverlay({
   const leave = () => {
     if (leaving.current) return
     leaving.current = true
-    backdrop.value = withTiming(0, { duration: T.exit }, (finished) => {
-      if (finished) scheduleOnRN(onDone)
+    // Done even if the fade is cut short, so it can't stay on screen.
+    backdrop.value = withTiming(0, { duration: T.exit }, () => {
+      scheduleOnRN(onDone)
     })
   }
 

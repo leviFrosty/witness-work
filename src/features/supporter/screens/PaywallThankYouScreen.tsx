@@ -179,7 +179,7 @@ const PaywallThankYouScreen = () => {
             if (navigation.canGoBack()) {
               navigation.goBack()
             } else {
-              navigation.navigate('Root')
+              navigation.navigate('Root', undefined, { pop: true })
             }
           }}
         >

@@ -1,4 +1,5 @@
 import { useToastController } from '@tamagui/toast'
+import { noteUserAction } from '@/lib/userAction'
 import moment from 'moment'
 import type { ContextMenuItem } from '@/components/ui/ContextMenu'
 import Haptics from '@/lib/haptics'
@@ -38,6 +39,7 @@ const useMonthReportExport = () => {
       'context_menu'
     )
     if (!sent) return
+    noteUserAction('report')
     usePreferences.getState().markReportSubmitted(reportMonthKey(month, year))
     Haptics.success()
     if (method === 'copy') {

@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'

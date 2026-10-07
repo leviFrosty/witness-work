@@ -44,9 +44,10 @@ const meetsIos = (minIos?: number) =>
 /**
  * The tour as this device and role should see it: platform-only pages and tiles
  * dropped, Android copy where it differs, the Year Pace page only for roles
- * that have the card, Buddies only where it shows, and the Apple Watch pages
- * only on an iPhone. Whether a watch is paired isn't known until the connection
- * activates, after the reveal has started, so every iPhone sees them.
+ * that have the card, Buddies (and mentions of it) only where it shows, and the
+ * Apple Watch pages only on an iPhone. Whether a watch is paired isn't known
+ * until the connection activates, after the reveal has started, so every iPhone
+ * sees them.
  */
 const useRevealPages = () => {
   const theme = useTheme()
@@ -67,7 +68,9 @@ const useRevealPages = () => {
     const captionKey =
       !showsTimeEntry && page.checkboxCaptionKey
         ? page.checkboxCaptionKey
-        : copy.captionKey
+        : !buddiesEnabled && page.noBuddiesCaptionKey
+          ? page.noBuddiesCaptionKey
+          : copy.captionKey
     return {
       id: page.id,
       icon: page.icon,

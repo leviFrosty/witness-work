@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Modal, Pressable, View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'

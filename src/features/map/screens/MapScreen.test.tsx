@@ -170,9 +170,15 @@ vi.mock('@/stores/contactsStore', () => ({
 vi.mock('@/stores/conversationStore', () => ({
   default: () => ({ conversations: [] }),
 }))
-vi.mock('@/stores/preferences', () => ({
-  usePreferences: () => ({ hasCompletedMapOnboarding: true }),
-}))
+vi.mock('@/stores/preferences', async () => {
+  const { create } = await import('zustand')
+  const usePreferences = create<Record<string, unknown>>((set) => ({
+    hasCompletedMapOnboarding: true,
+    mapLayer: 'standard',
+    set: (partial: Record<string, unknown>) => set(partial),
+  }))
+  return { usePreferences }
+})
 vi.mock('@/contexts/theme', async () => {
   const { createContext } = await import('react')
   const theme = {
@@ -277,6 +283,8 @@ beforeEach(async () => {
   mocks.platform = 'ios'
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
   mocks.contacts[1].coordinate = { latitude: 41, longitude: -73 }
+  const { usePreferences } = await import('@/stores/preferences')
+  usePreferences.setState({ mapLayer: 'standard' })
   mocks.addListener.mockImplementation((event, listener) => {
     const listeners = mocks.listeners.get(event) ?? new Set()
     listeners.add(listener)
@@ -498,6 +506,29 @@ describe('Dropped pin on an empty tablet map', () => {
     expect(
       root.root.findAllByProps({ children: 'map_emptyNoContactsTitle' }).length
     ).toBeGreaterThan(0)
+  })
+})
+
+describe('Map layer', () => {
+  it('remembers the chosen layer in preferences', async () => {
+    const { default: MapLayerMenu } = await import(
+      '@/features/map/components/MapLayerMenu'
+    )
+    const { usePreferences } = await import('@/stores/preferences')
+
+    await act(async () =>
+      root.root.findByType(MapLayerMenu).props.onChange('hybrid')
+    )
+
+    expect(usePreferences.getState().mapLayer).toBe('hybrid')
+    expect(root.root.findByType(MapLayerMenu).props.value).toBe('hybrid')
+  })
+
+  it('stays on this device instead of syncing', async () => {
+    const { NON_SYNCABLE_PREFERENCE_KEYS } = await import(
+      '@/lib/syncPreferencePolicy'
+    )
+    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('mapLayer')).toBe(true)
   })
 })
 

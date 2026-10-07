@@ -32,6 +32,7 @@ import type {
   SavedContactView,
 } from '@/types/savedContactView'
 import type { ContactsView } from '@/types/homeStack'
+import type { MapLayer } from '@/types/map'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
 import type {
@@ -358,6 +359,8 @@ export const PREFERENCE_DEFAULTS = {
    * can each keep their own.
    */
   contactsView: 'list' as ContactsView,
+  /** The Map's last chosen imagery. Device-local, like `contactsView`. */
+  mapLayer: 'standard' as MapLayer,
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,

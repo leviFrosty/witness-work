@@ -5,9 +5,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-
-const mapLayers = ['standard', 'satellite', 'hybrid'] as const
-export type MapLayer = (typeof mapLayers)[number]
+import { mapLayers, type MapLayer } from '@/types/map'
 
 export default function MapLayerMenu({
   value,

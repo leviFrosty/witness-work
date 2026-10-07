@@ -65,6 +65,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'updateReveal',
   'contactsView',
   'activeSavedContactView',
+  'mapLayer',
 ])
 
 export const NON_SYNCABLE_PROFILE_KEYS = new Set(['profileUpdatedAt'])

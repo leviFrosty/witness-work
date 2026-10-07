@@ -80,9 +80,7 @@ import {
   getMapImageryTheme,
   MapImageryContext,
 } from '@/features/map/lib/mapImageryTheme'
-import MapLayerMenu, {
-  type MapLayer,
-} from '@/features/map/components/MapLayerMenu'
+import MapLayerMenu from '@/features/map/components/MapLayerMenu'
 import MapPinLabel, {
   PinHoverArea,
 } from '@/features/map/components/MapPinLabel'
@@ -147,11 +145,10 @@ const FullMapView = ({
   const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
-  const { colorScheme, set: setPreferences } = usePreferences()
+  const { colorScheme, mapLayer, set: setPreferences } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
-  const [mapLayer, setMapLayer] = useState<MapLayer>('standard')
   const insets = useSafeAreaInsets()
   // Google Maps' logo sits above its padding; keep cards clear of that strip.
   const bottomOverlayInset =
@@ -1274,7 +1271,7 @@ const FullMapView = ({
             >
               <MapLayerMenu
                 value={mapLayer}
-                onChange={setMapLayer}
+                onChange={(mapLayer) => setPreferences({ mapLayer })}
                 style={mapControlStyle}
               />
             </PointerTooltip>

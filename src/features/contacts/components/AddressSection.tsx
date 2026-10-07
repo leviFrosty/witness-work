@@ -5,7 +5,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { TextInput, TouchableOpacity, View } from 'react-native'
-import { Address, Contact } from '@/types/contact'
+import { Address, Contact, Coordinate } from '@/types/contact'
 import useTheme from '@/contexts/theme'
 import { useState } from 'react'
 import Text from '@/components/ui/MyText'
@@ -14,10 +14,9 @@ import Button from '@/components/ui/Button'
 import Section from '@/components/ui/inputs/Section'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import PinLocation from '@/features/contacts/components/PinLocation'
-import AddressAutocomplete, {
-  Suggestion,
-} from '@/features/contacts/components/AddressAutocomplete'
+import PlaceSearchInput from '@/components/PlaceSearchInput'
 import { addressToString } from '@/lib/address'
+import type { ResolvedPlace } from '@/lib/placeSearch'
 import { usePreferences } from '@/stores/preferences'
 
 type Mode = 'search' | 'manual'
@@ -89,6 +88,7 @@ export default function AddressSection({
   setZip,
   setCountry,
   prefill,
+  onPlacePicked,
 }: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
@@ -113,18 +113,18 @@ export default function AddressSection({
         readonly address: undefined
         readonly enabled: false
       }
+  /** A search result was picked; `coordinate` is set when MapKit found it. */
+  onPlacePicked?: (address: Address, coordinate?: Coordinate) => void
 }) {
   const theme = useTheme()
-  // Address search is the one entry path that leaves the device (HERE, via the
-  // vendor's proxy). With data protection mode on the segmented control is
-  // gone and the section is manual-entry only, so the address the publisher
-  // types is never transmitted anywhere. `AddressAutocomplete` refuses to
-  // fetch in this mode too, belt and braces.
+  // Address search is the one entry path that leaves the device (Apple MapKit
+  // on iOS, HERE via the vendor's proxy elsewhere). With data protection mode
+  // on the segmented control is gone and the section is manual-entry only, so
+  // the address the publisher types is never transmitted anywhere. Search
+  // stays unmounted in this mode even if `mode` is still 'search'.
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const [query, setQuery] = useState(addressToString(contact.address))
   const [isResult, setIsResult] = useState(!!contact.address)
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [error, setError] = useState(false)
   const [mode, setMode] = useState<Mode>(
     dataProtectionMode ? 'manual' : 'search'
   )
@@ -157,15 +157,41 @@ export default function AddressSection({
     }
     setHasCleared(true)
     setQuery('')
-    setSuggestions([])
     setContact({ ...contact, address: clearedPrefill })
   }
 
-  const handleAddressSelect = (selectedAddress: Address) => {
-    setContact((prevContact) => ({
-      ...prevContact,
-      address: selectedAddress,
-    }))
+  const setAddress = (address: Address) => {
+    setContact((prevContact) => ({ ...prevContact, address }))
+  }
+
+  const changeQuery = (text: string) => {
+    setQuery(text)
+    setIsResult(false)
+    if (text === '') {
+      // Clear structured fields too, so stale values cannot survive save.
+      setAddress({
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: '',
+      })
+    }
+  }
+
+  const pickPlace = (place: ResolvedPlace) => {
+    const address: Address = place.postalAddress ?? { line1: place.address }
+    setAddress(address)
+    setQuery(addressToString(address))
+    setIsResult(true)
+    const { latitude, longitude } = place
+    onPlacePicked?.(
+      address,
+      latitude !== undefined && longitude !== undefined
+        ? { latitude, longitude }
+        : undefined
+    )
   }
 
   const switchMode = (next: Mode) => {
@@ -229,18 +255,18 @@ export default function AddressSection({
             />
           </View>
         )}
-        {mode === 'search' ? (
-          <AddressAutocomplete
-            onSelect={handleAddressSelect}
-            error={error}
-            query={query}
-            setQuery={setQuery}
-            isResult={isResult}
-            setIsResult={setIsResult}
-            suggestions={suggestions}
-            setSuggestions={setSuggestions}
-            setError={setError}
-          />
+        {mode === 'search' && !dataProtectionMode ? (
+          <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+            <PlaceSearchInput
+              scope='address'
+              query={query}
+              onChangeQuery={changeQuery}
+              onSelect={pickPlace}
+              searchEnabled={!isResult}
+              placeholder={i18n.t('enterAddress')}
+              accessibilityLabel={i18n.t('enterAddress')}
+            />
+          </View>
         ) : (
           <>
             <TextInputRow

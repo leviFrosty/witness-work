@@ -1,12 +1,146 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../modules/place-search', () => ({
-  isAvailable: false,
-  autocomplete: vi.fn(async () => []),
+const native = vi.hoisted(() => ({
+  version: 0,
+  autocomplete: vi.fn(async () => [{ id: 'a', title: 'A', subtitle: '' }]),
   resolve: vi.fn(async () => null),
+  get: vi.fn(),
 }))
 
-import { appleMapsUrl, formatPlanLocation } from '@/lib/placeSearch'
+vi.mock('../../modules/place-search', () => ({
+  get isAvailable() {
+    return native.version >= 1
+  },
+  get supportsAddressScope() {
+    return native.version >= 2
+  },
+  autocomplete: native.autocomplete,
+  resolve: native.resolve,
+}))
+vi.mock('axios', () => ({ default: { get: native.get } }))
+vi.mock('@/constants/apis', () => ({
+  default: { autocomplete: 'https://api.test/autocomplete' },
+}))
+
+import {
+  appleMapsUrl,
+  formatPlanLocation,
+  placeSearchProvider,
+  resolvePlace,
+  searchPlaces,
+} from '@/lib/placeSearch'
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  native.version = 0
+})
+
+describe('placeSearchProvider', () => {
+  it.each([
+    [0, 'address', 'here'],
+    [0, 'all', undefined],
+    [1, 'address', 'here'],
+    [1, 'all', 'mapkit'],
+    [2, 'address', 'mapkit'],
+    [2, 'all', 'mapkit'],
+  ] as const)(
+    'native version %i searches %s with %s',
+    (version, scope, provider) => {
+      native.version = version
+      expect(placeSearchProvider(scope)).toBe(provider)
+    }
+  )
+})
+
+describe('searchPlaces', () => {
+  it('asks MapKit for addresses only on a version 2 binary', async () => {
+    native.version = 2
+    const near = { latitude: 1, longitude: 2 }
+    await searchPlaces('1 Example', near, 'address')
+    expect(native.autocomplete).toHaveBeenCalledWith(
+      '1 Example',
+      near,
+      'address'
+    )
+    expect(native.get).not.toHaveBeenCalled()
+  })
+
+  it('maps HERE addresses into a title, subtitle, and parts', async () => {
+    native.get.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'here:1',
+            address: {
+              label: '12 Oak St, Springfield, IL 62701, United States',
+              houseNumber: '12',
+              street: 'Oak St',
+              city: 'Springfield',
+              state: 'Illinois',
+              postalCode: '62701',
+              countryName: 'United States',
+            },
+          },
+        ],
+      },
+    })
+    const [suggestion] = await searchPlaces(
+      '12 Oak',
+      { latitude: 39.8, longitude: -89.6 },
+      'address'
+    )
+
+    const url = new URL(native.get.mock.lastCall![0])
+    expect(url.searchParams.get('q')).toBe('12 Oak')
+    expect(url.searchParams.get('in')).toBe('circle:39.8,-89.6;r=1000000')
+    expect(suggestion).toEqual({
+      id: 'here:1',
+      title: '12 Oak St',
+      subtitle: 'Springfield, IL 62701, United States',
+      place: {
+        address: '12 Oak St, Springfield, IL 62701, United States',
+        postalAddress: {
+          line1: '12 Oak St',
+          city: 'Springfield',
+          state: 'Illinois',
+          zip: '62701',
+          country: 'United States',
+        },
+      },
+    })
+    expect(await resolvePlace(suggestion!)).toBe(suggestion!.place)
+    expect(native.resolve).not.toHaveBeenCalled()
+  })
+
+  it('orders MapKit address parts the way the contact form shows them', async () => {
+    native.version = 2
+    native.resolve.mockResolvedValueOnce({
+      address: '1 Example Way, Springfield, IL 62701, United States',
+      postalAddress: {
+        zip: '62701',
+        country: 'United States',
+        line1: '1 Example Way',
+        state: 'IL',
+        city: 'Springfield',
+      },
+      latitude: 39.8,
+      longitude: -89.6,
+    } as never)
+    const place = await resolvePlace({ id: 'a', title: 'A', subtitle: '' })
+    expect(Object.keys(place!.postalAddress!)).toEqual([
+      'line1',
+      'city',
+      'state',
+      'zip',
+      'country',
+    ])
+  })
+
+  it('finds no points of interest without MapKit', async () => {
+    expect(await searchPlaces('Kingdom Hall', undefined, 'all')).toEqual([])
+    expect(native.get).not.toHaveBeenCalled()
+  })
+})
 
 describe('formatPlanLocation', () => {
   it('shows a point of interest name over its address', () => {

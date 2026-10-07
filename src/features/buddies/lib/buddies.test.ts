@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   concatBytes,
   fromB64u,
+  fromUtf8,
   toB64u,
   utf8,
 } from '@/features/buddies/lib/bytes'
@@ -33,6 +34,8 @@ import {
   initialBuddiesState,
   INVITE_TTL_MS,
   MAX_NOTIFICATIONS,
+  MAX_REMOVED_BUDDIES,
+  mergeRemovedBuddies,
   notificationIdForSeq,
   OutgoingShareSpec,
   REPLY_HOLD_MS,
@@ -54,7 +57,8 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
-import type { ShareReply } from '@/features/buddies/lib/schemas'
+import { rosterSchema } from '@/features/buddies/lib/schemas'
+import type { Roster, ShareReply } from '@/features/buddies/lib/schemas'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
@@ -715,8 +719,13 @@ describe('buddies pairing', () => {
     // phone pairs with Sue while the stale iPad creates an invite.
     await pair(mom, sue)
     await momsIpad.engine.createInvite()
+    // The iPad's roster is older than the phone's last one, so the phone
+    // ignores it and writes its own back; the iPad merges that and writes
+    // the union, which the phone takes on its next sync.
     await mom.engine.sync()
+    expect(mom.store.getState().outgoingInvites).toEqual([])
     await momsIpad.engine.sync()
+    await mom.engine.sync()
     for (const device of [mom, momsIpad]) {
       expect(
         device.store
@@ -849,6 +858,432 @@ describe('buddies pairing', () => {
     })
     await anna.engine.sync()
     expect(anna.store.getState().buddies).toEqual([])
+  })
+})
+
+type User = ReturnType<ReturnType<typeof setup>['user']>
+
+/**
+ * What a relay can do to an inbox without any of its keys: hand back a sealed
+ * roster it kept from earlier, and list a slot that isn't there.
+ */
+function relayPowers(fake: ReturnType<typeof setup>['fake']) {
+  return {
+    rosterBlob: (inboxId: string) => fake.inboxes.get(inboxId)!.roster!.blob,
+    serveRoster(inboxId: string, blob: string) {
+      const inbox = fake.inboxes.get(inboxId)!
+      inbox.seq += 1
+      inbox.roster = { blob, seq: inbox.seq }
+    },
+    listSlot(inboxId: string, slot: { slotId: string; writerPub: string }) {
+      fake.inboxes
+        .get(inboxId)!
+        .slots.set(slot.slotId, { writerPub: slot.writerPub, createdAt: 0 })
+    },
+  }
+}
+
+/** The pair's slots as `holder` knows them; they outlive a removal. */
+function pairSlots(holder: User, peerInboxId: string) {
+  const me = deriveIdentity(holder.seed)
+  const peer = holder.store
+    .getState()
+    .buddies.find((b) => b.inboxId === peerInboxId)!
+  const secret = derivePairSecret(
+    me.dhPrivate,
+    fromB64u(peer.dhPub),
+    fromB64u(peer.inviteSecret),
+    me.inboxId,
+    peerInboxId
+  )
+  return {
+    /** The peer writes here, in the holder's inbox. */
+    intoHolder: deriveDirection(secret, me.inboxId),
+    /** The holder writes here, in the peer's inbox. */
+    intoPeer: deriveDirection(secret, peerInboxId),
+  }
+}
+
+function openRoster(user: User, blob: string): Roster {
+  const { rosterKey, inboxId } = deriveIdentity(user.seed)
+  return JSON.parse(
+    fromUtf8(open(rosterKey, blob, `ww-buddies/v1/roster|${inboxId}`))
+  )
+}
+
+/** A roster as builds before versions and tombstones wrote it. */
+function sealLegacyRoster(user: User, roster: Roster): string {
+  const { rosterKey, inboxId } = deriveIdentity(user.seed)
+  const legacy: Partial<Roster> = { ...roster }
+  delete legacy.version
+  delete legacy.removedBuddies
+  return seal(
+    rosterKey,
+    utf8(JSON.stringify(legacy)),
+    `ww-buddies/v1/roster|${inboxId}`,
+    random(12)
+  )
+}
+
+describe('removed buddies stay removed', () => {
+  it("doesn't bring a removed buddy back when the relay replays an old roster", async () => {
+    const { fake, user } = setup()
+    const relay = relayPowers(fake)
+    const plans: Plans = {
+      dayPlans: [dayPlan('2026-09-25', 120, 540)],
+      recurringPlans: [],
+    }
+    const mom = user('Mom', plans)
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const rosterWithAnna = relay.rosterBlob(mom.inboxId)
+    const slots = pairSlots(anna, mom.inboxId)
+
+    await mom.engine.removeBuddy(anna.inboxId)
+    expect(mom.store.getState().removedBuddies).toHaveProperty(anna.inboxId)
+
+    // Anna can always re-add Mom's slot in her own inbox. The relay hands Mom
+    // the roster from before and lists Anna's slot again.
+    relay.listSlot(anna.inboxId, slots.intoHolder)
+    plans.dayPlans = [dayPlan('2026-09-30', 180, 600)]
+    relay.serveRoster(mom.inboxId, rosterWithAnna)
+    relay.listSlot(mom.inboxId, slots.intoPeer)
+    await mom.engine.sync()
+
+    expect(mom.store.getState().buddies).toEqual([])
+    expect(
+      fake.inboxes.get(anna.inboxId)!.cards.has(slots.intoHolder.slotId)
+    ).toBe(false)
+    // Mom's own roster goes back over the stale one.
+    expect(openRoster(mom, relay.rosterBlob(mom.inboxId))).toMatchObject({
+      buddies: [],
+      removedBuddies: { [anna.inboxId]: expect.any(Number) },
+    })
+  })
+
+  it('ignores a roster older than one it has seen, even without a tombstone', async () => {
+    const { fake, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const rosterWithAnna = relay.rosterBlob(mom.inboxId)
+    const slots = pairSlots(anna, mom.inboxId)
+    await mom.engine.removeBuddy(anna.inboxId)
+
+    // As if the cap had pushed Anna's tombstone out.
+    mom.store.setState({ removedBuddies: {} })
+    relay.listSlot(anna.inboxId, slots.intoHolder)
+    relay.serveRoster(mom.inboxId, rosterWithAnna)
+    relay.listSlot(mom.inboxId, slots.intoPeer)
+    await mom.engine.sync()
+
+    expect(mom.store.getState().buddies).toEqual([])
+    expect(
+      openRoster(mom, relay.rosterBlob(mom.inboxId)).version
+    ).toBeGreaterThan(openRoster(mom, rosterWithAnna).version!)
+  })
+
+  it('merges a roster from an older build without undoing a removal', async () => {
+    const { fake, offlineOps, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom')
+    const anna = user('Anna')
+    const joe = user('Joe', {
+      dayPlans: [dayPlan('2026-09-29', 60)],
+      recurringPlans: [],
+    })
+    await pair(mom, anna)
+    const momsIpad = user('Mom', { dayPlans: [], recurringPlans: [] }, mom.seed)
+    await momsIpad.engine.sync()
+    const before = openRoster(mom, relay.rosterBlob(mom.inboxId))
+    const slots = pairSlots(anna, mom.inboxId)
+    await mom.engine.removeBuddy(anna.inboxId)
+    const version = mom.store.getState().rosterVersion
+
+    // The iPad runs an older build: it pairs with Joe and writes a roster
+    // with no version or tombstones that still lists Anna. Anna re-adds Mom's
+    // slot, and the relay lists hers again.
+    offlineOps.add('roster/put')
+    await pair(momsIpad, joe)
+    offlineOps.clear()
+    const joeOnIpad = momsIpad.store
+      .getState()
+      .buddies.find((b) => b.inboxId === joe.inboxId)!
+    relay.serveRoster(
+      mom.inboxId,
+      sealLegacyRoster(mom, {
+        ...before,
+        buddies: [...before.buddies, joeOnIpad],
+      })
+    )
+    relay.listSlot(anna.inboxId, slots.intoHolder)
+    relay.listSlot(mom.inboxId, slots.intoPeer)
+    await mom.engine.sync()
+
+    expect(mom.store.getState().buddies.map((b) => b.inboxId)).toEqual([
+      joe.inboxId,
+    ])
+    expect(
+      fake.inboxes.get(anna.inboxId)!.cards.has(slots.intoHolder.slotId)
+    ).toBe(false)
+    expect(mom.store.getState().cards[joe.inboxId].days).toEqual([
+      { d: '2026-09-29', p: [{ m: 60 }] },
+    ])
+    // Written back with the tombstone and a newer version for newer builds.
+    const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
+    expect(written.removedBuddies).toHaveProperty(anna.inboxId)
+    expect(written.version).toBeGreaterThan(version)
+  })
+
+  it("doesn't bring back a claim the User turned down", async () => {
+    const { advance, fake, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom')
+    const anna = user('Anna')
+    const link = await mom.engine.createInvite()
+    await anna.engine.acceptInvite(link)
+    await mom.engine.sync()
+    const rosterWithClaim = relay.rosterBlob(mom.inboxId)
+    expect(openRoster(mom, rosterWithClaim).incomingClaims).toHaveLength(1)
+
+    await mom.engine.rejectClaim(
+      mom.store.getState().incomingClaims[0].inviteId
+    )
+    relay.serveRoster(mom.inboxId, rosterWithClaim)
+    await mom.engine.sync()
+    expect(mom.store.getState()).toMatchObject({
+      incomingClaims: [],
+      outgoingInvites: [],
+    })
+
+    // Once the invite lapses its tombstone goes too, but so does the claim:
+    // not even an older build's roster can list it again.
+    advance(INVITE_TTL_MS + 1)
+    await mom.engine.sync()
+    expect(mom.store.getState().closedInviteIds).toEqual({})
+    relay.serveRoster(
+      mom.inboxId,
+      sealLegacyRoster(mom, openRoster(mom, rosterWithClaim))
+    )
+    await mom.engine.sync()
+    expect(mom.store.getState()).toMatchObject({
+      incomingClaims: [],
+      outgoingInvites: [],
+    })
+  })
+
+  it("can't confirm a claim that lapsed while it was still listed", async () => {
+    const { advance, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await anna.engine.acceptInvite(await mom.engine.createInvite())
+    await mom.engine.sync()
+    const [claim] = mom.store.getState().incomingClaims
+
+    advance(INVITE_TTL_MS + 1)
+    await expect(mom.engine.confirmClaim(claim.inviteId)).rejects.toEqual(
+      new BuddyInviteError('unavailable')
+    )
+    expect(mom.store.getState()).toMatchObject({
+      buddies: [],
+      incomingClaims: [],
+    })
+  })
+
+  it('lets the User pair again with someone they removed, on every device', async () => {
+    const { fake, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom', {
+      dayPlans: [dayPlan('2026-09-26', 60)],
+      recurringPlans: [],
+    })
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const momsIpad = user('Mom', { dayPlans: [], recurringPlans: [] }, mom.seed)
+    await momsIpad.engine.sync()
+    const oldPairing = mom.store.getState().buddies[0].inviteSecret
+    const rosterWithAnna = relay.rosterBlob(mom.inboxId)
+
+    await mom.engine.removeBuddy(anna.inboxId)
+    await momsIpad.engine.sync()
+    await anna.engine.sync()
+    expect(momsIpad.store.getState().removedBuddies).toHaveProperty(
+      anna.inboxId
+    )
+    expect(anna.store.getState().removedBuddies).toHaveProperty(mom.inboxId)
+
+    // Anna invites Mom again (Anna confirms the claim), and Mom accepts.
+    const link = await anna.engine.createInvite()
+    await mom.engine.acceptInvite(link)
+    await anna.engine.sync()
+    await anna.engine.confirmClaim(
+      anna.store.getState().incomingClaims[0].inviteId
+    )
+    await mom.engine.sync()
+    await anna.engine.sync()
+    await momsIpad.engine.sync()
+
+    for (const device of [mom, momsIpad])
+      expect(device.store.getState()).toMatchObject({
+        buddies: [{ inboxId: anna.inboxId, status: 'active' }],
+        removedBuddies: {},
+      })
+    expect(anna.store.getState()).toMatchObject({
+      buddies: [{ inboxId: mom.inboxId, status: 'active' }],
+      removedBuddies: {},
+    })
+    expect(anna.store.getState().cards[mom.inboxId].days).toEqual([
+      { d: '2026-09-26', p: [{ m: 60 }] },
+    ])
+
+    // The old pairing's roster doesn't disturb the new one.
+    relay.serveRoster(mom.inboxId, rosterWithAnna)
+    await mom.engine.sync()
+    expect(mom.store.getState().buddies).toHaveLength(1)
+    expect(mom.store.getState().buddies[0].inviteSecret).not.toBe(oldPairing)
+  })
+
+  it("carries a removal to the User's other devices before the relay has it", async () => {
+    const { fake, offlineOps, user } = setup()
+    const plans: Plans = { dayPlans: [], recurringPlans: [] }
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const momsIpad = user('Mom', plans, mom.seed)
+    await momsIpad.engine.sync()
+    const slots = pairSlots(mom, anna.inboxId)
+    const cardForAnna = () =>
+      fake.inboxes.get(anna.inboxId)!.cards.get(slots.intoPeer.slotId)?.blob
+    const cardBefore = cardForAnna()
+
+    // The phone can't withdraw the slots yet, but its roster gets through.
+    offlineOps.add('slot/remove')
+    await expect(mom.engine.removeBuddy(anna.inboxId)).rejects.toEqual(
+      new BuddyRemovalPendingError('buddy')
+    )
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().buddies).toEqual([])
+    plans.dayPlans = [dayPlan('2026-09-28', 60)]
+    await momsIpad.engine.publishCards()
+    expect(cardForAnna()).toBe(cardBefore)
+
+    // The iPad finishes the removal itself once it can.
+    offlineOps.clear()
+    await momsIpad.engine.sync()
+    expect(fake.inboxes.get(mom.inboxId)!.slots.size).toBe(0)
+    expect(cardForAnna()).toBeUndefined()
+  })
+
+  it("doesn't let a device that missed a removal end the pairing made since", async () => {
+    const { advance, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const momsIpad = user('Mom', { dayPlans: [], recurringPlans: [] }, mom.seed)
+    await momsIpad.engine.sync()
+
+    // The iPad is away while the phone removes Anna and pairs with her again.
+    await mom.engine.removeBuddy(anna.inboxId)
+    await anna.engine.sync()
+    advance(60_000)
+    await pair(mom, anna)
+    // The iPad drops its old pairing, whose slot is gone, without ending the
+    // new one, and learns the new one from the roster.
+    await momsIpad.engine.sync()
+    await mom.engine.sync()
+    await momsIpad.engine.sync()
+
+    for (const device of [mom, momsIpad])
+      expect(device.store.getState().buddies).toMatchObject([
+        { inboxId: anna.inboxId, status: 'active' },
+      ])
+  })
+
+  it('writes rosters that older builds still read', async () => {
+    const { fake, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.removeBuddy(anna.inboxId)
+    const written = openRoster(mom, relayPowers(fake).rosterBlob(mom.inboxId))
+    expect(written).toMatchObject({
+      version: expect.any(Number),
+      removedBuddies: { [anna.inboxId]: expect.any(Number) },
+    })
+
+    // Older builds parse with this schema minus the new fields; unknown
+    // fields are dropped, not rejected.
+    const olderBuild = rosterSchema.omit({
+      version: true,
+      removedBuddies: true,
+    })
+    const parsed = olderBuild.parse(written)
+    expect(parsed).not.toHaveProperty('version')
+    expect(parsed).not.toHaveProperty('removedBuddies')
+  })
+
+  it('keeps the newest tombstones, and a full roster fits the relay cap', () => {
+    const id = () => toB64u(random(16))
+    const removed = Object.fromEntries(
+      Array.from({ length: MAX_REMOVED_BUDDIES + 5 }, (_, index) => [
+        id(),
+        1_790_000_000_000 + index,
+      ])
+    )
+    const kept = mergeRemovedBuddies({}, removed)
+    expect(Object.keys(kept)).toHaveLength(MAX_REMOVED_BUDDIES)
+    expect(Math.min(...Object.values(kept))).toBe(1_790_000_000_005)
+
+    const at = 1_790_000_000_000
+    const name = 'N'.repeat(60)
+    const avatar = { t: 'emoji', v: '🧑🏽‍🦱' } as const
+    const tenure = { kind: 'regularAuxiliary', since: '2019-09' } as const
+    const dhPub = () => toB64u(random(32))
+    const roster: Roster = {
+      v: 1,
+      version: 1_000_000,
+      buddies: Array.from({ length: 5 }, (_, colorIndex) => ({
+        inboxId: id(),
+        name,
+        nickname: name,
+        avatar,
+        tenure,
+        dhPub: dhPub(),
+        inviteSecret: id(),
+        status: 'active',
+        pairedAt: at,
+        colorIndex,
+        color: '#A855F7FF',
+        showOnCalendar: true,
+      })),
+      outgoingInvites: Array.from({ length: 5 }, () => ({
+        inviteId: id(),
+        secret: id(),
+        createdAt: at,
+        expiresAt: at,
+      })),
+      incomingClaims: Array.from({ length: 5 }, () => ({
+        inviteId: id(),
+        secret: id(),
+        name,
+        avatar,
+        tenure,
+        dhPub: dhPub(),
+        inboxId: id(),
+        receivedAt: at,
+        expiresAt: at,
+      })),
+      // 20 invites a day, each tombstoned for its 7-day life.
+      closedInviteIds: Object.fromEntries(
+        Array.from({ length: 140 }, () => [id(), at])
+      ),
+      removedBuddies: kept,
+      sharing: { photo: true, tenure: true, updatedAt: at },
+    }
+    const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
+    // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
+    expect(plaintext.length).toBeLessThan(32 * 1024 - 29)
   })
 })
 

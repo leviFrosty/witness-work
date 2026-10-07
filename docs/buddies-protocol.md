@@ -248,11 +248,72 @@ Both people can derive both directions; each registers the _incoming_ direction'
 
 ### Ending
 
-The remover purges locally and queues the removal durably, then calls `slot/remove` (their inbox, the other person's slot) and `slot/leave` (the other person's inbox, their own slot). Both are idempotent, so a removal stays queued and is retried on every sync until both succeed. Delete-all wipes the inbox and the root seed only after every buddy has been left, because the seed is the only way to retry. The other side sees the slot vanish from `inbox/sync` and purges too. No push.
+The remover purges locally, records the pairing as ended (`removedBuddies`, see [Multi-device roster](#multi-device-roster)), and queues the removal durably, then calls `slot/remove` (their inbox, the other person's slot) and `slot/leave` (the other person's inbox, their own slot). Both are idempotent, so a removal stays queued and is retried on every sync until both succeed. Delete-all wipes the inbox and the root seed only after every buddy has been left, because the seed is the only way to retry. The other side sees the slot vanish from `inbox/sync` and purges and records it too. No push.
 
 ### Multi-device roster
 
-`roster/put` is last-writer-wins, so clients merge rather than replace. On every sync that returns a roster, the client unions buddies, invites, and claims with its local state. A removed buddy's slot is gone from the inbox, so the same sync drops them again. Cancelled, rejected, and confirmed invites carry tombstones (`closedInviteIds`: `inviteId → expiresAt`), pruned once they expire. If the merged result differs from the relay's copy, the client writes it back, which also heals a concurrent overwrite. When the merge adds a buddy, the client re-syncs from `since: 0` to pick up cards and events it had already synced past.
+The roster is the User's own state, sealed with the roster key, so only their devices can write one. The relay can't forge a roster, but it keeps every blob it was given and can hand back an old one, or list a slot that was removed. The merge rules below make that harmless: nothing the relay returns can bring back a pairing the User ended.
+
+Roster plaintext (JSON):
+
+```json
+{
+  "v": 1,
+  "version": 7,
+  "buddies": [
+    {
+      "inboxId": "<22>",
+      "name": "Anna",
+      "nickname": "Annie",
+      "avatar": { "t": "emoji", "v": "🙂" },
+      "dhPub": "<b64u>",
+      "inviteSecret": "<22>",
+      "status": "active",
+      "pairedAt": 0,
+      "colorIndex": 0,
+      "showOnCalendar": true
+    }
+  ],
+  "outgoingInvites": [
+    { "inviteId": "<22>", "secret": "<22>", "createdAt": 0, "expiresAt": 0 }
+  ],
+  "incomingClaims": [
+    {
+      "inviteId": "<22>",
+      "secret": "<22>",
+      "name": "Joe",
+      "dhPub": "<b64u>",
+      "inboxId": "<22>",
+      "receivedAt": 0,
+      "expiresAt": 0
+    }
+  ],
+  "closedInviteIds": { "<inviteId>": 0 },
+  "removedBuddies": { "<inboxId>": 0 },
+  "sharing": { "photo": true, "tenure": true, "updatedAt": 0 }
+}
+```
+
+- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos from Buddy Cards.
+- `version` counts roster writes across the User's devices: each write is the newest version the device has read or written, plus one, and only a write the relay accepted counts. Rosters from builds before it have none.
+- `closedInviteIds`: invites cancelled, rejected, or confirmed (`inviteId → expiresAt`), pruned once they expire. A rejected claim goes with its invite: the claim expires at the same moment.
+- `removedBuddies`: ended pairings (`inboxId → removedAt`). A pairing with that buddy whose `pairedAt ≤ removedAt` is over. A removal the User makes records the time. When the relay shows the buddy left (their slot is gone, or a write returns `gone`) or an unconfirmed request lapses, the device records that pairing's own `pairedAt` instead, so a device that missed a newer pairing made on another device can't end it. Pairing again on purpose (accepting an invite, or confirming a claim) drops the local entry and starts the new pairing after any `removedAt` this device knows. Entries never expire. Past 200, the smallest `removedAt` is dropped first; only the User's own pairings add entries, so one is dropped only after 200 later removals. 200 entries take about 8 KB of the 32 KB roster cap.
+- Readers drop fields they don't know rather than reject them, and the AAD has no version, so older builds still open and parse rosters that carry fields added since.
+
+`roster/put` is last-writer-wins, so clients merge rather than replace. On every sync that returns a roster:
+
+1. **Older rosters are ignored.** A roster whose `version` is below the newest this device has read or written is a replay or a stale write. The client ignores it and writes its own roster back. A device that wrote without having synced recovers its change on its next sync: it merges the newer roster and writes the union. A roster with no `version` comes from an older build and is merged, but local tombstones still win over it.
+2. **Otherwise the client merges.** Buddies, invites, and claims union with local state, and so do `closedInviteIds` and `removedBuddies` (the later `removedAt` per buddy wins). Then:
+   - a pairing that has ended is never added, whichever roster lists it; a local buddy whose pairing another device ended is dropped, and its slots are withdrawn as in [Ending](#ending);
+   - closed or expired invites and claims are dropped;
+   - a local `awaitingConfirm` buddy turns `active` only when the roster shows the same pairing (same `inviteSecret`) active;
+   - a `removedBuddies` entry older than that buddy's current `pairedAt` is dropped;
+   - the device keeps the higher `version`.
+3. **Changes are written back.** If the merged result differs from the relay's copy, the client writes it back with a new `version`. This also heals a concurrent overwrite and restores tombstones an older build left out. When the merge adds a buddy, the client re-syncs from `since: 0` to pick up cards and events it had already synced past.
+
+A removed buddy's slot is gone from the inbox too, so the next sync drops them on every device even without a tombstone. Only the roster can add a buddy without the User acting; the slots in `inbox/sync` only take buddies away, and a claim waits for the User to confirm it.
+
+**Limits.** A device restoring from the root seed with no Buddies data yet has neither a version nor tombstones of its own, so it relies on the roster the relay serves it. A relay that serves such a device a roster from before a removal can bring that buddy back there. Builds without roster versions don't read tombstones, and removals made on them leave none.
 
 The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, updatedAt }`), merged last-writer-wins on `updatedAt`, so every device publishes the same Buddy Card. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
 

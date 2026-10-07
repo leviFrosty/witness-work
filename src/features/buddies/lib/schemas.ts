@@ -177,9 +177,19 @@ export type JoinRequest = z.infer<typeof joinRequestSchema>
 
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
 
-/** The encrypted multi-device roster: everything needed to rebuild pairings. */
+/**
+ * The encrypted multi-device roster: everything needed to rebuild pairings.
+ * Unknown fields are dropped, not rejected, so older builds still read rosters
+ * that carry fields added since.
+ */
 export const rosterSchema = z.object({
   v: z.literal(1),
+  /**
+   * Counts roster writes across the User's devices. A device ignores a roster
+   * older than the newest it has seen. Absent from rosters written by builds
+   * before it.
+   */
+  version: z.number().int().nonnegative().optional(),
   buddies: z
     .array(
       z.object({
@@ -226,6 +236,8 @@ export const rosterSchema = z.object({
     )
     .max(5),
   closedInviteIds: z.record(relayId, z.number()).default({}),
+  /** Ended pairings: buddy inboxId → `removedAt` (see `RemovedBuddies`). */
+  removedBuddies: z.record(relayId, z.number()).default({}),
   sharing: z
     .object({
       photo: z.boolean(),

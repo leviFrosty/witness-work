@@ -460,6 +460,14 @@ Invoke `/beta-build` (see `.agents/skills/beta-build/SKILL.md`) to put any branc
 
 Prerequisites are the same as production builds, plus:
 
-- **`.env.beta`** (gitignored): a copy of `.env.production` with `APP_VARIANT=beta` and the Beta app's RevenueCat public key. Worktrees fall back to the main checkout's copy.
+- **`.env.beta`** (gitignored): a copy of `.env.production` with `APP_VARIANT=beta` and the Beta app's RevenueCat public key. Worktrees fall back to the main checkout's copy. The build stops if the key is empty. A ready copy is in 1Password: `op document get "WitnessWork .env.beta" --vault Agents --out-file .env.beta`.
 - **One-time signing setup per Apple account:** run `scripts/build-beta.sh --mode native --interactive` once in a Terminal and log in to Apple when EAS prompts. EAS registers the App Group, iCloud container and App Attest capability, then stores the profiles. Later runs are non-interactive.
 - **Unlocked login keychain** for remote/SSH-triggered builds, or codesign fails with `errSecInternalComponent`.
+
+### Beta in-app purchases
+
+Beta sells the same catalog as the App Store app, so supporter features can be tested with sandbox purchases in TestFlight:
+
+- **App Store Connect:** the WitnessWork Beta app has its own copy of every subscription and consumable, named `jwtimebeta_<suffix>` because product ids must be unique across the Apple account. Names, group levels, per-territory prices, availability and the pause offers (`supporter_pause_<n>m_<productId>`) match production.
+- **RevenueCat:** the "WitnessWork Beta" App Store app lives in the **production** RevenueCat project, not a separate one. ww-api checks Supporter status against that project, and Beta calls the production API. Each Beta product sits in the same entitlements and offering packages as its production twin. The public SDK key is listed by `rc apps keys app6fbb58486d`.
+- **Keep them in sync:** after adding products or offerings to production, run `node scripts/sync-beta-catalog.mjs`. It fills in whatever is missing and never edits or deletes. Mirror price changes to existing products by hand.

@@ -985,8 +985,7 @@ export const PREFERENCE_DEFAULTS = {
    * Off Days the user wants the Assistant to treat as a hard exclusion when
    * generating recommended day plans. Empty by default — no exclusion. Today
    * stored as weekday numbers (0 = Sunday … 6 = Saturday); the concept covers
-   * any day. The user can override per-day even when a weekday is in this set;
-   * the calendar dims Off Days as a hint.
+   * any day. The user can override per-day even when a weekday is in this set.
    */
   offDays: [] as number[],
   /**

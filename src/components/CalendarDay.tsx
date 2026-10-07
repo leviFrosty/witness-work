@@ -347,12 +347,9 @@ const CalendarDay = (
   const recurringPlans = props.recurringPlansOverride ?? store.recurringPlans
   const translateY = useSharedValue(0)
   const theme = useTheme()
-  const { howToAddPlan, removeHint, offDays } = usePreferences()
+  const { howToAddPlan, removeHint } = usePreferences()
 
   const isToday = moment().isSame(props.date?.dateString, 'day')
-  const isOffDay = props.date?.dateString
-    ? offDays.includes(moment(props.date.dateString).day())
-    : false
 
   const startAnimation = useCallback(() => {
     translateY.value = withRepeat(withTiming(-10, { duration: 600 }), 0, true)
@@ -435,7 +432,7 @@ const CalendarDay = (
         pointerEffect={disabled ? 'none' : 'highlight'}
         hoverRadius={theme.numbers.borderRadiusSm}
         style={{
-          opacity: disabled ? 0.4 : isOffDay ? 0.55 : 1,
+          opacity: disabled ? 0.4 : 1,
         }}
       >
         {/* The overlay sits inside the trigger so VoiceOver reads it with its day. */}

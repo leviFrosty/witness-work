@@ -14,8 +14,8 @@ describe('getEffectiveTabOrder', () => {
     expect(getEffectiveTabOrder(['Contacts', 'Tools', 'Home'])).toEqual([
       'Contacts',
       'Home',
-      'Schedule',
       'Progress',
+      'Schedule',
     ])
   })
 })
@@ -23,15 +23,15 @@ describe('getEffectiveTabOrder', () => {
 describe('moveVisibleTab', () => {
   it('moves a tab up and down', () => {
     expect(moveVisibleTab(DEFAULT_TAB_ORDER, DEFAULT_TAB_ORDER, 2, 0)).toEqual([
-      'Contacts',
-      'Home',
-      'Schedule',
       'Progress',
+      'Home',
+      'Contacts',
+      'Schedule',
     ])
     expect(moveVisibleTab(DEFAULT_TAB_ORDER, DEFAULT_TAB_ORDER, 0, 3)).toEqual([
-      'Schedule',
       'Contacts',
       'Progress',
+      'Schedule',
       'Home',
     ])
   })

@@ -419,7 +419,7 @@ screen tracking (`ShareApp`) shows how often the code is opened from Settings.
 
 ## Navigation preferences
 
-Users can reorder the Home, Schedule, Contacts, and Progress tabs in Preferences
+Users can reorder the Home, Contacts, Progress, and Schedule tabs in Preferences
 → Tab Order; Home remains the launch tab. `tab_order_changed` measures adoption
 of this preference with `order` (comma-separated bounded route names, including
 Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and

@@ -1,18 +1,14 @@
 import { z } from 'zod'
 import { publishers } from '@/constants/publisher'
 import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
+import {
+  dateStringSchema as date,
+  recordIdSchema as id,
+  timestampSchema as timestamp,
+} from '@/lib/recordValidation'
 
-const timestamp = z.number().finite().nonnegative()
-const date = z.string().refine((value) => Number.isFinite(Date.parse(value)))
 /** Local calendar day, `YYYY-MM-DD`. */
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
-const id = z
-  .string()
-  .min(1)
-  .refine(
-    (value) =>
-      !value.includes('/') && !value.includes('\\') && !value.includes('..')
-  )
 const record = z
   .object({
     id,
@@ -266,16 +262,6 @@ export const payloadSchema = z.object({
   preferencesStore: values,
   profileStore: values.optional(),
 })
-
-/** Reject unsafe dictionary keys before legacy transforms or store writes. */
-export function hasUnsafeKeys(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false
-  return Object.entries(value).some(
-    ([key, item]) =>
-      ['__proto__', 'prototype', 'constructor'].includes(key) ||
-      hasUnsafeKeys(item)
-  )
-}
 
 const publisher = z.enum(publishers)
 const offset = z.object({

@@ -54,6 +54,7 @@ const MoreScreen = () => {
     updateConversation,
     recoverContact,
     mergeIncomingCustomFieldDefs,
+    getConversations: () => useConversations.getState().conversations,
     showToast: (title: string, message: string) => {
       toast.show(title, { message, native: true })
     },

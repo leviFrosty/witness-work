@@ -4,14 +4,9 @@ import * as Linking from 'expo-linking'
 import { useToastController } from '@tamagui/toast'
 import {
   ImportHandlerCallbacks,
-  importContactFromUrl,
+  importContactFromIncomingUrl,
   processCompleteImport,
-  validateContactImport,
 } from '@/features/contacts/lib/contactImport'
-import {
-  isContactShareLink,
-  parseContactShareLink,
-} from '@/features/contacts/lib/contactShareLink'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { navigationRef } from '@/features/contacts/lib/linking'
@@ -28,8 +23,9 @@ import { logger } from '@/lib/logger'
  * 2. `file://…/<name>.witnesswork` — file attachment tapped from Files / iMessage
  *    / AirDrop (registered via `CFBundleDocumentTypes`).
  *
- * Both paths validate, show a confirm dialog, run the existing import flow, and
- * navigate to the imported contact.
+ * Both go through `importContactFromIncomingUrl`, which validates them the same
+ * way, then show a confirm dialog, run the existing import flow, and navigate
+ * to the imported contact.
  */
 export default function ContactImportListener() {
   const toast = useToastController()
@@ -38,70 +34,21 @@ export default function ContactImportListener() {
   const handledInitialUrl = useRef(false)
 
   useEffect(() => {
-    const isContactFileUrl = (url: string) =>
-      // Android document providers may use opaque content URIs without a
-      // filename. The intent filter restricts MIME type; import validates data
-      // before prompting and never writes it without confirmation.
-      url.startsWith('content:') ||
-      (url.startsWith('file:') && /\.witnesswork(\?|#|$)/i.test(url))
-
     const handle = async (url: string | null) => {
-      logger.log('[ContactImportListener] handle() url =', url)
-      if (!url) {
-        logger.log('[ContactImportListener] null url — ignoring')
+      if (!url) return
+
+      const result = await importContactFromIncomingUrl(url)
+      if (!result) return
+      if (!result.success || !result.data) {
+        logger.warn('[ContactImportListener] refused an invalid contact share')
+        Alert.alert(
+          result.errorTitle || i18n.t('invalidFile'),
+          result.error || i18n.t('invalidFile_description')
+        )
         return
       }
 
-      const isShareLink = isContactShareLink(url)
-      const isFileUrl = isContactFileUrl(url)
-      logger.log('[ContactImportListener] classification:', {
-        isShareLink,
-        isFileUrl,
-      })
-
-      let importData: Awaited<ReturnType<typeof importContactFromUrl>>['data'] =
-        undefined
-
-      if (isShareLink) {
-        // Universal link (https://ww-proxy.leviwilkerson.com/c#<payload>).
-        logger.log('[ContactImportListener] decoding universal link')
-        const decoded = parseContactShareLink(url)
-        logger.log('[ContactImportListener] decoded =', decoded)
-        if (decoded === null) {
-          logger.error(
-            '[ContactImportListener] parseContactShareLink returned null'
-          )
-          Alert.alert(i18n.t('invalidFile'), i18n.t('invalidFile_description'))
-          return
-        }
-        const validation = validateContactImport(decoded)
-        logger.log('[ContactImportListener] validation =', validation)
-        if (!validation.success || !validation.data) {
-          Alert.alert(
-            i18n.t('invalidFile'),
-            validation.error || i18n.t('invalidFile_description')
-          )
-          return
-        }
-        importData = validation.data
-      } else if (isFileUrl) {
-        // File attachment tapped from Files / iMessage / AirDrop.
-        const result = await importContactFromUrl(url)
-        if (!result.success || !result.data) {
-          Alert.alert(
-            i18n.t('invalidFile'),
-            result.error || i18n.t('invalidFile_description')
-          )
-          return
-        }
-        importData = result.data
-      } else {
-        logger.log('[ContactImportListener] url did not match any handler')
-        return
-      }
-
-      if (!importData) return
-      const finalImportData = importData
+      const finalImportData = result.data
       Alert.alert(
         i18n.t('importContactConfirm_title'),
         i18n.t('importContactConfirm_description', {
@@ -132,6 +79,8 @@ export default function ContactImportListener() {
                   updateConversation,
                   recoverContact,
                   mergeIncomingCustomFieldDefs,
+                  getConversations: () =>
+                    useConversations.getState().conversations,
                   showToast: (title, message) =>
                     toast.show(title, { message, native: true }),
                   navigate: (contactId) => {

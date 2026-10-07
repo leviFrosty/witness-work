@@ -3,11 +3,11 @@ import { syncNow, hasCalibratedSyncClock } from '@/lib/syncClock'
 import { expireDeletedContactDetails } from '@/lib/contactRetention'
 import {
   payloadSchema,
-  hasUnsafeKeys,
   dropUnreadableSavedViews,
   validSettingValues,
   validProfileValues,
 } from '@/app/sync/payloadValidation'
+import { hasUnsafeKeys } from '@/lib/recordValidation'
 import {
   syncableValues,
   NON_SYNCABLE_PROFILE_KEYS as PROFILE_EXCLUDED,

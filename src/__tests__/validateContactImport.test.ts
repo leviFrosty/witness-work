@@ -46,7 +46,7 @@ describe('validateContactImport', () => {
     mockI18n.t.mockImplementation((key: string) => key)
   })
 
-  // Helper to create valid import data
+  // Helper to create valid import data, shaped as it arrives: parsed JSON.
   const createValidImportData = (
     contact?: Partial<Contact>,
     conversations?: Visit[]
@@ -65,13 +65,15 @@ describe('validateContactImport', () => {
       email: 'example@test.com',
       phone: '+1 (888) 123-5555',
     }
-    return {
-      version: '1.0',
-      type: 'witnesswork-contact',
-      exportedAt: new Date().toISOString(),
-      contact: { ...fakeContact, ...contact },
-      conversations,
-    }
+    return JSON.parse(
+      JSON.stringify({
+        version: '1.0',
+        type: 'witnesswork-contact',
+        exportedAt: new Date().toISOString(),
+        contact: { ...fakeContact, ...contact },
+        conversations,
+      })
+    )
   }
 
   describe('valid data', () => {
@@ -441,7 +443,7 @@ describe('validateContactImport', () => {
         contact: {
           id: 'evil-1',
           name: 'Bob Smith',
-          createdAt: new Date(),
+          createdAt: '2026-01-01T00:00:00.000Z',
           avatar: {
             type: 'image',
             value:
@@ -472,7 +474,7 @@ describe('validateContactImport', () => {
         contact: {
           id: 'evil-2',
           name: 'Bob Smith',
-          createdAt: new Date(),
+          createdAt: '2026-01-01T00:00:00.000Z',
           avatar: { type: 'image', value: 'icloud://contact-evil-2' },
         },
       }
@@ -482,46 +484,43 @@ describe('validateContactImport', () => {
       expect(result.data?.contact.avatar).toBeUndefined()
     })
 
-    it('preserves emoji avatars on imported contacts', () => {
+    it('drops emoji avatars too; the recipient picks their own', () => {
       const payload = {
         type: 'witnesswork-contact',
         version: '1.0',
         contact: {
           id: 'friendly-1',
           name: 'Bob Smith',
-          createdAt: new Date(),
+          createdAt: '2026-01-01T00:00:00.000Z',
           avatar: { type: 'emoji', value: '🌱' },
         },
       }
       const result = validateContactImport(payload)
 
       expect(result.success).toBe(true)
-      expect(result.data?.contact.avatar).toEqual({
-        type: 'emoji',
-        value: '🌱',
-      })
+      expect(result.data?.contact.avatar).toBeUndefined()
     })
 
-    it('preserves "none" avatars on imported contacts', () => {
+    it('drops "none" avatars on imported contacts', () => {
       const payload = {
         type: 'witnesswork-contact',
         version: '1.0',
         contact: {
           id: 'friendly-2',
           name: 'Bob Smith',
-          createdAt: new Date(),
+          createdAt: '2026-01-01T00:00:00.000Z',
           avatar: { type: 'none', value: '' },
         },
       }
       const result = validateContactImport(payload)
 
       expect(result.success).toBe(true)
-      expect(result.data?.contact.avatar).toEqual({ type: 'none', value: '' })
+      expect(result.data?.contact.avatar).toBeUndefined()
     })
   })
 
   describe('edge cases', () => {
-    it('should accept contact with extra fields', () => {
+    it('drops contact fields outside the share format', () => {
       // Create valid data first, then add extra fields to the contact object directly
       const validData = createValidImportData()
       const contactWithExtraFields = {
@@ -536,33 +535,28 @@ describe('validateContactImport', () => {
       const result = validateContactImport(dataWithExtraFields)
 
       expect(result.success).toBe(true)
-      expect(result.data).toEqual(dataWithExtraFields)
+      expect(result.data).toEqual(validData)
     })
 
-    it('should accept import data with extra root fields', () => {
-      const validData = {
-        ...createValidImportData(),
+    it('drops root fields outside the share format', () => {
+      const validData = createValidImportData()
+      const result = validateContactImport({
+        ...validData,
         extraRootField: 'this should not cause validation to fail',
         metadata: { someInfo: 'test' },
-      }
-      const result = validateContactImport(validData)
+      })
 
       expect(result.success).toBe(true)
       expect(result.data).toEqual(validData)
     })
 
-    it('should handle very long strings in required fields', () => {
+    it('rejects ids and names over the share limits', () => {
       const longString = 'a'.repeat(10000)
-      const contactWithLongStrings = {
-        id: longString,
-        name: longString,
+      for (const contact of [{ id: longString }, { name: longString }]) {
+        const result = validateContactImport(createValidImportData(contact))
+        expect(result.success).toBe(false)
+        expect(result.error).toBe('invalidFile_description')
       }
-
-      const validData = createValidImportData(contactWithLongStrings)
-      const result = validateContactImport(validData)
-
-      expect(result.success).toBe(true)
-      expect(result.data).toEqual(validData)
     })
 
     it('should handle different date formats in createdAt', () => {

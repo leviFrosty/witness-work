@@ -1,8 +1,10 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
+import { View } from 'react-native'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import LucideIcon from '@/components/ui/LucideIcon'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import StreakBadge from '@/components/StreakBadge'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -15,6 +17,7 @@ import {
 } from '@/features/buddies/lib/buddyConfirmations'
 import {
   buddyDisplayName,
+  buddyStreakCount,
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
@@ -34,6 +37,7 @@ export default function BuddyRow({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const awaiting = buddy.status === 'awaitingConfirm'
+  const streak = buddyStreakCount(buddy.streak)
   const open = () => navigation.navigate('Buddy', { inboxId: buddy.inboxId })
 
   const withdraw: ContextMenuEntries = [
@@ -104,11 +108,14 @@ export default function BuddyRow({
       actions={awaiting ? withdraw : actions}
       accessory={
         awaiting ? undefined : (
-          <LucideIcon
-            icon={ChevronRightIcon}
-            size={18}
-            color={theme.colors.textAlt}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {streak > 0 && <StreakBadge count={streak} size='sm' />}
+            <LucideIcon
+              icon={ChevronRightIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+          </View>
         )
       }
       // A waiting request has no detail screen, so its only action stays

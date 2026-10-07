@@ -2,6 +2,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Wrapper from '@/components/ui/layout/Wrapper'
 import PlansPreferencesSection from '@/features/settings/components/preferences-sections/PlansPreferencesSection'
 import UnloggedDayRemindersSection from '@/features/settings/components/preferences-sections/UnloggedDayRemindersSection'
+import StreakRemindersSection from '@/features/settings/components/preferences-sections/StreakRemindersSection'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const PreferencesPlansScreen = () => {
@@ -13,6 +14,7 @@ const PreferencesPlansScreen = () => {
         >
           <PlansPreferencesSection />
           <UnloggedDayRemindersSection />
+          <StreakRemindersSection />
         </KeyboardAwareScrollView>
       </Wrapper>
     </SettingsInputLayout>

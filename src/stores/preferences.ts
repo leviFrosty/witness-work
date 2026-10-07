@@ -403,6 +403,14 @@ export const PREFERENCE_DEFAULTS = {
    * before then aren't listed in the tray.
    */
   unloggedDayRemindersEnabledAt: null as number | null,
+  /**
+   * Remind the User when their Service Streak is about to end: 6 PM on the last
+   * day to log a planned day, or three days before the month is out. On by
+   * default; only a streak long enough to show has one.
+   */
+  streakReminders: true,
+  /** The Schedule intro has been seen or closed; Schedule won't open it again. */
+  scheduleIntroSeen: false,
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,

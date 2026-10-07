@@ -37,6 +37,8 @@ export const lightModeColors = {
   tealAlt: '#F0FDFA',
   orange: '#F97316',
   orangeAlt: '#FFF7ED',
+  // Service Streak flame chip.
+  orangeTranslucent: '#F9731622',
   pink: '#EC4899',
   pinkAlt: '#FDF2F8',
   indigo: '#6366F1',
@@ -90,6 +92,7 @@ const darkModeColors: Colors = {
   tealAlt: '#134E4A',
   orange: '#FB923C',
   orangeAlt: '#7C2D12',
+  orangeTranslucent: '#FB923C2E',
   pink: '#F472B6',
   pinkAlt: '#831843',
   indigo: '#818CF8',

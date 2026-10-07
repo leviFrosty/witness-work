@@ -178,5 +178,6 @@ export type ServiceHistorySource =
   | 'year_row_menu'
   | 'add_earlier_year'
   | 'settings'
+  | 'streak'
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

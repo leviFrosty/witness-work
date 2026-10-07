@@ -5,6 +5,11 @@ import type { DayPlan } from '@/types/timeEntry'
 import type { NotificationOffset } from '@/lib/notificationOffset'
 import { combineDateAndStartTime } from '@/lib/normalizeDate'
 import {
+  streakReminderAt,
+  type ServiceStreak,
+  type StreakKind,
+} from '@/lib/serviceStreak'
+import {
   unloggedDayReminderGroups,
   type UnloggedDaySources,
 } from '@/lib/unloggedDayReminders'
@@ -13,17 +18,18 @@ export type LocalReminder = {
   /** The OS request id. Stable per record, so reconciling replaces it. */
   id: string
   date: Date
-  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay'
+  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay' | 'streak'
   /**
    * The Visit, Plan, or Contact the reminder opens; for a reminder to log time,
-   * its earliest planned day (`YYYY-MM-DD`).
+   * its earliest planned day (`YYYY-MM-DD`); for a streak, the day or month
+   * (its 1st) it waits on.
    */
   targetId: string
   /** The Visit's Contact. */
   contactId?: string
   /**
-   * When the Follow-up or Plan starts, or the planned day's Plans end; the
-   * Contact's return otherwise.
+   * When the Follow-up or Plan starts, or the planned day's Plans end; when a
+   * streak ends; the Contact's return otherwise.
    */
   anchor: Date
   name?: string
@@ -34,6 +40,8 @@ export type LocalReminder = {
   minutes?: number
   /** The planned days a reminder to log time covers, earliest first. */
   days?: string[]
+  /** The streak about to end. */
+  streak?: { count: number; kind: StreakKind }
 }
 
 export const reminderRequestId = (
@@ -86,6 +94,8 @@ type ReminderSources = {
   planOffset: NotificationOffset
   /** Planned days still without time logged; absent when that's off. */
   unloggedDays?: UnloggedDaySources
+  /** The Service Streak; absent when its reminders are off. */
+  streak?: ServiceStreak
 }
 
 /**
@@ -161,6 +171,18 @@ export function reminderOccurrences(
         days: days.map((day) => day.key),
       })
     }
+  }
+  const streakAt = args.streak ? streakReminderAt(args.streak) : null
+  if (args.streak?.due && streakAt) {
+    const { due, count, kind } = args.streak
+    reminders.push({
+      id: reminderRequestId('streak', due.period),
+      date: streakAt,
+      kind: 'streak',
+      targetId: due.period,
+      anchor: due.endsAt,
+      streak: { count, kind },
+    })
   }
   return reminders.filter((reminder) =>
     Number.isFinite(reminder.date.getTime())

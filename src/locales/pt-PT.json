@@ -92,8 +92,6 @@
   "applyCrop": "Aplicar",
   "cropPhotoHint": "Apertar para fazer zoom, arrastar para reposicionar",
   "profileStatStreak": "Faixa",
-  "profileStatStreakUnit": "semana",
-  "profileStatStreakUnit_plural": "semanas",
   "profileStatHours": "Total de horas",
   "profileStatHoursSub": "Todo o tempo",
   "profileStatDays": "Dias activos",
@@ -1580,8 +1578,6 @@
     "other": "{{count}} correspondências"
   },
   "contacts_sortAndFilter_sortLabel": "Ordenar: {{label}}",
-  "profileStatStreakUnitMonth": "mês",
-  "profileStatStreakUnitMonth_plural": "meses",
   "profileStatConversations": "Conversas",
   "profileStatConversationsSub": "Desde sempre",
   "goalAdjustedForMonth": "Objetivo personalizado para este mês",

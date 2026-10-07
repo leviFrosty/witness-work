@@ -9,6 +9,8 @@ import { View } from 'react-native'
 import WhatsNewSheet from '@/features/updates/components/WhatsNewSheet'
 import UpdateRevealOverlay from '@/features/updates/components/reveal/UpdateRevealOverlay'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
+import StreakCelebration from '@/features/profile/components/StreakCelebration'
+import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
 import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useEffect, useRef, useState } from 'react'
@@ -197,6 +199,8 @@ const HomeTabStack = () => {
       </Tab.Navigator>
       {/* One instance for every root header's account menu. */}
       <ProfileDetailOverlay />
+      <ScheduleIntroHost />
+      <StreakCelebration />
       {/* Mounted last so it overlays the tab bar. */}
       {revealSource && (
         <UpdateRevealOverlay

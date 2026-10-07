@@ -13,7 +13,10 @@ import useServiceReport from '@/stores/serviceReport'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { syncBuddyNotifications } from '@/features/buddies/hooks/useBuddyNotifications'
 
-import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import {
+  buddiesEngine,
+  currentBuddyStreak,
+} from '@/features/buddies/lib/buddiesService'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import {
   forgetBuddiesInData,
@@ -250,15 +253,26 @@ export default function BuddiesRuntime() {
         declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
       publishSharesChange()
     })
+    // The streak travels in Buddy Cards too; time logged can move it.
+    let streak = JSON.stringify(currentBuddyStreak() ?? null)
+    const timeEntries = useServiceReport.subscribe((state, previous) => {
+      if (state.serviceReports === previous.serviceReports) return
+      const next = JSON.stringify(currentBuddyStreak() ?? null)
+      if (next === streak) return
+      streak = next
+      schedulePublish()
+    })
     // Name, photo, and Tenure travel in Buddy Cards too.
     const profile = useProfile.subscribe((state, previous) => {
       if (state.name !== previous.name) schedulePublish()
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)
     })
+    // So does the streak, counted by the role.
     const tenure = usePreferences.subscribe((state, previous) => {
       if (
         state.role !== previous.role ||
+        state.roleHistory !== previous.roleHistory ||
         state.tenureStartDate !== previous.tenureStartDate
       )
         schedulePublish()
@@ -311,6 +325,7 @@ export default function BuddiesRuntime() {
       appState.remove()
       tray()
       plans()
+      timeEntries()
       profile()
       tenure()
       visits()

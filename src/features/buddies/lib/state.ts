@@ -1,6 +1,7 @@
 import type {
   BuddyAvatar,
   BuddyCardDay,
+  BuddyStreak,
   BuddyTenure,
   ShareDetails,
   ShareReply,
@@ -26,6 +27,7 @@ export type BuddyProfile = {
 export type BuddySharing = {
   photo: boolean
   tenure: boolean
+  streak: boolean
   updatedAt: number
 }
 
@@ -43,6 +45,8 @@ export type Buddy = {
   nickname?: string
   avatar?: BuddyAvatar
   tenure?: BuddyTenure
+  /** From their latest Buddy Card; never in the roster. */
+  streak?: BuddyStreak
   dhPub: string
   /** The invite secret that paired us (base64url) — salts the pair secret. */
   inviteSecret: string
@@ -397,7 +401,7 @@ export const initialBuddiesState: BuddiesState = {
   notifications: [],
   pushRegistrationKey: null,
   pushRegisteredAt: 0,
-  sharing: { photo: true, tenure: true, updatedAt: 0 },
+  sharing: { photo: true, tenure: true, streak: true, updatedAt: 0 },
   notificationsEnabled: true,
   joinRequestNotifications: true,
   mutedJoinRequests: [],

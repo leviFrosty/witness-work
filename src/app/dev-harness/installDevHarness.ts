@@ -11,6 +11,7 @@ import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
+import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
@@ -98,6 +99,8 @@ function seed(name: string) {
     tenureStartDate: scenario.tenureStartDate,
     // Keeps the full-screen rollover prompt from covering a fresh seed.
     lastRolloverYearMonth: moment().format('YYYY-MM'),
+    // Same for the Schedule intro; Schedule's header button still opens it.
+    scheduleIntroSeen: scenario.onboarded,
   })
   if (scenario.onboarded) {
     useProfile.getState().set({
@@ -178,6 +181,8 @@ export function installDevHarness() {
       mileage: useMileage,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
+      // `setState({ celebrating: { count, kind } })` replays a milestone.
+      streakCelebration: useStreakCelebration,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

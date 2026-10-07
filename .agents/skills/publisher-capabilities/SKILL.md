@@ -28,7 +28,9 @@ Sources: `src/constants/publisher.ts`, `src/stores/preferences.ts`, `src/lib/pub
 - **Role History (`src/lib/roleHistory.ts`).** The role can differ per calendar month. `usePublisher()` resolves _this month_; pass `usePublisher({ month, year })` for any month-specific surface (month report, exports, Year-tab rows, goal math) and `usePublisher('standing')` only in Settings that edit the `role` preference. Multi-month walks use `useRoleForMonth()` (or pass a resolver to `getTotalMinutesForServiceYear`). Non-React callers use `roleForMonth(prefs.roleHistory, prefs.role, target)` / `publisherCapabilitiesForMonth`. Never read `prefs.role` for a specific month. Write only through `setRole(role, { from })` / `setRoleForMonths(start, end, role)` so `role` and `roleHistory` never disagree.
 - **Pure / non-React callers** (widget snapshot builders, `adjustedMinutesForSpecificMonth`, onboarding step gates) call `derivePublisherCapabilities` or the small helpers directly: `getEntryMode`, `isInFullTimeService`, `getTenureType`, `tracksTenure`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`.
 
-Resolved capability flags callers read: `entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tenureType`, `tracksTenure`, `showsTimeEntry`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`.
+Resolved capability flags callers read: `entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tenureType`, `tracksTenure`, `showsTimeEntry`, `showsTimer`, `showsYearTabs`, `streakKind`, `creditCapMinutes`, `hasUnlimitedCreditDefault`.
+
+`streakKind` is what the Service Streak counts: `'months'` for the checkbox role (even with Hours Logging on), `'plans'` (kept planned days) for every hours-mode role. Non-React callers use `getStreakKind(role)` or `currentServiceStreak()` (`src/lib/currentServiceStreak.ts`), which resolves this month's role from Role History.
 
 ## Rules
 

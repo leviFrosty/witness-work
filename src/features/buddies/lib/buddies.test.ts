@@ -58,7 +58,11 @@ import {
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import { rosterSchema } from '@/features/buddies/lib/schemas'
-import type { Roster, ShareReply } from '@/features/buddies/lib/schemas'
+import type {
+  BuddyStreak,
+  Roster,
+  ShareReply,
+} from '@/features/buddies/lib/schemas'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
@@ -117,6 +121,7 @@ function setup() {
     const profile: BuddyProfile = { name }
     let rootSeed: Uint8Array | null = seed
     let shares: OutgoingShareSpec[] = []
+    let streak: BuddyStreak | undefined
     const engine = createBuddiesEngine({
       relay,
       store,
@@ -128,6 +133,7 @@ function setup() {
       },
       getPlans: () => plans,
       getProfile: () => profile,
+      getStreak: () => streak,
       getShares: () => shares,
     })
     return {
@@ -138,6 +144,9 @@ function setup() {
       inboxId: deriveIdentity(seed).inboxId,
       setShares: (next: OutgoingShareSpec[]) => {
         shares = next
+      },
+      setStreak: (next: BuddyStreak | undefined) => {
+        streak = next
       },
     }
   }
@@ -644,6 +653,61 @@ describe('buddies pairing', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].tenure).toEqual(tenure)
     expect(fake.inboxes.get(mom.inboxId)!.slots.size).toBe(1)
+  })
+
+  it('shares the streak in Buddy Cards until switched off', async () => {
+    const { advance, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    mom.setStreak({ n: 5, until: '2026-10-04' })
+    await pair(mom, anna)
+    expect(anna.store.getState().buddies[0].streak).toEqual({
+      n: 5,
+      until: '2026-10-04',
+    })
+
+    // A longer streak republishes; a lapsed one clears.
+    mom.setStreak({ n: 6, until: '2026-10-11' })
+    await mom.engine.publishCards()
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].streak?.n).toBe(6)
+    mom.setStreak(undefined)
+    await mom.engine.publishCards()
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].streak).toBeUndefined()
+
+    // Switching it off holds it back on every device of Mom's.
+    mom.setStreak({ n: 7, until: '2026-10-18' })
+    advance(1000)
+    await mom.engine.setSharing({ streak: false })
+    const momsIpad = user('Mom', undefined, mom.seed)
+    momsIpad.setStreak({ n: 7, until: '2026-10-18' })
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().sharing.streak).toBe(false)
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].streak).toBeUndefined()
+
+    // Streaks come from cards, so the roster never holds one.
+    const annasIpad = user('Anna', undefined, anna.seed)
+    await mom.engine.setSharing({ streak: true })
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].streak?.n).toBe(7)
+    await annasIpad.engine.sync()
+    expect(annasIpad.store.getState().buddies[0].streak?.n).toBe(7)
+  })
+
+  it('reads a card whose streak it doesn’t understand', async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    mom.setStreak({ n: -1, until: 'soon' } as unknown as BuddyStreak)
+    mom.profile.tenure = { kind: 'pioneer', since: '2019-09' }
+    await pair(mom, anna)
+    expect(anna.store.getState().buddies[0]).toMatchObject({
+      name: 'Mom',
+      tenure: { kind: 'pioneer', since: '2019-09' },
+    })
+    expect(anna.store.getState().buddies[0].streak).toBeUndefined()
   })
 
   it('caps active buddies plus pending invites at five', async () => {
@@ -1279,7 +1343,7 @@ describe('removed buddies stay removed', () => {
         Array.from({ length: 140 }, () => [id(), at])
       ),
       removedBuddies: kept,
-      sharing: { photo: true, tenure: true, updatedAt: at },
+      sharing: { photo: true, tenure: true, streak: true, updatedAt: at },
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
     // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.

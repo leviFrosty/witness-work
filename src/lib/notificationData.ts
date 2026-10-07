@@ -1,6 +1,11 @@
 import type * as Notifications from 'expo-notifications'
 
-export type ReminderKind = 'visit' | 'plan' | 'contact' | 'unloggedDay'
+export type ReminderKind =
+  | 'visit'
+  | 'plan'
+  | 'contact'
+  | 'unloggedDay'
+  | 'streak'
 
 /**
  * What a local reminder carries so a tap can open its record. Ids only — the
@@ -8,7 +13,10 @@ export type ReminderKind = 'visit' | 'plan' | 'contact' | 'unloggedDay'
  */
 export type ReminderData = {
   kind: ReminderKind
-  /** Visit, Plan, or Contact id; a planned day (`YYYY-MM-DD`) to log time. */
+  /**
+   * Visit, Plan, or Contact id; a planned day (`YYYY-MM-DD`) to log time; the
+   * day or month (its 1st) a streak waits on.
+   */
   id: string
   /** The Visit's Contact, so a Follow-up reminder opens its Contact. */
   contactId?: string
@@ -58,7 +66,8 @@ export function reminderData(
     kind !== 'visit' &&
     kind !== 'plan' &&
     kind !== 'contact' &&
-    kind !== 'unloggedDay'
+    kind !== 'unloggedDay' &&
+    kind !== 'streak'
   )
     return null
   return {

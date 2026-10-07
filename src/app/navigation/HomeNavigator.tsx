@@ -10,6 +10,7 @@ import { DevSettings, View } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import { usePreferences } from '@/stores/preferences'
 import NotificationsBell from '@/app/notifications/NotificationsBell'
+import HomeStreakChip from '@/features/profile/components/HomeStreakChip'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -71,6 +72,7 @@ const HomeNavigator = () => {
                       onLongPress={() => DevSettings.reload()}
                     />
                   )}
+                  <HomeStreakChip />
                   <NotificationsBell />
                 </>
               }

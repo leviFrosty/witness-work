@@ -2,6 +2,7 @@ import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
   CalendarDays as CalendarDaysIcon,
+  CircleHelp as CircleHelpIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
@@ -15,6 +16,9 @@ import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
+import { useScheduleIntro } from '@/stores/scheduleIntro'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import ScheduleDayInspector from '@/features/plans/components/ScheduleDayInspector'
@@ -75,6 +79,11 @@ const ScheduleScreen = ({ route }: Props) => {
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
   useSyncBuddiesOnFocus()
+  const openIntro = useScheduleIntro((s) => s.open)
+  // The first visit explains how to get the most from Schedule.
+  useEffect(() => {
+    if (!usePreferences.getState().scheduleIntroSeen) openIntro('first_visit')
+  }, [openIntro])
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
   const [calendarViewMode, setCalendarViewMode] =
@@ -246,7 +255,20 @@ const ScheduleScreen = ({ route }: Props) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <RootHeader
         title={i18n.t('Schedule')}
-        actions={<BuddiesHeaderButton />}
+        actions={
+          <>
+            <PointerTooltip label={i18n.t('scheduleIntro_howItWorks')}>
+              <IconButton
+                icon={CircleHelpIcon}
+                size='xl'
+                hitSlop={12}
+                accessibilityLabel={i18n.t('scheduleIntro_howItWorks')}
+                onPress={() => openIntro('help')}
+              />
+            </PointerTooltip>
+            <BuddiesHeaderButton />
+          </>
+        }
         contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
       />
       <SwipeMonthNavigator

@@ -16,10 +16,13 @@ import {
   POLICY,
   RAM_GB,
   acquireBuild,
+  belowFloor,
   claimLease,
+  evictStaleWarm,
   gc,
   heartbeat,
   killTree,
+  parkWarm,
   readLeases,
   reapBuilds,
   release,
@@ -27,6 +30,7 @@ import {
   removeDirs,
   reservePort,
   setBuildGroup,
+  shutdownWarm,
   snapshot,
   updateLeases,
   withMutex,
@@ -51,7 +55,9 @@ const ANDROID_HOME =
   process.env.ANDROID_HOME || path.join(os.homedir(), 'Library/Android/sdk')
 const ANDROID_AVD_HOME =
   process.env.ANDROID_AVD_HOME || path.join(os.homedir(), '.android/avd')
-const KEEP_BUILDS = 3
+// Cached builds per platform (about 230 MB iOS, 130 MB Android). Worktrees on
+// different native fingerprints evict each other's builds below ~6.
+const KEEP_BUILDS = Number(process.env.WW_VERIFY_KEEP_BUILDS) || 6
 
 const slugOf = (root) =>
   path
@@ -250,9 +256,18 @@ function leaseDevice(lease) {
   }
 }
 
-async function takeLease(platform, kind, flags) {
+/** Shuts down a warm device a lease or build needs the memory of. */
+function shutdownWarmDevice(warm) {
+  log(`shutting down warm ${warm.deviceName} to free memory`)
+  shutdownDevice(
+    leaseDevice({ ...warm, worktree: null }) // same shape as a lease
+  )
+}
+
+async function takeLease(platform, kind, native, flags) {
   const waitMin = Number(flags.wait ?? 30)
   const waitLog = waitLogger()
+  const installs = readJson(INSTALLS, {})
   const result = await claimLease(
     {
       worktree: ROOT,
@@ -262,10 +277,16 @@ async function takeLease(platform, kind, flags) {
       create:
         platform === 'ios' ? (pool) => createIosDevice(kind, pool) : createAvd,
       busyPorts: () => new Set(listeningPorts().keys()),
+      // A device that already runs this build skips the install.
+      prefer: (d) =>
+        !native.stale &&
+        installs[d.key]?.fingerprint === native.fingerprint &&
+        installs[d.key]?.artifact === native.artifact,
     },
     {
       waitMs: waitMin * 60_000,
       beforeTry: reapExpired,
+      shutdown: shutdownWarmDevice,
       onWait: (r) =>
         waitLog(
           `waiting for a ${platform} device (#${r.position} of ${r.queued} waiting): ${r.wait}${r.holders.length ? `; ${platform} leases held by ${r.holders.map(describeHolder).join(', ')}` : ''} (see wwv status)`
@@ -415,7 +436,11 @@ function stopWorktreeServices(worktree, reason) {
   writeJson(file, state)
 }
 
-/** Closes the session, shuts the device down, and drops the lease. */
+/**
+ * Closes the session and drops the lease. The device stays booted (warm) for
+ * the next `up` when the warm pool has room (`--keep-device` always keeps it,
+ * `--shutdown` never does); otherwise it is shut down first.
+ */
 function releasePlatform(state, platform, flags) {
   const own = readLeases().filter(
     (l) => l.worktree === ROOT && l.platform === platform
@@ -423,10 +448,18 @@ function releasePlatform(state, platform, flags) {
   const device = state.devices?.[platform] ?? (own[0] && leaseDevice(own[0]))
   if (!device) return
   agentDevice(['close', '--session', sessionName(platform)])
-  shutdownDevice(device, { keepDevice: Boolean(flags['keep-device']) })
+  const lease = own.find((l) => l.key === device.lockKey && !l.legacy)
+  shutdownDevice(device, { keepDevice: true }) // stops the iOS runner
+  const warm =
+    !flags.shutdown &&
+    lease &&
+    parkWarm(lease, { force: Boolean(flags['keep-device']) })
+  if (!warm) shutdownDevice(device)
   release(ROOT, (l) => l.platform === platform || l.key === device.lockKey)
   delete state.devices?.[platform]
-  log(`released ${device.name}`)
+  log(
+    `released ${device.name}${warm ? '; it stays booted for the next up' : ''}`
+  )
 }
 
 /** Releases every lease of this worktree and stops its Metro; keeps state. */
@@ -467,6 +500,10 @@ function printTable(title, headers, rows) {
 
 async function reapExpired() {
   await reapBuilds({ log })
+  await shutdownWarm(evictStaleWarm(), (w) => {
+    log(`shutting down ${w.deviceName}, warm over ${CONFIG.warmHours} h`)
+    shutdownDevice(leaseDevice({ ...w, worktree: null }))
+  })
   return gc(async (lease) => {
     const device = leaseDevice(lease)
     const gone = !fs.existsSync(lease.worktree)
@@ -483,7 +520,8 @@ async function reapExpired() {
       '--session',
       sessionName(lease.platform, lease.worktree),
     ])
-    shutdownDevice(device)
+    shutdownDevice(device, { keepDevice: true }) // stops the iOS runner
+    if (lease.legacy || !parkWarm(lease)) shutdownDevice(device)
     const others = readLeases().some(
       (l) => l.worktree === lease.worktree && l.key !== lease.key && !l.expired
     )
@@ -1085,6 +1123,7 @@ async function resolveNative(state, platform, flags) {
   const options = { worktree: ROOT, platform, fingerprint }
   const handlers = {
     ready: cached,
+    shutdown: shutdownWarmDevice,
     onWait: (r) =>
       waitLog(
         `waiting to build ${platform} ${fingerprint.slice(0, 12)} (#${r.position} of ${r.queued} build waiters, holding no device): ${r.wait} (see wwv status)`
@@ -1124,6 +1163,50 @@ async function resolveNative(state, platform, flags) {
     releaseBuild()
     // Also after a failure: a failed build leaves several GB of intermediates.
     if (!flags['keep-build-dirs']) removeBuildDirs(platform)
+  }
+}
+
+/** The newest cached build, for `wwv warm` (which has no tree to fingerprint). */
+function newestCached(platform) {
+  const [key, entry] =
+    Object.entries(readJson(BUILD_INDEX, {}))
+      .filter(([k, e]) => k.startsWith(`${platform}-`) && fs.existsSync(e.path))
+      .sort((a, b) => b[1].builtAt - a[1].builtAt)[0] ?? []
+  return entry
+    ? { fingerprint: key.slice(platform.length + 1), artifact: entry.path }
+    : null
+}
+
+/**
+ * Boots one device for `wwv warm`, installs the newest cached build on it, and
+ * parks it warm. Returns its name, or null when no device is free.
+ */
+async function warmOne(platform) {
+  const native = newestCached(platform) ?? { stale: true }
+  const kind = platform === 'ios' ? 'iphone' : 'emulator'
+  let claim
+  try {
+    claim = await takeLease(platform, kind, native, { wait: 0 })
+  } catch (error) {
+    if (!(error instanceof Failure)) throw error
+    log(`no ${platform} device to warm: ${error.message}`)
+    return null
+  }
+  const device = leaseDevice(claim.lease)
+  try {
+    if (platform === 'ios') bootIos(device)
+    else {
+      device.id = await bootAndroid(device)
+      updateLeases(ROOT, { deviceId: device.id }, [device.lockKey])
+    }
+    if (!native.stale) ensureApp(device, native, {})
+    const lease = readLeases().find((l) => l.key === device.lockKey)
+    parkWarm(lease, { force: true })
+    return device.name
+  } catch (error) {
+    shutdownDevice(device)
+    release(ROOT, (l) => l.key === device.lockKey)
+    throw error
   }
 }
 
@@ -1610,6 +1693,31 @@ async function launch(state, device) {
     agentDevice(['alert', 'accept', '--session', session])
   }
   await waitForHarness(state, device.platform, 300_000)
+  await settleAndHideSplash(state, device.platform)
+}
+
+/**
+ * Xcode 27 dev builds leave the native splash over a running app after any
+ * second JS load, and the dev launcher often loads twice on a relaunch (its
+ * last project, then the link), most of all on a simulator that stayed booted.
+ * Waits until a marker survives 5 s (no reload), then hides the splash; hiding
+ * is a no-op once it's gone.
+ */
+async function settleAndHideSplash(state, platform) {
+  for (let i = 0; i < 8; i++) {
+    const mark = JSON.stringify(`${process.pid}-${Date.now()}`)
+    await cdpEval(state, platform, `globalThis.__wwvMark = ${mark}`)
+    await sleep(5000)
+    await waitForHarness(state, platform, 120_000)
+    if (await cdpEval(state, platform, `globalThis.__wwvMark === ${mark}`))
+      break
+    log('the app reloaded during launch; waiting for it to settle')
+  }
+  await cdpEval(
+    state,
+    platform,
+    'globalThis.expo?.modules?.ExpoSplashScreen?.hide?.() ?? null'
+  )
 }
 
 /**
@@ -1799,7 +1907,7 @@ const commands = {
       }
       const undone = []
       if (took.lease) {
-        releasePlatform(state, platform, {})
+        releasePlatform(state, platform, { shutdown: true })
         undone.push(`released ${took.lease.deviceName}`)
       }
       if (
@@ -1826,8 +1934,9 @@ const commands = {
       // Resolve (or build) the native artifact before leasing: a build needs
       // no device, and a build waiter must hold none.
       const native = await resolveNative(state, platform, flags)
-      const claim = await takeLease(platform, kind, flags)
+      const claim = await takeLease(platform, kind, native, flags)
       if (!claim.existing) took.lease = claim.lease
+      if (claim.warm) log(`reusing warm ${claim.lease.deviceName}`)
       startHeartbeat()
       device = leaseDevice(claim.lease)
       state.devices = { ...state.devices, [platform]: device }
@@ -2273,6 +2382,30 @@ const commands = {
     log(`stopped Metro; evidence kept in ${evidence ?? '.verify/artifacts'}`)
   },
 
+  // Boots devices until each platform runs WW_VERIFY_WARM_MIN (leased or
+  // warm); run it from launchd to keep the floor after builds and reboots.
+  async warm() {
+    await reapExpired()
+    const below = belowFloor()
+    if (!Object.keys(below).length) {
+      console.log(`ok: every platform runs at least ${CONFIG.warmMin}`)
+      return
+    }
+    for (const [platform, missing] of Object.entries(below)) {
+      if (
+        readLeases().some((l) => l.worktree === ROOT && l.platform === platform)
+      ) {
+        log(`skipping ${platform}: this checkout holds a ${platform} lease`)
+        continue
+      }
+      for (let i = 0; i < missing; i++) {
+        const name = await warmOne(platform)
+        if (!name) break
+        console.log(`warmed ${name}`)
+      }
+    }
+  },
+
   async gc() {
     const builds = await reapBuilds({ log })
     const reaped = await reapExpired()
@@ -2287,7 +2420,7 @@ const commands = {
   },
 
   async status() {
-    const { leases, builds, waiters, buildWaiters, usedGb } = snapshot()
+    const { leases, builds, warm, waiters, buildWaiters, usedGb } = snapshot()
     const names = Object.fromEntries(
       simctlDevices().map((d) => [d.udid, d.name])
     )
@@ -2299,6 +2432,9 @@ const commands = {
       WW_VERIFY_MAX_ANDROID: CONFIG.max.android,
       WW_VERIFY_MAX_BUILDS: CONFIG.maxBuilds,
       WW_VERIFY_LEASE_IDLE_MIN: CONFIG.idleMin,
+      WW_VERIFY_WARM: CONFIG.warm,
+      WW_VERIFY_WARM_HOURS: CONFIG.warmHours,
+      WW_VERIFY_WARM_MIN: CONFIG.warmMin,
       WW_VERIFY_EST_IOS_GB: CONFIG.est.ios,
       WW_VERIFY_EST_ANDROID_GB: CONFIG.est.android,
       WW_VERIFY_EST_METRO_GB: CONFIG.est.metro,
@@ -2326,6 +2462,18 @@ const commands = {
             : l.legacy
               ? 'held (old harness)'
               : 'held',
+      ])
+    )
+    const installs = readJson(INSTALLS, {})
+    printTable(
+      'WARM (booted, unleased; the next up takes these first)',
+      ['platform', 'device', 'warm for', 'installed build', 'state'],
+      warm.map((w) => [
+        w.platform,
+        w.deviceName ?? w.key,
+        ago(w.since),
+        String(installs[w.key]?.fingerprint ?? '-').slice(0, 12),
+        w.evicting ? `shutting down (${w.evicting})` : 'ready',
       ])
     )
     printTable(
@@ -2389,8 +2537,11 @@ const commands = {
   errors [--clear]                         JS errors captured since launch
   flow [files or dirs]                     Maestro flows (default e2e/maestro)
   monkey [--steps 120] [--seed N] [--scenario pioneer]
-  down [--platform p] [--keep-device]      release devices, stop Metro, keep evidence
+  down [--platform p] [--shutdown] [--keep-device]
+                                           release devices (kept booted while the
+                                           warm pool has room), stop Metro, keep evidence
   status                                   machine-wide leases, queue, builds, Metros, memory
+  warm                                     boot devices up to WW_VERIFY_WARM_MIN per platform
   gc                                       reap expired leases (also runs on every up)`)
   },
 }

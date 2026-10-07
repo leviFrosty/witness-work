@@ -39,5 +39,9 @@ module.exports = {
     // GoogleMaps pods are installed (decided by hashed config), so it is a
     // build output; hashing it would change the runtime version after a build.
     'node_modules/react-native-maps/ios/AirMaps/RNMapsDefines.h',
+    // app.config.ts imports it for permission strings, which the hashed Expo
+    // config already carries; hashing the whole file made every new UI string
+    // a native change.
+    'src/locales/en-US.json',
   ],
 }

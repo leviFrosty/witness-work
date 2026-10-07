@@ -55,7 +55,7 @@ Success: HTTP 200 with `{ "ok": true, ... }`. Failure: `{ "error": "<code>" }` w
 | 409  | `conflict`         | Inbox already registered with a different key; invite already claimed |
 | 410  | `gone`             | Slot does not exist (buddy removed you)                               |
 | 429  | `limit`            | A count cap was hit (slots, invites, devices)                         |
-| 429  | `rate_limited`     | A rate limit was hit                                                  |
+| 429  | `rate_limited`     | A rate limit or a stored-event cap was hit; may carry `Retry-After`   |
 | 503  | `disabled`         | Kill switch is off                                                    |
 | 426  | `upgrade_required` | `inbox/live` requested without a WebSocket upgrade                    |
 
@@ -107,7 +107,7 @@ Payload fields listed are **in addition** to `ts` and `nonce` for signed ops.
 While the app is in the foreground it keeps a WebSocket open to its own inbox, so a buddy's claim, confirmation, invitation, reply, or request to join shows up within a second instead of at the next foreground or push. The socket only says _that_ something changed; the app then runs `inbox/sync` as usual.
 
 - **Request:** `GET {BASE}/buddies/v1/inbox/live` with `Upgrade: websocket`. Owner-signed exactly like a POST owner op, with op `inbox/live` and payload `{ inboxId, ts, nonce }`, but the envelope travels in headers so no id reaches a URL: `x-buddies-p` (the `p` value) and `x-buddies-s` (the `s` value). Same stale and replay checks. Not a POST op (`POST /inbox/live` is 404).
-- **Refusals (before upgrading):** kill switch off → `503 disabled`; not a WebSocket upgrade → `426 upgrade_required`; then the usual `bad_request`, `bad_signature`, `stale`, `replay`, `not_found`.
+- **Refusals (before upgrading):** kill switch off → `503 disabled`; too many requests from this caller → `429 rate_limited` (with `Retry-After`); not a WebSocket upgrade → `426 upgrade_required`; then the usual `bad_request`, `bad_signature`, `stale`, `replay`, `not_found`. A refused upgrade is retried with the usual reconnect backoff.
 - **Messages (server → app):** `{ "type": "hello", "seq": N }` right after the upgrade, where `N` is the inbox's current `seq` (what a full `inbox/sync` returns); then `{ "type": "changed", "seq": N }` after every committed write that changes what `inbox/sync` returns: `event/put` (new events only), `card/put`, `roster/put`, a delivered claim, and `slot/add`, `slot/remove`, `slot/leave` that changed a slot. No content, ever. Slot changes don't advance `seq`, so the app syncs on every `changed` and on a `hello` past its cursor.
 - **Keepalive:** the app sends `ping` about every 25 s; the relay answers `pong` without waking the inbox's Durable Object. No `pong` within 10 s means the connection is dead and the app reconnects. Anything else the app sends is ignored.
 - **Closes:** `4001 "gone"` when the inbox is deleted or wiped for inactivity (the app syncs, which restores it); `4002 "replaced"` when an 11th socket opens, closing the oldest. The app reconnects with backoff (1 s → 60 s, jittered) while in the foreground and closes the socket when backgrounded.
@@ -134,12 +134,18 @@ The relay keeps `inviteId → creator inboxId` only until the invite is deleted 
 
 ## Limits and retention
 
+Stored-event caps count a slot's events (by number and by base64url bytes) until they expire. An `event/put` past a cap fails with `rate_limited` and stores nothing; stored events are never dropped to make room, and room comes back as they expire. Cards and the roster are replaced in place, so only their blob sizes cap them.
+
+Every op is also rate-limited per caller (the client IP, IPv6 by /64), never per target inbox. Unsigned invite ops, `inbox/register` (also capped per caller per day), reads (`inbox/sync` and `inbox/live`), and every other signed op each have their own budget, sized far above real use. A refused request gets 429 `rate_limited`, usually with `Retry-After` in seconds. Clients treat it like any transient failure and retry later, never in a tight loop.
+
 | Item                                       | Limit                                                                                                                |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Slots + open invites per inbox             | 5                                                                                                                    |
 | Open invites per inbox                     | 3                                                                                                                    |
 | Invite creations per inbox                 | 20 per 24 h                                                                                                          |
 | Writes per slot (`card/put` + `event/put`) | 60 per hour                                                                                                          |
+| Stored events per slot                     | 10,000 events and 16 MiB until they expire (see above)                                                               |
+| Stored events per inbox                    | 128 MiB across all slots (see above)                                                                                 |
 | Pushes per slot                            | 10 per 24 h, at least 60 s apart; `*.cancel`/`*.decline` kinds get 5 more per 24 h (see [Push budget](#push-budget)) |
 | Devices per inbox                          | 10                                                                                                                   |
 | Events                                     | Deleted 30 days after creation                                                                                       |

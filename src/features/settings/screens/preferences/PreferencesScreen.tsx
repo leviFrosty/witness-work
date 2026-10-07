@@ -15,7 +15,7 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'

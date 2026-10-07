@@ -27,6 +27,7 @@ const MUTEX = path.join(HOME, 'mutex')
 const WAITERS = path.join(HOME, 'waiters.json')
 const BUILDS = path.join(HOME, 'active-builds.json')
 const BUILD_WAITERS = path.join(HOME, 'build-waiters.json')
+const WARM = path.join(HOME, 'warm.json')
 
 export const CONFIG = {
   max: {
@@ -35,6 +36,12 @@ export const CONFIG = {
   },
   maxBuilds: num('WW_VERIFY_MAX_BUILDS', 1),
   idleMin: num('WW_VERIFY_LEASE_IDLE_MIN', 30, 15),
+  // Idle devices per platform kept booted after `down` for the next `up`.
+  warm: num('WW_VERIFY_WARM', 2, 0),
+  warmHours: num('WW_VERIFY_WARM_HOURS', 12),
+  // Devices per platform kept running (leased or warm); `wwv warm` boots up to
+  // it. Only a native build, which can't fit otherwise, goes below it.
+  warmMin: num('WW_VERIFY_WARM_MIN', 0),
   budgetGb: num('WW_VERIFY_MEMORY_BUDGET_GB', Math.round(RAM_GB * 0.7), 8),
   // GB per item, measured on a 16 GB Mac Mini (footprint, not RSS); calibrate
   // with the env vars on a new machine.
@@ -209,16 +216,177 @@ function save(lease) {
   writeJsonAtomic(lease.file ?? lockFile(raw.key), raw)
 }
 
-/** Live leases and builds, the Metro each leasing worktree runs, in GB. */
-export function usage(leases, builds) {
+/**
+ * Live leases, warm devices and builds, plus the Metro each leasing worktree
+ * runs, in GB.
+ */
+export function usage(leases, builds, warm = []) {
   const live = leases.filter((l) => !l.expired)
   const worktrees = new Set(live.map((l) => l.worktree))
   return round(
     live.reduce((sum, l) => sum + CONFIG.est[l.platform], 0) +
+      warm.reduce((sum, w) => sum + CONFIG.est[w.platform], 0) +
       worktrees.size * CONFIG.est.metro +
       builds.reduce((sum, b) => sum + CONFIG.est[`build-${b.platform}`], 0)
   )
 }
+
+// ---------- warm devices ----------
+
+// A warm device is a booted pool device no lease holds, kept for the next
+// `up`. Its memory counts toward the budget until a lease takes it or a lease
+// or build that needs the room evicts it (marks it, shuts it down, drops it).
+const evicting = (w) => Boolean(w.evicting && pidAlive(w.evicting))
+
+/**
+ * Warm devices no lease has taken; an eviction whose owner died is dropped.
+ * `persist` (under the mutex) forgets the rest for good, since an older harness
+ * that leases a warm device shuts it down without updating this file.
+ */
+function readWarm(leases, { persist = false } = {}) {
+  const leased = new Set(leases.map((l) => l.key))
+  const all = readJson(WARM, [])
+  const warm = all.filter(
+    (w) => !leased.has(w.key) && (!w.evicting || evicting(w))
+  )
+  if (persist && warm.length !== all.length) writeJsonAtomic(WARM, warm)
+  return warm
+}
+
+/** Warm devices that still hold memory, i.e. not being shut down. */
+const idleWarm = (leases) => readWarm(leases).filter((w) => !evicting(w))
+
+/** Running devices (live leases and idle warm ones) per platform. */
+function running(leases, warm) {
+  const count = { ios: 0, android: 0 }
+  for (const l of leases) if (!l.expired) count[l.platform]++
+  for (const w of warm) if (!evicting(w)) count[w.platform]++
+  return count
+}
+
+/**
+ * Keeps `candidates` (oldest first) only while shutting each down leaves its
+ * platform at `WW_VERIFY_WARM_MIN` or more; `count` is what runs afterwards
+ * without them.
+ */
+function aboveFloor(candidates, count) {
+  const left = { ...count }
+  return [...candidates]
+    .sort((a, b) => a.since - b.since)
+    .filter((w) => left[w.platform] > CONFIG.warmMin && left[w.platform]--)
+}
+
+/**
+ * Marks warm devices for shutdown, oldest first, until `fits(freedGb)`; returns
+ * them, or null (nothing marked) when even all of them aren't enough.
+ */
+function markEvictions(warm, fits, pid) {
+  const victims = []
+  let freed = 0
+  for (const w of warm) {
+    if (fits(freed)) break
+    victims.push(w)
+    freed += CONFIG.est[w.platform]
+  }
+  if (!victims.length || !fits(freed)) return null
+  return mark(victims, pid)
+}
+
+function mark(victims, pid) {
+  const keys = new Set(victims.map((w) => w.key))
+  writeJsonAtomic(
+    WARM,
+    readJson(WARM, []).map((w) =>
+      keys.has(w.key) ? { ...w, evicting: pid } : w
+    )
+  )
+  return victims
+}
+
+/**
+ * Hands a lease back but keeps its device booted for the next `up`, if the warm
+ * pool has room for it (`WW_VERIFY_WARM` per platform) under the memory budget.
+ * `force`, or a platform below `WW_VERIFY_WARM_MIN`, skips both checks. Returns
+ * false, leaving the lease in place, when it doesn't fit: the caller shuts the
+ * device down and releases.
+ */
+export function parkWarm(lease, { force = false } = {}) {
+  return withMutex(() => {
+    const now = Date.now()
+    const leases = readLeases(now).filter((l) => l.key !== lease.key)
+    const warm = readWarm(leases).filter((w) => w.key !== lease.key)
+    const peers = warm.filter((w) => w.platform === lease.platform)
+    const used = usage(
+      leases,
+      liveBuilds(now),
+      warm.filter((w) => !evicting(w))
+    )
+    const floor = running(leases, warm)[lease.platform] < CONFIG.warmMin
+    if (
+      !force &&
+      !floor &&
+      (peers.length >= CONFIG.warm ||
+        used + CONFIG.est[lease.platform] > CONFIG.budgetGb)
+    )
+      return false
+    writeJsonAtomic(WARM, [
+      ...warm,
+      {
+        key: lease.key,
+        platform: lease.platform,
+        kind: lease.kind,
+        deviceId: lease.deviceId,
+        deviceName: lease.deviceName,
+        since: now,
+      },
+    ])
+    fs.rmSync(lockFile(lease.key), { force: true })
+    return true
+  })
+}
+
+/**
+ * Marks warm devices for shutdown that match `filter` (e.g. too old), keeping
+ * `WW_VERIFY_WARM_MIN` running per platform.
+ */
+export function evictWarm(filter, pid = process.pid) {
+  return withMutex(() => {
+    const leases = readLeases()
+    const warm = idleWarm(leases)
+    return mark(aboveFloor(warm.filter(filter), running(leases, warm)), pid)
+  })
+}
+
+/**
+ * Platforms with fewer running devices than `WW_VERIFY_WARM_MIN`, and by how
+ * many.
+ */
+export function belowFloor() {
+  return withMutex(() => {
+    const leases = readLeases()
+    const count = running(leases, idleWarm(leases))
+    return Object.fromEntries(
+      Object.entries(count)
+        .filter(([, n]) => n < CONFIG.warmMin)
+        .map(([platform, n]) => [platform, CONFIG.warmMin - n])
+    )
+  })
+}
+
+/** Forgets warm devices this process marked and has now shut down. */
+export function dropWarm(victims, pid = process.pid) {
+  const keys = new Set(victims.map((w) => w.key))
+  withMutex(() =>
+    writeJsonAtomic(
+      WARM,
+      readJson(WARM, []).filter((w) => !(keys.has(w.key) && w.evicting === pid))
+    )
+  )
+}
+
+/** Warm devices older than `WW_VERIFY_WARM_HOURS`, marked for shutdown. */
+export const evictStaleWarm = (now = Date.now()) =>
+  evictWarm((w) => now - w.since > CONFIG.warmHours * 3600_000)
 
 /** Who holds the budgeted memory, for wait messages. */
 function describeUse(leases, now = Date.now()) {
@@ -228,7 +396,8 @@ function describeUse(leases, now = Date.now()) {
   const builds = liveBuilds(now).map(
     (b) => `${b.platform} build ${path.basename(b.worktree)}`
   )
-  const all = [...held, ...builds]
+  const warm = idleWarm(leases).map((w) => `warm ${w.deviceName ?? w.key}`)
+  const all = [...held, ...builds, ...warm]
   return `held by ${all.join(', ') || 'nobody'}`
 }
 
@@ -303,6 +472,7 @@ export function tryClaim({
   pool,
   create,
   busyPorts = () => new Set(),
+  prefer = () => false,
   pid = process.pid,
 }) {
   return withMutex(() => {
@@ -335,7 +505,6 @@ export function tryClaim({
     const need =
       CONFIG.est[platform] +
       (live.some((l) => l.worktree === worktree) ? 0 : CONFIG.est.metro)
-    const used = usage(leases, liveBuilds(now))
     const wait = (reason, impossible = false) => {
       const entry = waiters.find((w) => w.pid === pid)
       entry.reason = reason
@@ -361,10 +530,38 @@ export function tryClaim({
       return wait(
         `all ${cap} ${platform} leases are held (WW_VERIFY_MAX_${platform.toUpperCase()})`
       )
-    if (used + need > CONFIG.budgetGb)
+    // Prefer a warm device (no boot), then one that already runs the build.
+    const devices = pool()
+    const warm = readWarm(leases, { persist: true })
+    const taken = new Set([
+      ...leases.map((l) => l.key),
+      ...warm.filter(evicting).map((w) => w.key),
+    ])
+    const score = (d) =>
+      (warm.some((w) => w.key === d.key) ? 2 : 0) + (prefer(d) ? 1 : 0)
+    let device = devices
+      .filter((d) => !taken.has(d.key))
+      .sort((a, b) => score(b) - score(a))[0]
+    // A warm device this lease takes over is already counted in `need`.
+    const others = warm.filter((w) => !evicting(w) && w.key !== device?.key)
+    const used = usage(leases, liveBuilds(now), others)
+    if (used + need > CONFIG.budgetGb) {
+      // A lease on a device that isn't warm adds a running device.
+      const after = running(leases, warm)
+      if (!warm.some((w) => w.key === device?.key)) after[platform]++
+      const evict = markEvictions(
+        aboveFloor(others, after),
+        (freed) => used - freed + need <= CONFIG.budgetGb,
+        pid
+      )
+      if (evict) {
+        writeJsonAtomic(WAITERS, waiters) // keeps this waiter's place
+        return { evict }
+      }
       return wait(
         `memory budget: ${used} GB in use + ${need} GB > ${CONFIG.budgetGb} GB (WW_VERIFY_MEMORY_BUDGET_GB); ${describeUse(leases, now)}`
       )
+    }
     // A build that queued earlier and waits only for memory goes first, or a
     // steady stream of device leases would starve it.
     const since = waiters.find((w) => w.pid === pid).since
@@ -378,9 +575,6 @@ export function tryClaim({
       return wait(
         `yielding memory to an earlier ${build.platform} build for ${path.basename(build.worktree)}`
       )
-    const devices = pool()
-    const taken = new Set(leases.map((l) => l.key))
-    let device = devices.find((d) => !taken.has(d.key))
     if (!device) {
       if (devices.length >= cap)
         return wait(`all ${devices.length} ${platform} devices are taken`)
@@ -401,15 +595,25 @@ export function tryClaim({
       at: now,
     }
     writeJsonAtomic(lockFile(device.key), lease)
+    writeJsonAtomic(
+      WARM,
+      readJson(WARM, []).filter((w) => w.key !== device.key)
+    )
     leave()
-    return { lease }
+    return { lease, warm: warm.some((w) => w.key === device.key) }
   })
 }
 
 /** Polls `tryClaim` until it succeeds or `waitMs` passes. */
 export async function claimLease(
   options,
-  { waitMs, pollMs = 12_000, beforeTry = async () => {}, onWait = () => {} }
+  {
+    waitMs,
+    pollMs = 12_000,
+    beforeTry = async () => {},
+    onWait = () => {},
+    shutdown = async () => {},
+  }
 ) {
   const deadline = Date.now() + waitMs
   const pid = options.pid ?? process.pid
@@ -417,6 +621,10 @@ export async function claimLease(
     for (;;) {
       await beforeTry()
       const result = tryClaim(options)
+      if (result.evict) {
+        await shutdownWarm(result.evict, shutdown, pid)
+        continue
+      }
       if (result.lease || result.impossible || Date.now() >= deadline)
         return result
       onWait(result)
@@ -514,6 +722,15 @@ export async function gc(cleanup) {
   return victims
 }
 
+/** Shuts marked warm devices down, then forgets them (even if one failed). */
+export async function shutdownWarm(victims, shutdown, pid = process.pid) {
+  try {
+    for (const w of victims) await shutdown(w)
+  } finally {
+    dropWarm(victims, pid)
+  }
+}
+
 // ---------- native builds ----------
 
 /**
@@ -564,12 +781,24 @@ export function tryAcquireBuild({
       return wait(
         `${builds.length} of ${CONFIG.maxBuilds} build slots busy (${builds.map((b) => `${b.platform} ${path.basename(b.worktree)} ${String(b.fingerprint).slice(0, 12)}`).join(', ')}; WW_VERIFY_MAX_BUILDS)`
       )
-    const used = usage(leases, builds)
-    if (used + need > CONFIG.budgetGb)
+    const warm = readWarm(leases, { persist: true }).filter((w) => !evicting(w))
+    const used = usage(leases, builds, warm)
+    if (used + need > CONFIG.budgetGb) {
+      // A build may go below WW_VERIFY_WARM_MIN; `wwv warm` restores it.
+      const evict = markEvictions(
+        [...warm].sort((a, b) => a.since - b.since),
+        (freed) => used - freed + need <= CONFIG.budgetGb,
+        pid
+      )
+      if (evict) {
+        writeJsonAtomic(BUILD_WAITERS, waiters)
+        return { evict }
+      }
       return wait(
         `memory budget: ${used} GB in use + ${need} GB build > ${CONFIG.budgetGb} GB; ${describeUse(leases, now)}`,
         { blockedOn: 'memory' }
       )
+    }
     writeJsonAtomic(BUILDS, [
       ...storedBuilds(now),
       { pid, worktree, platform, fingerprint, startedAt: now, seenAt: now },
@@ -608,7 +837,13 @@ let buildTimer
  */
 export async function acquireBuild(
   options,
-  { waitMs, pollMs = 10_000, onWait = () => {}, ready = () => null }
+  {
+    waitMs,
+    pollMs = 10_000,
+    onWait = () => {},
+    ready = () => null,
+    shutdown = async () => {},
+  }
 ) {
   const deadline = Date.now() + waitMs
   const pid = options.pid ?? process.pid
@@ -617,6 +852,10 @@ export async function acquireBuild(
       const cached = ready()
       if (cached) return { cached }
       const result = tryAcquireBuild(options)
+      if (result.evict) {
+        await shutdownWarm(result.evict, shutdown, pid)
+        continue
+      }
       if (result.ok) {
         clearInterval(buildTimer)
         buildTimer = setInterval(() => {
@@ -777,11 +1016,17 @@ export function snapshot() {
     ...b,
     orphaned: isOrphan(b, now),
   }))
+  const warm = readWarm(leases)
   return {
     leases,
     builds,
+    warm,
     waiters: liveWaiters(now).sort((a, b) => a.since - b.since),
     buildWaiters: liveBuildWaiters(now).sort((a, b) => a.since - b.since),
-    usedGb: usage(leases, builds),
+    usedGb: usage(
+      leases,
+      builds,
+      warm.filter((w) => !evicting(w))
+    ),
   }
 }

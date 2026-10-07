@@ -21,14 +21,14 @@ What `up` does, in order:
 
 1. Reaps expired leases and orphaned builds.
 2. Resolves the native app before it leases anything. It computes the native fingerprint (`@expo/fingerprint`) and uses the matching build in `~/.ww-verify/builds`. Otherwise it waits for a build slot, then builds the dev client without a device: a clean dev prebuild, then `xcodebuild` (newest installed Xcode, DerivedData in `.verify/DerivedData`) or `gradlew :app:assembleDebug`. It caches the result and deletes `.verify/DerivedData` or `android/app/build` (`--keep-build-dirs` keeps them). A worktree waiting to build holds no device: if it held one, `up` hands it back first and leases again after the build.
-3. Leases a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device, queueing if the pool is full (see [Concurrency and resources](#concurrency-and-resources)).
+3. Leases a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device, queueing if the pool is full (see [Concurrency and resources](#concurrency-and-resources)). It takes a warm device first (already booted, so no boot), preferring one that already runs this build (so no install).
 4. Starts Metro on the port reserved with the lease, from 8090 to 8129.
-5. Installs the cached build unless the device already runs exactly that binary.
+5. Boots the device unless it's warm, then installs the cached build unless the device already runs exactly that binary.
 6. Launches the app against this Metro and waits until `__WW_DEV__` answers.
 
 If `up` fails or is interrupted, it hands back the lease it took and stops the Metro it started, then says what to do next.
 
-It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes 10 to 25 minutes, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro.
+It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes 10 to 25 minutes, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro; with a warm device that already runs it, `up` takes well under a minute. The fingerprint covers native inputs only (`fingerprint.config.js`): `modules/`, `patches/`, `plugins/`, `targets/`, native deps, and the resolved `app.config.ts`. New or changed strings in `en-US.json` don't count, except the permission strings `app.config.ts` copies into the native config.
 
 - `--accept-stale-native` skips the build. Use it only when the diff has no native change (`modules/`, `patches/`, `plugins/`, `targets/`, native deps, `app.config.ts`), and report "native binary unverified".
 - `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`), an isolated ww-api, and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Use it whenever the change reads or writes backend data (Buddies, Notes Import, accounts) or when you need isolation. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` (see `wwv up`'s `api` output), shared with the user and every other worktree.
@@ -140,13 +140,16 @@ Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 - **Builds.** Always the development variant (`com.leviwilkerson.jwtimedev`); the harness refuses to cache or install anything else and never adds PostHog's symbol upload. A build never installs anything; `up` installs the cached artifact after it holds a lease. A failed build's `.verify/DerivedData` or `android/app/build` is deleted too. Android builds run without a Gradle or Kotlin daemon, so nothing stays resident afterwards.
 - **Orphaned builds.** A build runs in its own process group, recorded with its slot. If its `up` dies (killed, crashed), the next `up` or `wwv gc` kills that group and deletes its build dirs; `wwv status` shows it as `orphaned` until then.
 - **Waiting.** When every device is leased, `up` queues first-come and prints the holders and your place. Builds queue first-come too, and a device request waits behind an earlier build that is only short of memory, so builds aren't starved. `up` gives up after `--wait <minutes>` (default 30). Don't kill another worktree's lease; run `wwv status` (it lists who waits for what, and why) and wait, or work without a device.
-- **Idle expiry.** Every command that touches the device refreshes the lease. A lease that is idle for `WW_VERIFY_LEASE_IDLE_MIN`, or whose worktree was deleted, gets reaped by the next `up` or `wwv gc`: the reaper shuts the device down and stops that worktree's Metro. After that, your commands fail with "no longer holds its lease"; run `wwv up` again.
+- **Idle expiry.** Every command that touches the device refreshes the lease. A lease that is idle for `WW_VERIFY_LEASE_IDLE_MIN`, or whose worktree was deleted, gets reaped by the next `up` or `wwv gc`: the reaper hands the device to the warm pool (or shuts it down if the pool is full) and stops that worktree's Metro. After that, your commands fail with "no longer holds its lease"; run `wwv up` again.
+- **Warm devices.** `down` keeps the device booted, unleased, for the next `up` while there are fewer than `WW_VERIFY_WARM` warm devices of that platform and the budget has room. Warm devices count toward the memory budget. A lease or build that needs the memory shuts the oldest ones down instead of waiting, and any warm device is shut down after `WW_VERIFY_WARM_HOURS`. `wwv status` lists them and the build each one runs. A warm device keeps the last worktree's app data, as a shut-down one always did, so seed state with `--seed` or `wwv seed`.
+- **Minimum running devices.** `WW_VERIFY_WARM_MIN` (default 0) keeps that many devices per platform running, leased or warm: `down` and idle reaping always keep a device warm below it, and neither the hours limit nor a lease evicts below it. Only a native build may, because it can't fit otherwise. `wwv warm` boots devices back up to the minimum and installs the newest cached build on them. A machine that sets the minimum runs `wwv warm` from launchd every few minutes.
 - **Memory budget.** A lease or build waits while the estimated total would exceed `WW_VERIFY_MEMORY_BUDGET_GB`; a request bigger than the whole budget fails at once. Emulators boot with 2 GB and 2 cores, and Metro runs with 2 workers.
 - **Always `wwv down` when done**, including after a failed `up`.
 
 ```bash
 wwv status     # leases, device and build waiters with reasons, builds, Metros, memory (read-only)
 wwv gc         # reap expired leases and orphaned builds now
+wwv warm       # boot devices up to WW_VERIFY_WARM_MIN per platform (no-op at 0)
 ```
 
 Defaults depend on the machine's RAM; env vars always win, and `wwv status` prints the effective policy and where each value came from (`env` or `auto`).
@@ -156,6 +159,9 @@ Defaults depend on the machine's RAM; env vars always win, and `wwv status` prin
 | `WW_VERIFY_MAX_IOS`, `WW_VERIFY_MAX_ANDROID`                   | 1, 1                  | 2, 2                  |
 | `WW_VERIFY_MAX_BUILDS`                                         | 1                     | 1                     |
 | `WW_VERIFY_LEASE_IDLE_MIN`                                     | 15                    | 30                    |
+| `WW_VERIFY_WARM` (per platform), `WW_VERIFY_WARM_HOURS`        | 0, 12                 | 2, 12                 |
+| `WW_VERIFY_WARM_MIN` (per platform)                            | 0                     | 0                     |
+| `WW_VERIFY_KEEP_BUILDS` (cached builds per platform)           | 6                     | 6                     |
 | `WW_VERIFY_MEMORY_BUDGET_GB`                                   | 8                     | 70% of RAM            |
 | `WW_VERIFY_EST_{IOS,ANDROID,METRO,IOS_BUILD,ANDROID_BUILD}_GB` | 3.4, 3.2, 0.6, 6, 6.5 | 3.4, 3.2, 0.6, 6, 6.5 |
 | `WW_VERIFY_METRO_WORKERS`, `WW_VERIFY_GRADLE_WORKERS`          | 2, 2                  | 2, 2                  |
@@ -170,8 +176,9 @@ The budget covers only the harness. The rest of the 16 GB is spoken for: macOS a
 ## Cleanup
 
 ```bash
-wwv down                    # close sessions, shut down claimed devices, stop Metro (and local API)
-wwv down --keep-device      # keep the device booted for a follow-up task
+wwv down                    # close sessions, release devices (kept warm if the pool has room), stop Metro (and local API)
+wwv down --shutdown         # shut the device down instead of keeping it warm
+wwv down --keep-device      # keep it warm even past WW_VERIFY_WARM
 ```
 
 `down` releases this worktree's leases (even if the device is already gone), only stops what this worktree started, and keeps `.verify/artifacts/`. Simulators and AVDs stay installed for reuse. Delete them only to reclaim disk: `xcrun simctl delete <udid>` or `avdmanager delete avd -n ww-verify-N`, plus stale builds in `~/.ww-verify/builds`.
@@ -180,7 +187,7 @@ wwv down --keep-device      # keep the device booted for a follow-up task
 
 Each of these was hit for real. Use the fix rather than working around it:
 
-- **The splash covers the app after a JS reload.** On Xcode 27 dev builds, any reload (Metro `r`, dev menu Reload, `ad metro reload`) leaves the native splash over a running app. Never reload. Run `wwv up` instead: it is idempotent and cold-relaunches through the dev-client link. For JS edits, Fast Refresh is fine.
+- **The splash covers the app after a JS reload.** On Xcode 27 dev builds, any reload (Metro `r`, dev menu Reload, `ad metro reload`) leaves the native splash over a running app. Never reload. Run `wwv up` instead: it is idempotent, relaunches through the dev-client link, waits until the app stops reloading, and hides the splash. If a splash still covers a running app, `wwv eval 'globalThis.expo.modules.ExpoSplashScreen.hide()'` clears it. For JS edits, Fast Refresh is fine.
 - **The snapshot is empty or reports "circuit-disabled".** agent-device turned off its fast iOS accessibility reader for this app process, usually after a slow screen or another app came forward. Run `wwv up` to relaunch.
 - **Taps land on the wrong control after `seed`.** Take `wwv ad snapshot -i` first, because refs and geometry go stale when the layout changes.
 - **A LogBox banner or RedBox covers the tab bar.** `up` mutes LogBox (errors are still captured). Clear a leftover one with `wwv ad react-native dismiss-overlay`, then read it with `wwv errors`.

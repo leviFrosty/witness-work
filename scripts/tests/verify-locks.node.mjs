@@ -509,6 +509,189 @@ test('a device claim yields to an earlier build that waits for memory', async ()
   )
 })
 
+const warmFile = (box) => path.join(box.home, 'warm.json')
+const readWarm = (box) =>
+  fs.existsSync(warmFile(box))
+    ? JSON.parse(fs.readFileSync(warmFile(box), 'utf8'))
+    : []
+const park = (worktree, force = false) => `
+  const lease = L.readLeases().find((l) => l.worktree === ${JSON.stringify(worktree)})
+  return L.parkWarm(lease, { force: ${force} })
+`
+// A warm device outside the test pool, so a claim can't take it over.
+const writeWarm = (box, entries) =>
+  fs.writeFileSync(
+    warmFile(box),
+    JSON.stringify(
+      entries.map((e) => ({ platform: 'ios', deviceName: e.key, ...e }))
+    )
+  )
+const shutdownLog = (box) => path.join(box.home, 'shutdowns')
+const shutdowns = (box) =>
+  fs.existsSync(shutdownLog(box))
+    ? fs.readFileSync(shutdownLog(box), 'utf8').trim().split('\n')
+    : []
+const logShutdown = (box) =>
+  `async (w) => fs.appendFileSync(${JSON.stringify(shutdownLog(box))}, w.key + '\\n')`
+
+test('a released device stays warm up to the cap and the next claim takes it first', async () => {
+  const box = sandbox({ WW_VERIFY_WARM: '1' })
+  const [a, b, c] = ['a', 'b', 'c'].map((n) => box.worktree(n))
+  assert.equal((await child(box, claim(a))).key, 'dev-1')
+  assert.equal((await child(box, claim(b))).key, 'dev-2')
+  assert.equal(await child(box, park(a)), true)
+  assert.equal(await child(box, park(b)), false, 'over WW_VERIFY_WARM')
+  assert.deepEqual(
+    readWarm(box).map((w) => w.key),
+    ['dev-1']
+  )
+  assert.deepEqual(box.lockFiles(), ['dev-2.json'], 'b keeps its lease')
+  const taken = await child(
+    box,
+    `const r = await L.claimLease(
+       { worktree: ${JSON.stringify(c)}, platform: 'ios', kind: 'iphone', pool, create },
+       { waitMs: 0 }
+     )
+     return { key: r.lease.key, warm: r.warm }`
+  )
+  assert.deepEqual(taken, { key: 'dev-1', warm: true })
+  assert.deepEqual(readWarm(box), [])
+  assert.equal(await child(box, park(b, true)), true, 'force ignores the cap')
+})
+
+test('parking refuses a device the memory budget has no room for', async () => {
+  const box = sandbox({
+    WW_VERIFY_MEMORY_BUDGET_GB: '8',
+    WW_VERIFY_EST_IOS_GB: '3',
+    WW_VERIFY_EST_METRO_GB: '1',
+  })
+  const a = box.worktree('a')
+  assert.ok((await child(box, claim(a))).key)
+  writeWarm(box, [
+    { key: 'warm-x', since: Date.now() },
+    { key: 'warm-y', since: Date.now() },
+  ])
+  assert.equal(await child(box, park(a)), false) // 6 GB warm + 3 > 8
+  assert.equal(box.lockFiles().length, 1, 'the caller shuts down and releases')
+  writeWarm(box, [{ key: 'warm-x', since: Date.now() }])
+  assert.equal(await child(box, park(a)), true) // 3 GB warm + 3 <= 8
+})
+
+test('a claim short of memory shuts warm devices down, oldest first', async () => {
+  const box = sandbox({
+    WW_VERIFY_MEMORY_BUDGET_GB: '8',
+    WW_VERIFY_EST_IOS_GB: '3',
+    WW_VERIFY_EST_METRO_GB: '1',
+  })
+  const now = Date.now()
+  writeWarm(box, [
+    { key: 'warm-new', since: now },
+    { key: 'warm-old', since: now - 60_000 },
+  ])
+  const got = await child(
+    box,
+    `const r = await L.claimLease(
+       { worktree: ${JSON.stringify(box.worktree('a'))}, platform: 'ios', kind: 'iphone', pool, create },
+       { waitMs: 0, shutdown: ${logShutdown(box)} }
+     )
+     return r.lease?.key ?? r.wait`
+  )
+  assert.equal(got, 'dev-1')
+  assert.deepEqual(shutdowns(box), ['warm-old'], 'one eviction frees enough')
+  assert.deepEqual(
+    readWarm(box).map((w) => w.key),
+    ['warm-new']
+  )
+})
+
+test('a build short of memory shuts warm devices down instead of waiting', async () => {
+  const box = sandbox({
+    WW_VERIFY_MEMORY_BUDGET_GB: '8',
+    WW_VERIFY_EST_IOS_GB: '3',
+    WW_VERIFY_EST_IOS_BUILD_GB: '6',
+  })
+  writeWarm(box, [{ key: 'warm-x', since: Date.now() }])
+  const got = await child(
+    box,
+    `const r = await L.acquireBuild(
+       { worktree: 'w', platform: 'ios', fingerprint: 'f' },
+       { waitMs: 0, shutdown: ${logShutdown(box)} }
+     )
+     L.releaseBuild()
+     return r.ok ?? r.wait`
+  )
+  assert.equal(got, true)
+  assert.deepEqual(shutdowns(box), ['warm-x'])
+  assert.deepEqual(readWarm(box), [])
+})
+
+test('warm devices past WW_VERIFY_WARM_HOURS are marked for shutdown', async () => {
+  const box = sandbox({ WW_VERIFY_WARM_HOURS: '1' })
+  const now = Date.now()
+  writeWarm(box, [
+    { key: 'fresh', since: now },
+    { key: 'stale', since: now - 2 * 3600_000 },
+  ])
+  assert.deepEqual(
+    await child(box, `return L.evictStaleWarm().map((w) => w.key)`),
+    ['stale']
+  )
+  // Marked by a process that has exited: dropped, never counted again.
+  assert.deepEqual(
+    await child(box, `return L.snapshot().warm.map((w) => w.key)`),
+    ['fresh']
+  )
+})
+
+test('WW_VERIFY_WARM_MIN keeps a device per platform running; only builds go below it', async () => {
+  const box = sandbox({
+    WW_VERIFY_WARM: '0',
+    WW_VERIFY_WARM_MIN: '1',
+    WW_VERIFY_WARM_HOURS: '1',
+    WW_VERIFY_MEMORY_BUDGET_GB: '8',
+    WW_VERIFY_EST_IOS_GB: '3',
+    WW_VERIFY_EST_ANDROID_GB: '3',
+    WW_VERIFY_EST_METRO_GB: '1',
+    WW_VERIFY_EST_IOS_BUILD_GB: '6',
+  })
+  assert.deepEqual(await child(box, `return L.belowFloor()`), {
+    ios: 1,
+    android: 1,
+  })
+  const a = box.worktree('a')
+  assert.ok((await child(box, claim(a))).key)
+  assert.equal(await child(box, park(a)), true, 'parks below the floor')
+  assert.deepEqual(await child(box, `return L.belowFloor()`), { android: 1 })
+  // Too old, but the only iOS device running: it stays.
+  const old = readWarm(box).map((w) => ({ ...w, since: 0 }))
+  fs.writeFileSync(warmFile(box), JSON.stringify(old))
+  assert.deepEqual(await child(box, `return L.evictStaleWarm()`), [])
+  // An Android claim short of memory can't take the floor device either.
+  const android = (name) => `
+    const r = L.tryClaim({ worktree: ${JSON.stringify(box.worktree(name))}, platform: 'android', kind: 'emulator',
+      pool: () => [], create: () => ({ key: 'avd-${name}', id: '${name}', name: '${name}' }) })
+    return r.lease?.key ?? r.wait ?? r.evict`
+  assert.equal(await child(box, android('b')), 'avd-b', '3 warm + 4 <= 8')
+  assert.match(await child(box, android('c')), /memory budget/)
+  assert.equal(readWarm(box).length, 1)
+  // A build can't fit otherwise, so it may go below the floor.
+  await child(
+    box,
+    `return L.release(${JSON.stringify(box.worktree('b'))}).length`
+  )
+  const built = await child(
+    box,
+    `const r = await L.acquireBuild(
+       { worktree: 'w', platform: 'ios', fingerprint: 'f' },
+       { waitMs: 0, shutdown: ${logShutdown(box)} }
+     )
+     L.releaseBuild()
+     return r.ok ?? r.wait`
+  )
+  assert.equal(built, true)
+  assert.deepEqual(shutdowns(box), ['dev-1'])
+})
+
 test('an orphaned build group is killed, its slot freed and its dirs removed', async () => {
   const box = sandbox()
   const wt = box.worktree('orphan')

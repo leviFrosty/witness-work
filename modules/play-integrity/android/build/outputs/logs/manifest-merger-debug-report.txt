@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml:2:13-83
-INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml:2:13-83
+ADDED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml:2:13-83
+INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml:2:13-83
 	package
-		INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml
+		INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml
 	xmlns:android
-		ADDED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml:2:23-81
+		ADDED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml:2:23-81
 uses-sdk
-INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml reason: use-sdk injection requested
-INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml
-INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml
+INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml reason: use-sdk injection requested
+INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml
+INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml
 	android:targetSdkVersion
-		INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml
+		INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml
 	android:minSdkVersion
-		INJECTED from /Users/levi/.t3/worktrees/witness-work/plan-details-page/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14070595098248302570.xml
+		INJECTED from /Users/levi/.t3/worktrees/witness-work/t3-d4349996/modules/play-integrity/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest6748923400940609261.xml

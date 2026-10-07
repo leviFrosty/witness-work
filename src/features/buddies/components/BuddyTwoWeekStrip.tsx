@@ -1,13 +1,17 @@
 import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
+import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
+import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
+import type { RootStackNavigation } from '@/types/rootStack'
 import useServiceReport from '@/stores/serviceReport'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import useAskToJoin from '@/features/buddies/hooks/useAskToJoin'
@@ -50,7 +54,8 @@ function LegendItem({ color, label }: { color: string; label: string }) {
 
 /**
  * The buddy's days and the User's own for the next two weeks, side by side. Tap
- * one of the buddy's days to plan the same time or ask to join.
+ * any day to invite the buddy or plan it; on one of the buddy's days, also to
+ * plan the same time or ask to join.
  */
 export default function BuddyTwoWeekStrip({
   buddy,
@@ -60,6 +65,7 @@ export default function BuddyTwoWeekStrip({
   card?: ReceivedCard
 }) {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const { timeDisplayFormat } = usePreferences()
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
@@ -95,7 +101,7 @@ export default function BuddyTwoWeekStrip({
     const plans = theirs.get(key)
     const isToday = day.isSame(start, 'day')
     const content = (
-      <View style={{ alignItems: 'center', gap: 4, paddingVertical: 6 }}>
+      <View style={{ alignItems: 'center', gap: 4, paddingVertical: 12 }}>
         <Text
           style={{
             color: theme.colors.textAlt,
@@ -132,31 +138,53 @@ export default function BuddyTwoWeekStrip({
       .filter(Boolean)
       .join('. ')
 
+    const date = day.clone().hour(12).toISOString()
+
     return (
-      <View key={key} style={{ flex: 1 }}>
-        {plans ? (
-          <PullDownMenu
-            accessibilityLabel={label}
-            actions={plans.map((plan, index) => [
-              {
-                id: `plan_same_time_${index}`,
-                title: i18n.t('buddies_planSameTimeAs', {
-                  plan: planLabel(plan),
-                }),
-                systemImage: 'calendar.badge.plus',
-                onPress: () => planSameTime(key, plan),
+      <PullDownMenu
+        key={key}
+        style={{ flex: 1 }}
+        // Neighbouring days would steal each other's edges.
+        hitSlop={0}
+        accessibilityLabel={label}
+        actions={[
+          ...(plans ?? []).map((plan, index): ContextMenuEntries[number] => [
+            {
+              id: `plan_same_time_${index}`,
+              title: i18n.t('buddies_planSameTimeAs', {
+                plan: planLabel(plan),
+              }),
+              systemImage: 'calendar.badge.plus',
+              onPress: () => planSameTime(key, plan),
+            },
+            askToJoin.menuAction(buddy, key, plan),
+          ]),
+          [
+            {
+              id: 'invite_to_plan',
+              title: i18n.t('buddies_inviteNameToPlan', { name: buddyName }),
+              systemImage: 'person.2.badge.plus',
+              onPress: () => {
+                analytics.capture('buddy_plan_invite_opened', {
+                  source: 'buddy_detail_day',
+                })
+                navigation.navigate('PlanDay', {
+                  date,
+                  prefill: { buddies: [buddy.inboxId] },
+                })
               },
-              askToJoin.menuAction(buddy, key, plan),
-            ])}
-          >
-            {content}
-          </PullDownMenu>
-        ) : (
-          <View accessible accessibilityLabel={label}>
-            {content}
-          </View>
-        )}
-      </View>
+            },
+            {
+              id: 'plan_day',
+              title: i18n.t('planThisDay'),
+              systemImage: 'calendar',
+              onPress: () => navigation.navigate('PlanDay', { date }),
+            },
+          ],
+        ]}
+      >
+        {content}
+      </PullDownMenu>
     )
   }
 
@@ -173,10 +201,17 @@ export default function BuddyTwoWeekStrip({
             : undefined
       }
     >
-      <View style={{ gap: 4, paddingVertical: 8, paddingHorizontal: 8 }}>
+      <View style={{ paddingVertical: 4, paddingHorizontal: 4 }}>
         <XView>{days.slice(0, 7).map(cell)}</XView>
         <XView>{days.slice(7).map(cell)}</XView>
-        <XView style={{ gap: 16, justifyContent: 'center', paddingTop: 4 }}>
+        <XView
+          style={{
+            gap: 16,
+            justifyContent: 'center',
+            paddingTop: 4,
+            paddingBottom: 8,
+          }}
+        >
           <LegendItem color={theirColor} label={buddyName} />
           <LegendItem
             color={theme.colors.accent}

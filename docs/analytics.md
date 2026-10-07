@@ -550,12 +550,12 @@ A buddy's detail screen answers whether people plan together from it and make
 it their own. All properties are bounded enums; no names, nicknames, relay ids,
 or dates are sent.
 
-| Event                         | When                                                                                 | Properties                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `buddy_plan_invite_opened`    | Invite to a Plan opened the Plan form with the buddy preselected.                    | `source: buddy_detail`. Saving still sends `plan_created` (`invited_buddies`).               |
-| `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                             |
-| `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail \| plan_details`, `type: plan \| followUp`, `answer`. |
-| `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                                |
+| Event                         | When                                                                                 | Properties                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `buddy_plan_invite_opened`    | Invite to a Plan opened the Plan form with the buddy preselected.                    | `source: buddy_detail \| buddy_detail_day`. Saving still sends `plan_created` (`invited_buddies`). |
+| `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                                   |
+| `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail \| plan_details`, `type: plan \| followUp`, `answer`.       |
+| `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                                      |
 
 ### Buddies Alpha feedback
 

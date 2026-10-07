@@ -95,6 +95,11 @@ set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
 set +a
+# Without the key the Beta paywall can't load and nothing else fails loudly.
+if [ -z "${EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY:-}" ]; then
+  echo "error: EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY is empty in $ENV_FILE (see docs/build.md → Beta builds)" >&2
+  exit 1
+fi
 # The shell environment is the single source of truth: never let Expo merge
 # the development .env into a beta bundle.
 export APP_VARIANT=beta EXPO_NO_DOTENV=1 NODE_ENV=production

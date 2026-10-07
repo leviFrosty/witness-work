@@ -32,6 +32,8 @@ import { TimerSection } from '@/features/service-reports/components/TimerSection
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import HomeGreeting from '@/features/profile/components/HomeGreeting'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
+import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
+import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
@@ -187,7 +189,12 @@ export const HomeScreen = () => {
                 case 'approachingConversations':
                   // Missed Follow-ups live in the notifications tray.
                   if (!homeScreenElements.approachingConversations) return null
-                  return <ApproachingConversations key={key} />
+                  return (
+                    <ApproachingConversations
+                      key={key}
+                      headerAction={<TodayRouteAction />}
+                    />
+                  )
                 case 'tabletServiceYearSummary':
                   if (
                     !isTablet ||
@@ -299,6 +306,13 @@ export const HomeScreen = () => {
         onAddTime={handleAddTime}
         onPlanDay={handlePlanDay}
         onEditTimeReport={handleEditTimeReport}
+        renderFooter={(date, onNavigate) => (
+          <TodayRouteEntry
+            date={date}
+            surface='home_day'
+            onNavigate={onNavigate}
+          />
+        )}
       />
     </View>
   )

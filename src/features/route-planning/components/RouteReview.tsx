@@ -18,6 +18,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import RouteSectionLabel from '@/features/route-planning/components/RouteSectionLabel'
 import RouteStopRow from '@/features/route-planning/components/RouteStopRow'
+import RouteSupporterPreview from '@/features/route-planning/components/RouteSupporterPreview'
 import { routePlanErrorMessage } from '@/features/route-planning/lib/routePlanErrors'
 import type { RoutePlannerError } from '@/features/route-planning/hooks/useRoutePlanner'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
@@ -32,6 +33,7 @@ export default function RouteReview({
   startStop,
   canRestore,
   missingLocationCount,
+  locked,
   planning,
   error,
   onRemove,
@@ -44,6 +46,8 @@ export default function RouteReview({
   startStop: RouteStop | null
   canRestore: boolean
   missingLocationCount: number
+  /** No access yet: preview the stops and offer Supporter instead of planning. */
+  locked: boolean
   planning: boolean
   error: RoutePlannerError | null
   onRemove: (key: string) => void
@@ -87,9 +91,15 @@ export default function RouteReview({
           <InfoPopover
             inline
             title={i18n.t('routePlan_stopsInfoTitle')}
-            description={i18n.t('routePlan_stopsInfo', {
-              max: MAX_ROUTE_STOPS,
-            })}
+            description={[
+              missingLocationCount > 0 &&
+                i18n.t('routePlan_missingLocation' as TranslationKey, {
+                  count: missingLocationCount,
+                }),
+              i18n.t('routePlan_stopsInfo', { max: MAX_ROUTE_STOPS }),
+            ]
+              .filter(Boolean)
+              .join('\n\n')}
           />
         </XView>
         {included.length > 0 ? (
@@ -131,9 +141,20 @@ export default function RouteReview({
 
       {removed.length > 0 && (
         <View style={{ gap: 8 }}>
-          <RouteSectionLabel>
-            {i18n.t('routePlan_removedCount', { count: removed.length })}
-          </RouteSectionLabel>
+          <XView>
+            <RouteSectionLabel>
+              {i18n.t('routePlan_removedCount', { count: removed.length })}
+            </RouteSectionLabel>
+            {!canRestore && (
+              <InfoPopover
+                inline
+                title={i18n.t('routePlan_removedInfoTitle')}
+                description={i18n.t('routePlan_stopLimit', {
+                  max: MAX_ROUTE_STOPS,
+                })}
+              />
+            )}
+          </XView>
           <Card style={{ paddingVertical: 4, gap: 0 }}>
             {removed.map((stop, index) => (
               <Fragment key={stop.key}>
@@ -161,42 +182,35 @@ export default function RouteReview({
               </Fragment>
             ))}
           </Card>
-          {!canRestore && (
-            <Text style={footnote}>
-              {i18n.t('routePlan_stopLimit', { max: MAX_ROUTE_STOPS })}
-            </Text>
-          )}
         </View>
       )}
 
-      {missingLocationCount > 0 && (
-        <Text style={footnote}>
-          {i18n.t('routePlan_missingLocation' as TranslationKey, {
-            count: missingLocationCount,
-          })}
-        </Text>
-      )}
+      {locked ? (
+        <RouteSupporterPreview />
+      ) : (
+        <>
+          {error && (
+            <Text
+              accessibilityLiveRegion='polite'
+              style={{ color: theme.colors.error }}
+            >
+              {routePlanErrorMessage(error)}
+            </Text>
+          )}
 
-      {error && (
-        <Text
-          accessibilityLiveRegion='polite'
-          style={{ color: theme.colors.error }}
-        >
-          {routePlanErrorMessage(error)}
-        </Text>
+          <ActionButton
+            onPress={onPlan}
+            disabled={planning || included.length === 0}
+            accessibilityLabel={i18n.t('routePlan_findShortest')}
+          >
+            {planning ? (
+              <Loader style={{ height: 24, width: 24 }} />
+            ) : (
+              i18n.t('routePlan_findShortest')
+            )}
+          </ActionButton>
+        </>
       )}
-
-      <ActionButton
-        onPress={onPlan}
-        disabled={planning || included.length === 0}
-        accessibilityLabel={i18n.t('routePlan_findShortest')}
-      >
-        {planning ? (
-          <Loader style={{ height: 24, width: 24 }} />
-        ) : (
-          i18n.t('routePlan_findShortest')
-        )}
-      </ActionButton>
     </View>
   )
 }

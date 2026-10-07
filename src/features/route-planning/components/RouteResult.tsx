@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
 import IconButton from '@/components/ui/IconButton'
+import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -46,33 +47,36 @@ export default function RouteResult({
   const stopByStop = handoff.mode === 'stopByStop'
   const next = Math.min((lastOpened ?? -1) + 1, stops.length - 1)
   const nextStop = stops[next]
+  const info = [
+    route.summary && i18n.t('routePlan_summaryCaption'),
+    stopByStop && i18n.t('routePlan_oneAtATime', { app: appName(handoff.app) }),
+  ].filter(Boolean)
 
   return (
     <View style={{ gap: 20 }}>
       <View style={{ gap: 4 }}>
-        <RouteSectionLabel>{i18n.t('routePlan_yourRoute')}</RouteSectionLabel>
+        <XView>
+          <RouteSectionLabel>{i18n.t('routePlan_yourRoute')}</RouteSectionLabel>
+          {info.length > 0 && (
+            <InfoPopover
+              inline
+              title={i18n.t('routePlan_yourRoute')}
+              description={info.join('\n\n')}
+            />
+          )}
+        </XView>
         {route.summary && (
-          <>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {formatRouteSummary(route.summary, {
-                timeDisplayFormat,
-                distanceUnit,
-              })}
-            </Text>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {i18n.t('routePlan_summaryCaption')}
-            </Text>
-          </>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {formatRouteSummary(route.summary, {
+              timeDisplayFormat,
+              distanceUnit,
+            })}
+          </Text>
         )}
       </View>
 
@@ -133,23 +137,12 @@ export default function RouteResult({
       </Card>
 
       {stopByStop && nextStop ? (
-        <View style={{ gap: 8 }}>
-          <ActionButton onPress={() => onOpen(next)}>
-            {i18n.t('routePlan_navigateToStop', {
-              position: next + 1,
-              name: nextStop.title,
-            })}
-          </ActionButton>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('routePlan_oneAtATime', { app: appName(handoff.app) })}
-          </Text>
-        </View>
+        <ActionButton onPress={() => onOpen(next)}>
+          {i18n.t('routePlan_navigateToStop', {
+            position: next + 1,
+            name: nextStop.title,
+          })}
+        </ActionButton>
       ) : (
         <ActionButton onPress={() => onOpen(0)}>
           {i18n.t('routePlan_openIn', { app: appName(handoff.app) })}

@@ -1,9 +1,11 @@
-import { createElement, type ReactNode } from 'react'
+import { createElement } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  capture: vi.fn(),
+  hasAccess: true,
   stopCount: 2,
 }))
 
@@ -19,10 +21,11 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
-vi.mock('@/components/IsSupporter', () => ({
-  default: (props: { children: ReactNode }) =>
-    createElement('IsSupporter', props),
+vi.mock('@/components/SupporterBadge', () => ({ default: 'SupporterBadge' }))
+vi.mock('@/hooks/useFeatureAccess', () => ({
+  default: () => ({ hasAccess: mocks.hasAccess }),
 }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))
 vi.mock('@/features/route-planning/hooks/useDayRouteStops', () => ({
   default: () => ({
     stops: Array.from({ length: mocks.stopCount }, (_, i) => ({ key: `${i}` })),
@@ -43,28 +46,42 @@ const render = async (props: Parameters<typeof TodayRouteEntry>[0]) => {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.stopCount = 2
+  mocks.hasAccess = true
 })
 
 describe('TodayRouteEntry', () => {
-  it('sits behind the Supporter gate on today once two stops have a location', async () => {
-    const root = await render({ date: new Date() })
-    const gate = root.root.findByType('IsSupporter' as never)
-    expect(gate.props).toMatchObject({
-      feature: 'routePlanning',
-      analyticsSurface: 'today_route',
+  it('opens for non-Supporters too, marked as a Supporter feature', async () => {
+    mocks.hasAccess = false
+    const root = await render({ date: new Date(), surface: 'schedule_day' })
+    expect(root.root.findAllByType('SupporterBadge' as never)).toHaveLength(1)
+    await act(async () => {
+      root.root.findByType('Button' as never).props.onPress()
+    })
+    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute')
+    expect(mocks.capture).toHaveBeenCalledWith('route_plan_entry_opened', {
+      surface: 'schedule_day',
+      supporter: false,
     })
   })
 
   it('stays hidden on other days and with fewer than two stops', async () => {
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    expect((await render({ date: tomorrow })).toJSON()).toBeNull()
+    expect(
+      (await render({ date: tomorrow, surface: 'schedule_day' })).toJSON()
+    ).toBeNull()
     mocks.stopCount = 1
-    expect((await render({ date: new Date() })).toJSON()).toBeNull()
+    expect(
+      (await render({ date: new Date(), surface: 'schedule_day' })).toJSON()
+    ).toBeNull()
   })
 
   it('opens the route screen through the host, e.g. after its sheet closes', async () => {
     const onNavigate = vi.fn((go: () => void) => go())
-    const root = await render({ date: new Date(), onNavigate })
+    const root = await render({
+      date: new Date(),
+      surface: 'home_day',
+      onNavigate,
+    })
     await act(async () => {
       root.root.findByType('Button' as never).props.onPress()
     })

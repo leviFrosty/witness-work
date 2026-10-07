@@ -54,7 +54,7 @@ export default function VisitCustomFieldsSection({
     )
 
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 8, marginTop: 16 }}>
       <XView
         style={{
           paddingHorizontal: 12,

@@ -52,7 +52,7 @@ export default function BuddyPicker({
   return (
     <InputRowContainer
       label={i18n.t('buddies_inviteBuddies')}
-      description={description}
+      info={description}
       controlWidth='full'
       lastInSection={lastInSection}
       style={{ gap: 10 }}

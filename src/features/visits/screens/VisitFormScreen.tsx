@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '@/components/ui/inputs/Section'
+import Section, { SectionRows } from '@/components/ui/inputs/Section'
 import { Visit } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -69,8 +69,10 @@ const NotificationSection = (props: {
   notificationsAllowed: boolean
   turnOnNotifications: () => Promise<boolean>
   notifyMeOffset: MomentOffset
+  lastInSection: boolean
 }) => {
   const {
+    lastInSection,
     conversation,
     notificationsAllowed,
     turnOnNotifications,
@@ -121,10 +123,10 @@ const NotificationSection = (props: {
   }))
 
   return (
-    <>
+    <SectionRows>
       <InputRowContainer
         label={i18n.t('notifyMe')}
-        lastInSection={!notificationsAllowed || !notifyMe}
+        lastInSection={lastInSection && (!notificationsAllowed || !notifyMe)}
         description={
           notificationsAllowed ? undefined : i18n.t('notifyMe_description')
         }
@@ -139,7 +141,7 @@ const NotificationSection = (props: {
       {notificationsAllowed && notifyMe && (
         <InputRowContainer
           label={i18n.t('notification')}
-          lastInSection
+          lastInSection={lastInSection}
           controlWidth='full'
           description={
             reminderPassed ? i18n.t('reminderTimePassed') : undefined
@@ -171,7 +173,7 @@ const NotificationSection = (props: {
           </View>
         </InputRowContainer>
       )}
-    </>
+    </SectionRows>
   )
 }
 
@@ -559,79 +561,84 @@ const VisitFormScreen = ({
       <Wrapper
         insets='none'
         style={{
-          gap: 30,
-          marginTop: 20,
+          gap: 24,
+          marginTop: 16,
           paddingHorizontal: 12,
           alignSelf: 'center',
           width: '100%',
           maxWidth: 680,
         }}
       >
-        <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <IconButton
-              icon={conversation.notAtHome ? CaravanIcon : MessagesSquareIcon}
-              size={20}
-              iconStyle={{ color: theme.colors.text }}
-            />
-            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {getTitle()}
-            </Text>
-          </View>
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {notAtHome
-              ? i18n.t('addNotAtHome_description')
-              : i18n.t('addConversation_description')}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingHorizontal: 13,
+          }}
+        >
+          <IconButton
+            icon={conversation.notAtHome ? CaravanIcon : MessagesSquareIcon}
+            size={20}
+            iconStyle={{ color: theme.colors.text }}
+          />
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+            {getTitle()}
           </Text>
         </View>
-        <Section>
-          <InputRowContainer
-            label={i18n.t('date')}
-            justifyContent='space-between'
-            controlWidth='auto'
-          >
-            <DateTimePicker
-              maximumDate={moment().toDate()}
-              value={conversation.date}
-              onChange={handleDateChange}
-              iOSMode='datetime'
-            />
-          </InputRowContainer>
-          <TextInputRow
-            label={i18n.t('note')}
-            info={
-              dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
-            }
-            textInputProps={{
-              placeholder: i18n.t('note_placeholder'),
-              multiline: true,
-              enterKeyHint: 'enter',
-              defaultValue: conversation.note,
-              textAlign: 'left',
-              onChangeText: (note: string) =>
-                setConversation({ ...conversation, note }),
-            }}
-            lastInSection={notAtHome}
-          />
-          {!notAtHome && (
-            <InputRowSwitch
-              label={i18n.t('conductedBibleStudy')}
-              value={conversation.isBibleStudy}
-              onValueChange={(isBibleStudy) =>
-                setConversation({ ...conversation, isBibleStudy })
+        {/* Keeps the Custom Fields link under the section it adds to. */}
+        <View style={{ gap: 8 }}>
+          <Section>
+            <InputRowContainer
+              label={i18n.t('date')}
+              justifyContent='space-between'
+              controlWidth='auto'
+            >
+              <DateTimePicker
+                maximumDate={moment().toDate()}
+                value={conversation.date}
+                onChange={handleDateChange}
+                iOSMode='datetime'
+              />
+            </InputRowContainer>
+            <TextInputRow
+              label={i18n.t('note')}
+              info={
+                dataProtectionMode
+                  ? i18n.t('dataProtectionNoteHint')
+                  : undefined
               }
-              lastInSection
+              textInputProps={{
+                placeholder: i18n.t('note_placeholder'),
+                multiline: true,
+                enterKeyHint: 'enter',
+                defaultValue: conversation.note,
+                textAlign: 'left',
+                onChangeText: (note: string) =>
+                  setConversation({ ...conversation, note }),
+              }}
+              lastInSection={notAtHome}
             />
-          )}
-        </Section>
-        <VisitCustomFieldsSection
-          customFields={conversation.customFields}
-          setCustomField={setCustomField}
-        />
+            {!notAtHome && (
+              <InputRowSwitch
+                label={i18n.t('conductedBibleStudy')}
+                value={conversation.isBibleStudy}
+                onValueChange={(isBibleStudy) =>
+                  setConversation({ ...conversation, isBibleStudy })
+                }
+                lastInSection
+              />
+            )}
+          </Section>
+          <VisitCustomFieldsSection
+            customFields={conversation.customFields}
+            setCustomField={setCustomField}
+          />
+        </View>
         <Section>
           <InputRowSwitch
             label={i18n.t('followUp')}
-            description={i18n.t('followUp_description')}
+            info={i18n.t('followUp_description')}
             value={followUpEnabled}
             onValueChange={handleFollowUpEnabledChange}
             lastInSection={!followUpEnabled}
@@ -687,6 +694,7 @@ const VisitFormScreen = ({
                 notifyMeOffset={notifyMeOffset}
                 setConversation={setConversation}
                 setNotifyMeOffset={setNotifyMeOffset}
+                lastInSection={Platform.OS !== 'ios'}
               />
               {Platform.OS === 'ios' && (
                 <FollowUpCalendarControls

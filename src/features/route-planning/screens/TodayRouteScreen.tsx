@@ -19,7 +19,7 @@ export default function TodayRouteScreen() {
   const planner = useRoutePlanner(stops)
 
   return (
-    <Wrapper insets='none'>
+    <Wrapper insets='none' style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{
           padding: 20,

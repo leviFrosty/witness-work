@@ -5,7 +5,7 @@ import Text from '@/components/ui/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import useContacts from '@/stores/contactsStore'
 import useTheme from '@/contexts/theme'
-import { Address, Contact } from '@/types/contact'
+import { Address, Contact, Coordinate } from '@/types/contact'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Header from '@/components/ui/layout/Header'
 import i18n from '@/lib/locales'
@@ -14,6 +14,7 @@ import * as Localization from 'expo-localization'
 import { fetchCoordinateFromAddress } from '@/lib/address'
 import Loader from '@/components/ui/Loader'
 import isEqual from 'lodash/isEqual'
+import { canonicalJson } from '@/lib/canonicalJson'
 import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import moment from 'moment'
@@ -58,6 +59,12 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const contactToUpdate = originalContact.current
   const locales = Localization.getLocales()
   const geocodeAbortController = useRef<AbortController>(null)
+  /**
+   * The last address picked from search with the coordinate MapKit returned for
+   * it. Saving that same address reuses the coordinate instead of geocoding it
+   * again.
+   */
+  const pickedPlace = useRef<{ address: Address; coordinate: Coordinate }>(null)
   const [fetching, setFetching] = useState(false)
   const prefillKeys = prefillAddress.address
     ? Object.keys(prefillAddress.address)
@@ -297,6 +304,21 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       shouldGeocode: boolean,
       resolve: (value: unknown) => void
     ) => {
+      const picked = pickedPlace.current
+      if (
+        shouldGeocode &&
+        picked &&
+        canonicalJson(picked.address) === canonicalJson(c.address)
+      ) {
+        const located = {
+          ...c,
+          coordinate: picked.coordinate,
+          userDraggedCoordinate: undefined,
+        }
+        commit(located)
+        resolve(located)
+        return
+      }
       commit(c)
       // Geocoding posts the full householder address to HERE through the
       // vendor's proxy. In data protection mode the contact is saved without a
@@ -622,6 +644,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             stateInput={stateInput}
             zipInput={zipInput}
             prefill={prefill}
+            onPlacePicked={(address, coordinate) => {
+              pickedPlace.current = coordinate ? { address, coordinate } : null
+            }}
           />
         )}
         {detailsVisible && (

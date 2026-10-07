@@ -209,6 +209,35 @@ describe('Contact Form map coordinates', () => {
     )
   })
 
+  it('saves the coordinate of a picked search result without geocoding', async () => {
+    await mount({ id: 'new-contact' })
+    const address = { line1: '1 Example Way', city: 'Springfield' }
+    const coordinate = { latitude: 39.8, longitude: -89.6 }
+    await act(async () => {
+      root.root.findByType(ContactIdentityCard).props.onNameChange('Neighbor')
+      addressProps().setContact((c) => ({ ...c, address }))
+      addressProps().onPlacePicked?.(address, coordinate)
+    })
+    await save()
+    expect(mocks.geocode).not.toHaveBeenCalled()
+    expect(mocks.addContact).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ address, coordinate })
+    )
+  })
+
+  it('geocodes when the address was edited after picking a result', async () => {
+    await mount({ id: 'new-contact' })
+    const address = { line1: '1 Example Way', city: 'Springfield' }
+    await act(async () => {
+      root.root.findByType(ContactIdentityCard).props.onNameChange('Neighbor')
+      addressProps().setContact((c) => ({ ...c, address }))
+      addressProps().onPlacePicked?.(address, { latitude: 1, longitude: 2 })
+    })
+    await act(async () => addressProps().setLine1('2 Example Way'))
+    await save()
+    expect(mocks.geocode).toHaveBeenCalledOnce()
+  })
+
   it('does not write a contact when the prefilled form is abandoned', async () => {
     await mount({
       id: 'new-contact',

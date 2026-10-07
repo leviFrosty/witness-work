@@ -11,19 +11,24 @@ import i18n from '@/lib/locales'
 /**
  * Optional help directly after a label, with no gap on the parent row. The icon
  * starts 6pt from the label; the rest of its 44pt tap target extends rightward.
- * Keep values, essential instructions, and help inside existing detail popovers
- * inline; don't nest an InfoPopover inside another popover.
+ * Beside a control rather than a label, `centered` centers the icon in its
+ * target so it doesn't leave a wide gutter after it. Keep values, essential
+ * instructions, and help inside existing detail popovers inline; don't nest an
+ * InfoPopover inside another popover.
  */
 const InfoPopover = ({
   title,
   description,
   inline = false,
+  centered = false,
   color,
 }: {
   title: string
   description: string
   /** Keep the 44pt target without making a text line 44pt tall. */
   inline?: boolean
+  /** Center the icon in its tap target, e.g. at the end of an input row. */
+  centered?: boolean
   /** Icon color override, e.g. on a tinted hero. Defaults to `textAlt`. */
   color?: string
 }) => {
@@ -68,8 +73,8 @@ const InfoPopover = ({
             height: 44,
             marginVertical: inline ? -12 : 0,
             flexShrink: 0,
-            alignItems: 'flex-start',
-            paddingLeft: 6,
+            alignItems: centered ? 'center' : 'flex-start',
+            paddingLeft: centered ? 0 : 6,
             justifyContent: 'center',
             opacity: pressed ? 0.6 : 1,
           })}

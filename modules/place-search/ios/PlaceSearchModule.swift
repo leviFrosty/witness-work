@@ -4,10 +4,11 @@ import Foundation
 import MapKit
 
 /**
- * Apple MapKit place search for Plan locations. Autocomplete uses
- * `MKLocalSearchCompleter` so publishers can find points of interest
- * ("Kingdom Hall", a park, a coffee shop) as well as street addresses; resolve
- * turns a picked suggestion into a name, a one-line address, and coordinates.
+ * Apple MapKit place search for Plan locations and contact addresses.
+ * Autocomplete uses `MKLocalSearchCompleter` so publishers can find points of
+ * interest ("Kingdom Hall", a park, a coffee shop) as well as street addresses;
+ * resolve turns a picked suggestion into a name, a one-line address, its
+ * postal parts, and coordinates.
  *
  * Everything runs on the main queue: `MKLocalSearchCompleter` must be created
  * and driven from the main thread, and it calls its delegate there.
@@ -19,15 +20,19 @@ public class PlaceSearchModule: Module {
     Name("PlaceSearch")
 
     // JS checks this so OTA updates never call into a binary without the module.
+    // 2: `scope` argument and `postalAddress` on resolved places.
     Constant("placeSearchVersion") {
-      1
+      2
     }
 
     AsyncFunction("autocomplete") {
-      (query: String, latitude: Double?, longitude: Double?, promise: Promise) in
+      (query: String, latitude: Double?, longitude: Double?, scope: String?, promise: Promise) in
       let searcher = self.mainSearcher()
-      searcher.complete(query: query, center: Self.coordinate(latitude, longitude)) {
-        completions in
+      searcher.complete(
+        query: query,
+        center: Self.coordinate(latitude, longitude),
+        addressesOnly: scope == "address"
+      ) { completions in
         let serialized: [[String: Any]] = completions.map { Self.serializeCompletion($0) }
         promise.resolve(serialized as Any?)
       }
@@ -86,7 +91,47 @@ public class PlaceSearchModule: Module {
     if let name = poiName(mapItem, address: address) {
       place["name"] = name
     }
+    let postal = postalParts(placemark)
+    if !postal.isEmpty {
+      place["postalAddress"] = postal
+    }
     return place
+  }
+
+  /// Address fields for forms that store them separately, e.g. a contact's
+  /// line 1, city, and zip. Empty parts are left out.
+  private static func postalParts(_ placemark: MKPlacemark) -> [String: String] {
+    var street = streetLine(placemark)
+    var city = placemark.locality
+    var state = placemark.administrativeArea
+    var zip = placemark.postalCode
+    var country = placemark.country
+    if let postalAddress = placemark.postalAddress {
+      if !postalAddress.street.isEmpty { street = postalAddress.street }
+      if !postalAddress.city.isEmpty { city = postalAddress.city }
+      if !postalAddress.state.isEmpty { state = postalAddress.state }
+      if !postalAddress.postalCode.isEmpty { zip = postalAddress.postalCode }
+      if !postalAddress.country.isEmpty { country = postalAddress.country }
+    }
+    // A street can span lines ("1 Main St\nApt 4"); the rest becomes line 2.
+    let streetLines = (street ?? "")
+      .components(separatedBy: .newlines)
+      .map { $0.trimmingCharacters(in: .whitespaces) }
+      .filter { !$0.isEmpty }
+    let parts: [String: String?] = [
+      "line1": streetLines.first,
+      "line2": streetLines.count > 1 ? streetLines.dropFirst().joined(separator: ", ") : nil,
+      "city": city,
+      "state": state,
+      "zip": zip,
+      "country": country,
+    ]
+    return parts.compactMapValues { value in
+      guard let value = value?.trimmingCharacters(in: .whitespaces), !value.isEmpty else {
+        return nil
+      }
+      return value
+    }
   }
 
   /// Single-line postal address, e.g. "1 Apple Park Way, Cupertino CA 95014, United States".
@@ -170,6 +215,7 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
   private var pending: (([MKLocalSearchCompletion]) -> Void)?
   private var generation = 0
   private var lastRegion: MKCoordinateRegion?
+  private var addressesOnly = false
   /// Last delivered completions, keyed by `key(title:subtitle:)`, so resolve can
   /// search on the real `MKLocalSearchCompletion` instead of free text.
   private var completionsById: [String: MKLocalSearchCompletion] = [:]
@@ -187,6 +233,7 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
   func complete(
     query: String,
     center: CLLocationCoordinate2D?,
+    addressesOnly: Bool,
     callback: @escaping ([MKLocalSearchCompletion]) -> Void
   ) {
     // Supersede any in-flight query; JS ignores stale responses anyway.
@@ -211,9 +258,16 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
       completer.region = region ?? MKCoordinateRegion(MKMapRect.world)
       lastRegion = region
     }
+    let typesChanged = addressesOnly != self.addressesOnly
+    if typesChanged {
+      self.addressesOnly = addressesOnly
+      completer.resultTypes = addressesOnly ? [.address] : [.pointOfInterest, .address]
+    }
 
     // Re-setting an identical fragment doesn't trigger a new delegate callback.
-    if !regionChanged, completer.queryFragment == trimmed, !completer.isSearching {
+    if !regionChanged, !typesChanged, completer.queryFragment == trimmed,
+      !completer.isSearching
+    {
       remember(completer.results)
       callback(completer.results)
       return
@@ -238,7 +292,7 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
       request.naturalLanguageQuery = [title, subtitle]
         .filter { !$0.isEmpty }
         .joined(separator: " ")
-      request.resultTypes = [.pointOfInterest, .address]
+      request.resultTypes = addressesOnly ? [.address] : [.pointOfInterest, .address]
       if let lastRegion {
         request.region = lastRegion
       }

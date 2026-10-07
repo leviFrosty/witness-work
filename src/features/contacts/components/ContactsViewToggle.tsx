@@ -56,8 +56,8 @@ const ContactsViewToggle = ({
               accessibilityLabel={label()}
               accessibilityState={{ selected: active }}
               style={{
-                width: 36,
-                height: 30,
+                width: 44,
+                height: 36,
                 borderRadius: 999,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -68,7 +68,7 @@ const ContactsViewToggle = ({
             >
               <LucideIcon
                 icon={icon}
-                size={theme.fontSize('md')}
+                size={theme.fontSize('lg')}
                 style={{
                   color: active ? theme.colors.accent : theme.colors.textAlt,
                 }}

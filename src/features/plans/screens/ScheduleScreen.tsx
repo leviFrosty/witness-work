@@ -65,7 +65,7 @@ import RootHeader from '@/components/RootHeader'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
-const ScheduleScreen = ({ route }: Props) => {
+const ScheduleScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
@@ -104,6 +104,31 @@ const ScheduleScreen = ({ route }: Props) => {
   useEffect(() => {
     if (isWide) setSelectedDateSheet((current) => ({ ...current, open: false }))
   }, [isWide])
+
+  // The sheet is modal and this tab stays mounted, so it would cover whatever
+  // screen a widget or tab switch opens next.
+  useEffect(
+    () =>
+      navigation.addListener('blur', () =>
+        setSelectedDateSheet((current) =>
+          current.open ? { ...current, open: false } : current
+        )
+      ),
+    [navigation]
+  )
+
+  // A Calendar widget day (`witnesswork://schedule/:date`) opens that day the
+  // same way tapping it here does: the sheet, or the inspector when wide.
+  const linkedDate = route.params?.date
+  useEffect(() => {
+    if (!linkedDate) return
+    const date = moment(linkedDate, 'YYYY-MM-DD', true)
+    navigation.setParams({ date: undefined })
+    if (!date.isValid()) return
+    setMonth(date.month())
+    setYear(date.year())
+    setSelectedDateSheet({ open: !isWide, date: date.toDate() })
+  }, [linkedDate, isWide, navigation])
 
   const pendingNavigation = useRef<(() => void) | null>(null)
   const selectedMonth = useMemo(

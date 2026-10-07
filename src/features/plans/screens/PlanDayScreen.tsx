@@ -868,7 +868,10 @@ const RecurringSaveScopeModal = (props: {
 type PlanDayScreenProps = NativeStackScreenProps<RootStackParamList, 'PlanDay'>
 
 const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
-  const defaultDate = planDayFromRouteDate(route.params.date)
+  // A cold launch from the Calendar widget's "+" (`witnesswork://day`) opens
+  // this screen with no params at all.
+  const params = route.params ?? {}
+  const defaultDate = planDayFromRouteDate(params.date)
   const defaultStoredDate = storedDateFor(defaultDate)
   const {
     dayPlans,
@@ -884,16 +887,16 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     deleteSingleEventFromRecurringPlan,
   } = useServiceReport()
 
-  const existingDayPlan = route.params.existingDayPlanId
-    ? dayPlans.find((p) => p.id === route.params.existingDayPlanId)
+  const existingDayPlan = params.existingDayPlanId
+    ? dayPlans.find((p) => p.id === params.existingDayPlanId)
     : null
-  const existingRecurringPlan = route.params.existingRecurringPlanId
-    ? recurringPlans.find((p) => p.id === route.params.existingRecurringPlanId)
+  const existingRecurringPlan = params.existingRecurringPlanId
+    ? recurringPlans.find((p) => p.id === params.existingRecurringPlanId)
     : null
 
   const editingDate =
-    existingRecurringPlan && route.params.recurringPlanDate
-      ? planDayFromRouteDate(route.params.recurringPlanDate)
+    existingRecurringPlan && params.recurringPlanDate
+      ? planDayFromRouteDate(params.recurringPlanDate)
       : defaultDate
   const editingStoredDate = storedDateFor(editingDate)
   const editingWriteDate = localDateForWrite(editingDate)
@@ -904,14 +907,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   const isEditMode = !!(existingDayPlan || existingRecurringPlan)
   // Seeds for a new plan (Duplicate, Plan the Same Time); ignored when editing.
-  const prefill = isEditMode ? undefined : route.params.prefill
+  const prefill = isEditMode ? undefined : params.prefill
   const prefillStartTime = prefill?.startTime
     ? moment(prefill.startTime).hours() * 60 +
       moment(prefill.startTime).minutes()
     : undefined
   const initialOneTime = existingRecurringPlan
     ? false
-    : isEditMode || !route.params.recurring
+    : isEditMode || !params.recurring
 
   const [oneTime, setOneTime] = useState(initialOneTime)
   const [date, setDate] = useState(
@@ -1114,7 +1117,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
 
-  const editingContext = `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}-${route.params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
+  const editingContext = `${params.existingDayPlanId || 'new'}-${params.existingRecurringPlanId || 'new'}-${params.recurringPlanDate || params.date}-${params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
 
   useEffect(() => {
     setOneTime(initialOneTime)

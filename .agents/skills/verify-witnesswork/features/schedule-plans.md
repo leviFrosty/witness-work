@@ -14,6 +14,7 @@ The Schedule tab shows a month calendar of planned versus actual time. Users cre
 ## How to get to it (user POV)
 
 - The Schedule tab → a day cell.
+- Tapping a day on the calendar widget, which opens `witnesswork://schedule/<YYYY-MM-DD>` (that day's sheet).
 - Quick Action → "Create Plan".
 - The calendar widget "+", which opens `witnesswork://day`.
 

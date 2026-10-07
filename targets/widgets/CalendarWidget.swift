@@ -367,16 +367,15 @@ private struct WeekdayRow: View {
 /// Wraps the cell in a per-day deep link. Pulled into its own view so the
 /// medium and large layouts share the same tap behavior.
 ///
-/// Taps open Add Time with the date pre-filled — logging hours is the far
-/// more common intent from a calendar cell than editing the plan. Plan
-/// creation lives on the header "+" button.
+/// Taps open that day's sheet on the Schedule tab, matching a day tap in the
+/// app. Plan creation lives on the header "+" button.
 private struct CellLink: View {
   let day: WidgetSnapshot.CalendarDay
   let isCompact: Bool
   let buddies: CalendarBuddies
 
   var body: some View {
-    Link(destination: WidgetURLs.addTime(date: day.date)) {
+    Link(destination: WidgetURLs.scheduleDay(date: day.date)) {
       CalendarCell(day: day, isCompact: isCompact, buddies: buddies)
     }
   }

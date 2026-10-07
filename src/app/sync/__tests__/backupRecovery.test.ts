@@ -23,7 +23,10 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
-import { handleContactImport } from '@/features/contacts/lib/contactImport'
+import {
+  handleContactImport,
+  importedVisitId,
+} from '@/features/contacts/lib/contactImport'
 vi.mock('react-native', () => ({ Alert: { alert: vi.fn() } }))
 vi.mock('expo-document-picker', () => ({}))
 vi.mock('expo-file-system/legacy', () => ({}))
@@ -142,6 +145,7 @@ describe('JSON backup completeness and restore isolation', () => {
       {
         ...useContacts.getState(),
         ...useConversations.getState(),
+        getConversations: () => useConversations.getState().conversations,
         showToast: vi.fn(),
         navigate: vi.fn(),
       },
@@ -153,7 +157,7 @@ describe('JSON backup completeness and restore isolation', () => {
         .conversations.map((visit) => [visit.id, visit.note])
     ).toEqual([
       ['existing', 'Changed'],
-      ['new', 'New'],
+      [importedVisitId('c', 'new'), 'New'],
     ])
   })
 })

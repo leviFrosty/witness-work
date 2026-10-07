@@ -8,6 +8,7 @@ import {
   buildContactShareLink,
   ContactShareLinkTooLargeError,
 } from '@/features/contacts/lib/contactShareLink'
+import { buildContactShareFile } from '@/features/contacts/lib/contactShareFormat'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { shareUrl } from '@/lib/share'
@@ -15,41 +16,16 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
+import type { CustomFieldDefinition } from '@/types/customField'
 import type { Visit } from '@/types/visit'
 
-type ContactExport = {
-  version: '1.0'
-  type: 'witnesswork-contact'
-  exportedAt: string
-  contact: Contact
-  conversations?: Visit[]
-}
-
-const newestFirst = (visits: Visit[]) =>
-  [...visits].sort((a, b) =>
-    moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-  )
-
-const shareContactAsFile = async (contact: Contact, visits: Visit[]) => {
-  // Drop per-device image avatar URIs — same policy as the universal-link
-  // share (see contactShareLink.ts CONTACT_POLICY.avatar). The file path
-  // points inside this device's FileSystem.documentDirectory and would be
-  // dead on the recipient's device.
-  let exportContact: Contact = contact
-  if (contact.avatar?.type === 'image') {
-    exportContact = { ...contact }
-    delete exportContact.avatar
-  }
-
-  const exportData: ContactExport = {
-    version: '1.0',
-    type: 'witnesswork-contact',
-    exportedAt: moment().toISOString(),
-    contact: exportContact,
-  }
-  if (visits.length > 0) exportData.conversations = newestFirst(visits)
-
-  const jsonString = JSON.stringify(exportData, null, 2)
+const shareContactAsFile = async (
+  contact: Contact,
+  visits: Visit[],
+  customFieldDefs: CustomFieldDefinition[]
+) => {
+  // Same fields as the link; see `contactShareFormat.ts`.
+  const jsonString = buildContactShareFile(contact, visits, customFieldDefs)
   const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
   const timestamp = moment().format('YYYY-MM-DD')
   const fileName = `${sanitizedName}_${timestamp}.witnesswork`
@@ -149,7 +125,7 @@ export default function useShareContact(contact: Contact | undefined) {
             {
               text: i18n.t('shareContactTooLarge_shareAsFile'),
               onPress: () => {
-                void shareContactAsFile(contact, visits)
+                void shareContactAsFile(contact, visits, customFieldDefs)
               },
             },
           ]

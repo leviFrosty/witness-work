@@ -7,11 +7,8 @@ import {
 import { reconcileSyncDefinitions } from '@/app/sync/definitionReconciliation'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
-import {
-  payloadSchema,
-  validSettingValues,
-  hasUnsafeKeys,
-} from '@/app/sync/payloadValidation'
+import { payloadSchema, validSettingValues } from '@/app/sync/payloadValidation'
+import { hasUnsafeKeys } from '@/lib/recordValidation'
 import { contactEditPatch, mayApplyGeocode } from '@/lib/contactEdits'
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
 import { migrateTagsToCategories } from '@/lib/categories'

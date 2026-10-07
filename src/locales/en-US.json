@@ -539,6 +539,8 @@
   "keep": "Keep Existing",
   "invalidFile": "Invalid File",
   "invalidFile_description": "The selected file is not a valid WitnessWork contact export.",
+  "invalidContactLink": "Invalid Link",
+  "invalidContactLink_description": "This link isn't a valid WitnessWork contact. Ask the sender to share the contact again.",
   "notes": "Notes",
   "no": "No",
   "fieldServiceReport": "Field Service Report",

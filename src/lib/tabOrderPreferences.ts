@@ -4,13 +4,13 @@
  * saved position so switching roles restores it. Tools and Settings stay pinned
  * after these.
  */
-export type TabOrderKey = 'Home' | 'Schedule' | 'Contacts' | 'Progress'
+export type TabOrderKey = 'Home' | 'Contacts' | 'Progress' | 'Schedule'
 
 export const DEFAULT_TAB_ORDER: TabOrderKey[] = [
   'Home',
-  'Schedule',
   'Contacts',
   'Progress',
+  'Schedule',
 ]
 
 /** Drops unknown keys and appends any missing ones in default order. */

@@ -60,10 +60,12 @@ import {
   initialBuddiesState,
   INVITE_TTL_MS,
   MAX_BUDDIES,
+  mergeRemovedBuddies,
   withoutExpired,
   withPendingInvitesQueued,
   occupiedBuddySpots,
   OutgoingShareSpec,
+  pairingEnded,
   PendingRemoval,
 } from '@/features/buddies/lib/state'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
@@ -228,6 +230,7 @@ function rosterSignature(
     | 'outgoingInvites'
     | 'incomingClaims'
     | 'closedInviteIds'
+    | 'removedBuddies'
     | 'sharing'
   >
 ) {
@@ -237,6 +240,9 @@ function rosterSignature(
     roster.outgoingInvites.map((i) => i.inviteId).sort(),
     roster.incomingClaims.map((c) => c.inviteId).sort(),
     Object.keys(roster.closedInviteIds).sort(),
+    Object.entries(roster.removedBuddies)
+      .map(([inboxId, removedAt]) => `${inboxId}:${removedAt}`)
+      .sort(),
     [photo, tenure, updatedAt],
   ])
 }
@@ -258,6 +264,27 @@ function omitKey<T>(record: Record<string, T>, key: string) {
   return Object.fromEntries(
     Object.entries(record).filter(([entryKey]) => entryKey !== key)
   )
+}
+
+/** `removedBuddies` with this buddy's current pairing recorded as ended. */
+function endedPairing(
+  state: BuddiesState,
+  inboxId: string,
+  removedAt?: number
+) {
+  const buddy = state.buddies.find((b) => b.inboxId === inboxId)
+  if (!buddy) return state.removedBuddies
+  return mergeRemovedBuddies(state.removedBuddies, {
+    [inboxId]: Math.max(removedAt ?? buddy.pairedAt, buddy.pairedAt),
+  })
+}
+
+/**
+ * When a new pairing starts: after any removal this device knows of, so that
+ * removal can't end it.
+ */
+function newPairedAt(state: BuddiesState, inboxId: string, now: number) {
+  return Math.max(now, (state.removedBuddies[inboxId] ?? -1) + 1)
 }
 
 export function createBuddiesEngine(deps: BuddiesEngineDeps) {
@@ -377,32 +404,45 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /** Best effort: the next change or sync rewrites it. */
   async function saveRoster(me: BuddyIdentity) {
-    const { buddies, outgoingInvites, incomingClaims, closedInviteIds } =
-      store.getState()
+    const state = store.getState()
+    const version = state.rosterVersion + 1
     const roster: Roster = {
       v: 1,
+      version,
       // Photos would overflow the roster cap; each device gets them from cards.
-      buddies: buddies.map(compactProfile),
-      outgoingInvites,
-      incomingClaims: incomingClaims.map(compactProfile),
-      closedInviteIds,
-      sharing: store.getState().sharing,
+      buddies: state.buddies.map(compactProfile),
+      outgoingInvites: state.outgoingInvites,
+      incomingClaims: state.incomingClaims.map(compactProfile),
+      closedInviteIds: state.closedInviteIds,
+      removedBuddies: state.removedBuddies,
+      sharing: state.sharing,
     }
     try {
       await relay.putRoster(
         ownerAuth(me),
         seal(me.rosterKey, json(roster), aad.roster(me.inboxId), nonce())
       )
+      // Only a write the relay took counts; otherwise this device could
+      // refuse another device's roster that is in fact newer.
+      store.setState((current) => ({
+        rosterVersion: Math.max(current.rosterVersion, version),
+      }))
     } catch {
       // Offline or relay hiccup — the next sync that sees a different roster
       // on the relay writes the merged one back.
     }
   }
 
-  /** Also purges everything they shared with this User. */
-  function forgetBuddy(inboxId: string) {
+  /**
+   * Also purges everything they shared with this User, and records the pairing
+   * as ended so no roster brings it back. `removedAt` defaults to the pairing's
+   * own `pairedAt`: when the relay says they left, this device may hold an
+   * older pairing than one made since on another device.
+   */
+  function forgetBuddy(inboxId: string, removedAt?: number) {
     store.setState((state) => ({
       buddies: state.buddies.filter((b) => b.inboxId !== inboxId),
+      removedBuddies: endedPairing(state, inboxId, removedAt),
       cards: omitKey(state.cards, inboxId),
       publishedCardHashes: omitKey(state.publishedCardHashes, inboxId),
       incomingShares: Object.fromEntries(
@@ -615,12 +655,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           avatar: compactAvatar(card.avatar),
           tenure: card.tenure,
           status: 'awaitingConfirm',
-          pairedAt: deps.now(),
+          pairedAt: newPairedAt(state, card.inboxId, deps.now()),
           colorIndex,
           showOnCalendar: true,
           expiresAt,
         },
       ],
+      // Pairing again on purpose lifts an earlier removal.
+      removedBuddies: omitKey(state.removedBuddies, card.inboxId),
       // Accepting a link is starting Buddies; skip the first-visit intro.
       onboardingComplete: true,
     }))
@@ -629,10 +671,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   async function confirmClaim(inviteId: string) {
-    const claim = store
-      .getState()
-      .incomingClaims.find((candidate) => candidate.inviteId === inviteId)
+    const state = store.getState()
+    const claim = state.incomingClaims.find(
+      (candidate) => candidate.inviteId === inviteId
+    )
     if (!claim) return
+    // Lapsed while still listed: it can't become a pairing anymore.
+    if (claim.expiresAt <= deps.now()) {
+      dropInvite(inviteId)
+      throw new BuddyInviteError('unavailable')
+    }
     requireName()
     const me = await ensureInbox()
     const buddy: Buddy = {
@@ -643,7 +691,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       dhPub: claim.dhPub,
       inviteSecret: claim.secret,
       status: 'active',
-      pairedAt: deps.now(),
+      pairedAt: newPairedAt(state, claim.inboxId, deps.now()),
       colorIndex: nextColorIndex(),
       showOnCalendar: true,
     }
@@ -671,7 +719,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       await saveRoster(me)
       throw new BuddyInviteError('unavailable')
     }
-    store.setState((state) => ({ buddies: [...state.buddies, buddy] }))
+    store.setState((current) => ({
+      buddies: [...current.buddies, buddy],
+      // Pairing again on purpose lifts an earlier removal.
+      removedBuddies: omitKey(current.removedBuddies, buddy.inboxId),
+    }))
     dropInvite(inviteId)
     await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
     await saveRoster(me)
@@ -686,9 +738,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /** Forgets buddies locally and queues withdrawing their relay slots. */
-  function queueRemoval(parties: PendingRemoval[]) {
+  function queueRemoval(parties: PendingRemoval[], removedAt?: number) {
     const inboxIds = new Set(parties.map((party) => party.inboxId))
-    for (const inboxId of inboxIds) forgetBuddy(inboxId)
+    for (const inboxId of inboxIds) forgetBuddy(inboxId, removedAt)
     store.setState((state) => ({
       pendingRemovals: [
         ...state.pendingRemovals.filter((p) => !inboxIds.has(p.inboxId)),
@@ -740,7 +792,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const buddy = store.getState().buddies.find((b) => b.inboxId === inboxId)
     if (!buddy) return
     const me = await ensureInbox()
-    queueRemoval([buddy])
+    // Ends every pairing with them up to now, on all this User's devices.
+    queueRemoval([buddy], deps.now())
     await flushRemovals(me)
     await saveRoster(me)
     if (isPendingRemoval(inboxId)) throw new BuddyRemovalPendingError('buddy')
@@ -1905,18 +1958,36 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * A roster older than the newest this device has read or written: a replay,
+   * or a write from a device that hadn't synced. One without a `version` comes
+   * from an older build and is merged; local tombstones still win over it.
+   */
+  function isStaleRoster(roster: Roster): boolean {
+    return (
+      roster.version !== undefined &&
+      roster.version < store.getState().rosterVersion
+    )
+  }
+
+  /**
    * Folds another device's roster into local state. Relationships union, and
-   * removals win: closed invites carry tombstones, and a removed buddy's slot
-   * is gone from the inbox, so the sync that follows drops them again. The
-   * later sharing choice wins. Returns the buddies this device didn't know
-   * about.
+   * removals win: ended pairings and closed invites carry tombstones, which
+   * union too, and a removed buddy's slot is gone from the inbox. Lapsed
+   * invites and claims are dropped. The later sharing choice wins. Returns the
+   * buddies this device didn't know about.
    */
   function mergeRoster(me: BuddyIdentity, remote: Roster): string[] {
     const state = store.getState()
+    const now = deps.now()
     const closedInviteIds = {
       ...remote.closedInviteIds,
       ...state.closedInviteIds,
     }
+    const removedBuddies = mergeRemovedBuddies(
+      state.removedBuddies,
+      remote.removedBuddies
+    )
+    const ended = (buddy: Buddy) => pairingEnded(removedBuddies, buddy)
     const known = new Set(state.buddies.map((b) => b.inboxId))
     const usedColors = new Set(state.buddies.map((b) => b.colorIndex))
     const added: Buddy[] = []
@@ -1924,7 +1995,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (
         known.has(buddy.inboxId) ||
         buddy.inboxId === me.inboxId ||
-        isPendingRemoval(buddy.inboxId)
+        isPendingRemoval(buddy.inboxId) ||
+        ended(buddy)
       )
         continue
       const colorIndex = usedColors.has(buddy.colorIndex)
@@ -1933,23 +2005,30 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       usedColors.add(colorIndex)
       added.push({ ...buddy, colorIndex })
     }
+    // Another of this User's devices ended these pairings.
+    const endedHere = state.buddies.filter(ended)
     const buddies = [
-      ...state.buddies.map((local): Buddy => {
-        const theirs = remote.buddies.find((b) => b.inboxId === local.inboxId)
-        // Another device already applied the confirmation event.
-        return local.status === 'awaitingConfirm' && theirs?.status === 'active'
-          ? {
-              ...local,
-              name: theirs.name,
-              tenure: theirs.tenure,
-              status: 'active',
-              expiresAt: undefined,
-            }
-          : local
-      }),
+      ...state.buddies
+        .filter((local) => !ended(local))
+        .map((local): Buddy => {
+          const theirs = remote.buddies.find((b) => b.inboxId === local.inboxId)
+          // Another device already applied this pairing's confirmation.
+          return local.status === 'awaitingConfirm' &&
+            theirs?.status === 'active' &&
+            theirs.inviteSecret === local.inviteSecret
+            ? {
+                ...local,
+                name: theirs.name,
+                tenure: theirs.tenure,
+                status: 'active',
+                expiresAt: undefined,
+              }
+            : local
+        }),
       ...added,
     ]
-    const isOpen = (inviteId: string) => !(inviteId in closedInviteIds)
+    const isOpen = (invite: { inviteId: string; expiresAt: number }) =>
+      !(invite.inviteId in closedInviteIds) && invite.expiresAt > now
     store.setState({
       buddies,
       // Buddies restored from another device means Buddies is already set up.
@@ -1958,22 +2037,33 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         state.outgoingInvites,
         remote.outgoingInvites,
         (invite) => invite.inviteId
-      ).filter((invite) => isOpen(invite.inviteId)),
+      ).filter(isOpen),
       incomingClaims: unionBy(
         state.incomingClaims,
         remote.incomingClaims,
         (claim) => claim.inviteId
       ).filter(
         (claim) =>
-          isOpen(claim.inviteId) &&
-          !buddies.some((b) => b.inboxId === claim.inboxId)
+          isOpen(claim) && !buddies.some((b) => b.inboxId === claim.inboxId)
       ),
       closedInviteIds,
+      // A tombstone a newer pairing replaced has done its job.
+      removedBuddies: Object.fromEntries(
+        Object.entries(removedBuddies).filter(
+          ([inboxId, removedAt]) =>
+            !buddies.some(
+              (b) => b.inboxId === inboxId && b.pairedAt > removedAt
+            )
+        )
+      ),
+      rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
       sharing:
         remote.sharing.updatedAt > state.sharing.updatedAt
           ? remote.sharing
           : state.sharing,
     })
+    // Withdraw their slots from here too, in case that device can't finish.
+    if (endedHere.length > 0) queueRemoval(endedHere)
     return added.map((b) => b.inboxId)
   }
 
@@ -2041,16 +2131,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const since = store.getState().syncSeq
     let response = await fetchInbox(me, since)
 
-    const remoteRoster = response.roster
+    const readBack = response.roster
       ? readRoster(me, response.roster.blob)
       : null
+    // A stale roster is ignored, and this device's own is written back over it.
+    const staleRoster = readBack !== null && isStaleRoster(readBack)
+    const remoteRoster = staleRoster ? null : readBack
     if (remoteRoster) {
       const learned = mergeRoster(me, remoteRoster)
       // This device already synced past the new buddies' cards and events.
       if (learned.length > 0 && since > 0) response = await fetchInbox(me, 0)
     }
 
-    let rosterChanged = false
+    let rosterChanged = staleRoster
     for (const event of [...response.events].sort((a, b) => a.seq - b.seq)) {
       if (event.kind === 'invite.claimed' && event.slotId === '') {
         applyClaim(me, event)

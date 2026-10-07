@@ -80,6 +80,44 @@ export type IncomingClaim = {
 /** A buddy removed locally whose relay slots may still need withdrawing. */
 export type PendingRemoval = Pick<Buddy, 'inboxId' | 'dhPub' | 'inviteSecret'>
 
+/**
+ * Ended pairings: buddy inboxId → `removedAt`. A pairing with that buddy made
+ * at or before `removedAt` is over, so no roster can bring it back; pairing
+ * again on purpose makes a newer one.
+ */
+export type RemovedBuddies = Record<string, number>
+
+/**
+ * Tombstones kept, newest first. Only the User's own pairings add them, so the
+ * oldest is dropped only after this many later removals.
+ */
+export const MAX_REMOVED_BUDDIES = 200
+
+export function pairingEnded(
+  removedBuddies: RemovedBuddies,
+  buddy: Pick<Buddy, 'inboxId' | 'pairedAt'>
+): boolean {
+  const removedAt = removedBuddies[buddy.inboxId]
+  return removedAt !== undefined && buddy.pairedAt <= removedAt
+}
+
+/** Both sets of tombstones, the later `removedAt` per buddy, capped. */
+export function mergeRemovedBuddies(
+  local: RemovedBuddies,
+  remote: RemovedBuddies
+): RemovedBuddies {
+  const merged = { ...local }
+  for (const [inboxId, removedAt] of Object.entries(remote))
+    merged[inboxId] = Math.max(merged[inboxId] ?? removedAt, removedAt)
+  const entries = Object.entries(merged)
+  if (entries.length <= MAX_REMOVED_BUDDIES) return merged
+  return Object.fromEntries(
+    entries
+      .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+      .slice(0, MAX_REMOVED_BUDDIES)
+  )
+}
+
 export type ReceivedCard = {
   name: string
   updatedAt: number
@@ -279,6 +317,16 @@ export type BuddiesState = {
    * stale roster from another device can't bring them back. Pruned on expiry.
    */
   closedInviteIds: Record<string, number>
+  /**
+   * Buddies removed, or who left, so a stale or replayed roster can't bring
+   * them back. Synced through the roster; capped, never expired.
+   */
+  removedBuddies: RemovedBuddies
+  /**
+   * The newest roster `version` this device has read or written. An older
+   * roster is a replay or a stale write and is ignored.
+   */
+  rosterVersion: number
   /** Removals to finish on the relay; retried on every sync. */
   pendingRemovals: PendingRemoval[]
   /** The relay wiped this inbox; buddies' slots must be re-added. */
@@ -335,6 +383,8 @@ export const initialBuddiesState: BuddiesState = {
   outgoingInvites: [],
   incomingClaims: [],
   closedInviteIds: {},
+  removedBuddies: {},
+  rosterVersion: 0,
   pendingRemovals: [],
   slotsNeedRestore: false,
   cards: {},

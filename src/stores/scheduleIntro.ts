@@ -4,8 +4,9 @@ import { create } from 'zustand'
 export type ScheduleIntroSource = 'first_visit' | 'help'
 
 /**
- * Whether the Schedule intro is on screen, and what opened it. Runtime only:
- * `scheduleIntroSeen` in Preferences keeps Schedule from opening it again.
+ * Whether the Schedule intro is wanted (waiting for its takeover turn, or on
+ * screen), and what opened it. Runtime only: `scheduleIntroSeen` in Preferences
+ * keeps Schedule from opening it again.
  */
 export const useScheduleIntro = create<{
   source: ScheduleIntroSource | null

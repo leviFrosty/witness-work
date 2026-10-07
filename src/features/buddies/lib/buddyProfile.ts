@@ -1,6 +1,7 @@
 import * as ImageManipulator from 'expo-image-manipulator'
 import moment from 'moment'
 import { getStartDateLabels } from '@/constants/publisher'
+import { buddyCardBadges } from '@/lib/badges/display'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { tracksTenure } from '@/lib/publisherCapabilities'
 import { STREAK_MIN } from '@/lib/serviceStreak'
@@ -46,13 +47,20 @@ export function buddyTenureFor(
 const isLocalImage = (value: string) => value.startsWith('file://')
 
 /**
- * The Profile name, avatar, and Tenure buddies can see, before the engine drops
- * whatever the User chose not to share. A photo is shared only once its
- * thumbnail exists (`refreshBuddyAvatarThumbnail`).
+ * The Profile name, avatar, Tenure, and earned badges buddies can see, before
+ * the engine drops whatever the User chose not to share. A photo is shared only
+ * once its thumbnail exists (`refreshBuddyAvatarThumbnail`); badges only while
+ * Badges is on.
  */
 export function currentBuddyProfile(): BuddyProfile {
   const { name, avatar } = useProfile.getState()
-  const { role, tenureStartDate } = usePreferences.getState()
+  const {
+    role,
+    tenureStartDate,
+    showBadges,
+    earnedBadges,
+    dataProtectionMode,
+  } = usePreferences.getState()
   const thumbnail = useBuddies.getState().avatarThumbnail
   return {
     name: name.trim().slice(0, MAX_NAME_LENGTH),
@@ -63,6 +71,9 @@ export function currentBuddyProfile(): BuddyProfile {
           ? { t: 'image', v: thumbnail.data }
           : undefined,
     tenure: buddyTenureFor(role, tenureStartDate),
+    badges: showBadges
+      ? buddyCardBadges(earnedBadges, { dataProtectionMode })
+      : [],
   }
 }
 

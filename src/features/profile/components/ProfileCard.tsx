@@ -21,6 +21,8 @@ import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import Avatar from '@/components/ui/Avatar'
 import i18n from '@/lib/locales'
 import MyTextInput from '@/components/ui/TextInput'
+import { profileBadges } from '@/lib/badges/display'
+import ProfileCardBadges from '@/features/profile/components/ProfileCardBadges'
 
 const daysSince = (from: Date): number =>
   Math.max(1, moment().diff(moment(from), 'days'))
@@ -78,16 +80,21 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
 interface Props {
   /** Shows the profile without editing; used by the profile overlay. */
   readOnly?: boolean
+  /** Leaves out the badge row, e.g. where badges have their own section. */
+  hideBadges?: boolean
 }
 
 /**
  * Inline profile editor: the avatar is a picker and the name a text input, so
  * the preview _is_ the form. Used by profile setup, onboarding, and Buddies.
- * `readOnly` renders the same card as a plain display.
+ * `readOnly` renders the same card as a plain display. Earned badges show
+ * underneath unless the User turned badges off.
  */
-const ProfileCard = ({ readOnly }: Props) => {
+const ProfileCard = ({ readOnly, hideBadges }: Props) => {
   const theme = useTheme()
-  const { installedOn, tenureStartDate } = usePreferences()
+  const { installedOn, tenureStartDate, earnedBadges, showBadges } =
+    usePreferences()
+  const badges = showBadges && !hideBadges ? profileBadges(earnedBadges) : []
   // Profile-shaped fields live in the Profile store (wave-3 store split).
   // ProfileCard reads + writes both stores because the card is the editing
   // surface for Profile while tenure remains a Preference.
@@ -187,7 +194,7 @@ const ProfileCard = ({ readOnly }: Props) => {
         )
       }
       subtitle={i18n.t(publisher)}
-      badge={streak > 0 ? <StreakBadge count={streak} /> : undefined}
+      trailing={streak > 0 ? <StreakBadge count={streak} /> : undefined}
       details={[
         {
           icon: tenure.icon,
@@ -197,6 +204,9 @@ const ProfileCard = ({ readOnly }: Props) => {
           text: tenure.text,
         },
       ]}
+      footer={
+        badges.length > 0 ? <ProfileCardBadges badges={badges} /> : undefined
+      }
     />
   )
 }

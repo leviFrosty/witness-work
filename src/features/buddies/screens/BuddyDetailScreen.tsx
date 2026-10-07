@@ -7,6 +7,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { RootStackParamList } from '@/types/rootStack'
+import BuddyBadgesSection from '@/features/buddies/components/BuddyBadgesSection'
 import BuddyCalendarSection from '@/features/buddies/components/BuddyCalendarSection'
 import BuddyDetailActions from '@/features/buddies/components/BuddyDetailActions'
 import BuddyNeedsAnswerSection from '@/features/buddies/components/BuddyNeedsAnswerSection'
@@ -21,10 +22,10 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy'>
 
 /**
- * One buddy: who they are, what's planned together, their next two weeks next
- * to the User's (tap a day to plan the same time or ask to join), how they show
- * up here and alerts for their requests to join, and ending the pairing. Their
- * full schedule lives on the calendar.
+ * One buddy: who they are and the badges they share, what's planned together,
+ * their next two weeks next to the User's (tap a day to plan the same time or
+ * ask to join), how they show up here and alerts for their requests to join,
+ * and ending the pairing. Their full schedule lives on the calendar.
  */
 export default function BuddyDetailScreen({ route, navigation }: Props) {
   const theme = useTheme()
@@ -58,6 +59,7 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
         }}
       >
         <BuddyProfileHeader buddy={buddy} />
+        <BuddyBadgesSection buddy={buddy} />
         <BuddyDetailActions inboxId={inboxId} />
         <BuddyNeedsAnswerSection items={needsAnswer} />
         <BuddyTogetherSection items={together} buddyName={name} />

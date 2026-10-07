@@ -198,6 +198,9 @@ export const writeMappedDataToStores = (
   // Time totals are cached per month/year; drop it all so the imported entries
   // recompute.
   useTimeCache.getState().invalidateAllCache()
+  // Badges the imported history reaches are filed quietly with one summary,
+  // not celebrated one by one or announced to buddies.
+  usePreferences.getState().set({ badgesBackfilledAt: null })
 
   return {
     insertedContactIds,

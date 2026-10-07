@@ -1,9 +1,10 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
-import { DayPlan, TimeEntry } from '@/types/timeEntry'
+import { DayPlan, RecurringPlan, TimeEntry } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import { buildBadgeHistoryFixture } from '@/app/dev-fixtures/badges'
 
 /**
  * Named app states for agent verification runs (`scripts/verify`). Pure: every
@@ -16,6 +17,7 @@ export const SCENARIO_NAMES = [
   'publisher',
   'pioneer',
   'busy',
+  'badges',
 ] as const
 export type ScenarioName = (typeof SCENARIO_NAMES)[number]
 
@@ -29,6 +31,9 @@ export type Scenario = {
   visits: Visit[]
   timeEntries: TimeEntry[]
   dayPlans: DayPlan[]
+  recurringPlans: RecurringPlan[]
+  /** `YYYY-MM` months whose report counts as sent. */
+  submittedReportMonths: string[]
 }
 
 export const SCENARIO_ID_PREFIX = 'verify-'
@@ -211,6 +216,8 @@ export function buildScenario(
     visits: [],
     timeEntries: [],
     dayPlans: [],
+    recurringPlans: [],
+    submittedReportMonths: [],
   }
   if (name === 'fresh' || name === 'onboarded') return empty
 
@@ -226,7 +233,7 @@ export function buildScenario(
 
   const serviceYearStart = serviceYearStartFor(now)
   const contacts = buildContacts(now, name === 'busy' ? 160 : 8)
-  return {
+  const pioneer: Scenario = {
     ...empty,
     role: 'regularPioneer',
     tenureStartDate: serviceYearStart.clone().subtract(2, 'years').toDate(),
@@ -234,5 +241,19 @@ export function buildScenario(
     visits: buildVisits(now, contacts),
     timeEntries: buildPioneerEntries(now, serviceYearStart),
     dayPlans: buildDayPlans(now),
+  }
+  if (name !== 'badges') return pioneer
+
+  // `pioneer` plus a year and a bit of history (`dev-badges-` ids), so the
+  // Badges screen has a spread of earned levels and progress. Seeding files
+  // them all quietly as history.
+  const history = buildBadgeHistoryFixture({ now })
+  return {
+    ...pioneer,
+    contacts: [...pioneer.contacts, ...history.contacts],
+    visits: [...pioneer.visits, ...history.visits],
+    timeEntries: [...pioneer.timeEntries, ...history.timeEntries],
+    recurringPlans: history.recurringPlans,
+    submittedReportMonths: history.submittedReportMonths,
   }
 }

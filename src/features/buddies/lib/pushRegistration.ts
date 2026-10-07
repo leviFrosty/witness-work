@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type {
+  BadgePushKind,
   BuddyPushKind,
   JoinRequestPushKind,
 } from '@/features/buddies/lib/engine'
@@ -79,10 +80,24 @@ function ensureBuddiesChannel() {
   })
 }
 
+/**
+ * Buddies' social news (a new badge, a reaction) on Android: low importance, so
+ * it lands in the shade without sound or a heads-up banner.
+ */
+export const BUDDIES_NEWS_CHANNEL_ID = 'buddies_news'
+
+export async function ensureBuddiesNewsChannel(): Promise<void> {
+  await Notifications.setNotificationChannelAsync(BUDDIES_NEWS_CHANNEL_ID, {
+    name: i18n.t('buddies_newsChannelName'),
+    importance: Notifications.AndroidImportance.LOW,
+  })
+}
+
 /** APNs on iOS; FCM, through Google Play services, on Android. */
 async function pushAddress(): Promise<PushAddress> {
   const token = await Notifications.getDevicePushTokenAsync()
   if (Platform.OS === 'android') {
+    await ensureBuddiesNewsChannel()
     await ensureBuddiesChannel()
     return { pushService: 'fcm', fcmToken: String(token.data) }
   }
@@ -97,6 +112,27 @@ async function pushAddress(): Promise<PushAddress> {
       ? { apnsTopic: Application.applicationId }
       : {}),
   }
+}
+
+/**
+ * A buddy's new badges, and a buddy's reaction to one of this User's badges,
+ * while badge alerts are on here. Generic on purpose: the relay stores this
+ * text, so it never names anyone.
+ */
+const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
+  const templates: Record<BadgePushKind, PushTemplate> = {
+    'badge.new': {
+      title: i18n.t('buddies_pushBadgeTitle'),
+      body: i18n.t('buddies_pushBadgeBody'),
+    },
+    'badge.reaction': {
+      title: i18n.t('buddies_pushBadgeReactionTitle'),
+      body: i18n.t('buddies_pushBadgeBody'),
+    },
+  }
+  return Object.fromEntries(
+    buddiesEngine.badgePushKinds().map((kind) => [kind, templates[kind]])
+  )
 }
 
 /**
@@ -127,7 +163,7 @@ function withTimeout(work: Promise<void>): Promise<void> {
  * system allows notifications. With Buddies notifications off here, it
  * registers no templates, so the relay sends this device nothing. An unchanged
  * registration is only re-sent once a day, so calling this often is cheap. Call
- * it again when buddies or join request mutes change.
+ * it again when buddies, join request mutes, or badge alerts change.
  */
 export function registerBuddiesPush(): Promise<void> {
   const run = registration.then(() => withTimeout(register()))
@@ -152,7 +188,11 @@ async function register() {
     const outcome = await buddiesEngine.registerPush({
       ...(await pushAddress()),
       templates: notificationsEnabled
-        ? { ...pushTemplates(), ...joinRequestTemplates() }
+        ? {
+            ...pushTemplates(),
+            ...joinRequestTemplates(),
+            ...badgeTemplates(),
+          }
         : {},
     })
     if (outcome !== 'unchanged')

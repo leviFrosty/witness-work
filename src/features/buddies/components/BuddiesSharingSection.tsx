@@ -5,6 +5,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import useServiceStreak from '@/hooks/useServiceStreak'
+import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { shownStreak } from '@/lib/serviceStreak'
 import { logger } from '@/lib/logger'
@@ -25,7 +26,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  * How buddies see me: the Profile (edited on its own screen) and switches for
  * the parts I can withhold. Name and Plans are the point, so they always go.
  * The streak switch shows before there's a streak, so it can be off from the
- * start.
+ * start. Badges is offered only while badges are on at all.
  */
 export default function BuddiesSharingSection() {
   const theme = useTheme()
@@ -36,6 +37,7 @@ export default function BuddiesSharingSection() {
   const tenure = buddyTenureFor(role, tenureStartDate)
   const sharing = useBuddies((state) => state.sharing)
   const streak = shownStreak(useServiceStreak())
+  const showBadges = usePreferences((state) => state.showBadges)
   const hasPhoto = avatar.type !== 'none'
 
   // Saved at once; a failed republish is retried by the next sync.
@@ -90,8 +92,22 @@ export default function BuddiesSharingSection() {
         }
         value={sharing.streak}
         onValueChange={(value) => share({ streak: value })}
-        lastInSection
+        lastInSection={!showBadges}
       />
+      {showBadges && (
+        <InputRowSwitch
+          label={i18n.t('buddies_shareBadges')}
+          value={sharing.badges}
+          onValueChange={(badges) => {
+            analytics.capture('badges_setting_changed', {
+              setting: 'share',
+              enabled: badges,
+            })
+            void share({ badges })
+          }}
+          lastInSection
+        />
+      )}
     </BuddiesSection>
   )
 }

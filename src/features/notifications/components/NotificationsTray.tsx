@@ -6,6 +6,7 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
+import { useIsTakingOver } from '@/hooks/useTakeoverTurn'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import NotificationsList, {
@@ -21,14 +22,18 @@ import {
 
 const POPOVER_WIDTH = 380
 
-/** Opens the popover when something (a tapped push) asked for it. */
+/**
+ * Opens the popover when something (a tapped push) asked for it, once nothing
+ * is taking over the screen (the update reveal, a celebration).
+ */
 function useOpenOnRequest(open: () => void) {
   const requested = useNotificationsTray((state) => state.openRequested)
+  const takingOver = useIsTakingOver()
   useEffect(() => {
-    if (!requested) return
+    if (!requested || takingOver) return
     useNotificationsTray.setState({ openRequested: false })
     open()
-  }, [requested, open])
+  }, [requested, takingOver, open])
 }
 
 /** Keeps the app icon badge on the unread count. */

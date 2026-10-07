@@ -1,6 +1,7 @@
 import { X as XIcon } from 'lucide-react-native'
 import Card from '@/components/ui/Card'
-import { Sheet, Spinner } from 'tamagui'
+import { Spinner } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import MapView, { Marker, Region } from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

@@ -30,14 +30,15 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 
 ## Features
 
-- [Onboarding](./onboarding.md) covers the fresh install welcome, the publisher-type choice and finishing setup.
+- [Onboarding](./onboarding.md) covers the fresh install welcome, the publisher-type choice, the Buddies step and finishing setup.
 - [Time entry](./time-entry.md) covers logging time from the Home card, the Quick Action menu and the `add-time` deep link, with read-back.
 - [Contacts and visits](./contacts-visits.md) covers creating a contact, logging a visit and follow-ups, and the `contact/:id` deep link.
 - [Schedule and plans](./schedule-plans.md) covers the month calendar, creating a plan, Plan Details and the `day` deep link.
 - [Progress and goals](./progress-goals.md) covers the Month, Year and All-time tabs, pace and projection for pioneers, and the checkbox report for publishers.
-- [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, and two-device invites.
+- [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, two-device invites, and the onboarding entry point.
 - [Service Streaks](./streaks.md) covers the Home streak chip and countdown, the milestone celebration, streak reminders, buddies' streaks over the local relay, and the Schedule intro.
 - [Calendar Sync](./calendar-sync.md) covers connecting a calendar, publishing Follow-ups, disconnecting, and Android's calendar provider read-back.
 - [Cloud sync](./cloud-sync.md) covers iCloud Sync screens on iOS and Google Drive Sync on Android through a local fake Drive, including two Android users as two devices.
+- [Badges](./badges.md) covers the profile overlay's badges section, the Badges screen and badge sheet, earning a badge live (a celebration after the User's own action, or the Home "New badge" card otherwise) and the history summary, takeovers one at a time (ADR 0021), the Show badges switch, a buddy's badges and badge alerts, and the onboarding and update reveal pages.
 
 Not mapped yet: supporter route planning, saved contact views, Notes Import (Scribe) on Android, the supporter pause offer, and Settings → About and Advanced. Map one with `maintain-verification-skill` before relying on this index for it.

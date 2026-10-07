@@ -193,7 +193,7 @@ A User's request to be invited to a buddy's Plan they saw on that buddy's calend
 _Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pairing).
 
 **Buddy Card**:
-Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, and planned days and times for the next 8 weeks. Never shown by name in the UI.
+Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, and planned days and times for the next 8 weeks. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
 
 ### Assistant
@@ -316,11 +316,39 @@ _Avoid_: "pioneer start date" (legacy field name; misleading because auxiliary t
 A current Supporter whose Supporter `since` date (the earliest original purchase date among active qualifying entitlements) is before the Supporter tier launched in 1.38.2 (cutoff: start of 2026-05-21 UTC). They supported the project before Supporter perks existed. Recognized in the UI as gratitude but **not a separate tier in code**: they receive the same perks and gating as any other Supporter, and Founding can't be bought or earned now. It is derived from RevenueCat, so it follows Supporter status across devices and nothing is stored. A Founding Supporter who lapses loses the recognition with all other Supporter UI, and regains it on resubscription only if the store still reports the original purchase date. Promotional and Lifetime Supporter grants count by their grant date; Tips never count. See ADR 0015.
 _Avoid_: "legacy supporter" (sounds deprecated), "existing supporter" (administrative tone), "OG supporter" (slang).
 
+### Badges
+
+**Badge**:
+A keepsake the User earns on-device for a steady habit: one **Badge Level** of a **Badge Collection**, or a **One-time Badge**. Every Badge counts calendar months, never hours, goals, or minutes, so every **Publisher** role earns at the same pace (ADR 0019), and none depends on an unbroken run of months; the **Service Streak** is separate, and no Badge reads it. Once earned it is never revoked, even when the records behind it are deleted. Badges reached by history (a device's first evaluation, an Import, a restore, or any month older than last month) are stored quietly with one summary. A Badge earned live is announced to buddies; it's celebrated full screen only when the User's own action just earned it, and otherwise waits on a New badge card at the top of Home (ADR 0021). Shown on the User's **Profile**, the Badges screen, and the **Buddy Card**; the Show badges preference hides them everywhere without forgetting them.
+_Avoid_: "achievement", "award", "trophy", "reward" (and **Achievement Tier**, the monthly-goal celebration); "badge" for the app icon's unread count (say "app icon badge") or for UI pills and labels (`SinceBadge`, `StreakBadge`, the Buddies Alpha badge).
+
+**Badge Collection**:
+One habit that grows through four **Badge Levels** sharing one illustration. Nine collections: Sharing the Good News (months with a Time Entry or the shared checkbox), Year Round (Service Years with at least 10 shared months), Reports Sent, Ready to Go (months with a Plan, once its day arrives), Kind Words (months with a real conversation), Return Visits, Next Time (months with a Follow-up that has a topic), Keeping in Touch (most months with one Contact), and Two by Two (months a buddy went along; only where **Buddies** shows). Each counts months, so a collection moves at most one step a month; both halves of a **Time Rollover** never count.
+_Avoid_: "category" (that's a Time Entry **Category**), "track", "series".
+
+**Badge Level**:
+A step within a Badge Collection: 1 Bronze, 2 Silver, 3 Gold, 4 Pearl. Stored as a number, so renaming a level never touches saved data.
+_Avoid_: "tier" (collides with **Achievement Tier** and subscription tiers), "rank", "level up".
+
+**One-time Badge**:
+A Badge for a single first, with no levels: First Bible Study and First Buddy. Hidden until earned, so it never reads as a target, and never announced to buddies. First Bible Study stays off the **Buddy Card** in data protection mode.
+_Avoid_: "secret badge", "achievement".
+
+**Badge Reaction**:
+A buddy's one-tap reply to one of the User's **Badges** (the Encourage idea, shipped for Badges): one of six preset reactions (🎉 🎊 🔥 👏 👍 🙌), never free text. One per buddy and Badge; choosing another replaces it. Only active buddies react, only to Badges on the User's **Buddy Card**, and only the Badge's owner sees who reacted, on that Badge's full-screen view and in the notification bell. Its alert is generic ("A buddy reacted to your badge") and follows Badge Alerts.
+_Avoid_: "like", "comment", "kudos", "emoji reply".
+
 ### Update intros
 
 **Reveal update**:
 An app version bump that earns its own dedicated full-screen reveal on first launch. `WhatsNewSheet` is **suppressed entirely** for that version transition — the reveal IS the update intro for the audience(s) it serves. Reserved for major rollups or moments worth a ceremony (e.g. the 1.38.2 Milestone Update, or the 1.44 Together Update, where the splash collapses into the app tile and a short picture-led tour of the release follows). Each has a name, shown on the reveal and as the release's badge in What's New. A single Reveal update can chain multiple audience-specific reveals (e.g. a universal reveal followed by a Supporter-only thank-you for users who were already Supporters at upgrade). Each reveal in the chain tracks its own one-shot engagement; the update reveal stores it against its version, so the next Reveal update starts fresh. Non-audience users on a Supporter-targeted Reveal update still see `WhatsNewSheet` — they need to know about the version.
 _Avoid_: "modal update", "big update" — **Reveal update** is the canonical term.
+
+### Takeovers
+
+**Takeover**:
+Anything that covers the app without the User asking for it right then: the update reveal and What's New, the Schedule intro, a Badge or **Service Streak** celebration, and the badges welcome or history summary. One shows at a time, through a single arbiter (ADR 0021), in that order of priority, with a short gap between two; nothing new takes over while the profile overlay, the notification bell, a sheet, or a pushed screen is open, or while the app is in the background. A celebration is a Takeover only right after the User's own action (Add Time, the checkbox, saving a visit or Plan, sending a report, answering Going, confirming a buddy); otherwise the moment arrives quietly, as the New badge card on Home or the streak chip's flare. Push taps and links wait until no Takeover is showing. Buddies' moments are never Takeovers; they live in the notification bell.
+_Avoid_: "modal", "popup", "interstitial" (say which Takeover), "celebration" for the update reveal or the welcome.
 
 ### Localization
 
@@ -365,6 +393,9 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 - The **Tenure Start Date** persists across Publisher changes within the same Tenure Type and resets across Tenure Type changes.
 - Each calendar month has exactly one **Publisher** role, resolved from the **Role History**; a **Service Report** is always exported in its month's role.
 - A **Monthly Goal** determines an **Annual Goal** (`Annual = Monthly × 12`); the Annual Goal is never set independently.
+- A **Badge Collection** has four **Badge Levels**; a **Badge** is one earned level or a **One-time Badge**. Badges only accumulate: deleting records never removes one.
+- A **Buddy Card** carries the highest earned **Badge Level** per Badge Collection and earned One-time Badges (never counts, dates, or progress); turning off badge sharing in Buddies Settings leaves them off.
+- A buddy has at most one **Badge Reaction** per **Badge** of the User's; a newer one replaces it, and it goes when that buddy does.
 
 ## Example dialogue
 
@@ -392,3 +423,4 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 
 - "publisher" was used historically to mean both the human User and the role. Resolved: **User** is the human; **Publisher** is the role. The leaf role whose enum value is `'publisher'` is referred to in glossary prose as **"the Publisher role"** or **"Regular Publisher"** to disambiguate; its user-facing label is **Kingdom Publisher**.
 - Resolved: the canonical noun for Supporters who were already subscribed before the Supporter Reveal update is **Founding Supporter** (see Monetization entry).
+- "badge" names three things in the codebase: the earned keepsake, the app icon's unread count, and small UI pills. Resolved: an unqualified **Badge** is the keepsake; say "app icon badge" for the count.

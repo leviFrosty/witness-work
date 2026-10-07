@@ -10,9 +10,11 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
 } from 'react-native-reanimated'
+import { useIsFocused } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
+import { useTakeover } from '@/stores/takeover'
 import LaunchSplash, { splashMarkWidth } from '@/app/launch/LaunchSplash'
 import { isLaunching } from '@/app/launch/launchState'
 import {
@@ -154,8 +156,16 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
     set({ updateReveal: { version: UPDATE_REVEAL_VERSION, status: 'seen' } })
   }, [phase, set])
 
-  // Android's back button closes the reveal like its own close button.
+  // Android's back button closes the reveal like its own close button, but
+  // only while it's the takeover on screen and nothing is pushed over Root;
+  // otherwise Back belongs to whatever is in front. Registered again on every
+  // render so it stays ahead of the navigators' own handlers.
+  const rootFocused = useIsFocused()
+  const onScreen = useTakeover(
+    (s) => s.arbiter.active?.kind === 'update-reveal'
+  )
   useEffect(() => {
+    if (!rootFocused || !onScreen) return
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {

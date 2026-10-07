@@ -67,6 +67,7 @@ import PlanDetailsList from '@/features/plans/components/PlanDetailsList'
 import PlanRecurrenceControls from '@/features/plans/components/PlanRecurrenceControls'
 import PlanFormLayout from '@/features/plans/components/PlanFormLayout'
 import PlanWhenDock from '@/features/plans/components/PlanWhenDock'
+import { noteUserAction } from '@/lib/userAction'
 
 type NotifyMeOffset = {
   amount: number
@@ -871,6 +872,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const savePlan = async (scope?: RecurringSaveScope) => {
+    noteUserAction('plan')
     const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     const plannedMinutes = hours * 60 + minutes
     const plannedNote = note || undefined

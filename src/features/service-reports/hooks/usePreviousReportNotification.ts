@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { noteUserAction } from '@/lib/userAction'
 import { Send as SendIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
@@ -61,7 +62,10 @@ export default function usePreviousReportNotification(
         id: 'already_submitted',
         label: i18n.t('notifications_alreadySubmitted'),
         inPlace: true,
-        onPress: () => markReportSubmitted(monthKey),
+        onPress: () => {
+          noteUserAction('report')
+          markReportSubmitted(monthKey)
+        },
       },
     ],
   }

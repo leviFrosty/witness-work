@@ -8,7 +8,7 @@ import {
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ScrollView } from 'react-native'
 import Switch from '@/components/ui/Switch'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import { useToastController } from '@tamagui/toast'
 import * as Crypto from 'expo-crypto'
 
@@ -33,6 +33,7 @@ import { formatMinutes } from '@/lib/minutes'
 import moment from 'moment'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { formatWeekdayMonthDayCompact } from '@/lib/dates'
+import { noteUserAction } from '@/lib/userAction'
 
 type Row = {
   /** Local-only id — never persisted; used as React key + stepper target. */
@@ -130,6 +131,7 @@ const AssistantPreviewSheet = ({
   const handleAddToSchedule = useCallback(() => {
     const survivors = rows.filter((r) => !r.dropped && r.minutes > 0)
     const newIds: string[] = []
+    noteUserAction('plan')
     for (const row of survivors) {
       const id = Crypto.randomUUID()
       newIds.push(id)

@@ -2,7 +2,7 @@ import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
 import { TextInput as RNTextInput, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'

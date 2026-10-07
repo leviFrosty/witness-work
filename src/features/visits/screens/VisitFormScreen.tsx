@@ -2,6 +2,7 @@ import {
   Caravan as CaravanIcon,
   MessagesSquare as MessagesSquareIcon,
 } from 'lucide-react-native'
+import { noteUserAction } from '@/lib/userAction'
 import { ReactNode, useCallback } from 'react'
 import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
@@ -389,6 +390,7 @@ const VisitFormScreen = ({
       }
     }
 
+    noteUserAction('visit')
     if (params.visitToEditId) updateConversation(buildVisit())
     else addConversation(buildVisit())
     toast.show(i18n.t('success'), {

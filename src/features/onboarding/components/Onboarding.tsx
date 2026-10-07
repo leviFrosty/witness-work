@@ -22,6 +22,10 @@ import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/Prof
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
+import Badges from '@/features/onboarding/components/steps/Badges'
+import Buddies from '@/features/onboarding/components/steps/Buddies'
+import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
@@ -51,6 +55,8 @@ type StepId =
   | 'profileSetup'
   | 'pioneerDate'
   | 'planMonth'
+  | 'buddies'
+  | 'badges'
   | 'notifications'
   | 'calendarSync'
   | 'defaultNav'
@@ -60,6 +66,8 @@ type StepId =
 interface StepProps {
   goBack: () => void
   goNext: () => void
+  /** Whether Buddies is part of this onboarding, held once its step is reached. */
+  buddiesAvailable: boolean
 }
 
 /**
@@ -74,6 +82,8 @@ interface StepShowIfContext {
   installedOn: Date
   userSpecifiedHasAnnualGoal: boolean | 'default'
   serviceReports: TimeEntriesByYear
+  /** Buddies shows on this device; see `useOnboardingBuddiesAvailable`. */
+  buddiesAvailable: boolean
 }
 
 interface StepDef {
@@ -119,6 +129,15 @@ const allSteps: StepDef[] = [
     showIf: ({ publisher, publisherHours, logsHours }) =>
       tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
+  {
+    id: 'buddies',
+    Component: Buddies,
+    countsTowardProgress: true,
+    // Needs the Buddies key module and the rollout flag (iOS and Android).
+    showIf: ({ buddiesAvailable }) => buddiesAvailable,
+  },
+  // Before notifications, which also deliver badge alerts from buddies.
+  { id: 'badges', Component: Badges, countsTowardProgress: true },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   {
     id: 'calendarSync',
@@ -154,6 +173,12 @@ const allSteps: StepDef[] = [
   },
 ]
 
+/** `current` (a persisted step id) is at or past `id`'s place in the flow. */
+const reachedStep = (current: string | null, id: StepId) => {
+  const index = allSteps.findIndex((step) => step.id === current)
+  return index >= 0 && index >= allSteps.findIndex((step) => step.id === id)
+}
+
 const OnBoarding = () => {
   const {
     set,
@@ -165,6 +190,10 @@ const OnBoarding = () => {
     userSpecifiedHasAnnualGoal,
   } = usePreferences()
   const { serviceReports } = useServiceReport()
+  // The persisted id tracks the current step (and survives a relaunch).
+  const buddiesAvailable = useOnboardingBuddiesAvailable(
+    reachedStep(onboardingStepId, 'buddies')
+  )
 
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
@@ -174,6 +203,7 @@ const OnBoarding = () => {
       installedOn,
       userSpecifiedHasAnnualGoal,
       serviceReports,
+      buddiesAvailable,
     }),
     [
       role,
@@ -182,6 +212,7 @@ const OnBoarding = () => {
       installedOn,
       userSpecifiedHasAnnualGoal,
       serviceReports,
+      buddiesAvailable,
     ]
   )
 
@@ -214,7 +245,15 @@ const OnBoarding = () => {
             : 'notifications'
           : onboardingStepId
     const idx = initialVisible.findIndex((s) => s.id === resumeId)
-    return idx >= 0 ? idx : 0
+    if (idx >= 0) return idx
+    // A conditional step that no longer shows (e.g. Buddies after its flag
+    // turned off): resume on the next step that does.
+    const order = allSteps.findIndex((s) => s.id === resumeId)
+    const next =
+      order >= 0
+        ? initialVisible.findIndex((s) => allSteps.indexOf(s) > order)
+        : -1
+    return next >= 0 ? next : 0
   })
 
   // Clamp the index if the visible-step list shrinks (e.g. user switches
@@ -244,6 +283,7 @@ const OnBoarding = () => {
   }, [stepIndex, visibleSteps, onboardingStepId, set])
 
   const isFocused = useIsFocused()
+  const onboardingStartedAt = useRef(Date.now())
   const stepViewedAt = useRef(Date.now())
   const lastViewedStep = useRef<StepId | null>(null)
   const initialStepId = useRef(onboardingStepId)
@@ -285,6 +325,17 @@ const OnBoarding = () => {
         : {}),
       ...(visibleSteps[stepIndex]?.id === 'defaultExportMethod'
         ? { selected_option: preferences.defaultExportMethod }
+        : {}),
+      ...(visibleSteps[stepIndex]?.id === 'buddies'
+        ? {
+            selected_option: useBuddies
+              .getState()
+              .outgoingInvites.some(
+                (invite) => invite.createdAt >= onboardingStartedAt.current
+              )
+              ? 'invited'
+              : 'skipped',
+          }
         : {}),
     })
     if (stepIndex >= visibleSteps.length - 1) {
@@ -340,7 +391,11 @@ const OnBoarding = () => {
         {current.id === 'hero' ? (
           <StepOne goBack={goBack} goNext={goNext} goToStep={goToStep} />
         ) : (
-          <current.Component goBack={goBack} goNext={goNext} />
+          <current.Component
+            goBack={goBack}
+            goNext={goNext}
+            buddiesAvailable={buddiesAvailable}
+          />
         )}
       </View>
     </OnboardingProgressContext.Provider>

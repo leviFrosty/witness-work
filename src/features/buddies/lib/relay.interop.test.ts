@@ -1,6 +1,10 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { createBuddiesEngine } from '@/features/buddies/lib/engine'
+import {
+  BADGE_REACTION_PUSH_KIND,
+  BUDDY_PUSH_KINDS,
+  createBuddiesEngine,
+} from '@/features/buddies/lib/engine'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { createRelayClient } from '@/features/buddies/lib/relay'
 import type { BuddyStreak } from '@/features/buddies/lib/schemas'
@@ -10,6 +14,7 @@ import {
   OutgoingShareSpec,
 } from '@/features/buddies/lib/state'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import type { SharedBadge } from '@/types/badges'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -21,10 +26,15 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
-function user(name: string) {
+function user(name: string, badges?: SharedBadge[]) {
   const seed = random(32)
   let shares: OutgoingShareSpec[] = []
   let streak: BuddyStreak | undefined
+  /**
+   * The engine's clock ahead of the relay's, e.g. past the relay's 60 s alert
+   * spacing without waiting. Requests are still signed with the real time.
+   */
+  let ahead = 0
   let state: BuddiesState = { ...initialBuddiesState }
   const store = {
     getState: () => state,
@@ -43,9 +53,9 @@ function user(name: string) {
     relay: createRelayClient({ baseUrl: relayUrl!, randomBytes: random }),
     store,
     randomBytes: random,
-    now: Date.now,
+    now: () => Date.now() + ahead,
     getRootSeed: () => seed,
-    getProfile: () => ({ name }),
+    getProfile: () => ({ name, badges }),
     getShares: () => shares,
     getStreak: () => streak,
     deleteRootSeed: () => {},
@@ -71,7 +81,24 @@ function user(name: string) {
     setStreak: (next: BuddyStreak | undefined) => {
       streak = next
     },
+    advance: (ms: number) => {
+      ahead += ms
+    },
   }
+}
+
+/** Every fixed kind, a join kind per buddy (five at most), and both badge kinds. */
+function allTemplates(engine: ReturnType<typeof user>['engine']) {
+  const template = { title: 't', body: 'b' }
+  return Object.fromEntries(
+    [
+      ...BUDDY_PUSH_KINDS,
+      ...['a', 'b', 'c', 'd', 'e'].map(
+        (tag) => `join.request.${tag.repeat(12)}`
+      ),
+      ...engine.badgePushKinds(),
+    ].map((kind) => [kind, template])
+  )
 }
 
 async function pair(inviter: ReturnType<typeof user>, invitee: typeof inviter) {
@@ -172,6 +199,89 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
     await mom.engine.publishShares()
     await anna.engine.sync()
     expect(anna.store.getState().incomingShares[key]?.status).toBe('cancelled')
+
+    await mom.engine.deleteEverything()
+    await anna.engine.deleteEverything()
+  }, 30_000)
+
+  it('carries badges on the card and announces a new one', async () => {
+    const mom = user('Mom', [{ c: 'monthsShared', l: 2 }])
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const templates = allTemplates(anna.engine)
+    expect(Object.keys(templates)).toHaveLength(16)
+    await expect(
+      anna.engine.registerPush({
+        apnsToken: 'ab'.repeat(32),
+        apnsEnvironment: 'sandbox',
+        templates,
+      })
+    ).resolves.toBe('registered')
+    expect(anna.store.getState().buddies[0]?.badges).toEqual([
+      { c: 'monthsShared', l: 2 },
+    ])
+
+    // Mom's pairing confirmation alerted Anna just now; a badge alert waits
+    // out the relay's 60 s spacing, so step past it.
+    mom.advance(65_000)
+    await mom.engine.announceBadges(['returnVisits.1'])
+    expect(mom.store.getState().badgeAnnouncements).toEqual([])
+    await anna.engine.sync()
+    expect(
+      anna.store.getState().notifications.find((n) => n.kind === 'badge')
+    ).toMatchObject({ badges: [{ c: 'returnVisits', l: 1 }] })
+
+    await mom.engine.deleteEverything()
+    await anna.engine.deleteEverything()
+  }, 30_000)
+
+  it('carries a reaction to a badge, and a change to it', async () => {
+    const mom = user('Mom', [{ c: 'monthsShared', l: 2 }])
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await expect(
+      mom.engine.registerPush({
+        apnsToken: 'cd'.repeat(32),
+        apnsEnvironment: 'sandbox',
+        templates: allTemplates(mom.engine),
+      })
+    ).resolves.toBe('registered')
+
+    await anna.engine.reactToBadge(
+      mom.inboxId,
+      { c: 'monthsShared', l: 2 },
+      'party'
+    )
+    const sent = anna.store.getState().sentBadgeReactions[mom.inboxId]
+    expect(sent?.['monthsShared.2']).toMatchObject({ e: 'party' })
+    expect(sent?.['monthsShared.2'].sentRev).toBe(sent?.['monthsShared.2'].rev)
+    await mom.engine.sync()
+    expect(mom.store.getState().badgeReactions['monthsShared.2']).toMatchObject(
+      { [anna.inboxId]: { e: 'party' } }
+    )
+    expect(
+      mom.store
+        .getState()
+        .notifications.filter((n) => n.kind === 'badgeReaction')
+    ).toMatchObject([
+      { reaction: 'party', badges: [{ c: 'monthsShared', l: 2 }] },
+    ])
+
+    await anna.engine.reactToBadge(
+      mom.inboxId,
+      { c: 'monthsShared', l: 2 },
+      'raisedHands'
+    )
+    await mom.engine.sync()
+    expect(
+      mom.store.getState().badgeReactions['monthsShared.2'][anna.inboxId].e
+    ).toBe('raisedHands')
+    expect(
+      mom.store
+        .getState()
+        .notifications.filter((n) => n.kind === 'badgeReaction')
+    ).toMatchObject([{ reaction: 'raisedHands' }])
+    expect(BADGE_REACTION_PUSH_KIND).toBe('badge.reaction')
 
     await mom.engine.deleteEverything()
     await anna.engine.deleteEverything()

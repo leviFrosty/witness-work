@@ -6,6 +6,7 @@ import {
   type ShareAnswerSource,
   trackShareAnswer,
 } from '@/features/buddies/lib/shareAnswerAnalytics'
+import { noteUserAction } from '@/lib/userAction'
 
 /**
  * Answers a buddy's invitation. The answer is saved at once; Going is sent
@@ -21,6 +22,8 @@ export default function useAnswerShare(source: ShareAnswerSource) {
     reply: ShareReply
   ) => {
     trackShareAnswer(source, type, reply)
+    // Going can earn Two by Two; it's the User's own answer.
+    if (reply === 'going') noteUserAction('going')
     setBusy(true)
     try {
       await buddiesEngine.replyToShare(shareKey, reply, {

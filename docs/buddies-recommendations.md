@@ -276,16 +276,19 @@ A dedicated **Buddies** screen, reached from a row in the Settings drawer (next 
 4. **Buddy's push:** "Levi invited you to a Follow-up · Sat 10:00" with **I'll come** / **Can't make it** — never the householder's name or address on the lock screen. Accepted items appear read-only as "Follow-up with Levi" in the schedule and on Home; the buddy sets their own reminder.
 5. **Changes:** a same-day time change keeps the acceptance and shows "Changed"; a date change asks again; dismissing or deleting the Follow-up cancels it; logging the Visit completes it quietly; then the 24 h wipe.
 
-### 6.4 Buddy activity and awards (later phases)
+### 6.4 Buddy activity and badges
 
-- **Activity sharing** (feature 6) is **opt-in per buddy, default Off**: _Days I went out_ (calendar marks, no numbers), with a separate **Include my hours** toggle (default off) for close partners who want it. No presence ("out now"), no inactivity nudges, no rankings.
-- **Awards** (feature 5) are **keepsakes, not targets**: earned on-device, never revoked, no locked badge walls, breaks don't count against anyone, earnable in every Publisher role. Existing Milestones, the Annual Goal, and Achievement Tiers appear only as private keepsakes — no second celebration.
-- **Catalog v1 (14):** First Day Out · Steady Weeks (4/12/26/52 weeks with time out) · Every Month (each month of a Service Year) · Month Well Planned · First Return Visit · Faithful Follow-through · Keeping at It (a conversation after 2+ Not at Homes) · Groundwork Laid · First Study This Service Year (always private) · Two by Two (went out with a buddy) · Service Anniversary · plus the Milestone, Annual Goal, and Achievement Tier keepsakes (always private). Rejected: shareable hour thresholds, "plans kept" (Plans are forecast, never completed — ADR 0003), daily streaks, "comeback".
-- **Encourage:** a single tap in reply to a celebration a buddy _chose_ to share. Only the recipient sees who sent it; no counts, no free text, one per celebration, can be turned off.
+- **Activity sharing** (feature 6, later phase) is **opt-in per buddy, default Off**: _Days I went out_ (calendar marks, no numbers), with a separate **Include my hours** toggle (default off) for close partners who want it. No presence ("out now"), no inactivity nudges, no rankings.
+- **Badges** (feature 5, shipped in place of "awards") are **keepsakes, not targets**: earned on-device from the User's own records, never revoked, counted in months (Year Round: service years), never hours (ADR 0019), so breaks don't count against anyone and every Publisher role earns them at the same pace. Nine Badge Collections with four levels each (Bronze, Silver, Gold, Pearl) plus two One-time Badges (First Bible Study, First Buddy). Milestones, the Annual Goal, and Achievement Tiers stay separate and private.
+- **What buddies see:** the badges a User earned (each collection at its highest level, and One-time Badges) ride on the Buddy Card and show on that User's card in the buddy's app. Never locked badges, progress, counts, dates, or comparisons. First Bible Study stays home in data protection mode. Sharing is **on by default with an opt-out** (Buddies Settings → Badges, synced through the roster); turning badges off entirely shares nothing.
+- **News of a new badge:** when a User earns a new collection level live, each buddy gets one `badge.new` event (batched, deterministic id), which lands in their notifications tray and opens that buddy's page. One-time Badges are never announced. Pushes are **on by default for the recipient**, with a per-device **Badge Alerts** switch, at most one alert per buddy per 20 hours, and generic, name-free text ("A buddy has a new badge"). Wire details are in `buddies-protocol.md` → Badges.
+- Rejected as badges: shareable hour thresholds, "plans kept" (Plans are forecast, never completed — ADR 0003), daily streaks, "comeback", leaderboards. Badges count months and never depend on an unbroken run; the Service Streak is a separate feature that no badge reads.
+- **Quiet by design** ([ADR 0021](adr/0021-takeovers-follow-the-users-own-action.md)): buddies' badge news and reactions are **passive** pushes (no sound, no banner while the app is open; Android posts them in the low-importance `buddies_news` channel), live in the notification bell, and never appear on Home or take over the screen. The User's own badges follow the action rule: a full-screen celebration only right after something they did (Add Time, the checkbox, a visit, Plan, or report, answering Going, confirming a buddy); a badge that arrives any other way (iCloud Sync, the Watch, a buddy's reply, overnight) waits on a dismissible **New badge** card on Home. One takeover at a time, through the takeover arbiter.
+- **Encourage** (shipped for badges): a single tap in reply to a buddy's badge, one of six preset reactions (🎉 🎊 🔥 👏 👍 🙌) sent as an id in a `badge.reaction` event. Only the badge's owner sees who reacted; no counts, no free text, one per buddy and badge (choosing another replaces it). Its alert is generic ("A buddy reacted to your badge"), passive like a new badge's (ADR 0021), at most one per buddy per 20 hours, and the per-device Badge Alerts switch turns it off. Encourage for other celebrations is still a later phase. Wire details are in `buddies-protocol.md` → Reactions.
 
 ### 6.5 Notifications
 
-Only logistics interrupt in real time. Social events are passive or in-app. The app badge counts only things waiting on the User.
+Only logistics interrupt in real time. Social events are passive or in-app. The app badge counts only things waiting on the User. [ADR 0021](adr/0021-takeovers-follow-the-users-own-action.md) sets the interruption tier of every badge, streak, and buddy moment, and how buddies' news sits in the notification bell.
 
 | Event                                                 | Default                 | Channel             | Interruption level                   |
 | ----------------------------------------------------- | ----------------------- | ------------------- | ------------------------------------ |
@@ -297,13 +300,13 @@ Only logistics interrupt in real time. Social events are passive or in-app. The 
 | Follow-up changed (coalesced over 5 min) or cancelled | On                      | Push                | Active; Time Sensitive within 60 min |
 | Buddy joining your Plan / a joined Plan changed       | On                      | Push                | Active                               |
 | Both planning the same day                            | Off (chip always shown) | Evening-before push | Passive                              |
-| Buddy shared a celebration                            | Off (in-app on)         | Push optional       | Passive                              |
-| Encouragement received                                | On                      | Push                | Passive                              |
+| Buddy has a new badge                                 | On (per-device switch)  | Push + tray         | Passive; ≤ 1 per buddy per 20 h      |
+| Buddy reacted to your badge (Encourage)               | On (Badge Alerts)       | Push + tray         | Passive; ≤ 1 per buddy per 20 h      |
 | Buddy's hours, Milestones, Tiers, "out now"           | Never                   | —                   | —                                    |
 
 ### 6.6 Anti-features
 
-Buddies never gets: leaderboards or rankings · hour comparisons or charts · competitions · shared or daily streaks and "streak lost" copy · inactivity nudges · feeds, posts, comments, chat, emoji reactions · like or follower counts, public profiles, discovery, contact upload · presence, "last active", live location, read receipts · the word "group" (it collides with field service groups) · householder data outside a previewed, expiring invitation · AI processing of buddy data · "magic link" wording.
+Buddies never gets: leaderboards or rankings · hour comparisons or charts · competitions · shared or daily streaks and "streak lost" copy · inactivity nudges · feeds, posts, comments, chat, emoji reactions beyond Encourage's six presets on a badge · like or follower counts, public profiles, discovery, contact upload · presence, "last active", live location, read receipts · the word "group" (it collides with field service groups) · householder data outside a previewed, expiring invitation · AI processing of buddy data · "magic link" wording.
 
 ## 7. Roadmap
 
@@ -376,4 +379,4 @@ Still open:
 - **Shared Follow-up** — a Follow-up a User invited a Buddy to; minimal householder fields; expires after the Visit. _Avoid_: shared contact.
 - **Relay** — the part of ww-proxy that stores Buddies ciphertext. _Avoid_: account, server sync.
 - **Award** — a personal keepsake earned on-device; private unless the User shares it.
-- **Encourage** — a one-tap reply to a celebration a Buddy chose to share.
+- **Encourage** — a one-tap preset reaction to a badge a Buddy shared (later, to other celebrations they choose to share).

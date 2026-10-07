@@ -7,6 +7,7 @@ import { useTimeCache } from '@/stores/timeCache'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
 import { mmkvStorage } from '@/stores/mmkv'
+import { useBadgeSession } from '@/stores/badgeSession'
 
 /**
  * Wipes this device's data back to a fresh install (Tools "Reset all" and the
@@ -32,7 +33,10 @@ export function resetLocalData() {
   useConversations.getState()._WARNING_forceDeleteConversations()
   useMileage.getState()._WARNING_forceDeleteMileage()
   useTimeCache.getState().invalidateAllCache()
+  // The defaults also clear earned badges, the ledger and the first-pass
+  // marker; drop any queued celebration or summary with them.
   setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
+  useBadgeSession.getState().reset()
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
   mmkvStorage.clearAll()
   void AsyncStorage.clear()

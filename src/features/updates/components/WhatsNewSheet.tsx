@@ -1,7 +1,8 @@
 import { Gift as GiftIcon, X as XIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { Sheet, XStack } from 'tamagui'
+import { XStack } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -21,8 +22,10 @@ import Badge from '@/components/ui/Badge'
 import semver from 'semver'
 
 interface Props {
-  setShow: React.Dispatch<React.SetStateAction<boolean>>
+  /** Its takeover turn (ADR 0021): open while the arbiter shows it. */
   show: boolean
+  /** Closed by the User; gives the turn back. */
+  onClose: () => void
   /**
    * Version the user last saw notes for, captured before `lastAppVersion` is
    * stamped. Only releases newer than this are listed.
@@ -161,13 +164,13 @@ export const WhatsNewContent = ({
  * to the full history. Only used for releases announced as `'sheet'`; the
  * launch gate in `HomeTabStack` owns stamping `lastAppVersion`.
  */
-const WhatsNewSheet: React.FC<Props> = ({ show, setShow, sinceVersion }) => {
+const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
 
   const handleSeeAll = () => {
-    setShow(false)
+    onClose()
     navigation.navigate('Whats New')
   }
 
@@ -175,7 +178,9 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow, sinceVersion }) => {
     <Sheet
       open={show}
       modal
-      onOpenChange={(o: boolean) => setShow(o)}
+      onOpenChange={(o: boolean) => {
+        if (!o) onClose()
+      }}
       dismissOnSnapToBottom
       transition='quick'
     >
@@ -195,7 +200,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow, sinceVersion }) => {
 
           <IconButton
             noTransform
-            onPress={() => setShow(false)}
+            onPress={onClose}
             size={20}
             icon={XIcon}
             color={theme.colors.text}

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('../../../../modules/place-search', () => ({
@@ -125,6 +125,11 @@ const recurringPlans: RecurringPlan[] = [
 ]
 
 describe('dayRouteStops', () => {
+  // Dismiss periods are read against the clock, so pin it to the fixtures' day.
+  vi.setSystemTime(day)
+  afterAll(() => {
+    vi.useRealTimers()
+  })
   const result = dayRouteStops({
     day,
     conversations,

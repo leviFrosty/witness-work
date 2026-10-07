@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Alert, View } from 'react-native'
 import { Check as CheckIcon, X as XIcon } from 'lucide-react-native'
+import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
@@ -11,15 +12,17 @@ import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
+import { badgeTitle } from '@/lib/badges/display'
 import Haptics from '@/lib/haptics'
 import { formatRelative, formatStartTime } from '@/lib/dates'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
 import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
+import { badgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
@@ -33,6 +36,7 @@ import {
 import type { DayPlan } from '@/types/timeEntry'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { noteUserAction } from '@/lib/userAction'
 
 function headline(entry: BuddyNotification): string {
   const name = { name: entry.name }
@@ -60,7 +64,33 @@ function headline(entry: BuddyNotification): string {
         : i18n.t('buddies_notifReplyDeclined', name)
     case 'joinRequest':
       return i18n.t('buddies_notifJoinRequest', name)
+    case 'badge':
+      return i18n.t('buddies_notifBadge', name)
+    case 'badgeReaction': {
+      // "Alex reacted 🎉 to Year Round, Gold"
+      const [badge] = entry.badges ?? []
+      return i18n.t('buddies_notifBadgeReaction', {
+        ...name,
+        emoji: entry.reaction ? badgeReactionEmoji(entry.reaction) : '',
+        badge: badge ? badgeTitle(badge.c, badge.l ?? null) : '',
+      })
+    }
   }
+}
+
+/**
+ * "Year Round, Gold + 1 more": the badge named first, and how many came with
+ * it.
+ */
+function badgeLine(entry: BuddyNotification): string | undefined {
+  const [top, ...rest] = entry.badges ?? []
+  if (entry.kind !== 'badge' || !top) return undefined
+  const badge = badgeTitle(top.c, top.l ?? null)
+  if (rest.length === 0) return badge
+  return i18n.t('buddies_notifBadgeMore' as TranslationKey, {
+    badge,
+    count: rest.length,
+  })
 }
 
 /**
@@ -69,7 +99,9 @@ function headline(entry: BuddyNotification): string {
  * the answer buttons stay outside the long-press target. An invitation or claim
  * still waiting on an answer can't be dismissed: answering is what clears it. A
  * request to join can: Not Now is dismissing it, and Invite turns into a check
- * once the buddy is invited.
+ * once the buddy is invited. A buddy's new badge shows its medallion and opens
+ * their page; a buddy's reaction to one of this User's badges shows that
+ * badge's medallion and opens it.
  */
 export default function BuddyNotificationRow({
   entry,
@@ -243,6 +275,9 @@ export default function BuddyNotificationRow({
     ...entry,
     name: buddy ? buddyDisplayName(buddy) : entry.name,
   })
+  const newBadges = badgeLine(entry)
+  const topBadge =
+    newBadges || entry.kind === 'badgeReaction' ? entry.badges?.[0] : undefined
 
   return (
     <View style={{ gap: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
@@ -250,7 +285,7 @@ export default function BuddyNotificationRow({
         <ContextMenu
           style={{ flex: 1 }}
           onPress={open}
-          accessibilityLabel={title}
+          accessibilityLabel={newBadges ? `${title}, ${newBadges}` : title}
           hoverRadius={theme.numbers.borderRadiusSm}
           actions={[
             open && {
@@ -306,6 +341,7 @@ export default function BuddyNotificationRow({
                 <Text style={{ fontFamily: theme.fonts.semiBold }}>
                   {title}
                 </Text>
+                {newBadges ? <Text>{newBadges}</Text> : null}
                 <Text
                   style={{
                     color: theme.colors.textAlt,
@@ -315,6 +351,18 @@ export default function BuddyNotificationRow({
                   {formatRelative(entry.at)}
                 </Text>
               </View>
+              {topBadge ? (
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility='no-hide-descendants'
+                >
+                  <BadgeMedallion
+                    art={topBadge.c}
+                    level={topBadge.l ?? null}
+                    size={28}
+                  />
+                </View>
+              ) : null}
             </XView>
 
             {joinRequest ? (
@@ -450,7 +498,10 @@ export default function BuddyNotificationRow({
           <ActionButton
             disabled={busy}
             onPress={() => {
-              void run(() => buddiesEngine.confirmClaim(claim.inviteId))
+              void run(async () => {
+                await buddiesEngine.confirmClaim(claim.inviteId)
+                noteUserAction('buddy')
+              })
             }}
           >
             {i18n.t('buddies_confirm')}

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import type { RootStackNavigation } from '@/types/rootStack'
 import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'

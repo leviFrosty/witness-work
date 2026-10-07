@@ -25,7 +25,7 @@ the explicit `drawer` variant in `SettingsScreen`.
 - `components/AssistantPreviewSheet.tsx` and `components/TypeSelectorRow.tsx`:
   compound controls preserve their selection semantics while TypeSelectorRow
   uses a compact type select and separate full-width custom-category controls.
-- `features/settings/components/inputs/InputRowButton.tsx` and
+- `components/ui/inputs/InputRowButton.tsx` and
   `components/shared/SectionTitle.tsx`: drawer rows, row spacing, and section
   heading alignment.
 

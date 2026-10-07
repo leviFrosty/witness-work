@@ -5,7 +5,7 @@ import {
 import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'

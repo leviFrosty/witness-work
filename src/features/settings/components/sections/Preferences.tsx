@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'

@@ -562,7 +562,7 @@ const VisitFormScreen = ({
         insets='none'
         style={{
           gap: 24,
-          marginTop: 16,
+          marginTop: 4,
           paddingHorizontal: 12,
           alignSelf: 'center',
           width: '100%',
@@ -573,68 +573,63 @@ const VisitFormScreen = ({
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 10,
+            gap: 8,
             paddingHorizontal: 13,
           }}
         >
           <IconButton
             icon={conversation.notAtHome ? CaravanIcon : MessagesSquareIcon}
-            size={20}
+            size={18}
             iconStyle={{ color: theme.colors.text }}
           />
-          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+          <Text style={{ fontSize: 24, fontFamily: theme.fonts.bold }}>
             {getTitle()}
           </Text>
         </View>
-        {/* Keeps the Custom Fields link under the section it adds to. */}
-        <View style={{ gap: 8 }}>
-          <Section>
-            <InputRowContainer
-              label={i18n.t('date')}
-              justifyContent='space-between'
-              controlWidth='auto'
-            >
-              <DateTimePicker
-                maximumDate={moment().toDate()}
-                value={conversation.date}
-                onChange={handleDateChange}
-                iOSMode='datetime'
-              />
-            </InputRowContainer>
-            <TextInputRow
-              label={i18n.t('note')}
-              info={
-                dataProtectionMode
-                  ? i18n.t('dataProtectionNoteHint')
-                  : undefined
-              }
-              textInputProps={{
-                placeholder: i18n.t('note_placeholder'),
-                multiline: true,
-                enterKeyHint: 'enter',
-                defaultValue: conversation.note,
-                textAlign: 'left',
-                onChangeText: (note: string) =>
-                  setConversation({ ...conversation, note }),
-              }}
-              lastInSection={notAtHome}
+        <Section>
+          <InputRowContainer
+            label={i18n.t('date')}
+            justifyContent='space-between'
+            controlWidth='auto'
+          >
+            <DateTimePicker
+              maximumDate={moment().toDate()}
+              value={conversation.date}
+              onChange={handleDateChange}
+              iOSMode='datetime'
             />
-            {!notAtHome && (
-              <InputRowSwitch
-                label={i18n.t('conductedBibleStudy')}
-                value={conversation.isBibleStudy}
-                onValueChange={(isBibleStudy) =>
-                  setConversation({ ...conversation, isBibleStudy })
-                }
-                lastInSection
-              />
-            )}
-          </Section>
-          <VisitCustomFieldsSection
-            customFields={conversation.customFields}
-            setCustomField={setCustomField}
+          </InputRowContainer>
+          <TextInputRow
+            label={i18n.t('note')}
+            info={
+              dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
+            }
+            textInputProps={{
+              placeholder: i18n.t('note_placeholder'),
+              multiline: true,
+              enterKeyHint: 'enter',
+              defaultValue: conversation.note,
+              textAlign: 'left',
+              onChangeText: (note: string) =>
+                setConversation({ ...conversation, note }),
+            }}
+            lastInSection={notAtHome}
           />
-        </View>
+          {!notAtHome && (
+            <InputRowSwitch
+              label={i18n.t('conductedBibleStudy')}
+              value={conversation.isBibleStudy}
+              onValueChange={(isBibleStudy) =>
+                setConversation({ ...conversation, isBibleStudy })
+              }
+              lastInSection
+            />
+          )}
+        </Section>
+        <VisitCustomFieldsSection
+          customFields={conversation.customFields}
+          setCustomField={setCustomField}
+        />
         <Section>
           <InputRowSwitch
             label={i18n.t('followUp')}

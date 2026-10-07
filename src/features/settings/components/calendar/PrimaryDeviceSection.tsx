@@ -1,7 +1,7 @@
 import { Alert, View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'

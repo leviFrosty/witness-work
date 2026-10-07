@@ -7,7 +7,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
-import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import Select from '@/components/ui/Select'
 import {

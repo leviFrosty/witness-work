@@ -3082,6 +3082,7 @@
   "buddies_showFewer": "Show Fewer",
   "buddies_plan": "Plan",
   "buddies_inviteToPlan": "Invite to a Plan",
+  "buddies_inviteNameToPlan": "Invite {{name}} to a Plan",
   "buddies_viewOnCalendar": "View on Calendar",
   "buddies_nextTwoWeeks": "Next two weeks",
   "buddies_you": "You",

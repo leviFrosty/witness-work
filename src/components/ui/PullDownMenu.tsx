@@ -28,6 +28,8 @@ type PullDownMenuProps = {
   /** IPad pointer effect on the trigger; `lift` suits opaque ones. */
   pointerEffect?: PointerEffect
   style?: StyleProp<ViewStyle>
+  /** Extra touch area around the trigger. Use 0 for adjacent triggers. */
+  hitSlop?: number
 }
 
 /**
@@ -122,6 +124,7 @@ const PullDownMenu = ({
   triggerColor,
   pointerEffect = 'highlight',
   style,
+  hitSlop = 10,
 }: PullDownMenuProps) => {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -151,7 +154,7 @@ const PullDownMenu = ({
           accessible
           accessibilityRole='button'
           accessibilityLabel={accessibilityLabel}
-          hitSlop={10}
+          hitSlop={hitSlop}
           collapsable={false}
         >
           {children ?? (

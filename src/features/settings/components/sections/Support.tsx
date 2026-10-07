@@ -2,7 +2,6 @@ import {
   CalendarClock as CalendarClockIcon,
   ChevronRight as ChevronRightIcon,
   ExternalLink as ExternalLinkIcon,
-  Globe as GlobeIcon,
   Heart as HeartIcon,
   Medal as MedalIcon,
   Share2 as Share2Icon,
@@ -135,6 +134,7 @@ const SupportSection = ({
           label={i18n.t('shareApp_title')}
           onPress={() => handleNavigate('ShareApp')}
           selected={selectedDestination === 'ShareApp'}
+          lastInSection={Platform.OS !== 'ios'}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
@@ -152,35 +152,11 @@ const SupportSection = ({
                 )
               }
             }}
+            lastInSection
           >
             <IconButton icon={ExternalLinkIcon} />
           </InputRowButton>
         )}
-
-        <InputRowButton
-          leftIcon={GlobeIcon}
-          label={i18n.t('helpTranslate')}
-          onPress={async () => {
-            Alert.alert(
-              i18n.t('helpTranslateTitle'),
-              i18n.t('helpTranslate_message'),
-              [
-                {
-                  text: i18n.t('cancel'),
-                  style: 'cancel',
-                },
-                {
-                  text: i18n.t('yes'),
-                  onPress: () => openURL(links.crowdin),
-                },
-              ]
-            )
-          }}
-          url={links.crowdin}
-          lastInSection
-        >
-          <IconButton icon={ExternalLinkIcon} />
-        </InputRowButton>
       </Section>
       <ManageSubscriptionSheet
         open={manageOpen}

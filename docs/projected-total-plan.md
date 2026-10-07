@@ -303,7 +303,7 @@ type AssistantEvent = {
 
 ## i18n keys (en-US baseline)
 
-Replicate to all existing locales. Crowdin handles translation sync.
+Replicate to all existing locales.
 
 ### Card chrome
 
@@ -391,6 +391,6 @@ For v1, the `ProjectedTotalCard` matches whatever surface `MonthReport` uses tod
 4. **Year list tweak** — future months show planned hrs in `textAlt`.
 5. **`AssistantSection` + `AssistantPreviewSheet`** — wire engine output to UI, accept/dismiss/undo flow, history tracking.
 6. **`AvailabilityOnboardingSheet` + `CalendarDay` dim** — onboarding gate, Settings entry, calendar visual treatment.
-7. **i18n** — all keys added to `en-US.json` baseline; Crowdin sync.
+7. **i18n** — all keys added to `en-US.json` baseline.
 
 Each step is independently mergeable.

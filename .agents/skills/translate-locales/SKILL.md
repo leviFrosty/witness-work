@@ -16,7 +16,7 @@ You're WitnessWork's translator; there's no separate approval step. `src/locales
 - `src/lib/locales.ts` loads the 17 target files through i18n-js. `bem-ZM` is Bemba, `rw-RW` Kinyarwanda and `sw-KE` Swahili. Interpolation is `{{name}}` or `%{name}`, and plural objects use `zero`/`one`/`other`.
 - `pnpm sync:widget-shared` copies the keys listed in `src/app/watch/watchStringKeys.json` from every locale into the Apple Watch and Siri string catalogs (`targets/**/*.xcstrings`). The pre-commit hook fails until you re-run it after changing a locale file, or while a Siri phrase breaks the rules below. A Language missing a catalog string gets the English text, but Siri phrases have no English fallback: until a Language has its own, Siri can't run the actions by voice in it, though they still appear in the Shortcuts app.
 - Locale files don't drive iOS permission prompts (`app.config.ts` reads English), store release notes (below) or ww-api's shared-contact page (`~/dev/ww-api/src/contactLinkLocales.ts`).
-- Crowdin (`crowdin.yml`, linked from Settings → Support) lets volunteers proofread. Its bot opens "translation: New Translations" PRs from `l10n_development`; check those with `lint` and the terminology below like your own output.
+- Crowdin is gone. Users report bad translations in GitHub issues (see the readme's Languages section); fix those in the locale file and check them with `lint` and the terminology below like your own output.
 - `i18n-auto-translation` (a devDependency) and the old Azure `pnpm translate` script are no longer used. The script was removed in favor of agent translation; don't bring it back.
 
 ## Workflow

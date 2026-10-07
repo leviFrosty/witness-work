@@ -125,6 +125,7 @@ import {
   MILEAGE_FIXTURE_ID_PREFIX,
 } from '@/app/dev-fixtures/mileage'
 import { toDateKey } from '@/lib/mileage/calc'
+import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
 
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
@@ -684,6 +685,21 @@ export default function ToolsScreen() {
     }
   }
 
+  // Today's stops for "Plan today's route". Re-running the same day is a
+  // no-op; a later day adds that day's stops.
+  const generateTodayRoute = () => {
+    const fixture = buildTodayRouteFixture({ now: moment() })
+    fixture.contacts.forEach((contact) => {
+      if (deletedContacts.some((c) => c.id === contact.id)) {
+        removeDeletedContact(contact.id)
+      }
+      addContact(contact)
+    })
+    fixture.visits.forEach(addConversation)
+    fixture.dayPlans.forEach(addDayPlan)
+    fixture.recurringPlans.forEach(addRecurringPlan)
+  }
+
   // Upserts the fixture under stable ids, so re-running refreshes it rather
   // than duplicating. Opts in so every Mileage entry point is visible.
   const generateMileage = () => {
@@ -861,6 +877,7 @@ export default function ToolsScreen() {
     generateServiceReports()
     generateServicePlans()
     generateOverdueFollowUps()
+    generateTodayRoute()
     generateMileage()
     showDone(i18n.t('generated'))
   }
@@ -1119,6 +1136,14 @@ export default function ToolsScreen() {
               info='Four contacts whose follow-ups are 5h, 1d, 7d, and 20d overdue, mixing notify and topic combinations.'
               onPress={() => {
                 generateOverdueFollowUps()
+                showDone(i18n.t('generated'))
+              }}
+            />
+            <ToolRow
+              label="Today's route stops"
+              info="11 located stops today around San Francisco (one past the route limit), 2 missing a map pin, plus a dismissed and an already-visited follow-up that stay hidden. Opens Plan today's route in the day view."
+              onPress={() => {
+                generateTodayRoute()
                 showDone(i18n.t('generated'))
               }}
             />

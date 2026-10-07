@@ -473,7 +473,11 @@ const ScheduleScreen = ({ route }: Props) => {
           onEditTimeReport={handleEditTimeReport}
           renderFooter={(date, onNavigate) => (
             <>
-              <TodayRouteEntry date={date} onNavigate={onNavigate} />
+              <TodayRouteEntry
+                date={date}
+                surface='schedule_day'
+                onNavigate={onNavigate}
+              />
               <BuddyPlansForDay date={date} onNavigate={onNavigate} />
             </>
           )}

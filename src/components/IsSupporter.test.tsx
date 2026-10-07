@@ -6,6 +6,7 @@ const runtime = vi.hoisted(() => ({
   hasAccess: false,
   focused: true,
   screen: 'PreferencesPersonalization',
+  rootScreen: 'Schedule',
   appState: 'active',
   platform: 'ios',
   rect: { x: 12, y: 100, width: 300, height: 30 },
@@ -34,11 +35,21 @@ vi.mock('react-native', () => ({
     addEventListener: () => ({ remove: runtime.removeListener }),
   },
 }))
-vi.mock('@react-navigation/native', () => ({
-  useRoute: () => ({ name: runtime.screen }),
-  useIsFocused: () => runtime.focused,
-  useNavigation: () => ({ navigate: runtime.navigate }),
-}))
+vi.mock('@react-navigation/native', async () => {
+  const { createContext } = await import('react')
+  return {
+    NavigationRouteContext: createContext<{ name: string } | undefined>({
+      get name() {
+        return runtime.screen
+      },
+    }),
+    NavigationContainerRefContext: createContext({
+      getCurrentRoute: () => ({ name: runtime.rootScreen }),
+    }),
+    useIsFocused: () => runtime.focused,
+    useNavigation: () => ({ navigate: runtime.navigate }),
+  }
+})
 vi.mock('expo-crypto', () => ({ randomUUID: () => `flow-${++runtime.nextId}` }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/hooks/useFeatureAccess', () => ({
@@ -81,6 +92,7 @@ vi.mock('tamagui', async () => {
 import IsSupporter from '@/components/IsSupporter'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { Pressable } from 'react-native'
+import { NavigationRouteContext } from '@react-navigation/native'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 
@@ -178,6 +190,20 @@ describe.each(['ios', 'android'])('supporter gate on %s', (platform) => {
       gateAttribution: attribution,
     })
     expect(events('supporter_gate_dismissed')).toHaveLength(0)
+  })
+})
+
+it('attributes a gate outside any screen, like a portaled sheet, to the current screen', () => {
+  act(() => {
+    renderer = create(
+      <NavigationRouteContext value={undefined}>
+        {gate()}
+      </NavigationRouteContext>,
+      { createNodeMock: () => ({ measureInWindow: runtime.measure }) }
+    )
+  })
+  expect(events('supporter_feature_gate_viewed')[0][1]).toMatchObject({
+    source_screen: 'Schedule',
   })
 })
 

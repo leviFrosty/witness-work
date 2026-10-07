@@ -278,7 +278,7 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
 | `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
 | `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
-| `routePlanning`     | `today_route`        | Plan Today's Route in Schedule's day sheet or iPad inspector (today only).   |
+| `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview).    |
 | `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
@@ -445,13 +445,18 @@ times, places, notes, ids, and buddy names are never sent.
 
 ## Route planning
 
-Plan Today's Route is a Supporter feature on iOS and Android. Its gate placement
-is `today_route` (see Supporter feature conversions). Three outcome events
-answer whether Supporters use it, whether a planned route turns into a drive,
-and why planning fails:
+Plan Today's Route is a Supporter feature on iOS and Android. Anyone can open
+it: non-Supporters see their own stops, with a Supporter card in place of Find
+Shortest Route. That card is the `today_route` gate placement (see Supporter
+feature conversions); its button opens the paywall directly, so this placement
+has no `supporter_gate_viewed`/`supporter_gate_clicked` sheet stage. An entry
+event answers which placements people find, and three outcome events answer
+whether Supporters use it, whether a planned route turns into a drive, and why
+planning fails:
 
 | Event                           | When / properties                                                                                                                                                                                                                                                                       |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `route_plan_entry_opened`       | An entry point opened the route screen. `surface`: `home_follow_ups` (Plan Route on Home's conversations card), `home_day` (Home's day sheet), `schedule_day` (Schedule's day sheet), or `schedule_inspector` (iPad); `supporter` (boolean).                                            |
 | `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                               |
 | `route_plan_failed`             | Planning stopped with `error_code`: `location`, `offline`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift.             |
 | `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened. |

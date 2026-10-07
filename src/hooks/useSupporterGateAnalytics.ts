@@ -1,6 +1,10 @@
 import { useContext, useEffect, useRef } from 'react'
 import { AppState, useWindowDimensions, type View } from 'react-native'
-import { useIsFocused, useRoute } from '@react-navigation/native'
+import {
+  NavigationContainerRefContext,
+  NavigationRouteContext,
+  useIsFocused,
+} from '@react-navigation/native'
 import { analytics } from '@/lib/analytics'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import type { FeatureKey } from '@/lib/featureAccess'
@@ -16,7 +20,11 @@ export default function useSupporterGateAnalytics(
   surface: SupporterGateSurface,
   hasAccess: boolean
 ) {
-  const { name: sourceScreen } = useRoute()
+  // Gates in a portaled sheet sit outside any screen, where `useRoute` throws;
+  // attribute them to the screen underneath.
+  const route = useContext(NavigationRouteContext)
+  const root = useContext(NavigationContainerRefContext)
+  const sourceScreen = route?.name ?? root?.getCurrentRoute()?.name ?? 'unknown'
   const focused = useIsFocused()
   const { width, height } = useWindowDimensions()
   const headerRef = useRef<View>(null)

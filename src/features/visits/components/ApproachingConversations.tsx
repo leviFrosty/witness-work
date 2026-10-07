@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ScrollView, View, type LayoutChangeEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 import moment from 'moment'
@@ -37,7 +37,12 @@ const nextOpenIndex = (items: FollowUpCardItem[], from: number) => {
  * Home's Follow-up card: today's Follow-ups one at a time, each answered with a
  * tap, with progress toward all caught up.
  */
-const ApproachingConversations = () => {
+const ApproachingConversations = ({
+  headerAction,
+}: {
+  /** Trailing action beside the title, e.g. Plan Route. */
+  headerAction?: ReactNode
+}) => {
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
   const items = useFollowUpCardItems()
@@ -142,42 +147,50 @@ const ApproachingConversations = () => {
 
   return (
     <Card style={{ paddingHorizontal: 0, paddingVertical: 16, gap: 14 }}>
-      <HomeSectionMenu
-        section='approachingConversations'
-        accessibilityLabel={title}
-        actions={[
-          [
-            {
-              id: 'close_follow_up_card',
-              title: i18n.t('followUpCard_close'),
-              systemImage: 'checkmark.circle',
-              onPress: dismiss,
-            },
-          ],
-        ]}
-      >
-        <View style={{ paddingHorizontal: 20, gap: 10 }}>
-          <View style={{ gap: 2 }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('lg'),
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {title}
-            </Text>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('followUpCard_progress', { done, total: items.length })}
-            </Text>
-          </View>
-          {!single && <FollowUpCardProgress done={done} total={items.length} />}
+      <View style={{ paddingHorizontal: 20, gap: 10 }}>
+        {/* The action sits outside the menu, whose native wrapper takes taps. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <HomeSectionMenu
+            section='approachingConversations'
+            accessibilityLabel={title}
+            style={{ flex: 1 }}
+            actions={[
+              [
+                {
+                  id: 'close_follow_up_card',
+                  title: i18n.t('followUpCard_close'),
+                  systemImage: 'checkmark.circle',
+                  onPress: dismiss,
+                },
+              ],
+            ]}
+          >
+            <View style={{ gap: 2 }}>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('lg'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {title}
+              </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('followUpCard_progress', {
+                  done,
+                  total: items.length,
+                })}
+              </Text>
+            </View>
+          </HomeSectionMenu>
+          {headerAction}
         </View>
-      </HomeSectionMenu>
+        {!single && <FollowUpCardProgress done={done} total={items.length} />}
+      </View>
       <View onLayout={handleLayout}>
         {allDone ? (
           <FollowUpCardCaughtUp

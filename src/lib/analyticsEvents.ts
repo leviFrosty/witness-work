@@ -95,7 +95,8 @@ export const analyticsEventNames = [
   'watch_entry_adjusted',
   'watch_entry_skipped',
   'watch_timer_action_completed',
-  // Supporter route planning outcomes.
+  // Route planning entry and Supporter outcomes.
+  'route_plan_entry_opened',
   'route_plan_created',
   'route_plan_failed',
   'route_plan_navigation_started',

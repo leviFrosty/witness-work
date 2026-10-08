@@ -2,6 +2,7 @@ import type { FlashListRef } from '@shopify/flash-list'
 import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
 import type { LayoutRectangle } from 'react-native'
+import { useSharedValue } from 'react-native-reanimated'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
@@ -19,6 +20,7 @@ import useScheduleZoom from '@/features/plans/hooks/useScheduleZoom'
 import {
   buildScheduleRows,
   calendarMonthKey,
+  monthOrdinal,
   monthRows,
   sameCalendarMonth,
   type ScheduleRow,
@@ -87,6 +89,12 @@ export default function useScheduleCalendar({
     setViewState(next)
   }
   const [focusedMonth, setFocusedMonth] = useState<CalendarMonth>(start)
+  // The weeks dim around the focused month on the UI thread, so a scroll into
+  // the next month re-renders only what names the month, not every week.
+  const focusedOrdinal = useSharedValue(monthOrdinal(start))
+  // The month the Year view rings. It catches up on each zoom rather than
+  // following every month scrolled past while the view is hidden.
+  const [yearFocusedMonth, setYearFocusedMonth] = useState<CalendarMonth>(start)
   const [yearServiceYear, setYearServiceYear] = useState(() =>
     serviceYearOfMonth(start)
   )
@@ -143,6 +151,7 @@ export default function useScheduleCalendar({
     const previous = focusedRef.current
     if (sameCalendarMonth(previous, month)) return
     focusedRef.current = month
+    focusedOrdinal.set(monthOrdinal(month))
     setFocusedMonth(month)
     const now = Date.now()
     if (!tick || now < quietUntil.current) return
@@ -277,6 +286,7 @@ export default function useScheduleCalendar({
     const month = monthRectInStage(target)
     if (serviceYearOfMonth(target) !== yearServiceYear) zoom.hold('year')
     zoom.zoomTo('year', tile && month ? { month, tile } : null)
+    setYearFocusedMonth(focusedRef.current)
     setYearServiceYear(serviceYearOfMonth(target))
     setView('year')
     analytics.capture('schedule_year_view_opened', { source })
@@ -317,6 +327,7 @@ export default function useScheduleCalendar({
     if (moves) zoom.hold('month')
     zoom.zoomTo('month', tile && month ? { month, tile } : null)
     focus(target, false)
+    setYearFocusedMonth(target)
     setView('month')
     if (!moves) return
     // Shown once the list has landed and drawn the month, or soon regardless.
@@ -369,6 +380,8 @@ export default function useScheduleCalendar({
   return {
     view,
     focusedMonth,
+    focusedOrdinal,
+    yearFocusedMonth,
     yearServiceYear,
     schedule,
     initialRowIndex,

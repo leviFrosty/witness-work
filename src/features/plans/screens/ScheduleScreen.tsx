@@ -82,6 +82,9 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       ? { year: route.params.year, month: route.params.month }
       : undefined
   const calendar = useScheduleCalendar({ initial: routeMonth })
+  // Taken out up front: `calendar` itself changes with each month scrolled
+  // into focus, and whatever closes over it would re-render with it.
+  const { view, focusedMonth: focused, changeView, showMonth } = calendar
 
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })
@@ -107,7 +110,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     )
       return
     handledRoute.current = routeMonth
-    calendar.showMonth(routeMonth)
+    showMonth(routeMonth)
   })
 
   // The sheets are modal and this tab stays mounted, so they would cover
@@ -149,9 +152,9 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     const date = moment(linkedDate, 'YYYY-MM-DD', true)
     navigation.setParams({ date: undefined })
     if (!date.isValid()) return
-    calendar.showMonth({ year: date.year(), month: date.month() })
+    showMonth({ year: date.year(), month: date.month() })
     setSelectedDateSheet({ open: !isWide, date: date.toDate() })
-  }, [linkedDate, isWide, navigation, calendar])
+  }, [linkedDate, isWide, navigation, showMonth])
 
   const selectedDate = selectedDateSheet.date
   const selectedMonthReports =
@@ -213,8 +216,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     />
   )
 
-  const focused = calendar.focusedMonth
-
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <RootHeader
@@ -231,8 +232,8 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
               />
             </PointerTooltip>
             <ScheduleViewToggle
-              value={calendar.view}
-              onChange={(view) => calendar.changeView(view, 'toggle')}
+              value={view}
+              onChange={(next) => changeView(next, 'toggle')}
             />
             {/* Phones have no room for the label beside the other actions
             and the title. */}

@@ -2,7 +2,10 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list'
 import moment from 'moment'
 import type { RefObject } from 'react'
 import { type LayoutRectangle, View } from 'react-native'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import Animated, {
+  type AnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated'
 import type { ViewStyle } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -27,6 +30,8 @@ export const MONTH_GRID_PADDING = 8
 type Props = {
   schedule: ScheduleRows
   focusedMonth: CalendarMonth
+  /** `focusedMonth` for the weeks, which dim on the UI thread. */
+  focusedOrdinal: SharedValue<number>
   initialRowIndex: number
   listRef: RefObject<FlashListRef<ScheduleRow> | null>
   index: ScheduleDayIndex
@@ -58,6 +63,7 @@ type Props = {
 export default function ScheduleMonthView({
   schedule,
   focusedMonth,
+  focusedOrdinal,
   initialRowIndex,
   listRef,
   index,
@@ -152,7 +158,9 @@ export default function ScheduleMonthView({
             keyExtractor={(row) => row.key}
             getItemType={(row) => row.kind}
             initialScrollIndex={initialRowIndex}
-            extraData={{ focusedMonth, selectedKey, index, buddyMarkers }}
+            // The focused month stays out of here: a new month would
+            // re-render every week on screen mid-scroll.
+            extraData={{ selectedKey, index, buddyMarkers }}
             onScroll={(e) => onScroll(e.nativeEvent.contentOffset.y)}
             scrollEventThrottle={16}
             onStartReached={onStartReached}
@@ -173,7 +181,7 @@ export default function ScheduleMonthView({
               ) : (
                 <ScheduleWeekRow
                   row={item}
-                  focusedMonth={focusedMonth}
+                  focusedOrdinal={focusedOrdinal}
                   selectedKey={selectedKey}
                   index={index}
                   recurringPlans={recurringPlans}

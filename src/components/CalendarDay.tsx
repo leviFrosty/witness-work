@@ -1,5 +1,4 @@
-import { ArrowUp as ArrowUpIcon } from 'lucide-react-native'
-import { ReactNode, useCallback, useEffect, useMemo } from 'react'
+import { ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { DateData } from 'react-native-calendars'
 import { DayProps } from 'react-native-calendars/src/calendar/day'
@@ -18,13 +17,6 @@ import {
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
 } from '@/lib/recurrence'
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated'
-import IconButton from '@/components/ui/IconButton'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
@@ -333,7 +325,6 @@ const PlannedDay = (
 const CalendarDay = (
   props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
-    planMode?: boolean
     monthsReports: TimeEntry[] | null
     viewMode?: CalendarViewMode
     height?: number
@@ -351,70 +342,34 @@ const CalendarDay = (
     overlay?: ReactNode
   }
 ) => {
-  const store = useServiceReport()
-  const dayPlans = props.dayPlansOverride ?? store.dayPlans
-  const recurringPlans = props.recurringPlansOverride ?? store.recurringPlans
-  const translateY = useSharedValue(0)
+  // Only the slices a day reads: the Schedule keeps hundreds of days mounted,
+  // and a whole-store subscription re-renders every one on any change.
+  const storeDayPlans = useServiceReport((s) => s.dayPlans)
+  const storeRecurringPlans = useServiceReport((s) => s.recurringPlans)
+  const dayPlans = props.dayPlansOverride ?? storeDayPlans
+  const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
   const theme = useTheme()
-  const { howToAddPlan, removeHint } = usePreferences()
 
-  const isToday = moment().isSame(props.date?.dateString, 'day')
-
-  const startAnimation = useCallback(() => {
-    translateY.value = withRepeat(withTiming(-10, { duration: 600 }), 0, true)
-  }, [translateY])
-
-  useEffect(() => {
-    startAnimation()
-  }, [startAnimation])
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    }
-  })
-
-  const reportsForDay = useMemo(() => {
-    if (
-      props.date === undefined ||
-      !props.date?.dateString ||
-      !props.monthsReports
-    ) {
-      return []
-    }
-
-    return props.monthsReports.filter((report) =>
-      isStoredDateOnLocalDay(report.date, props.date!.dateString)
-    )
-  }, [props.date, props.monthsReports])
-
-  const dayPlansForDay = useMemo(
-    () =>
-      props.date?.dateString
-        ? dayPlans.filter((plan) =>
-            isStoredDateOnLocalDay(plan.date, props.date!.dateString)
-          )
-        : [],
-    [dayPlans, props.date]
-  )
-
-  const recurringPlansForDay = useMemo(() => {
-    if (props.date === undefined || !props.date.dateString) return []
-    return getPlansIntersectingDay(
-      moment(props.date.dateString).toDate(),
-      recurringPlans
-    )
-  }, [props.date, recurringPlans])
+  const dateString = props.date?.dateString
+  const reportsForDay =
+    dateString && props.monthsReports
+      ? props.monthsReports.filter((report) =>
+          isStoredDateOnLocalDay(report.date, dateString)
+        )
+      : []
+  const dayPlansForDay = dateString
+    ? dayPlans.filter((plan) => isStoredDateOnLocalDay(plan.date, dateString))
+    : []
+  const recurringPlansForDay = dateString
+    ? getPlansIntersectingDay(moment(dateString).toDate(), recurringPlans)
+    : []
 
   const disabled = props.state === 'disabled'
-  const localDay = props.date?.dateString
-    ? moment(props.date.dateString).toDate()
-    : undefined
+  const localDay = dateString ? moment(dateString).toDate() : undefined
   // Adjacent-month cells aren't selectable, so they get no menu either.
   const menu = useDayMenuActions(disabled ? undefined : localDay)
 
-  if (props.date === undefined || !props.date.dateString || !localDay)
-    return null
+  if (props.date === undefined || !dateString || !localDay) return null
 
   const previewData = {
     reports: reportsForDay,
@@ -423,65 +378,46 @@ const CalendarDay = (
   }
 
   return (
-    <View style={{ position: 'relative' }}>
-      <ContextMenu
-        actions={menu}
-        onPress={() => {
-          props.onPress?.(props.date)
-          if (howToAddPlan) {
-            removeHint('howToAddPlan')
-          }
-        }}
-        // The square only shows totals; the preview lists the day's entries.
-        preview={
-          !disabled && dayHasPreview(previewData) ? (
-            <DayPreview date={localDay} {...previewData} />
-          ) : undefined
+    <ContextMenu
+      actions={menu}
+      onPress={() => {
+        props.onPress?.(props.date)
+        const { howToAddPlan, removeHint } = usePreferences.getState()
+        if (howToAddPlan) {
+          removeHint('howToAddPlan')
         }
-        pointerEffect={disabled ? 'none' : 'highlight'}
-        hoverRadius={theme.numbers.borderRadiusSm}
-        style={{
-          opacity: disabled ? 0.4 : 1,
-        }}
-      >
-        {/* The overlay sits inside the trigger so VoiceOver reads it with its day. */}
-        <View>
-          {dayPlansForDay.length || recurringPlansForDay?.length ? (
-            <PlannedDay
-              {...props}
-              serviceReports={reportsForDay}
-              dayPlans={dayPlansForDay}
-              recurringPlans={recurringPlansForDay}
-            />
-          ) : (
-            <NonPlannedDay {...props} serviceReports={reportsForDay} />
-          )}
-          {props.overlay ? (
-            <View pointerEvents='none' style={StyleSheet.absoluteFill}>
-              {props.overlay}
-            </View>
-          ) : null}
-        </View>
-      </ContextMenu>
-      {props.planMode && isToday && howToAddPlan && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              right: 5,
-              bottom: -25,
-            },
-            animatedStyle,
-          ]}
-        >
-          <IconButton
-            icon={ArrowUpIcon}
-            size={30}
-            color={theme.colors.accent}
+      }}
+      // The square only shows totals; the preview lists the day's entries.
+      preview={
+        !disabled && dayHasPreview(previewData) ? (
+          <DayPreview date={localDay} {...previewData} />
+        ) : undefined
+      }
+      pointerEffect={disabled ? 'none' : 'highlight'}
+      hoverRadius={theme.numbers.borderRadiusSm}
+      style={{
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {/* The overlay sits inside the trigger so VoiceOver reads it with its day. */}
+      <View>
+        {dayPlansForDay.length || recurringPlansForDay.length ? (
+          <PlannedDay
+            {...props}
+            serviceReports={reportsForDay}
+            dayPlans={dayPlansForDay}
+            recurringPlans={recurringPlansForDay}
           />
-        </Animated.View>
-      )}
-    </View>
+        ) : (
+          <NonPlannedDay {...props} serviceReports={reportsForDay} />
+        )}
+        {props.overlay ? (
+          <View pointerEvents='none' style={StyleSheet.absoluteFill}>
+            {props.overlay}
+          </View>
+        ) : null}
+      </View>
+    </ContextMenu>
   )
 }
 

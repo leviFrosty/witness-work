@@ -3,6 +3,13 @@ vi.mock('@/lib/syncClock', async (importOriginal) => ({
   refreshSyncClock: vi.fn(async () => null),
 }))
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  makeLdcBuiltinCategory,
+} from '@/constants/categories'
+import type { useCategories } from '@/stores/categories'
+
+type CategoriesStore = typeof useCategories
 
 // First-enable decisions against a fake bridge: a remote the device can't see
 // in full must never yield `seed` (pushing this device's fresh onboarding
@@ -187,4 +194,66 @@ it('ignores this installation’s own old snapshot during restore and first enab
   usePreferences.setState({ iCloudDeviceId: 'same' })
   runtime.files = [payloadFile('witness-work-same.json', 'same')]
   expect(await resolveInitialEnable()).toEqual({ outcome: 'seed' })
+})
+
+describe('first enable on a fresh install', () => {
+  // Every install seeds the LDC builtin Category at boot.
+  const freshInstall = async () => {
+    const { resolveInitialEnable, hasMeaningfulLocalData } = await import(
+      '@/app/sync/iCloudSync'
+    )
+    const { runLdcCategoryMigration } = await import(
+      '@/stores/migrations/categories'
+    )
+    const { useCategories } = await import('@/stores/categories')
+    runLdcCategoryMigration()
+    runtime.files = [payloadFile(PHONE_FILE, 'phone')]
+    return { resolveInitialEnable, hasMeaningfulLocalData, useCategories }
+  }
+
+  it('restores without asking when only the LDC builtin is there', async () => {
+    const { resolveInitialEnable, hasMeaningfulLocalData, useCategories } =
+      await freshInstall()
+
+    expect(useCategories.getState().categories).toEqual([
+      makeLdcBuiltinCategory(0),
+    ])
+    expect(hasMeaningfulLocalData()).toBe(false)
+    expect(await resolveInitialEnable()).toMatchObject({ outcome: 'pull' })
+  })
+
+  it.each([
+    [
+      'a Category the user created',
+      (categories: CategoriesStore) =>
+        categories
+          .getState()
+          .addCategory({ id: 'bethel', name: 'Bethel', isCredit: true }),
+    ],
+    [
+      'a deleted Category',
+      (categories: CategoriesStore) => {
+        categories
+          .getState()
+          .addCategory({ id: 'bethel', name: 'Bethel', isCredit: true })
+        categories.getState().deleteCategory('bethel')
+      },
+    ],
+    [
+      'an edited LDC builtin',
+      (categories: CategoriesStore) =>
+        categories
+          .getState()
+          .updateCategory({ id: LDC_BUILTIN_CATEGORY_ID, isCredit: false }),
+    ],
+  ])('asks before replacing %s', async (_, change) => {
+    const { resolveInitialEnable, hasMeaningfulLocalData, useCategories } =
+      await freshInstall()
+    change(useCategories)
+
+    expect(hasMeaningfulLocalData()).toBe(true)
+    expect(await resolveInitialEnable()).toMatchObject({
+      outcome: 'conflict',
+    })
+  })
 })

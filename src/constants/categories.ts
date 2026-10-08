@@ -66,3 +66,19 @@ export const makeLdcBuiltinCategory = (_now: number): Category => ({
   builtin: true,
   updatedAt: 1,
 })
+
+/**
+ * True for a builtin Category exactly as the app seeds it. Every install seeds
+ * one at boot, so on its own it isn't data the User created. Ignores
+ * `updatedAt`: older builds stamped the seed time there.
+ */
+export const isSeededBuiltinCategory = (category: Category) => {
+  const seed = makeLdcBuiltinCategory(0)
+  return (
+    category.id === seed.id &&
+    category.name === seed.name &&
+    category.isCredit === seed.isCredit &&
+    category.builtin === seed.builtin &&
+    !category.legacyIds?.length
+  )
+}

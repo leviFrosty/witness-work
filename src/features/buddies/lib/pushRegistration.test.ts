@@ -2,25 +2,38 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 
-const { registerPush, joinKinds, buddiesState, app, capture } = vi.hoisted(
-  () => ({
-    registerPush: vi.fn(
-      async (_device: {
-        apnsEnvironment: string
-        apnsTopic?: string
-        templates: Record<string, unknown>
-      }) => 'registered'
-    ),
-    joinKinds: { current: ['join.request.aaaaaaaaaaaa'] },
-    buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
-    app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
-    capture: vi.fn(),
-  })
-)
+const {
+  registerPush,
+  joinKinds,
+  buddiesState,
+  app,
+  capture,
+  platform,
+  setChannel,
+} = vi.hoisted(() => ({
+  registerPush: vi.fn(
+    async (_device: {
+      apnsEnvironment?: string
+      apnsTopic?: string
+      pushService?: string
+      fcmToken?: string
+      templates: Record<string, unknown>
+    }) => 'registered'
+  ),
+  joinKinds: { current: ['join.request.aaaaaaaaaaaa'] },
+  buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
+  app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
+  capture: vi.fn(),
+  platform: { OS: 'ios' as 'ios' | 'android' },
+  setChannel: vi.fn(async () => null),
+}))
 
+vi.mock('react-native', () => ({ Platform: platform }))
 vi.mock('expo-notifications', () => ({
+  AndroidImportance: { HIGH: 4 },
   getPermissionsAsync: async () => ({ granted: true }),
   getDevicePushTokenAsync: async () => ({ data: 'token' }),
+  setNotificationChannelAsync: setChannel,
 }))
 vi.mock('expo-application', () => ({
   get applicationId() {
@@ -47,12 +60,17 @@ describe('registerBuddiesPush', () => {
     buddiesState.notificationsEnabled = true
     joinKinds.current = ['join.request.aaaaaaaaaaaa']
     app.applicationId = 'com.leviwilkerson.jwtimebeta'
+    platform.OS = 'ios'
+    setChannel.mockClear()
   })
 
   it('registers a localized template for every Buddies push kind', async () => {
     await registerBuddiesPush()
     const { templates, apnsEnvironment } = registerPush.mock.calls[0][0]
     expect(apnsEnvironment).toBe('sandbox')
+    // iOS sends what builds before Android sent: no push service field.
+    expect(registerPush.mock.calls[0][0]).not.toHaveProperty('pushService')
+    expect(setChannel).not.toHaveBeenCalled()
     expect(Object.keys(templates).sort()).toEqual(
       [...BUDDY_PUSH_KINDS, ...joinKinds.current].sort()
     )
@@ -133,6 +151,22 @@ describe('registerBuddiesPush', () => {
     expect(capture).toHaveBeenCalledWith('buddies_push_registration', {
       outcome: 'failed',
       reason: 'error',
+    })
+  })
+
+  it('registers an FCM token on Android, after creating the Buddies channel', async () => {
+    platform.OS = 'android'
+    await registerBuddiesPush()
+    const device = registerPush.mock.calls[0][0]
+    expect(device).toMatchObject({ pushService: 'fcm', fcmToken: 'token' })
+    expect(device).not.toHaveProperty('apnsToken')
+    expect(device).not.toHaveProperty('apnsTopic')
+    expect(Object.keys(device.templates).sort()).toEqual(
+      [...BUDDY_PUSH_KINDS, ...joinKinds.current].sort()
+    )
+    expect(setChannel).toHaveBeenCalledWith('buddies', {
+      name: 'buddies_title',
+      importance: 4,
     })
   })
 })

@@ -69,6 +69,7 @@ export const analyticsEventNames = [
   'buddy_join_request_notifications_changed',
   'buddy_join_request_withdrawn',
   'buddy_join_requested',
+  'buddy_paired',
   'buddy_plan_invite_opened',
   'buddy_plan_same_time_opened',
   'calendar_connected',

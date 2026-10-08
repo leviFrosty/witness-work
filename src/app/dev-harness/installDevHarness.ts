@@ -14,6 +14,7 @@ import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnost
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
+import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
@@ -162,6 +163,11 @@ export function installDevHarness() {
       void checkBuddiesRelay()
       return 'started'
     },
+    /**
+     * Runs the Buddies known-answer crypto vectors in this runtime (Hermes on
+     * iOS or Android); `{ ok, checked, mismatches }`.
+     */
+    checkBuddiesCryptoVectors: () => checkCryptoVectors(),
     setSupporter: (on: boolean) => {
       usePreferences
         .getState()

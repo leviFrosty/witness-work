@@ -199,7 +199,7 @@ Development uses `com.leviwilkerson.jwtimedev`; production uses
   before launch. The app itself still handles missing keys gracefully.
 
 Contact URL intent filters cover `ww-proxy.leviwilkerson.com/c#<payload>` and
-legacy `/c/<payload>` links.
+legacy `/c/<payload>` links, and Buddies invites `/b#1<secret>`.
 Automatic Android App Links additionally require the backend's
 `/.well-known/assetlinks.json` to list each package and signing certificate.
 Contact attachments use the `application/witnesswork+json` MIME type and are
@@ -210,6 +210,17 @@ Shortcuts, and alternate app icons remain unavailable on Android. Its watch app
 is the Wear OS app ([above](#wear-os)). Local backups,
 MyTime import, contacts/visits, plans, service reports, preferences, and the
 persistent in-app stopwatch use the shared app flows.
+
+Buddies on Android (ADR 0020) keeps its root seed in `modules/buddies-keychain`
+(Android Keystore plus Block Store) and gets alerts through Firebase Cloud
+Messaging. `google-services.json` (Firebase project `turing-striker-403102`,
+production and dev packages) is checked in: every APK carries it, and it holds
+no secrets. Alerts need Google Play services, so use an emulator image with
+Google APIs; the sending key lives in ww-api (`FCM_SERVICE_ACCOUNT_JSON`).
+Development builds don't verify App Links (the debug key isn't in
+`assetlinks.json`), so let the emulator open them with
+`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com`,
+or drive invites with `wwv link`.
 
 Notes Import on Android authenticates with Google Play Integrity instead of App
 Attest (ADR 0017, `modules/play-integrity`). It opens only when both the

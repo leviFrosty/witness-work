@@ -12,17 +12,8 @@ import {
   isSharedGoodNewsUrl,
   navigationRef,
 } from '@/features/contacts/lib/linking'
-import { isContactShareLink } from '@/features/contacts/lib/contactShareLink'
+import { shouldForwardToSystem } from '@/features/contacts/lib/systemLinks'
 import { TimeEntry } from '@/types/timeEntry'
-
-/**
- * Schemes that the host app must hand off to the system instead of trying to
- * handle itself. iOS routes widget `Link(destination:)` taps through the host
- * app first when the host declares any custom URL scheme — so without this
- * forwarder, tapping the call/text/directions buttons on the contacts widget
- * just opens WitnessWork.
- */
-const FORWARDED_SCHEMES = ['tel:', 'sms:', 'mailto:', 'http:', 'https:']
 
 /**
  * Handles widget → app deep links that the React Navigation linking config
@@ -48,13 +39,9 @@ export default function SharedGoodNewsListener() {
 
       // Forward external URL schemes (tel:, sms:, http(s):, mailto:) to the
       // system. They land here because iOS routes widget Link taps through
-      // the host app once the app declares its own scheme. Skip contact-share
-      // universal links — those are in-app URLs handled by
-      // ContactImportListener; forwarding them bounces the user to Safari.
-      if (
-        FORWARDED_SCHEMES.some((s) => url.startsWith(s)) &&
-        !isContactShareLink(url)
-      ) {
+      // the host app once the app declares its own scheme. The app's own
+      // links (contact shares, Buddies invites) stay in the app.
+      if (shouldForwardToSystem(url)) {
         Linking.openURL(url).catch(() => {})
         return
       }

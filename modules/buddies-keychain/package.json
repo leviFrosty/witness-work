@@ -1,7 +1,7 @@
 {
   "name": "buddies-keychain",
   "version": "0.1.0",
-  "description": "Local Expo module storing the Buddies root seed as a synchronizable iCloud Keychain item so every device on the same Apple Account derives the same Buddies identity.",
+  "description": "Local Expo module holding the Buddies root seed: a synchronizable iCloud Keychain item on iOS, an Android Keystore-sealed copy backed up through Block Store on Android.",
   "main": "index.ts",
   "private": true
 }

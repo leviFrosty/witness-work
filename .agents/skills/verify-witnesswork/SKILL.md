@@ -211,7 +211,7 @@ These are not automatable here. Report them as unverified instead of guessing:
 - Real purchases; use `setSupporter` for supporter UI.
 - iCloud sync across devices.
 - Widgets, Live Activities and the Watch app beyond screenshots.
-- Push delivery.
+- APNs push delivery. Android Buddies alerts (FCM) do work against a local relay that has the FCM key; see [`features/buddies.md`](features/buddies.md).
 - Play Integrity.
 - Visual taste calls.
 

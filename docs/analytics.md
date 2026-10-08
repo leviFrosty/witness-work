@@ -130,7 +130,7 @@ speculative tier/billing/price/options/legal-link paywall events were removed.
 | Do streaks keep people planning and keeping their plans?     | `streak_milestone_reached` (`count`, `kind`: `plans` \| `months`) once per device when the streak reaches a celebrated milestone (3, 5, 10, 15, 20, 25, 30, 40, 50, then every 25 for Plans; every month from 3 for months), not on every kept day. `streak_reminders_changed` (`enabled`) when Streak Reminders is switched. Taps on a fired reminder arrive as `notification_opened` with `kind: streak`. Never dates, Plan details, or time logged.                                     |
 | Does the Schedule intro lead to planning?                    | `schedule_intro_closed` once per showing, with `source` (`first_visit`, or `help` for Schedule's header button), `method` (`plan` for Plan a Day, `done`, `close`, or `back` for Android's back button), `pages_viewed`, and `page_count` (3, or 4 where Buddies shows). Compare `method: plan` with the `plan_created` that follows.                                                                                                                                                      |
 | Are reports exported?                                        | `service_report_export_requested`, `service_report_exported`, `service_report_export_dismissed`. Share-sheet resolution has platform limitations; it is not proof of submission.                                                                                                                                                                                                                                                                                                           |
-| Are new features adopted?                                    | Timer start/failure, Buddies open/same-time planning/plan invites/invitation answers/customization, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                                                              |
+| Are new features adopted?                                    | Timer start/failure, Buddies open/pairings by platform (`buddy_paired`)/same-time planning/plan invites/invitation answers/customization, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                        |
 | Do buddies use Ask to Join, and does it lead to joint Plans? | `buddy_join_requested` and `buddy_join_request_withdrawn` (`source`: `buddy_plans_for_day` \| `buddy_detail`), `buddy_join_request_answered` (`action`: `invited` \| `not_now`; `invited` when Invite adds the buddy to the Plan, `not_now` for Not Now, dismiss, or Clear All), `buddy_join_request_notifications_changed` (`scope`: `all` \| `buddy`, `enabled`), `buddy_invite_overlap_resolved` (`choice`: `replace` \| `keep_both`). Never names, relay ids, or Plan dates and times. |
 | Do people filter Contacts by last visit?                     | `contacts_staleness_chip_applied` (`variant`: `month`, `week`, `recent`, or `never`; `source`: `list` or `map`) when a Contacts chip turns on that group, above the list or over the map. Once per session per group and surface; clearing a chip sends nothing. Dragging chips into a new order is a cosmetic preference and sends nothing.                                                                                                                                               |
 | Are Saved Views adopted and used?                            | `saved_view_created` (`filter_count`, `sort`, `view_count`) and `saved_view_applied` (`view_count`; `source`: `list` or `map` for the chip row it was picked from; once per session and surface). Updating, renaming, reordering (including dragging a chip) and deleting a view are ordinary edits and send nothing.                                                                                                                                                                      |
@@ -573,6 +573,23 @@ or dates are sent.
 | `buddy_plan_same_time_opened` | Plan the Same Time opened a prefilled Plan form.                                     | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                                   |
 | `buddy_invitation_answered`   | The User answered or changed their answer to a buddy's Plan or Follow-up invitation. | `source: notifications \| buddy_detail \| plan_details`, `type: plan \| followUp`, `answer`.       |
 | `buddy_customized`            | A nickname was saved or a color was chosen (Supporter-only).                         | `setting: nickname \| color`.                                                                      |
+
+### Buddies pairing
+
+`buddy_paired` answers which platform pairings complete: iPhone with iPhone,
+iPhone with Android, Android with Android. Each side records it once, when the
+pairing completes: the inviter after confirming a request (`role: inviter`),
+the invitee when that confirmation arrives (`role: invitee`). Count
+`role: inviter` for pairings; compare both roles to see confirmations that
+never reached the other side. The User's own platform is the event's `$os`.
+
+| Event          | When                         | Properties                                                                                                                                                             |
+| -------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_paired` | A Buddies pairing completed. | `role: inviter \| invitee`, `buddy_platform: ios \| android \| unknown` (`unknown` when the buddy's build predates the field). No names, relay ids, or invite details. |
+
+The buddy's platform travels inside the end-to-end encrypted invite card, claim,
+and `pair.confirmed` (see `docs/buddies-protocol.md`); the relay never sees it,
+and the app never shows it.
 
 ### Buddies Alpha feedback
 

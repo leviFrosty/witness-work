@@ -26,6 +26,7 @@ import {
   BuddyRemovalPendingError,
   createBuddiesEngine,
   PUSH_REGISTRATION_REFRESH_MS,
+  type BuddiesEngineDeps,
 } from '@/features/buddies/lib/engine'
 import {
   BuddiesState,
@@ -115,7 +116,8 @@ function setup() {
   function user(
     name: string,
     plans: Plans = { dayPlans: [], recurringPlans: [] },
-    seed: Uint8Array = random(32)
+    seed: Uint8Array = random(32),
+    extra: Pick<BuddiesEngineDeps, 'platform' | 'onPaired'> = {}
   ) {
     const store = memoryStore({})
     const profile: BuddyProfile = { name }
@@ -135,6 +137,7 @@ function setup() {
       getProfile: () => profile,
       getStreak: () => streak,
       getShares: () => shares,
+      ...extra,
     })
     return {
       engine,
@@ -377,6 +380,62 @@ describe('buddies relay client', () => {
 })
 
 describe('buddies pairing', () => {
+  it('tells each side the other’s platform when pairing completes, for analytics', async () => {
+    const { user } = setup()
+    const onIphone = vi.fn()
+    const onPixel = vi.fn()
+    const iphone = user('Mom', undefined, undefined, {
+      platform: 'ios',
+      onPaired: onIphone,
+    })
+    const pixel = user('Anna', undefined, undefined, {
+      platform: 'android',
+      onPaired: onPixel,
+    })
+
+    const link = await iphone.engine.createInvite()
+    await pixel.engine.acceptInvite(link)
+    await iphone.engine.sync()
+    expect(iphone.store.getState().incomingClaims[0].platform).toBe('android')
+    expect(onIphone).not.toHaveBeenCalled()
+    await iphone.engine.confirmClaim(
+      iphone.store.getState().incomingClaims[0].inviteId
+    )
+    expect(onIphone).toHaveBeenCalledExactlyOnceWith({
+      role: 'inviter',
+      buddyPlatform: 'android',
+    })
+    await pixel.engine.sync()
+    expect(onPixel).toHaveBeenCalledExactlyOnceWith({
+      role: 'invitee',
+      buddyPlatform: 'ios',
+    })
+    // Syncing again doesn't count the pairing twice.
+    await pixel.engine.sync()
+    await iphone.engine.sync()
+    expect(onPixel).toHaveBeenCalledTimes(1)
+    expect(onIphone).toHaveBeenCalledTimes(1)
+  })
+
+  it('pairs with builds that send no platform', async () => {
+    const { user } = setup()
+    const onPaired = vi.fn()
+    const older = user('Mom')
+    const pixel = user('Anna', undefined, undefined, {
+      platform: 'android',
+      onPaired,
+    })
+
+    await pair(older, pixel)
+
+    expect(onPaired).toHaveBeenCalledExactlyOnceWith({
+      role: 'invitee',
+      buddyPlatform: undefined,
+    })
+    expect(older.store.getState().buddies[0].status).toBe('active')
+    expect(pixel.store.getState().buddies[0].status).toBe('active')
+  })
+
   it('pairs through invite, claim, and one-tap confirmation', async () => {
     const { fake, user } = setup()
     const mom = user('Mom', {

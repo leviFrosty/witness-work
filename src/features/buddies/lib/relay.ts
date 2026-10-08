@@ -56,6 +56,20 @@ export type WriterAuth = {
 
 export type PushTemplate = { title: string; body: string }
 
+/**
+ * How the relay reaches this device: APNs on iOS (the default, so iOS sends no
+ * `pushService`), FCM on Android.
+ */
+export type PushAddress =
+  | {
+      pushService?: 'apns'
+      apnsToken: string
+      apnsEnvironment: 'sandbox' | 'production'
+      /** The app's bundle id; the relay defaults to production's. */
+      apnsTopic?: string
+    }
+  | { pushService: 'fcm'; fcmToken: string }
+
 export type RelaySyncResponse = {
   seq: number
   slots: { slotId: string; createdAt: number }[]
@@ -191,12 +205,8 @@ export function createRelayClient(deps: RelayDeps) {
       signed('inbox/delete', auth.ownerSeed, owner(auth)),
     registerDevice: (
       auth: OwnerAuth,
-      device: {
+      device: PushAddress & {
         deviceId: string
-        apnsToken: string
-        apnsEnvironment: 'sandbox' | 'production'
-        /** The app's bundle id; the relay defaults to production's. */
-        apnsTopic?: string
         templates: Record<string, PushTemplate>
       }
     ) =>

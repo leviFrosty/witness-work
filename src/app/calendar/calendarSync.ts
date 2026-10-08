@@ -67,12 +67,16 @@ export function calendarErrorKey(error: unknown) {
 /**
  * Serialize UI actions and auto-publishing; native serialization is the final
  * gate. Background runs don't disable the UI, and an error stays visible until
- * publishing succeeds or the user disconnects.
+ * publishing succeeds or the user disconnects. `report: false` keeps checks on
+ * a device that doesn't publish silent: its user never asked for updates.
  */
 let queue: Promise<unknown> = Promise.resolve()
 export function calendarAction<T>(
   action: () => Promise<T>,
-  { background = false }: { background?: boolean } = {}
+  {
+    background = false,
+    report = true,
+  }: { background?: boolean; report?: boolean } = {}
 ): Promise<T> {
   const next = queue
     .catch(() => undefined)
@@ -81,8 +85,12 @@ export function calendarAction<T>(
       try {
         return await action()
       } catch (error) {
+        if (!report) throw error
         const errorKey = calendarErrorKey(error)
         useCalendarPublishing.setState({ error: errorKey })
+        const settings = useCalendarSync.getState()
+        if (settings.enabled && !settings.failingSince)
+          useCalendarSync.setState({ failingSince: Date.now() })
         analytics.capture('calendar_sync_failed', {
           error_key: errorKey,
           background,
@@ -103,9 +111,8 @@ function applyState(state: PublishingState) {
     sharedCalendar: title
       ? { title, account: state.calendarAccount ?? '' }
       : null,
-    // Absent until first set: details stay private, follow-ups are included.
+    // Absent until first set: details stay private.
     includeDetails: state.includeDetails ?? false,
-    defaultInclude: state.defaultInclude ?? true,
   })
   return state
 }
@@ -128,17 +135,16 @@ export async function removeDevice(target: string) {
 }
 
 /** Shared by all devices so switching primary never changes what's published. */
-export async function setSharedOptions(options: SharedCalendarOptions) {
+export async function setSharedOptions(
+  options: Pick<SharedCalendarOptions, 'includeDetails'>
+) {
   const { id, name } = identity()
   const previous = useCalendarSync.getState()
   useCalendarSync.setState(options)
   try {
     applyState(await calendarBridge().configure(id, name, options))
   } catch (error) {
-    useCalendarSync.setState({
-      includeDetails: previous.includeDetails,
-      defaultInclude: previous.defaultInclude,
-    })
+    useCalendarSync.setState({ includeDetails: previous.includeDetails })
     throw error
   }
 }
@@ -270,6 +276,9 @@ async function sharedDestination(state: PublishingState) {
       calendar.title === state.calendarTitle &&
       calendar.account === state.calendarAccount
   )
+  // The calendar this device publishes to is gone (deleted, or its account
+  // turned off), as opposed to a shared one that hasn't synced here yet.
+  if (!matches.length && settings.enabled) throw new Error('CALENDAR_MISSING')
   if (matches.length !== 1) throw new Error('CALENDAR_SHARED_NOT_FOUND')
   return matches[0]
 }
@@ -296,7 +305,10 @@ export async function reconnectSharedCalendar() {
 }
 
 /** Only the primary changes shared state; other devices just stop locally. */
-export async function disconnectCalendar(remove: boolean) {
+export async function disconnectCalendar(
+  remove: boolean,
+  source: 'settings' | 'tray' | 'onboarding' = 'settings'
+) {
   const { id, name } = identity()
   const settings = useCalendarSync.getState()
   if (remove && settings.destination) {
@@ -327,9 +339,22 @@ export async function disconnectCalendar(remove: boolean) {
     enabled: false,
     optedOut: true,
     lastSyncedAt: null,
+    failingSince: null,
   })
   useCalendarPublishing.setState({ error: null })
-  analytics.capture('calendar_disconnected', { removed_events: remove })
+  analytics.capture('calendar_disconnected', { removed_events: remove, source })
+}
+
+/**
+ * A device that turned Calendar Sync off still checks in once, so an
+ * interrupted batch it owns can finish (native refresh recovers it). After that
+ * it stops: it no longer publishes, and a busy lock it held is released.
+ */
+export async function finishDisconnect() {
+  const { id } = identity()
+  const state = await refreshPublishing()
+  if (state.busy !== id && state.pending !== id)
+    useCalendarSync.setState({ registered: false })
 }
 
 /**
@@ -367,9 +392,11 @@ async function publishCurrentCalendar({
   if (!settings.enabled || !settings.destination) return
   const state = await refreshPublishing()
   const { id, name } = identity()
-  if (state.primary !== id) return
+  // Before the primary check: a new iCloud account has its own record, where
+  // this device isn't primary, and updates would otherwise stop silently.
   if (state.namespace !== settings.namespace)
     throw new Error('CALENDAR_ACCOUNT_CHANGED')
+  if (state.primary !== id) return
   if (!state.calendarTitle) {
     // Another primary disconnected. A stale local connection must stay stopped.
     useCalendarSync.setState({ enabled: false, lastSyncedAt: null })
@@ -416,7 +443,6 @@ async function publishCurrentCalendar({
     deletedContactIds: contacts.deletedContacts.map((contact) => contact.id),
     publishedKeys: state.publishedKeys,
     includeDetails: state.includeDetails ?? false,
-    defaultInclude: state.defaultInclude ?? true,
     alertMinutes,
     title: i18n.t('calendarFollowUpTitle'),
   })
@@ -434,6 +460,7 @@ async function publishCurrentCalendar({
     lastSyncedAt: now,
     upcomingCount: snapshot.entries.filter((entry) => entry.start >= now)
       .length,
+    failingSince: null,
   })
   useCalendarPublishing.setState({ error: null })
 }

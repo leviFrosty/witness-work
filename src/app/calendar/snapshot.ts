@@ -5,9 +5,10 @@ type CalendarContact = { id: string; name: string; address?: string }
 
 // Match the native bridge's supported range before sending a batch to EventKit.
 const CALENDAR_END_LIMIT = Date.parse('2100-01-01T00:00:00Z')
+const DURATION_MINUTES = 30
 
 /**
- * A follow-up without its own choice follows the shared `defaultInclude`. Only
+ * Every open follow-up is published: Calendar Sync is all or nothing. Only
  * explicit domain deletions remove events; partial cloud loads cannot. Removals
  * are limited to published keys, so the payload doesn't grow with every Visit
  * ever recorded.
@@ -19,7 +20,6 @@ export function buildCalendarSnapshot({
   deletedContactIds,
   publishedKeys,
   includeDetails,
-  defaultInclude,
   alertMinutes,
   title,
 }: {
@@ -29,7 +29,6 @@ export function buildCalendarSnapshot({
   deletedContactIds: string[]
   publishedKeys: string[]
   includeDetails: boolean
-  defaultInclude: boolean
   /** Visit id → minutes before the follow-up its Notify Me reminder fires. */
   alertMinutes: Map<string, number>
   title: string
@@ -41,15 +40,9 @@ export function buildCalendarSnapshot({
   const entries: CalendarSnapshot['entries'] = []
   for (const visit of visits) {
     const followUp = visit.followUp
-    // Malformed values from old payloads fall back to the default too.
-    const included =
-      typeof followUp?.calendarIncluded === 'boolean'
-        ? followUp.calendarIncluded
-        : defaultInclude
     if (
       !followUp ||
       followUp.dismissed ||
-      !included ||
       deletedContacts.has(visit.contact.id)
     ) {
       removed.add(visit.id)
@@ -59,18 +52,10 @@ export function buildCalendarSnapshot({
     const contact = byId.get(visit.contact.id)
     if (!contact) continue
     const start = new Date(followUp.date).getTime()
-    const duration = followUp.calendarDurationMinutes ?? 30
-    const end = start + duration * 60_000
+    const end = start + DURATION_MINUTES * 60_000
     // One malformed Visit (e.g. from an old sync payload) must not block every
     // other follow-up. Its existing event, if any, is left untouched.
-    if (
-      !Number.isFinite(start) ||
-      start < 0 ||
-      end >= CALENDAR_END_LIMIT ||
-      !Number.isInteger(duration) ||
-      duration < 5 ||
-      duration > 480
-    )
+    if (!Number.isFinite(start) || start < 0 || end >= CALENDAR_END_LIMIT)
       continue
     const alert = alertMinutes.get(visit.id)
     entries.push({

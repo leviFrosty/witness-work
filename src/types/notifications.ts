@@ -18,7 +18,10 @@ export type NotificationKind =
   | 'supporter_survey'
   | 'data_protection_retention'
   | 'buddies'
-  /** One-time invitation for existing users to set up Calendar Sync. */
+  /**
+   * Calendar Sync: the one-time setup invitation for existing users, or updates
+   * that stopped for someone who turned it on.
+   */
   | 'calendar_sync'
   /** Test items from the Tools screen. */
   | 'dev_test'

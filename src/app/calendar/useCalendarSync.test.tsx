@@ -20,6 +20,7 @@ const publishing = vi.hoisted(() => ({
   publish: vi.fn(),
   refresh: vi.fn(),
   reconnect: vi.fn(),
+  finish: vi.fn(),
 }))
 
 vi.mock('react-native', () => ({
@@ -51,6 +52,7 @@ vi.mock('@/app/calendar/calendarSync', () => ({
   publishCalendar: publishing.publish,
   refreshPublishing: publishing.refresh,
   reconnectSharedCalendar: publishing.reconnect,
+  finishDisconnect: publishing.finish,
 }))
 vi.mock('@/stores/contactsStore', async () => ({
   default: (await import('zustand')).create(() => ({
@@ -124,7 +126,6 @@ const visit = (): Visit => ({
   followUp: {
     date: new Date('2026-11-01'),
     notifyMe: false,
-    calendarIncluded: true,
   },
 })
 const Harness = ({ ready = true }: { ready?: boolean }) => {
@@ -220,7 +221,7 @@ describe('foreground calendar maintenance', () => {
         conversations: [
           {
             ...visit(),
-            followUp: { ...visit().followUp!, calendarDurationMinutes: 60 },
+            followUp: { ...visit().followUp!, date: new Date('2026-11-02') },
           },
         ],
       })
@@ -231,6 +232,53 @@ describe('foreground calendar maintenance', () => {
     expect(publishing.publish).toHaveBeenLastCalledWith({ pull: false })
     expect(publishing.publish).toHaveBeenCalledTimes(2)
     expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('lets a device that turned it off finish interrupted work silently, then stop', async () => {
+    useCalendarSettings.setState({
+      enabled: false,
+      registered: true,
+      optedOut: true,
+    })
+    publishing.finish.mockImplementation(async () => {
+      useCalendarSettings.setState({ registered: false })
+    })
+    await mount()
+    await advance(1500)
+    expect(publishing.finish).toHaveBeenCalledOnce()
+    expect(publishing.action).toHaveBeenCalledWith(expect.any(Function), {
+      background: true,
+      report: false,
+    })
+    expect(publishing.refresh).not.toHaveBeenCalled()
+    expect(publishing.reconnect).not.toHaveBeenCalled()
+    await act(async () => runtime.foreground('active'))
+    await advance(300_000)
+    expect(publishing.finish).toHaveBeenCalledOnce()
+  })
+
+  it('never checks in from a device that declined', async () => {
+    useCalendarSettings.setState({
+      enabled: false,
+      registered: false,
+      optedOut: true,
+    })
+    await mount()
+    await act(async () => runtime.foreground('active'))
+    await advance(300_000)
+    expect(publishing.action).not.toHaveBeenCalled()
+  })
+
+  it("keeps a non-publishing device's handoff checks silent", async () => {
+    useCalendarSettings.setState({ enabled: false, registered: false })
+    publishing.refresh.mockResolvedValueOnce(state('other-device'))
+    await mount()
+    await advance(1500)
+    expect(publishing.action).toHaveBeenCalledWith(expect.any(Function), {
+      background: true,
+      report: false,
+    })
+    expect(publishing.reconnect).not.toHaveBeenCalled()
   })
 
   it('reconciles a newly selected primary without leaving the screen', async () => {

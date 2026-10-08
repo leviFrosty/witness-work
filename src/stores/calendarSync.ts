@@ -11,9 +11,9 @@ import type {
 } from '../../modules/calendar-bridge'
 
 /**
- * Device-local; never included in the iCloud data payload. `includeDetails`,
- * `defaultInclude` and `sharedCalendar` cache the shared ownership record so
- * they are available offline and before the first check.
+ * Device-local; never included in the iCloud data payload. `includeDetails` and
+ * `sharedCalendar` cache the shared ownership record so they are available
+ * offline and before the first check.
  */
 export const useCalendarSync = create(
   persist(
@@ -23,14 +23,18 @@ export const useCalendarSync = create(
       registered: false,
       destination: null as CalendarDestination | null,
       namespace: null as string | null,
-      defaultInclude: false,
       includeDetails: false,
       lastSyncedAt: null as number | null,
+      /** When updates first failed since the last success (epoch ms). */
+      failingSince: null as number | null,
       /** Upcoming follow-ups in the calendar after the last update. */
       upcomingCount: 0,
       /** The calendar connected on the primary device, if any. */
       sharedCalendar: null as { title: string; account: string } | null,
-      /** Disconnected here: don't reconnect automatically after a handoff. */
+      /**
+       * Declined or disconnected here: no automatic reconnect after a handoff,
+       * no background checks once interrupted work is done, no alerts.
+       */
       optedOut: false,
       /** Answered the setup invitation (onboarding step or tray item). */
       promptAnswered: false,

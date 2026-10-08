@@ -45,31 +45,35 @@ const makeConversation = (overrides: Partial<Visit> = {}): Visit => ({
 })
 
 describe('contactShareLink round-trip', () => {
-  it('does not transfer calendar-publishing consent with a shared contact', () => {
+  it('drops per-follow-up calendar fields left by older builds', () => {
     const conversation = makeConversation({
       followUp: {
         date: new Date('2026-10-01'),
         notifyMe: false,
-        calendarIncluded: true,
-        calendarDurationMinutes: 90,
+        ...{ calendarIncluded: true, calendarDurationMinutes: 90 },
       },
     })
     const parsed = parseContactShareLink(
       buildContactShareLink(makeContact(), [conversation]).url
     ) as { conversations: Visit[] }
-    expect(parsed.conversations[0].followUp?.calendarIncluded).toBeUndefined()
-    expect(
-      parsed.conversations[0].followUp?.calendarDurationMinutes
-    ).toBeUndefined()
-    const imported = validateContactImport({
-      type: 'witnesswork-contact',
-      version: '1.0',
-      contact: makeContact(),
-      conversations: [conversation],
+    expect(parsed.conversations[0].followUp).toEqual({
+      date: conversation.followUp!.date.toISOString(),
+      notifyMe: false,
     })
-    expect(
-      imported.data?.conversations?.[0].followUp?.calendarIncluded
-    ).toBeUndefined()
+    // A file shared by an older build may still carry them.
+    Object.assign(parsed.conversations[0].followUp!, {
+      calendarIncluded: true,
+      calendarDurationMinutes: 90,
+    })
+    const imported = validateContactImport(parsed)
+    expect(imported.success).toBe(true)
+    expect(imported.data?.conversations?.[0].followUp).toBeDefined()
+    expect(imported.data?.conversations?.[0].followUp).not.toHaveProperty(
+      'calendarIncluded'
+    )
+    expect(imported.data?.conversations?.[0].followUp).not.toHaveProperty(
+      'calendarDurationMinutes'
+    )
   })
   it('encodes a contact into a URL that parses back to the same contact', () => {
     const contact = makeContact({ phone: '+1 555 123 4567' })

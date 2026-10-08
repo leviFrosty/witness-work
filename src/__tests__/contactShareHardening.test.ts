@@ -175,8 +175,6 @@ const makeVisits = (
       ],
       reminderOffsetMinutes: 60,
       // Never travels:
-      calendarIncluded: true,
-      calendarDurationMinutes: 45,
       buddies: ['buddy-inbox-id'],
     },
     // Never travels:
@@ -206,12 +204,7 @@ const sharedContact = (contact: Contact) => {
 }
 const sharedVisit = (visit: Visit) => {
   const { customFields: _cf, updatedAt: _u, followUp, ...shared } = visit
-  const {
-    calendarIncluded: _ci,
-    calendarDurationMinutes: _cd,
-    buddies: _b,
-    ...sharedFollowUp
-  } = followUp!
+  const { buddies: _b, ...sharedFollowUp } = followUp!
   return json({ ...shared, followUp: sharedFollowUp })
 }
 const sharedDef = ({
@@ -417,7 +410,6 @@ describe('visits stay with the contact being imported', () => {
       followUp: {
         date: NOW,
         notifyMe: true,
-        calendarIncluded: true,
         buddies: ['buddy-inbox-id'],
       },
     })
@@ -465,7 +457,6 @@ describe('visits stay with the contact being imported', () => {
       followUp: {
         date: '2026-10-01T15:00:00.000Z',
         notifyMe: false,
-        calendarIncluded: true,
         buddies: ['buddy-inbox-id'],
       },
     })
@@ -702,7 +693,6 @@ describe('the file export follows the link policy', () => {
     for (const leaked of [
       'consentGivenAt',
       'buddy-inbox-id',
-      'calendarIncluded',
       'conversation-field',
       'isFavorite',
       'avatar',

@@ -369,7 +369,9 @@ or fails: `status` is `connected`, `elsewhere`, or `error` with a bounded
 Successful setup also records `calendar_connected` (`created`: boolean).
 The one-time `calendar_sync` tray invitation retains setup behavior; outcomes use
 `calendar_connected` / `calendar_sync_failed`, without separate tray click events.
-`calendar_disconnected` records local disconnect (`removed_events`: boolean).
+`calendar_disconnected` records local disconnect (`removed_events`: boolean;
+`source`: `settings`, `tray` for the paused notification's Turn Off, or
+`onboarding` for Skip after a failed setup).
 `calendar_sync_failed` includes bounded `error_key` and `background`: boolean.
 No destination/account names, device IDs, appointment dates, or calendar contents
 are sent. Background publication, draft options, and generic tray actions remain

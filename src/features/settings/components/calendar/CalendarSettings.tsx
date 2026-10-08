@@ -11,12 +11,12 @@ import {
   calendarDestinations,
   connectCalendar,
   createCalendar,
-  disconnectCalendar,
   publishCalendar,
   refreshPublishing,
   setSharedOptions,
 } from '@/app/calendar/calendarSync'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
+import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
 
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -124,26 +124,7 @@ export default function CalendarSettings() {
       })
     })
   const disconnect = () =>
-    Alert.alert(
-      i18n.t('calendarDisconnect'),
-      i18n.t('calendarDisconnectDescription'),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('calendarKeepEvents'),
-          onPress: () => run(() => disconnectCalendar(false)),
-        },
-        ...(isPrimary
-          ? [
-              {
-                text: i18n.t('calendarRemoveEvents'),
-                style: 'destructive' as const,
-                onPress: () => run(() => disconnectCalendar(true)),
-              },
-            ]
-          : []),
-      ]
-    )
+    confirmDisconnectCalendar({ isPrimary, source: 'settings' })
   const status = settings.enabled
     ? isPrimary
       ? settings.lastSyncedAt
@@ -338,14 +319,6 @@ export default function CalendarSettings() {
       <View>
         <SectionTitle text={i18n.t('calendarOptions')} />
         <Section>
-          <InputRowSwitch
-            label={i18n.t('calendarDefaultInclude')}
-            info={i18n.t('calendarDefaultInclude_info')}
-            value={settings.defaultInclude}
-            onValueChange={(defaultInclude) =>
-              run(() => setSharedOptions({ defaultInclude }))
-            }
-          />
           <InputRowSwitch
             label={i18n.t('calendarIncludeDetails')}
             info={i18n.t('calendarDetailsDescription')}

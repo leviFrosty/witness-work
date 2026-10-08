@@ -12,7 +12,6 @@ const visit = (
   followUp: {
     date: new Date('2026-11-01T01:30:00-04:00'),
     notifyMe: false,
-    calendarIncluded: true,
     ...followUp,
   },
 })
@@ -25,7 +24,6 @@ const input = () => ({
   deletedContactIds: [] as string[],
   publishedKeys: ['visit-1'],
   includeDetails: false,
-  defaultInclude: false,
   alertMinutes: new Map<string, number>(),
   title: 'Follow-up',
 })
@@ -47,12 +45,9 @@ describe('calendar projection', () => {
     ])
   })
   it('preserves the appointment instant and elapsed duration across a DST transition', () => {
-    const result = buildCalendarSnapshot({
-      ...input(),
-      visits: [visit({ calendarDurationMinutes: 90 })],
-    })
-    expect(result.entries[0].end - result.entries[0].start).toBe(90 * 60_000)
-    expect(result.entries[0].end).toBe(Date.parse('2026-11-01T07:00:00Z'))
+    const [entry] = buildCalendarSnapshot(input()).entries
+    expect(entry.end - entry.start).toBe(30 * 60_000)
+    expect(entry.end).toBe(Date.parse('2026-11-01T06:00:00Z'))
   })
   it('rescheduling retains the same logical identity', () => {
     const before = buildCalendarSnapshot(input()).entries[0]
@@ -63,19 +58,19 @@ describe('calendar projection', () => {
     expect(after.key).toBe(before.key)
     expect(after.start).not.toBe(before.start)
   })
-  it.each([{ dismissed: true }, { calendarIncluded: false }])(
-    'removes opted-out or dismissed events: %j',
-    (change) => {
-      expect(
-        buildCalendarSnapshot({ ...input(), visits: [visit(change)] })
-      ).toEqual({
-        title: 'Follow-up',
-        deletedContactIds: [],
-        entries: [],
-        removed: ['visit-1'],
+  it('removes dismissed events', () => {
+    expect(
+      buildCalendarSnapshot({
+        ...input(),
+        visits: [visit({ dismissed: true })],
       })
-    }
-  )
+    ).toEqual({
+      title: 'Follow-up',
+      deletedContactIds: [],
+      entries: [],
+      removed: ['visit-1'],
+    })
+  })
   it('removes deleted visits, removed follow-ups, and deleted contacts', () => {
     const cases = [
       {
@@ -102,41 +97,15 @@ describe('calendar projection', () => {
       removed: [],
     })
   })
-  it('follow-ups without their own choice follow the shared default', () => {
-    const unset = {
-      ...input(),
-      visits: [visit({ calendarIncluded: undefined })],
-    }
-    expect(
-      buildCalendarSnapshot({ ...unset, defaultInclude: true }).entries
-    ).toHaveLength(1)
-    // Turning the default off removes events it added.
-    expect(buildCalendarSnapshot(unset)).toMatchObject({
-      entries: [],
-      removed: ['visit-1'],
+  it('publishes every open follow-up, ignoring per-follow-up choices from older builds', () => {
+    const old = visit()
+    Object.assign(old.followUp!, {
+      calendarIncluded: false,
+      calendarDurationMinutes: 90,
     })
-    // An explicit choice wins over the default either way.
-    expect(
-      buildCalendarSnapshot({
-        ...input(),
-        defaultInclude: true,
-        visits: [visit({ calendarIncluded: false })],
-      }).entries
-    ).toEqual([])
-  })
-  it('treats a malformed inclusion from an old payload as unset', () => {
-    const malformed = visit()
-    Object.assign(malformed.followUp!, { calendarIncluded: 'false' })
-    expect(
-      buildCalendarSnapshot({ ...input(), visits: [malformed] }).entries
-    ).toEqual([])
-    expect(
-      buildCalendarSnapshot({
-        ...input(),
-        defaultInclude: true,
-        visits: [malformed],
-      }).entries
-    ).toHaveLength(1)
+    const [entry] = buildCalendarSnapshot({ ...input(), visits: [old] }).entries
+    expect(entry.key).toBe('visit-1')
+    expect(entry.end - entry.start).toBe(30 * 60_000)
   })
 
   it('carries the follow-up reminder as the event alert, and none without one', () => {
@@ -169,18 +138,6 @@ describe('calendar projection', () => {
       }).entries
     ).toHaveLength(1)
   })
-  it.each([0, -30, 481, NaN, 30.5])(
-    'skips invalid duration %s without blocking other follow-ups',
-    (duration) => {
-      const valid = { ...visit(), id: 'visit-2' }
-      const result = buildCalendarSnapshot({
-        ...input(),
-        visits: [visit({ calendarDurationMinutes: duration }), valid],
-      })
-      expect(result.entries.map((entry) => entry.key)).toEqual(['visit-2'])
-      expect(result.removed).toEqual([])
-    }
-  )
   it.each([
     new Date(NaN),
     new Date('1969-12-31T23:59:59Z'),

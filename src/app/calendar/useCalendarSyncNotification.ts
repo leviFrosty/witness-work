@@ -33,6 +33,9 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
   if (Platform.OS !== 'ios' || !calendarBridgeAvailable || !visible) return null
 
   const answer = () => useCalendarSync.setState({ promptAnswered: true })
+  // Declining here is opting out, so a later handoff doesn't turn it on.
+  const decline = () =>
+    useCalendarSync.setState({ promptAnswered: true, optedOut: true })
   const openSettings = () => navigation.navigate('PreferencesCalendar')
   return {
     id: 'calendar_sync_intro',
@@ -66,9 +69,9 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
         id: 'not_now',
         label: i18n.t('notNow'),
         inPlace: true,
-        onPress: answer,
+        onPress: decline,
       },
     ],
-    onDismiss: answer,
+    onDismiss: decline,
   }
 }

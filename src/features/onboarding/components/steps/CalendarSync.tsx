@@ -12,9 +12,10 @@ import useTheme from '@/contexts/theme'
 import {
   calendarAction,
   calendarErrorKey,
+  disconnectCalendar,
   quickConnectCalendar,
 } from '@/app/calendar/calendarSync'
-import { useCalendarSync } from '@/stores/calendarSync'
+import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { analytics } from '@/lib/analytics'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
@@ -30,6 +31,19 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
 
   // Either answer here means the tray invitation for updaters never shows.
   const answer = () => useCalendarSync.setState({ promptAnswered: true })
+
+  // Skipping after a failed attempt must not leave updates running, or the
+  // error that made them skip, behind.
+  const skip = async () => {
+    answer()
+    if (useCalendarSync.getState().enabled) {
+      await calendarAction(() => disconnectCalendar(false, 'onboarding')).catch(
+        () => undefined
+      )
+    }
+    useCalendarSync.setState({ optedOut: true })
+    useCalendarPublishing.setState({ error: null })
+  }
 
   const connect = async () => {
     answer()
@@ -100,7 +114,7 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
               analytics.capture('onboarding_step_skipped', {
                 step_id: 'calendarSync',
               })
-              answer()
+              void skip()
               goNext()
             }}
           >

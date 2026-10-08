@@ -55,8 +55,8 @@ vi.mock('@/stores/calendarSync', async () => {
       } | null,
       namespace: 'namespace',
       includeDetails: false,
-      defaultInclude: false,
       lastSyncedAt: null as number | null,
+      failingSince: null as number | null,
       sharedCalendar: null as { title: string; account: string } | null,
       optedOut: false,
     })),
@@ -64,7 +64,7 @@ vi.mock('@/stores/calendarSync', async () => {
       state: null,
       deviceId: null,
       working: false,
-      error: null,
+      error: null as string | null,
     })),
   }
 })
@@ -104,7 +104,9 @@ import {
   quickConnectCalendar,
   reconnectSharedCalendar,
   setSharedOptions,
+  finishDisconnect,
 } from '@/app/calendar/calendarSync'
+import { analytics } from '@/lib/analytics'
 import { useCalendarSync, useCalendarPublishing } from '@/stores/calendarSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 
@@ -138,10 +140,12 @@ describe('calendar publishing orchestration', () => {
     device.deviceName = 'This iPhone'
     useCalendarSync.setState({
       enabled: true,
+      registered: true,
       destination: calendar,
       namespace: 'namespace',
       includeDetails: false,
       lastSyncedAt: null,
+      failingSince: null,
       sharedCalendar: null,
       optedOut: false,
     })
@@ -576,5 +580,68 @@ describe('calendar publishing orchestration', () => {
     )
     await publishCalendar({ pull: false })
     expect(useCalendarPublishing.getState().error).toBeNull()
+  })
+  it("keeps failures on a device that doesn't publish silent", async () => {
+    await calendarAction(
+      async () => {
+        throw new Error('offline')
+      },
+      { background: true, report: false }
+    ).catch(() => undefined)
+    expect(useCalendarPublishing.getState().error).toBeNull()
+    expect(useCalendarSync.getState().failingSince).toBeNull()
+    expect(analytics.capture).not.toHaveBeenCalled()
+  })
+  it('remembers when updates started failing until one succeeds or it is turned off', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000)
+    bridge.publish.mockRejectedValueOnce(new Error('offline'))
+    await calendarAction(publishCalendar).catch(() => undefined)
+    expect(useCalendarSync.getState().failingSince).toBe(1_000)
+    vi.spyOn(Date, 'now').mockReturnValue(2_000)
+    bridge.publish.mockRejectedValueOnce(new Error('offline'))
+    await calendarAction(publishCalendar).catch(() => undefined)
+    // Still the start of the same run of failures.
+    expect(useCalendarSync.getState().failingSince).toBe(1_000)
+    await calendarAction(publishCalendar)
+    expect(useCalendarSync.getState().failingSince).toBeNull()
+    useCalendarSync.setState({ failingSince: 5 })
+    await disconnectCalendar(false, 'tray')
+    expect(useCalendarSync.getState().failingSince).toBeNull()
+    expect(analytics.capture).toHaveBeenCalledWith('calendar_disconnected', {
+      removed_events: false,
+      source: 'tray',
+    })
+    vi.restoreAllMocks()
+  })
+  it('reports a changed iCloud account even when the new account names another primary', async () => {
+    bridge.registerDevice.mockResolvedValue({
+      ...owned,
+      primary: 'other-device',
+      namespace: 'other-account',
+    })
+    await expect(calendarAction(publishCalendar)).rejects.toThrow(
+      'CALENDAR_ACCOUNT_CHANGED'
+    )
+    expect(useCalendarPublishing.getState().error).toBe(
+      'calendarAccountChanged'
+    )
+  })
+  it('reports a deleted calendar as missing, not as still syncing', async () => {
+    bridge.destinations.mockResolvedValue([])
+    await expect(calendarAction(publishCalendar)).rejects.toThrow(
+      'CALENDAR_MISSING'
+    )
+    expect(useCalendarPublishing.getState().error).toBe('calendarMissingError')
+  })
+  it('stops checking in from a disconnected device once nothing it owns is pending', async () => {
+    useCalendarSync.setState({ enabled: false, optedOut: true })
+    bridge.registerDevice.mockResolvedValueOnce({
+      ...owned,
+      busy: 'this-device',
+    })
+    await finishDisconnect()
+    expect(useCalendarSync.getState().registered).toBe(true)
+    await finishDisconnect()
+    expect(useCalendarSync.getState().registered).toBe(false)
   })
 })

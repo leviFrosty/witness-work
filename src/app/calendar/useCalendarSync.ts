@@ -10,6 +10,7 @@ import {
 } from '@/stores/calendarSync'
 import {
   calendarAction,
+  finishDisconnect,
   publishCalendar,
   reconnectSharedCalendar,
   refreshPublishing,
@@ -39,8 +40,6 @@ export function useCalendarSync(ready: boolean | undefined) {
             visit.contact.id,
             visit.followUp?.date,
             visit.followUp?.dismissed,
-            visit.followUp?.calendarIncluded,
-            visit.followUp?.calendarDurationMinutes,
             visit.followUp?.notifyMe,
             visit.followUp?.reminderOffsetMinutes,
             visit.followUp?.notifications?.[0]?.date,
@@ -55,7 +54,6 @@ export function useCalendarSync(ready: boolean | undefined) {
           ]),
         useContacts.getState().deletedContacts,
         useCalendarSettings.getState().includeDetails,
-        useCalendarSettings.getState().defaultInclude,
         useCalendarSettings.getState().enabled,
         // Follow-ups without their own reminder offset use this default.
         usePreferences.getState().returnVisitNotificationOffset,
@@ -66,8 +64,13 @@ export function useCalendarSync(ready: boolean | undefined) {
       const withPull = pull
       pull = false
       // Devices that never published have nothing to maintain. Handoff
-      // targets are covered by `sharedCalendar`.
-      if (!settings.enabled && !settings.registered && !settings.sharedCalendar)
+      // targets are covered by `sharedCalendar`. A device that declined or
+      // disconnected only finishes interrupted work, then stops.
+      if (
+        !settings.enabled &&
+        !settings.registered &&
+        (settings.optedOut || !settings.sharedCalendar)
+      )
         return
       // Data edits only matter to a device that publishes.
       if (!settings.enabled && !withPull) return
@@ -83,11 +86,16 @@ export function useCalendarSync(ready: boolean | undefined) {
           // Refresh also completes a pending transfer after a previous
           // interrupted batch, even when this device has disabled its calendar
           // integration.
+          if (settings.optedOut) {
+            await finishDisconnect()
+            return
+          }
           const state = await refreshPublishing()
           const { deviceId } = useCalendarPublishing.getState()
           if (state.primary === deviceId) await reconnectSharedCalendar()
         },
-        { background: true }
+        // Only a device that publishes reports failures.
+        { background: true, report: settings.enabled }
       )
         .then(() => {
           retries = 0
@@ -130,8 +138,7 @@ export function useCalendarSync(ready: boolean | undefined) {
       useCalendarSettings.subscribe((state, previous) => {
         if (
           state.enabled !== previous.enabled ||
-          state.includeDetails !== previous.includeDetails ||
-          state.defaultInclude !== previous.defaultInclude
+          state.includeDetails !== previous.includeDetails
         )
           schedule()
       }),

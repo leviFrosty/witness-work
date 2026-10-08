@@ -3,7 +3,7 @@ import {
   MessagesSquare as MessagesSquareIcon,
 } from 'lucide-react-native'
 import { ReactNode, useCallback } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import * as Crypto from 'expo-crypto'
@@ -16,7 +16,6 @@ import Section, { SectionRows } from '@/components/ui/inputs/Section'
 import { Visit } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
-import FollowUpCalendarControls from '@/features/visits/components/FollowUpCalendarControls'
 import VisitCustomFieldsSection from '@/features/visits/components/VisitCustomFieldsSection'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -253,9 +252,6 @@ const VisitFormScreen = ({
         // so flipping the switch on has sane defaults. `followUpEnabled`
         // decides whether the draft is persisted.
         followUp: {
-          calendarIncluded: conversationToUpdate.followUp?.calendarIncluded,
-          calendarDurationMinutes:
-            conversationToUpdate.followUp?.calendarDurationMinutes,
           topic: conversationToUpdate.followUp?.topic,
           date: new Date(conversationToUpdate.followUp?.date || new Date()),
           notifyMe: conversationToUpdate.followUp?.notifyMe || false,
@@ -284,7 +280,6 @@ const VisitFormScreen = ({
       date: new Date(),
       note: '',
       followUp: {
-        calendarDurationMinutes: 30,
         date: moment()
           .add(
             returnVisitTimeOffset?.amount ??
@@ -689,16 +684,8 @@ const VisitFormScreen = ({
                 notifyMeOffset={notifyMeOffset}
                 setConversation={setConversation}
                 setNotifyMeOffset={setNotifyMeOffset}
-                lastInSection={Platform.OS !== 'ios'}
+                lastInSection
               />
-              {Platform.OS === 'ios' && (
-                <FollowUpCalendarControls
-                  followUp={conversation.followUp!}
-                  onChange={(followUp) =>
-                    setConversation({ ...conversation, followUp })
-                  }
-                />
-              )}
             </>
           )}
         </Section>

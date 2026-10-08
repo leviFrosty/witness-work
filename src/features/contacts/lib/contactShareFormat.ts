@@ -189,9 +189,6 @@ const CONTACT_FIELDS: FieldRules<Contact> = {
 type FollowUp = NonNullable<Visit['followUp']>
 
 const FOLLOW_UP_FIELDS: FieldRules<FollowUp> = {
-  // Export consent belongs to the sender, not the recipient of a contact share.
-  calendarIncluded: omit,
-  calendarDurationMinutes: omit,
   date: always(date),
   notifyMe: always(z.boolean()),
   topic: optional(text),
@@ -284,8 +281,8 @@ export function sharedVisitFields(visit: Visit): Partial<Visit> {
 }
 
 /**
- * The follow-up fields that never travel (the calendar choice, buddies). An
- * import that updates one of this device's visits keeps them.
+ * The follow-up fields that never travel (buddies). An import that updates one
+ * of this device's visits keeps them.
  */
 export function deviceOnlyFollowUpFields(
   followUp: FollowUp | undefined

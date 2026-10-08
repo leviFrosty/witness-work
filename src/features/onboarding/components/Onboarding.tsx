@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import { calendarBridgeAvailable } from '../../../../modules/calendar-bridge'
 import StepOne from '@/features/onboarding/components/steps/One'
 import StepTwo from '@/features/onboarding/components/steps/Two'
@@ -124,8 +124,8 @@ const allSteps: StepDef[] = [
     id: 'calendarSync',
     Component: CalendarSync,
     countsTowardProgress: true,
-    // Calendar Sync is iOS-only and needs a binary with the native module.
-    showIf: () => Platform.OS === 'ios' && calendarBridgeAvailable,
+    // Needs a binary with the native calendar module.
+    showIf: () => calendarBridgeAvailable,
   },
   { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
   {

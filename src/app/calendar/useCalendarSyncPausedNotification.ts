@@ -12,7 +12,15 @@ type Settings = ReturnType<typeof useCalendarSync.getState>
 type Publishing = ReturnType<typeof useCalendarPublishing.getState>
 
 /** Usually clear once the connection or the calendar account catches up. */
-const TRANSIENT_ERRORS = ['calendarConnectionError', 'calendarWaitingForEvents']
+const TRANSIENT_ERRORS = [
+  'calendarConnectionError',
+  'calendarConnectionErrorAndroid',
+  'calendarWaitingForEvents',
+]
+const PERMISSION_ERRORS = [
+  'calendarPermissionError',
+  'calendarPermissionErrorAndroid',
+]
 export const TRANSIENT_ALERT_DELAY_MS = 24 * 60 * 60 * 1000
 
 /**
@@ -54,11 +62,13 @@ export default function useCalendarSyncPausedNotification(
   const navigation = useNavigation<RootStackNavigation>()
   const settings = useCalendarSync()
   const publishing = useCalendarPublishing()
-  if (Platform.OS !== 'ios' || !calendarBridgeAvailable) return null
+  if (!calendarBridgeAvailable) return null
   const paused = pausedCalendarSync(settings, publishing, now)
   if (!paused) return null
+  // Android publishes from this device alone.
   const isPrimary =
-    !!publishing.deviceId && publishing.state?.primary === publishing.deviceId
+    Platform.OS === 'android' ||
+    (!!publishing.deviceId && publishing.state?.primary === publishing.deviceId)
   return {
     id: `calendar_sync:paused:${paused.since}`,
     kind: 'calendar_sync',
@@ -67,10 +77,14 @@ export default function useCalendarSyncPausedNotification(
     title: i18n.t('calendarSyncPaused'),
     description: i18n.t(paused.error as TranslationKey),
     actions: [
-      paused.error === 'calendarPermissionError'
+      PERMISSION_ERRORS.includes(paused.error)
         ? {
             id: 'open_settings',
-            label: i18n.t('calendarOpenSettings'),
+            label: i18n.t(
+              Platform.OS === 'android'
+                ? 'calendarOpenSettingsAndroid'
+                : 'calendarOpenSettings'
+            ),
             onPress: () => {
               void Linking.openSettings()
             },

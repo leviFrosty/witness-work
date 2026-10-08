@@ -7,6 +7,8 @@ import type { PublishingState } from '../../../modules/calendar-bridge'
 
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
+  /** Android binaries before Calendar Sync lack the native module. */
+  androidModule: true,
   appState: 'active',
   foreground: (_state: string) => {},
   calendarChanged: () => {},
@@ -41,6 +43,9 @@ vi.mock('react-native', () => ({
   },
 }))
 vi.mock('../../../modules/calendar-bridge', () => ({
+  get calendarSyncSupported() {
+    return runtime.platform === 'ios' || runtime.androidModule
+  },
   subscribeCalendarChanges: (listener: () => void) => {
     runtime.subscribeCalendar()
     runtime.calendarChanged = listener
@@ -148,6 +153,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.resetAllMocks()
   runtime.platform = 'ios'
+  runtime.androidModule = true
   runtime.appState = 'active'
   publishing.action.mockImplementation(async (action: () => Promise<unknown>) =>
     action()
@@ -177,12 +183,13 @@ afterEach(() => {
 
 describe('foreground calendar maintenance', () => {
   it.each([
-    { platform: 'android', ready: true },
-    { platform: 'ios', ready: false },
+    { platform: 'android', ready: true, androidModule: false },
+    { platform: 'ios', ready: false, androidModule: false },
   ])(
-    'does no work on $platform when ready=$ready',
-    async ({ platform, ready }) => {
+    'does no work on $platform when ready=$ready without Android support',
+    async ({ platform, ready, androidModule }) => {
       runtime.platform = platform
+      runtime.androidModule = androidModule
       await mount(ready)
       await advance(300_000)
       expect(publishing.action).not.toHaveBeenCalled()
@@ -279,6 +286,44 @@ describe('foreground calendar maintenance', () => {
       report: false,
     })
     expect(publishing.reconnect).not.toHaveBeenCalled()
+  })
+
+  it('publishes on Android at launch and after local edits', async () => {
+    runtime.platform = 'android'
+    useCalendarSettings.setState({ sharedCalendar: null })
+    useCalendarPublishing.setState({ state: null })
+    await mount()
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledExactlyOnceWith({ pull: true })
+    await act(async () => {
+      useConversations.setState({
+        conversations: [
+          {
+            ...visit(),
+            followUp: { ...visit().followUp!, date: new Date('2026-11-02') },
+          },
+        ],
+      })
+    })
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenLastCalledWith({ pull: false })
+    expect(publishing.refresh).not.toHaveBeenCalled()
+  })
+
+  it('does nothing on Android after turning it off', async () => {
+    runtime.platform = 'android'
+    useCalendarSettings.setState({
+      enabled: false,
+      registered: true,
+      optedOut: true,
+      sharedCalendar: null,
+    })
+    useCalendarPublishing.setState({ state: null })
+    await mount()
+    await act(async () => runtime.foreground('active'))
+    await advance(300_000)
+    // No ownership to release: the iOS check-in would fail on Android.
+    expect(publishing.action).not.toHaveBeenCalled()
   })
 
   it('reconciles a newly selected primary without leaving the screen', async () => {

@@ -1,4 +1,3 @@
-import { Platform } from 'react-native'
 import { CalendarSync as CalendarSyncIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useToastController } from '@tamagui/toast'
@@ -30,7 +29,7 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
   const visible = useCalendarSync(shouldInviteToCalendarSync)
-  if (Platform.OS !== 'ios' || !calendarBridgeAvailable || !visible) return null
+  if (!calendarBridgeAvailable || !visible) return null
 
   const answer = () => useCalendarSync.setState({ promptAnswered: true })
   // Declining here is opting out, so a later handoff doesn't turn it on.

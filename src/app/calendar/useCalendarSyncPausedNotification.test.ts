@@ -62,20 +62,21 @@ describe('Calendar Sync paused alert', () => {
     })
   })
 
-  it.each(['calendarConnectionError', 'calendarWaitingForEvents'])(
-    'waits a day before alerting about %s',
-    (error) => {
-      const failing = { ...publishing, error }
-      expect(pausedCalendarSync(settings, failing, NOW)).toBeNull()
-      expect(
-        pausedCalendarSync(
-          { ...settings, failingSince: NOW - TRANSIENT_ALERT_DELAY_MS },
-          failing,
-          NOW
-        )
-      ).not.toBeNull()
-    }
-  )
+  it.each([
+    'calendarConnectionError',
+    'calendarConnectionErrorAndroid',
+    'calendarWaitingForEvents',
+  ])('waits a day before alerting about %s', (error) => {
+    const failing = { ...publishing, error }
+    expect(pausedCalendarSync(settings, failing, NOW)).toBeNull()
+    expect(
+      pausedCalendarSync(
+        { ...settings, failingSince: NOW - TRANSIENT_ALERT_DELAY_MS },
+        failing,
+        NOW
+      )
+    ).not.toBeNull()
+  })
 
   it.each([
     ['turned off', { enabled: false }],
@@ -85,6 +86,21 @@ describe('Calendar Sync paused alert', () => {
     expect(
       pausedCalendarSync({ ...settings, ...change }, publishing, NOW)
     ).toBeNull()
+  })
+
+  it('alerts on Android, which has no ownership record', () => {
+    expect(
+      pausedCalendarSync(
+        { ...settings, namespace: null, sharedCalendar: null },
+        {
+          ...publishing,
+          state: null,
+          deviceId: null,
+          error: 'calendarPermissionErrorAndroid',
+        },
+        NOW
+      )
+    ).toEqual({ error: 'calendarPermissionErrorAndroid', since: NOW - 60_000 })
   })
 
   it('stays quiet without a failure or while another device publishes', () => {

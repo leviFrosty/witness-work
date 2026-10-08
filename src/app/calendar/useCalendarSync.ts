@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
-import { subscribeCalendarChanges } from '../../../modules/calendar-bridge'
+import {
+  calendarSyncSupported,
+  subscribeCalendarChanges,
+} from '../../../modules/calendar-bridge'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
@@ -23,7 +26,7 @@ import {
  */
 export function useCalendarSync(ready: boolean | undefined) {
   useEffect(() => {
-    if (!ready || Platform.OS !== 'ios') return
+    if (!ready || !calendarSyncSupported) return
     let timer: ReturnType<typeof setTimeout> | undefined
     let stopped = false
     let running = false
@@ -72,8 +75,9 @@ export function useCalendarSync(ready: boolean | undefined) {
         (settings.optedOut || !settings.sharedCalendar)
       )
         return
-      // Data edits only matter to a device that publishes.
-      if (!settings.enabled && !withPull) return
+      // Data edits only matter to a device that publishes. Android has no
+      // other publisher to take over from.
+      if (!settings.enabled && (!withPull || Platform.OS === 'android')) return
       running = true
       const before = fingerprint()
       let failed = false

@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { syncTimestamp } from '@/lib/syncClock'
 import {
   NON_SYNCABLE_PREFERENCE_KEYS,
@@ -1553,6 +1554,7 @@ export const usePreferences = create(
             ) => Partial<typeof PREFERENCE_DEFAULTS>),
         replace?: boolean
       ) => void = (partial, replace) => {
+        perf.count('prefs:set')
         let resolved =
           typeof partial === 'function' ? partial(getState()) : partial
 

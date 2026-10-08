@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
@@ -124,6 +125,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
               request.identifier.startsWith('witness-work-') ||
               obsoleteForPass.has(request.identifier)
             ) {
+              perf.count('reminders:cancel')
               await Notifications.cancelScheduledNotificationAsync(
                 request.identifier
               )
@@ -135,6 +137,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             if (Platform.OS === 'android') await ensureReminderChannel()
             for (const [index, reminder] of schedule.entries()) {
               if (stopped || queued) break
+              perf.count('reminders:schedule')
               await Notifications.scheduleNotificationAsync({
                 identifier: reminder.id,
                 content: {

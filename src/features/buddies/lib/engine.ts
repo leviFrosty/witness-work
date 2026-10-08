@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import moment from 'moment'
 import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
@@ -2833,6 +2834,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   async function runSync() {
+    perf.count('buddies:sync')
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
     const me = await ensureInbox()

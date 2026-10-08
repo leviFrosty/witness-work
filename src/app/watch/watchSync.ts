@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import debounce from 'lodash/debounce'
 import * as WatchBridge from '../../../modules/watch-bridge'
@@ -60,6 +61,7 @@ export function pushWatchSnapshot(
   force = false,
   reflectedEntryIds: string[] = []
 ): void {
+  perf.count('watch:push')
   if (!WatchBridge.isAvailable()) return
   // iOS keeps the snapshot for Siri even without a watch; Android only needs it
   // once a Wear OS watch has the app (`onStatusChange` sends it then).

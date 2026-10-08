@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
 import {
@@ -63,6 +64,7 @@ export function useCalendarSync(ready: boolean | undefined) {
       ])
     const run = () => {
       if (stopped || running || AppState.currentState !== 'active') return
+      perf.count('calendar:run')
       const settings = useCalendarSettings.getState()
       const withPull = pull
       pull = false

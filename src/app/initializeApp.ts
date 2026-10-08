@@ -1,3 +1,5 @@
+import { perf } from '@/lib/perf'
+import { installPerfProbe } from '@/lib/perfProbe'
 import * as Notifications from 'expo-notifications'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Updates from 'expo-updates'
@@ -11,6 +13,8 @@ import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 
 export function initializeApp() {
+  perf.mark('initializeApp')
+  installPerfProbe()
   configureLogger(() => usePreferences.getState().developerTools)
   // Before anything syncs: Android syncs through Google Drive (ADR 0019).
   // iOS keeps iCloud, and its copy keeps naming iCloud.

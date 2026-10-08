@@ -29,6 +29,8 @@ export type ServiceYearPaceData = {
   projection: ProjectedTotalResult
   today: Date
   monthBars: MonthBars
+  /** Each month's effective Monthly Goal (overrides included), Sep → Aug. */
+  monthGoalMinutes: number[]
 }
 
 /** What the Year tab's month-row bars share, and which marks they show. */
@@ -169,7 +171,7 @@ const useServiceYearPace = (serviceYear: number): ServiceYearPaceData => {
     hasGoal: monthGoalMinutes.some((minutes) => minutes > 0),
   }
 
-  return { pace, projection, today, monthBars }
+  return { pace, projection, today, monthBars, monthGoalMinutes }
 }
 
 export default useServiceYearPace

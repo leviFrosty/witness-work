@@ -45,6 +45,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                      |
 | `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                            |
 | `saved_view_applied`                                                              | Once per session and surface (`source`); reach of Saved View switching, not how often people switch.                          |
+| `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                    |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                   |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                |
 
@@ -452,6 +453,21 @@ Invite for a buddy who asked to join sends `buddy_join_request_answered`
 (`invited`), as it does from the bell. Answering a buddy's invitation here sends
 `buddy_invitation_answered` with `source: plan_details`. Plan titles, dates,
 times, places, notes, ids, and buddy names are never sent.
+
+## Schedule calendar
+
+The Schedule tab has a Month view (continuous weeks with this and next month's
+goals above them) and a Year view (the Service Year's twelve months), switched
+in the header, by pinching, or by tapping a Service Year divider. The product
+question is whether people zoom out to plan across months and the Service
+Year, and which way in they find.
+
+| Event                       | When / properties                                                                                                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schedule_year_view_opened` | The Year view opened. `source`: `toggle` (header switch), `pinch`, or `divider` (a Service Year divider in the weeks). Capped once per session and source. |
+
+Zooming back into a month, scrolling between months, and jumping to today send
+nothing. No dates, goals, or hours are sent.
 
 ## Route planning
 

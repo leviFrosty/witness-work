@@ -203,6 +203,22 @@ describe('PlanRow', () => {
     expect(text).not.toContain('Type:')
   })
 
+  it('leaves Standard plans unlabeled', () => {
+    let row: ReturnType<typeof create>
+    act(() => {
+      row = create(
+        <PlanRow
+          item={{
+            type: 'day',
+            date: new Date(2026, 7, 27),
+            plan: dayPlan('standard-plan'),
+          }}
+        />
+      )
+    })
+    expect(visibleText(row!.toJSON())).not.toContain('Standard')
+  })
+
   const renderMenu = (item: PlanListItem) => {
     let row: ReturnType<typeof create>
     act(() => {

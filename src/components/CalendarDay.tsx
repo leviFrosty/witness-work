@@ -29,9 +29,14 @@ import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
 import { isCountableEntry } from '@/lib/serviceReport'
-import type { CalendarViewMode } from '@/components/CalendarHeader'
 
 const boxSize = 40
+
+/**
+ * What a day's square counts: its Plans, the time logged, or (`auto`) the time
+ * logged once there is some and the Plans until then.
+ */
+export type CalendarViewMode = 'planned' | 'actual' | 'auto'
 
 export const getDateStatusColor = (
   theme: Theme,
@@ -95,7 +100,9 @@ const NonPlannedDay = (
   const wentInService = !!props.serviceReports?.some(isCountableEntry)
   const hasNote = !!props.serviceReports?.some((report) => report.note)
   const showActualTime =
-    props.viewMode === 'actual' && wentInService && !disabled
+    (props.viewMode === 'actual' || props.viewMode === 'auto') &&
+    wentInService &&
+    !disabled
 
   const backgroundColor = disabled
     ? undefined
@@ -209,9 +216,10 @@ const PlannedDay = (
     : highestRecurringPlanEffectiveMinutes || 0
   const plannedDurationText = formatMinutesCompact(plannedMinutes)
   const actualDurationText = formatMinutesCompact(minutesForDay)
-  const showActual = props.viewMode === 'actual'
-
   const wentInService = !!props.serviceReports?.some(isCountableEntry)
+  const showActual =
+    props.viewMode === 'actual' || (props.viewMode === 'auto' && wentInService)
+
   const hasAPlan = hasDayPlans || !!props.recurringPlans?.length
 
   // Check for notes from day plans, service reports, and recurring plans (with overrides)

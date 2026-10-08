@@ -15,7 +15,10 @@ import { buildReport, type BuildReportArgs } from '@/app/widgets/buildReport'
 import { buildRolloverEntries } from '@/features/service-reports/lib/rollover'
 import { buildMonthReportData } from '@/features/service-reports/lib/monthReportData'
 import { buildServiceHistoryRows } from '@/features/service-reports/lib/serviceHistoryRows'
-import { buildMonthCalendarMarkedDates } from '@/features/service-reports/lib/monthCalendarMarkedDates'
+import {
+  buildScheduleDayIndex,
+  serviceYearDayStatuses,
+} from '@/features/plans/lib/scheduleDayIndex'
 import {
   consecutiveDaysStreak,
   daysLogged,
@@ -240,18 +243,16 @@ describe('days with only a Time Rollover entry', () => {
     ).toBe(true)
   })
 
-  it('get no logged-time dot on the Schedule calendar', () => {
-    const marked = buildMonthCalendarMarkedDates({
-      month: MAR,
-      year: 2026,
-      monthsReports: rolloverOnlyMarch(ministry(MAR, 3, 1))[2026][MAR],
-      dayPlans: [],
+  it('read as no service on the Schedule calendar', () => {
+    const statuses = serviceYearDayStatuses({
+      serviceYear: 2025,
+      index: buildScheduleDayIndex(rolloverOnlyMarch(ministry(MAR, 3, 1)), []),
       recurringPlans: [],
-      reportDotColor: '#123456',
+      today: new Date(2026, 3, 1, 12),
     })
 
-    expect(marked['2026-03-01']).toBeUndefined()
-    expect(marked['2026-03-03']).toMatchObject({ marked: true })
+    expect(statuses.get('2026-03-01')).toBe('none')
+    expect(statuses.get('2026-03-03')).toBe('logged')
   })
 
   it('neither add to nor break a Profile streak', () => {

@@ -18,6 +18,7 @@ const sessionEvents = new Set([
   'buddies_push_registration',
   'icloud_restore_probe_result',
   'saved_view_applied',
+  'schedule_year_view_opened',
 ])
 
 let storage: MMKV | undefined

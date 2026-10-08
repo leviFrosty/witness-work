@@ -1,15 +1,16 @@
 import { Platform } from 'react-native'
-import * as ICloudBridge from '../../modules/icloud-bridge'
 import { usePreferences } from '@/stores/preferences'
 import { clearAdoptedAccountId } from '@/lib/account'
-import { getOrCreateInstallId } from '@/lib/installId'
+import { androidDeviceInstallId, getOrCreateInstallId } from '@/lib/installId'
+import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 
 /**
- * Which physical device and which Apple Account iCloud sync is talking for.
- * Both identities are recorded device-locally (`NON_SYNCABLE_PREFERENCE_KEYS`)
- * and checked before sync reads or writes anything:
+ * Which physical device and which cloud account sync is talking for — the Apple
+ * Account on iOS, the connected Google Account on Android (ADR 0019). Both
+ * identities are recorded device-locally (`NON_SYNCABLE_PREFERENCE_KEYS`) and
+ * checked before sync reads or writes anything:
  *
  * - **Device.** `iCloudDeviceId` names this device's snapshot file. It lives in
  *   preferences, which iOS device backups and Quick Start copy to a new device;
@@ -146,9 +147,16 @@ function generateDeviceId(): string {
   )
 }
 
+/**
+ * What `iCloudDeviceId` is bound to. Android Auto Backup copies MMKV, and with
+ * it the stored install id, to a restored phone, so Android binds to the id
+ * derived from `ANDROID_ID`, which a restore can't carry.
+ */
 function readInstallId(): string | null {
   try {
-    return getOrCreateInstallId()
+    return Platform.OS === 'android'
+      ? androidDeviceInstallId()
+      : getOrCreateInstallId()
   } catch (error) {
     logger.warn('[iCloudIdentity] install id unavailable', error)
     return null
@@ -210,7 +218,7 @@ export type IdentityCheckSource =
 /** The native `isEqual:` comparison; null when it can't be made. */
 function storedTokenMatches(stored: string): boolean | null {
   try {
-    return ICloudBridge.identityTokenMatches(stored)
+    return syncTransport().identityTokenMatches(stored)
   } catch (error) {
     logger.warn('[iCloudIdentity] identity comparison unavailable', error)
     return null
@@ -226,7 +234,7 @@ function storedTokenMatches(stored: string): boolean | null {
  * callers only need to stop.
  */
 export function checkICloudIdentity(source: IdentityCheckSource): boolean {
-  if (Platform.OS !== 'ios') return true
+  if (!hasSyncTransport()) return true
   // A copied device's stored token came from another device, so the binding
   // is settled first (see `COPIED_DEVICE_RESET`). Until it can be verified,
   // the stored token may be such a copy and says nothing about this device's
@@ -236,7 +244,7 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
   const stored = prefs.iCloudIdentityToken
   let current: string | null
   try {
-    current = ICloudBridge.identityToken()
+    current = syncTransport().identityToken()
   } catch (error) {
     logger.warn('[iCloudIdentity] identity token unavailable', error)
     return true

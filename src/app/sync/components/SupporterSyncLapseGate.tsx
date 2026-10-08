@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
+import { hasSyncTransport } from '@/lib/syncTransport/platform'
 import useCustomer from '@/hooks/useCustomer'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
@@ -13,7 +13,7 @@ export default function SupporterSyncLapseGate() {
   const supporterStatusKnown = customer !== null
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return
+    if (!hasSyncTransport()) return
     if (!supporterStatusKnown) return
     if (isSupporter) {
       set({ iCloudSyncPausedForLapse: false })

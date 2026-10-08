@@ -56,6 +56,15 @@ const androidSeededInstallId = (): string | null => {
   }
 }
 
+/**
+ * Android: the install id derived from this device's `ANDROID_ID`, ignoring any
+ * id stored in MMKV. A phone restored from another one's backup derives a
+ * different id, which is how sync tells a copy from the original. Null when
+ * `ANDROID_ID` can't be read.
+ */
+export const androidDeviceInstallId = (): string | null =>
+  androidSeededInstallId()
+
 export const getOrCreateInstallId = (): string => {
   if (_cached) return _cached
 

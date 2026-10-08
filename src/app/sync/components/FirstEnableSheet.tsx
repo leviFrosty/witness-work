@@ -11,6 +11,7 @@ import { Sheet, XStack } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
@@ -40,20 +41,20 @@ const FirstEnableSheet: React.FC<Props> = ({
   const theme = useTheme()
 
   const remoteSummary = remote
-    ? i18n.t('iCloudFoundBackupSummary', {
-        device: remote.deviceName || i18n.t('iCloudAnotherDevice'),
+    ? i18n.t(syncKey('iCloudFoundBackupSummary'), {
+        device: remote.deviceName || i18n.t(syncKey('iCloudAnotherDevice')),
         relative: formatRelative(remote.writtenAt),
       })
     : ''
 
   const confirmUseRemote = () => {
     Alert.alert(
-      i18n.t('iCloudReplaceLocalConfirm_title'),
-      i18n.t('iCloudReplaceLocalConfirm_description'),
+      i18n.t(syncKey('iCloudReplaceLocalConfirm_title')),
+      i18n.t(syncKey('iCloudReplaceLocalConfirm_description')),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
-          text: i18n.t('iCloudReplaceLocalConfirm_action'),
+          text: i18n.t(syncKey('iCloudReplaceLocalConfirm_action')),
           style: 'destructive',
           onPress: () => {
             onChoose('useRemote')
@@ -83,7 +84,7 @@ const FirstEnableSheet: React.FC<Props> = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {i18n.t('iCloudFirstEnableTitle')}
+            {i18n.t(syncKey('iCloudFirstEnableTitle'))}
           </Text>
           <IconButton
             noTransform
@@ -103,8 +104,8 @@ const FirstEnableSheet: React.FC<Props> = ({
             }}
           >
             {remoteSummary
-              ? `${i18n.t('iCloudFirstEnableDescription')} ${remoteSummary}`
-              : i18n.t('iCloudFirstEnableDescription')}
+              ? `${i18n.t(syncKey('iCloudFirstEnableDescription'))} ${remoteSummary}`
+              : i18n.t(syncKey('iCloudFirstEnableDescription'))}
           </Text>
         </View>
 
@@ -115,8 +116,8 @@ const FirstEnableSheet: React.FC<Props> = ({
             <ChoiceCard
               icon={CloudUploadIcon}
               iconColor={theme.colors.accent}
-              title={i18n.t('iCloudChoiceKeepLocalTitle')}
-              description={i18n.t('iCloudChoiceKeepLocalDesc')}
+              title={i18n.t(syncKey('iCloudChoiceKeepLocalTitle'))}
+              description={i18n.t(syncKey('iCloudChoiceKeepLocalDesc'))}
               onPress={() => {
                 onChoose('keepLocal')
               }}
@@ -124,16 +125,16 @@ const FirstEnableSheet: React.FC<Props> = ({
             <ChoiceCard
               icon={CloudDownloadIcon}
               iconColor={theme.colors.error}
-              title={i18n.t('iCloudChoiceUseRemoteTitle')}
-              description={i18n.t('iCloudChoiceUseRemoteDesc')}
+              title={i18n.t(syncKey('iCloudChoiceUseRemoteTitle'))}
+              description={i18n.t(syncKey('iCloudChoiceUseRemoteDesc'))}
               destructive
               onPress={confirmUseRemote}
             />
             <ChoiceCard
               icon={ShuffleIcon}
               iconColor={theme.colors.textAlt}
-              title={i18n.t('iCloudChoiceMergeTitle')}
-              description={i18n.t('iCloudChoiceMergeDesc')}
+              title={i18n.t(syncKey('iCloudChoiceMergeTitle'))}
+              description={i18n.t(syncKey('iCloudChoiceMergeDesc'))}
               onPress={() => {
                 onChoose('merge')
               }}

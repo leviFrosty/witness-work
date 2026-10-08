@@ -34,6 +34,8 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudDeviceBinding',
   'iCloudIdentityToken',
   'iCloudAccountChangedAt',
+  'googleDriveAccountId',
+  'googleDriveNeedsReconnect',
   'preferenceUpdatedAt',
   'hasMigratedToSyncSchema',
   'hasMigratedCustomFieldsToIds',

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
 import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposerRouteScreen'
@@ -158,7 +159,7 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'PreferencesiCloud',
     component: PreferencesiCloudScreen,
-    title: () => i18n.t('iCloudSync'),
+    title: () => i18n.t(syncKey('iCloudSync')),
   },
   {
     name: 'PreferencesiCloudDevices',

@@ -16,6 +16,8 @@ import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRating
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
+  /** Android's wording, where it differs. */
+  androidLabelKey?: TranslationKey
   iosOnly?: boolean
   // `true`/`false` render a check/dash; a TranslationKey renders that text
   // (e.g. the `5` vs. `Unlimited` Notes Import allowance).
@@ -26,9 +28,9 @@ const FEATURE_ROWS: ReadonlyArray<{
   // trust signal rather than opening it with reasons not to pay.
   {
     labelKey: 'paywallFeatureSync',
+    androidLabelKey: 'paywallFeatureSyncAndroid',
     free: false,
     supporter: true,
-    iosOnly: true,
   },
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
@@ -245,7 +247,11 @@ export const ComparisonChart = ({
   }> = FEATURE_ROWS.filter((row) => !row.iosOnly || Platform.OS === 'ios').map(
     (row) => ({
       key: row.labelKey,
-      label: i18n.t(row.labelKey),
+      label: i18n.t(
+        Platform.OS === 'android' && row.androidLabelKey
+          ? row.androidLabelKey
+          : row.labelKey
+      ),
       free: resolveCell(row.free),
       supporter: resolveCell(row.supporter),
     })

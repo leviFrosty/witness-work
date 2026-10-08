@@ -1,3 +1,11 @@
+/**
+ * The sync engine (docs/icloud-sync.md, ADR 0019). Platform-agnostic: it reads
+ * and writes per-device snapshots, photos and the account file through
+ * `syncTransport()` — the iCloud container on iOS, the Google Drive app data
+ * folder on Android — and owns every decision about them: merges, resets,
+ * retries, photo transfer, and the Devices list. The `iCloud*` names in this
+ * file and its preferences predate Android and describe either transport.
+ */
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import type { MergeResult } from '@/app/sync/merge'
 type LocalMergeState = Omit<MergeResult, 'changed'>
@@ -25,10 +33,17 @@ import {
   syncDeviceRemoval,
 } from '@/lib/syncDevices'
 import { analytics } from '@/lib/analytics'
-import { AppState, AppStateStatus, Platform } from 'react-native'
+import { AppState, AppStateStatus } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
-import * as ICloudBridge from '../../../modules/icloud-bridge'
+import {
+  hasSyncTransport,
+  syncTransport,
+  syncTransportErrorCode,
+  type SyncFile,
+  type SyncRead,
+  type UploadStatus,
+} from '@/lib/syncTransport'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
@@ -295,11 +310,11 @@ function tag(): string {
  * account's container.
  */
 export function canSync(): boolean {
-  if (Platform.OS !== 'ios') return false
+  if (!hasSyncTransport()) return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
   if (!useSupporter.getState().isSupporter) return false
-  if (!ICloudBridge.isAvailable()) return false
+  if (!syncTransport().isAvailable()) return false
   return checkICloudIdentity('can_sync')
 }
 
@@ -589,7 +604,7 @@ async function removePreResetFiles(
   epoch: ResetEpoch
 ): Promise<void> {
   try {
-    const { files } = await ICloudBridge.readFiles(
+    const { files } = await syncTransport().readFiles(
       (filename) => isPayloadFilename(filename) && filename !== ownFilename
     )
     const stale = files
@@ -598,7 +613,7 @@ async function removePreResetFiles(
         return parsed && compareResetEpochs(parsed.resetEpoch, epoch) < 0
       })
       .map((file) => file.filename)
-    for (const filename of stale) await ICloudBridge.deleteFile(filename)
+    for (const filename of stale) await syncTransport().deleteFile(filename)
     logger.log(`${tag()} reset cleanup: payloads`, { deleted: stale.length })
   } catch (e) {
     logger.warn(`${tag()} reset cleanup: payloads failed`, e)
@@ -636,9 +651,9 @@ function deleteUnreferencedCloudPhotos(): Promise<void> {
     const { avatar } = useProfile.getState()
     if (avatar?.type === 'image') keep.add(filenameForProfile(avatar.revision))
     const deleted: string[] = []
-    for (const { filename } of await ICloudBridge.listBinaryFiles()) {
+    for (const { filename } of await syncTransport().listBinaryFiles()) {
       if (keep.has(filename)) continue
-      await ICloudBridge.deleteBinaryFile(filename)
+      await syncTransport().deleteBinaryFile(filename)
       deleted.push(filename)
     }
     if (deleted.length === 0) return
@@ -709,8 +724,8 @@ function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
  * switched during is `unavailable`.
  */
 export async function peekRemotePayload(): Promise<RemotePeek> {
-  if (Platform.OS !== 'ios') return { status: 'unavailable' }
-  if (!ICloudBridge.isAvailable()) return { status: 'unavailable' }
+  if (!hasSyncTransport()) return { status: 'unavailable' }
+  if (!syncTransport().isAvailable()) return { status: 'unavailable' }
   checkICloudIdentity('initial_enable')
   const account = storedICloudAccount()
   const peek = await readRemotePeek(account)
@@ -719,11 +734,11 @@ export async function peekRemotePayload(): Promise<RemotePeek> {
 
 async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
   try {
-    if (!(await ICloudBridge.waitForInitialScan(5000))) {
+    if (!(await syncTransport().waitForInitialScan(5000))) {
       return incompletePeek('scan')
     }
     for (let attempt = 1; ; attempt++) {
-      const { files, pending } = await ICloudBridge.readFiles(
+      const { files, pending } = await syncTransport().readFiles(
         (filename) =>
           isPayloadFilename(filename) &&
           filename !== filenameForDevice(ensureDeviceId())
@@ -795,8 +810,8 @@ export type InitialEnableDecision =
  * clobbering the old device on the next pull-and-merge.
  */
 export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
-  if (Platform.OS !== 'ios') return { outcome: 'unavailable' }
-  if (!ICloudBridge.isAvailable()) return { outcome: 'unavailable' }
+  if (!hasSyncTransport()) return { outcome: 'unavailable' }
+  if (!syncTransport().isAvailable()) return { outcome: 'unavailable' }
   // A headless auto-enable must not seed an account it just noticed.
   if (!checkICloudIdentity('initial_enable')) return { outcome: 'unavailable' }
   const peek = await peekRemotePayload()
@@ -861,7 +876,7 @@ export function applyPullEnable(
 }
 
 /**
- * Wires the real `ICloudBridge` + `expo-file-system` into the injectable deps
+ * Wires this platform's transport + `expo-file-system` into the injectable deps
  * the pure `imageSync` module consumes. The pure module exists to keep
  * upload/download bookkeeping testable without react-native mocks; this is the
  * production adapter.
@@ -870,15 +885,16 @@ function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
   return {
     canTransfer: () =>
       usePreferences.getState().iCloudSyncIncludeImages &&
-      ICloudBridge.isAvailable() &&
+      syncTransport().isAvailable() &&
       (oneShot || canSync()),
     bridge: {
       writeBinary: (filename, sourcePath) =>
-        ICloudBridge.writeBinary(filename, sourcePath),
+        syncTransport().writeBinary(filename, sourcePath),
       readBinary: (filename, destinationPath) =>
-        ICloudBridge.readBinary(filename, destinationPath),
-      listBinaryFiles: () => ICloudBridge.listBinaryFiles(),
-      deleteBinaryFile: (filename) => ICloudBridge.deleteBinaryFile(filename),
+        syncTransport().readBinary(filename, destinationPath),
+      listBinaryFiles: () => syncTransport().listBinaryFiles(),
+      deleteBinaryFile: (filename) =>
+        syncTransport().deleteBinaryFile(filename),
     },
     fs: {
       getModifiedAt: async (path) => {
@@ -926,7 +942,7 @@ async function pushImagesInner(
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages || !canSync()) return
   if (!publishedSources && prefs.iCloudSyncPendingPush) return
-  if (Platform.OS !== 'ios') return
+  if (!hasSyncTransport()) return
   try {
     const sources =
       publishedSources ??
@@ -978,7 +994,7 @@ function pullImagesIfEnabled(oneShot = false): Promise<void> {
 async function pullImagesInner(oneShot = false): Promise<void> {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages) return
-  if (Platform.OS !== 'ios') return
+  if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
   try {
     const sources = collectExpectedMarkerSources({
@@ -1094,7 +1110,7 @@ function gcImagesIfEnabled(): Promise<void> {
 async function gcImages(): Promise<void> {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages) return
-  if (Platform.OS !== 'ios') return
+  if (!hasSyncTransport()) return
   try {
     const { contacts } = useContacts.getState()
     const { avatar } = useProfile.getState()
@@ -1237,8 +1253,9 @@ async function pushInner(reason: string): Promise<boolean> {
         payload.serviceReportStore.deletedRecurringPlans?.length ?? 0,
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
-    await ICloudBridge.write(filename, json)
-    awaitUpload()
+    await syncTransport().write(filename, json)
+    if (syncTransport().writeConfirmsUpload) recordConfirmedUpload()
+    else awaitUpload()
     const covered = generation === editGeneration
     usePreferences.setState({ iCloudSyncPendingPush: !covered })
     cancelPushRetry()
@@ -1265,15 +1282,61 @@ async function pushInner(reason: string): Promise<boolean> {
     )
     return true
   } catch (e) {
-    logger.error(`${tag()} push failed (${reason})`, e)
-    errorTracking.captureException(e, { iCloudSync: 'push' })
+    if (isExpectedTransportFailure(e)) {
+      logger.warn(`${tag()} push failed (${reason})`, e)
+      errorTracking.addBreadcrumb({
+        category: 'iCloudSync',
+        message: `push (${reason}) failed: ${syncTransportErrorCode(e)}`,
+        level: 'warning',
+      })
+    } else {
+      logger.error(`${tag()} push failed (${reason})`, e)
+      errorTracking.captureException(e, { iCloudSync: 'push' })
+    }
     usePreferences.setState({
       iCloudSyncPendingPush: true,
       iCloudSyncIssue: 'push-failed',
     })
+    // A transport that uploads as it writes reports a full account here
+    // rather than through `uploadStatus`.
+    if (syncTransportErrorCode(e) === 'storage-full') recordUploadIssue()
     retryPush()
     return false
   }
+}
+
+/**
+ * Offline, throttled, signed out, or full: a transport that talks to its cloud
+ * directly (Drive) fails this way routinely, and retries cover it.
+ */
+function isExpectedTransportFailure(error: unknown): boolean {
+  const code = syncTransportErrorCode(error)
+  return code !== null && code !== 'unknown' && code !== 'not-found'
+}
+
+/** A write that already reached the cloud (`writeConfirmsUpload`). */
+function recordConfirmedUpload(): void {
+  const previousIssue = usePreferences.getState().iCloudUploadIssue
+  usePreferences.setState({
+    lastiCloudUploadedAt: Date.now(),
+    iCloudUploadPendingSince: null,
+    iCloudUploadIssue: null,
+  })
+  if (previousIssue) {
+    logger.log(`${tag()} upload recovered`, { previousIssue })
+    analytics.capture('icloud_sync_upload_recovered', {
+      previous_issue: analyticsReason(previousIssue),
+    })
+  }
+}
+
+/** The cloud account is full; shown until a write succeeds again. */
+function recordUploadIssue(): void {
+  if (usePreferences.getState().iCloudUploadIssue === 'icloud-full') return
+  usePreferences.setState({ iCloudUploadIssue: 'icloud-full' })
+  analytics.capture('icloud_sync_upload_failed', {
+    reason: analyticsReason('icloud-full'),
+  })
 }
 
 function awaitingUpload(): boolean {
@@ -1284,7 +1347,7 @@ function awaitingUpload(): boolean {
 /** After a write: this version waits for iCloud to confirm its upload. */
 function awaitUpload(): void {
   // A binary that can't tell keeps showing local activity, as before.
-  if (!ICloudBridge.supportsUploadStatus()) return
+  if (!syncTransport().supportsUploadStatus()) return
   uploadGeneration++
   if (usePreferences.getState().iCloudUploadPendingSince === null) {
     usePreferences.setState({ iCloudUploadPendingSince: Date.now() })
@@ -1304,6 +1367,8 @@ function restartUploadChecks(): void {
 }
 
 function scheduleUploadCheck(): void {
+  // Its writes are confirmed as they land; there's nothing to check.
+  if (syncTransport().writeConfirmsUpload) return
   if (!installed || uploadCheckTimer || !awaitingUpload()) return
   if (AppState.currentState !== 'active' || !canSync()) return
   const delay = UPLOAD_CHECK_DELAYS_MS[uploadChecks++]
@@ -1330,8 +1395,9 @@ export function checkUpload(): Promise<UploadVerdict | null> {
 }
 
 async function checkUploadInner(): Promise<UploadVerdict | null> {
+  if (syncTransport().writeConfirmsUpload) return null
   if (!awaitingUpload() || !canSync()) return null
-  if (!ICloudBridge.supportsUploadStatus()) {
+  if (!syncTransport().supportsUploadStatus()) {
     // Recorded by a newer binary before an OTA rollback onto this one.
     usePreferences.setState({
       iCloudUploadPendingSince: null,
@@ -1340,9 +1406,9 @@ async function checkUploadInner(): Promise<UploadVerdict | null> {
     return null
   }
   const generation = uploadGeneration
-  let status: ICloudBridge.UploadStatus | null
+  let status: UploadStatus | null
   try {
-    status = await ICloudBridge.uploadStatus(
+    status = await syncTransport().uploadStatus(
       filenameForDevice(ensureDeviceId())
     )
   } catch (e) {
@@ -1448,7 +1514,7 @@ export async function pullBeforeCalendarPublish(): Promise<void> {
       throw new ICloudReadError('iCloud data could not be fully read')
   }
   if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
-  if (!(await ICloudBridge.waitForInitialScan()))
+  if (!(await syncTransport().waitForInitialScan()))
     throw new ICloudReadError('iCloud data scan incomplete')
   check(await pull('calendar-publish'))
   while (pullInFlight) check(await pullInFlight)
@@ -1542,13 +1608,15 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   const ownFilename = filenameForDevice(deviceId)
 
   const seenAt = nextReadStamp()
-  let read: ICloudBridge.SyncRead
+  let read: SyncRead
   try {
-    read = await ICloudBridge.readFiles(isPayloadFilename)
+    read = await syncTransport().readFiles(isPayloadFilename)
   } catch (e) {
-    logger.error(`${tag()} read failed (${reason})`, e)
+    const expected = isExpectedTransportFailure(e)
+    if (expected) logger.warn(`${tag()} read failed (${reason})`, e)
+    else logger.error(`${tag()} read failed (${reason})`, e)
     // Retries of the same outage would only repeat the report.
-    if (readRetries === 0) {
+    if (readRetries === 0 && !expected) {
       errorTracking.captureException(e, { iCloudSync: 'pull' })
     }
     usePreferences.setState({ iCloudSyncIssue: 'read-failed' })
@@ -1903,10 +1971,7 @@ function nextReadStamp(): number {
   return lastReadStamp
 }
 
-function unparsedDeviceFile(
-  file: ICloudBridge.SyncFile,
-  seenAt: number
-): SyncDeviceFile {
+function unparsedDeviceFile(file: SyncFile, seenAt: number): SyncDeviceFile {
   return {
     deviceId: deviceIdFromSyncFilename(file.filename),
     deviceName: null,
@@ -1925,7 +1990,7 @@ function unparsedDeviceFile(
  * `pre-reset`.
  */
 function recordDeviceFiles(args: {
-  read: ICloudBridge.SyncRead
+  read: SyncRead
   ownFilename: string
   deviceId: string
   remotePayloads: Array<{
@@ -2021,7 +2086,7 @@ export async function removeSyncDevice(filename: string): Promise<{
     logger.log(`${tag()} device removal blocked`, { filename, decision })
     return { outcome: decision, entry }
   }
-  await ICloudBridge.deleteFile(filename)
+  await syncTransport().deleteFile(filename)
   const { [filename]: _removed, ...rest } =
     usePreferences.getState().iCloudSyncDevices ?? {}
   usePreferences.setState({ iCloudSyncDevices: rest })
@@ -2183,7 +2248,7 @@ async function catchUp(reason: string): Promise<void> {
   catchUpInFlight = true
   try {
     await calibrateClock()
-    const scanned = await ICloudBridge.waitForInitialScan(5000)
+    const scanned = await syncTransport().waitForInitialScan(5000)
     await pull(reason)
     // Publish the exact snapshot whose photos the push will upload. Failed
     // writes leave bytes untouched and retain the pending flag for retries.
@@ -2213,7 +2278,7 @@ async function catchUp(reason: string): Promise<void> {
  * preference, so nothing runs until the user flips the toggle.
  */
 export function installiCloudSync(): () => void {
-  if (Platform.OS !== 'ios') return () => {}
+  if (!hasSyncTransport()) return () => {}
   if (installed) return () => {}
   installed = true
   // Before the clock offset is read: a copied device resets it. Also catches
@@ -2282,7 +2347,7 @@ export function installiCloudSync(): () => void {
     REMOTE_CHANGE_DEBOUNCE_MS,
     { leading: true, trailing: true }
   )
-  remoteChangeSub = ICloudBridge.addRemoteChangeListener(() => {
+  remoteChangeSub = syncTransport().addRemoteChangeListener(() => {
     if (!canSync()) return
     debouncedRemotePull()
   })
@@ -2303,7 +2368,7 @@ export function installiCloudSync(): () => void {
       catchUpIfActive('supporter-ready')
     }
   })
-  availabilitySub = ICloudBridge.addAvailabilityChangeListener((e) => {
+  availabilitySub = syncTransport().addAvailabilityChangeListener((e) => {
     checkICloudIdentity('availability')
     if (!e.available) {
       logger.warn(`${tag()} iCloud became unavailable`)
@@ -2338,7 +2403,7 @@ export function installiCloudSync(): () => void {
 /** The per-device toggle pauses photo transfer; shared cleanup is explicit. */
 export function clearCloudPhotos(): Promise<void> {
   return serializeImages(async () => {
-    await ICloudBridge.deleteAllBinaries()
+    await syncTransport().deleteAllBinaries()
     usePreferences.setState({ iCloudImageSync: {} })
   })
 }

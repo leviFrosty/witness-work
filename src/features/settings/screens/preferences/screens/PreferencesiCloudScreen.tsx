@@ -24,9 +24,12 @@ import Badge from '@/components/ui/Badge'
 import IsSupporter from '@/components/IsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
-import * as ICloudBridge from '../../../../../../modules/icloud-bridge/index'
+import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
+import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
+import GoogleDriveAccountSection from '@/features/settings/components/sync/GoogleDriveAccountSection'
 import { ICloudAccount, iCloudSync } from '@/app/sync/iCloudSync'
 import FirstEnableSheet, {
   FirstEnableChoice,
@@ -62,11 +65,16 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
     iCloudAccountChangedAt,
+    googleDriveNeedsReconnect,
     developerTools,
     set,
   } = usePreferences()
+  // Android syncs through the connected Google Account's Drive (ADR 0019).
+  const googleDrive = usesGoogleDriveSync()
   const [syncing, setSyncing] = useState(false)
-  const [available, setAvailable] = useState(() => ICloudBridge.isAvailable())
+  const [available, setAvailable] = useState(() =>
+    syncTransport().isAvailable()
+  )
   const [firstEnableSheetOpen, setFirstEnableSheetOpen] = useState(false)
   const [pendingRemote, setPendingRemote] = useState<SyncPayload | null>(null)
   // The Apple Account `pendingRemote` was read under.
@@ -107,10 +115,10 @@ const PreferencesiCloudScreenInner = () => {
   const showAccountChangedNotice =
     iCloudAccountChangedAt !== null && !iCloudSyncEnabled
 
-  // Re-check iCloud availability on mount and whenever the identity changes.
+  // Re-check availability on mount and whenever the identity changes.
   useEffect(() => {
-    setAvailable(ICloudBridge.isAvailable())
-    const sub = ICloudBridge.addAvailabilityChangeListener((e) => {
+    setAvailable(syncTransport().isAvailable())
+    const sub = syncTransport().addAvailabilityChangeListener((e) => {
       setAvailable(e.available)
     })
     return () => sub.remove()
@@ -137,8 +145,8 @@ const PreferencesiCloudScreenInner = () => {
       setPendingAccount(null)
       setPendingEnable(null)
       Alert.alert(
-        i18n.t('iCloudAccountChangedNotice_title'),
-        i18n.t('iCloudAccountChangedNotice_description')
+        i18n.t(syncKey('iCloudAccountChangedNotice_title')),
+        i18n.t(syncKey('iCloudAccountChangedNotice_description'))
       )
       return
     }
@@ -168,13 +176,17 @@ const PreferencesiCloudScreenInner = () => {
       switch (choice) {
         case 'keepLocal':
           await iCloudSync.overwriteRemoteWithLocal()
-          toast.show(i18n.t('iCloudEnabledToastKeep'), { native: true })
+          toast.show(i18n.t(syncKey('iCloudEnabledToastKeep')), {
+            native: true,
+          })
           break
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
             shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
-            toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
+            toast.show(i18n.t(syncKey('iCloudEnabledToastRestored')), {
+              native: true,
+            })
           }
           break
         case 'merge':
@@ -184,7 +196,9 @@ const PreferencesiCloudScreenInner = () => {
             !(await iCloudSync.push('initial-enable-merge'))
           )
             throw new Error('iCloud sync incomplete')
-          toast.show(i18n.t('iCloudEnabledToastMerged'), { native: true })
+          toast.show(i18n.t(syncKey('iCloudEnabledToastMerged')), {
+            native: true,
+          })
           break
       }
       analytics.capture('icloud_sync_first_enable_outcome', {
@@ -196,7 +210,7 @@ const PreferencesiCloudScreenInner = () => {
         choice,
         outcome: 'failed',
       })
-      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+      Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
     } finally {
       setPendingRemote(null)
       setPendingAccount(null)
@@ -205,12 +219,15 @@ const PreferencesiCloudScreenInner = () => {
     }
     if (shouldPromptForImages) {
       Alert.alert(
-        i18n.t('iCloudImagesRestorePrompt_title'),
-        i18n.t('iCloudImagesRestorePrompt_description'),
+        i18n.t(syncKey('iCloudImagesRestorePrompt_title')),
+        i18n.t(syncKey('iCloudImagesRestorePrompt_description')),
         [
-          { text: i18n.t('iCloudImagesRestorePrompt_skip'), style: 'cancel' },
           {
-            text: i18n.t('iCloudImagesRestorePrompt_action'),
+            text: i18n.t(syncKey('iCloudImagesRestorePrompt_skip')),
+            style: 'cancel',
+          },
+          {
+            text: i18n.t(syncKey('iCloudImagesRestorePrompt_action')),
             onPress: async () => {
               usePreferences.setState({ iCloudSyncIncludeImages: true })
               await iCloudSync.pullImagesIfEnabled()
@@ -224,12 +241,12 @@ const PreferencesiCloudScreenInner = () => {
   const handleToggle = async (next: boolean) => {
     if (!next) {
       Alert.alert(
-        i18n.t('iCloudSyncDisabled_title'),
-        i18n.t('iCloudDisableConfirm_description'),
+        i18n.t(syncKey('iCloudSyncDisabled_title')),
+        i18n.t(syncKey('iCloudDisableConfirm_description')),
         [
           { text: i18n.t('cancel'), style: 'cancel' },
           {
-            text: i18n.t('iCloudDisableConfirm_pause'),
+            text: i18n.t(syncKey('iCloudDisableConfirm_pause')),
             onPress: () => {
               set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
               analytics.capture('icloud_sync_enabled_changed', {
@@ -239,7 +256,7 @@ const PreferencesiCloudScreenInner = () => {
             },
           },
           {
-            text: i18n.t('iCloudDisableConfirm_removePhotos'),
+            text: i18n.t(syncKey('iCloudDisableConfirm_removePhotos')),
             style: 'destructive',
             onPress: async () => {
               setSyncing(true)
@@ -256,7 +273,10 @@ const PreferencesiCloudScreenInner = () => {
                   source: 'disable_sync',
                   outcome: 'failed',
                 })
-                Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+                Alert.alert(
+                  i18n.t('error'),
+                  i18n.t(syncKey('iCloudOperationFailed'))
+                )
               } finally {
                 setSyncing(false)
               }
@@ -268,11 +288,20 @@ const PreferencesiCloudScreenInner = () => {
     }
     set({ iCloudSyncSetByUser: true, iCloudAccountChangedAt: null })
     setPendingEnable(true)
-    if (!ICloudBridge.isAvailable()) {
+    // Turning sync on is how Android users first connect Google Drive.
+    if (
+      googleDrive &&
+      !syncTransport().isAvailable() &&
+      !(await connectGoogleDriveFromUser({ source: 'settings' }))
+    ) {
+      setPendingEnable(null)
+      return
+    }
+    if (!syncTransport().isAvailable()) {
       setPendingEnable(null)
       Alert.alert(
-        i18n.t('iCloudUnavailable_title'),
-        i18n.t('iCloudUnavailable_description')
+        i18n.t(syncKey('iCloudUnavailable_title')),
+        i18n.t(syncKey('iCloudUnavailable_description'))
       )
       return
     }
@@ -300,11 +329,15 @@ const PreferencesiCloudScreenInner = () => {
       switch (decision.outcome) {
         case 'seed':
           await iCloudSync.applySeedEnable()
-          toast.show(i18n.t('iCloudEnabledToastSeeded'), { native: true })
+          toast.show(i18n.t(syncKey('iCloudEnabledToastSeeded')), {
+            native: true,
+          })
           break
         case 'pull':
           iCloudSync.applyPullEnable(decision.remote)
-          toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
+          toast.show(i18n.t(syncKey('iCloudEnabledToastRestored')), {
+            native: true,
+          })
           break
         case 'incomplete':
           // Part of the remote is still downloading (or from a newer app
@@ -315,8 +348,8 @@ const PreferencesiCloudScreenInner = () => {
             reason: decision.reason,
           })
           Alert.alert(
-            i18n.t('iCloudRemoteNotReady_title'),
-            i18n.t('iCloudRemoteNotReady_description')
+            i18n.t(syncKey('iCloudRemoteNotReady_title')),
+            i18n.t(syncKey('iCloudRemoteNotReady_description'))
           )
           break
         case 'unavailable':
@@ -324,13 +357,13 @@ const PreferencesiCloudScreenInner = () => {
           // token flipping mid-peek or the container being unreadable
           // (iCloud Drive off for the app).
           Alert.alert(
-            i18n.t('iCloudUnavailable_title'),
-            i18n.t('iCloudUnavailable_description')
+            i18n.t(syncKey('iCloudUnavailable_title')),
+            i18n.t(syncKey('iCloudUnavailable_description'))
           )
           break
       }
     } catch {
-      Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+      Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
     } finally {
       setSyncing(false)
       setPendingEnable(null)
@@ -371,8 +404,8 @@ const PreferencesiCloudScreenInner = () => {
       })
       toast.show(
         merged
-          ? i18n.t('iCloudManualSyncMerged')
-          : i18n.t('iCloudManualSyncNoChanges'),
+          ? i18n.t(syncKey('iCloudManualSyncMerged'))
+          : i18n.t(syncKey('iCloudManualSyncNoChanges')),
         { native: true }
       )
     } catch {
@@ -381,8 +414,8 @@ const PreferencesiCloudScreenInner = () => {
         i18n.t('error'),
         i18n.t(
           usePreferences.getState().iCloudUploadIssue === 'icloud-full'
-            ? 'iCloudStorageFullHelp'
-            : 'iCloudOperationFailed'
+            ? syncKey('iCloudStorageFullHelp')
+            : syncKey('iCloudOperationFailed')
         )
       )
     } finally {
@@ -403,7 +436,10 @@ const PreferencesiCloudScreenInner = () => {
     uploadIssue: iCloudUploadIssue,
     pendingPush: iCloudSyncPendingPush,
     uploadPendingSince: iCloudUploadPendingSince,
-    uploadConfirmationSupported: ICloudBridge.supportsUploadStatus(),
+    uploadConfirmationSupported:
+      syncTransport().supportsUploadStatus() ||
+      syncTransport().writeConfirmsUpload,
+    needsReconnect: googleDrive && googleDriveNeedsReconnect,
     lastPulledAt: lastiCloudPulledAt,
     lastPushedAt: lastiCloudPushedAt,
     lastUploadedAt: lastiCloudUploadedAt,
@@ -420,17 +456,17 @@ const PreferencesiCloudScreenInner = () => {
   const handleImagesToggle = (next: boolean) => {
     if (next) {
       Alert.alert(
-        i18n.t('iCloudImagesEnableConfirm_title'),
-        i18n.t('iCloudImagesEnableConfirm_description'),
+        i18n.t(syncKey('iCloudImagesEnableConfirm_title')),
+        i18n.t(syncKey('iCloudImagesEnableConfirm_description')),
         [
           { text: i18n.t('cancel'), style: 'cancel' },
           {
-            text: i18n.t('iCloudImagesEnableConfirm_action'),
+            text: i18n.t(syncKey('iCloudImagesEnableConfirm_action')),
             style: 'destructive',
             onPress: async () => {
               setPendingImagesEnable(true)
               setMigratingImages(true)
-              toast.show(i18n.t('iCloudImagesToastMigrating'), {
+              toast.show(i18n.t(syncKey('iCloudImagesToastMigrating')), {
                 native: true,
               })
               try {
@@ -453,7 +489,7 @@ const PreferencesiCloudScreenInner = () => {
                 ).length
                 if (failed > 0) {
                   toast.show(
-                    i18n.t('iCloudImagesToastMigratedPartial', {
+                    i18n.t(syncKey('iCloudImagesToastMigratedPartial'), {
                       uploaded,
                       total: uploaded + failed,
                     }),
@@ -461,7 +497,9 @@ const PreferencesiCloudScreenInner = () => {
                   )
                 } else {
                   toast.show(
-                    i18n.t('iCloudImagesToastMigrated', { count: uploaded }),
+                    i18n.t(syncKey('iCloudImagesToastMigrated'), {
+                      count: uploaded,
+                    }),
                     { native: true }
                   )
                 }
@@ -474,7 +512,10 @@ const PreferencesiCloudScreenInner = () => {
                   enabled: true,
                   outcome: 'failed',
                 })
-                Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+                Alert.alert(
+                  i18n.t('error'),
+                  i18n.t(syncKey('iCloudOperationFailed'))
+                )
               } finally {
                 setMigratingImages(false)
                 setPendingImagesEnable(null)
@@ -487,12 +528,12 @@ const PreferencesiCloudScreenInner = () => {
     }
 
     Alert.alert(
-      i18n.t('iCloudImagesDisableConfirm_title'),
-      i18n.t('iCloudImagesDisableConfirm_description'),
+      i18n.t(syncKey('iCloudImagesDisableConfirm_title')),
+      i18n.t(syncKey('iCloudImagesDisableConfirm_description')),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
-          text: i18n.t('iCloudImagesDisableConfirm_action'),
+          text: i18n.t(syncKey('iCloudImagesDisableConfirm_action')),
           onPress: async () => {
             setPendingImagesEnable(false)
             setMigratingImages(true)
@@ -502,7 +543,9 @@ const PreferencesiCloudScreenInner = () => {
                 enabled: false,
                 source: 'settings',
               })
-              toast.show(i18n.t('iCloudImagesToastPaused'), { native: true })
+              toast.show(i18n.t(syncKey('iCloudImagesToastPaused')), {
+                native: true,
+              })
             } finally {
               setMigratingImages(false)
               setPendingImagesEnable(null)
@@ -510,7 +553,7 @@ const PreferencesiCloudScreenInner = () => {
           },
         },
         {
-          text: i18n.t('iCloudDisableConfirm_removePhotos'),
+          text: i18n.t(syncKey('iCloudDisableConfirm_removePhotos')),
           style: 'destructive',
           onPress: async () => {
             setMigratingImages(true)
@@ -521,13 +564,18 @@ const PreferencesiCloudScreenInner = () => {
                 source: 'images_toggle',
                 outcome: 'completed',
               })
-              toast.show(i18n.t('iCloudImagesToastRemoved'), { native: true })
+              toast.show(i18n.t(syncKey('iCloudImagesToastRemoved')), {
+                native: true,
+              })
             } catch {
               analytics.capture('icloud_sync_cloud_photos_removed', {
                 source: 'images_toggle',
                 outcome: 'failed',
               })
-              Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+              Alert.alert(
+                i18n.t('error'),
+                i18n.t(syncKey('iCloudOperationFailed'))
+              )
             } finally {
               setMigratingImages(false)
             }
@@ -545,8 +593,8 @@ const PreferencesiCloudScreenInner = () => {
 
   const handleReset = () => {
     Alert.alert(
-      i18n.t('iCloudResetConfirm_title'),
-      i18n.t('iCloudResetConfirm_description'),
+      i18n.t(syncKey('iCloudResetConfirm_title')),
+      i18n.t(syncKey('iCloudResetConfirm_description')),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
@@ -560,12 +608,17 @@ const PreferencesiCloudScreenInner = () => {
               analytics.capture('icloud_sync_reset_outcome', {
                 outcome: 'completed',
               })
-              toast.show(i18n.t('iCloudEnabledToastKeep'), { native: true })
+              toast.show(i18n.t(syncKey('iCloudEnabledToastKeep')), {
+                native: true,
+              })
             } catch {
               analytics.capture('icloud_sync_reset_outcome', {
                 outcome: 'failed',
               })
-              Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+              Alert.alert(
+                i18n.t('error'),
+                i18n.t(syncKey('iCloudOperationFailed'))
+              )
             } finally {
               setSyncing(false)
             }
@@ -606,11 +659,11 @@ const PreferencesiCloudScreenInner = () => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t('iCloudSync')}
+                {i18n.t(syncKey('iCloudSync'))}
               </Text>
               <InfoPopover
-                title={i18n.t('iCloudSync')}
-                description={`${i18n.t('iCloudSync_description')} ${i18n.t('iCloudBetaNotice')}`}
+                title={i18n.t(syncKey('iCloudSync'))}
+                description={`${i18n.t(syncKey('iCloudSync_description'))} ${i18n.t(syncKey('iCloudBetaNotice'))}`}
               />
             </View>
             <Badge color={theme.colors.accentTranslucent}>
@@ -627,7 +680,7 @@ const PreferencesiCloudScreenInner = () => {
             </Badge>
           </View>
           <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-            {i18n.t('iCloudSync_summary')}
+            {i18n.t(syncKey('iCloudSync_summary'))}
           </Text>
         </View>
 
@@ -643,12 +696,14 @@ const PreferencesiCloudScreenInner = () => {
               }}
             >
               <Text style={{ flexShrink: 1, color: theme.colors.text }}>
-                {i18n.t('iCloudAccountChangedNotice')}
+                {i18n.t(syncKey('iCloudAccountChangedNotice'))}
               </Text>
               <InfoPopover
                 inline
-                title={i18n.t('iCloudAccountChangedNotice_title')}
-                description={i18n.t('iCloudAccountChangedNotice_description')}
+                title={i18n.t(syncKey('iCloudAccountChangedNotice_title'))}
+                description={i18n.t(
+                  syncKey('iCloudAccountChangedNotice_description')
+                )}
               />
             </View>
             <IconButton
@@ -662,7 +717,7 @@ const PreferencesiCloudScreenInner = () => {
 
         <Section>
           <InputRowContainer
-            label={i18n.t('iCloudEnableLabel')}
+            label={i18n.t(syncKey('iCloudEnableLabel'))}
             controlWidth='auto'
             style={{ justifyContent: 'space-between' }}
           >
@@ -680,7 +735,7 @@ const PreferencesiCloudScreenInner = () => {
             </View>
           </InputRowContainer>
           <InputRowContainer
-            label={i18n.t('iCloudStatusLabel')}
+            label={i18n.t(syncKey('iCloudStatusLabel'))}
             lastInSection
             style={{ justifyContent: 'space-between' }}
           >
@@ -716,15 +771,17 @@ const PreferencesiCloudScreenInner = () => {
                 paddingBottom: 16,
               }}
             >
-              {i18n.t('iCloudStorageFullHelp')}
+              {i18n.t(syncKey('iCloudStorageFullHelp'))}
             </Text>
           )}
         </Section>
 
-        {!available && (
+        {googleDrive && <GoogleDriveAccountSection />}
+
+        {!googleDrive && !available && (
           <Section>
             <InputRowButton
-              label={i18n.t('iCloudOpenSettings')}
+              label={i18n.t(syncKey('iCloudOpenSettings'))}
               onPress={handleOpenSettings}
               lastInSection
             >
@@ -741,21 +798,21 @@ const PreferencesiCloudScreenInner = () => {
                 paddingBottom: 16,
               }}
             >
-              {i18n.t('iCloudOpenSettingsHelp')}
+              {i18n.t(syncKey('iCloudOpenSettingsHelp'))}
             </Text>
           </Section>
         )}
 
         <View>
           <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-            {i18n.t('iCloudPrivacyNote')}
+            {i18n.t(syncKey('iCloudPrivacyNote'))}
           </Text>
         </View>
 
         {iCloudSyncEnabled && developerTools && (
           <Section>
             <InputRowContainer
-              label={i18n.t('iCloudLastPushedLabel')}
+              label={i18n.t(syncKey('iCloudLastPushedLabel'))}
               style={{ justifyContent: 'space-between' }}
             >
               <Text
@@ -769,7 +826,7 @@ const PreferencesiCloudScreenInner = () => {
               </Text>
             </InputRowContainer>
             <InputRowContainer
-              label={i18n.t('iCloudLastPulledLabel')}
+              label={i18n.t(syncKey('iCloudLastPulledLabel'))}
               style={{ justifyContent: 'space-between' }}
             >
               <Text
@@ -783,7 +840,7 @@ const PreferencesiCloudScreenInner = () => {
               </Text>
             </InputRowContainer>
             <InputRowContainer
-              label={i18n.t('iCloudRemoteWrittenLabel')}
+              label={i18n.t(syncKey('iCloudRemoteWrittenLabel'))}
               style={{ justifyContent: 'space-between' }}
             >
               <Text
@@ -797,7 +854,7 @@ const PreferencesiCloudScreenInner = () => {
               </Text>
             </InputRowContainer>
             <InputRowContainer
-              label={i18n.t('iCloudRemoteDeviceLabel')}
+              label={i18n.t(syncKey('iCloudRemoteDeviceLabel'))}
               lastInSection
               style={{ justifyContent: 'space-between' }}
             >
@@ -814,7 +871,7 @@ const PreferencesiCloudScreenInner = () => {
                     : '—')}
                 {lastiCloudRemoteDeviceId &&
                 iCloudDeviceId === lastiCloudRemoteDeviceId
-                  ? ` (${i18n.t('iCloudThisDevice')})`
+                  ? ` (${i18n.t(syncKey('iCloudThisDevice'))})`
                   : ''}
               </Text>
             </InputRowContainer>
@@ -824,12 +881,12 @@ const PreferencesiCloudScreenInner = () => {
         {iCloudSyncEnabled && (
           <Section>
             <InputRowButton
-              label={i18n.t('iCloudSyncNow')}
+              label={i18n.t(syncKey('iCloudSyncNow'))}
               onPress={handleSyncNow}
               lastInSection
             >
               <Text style={{ color: theme.colors.accent }}>
-                {syncing ? i18n.t('iCloudSyncing') : i18n.t('sync')}
+                {syncing ? i18n.t(syncKey('iCloudSyncing')) : i18n.t('sync')}
               </Text>
             </InputRowButton>
           </Section>
@@ -838,7 +895,7 @@ const PreferencesiCloudScreenInner = () => {
         {iCloudSyncEnabled && (
           <Section>
             <InputRowButton
-              label={i18n.t('iCloudDevices')}
+              label={i18n.t(syncKey('iCloudDevices'))}
               onPress={() => navigation.navigate('PreferencesiCloudDevices')}
               lastInSection
             >
@@ -870,18 +927,19 @@ const PreferencesiCloudScreenInner = () => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t('iCloudImagesSectionTitle')}
+                {i18n.t(syncKey('iCloudImagesSectionTitle'))}
               </Text>
               <InfoPopover
-                title={i18n.t('iCloudImagesSectionTitle')}
-                description={i18n.t('iCloudImagesInfoFooter')}
+                title={i18n.t(syncKey('iCloudImagesSectionTitle'))}
+                description={i18n.t(syncKey('iCloudImagesInfoFooter'))}
               />
             </View>
             <Section>
               <InputRowContainer
-                label={i18n.t('iCloudImagesToggleLabel')}
+                label={i18n.t(syncKey('iCloudImagesToggleLabel'))}
                 controlWidth='auto'
                 style={{ justifyContent: 'space-between' }}
+                lastInSection={googleDrive}
               >
                 <View
                   style={{
@@ -903,19 +961,22 @@ const PreferencesiCloudScreenInner = () => {
                   />
                 </View>
               </InputRowContainer>
-              <InputRowButton
-                label={i18n.t('iCloudImagesLearnADP')}
-                onPress={handleOpenADP}
-                lastInSection
-              >
-                <Text style={{ color: theme.colors.accent }}>
-                  {i18n.t('open')}
-                </Text>
-              </InputRowButton>
+              {/* Advanced Data Protection is Apple's; Drive has no equivalent. */}
+              {!googleDrive && (
+                <InputRowButton
+                  label={i18n.t(syncKey('iCloudImagesLearnADP'))}
+                  onPress={handleOpenADP}
+                  lastInSection
+                >
+                  <Text style={{ color: theme.colors.accent }}>
+                    {i18n.t('open')}
+                  </Text>
+                </InputRowButton>
+              )}
             </Section>
             <View>
               <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-                {i18n.t('iCloudImagesToggleSubtitle')}
+                {i18n.t(syncKey('iCloudImagesToggleSubtitle'))}
               </Text>
             </View>
           </View>
@@ -924,7 +985,7 @@ const PreferencesiCloudScreenInner = () => {
         {iCloudSyncEnabled && (
           <Section>
             <InputRowButton
-              label={i18n.t('iCloudReset')}
+              label={i18n.t(syncKey('iCloudReset'))}
               onPress={handleReset}
               lastInSection
             >

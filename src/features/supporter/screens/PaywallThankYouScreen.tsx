@@ -137,32 +137,35 @@ const PaywallThankYouScreen = () => {
           {showSupporterCelebration && <SupporterBenefits />}
 
           {/*
-           * With iCloud reachable, Supporter status reaches the user's other
-           * devices automatically (ADR 0011) — say nothing. Only when it can't
-           * (signed out, or iCloud Drive disabled for WitnessWork) does the
-           * user have something to do, so only then surface the manual path.
+           * With iCloud reachable (or Google Drive connected on Android),
+           * Supporter status reaches the user's other devices automatically
+           * (ADR 0011) — say nothing. Only when it can't (signed out, iCloud
+           * Drive disabled for WitnessWork, Drive not connected) does the user
+           * have something to do, so only then surface the manual path.
            */}
-          {Platform.OS === 'ios' &&
-            showSupporterCelebration &&
-            !iCloudSharingAvailable && (
-              <Card style={{ marginTop: 15 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('thankYou_multiDeviceTitle')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t('thankYou_multiDeviceBody')}
-                </Text>
-              </Card>
-            )}
+          {showSupporterCelebration && !iCloudSharingAvailable && (
+            <Card style={{ marginTop: 15 }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('thankYou_multiDeviceTitle')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t(
+                  Platform.OS === 'android'
+                    ? 'thankYou_multiDeviceBodyAndroid'
+                    : 'thankYou_multiDeviceBody'
+                )}
+              </Text>
+            </Card>
+          )}
         </View>
       </ScrollView>
       <View

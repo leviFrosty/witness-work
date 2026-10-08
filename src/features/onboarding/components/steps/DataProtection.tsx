@@ -12,6 +12,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import { isDataProtectionRegion } from '@/lib/dataProtection'
 import { usePreferences } from '@/stores/preferences'
 
@@ -95,7 +96,7 @@ const DataProtection = ({ goBack, goNext }: Props) => {
               </Text>
               <InfoPopover
                 title={i18n.t('dataProtectionInfoTitle')}
-                description={i18n.t('dataProtectionInfoDesc')}
+                description={i18n.t(syncKey('dataProtectionInfoDesc'))}
               />
             </View>
             <View>

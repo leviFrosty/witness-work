@@ -11,7 +11,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
@@ -28,7 +28,10 @@ import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
 import { useBackupImport } from '@/hooks/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
-import * as ICloudBridge from '../../../../../modules/icloud-bridge'
+import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
+import { hasSyncTransport } from '@/lib/syncTransport/platform'
+import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
+import { syncKey } from '@/lib/syncCopy'
 
 interface StepProps {
   goBack: () => void
@@ -118,7 +121,12 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const toChooser = () => {
     setMode('choose')
   }
-  const icloudAvailable = ICloudBridge.isAvailable()
+  // iOS needs iCloud signed in. Android connects Google Drive inside the
+  // restore step, so it only needs Google Play services.
+  const cloudSyncSupported = useCloudSyncSupported()
+  const icloudAvailable = usesGoogleDriveSync()
+    ? cloudSyncSupported
+    : syncTransport().isAvailable()
   const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
   const { importing, importBackup } = useBackupImport({ source: 'onboarding' })
@@ -148,7 +156,10 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     importType: 'notes' | 'mytime' | 'icloud' | 'backup_json'
   ) => {
     analytics.capture('import_type_selected', {
-      import_type: importType,
+      import_type:
+        importType === 'icloud' && usesGoogleDriveSync()
+          ? 'google_drive'
+          : importType,
       source: 'onboarding',
     })
     if (importType === 'notes')
@@ -216,14 +227,14 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             descKey='onboardingPickUp_mytimeDesc'
             onPress={() => selectImport('mytime')}
           />
-          {Platform.OS === 'ios' && (
+          {hasSyncTransport() && (
             <OptionCard
               icon={CloudIcon}
               color={theme.colors.purple}
-              titleKey='onboardingPickUp_icloud'
-              descKey='onboardingPickUp_icloudDesc'
+              titleKey={syncKey('onboardingPickUp_icloud')}
+              descKey={syncKey('onboardingPickUp_icloudDesc')}
               disabled={!icloudAvailable}
-              disabledNoteKey='onboardingPickUp_icloudUnavailable'
+              disabledNoteKey={syncKey('onboardingPickUp_icloudUnavailable')}
               onPress={() => selectImport('icloud')}
             />
           )}

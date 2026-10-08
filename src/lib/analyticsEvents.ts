@@ -105,7 +105,7 @@ export const analyticsEventNames = [
   'route_plan_created',
   'route_plan_failed',
   'route_plan_navigation_started',
-  // Supporter iCloud adoption and recovery.
+  // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',
   'icloud_restore_images_requested',
@@ -132,6 +132,10 @@ export const analyticsEventNames = [
   'icloud_sync_reset_started',
   'icloud_sync_upload_failed',
   'icloud_sync_upload_recovered',
+  // Android Google Drive Sync (ADR 0019); sync outcomes reuse the iCloud events.
+  'google_drive_access_lost',
+  'google_drive_connect_outcome',
+  'google_drive_disconnected',
   // Onboarding and activation.
   'onboarding_backfill_completed',
   'onboarding_calendar_setup_result',

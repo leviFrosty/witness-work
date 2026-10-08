@@ -1,0 +1,7 @@
+{
+  "name": "google-drive-auth",
+  "version": "0.1.0",
+  "description": "Local Expo module that authorizes the Google Drive app data scope with Google Identity Services (AuthorizationClient) and returns short-lived access tokens for Drive sync on Android.",
+  "main": "index.ts",
+  "private": true
+}

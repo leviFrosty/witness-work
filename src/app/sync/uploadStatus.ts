@@ -1,4 +1,4 @@
-import type { UploadStatus } from '../../../modules/icloud-bridge'
+import type { UploadStatus } from '@/lib/syncTransport/types'
 
 /**
  * An upload problem worth showing. `icloud-full` is the user's iCloud storage

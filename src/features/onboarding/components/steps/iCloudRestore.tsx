@@ -8,7 +8,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Animated, Easing, Platform, View } from 'react-native'
+import { Alert, Animated, Easing, View } from 'react-native'
 import { Spinner } from 'tamagui'
 import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
@@ -20,7 +20,13 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import * as ICloudBridge from '../../../../../modules/icloud-bridge'
+import { syncKey } from '@/lib/syncCopy'
+import {
+  hasSyncTransport,
+  syncTransport,
+  usesGoogleDriveSync,
+} from '@/lib/syncTransport'
+import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import { ICloudAccount, iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
@@ -37,9 +43,13 @@ interface Props {
 type Probe =
   | { state: 'probing' }
   | { state: 'unavailable' } // iCloud account unavailable on this device
+  | { state: 'needsConnect' } // Android: Google Drive not connected yet
   | { state: 'noBackup' } // Available but nothing there yet
   | { state: 'incomplete' } // A backup may exist but isn't fully readable yet
   | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
+
+/** Analytics `import_type` for this restore: the service it reads from. */
+const importType = () => (usesGoogleDriveSync() ? 'google_drive' : 'icloud')
 
 /** `merge` is offered only when ongoing sync can be enabled (Supporters). */
 type RestoreMode = 'replace' | 'merge'
@@ -60,13 +70,14 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
 }
 
 /**
- * Offers a one-shot restore from iCloud during onboarding. Pulling is not gated
- * by supporter status — the user can import their data now and decide whether
- * to enable ongoing sync (which IS supporter-only) later. Skipping preserves an
- * explicit local off choice before advancing.
+ * Offers a one-shot restore from iCloud (iOS) or Google Drive (Android, ADR
+ * 0019) during onboarding. Pulling is not gated by supporter status — the user
+ * can import their data now and decide whether to enable ongoing sync (which IS
+ * supporter-only) later. Skipping preserves an explicit local off choice before
+ * advancing.
  *
- * Not rendered on Android: iCloud is iOS-only. The parent step list hides this
- * step on non-iOS platforms.
+ * Android first asks the user to connect Google Drive; connecting also lets
+ * this device share Supporter status with their other devices (ADR 0011).
  */
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
@@ -77,6 +88,17 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   // Bumped by "Search again" to run the probe effect afresh.
   const [search, setSearch] = useState(0)
   const [restoring, setRestoring] = useState(false)
+  const [connecting, setConnecting] = useState(false)
+
+  const connectDrive = async () => {
+    setConnecting(true)
+    try {
+      if (await connectGoogleDriveFromUser({ source: 'onboarding' }))
+        setSearch((n) => n + 1)
+    } finally {
+      setConnecting(false)
+    }
+  }
 
   // Breathing animation for the cloud icon while probing. Runs only while
   // `probe.state === 'probing'` and stops cleanly when the state resolves.
@@ -98,9 +120,12 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         let next: Probe
         do {
           again = false
-          next =
-            Platform.OS !== 'ios' || !ICloudBridge.isAvailable()
-              ? { state: 'unavailable' }
+          next = !hasSyncTransport()
+            ? { state: 'unavailable' }
+            : !syncTransport().isAvailable()
+              ? {
+                  state: usesGoogleDriveSync() ? 'needsConnect' : 'unavailable',
+                }
               : probeFromPeek(await iCloudSync.peekRemotePayload())
         } while (again && !cancelled && next.state !== 'found')
         if (cancelled) return
@@ -114,7 +139,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       void run().catch(() => {
         if (!cancelled) setProbe({ state: 'unavailable' })
         analytics.capture('import_failed', {
-          import_type: 'icloud',
+          import_type: importType(),
           source: 'onboarding',
           stage: 'probe',
           error_code: 'unexpected',
@@ -124,7 +149,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     // A backup that lands after the probe — materializing late on a cold
     // launch, or finishing its download — upgrades the screen on its own:
     // the metadata query reports files this device hasn't read yet.
-    const sub = ICloudBridge.addRemoteChangeListener(() => {
+    const sub = syncTransport().addRemoteChangeListener(() => {
       if (!cancelled && !found) probeRemote()
     })
     return () => {
@@ -194,11 +219,11 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       restore(remote, account, mode)
     }
     Alert.alert(
-      i18n.t('iCloudRestoreReplaceConfirm_title'),
+      i18n.t(syncKey('iCloudRestoreReplaceConfirm_title')),
       i18n.t(
         canEnableICloudSync
-          ? 'iCloudRestoreReplaceConfirm_descriptionWithMerge'
-          : 'iCloudRestoreReplaceConfirm_description'
+          ? syncKey('iCloudRestoreReplaceConfirm_descriptionWithMerge')
+          : syncKey('iCloudRestoreReplaceConfirm_description')
       ),
       [
         {
@@ -208,13 +233,13 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         ...(canEnableICloudSync
           ? [
               {
-                text: i18n.t('iCloudRestoreReplaceConfirm_merge'),
+                text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_merge')),
                 onPress: choose('merge'),
               },
             ]
           : []),
         {
-          text: i18n.t('iCloudRestoreReplaceConfirm_replace'),
+          text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_replace')),
           style: 'destructive' as const,
           onPress: choose('replace'),
         },
@@ -230,14 +255,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     const startedAt = Date.now()
     setRestoring(true)
     analytics.capture('import_started', {
-      import_type: 'icloud',
+      import_type: importType(),
       source: 'onboarding',
       mode,
     })
     const failed = (errorCode: 'unexpected' | 'account_changed') => {
       setRestoring(false)
       analytics.capture('import_failed', {
-        import_type: 'icloud',
+        import_type: importType(),
         source: 'onboarding',
         stage: 'restore',
         error_code: errorCode,
@@ -251,14 +276,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     const sameAccount = () => {
       if (iCloudSync.confirmICloudAccount(account)) return true
       failed('account_changed')
-      Alert.alert(i18n.t('iCloudAccountChangedNotice_title'))
+      Alert.alert(i18n.t(syncKey('iCloudAccountChangedNotice_title')))
       setSearch((n) => n + 1)
       return false
     }
     const fail = () => {
       failed('unexpected')
       if (mode === 'merge')
-        Alert.alert(i18n.t('error'), i18n.t('iCloudOperationFailed'))
+        Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
       else
         Alert.alert(
           i18n.t('importError_title'),
@@ -344,7 +369,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     startedAt: number
   ) => {
     analytics.capture('import_completed', {
-      import_type: 'icloud',
+      import_type: importType(),
       source: 'onboarding',
       mode,
       elapsed_ms: Date.now() - startedAt,
@@ -377,11 +402,11 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         source: 'onboarding',
       })
       Alert.alert(
-        i18n.t('iCloudImagesRestorePrompt_title'),
-        i18n.t('iCloudImagesRestorePrompt_description'),
+        i18n.t(syncKey('iCloudImagesRestorePrompt_title')),
+        i18n.t(syncKey('iCloudImagesRestorePrompt_description')),
         [
           {
-            text: i18n.t('iCloudImagesRestorePrompt_skip'),
+            text: i18n.t(syncKey('iCloudImagesRestorePrompt_skip')),
             style: 'cancel',
             onPress: () => {
               analytics.capture('icloud_restore_images_skipped', {
@@ -390,7 +415,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             },
           },
           {
-            text: i18n.t('iCloudImagesRestorePrompt_action'),
+            text: i18n.t(syncKey('iCloudImagesRestorePrompt_action')),
             onPress: async () => {
               usePreferences.setState({ iCloudSyncIncludeImages: true })
               analytics.capture('icloud_restore_images_requested', {
@@ -484,7 +509,9 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             />
           </Animated.View>
         </View>
-        <Text style={styles.stepTitle}>{i18n.t('iCloudRestoreTitle')}</Text>
+        <Text style={styles.stepTitle}>
+          {i18n.t(syncKey('iCloudRestoreTitle'))}
+        </Text>
         <Text
           style={{
             fontSize: 14,
@@ -494,7 +521,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             lineHeight: 20,
           }}
         >
-          {i18n.t('iCloudRestoreDescription')}
+          {i18n.t(syncKey('iCloudRestoreDescription'))}
         </Text>
 
         {probe.state === 'probing' && (
@@ -509,7 +536,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           >
             <Spinner color={theme.colors.textAlt} />
             <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('iCloudRestoreChecking')}
+              {i18n.t(syncKey('iCloudRestoreChecking'))}
             </Text>
           </Card>
         )}
@@ -537,7 +564,35 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 lineHeight: 18,
               }}
             >
-              {i18n.t('iCloudRestoreUnavailable')}
+              {i18n.t(syncKey('iCloudRestoreUnavailable'))}
+            </Text>
+          </Card>
+        )}
+
+        {probe.state === 'needsConnect' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <LucideIcon
+              icon={CloudIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t('googleDriveRestoreConnectDescription')}
             </Text>
           </Card>
         )}
@@ -565,7 +620,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 lineHeight: 18,
               }}
             >
-              {i18n.t('iCloudRemoteNotReady_description')}
+              {i18n.t(syncKey('iCloudRemoteNotReady_description'))}
             </Text>
           </Card>
         )}
@@ -593,7 +648,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 lineHeight: 18,
               }}
             >
-              {i18n.t('iCloudRestoreNoBackup')}
+              {i18n.t(syncKey('iCloudRestoreNoBackup'))}
             </Text>
           </Card>
         )}
@@ -635,12 +690,13 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t('iCloudRestoreFoundTitle')}
+                {i18n.t(syncKey('iCloudRestoreFoundTitle'))}
               </Text>
               <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-                {i18n.t('iCloudRestoreFoundSummary', {
+                {i18n.t(syncKey('iCloudRestoreFoundSummary'), {
                   device:
-                    probe.remote.deviceName || i18n.t('iCloudAnotherDevice'),
+                    probe.remote.deviceName ||
+                    i18n.t(syncKey('iCloudAnotherDevice')),
                   relative: formatRelative(probe.remote.writtenAt),
                 })}
               </Text>
@@ -653,7 +709,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                     lineHeight: 16,
                   }}
                 >
-                  {i18n.t('iCloudRestoreFoundSyncNote')}
+                  {i18n.t(syncKey('iCloudRestoreFoundSyncNote'))}
                 </Text>
               )}
             </View>
@@ -662,6 +718,15 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       </View>
 
       <View style={{ gap: 10 }}>
+        {probe.state === 'needsConnect' && (
+          <ActionButton onPress={connectDrive} disabled={connecting}>
+            {connecting ? (
+              <Spinner color={theme.colors.textInverse} />
+            ) : (
+              i18n.t('googleDriveRestoreConnect')
+            )}
+          </ActionButton>
+        )}
         {probe.state === 'found' && (
           <ActionButton onPress={handleRestore} disabled={restoring}>
             {restoring ? (
@@ -680,14 +745,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                     fontFamily: theme.fonts.bold,
                   }}
                 >
-                  {i18n.t('iCloudRestoreRestoring')}
+                  {i18n.t(syncKey('iCloudRestoreRestoring'))}
                 </Text>
               </View>
             ) : (
               i18n.t(
                 canEnableICloudSync
-                  ? 'iCloudRestoreActionWithSync'
-                  : 'iCloudRestoreAction'
+                  ? syncKey('iCloudRestoreActionWithSync')
+                  : syncKey('iCloudRestoreAction')
               )
             )}
           </ActionButton>
@@ -718,21 +783,21 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 textDecorationLine: 'underline',
               }}
             >
-              {i18n.t('iCloudRestoreRetry')}
+              {i18n.t(syncKey('iCloudRestoreRetry'))}
             </Text>
           </Button>
         )}
         <Button
           onPress={() => {
             analytics.capture('onboarding_import_skipped', {
-              import_type: 'icloud',
+              import_type: importType(),
               status: probe.state,
             })
             set(FRESH_SETUP_PREFERENCES)
             goNext()
           }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}
-          disabled={restoring}
+          disabled={restoring || connecting}
         >
           <Text
             style={{
@@ -741,7 +806,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             }}
           >
             {probe.state === 'found'
-              ? i18n.t('iCloudRestoreSkip')
+              ? i18n.t(syncKey('iCloudRestoreSkip'))
               : i18n.t('continue')}
           </Text>
         </Button>

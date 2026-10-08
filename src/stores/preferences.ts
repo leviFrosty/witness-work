@@ -823,6 +823,18 @@ export const PREFERENCE_DEFAULTS = {
    */
   iCloudAccountChangedAt: null as number | null,
   /**
+   * Android: a hash of the Google Account whose Drive app data folder this
+   * device syncs with (ADR 0019), or null when Google Drive isn't connected.
+   * Never the email. Compared with `iCloudIdentityToken`, which on Android
+   * holds the account sync last ran under, to notice an account switch.
+   */
+  googleDriveAccountId: null as string | null,
+  /**
+   * Android: set when Google no longer grants Drive access silently (revoked,
+   * or consent expired). Sync waits until the user reconnects.
+   */
+  googleDriveNeedsReconnect: false,
+  /**
    * Per-key epoch ms of the most recent change for syncable preference keys.
    * Merged last-writer-wins per key so a theme toggle on device A doesn't
    * revert a publisher-type change on device B.

@@ -159,6 +159,10 @@ interface PlaceSearchInputProps {
   searchEnabled?: boolean
   placeholder: string
   accessibilityLabel: string
+  /** Drops the field's border and fill, for a field that sits in a row. */
+  borderless?: boolean
+  onFocus?: () => void
+  onBlur?: () => void
 }
 
 /**
@@ -175,6 +179,9 @@ export default function PlaceSearchInput({
   searchEnabled = true,
   placeholder,
   accessibilityLabel,
+  borderless,
+  onFocus,
+  onBlur,
 }: PlaceSearchInputProps) {
   const theme = useTheme()
   const { location, status, requestLocation, refreshStatus } = useLocation()
@@ -270,9 +277,19 @@ export default function PlaceSearchInput({
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <MyTextInput
-          style={{ flex: 1, minWidth: 0 }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            ...(borderless && {
+              borderWidth: 0,
+              backgroundColor: 'transparent',
+              paddingHorizontal: 0,
+            }),
+          }}
           value={query}
           onChangeText={onChangeQuery}
+          onFocus={onFocus}
+          onBlur={onBlur}
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textAlt}
           accessibilityLabel={accessibilityLabel}

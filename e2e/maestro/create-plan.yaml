@@ -1,0 +1,39 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => p.title === 'Morning cart' && p.minutes === 120 && p.note === 'Bring tracts')
+appId: com.leviwilkerson.jwtimedev
+name: Create a one-time Plan from the bottom dock
+---
+- extendedWaitUntil:
+    visible: Quick Action
+    timeout: 60000
+- tapOn: Quick Action
+- tapOn: Create Plan
+- assertVisible: Add One Time Plan
+# Recurring adds the frequency controls to the dock and End Date to the details.
+- tapOn:
+    id: plan-kind-recurring
+- assertVisible: Recurrence
+- assertVisible: End Date
+- tapOn:
+    id: plan-kind-one-time
+- assertNotVisible: Recurrence
+- tapOn:
+    id: plan-title-input
+- inputText: Morning cart
+- hideKeyboard
+# Note opens in place with the cursor already in it.
+- tapOn:
+    id: plan-note-row
+- inputText: Bring tracts
+# Return adds a line in a note, so Done closes the keyboard.
+- tapOn:
+    id: plan-note-done
+- tapOn:
+    id: plan-duration-pill
+# Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.
+- tapOn: '2'
+- tapOn:
+    id: plan-picker-done
+- tapOn:
+    id: plan-save
+- assertNotVisible: Add One Time Plan

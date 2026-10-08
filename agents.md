@@ -45,8 +45,17 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).
 
-- **Report back with screenshots.** In your final message, embed the changed screens as Markdown images with absolute paths, e.g. `![Buddy detail](/tmp/ww-shots/buddy-detail.png)`. T3 Code shows them inline. Add one line saying what each shows.
-- **No images in tables in your messages.** T3 Code doesn't render images inside Markdown tables. For a before/after pair in a chat reply, put each image on its own line under a short label (`Before:`, then the image; `After:`, then the image). Tables of images are for PR bodies only.
+- **Report back with screenshots.** In your final message, embed the changed screens as Markdown images with absolute paths. T3 Code renders images inline, so any text on the same line as an image, or on the line right after it, wraps beside the image. Give each image its own paragraph: a one-line caption, a blank line, the image alone on its line, then a blank line before anything else. A single line break isn't enough; Markdown joins the lines.
+
+  ```markdown
+  Buddy detail with the new share button:
+
+  ![Buddy detail](/tmp/ww-shots/buddy-detail.png)
+
+  The next paragraph starts here.
+  ```
+
+- **No images in tables in your messages.** T3 Code doesn't render images inside Markdown tables. For a before/after pair in a chat reply, use the same layout twice: `Before:`, blank line, image, blank line, `After:`, blank line, image. Tables of images are for PR bodies only.
 - **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table in the PR body. A brand-new screen has no before; label it "New screen".
 - **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree and capture it there.
 - **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Add dark mode or iPad only where the change looks different there.

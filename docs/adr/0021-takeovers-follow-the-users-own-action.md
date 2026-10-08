@@ -67,8 +67,8 @@ Buddies' social news (`badge.new`, `badge.reaction`) arrives as ordinary alerts:
 
 5. **Buddies' news is quiet.**
    - `badge.new` and `badge.reaction` pushes are passive: no sound, the screen doesn't wake, and no banner while the app is open.
-   - Pushes never name anyone until a Notification Service Extension can decrypt names on the device.
-   - Tapping a push opens the badge it's about, once the relay sends the event's `seq`.
+   - The relay's template names no one. The device names the buddy and the badge itself, from the sealed event the push carries (named alerts, `docs/buddies-protocol.md`): the Notification Service Extension on iOS, the push task on Android, where badge news goes in the quiet `buddies_news` channel.
+   - Tapping a push opens the badge it's about: the relay sends the event's `seq`.
 
 6. **Buddies' news lives in the notification bell, with everything else.** We're not adding a separate feed or a Buddies tab. In the bell, social items:
    - are grouped under "From your buddies", below items that need an answer;

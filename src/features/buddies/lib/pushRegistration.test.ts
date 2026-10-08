@@ -26,6 +26,7 @@ const {
       apnsTopic?: string
       pushService?: string
       fcmToken?: string
+      appAlerts?: boolean
       templates: Record<string, unknown>
     }) => 'registered'
   ),
@@ -209,7 +210,11 @@ describe('registerBuddiesPush', () => {
     platform.OS = 'android'
     await registerBuddiesPush()
     const device = registerPush.mock.calls[0][0]
-    expect(device).toMatchObject({ pushService: 'fcm', fcmToken: 'token' })
+    expect(device).toMatchObject({
+      pushService: 'fcm',
+      fcmToken: 'token',
+      appAlerts: true,
+    })
     expect(device).not.toHaveProperty('apnsToken')
     expect(device).not.toHaveProperty('apnsTopic')
     // Badge alerts register on Android too, now that Buddies is there.

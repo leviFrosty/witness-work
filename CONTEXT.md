@@ -196,6 +196,10 @@ _Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pair
 Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, and planned days and times for the next 8 weeks. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
 
+**Buddies Alert**:
+A system notification about something a buddy did: accepted an invite, invited the User to a Plan or Follow-up, changed or canceled one, answered, asked to join, earned a **Badge**, or reacted to one. It names the buddy (by the User's nickname for them, if any) and gives the day and time or the Badge, never a householder's details or a Plan's text. The device words it from the encrypted event the push carries; the relay only has a generic template, which shows when the device can't read the event.
+_Avoid_: "push" in UI copy.
+
 ### Assistant
 
 **Assistant**:
@@ -335,7 +339,7 @@ A Badge for a single first, with no levels: First Bible Study and First Buddy. H
 _Avoid_: "secret badge", "achievement".
 
 **Badge Reaction**:
-A buddy's one-tap reply to one of the User's **Badges** (the Encourage idea, shipped for Badges): one of six preset reactions (🎉 🎊 🔥 👏 👍 🙌), never free text. One per buddy and Badge; choosing another replaces it. Only active buddies react, only to Badges on the User's **Buddy Card**, and only the Badge's owner sees who reacted, on that Badge's full-screen view and in the notification bell. Its alert is generic ("A buddy reacted to your badge") and follows Badge Alerts.
+A buddy's one-tap reply to one of the User's **Badges** (the Encourage idea, shipped for Badges): one of six preset reactions (🎉 🎊 🔥 👏 👍 🙌), never free text. One per buddy and Badge; choosing another replaces it. Only active buddies react, only to Badges on the User's **Buddy Card**, and only the Badge's owner sees who reacted, on that Badge's full-screen view and in the notification bell. Its **Buddies Alert** names the buddy and the Badge ("Anna reacted 🔥 to your badge") and follows Badge Alerts.
 _Avoid_: "like", "comment", "kudos", "emoji reply".
 
 ### Update intros

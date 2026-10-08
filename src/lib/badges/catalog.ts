@@ -97,7 +97,7 @@ export const ALL_BADGE_KEYS: readonly BadgeKey[] = [
  * Which earned badge to name when several arrive together: the rarer collection
  * first, then the higher level.
  */
-const ANNOUNCE_ORDER: readonly BadgeArtId[] = [
+export const ANNOUNCE_ORDER: readonly BadgeArtId[] = [
   'yearRound',
   'monthsShared',
   'keepingInTouch',

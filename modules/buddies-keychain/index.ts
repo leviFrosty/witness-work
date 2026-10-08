@@ -24,6 +24,16 @@ interface BuddiesKeychainNative {
   deleteRootSeed(): void
   /** Android only. */
   rootSeedBackup?(): RootSeedBackup
+  /**
+   * Version 2, on iOS: stores the named-alert snapshot (JSON) where the
+   * Notification Service Extension reads it; null deletes it.
+   */
+  setAlertContext?(json: string | null): void
+  /**
+   * Version 2, on iOS: how the extension's Buddies alerts turned out since the
+   * last call (counts by outcome), then forgets them.
+   */
+  takeAlertOutcomes?(): Record<string, number>
 }
 
 const native =
@@ -65,4 +75,34 @@ export function deleteRootSeed(): void {
 export function rootSeedBackup(): RootSeedBackup | null {
   if (!isAvailable() || !native!.rootSeedBackup) return null
   return native!.rootSeedBackup()
+}
+
+/**
+ * Whether this binary can hand Buddies alert keys to its Notification Service
+ * Extension (iOS builds with version 2 of the module).
+ */
+export function isAlertContextAvailable(): boolean {
+  return (
+    isAvailable() &&
+    Platform.OS === 'ios' &&
+    (native!.buddiesKeychainVersion ?? 0) >= 2 &&
+    native!.setAlertContext !== undefined
+  )
+}
+
+/**
+ * On iOS, the snapshot the Notification Service Extension words Buddies alerts
+ * from (see `src/app/buddies/buddiesAlertContext.ts`); null deletes it. It's
+ * kept in a Keychain item shared only with the extension, readable after the
+ * first unlock and never synced or backed up.
+ */
+export function setAlertContext(json: string | null): void {
+  if (!isAlertContextAvailable()) return
+  native!.setAlertContext!(json)
+}
+
+/** On iOS, the extension's alert outcomes since the last call, cleared. */
+export function takeAlertOutcomes(): Record<string, number> {
+  if (!isAlertContextAvailable() || !native!.takeAlertOutcomes) return {}
+  return native!.takeAlertOutcomes()
 }

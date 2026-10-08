@@ -9,19 +9,33 @@ vi.mock('expo-notifications', () => ({
   BackgroundNotificationTaskResult: { NoData: 1, NewData: 2, Failed: 3 },
   registerTaskAsync: vi.fn(async () => undefined),
 }))
-vi.mock('expo-task-manager', () => ({
-  isTaskDefined: () => false,
-  defineTask: vi.fn(),
-}))
 vi.mock('../../../modules/buddies-keychain', () => ({
   isAvailable: () => true,
 }))
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn() } }))
-vi.mock('@/features/buddies/lib/buddiesService', () => ({
-  buddiesEngine: { sync: vi.fn() },
+const { sync, postBuddiesAlert, defineTask, calls } = vi.hoisted(() => {
+  const calls: string[] = []
+  return {
+    calls,
+    sync: vi.fn(async () => {
+      calls.push('sync')
+    }),
+    postBuddiesAlert: vi.fn(async () => {
+      calls.push('alert')
+    }),
+    defineTask: vi.fn(),
+  }
+})
+vi.mock('expo-task-manager', () => ({
+  isTaskDefined: () => false,
+  defineTask,
 }))
+vi.mock('@/features/buddies/lib/buddiesService', () => ({
+  buddiesEngine: { sync },
+}))
+vi.mock('@/app/buddies/buddiesPushAlerts', () => ({ postBuddiesAlert }))
 vi.mock('@/features/buddies/stores/buddiesStore', () => ({
-  useBuddies: { getState: () => ({ registeredInboxId: null, syncSeq: 0 }) },
+  useBuddies: { getState: () => ({ registeredInboxId: 'inbox', syncSeq: 0 }) },
 }))
 
 const { isBuddiesPush } = await import('./buddiesBackgroundSync')
@@ -60,5 +74,32 @@ describe('isBuddiesPush', () => {
         notification: {},
       } as unknown as Notifications.NotificationTaskPayload)
     ).toBe(false)
+  })
+})
+
+describe('the background push task', () => {
+  const run = (data: Record<string, unknown>) => {
+    const [[, task]] = defineTask.mock.calls as unknown as [
+      [string, (body: { data: unknown }) => Promise<unknown>],
+    ]
+    return task({ data: payload(data) })
+  }
+
+  it("posts the push's alert, then syncs what it announced", async () => {
+    calls.length = 0
+    const data = {
+      fallbackTitle: 'New invitation',
+      body: JSON.stringify({ ww: { kind: 'plan.invite', seq: 3 } }),
+    }
+    await run(data)
+    expect(postBuddiesAlert).toHaveBeenCalledWith(data)
+    expect(calls).toEqual(['alert', 'sync'])
+  })
+
+  it('still syncs when posting the alert fails', async () => {
+    calls.length = 0
+    postBuddiesAlert.mockRejectedValueOnce(new Error('boom'))
+    await run({ dataString: JSON.stringify({ ww: { kind: 'badge.new' } }) })
+    expect(calls).toEqual(['sync'])
   })
 })

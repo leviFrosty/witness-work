@@ -3,6 +3,12 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Notifications from 'expo-notifications'
 
+import { useBuddiesAlertContext } from '@/app/buddies/buddiesAlertContext'
+import { reportAlertOutcomes } from '@/app/buddies/buddiesAlertOutcomes'
+import {
+  postBuddiesAlert,
+  remoteMessageData,
+} from '@/app/buddies/buddiesPushAlerts'
 import { logger } from '@/lib/logger'
 import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
@@ -139,6 +145,7 @@ export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const running = enabled && started
+  useBuddiesAlertContext()
 
   // What the engine checks before making or sending badge news.
   useEffect(() => {
@@ -235,12 +242,14 @@ export default function BuddiesRuntime() {
     })
     syncNow()
     checkPushRegistration()
+    reportAlertOutcomes()
     if (AppState.currentState === 'active') live.start()
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         buddiesEngine.expire()
         syncNow()
         checkPushRegistration()
+        reportAlertOutcomes()
         live.start()
       } else if (state === 'background') {
         live.stop()
@@ -342,8 +351,14 @@ export default function BuddiesRuntime() {
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
-        const push = buddiesPushData(notification)
-        if (push) syncAfterPush()
+        // Pushes only: Android's own alert for one carries the same marker.
+        const trigger = notification.request.trigger as {
+          type?: string
+        } | null
+        if (trigger?.type !== 'push') return
+        if (!buddiesPushData(notification)) return
+        syncAfterPush()
+        void postBuddiesAlert(remoteMessageData(notification)).catch(logFailure)
       }
     )
     return () => {

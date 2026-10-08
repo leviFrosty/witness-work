@@ -169,8 +169,6 @@
   "applyCrop": "Apply",
   "cropPhotoHint": "Pinch to zoom, drag to reposition",
   "profileStatStreak": "Streak",
-  "profileStatStreakUnit": "week",
-  "profileStatStreakUnit_plural": "weeks",
   "profileStatStreakUnitMonth": "month",
   "profileStatStreakUnitMonth_plural": "months",
   "profileStatHours": "Total hours",

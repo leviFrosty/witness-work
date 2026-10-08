@@ -27,6 +27,9 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
+import useRoleForMonth from '@/hooks/useRoleForMonth'
+import { getEntryMode } from '@/lib/publisherCapabilities'
+import useServiceReport from '@/stores/serviceReport'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
@@ -41,7 +44,6 @@ import i18n from '@/lib/locales'
 import { getStartDateLabels } from '@/constants/publisher'
 import {
   consecutiveMonthsStreak,
-  consecutiveWeeksStreak,
   daysLogged,
   minutesInTrailingDays,
   totalMinutes,
@@ -117,6 +119,8 @@ const ProfileDetailOverlay = () => {
   const { type: publisher, tracksTenure, entryMode } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
+  const { serviceReports } = useServiceReport()
+  const roleForMonth = useRoleForMonth()
   const daily = useDailyMinutes()
 
   const stats = useMemo(() => {
@@ -124,13 +128,14 @@ const ProfileDetailOverlay = () => {
     return {
       totalMinutes: total,
       days: daysLogged(daily),
-      streak:
-        entryMode === 'hours'
-          ? consecutiveMonthsStreak(daily)
-          : consecutiveWeeksStreak(daily),
+      streak: consecutiveMonthsStreak({
+        daily,
+        reports: serviceReports,
+        entryModeFor: (month) => getEntryMode(roleForMonth(month)),
+      }),
       last30Minutes: minutesInTrailingDays(daily, 30),
     }
-  }, [daily, entryMode])
+  }, [daily, serviceReports, roleForMonth])
   const totalDisplay = useFormattedMinutes(stats.totalMinutes)
   const last30Display = useFormattedMinutes(stats.last30Minutes)
 
@@ -266,13 +271,9 @@ const ProfileDetailOverlay = () => {
                   label={i18n.t('profileStatStreak')}
                   value={String(stats.streak)}
                   sub={i18n.t(
-                    entryMode === 'hours'
-                      ? stats.streak === 1
-                        ? 'profileStatStreakUnitMonth'
-                        : 'profileStatStreakUnitMonth_plural'
-                      : stats.streak === 1
-                        ? 'profileStatStreakUnit'
-                        : 'profileStatStreakUnit_plural'
+                    stats.streak === 1
+                      ? 'profileStatStreakUnitMonth'
+                      : 'profileStatStreakUnitMonth_plural'
                   )}
                 />
                 {entryMode === 'hours' ? (

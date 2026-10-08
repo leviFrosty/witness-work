@@ -92,8 +92,6 @@
   "applyCrop": "적용",
   "cropPhotoHint": "핀치하여 확대, 드래그하여 위치 변경",
   "profileStatStreak": "연속",
-  "profileStatStreakUnit": "주",
-  "profileStatStreakUnit_plural": "주",
   "profileStatStreakUnitMonth": "한 달",
   "profileStatStreakUnitMonth_plural": "몇 달",
   "profileStatHours": "총 시간",

@@ -92,8 +92,6 @@
   "applyCrop": "Застосувати",
   "cropPhotoHint": "Затисніть, щоб збільшити, перетягніть, щоб змінити позицію",
   "profileStatStreak": "Смуга",
-  "profileStatStreakUnit": "тиждень",
-  "profileStatStreakUnit_plural": "тижнів",
   "profileStatStreakUnitMonth": "місяць",
   "profileStatStreakUnitMonth_plural": "місяці",
   "profileStatHours": "Всього годин",

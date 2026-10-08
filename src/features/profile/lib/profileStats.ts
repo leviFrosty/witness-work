@@ -1,6 +1,9 @@
 import moment from 'moment'
-import { TimeEntriesByYear } from '@/types/timeEntry'
+import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
+import type { CalendarMonth } from '@/lib/monthlyGoals'
+import type { PublisherCapabilities } from '@/lib/publisherCapabilities'
 import { storedDayKey } from '@/lib/normalizeDate'
+import { getMonthsReports } from '@/lib/serviceReport'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
@@ -41,61 +44,50 @@ export const consecutiveDaysStreak = (
 }
 
 /**
- * Counts trailing weeks with at least one day of logged service, ending with
- * the current ISO week. Stops counting at the first empty week.
+ * A Time Entry that says the User shared that month. Both halves of a Time
+ * Rollover are bookkeeping, not ministry, and a negative entry never is.
  */
-export const consecutiveWeeksStreak = (
-  daily: Map<string, number>,
-  now: Date = new Date()
-): number => {
-  let streak = 0
-  const cursor = moment(now).startOf('isoWeek')
-  // Cap iterations to avoid infinite loops on bad data.
-  for (let i = 0; i < 520; i++) {
-    let hasDay = false
-    for (let d = 0; d < 7; d++) {
-      const key = dayKey(cursor.clone().add(d, 'days'))
-      if ((daily.get(key) || 0) > 0) {
-        hasDay = true
-        break
-      }
-    }
-    if (!hasDay) {
-      // Allow the current week to be empty without breaking the streak —
-      // a user mid-week hasn't "lost" their streak yet.
-      if (i === 0) {
-        cursor.subtract(1, 'week')
-        continue
-      }
-      break
-    }
-    streak++
-    cursor.subtract(1, 'week')
-  }
-  return streak
+const isCountableEntry = (entry: TimeEntry) =>
+  entry.rollover !== true && (entry.hours || 0) * 60 + (entry.minutes || 0) >= 0
+
+export type MonthsStreakInput = {
+  daily: Map<string, number>
+  reports: TimeEntriesByYear
+  /** Entry mode of the role that applied to `month`, per the Role History. */
+  entryModeFor: (month: CalendarMonth) => PublisherCapabilities['entryMode']
 }
 
 /**
- * Counts trailing months with at least one day of logged service, ending with
- * the current month. Stops counting at the first empty month.
+ * Counts trailing months of service, ending with the current month. Stops
+ * counting at the first month that doesn't count. Each month is judged by the
+ * role that applied then: a checkbox month counts when the User shared (any
+ * Time Entry, even 0h, except Time Rollover entries), an hours month when a day
+ * has logged minutes.
  */
 export const consecutiveMonthsStreak = (
-  daily: Map<string, number>,
+  { daily, reports, entryModeFor }: MonthsStreakInput,
   now: Date = new Date()
 ): number => {
   let streak = 0
   const cursor = moment(now).startOf('month')
   for (let i = 0; i < 600; i++) {
-    let hasDay = false
-    const daysInMonth = cursor.daysInMonth()
-    for (let d = 0; d < daysInMonth; d++) {
-      const key = dayKey(cursor.clone().add(d, 'days'))
-      if ((daily.get(key) || 0) > 0) {
-        hasDay = true
-        break
+    const target = { year: cursor.year(), month: cursor.month() }
+    let counts = false
+    if (entryModeFor(target) === 'checkbox') {
+      counts = getMonthsReports(reports, target.month, target.year).some(
+        isCountableEntry
+      )
+    } else {
+      const daysInMonth = cursor.daysInMonth()
+      for (let d = 0; d < daysInMonth; d++) {
+        const key = dayKey(cursor.clone().add(d, 'days'))
+        if ((daily.get(key) || 0) > 0) {
+          counts = true
+          break
+        }
       }
     }
-    if (!hasDay) {
+    if (!counts) {
       // Allow the current month to be empty without breaking the streak —
       // a user mid-month hasn't "lost" their streak yet.
       if (i === 0) {

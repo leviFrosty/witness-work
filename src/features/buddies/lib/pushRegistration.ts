@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as Application from 'expo-application'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
@@ -6,7 +7,7 @@ import type {
   BuddyPushKind,
   JoinRequestPushKind,
 } from '@/features/buddies/lib/engine'
-import type { PushTemplate } from '@/features/buddies/lib/relay'
+import type { PushAddress, PushTemplate } from '@/features/buddies/lib/relay'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -66,12 +67,48 @@ const joinRequestTemplates = (): Record<JoinRequestPushKind, PushTemplate> => {
 }
 
 /**
+ * The Android channel Buddies alerts arrive in; the relay names it in every FCM
+ * message. Created before registering, so it exists before any alert.
+ */
+const BUDDIES_CHANNEL_ID = 'buddies'
+
+function ensureBuddiesChannel() {
+  return Notifications.setNotificationChannelAsync(BUDDIES_CHANNEL_ID, {
+    name: i18n.t('buddies_title'),
+    importance: Notifications.AndroidImportance.HIGH,
+  })
+}
+
+/** APNs on iOS; FCM, through Google Play services, on Android. */
+async function pushAddress(): Promise<PushAddress> {
+  const token = await Notifications.getDevicePushTokenAsync()
+  if (Platform.OS === 'android') {
+    await ensureBuddiesChannel()
+    return { pushService: 'fcm', fcmToken: String(token.data) }
+  }
+  const environment =
+    await Application.getIosPushNotificationServiceEnvironmentAsync()
+  return {
+    apnsToken: String(token.data),
+    // Dev-client and simulator builds talk to the APNs sandbox.
+    apnsEnvironment: environment === 'production' ? 'production' : 'sandbox',
+    // Beta and production are separate apps with their own APNs topic.
+    ...(Application.applicationId
+      ? { apnsTopic: Application.applicationId }
+      : {}),
+  }
+}
+
+/**
  * Registrations run one after another, so the last change is what the relay
  * keeps.
  */
 let registration: Promise<void> = Promise.resolve()
 
-/** A registration that hangs (the APNs token can) stops holding up the next. */
+/**
+ * A registration that hangs (the APNs token can, and so can the FCM token
+ * without Google Play services) stops holding up the next.
+ */
 const REGISTRATION_TIMEOUT_MS = 30 * 1000
 
 function withTimeout(work: Promise<void>): Promise<void> {
@@ -86,11 +123,11 @@ function withTimeout(work: Promise<void>): Promise<void> {
 }
 
 /**
- * Registers this device for Buddies pushes once Buddies has started and iOS
- * allows notifications. With Buddies notifications off here, it registers no
- * templates, so the relay sends this device nothing. An unchanged registration
- * is only re-sent once a day, so calling this often is cheap. Call it again
- * when buddies or join request mutes change.
+ * Registers this device for Buddies pushes once Buddies has started and the
+ * system allows notifications. With Buddies notifications off here, it
+ * registers no templates, so the relay sends this device nothing. An unchanged
+ * registration is only re-sent once a day, so calling this often is cheap. Call
+ * it again when buddies or join request mutes change.
  */
 export function registerBuddiesPush(): Promise<void> {
   const run = registration.then(() => withTimeout(register()))
@@ -112,17 +149,8 @@ async function register() {
     return
   }
   try {
-    const token = await Notifications.getDevicePushTokenAsync()
-    const environment =
-      await Application.getIosPushNotificationServiceEnvironmentAsync()
     const outcome = await buddiesEngine.registerPush({
-      apnsToken: String(token.data),
-      // Dev-client and simulator builds talk to the APNs sandbox.
-      apnsEnvironment: environment === 'production' ? 'production' : 'sandbox',
-      // Beta and production are separate apps with their own APNs topic.
-      ...(Application.applicationId
-        ? { apnsTopic: Application.applicationId }
-        : {}),
+      ...(await pushAddress()),
       templates: notificationsEnabled
         ? { ...pushTemplates(), ...joinRequestTemplates() }
         : {},

@@ -66,6 +66,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: IS_DEV
         ? 'com.leviwilkerson.jwtimedev'
         : 'com.leviwilkerson.jwtime',
+      // Firebase Cloud Messaging for Buddies pushes (Firebase project
+      // `turing-striker-403102`). Lists both the production and dev packages;
+      // nothing in it is secret, as every APK carries it.
+      googleServicesFile: './google-services.json',
       adaptiveIcon: {
         foregroundImage: './src/assets/adaptive-icon.png',
         monochromeImage: './src/assets/adaptive-icon-monochrome.png',
@@ -87,6 +91,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
               scheme: 'https',
               host: 'ww-proxy.leviwilkerson.com',
               pathPrefix: '/c/',
+            },
+            // Buddy invites (`/b#1<secret>`); the secret stays in the fragment,
+            // which Android hands to the app with the rest of the link.
+            {
+              scheme: 'https',
+              host: 'ww-proxy.leviwilkerson.com',
+              path: '/b',
             },
           ],
         },
@@ -243,6 +254,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-background-task',
       // Buddies pushes carry `content-available`, so iOS wakes the app to pull
       // what they announced before it's opened (buddiesBackgroundSync.ts).
+      // Android gets data-only FCM messages, which wake the same task.
       // Otherwise the defaults Expo already applies for this package.
       ['expo-notifications', { enableBackgroundRemoteNotifications: true }],
       'expo-sqlite',

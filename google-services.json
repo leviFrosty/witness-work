@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "53605912655",
+    "project_id": "turing-striker-403102",
+    "storage_bucket": "turing-striker-403102.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53605912655:android:4f8398a1893041b4c65a3a",
+        "android_client_info": {
+          "package_name": "com.leviwilkerson.jwtime"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-1tQgryEmlNXNARppBzAMbpvkwMRk0Us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53605912655:android:d8089507112ba05dc65a3a",
+        "android_client_info": {
+          "package_name": "com.leviwilkerson.jwtimedev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-1tQgryEmlNXNARppBzAMbpvkwMRk0Us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,6 +16,7 @@ import {
 import {
   isRelayError,
   OwnerAuth,
+  PushAddress,
   PushTemplate,
   RelayClient,
   RelaySyncResponse,
@@ -24,6 +25,7 @@ import {
 import {
   BuddyAvatar,
   BuddyCardDay,
+  BuddyPlatform,
   buddyCardSchema,
   BuddyStreak,
   joinRequestSchema,
@@ -107,6 +109,19 @@ export type BuddiesEngineDeps = {
   getStreak?: () => BuddyStreak | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
+  /** This device's platform, told to new buddies for pairing analytics. */
+  platform?: BuddyPlatform
+  /**
+   * A pairing just completed: the inviter confirmed (`inviter`), or this User's
+   * accepted invite was confirmed (`invitee`). For analytics only.
+   */
+  onPaired?: (pairing: BuddyPairing) => void
+}
+
+export type BuddyPairing = {
+  role: 'inviter' | 'invitee'
+  /** Absent when the buddy's build doesn't send it. */
+  buddyPlatform?: BuddyPlatform
 }
 
 export type BuddyInviteErrorReason =
@@ -378,6 +393,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       dhPub: me.dhPub,
       inboxId: me.inboxId,
       offer: { plans: 'daysTimes' },
+      ...(deps.platform ? { platform: deps.platform } : {}),
     }
   }
 
@@ -713,7 +729,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         kind: 'pair.confirmed',
         blob: seal(
           outgoing.contentKey,
-          json({ v: 1, ...compactProfile(profile()) }),
+          json({
+            v: 1,
+            ...compactProfile(profile()),
+            ...(deps.platform ? { platform: deps.platform } : {}),
+          }),
           aad.event(buddy.inboxId, outgoing.slotId, eventId),
           nonce()
         ),
@@ -734,6 +754,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       removedBuddies: omitKey(current.removedBuddies, buddy.inboxId),
     }))
     dropInvite(inviteId)
+    deps.onPaired?.({ role: 'inviter', buddyPlatform: claim.platform })
     await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
     await saveRoster(me)
     await publishCards().catch(() => {})
@@ -951,6 +972,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           tenure: card.tenure,
           dhPub: card.dhPub,
           inboxId: card.inboxId,
+          ...(card.platform ? { platform: card.platform } : {}),
           receivedAt: deps.now(),
           expiresAt: invite.expiresAt,
         },
@@ -1009,6 +1031,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         name: body.name,
         seq: event.seq,
       })
+      deps.onPaired?.({ role: 'invitee', buddyPlatform: body.platform })
       return true
     } catch {
       return false
@@ -2263,15 +2286,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * device since (a rejected token, or evicted for a newer device), and a
    * re-sent registration keeps an active device from being the one evicted.
    */
-  async function registerPush(device: {
-    apnsToken: string
-    apnsEnvironment: 'sandbox' | 'production'
-    /** The app's bundle id, so Beta and production builds get their own topic. */
-    apnsTopic?: string
-    /** A kind left out is never pushed to this device. */
-    templates: Partial<Record<BuddyPushKind, PushTemplate>> &
-      Record<JoinRequestPushKind, PushTemplate>
-  }): Promise<PushRegistrationOutcome> {
+  async function registerPush(
+    device: PushAddress & {
+      /** A kind left out is never pushed to this device. */
+      templates: Partial<Record<BuddyPushKind, PushTemplate>> &
+        Record<JoinRequestPushKind, PushTemplate>
+    }
+  ): Promise<PushRegistrationOutcome> {
     const me = await ensureInbox()
     let deviceId = store.getState().deviceId
     if (!deviceId) {

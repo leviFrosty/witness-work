@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { UsersRound as UsersRoundIcon } from 'lucide-react-native'
 import moment from 'moment'
 import { useToastController } from '@tamagui/toast'
+import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import Switch from '@/components/ui/Switch'
 import apis from '@/constants/apis'
 import useNow from '@/hooks/useNow'
@@ -140,12 +141,15 @@ export default function BuddiesTools() {
     session: { syncing, failure, relayDisabled },
     lastManualSync,
     push: {
+      service: Platform.OS === 'android' ? 'fcm' : 'apns',
       notificationsEnabled,
       registeredAt: pushRegisteredAt
         ? new Date(pushRegisteredAt).toISOString()
         : null,
       device: shortId(deviceId),
     },
+    // Android: where Block Store keeps the root seed (iOS: iCloud Keychain).
+    seedBackup: BuddiesKeychain.rootSeedBackup(),
     live: { ...live, log: readableLog(live) },
     relayCheck: relayCheck.report,
   }
@@ -256,6 +260,12 @@ export default function BuddiesTools() {
           label='Push registered'
           value={`${clock(pushRegisteredAt)} · ${shortId(deviceId)}`}
         />
+        {Platform.OS === 'android' && (
+          <ToolRow
+            label='Seed backup'
+            value={BuddiesKeychain.rootSeedBackup() ?? '—'}
+          />
+        )}
         <ToolRow
           label={relayCheck.running ? 'Checking…' : 'Run relay check'}
           disabled={!started || relayCheck.running}

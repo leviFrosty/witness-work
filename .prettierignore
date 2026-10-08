@@ -8,3 +8,6 @@ src/locales/**
 # Symlinks to shared Stopwatch Swift sources (canonical files live in
 # modules/stopwatch-bridge/ios/). Prettier errors on explicitly-staged symlinks.
 targets/widgets/Stopwatch/*.swift
+# Firebase config, byte for byte as Firebase writes it: it is a native
+# fingerprint input, so reformatting it forces a native rebuild.
+google-services.json

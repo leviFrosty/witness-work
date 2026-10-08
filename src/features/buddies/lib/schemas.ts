@@ -62,6 +62,14 @@ const profileFields = {
   tenure: buddyTenureSchema.optional(),
 }
 
+/**
+ * The sender's platform, for pairing analytics only. Optional and lenient: an
+ * unknown value reads as absent rather than spoiling the whole card.
+ */
+export const BUDDY_PLATFORMS = ['ios', 'android'] as const
+export type BuddyPlatform = (typeof BUDDY_PLATFORMS)[number]
+const buddyPlatformSchema = z.enum(BUDDY_PLATFORMS).optional().catch(undefined)
+
 export const sharingOfferSchema = z.object({
   plans: z.literal('daysTimes'),
 })
@@ -77,6 +85,7 @@ export const pairingCardSchema = z.object({
   dhPub: b64uKey,
   inboxId: relayId,
   offer: sharingOfferSchema,
+  platform: buddyPlatformSchema,
 })
 export type PairingCard = z.infer<typeof pairingCardSchema>
 
@@ -107,6 +116,7 @@ export const pairConfirmedSchema = z.object({
   v: z.literal(1),
   name: displayName,
   ...profileFields,
+  platform: buddyPlatformSchema,
 })
 
 /**
@@ -244,6 +254,7 @@ export const rosterSchema = z.object({
         ...profileFields,
         dhPub: b64uKey,
         inboxId: relayId,
+        platform: buddyPlatformSchema,
         receivedAt: z.number(),
         expiresAt: z.number(),
       })

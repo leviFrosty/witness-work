@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.buddieskeychain'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.buddieskeychain"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Pinned to an exact patch version (CLAUDE.md). Task-based; no coroutines.
+  implementation 'com.google.android.gms:play-services-auth-blockstore:16.4.0'
+}

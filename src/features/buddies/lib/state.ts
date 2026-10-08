@@ -1,6 +1,7 @@
 import type {
   BuddyAvatar,
   BuddyCardDay,
+  BuddyPlatform,
   BuddyStreak,
   BuddyTenure,
   ShareDetails,
@@ -77,6 +78,8 @@ export type IncomingClaim = {
   tenure?: BuddyTenure
   dhPub: string
   inboxId: string
+  /** The claimer's platform, when their build sends it (analytics only). */
+  platform?: BuddyPlatform
   receivedAt: number
   expiresAt: number
 }

@@ -229,10 +229,12 @@ const sampleBuddyBadges = (random: () => number): SharedBadge[] => {
 }
 
 /**
- * Puts a buddy's "new badge" entry in the Home bell without a second device:
- * from the first active buddy (whose page then lists the badges too), or a
- * made-up "Sample Buddy" when there's none. The bell lists Buddies entries only
- * once Buddies is set up on this device.
+ * Puts a buddy's "new badge" entry in the Home bell without a second device,
+ * from the first active buddy, whose page then lists the badges too. Calling it
+ * again within 20 hours folds the news into the same bell row. With no active
+ * buddy the entry goes to a made-up "Sample Buddy" and the bell leaves it out,
+ * as it does all news without buddies. The bell lists Buddies entries only once
+ * Buddies is set up on this device.
  */
 export const simulateBuddyBadge = (random = Math.random) => {
   const state = useBuddies.getState()
@@ -263,7 +265,7 @@ export const simulateBuddyBadge = (random = Math.random) => {
   return {
     name: entry.name,
     badges,
-    listed: state.registeredInboxId !== null,
+    listed: state.registeredInboxId !== null && !!buddy,
   }
 }
 
@@ -271,8 +273,8 @@ export const simulateBuddyBadge = (random = Math.random) => {
  * Puts a buddy's reaction to one of this User's badges in place without a
  * second device: on that badge's view (`useBadgeReactions`) and in the Home
  * bell, from the first active buddy, replacing their earlier reaction to it.
- * With no active buddy, a made-up "Sample Buddy" gets only the bell entry,
- * since badge views list active buddies only. The badge key defaults to the
+ * With no active buddy, the entry goes to a made-up "Sample Buddy", which
+ * neither the bell nor the badge view lists. The badge key defaults to the
  * newest earned badge and must be earned; `emoji` defaults to a random
  * reaction. No push is sent.
  */
@@ -340,7 +342,7 @@ export const simulateBuddyReaction = (
     emoji: reaction,
     /** Shown on the badge's view (needs an active buddy). */
     onBadge: !!buddy,
-    listed: state.registeredInboxId !== null,
+    listed: state.registeredInboxId !== null && !!buddy,
   }
 }
 

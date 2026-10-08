@@ -115,6 +115,9 @@ vi.mock('@/features/badges/components/BadgeCelebration', () => ({
 vi.mock('@/features/badges/components/BadgesWelcome', () => ({
   default: stub('badges-welcome'),
 }))
+vi.mock('@/features/buddies/components/BadgeAudienceLine', () => ({
+  default: () => null,
+}))
 
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'

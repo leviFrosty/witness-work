@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
@@ -15,37 +16,104 @@ import i18n from '@/lib/locales'
 import type { SharedBadge } from '@/types/badges'
 import {
   BADGE_REACTION_EMOJI,
+  badgeReactionEmoji,
   type BadgeReactionEmoji,
 } from '@/features/buddies/lib/badgeReactions'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
 import { useSentBadgeReaction } from '@/features/buddies/stores/buddiesStore'
 
-const SIZE = 44
+/**
+ * Where the bar sits, which is also `badge_reaction_sent`'s `source`: the badge
+ * view (large, under "Encourage <name>") or a bell row (compact).
+ */
+export type BadgeReactionPlacement = 'badge_view' | 'bell'
+
+const SIZE: Record<BadgeReactionPlacement, number> = {
+  badge_view: 44,
+  bell: 32,
+}
 
 /**
  * Encourage a buddy on one of their badges: the six preset reactions, with the
- * one already sent highlighted. Picking another replaces it.
+ * one already sent highlighted. Picking another replaces it. In a bell row, a
+ * reaction sent before the row showed folds into "You sent 🎉", which opens the
+ * choices again.
  */
 export default function BadgeReactionBar({
   inboxId,
   badge,
   name,
+  placement = 'badge_view',
 }: {
   inboxId: string
   badge: SharedBadge
   /** The buddy's name as this User sees it. */
   name: string
+  placement?: BadgeReactionPlacement
 }) {
   const theme = useTheme()
   const sent = useSentBadgeReaction(inboxId, sharedBadgeKey(badge))
+  const compact = placement === 'bell'
+  const [open, setOpen] = useState(!compact || sent === null)
 
   const send = (emoji: BadgeReactionEmoji) => {
     if (emoji === sent) return
-    analytics.capture('badge_reaction_sent', { emoji, level: badge.l ?? null })
+    analytics.capture('badge_reaction_sent', {
+      emoji,
+      level: badge.l ?? null,
+      source: placement,
+    })
     // Saved before it's sent, so the highlight moves at once, even offline.
     void buddiesEngine.reactToBadge(inboxId, badge, emoji)
   }
+
+  if (!open && sent) {
+    const label = i18n.t('badges_reactionSent', {
+      emoji: badgeReactionEmoji(sent),
+    })
+    return (
+      <Button
+        noTransform
+        onPress={() => setOpen(true)}
+        accessibilityRole='button'
+        accessibilityLabel={`${label}. ${i18n.t('badges_reactionChange')}`}
+        style={{
+          alignSelf: 'flex-start',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingVertical: 4,
+        }}
+      >
+        <Text style={{ color: theme.colors.textAlt }}>{label}</Text>
+        <Text
+          style={{
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('badges_reactionChange')}
+        </Text>
+      </Button>
+    )
+  }
+
+  const choices = (
+    <View style={{ flexDirection: 'row', gap: compact ? 6 : 8 }}>
+      {BADGE_REACTION_EMOJI.map(({ id, emoji }) => (
+        <ReactionButton
+          key={id}
+          emoji={emoji}
+          size={SIZE[placement]}
+          selected={sent === id}
+          hint={compact ? i18n.t('badges_encourage', { name }) : undefined}
+          onPress={() => send(id)}
+        />
+      ))}
+    </View>
+  )
+  if (compact) return choices
 
   return (
     <View style={{ alignItems: 'center', gap: 10 }}>
@@ -58,27 +126,23 @@ export default function BadgeReactionBar({
       >
         {i18n.t('badges_encourage', { name })}
       </Text>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {BADGE_REACTION_EMOJI.map(({ id, emoji }) => (
-          <ReactionButton
-            key={id}
-            emoji={emoji}
-            selected={sent === id}
-            onPress={() => send(id)}
-          />
-        ))}
-      </View>
+      {choices}
     </View>
   )
 }
 
 function ReactionButton({
   emoji,
+  size,
   selected,
+  hint,
   onPress,
 }: {
   emoji: string
+  size: number
   selected: boolean
+  /** Says what a choice does where no label shows it. */
+  hint?: string
   onPress: () => void
 }) {
   const theme = useTheme()
@@ -87,6 +151,7 @@ function ReactionButton({
   const popStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pop.value }],
   }))
+  const fontSize = Math.round(size * 0.48)
 
   return (
     <Button
@@ -100,10 +165,11 @@ function ReactionButton({
       }}
       accessibilityRole='button'
       accessibilityState={{ selected }}
+      accessibilityHint={hint}
       style={{
-        width: SIZE,
-        height: SIZE,
-        borderRadius: SIZE / 2,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: selected
@@ -114,7 +180,9 @@ function ReactionButton({
       }}
     >
       <Animated.View style={popStyle}>
-        <Text style={{ fontSize: 21, lineHeight: 26 }}>{emoji}</Text>
+        <Text style={{ fontSize, lineHeight: Math.round(fontSize * 1.24) }}>
+          {emoji}
+        </Text>
       </Animated.View>
     </Button>
   )

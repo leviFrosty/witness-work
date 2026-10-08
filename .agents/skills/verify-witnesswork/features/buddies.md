@@ -11,6 +11,7 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 - `buddies-plans` marks shared plans on the calendar, and lets the user ask to join.
 - `buddies-plan-details` shows a plan's invited buddies and replies, requests to join (Invite adds them in place), Invite Buddies, and for a plan from a buddy's invitation the organizer and a Going / Can't Make It switch. Can't Make It keeps the page open on the invitation so Going can bring the plan back.
 - `buddies-settings` covers Buddies Settings and Feedback.
+- `buddies-bell` lists Buddies items in the Home bell. Invitations, replies, requests to join and pairings count toward its red number like any item. Buddies' news (a buddy's new badge, a reaction to yours) sits below them under "From your buddies", never counts (only a quiet dot), and offers Encourage inline. See `badges-bell-news` in [`badges.md`](badges.md).
 
 ## How to get to it (user POV)
 
@@ -57,13 +58,13 @@ While the app is in the foreground, Buddies keeps a WebSocket to the relay (`inb
 
 ## Gotchas
 
-- Buddies is iOS-only for now: its Keychain module isn't in Android builds, where the invite screen fails with "Buddies Keychain requires a newer native binary". A worktree also holds only one iOS device (`--ipad` hands back the iPhone). For a second person, pair the app with a headless engine against the local relay; [streaks.md](./streaks.md) has the recipe.
+- A worktree holds only one iOS device (`--ipad` hands back the iPhone). For a second person, use the Android emulator, or pair the app with a headless engine against the local relay; [streaks.md](./streaks.md) has the recipe.
 
 - The flag override only applies to dev builds and survives remote flag refreshes. `wwv flag buddies clear` restores the remote value.
 - Buddies needs the Keychain native module (Keystore and Block Store on Android). On a binary without it, the feature stays hidden even with the flag on.
 - APNs pushes are skipped locally, because `wrangler dev` can't reach APNs. Refresh by reopening the screen. Android alerts work locally with the FCM key (above).
 - The relay's rate limit is 30 requests per minute per IP. Avoid tight loops.
-- For screens that only read Buddies state (Plan Details, the bell), seed made-up buddies, `shareReplies`, `joinRequests`, and `incomingShares` through `__WW_DEV__.stores.buddies.setState(...)` instead of pairing devices. Re-run `wwv flag buddies on` after a reload; the override doesn't survive one.
+- For screens that only read Buddies state (Plan Details, the bell), seed made-up buddies, `shareReplies`, `joinRequests`, and `incomingShares` through `__WW_DEV__.stores.buddies.setState(...)` instead of pairing devices. Set `registeredInboxId` (the bell lists Buddies items only once it's set) and a future `lastSyncAt`, or the bell shows "Couldn't check for new Buddies activity" after its sync to that made-up inbox fails. Re-run `wwv flag buddies on` after a reload; the override doesn't survive one.
 - Universal links and App Links always point at the production host. Drive invites with `wwv link`, which the app parses locally, rather than a browser.
 - Enter Invite Link uses `Alert.prompt` on iOS and reads the clipboard on Android (there's no prompt there). Android 16 emulators have no clipboard shell command (`wwv ad clipboard write` refuses), so stand in for "copied from Messages" through the app: `wwv eval "globalThis.expo.modules.ExpoClipboard.setStringAsync('Join me: <link>', {})"` (the options argument is required), then tap Enter Invite Link.
 - A link opened while the `buddies` flag override is off (it doesn't survive `up` relaunching the app) waits in `BuddyInviteListener`; `wwv flag buddies on` releases it.

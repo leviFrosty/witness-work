@@ -5,10 +5,12 @@ import BadgeReactionsReceived from '@/features/buddies/components/BadgeReactions
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
-import { sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
+import { holdsBadge } from '@/features/buddies/lib/sharedBadges'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { parseBadgeKey } from '@/lib/badges/catalog'
 import { knownSharedBadges } from '@/lib/badges/display'
 import { usePreferences } from '@/stores/preferences'
+import type { SharedBadge } from '@/types/badges'
 import type { RootStackParamList } from '@/types/rootStack'
 
 /**
@@ -45,9 +47,17 @@ export default function BadgeViewRouteScreen() {
   }
 
   const name = buddy ? buddyDisplayName(buddy) : null
-  const badge = knownSharedBadges(buddy?.badges).find(
-    (shared) => sharedBadgeKey(shared) === params.badgeKey
-  )
+  // Bell news can name a level they've grown past since; it's still theirs.
+  const parsed = parseBadgeKey(params.badgeKey)
+  const shown: SharedBadge | null = parsed
+    ? parsed.level
+      ? { c: parsed.art, l: parsed.level }
+      : { c: parsed.art }
+    : null
+  const badge =
+    shown && holdsBadge(knownSharedBadges(buddy?.badges), shown)
+      ? shown
+      : undefined
   return (
     <BadgeViewScreen
       buddy={

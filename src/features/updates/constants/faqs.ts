@@ -109,6 +109,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'badgesMonths', category: 'badges' },
   { id: 'badgesCollections', category: 'badges' },
   { id: 'badgesBuddies', category: 'badges' },
+  { id: 'badgesBuddyNews', category: 'badges' },
   { id: 'badgesKeep', category: 'badges' },
   { id: 'mileageStart', category: 'mileage' },
   { id: 'mileageCost', category: 'mileage' },

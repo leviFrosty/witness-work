@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import BadgeCelebrationOverlay from '@/features/badges/components/BadgeCelebrationOverlay'
+import BadgeAudienceLine from '@/features/buddies/components/BadgeAudienceLine'
 import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroHost'
@@ -24,7 +25,7 @@ type Props = {
  * for its turn and renders only while it has it, so at most one is on screen;
  * the arbiter decides the order (`policy.ts`). The launch reveal is seeded on
  * screen before anything else can ask, since it picks up from the splash in the
- * very first frame.
+ * very first frame. A new badge's card says which buddies will see it.
  */
 export default function TakeoverHosts({
   launchReveal: launchRevealOnMount,
@@ -98,7 +99,9 @@ export default function TakeoverHosts({
           rootNavigation.navigate('MilestoneShowcase')
         }}
       />
-      <BadgeCelebrationOverlay />
+      <BadgeCelebrationOverlay
+        audience={(badge) => <BadgeAudienceLine badge={badge} />}
+      />
     </>
   )
 }

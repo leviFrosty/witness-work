@@ -72,8 +72,9 @@ Buddies' social news (`badge.new`, `badge.reaction`) arrives as ordinary alerts:
 
 6. **Buddies' news lives in the notification bell, with everything else.** We're not adding a separate feed or a Buddies tab. In the bell, social items:
    - are grouped under "From your buddies", below items that need an answer;
-   - never add to the red number on the bell or the app icon;
-   - offer Encourage in one tap, and tapping the coin opens the badge view;
+   - never add to the red number on the bell or the app icon. While only they are unread, the bell shows a small accent dot instead;
+   - offer Encourage in one tap on a buddy's new badge, and tapping the row or its coin opens the badge view, marked New while the row was unread;
+   - fold a buddy's badge news within 20 hours into one row ("Tomás has 2 new badges");
    - are pruned after 30 days, like other bell items.
 
    With no buddies, with Buddies unavailable, or with Show badges off, nothing new appears. Buddies' moments never appear on Home.

@@ -40,6 +40,20 @@ export function knownBadges(
   return known
 }
 
+/**
+ * Whether `held` (one entry per collection at its highest level) includes
+ * `badge`. Every level up to the highest is earned, so a lower one counts.
+ */
+export function holdsBadge(
+  held: readonly SharedBadge[] | undefined,
+  badge: SharedBadge
+): boolean {
+  return (held ?? []).some(
+    (candidate) =>
+      candidate.c === badge.c && (candidate.l ?? 0) >= (badge.l ?? 0)
+  )
+}
+
 /** The badge to name first when several arrive together. */
 export const sortedForAnnouncement = (badges: readonly SharedBadge[]) =>
   [...badges].sort((a, b) =>

@@ -67,9 +67,9 @@ type Geometry = { target: Point; origin: (Point & { size: number }) | null }
  * medallion that was tapped and settles large with a sweep of light, over what
  * it stands for, whose it is, and the app's name. The User's own badges also
  * show how their collection is growing; a level not reached yet says "Not yet"
- * and how to grow it. Reduce Motion crossfades instead. Closes with the X, a
- * swipe down, or Android's back, flying back into its medallion when that's
- * still on screen.
+ * and how to grow it. Opened from a buddy's unseen news, whose it is says "New"
+ * too. Reduce Motion crossfades instead. Closes with the X, a swipe down, or
+ * Android's back, flying back into its medallion when that's still on screen.
  *
  * The app tier passes the buddy (for a buddy's badge) and `footer`, where
  * Buddies reactions go.
@@ -121,6 +121,7 @@ function BadgeViewContent({
   const user = useUser()
 
   const mine = params.owner === 'me'
+  const isNew = !!params.isNew
   const key = badgeKey(art, level)
   const record = usePreferences((s) =>
     mine ? (s.earnedBadges[key] ?? null) : null
@@ -437,16 +438,18 @@ function BadgeViewContent({
                 {owner ? (
                   <View
                     accessible
-                    accessibilityLabel={i18n.t('badges_ownerBadge', {
-                      name: owner.name,
-                    })}
+                    accessibilityLabel={
+                      isNew
+                        ? `${i18n.t('badges_ownerBadge', { name: owner.name })}, ${i18n.t('badges_newPill')}`
+                        : i18n.t('badges_ownerBadge', { name: owner.name })
+                    }
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 8,
                       paddingVertical: 4,
                       paddingLeft: 4,
-                      paddingRight: 12,
+                      paddingRight: isNew ? 4 : 12,
                       borderRadius: 18,
                       backgroundColor: theme.colors.card,
                       borderWidth: 1,
@@ -457,7 +460,7 @@ function BadgeViewContent({
                     <Text
                       numberOfLines={1}
                       style={{
-                        maxWidth: width * 0.6,
+                        maxWidth: width * (isNew ? 0.45 : 0.6),
                         fontSize: 14,
                         fontFamily: theme.fonts.semiBold,
                         color: theme.colors.text,
@@ -465,6 +468,24 @@ function BadgeViewContent({
                     >
                       {i18n.t('badges_ownerBadge', { name: owner.name })}
                     </Text>
+                    {isNew ? (
+                      <Text
+                        style={{
+                          overflow: 'hidden',
+                          paddingVertical: 3,
+                          paddingHorizontal: 9,
+                          borderRadius: 12,
+                          backgroundColor: theme.colors.accentTranslucent,
+                          color: theme.colors.accent,
+                          fontSize: 11,
+                          fontFamily: theme.fonts.semiBold,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.6,
+                        }}
+                      >
+                        {i18n.t('badges_newPill')}
+                      </Text>
+                    ) : null}
                   </View>
                 ) : null}
                 <View

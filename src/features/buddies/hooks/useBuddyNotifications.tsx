@@ -10,8 +10,10 @@ import type { PlannedDayContribution } from '@/lib/recurrence'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
+import BuddyNewsRow from '@/features/buddies/components/BuddyNewsRow'
 import BuddyNotificationRow from '@/features/buddies/components/BuddyNotificationRow'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { buddyNews, isBuddyNews } from '@/features/buddies/lib/badgeNews'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
@@ -23,7 +25,7 @@ import {
   effectiveShareStatus,
   isOpenPlanInvitation,
 } from '@/features/buddies/lib/linkedPlans'
-import { sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
+import { holdsBadge, sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import {
   awaitsAnswer,
@@ -138,9 +140,10 @@ export function openBadgeReactionPush(
 
 /**
  * The buddy notification queue as tray items: invitations, changes,
- * cancellations, replies, requests to join, new pairings, and buddies' new
- * badges and reactions to this User's badges (while badges are on). Only once
- * the User has started using Buddies.
+ * cancellations, replies, requests to join, and new pairings, then buddies'
+ * news (their new badges, and reactions to this User's badges) while badges are
+ * on. News is social: it's grouped apart and never counts (ADR 0021), and only
+ * an active buddy's shows. Only once the User has started using Buddies.
  */
 export default function useBuddyNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
@@ -197,7 +200,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
       navigation.navigate('Plan Details', { share: { from, shareId } })
   }
 
-  /** A new pairing or badge opens that buddy, while they're still a buddy. */
+  /** A new pairing opens that buddy, while they're still a buddy. */
   const buddyTarget = (inboxId: string) =>
     buddies.some((b) => b.inboxId === inboxId)
       ? () => navigation.navigate('Buddy', { inboxId })
@@ -209,7 +212,62 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return buddy ? buddyDisplayName(buddy) : entry.name
   }
 
-  return listedNotifications(queue, { showBadges }).map((entry) => {
+  const listed = listedNotifications(queue, { showBadges })
+
+  // Buddies' news opens the badge it's about: theirs, or the one of this
+  // User's they reacted to. "New" while the row was unread.
+  const news = buddyNews(listed).flatMap(
+    ({ entry, ids }): NotificationItem[] => {
+      const buddy = buddies.find(
+        (b) => b.inboxId === entry.from && b.status === 'active'
+      )
+      const [lead] = entry.badges ?? []
+      if (!buddy || !lead) return []
+      const theirs = entry.kind === 'badge'
+      return [
+        {
+          id: entry.id,
+          kind: 'buddies',
+          at: entry.at,
+          title: buddyName(entry),
+          social: true,
+          onView: () => {
+            for (const id of ids) buddiesEngine.markNotificationRead(id)
+          },
+          onDismiss: () => {
+            for (const id of ids) buddiesEngine.dismissNotification(id)
+          },
+          render: ({ unread, dismiss, closeThen }) => (
+            <BuddyNewsRow
+              entry={entry}
+              unread={unread}
+              now={now}
+              onDismiss={dismiss}
+              onOpen={(origin) =>
+                closeThen(() =>
+                  navigation.navigate('BadgeView', {
+                    badgeKey: sharedBadgeKey(lead),
+                    owner: theirs ? { inboxId: buddy.inboxId } : 'me',
+                    // The tray closes behind the view, taking the coin along.
+                    origin: origin && { ...origin, returns: false },
+                    isNew: theirs && unread,
+                  })
+                )
+              }
+              encourage={
+                theirs && holdsBadge(buddy.badges, lead)
+                  ? { inboxId: buddy.inboxId, badge: lead }
+                  : undefined
+              }
+            />
+          ),
+        },
+      ]
+    }
+  )
+
+  const logisticsEntries = listed.filter((entry) => !isBuddyNews(entry))
+  const logistics = logisticsEntries.map((entry): NotificationItem => {
     const joinRequest =
       entry.kind === 'joinRequest' && entry.shareKey
         ? joinRequests[entry.shareKey]
@@ -217,27 +275,17 @@ export default function useBuddyNotifications(): NotificationItem[] {
     const ownPlan = joinRequest
       ? findJoinRequestPlan(joinRequest, dayPlans, recurringPlans)
       : undefined
-    const reactedTo =
-      entry.kind === 'badgeReaction' ? entry.badges?.[0] : undefined
     const target =
       entry.kind === 'shareReply' && entry.shareKey
         ? replyTarget(entry.shareKey)
-        : (entry.kind === 'paired' || entry.kind === 'badge') && entry.from
+        : entry.kind === 'paired' && entry.from
           ? buddyTarget(entry.from)
-          : reactedTo
-            ? // My badge, full screen, where buddies' reactions show.
-              () =>
-                navigation.navigate('BadgeView', {
-                  badgeKey: sharedBadgeKey(reactedTo),
-                  owner: 'me',
-                })
-            : joinRequest && ownPlan
-              ? planTarget(ownPlan, joinRequest.d)
-              : (entry.kind === 'shareInvite' ||
-                    entry.kind === 'shareUpdate') &&
-                  entry.shareKey
-                ? invitationTarget(entry.shareKey)
-                : undefined
+          : joinRequest && ownPlan
+            ? planTarget(ownPlan, joinRequest.d)
+            : (entry.kind === 'shareInvite' || entry.kind === 'shareUpdate') &&
+                entry.shareKey
+              ? invitationTarget(entry.shareKey)
+              : undefined
     const share =
       entry.kind !== 'shareReply' && entry.shareKey
         ? incomingShares[entry.shareKey]
@@ -303,4 +351,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
       ),
     }
   })
+
+  return [...logistics, ...news]
 }

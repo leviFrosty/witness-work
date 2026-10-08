@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import BadgeCelebration, {
   type BadgeCelebrationAction,
@@ -13,6 +13,7 @@ import { useBadgeSession } from '@/stores/badgeSession'
 import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import { useTakeover } from '@/stores/takeover'
+import type { BadgeKey } from '@/types/badges'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 /**
@@ -32,7 +33,12 @@ import type { RootStackNavigation } from '@/types/rootStack'
  * (the badges stay new). Turning badges off drops everything unseen.
  * HomeTabStack mounts the single instance.
  */
-export default function BadgeCelebrationOverlay() {
+export default function BadgeCelebrationOverlay({
+  audience,
+}: {
+  /** Who will see a new badge, the one named first (from Buddies). */
+  audience?: (badge: BadgeKey) => ReactNode
+} = {}) {
   const navigation = useNavigation<RootStackNavigation>()
   const celebrations = useBadgeSession((s) => s.celebrations)
   const claim = useBadgeSession((s) => s.claim)
@@ -115,6 +121,16 @@ export default function BadgeCelebrationOverlay() {
 
   if (welcome.active) return <BadgesWelcome onClose={handleWelcomeClose} />
   if (content)
-    return <BadgeCelebration content={content} onClose={handleClose} />
+    return (
+      <BadgeCelebration
+        content={content}
+        onClose={handleClose}
+        audience={
+          content.kind === 'live' && content.keys[0]
+            ? audience?.(content.keys[0])
+            : null
+        }
+      />
+    )
   return null
 }

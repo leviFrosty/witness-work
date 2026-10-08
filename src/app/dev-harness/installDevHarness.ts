@@ -12,6 +12,7 @@ import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
@@ -262,6 +263,8 @@ export function installDevHarness() {
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
+      // The bell's book (`seen`, `dismissed`) and its counted `unread`.
+      notificationsTray: useNotificationsTray,
       // `setState({ celebrating: { count, kind } })` replays a milestone; with
       // no action behind it, it waits for its takeover turn without expiring.
       streakCelebration: useStreakCelebration,

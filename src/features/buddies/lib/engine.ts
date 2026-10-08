@@ -52,6 +52,7 @@ import {
   buildBuddyCardDays,
 } from '@/features/buddies/lib/card'
 import {
+  holdsBadge,
   knownBadges,
   sharedBadgeKey,
   sortedForAnnouncement,
@@ -2344,20 +2345,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return badgeNotifications && (deps.showBadges?.() ?? true)
       ? [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND]
       : []
-  }
-
-  /**
-   * Whether `held` (one entry per collection at its highest level) includes
-   * `badge`. Every level up to the highest is earned, so a lower one counts.
-   */
-  function holdsBadge(
-    held: readonly SharedBadge[] | undefined,
-    badge: SharedBadge
-  ): boolean {
-    return (held ?? []).some(
-      (candidate) =>
-        candidate.c === badge.c && (candidate.l ?? 0) >= (badge.l ?? 0)
-    )
   }
 
   /**

@@ -173,6 +173,8 @@ export type RootStackParamList = {
     badgeKey: string
     owner: BadgeOwner
     origin?: BadgeViewOrigin
+    /** Opened from news the User hadn't seen yet: shows a "New" pill. */
+    isNew?: boolean
   }
 }
 

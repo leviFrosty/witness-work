@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import type { NotificationItem } from '@/types/notifications'
 import {
   clearableIds,
+  hasUnreadNews,
   pruned,
   stamped,
   trayEntries,
+  trayGroups,
   TRAY_BOOK_RETENTION_MS,
   unreadCount,
   visibleIds,
@@ -45,6 +47,40 @@ describe('trayEntries', () => {
     )
     expect(unreadCount(entries)).toBe(1)
     expect(entries.find((entry) => entry.unread)?.item.id).toBe('b')
+  })
+})
+
+describe("buddies' news", () => {
+  const entries = (seen: Record<string, number> = {}) =>
+    trayEntries(
+      [
+        item('invite', { at: 1, kind: 'buddies', sticky: true }),
+        item('badge', { at: 3, kind: 'buddies', social: true }),
+        item('report', { at: 2 }),
+        item('reaction', { at: 4, kind: 'buddies', social: true }),
+      ],
+      { ...empty, seen },
+      now
+    )
+
+  it('never counts toward the bell or the app icon', () => {
+    expect(unreadCount(entries())).toBe(2)
+    expect(unreadCount(entries({ invite: now, report: now }))).toBe(0)
+  })
+
+  it('shows the quiet dot only while some news is unread', () => {
+    expect(hasUnreadNews(entries({ badge: now }))).toBe(true)
+    expect(hasUnreadNews(entries({ badge: now, reaction: now }))).toBe(false)
+  })
+
+  it('groups news below everything else, each newest first', () => {
+    const { main, news } = trayGroups(entries())
+    expect(main.map((entry) => entry.item.id)).toEqual(['report', 'invite'])
+    expect(news.map((entry) => entry.item.id)).toEqual(['reaction', 'badge'])
+  })
+
+  it('clears with Clear All', () => {
+    expect(clearableIds(entries())).toEqual(['reaction', 'badge', 'report'])
   })
 })
 

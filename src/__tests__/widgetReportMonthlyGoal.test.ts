@@ -79,4 +79,23 @@ describe('widget Monthly Goal', () => {
     expect(report.goalHours).toBe(50)
     expect(report.progress).toBe(0.6)
   })
+
+  it('paces against time and plans through today, like the Schedule screen', () => {
+    const args = baseArgs()
+    args.serviceReports[2026][6].push({
+      id: 'later-in-july',
+      date: new Date(2026, 6, 20, 12),
+      hours: 5,
+      minutes: 0,
+      credit: false,
+    })
+    args.dayPlans = [
+      { id: 'early-plan', date: new Date(2026, 6, 2), minutes: 20 * 60 },
+      { id: 'later-plan', date: new Date(2026, 6, 25), minutes: 8 * 60 },
+    ]
+
+    const report = buildReport(args)
+
+    expect(report.aheadBehindMinutes).toBe(10 * 60)
+  })
 })

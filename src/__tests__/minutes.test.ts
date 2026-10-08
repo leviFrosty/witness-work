@@ -139,7 +139,9 @@ describe('Duration Format (src/lib/minutes.ts)', () => {
       [90, '1.5h'],
       [120, '2h'],
       [150, '2.5h'],
-      [630, '11h'],
+      [630, '10.5h'],
+      [690, '11.5h'],
+      [720, '12h'],
     ])('formats %d min compactly → "%s"', (minutes, expected) => {
       expect(formatMinutesCompact(minutes)).toBe(expected)
     })

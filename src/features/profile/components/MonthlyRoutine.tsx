@@ -15,7 +15,7 @@ import usePublisher from '@/hooks/usePublisher'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 
 const Month = ({
@@ -44,8 +44,9 @@ const Month = ({
 
   const monthWasBeforeInstalled = toDisplay.isBefore(installedOn)
 
-  const didNotGoOutInService = monthHasPassed && !monthReports.length
-  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !monthReports.length
+  const shared = monthReports.some(isCountableEntry)
+  const didNotGoOutInService = monthHasPassed && !shared
+  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !shared
 
   return (
     <Button
@@ -78,7 +79,7 @@ const Month = ({
       >
         <IconButton
           iconStyle={{
-            color: monthReports.length
+            color: shared
               ? theme.colors.accent
               : hasNotGoneOutTheCurrentMonth ||
                   monthInFuture ||

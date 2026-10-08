@@ -13,6 +13,7 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import { isCountableEntry } from '@/lib/serviceReport'
 import { formatDate } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
@@ -153,7 +154,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
 
   const hasTimeReports = !!thisDaysReports?.length
   const hasPlans = countedPlanItems.length > 0 || notCountedPlanItems.length > 0
-  const wentInService = hasTimeReports
+  const wentInService = !!thisDaysReports?.some(isCountableEntry)
   const isToday = moment().isSame(date, 'day')
   const dateInPast = moment(date).isSameOrBefore(moment(), 'day')
   const hitGoal = actualMinutes >= (goalMinutes ?? 0)

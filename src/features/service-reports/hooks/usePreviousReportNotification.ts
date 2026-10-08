@@ -2,7 +2,7 @@ import moment from 'moment'
 import { Send as SendIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
@@ -23,12 +23,11 @@ export default function usePreviousReportNotification(
   const serviceReports = useServiceReport((state) => state.serviceReports)
 
   const previousMonth = moment(now).subtract(1, 'month')
-  const previousMonthHasEntries =
-    getMonthsReports(
-      serviceReports,
-      previousMonth.month(),
-      previousMonth.year()
-    ).length > 0
+  const previousMonthHasEntries = getMonthsReports(
+    serviceReports,
+    previousMonth.month(),
+    previousMonth.year()
+  ).some(isCountableEntry)
   if (
     !shouldShowPreviousReportReminder({
       installedOn,

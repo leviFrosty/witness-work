@@ -19,6 +19,7 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
+import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -76,7 +77,7 @@ export const hasReportsInCatchUpWindow = (
   const cursor = moment().month(8).year(sy).startOf('month')
   while (cursor.isBefore(installStart)) {
     const monthReports = serviceReports[cursor.year()]?.[cursor.month()]
-    if (monthReports && monthReports.length > 0) return true
+    if (monthReports?.some(isCountableEntry)) return true
     cursor.add(1, 'month')
   }
   return false

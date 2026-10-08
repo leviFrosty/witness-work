@@ -28,6 +28,7 @@ import IconButton from '@/components/ui/IconButton'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
+import { isCountableEntry } from '@/lib/serviceReport'
 import type { CalendarViewMode } from '@/components/CalendarHeader'
 
 const boxSize = 40
@@ -91,7 +92,7 @@ const NonPlannedDay = (
   if (!props.date) return null
   const disabled = props.state === 'disabled'
   const isToday = moment().isSame(props.date.dateString, 'day')
-  const wentInService = !!props.serviceReports?.length
+  const wentInService = !!props.serviceReports?.some(isCountableEntry)
   const hasNote = !!props.serviceReports?.some((report) => report.note)
   const showActualTime =
     props.viewMode === 'actual' && wentInService && !disabled
@@ -210,7 +211,7 @@ const PlannedDay = (
   const actualDurationText = formatMinutesCompact(minutesForDay)
   const showActual = props.viewMode === 'actual'
 
-  const wentInService = !!props.serviceReports?.length
+  const wentInService = !!props.serviceReports?.some(isCountableEntry)
   const hasAPlan = hasDayPlans || !!props.recurringPlans?.length
 
   // Check for notes from day plans, service reports, and recurring plans (with overrides)

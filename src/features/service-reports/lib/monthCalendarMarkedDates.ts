@@ -7,6 +7,7 @@ import {
   getPlansIntersectingDay,
 } from '@/lib/recurrence'
 import { momentStoredDate } from '@/lib/normalizeDate'
+import { isCountableEntry } from '@/lib/serviceReport'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
 import type { RecurringPlan } from '@/lib/recurrence'
 
@@ -43,7 +44,7 @@ export const buildMonthCalendarMarkedDates = ({
   const markedDates: MonthCalendarMarkedDates = {}
   const planFingerprintsByDate = new Map<string, string[]>()
 
-  monthsReports?.forEach((report) => {
+  monthsReports?.filter(isCountableEntry).forEach((report) => {
     const dateKey = momentStoredDate(report.date).format('YYYY-MM-DD')
     markedDates[dateKey] = { marked: true, dotColor: reportDotColor }
   })

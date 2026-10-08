@@ -10,7 +10,7 @@ import {
   serviceYearMonths,
   type RoleHistory,
 } from '@/lib/roleHistory'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import type { Publisher } from '@/types/publisher'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
@@ -19,7 +19,11 @@ export type ServiceHistoryRow = {
   target: CalendarMonth
   savedStatus: MonthStatus
   status: MonthStatus
-  /** Raw logged minutes; `null` when the month has no Time Entries. */
+  /**
+   * Raw logged minutes, Time Rollovers included; `null` when the month has no
+   * ministry logged (a Time Rollover alone isn't ministry), so it can be filled
+   * in.
+   */
   loggedMinutes: number | null
   hours: string
   creditHours: string
@@ -62,7 +66,7 @@ export const buildServiceHistoryRows = ({
         target,
         savedStatus,
         status: savedStatus,
-        loggedMinutes: reports.length
+        loggedMinutes: reports.some(isCountableEntry)
           ? reports.reduce((sum, r) => sum + r.hours * 60 + r.minutes, 0)
           : null,
         hours: '',

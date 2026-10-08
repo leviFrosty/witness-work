@@ -5,6 +5,7 @@ import {
   adjustedMinutesForSpecificMonth,
   getTotalMinutesDetailedForSpecificMonth,
   getMonthsReports,
+  isCountableEntry,
 } from '@/lib/serviceReport'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
 import { formatMinutesCompact } from '@/lib/minutes'
@@ -16,7 +17,7 @@ import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 
 export type MonthReportData = {
-  /** Whether the publisher has any reports logged for this month. */
+  /** Whether the publisher logged any ministry this month (not a rollover). */
   sharedInMinistry: boolean
   /** Whole-hour standard time (excludes credit). */
   hours: number
@@ -109,7 +110,7 @@ export const buildMonthReportData = ({
         .isSame(moment().month(month).year(year), 'month')
     : false
 
-  const sharedInMinistry = monthReports.length > 0
+  const sharedInMinistry = monthReports.some(isCountableEntry)
   const hours = Math.floor(adjusted.standard / 60)
   const credit = Math.max(0, Math.floor(adjusted.value / 60) - hours)
   const creditOverageHours = Math.floor(adjusted.creditOverage / 60)

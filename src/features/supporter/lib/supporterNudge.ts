@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
+import { isCountableEntry } from '@/lib/serviceReport'
 
 /**
  * Tenure, engagement, and cooldown thresholds for the tray supporter-nudge
@@ -62,7 +63,7 @@ const countReportMonths = (reports: TimeEntriesByYear): number => {
     if (!yearReports) continue
     for (const month of Object.keys(yearReports)) {
       const monthReports = yearReports[month]
-      if (monthReports && monthReports.length > 0) {
+      if (monthReports?.some(isCountableEntry)) {
         count += 1
       }
     }

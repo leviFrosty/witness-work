@@ -1,10 +1,15 @@
 import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { storedDayKey } from '@/lib/normalizeDate'
+import { isCountableEntry } from '@/lib/serviceReport'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
-/** Flattens nested service reports into a day→minutes map. */
+/**
+ * Flattens nested service reports into a day→minutes map. Time Rollovers are
+ * left out: they move minutes between months, not onto a day of service, and
+ * each pair nets to zero, so all-time totals don't change.
+ */
 export const flattenDailyMinutes = (
   reports: TimeEntriesByYear
 ): Map<string, number> => {
@@ -12,6 +17,7 @@ export const flattenDailyMinutes = (
   for (const year of Object.values(reports)) {
     for (const month of Object.values(year)) {
       for (const r of month) {
+        if (!isCountableEntry(r)) continue
         const key = storedDayKey(r.date)
         const minutes = (r.hours || 0) * 60 + (r.minutes || 0)
         out.set(key, (out.get(key) || 0) + minutes)

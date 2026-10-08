@@ -13,6 +13,7 @@ import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
+  isCountableEntry,
 } from '@/lib/serviceReport'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
@@ -210,7 +211,7 @@ const MonthRow = ({
           goalMinutes={goalMinutes}
           statusLabel={monthStatus.label}
           showsTime={showsTimeEntry}
-          sharedInMinistry={monthsReports.length > 0}
+          sharedInMinistry={monthsReports.some(isCountableEntry)}
         />
       }
       actions={[

@@ -34,7 +34,7 @@ import DismissableCard from '@/components/DismissableCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import PointerHover from '@/components/ui/PointerHover'
 import SupporterNote from '@/features/supporter/components/SupporterNote'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 
 /**
@@ -102,13 +102,13 @@ const HomeChecklist = () => {
   // is actually looking at the Home tab.
   const isFocused = useIsFocused()
 
-  // Any TimeEntry row (dayPlans/recurringPlans intentionally excluded —
-  // the aha moment is a _logged_ minute, not a planned one).
+  // Any logged TimeEntry (dayPlans/recurringPlans intentionally excluded —
+  // the aha moment is a _logged_ minute, not a planned or rolled-over one).
   const hasAnyServiceReport = useMemo(() => {
     for (const year of Object.keys(serviceReports)) {
       const months = serviceReports[year]
       for (const month of Object.keys(months)) {
-        if ((months[month]?.length ?? 0) > 0) return true
+        if (months[month]?.some(isCountableEntry)) return true
       }
     }
     return false
@@ -120,8 +120,9 @@ const HomeChecklist = () => {
 
   const hasReportThisMonth = useMemo(
     () =>
-      getMonthsReports(serviceReports, moment().month(), moment().year())
-        .length > 0,
+      getMonthsReports(serviceReports, moment().month(), moment().year()).some(
+        isCountableEntry
+      ),
     [serviceReports]
   )
 

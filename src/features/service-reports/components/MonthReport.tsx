@@ -12,6 +12,7 @@ import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
+  isCountableEntry,
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
@@ -217,8 +218,9 @@ const MonthReport = ({
         : theme.colors.textAlt
 
   const lastLoggedDate = useMemo(() => {
-    if (!monthsReports || monthsReports.length === 0) return null
-    const latest = monthsReports.reduce((prev, curr) =>
+    const logged = monthsReports?.filter(isCountableEntry)
+    if (!logged || logged.length === 0) return null
+    const latest = logged.reduce((prev, curr) =>
       moment(curr.date).isAfter(prev.date) ? curr : prev
     )
     return momentStoredDate(latest.date)

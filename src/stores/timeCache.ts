@@ -205,5 +205,7 @@ export const generateDailyMinutesFingerprint = (
       }
     }
   }
-  return `dm:${count}:${maxUpdated}`
+  // Bump the prefix when `flattenDailyMinutes` changes what it counts, so a
+  // persisted map built the old way is rebuilt.
+  return `dm2:${count}:${maxUpdated}`
 }

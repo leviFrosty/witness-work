@@ -5,6 +5,7 @@ import {
   adjustedMinutesForSpecificMonth,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
+  isCountableEntry,
 } from '@/lib/serviceReport'
 import { RecurringPlan } from '@/lib/recurrence'
 import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
@@ -174,8 +175,9 @@ export function buildReport(args: BuildReportArgs): ReportFields {
   const year = now.year()
 
   const monthReports = getMonthsReports(args.serviceReports, month, year)
-  const hasReportedThisMonth = monthReports.length > 0
-  const hasReportedToday = monthReports.some((r) =>
+  const sharedReports = monthReports.filter(isCountableEntry)
+  const hasReportedThisMonth = sharedReports.length > 0
+  const hasReportedToday = sharedReports.some((r) =>
     isStoredDateOnLocalDay(r.date, now)
   )
 

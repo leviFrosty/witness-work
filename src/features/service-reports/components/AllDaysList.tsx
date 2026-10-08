@@ -9,7 +9,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import {
   getPlansIntersectingDay,
   getEffectiveMinutesForRecurringPlan,
@@ -295,7 +295,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       if (hasPlan) {
         const isTodayDate = now.isSame(day, 'day')
         const dateInPast = day.isSameOrBefore(now, 'day')
-        const wentInService = reportsForDay.length > 0
+        const wentInService = reportsForDay.some(isCountableEntry)
         const hitGoal = totalMinutes >= goalMinutes
         planDotColor = getDateStatusColor(
           theme,

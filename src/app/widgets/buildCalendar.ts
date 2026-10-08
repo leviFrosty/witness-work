@@ -3,7 +3,7 @@ import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { tracksHours } from '@/lib/publisherCapabilities'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import {
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
@@ -224,7 +224,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
     const reportsForDay = isCurrentMonth
       ? monthReports.filter((r) => isStoredDateOnLocalDay(r.date, d))
       : []
-    const wentInService = reportsForDay.length > 0
+    const wentInService = reportsForDay.some(isCountableEntry)
     const workedMinutes = reportsForDay.reduce(
       (acc, r) => acc + r.minutes + r.hours * 60,
       0

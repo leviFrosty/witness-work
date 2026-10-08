@@ -7,7 +7,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useAnimation from '@/hooks/useAnimation'
 import Haptics from '@/lib/haptics'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
-import { getMonthsReports } from '@/lib/serviceReport'
+import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import {
   isSharedGoodNewsUrl,
   navigationRef,
@@ -68,9 +68,11 @@ export default function SharedGoodNewsListener() {
       }
 
       const { serviceReports } = useServiceReport.getState()
-      const alreadyReported =
-        getMonthsReports(serviceReports, moment().month(), moment().year())
-          .length > 0
+      const alreadyReported = getMonthsReports(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      ).some(isCountableEntry)
       if (alreadyReported) return
 
       const report: TimeEntry = {

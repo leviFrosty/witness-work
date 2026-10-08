@@ -19,6 +19,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
+  isCountableEntry,
 } from '@/lib/serviceReport'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 import { usePreferences } from '@/stores/preferences'
@@ -42,10 +43,11 @@ export default function PublisherCheckBoxCard() {
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
   )
-  const hasParticipated = monthReports.length > 0
+  const hasParticipated = monthReports.some(isCountableEntry)
   // A publisher who opted into Hours Logging sees their month total under the
   // checked state. Any logged entry also counts as "shared", so the checkbox
-  // and the hours never disagree.
+  // and the hours never disagree. A Time Rollover alone doesn't: it carries
+  // last month's minutes, not ministry.
   const loggedMinutes = useMemo(
     () =>
       showsTimeEntry

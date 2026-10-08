@@ -55,7 +55,7 @@ The monthly aggregate a User submits to their congregation — total hours, bibl
 _Avoid_: "monthly report", "field service report" (those are aliases), and "service report" when referring to a single Time Entry.
 
 **Reporting State**:
-The Regular Publisher's monthly check-in status, surfaced primarily on the home-screen widget. Three values: **unreported** (no Time Entry exists for the current month yet), **reportedToday** (a Time Entry was added today — celebratory state), **reportedThisMonth** (a Time Entry exists from earlier this month but not today). Only meaningful when the Publisher is `'publisher'` (checkbox entry mode).
+The Regular Publisher's monthly check-in status, surfaced primarily on the home-screen widget. Three values: **unreported** (no Time Entry exists for the current month yet), **reportedToday** (a Time Entry was added today — celebratory state), **reportedThisMonth** (a Time Entry exists from earlier this month but not today). Time Rollover entries don't count. Only meaningful when the Publisher is `'publisher'` (checkbox entry mode).
 _Avoid_: equating Reporting State with Service Report — Reporting State is an at-a-glance summary of _whether_ anything has been reported; the Service Report is the underlying aggregate.
 
 **Credit Time**:
@@ -75,7 +75,7 @@ The Jehovah's Witnesses fiscal year. Runs September 1 through August 31 of the f
 _Avoid_: "fiscal year", "calendar year" — Service Year is the canonical term and it does not equal a calendar year.
 
 **Time Rollover**:
-A mechanism that floors a finished month's hours to a whole number (for whole-hour Service Report submission) and parks the fractional remainder on the next month, so the User's Service-Year-cumulative total stays exact. Implemented as a pair of Time Entries sharing a `rolloverGroupId` — a negative entry on the source month's last day and a matching positive entry on the destination month's first day. The pair can be undone atomically.
+A mechanism that floors a finished month's hours to a whole number (for whole-hour Service Report submission) and parks the fractional remainder on the next month, so the User's Service-Year-cumulative total stays exact. Implemented as a pair of Time Entries sharing a `rolloverGroupId` — a negative entry on the source month's last day and a matching positive entry on the destination month's first day. The pair can be undone atomically. Both entries count toward hour totals but are never ministry: a month or day holding only rollover entries is not shared (`isCountableEntry`).
 _Avoid_: "month rollover" alone (ambiguous with Onboarding Backfill); confusing this with the one-time onboarding flow.
 
 **Onboarding Backfill**:

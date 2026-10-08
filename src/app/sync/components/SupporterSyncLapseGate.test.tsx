@@ -63,8 +63,19 @@ it('preserves the enable choice across a lapse and clears the pause after resubs
     )
   ).toBe(true)
 })
-it('does not change sync settings on Android', async () => {
+it('pauses Google Drive sync on Android the same way', async () => {
   runtime.platform = 'android'
+  runtime.customer = {}
+  await act(async () => {
+    renderer = create(<SupporterSyncLapseGate />)
+  })
+  expect(runtime.set).toHaveBeenLastCalledWith({
+    iCloudSyncPausedForLapse: true,
+  })
+})
+
+it('does not change sync settings where there is no cloud sync', async () => {
+  runtime.platform = 'web'
   runtime.customer = {}
   await act(async () => {
     renderer = create(<SupporterSyncLapseGate />)

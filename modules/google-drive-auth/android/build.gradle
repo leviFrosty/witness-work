@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.googledriveauth'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.googledriveauth"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Pinned to an exact patch version (CLAUDE.md). 21.6.0 has AuthorizationClient
+  // with clearToken and Prompt.SELECT_ACCOUNT; 22.x only removes legacy APIs.
+  implementation 'com.google.android.gms:play-services-auth:21.6.0'
+}

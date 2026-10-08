@@ -1,7 +1,6 @@
-import { Platform } from 'react-native'
 import { MMKV } from 'react-native-mmkv'
 import * as Device from 'expo-device'
-import * as ICloudBridge from '../../modules/icloud-bridge'
+import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { getOrCreateInstallId } from '@/lib/installId'
 import {
   ACCOUNT_FILENAME,
@@ -13,9 +12,10 @@ import { logger } from '@/lib/logger'
 
 /**
  * Effectful half of the account model (ADR 0011) — id persistence and the
- * account file's iCloud IO. The pure payload/decision layer lives in
- * `@/lib/accountFile`; the reconcile loop that drives both lives in
- * `AccountProvider`.
+ * account file's IO through the sync transport: the iCloud container on iOS,
+ * the Google Drive app data folder on Android (ADR 0019). The pure
+ * payload/decision layer lives in `@/lib/accountFile`; the reconcile loop that
+ * drives both lives in `AccountProvider`.
  *
  * The account id defaults to this device's install id (ADR 0007) and is
  * replaced only when the device adopts another device's claim from iCloud. The
@@ -72,17 +72,17 @@ export type AccountRead = {
 }
 
 /**
- * Reads the account file from the ubiquity container. Also absorbs iCloud
- * conflict duplicates (`witness-work-account 2.json`): the newest payload wins,
- * losers are deleted, and a winner that lived under a duplicate name is
- * rewritten to the canonical filename — all best-effort, and skipped while any
- * of them is still downloading.
+ * Reads the account file from the sync transport. Also absorbs iCloud conflict
+ * duplicates (`witness-work-account 2.json`): the newest payload wins, losers
+ * are deleted, and a winner that lived under a duplicate name is rewritten to
+ * the canonical filename — all best-effort, and skipped while any of them is
+ * still downloading.
  *
  * Rejects when iCloud is unavailable (signed out, or iCloud Drive disabled for
  * the app) — callers treat that as "sharing unavailable", not an error.
  */
 export const readAccountFile = async (): Promise<AccountRead> => {
-  const read = await ICloudBridge.readFiles(isAccountFilename)
+  const read = await syncTransport().readFiles(isAccountFilename)
   // `pending: null` is a binary that can't tell (see `readFiles`). Treat its
   // read as complete, as before `pending` existed: refusing would stop claims
   // on those builds altogether, and claims still wait for the initial scan.
@@ -106,12 +106,17 @@ export const readAccountFile = async (): Promise<AccountRead> => {
     if (c.filename === best.filename || c.filename === ACCOUNT_FILENAME) {
       continue
     }
-    void ICloudBridge.deleteFile(c.filename).catch(() => {})
+    void syncTransport()
+      .deleteFile(c.filename)
+      .catch(() => {})
   }
   if (best.filename !== ACCOUNT_FILENAME) {
     try {
-      await ICloudBridge.write(ACCOUNT_FILENAME, JSON.stringify(best.payload))
-      await ICloudBridge.deleteFile(best.filename)
+      await syncTransport().write(
+        ACCOUNT_FILENAME,
+        JSON.stringify(best.payload)
+      )
+      await syncTransport().deleteFile(best.filename)
     } catch (e) {
       logger.warn('[Account] failed to canonicalize account file', e)
     }
@@ -131,7 +136,7 @@ export const writeAccountFile = async (
     updatedAt: Date.now(),
     deviceName: Device.modelName ?? undefined,
   }
-  await ICloudBridge.write(ACCOUNT_FILENAME, JSON.stringify(payload))
+  await syncTransport().write(ACCOUNT_FILENAME, JSON.stringify(payload))
 }
 
 /**
@@ -142,8 +147,8 @@ export const writeAccountFile = async (
  * device could claim first.
  */
 export const reclaimAccountFile = async (entitled: boolean): Promise<void> => {
-  if (Platform.OS !== 'ios') return
-  if (!ICloudBridge.isAvailable()) return
+  if (!hasSyncTransport()) return
+  if (!syncTransport().isAvailable()) return
   try {
     await writeAccountFile(getOrCreateAccountId(), entitled)
   } catch (e) {

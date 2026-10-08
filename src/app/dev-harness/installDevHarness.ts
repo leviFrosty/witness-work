@@ -19,7 +19,31 @@ import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
+import { mmkvStorage } from '@/stores/mmkv'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import {
+  setFakeGoogleDrive,
+  type FakeGoogleDrive,
+} from '@/lib/syncTransport/googleDrive/googleDriveAuth'
+
+/**
+ * The fake Google Drive this dev build syncs with, if any (see
+ * `scripts/verify/fake-google-drive-server.mjs`). Persisted so it applies from
+ * launch, before sync first runs, and kept across seeds.
+ */
+const FAKE_GOOGLE_DRIVE_KEY = 'devFakeGoogleDrive'
+
+function applyFakeGoogleDrive(config: FakeGoogleDrive | null) {
+  if (config) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, JSON.stringify(config))
+  else mmkvStorage.delete(FAKE_GOOGLE_DRIVE_KEY)
+  setFakeGoogleDrive(config)
+  return config
+}
+
+function restoreFakeGoogleDrive() {
+  const saved = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
+  if (saved) setFakeGoogleDrive(JSON.parse(saved) as FakeGoogleDrive)
+}
 
 type CapturedError = {
   at: string
@@ -95,7 +119,9 @@ function summary() {
 
 function seed(name: string) {
   const scenario = buildScenario(name, moment())
+  const fakeDrive = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
   resetLocalData()
+  if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
   const preferences = usePreferences.getState()
   preferences.setRole(scenario.role)
   usePreferences.getState().set({
@@ -137,6 +163,7 @@ function seed(name: string) {
 export function installDevHarness() {
   if (!__DEV__) return
   captureErrors()
+  restoreFakeGoogleDrive()
   const harness = {
     version: 1,
     scenarios: SCENARIO_NAMES,
@@ -170,6 +197,11 @@ export function installDevHarness() {
      * iOS or Android); `{ ok, checked, mismatches }`.
      */
     checkBuddiesCryptoVectors: () => checkCryptoVectors(),
+    /**
+     * Android: sync with a local fake Google Drive instead of Google, as the
+     * account `account` (null switches back to real Google).
+     */
+    fakeGoogleDrive: applyFakeGoogleDrive,
     /** The sync engine, for reading state back; drive changes through the UI. */
     sync: iCloudSync,
     setSupporter: (on: boolean) => {

@@ -53,7 +53,11 @@ const HeroCard = () => {
                 color: theme.colors.text,
               }}
             >
-              {i18n.t('supporterHeroTitle')}
+              {i18n.t(
+                Platform.OS === 'android'
+                  ? 'supporterHeroTitleAndroid'
+                  : 'supporterHeroTitle'
+              )}
             </Text>
           </View>
           <Text
@@ -117,7 +121,7 @@ const PerkRow = ({ icon, title, desc }: PerkProps) => {
 }
 
 interface Props {
-  /** Hides the hero (iCloud sync) row. Useful in narrow contexts. */
+  /** Hides the hero (cloud sync) row. Useful in narrow contexts. */
   compact?: boolean
 }
 
@@ -140,7 +144,7 @@ const SupporterBenefits = ({ compact }: Props) => {
       >
         {i18n.t('supportersUnlock')}
       </Text>
-      {!compact && Platform.OS === 'ios' && <HeroCard />}
+      {!compact && <HeroCard />}
       <View style={{ gap: 14 }}>
         {scribeAiPerk && (
           <PerkRow

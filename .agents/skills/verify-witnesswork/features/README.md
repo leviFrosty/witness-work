@@ -38,5 +38,6 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 - [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, and two-device invites.
 - [Service Streaks](./streaks.md) covers the Home streak chip and countdown, the milestone celebration, streak reminders, buddies' streaks over the local relay, and the Schedule intro.
 - [Calendar Sync](./calendar-sync.md) covers connecting a calendar, publishing Follow-ups, disconnecting, and Android's calendar provider read-back.
+- [Cloud sync](./cloud-sync.md) covers iCloud Sync screens on iOS and Google Drive Sync on Android through a local fake Drive, including two Android users as two devices.
 
 Not mapped yet: supporter route planning, saved contact views, Notes Import (Scribe) on Android, the supporter pause offer, and Settings → About and Advanced. Map one with `maintain-verification-skill` before relying on this index for it.

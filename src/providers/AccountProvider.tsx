@@ -5,11 +5,11 @@ import {
   useRef,
   useState,
 } from 'react'
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
 import debounce from 'lodash/debounce'
-import * as ICloudBridge from '../../modules/icloud-bridge'
+import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { AccountContext, AccountCtx } from '@/contexts/account'
 import useCustomer from '@/hooks/useCustomer'
 import { supporterSinceDate } from '@/lib/supporterSince'
@@ -28,14 +28,16 @@ interface Props {}
 
 /**
  * Keeps this device's account id in agreement with the user's other devices
- * (ADR 0011). Runs the reconcile pass — read the iCloud account file, then
- * claim / adopt / refresh per `decideAccountAction` — whenever entitlement
- * state, iCloud availability, or the remote file changes, and on foreground.
+ * (ADR 0011). Runs the reconcile pass — read the account file, then claim /
+ * adopt / refresh per `decideAccountAction` — whenever entitlement state, cloud
+ * availability, or the remote file changes, and on foreground.
  *
- * This is what makes Supporter multi-device work with no sign-in: the device
- * that holds the entitlement claims its id; every other device on the same
- * Apple ID adopts it via `Purchases.logIn`, becoming the same RevenueCat
- * customer, so the entitlement (and later its lapse) applies everywhere.
+ * This is what makes Supporter multi-device work with no app account: the
+ * device that holds the entitlement claims its id; every other device on the
+ * same Apple ID adopts it via `Purchases.logIn`, becoming the same RevenueCat
+ * customer, so the entitlement (and later its lapse) applies everywhere. On
+ * Android the file lives in the Google Drive app data folder (ADR 0019), so
+ * devices share it once each has connected the same Google Account.
  *
  * Must live inside `CustomerProvider`: adoption replaces the active RevenueCat
  * user, and the fresh CustomerInfo has to land in customer state immediately.
@@ -52,10 +54,11 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     }
   })
   // Optimistic until the first reconcile probes the container: `isAvailable`
-  // only proves iCloud sign-in; iCloud Drive being disabled for the app
-  // surfaces as a read rejection and flips this false.
+  // only proves iCloud sign-in (or a connected Google Drive); iCloud Drive
+  // being disabled for the app surfaces as a read rejection and flips this
+  // false.
   const [iCloudSharingAvailable, setICloudSharingAvailable] = useState(
-    () => Platform.OS === 'ios' && ICloudBridge.isAvailable()
+    () => hasSyncTransport() && syncTransport().isAvailable()
   )
 
   // Latest customer state for event-driven reconciles without resubscribing.
@@ -71,7 +74,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
   const reconcile = useCallback(
     async (reason: string): Promise<void> => {
-      if (Platform.OS !== 'ios') return
+      if (!hasSyncTransport()) return
       if (!readyRef.current) return
       // Entitlement truth isn't known until the initial CustomerInfo lands;
       // acting on the transient "no customer" state could mis-claim.
@@ -85,7 +88,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       }
       inFlightRef.current = true
       try {
-        if (!ICloudBridge.isAvailable()) {
+        if (!syncTransport().isAvailable()) {
           setICloudSharingAvailable(false)
           return
         }
@@ -113,7 +116,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
         // Don't trust an early empty directory listing — claiming before the
         // container materializes would shadow another device's real claim.
-        const scanned = await ICloudBridge.waitForInitialScan(5000)
+        const scanned = await syncTransport().waitForInitialScan(5000)
 
         let read
         try {
@@ -222,7 +225,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   }, [reconcile, ready, customerKnown, entitled])
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return
+    if (!hasSyncTransport()) return
 
     // Same echo-burst problem the sync engine has: iCloud re-stamps mtimes as
     // a write replicates, producing trailing notifications ~500ms apart.
@@ -231,13 +234,15 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       500,
       { leading: true, trailing: true }
     )
-    const remoteSub = ICloudBridge.addRemoteChangeListener(() => {
+    const remoteSub = syncTransport().addRemoteChangeListener(() => {
       debouncedReconcile('remote-change')
     })
-    const availabilitySub = ICloudBridge.addAvailabilityChangeListener((e) => {
-      setICloudSharingAvailable(e.available)
-      if (e.available) void reconcile('icloud-available')
-    })
+    const availabilitySub = syncTransport().addAvailabilityChangeListener(
+      (e) => {
+        setICloudSharingAvailable(e.available)
+        if (e.available) void reconcile('icloud-available')
+      }
+    )
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') void reconcile('foreground')
     })

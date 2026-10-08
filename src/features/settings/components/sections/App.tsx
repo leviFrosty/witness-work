@@ -7,8 +7,10 @@ import {
   FileOutput as FileOutputIcon,
   FileText as FileTextIcon,
 } from 'lucide-react-native'
-import { View, Platform } from 'react-native'
+import { View } from 'react-native'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
+import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
@@ -24,6 +26,7 @@ const AppSection = ({
   selectedDestination,
 }: SettingsSectionProps) => {
   const notesImportEnabled = useNotesImportEnabled()
+  const cloudSyncSupported = useCloudSyncSupported()
   const notesImport = useNotesImportAvailability()
   const notesImportReadyCount = useNotesImportManager((s) =>
     unviewedReadyImportCount(s.entries)
@@ -71,10 +74,10 @@ const AppSection = ({
             </View>
           </InputRowButton>
         )}
-        {Platform.OS === 'ios' && (
+        {cloudSyncSupported && (
           <InputRowButton
             leftIcon={CloudIcon}
-            label={i18n.t('iCloudSync')}
+            label={i18n.t(syncKey('iCloudSync'))}
             onPress={() => handleNavigate('PreferencesiCloud')}
             selected={selectedDestination === 'PreferencesiCloud'}
           >

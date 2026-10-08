@@ -10,6 +10,7 @@ import Switch from '@/components/ui/Switch'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import i18n from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { deleteAllHouseholderData } from '@/stores/householderData'
 import useTheme from '@/contexts/theme'
@@ -23,7 +24,7 @@ const PrivacyPreferencesSection = () => {
   const handleDeleteAllHouseholderData = () => {
     Alert.alert(
       i18n.t('dataProtectionDeleteAllTitle'),
-      i18n.t('dataProtectionDeleteAllDesc'),
+      i18n.t(syncKey('dataProtectionDeleteAllDesc')),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
@@ -74,7 +75,7 @@ const PrivacyPreferencesSection = () => {
           <InputRowContainer
             leftIcon={ShieldCheckIcon}
             label={i18n.t('dataProtectionSwitchLabel')}
-            info={i18n.t('dataProtectionInfoDesc')}
+            info={i18n.t(syncKey('dataProtectionInfoDesc'))}
             controlWidth='auto'
             lastInSection={!dataProtectionMode}
             style={{ justifyContent: 'space-between' }}

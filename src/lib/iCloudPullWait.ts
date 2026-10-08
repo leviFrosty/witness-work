@@ -59,7 +59,7 @@ export function iCloudPullWaitRemainingMs({
   now = Date.now(),
   state = { activeSince, completePullAt },
 }: {
-  /** Whether iCloud sync is on for this device (iOS only). */
+  /** Whether cloud sync (iCloud or Google Drive) is on for this device. */
   iCloudSyncOn: boolean
   now?: number
   state?: { activeSince: number | null; completePullAt: number | null }

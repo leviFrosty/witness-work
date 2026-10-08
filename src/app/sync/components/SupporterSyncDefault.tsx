@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { analytics } from '@/lib/analytics'
-import * as ICloudBridge from '../../../../modules/icloud-bridge'
+import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 
 // Auto-enable only before an explicit user choice. Conflicts stay disabled
 // until the user resolves them in Settings through FirstEnableSheet.
@@ -13,7 +13,7 @@ export default function SupporterSyncDefault() {
   const { iCloudSyncEnabled, iCloudSyncSetByUser } = usePreferences()
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return
+    if (!hasSyncTransport()) return
     if (!isSupporter) return
     if (iCloudSyncSetByUser) return
     if (iCloudSyncEnabled) return
@@ -62,7 +62,7 @@ export default function SupporterSyncDefault() {
                 reason: decision.reason,
               })
               retrySubs = [
-                ICloudBridge.addRemoteChangeListener(() => void attempt()),
+                syncTransport().addRemoteChangeListener(() => void attempt()),
                 AppState.addEventListener('change', (state) => {
                   if (state === 'active') void attempt()
                 }),

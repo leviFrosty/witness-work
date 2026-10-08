@@ -178,20 +178,20 @@ observation window that allows resumption.
 
 ## Imports and backups
 
-Filter by `import_type` (`notes`, `mytime`, `icloud`, `backup_json`) and `source`.
+Filter by `import_type` (`notes`, `mytime`, `icloud`, `google_drive`, `backup_json`) and `source`.
 Retain type selection, start, preview readiness, completion, failure, cancellation,
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
 
-| Flow                    | Outcomes                                                                                                                                             |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Notes Import            | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`. |
-| Notes Import capture    | `notes_import_capture_finished` once per voice log or photo attempt.                                                                                 |
-| MyTime / iCloud Restore | `import_completed` with the import type.                                                                                                             |
-| JSON restore            | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                                         |
-| JSON export             | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                   |
-| Backup reminder         | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                      |
-| iCloud photo consent    | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                  |
+| Flow                   | Outcomes                                                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notes Import           | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`. |
+| Notes Import capture   | `notes_import_capture_finished` once per voice log or photo attempt.                                                                                 |
+| MyTime / cloud restore | `import_completed` with the import type (`icloud` on iOS, `google_drive` on Android).                                                                |
+| JSON restore           | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                                         |
+| JSON export            | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                   |
+| Backup reminder        | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                      |
+| iCloud photo consent   | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                  |
 
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
@@ -278,7 +278,7 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                           |
 | `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
 | `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
-| `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (iOS only). |
+| `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (both OSs). |
 | `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
 | `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview).    |
 | `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
@@ -345,6 +345,20 @@ their outcomes come from RevenueCat, as does whether paused Supporters resume
 paying. No prices, product identifiers, or dates are sent.
 
 ## iCloud Sync and recovery
+
+Android's Google Drive Sync (ADR 0019) sends the same `icloud_sync_*`,
+`icloud_restore_*`, and `icloud_account_changed` events from the same code;
+split them by the SDK's `$os_name`. On Android, `icloud_sync_upload_failed`
+means Google storage is full, and `icloud_account_changed` means a different
+Google Account was connected. Drive adds three events of its own:
+
+| Event                          | Interpretation                                                                                                                                                                                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `google_drive_connect_outcome` | A user tried to connect Google Drive. `source` (`settings`, `onboarding`, `reconnect`), `outcome` (`connected`, `canceled`, `scopeDenied`, `network`, `misconfigured`, `unavailable`, `unknown`), and `switch_account`. `misconfigured` means no OAuth client matches the build. |
+| `google_drive_access_lost`     | Google stopped granting Drive access silently (revoked or expired), so sync waits for Reconnect. Once per loss.                                                                                                                                                                  |
+| `google_drive_disconnected`    | The user disconnected Google Drive in Settings. Turning sync off with it also sends `icloud_sync_enabled_changed` (`source: google_drive_disconnect`).                                                                                                                           |
+
+No account ids, emails, or hashes are sent.
 
 Retain committed enable/disable transitions (`icloud_sync_enabled_changed`) and
 bounded `source`: settings, supporter default/lapse, or onboarding restore.

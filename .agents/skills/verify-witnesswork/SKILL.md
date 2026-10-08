@@ -210,6 +210,7 @@ These are not automatable here. Report them as unverified instead of guessing:
 - App Attest on a real device.
 - Real purchases; use `setSupporter` for supporter UI.
 - iCloud sync across devices.
+- Google's real account picker and consent screen for Google Drive Sync (needs a Google Account on the device and an OAuth client); sync itself runs against the fake Drive in [`features/cloud-sync.md`](features/cloud-sync.md).
 - Widgets, Live Activities and the Watch app beyond screenshots.
 - APNs push delivery. Android Buddies alerts (FCM) do work against a local relay that has the FCM key; see [`features/buddies.md`](features/buddies.md).
 - Play Integrity.

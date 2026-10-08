@@ -12,6 +12,7 @@ import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { syncKey } from '@/lib/syncCopy'
 import { analytics } from '@/lib/analytics'
 import { formatRelative } from '@/lib/dates'
 import {
@@ -36,7 +37,7 @@ const HINT_KEYS: Record<SyncDeviceHint, TranslationKey> = {
 }
 
 const deviceName = (device: { deviceName: string | null }) =>
-  device.deviceName || i18n.t('iCloudDeviceUnknown')
+  device.deviceName || i18n.t(syncKey('iCloudDeviceUnknown'))
 
 /** Bounded analytics properties: never the device's id, name or filename. */
 const removalProperties = (filename: string, entry: SyncDeviceFile) => ({
@@ -64,18 +65,18 @@ const PreferencesiCloudDevicesScreenInner = () => {
     })
     if (reason === 'sync-first')
       Alert.alert(
-        i18n.t('iCloudDeviceSyncFirst_title'),
-        i18n.t('iCloudDeviceSyncFirst_description')
+        i18n.t(syncKey('iCloudDeviceSyncFirst_title')),
+        i18n.t(syncKey('iCloudDeviceSyncFirst_description'))
       )
     else if (reason === 'update-app')
       Alert.alert(
-        i18n.t('iCloudDeviceUpdateApp_title'),
-        i18n.t('iCloudDeviceUpdateApp_description')
+        i18n.t(syncKey('iCloudDeviceUpdateApp_title')),
+        i18n.t(syncKey('iCloudDeviceUpdateApp_description'))
       )
     else
       Alert.alert(
-        i18n.t('iCloudUnavailable_title'),
-        i18n.t('iCloudUnavailable_description')
+        i18n.t(syncKey('iCloudUnavailable_title')),
+        i18n.t(syncKey('iCloudUnavailable_description'))
       )
   }
 
@@ -93,15 +94,18 @@ const PreferencesiCloudDevicesScreenInner = () => {
         'icloud_sync_device_removed',
         removalProperties(device.filename, entry ?? device)
       )
-      toast.show(i18n.t('iCloudDeviceRemoved', { name: deviceName(device) }), {
-        native: true,
-      })
+      toast.show(
+        i18n.t(syncKey('iCloudDeviceRemoved'), { name: deviceName(device) }),
+        {
+          native: true,
+        }
+      )
     } catch {
       analytics.capture('icloud_sync_device_remove_failed', {
         ...removalProperties(device.filename, device),
         reason: 'error',
       })
-      Alert.alert(i18n.t('error'), i18n.t('iCloudDeviceRemoveFailed'))
+      Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudDeviceRemoveFailed')))
     } finally {
       setRemoving(null)
     }
@@ -113,8 +117,10 @@ const PreferencesiCloudDevicesScreenInner = () => {
       return
     }
     Alert.alert(
-      i18n.t('iCloudDeviceRemoveConfirm_title', { name: deviceName(device) }),
-      i18n.t('iCloudDeviceRemoveConfirm_description'),
+      i18n.t(syncKey('iCloudDeviceRemoveConfirm_title'), {
+        name: deviceName(device),
+      }),
+      i18n.t(syncKey('iCloudDeviceRemoveConfirm_description')),
       [
         {
           text: i18n.t('cancel'),
@@ -132,7 +138,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
   const describe = (device: SyncDeviceListItem) => {
     const hint = syncDeviceHint(device.filename, device)
     return [
-      i18n.t('iCloudDeviceLastSynced', {
+      i18n.t(syncKey('iCloudDeviceLastSynced'), {
         relative: formatRelative(device.modifiedAt),
       }),
       ...(hint ? [i18n.t(HINT_KEYS[hint])] : []),
@@ -158,11 +164,11 @@ const PreferencesiCloudDevicesScreenInner = () => {
               color: theme.colors.text,
             }}
           >
-            {i18n.t('iCloudDevices')}
+            {i18n.t(syncKey('iCloudDevices'))}
           </Text>
           <InfoPopover
-            title={i18n.t('iCloudDevices')}
-            description={i18n.t('iCloudDevices_description')}
+            title={i18n.t(syncKey('iCloudDevices'))}
+            description={i18n.t(syncKey('iCloudDevices_description'))}
           />
         </View>
         {devices.length === 0 ? (
@@ -173,7 +179,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
               paddingHorizontal: inputLayout.horizontalPadding,
             }}
           >
-            {i18n.t('iCloudDevicesEmpty')}
+            {i18n.t(syncKey('iCloudDevicesEmpty'))}
           </Text>
         ) : (
           <Section>
@@ -187,7 +193,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
               >
                 {device.isThisDevice ? (
                   <Text style={{ color: theme.colors.textAlt }}>
-                    {i18n.t('iCloudDeviceThisDevice')}
+                    {i18n.t(syncKey('iCloudDeviceThisDevice'))}
                   </Text>
                 ) : removing === device.filename ? (
                   <ActivityIndicator
@@ -200,7 +206,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
                     disabled={removing !== null}
                     onPress={() => confirmRemove(device)}
                     accessibilityLabel={i18n.t(
-                      'iCloudDeviceRemoveConfirm_title',
+                      syncKey('iCloudDeviceRemoveConfirm_title'),
                       { name: deviceName(device) }
                     )}
                   >

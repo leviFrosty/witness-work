@@ -45,8 +45,21 @@ import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milest
 const HERO_FEATURES = (
   ['liquidGlass', 'widgets', 'progress', 'contacts', 'iCloudSync'] as const
 ).filter(
-  (id) => Platform.OS === 'ios' || id === 'progress' || id === 'contacts'
+  (id) =>
+    Platform.OS === 'ios' ||
+    id === 'progress' ||
+    id === 'contacts' ||
+    id === 'iCloudSync'
 )
+
+/** Android syncs through Google Drive, so its sync hero says so. */
+const heroKey = (
+  id: (typeof HERO_FEATURES)[number],
+  part: 'title' | 'description'
+) =>
+  (Platform.OS === 'android' && id === 'iCloudSync'
+    ? `milestoneHero_iCloudSync_${part}Android`
+    : `milestoneHero_${id}_${part}`) as TranslationKey
 
 const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
   { id: 'rollover', icon: FastForwardIcon },
@@ -234,10 +247,10 @@ const HeroSection = ({ id, index }: HeroSectionProps) => {
             { color: theme.colors.text, fontFamily: theme.fonts.bold },
           ]}
         >
-          {i18n.t(`milestoneHero_${id}_title` as TranslationKey)}
+          {i18n.t(heroKey(id, 'title'))}
         </Text>
         <Text style={[styles.heroDescription, { color: theme.colors.textAlt }]}>
-          {i18n.t(`milestoneHero_${id}_description` as TranslationKey)}
+          {i18n.t(heroKey(id, 'description'))}
         </Text>
       </View>
     </Animated.View>

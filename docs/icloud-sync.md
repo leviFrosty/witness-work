@@ -1,8 +1,13 @@
-# iCloud sync
+# iCloud sync (and Google Drive sync on Android)
 
-WitnessWork uses a private iCloud Drive container on iOS. Supporter access and
-this device’s opt-in are required for ongoing sync. Android uses local data and
-JSON backups; hide iCloud entry points there.
+WitnessWork uses a private iCloud Drive container on iOS and the hidden Google
+Drive app data folder on Android ([ADR 0019](./adr/0019-android-sync-over-google-drive-app-data.md)).
+Supporter access and this device’s opt-in are required for ongoing sync on
+both. One engine (`src/app/sync/iCloudSync.ts`) makes every sync decision and
+reads and writes only through a `SyncTransport`
+(`src/lib/syncTransport/types.ts`), so everything below applies to both
+platforms except where a section says otherwise. Sync between an iPhone and an
+Android device isn't supported.
 
 ## Data and identity
 
@@ -137,11 +142,47 @@ cancel waiting file coordinators, and forbid a timed-out read from writing late.
 Metadata-query starts/stops are serialized on the main queue; timed-out initial
 scan waiters are removed from the waiter dictionary.
 
+## Android: Google Drive
+
+The user connects a Google Account (Settings → Google Drive Sync, or the
+onboarding restore). Google's own account picker and consent screen grant only
+`drive.appdata`, a scope that reaches WitnessWork's hidden folder and nothing
+else in their Drive. `modules/google-drive-auth` returns short-lived tokens;
+all Drive calls are REST from JS. Copy names Google Drive through `syncKey`
+(`…Android` strings).
+
+What differs from iCloud, and where it's handled
+(`src/lib/syncTransport/googleDrive/`):
+
+- **Account.** Only a hash of the Drive `permissionId` is stored
+  (`googleDriveAccountId`). Each fresh token is checked against it. A different
+  account turns sync off through `checkICloudIdentity`, the same path as an
+  Apple Account switch. Lost consent sets `googleDriveNeedsReconnect`; sync
+  waits for Reconnect. Disconnect forgets the account (not Google's shared grant) and turns sync off on this
+  device.
+- **Device binding** uses the `ANDROID_ID`-derived install id, because Auto
+  Backup copies MMKV to restored phones.
+- **Writes.** JSON is copy-on-write (create, then delete the old copy) so
+  Drive keeps no revisions. Duplicate names read as the newest copy. A write
+  is uploaded when it resolves (`writeConfirmsUpload`); a full account is
+  `storageQuotaExceeded`, shown as storage full.
+- **Remote changes.** There are no push events: while the app is in the
+  foreground the folder is listed every 60 s, and each copy this device hasn't
+  read fires remote-change once. There's no background pull on Android.
+- **Photos** use the same names, references, consent, and cleanup rules,
+  uploaded through resumable sessions.
+
+Verify on emulators without a Google Account through the fake Drive server
+(`scripts/verify/fake-google-drive-server.mjs`, `__WW_DEV__.fakeGoogleDrive`).
+The Cloud console setup is in ADR 0019's Consequences.
+
 ## Files and validation
 
 | Path                                                                            | Responsibility                                              |
 | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `src/app/sync/iCloudSync.ts`                                                    | Runtime, retries, initial enable, restore, image sequencing |
+| `src/lib/syncTransport/`                                                        | Transport interface; iCloud and Google Drive transports     |
+| `modules/google-drive-auth/`                                                    | Android Drive authorization (access tokens only)            |
 | `src/app/sync/payload.ts`, `payloadValidation.ts`                               | Wire boundary, legacy normalization, known setting types    |
 | `src/app/sync/merge.ts`, `preferencesMerge.ts`                                  | Record/tombstone and per-entry preference merge             |
 | `src/app/sync/foldRemotePayloads.ts`                                            | Fold foreign snapshots for restore                          |
@@ -152,7 +193,11 @@ scan waiters are removed from the waiter dictionary.
 | `src/features/onboarding/components/steps/iCloudRestore.tsx`                    | Onboarding one-shot restore                                 |
 | `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                            | Coordinated iCloud IO and metadata query                    |
 
-Swift changes require a native rebuild. Pure merge, validation, photo, clock,
-backup, and store regressions live in `src/app/sync/__tests__` and `src/__tests__`.
+Swift and Kotlin changes require a native rebuild. Pure merge, validation,
+photo, clock, backup, and store regressions live in `src/app/sync/__tests__` and
+`src/__tests__`. Drive transport tests are in
+`src/lib/syncTransport/googleDrive/__tests__`, and
+`src/app/sync/__tests__/googleDriveSync.test.ts` runs several Android devices
+against one fake Drive.
 For the addressed audit checklist and remaining Critical/High work, see
 [icloud-sync-audit-fixes.md](./icloud-sync-audit-fixes.md).

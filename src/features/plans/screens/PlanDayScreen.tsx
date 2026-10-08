@@ -65,8 +65,9 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { placeSearchProvider } from '@/lib/placeSearch'
 import PlanDetailsList from '@/features/plans/components/PlanDetailsList'
 import PlanRecurrenceControls from '@/features/plans/components/PlanRecurrenceControls'
-import PlanFormLayout from '@/features/plans/components/PlanFormLayout'
-import PlanWhenDock from '@/features/plans/components/PlanWhenDock'
+import PlanKindToggle from '@/features/plans/components/PlanKindToggle'
+import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
+import WhenDock from '@/components/WhenDock'
 import { noteUserAction } from '@/lib/userAction'
 
 type NotifyMeOffset = {
@@ -1041,30 +1042,37 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }
 
   const dock = (
-    <PlanWhenDock
-      showKindToggle={!isEditMode}
-      oneTime={oneTime}
-      setOneTime={setOneTime}
+    <WhenDock
+      testID='plan'
+      header={
+        <>
+          {!isEditMode && (
+            <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />
+          )}
+          {!oneTime && (
+            <PlanRecurrenceControls
+              frequency={frequency}
+              setFrequency={handleFrequencyChange}
+              weekday={weekday}
+              setWeekday={setWeekday}
+              weekOfMonth={weekOfMonth}
+              setWeekOfMonth={setWeekOfMonth}
+            />
+          )}
+        </>
+      }
       date={date}
       setDate={handleDateChange}
+      showTime
       hours={hours}
       minutes={minutes}
       setDuration={(nextHours, nextMinutes) => {
         setHours(nextHours)
         setMinutes(nextMinutes)
       }}
-      recurrence={
-        !oneTime && (
-          <PlanRecurrenceControls
-            frequency={frequency}
-            setFrequency={handleFrequencyChange}
-            weekday={weekday}
-            setWeekday={setWeekday}
-            weekOfMonth={weekOfMonth}
-            setWeekOfMonth={setWeekOfMonth}
-          />
-        )
-      }
+      durationLabel={i18n.t('planForm_duration')}
+      maxHours={23}
+      minuteStep={5}
       saveButton={
         <ActionButton
           onPress={handlePrimarySave}
@@ -1090,7 +1098,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   return (
     // The dock applies the bottom safe area itself.
     <Wrapper insets='none' style={{ flex: 1 }}>
-      <PlanFormLayout
+      <DockedFormLayout
         dock={dock}
         contentContainerStyle={{
           flexGrow: 1,
@@ -1206,7 +1214,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             </Text>
           </Button>
         )}
-      </PlanFormLayout>
+      </DockedFormLayout>
 
       <RecurringSaveScopeModal
         open={saveScopeModalOpen}

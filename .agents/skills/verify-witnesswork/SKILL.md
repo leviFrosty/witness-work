@@ -90,7 +90,7 @@ wwv flow e2e/maestro/add-contact.yaml --platform android
 ```
 
 - `scripts/verify/flows.mjs` interprets a Maestro subset through this run's agent-device session: `tapOn`, `assertVisible`, `assertNotVisible`, `extendedWaitUntil`, `inputText`, `hideKeyboard`, `back`, `scroll`, `scrollUntilVisible`, `waitForAnimationToEnd`. It doesn't use the Maestro CLI, because Maestro 2.4's iOS driver (and agent-device's own replay runner) can't see React Native views on iOS 27 simulators.
-- Use `traits: button` to target the control rather than its label. `text: [A, B]` tries each label, for accessible names that differ by platform, such as Android appending a control's value ("Hours, 0").
+- Use `traits: button` to target the control rather than its label. `text: [A, B]` tries each label, for accessible names that differ by platform, such as Android appending a control's value ("Hours, 0"). `index: 0` taps the first of several matches (agent-device's `find --first`), such as the same number on two wheels; which one is first is agent-device's choice, so assert something either match satisfies.
 - `# seed: <scenario>` seeds before the flow. `# assert: <js>` lines must evaluate to `true` in the app afterwards, which is the read-back.
 - A flow fails on a failed step, a captured JS error, or a false assert. A screenshot of the failure lands in the artifacts.
 - Add a flow for any user path you change that a later agent should re-prove.

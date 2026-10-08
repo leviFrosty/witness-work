@@ -28,7 +28,6 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
-import useServiceStreak from '@/hooks/useServiceStreak'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
 import Text from '@/components/ui/MyText'
@@ -41,6 +40,7 @@ import SinceBadge from '@/features/profile/components/SinceBadge'
 import i18n from '@/lib/locales'
 import { getStartDateLabels } from '@/constants/publisher'
 import {
+  busiestWeekday,
   daysLogged,
   minutesInTrailingDays,
   totalMinutes,
@@ -82,6 +82,8 @@ const Stat = ({
         {label}
       </Text>
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
         style={{
           fontFamily: theme.fonts.semiBold,
           fontSize: 20,
@@ -117,7 +119,6 @@ const ProfileDetailOverlay = () => {
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
   const daily = useDailyMinutes()
-  const streak = useServiceStreak()
 
   const stats = useMemo(() => {
     const total = totalMinutes(daily)
@@ -125,8 +126,9 @@ const ProfileDetailOverlay = () => {
       totalMinutes: total,
       days: daysLogged(daily),
       last30Minutes: minutesInTrailingDays(daily, 30),
+      busiestWeekday: busiestWeekday(daily, conversations),
     }
-  }, [daily])
+  }, [daily, conversations])
   const totalDisplay = useFormattedMinutes(stats.totalMinutes)
   const last30Display = useFormattedMinutes(stats.last30Minutes)
 
@@ -259,13 +261,13 @@ const ProfileDetailOverlay = () => {
 
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Stat
-                  label={i18n.t('profileStatStreak')}
-                  value={String(streak.count)}
-                  sub={i18n.t(
-                    streak.kind === 'months'
-                      ? 'profileStatStreakMonths'
-                      : 'profileStatStreakPlans'
-                  )}
+                  label={i18n.t('profileStatBusiestDay')}
+                  value={
+                    stats.busiestWeekday === null
+                      ? '—'
+                      : moment.weekdays(stats.busiestWeekday)
+                  }
+                  sub={i18n.t('profileStatBusiestDaySub')}
                 />
                 {entryMode === 'hours' ? (
                   <Stat

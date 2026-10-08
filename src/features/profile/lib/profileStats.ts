@@ -60,6 +60,58 @@ export const minutesInTrailingDays = (
   return total
 }
 
+/**
+ * The weekday (0 = Sunday) the User went out on most often in the past year:
+ * the one with the most days that have logged time or a Visit. Visits cover
+ * publishers who only check off the month. Ties go to the weekday with more
+ * logged minutes, then to the one gone out on most recently. `null` when there
+ * was no activity.
+ */
+export const busiestWeekday = (
+  daily: Map<string, number>,
+  visits: { date: Date }[],
+  now: Date = new Date()
+): number | null => {
+  const today = dayKey(moment(now))
+  const yearAgo = dayKey(moment(now).subtract(1, 'year'))
+  const inPastYear = (key: string) => key > yearAgo && key <= today
+
+  const activeDays = new Map<string, number>()
+  for (const [key, minutes] of daily) {
+    if (minutes > 0 && inPastYear(key)) activeDays.set(key, minutes)
+  }
+  for (const visit of visits) {
+    const key = dayKey(moment(visit.date))
+    if (inPastYear(key) && !activeDays.has(key)) activeDays.set(key, 0)
+  }
+
+  const days = Array<number>(7).fill(0)
+  const minutes = Array<number>(7).fill(0)
+  const latest = Array<string>(7).fill('')
+  for (const [key, dayMinutes] of activeDays) {
+    const weekday = moment(key, 'YYYY-MM-DD').day()
+    days[weekday]++
+    minutes[weekday] += dayMinutes
+    if (key > latest[weekday]) latest[weekday] = key
+  }
+
+  let busiest: number | null = null
+  for (let weekday = 0; weekday < 7; weekday++) {
+    if (days[weekday] === 0) continue
+    if (
+      busiest === null ||
+      days[weekday] > days[busiest] ||
+      (days[weekday] === days[busiest] &&
+        (minutes[weekday] > minutes[busiest] ||
+          (minutes[weekday] === minutes[busiest] &&
+            latest[weekday] > latest[busiest])))
+    ) {
+      busiest = weekday
+    }
+  }
+  return busiest
+}
+
 export type ContributionCell = {
   date: Date
   minutes: number

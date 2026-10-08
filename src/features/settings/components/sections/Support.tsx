@@ -134,29 +134,30 @@ const SupportSection = ({
           label={i18n.t('shareApp_title')}
           onPress={() => handleNavigate('ShareApp')}
           selected={selectedDestination === 'ShareApp'}
-          lastInSection={Platform.OS !== 'ios'}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
-        {Platform.OS === 'ios' && (
-          <InputRowButton
-            leftIcon={MedalIcon}
-            label={i18n.t('rateWitnessWorkOnAppStore')}
-            onPress={() => {
-              try {
-                openURL(links.appStoreReview)
-              } catch (error) {
-                Alert.alert(
-                  i18n.t('appleAppStoreReviewErrorTitle'),
-                  i18n.t('appleAppStoreReviewErrorMessage')
-                )
-              }
-            }}
-            lastInSection
-          >
-            <IconButton icon={ExternalLinkIcon} />
-          </InputRowButton>
-        )}
+        <InputRowButton
+          leftIcon={MedalIcon}
+          label={i18n.t('rateWitnessWorkOnAppStore')}
+          onPress={() => {
+            try {
+              openURL(
+                Platform.OS === 'android'
+                  ? links.playStore
+                  : links.appStoreReview
+              )
+            } catch (error) {
+              Alert.alert(
+                i18n.t('appleAppStoreReviewErrorTitle'),
+                i18n.t('appleAppStoreReviewErrorMessage')
+              )
+            }
+          }}
+          lastInSection
+        >
+          <IconButton icon={ExternalLinkIcon} />
+        </InputRowButton>
       </Section>
       <ManageSubscriptionSheet
         open={manageOpen}

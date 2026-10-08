@@ -11,6 +11,8 @@ struct PaceBar: View {
   let fraction: Double
   let paceFraction: Double?
   var height: CGFloat = 6
+  /// Complications pass their own: `Color.accentColor` is white there.
+  var tint: Color = .accentColor
 
   /// Tinted faces draw the fill and the mark in one color, keeping only
   /// opacity, so the bar is cut away beside the mark to keep it visible.
@@ -28,7 +30,7 @@ struct PaceBar: View {
           Capsule()
             .fill(Color.primary.opacity(0.25))
           Capsule()
-            .fill(Color.accentColor)
+            .fill(tint)
             .frame(width: fraction > 0 ? max(width * fraction, height) : 0)
             .widgetAccentable()
         }

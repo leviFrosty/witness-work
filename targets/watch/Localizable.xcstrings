@@ -6894,6 +6894,119 @@
         }
       }
     },
+    "watchRangeComplicationDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge from zero to your goal."
+          }
+        }
+      }
+    },
     "watchSetUp" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7116,6 +7229,119 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Open WitnessWork on your iPhone to update."
+          }
+        }
+      }
+    },
+    "watchSymbolComplicationDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This month's hours on a gauge toward your goal."
           }
         }
       }

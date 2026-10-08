@@ -111,43 +111,49 @@ private struct UpNextContent {
   var upNext: String { L10n.t("watchUpNext", snapshot) }
 }
 
+/// Laid out like Calendar's Today's Date: the symbol where its weekday is, in
+/// the tint, and the time below in the same rounded type, sized to fit.
 private struct UpNextCircularView: View {
   let content: UpNextContent
 
   var body: some View {
     ZStack {
       AccessoryWidgetBackground()
-      if let item = content.item {
-        VStack(spacing: 1) {
-          Image(systemName: UpNext.symbol(item))
-            .font(.system(size: 13, weight: .semibold))
-            .widgetAccentable()
-          if let clock = content.clock(item) {
-            // `3:00` with a small `PM`, like the Alarms complication.
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-              Text(clock)
-                .font(.system(size: 16, weight: .semibold))
+      CircularScaled { scale in
+        if let item = content.item {
+          VStack(spacing: 0) {
+            Image(systemName: UpNext.symbol(item))
+              .font(.system(size: 13 * scale, weight: .medium))
+              .foregroundStyle(complicationTint)
+              .widgetAccentable()
+              .padding(.bottom, 2 * scale)
+            if let clock = content.clock(item) {
+              // `3:00` with a small `PM`, like the Alarms complication. One
+              // Text, so it shrinks as a whole rather than truncating.
+              let time = Text(clock)
+                .font(.system(size: 18 * scale, weight: .medium, design: .rounded))
               if let period = item.periodText {
-                Text(period)
-                  .font(.system(size: 9, weight: .semibold))
+                let marker = Text(period)
+                  .font(.system(size: 10 * scale, weight: .medium, design: .rounded))
+                Text("\(time)\u{2009}\(marker)")
+              } else {
+                time
               }
+            } else {
+              Text(content.shortWhen(item))
+                .font(.system(size: 17 * scale, weight: .medium, design: .rounded))
             }
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-          } else {
-            Text(content.shortWhen(item))
-              .font(.system(size: 14, weight: .semibold))
-              .lineLimit(1)
-              .minimumScaleFactor(0.5)
           }
+          .lineLimit(1)
+          .minimumScaleFactor(0.6)
+          .padding(.horizontal, 4 * scale)
+        } else if content.isSetUp {
+          Image(systemName: "calendar")
+            .font(.system(size: 24 * scale, weight: .medium))
+            .foregroundStyle(.secondary)
+        } else {
+          Text(verbatim: "—")
         }
-        .padding(4)
-      } else if content.isSetUp {
-        Image(systemName: "calendar")
-          .font(.title3)
-          .foregroundStyle(.secondary)
-      } else {
-        Text(verbatim: "—")
       }
     }
     .accessibilityElement(children: .combine)

@@ -42,7 +42,7 @@ overrides:
   metro-runtime: 0.84.5
   metro-source-map: 0.84.5
   'nanoid@3': '^3.3.18'
-  shell-quote: '^1.10.0'
+  shell-quote: '^1.11.0'
   'ws@8': '^8.21.3'
 patchedDependencies:
   '@react-native-menu/menu@2.0.0': patches/@react-native-menu__menu@2.0.0.patch

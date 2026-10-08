@@ -10,12 +10,11 @@ enum WidgetURLs {
   static let addTime = URL(string: "\(scheme)://add-time")!
   static let sharedGoodNews = URL(string: "\(scheme)://shared-good-news")!
 
-  /// Opens Add Time with the given `YYYY-MM-DD` date pre-filled. Used by the
-  /// Calendar widget when a user taps a day cell — the primary intent on the
-  /// calendar is logging hours worked on that day, so the tap goes to Add Time
-  /// rather than the Plan Day screen. Plan creation lives on the header "+".
-  static func addTime(date: String) -> URL {
-    URL(string: "\(scheme)://add-time/\(date)")!
+  /// Opens the Schedule tab with the given `YYYY-MM-DD` day's sheet, the same
+  /// view as tapping that day in the app's calendar. Used by the Calendar
+  /// widget's day cells.
+  static func scheduleDay(date: String) -> URL {
+    URL(string: "\(scheme)://schedule/\(date)")!
   }
 
   static func contact(id: String) -> URL {

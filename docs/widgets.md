@@ -80,6 +80,8 @@ Widgets deep-link into the app via the `witnesswork://` scheme declared in `app.
 | `witnesswork://contact/:id`                   | Push Contact Details.                               |
 | `witnesswork://contact/:id/:convId`           | Push Contact Details with the conversation focused. |
 | `witnesswork://reschedule/:contactId/:convId` | Open the Reschedule sheet for an overdue follow-up. |
+| `witnesswork://schedule/:date`                | Schedule tab with that day's sheet (Calendar day).  |
+| `witnesswork://day`                           | Push an empty Plan Day (Calendar "+").              |
 | `witnesswork://shared-good-news`              | **Action**: log a 0h0m report + play confetti.      |
 
 `shared-good-news` is handled by `SharedGoodNewsListener.tsx`, not React Navigation, because it mutates state instead of pushing a screen.

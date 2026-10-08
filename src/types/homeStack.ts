@@ -15,7 +15,14 @@ export type HomeTabStackParamList = {
         tab?: 'month' | 'year' | 'allTime'
       }
     | undefined
-  Schedule: { month: number; year: number } | undefined
+  Schedule:
+    | {
+        month?: number
+        year?: number
+        /** `YYYY-MM-DD`; opens that day's sheet, e.g. from the Calendar widget. */
+        date?: string
+      }
+    | undefined
   Settings: undefined
 }
 

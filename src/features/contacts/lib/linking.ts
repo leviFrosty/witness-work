@@ -20,7 +20,8 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  * | URL                                           | Screen                                     |
  * | --------------------------------------------- | ------------------------------------------ |
  * | `witnesswork://add-time`                      | Add Time                                   |
- * | `witnesswork://add-time/:date`                | Add Time, date pre-filled (calendar tap)   |
+ * | `witnesswork://add-time/:date`                | Add Time, date pre-filled                  |
+ * | `witnesswork://schedule/:date`                | Schedule, that day's sheet (calendar tap)  |
  * | `witnesswork://contact/:id`                   | Contact Details                            |
  * | `witnesswork://contact/:id/:convId`           | Contact Details with highlighted conv.     |
  * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Visit modal                     |
@@ -52,12 +53,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Root: {
         screens: {
           Home: 'home',
+          // A Calendar widget day opens the same day sheet as tapping that
+          // day in the app's own calendar.
+          Schedule: 'schedule/:date?',
         },
       },
       // Date suffix is optional: `add-time` opens the empty form, and
-      // `add-time/:date` pre-fills the date — used by the Calendar widget
-      // when a user taps a day cell, so the primary gesture logs hours for
-      // that day rather than opening the plan editor.
+      // `add-time/:date` pre-fills the date.
       'Add Time': 'add-time/:date?',
       'Contact Details': 'contact/:id/:highlightedVisitId?',
       RescheduleVisit: 'reschedule/:contactId/:visitId',

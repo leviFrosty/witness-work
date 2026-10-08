@@ -15,7 +15,7 @@ Users who log hours record service time for a day, from the Home service report 
 
 - Home → "Add Time" on the service report card.
 - The center "+" ("Quick Action") → "Add Time".
-- Tapping a day on the calendar widget, which opens `witnesswork://add-time/<date>`.
+- `witnesswork://add-time/<date>`, which pre-fills the date.
 
 ## Driving it with ww-verify
 

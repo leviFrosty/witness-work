@@ -4,6 +4,7 @@ import {
   EventSubscription,
 } from 'expo-modules-core'
 import { androidStopwatch } from './androidStopwatch'
+import { androidNativeStopwatch } from './androidNativeStopwatch'
 import { ZERO_STATE, type StopwatchState } from './types'
 
 export type { StopwatchState } from './types'
@@ -16,6 +17,8 @@ type StopwatchBridgeNative = {
   reset(): Promise<StopwatchState>
   getState(): StopwatchState
   areLiveActivitiesEnabled(): boolean
+  /** Android only: takes over the state the MMKV fallback kept. */
+  importLegacyState?(json: string): boolean
   addListener(
     eventName: 'onStateChange',
     listener: (state: StopwatchState) => void
@@ -25,9 +28,12 @@ type StopwatchBridgeNative = {
 const native =
   requireOptionalNativeModule<StopwatchBridgeNative>('StopwatchBridge')
 
+// Android binaries from before the native store fall back to MMKV.
 const stopwatch =
   Platform.OS === 'android'
-    ? androidStopwatch
+    ? native
+      ? androidNativeStopwatch(native)
+      : androidStopwatch
     : Platform.OS === 'ios'
       ? native
       : null

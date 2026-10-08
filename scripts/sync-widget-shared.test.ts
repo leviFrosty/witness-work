@@ -3,10 +3,13 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  kotlinL10nKeys,
   l10nKeys,
   readLocales,
   shortcutCatalog,
   stringCatalog,
+  wearBundledStrings,
+  wearStringResources,
 } from './sync-widget-shared.mjs'
 import keys from '../src/app/watch/watchStringKeys.json'
 
@@ -216,5 +219,61 @@ describe('shortcutCatalog', () => {
       'targets/intents/ServiceShortcuts.swift has no phrase "Start in \\(.applicationName)" (from en-US "siriShortcutStart")',
       'targets/intents/ServiceShortcuts.swift phrase "Log time in \\(.applicationName)" needs a siriShortcut* string in src/locales/en-US.json, listed under shortcutPhrases in src/app/watch/watchStringKeys.json',
     ])
+  })
+})
+
+describe('Wear OS strings', () => {
+  const wearKeyLists = {
+    strings: ['watchSetUp', 'sharedTheGoodNews'],
+    widgetStrings: ['watchNow'],
+    wearStrings: ['siriTimerSaved'],
+    androidVariants: ['watchSetUp'],
+  }
+  const locales = {
+    'en-US': {
+      watchSetUp: 'Open WitnessWork on your iPhone.',
+      watchSetUpAndroid: "Open WitnessWork on your phone's app.",
+      sharedTheGoodNews: 'Shared the\nGood News',
+      watchNow: '@Now & <then>',
+      siriTimerSaved: 'Timer saved',
+    },
+    'es-ES': { sharedTheGoodNews: 'Compartió', watchSetUp: 'iPhone' },
+  }
+
+  it('says phone where the Apple Watch says iPhone, in English by default', () => {
+    const resources = wearStringResources(locales, wearKeyLists)
+    expect(resources.values).toContain(
+      '<string name="watchSetUp" formatted="false">Open WitnessWork on your phone\\\'s app.</string>'
+    )
+    expect(resources.values).toContain(
+      '<string name="sharedTheGoodNews" formatted="false">Shared the\\nGood News</string>'
+    )
+    expect(resources.values).toContain(
+      '<string name="watchNow" formatted="false">\\@Now &amp; &lt;then&gt;</string>'
+    )
+    expect(resources.values).toContain('name="siriTimerSaved"')
+  })
+
+  it('lists only what a language translated, so Android falls back to English', () => {
+    const spanish = wearStringResources(locales, wearKeyLists)['values-es']
+    expect(spanish).toContain(
+      '<string name="sharedTheGoodNews" formatted="false">Compartió</string>'
+    )
+    // Its `watchSetUp` says iPhone; the Android wording isn't translated yet.
+    expect(spanish).not.toContain('watchSetUp')
+  })
+
+  it('maps every key to its resource for lookups by name', () => {
+    expect(wearBundledStrings(wearKeyLists)).toContain(
+      '"siriTimerSaved" to R.string.siriTimerSaved,'
+    )
+  })
+
+  it('finds the keys Kotlin looks up', () => {
+    expect([
+      ...kotlinL10nKeys(
+        'L10n.t("addTime", snapshot); L10n.line( "shared", s); t("hoursCompact"); format("x")'
+      ),
+    ]).toEqual(['addTime', 'shared', 'hoursCompact'])
   })
 })

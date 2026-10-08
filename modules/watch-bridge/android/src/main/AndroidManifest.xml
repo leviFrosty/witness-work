@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- Requests from the Wear OS app (targets/wear-os), delivered while the app isn't running. -->
+    <service
+      android:name="expo.modules.watchbridge.WatchBridgeListenerService"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
+        <data android:scheme="wear" android:host="*" android:path="/witnesswork/request" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+        <data android:scheme="wear" android:host="*" android:pathPrefix="/witnesswork/queued/" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
+        <data android:scheme="wear" android:host="*" android:path="/witnesswork_wear_app" />
+      </intent-filter>
+    </service>
+  </application>
+</manifest>

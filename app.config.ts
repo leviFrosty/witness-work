@@ -205,6 +205,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       '@bacons/apple-targets',
+      // The Wear OS app (targets/wear-os) as the `:wear` Gradle module.
+      './plugins/with-wear-os',
       './plugins/with-posthog-symbols-last',
       '@react-native-community/datetimepicker',
       [

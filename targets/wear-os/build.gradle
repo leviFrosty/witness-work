@@ -1,0 +1,131 @@
+// The WitnessWork Wear OS app: native Kotlin + Compose for Wear OS, the counterpart of the
+// Apple Watch app in `targets/watch` (feature parity: `docs/watch/features.json`).
+//
+// `plugins/with-wear-os.js` includes this directory in the generated Android project as the
+// `:wear` module. Build it with `./gradlew :wear:assembleDebug`, or `:wear:bundleRelease`
+// for Google Play (docs/build.md). The phone app's APK doesn't contain it.
+
+buildscript {
+  // The Compose compiler ships with Kotlin and must match the Kotlin Gradle plugin that
+  // React Native's build loads, so take that version from the root classpath.
+  def kotlinVersion = rootProject.buildscript.configurations.classpath.resolvedConfiguration
+    .resolvedArtifacts
+    .find { it.moduleVersion.id.group == 'org.jetbrains.kotlin' && it.name == 'kotlin-gradle-plugin' }
+    ?.moduleVersion?.id?.version ?: rootProject.ext.kotlinVersion
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:${kotlinVersion}"
+  }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+// The Wearable Data Layer only connects apps with the same application id and signing key,
+// and Google Play lists the watch app under the phone app's id. EAS writes the version code
+// into the phone app's build.gradle, so it's read from there too.
+evaluationDependsOn(':app')
+def phone = project(':app').android
+// The phone app's name for this variant (WitnessWork, WitnessWork Dev), from its resources.
+def phoneAppName = new groovy.xml.XmlSlurper()
+  .parse(project(':app').file('src/main/res/values/strings.xml'))
+  .string.find { it.@name == 'app_name' }
+  .text()
+
+// Outputs in `android/build/wear`, so this source directory stays clean.
+layout.buildDirectory = rootProject.layout.buildDirectory.dir('wear')
+
+android {
+  namespace 'com.leviwilkerson.witnesswork.wear'
+  compileSdk rootProject.ext.compileSdkVersion
+
+  defaultConfig {
+    applicationId phone.defaultConfig.applicationId
+    // Wear OS 3; Compose for Wear OS and Tiles need it.
+    minSdk 30
+    targetSdk rootProject.ext.targetSdkVersion
+    versionCode phone.defaultConfig.versionCode
+    versionName phone.defaultConfig.versionName
+    resValue 'string', 'app_name', phoneAppName
+  }
+
+  signingConfigs {
+    debug {
+      def debugSigning = phone.signingConfigs.debug
+      storeFile debugSigning.storeFile
+      storePassword debugSigning.storePassword
+      keyAlias debugSigning.keyAlias
+      keyPassword debugSigning.keyPassword
+    }
+  }
+
+  buildTypes {
+    debug {
+      signingConfig signingConfigs.debug
+    }
+    release {
+      // Like the phone app's template; EAS replaces it with the upload key below.
+      signingConfig signingConfigs.debug
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+  }
+
+  buildFeatures {
+    compose true
+    buildConfig true
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
+}
+
+kotlin {
+  jvmToolchain(17)
+}
+
+// EAS signs release builds by applying this script to the phone app; apply it here too so
+// both apps carry the same upload key.
+def easBuildGradle = rootProject.file('app/eas-build.gradle')
+if (easBuildGradle.exists()) {
+  apply from: easBuildGradle
+}
+
+// Pinned to exact patch versions (AGENTS.md). The newest releases that build with the
+// phone project's Android Gradle plugin and compile SDK (8.12, 36); newer AndroidX releases
+// need AGP 9.1 and SDK 37.
+dependencies {
+  implementation platform('androidx.compose:compose-bom:2026.06.01')
+  implementation 'androidx.activity:activity-compose:1.13.0'
+  implementation 'androidx.core:core-ktx:1.18.0'
+  implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.10.0'
+  implementation 'androidx.wear.compose:compose-material3:1.6.2'
+  implementation 'androidx.wear.compose:compose-foundation:1.6.2'
+  implementation 'androidx.wear.compose:compose-navigation:1.6.2'
+  implementation 'androidx.wear:wear:1.4.0'
+  implementation 'androidx.wear:wear-ongoing:1.1.0'
+  implementation 'androidx.wear.tiles:tiles:1.6.2'
+  implementation 'androidx.wear.protolayout:protolayout:1.4.2'
+  implementation 'androidx.wear.protolayout:protolayout-expression:1.4.2'
+  implementation 'androidx.wear.protolayout:protolayout-material3:1.4.2'
+  implementation 'androidx.wear.watchface:watchface-complications-data-source-ktx:1.3.0'
+  implementation 'androidx.concurrent:concurrent-futures-ktx:1.3.0'
+  implementation 'com.google.android.gms:play-services-wearable:20.0.1'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2'
+
+  testImplementation 'junit:junit:4.13.2'
+  // Android's org.json is a stub in JVM tests.
+  testImplementation 'org.json:json:20260814'
+}

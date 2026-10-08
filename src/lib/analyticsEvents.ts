@@ -93,7 +93,7 @@ export const analyticsEventNames = [
   'tab_order_changed',
   'update_reveal_closed',
   'update_reveal_opened',
-  // Apple Watch adoption and sync outcomes, captured on the iPhone.
+  // Apple Watch and Wear OS adoption and sync outcomes, captured on the phone.
   'watch_app_status',
   'watch_entry_adjusted',
   'watch_entry_skipped',

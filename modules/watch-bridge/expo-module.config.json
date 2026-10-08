@@ -1,7 +1,10 @@
 {
-  "platforms": ["ios"],
+  "platforms": ["ios", "android"],
   "ios": {
     "modules": ["WatchBridgeModule"],
     "appDelegateSubscribers": ["WatchBridgeAppDelegateSubscriber"]
+  },
+  "android": {
+    "modules": ["expo.modules.watchbridge.WatchBridgeModule"]
   }
 }

@@ -1,0 +1,144 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <uses-feature android:name="android.hardware.type.watch" />
+
+  <!-- The running timer's Ongoing Activity. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <application
+    android:allowBackup="false"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:supportsRtl="true"
+    android:theme="@android:style/Theme.DeviceDefault">
+
+    <!-- Needs the phone app, like the Apple Watch app needs the iPhone. -->
+    <meta-data
+      android:name="com.google.android.wearable.standalone"
+      android:value="false" />
+
+    <activity
+      android:name=".MainActivity"
+      android:exported="true"
+      android:launchMode="singleTask"
+      android:taskAffinity="">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <!-- The tile's and the timer notification's actions. -->
+    <activity
+      android:name=".QuickActionActivity"
+      android:excludeFromRecents="true"
+      android:exported="true"
+      android:noHistory="true"
+      android:taskAffinity=".quickaction" />
+
+    <service
+      android:name=".complications.ProgressComplicationService"
+      android:exported="true"
+      android:icon="@drawable/ic_clock"
+      android:label="@string/watchComplicationName"
+      android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+      <intent-filter>
+        <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+      </intent-filter>
+      <meta-data
+        android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+        android:value="RANGED_VALUE,SHORT_TEXT,LONG_TEXT" />
+      <!-- Updated by the app when its data changes; timelines cover each midnight. -->
+      <meta-data
+        android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+        android:value="0" />
+    </service>
+
+    <!-- The same progress in circular slots only, in the Apple Watch's other gauge styles. -->
+    <service
+      android:name=".complications.ProgressRangeComplicationService"
+      android:exported="true"
+      android:icon="@drawable/ic_clock"
+      android:label="@string/wearRangeComplicationName"
+      android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+      <intent-filter>
+        <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+      </intent-filter>
+      <meta-data
+        android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+        android:value="RANGED_VALUE" />
+      <meta-data
+        android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+        android:value="0" />
+    </service>
+
+    <service
+      android:name=".complications.ProgressSymbolComplicationService"
+      android:exported="true"
+      android:icon="@drawable/ic_clock"
+      android:label="@string/wearSymbolComplicationName"
+      android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+      <intent-filter>
+        <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+      </intent-filter>
+      <meta-data
+        android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+        android:value="RANGED_VALUE" />
+      <meta-data
+        android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+        android:value="0" />
+    </service>
+
+    <service
+      android:name=".complications.UpNextComplicationService"
+      android:exported="true"
+      android:icon="@drawable/ic_calendar"
+      android:label="@string/watchUpNextComplicationName"
+      android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+      <intent-filter>
+        <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+      </intent-filter>
+      <meta-data
+        android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+        android:value="SHORT_TEXT,LONG_TEXT" />
+      <meta-data
+        android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+        android:value="0" />
+    </service>
+
+    <service
+      android:name=".tile.ProgressTileService"
+      android:description="@string/watchComplicationDescription"
+      android:exported="true"
+      android:icon="@drawable/ic_clock"
+      android:label="@string/watchComplicationName"
+      android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+      <intent-filter>
+        <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+      </intent-filter>
+      <meta-data
+        android:name="androidx.wear.tiles.PREVIEW"
+        android:resource="@drawable/tile_preview" />
+    </service>
+
+    <!-- What the phone publishes, while the app isn't running. -->
+    <service
+      android:name=".WatchListenerService"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+        <data
+          android:host="*"
+          android:path="/witnesswork/context"
+          android:scheme="wear" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
+        <data
+          android:host="*"
+          android:path="/witnesswork_phone_app"
+          android:scheme="wear" />
+      </intent-filter>
+    </service>
+  </application>
+</manifest>

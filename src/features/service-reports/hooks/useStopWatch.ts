@@ -37,9 +37,10 @@ const ZERO: Stopwatch.StopwatchState = {
 
 /**
  * The bridge owns persisted timestamp state: Swift/App Group UserDefaults on
- * iOS, MMKV on Android. iOS Live Activities can also change it through App
- * Intents. Both implementations rehydrate on foreground; this hook renders
- * elapsed time and dispatches commands through the same interface.
+ * iOS, `StopwatchStore.kt` on Android. iOS Live Activities can also change it
+ * through App Intents, and either watch through the watch bridge. Both
+ * implementations rehydrate on foreground; this hook renders elapsed time and
+ * dispatches commands through the same interface.
  */
 export const useStopWatch = () => {
   const [state, setState] = useState<Stopwatch.StopwatchState>(() =>

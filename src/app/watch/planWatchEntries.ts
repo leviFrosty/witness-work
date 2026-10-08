@@ -36,6 +36,8 @@ export const WATCH_ORIGINS: readonly WatchOrigin[] = [
   'shortcut',
   'timer',
   'phoneShortcut',
+  'tile',
+  'ongoing_activity',
 ]
 
 const isWholeNumberIn = (value: unknown, min: number, max: number) =>
@@ -58,10 +60,11 @@ function isValidDraft(draft: WatchEntryDraft): boolean {
 }
 
 /**
- * Decides what to do with each Time Entry made on the Apple Watch or with Siri
- * on this device. The draft's id becomes the entry's id, so a delivery that
- * repeats — or that iCloud Sync already brought in from another device — is
- * recognized, and an entry deleted before it arrived stays deleted.
+ * Decides what to do with each Time Entry made on the watch (Apple Watch or
+ * Wear OS) or with Siri on this device. The draft's id becomes the entry's id,
+ * so a delivery that repeats — or that iCloud Sync already brought in from
+ * another device — is recognized, and an entry deleted before it arrived stays
+ * deleted.
  *
  * A Category deleted in the meantime is dropped rather than losing the time;
  * the entry then counts as Standard.

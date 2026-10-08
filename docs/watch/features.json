@@ -1,0 +1,1152 @@
+{
+  "$comment": "Apple Watch ↔ Wear OS feature parity. Read docs/watch/README.md; checked by scripts/check-watch-parity.mjs (pnpm check:watch-parity).",
+  "statuses": {
+    "implemented": "Works the same way, apart from platform conventions.",
+    "partial": "The closest equivalent the platform allows; notes say what differs.",
+    "gap": "Missing on this platform; notes say why.",
+    "not-applicable": "The platform has no such surface; notes name what covers it instead."
+  },
+  "sources": {
+    "watchos": [
+      "targets/watch/*.swift",
+      "targets/watch-widgets/*.swift",
+      "modules/watch-bridge/ios/*.swift"
+    ],
+    "wearos": [
+      "targets/wear-os/src/main/java/**/*.kt",
+      "modules/watch-bridge/android/src/main/java/**/*.kt",
+      "modules/stopwatch-bridge/android/src/main/java/**/*.kt"
+    ],
+    "shared": ["src/app/watch/*"]
+  },
+  "infrastructure": {
+    "watchos": [
+      "targets/watch/Shared/AppGroup.swift",
+      "modules/watch-bridge/ios/WatchBridgeAppDelegateSubscriber.swift",
+      "modules/watch-bridge/ios/IntentInbox.swift",
+      "targets/watch/expo-target.config.js"
+    ],
+    "wearos": [
+      "plugins/with-wear-os.js",
+      "targets/wear-os/build.gradle",
+      "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeListenerService.kt"
+    ]
+  },
+  "features": [
+    {
+      "id": "app.setup",
+      "area": "App",
+      "title": "Set-up screen",
+      "description": "Before the phone has sent anything, the app says to open WitnessWork on the phone to finish setting up.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/WitnessWorkWatchApp.swift#RootView"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/WatchApp.kt#SetupScreen"
+        ]
+      }
+    },
+    {
+      "id": "app.refresh-on-open",
+      "area": "App",
+      "title": "Refresh when opened",
+      "description": "When the app becomes active it asks the phone for a fresh context (hello, reporting the complications in use) and resends entries the phone hasn't accepted.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WitnessWorkWatchApp.swift#scenePhase",
+          "targets/watch/WatchModel.swift#func refresh"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MainActivity.kt#onResume",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#suspend fun refresh"
+        ]
+      }
+    },
+    {
+      "id": "app.alerts",
+      "area": "App",
+      "title": "Error alerts",
+      "description": "Failed actions show an alert with one OK button: phone unreachable, timer changed on the phone, directions unavailable, or something went wrong.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WitnessWorkWatchApp.swift#.alert",
+          "targets/watch/WatchModel.swift#func show",
+          "targets/intents/ServiceIntents.swift#enum ServiceActionError"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/WatchApp.kt#AlertDialog",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ServiceActionError.kt#enum class ServiceActionError"
+        ]
+      }
+    },
+    {
+      "id": "app.hide-names-dimmed",
+      "area": "App",
+      "title": "Hide names while dimmed",
+      "description": "While the wrist is down (watchOS luminance reduced, Wear OS ambient mode) the app shows \"Follow Up\" instead of a Contact's name and hides the topic, because the person you're talking with may see the screen.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#isLuminanceReduced",
+          "targets/watch/UpNextView.swift#isLuminanceReduced",
+          "targets/watch/UpNext.swift#hidesNames"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MainActivity.kt#AmbientLifecycleObserver",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Theme.kt#LocalHidesNames",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#hidesNames"
+        ]
+      }
+    },
+    {
+      "id": "app.theme",
+      "area": "App",
+      "title": "Look and accent color",
+      "description": "Black background with the app's green accent (#4BD27C) for highlights, progress fill and icons; the app icon matches the phone app's.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/expo-target.config.js#$accent",
+          "targets/watch-widgets/expo-target.config.js#$accent"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Theme.kt#Accent",
+          "targets/wear-os/src/main/res/mipmap-anydpi/ic_launcher.xml"
+        ]
+      }
+    },
+    {
+      "id": "app.haptics",
+      "area": "App",
+      "title": "Haptic feedback",
+      "description": "Actions confirm with haptics: a click when the timer starts or pauses, success when time is added or saved.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#WKInterfaceDevice.current().play",
+          "targets/watch/AddTimeView.swift#play(.success)",
+          "targets/watch/UpNextView.swift#play(.start)"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#performHapticFeedback",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#HapticFeedbackType.Confirm",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/UpNextScreen.kt#HapticFeedbackType.ToggleOn"
+        ]
+      }
+    },
+    {
+      "id": "home.stale",
+      "area": "Home",
+      "title": "Out-of-date notice",
+      "description": "Once the month the phone described and the month after have both ended, Home says to open WitnessWork on the phone to update.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/HomeView.swift#watchStale"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#watchStale"
+        ]
+      }
+    },
+    {
+      "id": "home.progress",
+      "area": "Home",
+      "title": "Month progress",
+      "description": "The month's name, its total in the user's Duration Format, the goal in whole hours, a pace bar with a mark where the user's Plans put them by today (never red), and either Goal reached or the ahead/behind or hours-per-day pace line.",
+      "shared": ["src/app/watch/buildWatchSnapshot.ts#paceText"],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#ProgressSection",
+          "targets/watch/PaceBar.swift#struct PaceBar",
+          "targets/watch/MonthProgress.swift#struct MonthProgress"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#ProgressSection",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Components.kt#fun PaceBar",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#data class MonthProgress"
+        ]
+      }
+    },
+    {
+      "id": "home.unsynced-time",
+      "area": "Home",
+      "title": "Time added on the watch counts at once",
+      "description": "Entries still on their way to the phone are added to the month's total, the bar and the complications, except Credit Time, which waits for the phone to apply the credit limit. Entries the phone already counts (reflectedEntryIds, resolvedEntryIds) aren't counted twice.",
+      "shared": ["src/app/watch/watchSync.ts#reflectedEntryIds"],
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/MonthProgress.swift#creditIds"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#creditIds"
+        ]
+      }
+    },
+    {
+      "id": "home.rollover",
+      "area": "Home",
+      "title": "Day and month rollover without the phone",
+      "description": "At midnight \"reported today\" becomes \"reported this month\", the pace moves on, and on the 1st the next month starts at zero with its own goal, all before the phone sends anything new.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WatchStorage.swift#func publisherState",
+          "targets/watch/MonthProgress.swift#nextMonth",
+          "targets/watch/HomeView.swift#TimelineView(.everyMinute)"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#fun WatchSnapshot.publisherState",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#nextMonth",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Theme.kt#fun rememberClock"
+        ]
+      }
+    },
+    {
+      "id": "home.timer",
+      "area": "Home",
+      "title": "Phone timer",
+      "description": "For roles that log hours, a Timer row shows the phone's service timer (counting up while it runs; m:ss under an hour, h:mm:ss from then) with Start Timer or Pause Timer, which need the phone nearby.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#TimerSection",
+          "targets/watch/WatchModel.swift#func setTimer"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#TimerReadout",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#TimerToggle",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#suspend fun setTimer"
+        ]
+      }
+    },
+    {
+      "id": "home.timer-save",
+      "area": "Home",
+      "title": "Save the timer's time",
+      "description": "When the paused timer holds a minute or more, Save Time… opens Add Time with its hours and minutes; saving adds the entry and resets the phone's timer, unless the timer changed since the watch showed it.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#canSave",
+          "targets/watch/WatchModel.swift#func saveTimer"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#canSave",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#suspend fun saveTimer"
+        ]
+      }
+    },
+    {
+      "id": "home.add-time",
+      "area": "Home",
+      "title": "Add Time button",
+      "description": "For roles that log hours, Add Time opens the Add Time screen.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/HomeView.swift#AddTimeView(snapshot: snapshot)"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#R.drawable.ic_plus"
+        ]
+      }
+    },
+    {
+      "id": "home.report-status",
+      "area": "Home",
+      "title": "Shared the Good News",
+      "description": "Publishers who don't log hours get the phone's checkbox instead: tapping Shared the Good News adds a 0:00 marker entry for today; once reported it shows a check, plus Reported today on the day.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/HomeView.swift#ReportStatusSection"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#ReportStatusSection"
+        ]
+      }
+    },
+    {
+      "id": "home.up-next",
+      "area": "Home",
+      "title": "Up Next row",
+      "description": "The next Follow-up or Plan: its heading (Now, Today, Tomorrow, weekday or date, with the time), title and detail, opening the Up Next screen; or Nothing scheduled.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/HomeView.swift#UpNextSection"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#UpNextSection"
+        ]
+      }
+    },
+    {
+      "id": "home.syncing",
+      "area": "Home",
+      "title": "Syncing indicator",
+      "description": "While the outbox holds anything the phone hasn't finished with, Home shows Syncing with iPhone (Syncing with phone on Wear OS).",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/HomeView.swift#watchSyncing"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#watchSyncing"
+        ]
+      }
+    },
+    {
+      "id": "add-time.pickers",
+      "area": "Add Time",
+      "title": "Hours and minutes wheels",
+      "description": "Two wheels, hours 0-23 and minutes 0-59, turned with the Digital Crown or rotating bezel, with their labels always visible. Save is disabled at 0:00.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/AddTimeView.swift#func wheel"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#PickerGroup"
+        ]
+      }
+    },
+    {
+      "id": "add-time.type",
+      "area": "Add Time",
+      "title": "Type",
+      "description": "When the user has Types (Categories), a Type picker offers Standard and each Type; a Type deleted before the entry arrives is saved as Standard.",
+      "shared": ["src/app/watch/planWatchEntries.ts#categoryRemoved"],
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/AddTimeView.swift#Picker(L10n.t(\"type\""]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#TypeDialog"
+        ]
+      }
+    },
+    {
+      "id": "add-time.save",
+      "area": "Add Time",
+      "title": "Save",
+      "description": "Saves an entry for today (the watch's Gregorian day, kept even if delivered after midnight), confirms with a haptic and closes; from the timer it saves the timer's time and resets it.",
+      "shared": [
+        "src/app/watch/planWatchEntries.ts#export function planWatchEntries"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/AddTimeView.swift#func save",
+          "targets/watch/WatchModel.swift#func addEntry"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#fun save",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#suspend fun addEntry"
+        ]
+      }
+    },
+    {
+      "id": "up-next.screen",
+      "area": "Up Next",
+      "title": "Up Next screen",
+      "description": "Opened from Home or the complication: the item's heading, title and detail, updating each minute; if it's no longer coming up (answered or moved on the phone) it says Nothing scheduled.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/UpNextView.swift#struct UpNextView"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/UpNextScreen.kt#fun UpNextScreen"
+        ]
+      }
+    },
+    {
+      "id": "up-next.directions",
+      "area": "Up Next",
+      "title": "Directions",
+      "description": "When the item has a place, Directions opens the watch's maps app with directions, by coordinate or by searching its address; if that's impossible an alert says Maps couldn't find the place.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/UpNextView.swift#func openDirections"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/UpNextScreen.kt#fun openDirections"
+        ]
+      }
+    },
+    {
+      "id": "up-next.timer",
+      "area": "Up Next",
+      "title": "Start the timer for a Plan",
+      "description": "For a Plan, when the role logs hours: Start Timer starts the phone's timer, or the running timer counts up in its place.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/UpNextView.swift#func startTimer"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/UpNextScreen.kt#WatchOrigin.UP_NEXT"
+        ]
+      }
+    },
+    {
+      "id": "up-next.selection",
+      "area": "Up Next",
+      "title": "What comes up next",
+      "description": "Follow-ups and Plans for the next two weeks (Plans only for roles that log hours), soonest first; timed items stay up 15 minutes after they start, a Plan without a time spans its day after that day's timed items. The watch drops what has passed on its own.",
+      "shared": ["src/app/watch/buildUpNext.ts#export function buildUpNext"],
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/UpNext.swift#static func items"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#fun items"
+        ]
+      }
+    },
+    {
+      "id": "up-next.open-from-complication",
+      "area": "Up Next",
+      "title": "Open an item from its complication",
+      "description": "Tapping the Up Next complication opens that item in the app (watchOS: witnesswork-watch://up-next?id=…; Wear OS: an intent extra).",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WitnessWorkWatchApp.swift#onOpenURL",
+          "targets/watch/UpNext.swift#static func url"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MainActivity.kt#fun upNextIntent",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/WatchApp.kt#MainActivity.Route.UP_NEXT"
+        ]
+      }
+    },
+    {
+      "id": "complication.progress",
+      "area": "Complications",
+      "title": "Monthly Progress complication",
+      "description": "Total toward the goal for roles that log hours: the ring with the bare hours in the middle, or the total, /goal, pace line or Goal reached in larger slots; without a goal, the hours under an HOURS caption. For publishers who don't log hours, the month and whether they shared the good news. \"—\" before the first snapshot. watchOS families map to Wear OS types: circular gauge → RANGED_VALUE, corner and small → SHORT_TEXT, rectangular and inline → LONG_TEXT.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/WatchWidgets.swift#struct ProgressComplication"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#class ProgressComplicationService"
+        ]
+      }
+    },
+    {
+      "id": "complication.progress-range",
+      "area": "Complications",
+      "title": "Monthly Progress from 0 to the goal",
+      "description": "A second circular style of Monthly Progress, picked as its own complication: the hours on a gauge from 0 to the goal, like Weather's temperature gauge.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/WatchWidgets.swift#struct ProgressRangeComplication"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#class ProgressRangeComplicationService",
+          "targets/wear-os/src/main/AndroidManifest.xml#@string/wearRangeComplicationName"
+        ],
+        "notes": "Wear OS faces draw a RANGED_VALUE their own way: the value runs from 0 to the goal, but whether the face labels the ends is up to the face. Wear OS lists complications by name only, so it's named \"Monthly Progress, 0 to Goal\"."
+      }
+    },
+    {
+      "id": "complication.progress-symbol",
+      "area": "Complications",
+      "title": "Monthly Progress with a clock",
+      "description": "A third circular style of Monthly Progress, picked as its own complication: the gauge with a clock symbol and the hours, like UV Index.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/WatchWidgets.swift#struct ProgressSymbolComplication"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#class ProgressSymbolComplicationService",
+          "targets/wear-os/src/main/AndroidManifest.xml#@string/wearSymbolComplicationName"
+        ],
+        "notes": "Named \"Monthly Progress with Clock\" in the picker, which lists names only."
+      }
+    },
+    {
+      "id": "complication.progress-timeline",
+      "area": "Complications",
+      "title": "Progress at midnight",
+      "description": "The Progress complication carries entries for coming midnights, so it rolls the day and month over without the phone.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/WatchWidgets.swift#entry(at: midnight)"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#TimelineEntry"
+        ]
+      }
+    },
+    {
+      "id": "complication.up-next",
+      "area": "Complications",
+      "title": "Up Next complication",
+      "description": "The next item: its symbol (person for a Follow-up, calendar for a Plan) and time (3:00 with a small PM later today, otherwise Now or the day), or heading, title and the item after it (Then · …) in larger slots; Nothing scheduled, or \"—\" before setup.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/UpNextWidget.swift#struct UpNextComplication"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/UpNextComplicationService.kt#class UpNextComplicationService"
+        ]
+      }
+    },
+    {
+      "id": "complication.up-next-timeline",
+      "area": "Complications",
+      "title": "Up Next advances on its own",
+      "description": "One timeline entry per change (an item becoming soon, starting, leaving, and each midnight), so Up Next moves along between updates from the phone.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/UpNext.swift#static func changes",
+          "targets/watch-widgets/UpNextWidget.swift#struct UpNextProvider"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#fun changes",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/UpNextComplicationService.kt#MAX_ENTRIES"
+        ]
+      }
+    },
+    {
+      "id": "complication.up-next-relevance",
+      "area": "Complications",
+      "title": "Raised in the Smart Stack when soon",
+      "description": "watchOS raises the Up Next widget in the Smart Stack in the hour before an item and while it's Now.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/UpNextWidget.swift#TimelineEntryRelevance"
+        ]
+      },
+      "wearos": {
+        "status": "not-applicable",
+        "notes": "Wear OS has no Smart Stack or relevance for complications; the Monthly Progress tile is a swipe from the face instead (tile.progress)."
+      }
+    },
+    {
+      "id": "complication.hide-names",
+      "area": "Complications",
+      "title": "Names on the watch face",
+      "description": "Contacts' names and topics stay off a watch face that others may see.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch-widgets/UpNextWidget.swift#isLuminanceReduced"]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/UpNextComplicationService.kt#HIDES_NAMES"
+        ],
+        "notes": "watchOS hides names only while the wrist is down; Wear OS can't give a complication different content in ambient mode, so the Up Next complication always shows \"Follow Up\" (Plans keep their titles). The item opens with the name in the app."
+      }
+    },
+    {
+      "id": "complication.refresh",
+      "area": "Complications",
+      "title": "Refresh on new data",
+      "description": "Complications reload when the phone's snapshot or the outbox changes, spending the refresh budget only on real changes.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/PhoneSession.swift#reloadAllTimelines",
+          "targets/watch/WatchModel.swift#reloadAllTimelines",
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#transferCurrentComplicationUserInfo"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/Surfaces.kt#fun update",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/PhoneSession.kt#Surfaces.update",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#Surfaces.update"
+        ]
+      }
+    },
+    {
+      "id": "complication.picker-names",
+      "area": "Complications",
+      "title": "Names in the face editor",
+      "description": "The complications are listed as Monthly Progress (\"This month's service at a glance.\") and Up Next (\"Your next follow-up or plan.\") in the system's language.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch-widgets/WatchWidgets.swift#watchComplicationName",
+          "targets/watch-widgets/UpNextWidget.swift#watchUpNextComplicationName"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/AndroidManifest.xml#@string/watchComplicationName",
+          "targets/wear-os/src/main/AndroidManifest.xml#@string/watchUpNextComplicationName"
+        ]
+      }
+    },
+    {
+      "id": "tile.progress",
+      "area": "Tile",
+      "title": "Monthly Progress tile",
+      "description": "A tile with the month's progress ring, total and pace, a timer Start/Pause button and an Add Time edge button; for publishers who don't log hours, whether they've reported.",
+      "watchos": {
+        "status": "not-applicable",
+        "notes": "The Apple Watch shows the same progress as the Monthly Progress widget in the Smart Stack (complication.progress) and offers the timer and Add Time through Siri (shortcut.*)."
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/tile/ProgressTileService.kt#class ProgressTileService"
+        ]
+      }
+    },
+    {
+      "id": "timer.ongoing-activity",
+      "area": "Timer",
+      "title": "Running timer outside the app",
+      "description": "While the phone's timer runs, it shows counting up outside the app, with Pause and Stop.",
+      "watchos": {
+        "status": "partial",
+        "paths": [
+          "modules/stopwatch-bridge/ios/StopwatchActivityController.swift"
+        ],
+        "notes": "The iPhone's Live Activity, which watchOS shows in the Smart Stack; its controls are the iPhone's."
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/TimerOngoingActivity.kt#OngoingActivity.Builder"
+        ],
+        "notes": "Wear OS's Ongoing Activity: an icon on the watch face and in the launcher, and a notification with Pause Timer and Stop Timer. Needs notification permission, asked when the timer is first started from the watch."
+      }
+    },
+    {
+      "id": "shortcut.add-time",
+      "area": "Shortcuts",
+      "title": "Add time by voice or shortcut",
+      "description": "Siri and Shortcuts on the watch: \"Add time in WitnessWork\" with a duration and optional Type adds an entry for today.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct AddServiceTimeIntent",
+          "targets/watch/Shared/ServiceShortcuts.swift#AddServiceTimeIntent",
+          "targets/watch/WatchServiceActions.swift#static func addEntry"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/tile/ProgressTileService.kt#MainActivity.Route.ADD_TIME"
+        ],
+        "notes": "Wear OS has no voice actions or shortcuts for other apps. Closest: the tile's Add Time button opens Add Time."
+      }
+    },
+    {
+      "id": "shortcut.start-timer",
+      "area": "Shortcuts",
+      "title": "Start the timer by voice or shortcut",
+      "description": "\"Start my timer in WitnessWork\" starts the phone's timer.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct StartServiceTimerIntent"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/QuickActionActivity.kt#Action.START_TIMER",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/tile/ProgressTileService.kt#Action.START_TIMER"
+        ],
+        "notes": "No voice actions on Wear OS. Closest: the tile's play button, confirmed with \"Timer started\"."
+      }
+    },
+    {
+      "id": "shortcut.pause-timer",
+      "area": "Shortcuts",
+      "title": "Pause the timer by voice or shortcut",
+      "description": "\"Pause my timer in WitnessWork\" pauses the phone's timer.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct PauseServiceTimerIntent"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/QuickActionActivity.kt#Action.PAUSE_TIMER",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/TimerOngoingActivity.kt#Action.PAUSE_ONGOING"
+        ],
+        "notes": "No voice actions on Wear OS. Closest: the tile's pause button and the Ongoing Activity's Pause Timer, confirmed with \"Timer paused\"."
+      }
+    },
+    {
+      "id": "shortcut.stop-timer",
+      "area": "Shortcuts",
+      "title": "Stop and save the timer by voice or shortcut",
+      "description": "\"Stop my timer in WitnessWork\" saves the timer's whole minutes as an entry for today and resets it; under a minute or 24 hours or more it explains why nothing was added.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct StopServiceTimerIntent",
+          "targets/watch/WatchModel.swift#func stopTimer"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/TimerOngoingActivity.kt#Action.STOP_ONGOING",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#suspend fun stopTimer"
+        ],
+        "notes": "No voice actions on Wear OS. Closest: the Ongoing Activity's Stop Timer, confirmed with \"Timer stopped and time added\". It always saves as Standard; Siri can take a Type."
+      }
+    },
+    {
+      "id": "shortcut.log-trip",
+      "area": "Shortcuts",
+      "title": "Log a mileage trip by voice",
+      "description": "\"Log a trip\" / \"Log a round trip in WitnessWork\" logs a trip for today in the user's distance unit with the default or chosen car; a round trip asks for the one-way distance and doubles it.",
+      "shared": [
+        "src/app/watch/planWatchTrips.ts#export function planWatchTrips"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct LogTripIntent",
+          "targets/watch/Shared/ServiceIntents.swift#struct LogRoundTripIntent",
+          "targets/watch/WatchModel.swift#func addTrip"
+        ]
+      },
+      "wearos": {
+        "status": "gap",
+        "notes": "Wear OS has no voice actions for other apps, and the Apple Watch has no trip screen to port, so trips can't be logged from a Wear OS watch. The phone side (ADD_TRIP) is ready if a surface is added."
+      }
+    },
+    {
+      "id": "shortcut.parameters",
+      "area": "Shortcuts",
+      "title": "Siri parameters",
+      "description": "Siri offers the user's Types and cars as parameters, read from the stored snapshot even before the app runs.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/Shared/ServiceIntents.swift#struct ServiceCategoryQuery",
+          "targets/watch/Shared/ServiceIntents.swift#struct ServiceVehicleQuery",
+          "targets/watch/WatchServiceActions.swift#storedSnapshot"
+        ]
+      },
+      "wearos": {
+        "status": "not-applicable",
+        "notes": "No voice actions on Wear OS (shortcut.add-time)."
+      }
+    },
+    {
+      "id": "shortcut.results",
+      "area": "Shortcuts",
+      "title": "Spoken results",
+      "description": "Each action answers with its result (\"Timer started\", \"Timer paused\", \"Timer stopped and time added\", \"Added Time\") or why it couldn't (not set up, hours logging off, phone unreachable).",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/Shared/ServiceIntents.swift#IntentDialog"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/QuickActionActivity.kt#SuccessConfirmationDialog",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/QuickActionActivity.kt#AlertDialog"
+        ],
+        "notes": "Confirmation dialogs after a tile or notification action."
+      }
+    },
+    {
+      "id": "shortcut.phrases-localized",
+      "area": "Shortcuts",
+      "title": "Phrases in the user's language",
+      "description": "Siri phrases come from the siriShortcut* translations; languages without them have no voice phrases.",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/AppShortcuts.xcstrings"]
+      },
+      "wearos": {
+        "status": "not-applicable",
+        "notes": "No voice actions on Wear OS."
+      }
+    },
+    {
+      "id": "sync.context",
+      "area": "Sync",
+      "title": "The phone publishes what the watch shows",
+      "description": "The phone publishes one PhoneContext (snapshot, timer, resolved entry ids) whenever any of it changes: WatchConnectivity's application context on iOS, a Data Layer data item on Android. The watch stores it before updating the UI, keeping the newest by sentAt.",
+      "shared": [
+        "src/app/watch/watchSync.ts#export function pushWatchSnapshot",
+        "src/app/watch/buildWatchSnapshot.ts#export function buildWatchSnapshot",
+        "src/app/watch/useWatchSync.ts"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#func publish",
+          "targets/watch/PhoneSession.swift#func receive",
+          "targets/watch/WatchStorage.swift#saveContextIfNewer"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchSessionCoordinator.kt#private fun publish",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/PhoneSession.kt#fun receive",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#fun saveContextIfNewer"
+        ]
+      }
+    },
+    {
+      "id": "sync.requests",
+      "area": "Sync",
+      "title": "Requests with replies",
+      "description": "The watch sends requests (hello, addEntry, timer, saveTimer, stopTimer, addTrip) and waits for the phone's reply, which carries a fresh context: sendMessage with a reply handler on watchOS, MessageClient.sendRequest on Wear OS.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/PhoneSession.swift#func send",
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#private func process"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/PhoneSession.kt#suspend fun send",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchRequestHandler.kt#fun process",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeListenerService.kt#override fun onRequest"
+        ]
+      }
+    },
+    {
+      "id": "sync.queued",
+      "area": "Sync",
+      "title": "Delivery when the phone is away",
+      "description": "An entry made while the phone is out of reach is queued and delivered when they next connect, even if the watch app isn't running: transferUserInfo on watchOS, a data item the phone deletes once handled on Wear OS.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/PhoneSession.swift#func transfer",
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#didReceiveUserInfo"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/PhoneSession.kt#fun transfer",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeListenerService.kt#override fun onDataChanged"
+        ]
+      }
+    },
+    {
+      "id": "sync.outbox",
+      "area": "Sync",
+      "title": "Outbox",
+      "description": "Entries stay in the watch's outbox until the phone app reports them resolved; ids make repeated delivery safe; an unavailable phone (locked) is retried later; anything not resolved in 30 days is dropped.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WatchModel.swift#outboxLifetime",
+          "targets/watch/WatchStorage.swift#struct OutboxItem"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#OUTBOX_LIFETIME_MS",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#data class OutboxItem"
+        ]
+      }
+    },
+    {
+      "id": "sync.background",
+      "area": "Sync",
+      "title": "Updates while the watch app is closed",
+      "description": "The watch receives the phone's context in the background and refreshes the complications (and on Wear OS the tile and the Ongoing Activity).",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WitnessWorkWatchApp.swift#WKWatchConnectivityRefreshBackgroundTask",
+          "targets/watch/PhoneSession.swift#func handle"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchListenerService.kt#class WatchListenerService"
+        ]
+      }
+    },
+    {
+      "id": "sync.protocol",
+      "area": "Sync",
+      "title": "One protocol, versioned",
+      "description": "Both watches exchange the same JSON messages; a newer protocol than the phone understands is refused. The JS-built snapshot is checked against both decoders by a contract fixture.",
+      "shared": ["src/__tests__/watchProtocolContract.test.ts"],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchProtocol.swift#enum WatchProtocol"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/com/leviwilkerson/witnesswork/watchprotocol/WatchProtocol.kt#object WatchProtocol",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/watchprotocol/WatchProtocol.kt"
+        ]
+      }
+    },
+    {
+      "id": "phone.inbox",
+      "area": "Phone",
+      "title": "Entries saved by the phone app",
+      "description": "The phone keeps watch entries and trips in a durable inbox until its JavaScript saves them (recognizing repeats and entries deleted meanwhile), then reports them resolved to the watch.",
+      "shared": [
+        "src/app/watch/watchSync.ts#function drainInbox",
+        "modules/watch-bridge/index.ts#export function getPendingEntries"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#struct WatchInbox",
+          "modules/watch-bridge/ios/WatchBridgeModule.swift#getPendingEntries"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchInbox.kt#data class WatchInbox",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeModule.kt#getPendingEntries"
+        ]
+      }
+    },
+    {
+      "id": "phone.timer-commands",
+      "area": "Phone",
+      "title": "Timer commands without the app",
+      "description": "The phone changes its timer for the watch natively, so it works while the phone app's JavaScript isn't running; a retried command is applied once.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#StopwatchStore.start()",
+          "modules/stopwatch-bridge/ios/StopwatchStore.swift#enum StopwatchStore"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchRequestHandler.kt#timer.start()",
+          "modules/stopwatch-bridge/android/src/main/java/expo/modules/stopwatchbridge/StopwatchStore.kt#object StopwatchStore",
+          "modules/stopwatch-bridge/android/src/main/java/expo/modules/stopwatchbridge/StopwatchBridgeModule.kt#onStateChange"
+        ]
+      }
+    },
+    {
+      "id": "phone.background-save",
+      "area": "Phone",
+      "title": "Saving entries promptly",
+      "description": "A watch request wakes the phone app in the background, so its JavaScript saves the entry right away.",
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#beginBackgroundTask"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchSessionCoordinator.kt#fun addInboxListener"
+        ],
+        "notes": "Android delivers the request to the phone app's process even when it's closed, and the timer and inbox are handled natively at once; but the JavaScript that saves Time Entries only runs while the app is open, so an entry is saved (and Syncing with phone clears) the next time WitnessWork opens on the phone, as for queued Apple Watch entries."
+      }
+    },
+    {
+      "id": "phone.status",
+      "area": "Phone",
+      "title": "Watch status for analytics",
+      "description": "The phone knows whether a watch is paired, has the app, and which complications (and on Wear OS the tile) are in use, and records it weekly.",
+      "shared": ["src/app/watch/watchSync.ts#function captureWatchStatus"],
+      "watchos": {
+        "status": "implemented",
+        "paths": ["modules/watch-bridge/ios/WatchBridgeModule.swift#getStatus"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchSessionCoordinator.kt#fun refreshStatus",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeModule.kt#getStatus",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/Surfaces.kt#fun activeKinds"
+        ]
+      }
+    },
+    {
+      "id": "l10n.strings",
+      "area": "Localization",
+      "title": "App language",
+      "description": "The phone sends the watch's strings in the app's chosen language; before the first snapshot, and for text the system shows, the watch uses bundled translations generated from src/locales (English where a language has none yet).",
+      "shared": [
+        "src/app/watch/watchStringKeys.json",
+        "scripts/sync-widget-shared.mjs#wearStringResources"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/WatchStrings.swift#enum L10n",
+          "targets/watch/Localizable.xcstrings",
+          "targets/watch-widgets/Localizable.xcstrings"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStrings.kt#object L10n",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/BundledStrings.kt",
+          "targets/wear-os/src/main/res/values/watch_strings.xml"
+        ]
+      }
+    },
+    {
+      "id": "l10n.platform-wording",
+      "area": "Localization",
+      "title": "Phone wording",
+      "description": "Messages name the phone the watch pairs with: \"iPhone\" on the Apple Watch, \"phone\" on Wear OS (the …Android variants listed under androidVariants).",
+      "watchos": {
+        "status": "implemented",
+        "paths": ["src/app/watch/buildWatchSnapshot.ts#watchStrings"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": ["src/app/watch/buildWatchSnapshot.ts#androidVariants"]
+      }
+    },
+    {
+      "id": "l10n.formatting",
+      "area": "Localization",
+      "title": "Times and durations",
+      "description": "Durations arrive formatted in the user's Duration Format and times in the app's time format; the watch only formats its compact total (30m, 2h, 1.5h, 11.5h) the way the phone does.",
+      "shared": ["src/lib/minutes.ts#export const formatMinutesCompact"],
+      "watchos": {
+        "status": "implemented",
+        "paths": ["targets/watch/MonthProgress.swift#static func compact"]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#fun compact"
+        ]
+      }
+    },
+    {
+      "id": "analytics.watch-events",
+      "area": "Analytics",
+      "title": "Watch analytics",
+      "description": "The watch has no analytics client; the phone records what it receives: time_entry_created (source watch), watch_timer_action_completed, watch_entry_skipped/adjusted and watch_app_status. Siri actions on the Apple Watch also send siri_action_completed.",
+      "shared": [
+        "src/app/watch/watchSync.ts#FORWARDED_EVENTS",
+        "docs/analytics.md"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#recordEvent",
+          "targets/watch/WatchServiceActions.swift#static func record"
+        ]
+      },
+      "wearos": {
+        "status": "implemented",
+        "paths": [
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchRequestHandler.kt#recordEvent"
+        ]
+      }
+    }
+  ]
+}

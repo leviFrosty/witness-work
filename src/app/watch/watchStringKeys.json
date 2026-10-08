@@ -70,6 +70,24 @@
     "watchUpNextComplicationDescription",
     "watchUpNextComplicationName"
   ],
+  "wearStrings": [
+    "siriStopTimerShort",
+    "siriTimerEmpty",
+    "siriTimerPaused",
+    "siriTimerSaved",
+    "siriTimerStarted",
+    "siriTimerTooLong",
+    "wearRangeComplicationName",
+    "wearSymbolComplicationName"
+  ],
+  "androidVariants": [
+    "watchHoursLoggingOff",
+    "watchPhoneUnreachable",
+    "watchSetUp",
+    "watchStale",
+    "watchSyncing",
+    "watchTimerChanged"
+  ],
   "intentStrings": [
     "addTime",
     "mileage.car",

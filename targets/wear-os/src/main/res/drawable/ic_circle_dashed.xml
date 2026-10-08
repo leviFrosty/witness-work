@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A dashed ring, like SF Symbols' circle.dashed: not reported yet. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:width="24dp"
+  android:height="24dp"
+  android:viewportWidth="24"
+  android:viewportHeight="24">
+  <path
+    android:strokeColor="#FFFFFFFF"
+    android:strokeWidth="2"
+    android:strokeLineCap="round"
+    android:pathData="M10.59,3.11A9,9 0 0,1 13.41,3.11M15.23,3.60A9,9 0 0,1 17.66,5.01M18.99,6.34A9,9 0 0,1 20.40,8.77M20.89,10.59A9,9 0 0,1 20.89,13.41M20.40,15.23A9,9 0 0,1 18.99,17.66M17.66,18.99A9,9 0 0,1 15.23,20.40M13.41,20.89A9,9 0 0,1 10.59,20.89M8.77,20.40A9,9 0 0,1 6.34,18.99M5.01,17.66A9,9 0 0,1 3.60,15.23M3.11,13.41A9,9 0 0,1 3.11,10.59M3.60,8.77A9,9 0 0,1 5.01,6.34M6.34,5.01A9,9 0 0,1 8.77,3.60" />
+</vector>

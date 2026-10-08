@@ -66,6 +66,21 @@
         "APP_VARIANT": "production"
       }
     },
+    "development-wear": {
+      "extends": "development",
+      "android": {
+        "gradleCommand": ":wear:assembleDebug",
+        "buildType": "apk",
+        "applicationArchivePath": "android/build/wear/outputs/apk/debug/*.apk"
+      }
+    },
+    "production-wear": {
+      "extends": "production",
+      "android": {
+        "gradleCommand": ":wear:bundleRelease",
+        "applicationArchivePath": "android/build/wear/outputs/bundle/release/*.aab"
+      }
+    },
     "production-simulator": {
       "distribution": "internal",
       "channel": "production",

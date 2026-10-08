@@ -97,6 +97,27 @@ export function reminderContent(
                 })
       return { title: i18n.t('unloggedDayReminder_title'), body, data }
     }
+    case 'streak': {
+      const period = moment(reminder.targetId, 'YYYY-MM-DD')
+      const count = reminder.streak?.count ?? 0
+      return {
+        title: i18n.t('streakReminder_title'),
+        body:
+          reminder.streak?.kind === 'months'
+            ? i18n.t('streakReminderBodyMonths', {
+                month: period.format('MMMM'),
+                date: formatWeekdayMonthDayCompact(
+                  moment(reminder.anchor).subtract(1, 'day')
+                ),
+                count,
+              })
+            : i18n.t('streakReminderBodyPlans', {
+                date: formatWeekdayMonthDayCompact(period),
+                count,
+              }),
+        data,
+      }
+    }
     case 'contact':
       return {
         title: i18n.t('contactAvailableAgain'),

@@ -3,10 +3,13 @@ import apis from '@/constants/apis'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
+import { currentServiceStreak } from '@/lib/currentServiceStreak'
+import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { currentBuddyProfile } from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
 import { createBuddiesEngine } from '@/features/buddies/lib/engine'
+import type { BuddyStreak } from '@/features/buddies/lib/schemas'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
@@ -15,6 +18,18 @@ import { trackSync } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
+
+/**
+ * The Service Streak buddies see, once it's long enough to show, with the last
+ * day it lasts unless more service is logged.
+ */
+export function currentBuddyStreak(
+  now: Date = new Date()
+): BuddyStreak | undefined {
+  const streak = currentServiceStreak(now)
+  const n = shownStreak(streak)
+  return n > 0 ? { n, until: streakLastsThrough(streak, now) } : undefined
+}
 
 const engine = createBuddiesEngine({
   relay: createRelayClient({ baseUrl: apis.buddies, randomBytes }),
@@ -28,6 +43,7 @@ const engine = createBuddiesEngine({
     return { dayPlans, recurringPlans }
   },
   getProfile: currentBuddyProfile,
+  getStreak: () => currentBuddyStreak(),
   getShares: () =>
     buildOutgoingShares({
       dayPlans: useServiceReport.getState().dayPlans,

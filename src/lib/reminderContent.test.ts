@@ -115,4 +115,41 @@ describe('reminderContent', () => {
       expect(content.body).toBe('unloggedDayReminderBodyDays {"count":2}')
     })
   })
+
+  describe('a streak about to end', () => {
+    const streak: LocalReminder = {
+      id: 'witness-work-streak-2026-05-04',
+      kind: 'streak',
+      targetId: '2026-05-04',
+      anchor: new Date(2026, 4, 6),
+      date: new Date(2026, 4, 5, 18),
+      streak: { count: 12, kind: 'plans' },
+    }
+
+    it("names the planned day and the streak, and opens that day's time", () => {
+      const content = reminderContent(streak, options)
+      expect(content.title).toBe('streakReminder_title')
+      expect(content.body).toContain('streakReminderBodyPlans')
+      expect(content.body).toContain('"count":12')
+      expect(content.data).toEqual({
+        reminder: { kind: 'streak', id: '2026-05-04' },
+      })
+    })
+
+    it('names the month and its last day for months', () => {
+      const content = reminderContent(
+        {
+          ...streak,
+          targetId: '2026-04-01',
+          anchor: new Date(2026, 5, 1),
+          date: new Date(2026, 4, 28, 18),
+          streak: { count: 5, kind: 'months' },
+        },
+        options
+      )
+      expect(content.body).toContain('streakReminderBodyMonths')
+      expect(content.body).toContain('"month":"April"')
+      expect(content.body).toContain('"count":5')
+    })
+  })
 })

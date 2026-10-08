@@ -44,6 +44,18 @@ export const buddyTenureSchema = z.object({
 })
 export type BuddyTenure = z.infer<typeof buddyTenureSchema>
 
+/**
+ * The sender's Service Streak (`n` weeks or months in a row), sent only once
+ * it's long enough to show. `until` is the sender's last day it lasts without
+ * more service, so a buddy's phone stops showing one that lapsed while the
+ * sender's app was closed. Week or month isn't sent; buddies see the count.
+ */
+export const buddyStreakSchema = z.object({
+  n: z.number().int().min(1).max(10_000),
+  until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+export type BuddyStreak = z.infer<typeof buddyStreakSchema>
+
 /** Identity fields every Buddies payload may carry next to `name`. */
 const profileFields = {
   avatar: buddyAvatarSchema.optional(),
@@ -83,6 +95,8 @@ export const buddyCardSchema = z.object({
   v: z.literal(1),
   name: displayName,
   ...profileFields,
+  // A streak this version can't read is dropped, not the whole card.
+  streak: buddyStreakSchema.optional().catch(undefined),
   updatedAt: z.number(),
   level: z.literal('daysTimes'),
   days: z.array(buddyCardDaySchema).max(120),
@@ -242,8 +256,10 @@ export const rosterSchema = z.object({
     .object({
       photo: z.boolean(),
       tenure: z.boolean(),
+      // Rosters written before streaks existed.
+      streak: z.boolean().default(true),
       updatedAt: z.number(),
     })
-    .default({ photo: true, tenure: true, updatedAt: 0 }),
+    .default({ photo: true, tenure: true, streak: true, updatedAt: 0 }),
 })
 export type Roster = z.infer<typeof rosterSchema>

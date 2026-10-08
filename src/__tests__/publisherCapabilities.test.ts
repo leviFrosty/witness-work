@@ -43,6 +43,21 @@ describe('derivePublisherCapabilities', () => {
     })
   })
 
+  describe('streakKind', () => {
+    it('counts months for the Kingdom Publisher, even logging hours', () => {
+      expect(derive('publisher').streakKind).toBe('months')
+      expect(derive('publisher', { logsHours: true }).streakKind).toBe('months')
+    })
+
+    it('counts planned days kept for every other role', () => {
+      expect(derive('regularAuxiliary').streakKind).toBe('plans')
+      expect(derive('regularPioneer').streakKind).toBe('plans')
+      expect(derive('circuitOverseer').streakKind).toBe('plans')
+      expect(derive('specialPioneer').streakKind).toBe('plans')
+      expect(derive('custom').streakKind).toBe('plans')
+    })
+  })
+
   describe('creditCapMinutes (no user override)', () => {
     it('is unlimited (null) for special pioneers and circuit overseers', () => {
       expect(derive('specialPioneer').creditCapMinutes).toBeNull()

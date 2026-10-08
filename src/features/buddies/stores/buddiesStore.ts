@@ -22,7 +22,14 @@ export const useBuddies = create<BuddiesState>()(
     // and every invitation still to answer is listed.
     merge: (persisted, current) => {
       const now = Date.now()
-      const merged = { ...current, ...(persisted as Partial<BuddiesState>) }
+      // Undefined on a fresh install.
+      const restored = (persisted ?? {}) as Partial<BuddiesState>
+      const merged = {
+        ...current,
+        ...restored,
+        // A sharing choice added since (the streak) starts at its default.
+        sharing: { ...current.sharing, ...restored.sharing },
+      }
       const unexpired = { ...merged, ...withoutExpired(merged, now) }
       return {
         ...unexpired,

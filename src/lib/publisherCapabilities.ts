@@ -1,5 +1,6 @@
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { getEffectiveMilestones } from '@/lib/milestones'
+import type { StreakKind } from '@/lib/serviceStreak'
 import type { Publisher, PublisherHours } from '@/types/publisher'
 
 /**
@@ -62,6 +63,8 @@ export type PublisherCapabilities = {
   showsTimeEntry: boolean
   showsTimer: boolean
   showsYearTabs: boolean
+  /** What the Service Streak counts. See `getStreakKind`. */
+  streakKind: StreakKind
   milestones: number[]
 }
 
@@ -122,6 +125,14 @@ export const tracksHours = (
   publisher: Publisher,
   logsHours: boolean
 ): boolean => getEntryMode(publisher) === 'hours' || logsHours
+
+/**
+ * What the Service Streak counts: months in service for a role that reports a
+ * monthly "shared in the ministry" (the Kingdom Publisher, even with Hours
+ * Logging on), planned days kept for every hours-mode role.
+ */
+export const getStreakKind = (publisher: Publisher): StreakKind =>
+  getEntryMode(publisher) === 'checkbox' ? 'months' : 'plans'
 
 export type PublisherCapabilitiesInput = {
   publisher: Publisher
@@ -234,6 +245,7 @@ export const derivePublisherCapabilities = (
     showsTimeEntry,
     showsTimer: showsTimeEntry,
     showsYearTabs: showsTimeEntry,
+    streakKind: getStreakKind(publisher),
     milestones: getEffectiveMilestones(
       publisher,
       milestoneOverrides,

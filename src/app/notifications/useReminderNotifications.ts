@@ -2,11 +2,14 @@ import {
   BellRing as BellRingIcon,
   CalendarClock as CalendarClockIcon,
   ClockAlert as ClockAlertIcon,
+  Flame as FlameIcon,
   UserCheck as UserCheckIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
 import { formatTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
+import { serviceStreakFor } from '@/lib/currentServiceStreak'
 import i18n from '@/lib/locales'
+import { reminderContent } from '@/lib/reminderContent'
 import { formatMinutes } from '@/lib/minutes'
 import { reminderOccurrences, type LocalReminder } from '@/lib/reminderSchedule'
 import {
@@ -48,6 +51,9 @@ function listedUntil(reminder: LocalReminder): number {
     case 'unloggedDay':
       // Leaves sooner once the day has time logged.
       return reminder.date.getTime() + UNLOGGED_DAY_LISTED_MS
+    case 'streak':
+      // Leaves sooner once the streak is kept.
+      return anchor
   }
 }
 
@@ -75,9 +81,9 @@ export function firedReminders(
 
 /**
  * The tray copy of each local reminder that has fired: Follow-ups, Plans,
- * returning Contacts, and planned days to log time for. Listed whether or not
- * the system alert was allowed, so the tray is the same record of what reminded
- * the User.
+ * returning Contacts, planned days to log time for, and a streak about to end.
+ * Listed whether or not the system alert was allowed, so the tray is the same
+ * record of what reminded the User.
  */
 export default function useReminderNotifications(
   now: number
@@ -100,6 +106,8 @@ export default function useReminderNotifications(
   const role = usePreferences((s) => s.role)
   const roleHistory = usePreferences((s) => s.roleHistory)
   const logsHours = usePreferences((s) => s.logsHours)
+  const streakReminders = usePreferences((s) => s.streakReminders)
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   const open = (reminder: LocalReminder) => () =>
     void openReminderTarget({
@@ -128,6 +136,13 @@ export default function useReminderNotifications(
         logsHours,
       }
     ),
+    streak: streakReminders
+      ? serviceStreakFor(
+          { role, roleHistory },
+          { serviceReports, dayPlans: plans, recurringPlans },
+          new Date(now)
+        )
+      : undefined,
     now,
   }).map((reminder): NotificationItem => {
     const base = {
@@ -196,6 +211,29 @@ export default function useReminderNotifications(
             {
               id: 'add_time',
               label: i18n.t('addTime'),
+              onPress: open(reminder),
+            },
+          ],
+        }
+      }
+      case 'streak': {
+        const { title, body } = reminderContent(reminder, {
+          dataProtectionMode,
+          timeDisplayFormat,
+        })
+        return {
+          ...base,
+          tone: 'warn',
+          icon: FlameIcon,
+          title,
+          description: body,
+          actions: [
+            {
+              id: 'keep_streak',
+              label:
+                reminder.streak?.kind === 'months'
+                  ? i18n.t('open')
+                  : i18n.t('addTime'),
               onPress: open(reminder),
             },
           ],

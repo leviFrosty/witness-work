@@ -12,8 +12,11 @@ import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import useServiceStreak from '@/hooks/useServiceStreak'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
+import { shownStreak } from '@/lib/serviceStreak'
 import ProfileCardLayout from '@/components/ProfileCardLayout'
+import StreakBadge from '@/components/StreakBadge'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import Avatar from '@/components/ui/Avatar'
 import i18n from '@/lib/locales'
@@ -92,6 +95,7 @@ const ProfileCard = ({ readOnly }: Props) => {
   const { name: trimmedName } = useUser()
   const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
+  const streak = shownStreak(useServiceStreak())
 
   const tenure: Tenure = (() => {
     if (isInFullTimeService && tenureStartDate) {
@@ -183,6 +187,7 @@ const ProfileCard = ({ readOnly }: Props) => {
         )
       }
       subtitle={i18n.t(publisher)}
+      badge={streak > 0 ? <StreakBadge count={streak} /> : undefined}
       details={[
         {
           icon: tenure.icon,

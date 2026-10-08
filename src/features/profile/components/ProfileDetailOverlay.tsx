@@ -28,6 +28,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import useServiceStreak from '@/hooks/useServiceStreak'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
 import Text from '@/components/ui/MyText'
@@ -40,8 +41,6 @@ import SinceBadge from '@/features/profile/components/SinceBadge'
 import i18n from '@/lib/locales'
 import { getStartDateLabels } from '@/constants/publisher'
 import {
-  consecutiveMonthsStreak,
-  consecutiveWeeksStreak,
   daysLogged,
   minutesInTrailingDays,
   totalMinutes,
@@ -118,19 +117,16 @@ const ProfileDetailOverlay = () => {
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
   const daily = useDailyMinutes()
+  const streak = useServiceStreak()
 
   const stats = useMemo(() => {
     const total = totalMinutes(daily)
     return {
       totalMinutes: total,
       days: daysLogged(daily),
-      streak:
-        entryMode === 'hours'
-          ? consecutiveMonthsStreak(daily)
-          : consecutiveWeeksStreak(daily),
       last30Minutes: minutesInTrailingDays(daily, 30),
     }
-  }, [daily, entryMode])
+  }, [daily])
   const totalDisplay = useFormattedMinutes(stats.totalMinutes)
   const last30Display = useFormattedMinutes(stats.last30Minutes)
 
@@ -264,15 +260,11 @@ const ProfileDetailOverlay = () => {
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Stat
                   label={i18n.t('profileStatStreak')}
-                  value={String(stats.streak)}
+                  value={String(streak.count)}
                   sub={i18n.t(
-                    entryMode === 'hours'
-                      ? stats.streak === 1
-                        ? 'profileStatStreakUnitMonth'
-                        : 'profileStatStreakUnitMonth_plural'
-                      : stats.streak === 1
-                        ? 'profileStatStreakUnit'
-                        : 'profileStatStreakUnit_plural'
+                    streak.kind === 'months'
+                      ? 'profileStatStreakMonths'
+                      : 'profileStatStreakPlans'
                   )}
                 />
                 {entryMode === 'hours' ? (

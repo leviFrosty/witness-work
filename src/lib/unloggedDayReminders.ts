@@ -205,6 +205,32 @@ export function unloggedDayReminderGroups(
 }
 
 /**
+ * Add Time's params to log a planned day (`YYYY-MM-DD`), prefilled with what
+ * was planned while the day has no time yet.
+ */
+export function logPlannedDayParams(
+  key: string,
+  records: {
+    dayPlans: DayPlan[]
+    recurringPlans: RecurringPlan[]
+    timeEntries: TimeEntriesByYear
+  }
+): { date: string; hours?: number; minutes?: number; categoryId?: string } {
+  const [year, month, date] = key.split('-').map(Number)
+  const day = unloggedDay(key, records)
+  return {
+    date: new Date(year, month - 1, date, 12).toISOString(),
+    ...(day
+      ? {
+          hours: Math.floor(day.minutes / 60),
+          minutes: day.minutes % 60,
+          categoryId: day.categoryId,
+        }
+      : {}),
+  }
+}
+
+/**
  * What to log for a planned day, or null once it has time logged or nothing
  * planned. Opening a reminder to log time prefills Add Time with it.
  */

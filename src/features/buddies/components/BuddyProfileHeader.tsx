@@ -6,11 +6,13 @@ import moment from 'moment'
 import ProfileCardLayout, {
   type ProfileCardDetail,
 } from '@/components/ProfileCardLayout'
+import StreakBadge from '@/components/StreakBadge'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import {
   buddyDisplayName,
+  buddyStreakCount,
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
@@ -22,6 +24,7 @@ import type { Buddy } from '@/features/buddies/lib/state'
 export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
   const name = buddyDisplayName(buddy)
+  const streak = buddyStreakCount(buddy.streak)
   const details: ProfileCardDetail[] = [
     buddy.tenure && {
       icon: StarIcon,
@@ -50,6 +53,7 @@ export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
       }
       title={name}
       subtitle={buddy.nickname ? buddy.name : undefined}
+      badge={streak > 0 ? <StreakBadge count={streak} /> : undefined}
       details={details}
     />
   )

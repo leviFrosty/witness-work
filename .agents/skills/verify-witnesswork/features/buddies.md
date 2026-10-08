@@ -46,6 +46,8 @@ While the app is in the foreground, Buddies keeps a WebSocket to the relay (`inb
 
 ## Gotchas
 
+- Buddies is iOS-only for now: its Keychain module isn't in Android builds, where the invite screen fails with "Buddies Keychain requires a newer native binary". A worktree also holds only one iOS device (`--ipad` hands back the iPhone). For a second person, pair the app with a headless engine against the local relay; [streaks.md](./streaks.md) has the recipe.
+
 - The flag override only applies to dev builds and survives remote flag refreshes. `wwv flag buddies clear` restores the remote value.
 - Buddies needs the Keychain native module. On a binary without it, the feature stays hidden even with the flag on.
 - Pushes are skipped locally, because APNs keys aren't passed to the isolated worker. Refresh by reopening the screen.

@@ -296,11 +296,11 @@ Roster plaintext (JSON):
   ],
   "closedInviteIds": { "<inviteId>": 0 },
   "removedBuddies": { "<inboxId>": 0 },
-  "sharing": { "photo": true, "tenure": true, "updatedAt": 0 }
+  "sharing": { "photo": true, "tenure": true, "streak": true, "updatedAt": 0 }
 }
 ```
 
-- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos from Buddy Cards.
+- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos, and streaks, from Buddy Cards.
 - `version` counts roster writes across the User's devices: each write is the newest version the device has read or written, plus one, and only a write the relay accepted counts. Rosters from builds before it have none.
 - `closedInviteIds`: invites cancelled, rejected, or confirmed (`inviteId → expiresAt`), pruned once they expire. A rejected claim goes with its invite: the claim expires at the same moment.
 - `removedBuddies`: ended pairings (`inboxId → removedAt`). A pairing with that buddy whose `pairedAt ≤ removedAt` is over. A removal the User makes records the time. When the relay shows the buddy left (their slot is gone, or a write returns `gone`) or an unconfirmed request lapses, the device records that pairing's own `pairedAt` instead, so a device that missed a newer pairing made on another device can't end it. Pairing again on purpose (accepting an invite, or confirming a claim) drops the local entry and starts the new pairing after any `removedAt` this device knows. Entries never expire. Past 200, the smallest `removedAt` is dropped first; only the User's own pairings add entries, so one is dropped only after 200 later removals. 200 entries take about 8 KB of the 32 KB roster cap.
@@ -321,7 +321,7 @@ A removed buddy's slot is gone from the inbox too, so the next sync drops them o
 
 **Limits.** A device restoring from the root seed with no Buddies data yet has neither a version nor tombstones of its own, so it relies on the roster the relay serves it. A relay that serves such a device a roster from before a removal can bring that buddy back there. Builds without roster versions don't read tombstones, and removals made on them leave none.
 
-The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, updatedAt }`), merged last-writer-wins on `updatedAt`, so every device publishes the same Buddy Card. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
+The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, streak, updatedAt }`), merged last-writer-wins on `updatedAt`, so every device publishes the same Buddy Card. A roster written before streaks existed reads `streak` as `true`. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. The streak only ever travels in cards, and the roster never stores a buddy's streak. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
 
 If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers the inbox, re-adds every buddy's slot, and writes its roster. A local flag makes a failure part-way retry instead of looking like every buddy left.
 
@@ -331,6 +331,7 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 {
   "v": 1,
   "name": "Levi",
+  "streak": { "n": 12, "until": "2026-10-07" },
   "updatedAt": 0,
   "level": "daysTimes",
   "days": [{ "d": "2026-09-27", "p": [{ "s": 540, "m": 180 }] }]
@@ -338,6 +339,8 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 ```
 
 `d` is the sender's local calendar day; `s` (start, minutes after midnight) is present only when the Plan has a start time; `m` is planned minutes. The window is today through +56 days. Day Plans and resolved Recurring Plan instances only — never Categories, notes (MVP), Time Entries, or goals.
+
+`streak` is optional: the sender's Service Streak (`n`, planned days kept or months in service, 1–10,000) once it's at least 3 and only while `sharing.streak` is on. `until` is the sender's last local day it lasts without more service: the day after the next planned day still waiting for time, or the end of the next month for months. With no Plan ahead it's the end of the Plan window. The receiver hides the streak once its own local date is past `until`, so a streak that lapsed while the sender's app was closed stops showing. Whether `n` counts Plans or months isn't sent. A receiver that can't parse `streak` drops just that field, not the card. The card's content hash includes `streak`, so a change republishes it.
 
 ### Event kinds (MVP)
 

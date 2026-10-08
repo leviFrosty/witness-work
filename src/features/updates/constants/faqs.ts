@@ -2,6 +2,7 @@ export type FAQCategory =
   | 'time'
   | 'contacts'
   | 'plans'
+  | 'streaks'
   | 'buddies'
   | 'mileage'
   | 'map'
@@ -184,6 +185,9 @@ export const FAQS: FAQEntry[] = [
   },
   { id: 'planFirstMonth', category: 'plans' },
   { id: 'logTimeReminders', category: 'plans', related: [203] },
+  { id: 'streaks', category: 'streaks' },
+  { id: 'streakEnds', category: 'streaks' },
+  { id: 'streakBuddies', category: 'streaks' },
   { id: 'routePlanning', category: 'plans' },
   { id: 'routePlanningNavigation', category: 'plans' },
   { id: 'routePlanningPrivacy', category: 'plans' },
@@ -296,6 +300,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'time',
   'contacts',
   'plans',
+  'streaks',
   'buddies',
   'mileage',
   'map',

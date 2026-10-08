@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createBuddiesEngine } from '@/features/buddies/lib/engine'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { createRelayClient } from '@/features/buddies/lib/relay'
+import type { BuddyStreak } from '@/features/buddies/lib/schemas'
 import {
   BuddiesState,
   initialBuddiesState,
@@ -23,6 +24,7 @@ const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 function user(name: string) {
   const seed = random(32)
   let shares: OutgoingShareSpec[] = []
+  let streak: BuddyStreak | undefined
   let state: BuddiesState = { ...initialBuddiesState }
   const store = {
     getState: () => state,
@@ -45,6 +47,7 @@ function user(name: string) {
     getRootSeed: () => seed,
     getProfile: () => ({ name }),
     getShares: () => shares,
+    getStreak: () => streak,
     deleteRootSeed: () => {},
     getPlans: () => ({
       dayPlans: [
@@ -64,6 +67,9 @@ function user(name: string) {
     inboxId: deriveIdentity(seed).inboxId,
     setShares: (next: OutgoingShareSpec[]) => {
       shares = next
+    },
+    setStreak: (next: BuddyStreak | undefined) => {
+      streak = next
     },
   }
 }
@@ -102,6 +108,26 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
     await anna.engine.removeBuddy(mom.inboxId)
     await mom.engine.sync()
     expect(mom.store.getState().buddies).toEqual([])
+
+    await mom.engine.deleteEverything()
+    await anna.engine.deleteEverything()
+  }, 30_000)
+
+  it('carries the streak in Buddy Cards until it is switched off', async () => {
+    const mom = user('Mom')
+    const anna = user('Anna')
+    mom.setStreak({ n: 12, until: '2099-01-01' })
+    await pair(mom, anna)
+    await mom.engine.publishCards()
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0]?.streak).toEqual({
+      n: 12,
+      until: '2099-01-01',
+    })
+
+    await mom.engine.setSharing({ streak: false })
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0]?.streak).toBeUndefined()
 
     await mom.engine.deleteEverything()
     await anna.engine.deleteEverything()

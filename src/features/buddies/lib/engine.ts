@@ -25,6 +25,7 @@ import {
   BuddyAvatar,
   BuddyCardDay,
   buddyCardSchema,
+  BuddyStreak,
   joinRequestSchema,
   pairConfirmedSchema,
   PairingCard,
@@ -99,6 +100,11 @@ export type BuddiesEngineDeps = {
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
   /** Name, avatar, and Tenure as buddies should see them. */
   getProfile: () => BuddyProfile
+  /**
+   * The Service Streak, while it's long enough to show. Only Buddy Cards carry
+   * it, never invites: a link can reach someone who isn't a buddy yet.
+   */
+  getStreak?: () => BuddyStreak | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
 }
@@ -234,7 +240,7 @@ function rosterSignature(
     | 'sharing'
   >
 ) {
-  const { photo, tenure, updatedAt } = roster.sharing
+  const { photo, tenure, streak, updatedAt } = roster.sharing
   return JSON.stringify([
     roster.buddies.map((b) => `${b.inboxId}:${b.status}`).sort(),
     roster.outgoingInvites.map((i) => i.inviteId).sort(),
@@ -243,7 +249,7 @@ function rosterSignature(
     Object.entries(roster.removedBuddies)
       .map(([inboxId, removedAt]) => `${inboxId}:${removedAt}`)
       .sort(),
-    [photo, tenure, updatedAt],
+    [photo, tenure, streak, updatedAt],
   ])
 }
 
@@ -409,8 +415,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const roster: Roster = {
       v: 1,
       version,
-      // Photos would overflow the roster cap; each device gets them from cards.
-      buddies: state.buddies.map(compactProfile),
+      // Photos would overflow the roster cap; each device gets them, and
+      // streaks, from cards.
+      buddies: state.buddies.map(({ streak, ...buddy }) =>
+        compactProfile(buddy)
+      ),
       outgoingInvites: state.outgoingInvites,
       incomingClaims: state.incomingClaims.map(compactProfile),
       closedInviteIds: state.closedInviteIds,
@@ -852,6 +861,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   /** Publishes one Buddy Card per active buddy, skipping unchanged content. */
   async function publishCards() {
     const { name, avatar, tenure } = profile()
+    const streak = store.getState().sharing.streak
+      ? deps.getStreak?.()
+      : undefined
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
     const me = identity()
@@ -861,7 +873,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       recurringPlans,
       new Date(deps.now())
     )
-    const contentHash = toB64u(sha256(json({ name, avatar, tenure, days })))
+    const contentHash = toB64u(
+      sha256(json({ name, avatar, tenure, streak, days }))
+    )
     for (const buddy of active) {
       if (store.getState().publishedCardHashes[buddy.inboxId] === contentHash)
         continue
@@ -871,6 +885,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         name,
         avatar,
         tenure,
+        streak,
         updatedAt: deps.now(),
         level: 'daysTimes',
         days,
@@ -1056,6 +1071,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 name: parsed.name,
                 avatar: parsed.avatar,
                 tenure: parsed.tenure,
+                streak: parsed.streak,
               }
             : b
         ),

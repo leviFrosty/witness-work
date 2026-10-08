@@ -3,10 +3,12 @@ import moment from 'moment'
 import { getStartDateLabels } from '@/constants/publisher'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { tracksTenure } from '@/lib/publisherCapabilities'
+import { STREAK_MIN } from '@/lib/serviceStreak'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import type { Publisher } from '@/types/publisher'
 import {
+  type BuddyStreak,
   BuddyTenure,
   BuddyTenureKind,
   MAX_AVATAR_IMAGE_CHARS,
@@ -93,6 +95,18 @@ export async function refreshBuddyAvatarThumbnail(): Promise<boolean> {
     avatarThumbnail: { source: avatar.value, data: result.base64 },
   })
   return true
+}
+
+/**
+ * A buddy's streak as it stands today: hidden once its last day has passed,
+ * when their app hasn't run to publish what happened since.
+ */
+export function buddyStreakCount(
+  streak: BuddyStreak | undefined,
+  now: Date = new Date()
+): number {
+  if (!streak || streak.n < STREAK_MIN) return 0
+  return moment(now).format('YYYY-MM-DD') <= streak.until ? streak.n : 0
 }
 
 /** "Regular pioneer since September 2019" for a buddy's shared Tenure. */

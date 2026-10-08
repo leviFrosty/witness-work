@@ -37,6 +37,9 @@ vi.mock('react-native-mmkv', () => ({
     set(key: string, value: string) {
       runtime.persisted.set(key, value)
     }
+    delete(key: string) {
+      runtime.persisted.delete(key)
+    }
   },
 }))
 
@@ -168,6 +171,89 @@ describe('Android stopwatch', () => {
     expect(runtime.foregroundListeners.size).toBe(0)
     await stopwatch.reset()
     expect(otherListener).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('Android stopwatch with the native store', () => {
+  const nativeStore = () => {
+    let state = {
+      startedAt: null as number | null,
+      accumulatedMs: 0,
+      isRunning: false,
+      updatedAt: 0,
+    }
+    const listeners = new Set<(next: typeof state) => void>()
+    const set = async (next: typeof state) => {
+      state = next
+      listeners.forEach((listener) => listener(state))
+      return state
+    }
+    return {
+      getState: vi.fn(() => state),
+      areLiveActivitiesEnabled: vi.fn(() => false),
+      start: vi.fn(() =>
+        set({ ...state, isRunning: true, startedAt: 100, updatedAt: 100 })
+      ),
+      pause: vi.fn(() =>
+        set({ ...state, isRunning: false, startedAt: null, updatedAt: 110 })
+      ),
+      resume: vi.fn(() => set(state)),
+      stop: vi.fn(() => set(state)),
+      reset: vi.fn(() => set({ ...state, accumulatedMs: 0 })),
+      importLegacyState: vi.fn((json: string) => {
+        state = JSON.parse(json)
+        return true
+      }),
+      addListener: vi.fn(
+        (_event: string, listener: (next: typeof state) => void) => {
+          listeners.add(listener)
+          return { remove: () => listeners.delete(listener) }
+        }
+      ),
+    }
+  }
+
+  it('delegates to the store the watch also changes', async () => {
+    const native = nativeStore()
+    runtime.native = native
+    const stopwatch = await import('./index')
+    expect(stopwatch.isAvailable()).toBe(true)
+    expect((await stopwatch.start()).isRunning).toBe(true)
+    expect(native.start).toHaveBeenCalledOnce()
+    expect(native.importLegacyState).not.toHaveBeenCalled()
+    expect(runtime.persisted.size).toBe(0)
+  })
+
+  it('takes over a running timer the MMKV fallback kept, once', async () => {
+    const legacy = {
+      startedAt: 90,
+      accumulatedMs: 5_000,
+      isRunning: true,
+      updatedAt: 90,
+    }
+    runtime.persisted.set('state', JSON.stringify(legacy))
+    const native = nativeStore()
+    runtime.native = native
+    const stopwatch = await import('./index')
+    expect(stopwatch.getState()).toEqual(legacy)
+    expect(runtime.persisted.has('state')).toBe(false)
+    stopwatch.getState()
+    await stopwatch.pause()
+    expect(native.importLegacyState).toHaveBeenCalledOnce()
+  })
+
+  it('re-reads the store on foreground for changes the watch made', async () => {
+    const native = nativeStore()
+    runtime.native = native
+    const stopwatch = await import('./index')
+    const listener = vi.fn()
+    const subscription = stopwatch.onStateChange(listener)
+    await stopwatch.start()
+    expect(listener).toHaveBeenCalledTimes(1)
+    for (const foreground of runtime.foregroundListeners) foreground('active')
+    expect(listener).toHaveBeenCalledTimes(2)
+    subscription.remove()
+    expect(runtime.foregroundListeners.size).toBe(0)
   })
 })
 

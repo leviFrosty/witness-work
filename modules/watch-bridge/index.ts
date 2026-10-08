@@ -6,12 +6,19 @@ import {
 
 /**
  * How an entry or trip was made, reported to analytics. `shortcut` is Siri or
- * Shortcuts on the watch; `phoneShortcut` is Siri or Shortcuts on the iPhone or
- * iPad (`targets/intents`).
+ * Shortcuts on the Apple Watch; `phoneShortcut` is Siri or Shortcuts on the
+ * iPhone or iPad (`targets/intents`). `tile` and `ongoing_activity` are the
+ * Wear OS tile and the running timer's notification.
  */
-export type WatchOrigin = 'app' | 'shortcut' | 'timer' | 'phoneShortcut'
+export type WatchOrigin =
+  | 'app'
+  | 'shortcut'
+  | 'timer'
+  | 'phoneShortcut'
+  | 'tile'
+  | 'ongoing_activity'
 
-/** A Time Entry made on the Apple Watch, waiting to be saved. */
+/** A Time Entry made on the watch, waiting to be saved. */
 export type WatchEntryDraft = {
   /** Becomes the Time Entry id, so a repeated delivery is saved once. */
   id: string
@@ -38,13 +45,15 @@ export type WatchTripDraft = {
 }
 
 export type WatchStatus = {
+  /** IOS: WatchConnectivity. Android: Google Play services' Wearable API. */
   isSupported: boolean
   isPaired: boolean
   isWatchAppInstalled: boolean
   isComplicationEnabled: boolean
   /**
-   * Widget kinds of the complications on the watch's faces and Smart Stack, as
-   * the watch app last reported them; `null` before it has.
+   * Widget kinds of the complications on the watch's faces and Smart Stack (and
+   * on Wear OS the tile, `WitnessWorkTile`), as the watch app last reported
+   * them; `null` before it has.
    */
   activeComplications: string[] | null
 }
@@ -68,13 +77,15 @@ type WatchBridgeNative = {
 }
 
 const native =
-  Platform.OS === 'ios'
+  Platform.OS === 'ios' || Platform.OS === 'android'
     ? requireOptionalNativeModule<WatchBridgeNative>('WatchBridge')
     : null
 
 /**
- * Whether this binary has the module (iOS): it talks to an Apple Watch and
- * receives what Siri made on this device.
+ * Whether this binary has the module: on iOS it talks to an Apple Watch over
+ * WatchConnectivity and receives what Siri made on this device; on Android it
+ * talks to the Wear OS app over the Wearable Data Layer
+ * (`android/…/WatchSessionCoordinator.kt`).
  */
 export function isAvailable(): boolean {
   return native != null
@@ -93,8 +104,9 @@ export function getStatus(): WatchStatus {
 }
 
 /**
- * Stores the snapshot natively for Siri, and sends it to the watch when one is
- * paired with the app installed. Throws if Swift can't decode it.
+ * Stores the snapshot natively (for Siri on iOS), and sends it to the watch
+ * when one is paired with the app installed. Throws if the native side can't
+ * decode it.
  */
 export function setSnapshot(json: string): void {
   native?.setSnapshot(json)

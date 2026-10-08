@@ -53,9 +53,15 @@ vi.mock(
   '@react-native-async-storage/async-storage',
   () => import('@/__tests__/mocks/asyncStorage')
 )
+const platform = vi.hoisted(() => ({ OS: 'ios' as 'ios' | 'android' }))
 vi.mock('react-native', () => ({
   AppState: { addEventListener: () => ({ remove: () => {} }) },
-  Platform: { OS: 'ios', select: (options: { ios?: unknown }) => options.ios },
+  Platform: {
+    get OS() {
+      return platform.OS
+    },
+    select: (options: { ios?: unknown }) => options.ios,
+  },
 }))
 // The real preferences and contact stores reach expo modules that need
 // `__DEV__`; the time-entry store is the one under test.
@@ -156,6 +162,7 @@ describe('watch sync', () => {
       trips: [],
       deletedMileageRecords: [],
     })
+    platform.OS = 'ios'
     bridge.isPaired = true
     bridge.activeComplications = null
     bridge.pending = []
@@ -319,6 +326,69 @@ describe('watch sync', () => {
       up_next_complication: false,
     })
   })
+
+  it('sends a Wear OS watch its own strings, saying phone for iPhone', () => {
+    platform.OS = 'android'
+
+    teardown = installWatchSync()
+
+    const { strings } = JSON.parse(bridge.snapshots.at(-1)!)
+    expect(strings.watchSetUp).toBe('watchSetUpAndroid')
+    expect(strings.watchSyncing).toBe('watchSyncingAndroid')
+    expect(strings.addTime).toBe('addTime')
+    expect(strings.siriTimerSaved).toBe('siriTimerSaved')
+  })
+
+  it('builds no snapshot on Android until a Wear OS watch has the app', () => {
+    platform.OS = 'android'
+    bridge.isPaired = false
+
+    teardown = installWatchSync()
+
+    expect(bridge.snapshots).toEqual([])
+  })
+
+  it('sends the Apple Watch only its own strings', () => {
+    teardown = installWatchSync()
+
+    const { strings } = JSON.parse(bridge.snapshots.at(-1)!)
+    expect(strings.watchSetUp).toBe('watchSetUp')
+    expect(strings).not.toHaveProperty('siriTimerSaved')
+  })
+
+  it('reports the Wear OS tile with the complications', () => {
+    platform.OS = 'android'
+    bridge.activeComplications = ['WitnessWorkProgress', 'WitnessWorkTile']
+
+    teardown = installWatchSync()
+
+    expect(capture).toHaveBeenCalledWith('watch_app_status', {
+      complication_enabled: true,
+      progress_complication: true,
+      progress_complication_styles: 'default',
+      up_next_complication: false,
+      tile: true,
+    })
+  })
+
+  it.each(['tile', 'ongoing_activity'] as const)(
+    'saves Wear OS entries made from the %s',
+    (origin) => {
+      platform.OS = 'android'
+      bridge.pending = [draft({ origin, hours: 0, minutes: 0 })]
+
+      teardown = installWatchSync()
+
+      expect(octoberEntries()).toHaveLength(1)
+      expect(capture).toHaveBeenCalledWith('time_entry_created', {
+        source: 'watch',
+        watch_origin: origin,
+        entry_mode: 'checkbox',
+        has_category: false,
+        has_note: false,
+      })
+    }
+  )
 
   it('adds a redelivered entry once', () => {
     bridge.pending = [draft()]

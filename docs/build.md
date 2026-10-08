@@ -95,6 +95,77 @@ Agents run and check changes on emulators and simulators through the
 [`verify-witnesswork`](../.agents/skills/verify-witnesswork/SKILL.md) skill,
 not these commands.
 
+### Wear OS
+
+The Wear OS app is Android's counterpart of the Apple Watch app: native Kotlin
+and Compose for Wear OS in `targets/wear-os`, with Wear complications, a tile,
+and an Ongoing Activity for the running timer. Feature parity with the Apple
+Watch is tracked in [`docs/watch/features.json`](./watch/features.json)
+([how](./watch/README.md)).
+
+**How it's built.** `plugins/with-wear-os.js` adds `targets/wear-os` to the
+generated Android project as the `:wear` Gradle module, so every
+`expo prebuild` (and EAS build) includes it without copying sources into the
+disposable `android/`. Gradle builds it in place, with outputs under
+`android/build/wear`. This keeps one Gradle build: the module reads the phone
+app's application id, version name, version code and debug keystore from
+`:app` (`evaluationDependsOn(':app')`), and applies EAS's
+`app/eas-build.gradle` when present, so both apps share the upload key. The
+Wearable Data Layer only connects apps with the same application id and
+signing key, and Google Play lists the watch app under the phone app. The
+phone app's APK doesn't contain the watch app.
+
+Its dependencies are pinned to the newest releases that build with the phone
+project's Android Gradle plugin and compile SDK (AGP 8.12, SDK 36): Wear
+Compose 1.6.2, Compose BOM 2026.06.01, Tiles 1.6.2, ProtoLayout 1.4.2.
+AndroidX's newer releases need AGP 9.1 and SDK 37; move them together with React
+Native's Gradle setup. The Compose compiler plugin takes the Kotlin version of
+React Native's Kotlin Gradle plugin, which it must match.
+
+```bash
+pnpm run prebuild:android  # once, or after native changes
+cd android
+./gradlew :wear:assembleDebug        # android/build/wear/outputs/apk/debug
+./gradlew :wear:installDebug         # onto the connected Wear OS device
+./gradlew :wear:testDebugUnitTest :watch-bridge:testDebugUnitTest
+```
+
+`pnpm run build:wear` builds the same APK with EAS locally (profile
+`development-wear`). For Google Play, `pnpm run build:wear:production` builds
+`:wear:bundleRelease` (profile `production-wear`). Build it as its own EAS build:
+remote `autoIncrement` then gives it a version code of its own, as Play
+requires for every bundle. Upload it to the Wear OS release track of the same
+app (add Wear OS as a form factor in Play Console first); it ships alongside,
+not inside, the phone bundle.
+
+**Phone side.** `modules/watch-bridge` has an Android implementation with the
+same JS API as on iOS (`WatchSessionCoordinator.kt` and
+`WatchBridgeListenerService.kt`). It publishes the snapshot `src/app/watch`
+builds as a Data Layer data item, answers the watch's requests (a
+`MessageClient` RPC, or a data item the watch queued while the phone was
+away), changes the timer natively in `StopwatchStore.kt`
+(`modules/stopwatch-bridge/android`, which the app's own timer now uses too),
+and keeps entries in an inbox until `watchSync.ts` saves them. Requests arrive
+while the app is closed; entries are saved the next time its JavaScript runs.
+The messages are `WatchProtocol.kt`, the same JSON as `WatchProtocol.swift`.
+It's canonical in the module and copied into the watch app by
+`pnpm sync:widget-shared`, which also generates the watch's string resources
+from `src/locales`, as for the Apple Watch.
+
+**Trying it.** A Wear OS emulator pairs with a phone emulator only through the
+Wear OS companion app from the Play Store, which needs a signed-in Google
+account on a Google Play phone image. Without pairing, seed the watch with the
+same sample data as the Apple Watch simulator
+(`docs/watch/README.md#seeding-sample-data`) to check every screen,
+complication and the tile.
+
+```bash
+sdkmanager "system-images;android-36;android-wear-signed;arm64-v8a"
+avdmanager create avd -n WW_Wear_OS_6 -d wearos_large_round \
+  -k "system-images;android-36;android-wear-signed;arm64-v8a"
+emulator -avd WW_Wear_OS_6 -no-window -no-audio -no-boot-anim
+```
+
 ## Native changes
 
 - To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.
@@ -135,7 +206,8 @@ Contact attachments use the `application/witnesswork+json` MIME type and are
 validated and confirmed before import, including opaque Android content URIs.
 
 iCloud sync/restore, widgets, Live Activities, the Apple Watch app, Siri and
-Shortcuts, and alternate app icons remain unavailable on Android. Local backups,
+Shortcuts, and alternate app icons remain unavailable on Android. Its watch app
+is the Wear OS app ([above](#wear-os)). Local backups,
 MyTime import, contacts/visits, plans, service reports, preferences, and the
 persistent in-app stopwatch use the shared app flows.
 

@@ -1,6 +1,9 @@
 {
-  "platforms": ["ios"],
+  "platforms": ["ios", "android"],
   "ios": {
     "modules": ["StopwatchBridgeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.stopwatchbridge.StopwatchBridgeModule"]
   }
 }

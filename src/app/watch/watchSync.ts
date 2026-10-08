@@ -1,4 +1,4 @@
-import { AppState, AppStateStatus } from 'react-native'
+import { AppState, AppStateStatus, Platform } from 'react-native'
 import debounce from 'lodash/debounce'
 import * as WatchBridge from '../../../modules/watch-bridge'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -30,9 +30,9 @@ const FORWARDED_EVENTS = new Set<string>([
 ] satisfies AnalyticsEventName[])
 const STATUS_CAPTURED_AT_KEY = 'watchStatusCapturedAt'
 /**
- * Widget kinds in `targets/watch-widgets`. Monthly Progress has a kind per
- * circular style: Battery's ring (and the other families), Weather's range
- * gauge and the gauge with a symbol.
+ * Widget kinds in `targets/watch-widgets`, which the Wear OS complications
+ * reuse. Monthly Progress has a kind per circular style: Battery's ring (and
+ * the other families), Weather's range gauge and the gauge with a symbol.
  */
 const PROGRESS_COMPLICATION_STYLES = {
   WitnessWorkProgress: 'default',
@@ -40,6 +40,8 @@ const PROGRESS_COMPLICATION_STYLES = {
   WitnessWorkProgressSymbol: 'symbol',
 } as const
 const UP_NEXT_COMPLICATION = 'WitnessWorkUpNext'
+/** The Wear OS tile's kind. */
+const WEAR_TILE = 'WitnessWorkTile'
 const STATUS_CAPTURE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
 
 let installed = false
@@ -48,9 +50,10 @@ let draining = false
 
 /**
  * Builds the watch snapshot from the stores and hands it to the native layer,
- * which keeps it for Siri on this device and sends it to a paired Apple Watch.
- * Skipped when nothing in it changed, unless `force`d. `reflectedEntryIds` are
- * watch entries just saved but not yet resolved.
+ * which keeps it for Siri on this device and sends it to a paired Apple Watch,
+ * or on Android to a Wear OS watch. Skipped when nothing in it changed, unless
+ * `force`d. `reflectedEntryIds` are watch entries just saved but not yet
+ * resolved.
  */
 export function pushWatchSnapshot(
   reason: string,
@@ -58,6 +61,10 @@ export function pushWatchSnapshot(
   reflectedEntryIds: string[] = []
 ): void {
   if (!WatchBridge.isAvailable()) return
+  // iOS keeps the snapshot for Siri even without a watch; Android only needs it
+  // once a Wear OS watch has the app (`onStatusChange` sends it then).
+  if (Platform.OS === 'android' && !WatchBridge.getStatus().isWatchAppInstalled)
+    return
 
   try {
     const sr = useServiceReport.getState()
@@ -72,6 +79,7 @@ export function pushWatchSnapshot(
       addCalendarMonths(month, 1)
     )
     const snapshot = buildWatchSnapshot({
+      platform: Platform.OS === 'android' ? 'android' : 'ios',
       serviceReports: sr.serviceReports,
       publisher,
       publisherHours: prefs.publisherHours,
@@ -203,6 +211,8 @@ function captureWatchStatus(): void {
     progress_complication: progressStyles && progressStyles.length > 0,
     progress_complication_styles: progressStyles?.join(',') || undefined,
     up_next_complication: kinds?.includes(UP_NEXT_COMPLICATION),
+    // Wear OS only; the Apple Watch has no tiles.
+    ...(Platform.OS === 'android' && { tile: kinds?.includes(WEAR_TILE) }),
   })
   mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())
 }
@@ -213,9 +223,10 @@ const debouncedPush = debounce(() => pushWatchSnapshot('store-change'), 500, {
 })
 
 /**
- * Connects the stores to the Apple Watch and to Siri on this device: saves the
- * entries and trips they made and keeps their snapshot current. Install once
- * storage has hydrated. Idempotent; returns a teardown function for tests.
+ * Connects the stores to the watch (Apple Watch, or Wear OS on Android) and to
+ * Siri on this device: saves the entries and trips they made and keeps their
+ * snapshot current. Install once storage has hydrated. Idempotent; returns a
+ * teardown function for tests.
  */
 export function installWatchSync(): () => void {
   if (!WatchBridge.isAvailable() || installed) return () => {}

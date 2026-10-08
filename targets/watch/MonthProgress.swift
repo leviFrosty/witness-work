@@ -145,17 +145,16 @@ struct MonthProgress: Equatable {
     return calendar.dateComponents([.day], from: date, to: nextMonth).day ?? 0
   }
 
-  /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `12h`; `0h` for
-  /// zero, as the snapshot's `monthCompact` has it.
+  /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `11.5h`; `0h`
+  /// for zero, as the snapshot's `monthCompact` has it.
   static func compact(_ minutes: Int, _ snapshot: WatchSnapshot?) -> String {
     if minutes > 0, minutes < 60 { return "\(minutes)" + L10n.t("minutesCompact", snapshot) }
     return hoursNumber(minutes) + L10n.t("hoursCompact", snapshot)
   }
 
-  /// Hours as `compact` rounds them, without a unit: `0`, `0.5`, `1.5`, `12`.
+  /// Hours as `compact` rounds them, without a unit: `0`, `0.5`, `1.5`, `11.5`.
   static func hoursNumber(_ minutes: Int) -> String {
     let hours = Double(max(minutes, 0)) / 60
-    if hours >= 10 { return "\(Int(hours.rounded()))" }
     let tenths = (hours * 10).rounded() / 10
     return tenths == tenths.rounded()
       ? "\(Int(tenths))" : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), tenths)

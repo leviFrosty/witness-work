@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- The phone app's adaptiveIcon.backgroundColor (app.config.ts). -->
+  <color name="ic_launcher_background">#F8F9FA</color>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lets the Wear OS app find this phone app over the Data Layer (WatchProtocol.PHONE_CAPABILITY). -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+  tools:keep="@array/android_wear_capabilities">
+  <string-array name="android_wear_capabilities" translatable="false">
+    <item>witnesswork_phone_app</item>
+  </string-array>
+</resources>

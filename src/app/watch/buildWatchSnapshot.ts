@@ -24,11 +24,12 @@ import watchStringKeys from '@/app/watch/watchStringKeys.json'
 export const WATCH_SNAPSHOT_VERSION = 1
 
 /**
- * What the Apple Watch app and its complications show, and what Siri needs on
- * the watch and on this device. Mirrors `WatchSnapshot` in
- * `WatchProtocol.swift`. Strings are translated into the app's language and
- * durations formatted here, so the watch never formats measured time, except
- * the compact total it adds watch entries to before the iPhone saves them.
+ * What the watch app and its complications show (Apple Watch, or Wear OS from
+ * an Android phone), and what Siri needs on the watch and on this device.
+ * Mirrors `WatchSnapshot` in `WatchProtocol.swift` and `WatchProtocol.kt`.
+ * Strings are translated into the app's language and durations formatted here,
+ * so the watch never formats measured time, except the compact total it adds
+ * watch entries to before the iPhone saves them.
  */
 export type WatchSnapshot = {
   version: number
@@ -80,6 +81,8 @@ export type WatchSnapshot = {
 }
 
 export type BuildWatchSnapshotArgs = BuildReportArgs & {
+  /** The phone's platform: an Android phone's watch is a Wear OS watch. */
+  platform: 'ios' | 'android'
   showsTimeEntry: boolean
   categories: Category[]
   contacts: Contact[]
@@ -97,6 +100,28 @@ function activeVehicles(vehicles: Vehicle[], trips: Trip[]) {
     .filter((v) => !v.archived)
     .sort((a, b) => Number(b.id === firstId) - Number(a.id === firstId))
     .map(({ id, name }) => ({ id, name }))
+}
+
+/**
+ * The watch's strings in the app's language. A Wear OS watch also gets its own
+ * few, and wording that says "phone" where the Apple Watch's says "iPhone".
+ */
+function watchStrings(platform: BuildWatchSnapshotArgs['platform']) {
+  const keys =
+    platform === 'android'
+      ? [...watchStringKeys.strings, ...watchStringKeys.wearStrings]
+      : watchStringKeys.strings
+  const androidVariants = new Set(
+    platform === 'android' ? watchStringKeys.androidVariants : []
+  )
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      i18n.t(
+        (androidVariants.has(key) ? `${key}Android` : key) as TranslationKey
+      ),
+    ])
+  )
 }
 
 /** Same pace line as the Report widget's badge. */
@@ -180,8 +205,6 @@ export function buildWatchSnapshot(
       distanceUnit: args.distanceUnit,
       vehicles: activeVehicles(args.vehicles, args.trips),
     },
-    strings: Object.fromEntries(
-      watchStringKeys.strings.map((key) => [key, i18n.t(key as TranslationKey)])
-    ),
+    strings: watchStrings(args.platform),
   }
 }

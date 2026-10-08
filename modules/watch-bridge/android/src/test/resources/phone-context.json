@@ -1,0 +1,150 @@
+{
+  "protocolVersion": 1,
+  "sentAt": 1791190800,
+  "snapshot": {
+    "version": 1,
+    "generatedAt": 1791190800000,
+    "monthKey": "2026-10",
+    "monthName": "October",
+    "showsTimeEntry": true,
+    "entryMode": "hours",
+    "monthFormatted": "16.5",
+    "monthCompact": "16.5h",
+    "monthMinutes": 990,
+    "goalHours": 50,
+    "progress": 0.33,
+    "plannedThroughDay": [
+      0, 0, 0, 0, 0, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120,
+      120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120
+    ],
+    "publisherState": "reportedThisMonth",
+    "paceText": "1.3h hoursPerDayToGoal",
+    "nextMonth": {
+      "monthKey": "2026-11",
+      "monthName": "November",
+      "goalHours": 50,
+      "showsTimeEntry": true
+    },
+    "reflectedEntryIds": [],
+    "upNext": [
+      {
+        "id": "visit",
+        "kind": "followUp",
+        "start": 1791212400000,
+        "timed": true,
+        "timeText": "3:00 PM",
+        "clockText": "3:00",
+        "periodText": "PM",
+        "weekdayText": "Mon",
+        "dateText": "Oct 5",
+        "title": "Maria González",
+        "detail": "Why we suffer",
+        "durationText": null,
+        "place": {
+          "name": "Maria González",
+          "address": "12 Oak St Springfield",
+          "latitude": 40,
+          "longitude": -75
+        }
+      },
+      {
+        "id": "plan",
+        "kind": "plan",
+        "start": 1791295200000,
+        "timed": true,
+        "timeText": "2:00 PM",
+        "clockText": "2:00",
+        "periodText": "PM",
+        "weekdayText": "Tue",
+        "dateText": "Oct 6",
+        "title": "plan",
+        "detail": "Central Park",
+        "durationText": "2h",
+        "place": {
+          "name": "Central Park",
+          "address": "5th Ave",
+          "latitude": null,
+          "longitude": null
+        }
+      }
+    ],
+    "categories": [
+      {
+        "id": "ldc",
+        "name": "LDC",
+        "isCredit": true
+      }
+    ],
+    "mileage": {
+      "enabled": true,
+      "distanceUnit": "mi",
+      "vehicles": [
+        {
+          "id": "car",
+          "name": "Corolla"
+        }
+      ]
+    },
+    "strings": {
+      "addTime": "addTime",
+      "aheadOfSchedule": "aheadOfSchedule",
+      "behindSchedule": "behindSchedule",
+      "directions": "directions",
+      "followUp": "followUp",
+      "goal": "goal",
+      "goalReached": "goalReached",
+      "hours": "hours",
+      "hoursCompact": "h",
+      "hoursPerDayToGoal": "hoursPerDayToGoal",
+      "minutes": "minutes",
+      "minutesCompact": "m",
+      "month": "month",
+      "ok": "ok",
+      "reportedToday": "reportedToday",
+      "requestFailedTryAgain": "requestFailedTryAgain",
+      "save": "save",
+      "sharedTheGoodNews": "sharedTheGoodNews",
+      "siriStopTimerShort": "siriStopTimerShort",
+      "siriTimerEmpty": "siriTimerEmpty",
+      "siriTimerPaused": "siriTimerPaused",
+      "siriTimerSaved": "siriTimerSaved",
+      "siriTimerStarted": "siriTimerStarted",
+      "siriTimerTooLong": "siriTimerTooLong",
+      "standard": "standard",
+      "timeAdded": "timeAdded",
+      "timer": "timer",
+      "timerPauseAction": "timerPauseAction",
+      "timerSaveAction": "timerSaveAction",
+      "timerStartAction": "timerStartAction",
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "type": "type",
+      "watchComplicationDescription": "watchComplicationDescription",
+      "watchComplicationName": "watchComplicationName",
+      "watchDirectionsUnavailable": "watchDirectionsUnavailable",
+      "watchHoursLoggingOff": "watchHoursLoggingOffAndroid",
+      "watchNothingScheduled": "watchNothingScheduled",
+      "watchNow": "watchNow",
+      "watchPhoneUnreachable": "watchPhoneUnreachableAndroid",
+      "watchRangeComplicationDescription": "watchRangeComplicationDescription",
+      "watchSetUp": "watchSetUpAndroid",
+      "watchStale": "watchStaleAndroid",
+      "watchSymbolComplicationDescription": "watchSymbolComplicationDescription",
+      "watchSyncing": "watchSyncingAndroid",
+      "watchThen": "watchThen",
+      "watchTimerChanged": "watchTimerChangedAndroid",
+      "watchUpNext": "watchUpNext",
+      "watchUpNextComplicationDescription": "watchUpNextComplicationDescription",
+      "watchUpNextComplicationName": "watchUpNextComplicationName",
+      "wearRangeComplicationName": "wearRangeComplicationName",
+      "wearSymbolComplicationName": "wearSymbolComplicationName"
+    }
+  },
+  "timer": {
+    "isRunning": true,
+    "startedAt": 1791190200,
+    "accumulatedMs": 1500000,
+    "revision": 3
+  },
+  "resolvedEntryIds": ["resolved-1"]
+}

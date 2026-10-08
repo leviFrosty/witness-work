@@ -1,0 +1,26 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.watchbridge'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.watchbridge"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Timer commands from the watch run against the phone's StopwatchStore.
+  implementation project(':stopwatch-bridge')
+  // Pinned to exact patch versions (AGENTS.md).
+  implementation 'com.google.android.gms:play-services-wearable:20.0.1'
+
+  testImplementation 'junit:junit:4.13.2'
+  // Android's org.json is a stub in JVM tests.
+  testImplementation 'org.json:json:20260814'
+}

@@ -35,6 +35,8 @@ module.exports = {
     // they differ between a worktree and the build machine.
     'targets/*/generated.entitlements',
     'targets/*/Assets.xcassets/**',
+    // The Wear OS app is its own APK; it never changes the phone app's binary.
+    'targets/wear-os/**',
     // react-native-maps' Xcode build phase rewrites this from whether the
     // GoogleMaps pods are installed (decided by hashed config), so it is a
     // build output; hashing it would change the runtime version after a build.

@@ -64,6 +64,7 @@ import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
 import { CustomFieldDefinition } from '@/types/customField'
 import { Category } from '@/types/category'
+import { isSeededBuiltinCategory } from '@/constants/categories'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { stripTombstonedCustomFields } from '@/lib/customFields'
 import { markCompleteICloudPull } from '@/lib/iCloudPullWait'
@@ -378,7 +379,10 @@ export function hasMeaningfulLocalData(): boolean {
     }
   }
   const categories = useCategories.getState()
-  if (categories.categories.length > 0) return true
+  // Every install seeds the LDC builtin, so it counts only once the User
+  // changes it.
+  if (categories.categories.some((c) => !isSeededBuiltinCategory(c)))
+    return true
   if (categories.deletedCategories.length > 0) return true
   if (hasMileageData()) return true
   return false

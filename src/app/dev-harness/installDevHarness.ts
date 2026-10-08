@@ -5,6 +5,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
@@ -18,6 +19,7 @@ import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors
 import apis from '@/constants/apis'
 import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
+import { iCloudSync } from '@/app/sync/iCloudSync'
 
 type CapturedError = {
   at: string
@@ -168,6 +170,8 @@ export function installDevHarness() {
      * iOS or Android); `{ ok, checked, mismatches }`.
      */
     checkBuddiesCryptoVectors: () => checkCryptoVectors(),
+    /** The sync engine, for reading state back; drive changes through the UI. */
+    sync: iCloudSync,
     setSupporter: (on: boolean) => {
       usePreferences
         .getState()
@@ -186,6 +190,7 @@ export function installDevHarness() {
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
+      categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
       // `setState({ celebrating: { count, kind } })` replays a milestone.

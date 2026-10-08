@@ -44,6 +44,16 @@ googleServiceAccount.json
 /ios/
 /android/
 
+# Android build output from local Expo modules
+modules/*/android/build/
+modules/*/android/.gradle/
+modules/*/android/.cxx/
+modules/*/android/.kotlin/
+modules/*/android/local.properties
+*.iml
+*.apk
+*.aab
+
 # @bacons/apple-targets generated entitlements
 targets/*/generated.entitlements
 

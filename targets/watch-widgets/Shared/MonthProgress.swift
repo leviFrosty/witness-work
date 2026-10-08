@@ -13,6 +13,9 @@ struct MonthProgress: Equatable {
   let showsTimeEntry: Bool
   /// Compact total, e.g. `12.5h`.
   let total: String
+  /// `total` without its unit, e.g. `12.5`, for the middle of a circular
+  /// gauge: Apple's show a bare number there, and a unit shrinks the digits.
+  let hours: String
   /// The total in the user's Duration Format when the iPhone's figure is
   /// current; otherwise `total`.
   let formatted: String
@@ -73,6 +76,8 @@ struct MonthProgress: Equatable {
     guard let baseMinutes else {
       // Stored by an iPhone app from before the watch added time itself.
       total = snapshot.monthCompact
+      let unit = L10n.t("hoursCompact", snapshot)
+      hours = total.hasSuffix(unit) ? String(total.dropLast(unit.count)) : total
       formatted = snapshot.monthFormatted
       fraction = goalHours > 0 ? min(max(snapshot.progress, 0), 1) : nil
       goalReached = goalHours > 0 && snapshot.progress >= 1
@@ -91,6 +96,7 @@ struct MonthProgress: Equatable {
     let minutes = baseMinutes + unsyncedMinutes
 
     total = Self.compact(minutes, snapshot)
+    hours = Self.hoursNumber(minutes)
     formatted = unsyncedMinutes == 0 && snapshot.isCurrent(at: date)
       ? snapshot.monthFormatted : total
 
@@ -142,15 +148,16 @@ struct MonthProgress: Equatable {
   /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `12h`; `0h` for
   /// zero, as the snapshot's `monthCompact` has it.
   static func compact(_ minutes: Int, _ snapshot: WatchSnapshot?) -> String {
-    let hoursUnit = L10n.t("hoursCompact", snapshot)
-    guard minutes > 0 else { return "0" + hoursUnit }
-    if minutes < 60 { return "\(minutes)" + L10n.t("minutesCompact", snapshot) }
-    if minutes % 60 == 0 { return "\(minutes / 60)" + hoursUnit }
-    let hours = Double(minutes) / 60
-    if hours >= 10 { return "\(Int(hours.rounded()))" + hoursUnit }
+    if minutes > 0, minutes < 60 { return "\(minutes)" + L10n.t("minutesCompact", snapshot) }
+    return hoursNumber(minutes) + L10n.t("hoursCompact", snapshot)
+  }
+
+  /// Hours as `compact` rounds them, without a unit: `0`, `0.5`, `1.5`, `12`.
+  static func hoursNumber(_ minutes: Int) -> String {
+    let hours = Double(max(minutes, 0)) / 60
+    if hours >= 10 { return "\(Int(hours.rounded()))" }
     let tenths = (hours * 10).rounded() / 10
-    let number = tenths == tenths.rounded()
+    return tenths == tenths.rounded()
       ? "\(Int(tenths))" : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), tenths)
-    return number + hoursUnit
   }
 }

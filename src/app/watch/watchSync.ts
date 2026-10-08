@@ -29,8 +29,16 @@ const FORWARDED_EVENTS = new Set<string>([
   'siri_action_failed',
 ] satisfies AnalyticsEventName[])
 const STATUS_CAPTURED_AT_KEY = 'watchStatusCapturedAt'
-/** Widget kinds in `targets/watch-widgets`. */
-const PROGRESS_COMPLICATION = 'WitnessWorkProgress'
+/**
+ * Widget kinds in `targets/watch-widgets`. Monthly Progress has a kind per
+ * circular style: Battery's ring (and the other families), Weather's range
+ * gauge and the gauge with a symbol.
+ */
+const PROGRESS_COMPLICATION_STYLES = {
+  WitnessWorkProgress: 'default',
+  WitnessWorkProgressRange: 'range',
+  WitnessWorkProgressSymbol: 'symbol',
+} as const
 const UP_NEXT_COMPLICATION = 'WitnessWorkUpNext'
 const STATUS_CAPTURE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -185,9 +193,15 @@ function captureWatchStatus(): void {
   if (Date.now() - capturedAt < STATUS_CAPTURE_INTERVAL_MS) return
   // Unknown until the watch app reports the complications in use.
   const kinds = status.activeComplications
+  const progressStyles = kinds
+    ? Object.entries(PROGRESS_COMPLICATION_STYLES)
+        .filter(([kind]) => kinds.includes(kind))
+        .map(([, style]) => style)
+    : undefined
   analytics.capture('watch_app_status', {
     complication_enabled: status.isComplicationEnabled,
-    progress_complication: kinds?.includes(PROGRESS_COMPLICATION),
+    progress_complication: progressStyles && progressStyles.length > 0,
+    progress_complication_styles: progressStyles?.join(',') || undefined,
     up_next_complication: kinds?.includes(UP_NEXT_COMPLICATION),
   })
   mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())

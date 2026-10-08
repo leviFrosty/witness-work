@@ -299,7 +299,24 @@ describe('watch sync', () => {
     expect(capture).toHaveBeenCalledWith('watch_app_status', {
       complication_enabled: true,
       progress_complication: false,
+      progress_complication_styles: undefined,
       up_next_complication: true,
+    })
+  })
+
+  it('reports each Monthly Progress style in use', () => {
+    bridge.activeComplications = [
+      'WitnessWorkProgressRange',
+      'WitnessWorkProgressSymbol',
+    ]
+
+    teardown = installWatchSync()
+
+    expect(capture).toHaveBeenCalledWith('watch_app_status', {
+      complication_enabled: true,
+      progress_complication: true,
+      progress_complication_styles: 'range,symbol',
+      up_next_complication: false,
     })
   })
 

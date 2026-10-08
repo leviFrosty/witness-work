@@ -5,6 +5,8 @@ import WidgetKit
 struct WitnessWorkWatchWidgets: WidgetBundle {
   var body: some Widget {
     ProgressComplication()
+    ProgressRangeComplication()
+    ProgressSymbolComplication()
     UpNextComplication()
   }
 }
@@ -64,6 +66,32 @@ struct ProgressComplication: Widget {
   }
 }
 
+/// The same progress in the circular slot only, drawn like another of Apple's
+/// circular complications (see `CircularStyle`).
+struct ProgressRangeComplication: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: "WitnessWorkProgressRange", provider: ProgressProvider()) { entry in
+      CircularView(progress: entry.progress, snapshot: entry.snapshot, style: .range)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+    .configurationDisplayName(L10n.t("watchComplicationName", nil))
+    .description(L10n.t("watchRangeComplicationDescription", nil))
+    .supportedFamilies([.accessoryCircular])
+  }
+}
+
+struct ProgressSymbolComplication: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: "WitnessWorkProgressSymbol", provider: ProgressProvider()) { entry in
+      CircularView(progress: entry.progress, snapshot: entry.snapshot, style: .symbol)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+    .configurationDisplayName(L10n.t("watchComplicationName", nil))
+    .description(L10n.t("watchSymbolComplicationDescription", nil))
+    .supportedFamilies([.accessoryCircular])
+  }
+}
+
 struct ProgressComplicationView: View {
   @Environment(\.widgetFamily) private var family
   let entry: ProgressEntry
@@ -72,7 +100,7 @@ struct ProgressComplicationView: View {
     let progress = entry.progress
     let snapshot = entry.snapshot
     switch family {
-    case .accessoryCircular: CircularView(progress: progress)
+    case .accessoryCircular: CircularView(progress: progress, snapshot: snapshot)
     case .accessoryCorner: CornerView(progress: progress, snapshot: snapshot)
     case .accessoryInline: InlineView(progress: progress, snapshot: snapshot)
     default: RectangularView(progress: progress, snapshot: snapshot)
@@ -84,34 +112,116 @@ private func reportIcon(_ progress: MonthProgress) -> String {
   progress.publisherState == "unreported" ? "circle.dashed" : "checkmark.circle.fill"
 }
 
+/// The app's green. `Color.accentColor` is white in a watch complication, so
+/// rings tinted with it came out white on gray where Apple's are colored.
+let complicationTint = Color("$accent")
+
+/// The circular complications are Apple's own gauge styles with unstyled
+/// labels, so the ring, the number and their sizes match Apple's on every face
+/// and watch size. Each mirrors one of Apple's:
+///
+/// - `ProgressComplication`: Battery's closed ring, the number in the middle.
+/// - `ProgressRangeComplication`: Weather's temperature gauge, an open ring
+///   with the low and high at its ends; here 0 and the goal.
+/// - `ProgressSymbolComplication`: the open ring with a symbol in its gap, as
+///   in UV Index or Noise.
+///
+/// Without a goal there's nothing to fill, so all three stack a caption over
+/// the number like Calendar's Today's Date.
+private enum CircularStyle {
+  case ring, range, symbol
+}
+
 private struct CircularView: View {
   let progress: MonthProgress?
+  let snapshot: WatchSnapshot?
+  var style: CircularStyle = .ring
 
   var body: some View {
     if let progress, progress.showsTimeEntry, let fraction = progress.fraction {
-      Gauge(value: fraction) {
-        Image(systemName: "clock")
-      } currentValueLabel: {
-        Text(progress.total)
-      }
-      .gaugeStyle(.accessoryCircularCapacity)
-      .tint(.accentColor)
-      .widgetAccentable()
+      gauge(progress, fraction: fraction)
+        .tint(complicationTint)
+        .widgetAccentable()
+        .accessibilityValue(
+          progress.goalHours > 0
+            ? "\(progress.formatted) / \(progress.goalHours)" : progress.formatted)
     } else {
       ZStack {
         AccessoryWidgetBackground()
-        if let progress, progress.showsTimeEntry {
-          Text(progress.total)
-            .font(.headline)
+        CircularScaled { scale in
+          if let progress, progress.showsTimeEntry {
+            // Calendar's type and spacing, measured on its complication.
+            VStack(spacing: -4 * scale) {
+              Text(L10n.line("hours", snapshot))
+                .font(.system(size: 12 * scale, weight: .medium, design: .rounded))
+                .textCase(.uppercase)
+                .foregroundStyle(complicationTint)
+                .widgetAccentable()
+              Text(progress.hours)
+                .font(.system(size: 24 * scale, weight: .medium, design: .rounded))
+            }
+            .lineLimit(1)
             .minimumScaleFactor(0.6)
-        } else if let progress {
-          Image(systemName: reportIcon(progress))
-            .font(.title2)
-            .widgetAccentable()
-        } else {
-          Text(verbatim: "—")
+            .padding(.horizontal, 6 * scale)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(L10n.line("hours", snapshot))
+            .accessibilityValue(progress.formatted)
+          } else if let progress {
+            // As large as the glyph of Apple's app complications, like Messages.
+            Image(systemName: reportIcon(progress))
+              .font(.system(size: 32 * scale, weight: .medium))
+              .foregroundStyle(complicationTint)
+              .widgetAccentable()
+          } else {
+            Text(verbatim: "—")
+          }
         }
       }
+    }
+  }
+
+  @ViewBuilder
+  private func gauge(_ progress: MonthProgress, fraction: Double) -> some View {
+    switch style {
+    case .ring:
+      Gauge(value: fraction) {
+        EmptyView()
+      } currentValueLabel: {
+        Text(progress.hours)
+      }
+      .gaugeStyle(.accessoryCircularCapacity)
+    case .range:
+      Gauge(value: fraction) {
+        EmptyView()
+      } currentValueLabel: {
+        Text(progress.hours)
+      } minimumValueLabel: {
+        Text(verbatim: "0")
+      } maximumValueLabel: {
+        Text(verbatim: "\(progress.goalHours)")
+      }
+      .gaugeStyle(.accessoryCircular)
+    case .symbol:
+      Gauge(value: fraction) {
+        Image(systemName: "clock.fill")
+      } currentValueLabel: {
+        Text(progress.hours)
+      }
+      .gaugeStyle(.accessoryCircular)
+    }
+  }
+}
+
+/// Apple's circular complications size their type to the slot: Calendar's
+/// Today's Date is 12 and 24 points in the 51-point slot of a 46mm watch and
+/// smaller in a 42mm watch's 47. `content` gets the slot's scale against 51.
+struct CircularScaled<Content: View>: View {
+  @ViewBuilder let content: (CGFloat) -> Content
+
+  var body: some View {
+    GeometryReader { proxy in
+      content(min(proxy.size.width, proxy.size.height) / 51)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 }
@@ -132,7 +242,7 @@ private struct CornerView: View {
             Gauge(value: fraction) {
               EmptyView()
             }
-            .tint(.accentColor)
+            .tint(complicationTint)
           }
         }
     } else if let progress {
@@ -224,7 +334,7 @@ private struct RectangularView: View {
       .lineLimit(1)
       .minimumScaleFactor(0.7)
       if let fraction = progress.fraction {
-        PaceBar(fraction: fraction, paceFraction: progress.paceFraction)
+        PaceBar(fraction: fraction, paceFraction: progress.paceFraction, tint: complicationTint)
           .padding(.vertical, 1)
       }
       if showsFooter {

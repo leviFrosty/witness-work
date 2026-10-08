@@ -3,6 +3,12 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Notifications from 'expo-notifications'
 
+import { useBuddiesAlertContext } from '@/app/buddies/buddiesAlertContext'
+import { reportAlertOutcomes } from '@/app/buddies/buddiesAlertOutcomes'
+import {
+  postBuddiesAlert,
+  remoteMessageData,
+} from '@/app/buddies/buddiesPushAlerts'
 import { logger } from '@/lib/logger'
 import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
@@ -33,7 +39,11 @@ import {
   recordLiveEvent,
   useBuddiesDiagnostics,
 } from '@/features/buddies/stores/buddiesDiagnostics'
-import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
+import {
+  markSeen,
+  useNotificationsTray,
+} from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
 
 /** Returning to the app syncs, but not more often than this. */
@@ -135,6 +145,13 @@ export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const running = enabled && started
+  useBuddiesAlertContext()
+
+  // What the engine checks before making or sending badge news.
+  useEffect(() => {
+    useBuddiesSession.setState({ running })
+    return () => useBuddiesSession.setState({ running: false })
+  }, [running])
 
   useEffect(() => {
     if (!running) return
@@ -225,12 +242,14 @@ export default function BuddiesRuntime() {
     })
     syncNow()
     checkPushRegistration()
+    reportAlertOutcomes()
     if (AppState.currentState === 'active') live.start()
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         buddiesEngine.expire()
         syncNow()
         checkPushRegistration()
+        reportAlertOutcomes()
         live.start()
       } else if (state === 'background') {
         live.stop()
@@ -268,14 +287,24 @@ export default function BuddiesRuntime() {
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)
     })
-    // So does the streak, counted by the role.
-    const tenure = usePreferences.subscribe((state, previous) => {
+    // So do Tenure, the streak (counted by the role), and earned badges;
+    // Badges switched off withdraws them, and with them this device's badge
+    // alerts.
+    const preferences = usePreferences.subscribe((state, previous) => {
       if (
         state.role !== previous.role ||
         state.roleHistory !== previous.roleHistory ||
-        state.tenureStartDate !== previous.tenureStartDate
+        state.tenureStartDate !== previous.tenureStartDate ||
+        state.earnedBadges !== previous.earnedBadges ||
+        state.showBadges !== previous.showBadges ||
+        state.dataProtectionMode !== previous.dataProtectionMode
       )
         schedulePublish()
+      if (state.showBadges !== previous.showBadges)
+        void registerBuddiesPush().catch(logFailure)
+      // Badges off: news not yet sent stays home, even if they come back on.
+      if (!state.showBadges && previous.showBadges)
+        buddiesEngine.dropBadgeAnnouncements()
     })
     // Follow-up invitations carry the Visit's date and topic and the
     // Contact's first name and address.
@@ -287,22 +316,32 @@ export default function BuddiesRuntime() {
     })
     syncLinkedPlans()
     scheduleHeldReplies()
-    /** Whose requests to join may alert this device. */
-    const joinRequestAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
+    /** Whose requests to join, and whether new badges, may alert this device. */
+    const pushAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
       JSON.stringify([
         state.joinRequestNotifications,
         state.mutedJoinRequests,
         state.buddies
           .filter((buddy) => buddy.status === 'active')
           .map((buddy) => buddy.inboxId),
+        state.badgeNotifications,
       ])
     const buddies = useBuddies.subscribe((state, previous) => {
       if (state.buddies !== previous.buddies)
         forgetRemovedBuddies(previous.buddies, state.buddies)
       // A new buddy's requests need their own push template, and a muted
-      // buddy's template is dropped.
-      if (joinRequestAlerts(state) !== joinRequestAlerts(previous))
+      // buddy's template is dropped; so is the badge one with alerts off.
+      if (pushAlerts(state) !== pushAlerts(previous))
         void registerBuddiesPush().catch(logFailure)
+      // Entries that arrive already read (alerts off for them here) don't
+      // count toward the bell.
+      if (state.notifications !== previous.notifications) {
+        const known = new Set(previous.notifications.map((n) => n.id))
+        const quiet = state.notifications
+          .filter((n) => n.read && !known.has(n.id))
+          .map((n) => n.id)
+        if (quiet.length > 0) markSeen(quiet)
+      }
       if (state.incomingShares !== previous.incomingShares) {
         syncLinkedPlans(
           sharesJustAccepted(previous.incomingShares, state.incomingShares)
@@ -312,8 +351,14 @@ export default function BuddiesRuntime() {
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
-        const push = buddiesPushData(notification)
-        if (push) syncAfterPush()
+        // Pushes only: Android's own alert for one carries the same marker.
+        const trigger = notification.request.trigger as {
+          type?: string
+        } | null
+        if (trigger?.type !== 'push') return
+        if (!buddiesPushData(notification)) return
+        syncAfterPush()
+        void postBuddiesAlert(remoteMessageData(notification)).catch(logFailure)
       }
     )
     return () => {
@@ -327,7 +372,7 @@ export default function BuddiesRuntime() {
       plans()
       timeEntries()
       profile()
-      tenure()
+      preferences()
       visits()
       contacts()
       buddies()

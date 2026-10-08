@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import { useToastController } from '@tamagui/toast'
+import { isBuddiesNews } from '@/app/notifications/foregroundPresentation'
 import { isAudioEnabled } from '@/lib/audio'
 
 /**
@@ -18,6 +19,8 @@ export default function SilentForegroundAlerts() {
     const subscription = Notifications.addNotificationReceivedListener(
       (notification) => {
         if (isAudioEnabled()) return
+        // Buddies' badge news is quiet: no banner, in the app or out.
+        if (isBuddiesNews(notification)) return
         const { title, body } = notification.request.content
         if (!title && !body) return
         toast.show(title ?? body ?? '', {

@@ -11,6 +11,17 @@ import { toB64u } from '@/features/buddies/lib/bytes'
 
 const EMPTY = new Uint8Array(0)
 
+/** The AAD each sealed blob is bound to (docs/buddies-protocol.md). */
+export const aad = {
+  inviteCard: (inviteId: string) => `ww-buddies/v1/invite-card|${inviteId}`,
+  claim: (inviteId: string) => `ww-buddies/v1/invite-claim|${inviteId}`,
+  card: (inboxId: string, slotId: string) =>
+    `ww-buddies/v1/card|${inboxId}|${slotId}`,
+  event: (inboxId: string, slotId: string, eventId: string) =>
+    `ww-buddies/v1/event|${inboxId}|${slotId}|${eventId}`,
+  roster: (inboxId: string) => `ww-buddies/v1/roster|${inboxId}`,
+}
+
 export type BuddyIdentity = {
   /** Ed25519 seed that signs owner ops on the relay. */
   ownerSeed: Uint8Array

@@ -1,4 +1,3 @@
-import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
   concatBytes,
@@ -7,7 +6,12 @@ import {
   toB64u,
   utf8,
 } from '@/features/buddies/lib/bytes'
-import { ed25519Verify, open, seal } from '@/features/buddies/lib/crypto'
+import {
+  ed25519Verify,
+  open,
+  seal,
+  sha256,
+} from '@/features/buddies/lib/crypto'
 import {
   deriveDirection,
   deriveIdentity,
@@ -21,18 +25,22 @@ import {
 import { buildBuddyCardDays } from '@/features/buddies/lib/card'
 import { createRelayClient, RelayError } from '@/features/buddies/lib/relay'
 import {
+  BADGE_PUSH_KIND,
+  BADGE_REACTION_PUSH_KIND,
   BUDDY_PUSH_KINDS,
   BuddyInviteError,
   BuddyRemovalPendingError,
-  createBuddiesEngine,
   PUSH_REGISTRATION_REFRESH_MS,
-  type BuddiesEngineDeps,
 } from '@/features/buddies/lib/engine'
 import {
+  badgeReactionsFrom,
   BuddiesState,
-  BuddyProfile,
+  Buddy,
+  BuddyNotification,
+  BuddySharing,
   incomingShareKey,
-  initialBuddiesState,
+  listedNotifications,
+  mergeSharing,
   INVITE_TTL_MS,
   MAX_NOTIFICATIONS,
   MAX_REMOVED_BUDDIES,
@@ -58,129 +66,32 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
-import { rosterSchema } from '@/features/buddies/lib/schemas'
+import {
+  BADGE_REACTION_EMOJI,
+  BADGE_REACTION_IDS,
+  type BadgeReactionEmoji,
+  isBadgeReactionEmoji,
+} from '@/features/buddies/lib/badgeReactions'
+import {
+  badgeReactionSchema,
+  rosterSchema,
+} from '@/features/buddies/lib/schemas'
 import type {
   BuddyStreak,
   Roster,
   ShareReply,
 } from '@/features/buddies/lib/schemas'
-import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
+import {
+  pair,
+  type Plans,
+  random,
+  setup,
+} from '@/features/buddies/lib/testing/engineHarness'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-
-const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
-
-type Plans = { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
-
-function memoryStore(initial: Partial<BuddiesState>) {
-  let state: BuddiesState = { ...initialBuddiesState, ...initial }
-  return {
-    getState: () => state,
-    setState: (
-      partial:
-        | Partial<BuddiesState>
-        | ((current: BuddiesState) => Partial<BuddiesState>)
-    ) => {
-      state = {
-        ...state,
-        ...(typeof partial === 'function' ? partial(state) : partial),
-      }
-    },
-  }
-}
-
-function setup() {
-  let clock = Date.parse('2026-09-23T15:00:00Z')
-  const now = () => clock
-  const fake = createFakeRelay(now)
-  /** Ops that fail as if the device were offline. */
-  const offlineOps = new Set<string>()
-  /** Runs after the relay handled a request, before its response arrives. */
-  let afterOp: ((op: string) => Promise<void>) | null = null
-  const relay = createRelayClient({
-    baseUrl: 'https://relay.test',
-    randomBytes: random,
-    fetchImpl: (async (url: string, init?: RequestInit) => {
-      const op = String(url).split('/buddies/v1/')[1]
-      if (offlineOps.has(op)) throw new TypeError('Network request failed')
-      const response = await fake.fetchImpl(url, init)
-      await afterOp?.(op)
-      return response
-    }) as typeof fetch,
-    now,
-  })
-
-  function user(
-    name: string,
-    plans: Plans = { dayPlans: [], recurringPlans: [] },
-    seed: Uint8Array = random(32),
-    extra: Pick<BuddiesEngineDeps, 'platform' | 'onPaired'> = {}
-  ) {
-    const store = memoryStore({})
-    const profile: BuddyProfile = { name }
-    let rootSeed: Uint8Array | null = seed
-    let shares: OutgoingShareSpec[] = []
-    let streak: BuddyStreak | undefined
-    const engine = createBuddiesEngine({
-      relay,
-      store,
-      randomBytes: random,
-      now,
-      getRootSeed: () => (rootSeed ??= random(32)),
-      deleteRootSeed: () => {
-        rootSeed = null
-      },
-      getPlans: () => plans,
-      getProfile: () => profile,
-      getStreak: () => streak,
-      getShares: () => shares,
-      ...extra,
-    })
-    return {
-      engine,
-      store,
-      profile,
-      seed,
-      inboxId: deriveIdentity(seed).inboxId,
-      setShares: (next: OutgoingShareSpec[]) => {
-        shares = next
-      },
-      setStreak: (next: BuddyStreak | undefined) => {
-        streak = next
-      },
-    }
-  }
-
-  return {
-    fake,
-    offlineOps,
-    setAfterOp: (hook: typeof afterOp) => {
-      afterOp = hook
-    },
-    user,
-    advance: (ms: number) => {
-      clock += ms
-    },
-  }
-}
-
-/** Invite → accept → confirm, then both sides sync so cards flow. */
-async function pair(
-  inviter: ReturnType<ReturnType<typeof setup>['user']>,
-  invitee: ReturnType<ReturnType<typeof setup>['user']>
-) {
-  const link = await inviter.engine.createInvite()
-  await invitee.engine.acceptInvite(link)
-  await inviter.engine.sync()
-  const [claim] = inviter.store.getState().incomingClaims
-  await inviter.engine.confirmClaim(claim.inviteId)
-  await invitee.engine.sync()
-  await inviter.engine.sync()
-  return link
-}
 
 const dayPlan = (date: string, minutes: number, start?: number): DayPlan => ({
   id: `day-${date}`,
@@ -2564,5 +2475,1217 @@ describe('asking to join', () => {
     expect(anna.store.getState().joinRequests).toEqual({})
     await levi.engine.sync()
     expect(levi.store.getState().askedToJoin).toEqual({})
+  })
+})
+
+describe('badges', () => {
+  const HOUR = 60 * 60 * 1000
+  /** The relay's 60 s alert spacing, plus the client's slack. */
+  const SPACING = 65 * 1000
+  const START = Date.parse('2026-09-23T15:00:00Z')
+  const device = { apnsToken: 'ab', apnsEnvironment: 'sandbox' as const }
+  const template = { title: 't', body: 'b' }
+  type Env = ReturnType<typeof setup>
+  type User = ReturnType<Env['user']>
+
+  const badgeEntries = (user: User) =>
+    user.store.getState().notifications.filter((n) => n.kind === 'badge')
+  const buddyOf = (user: User, other: User) =>
+    user.store.getState().buddies.find((b) => b.inboxId === other.inboxId)!
+
+  async function duo() {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    await pair(levi, anna)
+    await anna.engine.registerPush({
+      ...device,
+      templates: Object.fromEntries(
+        anna.engine.badgePushKinds().map((kind) => [kind, template])
+      ),
+    })
+    // Past the relay's alert spacing after Levi's pairing confirmation.
+    env.advance(SPACING)
+    const badgeEventsTo = (inboxId: string) =>
+      env.fake.inboxes
+        .get(inboxId)!
+        .events.filter((event) => event.kind === BADGE_PUSH_KIND)
+    const badgeAlerts = () =>
+      env.fake.alerts.filter((alert) => alert.kind === BADGE_PUSH_KIND)
+    return { ...env, levi, anna, badgeEventsTo, badgeAlerts }
+  }
+
+  /** Writes what the app itself never would, as `from` into `to`'s inbox. */
+  function rawWriter(env: Env, from: User, to: User) {
+    const me = deriveIdentity(from.seed)
+    const buddy = buddyOf(from, to)
+    const { slotId, contentKey, writerSeed } = deriveDirection(
+      derivePairSecret(
+        me.dhPrivate,
+        fromB64u(buddy.dhPub),
+        fromB64u(buddy.inviteSecret),
+        me.inboxId,
+        buddy.inboxId
+      ),
+      to.inboxId
+    )
+    const auth = { inboxId: to.inboxId, slotId, writerSeed }
+    const sealed = (body: unknown, aad: string) =>
+      seal(contentKey, utf8(JSON.stringify(body)), aad, random(12))
+    return {
+      event: (kind: string, body: unknown) => {
+        const eventId = toB64u(random(16))
+        return env.relay.putEvent(auth, {
+          eventId,
+          kind,
+          blob: sealed(
+            body,
+            `ww-buddies/v1/event|${to.inboxId}|${slotId}|${eventId}`
+          ),
+          push: false,
+        })
+      },
+      card: (body: unknown) =>
+        env.relay.putCard(
+          auth,
+          sealed(body, `ww-buddies/v1/card|${to.inboxId}|${slotId}`)
+        ),
+    }
+  }
+
+  it('shares earned badges on the Buddy Card, republishing only when they change', async () => {
+    const { fake, user } = setup()
+    const levi = user('Levi')
+    const anna = user('Anna')
+    levi.profile.badges = [{ c: 'monthsShared', l: 2 }, { c: 'firstBuddy' }]
+    await pair(levi, anna)
+    expect(buddyOf(anna, levi).badges).toEqual([
+      { c: 'monthsShared', l: 2 },
+      { c: 'firstBuddy' },
+    ])
+
+    const cardSeq = () =>
+      [...fake.inboxes.get(anna.inboxId)!.cards.values()][0].seq
+    const before = cardSeq()
+    await levi.engine.publishCards()
+    expect(cardSeq()).toBe(before)
+    levi.profile.badges = [{ c: 'monthsShared', l: 3 }, { c: 'firstBuddy' }]
+    await levi.engine.publishCards()
+    expect(cardSeq()).toBeGreaterThan(before)
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual(levi.profile.badges)
+
+    // Badges travel only in cards: never in the roster.
+    await anna.engine.setNickname(levi.inboxId, 'L')
+    const me = deriveIdentity(anna.seed)
+    const roster = JSON.parse(
+      new TextDecoder().decode(
+        open(
+          me.rosterKey,
+          fake.inboxes.get(anna.inboxId)!.roster!.blob,
+          `ww-buddies/v1/roster|${me.inboxId}`
+        )
+      )
+    )
+    expect(roster.buddies[0].nickname).toBe('L')
+    expect(roster.buddies[0]).not.toHaveProperty('badges')
+  })
+
+  it("reads an older app's card, and drops badges this build can't use without losing the Plans", async () => {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    await pair(levi, anna)
+    // An app from before badges sends none.
+    expect(buddyOf(anna, levi).badges).toEqual([])
+
+    const raw = rawWriter(env, levi, anna)
+    const card = {
+      v: 1,
+      name: 'Levi',
+      updatedAt: 1,
+      level: 'daysTimes',
+      days: [{ d: '2026-09-28', p: [{ m: 60 }] }],
+    }
+    await raw.card({
+      ...card,
+      badges: [
+        { c: 'yearRound', l: 2 },
+        { c: 'futureBadge', l: 1 },
+        { c: 'monthsShared', l: 9 },
+        { c: 'firstBuddy', l: 1 },
+        'junk',
+        { c: 'yearRound', l: 2 },
+      ],
+    })
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([{ c: 'yearRound', l: 2 }])
+
+    // More badges than any card could hold: they go, the Plans stay.
+    await raw.card({
+      ...card,
+      days: [...card.days, { d: '2026-09-29', p: [{ m: 30 }] }],
+      badges: Array.from({ length: 41 }, () => ({ c: 'yearRound', l: 1 })),
+    })
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([])
+    expect(anna.store.getState().cards[levi.inboxId].days).toHaveLength(2)
+  })
+
+  it('withholds badges once switched off, in Buddies or for badges as a whole', async () => {
+    const { user } = setup()
+    const levi = user('Levi')
+    const anna = user('Anna')
+    levi.profile.badges = [{ c: 'monthsShared', l: 2 }]
+    await pair(levi, anna)
+    expect(buddyOf(anna, levi).badges).toHaveLength(1)
+
+    await levi.engine.setSharing({ badges: false })
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([])
+
+    await levi.engine.setSharing({ badges: true })
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toHaveLength(1)
+
+    levi.setShowBadges(false)
+    await levi.engine.publishCards()
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([])
+  })
+
+  it("keeps the badges choice on every device, even through an older app's roster", async () => {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    await pair(levi, anna)
+    const levisIpad = env.user('Levi', undefined, levi.seed)
+    await levisIpad.engine.sync()
+
+    env.advance(1000)
+    await levi.engine.setSharing({ badges: false })
+    await levisIpad.engine.sync()
+    expect(levisIpad.store.getState().sharing.badges).toBe(false)
+
+    // An older app writes a later photo choice, with no badges field at all.
+    env.advance(1000)
+    const roster = {
+      v: 1,
+      buddies: [],
+      outgoingInvites: [],
+      incomingClaims: [],
+      closedInviteIds: {},
+      sharing: { photo: false, tenure: true, updatedAt: START + 5000 },
+    }
+    expect(rosterSchema.safeParse(roster).success).toBe(true)
+    const me = deriveIdentity(levi.seed)
+    await env.relay.putRoster(
+      { inboxId: me.inboxId, ownerSeed: me.ownerSeed, ownerPub: me.ownerPub },
+      seal(
+        me.rosterKey,
+        utf8(JSON.stringify(roster)),
+        `ww-buddies/v1/roster|${me.inboxId}`,
+        random(12)
+      )
+    )
+    await levisIpad.engine.sync()
+    expect(levisIpad.store.getState().sharing).toMatchObject({
+      photo: false,
+      badges: false,
+    })
+    expect(levisIpad.store.getState().buddies).toHaveLength(1)
+    // The iPad wrote the choice back, so the phone keeps it too.
+    await levi.engine.sync()
+    expect(levi.store.getState().sharing).toMatchObject({
+      photo: false,
+      badges: false,
+    })
+  })
+
+  it('announces new levels in one event per buddy, under an id every device shares', async () => {
+    const { levi, anna, user, badgeEventsTo, badgeAlerts } = await duo()
+    await levi.engine.announceBadges(['monthsShared.2', 'returnVisits.1'])
+    const events = badgeEventsTo(anna.inboxId)
+    expect(events).toHaveLength(1)
+    expect(events[0].eventId).toBe(
+      toB64u(
+        sha256(
+          utf8(
+            `ww-buddies/v1/badge|${levi.inboxId}|${anna.inboxId}|monthsShared.2,returnVisits.1`
+          )
+        ).slice(0, 16)
+      )
+    )
+    expect(badgeAlerts()).toHaveLength(1)
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+
+    // Levi's iPad earned the same badges: the same event, and no second alert.
+    const levisIpad = user('Levi', undefined, levi.seed)
+    await levisIpad.engine.sync()
+    await levisIpad.engine.announceBadges(['returnVisits.1', 'monthsShared.2'])
+    expect(badgeEventsTo(anna.inboxId)).toHaveLength(1)
+    expect(badgeAlerts()).toHaveLength(1)
+  })
+
+  it('never announces One-time Badges', async () => {
+    const { levi, anna, badgeEventsTo } = await duo()
+    await levi.engine.announceBadges(['firstBibleStudy', 'firstBuddy'])
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+
+    await levi.engine.announceBadges(['firstBuddy', 'together.1'])
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toMatchObject([
+      { badges: [{ c: 'together', l: 1 }] },
+    ])
+  })
+
+  it('alerts a buddy at most once in 20 hours; later news arrives quietly', async () => {
+    const { levi, anna, advance, badgeEventsTo, badgeAlerts } = await duo()
+    await levi.engine.announceBadges(['monthsShared.1'])
+    advance(HOUR)
+    await levi.engine.announceBadges(['prepared.1'])
+    expect(badgeEventsTo(anna.inboxId)).toHaveLength(2)
+    expect(badgeAlerts()).toHaveLength(1)
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toHaveLength(2)
+
+    advance(19 * HOUR)
+    await levi.engine.announceBadges(['conversations.1'])
+    expect(badgeAlerts()).toHaveLength(2)
+  })
+
+  it('tells only buddies paired before the news, retrying until it lands', async () => {
+    const env = await duo()
+    const { levi, anna, offlineOps, badgeEventsTo, badgeAlerts } = env
+    offlineOps.add('event/put')
+    await levi.engine.announceBadges(['monthsShared.2'])
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().badgeAnnouncements).toMatchObject([
+      { recipients: [anna.inboxId], sent: {} },
+    ])
+
+    offlineOps.delete('event/put')
+    const mom = env.user('Mom')
+    await pair(levi, mom)
+    await levi.engine.sync()
+    expect(badgeEventsTo(anna.inboxId)).toHaveLength(1)
+    expect(badgeEventsTo(mom.inboxId)).toEqual([])
+    // The send that failed carried the alert, so its retry still does.
+    expect(badgeAlerts()).toHaveLength(1)
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+  })
+
+  it('drops news it could not deliver within a week', async () => {
+    const { levi, anna, offlineOps, advance, badgeEventsTo } = await duo()
+    offlineOps.add('event/put')
+    await levi.engine.announceBadges(['monthsShared.2'])
+    advance(8 * 24 * HOUR)
+    offlineOps.delete('event/put')
+    await levi.engine.sync()
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+  })
+
+  it('stays quiet before Buddies starts, with badges off or not shared, and drops unsent news then', async () => {
+    const solo = setup()
+    const levi1 = solo.user('Levi')
+    await levi1.engine.announceBadges(['monthsShared.1'])
+    expect(levi1.store.getState().badgeAnnouncements).toEqual([])
+    expect(solo.fake.inboxes.size).toBe(0)
+
+    const { levi, anna, offlineOps, badgeEventsTo } = await duo()
+    await levi.engine.setSharing({ badges: false })
+    await levi.engine.announceBadges(['monthsShared.1'])
+    levi.setShowBadges(false)
+    await levi.engine.setSharing({ badges: true })
+    await levi.engine.announceBadges(['prepared.1'])
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+
+    levi.setShowBadges(true)
+    offlineOps.add('event/put')
+    await levi.engine.announceBadges(['conversations.1'])
+    expect(levi.store.getState().badgeAnnouncements).toHaveLength(1)
+    await levi.engine.setSharing({ badges: false })
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+  })
+
+  it("lists a buddy's new badges in the tray and on their page until the next card", async () => {
+    const { levi, anna } = await duo()
+    levi.profile.badges = [{ c: 'monthsShared', l: 1 }]
+    await levi.engine.publishCards()
+    await anna.engine.sync()
+    await levi.engine.announceBadges(['returnVisits.1', 'monthsShared.2'])
+    await anna.engine.sync()
+    const news = [
+      { c: 'monthsShared', l: 2 },
+      { c: 'returnVisits', l: 1 },
+    ]
+    expect(badgeEntries(anna)).toMatchObject([
+      { from: levi.inboxId, name: 'Levi', read: false, badges: news },
+    ])
+    expect(badgeEntries(anna)[0].seq).toBeGreaterThan(0)
+    expect(buddyOf(anna, levi).badges).toEqual(news)
+
+    // The card is the source of truth.
+    levi.profile.badges = [{ c: 'returnVisits', l: 1 }]
+    await levi.engine.publishCards()
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([{ c: 'returnVisits', l: 1 }])
+  })
+
+  it("drops badges this build doesn't know, and news with none it does", async () => {
+    const env = await duo()
+    const { levi, anna } = env
+    const raw = rawWriter(env, levi, anna)
+    await raw.event(BADGE_PUSH_KIND, {
+      v: 1,
+      badges: [
+        { c: 'futureBadge', l: 1 },
+        { c: 'yearRound', l: 2 },
+      ],
+    })
+    await raw.event(BADGE_PUSH_KIND, { v: 1, badges: [{ c: 'futureBadge' }] })
+    await raw.event(BADGE_PUSH_KIND, { v: 2, badges: [] })
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toMatchObject([
+      { badges: [{ c: 'yearRound', l: 2 }] },
+    ])
+  })
+
+  it('lists news already read with badge alerts off, and not at all with badges off', async () => {
+    const { levi, anna, advance } = await duo()
+    anna.store.setState({ badgeNotifications: false })
+    expect(anna.engine.badgePushKinds()).toEqual([])
+    await levi.engine.announceBadges(['monthsShared.1'])
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toMatchObject([{ read: true }])
+
+    anna.store.setState({ badgeNotifications: true })
+    anna.setShowBadges(false)
+    expect(anna.engine.badgePushKinds()).toEqual([])
+    advance(HOUR)
+    await levi.engine.announceBadges(['prepared.1'])
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toHaveLength(1)
+    expect(buddyOf(anna, levi).badges).toContainEqual({ c: 'prepared', l: 1 })
+  })
+
+  it('lists badge news once, even when a sync reads the inbox from the start', async () => {
+    const { levi, anna } = await duo()
+    await levi.engine.announceBadges(['monthsShared.1'])
+    await anna.engine.sync()
+    anna.engine.dismissNotification(badgeEntries(anna)[0].id)
+    expect(badgeEntries(anna)).toEqual([])
+    anna.store.setState({ syncSeq: 0 })
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toEqual([])
+  })
+
+  it('merges the badges choice on its own stamp, keeping it through an older app and withholding on a tie', () => {
+    const local: BuddySharing = {
+      photo: true,
+      tenure: true,
+      streak: true,
+      updatedAt: 10,
+      badges: false,
+      badgesUpdatedAt: 5,
+    }
+    // An older app's later photo choice, with no badges fields.
+    expect(
+      mergeSharing(local, {
+        photo: false,
+        tenure: true,
+        streak: true,
+        updatedAt: 20,
+      })
+    ).toEqual({ ...local, photo: false, updatedAt: 20 })
+    // The streak goes with photo and Tenure, to the later `updatedAt`.
+    expect(
+      mergeSharing(local, {
+        photo: true,
+        tenure: true,
+        streak: false,
+        updatedAt: 20,
+      })
+    ).toMatchObject({ streak: false, badges: false, badgesUpdatedAt: 5 })
+    expect(
+      mergeSharing(local, {
+        photo: true,
+        tenure: true,
+        streak: false,
+        updatedAt: 5,
+      })
+    ).toMatchObject({ streak: true, updatedAt: 10 })
+    // Badges follow their own stamp, whatever `updatedAt` says.
+    const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
+    expect(
+      mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 4 })
+    ).toMatchObject({ badges: false, badgesUpdatedAt: 5, updatedAt: 30 })
+    expect(
+      mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 6 })
+    ).toMatchObject({ badges: true, badgesUpdatedAt: 6 })
+    // A tie settles on withholding, from either side.
+    expect(
+      mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 5 })
+    ).toMatchObject({ badges: false, badgesUpdatedAt: 5 })
+    expect(
+      mergeSharing(
+        { ...local, badges: true },
+        { ...remote, badges: false, badgesUpdatedAt: 5 }
+      )
+    ).toMatchObject({ badges: false, badgesUpdatedAt: 5 })
+  })
+
+  it("doesn't let an older app's roster bring back badges the User turned off", async () => {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    levi.profile.badges = [{ c: 'monthsShared', l: 2 }]
+    await pair(levi, anna)
+    const levisMac = env.user('Levi', undefined, levi.seed)
+    levisMac.profile.badges = levi.profile.badges
+    await levisMac.engine.sync()
+
+    // The phone turns badges off; the Mac doesn't sync yet.
+    env.advance(1000)
+    await levi.engine.setSharing({ badges: false })
+    // An older app on the iPad then saves a later photo choice.
+    env.advance(1000)
+    const me = deriveIdentity(levi.seed)
+    const owner = {
+      inboxId: me.inboxId,
+      ownerSeed: me.ownerSeed,
+      ownerPub: me.ownerPub,
+    }
+    await env.relay.putRoster(
+      owner,
+      seal(
+        me.rosterKey,
+        utf8(
+          JSON.stringify({
+            v: 1,
+            buddies: [],
+            outgoingInvites: [],
+            incomingClaims: [],
+            closedInviteIds: {},
+            sharing: { photo: false, tenure: true, updatedAt: START + 2000 },
+          })
+        ),
+        `ww-buddies/v1/roster|${me.inboxId}`,
+        random(12)
+      )
+    )
+
+    await levisMac.engine.sync()
+    expect(levisMac.store.getState().sharing).toMatchObject({ photo: false })
+    await levi.engine.sync()
+    expect(levi.store.getState().sharing).toMatchObject({
+      photo: false,
+      badges: false,
+    })
+    await levisMac.engine.sync()
+    expect(levisMac.store.getState().sharing).toMatchObject({
+      photo: false,
+      badges: false,
+    })
+    await anna.engine.sync()
+    expect(buddyOf(anna, levi).badges).toEqual([])
+
+    // Settled: nobody rewrites the roster again.
+    const rosterSeq = () => env.fake.inboxes.get(levi.inboxId)!.roster!.seq
+    const settled = rosterSeq()
+    await levi.engine.sync()
+    await levisMac.engine.sync()
+    await levi.engine.sync()
+    expect(rosterSeq()).toBe(settled)
+  })
+
+  it('settles two devices that chose differently at the same moment, without rewriting forever', async () => {
+    const env = setup()
+    const levi = env.user('Levi')
+    const anna = env.user('Anna')
+    await pair(levi, anna)
+    const levisMac = env.user('Levi', undefined, levi.seed)
+    await levisMac.engine.sync()
+
+    env.advance(1000)
+    await levi.engine.setSharing({ badges: false })
+    await levisMac.engine.setSharing({ badges: true })
+    for (const device of [levi, levisMac, levi, levisMac])
+      await device.engine.sync()
+    expect(levi.store.getState().sharing.badges).toBe(false)
+    expect(levisMac.store.getState().sharing.badges).toBe(false)
+
+    const rosterSeq = () => env.fake.inboxes.get(levi.inboxId)!.roster!.seq
+    const settled = rosterSeq()
+    for (const device of [levi, levisMac, levi]) await device.engine.sync()
+    expect(rosterSeq()).toBe(settled)
+  })
+
+  it('makes and sends no badge news while Buddies is hidden or stopped', async () => {
+    const { levi, anna, offlineOps, badgeEventsTo } = await duo()
+    levi.setEnabled(false)
+    await levi.engine.announceBadges(['monthsShared.1'])
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+
+    // News made before is kept, but waits while Buddies is off.
+    levi.setEnabled(true)
+    offlineOps.add('event/put')
+    await levi.engine.announceBadges(['prepared.1'])
+    offlineOps.delete('event/put')
+    levi.setEnabled(false)
+    await levi.engine.sync()
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().badgeAnnouncements).toHaveLength(1)
+
+    levi.setEnabled(true)
+    await levi.engine.sync()
+    expect(badgeEventsTo(anna.inboxId)).toHaveLength(1)
+  })
+
+  it('waits out the relay’s alert spacing after another alert, instead of losing the badge alert', async () => {
+    const { levi, anna, advance, badgeEventsTo, badgeAlerts } = await duo()
+    // Levi invites Anna to a Plan: an alert the relay counts for spacing.
+    levi.setShares([
+      {
+        key: planShareKey('sat'),
+        type: 'plan',
+        details: { d: '2026-09-26', s: 600, m: 120 },
+        recipients: [anna.inboxId],
+        expiresAt: START + 5 * 24 * HOUR,
+      },
+    ])
+    await levi.engine.publishShares()
+    advance(2000)
+    await levi.engine.announceBadges(['together.1'])
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.store.getState().lastBadgeAlertAt).toEqual({})
+    expect(levi.store.getState().badgeAnnouncements).toHaveLength(1)
+    expect(levi.timers).toHaveLength(1)
+    expect(levi.timers[0].ms).toBe(SPACING - 2000)
+
+    // A sync inside the spacing still waits, and schedules nothing new.
+    await levi.engine.sync()
+    expect(badgeEventsTo(anna.inboxId)).toEqual([])
+    expect(levi.timers).toHaveLength(1)
+
+    advance(SPACING)
+    levi.timers[0].run()
+    await vi.waitFor(() => expect(badgeEventsTo(anna.inboxId)).toHaveLength(1))
+    expect(badgeAlerts()).toHaveLength(1)
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+  })
+
+  it('lists badge news when it happened, and old news or a new device’s backlog already read', async () => {
+    const { levi, anna, user, advance, fake } = await duo()
+    await levi.engine.announceBadges(['monthsShared.1'])
+    const [event] = fake.inboxes
+      .get(anna.inboxId)!
+      .events.filter((e) => e.kind === BADGE_PUSH_KIND)
+    advance(HOUR)
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toMatchObject([
+      { at: event.createdAt, read: false },
+    ])
+
+    // Anna's new iPad reads the same backlog on its first sync.
+    const annasIpad = user('Anna', undefined, anna.seed)
+    await annasIpad.engine.sync()
+    expect(badgeEntries(annasIpad)).toMatchObject([
+      { at: event.createdAt, read: true },
+    ])
+
+    // News a day old or more arrives already read.
+    await levi.engine.announceBadges(['prepared.1'])
+    advance(25 * HOUR)
+    await anna.engine.sync()
+    expect(badgeEntries(anna)).toMatchObject([
+      { badges: [{ c: 'prepared', l: 1 }], read: true },
+      { badges: [{ c: 'monthsShared', l: 1 }], read: false },
+    ])
+  })
+
+  it('hides listed badge news while badges are off here', () => {
+    const entry = (id: string, kind: BuddyNotification['kind']) =>
+      ({ id, kind, at: 0, read: false, name: 'Levi' }) as BuddyNotification
+    const queue = [entry('a', 'badge'), entry('b', 'paired')]
+    expect(listedNotifications(queue, { showBadges: true })).toBe(queue)
+    expect(
+      listedNotifications(queue, { showBadges: false }).map((n) => n.id)
+    ).toEqual(['b'])
+  })
+
+  it('drops badge news not yet sent when asked, e.g. once badges are off', async () => {
+    const { levi, offlineOps } = await duo()
+    offlineOps.add('event/put')
+    await levi.engine.announceBadges(['monthsShared.1'])
+    expect(levi.store.getState().badgeAnnouncements).toHaveLength(1)
+    levi.engine.dropBadgeAnnouncements()
+    expect(levi.store.getState().badgeAnnouncements).toEqual([])
+  })
+
+  it('keeps the badge alerts choice through delete-all', async () => {
+    const { levi, anna } = await duo()
+    await levi.engine.announceBadges(['monthsShared.1'])
+    await anna.engine.sync()
+    anna.store.setState({ badgeNotifications: false })
+    await anna.engine.deleteEverything()
+    expect(anna.store.getState()).toMatchObject({
+      badgeNotifications: false,
+      badgeAnnouncements: [],
+      seenBadgeEvents: {},
+      notifications: [],
+    })
+  })
+
+  describe('reactions', () => {
+    const yearRound = { c: 'yearRound', l: 3 } as const
+    const reactionKey = (from: User, to: User, key: string, rev: number) =>
+      toB64u(
+        sha256(
+          utf8(
+            `ww-buddies/v1/badge-reaction|${from.inboxId}|${to.inboxId}|${key}|${rev}`
+          )
+        ).slice(0, 16)
+      )
+
+    /** Levi and Anna, with Anna's badges on the card Levi holds. */
+    async function reactionDuo() {
+      const env = await duo()
+      const { levi, anna } = env
+      anna.profile.badges = [yearRound, { c: 'firstBuddy' }]
+      levi.profile.badges = [{ c: 'monthsShared', l: 2 }]
+      await anna.engine.publishCards()
+      await levi.engine.publishCards()
+      await levi.engine.sync()
+      await anna.engine.sync()
+      expect(buddyOf(levi, anna).badges).toEqual(anna.profile.badges)
+      const reactionEventsTo = (user: User) =>
+        env.fake.inboxes
+          .get(user.inboxId)!
+          .events.filter((event) => event.kind === BADGE_REACTION_PUSH_KIND)
+      const reactionAlerts = () =>
+        env.fake.alerts.filter(
+          (alert) => alert.kind === BADGE_REACTION_PUSH_KIND
+        )
+      const reactionEntries = (user: User) =>
+        user.store
+          .getState()
+          .notifications.filter((n) => n.kind === 'badgeReaction')
+      /** What `from` wrote into `to`'s inbox, decrypted. */
+      const plaintext = (
+        from: User,
+        to: User,
+        event: { eventId: string; blob: string }
+      ) => {
+        const me = deriveIdentity(from.seed)
+        const buddy = buddyOf(from, to)
+        const { slotId, contentKey } = deriveDirection(
+          derivePairSecret(
+            me.dhPrivate,
+            fromB64u(buddy.dhPub),
+            fromB64u(buddy.inviteSecret),
+            me.inboxId,
+            buddy.inboxId
+          ),
+          to.inboxId
+        )
+        return JSON.parse(
+          fromUtf8(
+            open(
+              contentKey,
+              event.blob,
+              `ww-buddies/v1/event|${to.inboxId}|${slotId}|${event.eventId}`
+            )
+          )
+        )
+      }
+      return {
+        ...env,
+        reactionEventsTo,
+        reactionAlerts,
+        reactionEntries,
+        plaintext,
+      }
+    }
+
+    it('lists the six reactions in order, by id', () => {
+      expect(BADGE_REACTION_EMOJI).toEqual([
+        { id: 'party', emoji: '🎉' },
+        { id: 'confetti', emoji: '🎊' },
+        { id: 'fire', emoji: '🔥' },
+        { id: 'clap', emoji: '👏' },
+        { id: 'thumbsUp', emoji: '👍' },
+        { id: 'raisedHands', emoji: '🙌' },
+      ])
+      expect(BADGE_REACTION_IDS).toEqual(BADGE_REACTION_EMOJI.map((r) => r.id))
+      expect(BADGE_REACTION_IDS.every(isBadgeReactionEmoji)).toBe(true)
+      for (const other of ['toString', 'constructor', '🎉', 'heart', '', null])
+        expect(isBadgeReactionEmoji(other)).toBe(false)
+    })
+
+    it('reads only well-formed reactions, by id, dropping unknown fields', () => {
+      const valid = {
+        v: 1,
+        badge: { c: 'yearRound', l: 3 },
+        e: 'party',
+        rev: 5,
+      }
+      expect(badgeReactionSchema.parse({ ...valid, extra: true })).toEqual(
+        valid
+      )
+      expect(
+        badgeReactionSchema.parse({ ...valid, badge: { c: 'firstBuddy' } })
+      ).toMatchObject({ badge: { c: 'firstBuddy' } })
+      for (const bad of [
+        { ...valid, e: '🎉' },
+        { ...valid, e: 'heart' },
+        { ...valid, v: 2 },
+        { ...valid, rev: '5' },
+        { ...valid, badge: { c: 'yearRound', l: 9 } },
+        { ...valid, badge: { c: '' } },
+        { ...valid, badge: 'yearRound.3' },
+        { v: 1, e: 'party', rev: 5 },
+        'party',
+        null,
+      ])
+        expect(badgeReactionSchema.safeParse(bad).success).toBe(false)
+    })
+
+    it('sends a reaction as an id under a deterministic event id, and the owner keeps it', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEventsTo, reactionAlerts, plaintext } = env
+      const rev = START + SPACING
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      expect(
+        levi.store.getState().sentBadgeReactions[anna.inboxId]['yearRound.3']
+      ).toEqual({ e: 'party', rev, at: rev, sentRev: rev, alertRev: rev })
+      const [event] = reactionEventsTo(anna)
+      expect(event.eventId).toBe(reactionKey(levi, anna, 'yearRound.3', rev))
+      // Only ids travel: the badge, the reaction, and when it was chosen.
+      expect(plaintext(levi, anna, event)).toEqual({
+        v: 1,
+        badge: { c: 'yearRound', l: 3 },
+        e: 'party',
+        rev,
+      })
+      expect(reactionAlerts()).toHaveLength(1)
+
+      await anna.engine.sync()
+      expect(anna.store.getState().badgeReactions).toEqual({
+        'yearRound.3': {
+          [levi.inboxId]: { e: 'party', at: event.createdAt, rev },
+        },
+      })
+      expect(env.reactionEntries(anna)).toEqual([
+        {
+          id: event.eventId,
+          seq: event.seq,
+          kind: 'badgeReaction',
+          from: levi.inboxId,
+          name: 'Levi',
+          badges: [{ c: 'yearRound', l: 3 }],
+          reaction: 'party',
+          at: event.createdAt,
+          read: false,
+        },
+      ])
+      // Re-reading the inbox from the start lists nothing twice.
+      anna.store.setState({ syncSeq: 0 })
+      await anna.engine.sync()
+      expect(env.reactionEntries(anna)).toHaveLength(1)
+    })
+
+    it('retries a reaction whose send seemed to fail under the same id, alerting once', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEventsTo, reactionAlerts } = env
+      // The relay takes the event, but the answer never arrives.
+      let lost = true
+      env.setAfterOp(async (op) => {
+        if (op === 'event/put' && lost) {
+          lost = false
+          throw new TypeError('Network request failed')
+        }
+      })
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'clap')
+      const sent =
+        levi.store.getState().sentBadgeReactions[anna.inboxId]['yearRound.3']
+      expect(sent.sentRev).toBeUndefined()
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+      await levi.engine.sync()
+      expect(
+        levi.store.getState().sentBadgeReactions[anna.inboxId]['yearRound.3']
+          .sentRev
+      ).toBe(sent.rev)
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+      expect(reactionAlerts()).toHaveLength(1)
+    })
+
+    it('keeps trying offline for a week, then stops', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEventsTo, offlineOps, advance } = env
+      offlineOps.add('event/put')
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
+      // Shown as sent right away, so the reaction bar reflects it.
+      expect(
+        levi.store.getState().sentBadgeReactions[anna.inboxId]['yearRound.3']
+      ).toMatchObject({ e: 'fire' })
+      offlineOps.delete('event/put')
+      await levi.engine.sync()
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+
+      offlineOps.add('event/put')
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'clap')
+      advance(8 * 24 * HOUR)
+      offlineOps.delete('event/put')
+      await levi.engine.sync()
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+    })
+
+    it('replaces a reaction with a newer choice, keeping one entry, and ignores older ones', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, user, advance, reactionEventsTo, reactionEntries } =
+        env
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      // The same reaction again sends nothing.
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+      await anna.engine.sync()
+      expect(reactionEntries(anna)).toHaveLength(1)
+
+      // A change within the same millisecond still gets a newer rev.
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
+      const events = reactionEventsTo(anna)
+      expect(events).toHaveLength(2)
+      expect(events[1].eventId).not.toBe(events[0].eventId)
+      await anna.engine.sync()
+      const rev = START + SPACING + 1
+      expect(
+        anna.store.getState().badgeReactions['yearRound.3'][levi.inboxId]
+      ).toMatchObject({ e: 'fire', rev })
+      expect(reactionEntries(anna)).toMatchObject([
+        { reaction: 'fire', id: events[1].eventId },
+      ])
+
+      // An older choice arriving late changes nothing.
+      await rawWriter(env, levi, anna).event(BADGE_REACTION_PUSH_KIND, {
+        v: 1,
+        badge: yearRound,
+        e: 'clap',
+        rev: rev - 10,
+      })
+      await anna.engine.sync()
+      expect(
+        anna.store.getState().badgeReactions['yearRound.3'][levi.inboxId].e
+      ).toBe('fire')
+      expect(reactionEntries(anna)).toHaveLength(1)
+
+      // The same reaction from Levi's iPad (which doesn't know he sent it)
+      // isn't news: no new entry.
+      anna.engine.dismissNotification(reactionEntries(anna)[0].id)
+      const levisIpad = user('Levi', undefined, levi.seed)
+      await levisIpad.engine.sync()
+      expect(
+        levisIpad.store.getState().sentBadgeReactions[anna.inboxId]
+      ).toBeUndefined()
+      advance(HOUR)
+      await levisIpad.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
+      await anna.engine.sync()
+      expect(
+        anna.store.getState().badgeReactions['yearRound.3'][levi.inboxId]
+      ).toMatchObject({ e: 'fire', rev: START + SPACING + HOUR })
+      expect(reactionEntries(anna)).toEqual([])
+    })
+
+    it('ignores malformed reactions without failing the sync', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEntries } = env
+      const raw = rawWriter(env, levi, anna)
+      const valid = { v: 1, badge: yearRound, e: 'party', rev: 1 }
+      for (const body of [
+        { ...valid, e: '🎉' },
+        { ...valid, e: 'heart' },
+        { ...valid, v: 2 },
+        { ...valid, badge: { c: 'futureBadge', l: 1 } },
+        { ...valid, badge: { c: 'yearRound' } },
+        { v: 1, e: 'party', rev: 1 },
+        'junk',
+      ])
+        await raw.event(BADGE_REACTION_PUSH_KIND, body)
+      await raw.event(BADGE_REACTION_PUSH_KIND, { ...valid, rev: 2 })
+      await anna.engine.sync()
+      expect(anna.store.getState().badgeReactions).toEqual({
+        'yearRound.3': { [levi.inboxId]: expect.objectContaining({ rev: 2 }) },
+      })
+      expect(reactionEntries(anna)).toHaveLength(1)
+    })
+
+    it("ignores reactions from anyone but an active buddy, to badges the User doesn't have, and with badges off", async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEntries } = env
+      const raw = rawWriter(env, levi, anna)
+      const react = (badge: { c: string; l?: number }, rev: number) =>
+        raw.event(BADGE_REACTION_PUSH_KIND, { v: 1, badge, e: 'clap', rev })
+
+      // A badge Anna doesn't have, and a lower level of one she does.
+      await react({ c: 'monthsShared', l: 1 }, 1)
+      await react({ c: 'yearRound', l: 4 }, 2)
+      await react({ c: 'yearRound', l: 2 }, 3)
+      await anna.engine.sync()
+      expect(Object.keys(anna.store.getState().badgeReactions)).toEqual([
+        'yearRound.2',
+      ])
+
+      // Badges off here: nothing kept, nothing listed.
+      anna.setShowBadges(false)
+      await react(yearRound, 4)
+      await anna.engine.sync()
+      anna.setShowBadges(true)
+      expect(anna.store.getState().badgeReactions['yearRound.3']).toBe(
+        undefined
+      )
+
+      // Not (or no longer) an active buddy here.
+      anna.store.setState((state) => ({
+        buddies: state.buddies.map(
+          (b): Buddy => ({
+            ...b,
+            status: 'awaitingConfirm',
+            expiresAt: START + 7 * 24 * HOUR,
+          })
+        ),
+      }))
+      await react({ c: 'firstBuddy' }, 5)
+      await anna.engine.sync()
+      expect(anna.store.getState().badgeReactions.firstBuddy).toBe(undefined)
+      expect(reactionEntries(anna)).toHaveLength(1)
+    })
+
+    it('reacts only to an active buddy’s shared badge, while Buddies and badges are on', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEventsTo } = env
+      const sent = () => levi.store.getState().sentBadgeReactions
+      // Not on Anna's card, unknown, or not a reaction.
+      await levi.engine.reactToBadge(
+        anna.inboxId,
+        { c: 'monthsShared', l: 1 },
+        'party'
+      )
+      await levi.engine.reactToBadge(
+        anna.inboxId,
+        { c: 'futureBadge' } as unknown as typeof yearRound,
+        'party'
+      )
+      await levi.engine.reactToBadge(
+        anna.inboxId,
+        yearRound,
+        'heart' as BadgeReactionEmoji
+      )
+      await levi.engine.reactToBadge(
+        'AAAAAAAAAAAAAAAAAAAAAA',
+        yearRound,
+        'fire'
+      )
+      levi.setEnabled(false)
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      levi.setEnabled(true)
+      levi.setShowBadges(false)
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      levi.setShowBadges(true)
+      expect(sent()).toEqual({})
+      expect(reactionEventsTo(anna)).toEqual([])
+
+      // A lower level of a badge on the card is fine, and so is reacting
+      // without sharing one's own badges.
+      await levi.engine.setSharing({ badges: false })
+      await levi.engine.reactToBadge(
+        anna.inboxId,
+        { c: 'yearRound', l: 1 },
+        'thumbsUp'
+      )
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+
+      // Anna stops sharing badges: there's nothing left to react to.
+      await anna.engine.setSharing({ badges: false })
+      await levi.engine.sync()
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      expect(reactionEventsTo(anna)).toHaveLength(1)
+
+      // Before Buddies starts, nothing is made and no inbox appears.
+      const solo = setup()
+      const mom = solo.user('Mom')
+      await mom.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      expect(mom.store.getState().sentBadgeReactions).toEqual({})
+      expect(solo.fake.inboxes.size).toBe(0)
+    })
+
+    it('alerts a buddy to at most one reaction in 20 hours, apart from badge news', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, advance, reactionEventsTo, reactionAlerts } = env
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      // A quiet reaction doesn't wait for the relay's spacing.
+      advance(1000)
+      await levi.engine.reactToBadge(
+        anna.inboxId,
+        { c: 'firstBuddy' },
+        'raisedHands'
+      )
+      expect(reactionEventsTo(anna)).toHaveLength(2)
+      expect(reactionAlerts()).toHaveLength(1)
+      await anna.engine.sync()
+      expect(env.reactionEntries(anna)).toHaveLength(2)
+
+      // Badge news has its own allowance.
+      advance(SPACING)
+      await levi.engine.announceBadges(['monthsShared.3'])
+      expect(env.badgeAlerts()).toHaveLength(1)
+
+      advance(20 * HOUR)
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
+      expect(reactionAlerts()).toHaveLength(2)
+    })
+
+    it('waits out the relay’s alert spacing after badge news, instead of losing the alert', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, advance, reactionEventsTo, reactionAlerts } = env
+      await levi.engine.announceBadges(['monthsShared.3'])
+      expect(env.badgeAlerts()).toHaveLength(1)
+      advance(2000)
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'confetti')
+      expect(reactionEventsTo(anna)).toEqual([])
+      expect(levi.store.getState().lastBadgeReactionAlertAt).toEqual({})
+      expect(levi.timers).toHaveLength(1)
+      expect(levi.timers[0].ms).toBe(SPACING - 2000)
+
+      // A sync inside the spacing still waits, and schedules nothing new.
+      await levi.engine.sync()
+      expect(reactionEventsTo(anna)).toEqual([])
+      expect(levi.timers).toHaveLength(1)
+
+      advance(SPACING)
+      levi.timers[0].run()
+      await vi.waitFor(() => expect(reactionEventsTo(anna)).toHaveLength(1))
+      expect(reactionAlerts()).toHaveLength(1)
+    })
+
+    it('lists reactions already read with badge alerts off, when old, or as a new device’s backlog', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, user, advance, reactionEntries } = env
+      anna.store.setState({ badgeNotifications: false })
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      await anna.engine.sync()
+      expect(reactionEntries(anna)).toMatchObject([{ read: true }])
+
+      anna.store.setState({ badgeNotifications: true })
+      await levi.engine.reactToBadge(anna.inboxId, { c: 'firstBuddy' }, 'clap')
+      advance(25 * HOUR)
+      await anna.engine.sync()
+      expect(reactionEntries(anna)[0]).toMatchObject({
+        reaction: 'clap',
+        read: true,
+      })
+
+      const annasIpad = user('Anna', undefined, anna.seed)
+      annasIpad.profile.badges = anna.profile.badges
+      await annasIpad.engine.sync()
+      expect(reactionEntries(annasIpad)).toHaveLength(2)
+      expect(reactionEntries(annasIpad).every((n) => n.read)).toBe(true)
+    })
+
+    it('drops reactions both ways when a buddy is removed, and on delete-all', async () => {
+      const env = await reactionDuo()
+      const { levi, anna, reactionEntries } = env
+      await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
+      await anna.engine.reactToBadge(
+        levi.inboxId,
+        { c: 'monthsShared', l: 2 },
+        'clap'
+      )
+      await anna.engine.sync()
+      await levi.engine.sync()
+      expect(anna.store.getState().badgeReactions).not.toEqual({})
+      expect(levi.store.getState().badgeReactions).not.toEqual({})
+
+      await anna.engine.removeBuddy(levi.inboxId)
+      expect(anna.store.getState()).toMatchObject({
+        badgeReactions: {},
+        sentBadgeReactions: {},
+        lastBadgeReactionAlertAt: {},
+      })
+      expect(reactionEntries(anna)).toEqual([])
+
+      // Levi sees Anna's slot gone.
+      await levi.engine.sync()
+      expect(levi.store.getState()).toMatchObject({
+        badgeReactions: {},
+        sentBadgeReactions: {},
+        lastBadgeReactionAlertAt: {},
+      })
+      expect(reactionEntries(levi)).toEqual([])
+
+      // Delete-all forgets everything, including reactions to the User's
+      // badges from buddies still paired.
+      const again = await reactionDuo()
+      await again.levi.engine.reactToBadge(
+        again.anna.inboxId,
+        yearRound,
+        'party'
+      )
+      await again.anna.engine.sync()
+      await again.anna.engine.deleteEverything()
+      expect(again.anna.store.getState()).toMatchObject({
+        badgeReactions: {},
+        sentBadgeReactions: {},
+        notifications: [],
+      })
+    })
+
+    it('registers the reaction push kind with badge alerts, and lists reactions only with badges on', () => {
+      const { user } = setup()
+      const anna = user('Anna')
+      expect(anna.engine.badgePushKinds()).toEqual([
+        BADGE_PUSH_KIND,
+        BADGE_REACTION_PUSH_KIND,
+      ])
+      anna.store.setState({ badgeNotifications: false })
+      expect(anna.engine.badgePushKinds()).toEqual([])
+      anna.store.setState({ badgeNotifications: true })
+      anna.setShowBadges(false)
+      expect(anna.engine.badgePushKinds()).toEqual([])
+
+      const entry = (id: string, kind: BuddyNotification['kind']) =>
+        ({ id, kind, at: 0, read: false, name: 'Levi' }) as BuddyNotification
+      const queue = [entry('a', 'badgeReaction'), entry('b', 'paired')]
+      expect(
+        listedNotifications(queue, { showBadges: false }).map((n) => n.id)
+      ).toEqual(['b'])
+    })
+
+    it('lists reactions to a badge from active buddies, newest first', () => {
+      const buddy = (inboxId: string, status: Buddy['status']) =>
+        ({ inboxId, name: inboxId, status }) as Buddy
+      const buddies = [
+        buddy('anna', 'active'),
+        buddy('mom', 'active'),
+        buddy('joe', 'awaitingConfirm'),
+      ]
+      expect(
+        badgeReactionsFrom(
+          {
+            anna: { e: 'party', at: 1, rev: 1 },
+            mom: { e: 'fire', at: 2, rev: 2 },
+            joe: { e: 'clap', at: 3, rev: 3 },
+            gone: { e: 'clap', at: 4, rev: 4 },
+          },
+          buddies
+        )
+      ).toEqual([
+        { inboxId: 'mom', buddy: buddies[1], e: 'fire', at: 2 },
+        { inboxId: 'anna', buddy: buddies[0], e: 'party', at: 1 },
+      ])
+      expect(badgeReactionsFrom(undefined, buddies)).toEqual([])
+    })
   })
 })

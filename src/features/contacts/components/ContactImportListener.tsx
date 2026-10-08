@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
 import { useToastController } from '@tamagui/toast'
@@ -12,6 +12,8 @@ import useConversations from '@/stores/conversationStore'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
+import { usePreferences } from '@/stores/preferences'
 
 /**
  * Handles two kinds of incoming contact URLs:
@@ -32,8 +34,42 @@ export default function ContactImportListener() {
   // `getInitialURL` keeps returning the launch URL for the app's lifetime, so
   // handle it once — otherwise a re-run of the effect re-prompts the import.
   const handledInitialUrl = useRef(false)
+  // Links wait for onboarding and for whatever is taking over the screen (the
+  // update reveal) before asking to import (ADR 0021).
+  const [pendingUrls, setPendingUrls] = useState<string[]>([])
+  const onboarded = usePreferences((s) => s.onboardingComplete)
+  const takingOver = useIsTakingOver()
+  useTakeoverHold('contact-import', pendingUrls.length > 0)
 
   useEffect(() => {
+    const queue = (url: string | null) => {
+      if (url) setPendingUrls((urls) => [...urls, url])
+    }
+    if (!handledInitialUrl.current) {
+      handledInitialUrl.current = true
+      Linking.getInitialURL()
+        .then((initial) => {
+          logger.log(
+            '[ContactImportListener] getInitialURL resolved =',
+            initial
+          )
+          queue(initial)
+        })
+        .catch((error) => {
+          logger.error('[ContactImportListener] getInitialURL error:', error)
+        })
+    }
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      logger.log('[ContactImportListener] url event fired, url =', url)
+      queue(url)
+    })
+    return () => sub.remove()
+  }, [])
+
+  useEffect(() => {
+    if (pendingUrls.length === 0 || !onboarded || takingOver) return
+    const [url] = pendingUrls
+    setPendingUrls((urls) => urls.slice(1))
     const handle = async (url: string | null) => {
       if (!url) return
 
@@ -107,26 +143,8 @@ export default function ContactImportListener() {
       )
     }
 
-    if (!handledInitialUrl.current) {
-      handledInitialUrl.current = true
-      Linking.getInitialURL()
-        .then((initial) => {
-          logger.log(
-            '[ContactImportListener] getInitialURL resolved =',
-            initial
-          )
-          return handle(initial)
-        })
-        .catch((error) => {
-          logger.error('[ContactImportListener] getInitialURL error:', error)
-        })
-    }
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      logger.log('[ContactImportListener] url event fired, url =', url)
-      handle(url)
-    })
-    return () => sub.remove()
-  }, [toast])
+    void handle(url)
+  }, [pendingUrls, onboarded, takingOver, toast])
 
   return null
 }

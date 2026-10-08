@@ -1,4 +1,5 @@
 import { analytics } from '@/lib/analytics'
+import { noteUserAction } from '@/lib/userAction'
 import {
   Check as CheckIcon,
   CircleCheck as CircleCheckIcon,
@@ -134,6 +135,7 @@ const HomeChecklist = () => {
       minutes: 0,
       id: Crypto.randomUUID(),
     }
+    noteUserAction('checkbox')
     addServiceReport(report)
     analytics.capture('time_entry_created', {
       source: 'onboarding_checklist',

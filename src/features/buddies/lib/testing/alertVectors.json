@@ -1,0 +1,547 @@
+{
+  "context": {
+    "v": 1,
+    "inboxId": "Rvm0PZdQ5fgvKJ6Fhw6QFg",
+    "ownerSeed": "VUwIgZXLJQPAFOwVo18i_VP5fxq9p0pzsGqFLblmEzc",
+    "buddies": [
+      {
+        "slot": "D2MkFyqqS08nGwssVGHycg",
+        "key": "cUsgbqIBN12QMyACOgwbFDhx3ahxvk6uegebvF3AY6o",
+        "name": "Sam",
+        "joinMuted": true
+      },
+      {
+        "slot": "meduitHQ0wAiWmWSNF4N6Q",
+        "key": "FDj9LOvqRzCExeA1_rmBeX82-gsMlYFHGeMl61Yjs5E",
+        "name": "Zoë 王",
+        "shares": {
+          "EBESExQVFhcYGRobHB0eHw": {
+            "t": "plan",
+            "d": "2026-10-10",
+            "s": 600
+          }
+        }
+      }
+    ],
+    "invites": [
+      {
+        "id": "igpBzMmY-SH6rG-fCNnDlg",
+        "key": "0houAHrqGBkk6jY9sHNIhwa1-1rmBO8zOalWq1QCJUY"
+      }
+    ],
+    "myShares": {
+      "MDEyMzQ1Njc4OTo7PD0-Pw": {
+        "t": "plan",
+        "d": "2026-10-11",
+        "s": 540
+      },
+      "UFFSU1RVVldYWVpbXF1eXw": {
+        "t": "followUp",
+        "d": "2026-10-12"
+      }
+    },
+    "badgeAlerts": true,
+    "joinAlerts": true,
+    "catalog": {
+      "order": [
+        "yearRound",
+        "monthsShared",
+        "keepingInTouch",
+        "returnVisits",
+        "together",
+        "nextTime",
+        "conversations",
+        "reportSent",
+        "prepared",
+        "firstBibleStudy",
+        "firstBuddy"
+      ],
+      "oneTime": ["firstBibleStudy", "firstBuddy"]
+    }
+  },
+  "display": {
+    "language": "en",
+    "locale": "en-US",
+    "dayFirst": false,
+    "clock24": false
+  },
+  "cases": [
+    {
+      "name": "claim",
+      "event": {
+        "eventId": "igpBzMmY-SH6rG-fCNnDlg",
+        "kind": "invite.claimed",
+        "blob": "AfDx8vP09fb3-Pn6-xJx0-C2YrHyr8MfgFVxgqCioxVqnskOsVnvWuVOb3_MJx7IcXfjXeq_NzQTKP171GHME1LwBuXmyrfNTsvff_u9THbclBLwlpTknwvsE3ttHKPFSI4bEvUZHlCD_vLmYjpdp9Y7T89NSzHgbIo8Dw3YrPq9ncKF1nFYsYoivsUBNdysLFrAPadOgWl37GYjtFg5TElwB9WCWmsa"
+      },
+      "outcome": {
+        "alert": {
+          "type": "claimed",
+          "name": "Joe"
+        }
+      },
+      "text": {
+        "title": "Joe accepted your invite",
+        "body": "Open Buddies to confirm your new buddy."
+      }
+    },
+    {
+      "name": "claim for an invite this device has no key for",
+      "event": {
+        "eventId": "igpBzMmY-SH6rG-fCNnDlg",
+        "kind": "invite.claimed",
+        "blob": "AfDx8vP09fb3-Pn6-xJx0-C2YrHyr8MfgFVxgqCioxVqnskOsVnvWuVOb3_MJx7IcXfjXeq_NzQTKP171GHME1LwBuXmyrfNTsvff_u9THbclBLwlpTknwvsE3ttHKPFSI4bEvUZHlCD_vLmYjpdp9Y7T89NSzHgbIo8Dw3YrPq9ncKF1nFYsYoivsUBNdysLFrAPadOgWl37GYjtFg5TElwB9WCWmsa"
+      },
+      "context": {
+        "invites": []
+      },
+      "outcome": {
+        "failed": "unknownSender"
+      }
+    },
+    {
+      "name": "pairing confirmed",
+      "event": {
+        "eventId": "gYKDhIWGh4iJiouMjY6PkA",
+        "kind": "pair.confirmed",
+        "blob": "AQECAwQFBgcICQoLDOB6y4D5ZV32k8qmN0qDyf6L1-JlLYAvRu6aUqR5lFVALsdInnA"
+      },
+      "outcome": {
+        "alert": {
+          "type": "paired",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "You and Zoë 王 are buddies now",
+        "body": "You can now see each other's planned service days."
+      }
+    },
+    {
+      "name": "Plan invitation",
+      "event": {
+        "eventId": "goOEhYaHiImKi4yNjo-QkQ",
+        "kind": "plan.invite",
+        "blob": "AQIDBAUGBwgJCgsMDVanjueLsXf_2aiUl2Fb2dRt3n6uYT8Pttvh8ZxMqF6Fib9nzP4LOkDGtq3MMhLpoEVNQrIFFKk0xIL_2PPH5DbwT8-0FOacHeT9yvVTqOUwzwuwC26-tM3dGYS5y2ym1aipbqZnXJT2Drv5HtMbuWzY4ie6YUxIlzQXzUv_-Dzc_u3smpRm_RShUZbnlMq6FNaIA4g8cyXlZKj4SBnWuGZdsGuOSuqPL51JUTkzPyAvQytNaPfLLZe0u3k1aC18gIsGgyWuW280AVvQEJfh5pdJ_LHZ4dUqYry-ss1g9yUr9Pukhiu2QBsjyvdHBEDmt85m0D-UtL82o5EB"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "invite",
+          "shareType": "plan",
+          "name": "Zoë 王",
+          "when": {
+            "d": "2026-10-10",
+            "s": 600
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 invited you to a Plan",
+        "body": "Sat, Oct 10 · 10:00 AM"
+      }
+    },
+    {
+      "name": "Follow-up invitation",
+      "event": {
+        "eventId": "g4SFhoeIiYqLjI2Oj5CRkg",
+        "kind": "followup.invite",
+        "blob": "AQMEBQYHCAkKCwwNDqzZyOWB08z7iPAtuqmid8pp7Wyr6Zzs2FPrSon3xFgNnCsGgiHKSepMFg5GjKXzazNmYe_4gvHpE4wPqVKVWM8iW43O7q5aeqEf_uYQLfT6znaqhuA9yR1rxY4CPi3FOh8tMGyEHZQZbOm1irHh2DcpUwsgqE3Ot1AlN4coDMQ7nQVu9SiKaO_oHuX5OpwTuYnMpb7MG4jBnoNhhHHkftEdyrNyYQb_AIx6z_OyPaiTMhXfWol5_r2KptA7_5nusBQOK-QsOeqXC0ouTcw2u7p8GRJKr5LqW9BUxsWXz5C_ppVJLwCuH_QVNgJi__vqNWaT6u-k2I_uYNIQR1bYY-I"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "invite",
+          "shareType": "followUp",
+          "name": "Zoë 王",
+          "when": {
+            "d": "2026-10-09",
+            "s": 930
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 invited you to a Follow-up",
+        "body": "Fri, Oct 9 · 3:30 PM"
+      }
+    },
+    {
+      "name": "Plan changed, now without a start",
+      "event": {
+        "eventId": "hIWGh4iJiouMjY6PkJGSkw",
+        "kind": "plan.update",
+        "blob": "AQQFBgcICQoLDA0OD2zuQuvD03F2NISqyBr1W08IWm8ssovGqFUH3R_a1Tltg4Y219ZvNNNcId9PD-tgB0GPk-G8FU9TTSF-b2l3rP6R_pQ1Vi8hFhyjeb8z-k7-JKtkq14S3Zg4QdTktINZD4nLJ2lII0retjoyzSJF1bTSN8wa6WydmzP-tJSr4HVcKw6E77M4AdXm"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "update",
+          "shareType": "plan",
+          "name": "Zoë 王",
+          "when": {
+            "d": "2026-10-17"
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 changed a Plan",
+        "body": "Sat, Oct 17"
+      }
+    },
+    {
+      "name": "Plan canceled",
+      "event": {
+        "eventId": "hYaHiImKi4yNjo-QkZKTlA",
+        "kind": "plan.cancel",
+        "blob": "AQUGBwgJCgsMDQ4PEIBLCovP313e4vlh_58kut3YoBelYeuulAol6_hCI0X8WsS06AxjQXgPem4P12uB5IJapkHqq6uRupBTY9Y"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "cancel",
+          "shareType": "plan",
+          "name": "Zoë 王",
+          "when": {
+            "d": "2026-10-10",
+            "s": 600
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 canceled a Plan",
+        "body": "Sat, Oct 10 · 10:00 AM"
+      }
+    },
+    {
+      "name": "Follow-up canceled, not known here",
+      "event": {
+        "eventId": "hoeIiYqLjI2Oj5CRkpOUlQ",
+        "kind": "followup.cancel",
+        "blob": "AQYHCAkKCwwNDg8QEaXl_HOYsJbZ8lxGV1X9fH7Dl-fxvvTpCYTgvCJIRtsWjjOBlml4W1wg_zJVshPErx-XJm6xAul6dx34XPc"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "cancel",
+          "shareType": "followUp",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "Zoë 王 canceled a Follow-up"
+      }
+    },
+    {
+      "name": "going to your Plan",
+      "event": {
+        "eventId": "h4iJiouMjY6PkJGSk5SVlg",
+        "kind": "share.reply",
+        "blob": "AQcICQoLDA0ODxAREm5bEgdDKtrVv3mmA8QQ_hWecbIs0kJfWLKAV05QLBkOmigQQB8YGcGnnj8YZfaY_KBYEA_EEdcdXbXFKoKxhc1gAgbFf5vjDLxgzeOC_A"
+      },
+      "outcome": {
+        "alert": {
+          "type": "reply",
+          "reply": "going",
+          "name": "Zoë 王",
+          "shareType": "plan",
+          "when": {
+            "d": "2026-10-11",
+            "s": 540
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 is going",
+        "body": "Your Plan · Sun, Oct 11 · 9:00 AM"
+      }
+    },
+    {
+      "name": "can't make your Follow-up",
+      "event": {
+        "eventId": "iImKi4yNjo-QkZKTlJWWlw",
+        "kind": "share.reply",
+        "blob": "AQgJCgsMDQ4PEBESEycXWoBD2FzFEDdk_Y7eZacmrMFJPz8B7ilZrjSo9qyAhqrchVoy1zkg7_91ly9cV5FHuDI1sh-azHWcnmEpJVN-sJqXdKVdxH4qTB2OLh7rAg"
+      },
+      "outcome": {
+        "alert": {
+          "type": "reply",
+          "reply": "declined",
+          "name": "Zoë 王",
+          "shareType": "followUp",
+          "when": {
+            "d": "2026-10-12"
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 can't make it",
+        "body": "Your Follow-up · Mon, Oct 12"
+      }
+    },
+    {
+      "name": "reply to a share not known here",
+      "event": {
+        "eventId": "iYqLjI2Oj5CRkpOUlZaXmA",
+        "kind": "share.reply",
+        "blob": "AQkKCwwNDg8QERITFANs6h-PXhx0ZrNtR0TR42rjINUgMpYRNwSIRlUKfDj8-zmu9uWxrsdASwTtYcmkZ3GSOymFh-qCzahV9U64bZUWXdHg6zg7H8WqX131kg"
+      },
+      "outcome": {
+        "alert": {
+          "type": "reply",
+          "reply": "going",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "Zoë 王 is going"
+      }
+    },
+    {
+      "name": "asks to join",
+      "event": {
+        "eventId": "iouMjY6PkJGSk5SVlpeYmQ",
+        "kind": "join.request.f846c15d82d0",
+        "blob": "AQoLDA0ODxAREhMUFclTVu040irfwCoUZ2flb0RZGX5IbxJQEeWdN6IxGyjXr4N4foofeoGXX8_rthqUQRoq_an1HM4C4XbQAkUA0tS-mSmsr1Yed6FKjsdDSkGseqJnDwNyQQ5KScotbhZgVu8WptQAQCHNb73XGIXQyMe_PLI8FoHhRg"
+      },
+      "outcome": {
+        "alert": {
+          "type": "joinRequest",
+          "name": "Zoë 王",
+          "when": {
+            "d": "2026-10-11",
+            "s": 540
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 would like to join you",
+        "body": "Your Plan · Sun, Oct 11 · 9:00 AM"
+      }
+    },
+    {
+      "name": "asks to join, muted here",
+      "event": {
+        "eventId": "i4yNjo-QkZKTlJWWl5iZmg",
+        "kind": "join.request.956cc6e9a62c",
+        "blob": "AQsMDQ4PEBESExQVFgKVcrfNkb8U2crIN2W7WIn5oWmeDl1BtSgXaPU5u6I6soaBgxsjjFjeCKY0znOyO4VatRhL9DPrjmSbCwZVhIl3zhgty3LFGh3J7pjAk609XFdoH2LvlDw1qrPM_V3cGnHYLKeMhfm8"
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "asks to join, with Ask to Join alerts off",
+      "event": {
+        "eventId": "jI2Oj5CRkpOUlZaXmJmamw",
+        "kind": "join.request.f846c15d82d0",
+        "blob": "AQwNDg8QERITFBUWF1d2WCejaNVd6hoqozk6wWn9f7SSeJy-yxcmxKrlYYKazL-QMpbkn88FkgD5_CJwq0HmRLH2Fo8URyzI02eul9OZfLyC18xyK8Rvehfm1VlOpnXtUTUc0k70QzZcuGooxQaLABdFVMmX"
+      },
+      "context": {
+        "joinAlerts": false
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "withdraws a request",
+      "event": {
+        "eventId": "jY6PkJGSk5SVlpeYmZqbnA",
+        "kind": "join.cancel",
+        "blob": "AQ0ODxAREhMUFRYXGD44J9T7ewQIk4_5CgxmfOhcE0ujY5cjXqASYGzh15QaZLimge61imZcWXhTZQq8M9R8s27o_auvhGD3OuM"
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "one new badge",
+      "event": {
+        "eventId": "jo-QkZKTlJWWl5iZmpucnQ",
+        "kind": "badge.new",
+        "blob": "AQ4PEBESExQVFhcYGTLgg4umcmAS2DI_1wxWpDfr_SBmETvR1N_GniEK-bO4k9qrD7tx-tdIpIlStEXjMG8PpWwYbXuF8pQ"
+      },
+      "outcome": {
+        "alert": {
+          "type": "badge",
+          "name": "Zoë 王",
+          "badges": [
+            {
+              "c": "yearRound",
+              "l": 2
+            }
+          ]
+        }
+      },
+      "text": {
+        "title": "Zoë 王 earned a badge",
+        "body": "Year Round, Silver"
+      }
+    },
+    {
+      "name": "new badges, named in announcement order, skipping unknown ones",
+      "event": {
+        "eventId": "j5CRkpOUlZaXmJmam5ydng",
+        "kind": "badge.new",
+        "blob": "AQ8QERITFBUWFxgZGrOYjXhD7-VlTDUkXyX1-gBO1Gwo82JzFGXLuECb6SvPPDDm0HELXsUlnKIsjD53vJHcoSjbqzMWNisMlPX93nzzIKxAk1CNd0nBt-akFjOgygHIx31EjJge1xLpJXPUhdWY78GyPQsn15bgLiI3xTdKi6AaYyidqOQBIWSHqx_BcG9YJL7-VLUgwVC1Jibct5n_LNL-Zc0hViSgF4U2-ooSWA"
+      },
+      "outcome": {
+        "alert": {
+          "type": "badge",
+          "name": "Zoë 王",
+          "badges": [
+            {
+              "c": "returnVisits",
+              "l": 3
+            },
+            {
+              "c": "monthsShared",
+              "l": 1
+            },
+            {
+              "c": "firstBibleStudy"
+            }
+          ]
+        }
+      },
+      "text": {
+        "title": "Zoë 王 earned new badges",
+        "body": "Return Visits, Gold · Sharing the Good News, Bronze · First Bible Study"
+      }
+    },
+    {
+      "name": "only badges this build does not know",
+      "event": {
+        "eventId": "kJGSk5SVlpeYmZqbnJ2enw",
+        "kind": "badge.new",
+        "blob": "ARAREhMUFRYXGBkaG91w-oz2h21vXSA-yd9epeNPJGs3111DMKoDiFlu--1fYLv9LSiC9BxL4-OsFlBEC5gFo1K5n5pTBWDrsA"
+      },
+      "outcome": {
+        "alert": {
+          "type": "badge",
+          "name": "Zoë 王",
+          "badges": []
+        }
+      },
+      "text": {
+        "title": "Zoë 王 has a new badge"
+      }
+    },
+    {
+      "name": "new badge with Badge Alerts off",
+      "event": {
+        "eventId": "kZKTlJWWl5iZmpucnZ6foA",
+        "kind": "badge.new",
+        "blob": "ARESExQVFhcYGRobHNlLYOFROmMNrShmKaRA-87PJz3IE2fVQxdfL8jU5sPl__irgFj-9B4rbk4x7Rl8QGuk34N5lv192KY"
+      },
+      "context": {
+        "badgeAlerts": false
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "reaction",
+      "event": {
+        "eventId": "kpOUlZaXmJmam5ydnp-goQ",
+        "kind": "badge.reaction",
+        "blob": "ARITFBUWFxgZGhscHT_ksBkVKd4dyigFtnasJW8_drbWZU_eQaszoKjF45RDLHW3ZlZcraz0jB5j6jE824lqw6TzamDKSv7p-zu9dKX0DuR0sftZ-vz9kWg"
+      },
+      "outcome": {
+        "alert": {
+          "type": "badgeReaction",
+          "name": "Zoë 王",
+          "reaction": "raisedHands",
+          "badge": {
+            "c": "firstBuddy"
+          }
+        }
+      },
+      "text": {
+        "title": "Zoë 王 reacted 🙌 to your badge",
+        "body": "First Buddy"
+      }
+    },
+    {
+      "name": "Plan invitation fetched from the inbox, from Sam",
+      "event": {
+        "eventId": "k5SVlpeYmZqbnJ2en6Chog",
+        "kind": "plan.invite",
+        "blob": "ARMUFRYXGBkaGxwdHlGwMWjWljScRJBW7b84Oiw-UsSvpn_YW_m5FcuQsgMekQ8FP-vYYaJ8rmxtyAFXZA6EhYEWsEKWhM74IDmRE8Va2Vw2ebtQGjeiivVpOJs-G94tJVrO0gejbjobL2WutLbjF_qSBWF4cBsBbvcDvJSp_ZY8gMnA55466ik9d7DZOmrAxbDBxvyzNWnP68VS5pimCVk4PSRWX-o39OsQJ7PDgvQ_3C-cFrb9HPwzqeE3B2dVaW1v9kIRimtNc_G2xbQaE2uu_nJm3VUh6WjXqIXicgPmIiL99nPNXYAEt0oAxttA6uUQokr4Thix29sGTdBAc7WlC6BBpqxN",
+        "slotId": "D2MkFyqqS08nGwssVGHycg"
+      },
+      "outcome": {
+        "alert": {
+          "type": "share",
+          "action": "invite",
+          "shareType": "plan",
+          "name": "Sam",
+          "when": {
+            "d": "2026-10-10",
+            "s": 600
+          }
+        }
+      },
+      "text": {
+        "title": "Sam invited you to a Plan",
+        "body": "Sat, Oct 10 · 10:00 AM"
+      }
+    },
+    {
+      "name": "fetched with a slot that is not the sender",
+      "event": {
+        "eventId": "lJWWl5iZmpucnZ6foKGiow",
+        "kind": "plan.invite",
+        "blob": "ARQVFhcYGRobHB0eH6EYmse_es6UfyKxW4WzEHz7tqZY5CX7Q2p_L85wCdWQpBl8nqUtPOzbxb0oX_vf9b4z3wzzJknC2EFjXH7Li39yx_DjeRNepiJG1hPICljgDe7Cx3nlLXckdTjvtBhnNqk3n1Fay1mpTpZWYCIjyOGvs5bVubjFKIloE6ovZIExNnaOvHx8c2FLtE2_kbBI6xxJpI46pWduBBg_zZ4H2n4s5yOihEDf1UFTypVUFRRlK9JMVTh8OAwFSbxfwGRi0HkYvpKnTtGnc75xAFZw7iQkBHECRO4Ui1_7UuxdwAJON9q4oW9XKNA14wBs3zKRdQMlOMi1w5Krux1L",
+        "slotId": "D2MkFyqqS08nGwssVGHycg"
+      },
+      "outcome": {
+        "failed": "unknownSender"
+      }
+    },
+    {
+      "name": "tampered",
+      "event": {
+        "eventId": "np-goaKjpKWmp6ipqqusrQ",
+        "kind": "plan.invite",
+        "blob": "AQABAgMEBQYHCAkKC-Kkc0JGX4brDLReudYcYAkA3BKWUeOSUnpyVg1F80YJaptNJGkOG8Thov5xfAzQOfj_VWUigMSQ1UbCv9liI_SeWDvrstOvAfKzbd9ViGd8K4t4i7vbdSeNXhYgbqFeNTz6FBmt7A-TOchFvlHS8WMtV_d0SkqXK_SyPSDIZYq642wG5Ioo80nKFaRqG_44WiNVjzew_0xOs9_uGLK2E6SMucgkr7kmvMHO75yPquNdgEd4UFN3tBZ9Xl6XP2o0Rx0AbRqMuonmnRr1U_fhg8izgSfDrXt_8_HafEZePzZdzIz2QFDHafQQS41aixhkFWxDvoz1gyM0FPe4"
+      },
+      "outcome": {
+        "failed": "unknownSender"
+      }
+    },
+    {
+      "name": "a kind this build does not word",
+      "event": {
+        "eventId": "lZaXmJmam5ydnp-goaKjpA",
+        "kind": "plan.joined",
+        "blob": "ARUWFxgZGhscHR4fIJhznf2HiKcpxANkCn0ugoGWRNjr1xWF"
+      },
+      "outcome": {
+        "failed": "unknownKind"
+      }
+    },
+    {
+      "name": "malformed plaintext",
+      "event": {
+        "eventId": "lpeYmZqbnJ2en6ChoqOkpQ",
+        "kind": "plan.invite",
+        "blob": "ARYXGBkaGxwdHh8gIXHhcJuDJ4d4TXQ1Vo5UMJ80_M8beUa9CxrOzKzUGRS8Z1NDmElAsE7uZjhpam6I9WEtJpnO"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "not JSON",
+      "event": {
+        "eventId": "l5iZmpucnZ6foKGio6Slpg",
+        "kind": "badge.new",
+        "blob": "ARcYGRobHB0eHyAhIlFpmOfNnqiNvshP89LGe8_v7kh3kYpSnQ"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    }
+  ]
+}

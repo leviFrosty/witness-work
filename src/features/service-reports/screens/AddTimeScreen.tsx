@@ -1,4 +1,5 @@
 import { View, Alert, TextInput as RNTextInput } from 'react-native'
+import { noteUserAction } from '@/lib/userAction'
 import { useEffect, useRef, useState } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -246,6 +247,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       }
     }
 
+    noteUserAction('time')
     addServiceReport(serviceReport)
     analytics.capture('time_entry_created', {
       source: 'time_entry_form',
@@ -260,6 +262,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   const save = () => {
+    noteUserAction('time')
     updateServiceReport(serviceReport)
     analytics.capture('time_entry_updated', {
       source: 'time_entry_form',

@@ -1,0 +1,27 @@
+# seed: badges
+# assert: Object.keys(__WW_DEV__.stores.preferences.getState().earnedBadges).length === 14
+# assert: __WW_DEV__.state().route.name === 'Badges'
+appId: com.leviwilkerson.jwtimedev
+name: Open badges from the profile overlay, view one full screen, and close it
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Profile
+- assertVisible: 14 badges
+- tapOn: See all
+- assertVisible: Sharing the Good News
+- assertVisible: Year Round
+- tapOn: Year Round, Bronze
+# Only the full-screen view shows the status line; the Badges card under it
+# repeats the description.
+- extendedWaitUntil:
+    visible: 'Next: Silver · 1 of 3 service years'
+    timeout: 5000
+- assertVisible: Shared in at least 10 months of a service year
+- tapOn:
+    text: Close
+    traits: button
+- assertNotVisible: 'Next: Silver · 1 of 3 service years'
+- assertVisible: Sharing the Good News

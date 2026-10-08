@@ -4,7 +4,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

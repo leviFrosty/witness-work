@@ -24,6 +24,8 @@ import { PersistStorage } from '@/stores/mmkv'
 import { Address } from '@/types/contact'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
+import type { EarnedBadge } from '@/types/badges'
+import type { BadgesWelcomeState } from '@/lib/badges/welcome'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
@@ -917,6 +919,51 @@ export const PREFERENCE_DEFAULTS = {
    * `celebratedTiers`.
    */
   celebratedMilestones: {} as Record<string, number[]>,
+  /**
+   * Badges the User has earned, keyed by `BadgeKey` (`monthsShared.2`,
+   * `firstBibleStudy`). Earned badges are keepsakes: never revoked when the
+   * records behind them are deleted. Syncable and merged per badge
+   * (`SYNC_MAP_KEYS`), so every device and the Buddy Card agree.
+   */
+  earnedBadges: {} as Record<string, EarnedBadge>,
+  /**
+   * Months already counted toward ledger-backed Badge Collections
+   * (`returnVisits:2026-05`, `keepingInTouch:7` for the best months with one
+   * person), so progress survives records the app deletes by design. Holds no
+   * householder data. Syncable and unioned (`SYNC_SET_KEYS`).
+   */
+  badgeLedger: [] as string[],
+  /**
+   * Whether badges show anywhere — profile, Buddy Card, celebrations. Off hides
+   * and stops sharing them without forgetting what was earned. Syncable.
+   */
+  showBadges: true,
+  /**
+   * Epoch ms of this device's first badge evaluation. Until then, every badge
+   * the User's history already reaches is stored quietly instead of celebrated.
+   * Non-syncable: each device does its own quiet first pass.
+   */
+  badgesBackfilledAt: null as number | null,
+  /**
+   * Epoch ms the User last opened their badges; badges earned after it show as
+   * new. Non-syncable.
+   */
+  badgesSeenAt: 0,
+  /**
+   * The one-time "Your badges are here" screen for history found on this
+   * device's first badge evaluation: `pending` until it's closed, `done` once
+   * it's shown or wasn't needed (no history, badges hidden). Null until that
+   * first evaluation. Later history (imports, restores) gets the summary card
+   * instead. Non-syncable: each device welcomes once.
+   */
+  badgesWelcome: null as BadgesWelcomeState | null,
+  /**
+   * Badges the Home "New badge" card is done with: dismissed, opened from it,
+   * or already celebrated full screen. The card names new badges that arrived
+   * without a celebration (ADR 0021) and aren't in here. Non-syncable, like
+   * `badgesSeenAt`.
+   */
+  badgeCardDismissed: [] as string[],
   /**
    * User-customized milestone ladder for the Year tab's `YearMilestoneCard` /
    * `MilestoneAdjustSheet`. `null` means "use the publisher-type default
@@ -1813,6 +1860,68 @@ export const usePreferences = create(
                 [monthKey]: [...existing, tier],
               },
             }
+          }),
+        /**
+         * Stores newly earned badges and ledger months from one evaluation.
+         * Never removes or overwrites an earned badge.
+         */
+        recordBadges: ({
+          earned,
+          ledger,
+          backfilledAt,
+          welcome,
+        }: {
+          earned: { key: string; record: EarnedBadge }[]
+          ledger: string[]
+          backfilledAt?: number
+          /** Settles the welcome screen on this device's first evaluation. */
+          welcome?: BadgesWelcomeState
+        }) =>
+          set(({ earnedBadges, badgeLedger, badgesBackfilledAt }) => {
+            const additions = earned.filter(({ key }) => !earnedBadges[key])
+            const newLedger = ledger.filter(
+              (entry) => !badgeLedger.includes(entry)
+            )
+            const patch: Partial<typeof PREFERENCE_DEFAULTS> = {}
+            if (additions.length)
+              patch.earnedBadges = {
+                ...earnedBadges,
+                ...Object.fromEntries(
+                  additions.map(({ key, record }) => [key, record])
+                ),
+              }
+            if (newLedger.length)
+              patch.badgeLedger = [...badgeLedger, ...newLedger].sort()
+            if (backfilledAt && badgesBackfilledAt === null)
+              patch.badgesBackfilledAt = backfilledAt
+            if (welcome) patch.badgesWelcome = welcome
+            return patch
+          }),
+        markBadgesSeen: () => set({ badgesSeenAt: Date.now() }),
+        /** The Home "New badge" card won't name these again. */
+        dismissBadgeCard: (keys: string[]) =>
+          set(({ badgeCardDismissed }) => {
+            const additions = keys.filter(
+              (key) => !badgeCardDismissed.includes(key)
+            )
+            return additions.length
+              ? { badgeCardDismissed: [...badgeCardDismissed, ...additions] }
+              : {}
+          }),
+        setShowBadges: (showBadges: boolean) => set({ showBadges }),
+        /**
+         * Forgets every earned badge and counted month. The next evaluation
+         * finds what the User's records still reach, quietly, and welcomes them
+         * to it again.
+         */
+        resetBadges: () =>
+          set({
+            earnedBadges: {},
+            badgeLedger: [],
+            badgesBackfilledAt: null,
+            badgesSeenAt: 0,
+            badgesWelcome: null,
+            badgeCardDismissed: [],
           }),
         markMilestoneCelebrated: (
           serviceYearKey: string,

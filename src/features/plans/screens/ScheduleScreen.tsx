@@ -6,7 +6,10 @@ import {
   BottomTabScreenProps,
   useBottomTabBarHeight,
 } from '@react-navigation/bottom-tabs'
-import { useNavigation as useRootNavigation } from '@react-navigation/native'
+import {
+  useIsFocused,
+  useNavigation as useRootNavigation,
+} from '@react-navigation/native'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
@@ -17,6 +20,7 @@ import type { CalendarMonth } from '@/lib/monthlyGoals'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
+import { useTakeover } from '@/stores/takeover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { TimeEntry } from '@/types/timeEntry'
@@ -54,10 +58,20 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   useSyncBuddiesOnFocus()
   const openIntro = useScheduleIntro((s) => s.open)
-  // The first visit explains how to get the most from Schedule.
+  const isFocused = useIsFocused()
+  // The first visit explains how to get the most from Schedule. It may wait
+  // for its takeover turn (the update reveal first); leaving Schedule before
+  // then takes it back, so it never opens over another tab.
   useEffect(() => {
-    if (!usePreferences.getState().scheduleIntroSeen) openIntro('first_visit')
-  }, [openIntro])
+    if (!isFocused || usePreferences.getState().scheduleIntroSeen) return
+    openIntro('first_visit')
+    return () => {
+      const intro = useScheduleIntro.getState()
+      const showing =
+        useTakeover.getState().arbiter.active?.kind === 'schedule-intro'
+      if (intro.source === 'first_visit' && !showing) intro.close()
+    }
+  }, [isFocused, openIntro])
   const buddyMarkers = useBuddyCalendarMarkers()
   const index = useScheduleDayIndex()
   const editableGoal = useEditableMonthGoal()

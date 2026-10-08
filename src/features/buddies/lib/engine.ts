@@ -2,6 +2,7 @@ import moment from 'moment'
 import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
 import {
+  aad,
   BuddyIdentity,
   deriveDirection,
   deriveIdentity,
@@ -23,6 +24,12 @@ import {
   WriterAuth,
 } from '@/features/buddies/lib/relay'
 import {
+  BadgeReactionEmoji,
+  isBadgeReactionEmoji,
+} from '@/features/buddies/lib/badgeReactions'
+import {
+  badgeNewSchema,
+  badgeReactionSchema,
   BuddyAvatar,
   BuddyCardDay,
   BuddyPlatform,
@@ -42,11 +49,29 @@ import {
   ShareType,
 } from '@/features/buddies/lib/schemas'
 import {
+  type BuddiesPushMarker,
+  type BuddyAlertContext,
+  type BuddyAlertOutcome,
+  describeBuddyEvent,
+  type SealedEvent,
+  shareWhen,
+} from '@/features/buddies/lib/pushAlerts'
+import {
   BUDDY_CARD_HORIZON_DAYS,
   buildBuddyCardDays,
 } from '@/features/buddies/lib/card'
 import {
+  holdsBadge,
+  knownBadges,
+  sharedBadgeKey,
+  sortedForAnnouncement,
+  withNewBadges,
+} from '@/features/buddies/lib/sharedBadges'
+import {
   awaitsAnswer,
+  BADGE_ALERT_INTERVAL_MS,
+  BADGE_ANNOUNCEMENT_TTL_MS,
+  BadgeAnnouncement,
   Buddy,
   BuddyProfile,
   BuddySharing,
@@ -64,15 +89,23 @@ import {
   INVITE_TTL_MS,
   MAX_BUDDIES,
   mergeRemovedBuddies,
+  mergeSharing,
   withoutExpired,
   withPendingInvitesQueued,
   occupiedBuddySpots,
   OutgoingShareSpec,
   pairingEnded,
   PendingRemoval,
+  SentBadgeReaction,
 } from '@/features/buddies/lib/state'
+import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import type { RecurringPlan } from '@/lib/recurrence'
+import {
+  type BadgeKey,
+  ONE_TIME_BADGE_IDS,
+  type SharedBadge,
+} from '@/types/badges'
 import type { DayPlan } from '@/types/timeEntry'
 
 /**
@@ -116,6 +149,19 @@ export type BuddiesEngineDeps = {
    * accepted invite was confirmed (`invitee`). For analytics only.
    */
   onPaired?: (pairing: BuddyPairing) => void
+  /**
+   * The User's master Badges switch (on when absent). Off, no badges are shared
+   * or announced, buddies' badge news isn't listed, and reactions are neither
+   * sent nor kept.
+   */
+  showBadges?: () => boolean
+  /**
+   * Buddies is shown here and running (on when absent). Off (the `buddies` flag
+   * turned off, say), badge news is neither made nor sent.
+   */
+  isEnabled?: () => boolean
+  /** Runs `run` after `ms`, e.g. to send what had to wait; skipped when absent. */
+  later?: (run: () => void, ms: number) => void
 }
 
 export type BuddyPairing = {
@@ -166,6 +212,17 @@ export const BUDDY_PUSH_KINDS = [
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
 /**
+ * A buddy's new badges, and a buddy's reaction to one of this User's badges.
+ * Registered only on devices with badge alerts on, so they sit outside
+ * `BUDDY_PUSH_KINDS`.
+ */
+export const BADGE_PUSH_KIND = 'badge.new'
+export const BADGE_REACTION_PUSH_KIND = 'badge.reaction'
+export type BadgePushKind =
+  | typeof BADGE_PUSH_KIND
+  | typeof BADGE_REACTION_PUSH_KIND
+
+/**
  * `registered`: the relay got a new or changed registration. `refreshed`: an
  * unchanged one was re-sent because it was over a day old, which also repairs a
  * device the relay dropped. `unchanged`: nothing was sent.
@@ -178,16 +235,6 @@ export type PushRegistrationOutcome = 'registered' | 'refreshed' | 'unchanged'
  */
 export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000
 
-const aad = {
-  inviteCard: (inviteId: string) => `ww-buddies/v1/invite-card|${inviteId}`,
-  claim: (inviteId: string) => `ww-buddies/v1/invite-claim|${inviteId}`,
-  card: (inboxId: string, slotId: string) =>
-    `ww-buddies/v1/card|${inboxId}|${slotId}`,
-  event: (inboxId: string, slotId: string, eventId: string) =>
-    `ww-buddies/v1/event|${inboxId}|${slotId}|${eventId}`,
-  roster: (inboxId: string) => `ww-buddies/v1/roster|${inboxId}`,
-}
-
 /** The relay's event cap (8 KB sealed) minus the seal's version, nonce, and tag. */
 const MAX_EVENT_PLAINTEXT_BYTES = 8 * 1024 - 29
 
@@ -199,6 +246,17 @@ const MAX_EVENT_PLAINTEXT_BYTES = 8 * 1024 - 29
 const SHARE_EVENTS_PER_HOUR = 30
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
+
+/** Badge news waiting to go out; older news makes way. */
+const MAX_BADGE_ANNOUNCEMENTS = 20
+/**
+ * The relay drops an alert that comes within 60 s of the sender's previous one
+ * to that inbox, so a badge alert waits this long (with slack for latency)
+ * after any alerting send to that buddy instead of being lost.
+ */
+const RELAY_ALERT_SPACING_MS = 65 * 1000
+/** The relay keeps events 30 days; handled badge events are kept a bit longer. */
+const SEEN_BADGE_EVENT_TTL_MS = 31 * DAY_MS
 
 const SHARE_KIND_PREFIX: Record<ShareType, string> = {
   plan: 'plan',
@@ -255,7 +313,8 @@ function rosterSignature(
     | 'sharing'
   >
 ) {
-  const { photo, tenure, streak, updatedAt } = roster.sharing
+  const { photo, tenure, streak, updatedAt, badges, badgesUpdatedAt } =
+    roster.sharing
   return JSON.stringify([
     roster.buddies.map((b) => `${b.inboxId}:${b.status}`).sort(),
     roster.outgoingInvites.map((i) => i.inviteId).sort(),
@@ -265,6 +324,10 @@ function rosterSignature(
       .map(([inboxId, removedAt]) => `${inboxId}:${removedAt}`)
       .sort(),
     [photo, tenure, streak, updatedAt],
+    // A roster without badges (an older app's) reads as the default, so it
+    // differs only from a choice this device actually made, which is then
+    // written back once for devices restoring from the roster.
+    [badges ?? true, badgesUpdatedAt ?? 0],
   ])
 }
 
@@ -276,9 +339,15 @@ function compactAvatar(avatar: BuddyAvatar | undefined) {
   return avatar?.t === 'emoji' ? avatar : undefined
 }
 
-/** Profile fields for payloads without room for a photo. */
-function compactProfile<T extends { avatar?: BuddyAvatar }>(value: T): T {
-  return { ...value, avatar: compactAvatar(value.avatar) }
+/**
+ * Profile fields for payloads without room for a photo. Badges travel only in
+ * Buddy Cards (and `badge.new`), never in invites, claims, or the roster.
+ */
+function compactProfile<
+  T extends { avatar?: BuddyAvatar; badges?: SharedBadge[] },
+>(value: T): T {
+  const { badges, ...rest } = value
+  return { ...rest, avatar: compactAvatar(value.avatar) } as T
 }
 
 function omitKey<T>(record: Record<string, T>, key: string) {
@@ -320,6 +389,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const slotsAddedDuringSync = new Set<string>()
   /** Join request deliveries run one after another. */
   let joinDelivery: Promise<void> = Promise.resolve()
+  /** So do deliveries of badge news. */
+  let badgeDelivery: Promise<void> = Promise.resolve()
+  /** When badge news held back by the relay's alert spacing is retried. */
+  let badgeRetryAt: number | null = null
+  /**
+   * When this device last sent each buddy an alerting event (any kind), for the
+   * relay's alert spacing. Kept in memory: best effort.
+   */
+  const lastAlertSentAt = new Map<string, number>()
 
   const json = (value: unknown) => utf8(JSON.stringify(value))
   const nonce = () => deps.randomBytes(12)
@@ -379,7 +457,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       name: current.name.trim(),
       avatar: sharing.photo ? current.avatar : undefined,
       tenure: sharing.tenure ? current.tenure : undefined,
+      badges: sharesBadges() ? (current.badges ?? []) : [],
     }
+  }
+
+  /** Badges are on, and shared with buddies. */
+  function sharesBadges(): boolean {
+    return (
+      (deps.showBadges?.() ?? true) && store.getState().sharing.badges !== false
+    )
   }
 
   function displayName(): string {
@@ -503,14 +589,38 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       mutedJoinRequests: state.mutedJoinRequests.filter((id) => id !== inboxId),
       notifications: state.notifications.filter((n) => n.from !== inboxId),
+      // Pairing again later never brings old badge news.
+      badgeAnnouncements: state.badgeAnnouncements.map((announcement) => ({
+        ...announcement,
+        recipients: announcement.recipients.filter((id) => id !== inboxId),
+      })),
+      lastBadgeAlertAt: omitKey(state.lastBadgeAlertAt, inboxId),
+      // Reactions both ways go with them.
+      sentBadgeReactions: omitKey(state.sentBadgeReactions, inboxId),
+      badgeReactions: Object.fromEntries(
+        Object.entries(state.badgeReactions)
+          .map(([key, reactions]): [string, typeof reactions] => [
+            key,
+            omitKey(reactions, inboxId),
+          ])
+          .filter(([, reactions]) => Object.keys(reactions).length > 0)
+      ),
+      lastBadgeReactionAlertAt: omitKey(
+        state.lastBadgeReactionAlertAt,
+        inboxId
+      ),
     }))
   }
 
-  function notify(entry: Omit<BuddyNotification, 'at' | 'read'>, read = false) {
+  /** Queues a tray entry, stamped now unless it says when it happened. */
+  function notify(
+    entry: Omit<BuddyNotification, 'at' | 'read'> & { at?: number },
+    read = false
+  ) {
     store.setState((state) => ({
       notifications: cappedQueue(
         [
-          { ...entry, at: deps.now(), read },
+          { ...entry, at: entry.at ?? deps.now(), read },
           ...state.notifications.filter((n) => n.id !== entry.id),
         ],
         state
@@ -739,6 +849,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ),
         push: true,
       })
+      lastAlertSentAt.set(buddy.inboxId, deps.now())
     } catch (error) {
       if (!isRelayError(error, 'gone')) throw error
       // Their request lapsed or they cancelled — undo our half of the pairing.
@@ -866,13 +977,27 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
-   * Changes what buddies see and republishes, so their copy of a withheld photo
-   * or Tenure clears. Before Buddies has started it only records the choice.
+   * Changes what buddies see and republishes, so their copy of a withheld
+   * photo, Tenure, or streak clears. Before Buddies has started it only records
+   * the choice.
    */
-  async function setSharing(change: Partial<Omit<BuddySharing, 'updatedAt'>>) {
+  async function setSharing(
+    change: Partial<Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt'>>
+  ) {
+    const now = deps.now()
     store.setState((state) => ({
-      sharing: { ...state.sharing, ...change, updatedAt: deps.now() },
+      sharing: {
+        ...state.sharing,
+        ...change,
+        // Each choice carries its own stamp (see `mergeSharing`).
+        ...('photo' in change || 'tenure' in change || 'streak' in change
+          ? { updatedAt: now }
+          : {}),
+        ...('badges' in change ? { badgesUpdatedAt: now } : {}),
+      },
     }))
+    // Badge news not yet sent stays home too.
+    if (change.badges === false) dropBadgeAnnouncements()
     if (store.getState().registeredInboxId === null) return
     const me = await ensureInbox()
     await saveRoster(me)
@@ -881,7 +1006,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /** Publishes one Buddy Card per active buddy, skipping unchanged content. */
   async function publishCards() {
-    const { name, avatar, tenure } = profile()
+    const { name, avatar, tenure, badges: shared = [] } = profile()
     const streak = store.getState().sharing.streak
       ? deps.getStreak?.()
       : undefined
@@ -894,8 +1019,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       recurringPlans,
       new Date(deps.now())
     )
+    // Left out when there are none, so cards (and their hash) stay as before.
+    const badges = shared.length > 0 ? shared : undefined
     const contentHash = toB64u(
-      sha256(json({ name, avatar, tenure, streak, days }))
+      sha256(json({ name, avatar, tenure, streak, days, badges }))
     )
     for (const buddy of active) {
       if (store.getState().publishedCardHashes[buddy.inboxId] === contentHash)
@@ -910,6 +1037,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         updatedAt: deps.now(),
         level: 'daysTimes',
         days,
+        badges,
       }
       try {
         await relay.putCard(
@@ -1095,6 +1223,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 avatar: parsed.avatar,
                 tenure: parsed.tenure,
                 streak: parsed.streak,
+                // The card is the source of truth: none listed clears them.
+                badges: knownBadges(parsed.badges),
               }
             : b
         ),
@@ -1147,6 +1277,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       push,
     })
+    if (push) lastAlertSentAt.set(buddy.inboxId, deps.now())
   }
 
   /** Shortens the note until the invitation fits the relay's event cap. */
@@ -1940,6 +2071,548 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       .map((buddy) => joinRequestKind(pairKeys(me, buddy).incoming.slotId))
   }
 
+  /**
+   * Stable per buddy and set of badges, so the same news sent again (a retry,
+   * or another of this User's devices) is the same event, which the relay never
+   * alerts for twice.
+   */
+  function badgeEventId(
+    me: BuddyIdentity,
+    to: string,
+    badges: readonly SharedBadge[]
+  ): string {
+    const keys = badges.map(sharedBadgeKey).sort().join(',')
+    return toB64u(
+      sha256(utf8(`ww-buddies/v1/badge|${me.inboxId}|${to}|${keys}`)).slice(
+        0,
+        16
+      )
+    )
+  }
+
+  /**
+   * Tells buddies about badges this User just earned: each collection's new
+   * level, batched into one `badge.new` per buddy. One-time Badges stay quiet
+   * (a first Bible study is personal, and a first buddy already knows). Saved
+   * first, so it holds offline, and sent now or on a later sync for up to a
+   * week. Only buddies active now hear about it; anyone paired later sees the
+   * badges on the Buddy Card.
+   */
+  async function announceBadges(keys: readonly BadgeKey[]) {
+    // Buddies hidden or stopped here (its flag turned off, say): no news.
+    if (!(deps.isEnabled?.() ?? true)) return
+    const best = new Map<string, SharedBadge>()
+    for (const key of keys) {
+      const parsed = parseBadgeKey(key)
+      if (!parsed?.level) continue
+      const held = best.get(parsed.art)
+      if (!held || (held.l ?? 0) < parsed.level)
+        best.set(parsed.art, { c: parsed.art, l: parsed.level })
+    }
+    if (best.size === 0 || !sharesBadges()) return
+    const state = store.getState()
+    // Buddies never started here: no one to tell, and no seed to create.
+    if (state.registeredInboxId === null) return
+    const recipients = state.buddies
+      .filter((buddy) => buddy.status === 'active')
+      .map((buddy) => buddy.inboxId)
+    if (recipients.length === 0) return
+    const badges = sortedForAnnouncement([...best.values()])
+    const id = badges.map(sharedBadgeKey).sort().join(',')
+    if (state.badgeAnnouncements.some((announcement) => announcement.id === id))
+      return
+    store.setState((current) => ({
+      badgeAnnouncements: [
+        ...current.badgeAnnouncements,
+        {
+          id,
+          badges,
+          createdAt: deps.now(),
+          recipients,
+          sent: {},
+          alerted: {},
+        },
+      ].slice(-MAX_BADGE_ANNOUNCEMENTS),
+    }))
+    await deliverBadgeAnnouncements().catch(() => {
+      // Saved; retried on the next sync.
+    })
+  }
+
+  /** Forgets badge news not yet sent, once badges or sharing them is off. */
+  function dropBadgeAnnouncements() {
+    if (store.getState().badgeAnnouncements.length > 0)
+      store.setState({ badgeAnnouncements: [] })
+  }
+
+  /** Drops badge news that's delivered, a week old, or no longer shared. */
+  function pruneBadgeAnnouncements() {
+    const now = deps.now()
+    const { badgeAnnouncements } = store.getState()
+    const kept = sharesBadges()
+      ? badgeAnnouncements.filter(
+          (announcement) =>
+            announcement.createdAt + BADGE_ANNOUNCEMENT_TTL_MS > now &&
+            announcement.recipients.some((id) => !announcement.sent[id])
+        )
+      : []
+    if (kept.length !== badgeAnnouncements.length)
+      store.setState({ badgeAnnouncements: kept })
+  }
+
+  /** Sends badge news still owed to buddies, one delivery at a time. */
+  function deliverBadgeAnnouncements(): Promise<void> {
+    const run = badgeDelivery.then(sendBadgeAnnouncements)
+    badgeDelivery = run.catch(() => {
+      // The caller sees the failure; the queue moves on.
+    })
+    return run
+  }
+
+  /**
+   * Delivers badge news and reactions again once `at` passes, if a timer is
+   * available.
+   */
+  function retryBadgesAt(at: number) {
+    if (!deps.later || (badgeRetryAt !== null && badgeRetryAt <= at)) return
+    badgeRetryAt = at
+    deps.later(
+      () => {
+        if (badgeRetryAt === at) badgeRetryAt = null
+        void deliverBadgeAnnouncements().catch(() => {
+          // Retried on the next sync.
+        })
+        void deliverBadgeReactions().catch(() => {
+          // Retried on the next sync.
+        })
+      },
+      Math.max(0, at - deps.now())
+    )
+  }
+
+  async function sendBadgeAnnouncements() {
+    pruneBadgeAnnouncements()
+    if (store.getState().badgeAnnouncements.length === 0) return
+    // Kept, but not sent, while Buddies is hidden or stopped here.
+    if (!(deps.isEnabled?.() ?? true)) return
+    const me = await ensureInbox()
+    const current = (id: string) =>
+      store.getState().badgeAnnouncements.find((a) => a.id === id)
+    const update = (
+      id: string,
+      change: (announcement: BadgeAnnouncement) => Partial<BadgeAnnouncement>
+    ) =>
+      store.setState((state) => ({
+        badgeAnnouncements: state.badgeAnnouncements.map((announcement) =>
+          announcement.id === id
+            ? { ...announcement, ...change(announcement) }
+            : announcement
+        ),
+      }))
+    let failure: unknown = null
+    for (const { id, recipients } of store.getState().badgeAnnouncements) {
+      for (const inboxId of recipients) {
+        // Read again each time: a send may have ended a pairing meanwhile.
+        const announcement = current(id)
+        if (
+          !announcement ||
+          announcement.sent[inboxId] ||
+          !announcement.recipients.includes(inboxId)
+        )
+          continue
+        const buddy = store
+          .getState()
+          .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
+        // Waits for the hourly budget; retried on every sync.
+        if (!buddy || !hasShareBudget(inboxId)) continue
+        const lastAlert = store.getState().lastBadgeAlertAt[inboxId]
+        const alert =
+          !!announcement.alerted[inboxId] ||
+          lastAlert === undefined ||
+          deps.now() - lastAlert >= BADGE_ALERT_INTERVAL_MS
+        // Just alerted them about something else (a reply, an invitation):
+        // the relay would drop this alert, so it waits out the spacing rather
+        // than spending the day's badge alert on nothing.
+        const lastSent = lastAlertSentAt.get(inboxId)
+        const sinceLastSent =
+          lastSent === undefined ? Infinity : deps.now() - lastSent
+        if (
+          alert &&
+          sinceLastSent >= 0 &&
+          sinceLastSent < RELAY_ALERT_SPACING_MS
+        ) {
+          retryBadgesAt(lastSent! + RELAY_ALERT_SPACING_MS)
+          continue
+        }
+        if (alert && !announcement.alerted[inboxId]) {
+          // Recorded first: a send that seems to fail may still have landed,
+          // and its retry keeps the alert under the same event id.
+          store.setState((state) => ({
+            lastBadgeAlertAt: {
+              ...state.lastBadgeAlertAt,
+              [inboxId]: deps.now(),
+            },
+          }))
+          update(id, (a) => ({ alerted: { ...a.alerted, [inboxId]: true } }))
+        }
+        try {
+          await sendEvent(
+            me,
+            buddy,
+            BADGE_PUSH_KIND,
+            { v: 1, badges: announcement.badges },
+            alert,
+            badgeEventId(me, inboxId, announcement.badges)
+          )
+          spendShareBudget(inboxId)
+          update(id, (a) => ({ sent: { ...a.sent, [inboxId]: true } }))
+        } catch (error) {
+          if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
+          else failure ??= error
+        }
+      }
+    }
+    pruneBadgeAnnouncements()
+    if (failure) throw failure
+  }
+
+  /**
+   * A buddy's news of new badges: listed in the tray (already read with badge
+   * alerts off here, and not at all with Badges off) and shown on their page
+   * until their next Buddy Card, which is the source of truth.
+   */
+  function applyBadgeEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number],
+    /** This device has never synced: everything read is backlog. */
+    firstSync: boolean
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    // A sync that reads the inbox from the start again lists nothing twice.
+    if (store.getState().seenBadgeEvents[event.eventId] !== undefined) return
+    let badges: SharedBadge[]
+    try {
+      const body = badgeNewSchema.parse(openEvent(me, buddy, event))
+      badges = sortedForAnnouncement(knownBadges(body.badges))
+    } catch {
+      // Undecryptable or malformed events are dropped.
+      return
+    }
+    const now = deps.now()
+    store.setState((state) => ({
+      seenBadgeEvents: {
+        ...Object.fromEntries(
+          Object.entries(state.seenBadgeEvents).filter(
+            ([, at]) => at + SEEN_BADGE_EVENT_TTL_MS > now
+          )
+        ),
+        [event.eventId]: now,
+      },
+      buddies:
+        badges.length === 0
+          ? state.buddies
+          : state.buddies.map((b) =>
+              b.inboxId === buddy.inboxId
+                ? { ...b, badges: withNewBadges(b.badges ?? [], badges) }
+                : b
+            ),
+    }))
+    if (badges.length === 0 || !(deps.showBadges?.() ?? true)) return
+    // Listed when it happened, not when this device first read it.
+    const at = Number.isFinite(event.createdAt)
+      ? Math.min(event.createdAt, now)
+      : now
+    notify(
+      {
+        id: event.eventId,
+        seq: event.seq,
+        kind: 'badge',
+        from: buddy.inboxId,
+        name: buddy.name,
+        badges,
+        at,
+      },
+      // Listed, but not calling for attention: badge alerts are off here, or
+      // it's old news (a day or more, or a new device's whole backlog).
+      !store.getState().badgeNotifications || firstSync || at <= now - DAY_MS
+    )
+  }
+
+  /**
+   * The badge push kinds (new badges, reactions), while badge alerts are on for
+   * this device.
+   */
+  function badgePushKinds(): BadgePushKind[] {
+    const { badgeNotifications } = store.getState()
+    return badgeNotifications && (deps.showBadges?.() ?? true)
+      ? [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND]
+      : []
+  }
+
+  /**
+   * Stable per buddy, badge, and choice, so a retry (or another of this User's
+   * devices sending the same choice) is the same event, which the relay stores
+   * once and never alerts for twice.
+   */
+  function badgeReactionEventId(
+    me: BuddyIdentity,
+    to: string,
+    key: string,
+    rev: number
+  ): string {
+    return toB64u(
+      sha256(
+        utf8(`ww-buddies/v1/badge-reaction|${me.inboxId}|${to}|${key}|${rev}`)
+      ).slice(0, 16)
+    )
+  }
+
+  /**
+   * Reacts to a buddy's badge with one of the preset reactions, replacing this
+   * User's earlier reaction to it. Only for an active buddy whose card shows
+   * that badge (or a higher level of it). Saved first, so the reaction bar
+   * shows it at once and it holds offline, then sent now or on a later sync for
+   * up to a week. Sharing one's own badges isn't needed to react to theirs.
+   */
+  async function reactToBadge(
+    inboxId: string,
+    badge: SharedBadge,
+    emoji: BadgeReactionEmoji
+  ) {
+    // Buddies hidden or stopped here, or badges off: nothing to react to.
+    if (!(deps.isEnabled?.() ?? true) || !(deps.showBadges?.() ?? true)) return
+    if (!isBadgeReactionEmoji(emoji)) return
+    const [known] = knownBadges([badge])
+    const state = store.getState()
+    if (!known || state.registeredInboxId === null) return
+    const buddy = state.buddies.find(
+      (b) => b.inboxId === inboxId && b.status === 'active'
+    )
+    if (!buddy || !holdsBadge(buddy.badges, known)) return
+    const key = sharedBadgeKey(known)
+    const existing = state.sentBadgeReactions[inboxId]?.[key]
+    if (existing?.e !== emoji) {
+      const now = deps.now()
+      const reaction: SentBadgeReaction = {
+        ...existing,
+        e: emoji,
+        // Always newer than the last choice, even within a millisecond.
+        rev: Math.max(now, (existing?.rev ?? 0) + 1),
+        at: now,
+      }
+      store.setState((current) => ({
+        sentBadgeReactions: {
+          ...current.sentBadgeReactions,
+          [inboxId]: {
+            ...current.sentBadgeReactions[inboxId],
+            [key]: reaction,
+          },
+        },
+      }))
+    }
+    await deliverBadgeReactions().catch(() => {
+      // Saved; retried on the next sync.
+    })
+  }
+
+  /**
+   * Sends reactions that haven't reached their buddy yet. Runs in line with
+   * badge news, so the two never race for the relay's alert spacing.
+   */
+  function deliverBadgeReactions(): Promise<void> {
+    const run = badgeDelivery.then(sendBadgeReactions)
+    badgeDelivery = run.catch(() => {
+      // The caller sees the failure; the queue moves on.
+    })
+    return run
+  }
+
+  async function sendBadgeReactions() {
+    const now = deps.now()
+    const waiting = Object.entries(store.getState().sentBadgeReactions).flatMap(
+      ([inboxId, reactions]) =>
+        Object.entries(reactions)
+          .filter(
+            ([, reaction]) =>
+              reaction.sentRev !== reaction.rev &&
+              reaction.at + BADGE_ANNOUNCEMENT_TTL_MS > now
+          )
+          .map(([key]) => ({ inboxId, key }))
+    )
+    if (waiting.length === 0) return
+    // Kept, but not sent, while Buddies is hidden or stopped here.
+    if (!(deps.isEnabled?.() ?? true)) return
+    const me = await ensureInbox()
+    const update = (
+      inboxId: string,
+      key: string,
+      change: (reaction: SentBadgeReaction) => Partial<SentBadgeReaction>
+    ) =>
+      store.setState((state) => {
+        const current = state.sentBadgeReactions[inboxId]?.[key]
+        if (!current) return state
+        return {
+          sentBadgeReactions: {
+            ...state.sentBadgeReactions,
+            [inboxId]: {
+              ...state.sentBadgeReactions[inboxId],
+              [key]: { ...current, ...change(current) },
+            },
+          },
+        }
+      })
+    let failure: unknown = null
+    for (const { inboxId, key } of waiting) {
+      // Read again each time: a send may have ended a pairing meanwhile.
+      const reaction = store.getState().sentBadgeReactions[inboxId]?.[key]
+      const parsed = parseBadgeKey(key)
+      if (!reaction || !parsed || reaction.sentRev === reaction.rev) continue
+      const buddy = store
+        .getState()
+        .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
+      // Waits for the hourly budget; retried on every sync.
+      if (!buddy || !hasShareBudget(inboxId)) continue
+      const { rev } = reaction
+      // Reactions have their own allowance, apart from badge news.
+      const lastAlert = store.getState().lastBadgeReactionAlertAt[inboxId]
+      const alert =
+        reaction.alertRev === rev ||
+        lastAlert === undefined ||
+        deps.now() - lastAlert >= BADGE_ALERT_INTERVAL_MS
+      // Just alerted them about something else: the relay would drop this
+      // alert, so it waits out the spacing rather than spending the day's
+      // reaction alert on nothing.
+      const lastSent = lastAlertSentAt.get(inboxId)
+      const sinceLastSent =
+        lastSent === undefined ? Infinity : deps.now() - lastSent
+      if (
+        alert &&
+        sinceLastSent >= 0 &&
+        sinceLastSent < RELAY_ALERT_SPACING_MS
+      ) {
+        retryBadgesAt(lastSent! + RELAY_ALERT_SPACING_MS)
+        continue
+      }
+      if (alert && reaction.alertRev !== rev) {
+        // Recorded first: a send that seems to fail may still have landed,
+        // and its retry keeps the alert under the same event id.
+        store.setState((state) => ({
+          lastBadgeReactionAlertAt: {
+            ...state.lastBadgeReactionAlertAt,
+            [inboxId]: deps.now(),
+          },
+        }))
+        update(inboxId, key, () => ({ alertRev: rev }))
+      }
+      try {
+        await sendEvent(
+          me,
+          buddy,
+          BADGE_REACTION_PUSH_KIND,
+          {
+            v: 1,
+            badge: parsed.level
+              ? { c: parsed.art, l: parsed.level }
+              : { c: parsed.art },
+            e: reaction.e,
+            rev,
+          },
+          alert,
+          badgeReactionEventId(me, inboxId, key, rev)
+        )
+        spendShareBudget(inboxId)
+        // A newer choice made meanwhile still needs sending.
+        update(inboxId, key, (current) =>
+          current.rev === rev ? { sentRev: rev } : {}
+        )
+      } catch (error) {
+        if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
+        else failure ??= error
+      }
+    }
+    if (failure) throw failure
+  }
+
+  /**
+   * A buddy's reaction to one of this User's badges: kept, the newest per buddy
+   * and badge, for that badge's view, and listed in the tray in place of their
+   * earlier reaction to it (already read with badge alerts off here, or when
+   * old). Ignored with badges off here, and for a badge this User doesn't
+   * have.
+   */
+  function applyBadgeReactionEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number],
+    /** This device has never synced: everything read is backlog. */
+    firstSync: boolean
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    let body: { badge: SharedBadge; e: BadgeReactionEmoji; rev: number }
+    try {
+      const parsed = badgeReactionSchema.parse(openEvent(me, buddy, event))
+      const [badge] = knownBadges([parsed.badge])
+      if (!badge) return
+      body = { ...parsed, badge }
+    } catch {
+      // Undecryptable or malformed events are dropped.
+      return
+    }
+    if (!(deps.showBadges?.() ?? true)) return
+    if (!holdsBadge(deps.getProfile().badges, body.badge)) return
+    const key = sharedBadgeKey(body.badge)
+    const existing = store.getState().badgeReactions[key]?.[buddy.inboxId]
+    // Read before (the inbox read from the start again), or an older choice.
+    if (existing && existing.rev >= body.rev) return
+    const now = deps.now()
+    const at = Number.isFinite(event.createdAt)
+      ? Math.min(event.createdAt, now)
+      : now
+    // The same reaction again (from another of their devices) isn't news.
+    const same = existing !== undefined && existing.e === body.e
+    store.setState((state) => ({
+      badgeReactions: {
+        ...state.badgeReactions,
+        [key]: {
+          ...state.badgeReactions[key],
+          [buddy.inboxId]: {
+            e: body.e,
+            at: same ? existing.at : at,
+            rev: body.rev,
+          },
+        },
+      },
+      // One entry per buddy and badge: a new reaction replaces the last.
+      notifications: same
+        ? state.notifications
+        : state.notifications.filter(
+            (n) =>
+              !(
+                n.kind === 'badgeReaction' &&
+                n.from === buddy.inboxId &&
+                n.badges?.some((b) => sharedBadgeKey(b) === key)
+              )
+          ),
+    }))
+    if (same) return
+    notify(
+      {
+        id: event.eventId,
+        seq: event.seq,
+        kind: 'badgeReaction',
+        from: buddy.inboxId,
+        name: buddy.name,
+        badges: [body.badge],
+        reaction: body.e,
+        at,
+      },
+      // Listed, but not calling for attention: badge alerts are off here, or
+      // it's old news (a day or more, or a new device's whole backlog).
+      !store.getState().badgeNotifications || firstSync || at <= now - DAY_MS
+    )
+  }
+
   function markNotificationsRead() {
     if (store.getState().notifications.every((n) => n.read)) return
     store.setState((state) => ({
@@ -2096,10 +2769,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         )
       ),
       rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
-      sharing:
-        remote.sharing.updatedAt > state.sharing.updatedAt
-          ? remote.sharing
-          : state.sharing,
+      sharing: mergeSharing(state.sharing, remote.sharing),
     })
     // Withdraw their slots from here too, in case that device can't finish.
     if (endedHere.length > 0) queueRemoval(endedHere)
@@ -2164,6 +2834,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function runSync() {
     expireLocal()
+    const firstSync = store.getState().lastSyncAt === 0
     const me = await ensureInbox()
     slotsAddedDuringSync.clear()
     if (store.getState().slotsNeedRestore) await restoreInbox(me)
@@ -2198,6 +2869,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         event.kind.startsWith(JOIN_REQUEST_KIND_PREFIX)
       ) {
         applyJoinEvent(me, event)
+      } else if (event.kind === BADGE_PUSH_KIND) {
+        applyBadgeEvent(me, event, firstSync)
+      } else if (event.kind === BADGE_REACTION_PUSH_KIND) {
+        applyBadgeReactionEvent(me, event, firstSync)
       }
     }
     for (const card of response.cards) applyCard(me, card)
@@ -2220,6 +2895,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
     await deliverJoinRequests().catch(() => {
       // Retried on the next sync.
+    })
+    await deliverBadgeAnnouncements().catch(() => {
+      // Retried on the next sync, for up to a week.
+    })
+    await deliverBadgeReactions().catch(() => {
+      // Retried on the next sync, for up to a week.
     })
     store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
     // Write the merged roster back when another device's copy lacks
@@ -2281,6 +2962,87 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * What this device needs to word Buddies pushes itself (see `pushAlerts`):
+   * each buddy's incoming slot, the key that opens it, and their name here;
+   * open invites' keys; and when shared Plans and Follow-ups are, both ways.
+   * Null until Buddies has started here.
+   */
+  function alertContext(): BuddyAlertContext | null {
+    const state = store.getState()
+    if (state.registeredInboxId === null) return null
+    const me = identity()
+    const now = deps.now()
+    const sharesFrom = (inboxId: string) =>
+      Object.fromEntries(
+        Object.values(state.incomingShares)
+          .filter((share) => share.from === inboxId && share.expiresAt > now)
+          .map((share) => [share.shareId, shareWhen(share.type, share.details)])
+      )
+    return {
+      v: 1,
+      inboxId: me.inboxId,
+      ownerSeed: toB64u(me.ownerSeed),
+      buddies: state.buddies.map((buddy) => {
+        const { incoming } = pairKeys(me, buddy)
+        const shares = sharesFrom(buddy.inboxId)
+        return {
+          slot: incoming.slotId,
+          key: toB64u(incoming.contentKey),
+          name: buddy.nickname ?? buddy.name,
+          ...(state.mutedJoinRequests.includes(buddy.inboxId)
+            ? { joinMuted: true as const }
+            : {}),
+          ...(Object.keys(shares).length > 0 ? { shares } : {}),
+        }
+      }),
+      invites: state.outgoingInvites
+        .filter((invite) => invite.expiresAt > now)
+        .map((invite) => ({
+          id: invite.inviteId,
+          key: toB64u(deriveInvite(fromB64u(invite.secret)).inviteKey),
+        })),
+      myShares: Object.fromEntries(
+        (deps.getShares?.() ?? [])
+          .filter((spec) => spec.expiresAt > now)
+          .map((spec) => [
+            shareIdFor(me, spec.key),
+            shareWhen(spec.type, spec.details),
+          ])
+      ),
+      badgeAlerts: state.badgeNotifications && (deps.showBadges?.() ?? true),
+      joinAlerts: state.joinRequestNotifications,
+      catalog: {
+        order: [...ANNOUNCE_ORDER],
+        oneTime: [...ONE_TIME_BADGE_IDS],
+      },
+    }
+  }
+
+  /**
+   * Opens the event a push is about and says how to word its alert: from the
+   * push itself when the event fit, or fetched from the inbox by its `seq`.
+   * Reads only; the sync that follows a push applies the event as usual.
+   */
+  async function describePush(
+    marker: BuddiesPushMarker
+  ): Promise<BuddyAlertOutcome> {
+    const context = alertContext()
+    if (!context) return { failed: 'noContext' }
+    let event: SealedEvent | undefined =
+      marker.eventId !== undefined && marker.blob !== undefined
+        ? { eventId: marker.eventId, kind: marker.kind, blob: marker.blob }
+        : undefined
+    if (!event && marker.seq !== undefined && marker.seq > 0) {
+      const { events } = await relay.syncInbox(
+        ownerAuth(identity()),
+        marker.seq - 1
+      )
+      event = events.find((candidate) => candidate.seq === marker.seq)
+    }
+    return event ? describeBuddyEvent(context, event) : { failed: 'noEvent' }
+  }
+
+  /**
    * Registers this device for pushes when anything about the registration
    * changed, or when the last one is a day old: the relay may have dropped the
    * device since (a rejected token, or evicted for a newer device), and a
@@ -2289,7 +3051,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function registerPush(
     device: PushAddress & {
       /** A kind left out is never pushed to this device. */
-      templates: Partial<Record<BuddyPushKind, PushTemplate>> &
+      templates: Partial<Record<BuddyPushKind | BadgePushKind, PushTemplate>> &
         Record<JoinRequestPushKind, PushTemplate>
     }
   ): Promise<PushRegistrationOutcome> {
@@ -2341,6 +3103,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     cachedIdentity = null
     pairCache.clear()
     shareSends.clear()
+    lastAlertSentAt.clear()
     // Choices about this device and what to share outlive the data; shared
     // Plans, invitations, replies, and the notification queue don't.
     const {
@@ -2349,6 +3112,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,
+      badgeNotifications,
       sharing,
     } = store.getState()
     store.setState({
@@ -2358,6 +3122,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,
+      badgeNotifications,
       sharing,
     })
   }
@@ -2385,6 +3150,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     withdrawJoinRequest,
     dismissJoinRequest,
     joinRequestPushKinds,
+    announceBadges,
+    deliverBadgeAnnouncements,
+    dropBadgeAnnouncements,
+    badgePushKinds,
+    reactToBadge,
+    deliverBadgeReactions,
     expire: expireLocal,
     shareIdForKey,
     markNotificationsRead,
@@ -2394,6 +3165,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     openLive,
     probeInbox,
     registerPush,
+    alertContext,
+    describePush,
     deleteEverything,
   }
 }

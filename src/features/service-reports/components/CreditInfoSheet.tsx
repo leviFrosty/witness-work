@@ -1,7 +1,7 @@
 import { X as XIcon } from 'lucide-react-native'
 import { useState } from 'react'
 import { View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'

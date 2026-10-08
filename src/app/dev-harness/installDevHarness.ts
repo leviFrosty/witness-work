@@ -12,6 +12,7 @@ import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
+import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
@@ -21,6 +22,28 @@ import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
 import { mmkvStorage } from '@/stores/mmkv'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { runBadgeEvaluation } from '@/app/badges/runBadgeEvaluation'
+import {
+  badgeHarnessState,
+  earnEveryBadge,
+  earnRandomBadges,
+  evaluateBadgesNow,
+  offerBadge,
+  recentUserAction,
+  resetBadgeState,
+  showBadgeHistorySummary,
+  simulateBuddyBadge,
+  simulateBuddyReaction,
+} from '@/app/dev-harness/badges'
+import { useBadgeSession } from '@/stores/badgeSession'
+import { takeoverSnapshot, useTakeover } from '@/stores/takeover'
+import { noteUserAction, type UserActionKind } from '@/lib/userAction'
+import {
+  devicePushToken,
+  prepareBuddiesPush,
+  prepareDevicePushToken,
+  preparedBuddiesPush,
+} from '@/app/dev-harness/buddiesPush'
 import {
   setFakeGoogleDrive,
   type FakeGoogleDrive,
@@ -109,6 +132,7 @@ function summary() {
     visits: useConversations.getState().conversations.length,
     timeEntries: timeEntries.length,
     dayPlans: reports.dayPlans.length,
+    badges: Object.keys(preferences.earnedBadges).length,
     route: route ? { name: route.name, params: route.params } : null,
     // false at the app's root, where Android back would leave the app
     canGoBack: navigationRef.isReady() && navigationRef.canGoBack(),
@@ -131,6 +155,7 @@ function seed(name: string) {
     lastRolloverYearMonth: moment().format('YYYY-MM'),
     // Same for the Schedule intro; Schedule's header button still opens it.
     scheduleIntroSeen: scenario.onboarded,
+    submittedReportMonths: scenario.submittedReportMonths,
   })
   if (scenario.onboarded) {
     useProfile.getState().set({
@@ -142,10 +167,18 @@ function seed(name: string) {
   scenario.contacts.forEach(addContact)
   const { addConversation } = useConversations.getState()
   scenario.visits.forEach(addConversation)
-  const { addServiceReport, addDayPlan } = useServiceReport.getState()
+  const { addServiceReport, addDayPlan, addRecurringPlan } =
+    useServiceReport.getState()
   scenario.timeEntries.forEach(addServiceReport)
   scenario.dayPlans.forEach(addDayPlan)
+  scenario.recurringPlans.forEach(addRecurringPlan)
   if (scenario.onboarded) {
+    // File every badge the seeded records reach as history now, so a seed
+    // never sets off celebrations or the history summary, and mark them seen
+    // so only badges earned afterwards read as new. A fresh install keeps its
+    // first pass for after onboarding, like a real one.
+    runBadgeEvaluation({ quiet: true })
+    usePreferences.getState().markBadgesSeen()
     // Start from Home, after RootStack swaps Onboarding out for Root.
     setTimeout(() => {
       if (navigationRef.isReady())
@@ -202,6 +235,16 @@ export function installDevHarness() {
      * account `account` (null switches back to real Google).
      */
     fakeGoogleDrive: applyFakeGoogleDrive,
+    /**
+     * Builds the APNs payload the relay would send this device for an inbox
+     * event (`{ seq?, inline? }`); read it a moment later with
+     * `buddiesPushPayload()` and replay it with `xcrun simctl push`.
+     */
+    prepareBuddiesPush,
+    buddiesPushPayload: preparedBuddiesPush,
+    /** This device's push token; `devicePushToken()` a moment later. */
+    prepareDevicePushToken,
+    devicePushToken,
     /** The sync engine, for reading state back; drive changes through the UI. */
     sync: iCloudSync,
     setSupporter: (on: boolean) => {
@@ -209,6 +252,49 @@ export function installDevHarness() {
         .getState()
         .set({ devSupporterOverride: on ? new Date() : null })
       return on
+    },
+    /**
+     * Marks an action the User took, as Add Time's save does (ADR 0021): for
+     * the next 15 s, a badge or streak milestone it brings can celebrate full
+     * screen. Without it, they arrive quietly (the Home card, the chip flare).
+     */
+    noteUserAction: (kind: UserActionKind = 'dev') => noteUserAction(kind),
+    /**
+     * The takeover arbiter: `state()` shows what's on screen, waiting, and
+     * holding; `store` is the live zustand store.
+     */
+    takeover: {
+      state: () => takeoverSnapshot(),
+      store: useTakeover,
+    },
+    /**
+     * Badge controls (see `dev-harness/badges.ts`). `evaluate()` evaluates as
+     * after a change: live badges celebrate only within 15 s of
+     * `noteUserAction()`, and wait on the Home card otherwise; `evaluate(true)`
+     * files everything quietly. `celebrate(key)` follows the same rule.
+     */
+    badges: {
+      evaluate: (quiet = false) =>
+        evaluateBadgesNow({ quiet, action: recentUserAction() }),
+      celebrate: offerBadge,
+      history: (count = 5) => showBadgeHistorySummary(count),
+      earnAll: () => {
+        earnEveryBadge()
+        return badgeHarnessState()
+      },
+      earnRandom: () => {
+        earnRandomBadges()
+        return badgeHarnessState()
+      },
+      reset: () => {
+        resetBadgeState()
+        return badgeHarnessState()
+      },
+      state: badgeHarnessState,
+      simulateBuddyBadge: () => simulateBuddyBadge(),
+      /** A buddy's reaction to one of my badges (`yearRound.2`, `party`). */
+      simulateBuddyReaction: (badgeKey?: string, emoji?: string) =>
+        simulateBuddyReaction(badgeKey, emoji),
     },
     navigate: (name: string, params?: object) => {
       if (!navigationRef.isReady()) throw new Error('Navigation is not ready')
@@ -225,10 +311,15 @@ export function installDevHarness() {
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
-      // `setState({ celebrating: { count, kind } })` replays a milestone.
+      // The bell's book (`seen`, `dismissed`) and its counted `unread`.
+      notificationsTray: useNotificationsTray,
+      // `setState({ celebrating: { count, kind } })` replays a milestone; with
+      // no action behind it, it waits for its takeover turn without expiring.
       streakCelebration: useStreakCelebration,
       calendarSync: useCalendarSync,
       calendarPublishing: useCalendarPublishing,
+      badgeSession: useBadgeSession,
+      takeover: useTakeover,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

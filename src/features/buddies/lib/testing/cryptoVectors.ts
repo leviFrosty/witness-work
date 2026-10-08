@@ -175,6 +175,8 @@ export function computeCryptoVectors(): CryptoVectors {
     aad,
     counting(12, 0x00)
   )
+  out['seal.key'] = hex(toThem.contentKey)
+  out['seal.aad'] = aad
   out['seal.blob'] = blob
   out['seal.opened'] = fromUtf8(open(toThem.contentKey, blob, aad))
 

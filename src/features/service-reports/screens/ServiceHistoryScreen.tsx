@@ -57,6 +57,7 @@ import {
   withStatusAppliedToLaterMonths,
   type ServiceHistoryDrafts,
 } from '@/features/service-reports/lib/serviceHistoryDrafts'
+import { noteUserAction } from '@/lib/userAction'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceHistory'>
 
@@ -146,6 +147,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
 
   const handleSave = () => {
     Keyboard.dismiss()
+    noteUserAction('time')
     const saved = saveServiceHistoryDrafts(drafts, {
       setMonthStatus,
       addServiceReport,

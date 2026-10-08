@@ -1,5 +1,6 @@
 import { X as XIcon } from 'lucide-react-native'
-import { Sheet, XStack } from 'tamagui'
+import { XStack } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'

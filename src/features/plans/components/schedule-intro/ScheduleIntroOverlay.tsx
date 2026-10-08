@@ -101,20 +101,17 @@ function introPages(
   return pages
 }
 
-/** Mounted once in HomeTabStack; shows the intro while it's open. */
-export default function ScheduleIntroHost() {
-  const source = useScheduleIntro((state) => state.source)
-  if (!source) return null
-  return <ScheduleIntroOverlay key={source} source={source} />
-}
-
 /**
  * How to get the most from Schedule, the first time it opens (and again from
  * Schedule's header): plan days, keep them to build a streak, what to do when
  * life happens, and planning with buddies. Paged like the update reveal's tour;
  * it ends on planning a day.
  */
-function ScheduleIntroOverlay({ source }: { source: ScheduleIntroSource }) {
+export default function ScheduleIntroOverlay({
+  source,
+}: {
+  source: ScheduleIntroSource
+}) {
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
   const insets = useSafeAreaInsets()
@@ -174,8 +171,9 @@ function ScheduleIntroOverlay({ source }: { source: ScheduleIntroSource }) {
       page_count: pages.length,
     })
     set({ scheduleIntroSeen: true })
-    fade.value = withTiming(0, { duration: 220 }, (finished) => {
-      if (finished) scheduleOnRN(leave, method)
+    // Leaves even if the fade is cut short, so the intro can't get stuck.
+    fade.value = withTiming(0, { duration: 220 }, () => {
+      scheduleOnRN(leave, method)
     })
   }
 

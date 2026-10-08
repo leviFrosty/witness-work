@@ -1,30 +1,23 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { useNavigation } from '@react-navigation/native'
 import NavigationTabBar from '@/app/navigation/NavigationTabBar'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
-import WhatsNewSheet from '@/features/updates/components/WhatsNewSheet'
-import UpdateRevealOverlay from '@/features/updates/components/reveal/UpdateRevealOverlay'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
-import StreakCelebration from '@/features/profile/components/StreakCelebration'
-import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
-import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
-import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
+import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
+import TakeoverHosts from '@/app/takeover/TakeoverHosts'
 import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '@/app/navigation/ToolsScreen'
 import ProgressScreen from '@/features/progress/screens/ProgressScreen'
 import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
 import ContactsTabScreen from '@/app/contacts/ContactsTabScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
-import { RootStackNavigation } from '@/types/rootStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import useICloudPullSettled from '@/hooks/useICloudPullSettled'
-import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
 import { isLaunchRevealArmed } from '@/features/updates/lib/devLaunchReveal'
 import {
@@ -110,23 +103,6 @@ const HomeTabStack = () => {
   // reveal has to be on screen in the very first frame to pick up from the
   // splash.
   const [launch] = useState(decideLaunch)
-  const [whatsNewSince] = useState(
-    launch.action === 'whats-new' ? launch.notesSince : undefined
-  )
-  const [showWhatsNew, setShowWhatsNew] = useState(
-    launch.action === 'whats-new'
-  )
-  const [launchReveal, setLaunchReveal] = useState(
-    launch.action === 'update-reveal'
-  )
-  // Replays from the tray, What's New, or Developer Tools.
-  const replaySource = useUpdateRevealStore((s) => s.source)
-  const dismissReplay = useUpdateRevealStore((s) => s.dismiss)
-  const revealSource = launchReveal ? 'launch' : replaySource
-  // The Milestone Update (1.38.2) is replay-only, from Developer Tools.
-  const rootNavigation = useNavigation<RootStackNavigation>()
-  const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
-  const dismissMilestoneReveal = useMilestoneRevealStore((s) => s.dismiss)
 
   // Record the launch's version transition once.
   useEffect(() => {
@@ -173,13 +149,7 @@ const HomeTabStack = () => {
 
   return (
     <View style={{ flexGrow: 1 }}>
-      {whatsNewSince && (
-        <WhatsNewSheet
-          sinceVersion={whatsNewSince}
-          show={showWhatsNew}
-          setShow={setShowWhatsNew}
-        />
-      )}
+      <TakeoverEnvironment />
       <Tab.Navigator
         initialRouteName='Home'
         tabBar={(props) => <NavigationTabBar {...props} />}
@@ -199,26 +169,12 @@ const HomeTabStack = () => {
       </Tab.Navigator>
       {/* One instance for every root header's account menu. */}
       <ProfileDetailOverlay />
-      <ScheduleIntroHost />
-      <StreakCelebration />
-      {/* Mounted last so it overlays the tab bar. */}
-      {revealSource && (
-        <UpdateRevealOverlay
-          key={revealSource}
-          source={revealSource}
-          onClosed={() => {
-            setLaunchReveal(false)
-            dismissReplay()
-          }}
-        />
-      )}
-      <MilestoneRevealOverlay
-        show={showMilestoneReveal}
-        onDismiss={dismissMilestoneReveal}
-        onSeeWhatsNew={() => {
-          dismissMilestoneReveal()
-          rootNavigation.navigate('MilestoneShowcase')
-        }}
+      {/* One takeover at a time, through the takeover arbiter (ADR 0021). */}
+      <TakeoverHosts
+        launchReveal={launch.action === 'update-reveal'}
+        whatsNewSince={
+          launch.action === 'whats-new' ? launch.notesSince : undefined
+        }
       />
     </View>
   )

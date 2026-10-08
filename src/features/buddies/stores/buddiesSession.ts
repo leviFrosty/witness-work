@@ -17,5 +17,15 @@ export const useBuddiesSession = create<
     sending: number
     /** The `buddies` flag loaded on during this session. */
     flagConfirmed: boolean
+    /**
+     * Buddies is shown and started, so its background runtime is running. Badge
+     * news is made and sent only then.
+     */
+    running: boolean
   }
->()(() => ({ ...initialBuddySyncStatus, sending: 0, flagConfirmed: false }))
+>()(() => ({
+  ...initialBuddySyncStatus,
+  sending: 0,
+  flagConfirmed: false,
+  running: false,
+}))

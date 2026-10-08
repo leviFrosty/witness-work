@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { BADGE_REACTION_IDS } from '@/features/buddies/lib/badgeReactions'
 import { RELAY_ID_PATTERN } from '@/features/buddies/lib/bytes'
 
 /** Base64 of a ~96 px JPEG; keeps a Buddy Card well under the 16 KB cap. */
@@ -100,6 +101,30 @@ export const buddyCardDaySchema = z.object({
 })
 export type BuddyCardDay = z.infer<typeof buddyCardDaySchema>
 
+/** Badges one payload may carry; a card holds one per collection at most. */
+export const MAX_SHARED_BADGES = 40
+
+/** One earned badge: its art id and level (absent for a One-time Badge). */
+const sharedBadgeSchema = z.object({
+  c: z.string().min(1).max(40),
+  l: z.number().int().min(1).max(4).optional(),
+})
+
+/**
+ * Earned badges as they travel. An item this build can't read is dropped on its
+ * own, so a newer app's badges never cost the rest; the receiver then drops
+ * badges it doesn't know (`knownBadges`).
+ */
+const sharedBadgesSchema = z
+  .array(z.unknown())
+  .max(MAX_SHARED_BADGES)
+  .transform((items) =>
+    items.flatMap((item) => {
+      const parsed = sharedBadgeSchema.safeParse(item)
+      return parsed.success ? [parsed.data] : []
+    })
+  )
+
 export const buddyCardSchema = z.object({
   v: z.literal(1),
   name: displayName,
@@ -109,6 +134,11 @@ export const buddyCardSchema = z.object({
   updatedAt: z.number(),
   level: z.literal('daysTimes'),
   days: z.array(buddyCardDaySchema).max(120),
+  /**
+   * Added after v1 shipped: older apps ignore it, and a malformed list costs
+   * only the badges, never the Plans.
+   */
+  badges: sharedBadgesSchema.optional().catch(undefined),
 })
 export type BuddyCard = z.infer<typeof buddyCardSchema>
 
@@ -199,6 +229,25 @@ export const joinRequestSchema = z.object({
 })
 export type JoinRequest = z.infer<typeof joinRequestSchema>
 
+/** `badge.new`: badges the sender just earned, batched into one event. */
+export const badgeNewSchema = z.object({
+  v: z.literal(1),
+  badges: sharedBadgesSchema,
+})
+
+/**
+ * `badge.reaction`: the sender's reply to one of the recipient's badges, one of
+ * the preset reactions by id. `rev` is the sender's clock when they chose it;
+ * the recipient keeps the newest per sender and badge.
+ */
+export const badgeReactionSchema = z.object({
+  v: z.literal(1),
+  badge: sharedBadgeSchema,
+  e: z.enum(BADGE_REACTION_IDS),
+  rev: z.number(),
+})
+export type BadgeReactionEvent = z.infer<typeof badgeReactionSchema>
+
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
 
 /**
@@ -270,6 +319,13 @@ export const rosterSchema = z.object({
       // Rosters written before streaks existed.
       streak: z.boolean().default(true),
       updatedAt: z.number(),
+      /**
+       * Absent from rosters written before badges, or by an older app; the
+       * merge then keeps this device's choice (`mergeSharing`).
+       */
+      badges: z.boolean().optional(),
+      /** When `badges` last changed; merged apart from `updatedAt`. */
+      badgesUpdatedAt: z.number().optional(),
     })
     .default({ photo: true, tenure: true, streak: true, updatedAt: 0 }),
 })

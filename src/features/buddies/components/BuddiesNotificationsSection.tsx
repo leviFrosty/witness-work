@@ -7,19 +7,23 @@ import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { usePreferences } from '@/stores/preferences'
 import useNotificationPermission from '@/features/buddies/hooks/useNotificationPermission'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Buddies pushes on this device: a switch once iOS allows notifications,
- * otherwise a way to allow them, and one for buddies asking to join.
+ * otherwise a way to allow them, then one for buddies asking to join and one
+ * for buddies' new badges (while badges are on).
  */
 export default function BuddiesNotificationsSection() {
   const theme = useTheme()
   const { granted, needsSettings, turnOn } = useNotificationPermission()
   const enabled = useBuddies((state) => state.notificationsEnabled)
   const joinRequests = useBuddies((state) => state.joinRequestNotifications)
+  const badgeAlerts = useBuddies((state) => state.badgeNotifications)
+  const showBadges = usePreferences((state) => state.showBadges)
 
   if (granted === null) return null
 
@@ -76,6 +80,22 @@ export default function BuddiesNotificationsSection() {
             })
             // The Buddies runtime re-registers this device's push templates.
             useBuddies.setState({ joinRequestNotifications })
+          }}
+          lastInSection={!showBadges}
+        />
+      ) : null}
+      {enabled && showBadges ? (
+        <InputRowSwitch
+          label={i18n.t('buddies_badgeAlerts')}
+          info={i18n.t('buddies_badgeAlertsInfo')}
+          value={badgeAlerts}
+          onValueChange={(badgeNotifications) => {
+            analytics.capture('badges_setting_changed', {
+              setting: 'alerts',
+              enabled: badgeNotifications,
+            })
+            // The Buddies runtime re-registers this device's push templates.
+            useBuddies.setState({ badgeNotifications })
           }}
           lastInSection
         />

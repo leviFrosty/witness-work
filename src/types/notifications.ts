@@ -66,6 +66,12 @@ export type NotificationItem = {
   actions?: NotificationAction[]
   /** Survives "Clear All", e.g. an invitation still waiting on an answer. */
   sticky?: boolean
+  /**
+   * Buddies' news (a buddy's new badge, a reaction to one of the User's
+   * badges): listed under "From your buddies", below everything else, and never
+   * counted on the bell or the app icon badge (ADR 0021).
+   */
+  social?: boolean
   /** Source-side effects of a dismissal, like a snooze or cooldown stamp. */
   onDismiss?: () => void
   /**

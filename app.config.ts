@@ -170,6 +170,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'com.apple.developer.devicecheck.appattest-environment': IS_DEV
           ? 'development'
           : 'production',
+        // The second group is shared with the Notification Service Extension
+        // (`targets/notification-service`), which reads the keys that name
+        // Buddies alerts there. The app's own group stays first, so it remains
+        // where new Keychain items (the Buddies root seed among them) go.
+        'keychain-access-groups': [
+          `$(AppIdentifierPrefix)${BUNDLE_ID}`,
+          `$(AppIdentifierPrefix)${BUNDLE_ID}.buddies-alerts`,
+        ],
         // iCloud entitlements are populated at prebuild time by
         // `plugins/with-icloud-container.js` so the container identifier
         // stays in lockstep with the plugin's Info.plist edits.

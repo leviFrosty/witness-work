@@ -37,7 +37,7 @@ const UpdateTourCard = () => {
       accessibilityRole='button'
       onPress={() => {
         // The reveal draws over the tabs, so come back to them first.
-        navigation.navigate('Root')
+        navigation.navigate('Root', undefined, { pop: true })
         requestReveal('whats_new')
       }}
       style={{

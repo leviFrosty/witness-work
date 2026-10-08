@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'

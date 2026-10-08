@@ -13,6 +13,7 @@ import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import type { IncomingClaim } from '@/features/buddies/lib/state'
+import { noteUserAction } from '@/lib/userAction'
 
 /** Someone claimed one of my invites; nothing is shared until I confirm. */
 export default function BuddyRequestRow({
@@ -36,7 +37,13 @@ export default function BuddyRequestRow({
     }
   }
 
-  const confirm = () => run(() => buddiesEngine.confirmClaim(claim.inviteId))
+  // Confirming can earn First Buddy: the User's own action, marked once the
+  // pairing lands.
+  const confirm = () =>
+    run(async () => {
+      await buddiesEngine.confirmClaim(claim.inviteId)
+      noteUserAction('buddy')
+    })
 
   const decline = () =>
     Alert.alert(

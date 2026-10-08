@@ -20,6 +20,7 @@ import type {
   BuddyAvatar as SharedAvatar,
   BuddyTenure,
 } from '@/features/buddies/lib/schemas'
+import { noteUserAction } from '@/lib/userAction'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy Invite'>
 
@@ -66,6 +67,7 @@ export default function BuddyInviteScreen({ route }: Props) {
     setAccepting(true)
     try {
       const { name } = await buddiesEngine.acceptInvite(link)
+      noteUserAction('buddy')
       Alert.alert(
         i18n.t('buddies_inviteSentTitle'),
         i18n.t('buddies_inviteSentBody', { name })

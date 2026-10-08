@@ -6,13 +6,18 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
+import { useIsTakingOver } from '@/hooks/useTakeoverTurn'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import NotificationsList, {
   type TraySyncState,
 } from '@/features/notifications/components/NotificationsList'
 import { setAppIconBadge } from '@/features/notifications/lib/appIconBadge'
-import { trayEntries, unreadCount } from '@/features/notifications/lib/tray'
+import {
+  hasUnreadNews,
+  trayEntries,
+  unreadCount,
+} from '@/features/notifications/lib/tray'
 import {
   recordArrivals,
   setUnreadCount,
@@ -21,14 +26,18 @@ import {
 
 const POPOVER_WIDTH = 380
 
-/** Opens the popover when something (a tapped push) asked for it. */
+/**
+ * Opens the popover when something (a tapped push) asked for it, once nothing
+ * is taking over the screen (the update reveal, a celebration).
+ */
 function useOpenOnRequest(open: () => void) {
   const requested = useNotificationsTray((state) => state.openRequested)
+  const takingOver = useIsTakingOver()
   useEffect(() => {
-    if (!requested) return
+    if (!requested || takingOver) return
     useNotificationsTray.setState({ openRequested: false })
     open()
-  }, [requested, open])
+  }, [requested, takingOver, open])
 }
 
 /** Keeps the app icon badge on the unread count. */
@@ -51,10 +60,13 @@ function BellTrigger({
   onPress,
   anchorRef,
   unread,
+  news,
 }: {
   onPress: () => void
   anchorRef: React.RefObject<View | null>
   unread: number
+  /** Unread buddies' news, which shows a quiet dot instead of a number. */
+  news: boolean
 }) {
   const theme = useTheme()
   useOpenOnRequest(onPress)
@@ -70,7 +82,9 @@ function BellTrigger({
           accessibilityLabel={
             unread > 0
               ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_unreadCount', { count: unread })}.`
-              : i18n.t('notifications_a11y')
+              : news
+                ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_newsUnread')}.`
+                : i18n.t('notifications_a11y')
           }
           onPress={onPress}
         />
@@ -102,14 +116,30 @@ function BellTrigger({
           </Text>
         </View>
       )}
+      {unread === 0 && news && (
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            top: -1,
+            right: -1,
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            borderWidth: 1.5,
+            borderColor: theme.colors.background,
+            backgroundColor: theme.colors.accent,
+          }}
+        />
+      )}
     </View>
   )
 }
 
 /**
  * Home header bell over every feature's time- and event-based notices, with an
- * unread badge. Items are derived by the caller; this owns dismissal, read
- * state, and when each item came in.
+ * unread badge; buddies' news only adds a quiet dot. Items are derived by the
+ * caller; this owns dismissal, read state, and when each item came in.
  */
 export default function NotificationsTray({
   items,
@@ -131,6 +161,7 @@ export default function NotificationsTray({
   const seen = useNotificationsTray((state) => state.seen)
   const entries = trayEntries(items, { arrivals, dismissed, seen }, now)
   const unread = unreadCount(entries)
+  const news = hasUnreadNews(entries)
   useAppIconBadge(unread)
 
   const ids = items.map((item) => item.id).join('\n')
@@ -143,7 +174,12 @@ export default function NotificationsTray({
       contentWidth={Math.min(POPOVER_WIDTH, width - 24)}
       contentStyle={{ padding: 0 }}
       renderTrigger={({ onPress, anchorRef }) => (
-        <BellTrigger onPress={onPress} anchorRef={anchorRef} unread={unread} />
+        <BellTrigger
+          onPress={onPress}
+          anchorRef={anchorRef}
+          unread={unread}
+          news={news}
+        />
       )}
     >
       {({ closeThen }) => (

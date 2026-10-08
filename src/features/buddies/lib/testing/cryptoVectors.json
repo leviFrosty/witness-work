@@ -39,6 +39,8 @@
   "envelope.p": "eyJpbmJveElkIjoiUnZtMFBaZFE1Zmd2S0o2Rmh3NlFGZyIsInNpbmNlIjowLCJ0cyI6MTc5MDAwMDAwMDAwMCwibm9uY2UiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIn0",
   "envelope.s": "wl2pW8fUMeHta-zGsMLa5-dE-mNnRU5EUcxLKH2PcVmPWxL0C4twSlC-IpBqQI-vCg9J3cxvbrqR6z78VcKXDg",
   "envelope.verifies": "true",
+  "seal.key": "efd5713bc15b771dc8d857d0f5c5c8057aaeeb3d745363f7a0a0e35f4f30c657",
+  "seal.aad": "ww-buddies/v1/card|nZ3wd_n-zWINqFDKXZ3tbQ|b4ZHT6KcWndmIfDsvXfsOQ",
   "seal.blob": "AQABAgMEBQYHCAkKC5YB5kNOAekxUGOpEcXCO-RgoxVCDiNFBp2J4xYbC3M2ImxOvHzDPYj2yw",
   "seal.opened": "{\"v\":1,\"name\":\"Zoë 🙂\"}"
 }

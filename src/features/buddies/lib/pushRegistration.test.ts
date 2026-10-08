@@ -1,10 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { BUDDY_PUSH_KINDS } from '@/features/buddies/lib/engine'
-import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
+import {
+  BADGE_PUSH_KIND,
+  BADGE_REACTION_PUSH_KIND,
+  BUDDY_PUSH_KINDS,
+} from '@/features/buddies/lib/engine'
+import {
+  BUDDIES_NEWS_CHANNEL_ID,
+  ensureBuddiesNewsChannel,
+  registerBuddiesPush,
+} from '@/features/buddies/lib/pushRegistration'
 
 const {
   registerPush,
   joinKinds,
+  badgeKinds,
   buddiesState,
   app,
   capture,
@@ -17,10 +26,12 @@ const {
       apnsTopic?: string
       pushService?: string
       fcmToken?: string
+      appAlerts?: boolean
       templates: Record<string, unknown>
     }) => 'registered'
   ),
   joinKinds: { current: ['join.request.aaaaaaaaaaaa'] },
+  badgeKinds: { current: ['badge.new', 'badge.reaction'] },
   buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
   app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
   capture: vi.fn(),
@@ -30,7 +41,7 @@ const {
 
 vi.mock('react-native', () => ({ Platform: platform }))
 vi.mock('expo-notifications', () => ({
-  AndroidImportance: { HIGH: 4 },
+  AndroidImportance: { HIGH: 4, LOW: 2 },
   getPermissionsAsync: async () => ({ granted: true }),
   getDevicePushTokenAsync: async () => ({ data: 'token' }),
   setNotificationChannelAsync: setChannel,
@@ -47,6 +58,7 @@ vi.mock('@/features/buddies/lib/buddiesService', () => ({
   buddiesEngine: {
     registerPush,
     joinRequestPushKinds: () => joinKinds.current,
+    badgePushKinds: () => badgeKinds.current,
   },
 }))
 vi.mock('@/features/buddies/stores/buddiesStore', () => ({
@@ -59,6 +71,7 @@ describe('registerBuddiesPush', () => {
     capture.mockClear()
     buddiesState.notificationsEnabled = true
     joinKinds.current = ['join.request.aaaaaaaaaaaa']
+    badgeKinds.current = [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND]
     app.applicationId = 'com.leviwilkerson.jwtimebeta'
     platform.OS = 'ios'
     setChannel.mockClear()
@@ -72,7 +85,12 @@ describe('registerBuddiesPush', () => {
     expect(registerPush.mock.calls[0][0]).not.toHaveProperty('pushService')
     expect(setChannel).not.toHaveBeenCalled()
     expect(Object.keys(templates).sort()).toEqual(
-      [...BUDDY_PUSH_KINDS, ...joinKinds.current].sort()
+      [
+        ...BUDDY_PUSH_KINDS,
+        ...joinKinds.current,
+        BADGE_PUSH_KIND,
+        BADGE_REACTION_PUSH_KIND,
+      ].sort()
     )
     // The relay accepts at most 32 templates per device.
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
@@ -101,7 +119,41 @@ describe('registerBuddiesPush', () => {
     joinKinds.current = []
     await registerBuddiesPush()
     expect(Object.keys(registerPush.mock.calls[1][0].templates).sort()).toEqual(
-      [...BUDDY_PUSH_KINDS].sort()
+      [...BUDDY_PUSH_KINDS, BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND].sort()
+    )
+  })
+
+  it('stays within the relay’s 32 templates with five buddies and badge alerts', async () => {
+    joinKinds.current = ['a', 'b', 'c', 'd', 'e'].map(
+      (tag) => `join.request.${tag.repeat(12)}`
+    )
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[0][0]
+    // Nine fixed kinds, five join kinds, and the two badge kinds.
+    expect(BUDDY_PUSH_KINDS).toHaveLength(9)
+    expect(Object.keys(templates)).toHaveLength(16)
+    expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
+  })
+
+  it('registers generic, name-free templates for new badges and reactions only while badge alerts are on', async () => {
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[0][0]
+    expect(templates[BADGE_PUSH_KIND]).toEqual({
+      title: 'buddies_pushBadgeTitle',
+      body: 'buddies_pushBadgeBody',
+    })
+    expect(templates[BADGE_REACTION_PUSH_KIND]).toEqual({
+      title: 'buddies_pushBadgeReactionTitle',
+      body: 'buddies_pushBadgeBody',
+    })
+    // Badge alerts (or badges) off on this device.
+    badgeKinds.current = []
+    await registerBuddiesPush()
+    expect(registerPush.mock.calls[1][0].templates).not.toHaveProperty(
+      BADGE_PUSH_KIND
+    )
+    expect(registerPush.mock.calls[1][0].templates).not.toHaveProperty(
+      BADGE_REACTION_PUSH_KIND
     )
   })
 
@@ -158,15 +210,37 @@ describe('registerBuddiesPush', () => {
     platform.OS = 'android'
     await registerBuddiesPush()
     const device = registerPush.mock.calls[0][0]
-    expect(device).toMatchObject({ pushService: 'fcm', fcmToken: 'token' })
+    expect(device).toMatchObject({
+      pushService: 'fcm',
+      fcmToken: 'token',
+      appAlerts: true,
+    })
     expect(device).not.toHaveProperty('apnsToken')
     expect(device).not.toHaveProperty('apnsTopic')
+    // Badge alerts register on Android too, now that Buddies is there.
     expect(Object.keys(device.templates).sort()).toEqual(
-      [...BUDDY_PUSH_KINDS, ...joinKinds.current].sort()
+      [...BUDDY_PUSH_KINDS, ...joinKinds.current, ...badgeKinds.current].sort()
     )
     expect(setChannel).toHaveBeenCalledWith('buddies', {
       name: 'buddies_title',
       importance: 4,
+    })
+    // Buddies' news gets its own quiet channel, made at the same time.
+    expect(setChannel).toHaveBeenCalledWith('buddies_news', {
+      name: 'buddies_newsChannelName',
+      importance: 2,
+    })
+  })
+})
+
+describe("buddies' news channel (ADR 0021)", () => {
+  it('is low importance', async () => {
+    setChannel.mockClear()
+    expect(BUDDIES_NEWS_CHANNEL_ID).toBe('buddies_news')
+    await ensureBuddiesNewsChannel()
+    expect(setChannel).toHaveBeenCalledWith('buddies_news', {
+      name: 'buddies_newsChannelName',
+      importance: 2,
     })
   })
 })

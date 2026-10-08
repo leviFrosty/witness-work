@@ -26,6 +26,13 @@ const hapticImports = {
   message: 'Play haptics through @/lib/haptics.',
 }
 
+const sheetImports = {
+  group: ['tamagui'],
+  importNames: ['Sheet'],
+  message:
+    'Use Sheet from @/components/ui/Sheet, which holds takeovers while open (ADR 0021).',
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -186,17 +193,27 @@ export default tseslint.config(
     },
   },
   // Sounds and haptics go through `@/lib/audio` and `@/lib/haptics` so the
-  // Audio & Haptics settings can't be bypassed. Flat config replaces (rather
-  // than merges) a rule's options, so each file gets one combined list.
+  // Audio & Haptics settings can't be bypassed, and sheets through
+  // `@/components/ui/Sheet` so they hold takeovers. Flat config replaces
+  // (rather than merges) a rule's options, so each file gets one combined list.
   ...[
-    { file: undefined, patterns: [soundImports, hapticImports] },
-    { file: 'src/lib/audio.ts', patterns: [hapticImports] },
-    { file: 'src/lib/haptics.ts', patterns: [soundImports] },
+    { file: undefined, patterns: [soundImports, hapticImports, sheetImports] },
+    { file: 'src/lib/audio.ts', patterns: [hapticImports, sheetImports] },
+    { file: 'src/lib/haptics.ts', patterns: [soundImports, sheetImports] },
+    {
+      file: 'src/components/ui/Sheet.tsx',
+      patterns: [soundImports, hapticImports],
+    },
   ].map(({ file, patterns }) => ({
     files: [file ?? 'src/**/*.{js,jsx,ts,tsx}'],
     ignores: file
       ? []
-      : ['src/lib/audio.ts', 'src/lib/haptics.ts', 'src/__tests__/**'],
+      : [
+          'src/lib/audio.ts',
+          'src/lib/haptics.ts',
+          'src/components/ui/Sheet.tsx',
+          'src/__tests__/**',
+        ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },
   })),
   {

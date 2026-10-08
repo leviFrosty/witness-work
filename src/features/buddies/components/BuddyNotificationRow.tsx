@@ -24,6 +24,7 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
+import { notificationHeadline } from '@/features/buddies/lib/notificationText'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { trackShareAnswer } from '@/features/buddies/lib/shareAnswerAnalytics'
 import {
@@ -33,35 +34,7 @@ import {
 import type { DayPlan } from '@/types/timeEntry'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
-
-function headline(entry: BuddyNotification): string {
-  const name = { name: entry.name }
-  const followUp = entry.shareType === 'followUp'
-  switch (entry.kind) {
-    case 'claim':
-      return i18n.t('buddies_requestTitle', name)
-    case 'paired':
-      return i18n.t('buddies_notifPaired', name)
-    case 'shareInvite':
-      return followUp
-        ? i18n.t('buddies_notifFollowUpInvite', name)
-        : i18n.t('buddies_notifPlanInvite', name)
-    case 'shareUpdate':
-      return followUp
-        ? i18n.t('buddies_notifFollowUpUpdate', name)
-        : i18n.t('buddies_notifPlanUpdate', name)
-    case 'shareCancel':
-      return followUp
-        ? i18n.t('buddies_notifFollowUpCancel', name)
-        : i18n.t('buddies_notifPlanCancel', name)
-    case 'shareReply':
-      return entry.reply === 'going'
-        ? i18n.t('buddies_notifReplyGoing', name)
-        : i18n.t('buddies_notifReplyDeclined', name)
-    case 'joinRequest':
-      return i18n.t('buddies_notifJoinRequest', name)
-  }
-}
+import { noteUserAction } from '@/lib/userAction'
 
 /**
  * One queue entry in the notifications tray; invitations, claims, and requests
@@ -69,7 +42,7 @@ function headline(entry: BuddyNotification): string {
  * the answer buttons stay outside the long-press target. An invitation or claim
  * still waiting on an answer can't be dismissed: answering is what clears it. A
  * request to join can: Not Now is dismissing it, and Invite turns into a check
- * once the buddy is invited.
+ * once the buddy is invited. Buddies' news has its own row (`BuddyNewsRow`).
  */
 export default function BuddyNotificationRow({
   entry,
@@ -239,7 +212,7 @@ export default function BuddyNotificationRow({
   const canAnswer =
     !!share && status !== 'cancelled' && (status === 'pending' || changing)
 
-  const title = headline({
+  const title = notificationHeadline({
     ...entry,
     name: buddy ? buddyDisplayName(buddy) : entry.name,
   })
@@ -450,7 +423,10 @@ export default function BuddyNotificationRow({
           <ActionButton
             disabled={busy}
             onPress={() => {
-              void run(() => buddiesEngine.confirmClaim(claim.inviteId))
+              void run(async () => {
+                await buddiesEngine.confirmClaim(claim.inviteId)
+                noteUserAction('buddy')
+              })
             }}
           >
             {i18n.t('buddies_confirm')}

@@ -46,12 +46,12 @@ Checks: free disk, Metro served from this worktree, API `/health`, the device le
 **State.** Never tap through onboarding or hand-enter fixture data.
 
 ```bash
-wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy
+wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy | badges
 wwv flag buddies on         # buddies | notes-import; on | off | clear
 wwv eval '__WW_DEV__.setSupporter(true)'
 wwv nav "Contact Details" '{"id":"verify-contact-0"}'
 wwv link 'witnesswork://add-time'   # real deep-link path; accepts the iOS "Open in" prompt
-wwv eval '__WW_DEV__.state()'       # route, counts, role, captured error count
+wwv eval '__WW_DEV__.state()'       # route, counts, role, badges, captured error count
 wwv eval '__WW_DEV__.stores.preferences.getState().timeDisplayFormat'
 ```
 
@@ -62,6 +62,8 @@ Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 - `publisher`: a checkbox-mode publisher with 4 contacts and 3 months shared.
 - `pioneer`: a regular pioneer with service-year hours, an LDC credit entry, 8 contacts (3 Bible studies, one overdue and one upcoming follow-up), and 3 upcoming plans.
 - `busy`: `pioneer` with 160 contacts, for list and map performance.
+- `badges`: `pioneer` plus a year and a bit of history (one contact visited monthly, sent reports, a weekly plan), which earns 14 badges.
+- Every onboarded scenario files the badges its records reach as already seen history, so seeding never shows a badge celebration. `fresh` leaves that first pass for after onboarding, like a real install.
 - Ids start with `verify-`, e.g. `verify-contact-0` is "Ada Reyes".
 
 **UI.** Use agent-device through the run's session:

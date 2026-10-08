@@ -31,6 +31,7 @@ import {
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import HomeGreeting from '@/features/profile/components/HomeGreeting'
+import HomeNewBadgeCard from '@/features/badges/components/HomeNewBadgeCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
@@ -181,6 +182,8 @@ export const HomeScreen = () => {
         }
       >
         <HomeGreeting />
+        {/* Full width above the columns, which alternate their children. */}
+        <HomeNewBadgeCard style={{ marginBottom: 20 }} />
         <AdaptiveColumns wide={isWide} style={{ paddingBottom: insets.bottom }}>
           {!homeChecklistDismissed && <HomeChecklist />}
           {effectiveOrder.map((key: HomeScreenElementKey) => {

@@ -5,8 +5,9 @@
 //   targets that compile it. The source is the source of truth; targets get
 //   copies because Xcode/EAS tarball flow does not reliably preserve symlinks
 //   across the local-build project archive.
-// - String catalogs for the watch and Siri (`targets/intents`) from
-//   `src/locales`, so their bundled strings and Siri phrases use the same
+// - String catalogs for the watch, Siri (`targets/intents`), and the Buddies
+//   alerts' Notification Service Extension (`targets/notification-service`)
+//   from `src/locales`, so their bundled strings and Siri phrases use the same
 //   translations as the app, and English where a language has none yet.
 // - The Wear OS app's (`targets/wear-os`) copy of the Kotlin watch protocol,
 //   and its string resources from `src/locales`.
@@ -429,6 +430,19 @@ export function l10nKeys(swift) {
   return keys
 }
 
+/**
+ * Keys the Notification Service Extension's Swift passes to `t` as string
+ * literals, including those in a literal key table (`"invite": "<key>"`).
+ */
+export function alertTextKeys(swift) {
+  const keys = new Set()
+  for (const [, key] of swift.matchAll(/\bt\(\s*"([A-Za-z0-9_.]+)"/g))
+    keys.add(key)
+  for (const [, key] of swift.matchAll(/:\s*"(buddies_[A-Za-z0-9_]+)"/g))
+    keys.add(key)
+  return keys
+}
+
 /** The source files ending in `extension` in `directory` and below. */
 function readSources(directory, extension) {
   return readdirSync(directory, { recursive: true })
@@ -492,6 +506,21 @@ function main() {
   sync(
     'targets/intents/Localizable.xcstrings',
     stringCatalog(locales, keys.intentStrings)
+  )
+
+  // The Notification Service Extension words Buddies alerts from these.
+  const alertKeys = new Set(keys.notificationStrings)
+  const alertUnlisted = [
+    ...alertTextKeys(readSwift(join(repo, 'targets/notification-service'))),
+  ].filter((key) => !alertKeys.has(key))
+  if (alertUnlisted.length) {
+    throw new Error(
+      `targets/notification-service uses ${alertUnlisted.join(', ')}; list them under notificationStrings in src/app/watch/watchStringKeys.json`
+    )
+  }
+  sync(
+    'targets/notification-service/Localizable.xcstrings',
+    stringCatalog(locales, keys.notificationStrings)
   )
 
   const shortcuts = shortcutCatalog(

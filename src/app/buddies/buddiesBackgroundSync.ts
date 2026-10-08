@@ -3,8 +3,10 @@ import * as Notifications from 'expo-notifications'
 import * as TaskManager from 'expo-task-manager'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 
+import { postBuddiesAlert } from '@/app/buddies/buddiesPushAlerts'
 import { logger } from '@/lib/logger'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import { pushMarkerOf } from '@/features/buddies/lib/pushAlerts'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const BUDDIES_PUSH_TASK = 'buddies-push-sync'
@@ -15,37 +17,30 @@ const BUDDIES_PUSH_TASK = 'buddies-push-sync'
  */
 const BACKGROUND_SYNC_TIMEOUT_MS = 25 * 1000
 
-/**
- * The push's `ww` marker: among the APNs payload's keys on iOS, and in the FCM
- * data's JSON `body` (`dataString`) on Android.
- */
-function pushMarker(data: { [key: string]: unknown } | undefined) {
-  if (data?.ww !== undefined) return data.ww
-  if (typeof data?.dataString !== 'string') return undefined
-  try {
-    return (JSON.parse(data.dataString) as { ww?: unknown } | null)?.ww
-  } catch {
-    return undefined
-  }
-}
+type PushPayload = Exclude<
+  Notifications.NotificationTaskPayload,
+  { actionIdentifier: string }
+>
 
 export const isBuddiesPush = (
   payload: Notifications.NotificationTaskPayload
-) => {
-  if ('actionIdentifier' in payload) return false
-  const marker = pushMarker(payload.data)
-  return typeof marker === 'object' && marker !== null && 'kind' in marker
-}
+): payload is PushPayload =>
+  !('actionIdentifier' in payload) && pushMarkerOf(payload.data) !== null
 
 /**
  * A Buddies push wakes the app in the background (`content-available` on iOS, a
  * data-only FCM message on Android), so what it announced is already pulled
- * when the User opens the app. While the app is open, BuddiesRuntime's received
- * listener syncs instead.
+ * when the User opens the app. On Android it also posts the push's alert. While
+ * the app is open, BuddiesRuntime's received listener does both instead.
  */
 async function syncForPush(payload: Notifications.NotificationTaskPayload) {
   if (!isBuddiesPush(payload) || AppState.currentState === 'active')
     return Notifications.BackgroundNotificationTaskResult.NoData
+  // Android's FCM message has no title: the alert is the app's to post (first,
+  // so it doesn't wait on the sync). iOS's extension words it instead.
+  await postBuddiesAlert(payload.data).catch((error) =>
+    logger.warn('[buddies] background push alert', error)
+  )
   if (
     !BuddiesKeychain.isAvailable() ||
     useBuddies.getState().registeredInboxId === null

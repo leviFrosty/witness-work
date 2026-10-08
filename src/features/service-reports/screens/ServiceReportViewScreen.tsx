@@ -10,6 +10,7 @@ import {
   Share as ShareIcon,
   X as XIcon,
 } from 'lucide-react-native'
+import { noteUserAction } from '@/lib/userAction'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, Keyboard, Platform, ScrollView, View } from 'react-native'
 import { TextArea } from 'tamagui'
@@ -214,6 +215,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   )
 
   const confirmSubmission = useCallback(() => {
+    noteUserAction('report')
     markReportSubmitted(reportMonthKey)
     setIsSubmitConfirmed(true)
     Haptics.success()

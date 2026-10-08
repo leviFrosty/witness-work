@@ -372,6 +372,17 @@ const preferenceShapes = z
     customAvatarBackground: z.string().nullable().optional(),
     seenTipIds: z.array(z.string()).optional(),
     submittedReportMonths: z.array(z.string()).optional(),
+    earnedBadges: z
+      .record(
+        z.object({
+          at: timestamp,
+          month: z.string().optional(),
+          history: z.boolean().optional(),
+        })
+      )
+      .optional(),
+    badgeLedger: z.array(z.string()).optional(),
+    showBadges: z.boolean().optional(),
     mileageTrackingEnabled: z.boolean().optional(),
     distanceUnit: z.enum(['mi', 'km']).optional(),
     fuelEconomyUnit: z

@@ -4,7 +4,7 @@ import {
 } from 'lucide-react-native'
 import { useState } from 'react'
 import { View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import Circle from '@/components/ui/Circle'

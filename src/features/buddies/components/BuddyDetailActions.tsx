@@ -74,7 +74,9 @@ export default function BuddyDetailActions({ inboxId }: { inboxId: string }) {
         icon={CalendarDaysIcon}
         label={i18n.t('buddies_viewOnCalendar')}
         onPress={() =>
-          navigation.navigate('Root', { screen: 'Schedule' } as never)
+          navigation.navigate('Root', { screen: 'Schedule' } as never, {
+            pop: true,
+          })
         }
       />
     </XView>

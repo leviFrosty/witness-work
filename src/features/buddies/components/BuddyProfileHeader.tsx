@@ -19,7 +19,8 @@ import type { Buddy } from '@/features/buddies/lib/state'
 
 /**
  * A buddy on the same card as the User's own Profile. Under a nickname, their
- * own name stays visible as the subtitle.
+ * own name stays visible as the subtitle. Their badges get their own section
+ * right below (`BuddyBadgesSection`).
  */
 export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
@@ -53,7 +54,7 @@ export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
       }
       title={name}
       subtitle={buddy.nickname ? buddy.name : undefined}
-      badge={streak > 0 ? <StreakBadge count={streak} /> : undefined}
+      trailing={streak > 0 ? <StreakBadge count={streak} /> : undefined}
       details={details}
     />
   )

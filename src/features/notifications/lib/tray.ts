@@ -36,8 +36,30 @@ export function trayEntries(
     .sort((a, b) => b.at - a.at)
 }
 
+/**
+ * The bell's number and the app icon badge: unread items, leaving out buddies'
+ * news, which never calls for attention.
+ */
 export const unreadCount = (entries: TrayEntry[]) =>
-  entries.filter((entry) => entry.unread).length
+  entries.filter((entry) => entry.unread && !entry.item.social).length
+
+/** Buddies' news the User hasn't seen yet, for the bell's quiet dot. */
+export const hasUnreadNews = (entries: TrayEntry[]) =>
+  entries.some((entry) => entry.unread && entry.item.social)
+
+/**
+ * The tray's two groups, each newest first: everything else on top, then
+ * buddies' news under "From your buddies".
+ */
+export function trayGroups(entries: TrayEntry[]): {
+  main: TrayEntry[]
+  news: TrayEntry[]
+} {
+  return {
+    main: entries.filter((entry) => !entry.item.social),
+    news: entries.filter((entry) => entry.item.social),
+  }
+}
 
 /** "Clear All" leaves sticky items, like invitations still to answer. */
 export const clearableIds = (entries: TrayEntry[]) =>

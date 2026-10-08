@@ -4,13 +4,16 @@ import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import { storedDayKey } from '@/lib/normalizeDate'
 import type { PlannedDayContribution } from '@/lib/recurrence'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
+import BuddyNewsRow from '@/features/buddies/components/BuddyNewsRow'
 import BuddyNotificationRow from '@/features/buddies/components/BuddyNotificationRow'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { buddyNews, isBuddyNews } from '@/features/buddies/lib/badgeNews'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
@@ -22,10 +25,12 @@ import {
   effectiveShareStatus,
   isOpenPlanInvitation,
 } from '@/features/buddies/lib/linkedPlans'
+import { holdsBadge, sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import {
   awaitsAnswer,
   type BuddyNotification,
+  listedNotifications,
   notificationIdForSeq,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -97,15 +102,55 @@ export function buddyNotificationIdForSeq(seq: number): string | null {
 }
 
 /**
+ * The tray entry and buddy a `badge.new` push (by its relay event, `ww.seq`) is
+ * about, once the event has synced and while they're still a buddy; marks the
+ * entry read. Null otherwise, so the caller can fall back to the tray.
+ */
+export function openBadgePush(
+  seq: number | undefined
+): { id: string; inboxId: string } | null {
+  if (seq === undefined || !usePreferences.getState().showBadges) return null
+  const { notifications, buddies } = useBuddies.getState()
+  const entry = notifications.find((n) => n.seq === seq && n.kind === 'badge')
+  const inboxId = entry?.from
+  if (!entry || !inboxId || !buddies.some((b) => b.inboxId === inboxId))
+    return null
+  buddiesEngine.markNotificationRead(entry.id)
+  return { id: entry.id, inboxId }
+}
+
+/**
+ * The tray entry and badge a `badge.reaction` push (by its relay event,
+ * `ww.seq`) is about, once the event has synced; marks the entry read. Null
+ * otherwise (a newer reaction replaced it, say), so the caller can fall back to
+ * the tray.
+ */
+export function openBadgeReactionPush(
+  seq: number | undefined
+): { id: string; badgeKey: string } | null {
+  if (seq === undefined || !usePreferences.getState().showBadges) return null
+  const entry = useBuddies
+    .getState()
+    .notifications.find((n) => n.seq === seq && n.kind === 'badgeReaction')
+  const badge = entry?.badges?.[0]
+  if (!entry || !badge) return null
+  buddiesEngine.markNotificationRead(entry.id)
+  return { id: entry.id, badgeKey: sharedBadgeKey(badge) }
+}
+
+/**
  * The buddy notification queue as tray items: invitations, changes,
- * cancellations, replies, requests to join, and new pairings. Only once the
- * User has started using Buddies.
+ * cancellations, replies, requests to join, and new pairings, then buddies'
+ * news (their new badges, and reactions to this User's badges) while badges are
+ * on. News is social: it's grouped apart and never counts (ADR 0021), and only
+ * an active buddy's shows. Only once the User has started using Buddies.
  */
 export default function useBuddyNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
   const enabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
-  const notifications = useBuddies((state) => state.notifications)
+  const queue = useBuddies((state) => state.notifications)
+  const showBadges = usePreferences((state) => state.showBadges)
   const buddies = useBuddies((state) => state.buddies)
   const incomingClaims = useBuddies((state) => state.incomingClaims)
   const incomingShares = useBuddies((state) => state.incomingShares)
@@ -167,7 +212,62 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return buddy ? buddyDisplayName(buddy) : entry.name
   }
 
-  return notifications.map((entry) => {
+  const listed = listedNotifications(queue, { showBadges })
+
+  // Buddies' news opens the badge it's about: theirs, or the one of this
+  // User's they reacted to. "New" while the row was unread.
+  const news = buddyNews(listed).flatMap(
+    ({ entry, ids }): NotificationItem[] => {
+      const buddy = buddies.find(
+        (b) => b.inboxId === entry.from && b.status === 'active'
+      )
+      const [lead] = entry.badges ?? []
+      if (!buddy || !lead) return []
+      const theirs = entry.kind === 'badge'
+      return [
+        {
+          id: entry.id,
+          kind: 'buddies',
+          at: entry.at,
+          title: buddyName(entry),
+          social: true,
+          onView: () => {
+            for (const id of ids) buddiesEngine.markNotificationRead(id)
+          },
+          onDismiss: () => {
+            for (const id of ids) buddiesEngine.dismissNotification(id)
+          },
+          render: ({ unread, dismiss, closeThen }) => (
+            <BuddyNewsRow
+              entry={entry}
+              unread={unread}
+              now={now}
+              onDismiss={dismiss}
+              onOpen={(origin) =>
+                closeThen(() =>
+                  navigation.navigate('BadgeView', {
+                    badgeKey: sharedBadgeKey(lead),
+                    owner: theirs ? { inboxId: buddy.inboxId } : 'me',
+                    // The tray closes behind the view, taking the coin along.
+                    origin: origin && { ...origin, returns: false },
+                    isNew: theirs && unread,
+                  })
+                )
+              }
+              encourage={
+                theirs && holdsBadge(buddy.badges, lead)
+                  ? { inboxId: buddy.inboxId, badge: lead }
+                  : undefined
+              }
+            />
+          ),
+        },
+      ]
+    }
+  )
+
+  const logisticsEntries = listed.filter((entry) => !isBuddyNews(entry))
+  const logistics = logisticsEntries.map((entry): NotificationItem => {
     const joinRequest =
       entry.kind === 'joinRequest' && entry.shareKey
         ? joinRequests[entry.shareKey]
@@ -251,4 +351,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
       ),
     }
   })
+
+  return [...logistics, ...news]
 }

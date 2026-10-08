@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'

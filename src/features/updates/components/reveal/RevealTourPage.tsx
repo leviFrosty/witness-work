@@ -29,6 +29,7 @@ import {
 import NavigationVisual from '@/features/updates/components/reveal/visuals/NavigationVisual'
 import MapVisual from '@/features/updates/components/reveal/visuals/MapVisual'
 import BuddiesVisual from '@/features/updates/components/reveal/visuals/BuddiesVisual'
+import BadgesVisual from '@/features/updates/components/reveal/visuals/BadgesVisual'
 import NotificationsVisual from '@/features/updates/components/reveal/visuals/NotificationsVisual'
 import HomeVisual from '@/features/updates/components/reveal/visuals/HomeVisual'
 import ContactsVisual from '@/features/updates/components/reveal/visuals/ContactsVisual'
@@ -165,6 +166,7 @@ const RevealTourPage = ({
             {page.id === 'navigation' && <NavigationVisual {...visualProps} />}
             {page.id === 'map' && <MapVisual {...visualProps} />}
             {page.id === 'buddies' && <BuddiesVisual {...visualProps} />}
+            {page.id === 'badges' && <BadgesVisual {...visualProps} />}
             {page.id === 'notifications' && (
               <NotificationsVisual {...visualProps} />
             )}

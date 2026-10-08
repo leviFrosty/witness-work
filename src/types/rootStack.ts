@@ -162,7 +162,45 @@ export type RootStackParamList = {
     | { vehicleId?: string; thenLogTrip?: boolean; source?: MileageSource }
     | undefined
   MileageFuelForm: { fuelId?: string } | undefined
+  /** The User's badge collection, with progress toward each next level. */
+  Badges: { source?: BadgesSource } | undefined
+  /**
+   * One badge, full screen: the coin flips out of `origin` and settles large.
+   * `badgeKey` is a `BadgeKey` (`yearRound.3`, `firstBibleStudy`). A buddy's
+   * badge shows only that it's theirs: no dates or progress.
+   */
+  BadgeView: {
+    badgeKey: string
+    owner: BadgeOwner
+    origin?: BadgeViewOrigin
+    /** Opened from news the User hadn't seen yet: shows a "New" pill. */
+    isNew?: boolean
+  }
 }
+
+/** Whose badge a badge view shows: the User's, or a buddy's by inbox id. */
+export type BadgeOwner = 'me' | { inboxId: string }
+
+/** The tapped coin's window rect, which a badge view grows out of. */
+export type BadgeViewOrigin = {
+  x: number
+  y: number
+  size: number
+  /**
+   * False when the coin is gone by the time the view closes (the profile
+   * overlay closes behind it), so the view fades instead of flying back.
+   */
+  returns?: boolean
+}
+
+/** Where the Badges screen was opened from (analytics). */
+export type BadgesSource =
+  | 'profile_overlay'
+  | 'profile_card'
+  | 'celebration'
+  | 'welcome'
+  | 'settings'
+  | 'other'
 
 /** Where a Mileage flow started (analytics). */
 export type MileageSource =

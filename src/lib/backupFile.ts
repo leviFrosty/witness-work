@@ -83,7 +83,25 @@ export function restoreBackupFile(data: BackupFile): void {
         ...useProfile.getState(),
       })
     )
-    usePreferences.getState().set(syncableValues(preferences.preferences))
+    const restored = syncableValues(preferences.preferences)
+    const current = usePreferences.getState()
+    usePreferences.getState().set({
+      ...restored,
+      // Earned badges are keepsakes: a restore adds to them, never removes
+      // (a removal would also sync to every other device).
+      earnedBadges: {
+        ...((restored.earnedBadges as typeof current.earnedBadges) ?? {}),
+        ...current.earnedBadges,
+      },
+      badgeLedger: [
+        ...new Set([
+          ...((restored.badgeLedger as string[]) ?? []),
+          ...current.badgeLedger,
+        ]),
+      ].sort(),
+      // The next evaluation files what the restored records reach as history.
+      badgesBackfilledAt: null,
+    })
     const profile = data.profileStore ?? preferences.profile.values
     useProfile
       .getState()

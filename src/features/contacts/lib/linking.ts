@@ -3,6 +3,8 @@ import {
   createNavigationContainerRef,
 } from '@react-navigation/native'
 import * as Linking from 'expo-linking'
+import { usePreferences } from '@/stores/preferences'
+import { afterTakeovers } from '@/stores/takeover'
 import { RootStackParamList } from '@/types/rootStack'
 
 /**
@@ -68,6 +70,44 @@ export const linking: LinkingOptions<RootStackParamList> = {
       PlanDay: 'day',
     },
   },
+  // A link that arrives during onboarding, or while something is taking over
+  // the screen (the update reveal), opens once that's done instead of
+  // underneath it (ADR 0021). The newest link wins.
+  subscribe(listener) {
+    let cancel = () => {}
+    const deliver = (url: string) => {
+      cancel()
+      let stopTakeover = () => {}
+      const stopOnboarding = afterOnboarding(() => {
+        stopTakeover = afterTakeovers(() => listener(url))
+      })
+      cancel = () => {
+        stopOnboarding()
+        stopTakeover()
+      }
+    }
+    const subscription = Linking.addEventListener('url', ({ url }) =>
+      deliver(url)
+    )
+    return () => {
+      cancel()
+      subscription.remove()
+    }
+  },
+}
+
+/** Runs `run` once onboarding is done: now, or when it finishes. */
+function afterOnboarding(run: () => void): () => void {
+  if (usePreferences.getState().onboardingComplete) {
+    run()
+    return () => {}
+  }
+  const unsubscribe = usePreferences.subscribe((state) => {
+    if (!state.onboardingComplete) return
+    unsubscribe()
+    run()
+  })
+  return unsubscribe
 }
 
 export const SHARED_GOOD_NEWS_HOST = 'shared-good-news'

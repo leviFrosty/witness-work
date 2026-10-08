@@ -11,6 +11,7 @@ import {
   Layers as LayersIcon,
   Map as MapIcon,
   MapPinned as MapPinnedIcon,
+  Medal as MedalIcon,
   PanelBottom as PanelBottomIcon,
   PanelsLeftBottom as PanelsLeftBottomIcon,
   Pointer as PointerIcon,
@@ -33,6 +34,7 @@ export type RevealPageId =
   | 'navigation'
   | 'map'
   | 'buddies'
+  | 'badges'
   | 'notifications'
   | 'home'
   | 'contacts'
@@ -64,6 +66,8 @@ export interface RevealPageSpec {
   timeEntryOnly?: boolean
   /** Caption for roles that report with the checkbox instead of hours. */
   checkboxCaptionKey?: TranslationKey
+  /** Caption where Buddies doesn't show (Android, or before its rollout). */
+  noBuddiesCaptionKey?: TranslationKey
   /** A Siri phrase to call out beneath the caption. */
   siriPhraseKey?: TranslationKey
 }
@@ -91,6 +95,14 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
     titleKey: 'updateReveal_buddies_title',
     captionKey: 'updateReveal_buddies_caption',
     buddiesOnly: true,
+  },
+  {
+    id: 'badges',
+    icon: MedalIcon,
+    color: 'warn',
+    titleKey: 'updateReveal_badges_title',
+    captionKey: 'updateReveal_badges_caption',
+    noBuddiesCaptionKey: 'updateReveal_badges_captionNoBuddies',
   },
   {
     id: 'notifications',

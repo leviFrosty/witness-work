@@ -1,10 +1,13 @@
 import moment from 'moment'
 import * as StoreReview from 'expo-store-review'
+import { useTakeover } from '@/stores/takeover'
 
 /**
  * Can be called safely from any major app action.
  *
- * Will only request a review if user has reached certain usage criteria.
+ * Will only request a review if user has reached certain usage criteria, and
+ * never while something is taking over the screen (ADR 0021): it just skips,
+ * and a later action asks again.
  */
 export const maybeRequestStoreReview = async ({
   installedOn,
@@ -25,6 +28,7 @@ export const maybeRequestStoreReview = async ({
     lastTimeRequestedAReview === null ||
     moment(lastTimeRequestedAReview).isBefore(moment().subtract(3, 'days'))
 
+  if (useTakeover.getState().isTakingOver()) return
   if (
     calledGoecodeApiTimes > 1 &&
     installedAppMoreThanADayAgo &&

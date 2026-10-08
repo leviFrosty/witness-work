@@ -4,6 +4,7 @@ export type FAQCategory =
   | 'plans'
   | 'streaks'
   | 'buddies'
+  | 'badges'
   | 'mileage'
   | 'map'
   | 'customization'
@@ -99,10 +100,18 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesInvitations', category: 'buddies' },
   { id: 'buddiesAskToJoin', category: 'buddies' },
   { id: 'buddiesJoinRequests', category: 'buddies' },
+  { id: 'buddiesNotifications', category: 'buddies' },
   { id: 'buddiesDetail', category: 'buddies' },
   { id: 'buddiesMissingPlans', category: 'buddies' },
   { id: 'buddiesNotSent', category: 'buddies' },
   { id: 'buddiesRemove', category: 'buddies' },
+  { id: 'badgesOverview', category: 'badges' },
+  { id: 'badgesView', category: 'badges' },
+  { id: 'badgesMonths', category: 'badges' },
+  { id: 'badgesCollections', category: 'badges' },
+  { id: 'badgesBuddies', category: 'badges' },
+  { id: 'badgesBuddyNews', category: 'badges' },
+  { id: 'badgesKeep', category: 'badges' },
   { id: 'mileageStart', category: 'mileage' },
   { id: 'mileageCost', category: 'mileage' },
   { id: 'mileageUnits', category: 'mileage' },
@@ -309,6 +318,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'plans',
   'streaks',
   'buddies',
+  'badges',
   'mileage',
   'map',
   'customization',

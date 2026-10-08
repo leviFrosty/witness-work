@@ -1,7 +1,7 @@
 import { X as XIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { Modal, View } from 'react-native'
-import { Sheet } from 'tamagui'
+import Sheet from '@/components/ui/Sheet'
 import ColorPicker, {
   HueSlider,
   Panel1,

@@ -5,26 +5,18 @@ import {
   Repeat as RepeatIcon,
   X as XIcon,
 } from 'lucide-react-native'
-import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
-import Switch from '@/components/ui/Switch'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { Modal, Pressable, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
-import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import DateTimePicker from '@/components/ui/DateTimePicker'
 import Select from '@/components/ui/Select'
-import SelectWheel from '@/components/ui/SelectWheel'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Header from '@/components/ui/layout/Header'
 import confirmDeletePlan, { deletePlan } from '@/lib/confirmDeletePlan'
@@ -55,8 +47,7 @@ import {
 import useCategories from '@/stores/categories'
 import useNotifications from '@/hooks/notifications'
 
-import TextInput from '@/components/ui/TextInput'
-import TypeSelectorRow, {
+import {
   CUSTOM_TYPE_VALUE,
   STANDARD_TYPE_VALUE,
   type TypeSelection,
@@ -64,11 +55,18 @@ import TypeSelectorRow, {
 import { RootStackParamList } from '@/types/rootStack'
 import type { DayPlan, PlanLocation } from '@/types/timeEntry'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
-import PlaceSearchField from '@/features/plans/components/PlaceSearchField'
 import BuddyPicker from '@/features/buddies/components/BuddyPicker'
 import LinkedPlanBanner from '@/features/buddies/components/LinkedPlanBanner'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { planShareKey } from '@/features/buddies/lib/shares'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { placeSearchProvider } from '@/lib/placeSearch'
+import PlanDetailsList from '@/features/plans/components/PlanDetailsList'
+import PlanRecurrenceControls from '@/features/plans/components/PlanRecurrenceControls'
+import PlanFormLayout from '@/features/plans/components/PlanFormLayout'
+import PlanWhenDock from '@/features/plans/components/PlanWhenDock'
 
 type NotifyMeOffset = {
   amount: number
@@ -78,17 +76,6 @@ type NotifyMeOffset = {
 type RecurringSaveScope = 'instance' | 'future' | 'all'
 
 type PlanDetailsTarget = RootStackParamList['Plan Details']
-
-const hourOptions = [...Array(24).keys()].map((value) => ({
-  label: `${value}`,
-  value,
-}))
-const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
-  (value) => ({
-    label: `${value}`,
-    value,
-  })
-)
 
 const offsetAmountOptions = [...Array(1000).keys()].map((value) => ({
   label: `${value}`,
@@ -102,25 +89,6 @@ const offsetUnitOptions: {
   value: value as moment.unitOfTime.DurationConstructor,
 }))
 
-const frequencyOptions = [
-  {
-    label: i18n.t('weekly'),
-    value: RecurringPlanFrequencies.WEEKLY,
-  },
-  {
-    label: i18n.t('bi-weekly'),
-    value: RecurringPlanFrequencies.BI_WEEKLY,
-  },
-  {
-    label: i18n.t('monthly'),
-    value: RecurringPlanFrequencies.MONTHLY,
-  },
-  {
-    label: i18n.t('monthlyByWeekday'),
-    value: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
-  },
-]
-
 const storedDateFor = (date: Date) => preserveOrNormalizeStoredDate(date)
 
 const storedDay = (date: Date) => momentStoredDate(storedDateFor(date))
@@ -129,491 +97,41 @@ const localDateForWrite = (date: Date) => localDayFromUtcCursor(storedDay(date))
 
 const sameDay = (a: Date, b: Date) => storedDay(a).isSame(storedDay(b), 'day')
 
-const PlanKindToggle = (props: {
-  oneTime: boolean
-  setOneTime: React.Dispatch<React.SetStateAction<boolean>>
-}) => {
-  const theme = useTheme()
-
-  return (
-    <InputRowContainer controlWidth='full'>
-      <XView
-        style={{
-          backgroundColor: theme.colors.background,
-          borderRadius: theme.numbers.borderRadiusXl,
-          padding: 10,
-        }}
-      >
-        <Button
-          style={{
-            backgroundColor: props.oneTime
-              ? theme.colors.accentTranslucent
-              : undefined,
-            borderColor: props.oneTime ? theme.colors.accent : undefined,
-            borderWidth: props.oneTime ? 1 : 0,
-            paddingHorizontal: 30,
-            paddingVertical: 10,
-            borderRadius: theme.numbers.borderRadiusXl,
-            justifyContent: 'center',
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 5,
-          }}
-          onPress={() => props.setOneTime(true)}
-        >
-          <IconButton
-            icon={Calendar1Icon}
-            color={props.oneTime ? theme.colors.accent : theme.colors.text}
-          />
-          <Text
-            style={{
-              textAlign: 'center',
-              color: props.oneTime ? theme.colors.accent : theme.colors.text,
-            }}
-          >
-            {i18n.t('oneTime')}
-          </Text>
-        </Button>
-        <Button
-          style={{
-            backgroundColor: !props.oneTime
-              ? theme.colors.accentTranslucent
-              : undefined,
-            borderColor: !props.oneTime ? theme.colors.accent : undefined,
-            borderWidth: !props.oneTime ? 1 : 0,
-            paddingHorizontal: 30,
-            paddingVertical: 10,
-            borderRadius: theme.numbers.borderRadiusXl,
-            justifyContent: 'center',
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 5,
-          }}
-          onPress={() => props.setOneTime(false)}
-        >
-          <IconButton
-            icon={RepeatIcon}
-            color={!props.oneTime ? theme.colors.accent : theme.colors.text}
-          />
-          <Text
-            style={{
-              textAlign: 'center',
-              color: !props.oneTime ? theme.colors.accent : theme.colors.text,
-            }}
-          >
-            {i18n.t('recurring')}
-          </Text>
-        </Button>
-      </XView>
-    </InputRowContainer>
-  )
-}
-
-const DurationFields = (props: {
-  hours: number
-  setHours: React.Dispatch<React.SetStateAction<number>>
-  minutes: number
-  setMinutes: React.Dispatch<React.SetStateAction<number>>
-  lastInSection?: boolean
-}) => (
-  <View style={{ flexDirection: 'row' }}>
-    <InputRowContainer
-      label={i18n.t('hours')}
-      lastInSection={props.lastInSection}
-      style={{ width: '50%' }}
-      gap={6}
-    >
-      <SelectWheel
-        data={hourOptions}
-        accessibilityLabel={i18n.t('hours')}
-        placeholder={props.hours.toString()}
-        onChange={({ value }) => props.setHours(value)}
-        value={props.hours.toString()}
-      />
-    </InputRowContainer>
-    <InputRowContainer
-      label={i18n.t('minutes')}
-      style={{ width: '50%' }}
-      gap={6}
-      lastInSection={props.lastInSection}
-    >
-      <SelectWheel
-        data={minuteOptions}
-        accessibilityLabel={i18n.t('minutes')}
-        placeholder={props.minutes.toString()}
-        onChange={({ value }) => props.setMinutes(value)}
-        value={props.minutes.toString()}
-      />
-    </InputRowContainer>
-  </View>
-)
-
-const NotificationFields = (props: {
-  notifyMe: boolean
-  setNotifyMe: React.Dispatch<React.SetStateAction<boolean>>
+const ReminderOffsetSelects = (props: {
   notifyMeOffset: NotifyMeOffset
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
-  notificationsAllowed: boolean
-  turnOnNotifications: () => Promise<boolean>
-  reminderPassed: boolean
 }) => {
   const theme = useTheme()
 
-  // Asking here, rather than leaving the switch disabled, matches Buddies.
-  const handleNotifyMeChange = async (notifyMe: boolean) => {
-    if (
-      notifyMe &&
-      !props.notificationsAllowed &&
-      !(await props.turnOnNotifications())
-    )
-      return
-    props.setNotifyMe(notifyMe)
-  }
-
   return (
-    <InputRowContainer lastInSection controlWidth='full' style={{ gap: 8 }}>
-      <View style={{ gap: 15, flex: 1 }}>
-        <View
-          style={{
-            justifyContent: 'flex-end',
-            flex: 1,
-            flexDirection: 'row',
-          }}
-        >
-          <View style={{ gap: 4, flex: 1 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <Text
-                style={{
-                  flexShrink: 1,
-                  fontFamily: theme.fonts.medium,
-                  fontSize: theme.fontSize('lg'),
-                }}
-              >
-                {i18n.t('notifyMe')}
-              </Text>
-              <Switch
-                accessibilityLabel={i18n.t('notifyMe')}
-                value={props.notifyMe}
-                onValueChange={(value) => void handleNotifyMeChange(value)}
-              />
-            </View>
-            {!props.notificationsAllowed && (
-              <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                {i18n.t('notifyMe_description')}
-              </Text>
-            )}
-          </View>
-        </View>
-        {props.notificationsAllowed && props.notifyMe && (
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={offsetAmountOptions}
-                onChange={({ value: amount }) =>
-                  props.setNotifyMeOffset({
-                    ...props.notifyMeOffset,
-                    amount,
-                  })
-                }
-                placeholder={props.notifyMeOffset.amount.toString()}
-                value={props.notifyMeOffset.amount.toString()}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={offsetUnitOptions}
-                onChange={({ value: unit }) =>
-                  props.setNotifyMeOffset({
-                    ...props.notifyMeOffset,
-                    unit,
-                  })
-                }
-                value={props.notifyMeOffset.unit}
-              />
-            </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('before')}
-            </Text>
-          </View>
-        )}
-        {props.notificationsAllowed &&
-          props.notifyMe &&
-          props.reminderPassed && (
-            <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-              {i18n.t('reminderTimePassed')}
-            </Text>
-          )}
+    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+      <View style={{ flex: 1 }}>
+        <Select
+          data={offsetAmountOptions}
+          onChange={({ value: amount }) =>
+            props.setNotifyMeOffset({
+              ...props.notifyMeOffset,
+              amount,
+            })
+          }
+          placeholder={props.notifyMeOffset.amount.toString()}
+          value={props.notifyMeOffset.amount.toString()}
+        />
       </View>
-    </InputRowContainer>
-  )
-}
-
-const RecurrenceFields = (props: {
-  date: Date
-  endDate: Date | null
-  setEndDate: React.Dispatch<React.SetStateAction<Date | null>>
-  willEnd: boolean
-  setWillEnd: React.Dispatch<React.SetStateAction<boolean>>
-  frequency: RecurringPlanFrequencies
-  setFrequency: React.Dispatch<React.SetStateAction<RecurringPlanFrequencies>>
-  weekday: number
-  setWeekday: React.Dispatch<React.SetStateAction<number>>
-  weekOfMonth: number
-  setWeekOfMonth: React.Dispatch<React.SetStateAction<number>>
-}) => {
-  const handleSetWillEnd = () => {
-    if (!props.willEnd) {
-      props.setEndDate(props.date)
-    } else {
-      props.setEndDate(null)
-    }
-    props.setWillEnd(!props.willEnd)
-  }
-
-  return (
-    <>
-      <InputRowContainer label={i18n.t('recurrence')}>
-        <View style={{ flex: 1 }}>
-          <Select
-            data={frequencyOptions}
-            placeholder={
-              frequencyOptions.find((f) => f.value === props.frequency)?.label
-            }
-            onChange={({ value }) => props.setFrequency(value)}
-            value={props.frequency.toString()}
-          />
-        </View>
-      </InputRowContainer>
-
-      {props.frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY && (
-        <>
-          <InputRowContainer label={i18n.t('selectWeekday')}>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={[
-                  { label: i18n.t('sunday'), value: 0 },
-                  { label: i18n.t('monday'), value: 1 },
-                  { label: i18n.t('tuesday'), value: 2 },
-                  { label: i18n.t('wednesday'), value: 3 },
-                  { label: i18n.t('thursday'), value: 4 },
-                  { label: i18n.t('friday'), value: 5 },
-                  { label: i18n.t('saturday'), value: 6 },
-                ]}
-                placeholder={
-                  [
-                    i18n.t('sunday'),
-                    i18n.t('monday'),
-                    i18n.t('tuesday'),
-                    i18n.t('wednesday'),
-                    i18n.t('thursday'),
-                    i18n.t('friday'),
-                    i18n.t('saturday'),
-                  ][props.weekday]
-                }
-                onChange={({ value }) => props.setWeekday(value)}
-                value={props.weekday.toString()}
-              />
-            </View>
-          </InputRowContainer>
-          <InputRowContainer label={i18n.t('selectWeekOfMonth')}>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={[
-                  { label: i18n.t('firstWeek'), value: 1 },
-                  { label: i18n.t('secondWeek'), value: 2 },
-                  { label: i18n.t('thirdWeek'), value: 3 },
-                  { label: i18n.t('fourthWeek'), value: 4 },
-                  { label: i18n.t('lastWeek'), value: -1 },
-                ]}
-                placeholder={
-                  props.weekOfMonth === -1
-                    ? i18n.t('lastWeek')
-                    : [
-                        i18n.t('firstWeek'),
-                        i18n.t('secondWeek'),
-                        i18n.t('thirdWeek'),
-                        i18n.t('fourthWeek'),
-                      ][props.weekOfMonth - 1]
-                }
-                onChange={({ value }) => props.setWeekOfMonth(value)}
-                value={props.weekOfMonth.toString()}
-              />
-            </View>
-          </InputRowContainer>
-        </>
-      )}
-
-      <InputRowContainer
-        label={i18n.t('endDate')}
-        controlWidth='auto'
-        style={{ justifyContent: 'space-between' }}
-      >
-        <XView>
-          <Switch
-            accessibilityLabel={i18n.t('endDate')}
-            value={props.willEnd}
-            onValueChange={handleSetWillEnd}
-          />
-          {props.willEnd && props.endDate && (
-            <DateTimePicker
-              value={props.endDate}
-              onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
-            />
-          )}
-        </XView>
-      </InputRowContainer>
-    </>
-  )
-}
-
-const PlanFields = (props: {
-  isRecurring: boolean
-  title: string
-  setTitle: React.Dispatch<React.SetStateAction<string>>
-  location?: PlanLocation
-  setLocation: (location?: PlanLocation) => void
-  date: Date
-  setDate: React.Dispatch<React.SetStateAction<Date>>
-  hours: number
-  setHours: React.Dispatch<React.SetStateAction<number>>
-  minutes: number
-  setMinutes: React.Dispatch<React.SetStateAction<number>>
-  note?: string
-  setNote: React.Dispatch<React.SetStateAction<string>>
-  typeSelector: React.ReactNode
-  endDate: Date | null
-  setEndDate: React.Dispatch<React.SetStateAction<Date | null>>
-  willEnd: boolean
-  setWillEnd: React.Dispatch<React.SetStateAction<boolean>>
-  frequency: RecurringPlanFrequencies
-  setFrequency: React.Dispatch<React.SetStateAction<RecurringPlanFrequencies>>
-  weekday: number
-  setWeekday: React.Dispatch<React.SetStateAction<number>>
-  weekOfMonth: number
-  setWeekOfMonth: React.Dispatch<React.SetStateAction<number>>
-  notifyMe: boolean
-  setNotifyMe: React.Dispatch<React.SetStateAction<boolean>>
-  notifyMeOffset: NotifyMeOffset
-  setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
-  notificationsAllowed: boolean
-  turnOnNotifications: () => Promise<boolean>
-  reminderPassed: boolean
-}) => {
-  const theme = useTheme()
-  const noteInput = useRef<RNTextInput>(null)
-  const titleInput = useRef<RNTextInput>(null)
-
-  return (
-    <>
-      <InputRowContainer
-        label={i18n.t('planTitle')}
-        onLabelPress={() => titleInput.current?.focus()}
-        controlWidth='full'
-      >
-        <TextInput
-          ref={titleInput}
-          value={props.title}
-          onChangeText={props.setTitle}
-          placeholder={i18n.t('planTitle_placeholder')}
-          placeholderTextColor={theme.colors.textAlt}
-          textAlign='left'
-          maxLength={100}
-          style={{
-            borderColor: theme.colors.border,
-            borderWidth: 1,
-            borderRadius: theme.numbers.borderRadiusSm,
-            padding: 10,
-            color: theme.colors.text,
-          }}
-          clearButtonMode='while-editing'
-          returnKeyType='done'
+      <View style={{ flex: 1 }}>
+        <Select
+          data={offsetUnitOptions}
+          onChange={({ value: unit }) =>
+            props.setNotifyMeOffset({
+              ...props.notifyMeOffset,
+              unit,
+            })
+          }
+          value={props.notifyMeOffset.unit}
         />
-      </InputRowContainer>
-      <InputRowContainer
-        label={i18n.t('date')}
-        controlWidth='auto'
-        justifyContent='space-between'
-      >
-        <DateTimePicker
-          value={props.date}
-          onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          iOSMode='datetime'
-        />
-      </InputRowContainer>
-      {props.typeSelector}
-      {props.isRecurring && (
-        <RecurrenceFields
-          date={props.date}
-          endDate={props.endDate}
-          setEndDate={props.setEndDate}
-          willEnd={props.willEnd}
-          setWillEnd={props.setWillEnd}
-          frequency={props.frequency}
-          setFrequency={props.setFrequency}
-          weekday={props.weekday}
-          setWeekday={props.setWeekday}
-          weekOfMonth={props.weekOfMonth}
-          setWeekOfMonth={props.setWeekOfMonth}
-        />
-      )}
-      <PlaceSearchField value={props.location} onChange={props.setLocation} />
-      <InputRowContainer
-        label={i18n.t('note')}
-        onLabelPress={() => noteInput.current?.focus()}
-        controlWidth='full'
-        style={{ gap: 8 }}
-      >
-        <View style={{ flex: 1 }}>
-          <TextInput
-            ref={noteInput}
-            value={props.note}
-            onChangeText={props.setNote}
-            placeholder={i18n.t('optional')}
-            placeholderTextColor={theme.colors.textAlt}
-            multiline
-            style={{
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-              borderRadius: theme.numbers.borderRadiusSm,
-              paddingHorizontal: 10,
-              paddingTop: 10,
-              paddingBottom: 10,
-              alignItems: 'center',
-              color: theme.colors.text,
-            }}
-            textAlign='left'
-            clearButtonMode='while-editing'
-          />
-        </View>
-      </InputRowContainer>
-      <DurationFields
-        hours={props.hours}
-        setHours={props.setHours}
-        minutes={props.minutes}
-        setMinutes={props.setMinutes}
-        lastInSection={props.isRecurring}
-      />
-      {!props.isRecurring && (
-        <NotificationFields
-          notifyMe={props.notifyMe}
-          setNotifyMe={props.setNotifyMe}
-          notifyMeOffset={props.notifyMeOffset}
-          setNotifyMeOffset={props.setNotifyMeOffset}
-          notificationsAllowed={props.notificationsAllowed}
-          turnOnNotifications={props.turnOnNotifications}
-          reminderPassed={props.reminderPassed}
-        />
-      )}
-    </>
+      </View>
+      <Text style={{ color: theme.colors.textAlt }}>{i18n.t('before')}</Text>
+    </View>
   )
 }
 
@@ -1115,7 +633,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   const toast = useToastController()
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
 
   const editingContext = `${params.existingDayPlanId || 'new'}-${params.existingRecurringPlanId || 'new'}-${params.recurringPlanDate || params.date}-${params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
 
@@ -1501,127 +1018,193 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     })
   }, [isEditMode, navigation])
 
-  return (
-    <Wrapper
-      style={{
-        flex: 1,
-        flexGrow: 1,
-        justifyContent: 'space-between',
-        paddingBottom: insets.bottom,
-        paddingTop: 0,
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <KeyboardAwareScrollView
-          contentContainerStyle={{
-            minHeight: 10,
-            gap: 20,
-            paddingTop: 10,
-            paddingHorizontal: inputLayout.horizontalPadding,
-            width: '100%',
-            maxWidth: inputLayout.contentMaxWidth,
-            alignSelf: 'center',
-          }}
-        >
-          {linkedShare && <LinkedPlanBanner share={linkedShare} />}
-          <Section>
-            {!isEditMode && (
-              <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />
-            )}
-            <PlanFields
-              isRecurring={!oneTime}
-              title={title}
-              setTitle={setTitle}
-              location={location}
-              setLocation={setLocation}
-              date={date}
-              setDate={handleDateChange}
-              hours={hours}
-              setHours={setHours}
-              minutes={minutes}
-              setMinutes={setMinutes}
-              note={note}
-              setNote={setNote}
-              typeSelector={
-                <TypeSelectorRow
-                  value={typeValue}
-                  onChange={handleTypeChange}
-                />
-              }
-              endDate={endDate}
-              setEndDate={setEndDate}
-              willEnd={willEnd}
-              setWillEnd={setWillEnd}
-              frequency={frequency}
-              setFrequency={handleFrequencyChange}
-              weekday={weekday}
-              setWeekday={setWeekday}
-              weekOfMonth={weekOfMonth}
-              setWeekOfMonth={setWeekOfMonth}
-              notifyMe={notifyMe}
-              setNotifyMe={setNotifyMe}
-              notifyMeOffset={notifyMeOffset}
-              setNotifyMeOffset={setNotifyMeOffset}
-              notificationsAllowed={notificationsAllowed}
-              turnOnNotifications={turnOnNotifications}
-              reminderPassed={reminderPassed}
-            />
-            {oneTime && !linkedShare && (
-              <BuddyPicker
-                value={invitedBuddies}
-                onChange={setInvitedBuddies}
-                description={i18n.t('buddies_invitePlanDescription')}
-                replies={shareReplies}
-                lastInSection
-              />
-            )}
+  const buddiesEnabled = useBuddiesEnabled()
+  const activeBuddies = useBuddies((state) => state.buddies).filter(
+    (buddy) => buddy.status === 'active'
+  )
+  const invitedBuddyNames = activeBuddies
+    .filter((buddy) => invitedBuddies.includes(buddy.inboxId))
+    .map(buddyDisplayName)
+    .join(', ')
 
-            {typeValue === CUSTOM_TYPE_VALUE && (
-              <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-                {i18n.t('categoryNeeded')}
-              </Text>
-            )}
-            <View style={{ paddingHorizontal: 12, paddingVertical: 16 }}>
-              <ActionButton onPress={handlePrimarySave} disabled={saveDisabled}>
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('lg'),
-                  }}
-                >
-                  {isEditMode
-                    ? i18n.t('save')
-                    : `${i18n.t('add')} ${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
-                </Text>
-              </ActionButton>
-            </View>
-            {isEditMode && (
-              <Button
-                noTransform
-                onPress={handleRequestDelete}
-                accessibilityRole='button'
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 12,
-                  marginBottom: 8,
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.error,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('md'),
-                  }}
-                >
-                  {i18n.t('deleteEllipsis')}
-                </Text>
-              </Button>
-            )}
-          </Section>
-        </KeyboardAwareScrollView>
-      </View>
+  // Asking here, rather than leaving the switch disabled, matches Buddies.
+  const handleNotifyMeChange = async (on: boolean) => {
+    if (on && !notificationsAllowed && !(await turnOnNotifications())) return
+    setNotifyMe(on)
+  }
+
+  const handleWillEndChange = () => {
+    setEndDate(willEnd ? null : date)
+    setWillEnd(!willEnd)
+  }
+
+  const dock = (
+    <PlanWhenDock
+      showKindToggle={!isEditMode}
+      oneTime={oneTime}
+      setOneTime={setOneTime}
+      date={date}
+      setDate={handleDateChange}
+      hours={hours}
+      minutes={minutes}
+      setDuration={(nextHours, nextMinutes) => {
+        setHours(nextHours)
+        setMinutes(nextMinutes)
+      }}
+      recurrence={
+        !oneTime && (
+          <PlanRecurrenceControls
+            frequency={frequency}
+            setFrequency={handleFrequencyChange}
+            weekday={weekday}
+            setWeekday={setWeekday}
+            weekOfMonth={weekOfMonth}
+            setWeekOfMonth={setWeekOfMonth}
+          />
+        )
+      }
+      saveButton={
+        <ActionButton
+          onPress={handlePrimarySave}
+          disabled={saveDisabled}
+          testID='plan-save'
+        >
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('lg'),
+            }}
+          >
+            {isEditMode
+              ? i18n.t('save')
+              : `${i18n.t('add')} ${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
+          </Text>
+        </ActionButton>
+      }
+    />
+  )
+
+  return (
+    // The dock applies the bottom safe area itself.
+    <Wrapper insets='none' style={{ flex: 1 }}>
+      <PlanFormLayout
+        dock={dock}
+        contentContainerStyle={{
+          flexGrow: 1,
+          // The details sit just above the dock, near the thumb, rather
+          // than at the top of a tall screen.
+          justifyContent: 'flex-end',
+          gap: 12,
+          paddingTop: 10,
+          paddingBottom: 16,
+          paddingHorizontal: inputLayout.horizontalPadding,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+        }}
+      >
+        {linkedShare && <LinkedPlanBanner share={linkedShare} />}
+        <PlanDetailsList
+          title={title}
+          setTitle={setTitle}
+          location={
+            placeSearchProvider('all')
+              ? { value: location, onChange: setLocation }
+              : undefined
+          }
+          note={note ?? ''}
+          setNote={setNote}
+          buddies={
+            oneTime && !linkedShare && buddiesEnabled && activeBuddies.length
+              ? {
+                  summary: invitedBuddyNames || undefined,
+                  picker: (
+                    <View style={{ gap: 8 }}>
+                      <BuddyPicker
+                        chipsOnly
+                        value={invitedBuddies}
+                        onChange={setInvitedBuddies}
+                        description={i18n.t('buddies_invitePlanDescription')}
+                        replies={shareReplies}
+                      />
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: 12,
+                        }}
+                      >
+                        {i18n.t('buddies_invitePlanDescription')}
+                      </Text>
+                    </View>
+                  ),
+                }
+              : undefined
+          }
+          notifyMe={
+            oneTime
+              ? {
+                  on: notificationsAllowed && notifyMe,
+                  onToggle: (on) => void handleNotifyMeChange(on),
+                  description: notificationsAllowed
+                    ? undefined
+                    : i18n.t('notifyMe_description'),
+                  offset: (
+                    <ReminderOffsetSelects
+                      notifyMeOffset={notifyMeOffset}
+                      setNotifyMeOffset={setNotifyMeOffset}
+                    />
+                  ),
+                  notice: reminderPassed && (
+                    <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                      {i18n.t('reminderTimePassed')}
+                    </Text>
+                  ),
+                }
+              : undefined
+          }
+          end={
+            oneTime
+              ? undefined
+              : {
+                  willEnd,
+                  onToggle: handleWillEndChange,
+                  endDate,
+                  setEndDate,
+                }
+          }
+          type={{
+            value: typeValue,
+            onChange: handleTypeChange,
+            hint:
+              typeValue === CUSTOM_TYPE_VALUE
+                ? i18n.t('categoryNeeded')
+                : undefined,
+          }}
+        />
+        {isEditMode && (
+          <Button
+            noTransform
+            onPress={handleRequestDelete}
+            accessibilityRole='button'
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+              }}
+            >
+              {i18n.t('deleteEllipsis')}
+            </Text>
+          </Button>
+        )}
+      </PlanFormLayout>
 
       <RecurringSaveScopeModal
         open={saveScopeModalOpen}

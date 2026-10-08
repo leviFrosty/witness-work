@@ -1422,6 +1422,8 @@
   "buddies_feedbackDiagnosticsBody": "Attach your device model, system and app version, and a full backup of your WitnessWork data (contacts, visits, reports, and settings) so we can find and fix issues faster. It's sent to the WitnessWork team only with this feedback, and never includes your buddies' data or your encryption keys.",
   "buddies_feedbackUnavailable": "Feedback isn't available right now. Check your connection and try again.",
   "buddies_feedbackAttachmentFailed": "Your feedback was sent, but the diagnostics couldn't be attached.",
+  "planForm_details": "Details",
+  "planForm_duration": "Duration",
   "planTitle": "Title",
   "planTitle_placeholder": "Title (Optional)",
   "location": "Location",

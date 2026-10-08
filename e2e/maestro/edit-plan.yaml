@@ -1,0 +1,22 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.find((p) => p.id === 'verify-plan-0')?.title === 'Cart witnessing at the park'
+appId: com.leviwilkerson.jwtimedev
+name: Edit a Plan's title and save it from the dock
+---
+- extendedWaitUntil:
+    visible: Schedule
+    timeout: 60000
+- tapOn: Schedule
+- scrollUntilVisible:
+    element: Cart witnessing
+- tapOn:
+    id: plan-row-verify-plan-0
+- tapOn: Edit
+- assertVisible: Edit Plan
+- tapOn:
+    id: plan-title-input
+- inputText: ' at the park'
+- hideKeyboard
+- tapOn:
+    id: plan-save
+- assertNotVisible: Edit Plan

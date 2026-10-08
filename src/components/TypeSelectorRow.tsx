@@ -1,6 +1,13 @@
 import InfoPopover from '@/components/ui/InfoPopover'
-import { useState } from 'react'
-import { View } from 'react-native'
+import type { InputRef } from 'tamagui'
+import { useRef, useState } from 'react'
+import {
+  StyleProp,
+  TextInput as NativeTextInput,
+  View,
+  ViewStyle,
+} from 'react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
 import * as Crypto from 'expo-crypto'
 
@@ -52,6 +59,11 @@ type Props = {
    */
   onChange: (selection: TypeSelection) => void
   lastInSection?: boolean
+  /** Icon and row style for the Type row, e.g. the Plan form's compact list. */
+  leftIcon?: AppIcon
+  style?: StyleProp<ViewStyle>
+  /** The custom category's name field took focus. */
+  onCustomNameFocus?: () => void
 }
 
 /**
@@ -62,13 +74,23 @@ type Props = {
  * `TypeSelection` onto whatever record it is editing (a Time Entry's
  * `categoryId` + legacy `credit` stamp, or a Plan's derive-only `categoryId`).
  */
-const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
+const TypeSelectorRow = ({
+  value,
+  onChange,
+  lastInSection,
+  leftIcon,
+  style,
+  onCustomNameFocus,
+}: Props) => {
   const theme = useTheme()
   const { categories, addCategory, updateCategory, deleteCategory } =
     useCategories()
   const setServiceReportStore = useServiceReport((s) => s.set)
 
   const [customCategoryName, setCustomCategoryName] = useState<string>('')
+  const customNameInput = useRef<InputRef>(null)
+  // Set while Add waits for the name field to blur.
+  const addOnBlur = useRef(false)
 
   // The Category currently in focus. Null when one of the synthetic preset
   // values (Standard / Custom) is selected; non-null for a real Category id
@@ -114,7 +136,7 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
     }
   }
 
-  const handleAddCustomCategory = () => {
+  const addCustomCategory = () => {
     const trimmed = customCategoryName.trim()
     if (!trimmed) return
     // Reuse an existing Category if the name matches (case-sensitive, mirrors
@@ -131,6 +153,20 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
     }
     onChange({ value: target.id, category: target })
     setCustomCategoryName('')
+  }
+
+  const handleAddCustomCategory = () => {
+    // The ref is typed for web; on native it's a React Native TextInput.
+    const input = customNameInput.current as unknown as NativeTextInput | null
+    // Adding removes the name field, and on Android removing a focused field
+    // hands focus and the keyboard to the next one. So blur it first and add
+    // once it has let go.
+    if (input?.isFocused()) {
+      addOnBlur.current = true
+      input.blur()
+      return
+    }
+    addCustomCategory()
   }
 
   const handleDeleteCurrentCategory = () => {
@@ -176,6 +212,8 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
     <>
       <InputRowContainer
         label={i18n.t('type')}
+        leftIcon={leftIcon}
+        style={style}
         lastInSection={!hasDetails && lastInSection}
         justifyContent='space-between'
       >
@@ -204,7 +242,14 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
                 paddingHorizontal: 10,
                 color: theme.colors.text,
               }}
+              ref={customNameInput}
               onChangeText={(c) => setCustomCategoryName(c)}
+              onFocus={onCustomNameFocus}
+              onBlur={() => {
+                if (!addOnBlur.current) return
+                addOnBlur.current = false
+                addCustomCategory()
+              }}
               value={customCategoryName}
               placeholder={i18n.t('enterCustomCategory')}
             />

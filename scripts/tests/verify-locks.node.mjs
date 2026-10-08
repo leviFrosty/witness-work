@@ -29,10 +29,15 @@ function sandbox(env = {}) {
     env: {
       ...process.env,
       WW_VERIFY_HOME: home,
+      // The large-machine defaults, whatever this machine has.
+      WW_VERIFY_RAM_GB: '64',
       WW_VERIFY_MAX_IOS: '2',
       WW_VERIFY_MAX_BUILDS: '1',
       WW_VERIFY_LEASE_IDLE_MIN: '30',
       WW_VERIFY_MEMORY_BUDGET_GB: '100',
+      // Live memory is plentiful and settles at once unless a case says not.
+      WW_VERIFY_MEMORY_LEVEL: '100',
+      WW_VERIFY_SETTLE_SEC: '0',
       ...env,
     },
     worktree(name) {
@@ -372,7 +377,7 @@ test('machines with 16 GB or less get the small policy; env vars win', async () 
       estIos: small.config.est.ios,
       idle: small.config.idleMin,
     },
-    { budget: 8, ios: 1, android: 1, builds: 1, estIos: 3.4, idle: 15 }
+    { budget: 16, ios: 2, android: 2, builds: 1, estIos: 3.4, idle: 15 }
   )
   assert.ok(Object.values(small.policy).every((from) => from === 'auto'))
   const big = await policy({ WW_VERIFY_RAM_GB: '64' })
@@ -507,6 +512,87 @@ test('a device claim yields to an earlier build that waits for memory', async ()
     await builder,
     /memory budget: 4 GB in use \+ 6.5 GB build > 8 GB; held by ios lease holder/
   )
+})
+
+const acquire = (worktree, platform = 'ios') =>
+  `return L.tryAcquireBuild({ worktree: ${JSON.stringify(worktree)}, platform: '${platform}', fingerprint: 'f', pid: process.pid })`
+
+test('a boot or build waits while live memory is short or under pressure', async () => {
+  const at = (level) => sandbox({ WW_VERIFY_MEMORY_LEVEL: level })
+  // 30% free: enough for a device (25%), not for a build (35%).
+  const box = at('30')
+  assert.ok((await child(box, claim(box.worktree('a')))).key)
+  assert.match(
+    (await child(box, acquire(box.worktree('b')))).wait,
+    /30% of memory free, under the 35% a build needs \(WW_VERIFY_MIN_FREE_PCT_BUILD\)/
+  )
+  const low = at('20')
+  assert.match(
+    (await child(low, claim(low.worktree('a')))).wait,
+    /20% of memory free, under the 25% a device needs/
+  )
+  const warn = at('70,2')
+  assert.match(
+    (await child(warn, claim(warn.worktree('a')))).wait,
+    /macOS reports memory pressure \(70% free\)/
+  )
+})
+
+test('a cold boot waits for the previous boot to settle; a warm takeover does not', async () => {
+  const box = sandbox({ WW_VERIFY_SETTLE_SEC: '60' })
+  const [a, b, c] = ['a', 'b', 'c'].map((n) => box.worktree(n))
+  assert.equal((await child(box, claim(a))).key, 'dev-1')
+  assert.match(
+    (await child(box, claim(b))).wait,
+    /letting the ios boot for a settle before the next boot or build/
+  )
+  assert.match((await child(box, acquire(c))).wait, /letting the ios boot/)
+  writeWarm(box, [{ key: 'dev-2', since: Date.now() }])
+  fs.writeFileSync(
+    box.pool,
+    JSON.stringify([
+      { key: 'dev-1', id: 'id-1', name: 'Device 1' },
+      { key: 'dev-2', id: 'id-2', name: 'Device 2' },
+    ])
+  )
+  assert.equal((await child(box, claim(b))).key, 'dev-2', 'warm, so no boot')
+})
+
+test('live memory pressure shuts one warm device down, then lets it settle', async () => {
+  const box = sandbox({
+    WW_VERIFY_MEMORY_LEVEL: '10',
+    WW_VERIFY_SETTLE_SEC: '60',
+  })
+  const now = Date.now()
+  writeWarm(box, [
+    { key: 'warm-new', since: now },
+    { key: 'warm-old', since: now - 60_000 },
+  ])
+  const got = await child(
+    box,
+    `const r = await L.claimLease(
+       { worktree: ${JSON.stringify(box.worktree('a'))}, platform: 'ios', kind: 'iphone', pool, create },
+       { waitMs: 0, shutdown: ${logShutdown(box)} }
+     )
+     return r.lease?.key ?? r.wait`
+  )
+  assert.match(got, /letting the shutdown of warm warm-old settle/)
+  assert.deepEqual(shutdowns(box), ['warm-old'], 'only one, not the pool')
+})
+
+test('a device claim yields to an earlier build that waits on live memory', async () => {
+  const box = sandbox({ WW_VERIFY_MEMORY_LEVEL: '30' })
+  const builder = child(
+    box,
+    `return L.acquireBuild(
+       { worktree: ${JSON.stringify(box.worktree('builder'))}, platform: 'ios', fingerprint: 'f' },
+       { waitMs: 3000, pollMs: 100 }
+     ).then((r) => r.wait ?? 'ok')`
+  )
+  await new Promise((r) => setTimeout(r, 600))
+  const late = await child(box, claim(box.worktree('late')))
+  assert.match(late.wait, /yielding memory to an earlier ios build for builder/)
+  assert.match(await builder, /under the 35% a build needs/)
 })
 
 const warmFile = (box) => path.join(box.home, 'warm.json')

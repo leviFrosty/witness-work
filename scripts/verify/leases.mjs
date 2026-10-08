@@ -28,21 +28,36 @@ const WAITERS = path.join(HOME, 'waiters.json')
 const BUILDS = path.join(HOME, 'active-builds.json')
 const BUILD_WAITERS = path.join(HOME, 'build-waiters.json')
 const WARM = path.join(HOME, 'warm.json')
+const LAST_ADMIT = path.join(HOME, 'last-admit.json')
 
 export const CONFIG = {
   max: {
-    ios: num('WW_VERIFY_MAX_IOS', 2, 1),
-    android: num('WW_VERIFY_MAX_ANDROID', 2, 1),
+    ios: num('WW_VERIFY_MAX_IOS', 2),
+    android: num('WW_VERIFY_MAX_ANDROID', 2),
   },
   maxBuilds: num('WW_VERIFY_MAX_BUILDS', 1),
   idleMin: num('WW_VERIFY_LEASE_IDLE_MIN', 30, 15),
   // Idle devices per platform kept booted after `down` for the next `up`.
-  warm: num('WW_VERIFY_WARM', 2, 0),
+  warm: num('WW_VERIFY_WARM', 2, 1),
   warmHours: num('WW_VERIFY_WARM_HOURS', 12),
   // Devices per platform kept running (leased or warm); `wwv warm` boots up to
   // it. Only a native build, which can't fit otherwise, goes below it.
   warmMin: num('WW_VERIFY_WARM_MIN', 0),
-  budgetGb: num('WW_VERIFY_MEMORY_BUDGET_GB', Math.round(RAM_GB * 0.7), 8),
+  // The estimates are full footprints, but an idle device compresses to about
+  // a third of its estimate, so a small machine budgets its whole RAM and
+  // leaves the real limit to the live check below.
+  budgetGb: num(
+    'WW_VERIFY_MEMORY_BUDGET_GB',
+    Math.round(RAM_GB * 0.7),
+    Math.round(RAM_GB)
+  ),
+  // Live check on top of the budget (macOS): a boot or build starts only while
+  // the kernel's free-memory level (kern.memorystatus_level) is at least this
+  // many percent and pressure is normal, and once the previous boot or build
+  // has had `settleSec` to show up in that level.
+  minFreePct: num('WW_VERIFY_MIN_FREE_PCT', 25),
+  minFreePctBuild: num('WW_VERIFY_MIN_FREE_PCT_BUILD', 35),
+  settleSec: num('WW_VERIFY_SETTLE_SEC', 60),
   // GB per item, measured on a 16 GB Mac Mini (footprint, not RSS); calibrate
   // with the env vars on a new machine.
   est: {
@@ -229,6 +244,78 @@ export function usage(leases, builds, warm = []) {
       worktrees.size * CONFIG.est.metro +
       builds.reduce((sum, b) => sum + CONFIG.est[`build-${b.platform}`], 0)
   )
+}
+
+// ---------- live memory ----------
+
+/**
+ * The kernel's free-memory level in percent and its pressure level (1 normal, 2
+ * warn, 4 critical), or null where the kernel has neither (not macOS).
+ * `WW_VERIFY_MEMORY_LEVEL=<free>[,<pressure>]` overrides both, for tests.
+ */
+export function memoryLevel() {
+  const fake = env.WW_VERIFY_MEMORY_LEVEL
+  const out = fake
+    ? fake.replace(',', '\n')
+    : process.platform === 'darwin'
+      ? spawnSync(
+          'sysctl',
+          [
+            '-n',
+            'kern.memorystatus_level',
+            'kern.memorystatus_vm_pressure_level',
+          ],
+          { encoding: 'utf8' }
+        ).stdout
+      : ''
+  const [free, pressure = 1] = (out ?? '').trim().split('\n').map(Number)
+  return Number.isFinite(free) && out.trim() ? { free, pressure } : null
+}
+
+/**
+ * Why a boot or build can't start yet on live memory, as `{ reason, blockedOn
+ * }`, or null when it can.
+ */
+function liveBlock(kind, now) {
+  const [minFree, knob] =
+    kind === 'build'
+      ? [CONFIG.minFreePctBuild, 'WW_VERIFY_MIN_FREE_PCT_BUILD']
+      : [CONFIG.minFreePct, 'WW_VERIFY_MIN_FREE_PCT']
+  const last = readJson(LAST_ADMIT, null)
+  if (last && now - last.at < CONFIG.settleSec * 1000)
+    return {
+      reason: `letting the ${last.label} settle before the next boot or build (WW_VERIFY_SETTLE_SEC)`,
+      blockedOn: 'settle',
+    }
+  const level = memoryLevel()
+  if (!level) return null
+  if (level.pressure > 1)
+    return {
+      reason: `macOS reports memory pressure (${level.free}% free)`,
+      blockedOn: 'pressure',
+    }
+  if (level.free < minFree)
+    return {
+      reason: `${level.free}% of memory free, under the ${minFree}% a ${kind} needs (${knob})`,
+      blockedOn: 'pressure',
+    }
+  return null
+}
+
+/** Starts the settle window after a boot, build or shutdown. */
+const admitted = (label, now = Date.now()) =>
+  writeJsonAtomic(LAST_ADMIT, { at: now, label })
+
+/**
+ * Marks the oldest of `warm` for shutdown because live memory is short; the
+ * settle window then keeps the next try from shutting down another before the
+ * freed memory shows.
+ */
+function evictForPressure(warm, pid) {
+  const victim = [...warm].sort((a, b) => a.since - b.since).slice(0, 1)
+  if (!victim.length) return null
+  admitted(`shutdown of warm ${victim[0].deviceName ?? victim[0].key}`)
+  return mark(victim, pid)
 }
 
 // ---------- warm devices ----------
@@ -568,13 +655,27 @@ export function tryClaim({
     const build = liveBuildWaiters(now).find(
       (w) =>
         w.since < since &&
-        w.blockedOn === 'memory' &&
-        used + need + CONFIG.est[`build-${w.platform}`] > CONFIG.budgetGb
+        (w.blockedOn === 'pressure' ||
+          (w.blockedOn === 'memory' &&
+            used + need + CONFIG.est[`build-${w.platform}`] > CONFIG.budgetGb))
     )
     if (build)
       return wait(
         `yielding memory to an earlier ${build.platform} build for ${path.basename(build.worktree)}`
       )
+    // Taking a warm device boots nothing, so only a cold one checks live memory.
+    const cold = !warm.some((w) => w.key === device?.key)
+    const blocked = cold && liveBlock('device', now)
+    if (blocked) {
+      const evict =
+        blocked.blockedOn === 'pressure' &&
+        evictForPressure(aboveFloor(others, running(leases, warm)), pid)
+      if (evict) {
+        writeJsonAtomic(WAITERS, waiters)
+        return { evict }
+      }
+      return wait(blocked.reason)
+    }
     if (!device) {
       if (devices.length >= cap)
         return wait(`all ${devices.length} ${platform} devices are taken`)
@@ -599,8 +700,9 @@ export function tryClaim({
       WARM,
       readJson(WARM, []).filter((w) => w.key !== device.key)
     )
+    if (cold) admitted(`${platform} boot for ${path.basename(worktree)}`, now)
     leave()
-    return { lease, warm: warm.some((w) => w.key === device.key) }
+    return { lease, warm: !cold }
   })
 }
 
@@ -799,6 +901,18 @@ export function tryAcquireBuild({
         { blockedOn: 'memory' }
       )
     }
+    const blocked = liveBlock('build', now)
+    if (blocked) {
+      // A build may go below WW_VERIFY_WARM_MIN here too.
+      const evict =
+        blocked.blockedOn === 'pressure' && evictForPressure(warm, pid)
+      if (evict) {
+        writeJsonAtomic(BUILD_WAITERS, waiters)
+        return { evict }
+      }
+      return wait(blocked.reason, { blockedOn: blocked.blockedOn })
+    }
+    admitted(`${platform} build for ${path.basename(worktree)}`, now)
     writeJsonAtomic(BUILDS, [
       ...storedBuilds(now),
       { pid, worktree, platform, fingerprint, startedAt: now, seenAt: now },
@@ -1023,6 +1137,7 @@ export function snapshot() {
     warm,
     waiters: liveWaiters(now).sort((a, b) => a.since - b.since),
     buildWaiters: liveBuildWaiters(now).sort((a, b) => a.since - b.since),
+    memory: memoryLevel(),
     usedGb: usage(
       leases,
       builds,

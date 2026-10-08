@@ -2420,17 +2420,24 @@ const commands = {
   },
 
   async status() {
-    const { leases, builds, warm, waiters, buildWaiters, usedGb } = snapshot()
+    const { leases, builds, warm, waiters, buildWaiters, usedGb, memory } =
+      snapshot()
     const names = Object.fromEntries(
       simctlDevices().map((d) => [d.udid, d.name])
     )
     const ago = (ms) => `${Math.round((Date.now() - ms) / 60_000)}m`
-    console.log(`memory ${usedGb} / ${CONFIG.budgetGb} GB budgeted\n`)
+    const pressure = { 1: 'normal', 2: 'warn', 4: 'critical' }
+    console.log(
+      `memory ${usedGb} / ${CONFIG.budgetGb} GB budgeted${memory ? `; ${memory.free}% free, pressure ${pressure[memory.pressure] ?? memory.pressure} (macOS)` : ''}\n`
+    )
     const policy = {
       WW_VERIFY_MEMORY_BUDGET_GB: CONFIG.budgetGb,
       WW_VERIFY_MAX_IOS: CONFIG.max.ios,
       WW_VERIFY_MAX_ANDROID: CONFIG.max.android,
       WW_VERIFY_MAX_BUILDS: CONFIG.maxBuilds,
+      WW_VERIFY_MIN_FREE_PCT: CONFIG.minFreePct,
+      WW_VERIFY_MIN_FREE_PCT_BUILD: CONFIG.minFreePctBuild,
+      WW_VERIFY_SETTLE_SEC: CONFIG.settleSec,
       WW_VERIFY_LEASE_IDLE_MIN: CONFIG.idleMin,
       WW_VERIFY_WARM: CONFIG.warm,
       WW_VERIFY_WARM_HOURS: CONFIG.warmHours,

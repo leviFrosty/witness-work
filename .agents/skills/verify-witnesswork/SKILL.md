@@ -28,7 +28,7 @@ What `up` does, in order:
 
 If `up` fails or is interrupted, it hands back the lease it took and stops the Metro it started, then says what to do next.
 
-It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes 10 to 25 minutes, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro; with a warm device that already runs it, `up` takes well under a minute. The fingerprint covers native inputs only (`fingerprint.config.js`): `modules/`, `patches/`, `plugins/`, `targets/`, native deps, and the resolved `app.config.ts`. New or changed strings in `en-US.json` don't count, except the permission strings `app.config.ts` copies into the native config.
+It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes about 3 to 5 minutes on its own, longer when it queues for a build slot or memory, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro; with a warm device that already runs it, `up` takes well under a minute. The fingerprint covers native inputs only (`fingerprint.config.js`): `modules/`, `patches/`, `plugins/`, `targets/`, native deps, and the resolved `app.config.ts`. New or changed strings in `en-US.json` don't count, except the permission strings `app.config.ts` copies into the native config.
 
 - `--accept-stale-native` skips the build. Use it only when the diff has no native change (`modules/`, `patches/`, `plugins/`, `targets/`, native deps, `app.config.ts`), and report "native binary unverified".
 - `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`), an isolated ww-api, and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Use it whenever the change reads or writes backend data (Buddies, Notes Import, accounts) or when you need isolation. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` (see `wwv up`'s `api` output), shared with the user and every other worktree.
@@ -144,6 +144,7 @@ Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 - **Warm devices.** `down` keeps the device booted, unleased, for the next `up` while there are fewer than `WW_VERIFY_WARM` warm devices of that platform and the budget has room. Warm devices count toward the memory budget. A lease or build that needs the memory shuts the oldest ones down instead of waiting, and any warm device is shut down after `WW_VERIFY_WARM_HOURS`. `wwv status` lists them and the build each one runs. A warm device keeps the last worktree's app data, as a shut-down one always did, so seed state with `--seed` or `wwv seed`.
 - **Minimum running devices.** `WW_VERIFY_WARM_MIN` (default 0) keeps that many devices per platform running, leased or warm: `down` and idle reaping always keep a device warm below it, and neither the hours limit nor a lease evicts below it. Only a native build may, because it can't fit otherwise. `wwv warm` boots devices back up to the minimum and installs the newest cached build on them. A machine that sets the minimum runs `wwv warm` from launchd every few minutes.
 - **Memory budget.** A lease or build waits while the estimated total would exceed `WW_VERIFY_MEMORY_BUDGET_GB`; a request bigger than the whole budget fails at once. Emulators boot with 2 GB and 2 cores, and Metro runs with 2 workers.
+- **Live memory.** On macOS, a boot or build also waits until the kernel's free-memory level (`kern.memorystatus_level`, shown by `wwv status`) is at least `WW_VERIFY_MIN_FREE_PCT` for a device or `WW_VERIFY_MIN_FREE_PCT_BUILD` for a build, and memory pressure is normal. It also waits `WW_VERIFY_SETTLE_SEC` after the previous boot or build, so that one shows up in the level first. This check covers what the budget can't see: other agents, typechecks, and devices or Gradle runs started outside `wwv`. A cold boot waits; taking a warm device boots nothing and skips the check. When memory is short, a lease or build shuts down one warm device and lets it settle before trying again. Device claims also give way to an earlier build that waits on live memory.
 - **Always `wwv down` when done**, including after a failed `up`.
 
 ```bash
@@ -156,20 +157,22 @@ Defaults depend on the machine's RAM; env vars always win, and `wwv status` prin
 
 | Variable                                                       | ≤ 16 GB RAM           | Larger machines       |
 | -------------------------------------------------------------- | --------------------- | --------------------- |
-| `WW_VERIFY_MAX_IOS`, `WW_VERIFY_MAX_ANDROID`                   | 1, 1                  | 2, 2                  |
+| `WW_VERIFY_MAX_IOS`, `WW_VERIFY_MAX_ANDROID`                   | 2, 2                  | 2, 2                  |
 | `WW_VERIFY_MAX_BUILDS`                                         | 1                     | 1                     |
 | `WW_VERIFY_LEASE_IDLE_MIN`                                     | 15                    | 30                    |
-| `WW_VERIFY_WARM` (per platform), `WW_VERIFY_WARM_HOURS`        | 0, 12                 | 2, 12                 |
+| `WW_VERIFY_WARM` (per platform), `WW_VERIFY_WARM_HOURS`        | 1, 12                 | 2, 12                 |
 | `WW_VERIFY_WARM_MIN` (per platform)                            | 0                     | 0                     |
 | `WW_VERIFY_KEEP_BUILDS` (cached builds per platform)           | 6                     | 6                     |
-| `WW_VERIFY_MEMORY_BUDGET_GB`                                   | 8                     | 70% of RAM            |
+| `WW_VERIFY_MEMORY_BUDGET_GB`                                   | all of RAM            | 70% of RAM            |
+| `WW_VERIFY_MIN_FREE_PCT`, `WW_VERIFY_MIN_FREE_PCT_BUILD`       | 25, 35                | 25, 35                |
+| `WW_VERIFY_SETTLE_SEC`                                         | 60                    | 60                    |
 | `WW_VERIFY_EST_{IOS,ANDROID,METRO,IOS_BUILD,ANDROID_BUILD}_GB` | 3.4, 3.2, 0.6, 6, 6.5 | 3.4, 3.2, 0.6, 6, 6.5 |
 | `WW_VERIFY_METRO_WORKERS`, `WW_VERIFY_GRADLE_WORKERS`          | 2, 2                  | 2, 2                  |
 | `WW_VERIFY_HOME`                                               | `~/.ww-verify`        | `~/.ww-verify`        |
 
-The estimates are measured memory footprints on a 16 GB Mac Mini: a simulator about 3.4 GB and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. The 8 GB budget fits one iPhone and one Android emulator at once (about 7.8 GB with two Metros), or one build on its own. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
+The estimates are measured memory footprints on a 16 GB Mac Mini: a simulator about 3.4 GB and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. A footprint counts compressed memory at full size, though. Once it settles, an idle simulator running the app costs only about 1 GB of real memory, about 6 points of `kern.memorystatus_level`; booting and launching costs about 12 points for a minute. So a 16 GB machine budgets all 16 GB. That fits two iPhones and two emulators (about 15.6 GB with four Metros), or two devices plus a build, and the live check stops new boots and builds when real memory runs short. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
 
-The budget covers only the harness. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. If you run more than about 15 agents on a 16 GB machine, lower `WW_VERIFY_MEMORY_BUDGET_GB` further (to 7 or 6, which allows one device at a time).
+The budget covers only the harness. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. The live check adapts to that load. If boots still push the machine into swap, raise `WW_VERIFY_MIN_FREE_PCT` rather than lowering the caps.
 
 **Spotlight.** Spotlight skips hidden folders and folders ending in `.noindex`, so `.verify/` and `~/.ww-verify` are never indexed, and neither is DerivedData; a `.metadata_never_index` file does not stop it on current macOS. Keep worktrees under a hidden folder (such as `~/.t3/worktrees`), or add the worktrees folder in System Settings > Spotlight > Search Privacy, or `mds` indexes every new checkout.
 

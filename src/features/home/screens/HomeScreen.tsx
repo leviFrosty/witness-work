@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -45,6 +46,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import type { TimeEntry } from '@/types/timeEntry'
 
 export const HomeScreen = () => {
+  perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()

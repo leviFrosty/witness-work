@@ -6,6 +6,7 @@
  * retries, photo transfer, and the Devices list. The `iCloud*` names in this
  * file and its preferences predate Android and describe either transport.
  */
+import { perf } from '@/lib/perf'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import type { MergeResult } from '@/app/sync/merge'
 type LocalMergeState = Omit<MergeResult, 'changed'>
@@ -1210,6 +1211,7 @@ async function calibrateClock(): Promise<void> {
 }
 
 async function pushInner(reason: string): Promise<boolean> {
+  perf.count('sync:push')
   if (!canSync()) {
     usePreferences.setState({ iCloudSyncPendingPush: true })
     logger.log(`${tag()} push skipped (canSync=false)`, { reason })
@@ -1597,6 +1599,7 @@ function canApplyPull(reason: string): boolean {
 }
 
 async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
+  perf.count('sync:pull')
   if (!canSync()) {
     logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
     return { changed: false, complete: false }
@@ -2239,6 +2242,7 @@ export function backfillUpdatedAtIfNeeded(): void {
  * listing looks like "no remote payloads".
  */
 async function catchUp(reason: string): Promise<void> {
+  perf.count('sync:catchUp')
   if (!canSync()) return
   backfillUpdatedAtIfNeeded()
   if (catchUpInFlight) {

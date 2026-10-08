@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import {
   PropsWithChildren,
   useCallback,
@@ -74,6 +75,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
   const reconcile = useCallback(
     async (reason: string): Promise<void> => {
+      perf.count('account:reconcile')
       if (!hasSyncTransport()) return
       if (!readyRef.current) return
       // Entitlement truth isn't known until the initial CustomerInfo lands;

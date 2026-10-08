@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { useEffect, useState } from 'react'
 import { AppState } from 'react-native'
 import { useNetworkState } from 'expo-network'
@@ -120,6 +121,7 @@ export function useInitializeFeatureFlags(): void {
     )
     async function load() {
       try {
+        perf.count('flags:reload')
         const values = await posthogClient?.reloadFeatureFlagsAsync()
         if (!cancelled && values === undefined) clearFlags('failed')
       } catch {

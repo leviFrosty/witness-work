@@ -53,6 +53,7 @@ export const analyticsEventNames = [
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.
+  'app_launch_timed',
   'app_share_completed',
   'app_share_failed',
   'app_share_tapped',

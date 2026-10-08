@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
@@ -63,6 +64,7 @@ function buddyMarkers(): Record<string, BuddyDayMarker> {
  * background fetch tasks alike — none of these go through React.
  */
 function pushSnapshot(reason: string): void {
+  perf.count('widget:push')
   if (!WidgetBridge.isAvailable()) return
 
   try {
@@ -125,6 +127,7 @@ function pushSnapshot(reason: string): void {
     })
 
     WidgetBridge.writeSnapshot(JSON.stringify(snapshot))
+    perf.count('widget:reload')
     WidgetBridge.reloadAllTimelines()
   } catch (e) {
     logger.error(`[widgetSync] failed to push snapshot (${reason})`, e)

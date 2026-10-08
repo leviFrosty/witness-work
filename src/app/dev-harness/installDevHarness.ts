@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import moment from 'moment'
 import { CommonActions } from '@react-navigation/native'
 import { LogBox } from 'react-native'
@@ -203,6 +204,8 @@ export function installDevHarness() {
     seed,
     reset: () => seed('fresh'),
     state: summary,
+    /** Launch milestones and work counters since launch (src/lib/perf). */
+    perf: () => perf.snapshot(),
     errors: () => [...errors],
     clearErrors: () => {
       errors.length = 0

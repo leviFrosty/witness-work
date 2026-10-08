@@ -19,6 +19,9 @@ import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import { markLaunched } from '@/app/launch/launchState'
+import { captureLaunchTiming } from '@/app/launch/captureLaunchTiming'
+import { perf } from '@/lib/perf'
+import { reportLaunch } from '@/lib/perfProbe'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
 import BadgesRuntime from '@/app/badges/BadgesRuntime'
@@ -56,6 +59,8 @@ import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 initializeApp()
 
 export default function App() {
+  perf.count('render:App')
+  perf.mark('appFirstRender')
   useInitializeFeatureFlags()
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
@@ -79,6 +84,7 @@ export default function App() {
   if (!hasMigrated || !fontsLoaded) {
     return <LaunchSplash />
   }
+  perf.mark('appTreeRender')
 
   try {
     return (
@@ -100,6 +106,8 @@ export default function App() {
                   fallback={<LaunchSplash />}
                   onReady={() => {
                     markLaunched()
+                    reportLaunch()
+                    captureLaunchTiming()
                     const initialScreen =
                       navigationRef.current?.getCurrentRoute()?.name
                     routeNameRef.current = initialScreen

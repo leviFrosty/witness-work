@@ -88,13 +88,13 @@ export type CompactDurationOptions = {
  *   formatMinutesCompact(30) // "30m" (under 1 hour)
  *   formatMinutesCompact(120) // "2h"   (whole hours)
  *   formatMinutesCompact(90) // "1.5h" (fractional hours)
- *   formatMinutesCompact(630) // "11h"  (10+ hours rounded)
+ *   formatMinutesCompact(690) // "11.5h"
  *   formatMinutesCompact(2, { unit: 'hours' }) // "2h" (value is already hours)
  *
  * @param value - Duration in minutes (rounded to the nearest whole minute), or
  *   in whole hours when `unit: 'hours'`.
  * @param options - See {@link CompactDurationOptions}.
- * @returns Ultra-compact time string (e.g., "30m", "2h", "1.5h", "12h").
+ * @returns Ultra-compact time string (e.g., "30m", "2h", "1.5h", "11.5h").
  */
 export const formatMinutesCompact = (
   value: number,
@@ -121,11 +121,8 @@ export const formatMinutesCompact = (
     return `${hours}${i18n.t('hoursCompact')}`
   }
 
-  // For fractional hours, show 1 decimal place with localized abbreviation (e.g., "2.5h")
-  // For very long times (10+), round to whole hours to save space
-  if (decimalHours >= 10) {
-    return `${Math.round(decimalHours)}${i18n.t('hoursCompact')}`
-  }
-
+  // For fractional hours, show 1 decimal place with localized abbreviation
+  // (e.g., "2.5h", "11.5h"). Long days keep the decimal too, so a calendar
+  // square agrees with the day's "X of Y planned" total.
   return `${Math.round(decimalHours * 10) / 10}${i18n.t('hoursCompact')}`
 }

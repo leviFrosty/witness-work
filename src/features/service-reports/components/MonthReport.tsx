@@ -16,7 +16,6 @@ import {
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
-import { plannedMinutesToCurrentDayForMonth } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -65,6 +64,7 @@ import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 import { formatMonthDayCompact } from '@/lib/dates'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
+import useScheduleStatus from '@/hooks/useScheduleStatus'
 import MonthStatusGoalSheets from '@/features/service-reports/components/MonthStatusGoalSheets'
 import {
   monthEditTargets,
@@ -148,7 +148,7 @@ const MonthReport = ({
   const hoursCompleted = adjustedMinutes.value / 60
   const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
 
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const { serviceReports } = useServiceReport()
   const prevMonth = month === 0 ? 11 : month - 1
   const prevMonthYear = month === 0 ? year - 1 : year
   const { effectiveGoalHours: previousMonthGoalHours } = useMonthlyGoal({
@@ -193,25 +193,14 @@ const MonthReport = ({
     lastMonthMinutes !== null &&
     lastMonthMinutes / 60 >= previousMonthGoalHours
 
-  // Pace vs plan — mirrors the widget's ahead/behind calc. Compares logged
-  // (credit-capped) minutes against the sum of day + recurring plans up to
+  // Pace vs plan — the same Schedule Status the Schedule screen's pace card
+  // shows: logged (credit-capped) time through today against Plans through
   // today. Hidden when there's no plan to compare against, or when viewing a
   // non-current month (the concept of "month-to-date" only applies now).
-  const plannedMinutesToCurrentDay = useMemo(
-    () =>
-      isCurrentMonth
-        ? plannedMinutesToCurrentDayForMonth(
-            month,
-            year,
-            dayPlans,
-            recurringPlans
-          )
-        : 0,
-    [isCurrentMonth, month, year, dayPlans, recurringPlans]
-  )
+  const scheduleStatus = useScheduleStatus({ month, year })
   const aheadBehindMinutes =
-    isCurrentMonth && plannedMinutesToCurrentDay > 0
-      ? adjustedMinutes.value - plannedMinutesToCurrentDay
+    isCurrentMonth && scheduleStatus.plannedMinutes > 0
+      ? scheduleStatus.differenceMinutes
       : null
   const aheadBehindDisplay =
     aheadBehindMinutes !== null

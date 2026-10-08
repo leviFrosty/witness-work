@@ -6,10 +6,8 @@ import {
   getDaysLeftInCurrentMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
-import {
-  plannedMinutesToCurrentDayForMonth,
-  RecurringPlan,
-} from '@/lib/recurrence'
+import { RecurringPlan } from '@/lib/recurrence'
+import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
 import { goalProgress } from '@/lib/goalProgress'
 import { formatMinutes } from '@/lib/minutes'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -232,16 +230,23 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     hoursPerDayNeeded = round(minutesRemaining / 60 / daysLeftInMonth, 1)
   }
 
-  const plannedMinutesToCurrentDay = plannedMinutesToCurrentDayForMonth(
+  // Same Schedule Status as the app's pace cards: time logged through today
+  // against Plans through today.
+  const scheduleStatus = getScheduleStatusForMonth({
     month,
     year,
-    args.dayPlans,
-    args.recurringPlans
-  )
+    today: now.toDate(),
+    serviceReports: args.serviceReports,
+    dayPlans: args.dayPlans,
+    recurringPlans: args.recurringPlans,
+    publisher: args.publisher,
+    creditLimit: {
+      enabled: args.overrideCreditLimit,
+      customLimitHours: args.customCreditLimitHours,
+    },
+  })
   const aheadBehindMinutes =
-    plannedMinutesToCurrentDay > 0
-      ? adjusted.value - plannedMinutesToCurrentDay
-      : null
+    scheduleStatus.plannedMinutes > 0 ? scheduleStatus.differenceMinutes : null
 
   // --- Publisher (checkbox) state machine + month conversation/study counts
   const publisherState: PublisherState = !hasReportedThisMonth

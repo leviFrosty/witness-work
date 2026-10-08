@@ -13,12 +13,20 @@ public class BuddiesKeychainModule: Module {
   private let service = "com.leviwilkerson.witnesswork.buddies"
   private let rootSeedAccount = "root-seed"
 
+  /// The named-alert snapshot for the Notification Service Extension
+  /// (`targets/notification-service`), in a Keychain access group only the app
+  /// and the extension have: `<team id>.<bundle id>.buddies-alerts`.
+  static let alertService = "com.leviwilkerson.witnesswork.buddies.alerts"
+  static let alertAccount = "context"
+  /// Where the extension counts how its alerts turned out, in the App Group.
+  static let alertOutcomesKey = "buddiesAlertOutcomes"
+
   public func definition() -> ModuleDefinition {
     Name("BuddiesKeychain")
 
     // JS checks this so OTA updates never call into a binary without the module.
     Constant("buddiesKeychainVersion") {
-      1
+      2
     }
 
     Function("peekRootSeed") { () throws -> String? in
@@ -43,6 +51,20 @@ public class BuddiesKeychainModule: Module {
         throw BuddiesKeychainError(message: "Root seed vanished after duplicate", status: errSecItemNotFound)
       }
       return synced
+    }
+
+    Function("setAlertContext") { (json: String?) throws in
+      try self.writeAlertContext(json)
+    }
+
+    Function("takeAlertOutcomes") { () -> [String: Int] in
+      guard
+        let bundleId = Bundle.main.bundleIdentifier,
+        let defaults = UserDefaults(suiteName: "group.\(bundleId)")
+      else { return [:] }
+      let counts = defaults.dictionary(forKey: Self.alertOutcomesKey) as? [String: Int] ?? [:]
+      defaults.removeObject(forKey: Self.alertOutcomesKey)
+      return counts
     }
 
     Function("deleteRootSeed") { () throws in
@@ -99,6 +121,77 @@ public class BuddiesKeychainModule: Module {
       throw BuddiesKeychainError(message: "Could not store root seed", status: status)
     }
     return true
+  }
+
+  /// Replaces the snapshot, or deletes it for nil. Readable after the first
+  /// unlock (the extension runs on a locked phone), on this device only: it
+  /// never syncs or moves to another device in a backup.
+  private func writeAlertContext(_ json: String?) throws {
+    var query: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: Self.alertService,
+      kSecAttrAccount as String: Self.alertAccount,
+      kSecAttrAccessGroup as String: try alertAccessGroup(),
+      kSecAttrSynchronizable as String: kCFBooleanFalse as Any,
+    ]
+    guard let json else {
+      let status = SecItemDelete(query as CFDictionary)
+      guard status == errSecSuccess || status == errSecItemNotFound else {
+        throw BuddiesKeychainError(message: "Could not delete alert context", status: status)
+      }
+      return
+    }
+    let data = Data(json.utf8)
+    let accessible = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    var status = SecItemUpdate(
+      query as CFDictionary,
+      [
+        kSecValueData as String: data,
+        kSecAttrAccessible as String: accessible,
+      ] as CFDictionary
+    )
+    if status == errSecItemNotFound {
+      query[kSecValueData as String] = data
+      query[kSecAttrAccessible as String] = accessible
+      status = SecItemAdd(query as CFDictionary, nil)
+    }
+    guard status == errSecSuccess else {
+      throw BuddiesKeychainError(message: "Could not store alert context", status: status)
+    }
+  }
+
+  private var cachedAlertAccessGroup: String?
+
+  /// `<team id>.<bundle id>.buddies-alerts`. The team id is read from the app's
+  /// default access group (`<team id>.<bundle id>`), which a probe item shows.
+  private func alertAccessGroup() throws -> String {
+    if let cachedAlertAccessGroup { return cachedAlertAccessGroup }
+    let probe: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: "\(service).probe",
+      kSecAttrAccount as String: "access-group",
+      kSecAttrSynchronizable as String: kCFBooleanFalse as Any,
+      kSecReturnAttributes as String: true,
+    ]
+    var result: AnyObject?
+    var status = SecItemCopyMatching(probe as CFDictionary, &result)
+    if status == errSecItemNotFound {
+      var add = probe
+      add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+      status = SecItemAdd(add as CFDictionary, &result)
+    }
+    guard
+      status == errSecSuccess,
+      let attributes = result as? [String: Any],
+      let group = attributes[kSecAttrAccessGroup as String] as? String,
+      let team = group.split(separator: ".").first,
+      let bundleId = Bundle.main.bundleIdentifier
+    else {
+      throw BuddiesKeychainError(message: "Could not find the Keychain access group", status: status)
+    }
+    let alertGroup = "\(team).\(bundleId).buddies-alerts"
+    cachedAlertAccessGroup = alertGroup
+    return alertGroup
   }
 
   private static func base64url(_ data: Data) -> String {

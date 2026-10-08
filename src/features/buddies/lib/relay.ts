@@ -68,7 +68,15 @@ export type PushAddress =
       /** The app's bundle id; the relay defaults to production's. */
       apnsTopic?: string
     }
-  | { pushService: 'fcm'; fcmToken: string }
+  | {
+      pushService: 'fcm'
+      fcmToken: string
+      /**
+       * The app posts named alerts itself, so the relay sends the template as
+       * fallback text expo-notifications doesn't show.
+       */
+      appAlerts?: true
+    }
 
 export type RelaySyncResponse = {
   seq: number

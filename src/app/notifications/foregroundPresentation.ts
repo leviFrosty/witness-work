@@ -1,8 +1,5 @@
 import * as Notifications from 'expo-notifications'
-import {
-  BADGE_PUSH_KIND,
-  BADGE_REACTION_PUSH_KIND,
-} from '@/features/buddies/lib/engine'
+import { isBuddiesNewsKind } from '@/features/buddies/lib/pushAlerts'
 import { buddiesPushData } from '@/lib/notificationData'
 
 /**
@@ -10,8 +7,8 @@ import { buddiesPushData } from '@/lib/notificationData'
  * the User's badge), by its `ww.kind`, rather than logistics.
  */
 export function isBuddiesNews(notification: Notifications.Notification) {
-  const kind = buddiesPushData(notification)?.kind
-  return kind === BADGE_PUSH_KIND || kind === BADGE_REACTION_PUSH_KIND
+  const push = buddiesPushData(notification)
+  return push !== null && isBuddiesNewsKind(push.kind)
 }
 
 /**

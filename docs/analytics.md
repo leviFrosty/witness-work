@@ -654,6 +654,20 @@ The buddy's platform travels inside the end-to-end encrypted invite card, claim,
 and `pair.confirmed` (see `docs/buddies-protocol.md`); the relay never sees it,
 and the app never shows it.
 
+### Buddies alerts
+
+`buddies_alerts_shown` answers whether named Buddies alerts work in the field,
+and why they fall back to the generic template when they don't (for example, a
+Keychain access group missing from a production build would show up as
+`noContext`). Alerts are counted on the device: by the iOS Notification Service
+Extension in the App Group, and by the Android push task. The app sends the
+counts once when it next comes to the foreground with Buddies running, then
+clears them. The User's platform is the event's `$os`.
+
+| Event                  | When                                                       | Properties                                                                                                                                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddies_alerts_shown` | Buddies alerts arrived since the last report (foreground). | `named`, `fallback`, `quiet` (counts; `quiet` is a push muted on this device), `fallback_reasons` (comma-separated, sorted: `noContext`, `noEvent`, `unknownSender`, `unreadable`, `unknownKind`, `fetch`, `timeout`, `error`). No kinds, names, relay ids, or dates. |
+
 ### Buddies Alpha feedback
 
 The Buddies screen's Alpha badge, its feedback card, and Buddies Settings open the

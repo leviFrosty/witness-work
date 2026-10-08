@@ -39,6 +39,12 @@ import { useBadgeSession } from '@/stores/badgeSession'
 import { takeoverSnapshot, useTakeover } from '@/stores/takeover'
 import { noteUserAction, type UserActionKind } from '@/lib/userAction'
 import {
+  devicePushToken,
+  prepareBuddiesPush,
+  prepareDevicePushToken,
+  preparedBuddiesPush,
+} from '@/app/dev-harness/buddiesPush'
+import {
   setFakeGoogleDrive,
   type FakeGoogleDrive,
 } from '@/lib/syncTransport/googleDrive/googleDriveAuth'
@@ -229,6 +235,16 @@ export function installDevHarness() {
      * account `account` (null switches back to real Google).
      */
     fakeGoogleDrive: applyFakeGoogleDrive,
+    /**
+     * Builds the APNs payload the relay would send this device for an inbox
+     * event (`{ seq?, inline? }`); read it a moment later with
+     * `buddiesPushPayload()` and replay it with `xcrun simctl push`.
+     */
+    prepareBuddiesPush,
+    buddiesPushPayload: preparedBuddiesPush,
+    /** This device's push token; `devicePushToken()` a moment later. */
+    prepareDevicePushToken,
+    devicePushToken,
     /** The sync engine, for reading state back; drive changes through the UI. */
     sync: iCloudSync,
     setSupporter: (on: boolean) => {

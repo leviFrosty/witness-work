@@ -46,6 +46,15 @@ export function createFakeRelay(now: () => number) {
   const inboxes = new Map<string, Inbox>()
   const invites = new Map<string, Invite>()
   const pushes: { inboxId: string; kind: string }[] = []
+  /**
+   * The `ww` marker each push carries, as the relay builds it: the event's kind
+   * and `seq`, and the sealed event itself (which the real relay leaves out
+   * when it doesn't fit).
+   */
+  const markers: {
+    inboxId: string
+    marker: { kind: string; seq: number; eventId: string; blob: string }
+  }[] = []
   /** Alerts a device would show: only kinds it registered a template for. */
   const alerts: { inboxId: string; deviceId: string; kind: string }[] = []
   /** Card and event writes per `inboxId|slotId` (60 per rolling hour). */
@@ -125,6 +134,15 @@ export function createFakeRelay(now: () => number) {
         createdAt: now(),
       })
       pushes.push({ inboxId: invite.inboxId, kind: 'invite.claimed' })
+      markers.push({
+        inboxId: invite.inboxId,
+        marker: {
+          kind: 'invite.claimed',
+          seq: creator.seq,
+          eventId: payload.inviteId,
+          blob: payload.blob,
+        },
+      })
       return ok()
     }
 
@@ -188,6 +206,15 @@ export function createFakeRelay(now: () => number) {
       })
       if (payload.push) {
         pushes.push({ inboxId: payload.inboxId, kind: payload.kind })
+        markers.push({
+          inboxId: payload.inboxId,
+          marker: {
+            kind: payload.kind,
+            seq: inbox.seq,
+            eventId: payload.eventId,
+            blob: payload.blob,
+          },
+        })
         for (const [deviceId, device] of inbox.devices) {
           const { templates } = device as { templates: Record<string, unknown> }
           if (templates[payload.kind])
@@ -272,5 +299,5 @@ export function createFakeRelay(now: () => number) {
     }
   }
 
-  return { fetchImpl, inboxes, invites, pushes, alerts }
+  return { fetchImpl, inboxes, invites, pushes, markers, alerts }
 }

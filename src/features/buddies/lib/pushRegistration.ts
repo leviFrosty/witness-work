@@ -68,12 +68,12 @@ const joinRequestTemplates = (): Record<JoinRequestPushKind, PushTemplate> => {
 }
 
 /**
- * The Android channel Buddies alerts arrive in; the relay names it in every FCM
- * message. Created before registering, so it exists before any alert.
+ * The Android channel Buddies alerts are posted in. Created before registering,
+ * so it exists before any alert.
  */
-const BUDDIES_CHANNEL_ID = 'buddies'
+export const BUDDIES_CHANNEL_ID = 'buddies'
 
-function ensureBuddiesChannel() {
+export function ensureBuddiesChannel() {
   return Notifications.setNotificationChannelAsync(BUDDIES_CHANNEL_ID, {
     name: i18n.t('buddies_title'),
     importance: Notifications.AndroidImportance.HIGH,
@@ -99,7 +99,12 @@ async function pushAddress(): Promise<PushAddress> {
   if (Platform.OS === 'android') {
     await ensureBuddiesNewsChannel()
     await ensureBuddiesChannel()
-    return { pushService: 'fcm', fcmToken: String(token.data) }
+    return {
+      pushService: 'fcm',
+      fcmToken: String(token.data),
+      // This build posts its own named alerts (`postBuddiesAlert`).
+      appAlerts: true,
+    }
   }
   const environment =
     await Application.getIosPushNotificationServiceEnvironmentAsync()
@@ -134,6 +139,16 @@ const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
     buddiesEngine.badgePushKinds().map((kind) => [kind, templates[kind]])
   )
 }
+
+/**
+ * Every template this device registers while Buddies notifications are on: the
+ * relay's alert text, which the app replaces with a named alert.
+ */
+export const buddiesPushTemplates = () => ({
+  ...pushTemplates(),
+  ...joinRequestTemplates(),
+  ...badgeTemplates(),
+})
 
 /**
  * Registrations run one after another, so the last change is what the relay
@@ -187,13 +202,7 @@ async function register() {
   try {
     const outcome = await buddiesEngine.registerPush({
       ...(await pushAddress()),
-      templates: notificationsEnabled
-        ? {
-            ...pushTemplates(),
-            ...joinRequestTemplates(),
-            ...badgeTemplates(),
-          }
-        : {},
+      templates: notificationsEnabled ? buddiesPushTemplates() : {},
     })
     if (outcome !== 'unchanged')
       analytics.capture('buddies_push_registration', { outcome })

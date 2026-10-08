@@ -393,6 +393,19 @@ export const formatWeekdayDayCompact = (m: moment.Moment): string =>
 export const formatWeekdayMonthDayCompact = (m: moment.Moment): string =>
   activeDayFirst() ? m.format('ddd, D MMM') : m.format('ddd, MMM D')
 
+/**
+ * The active Region's date order and clock, for native code that formats dates
+ * itself the way `formatWeekdayMonthDayCompact` and `formatTime` do (e.g. the
+ * iOS Notification Service Extension).
+ */
+export const activeDateConventions = (): {
+  dayFirst: boolean
+  clock24: boolean
+} => ({
+  dayFirst: activeDayFirst(),
+  clock24: !/h/.test(moment.localeData().longDateFormat('LT')),
+})
+
 /* ────────────────────────────────────────────────────────────────────────
  * Read-time display intents (ADR-0006)
  *

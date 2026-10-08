@@ -2,6 +2,7 @@ import moment from 'moment'
 import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
 import {
+  aad,
   BuddyIdentity,
   deriveDirection,
   deriveIdentity,
@@ -48,6 +49,14 @@ import {
   ShareType,
 } from '@/features/buddies/lib/schemas'
 import {
+  type BuddiesPushMarker,
+  type BuddyAlertContext,
+  type BuddyAlertOutcome,
+  describeBuddyEvent,
+  type SealedEvent,
+  shareWhen,
+} from '@/features/buddies/lib/pushAlerts'
+import {
   BUDDY_CARD_HORIZON_DAYS,
   buildBuddyCardDays,
 } from '@/features/buddies/lib/card'
@@ -89,10 +98,14 @@ import {
   PendingRemoval,
   SentBadgeReaction,
 } from '@/features/buddies/lib/state'
-import { parseBadgeKey } from '@/lib/badges/catalog'
+import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import type { RecurringPlan } from '@/lib/recurrence'
-import type { BadgeKey, SharedBadge } from '@/types/badges'
+import {
+  type BadgeKey,
+  ONE_TIME_BADGE_IDS,
+  type SharedBadge,
+} from '@/types/badges'
 import type { DayPlan } from '@/types/timeEntry'
 
 /**
@@ -221,16 +234,6 @@ export type PushRegistrationOutcome = 'registered' | 'refreshed' | 'unchanged'
  * evicted or dropped for a rejected token starts receiving pushes again.
  */
 export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000
-
-const aad = {
-  inviteCard: (inviteId: string) => `ww-buddies/v1/invite-card|${inviteId}`,
-  claim: (inviteId: string) => `ww-buddies/v1/invite-claim|${inviteId}`,
-  card: (inboxId: string, slotId: string) =>
-    `ww-buddies/v1/card|${inboxId}|${slotId}`,
-  event: (inboxId: string, slotId: string, eventId: string) =>
-    `ww-buddies/v1/event|${inboxId}|${slotId}|${eventId}`,
-  roster: (inboxId: string) => `ww-buddies/v1/roster|${inboxId}`,
-}
 
 /** The relay's event cap (8 KB sealed) minus the seal's version, nonce, and tag. */
 const MAX_EVENT_PLAINTEXT_BYTES = 8 * 1024 - 29
@@ -2959,6 +2962,87 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * What this device needs to word Buddies pushes itself (see `pushAlerts`):
+   * each buddy's incoming slot, the key that opens it, and their name here;
+   * open invites' keys; and when shared Plans and Follow-ups are, both ways.
+   * Null until Buddies has started here.
+   */
+  function alertContext(): BuddyAlertContext | null {
+    const state = store.getState()
+    if (state.registeredInboxId === null) return null
+    const me = identity()
+    const now = deps.now()
+    const sharesFrom = (inboxId: string) =>
+      Object.fromEntries(
+        Object.values(state.incomingShares)
+          .filter((share) => share.from === inboxId && share.expiresAt > now)
+          .map((share) => [share.shareId, shareWhen(share.type, share.details)])
+      )
+    return {
+      v: 1,
+      inboxId: me.inboxId,
+      ownerSeed: toB64u(me.ownerSeed),
+      buddies: state.buddies.map((buddy) => {
+        const { incoming } = pairKeys(me, buddy)
+        const shares = sharesFrom(buddy.inboxId)
+        return {
+          slot: incoming.slotId,
+          key: toB64u(incoming.contentKey),
+          name: buddy.nickname ?? buddy.name,
+          ...(state.mutedJoinRequests.includes(buddy.inboxId)
+            ? { joinMuted: true as const }
+            : {}),
+          ...(Object.keys(shares).length > 0 ? { shares } : {}),
+        }
+      }),
+      invites: state.outgoingInvites
+        .filter((invite) => invite.expiresAt > now)
+        .map((invite) => ({
+          id: invite.inviteId,
+          key: toB64u(deriveInvite(fromB64u(invite.secret)).inviteKey),
+        })),
+      myShares: Object.fromEntries(
+        (deps.getShares?.() ?? [])
+          .filter((spec) => spec.expiresAt > now)
+          .map((spec) => [
+            shareIdFor(me, spec.key),
+            shareWhen(spec.type, spec.details),
+          ])
+      ),
+      badgeAlerts: state.badgeNotifications && (deps.showBadges?.() ?? true),
+      joinAlerts: state.joinRequestNotifications,
+      catalog: {
+        order: [...ANNOUNCE_ORDER],
+        oneTime: [...ONE_TIME_BADGE_IDS],
+      },
+    }
+  }
+
+  /**
+   * Opens the event a push is about and says how to word its alert: from the
+   * push itself when the event fit, or fetched from the inbox by its `seq`.
+   * Reads only; the sync that follows a push applies the event as usual.
+   */
+  async function describePush(
+    marker: BuddiesPushMarker
+  ): Promise<BuddyAlertOutcome> {
+    const context = alertContext()
+    if (!context) return { failed: 'noContext' }
+    let event: SealedEvent | undefined =
+      marker.eventId !== undefined && marker.blob !== undefined
+        ? { eventId: marker.eventId, kind: marker.kind, blob: marker.blob }
+        : undefined
+    if (!event && marker.seq !== undefined && marker.seq > 0) {
+      const { events } = await relay.syncInbox(
+        ownerAuth(identity()),
+        marker.seq - 1
+      )
+      event = events.find((candidate) => candidate.seq === marker.seq)
+    }
+    return event ? describeBuddyEvent(context, event) : { failed: 'noEvent' }
+  }
+
+  /**
    * Registers this device for pushes when anything about the registration
    * changed, or when the last one is a day old: the relay may have dropped the
    * device since (a rejected token, or evicted for a newer device), and a
@@ -3081,6 +3165,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     openLive,
     probeInbox,
     registerPush,
+    alertContext,
+    describePush,
     deleteEverything,
   }
 }

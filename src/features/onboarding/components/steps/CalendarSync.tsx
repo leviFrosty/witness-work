@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import CalendarPreview from '@/features/onboarding/components/CalendarPreview'
@@ -94,7 +94,11 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
           </Text>
           <InfoPopover
             title={i18n.t('calendarOnboardingPrivate')}
-            description={i18n.t('calendarOnboardingPrivate_info')}
+            description={i18n.t(
+              Platform.OS === 'android'
+                ? 'calendarOnboardingPrivate_infoAndroid'
+                : 'calendarOnboardingPrivate_info'
+            )}
           />
         </View>
         {!!error && (

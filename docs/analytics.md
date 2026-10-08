@@ -140,8 +140,8 @@ Existing structural properties and sources remain on retained events. No saved
 content, record identifiers, appointment dates, or exception text is attached.
 Saved View `sort` is a built-in sort key or just `customField`; the events never
 carry view names, filter values, or custom field ids.
-Buddies and Notes Import are rollout-gated; iCloud and Calendar Sync features
-retain their iOS availability rules.
+Buddies and Notes Import are rollout-gated; iCloud features retain their iOS
+availability rules, and Calendar Sync is available on iOS and Android.
 
 ## Onboarding and activation
 
@@ -361,8 +361,8 @@ No device IDs/names, filenames, records, or payloads are included.
 
 ## Calendar Sync and notification badges
 
-Calendar Sync is available on iOS. The onboarding `calendarSync` step requires a
-build with the native calendar module. `onboarding_calendar_setup_result` answers
+Calendar Sync is available on iOS and Android. The onboarding `calendarSync` step
+requires a build with the native calendar module. `onboarding_calendar_setup_result` answers
 whether **Add to Calendar** connects successfully, uses another publishing device,
 or fails: `status` is `connected`, `elsewhere`, or `error` with a bounded
 `error_key`. Skip records `onboarding_step_skipped` with `step_id: calendarSync`.
@@ -373,6 +373,12 @@ The one-time `calendar_sync` tray invitation retains setup behavior; outcomes us
 `source`: `settings`, `tray` for the paused notification's Turn Off, or
 `onboarding` for Skip after a failed setup).
 `calendar_sync_failed` includes bounded `error_key` and `background`: boolean.
+Android uses the same events (break them down by the SDK's `$os_name`); it never
+reports `elsewhere`. Its `calendar_connected` adds `local_calendar`: boolean, true
+for a calendar stored only on the device, to show how many people publish to a
+calendar their other devices can't see. Android's permission and generic errors
+use `calendarPermissionErrorAndroid` and `calendarConnectionErrorAndroid`, so the
+denied-permission share of Android setups is countable.
 No destination/account names, device IDs, appointment dates, or calendar contents
 are sent. Background publication, draft options, and generic tray actions remain
 outside permanent usage coverage.

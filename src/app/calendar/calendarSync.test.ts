@@ -22,6 +22,7 @@ const data = vi.hoisted(() => ({
   contacts: [] as { id: string; name: string }[],
   conversations: [] as unknown[],
 }))
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('../../../modules/calendar-bridge', () => ({
   calendarBridge: () => bridge,
 }))

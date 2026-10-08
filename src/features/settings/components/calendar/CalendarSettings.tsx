@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Alert, Linking, View } from 'react-native'
+import { Alert, Linking, Platform, View } from 'react-native'
 import { useToastController } from '@tamagui/toast'
-import {
-  calendarBridge,
-  type CalendarDestination,
-  type CalendarSource,
+import type {
+  CalendarDestination,
+  CalendarSource,
 } from '../../../../../modules/calendar-bridge'
 import {
   calendarAction,
   calendarDestinations,
+  calendarSources,
   connectCalendar,
   createCalendar,
   publishCalendar,
@@ -29,6 +29,9 @@ import useTheme from '@/contexts/theme'
 import { formatRelative } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
+/** Android publishes from this device alone: no primary device or iCloud. */
+const android = Platform.OS === 'android'
+
 export default function CalendarSettings() {
   const theme = useTheme()
   const toast = useToastController()
@@ -37,9 +40,9 @@ export default function CalendarSettings() {
   const [destinations, setDestinations] = useState<CalendarDestination[]>([])
   const [sources, setSources] = useState<CalendarSource[]>([])
   const [loaded, setLoaded] = useState(false)
-  const isPrimary = !!deviceId && state?.primary === deviceId
+  const isPrimary = android || (!!deviceId && state?.primary === deviceId)
   // With no primary yet, connecting claims it for this device.
-  const canPublishHere = !!state && (!state.primary || isPrimary)
+  const canPublishHere = android || (!!state && (!state.primary || isPrimary))
   const primaryName = state?.devices.find(
     (device) => device.id === state.primary
   )?.name
@@ -52,6 +55,7 @@ export default function CalendarSettings() {
       (local.title === shared.title && local.account === shared.account))
   const suggested = localIsShared ? local : shared
   useEffect(() => {
+    if (android) return
     void calendarAction(refreshPublishing).catch(() => undefined)
   }, [])
   const run = (action: () => Promise<unknown>) => {
@@ -68,7 +72,7 @@ export default function CalendarSettings() {
         onPress: () =>
           run(async () => {
             setDestinations(await calendarDestinations())
-            setSources(await calendarBridge().sources())
+            setSources(await calendarSources())
             setLoaded(true)
           }),
       },
@@ -108,7 +112,7 @@ export default function CalendarSettings() {
         return
       }
       setDestinations(calendars)
-      setSources(await calendarBridge().sources())
+      setSources(await calendarSources())
       setLoaded(true)
       throw new Error('CALENDAR_SHARED_NOT_FOUND')
     })
@@ -145,6 +149,9 @@ export default function CalendarSettings() {
           device: primaryName ?? i18n.t('calendarNotConfigured'),
         })
       : i18n.t('calendarDisconnected')
+  const googleSetup = i18n.t(
+    android ? 'calendarGoogleSetupAndroid' : 'calendarGoogleSetup'
+  )
   const note = { fontSize: 12, color: theme.colors.textAlt }
   const padded = { paddingHorizontal: inputLayout.horizontalPadding }
   return (
@@ -157,7 +164,9 @@ export default function CalendarSettings() {
         <View>
           <SectionTitle
             text={i18n.t('calendar')}
-            info={i18n.t('calendarHowItWorks')}
+            info={i18n.t(
+              android ? 'calendarHowItWorksAndroid' : 'calendarHowItWorks'
+            )}
           />
           <Section>
             {settings.enabled && settings.destination && (
@@ -230,7 +239,8 @@ export default function CalendarSettings() {
           {((error === 'calendarWaitingForEvents' &&
             isPrimary &&
             settings.enabled) ||
-            error === 'calendarPermissionError') && (
+            error === 'calendarPermissionError' ||
+            error === 'calendarPermissionErrorAndroid') && (
             <Section>
               {error === 'calendarWaitingForEvents' ? (
                 <InputRowButton
@@ -254,7 +264,11 @@ export default function CalendarSettings() {
                 />
               ) : (
                 <InputRowButton
-                  label={i18n.t('calendarOpenSettings')}
+                  label={i18n.t(
+                    android
+                      ? 'calendarOpenSettingsAndroid'
+                      : 'calendarOpenSettings'
+                  )}
                   lastInSection
                   onPress={() => {
                     void Linking.openSettings()
@@ -272,7 +286,7 @@ export default function CalendarSettings() {
             <View>
               <SectionTitle
                 text={i18n.t('calendarExistingCalendars')}
-                info={i18n.t('calendarGoogleSetup')}
+                info={googleSetup}
               />
               <Section>
                 {destinations.map((destination, index) => (
@@ -292,19 +306,17 @@ export default function CalendarSettings() {
             <View>
               <SectionTitle
                 text={i18n.t('calendarNewCalendar')}
-                info={
-                  destinations.length
-                    ? undefined
-                    : i18n.t('calendarGoogleSetup')
-                }
+                info={destinations.length ? undefined : googleSetup}
               />
               <Section>
                 {sources.map((source, index) => (
                   <InputRowButton
                     key={source.id}
-                    label={i18n.t('calendarCreateIn', {
-                      account: source.title,
-                    })}
+                    label={
+                      android
+                        ? i18n.t('calendarCreateLocalAndroid')
+                        : i18n.t('calendarCreateIn', { account: source.title })
+                    }
                     disabled={working}
                     onPress={() => run(() => createCalendar(source.id))}
                     lastInSection={index === sources.length - 1}
@@ -321,7 +333,11 @@ export default function CalendarSettings() {
         <Section>
           <InputRowSwitch
             label={i18n.t('calendarIncludeDetails')}
-            info={i18n.t('calendarDetailsDescription')}
+            info={i18n.t(
+              android
+                ? 'calendarDetailsDescriptionAndroid'
+                : 'calendarDetailsDescription'
+            )}
             value={settings.includeDetails}
             onValueChange={(includeDetails) =>
               run(() => setSharedOptions({ includeDetails }))
@@ -331,7 +347,7 @@ export default function CalendarSettings() {
         </Section>
       </View>
 
-      <PrimaryDeviceSection />
+      {!android && <PrimaryDeviceSection />}
     </View>
   )
 }

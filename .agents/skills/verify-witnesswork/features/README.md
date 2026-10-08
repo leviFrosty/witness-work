@@ -37,5 +37,6 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 - [Progress and goals](./progress-goals.md) covers the Month, Year and All-time tabs, pace and projection for pioneers, and the checkbox report for publishers.
 - [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, and two-device invites.
 - [Service Streaks](./streaks.md) covers the Home streak chip and countdown, the milestone celebration, streak reminders, buddies' streaks over the local relay, and the Schedule intro.
+- [Calendar Sync](./calendar-sync.md) covers connecting a calendar, publishing Follow-ups, disconnecting, and Android's calendar provider read-back.
 
 Not mapped yet: supporter route planning, saved contact views, Notes Import (Scribe) on Android, the supporter pause offer, and Settings → About and Advanced. Map one with `maintain-verification-skill` before relying on this index for it.

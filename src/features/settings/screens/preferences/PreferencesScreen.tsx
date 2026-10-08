@@ -23,6 +23,7 @@ import IconButton from '@/components/ui/IconButton'
 import { View } from 'react-native'
 import { RootStackNavigation } from '@/types/rootStack'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+import { calendarSyncSupported } from '../../../../../modules/calendar-bridge'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -56,7 +57,7 @@ const PreferencesScreen = () => {
               >
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>
-              {Platform.OS === 'ios' && (
+              {calendarSyncSupported && (
                 <InputRowButton
                   leftIcon={Calendar1Icon}
                   label={i18n.t('calendarSync')}

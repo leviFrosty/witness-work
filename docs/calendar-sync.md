@@ -1,6 +1,6 @@
 # Calendar publishing
 
-Implements the Follow-up portion of [#265](https://github.com/leviFrosty/witness-work/issues/265). Plans and recurring series remain outside this release.
+Implements the Follow-up portion of [#265](https://github.com/leviFrosty/witness-work/issues/265). Plans and recurring series remain outside this release. The sections below describe iOS; [Android](#android) is a simpler single-device version.
 
 ## User behavior
 
@@ -31,6 +31,29 @@ A device-only Keychain journal that survives reinstall alongside the device iden
 
 Each event URL opens the existing Contact Details route and carries namespace/Visit markers in query parameters. Native IDs are local recovery aids only, cached per calendar so events kept in a previously used calendar are never mistaken for moved events. Reads cover the selected calendar's published date horizon in bounded EventKit query chunks. Reconciliation skips EventKit commit when no event changed, so its own notifications settle after the following check. Mutations operate on marked events only. Switching destinations rebuilds the selected calendar's manifest before projection, so reconnecting a kept calendar can remove its deleted Follow-ups even when publishing previously switched elsewhere. Explicit Visit/Contact deletion, dismissal, and exclusion remove events; contact tombstones also remove owned events when their source Visit is absent, using the contact marker in the event URL. Turning off contact details redacts retained events even if their app records are missing. Missing records in partial app-data sync are never interpreted as deletion. Past appointments are not initially backfilled, but already-exported past events remain maintainable.
 
+## Android
+
+Android publishes from one device with no ownership protocol: no CloudKit record, primary-device list, busy lock, journal, or handoff. Android has no cross-device app-data sync, so there is nothing to coordinate. The user-facing flow matches iOS where it is cheap: the onboarding step and tray invitation (one-tap setup), **Preferences → Calendar Sync** (choose or create a calendar, **Sync now**, **Turn Off Calendar Sync** with keep/remove), all upcoming Follow-ups as 30-minute events, **Include names and addresses**, alerts that mirror Notify Me, the **Calendar updates paused** tray alert, and no backfill of past Follow-ups. The primary-device section, iCloud copy and **Restore missing events** are absent; strings that mention iPhone or iCloud have `…Android` variants. All entry points need a binary with the Android module (`calendarSyncSupported`), so an OTA update can't expose them to older Android builds.
+
+- **Calendars.** The picker lists writable calendars that sync to the device, except each account's primary calendar. Google (and most other providers) ignore calendars created through CalendarContract, so **New calendar** creates a local WitnessWork calendar (`ACCOUNT_TYPE_LOCAL`), reused rather than duplicated if it already exists. To use Google, people create a calendar in Google Calendar and pick it. One-tap setup reuses a single calendar titled WitnessWork, else creates the local one; several matches ask the user to choose.
+- **Include names and addresses** lives in the device-local store; there is nothing to share it with.
+- **Permissions.** `READ_CALENDAR` and `WRITE_CALENDAR` come from the module's manifest and are requested when the user connects. A denial (or later revocation) pauses publishing with `calendarPermissionErrorAndroid`, an **Open Settings** row that opens the app's system settings, and the paused tray alert. Granting access in the picker clears the error.
+- **Maintenance** runs through the same `useCalendarSync` hook: launch, foreground, and a 1.5-second debounce after local edits, with the same retries. There is no app-data pull and no calendar-change listener. After turning off, Android does no background work: there is no interrupted ownership batch to finish.
+
+### Stable event key
+
+Every publish reads the destination's marked events, plans the change in JavaScript (`src/app/calendar/androidEvents.ts`), and applies it in one provider transaction. Events are upserted by Follow-up key, never blindly created, so re-running a publish is always safe.
+
+The key lives in the event **description**, as the link `witnesswork://contact/<contact>/<visit>?followUp=<visit>&alert=<minutes|none>`, the Android counterpart of the iOS event URL. CalendarContract has no app-writable field that also syncs:
+
+- `SYNC_DATA1`–`10` (and `_SYNC_ID`, `DIRTY`) are writable only by sync adapters. Writing as a sync adapter would also mark the event clean, so Google would never upload it.
+- `ExtendedProperties` are documented for sync adapters, and nothing documents that Google round-trips them.
+- `UID_2445` is app-writable, but Google's sync adapter leaves it null on every event it downloads (a [Pixel probe](https://github.com/williscool/CalendarNotification/pull/276) of 4,761 events found none), so a key there would not reach other devices. A shared iCalendar UID could also make CalDAV servers or Google reject the second device's copy as a UID conflict instead of letting it converge.
+
+Descriptions sync through every provider. So when two Android devices publish into the same Google calendar, each sees the other's events by key. If both created one before syncing, every device keeps the same copy (synced events first, then the lowest `_SYNC_ID`, then the lowest local id) and deletes the rest, so they converge on one event per Follow-up. The marker is visible in calendar apps and may not be tappable there; editing it detaches the event. Changes are detected by parsing the marker, not by comparing the whole description, so text added around it, or a provider turning it into an HTML link, never causes a rewrite on its own; the next real update writes the plain marker back. The alert is part of the marker, as on iOS: reminders are rewritten only when the marker changes, so Google's default notifications don't cause a rewrite on every check. Recurring events and exceptions are never treated as WitnessWork events.
+
+Removal follows iOS: only explicit removals (dismissed or deleted Follow-ups, deleted contacts via the contact id in the marker) delete events, so a device without some Follow-ups (another device's, or partial data from a future sync) never deletes them. Turning off names and addresses redacts every marked event. Unlike iOS, a missing upcoming event is simply recreated: with a single publisher, missing means deleted, not still downloading. Turning off with **Remove Events** deletes marked events in the selected calendar and keeps the calendar.
+
 ## Native build and release prerequisites
 
 1. Build a new iOS binary; an OTA update cannot add the native module or calendar permission strings.
@@ -38,10 +61,11 @@ Each event URL opens the existing Contact Details route and carries namespace/Vi
 3. TestFlight (Beta) and App Store builds use the **Production** CloudKit environment, which can't create record types on the fly: until the schema is deployed, every ownership call fails and the UI shows the generic connection error. In the development CloudKit environment, exercise registration once to create record type **CalendarPublisher**, with field **state** of type **String**. Deploy that schema to the production environment of each release container (`iCloud.com.leviwilkerson.jwtimebeta` for Beta, `iCloud.com.leviwilkerson.jwtime` for the App Store) before shipping. The Beta container's development schema must be created in CloudKit Console, since no development build uses it. No query indexes are required: the record is fetched by its fixed ID. This PR does not deploy schema or change remote provisioning.
 4. Verify on physical devices signed into the same iCloud account: create/adopt iCloud and Google calendars, secondary-account visibility, permission denial/revocation, handoff before calendar replication catches up, app termination during a batch, offline ownership checks, account switching, reinstall, missing/moved events, cleanup, and alert defaults. Simulator compilation and mocked tests cannot certify those behaviors.
 5. Only the English locale is changed. The release cut translates the other locales; until then they use the app's English fallback.
+6. Android needs a new binary too: the module adds `READ_CALENDAR`/`WRITE_CALENDAR` through its manifest. Calendar events are written on the device and never collected, so the Play Console Data safety answers don't change; confirm that when submitting. Verify a Google calendar on a physical device: the emulator has no signed-in Google account, so Google's handling of the description marker, default notifications and two-device convergence are untested there.
 
 ## Checks
 
-`pnpm exec vitest run src/app/calendar` covers projection and orchestration, including rescheduling, removal, privacy, DST, missing data, permission/ownership failures, account changes, failed cleanup, and merge ordering.
+`pnpm exec vitest run src/app/calendar` covers projection and orchestration, including rescheduling, removal, privacy, DST, missing data, permission/ownership failures, account changes, failed cleanup, and merge ordering. `androidEvents.test.ts` and `calendarSyncAndroid.test.ts` cover Android's marker, upsert, duplicate convergence, redaction and the connect/disconnect flows against an in-memory provider.
 
 `pnpm run test:calendar-native` compiles and runs the Swift ownership state tests on macOS. They exercise exclusive acquire, pending handoff, stale-owner rejection, crash persistence, no-op registration, device removal, disconnect, legacy record decoding, configuration-token validation, destination manifests, missing-event policy, invalid dates, and contact-marker decoding. These tests do not simulate CloudKit's server or EventKit's database.
 

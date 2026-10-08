@@ -1,4 +1,4 @@
-import { requireOptionalNativeModule } from 'expo-modules-core'
+import { Platform, requireOptionalNativeModule } from 'expo-modules-core'
 
 /** `seen` is seconds since 1970; absent for devices registered by old builds. */
 export type CalendarDevice = { id: string; name: string; seen?: number }
@@ -27,6 +27,8 @@ export type CalendarDestination = {
   id: string
   title: string
   account: string
+  /** Android: stored only on this device. */
+  local?: boolean
 }
 export type CalendarSource = { id: string; title: string }
 export type CalendarEntry = {
@@ -109,19 +111,76 @@ interface CalendarBridgeNative {
   ): Promise<void>
 }
 
-const native =
-  requireOptionalNativeModule<CalendarBridgeNative>('CalendarBridge')
+/** A marked WitnessWork event read from CalendarContract. */
+export type AndroidCalendarEvent = {
+  id: string
+  /** The provider's server id; null until the event first syncs. */
+  syncId: string | null
+  title: string
+  start: number
+  end: number
+  location: string
+  description: string
+  allDay: boolean
+}
+/** Without `id`, inserts a new event. */
+export type AndroidEventWrite = {
+  id?: string
+  title: string
+  start: number
+  end: number
+  location: string
+  description: string
+  alertMinutes?: number
+  /** Replace the event's reminders with `alertMinutes`. */
+  resetAlert: boolean
+}
+
+/** Single device: no ownership protocol, so no device or token arguments. */
+interface AndroidCalendarBridgeNative {
+  requestAccess(): Promise<boolean>
+  destinations(): Promise<CalendarDestination[]>
+  /** A local calendar on this device; returns the existing one if present. */
+  createCalendar(title: string): Promise<CalendarDestination>
+  events(calendarId: string): Promise<AndroidCalendarEvent[]>
+  apply(
+    calendarId: string,
+    writes: AndroidEventWrite[],
+    deletes: string[]
+  ): Promise<void>
+}
+
+const native = requireOptionalNativeModule('CalendarBridge')
 
 /** False on binaries built before Calendar Sync; hide entry points there. */
 export const calendarBridgeAvailable = !!native
 
+/**
+ * Older iOS binaries still show Calendar Sync and explain that they need an
+ * update. Android shows it only on binaries with the module.
+ */
+export const calendarSyncSupported =
+  Platform.OS === 'ios' ||
+  (Platform.OS === 'android' && calendarBridgeAvailable)
+
 /** Fail closed on older binaries; every native mutation checks cloud ownership. */
 export function calendarBridge(): CalendarBridgeNative {
-  if (!native) throw new Error('CALENDAR_BINARY_REQUIRED')
-  return native
+  if (!native || Platform.OS !== 'ios')
+    throw new Error('CALENDAR_BINARY_REQUIRED')
+  return native as CalendarBridgeNative
+}
+
+export function androidCalendarBridge(): AndroidCalendarBridgeNative {
+  if (!native || Platform.OS !== 'android')
+    throw new Error('CALENDAR_BINARY_REQUIRED')
+  return native as AndroidCalendarBridgeNative
 }
 
 /** Changes in Calendar.app or its account replication also need reconciliation. */
 export function subscribeCalendarChanges(listener: () => void) {
-  return native?.addListener('onCalendarChange', listener)
+  if (Platform.OS !== 'ios') return undefined
+  return (native as CalendarBridgeNative | null)?.addListener(
+    'onCalendarChange',
+    listener
+  )
 }

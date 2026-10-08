@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as Device from 'expo-device'
 import {
   calendarBridge,
@@ -6,21 +7,14 @@ import {
   type SharedCalendarOptions,
 } from '../../../modules/calendar-bridge'
 import { getOrCreate } from '../../../modules/keychain-uuid'
-import useContacts from '@/stores/contactsStore'
-import useConversations from '@/stores/conversationStore'
-import {
-  DEFAULT_PLAN_NOTIFICATION_OFFSET,
-  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
-  usePreferences,
-} from '@/stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
-import { buildCalendarSnapshot } from '@/app/calendar/snapshot'
+import { currentCalendarSnapshot } from '@/app/calendar/currentSnapshot'
+import * as android from '@/app/calendar/calendarSyncAndroid'
 import i18n from '@/lib/locales'
-import { addressToString } from '@/lib/address'
 import { analytics } from '@/lib/analytics'
-import { reminderOccurrences } from '@/lib/reminderSchedule'
 
 /** IOS 16+ reports a generic "iPhone" without a special entitlement. */
 const GENERIC_DEVICE_NAMES = ['iPhone', 'iPad', 'iPod touch']
@@ -44,8 +38,18 @@ function calendarErrorCode(error: unknown) {
     : String(error)
 }
 
+/** The iOS messages mention iPhone Settings or iCloud. */
+const ANDROID_ERROR_KEYS: Record<string, string> = {
+  calendarPermissionError: 'calendarPermissionErrorAndroid',
+  calendarConnectionError: 'calendarConnectionErrorAndroid',
+}
+
 export function calendarErrorKey(error: unknown) {
-  const code = calendarErrorCode(error)
+  const key = errorKey(calendarErrorCode(error))
+  return (Platform.OS === 'android' && ANDROID_ERROR_KEYS[key]) || key
+}
+
+function errorKey(code: string) {
   if (code.includes('CALENDAR_STATE_CHANGED')) return 'calendarConnectionError'
   if (code.includes('CALENDAR_PERMISSION')) return 'calendarPermissionError'
   if (code.includes('CALENDAR_NOT_PRIMARY')) return 'calendarPrimaryRequired'
@@ -138,6 +142,8 @@ export async function removeDevice(target: string) {
 export async function setSharedOptions(
   options: Pick<SharedCalendarOptions, 'includeDetails'>
 ) {
+  // A single device: nothing to share.
+  if (Platform.OS === 'android') return useCalendarSync.setState(options)
   const { id, name } = identity()
   const previous = useCalendarSync.getState()
   useCalendarSync.setState(options)
@@ -162,6 +168,7 @@ async function claimPrimary() {
 }
 
 export async function calendarDestinations() {
+  if (Platform.OS === 'android') return android.calendarDestinations()
   if (!(await calendarBridge().requestAccess()))
     throw new Error('CALENDAR_PERMISSION')
   return calendarBridge().destinations()
@@ -176,6 +183,8 @@ export async function connectCalendar(
   destination: CalendarDestination,
   { fresh = false }: { fresh?: boolean } = {}
 ) {
+  if (Platform.OS === 'android')
+    return android.connectCalendar(destination, { fresh })
   const { id, name } = identity()
   const previous = useCalendarSync.getState()
   const state = await claimPrimary()
@@ -206,7 +215,13 @@ export async function connectCalendar(
   analytics.capture('calendar_connected', { created: fresh })
 }
 
+export async function calendarSources() {
+  if (Platform.OS === 'android') return android.calendarSources()
+  return calendarBridge().sources()
+}
+
 export async function createCalendar(sourceId: string) {
+  if (Platform.OS === 'android') return android.createCalendar()
   const { id, name } = identity()
   const state = await claimPrimary()
   let destination: CalendarDestination
@@ -234,6 +249,7 @@ export async function createCalendar(sourceId: string) {
 export async function quickConnectCalendar(): Promise<
   'connected' | 'elsewhere'
 > {
+  if (Platform.OS === 'android') return android.quickConnectCalendar()
   const { id } = identity()
   const state = await refreshPublishing()
   if (state.primary && state.primary !== id && state.calendarTitle)
@@ -309,6 +325,8 @@ export async function disconnectCalendar(
   remove: boolean,
   source: 'settings' | 'tray' | 'onboarding' = 'settings'
 ) {
+  if (Platform.OS === 'android')
+    return android.disconnectCalendar(remove, source)
   const { id, name } = identity()
   const settings = useCalendarSync.getState()
   if (remove && settings.destination) {
@@ -365,6 +383,8 @@ export async function publishCalendar({
   repair = false,
   pull = true,
 }: { repair?: boolean; pull?: boolean } = {}) {
+  // No ownership or app-data pull; missing events are simply recreated.
+  if (Platform.OS === 'android') return android.publishCalendar()
   // One retry handles a concurrent option/destination change. Every attempt
   // rebuilds the snapshot from freshly checked shared configuration.
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -412,39 +432,9 @@ async function publishCurrentCalendar({
     useSupporter.getState().isSupporter
   )
     await iCloudSync.pullBeforeCalendarPublish()
-  const contacts = useContacts.getState()
-  const visits = useConversations.getState()
-  const preferences = usePreferences.getState()
-  // The same reminders the app schedules, so calendar alerts always match.
-  const alertMinutes = new Map<string, number>()
-  for (const reminder of reminderOccurrences({
-    contacts: contacts.contacts,
-    visits: visits.conversations,
-    plans: [],
-    visitOffset: {
-      ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
-      ...preferences.returnVisitNotificationOffset,
-    },
-    planOffset: DEFAULT_PLAN_NOTIFICATION_OFFSET,
-  })) {
-    const minutes = Math.round(
-      (reminder.anchor.getTime() - reminder.date.getTime()) / 60_000
-    )
-    if (reminder.kind === 'visit' && minutes >= 0)
-      alertMinutes.set(reminder.targetId, minutes)
-  }
-  const snapshot = buildCalendarSnapshot({
-    visits: visits.conversations,
-    deletedVisits: visits.deletedConversations,
-    contacts: contacts.contacts.map((contact) => ({
-      ...contact,
-      address: addressToString(contact.address),
-    })),
-    deletedContactIds: contacts.deletedContacts.map((contact) => contact.id),
+  const snapshot = currentCalendarSnapshot({
     publishedKeys: state.publishedKeys,
     includeDetails: state.includeDetails ?? false,
-    alertMinutes,
-    title: i18n.t('calendarFollowUpTitle'),
   })
   await calendarBridge().publish(
     id,

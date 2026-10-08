@@ -1,7 +1,7 @@
 {
   "name": "calendar-bridge",
   "version": "0.1.0",
-  "description": "Single-publisher EventKit calendar integration",
+  "description": "Follow-up calendar publishing: EventKit on iOS, CalendarContract on Android",
   "main": "index.ts",
   "private": true
 }

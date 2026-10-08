@@ -60,6 +60,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'calendarPrimary', category: 'backups' },
   { id: 'calendarTroubleshooting', category: 'backups' },
   { id: 'calendarDisconnect', category: 'backups' },
+  { id: 'calendarAndroid', category: 'backups' },
   {
     id: 'widgets',
     category: 'general',

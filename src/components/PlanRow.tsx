@@ -153,6 +153,9 @@ const PlanRow = (props: {
     lineHeight: theme.fontSize('sm') * 1.4,
   }
   const categoryLabel = planTypeLabel(plan, categories)
+  // Standard is the default Type, so only other Types are labeled.
+  const hasCategory =
+    !!plan.categoryId && categories.some((c) => c.id === plan.categoryId)
   const formattedDuration = useFormattedMinutes(effective.minutes)
   const dateMoment = moment(date)
   const isToday = dateMoment.isSame(moment(), 'day')
@@ -296,7 +299,7 @@ const PlanRow = (props: {
                     {i18n.t('notCounted')}
                   </Badge>
                 )}
-                <Badge size='xs'>{categoryLabel}</Badge>
+                {hasCategory && <Badge size='xs'>{categoryLabel}</Badge>}
                 {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
               </View>
             </View>

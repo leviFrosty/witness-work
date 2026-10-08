@@ -155,9 +155,13 @@ export default function RootHeader({
                 ...FLOAT_TRANSITION,
               }}
             >
+              {/* Shrinks a little before it truncates, so a crowded header
+              (or larger text) still shows the section's name. */}
               <Text
                 accessibilityRole='header'
                 numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
                 style={{
                   fontFamily: theme.fonts.bold,
                   fontSize: theme.fontSize('2xl'),

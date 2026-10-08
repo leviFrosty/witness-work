@@ -12,7 +12,12 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  * requests wait for confirmation, a spinner while Buddies is confirmed for the
  * first time this session, and dims while Buddies is turned off on the server.
  */
-export default function BuddiesHeaderButton() {
+export default function BuddiesHeaderButton({
+  compact = false,
+}: {
+  /** Icon only, where the header has no room for the label. */
+  compact?: boolean
+} = {}) {
   const navigation = useNavigation<RootStackNavigation>()
   const availability = useBuddiesAvailability()
   const requests = useBuddies((state) => state.incomingClaims.length)
@@ -24,6 +29,7 @@ export default function BuddiesHeaderButton() {
     <HeaderPillButton
       icon={UsersIcon}
       label={i18n.t('buddies_title')}
+      compact={compact}
       loading={availability === 'loading'}
       disabled={disabled}
       // Requests can't be confirmed while Buddies is off.

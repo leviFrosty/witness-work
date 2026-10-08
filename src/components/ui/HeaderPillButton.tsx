@@ -2,6 +2,7 @@ import { ActivityIndicator, View, type ViewStyle } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 
 type Props = {
@@ -16,6 +17,11 @@ type Props = {
   loading?: boolean
   /** Dimmed and not pressable; say why in `accessibilityLabel`. */
   disabled?: boolean
+  /**
+   * Icon only, for a header without room for the label. The label still names
+   * it to VoiceOver and as a pointer tooltip.
+   */
+  compact?: boolean
 }
 
 /** ActivityIndicator's `small` size; scaled down to the icon's. */
@@ -30,6 +36,7 @@ export default function HeaderPillButton({
   badge,
   loading,
   disabled,
+  compact = false,
 }: Props) {
   const theme = useTheme()
   const iconSize = theme.fontSize('md')
@@ -38,7 +45,9 @@ export default function HeaderPillButton({
     alignItems: 'center',
     gap: 6,
     minHeight: 36,
-    paddingHorizontal: 12,
+    ...(compact
+      ? { width: 36, justifyContent: 'center' }
+      : { paddingHorizontal: 12 }),
     borderRadius: 18,
     borderWidth: 1,
     borderColor: theme.colors.accent,
@@ -66,16 +75,18 @@ export default function HeaderPillButton({
       ) : (
         <LucideIcon icon={icon} size={iconSize} color={theme.colors.accent} />
       )}
-      <Text
-        numberOfLines={1}
-        style={{
-          color: theme.colors.accent,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('sm'),
-        }}
-      >
-        {label}
-      </Text>
+      {compact ? null : (
+        <Text
+          numberOfLines={1}
+          style={{
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {label}
+        </Text>
+      )}
       {badge && (
         <View
           style={{
@@ -105,7 +116,7 @@ export default function HeaderPillButton({
       </View>
     )
 
-  return (
+  const button = (
     <Button
       noTransform
       accessibilityRole='button'
@@ -118,5 +129,12 @@ export default function HeaderPillButton({
     >
       {content}
     </Button>
+  )
+  return compact ? (
+    <PointerTooltip label={label} effect='none'>
+      {button}
+    </PointerTooltip>
+  ) : (
+    button
   )
 }

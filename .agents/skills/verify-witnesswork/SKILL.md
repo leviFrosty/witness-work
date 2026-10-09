@@ -9,6 +9,44 @@ description: Drive the real WitnessWork app on an iOS simulator or Android emula
 
 Alias it: `alias wwv="node scripts/verify/ww-verify.mjs"`. All commands run from the worktree root and print JSON or `ok`/`FAIL` lines.
 
+## Delegate the drive
+
+A device run is dozens of small steps, and each one re-reads the conversation of whoever runs it. From a long feature thread, that re-reading is most of what verification costs. So the agent that made the change plans the proof and judges it, and a subagent on the cheapest model available drives the device from a fresh context:
+
+- Claude Code: the `Agent` tool with `model: "haiku"`.
+- T3 Code: `delegate_task`, picking the smallest model `orchestrator_capabilities` lists.
+- Other providers: their smallest model, through whatever subagent tool the harness has.
+
+If you are that subagent, don't delegate again: follow your brief and the rules below, starting at [Launch](#launch).
+
+Work in the same worktree, so the subagent uses this worktree's lease, Metro and artifacts. Run a single command yourself (one `wwv eval`, one `wwv link`); it costs less than writing a brief.
+
+**Delegate** scripted proof: known screens and taps, store read-backs, screenshots for the report or PR, `wwv flow` and `wwv monkey` runs, and re-runs after a fix.
+
+**Keep on your own model,** or hand to a subagent on a stronger one:
+
+- Exploratory bug hunts, where nobody knows yet what to look for.
+- Harness trouble: `up` or `doctor` keeps failing, or a step needs raw agent-device, `idb`, `adb` or `simctl`.
+- Visual and UX judgment.
+
+**The brief** has to stand alone, because the subagent sees nothing of your thread. Include:
+
+1. The worktree path, and "read `.agents/skills/verify-witnesswork/SKILL.md` and the matching `features/` file first".
+2. What changed, in a sentence or two, with the files.
+3. The platforms and the exact `wwv up` line. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`. When only the `api` check fails (the shared ww-api isn't running), relaunch with `--api local`.
+4. Setup (`seed`, `flag`, `nav`), then the user path to drive, with labels or testIDs and the expected result of each step.
+5. The exact `wwv eval` read-backs and the values you expect.
+6. The screens to capture, with `wwv shot <name>`, plus dark mode or iPad where needed.
+7. "Don't edit files, commit or change git state. Leave the device up."
+
+**The subagent** follows the brief and doesn't improvise around the harness:
+
+- If `doctor` fails twice, a target is still missing after a fresh `snapshot -i`, or a step would need anything outside `wwv`, it stops and reports `blocked` with the command and its output.
+- It reports each step as pass, fail or blocked, with the settled diff or `wait text`, the read-back output verbatim, and the screenshot paths. It ends with the output of `wwv errors` and what it couldn't check.
+- It describes what screens show and leaves judgment on how they look to you.
+
+**After the report,** read the two to four screenshots that matter, all in one turn. If a step failed, fix the code, then send the same brief again with what changed. Take the drive back into your own thread only for a `blocked` harness problem. Run `wwv down` when you're done.
+
 ## Launch
 
 ```bash

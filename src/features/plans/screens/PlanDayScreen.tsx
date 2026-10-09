@@ -1035,6 +1035,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const activeBuddies = useBuddies((state) => state.buddies).filter(
     (buddy) => buddy.status === 'active'
   )
+  // A Plan that has happened is history: nobody new is invited to it.
+  const planHasEnded =
+    date.getTime() + (hours * 60 + minutes) * 60 * 1000 <= Date.now()
   const invitedBuddyNames = activeBuddies
     .filter((buddy) => invitedBuddies.includes(buddy.inboxId))
     .map(buddyDisplayName)
@@ -1136,7 +1139,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           note={note}
           setNote={setNote}
           buddies={
-            oneTime && !linkedShare && buddiesEnabled && activeBuddies.length
+            oneTime &&
+            !linkedShare &&
+            !planHasEnded &&
+            buddiesEnabled &&
+            activeBuddies.length
               ? {
                   summary: invitedBuddyNames || undefined,
                   picker: (

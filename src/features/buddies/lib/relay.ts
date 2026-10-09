@@ -15,6 +15,9 @@ const RELAY_ERROR_CODES = [
   'limit',
   'rate_limited',
   'disabled',
+  'too_large',
+  'photos_disabled',
+  'no_buddies',
 ] as const
 
 /**
@@ -48,6 +51,8 @@ export const isRelayConnectivityError = (error: unknown) =>
 export const RELAY_TIMEOUT_MS = 15 * 1000
 /** Reading an inbox from the start can carry every card and event at once. */
 export const RELAY_FULL_SYNC_TIMEOUT_MS = 30 * 1000
+/** A shared photo is up to 1 MiB, which a slow connection needs time for. */
+export const RELAY_BLOB_TIMEOUT_MS = 60 * 1000
 
 /**
  * Per call: a caller's `signal` cancels the request, and `timeoutMs` replaces
@@ -115,6 +120,19 @@ export type RelaySyncResponse = {
     createdAt: number
   }[]
   roster: { blob: string; seq: number } | null
+  /** What this relay offers; missing on older relays. */
+  capabilities?: { photos?: boolean }
+}
+
+/** One encrypted shared photo, for `putBlob`. */
+export type BlobUpload = {
+  /** `b64u(SHA-256(data))`. */
+  blobId: string
+  data: Uint8Array
+  /** When the relay may delete it (epoch ms). */
+  expiresAt: number
+  /** `b64u(SHA-256(readToken))`; the token itself goes only to buddies. */
+  readTokenHash: string
 }
 
 /** The part of a WebSocket the live signal uses. */
@@ -229,15 +247,10 @@ export function createRelayClient(deps: RelayDeps) {
     return { p: toB64u(payload), s: toB64u(signature) }
   }
 
-  async function signed<T>(
-    op: string,
-    seed: Uint8Array,
-    fields: Record<string, unknown>,
-    call?: RelayCallOptions,
-    fullSync = false
-  ) {
+  /** Sends a signed call; after `stale`, corrects the clock and sends again. */
+  async function retryStale<T>(send: () => Promise<T>): Promise<T> {
     try {
-      return await post<T>(op, envelope(op, seed, fields), call, fullSync)
+      return await send()
     } catch (error) {
       if (!isRelayError(error, 'stale')) throw error
       const serverTime = staleServerTime
@@ -245,8 +258,57 @@ export function createRelayClient(deps: RelayDeps) {
       if (serverTime !== null) skewMs += serverTime - now()
       else if (deps.recalibrate) await deps.recalibrate().catch(() => {})
       else throw error
-      return post<T>(op, envelope(op, seed, fields), call, fullSync)
+      return send()
     }
+  }
+
+  function signed<T>(
+    op: string,
+    seed: Uint8Array,
+    fields: Record<string, unknown>,
+    call?: RelayCallOptions,
+    fullSync = false
+  ) {
+    return retryStale(() =>
+      post<T>(op, envelope(op, seed, fields), call, fullSync)
+    )
+  }
+
+  /** `blob/put`: the body is the raw bytes, so the envelope rides in headers. */
+  async function putBlobOnce(
+    auth: OwnerAuth,
+    blob: BlobUpload,
+    call: RelayCallOptions
+  ) {
+    const { p, s } = envelope('blob/put', auth.ownerSeed, {
+      ...owner(auth),
+      blobId: blob.blobId,
+      bytes: blob.data.length,
+      expiresAt: blob.expiresAt,
+      readTokenHash: blob.readTokenHash,
+    })
+    let response: { status: number; data: { ok?: boolean } | null }
+    try {
+      response = await request<{ ok?: boolean } | null>({
+        url: `${deps.baseUrl}/buddies/v1/blob/put`,
+        method: 'POST',
+        headers: {
+          'content-type': 'application/octet-stream',
+          'x-buddies-p': p,
+          'x-buddies-s': s,
+        },
+        body: blob.data,
+        timeoutMs: call.timeoutMs ?? RELAY_BLOB_TIMEOUT_MS,
+        signal: call.signal,
+        retry: { retries: 0 },
+        fetchImpl,
+      })
+    } catch (error) {
+      throw relayErrorFrom(error)
+    }
+    if (response.data?.ok !== true)
+      throw new RelayError('unknown', response.status)
+    return response.data as { ok: true; expiresAt: number }
   }
 
   function unsigned<T>(
@@ -351,6 +413,40 @@ export function createRelayClient(deps: RelayDeps) {
       }),
     leaveSlot: (auth: WriterAuth) =>
       signed('slot/leave', auth.writerSeed, writer(auth)),
+    /**
+     * Stores an encrypted shared photo under this inbox. Putting the same blob
+     * again only extends its expiry.
+     */
+    putBlob: (auth: OwnerAuth, blob: BlobUpload, call: RelayCallOptions = {}) =>
+      retryStale(() => putBlobOnce(auth, blob, call)),
+    /**
+     * A buddy's shared photo, still encrypted. Any miss (unknown, expired, or a
+     * wrong token) is the same `not_found`.
+     */
+    getBlob: async (
+      ref: { inboxId: string; blobId: string; token: string },
+      call: RelayCallOptions = {}
+    ): Promise<Uint8Array> => {
+      try {
+        const response = await request<Uint8Array>({
+          url: `${deps.baseUrl}/buddies/v1/blob/get`,
+          method: 'POST',
+          json: { p: toB64u(utf8(JSON.stringify(ref))) },
+          responseType: 'bytes',
+          timeoutMs: call.timeoutMs ?? RELAY_BLOB_TIMEOUT_MS,
+          signal: call.signal,
+          // Reading a blob changes nothing, so a lost answer can be retried.
+          idempotent: true,
+          retry: { retries: 1 },
+          fetchImpl,
+        })
+        return response.data
+      } catch (error) {
+        throw relayErrorFrom(error)
+      }
+    },
+    deleteBlobs: (auth: OwnerAuth, blobIds: string[]) =>
+      signed('blob/delete', auth.ownerSeed, { ...owner(auth), blobIds }),
   }
 }
 

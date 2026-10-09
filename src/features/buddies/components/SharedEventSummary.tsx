@@ -9,6 +9,8 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import PlanLocationLink from '@/components/PlanLocationLink'
 import RichNote from '@/components/RichNote'
+import { hasNote } from '@/lib/richText/notes'
+import { sharedNoteFields } from '@/features/buddies/lib/sharedNotes'
 import useTheme from '@/contexts/theme'
 import { formatStartTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
@@ -75,7 +77,10 @@ export default function SharedEventSummary({
           </Text>
         </XView>
       ) : null}
-      {details.note ? <RichNote note={{ note: details.note }} /> : null}
+      {hasNote(sharedNoteFields(details)) ? (
+        // A summary: photos as thumbnails; Plan Details shows them in full.
+        <RichNote note={sharedNoteFields(details)} preview thumbnails />
+      ) : null}
     </View>
   )
 }

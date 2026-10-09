@@ -9,7 +9,10 @@ import type { RootStackParamList } from '@/types/rootStack'
 import type { BuddyShareRef } from '@/types/timeEntry'
 import useAnswerShare from '@/features/buddies/hooks/useAnswerShare'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import { isOpenPlanInvitation } from '@/features/buddies/lib/linkedPlans'
+import {
+  isOpenPlanInvitation,
+  isShownPlanShare,
+} from '@/features/buddies/lib/linkedPlans'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { incomingShareKey } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -63,9 +66,12 @@ export default function PlanDetailsScreen({ route, navigation }: Props) {
   const followed = followedRef
     ? incomingShares[incomingShareKey(followedRef.from, followedRef.shareId)]
     : undefined
+  const shared =
+    enabled && isShownPlanShare(followed, now) ? followed : undefined
+  // A buddy's Plan that has happened can still be looked at, not answered.
   const invitation =
-    enabled && isOpenPlanInvitation(followed, now) ? followed : undefined
-  const gone = !item && !invitation
+    shared && isOpenPlanInvitation(shared, now) ? shared : undefined
+  const gone = !item && !shared
 
   // Deleted here, from the editor, on another device, or the invitation was
   // cancelled.
@@ -99,8 +105,13 @@ export default function PlanDetailsScreen({ route, navigation }: Props) {
       />
     )
   }
-  if (invitation) {
-    return <InvitationPlanDetails share={invitation} answering={answering} />
+  if (shared) {
+    return (
+      <InvitationPlanDetails
+        share={shared}
+        answering={invitation ? answering : undefined}
+      />
+    )
   }
   return null
 }

@@ -1,13 +1,30 @@
 import moment from 'moment'
 import { combineDateAndStartTime, storedDayKey } from '@/lib/normalizeDate'
+import { getRichNoteDoc } from '@/lib/richText/notes'
 import type { Contact } from '@/types/contact'
 import type { DayPlan, PlanLocation } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import type { ShareDetails } from '@/features/buddies/lib/schemas'
 import type { OutgoingShareSpec } from '@/features/buddies/lib/state'
 
-/** Shared Plans and Follow-ups are wiped this long after they happen. */
-export const SHARE_RETENTION_MS = 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Shared Plans stay with buddies, photos included, this long after they end, so
+ * a buddy can look back at one.
+ */
+export const PLAN_SHARE_RETENTION_MS = 30 * DAY_MS
+/**
+ * Shared Follow-ups are wiped this long after they happen: they carry a
+ * householder's first name and address.
+ */
+export const FOLLOW_UP_SHARE_RETENTION_MS = DAY_MS
+/**
+ * How long after it happens a share stays with builds from before shared Plans
+ * were kept a month: they read `expiresAt` alone, so it stays this, and
+ * `keepUntil` carries the month.
+ */
+export const LEGACY_SHARE_RETENTION_MS = DAY_MS
 
 export const planShareKey = (planId: string) => `plan:${planId}`
 export const followUpShareKey = (visitId: string) => `followUp:${visitId}`
@@ -95,9 +112,26 @@ export function followUpShareDetails(
 }
 
 /**
+ * When a share's buddies wipe it, as its event says: `expiresAt` for builds
+ * that keep a share only a day after it happens, `keepUntil` (a month, for
+ * Plans) for the rest.
+ */
+export function shareEventExpiry(
+  spec: Pick<OutgoingShareSpec, 'endsAt' | 'expiresAt'>
+): { expiresAt: number; keepUntil?: number } {
+  const expiresAt = Math.min(
+    spec.expiresAt,
+    spec.endsAt + LEGACY_SHARE_RETENTION_MS
+  )
+  return spec.expiresAt > expiresAt
+    ? { expiresAt, keepUntil: spec.expiresAt }
+    : { expiresAt }
+}
+
+/**
  * Every Plan and Follow-up this User has invited buddies to that hasn't
- * happened yet (plus a day). Plans that came from a buddy's invitation are
- * never re-shared.
+ * happened yet, or happened in the last month (Plans) or day (Follow-ups).
+ * Plans that came from a buddy's invitation are never re-shared.
  */
 export function buildOutgoingShares(input: {
   dayPlans: DayPlan[]
@@ -108,13 +142,17 @@ export function buildOutgoingShares(input: {
   const specs: OutgoingShareSpec[] = []
   for (const plan of input.dayPlans) {
     if (!plan.buddies?.length || plan.buddyShare) continue
-    const expiresAt = planEndsAt(plan) + SHARE_RETENTION_MS
+    const endsAt = planEndsAt(plan)
+    const expiresAt = endsAt + PLAN_SHARE_RETENTION_MS
     if (expiresAt <= input.now) continue
+    const noteDoc = getRichNoteDoc(plan)
     specs.push({
       key: planShareKey(plan.id),
       type: 'plan',
       details: planShareDetails(plan),
+      ...(noteDoc ? { noteDoc } : {}),
       recipients: plan.buddies,
+      endsAt,
       expiresAt,
     })
   }
@@ -124,13 +162,15 @@ export function buildOutgoingShares(input: {
     if (!followUp?.buddies?.length || followUp.dismissed) continue
     const contact = contacts.get(visit.contact.id)
     if (!contact) continue
-    const expiresAt = new Date(followUp.date).getTime() + SHARE_RETENTION_MS
+    const endsAt = new Date(followUp.date).getTime()
+    const expiresAt = endsAt + FOLLOW_UP_SHARE_RETENTION_MS
     if (expiresAt <= input.now) continue
     specs.push({
       key: followUpShareKey(visit.id),
       type: 'followUp',
       details: followUpShareDetails(followUp, contact),
       recipients: followUp.buddies,
+      endsAt,
       expiresAt,
     })
   }

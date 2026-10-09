@@ -9,7 +9,6 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   StatusBar,
@@ -17,6 +16,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
+import Spinner from '@/components/ui/Spinner'
 import { Image } from 'expo-image'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
@@ -406,7 +406,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
               justifyContent: 'center',
             }}
           >
-            <ActivityIndicator size='large' color='#fff' />
+            <Spinner size='large' color='#fff' />
           </View>
         )}
 

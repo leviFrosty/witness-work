@@ -12,7 +12,6 @@ import * as FileSystem from 'expo-file-system/legacy'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
 import { Alert, View } from 'react-native'
-import { Spinner } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
@@ -123,27 +122,24 @@ const ImportAndExportScreen = () => {
           </View>
           <Card>
             <ActionButton
-              disabled={loading || importing}
+              disabled={importing}
+              loading={loading}
               onPress={handleExport}
             >
-              {loading ? (
-                <Spinner />
-              ) : (
-                <XView>
-                  <IconButton
-                    icon={UploadIcon}
-                    color={theme.colors.textInverse}
-                  />
-                  <Text
-                    style={{
-                      color: theme.colors.textInverse,
-                      fontFamily: theme.fonts.bold,
-                    }}
-                  >
-                    {i18n.t('createBackup')}
-                  </Text>
-                </XView>
-              )}
+              <XView>
+                <IconButton
+                  icon={UploadIcon}
+                  color={theme.colors.textInverse}
+                />
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('createBackup')}
+                </Text>
+              </XView>
             </ActionButton>
           </Card>
 
@@ -157,27 +153,24 @@ const ImportAndExportScreen = () => {
               </XView>
             )}
             <ActionButton
-              disabled={loading || importing}
+              disabled={loading}
+              loading={importing}
               onPress={handleImport}
             >
-              {importing ? (
-                <Spinner />
-              ) : (
-                <XView>
-                  <IconButton
-                    icon={FileInputIcon}
-                    color={theme.colors.textInverse}
-                  />
-                  <Text
-                    style={{
-                      color: theme.colors.textInverse,
-                      fontFamily: theme.fonts.bold,
-                    }}
-                  >
-                    {i18n.t('restoreFromBackup')}
-                  </Text>
-                </XView>
-              )}
+              <XView>
+                <IconButton
+                  icon={FileInputIcon}
+                  color={theme.colors.textInverse}
+                />
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('restoreFromBackup')}
+                </Text>
+              </XView>
             </ActionButton>
           </Card>
           <Divider />

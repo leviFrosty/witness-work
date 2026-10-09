@@ -4,7 +4,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'

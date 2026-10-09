@@ -11,6 +11,8 @@ interface Props {
   tier: 'supporter' | 'tip'
   ctaLabel: string
   onPurchase: () => unknown
+  /** A purchase is running; the CTA shows a spinner and can't be pressed. */
+  purchasing?: boolean
 }
 
 export default function PaywallPurchaseFooter({
@@ -18,19 +20,23 @@ export default function PaywallPurchaseFooter({
   tier,
   ctaLabel,
   onPurchase,
+  purchasing = false,
 }: Props) {
   const theme = useTheme()
+  const labelColor = tier === 'supporter' ? '#343232' : theme.colors.textInverse
   return (
     <View style={{ gap: 10 }}>
       <SupporterCtaButton
         disabled={!selected}
+        loading={purchasing}
+        loadingColor={labelColor}
         onPress={onPurchase}
         shimmer={tier === 'supporter'}
       >
         <Text
           style={{
             fontSize: theme.fontSize('lg'),
-            color: tier === 'supporter' ? '#343232' : theme.colors.textInverse,
+            color: labelColor,
             fontFamily: theme.fonts.bold,
             textAlign: 'center',
             flexShrink: 1,
@@ -56,9 +62,11 @@ export default function PaywallPurchaseFooter({
 
 export function PaywallLegalFooter({
   onRestore,
+  restoring = false,
   showRestore,
 }: {
   onRestore: () => unknown
+  restoring?: boolean
   showRestore: boolean
 }) {
   const theme = useTheme()
@@ -75,6 +83,8 @@ export function PaywallLegalFooter({
       {showRestore && (
         <Button
           onPress={onRestore}
+          loading={restoring}
+          accessibilityRole='button'
           style={{ minHeight: 44, justifyContent: 'center' }}
         >
           <Text

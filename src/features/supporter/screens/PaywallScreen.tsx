@@ -1,8 +1,11 @@
 import {
   ChevronDown as ChevronDownIcon,
+  CircleAlert as CircleAlertIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
+  PackageOpen as PackageOpenIcon,
   RotateCw as RotateCwIcon,
   Trash2 as Trash2Icon,
+  WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import {
@@ -19,9 +22,11 @@ import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
+import Empty from '@/components/ui/Empty'
+import ActionButton from '@/components/ui/ActionButton'
+import InlineNotice from '@/components/ui/InlineNotice'
 import Purchases, {
-  PURCHASES_ERROR_CODE,
   PurchasesError,
   PurchasesOfferings,
   PurchasesPackage,
@@ -49,6 +54,13 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
+import { isConnectivityError } from '@/lib/http/networkError'
+import { addReconnectListener } from '@/lib/http/online'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import {
+  storeErrorOutcome,
+  type StoreErrorOutcome,
+} from '@/features/supporter/lib/purchaseErrors'
 import { clearAdoptedAccountId } from '@/lib/account'
 import {
   FounderLetter,
@@ -72,6 +84,16 @@ type SupporterBilling = 'monthly' | 'annual'
 // Each price list keeps its own independent selection — switching
 // monthly↔annual (or to tips) never remaps a choice across views.
 type PriceView = SupporterBilling | 'tip'
+// What asked for offerings, for `paywall_offerings_failed` / `_empty`.
+type OfferingsTrigger = 'initial' | 'retry' | 'foreground' | 'reconnect'
+
+const storePlatform = Platform.OS === 'android' ? 'android' : 'ios'
+
+const totalPackages = (offerings: PurchasesOfferings) =>
+  Object.values(offerings.all).reduce(
+    (count, offering) => count + offering.availablePackages.length,
+    0
+  )
 
 // Keep the price lists compact; unselected later options live behind "Show all options."
 const SUPPORTER_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 4
@@ -258,17 +280,28 @@ const PaywallScreen = ({
 
   // Fetches latest offerings from RevenueCat. Must wait until
   // `Purchases.configure` has run in CustomerProvider, otherwise the native
-  // SDK throws "Purchases has not been configured" and the user sees
-  // "Error Fetching Offerings" on first launch.
+  // SDK throws "Purchases has not been configured".
   const hasFetchedOfferings = useRef(false)
+  const offeringsInFlight = useRef(false)
+  const [loadingOfferings, setLoadingOfferings] = useState(false)
+  // Why the last load failed; the screen shows it until a load succeeds.
+  const [offeringsError, setOfferingsError] = useState<
+    'offline' | 'failed' | null
+  >(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // `getOfferings` is served from the SDK's internal cache (~5 min TTL), so a
   // plain call won't pick up dashboard edits. `force` routes through
   // `syncAttributesAndOfferingsIfNeeded`, which bypasses that cache.
   const fetchOfferings = useCallback(
-    async (force = false) => {
-      logger.log('[Paywall] calling Purchases.getOfferings', { force })
+    async ({
+      force = false,
+      trigger = 'initial',
+    }: { force?: boolean; trigger?: OfferingsTrigger } = {}) => {
+      if (offeringsInFlight.current) return
+      offeringsInFlight.current = true
+      setLoadingOfferings(true)
+      logger.log('[Paywall] calling Purchases.getOfferings', { force, trigger })
       try {
         const offerings = force
           ? await Purchases.syncAttributesAndOfferingsIfNeeded()
@@ -279,29 +312,40 @@ const PaywallScreen = ({
           allCount: Object.keys(offerings.all).length,
           allIdentifiers: Object.keys(offerings.all),
         })
-
+        if (totalPackages(offerings) === 0) {
+          analytics.capture('paywall_offerings_empty', {
+            source,
+            ...gateAttribution,
+            trigger,
+          })
+        }
         setCurrentOfferings(offerings)
+        setOfferingsError(null)
       } catch (error) {
         const err = error as PurchasesError
+        const connectivity = isConnectivityError(error)
         analytics.capture('paywall_offerings_failed', {
           source,
           ...gateAttribution,
           error_code: err?.code ?? 'unknown',
           offline: isOfflineError(error),
+          trigger,
         })
-        logger.error('[Paywall] getOfferings failed', {
+        const log = connectivity ? logger.warn : logger.error
+        log('[Paywall] getOfferings failed', {
           code: err?.code,
           message: err?.message,
           underlying: err?.underlyingErrorMessage,
           userInfo: err?.userInfo,
           raw: err,
         })
-        hasFetchedOfferings.current = false
-        Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-        // Offline is expected, not a bug — show the Alert without reporting an error
-        // (JW-TIME-BW). Other failures still report.
-        if (!isOfflineError(error)) errorTracking.captureException(error)
+        setOfferingsError(connectivity ? 'offline' : 'failed')
+        // Offline is expected, not a bug (JW-TIME-BW). Other failures report.
+        if (!connectivity) errorTracking.captureException(error)
         throw error
+      } finally {
+        offeringsInFlight.current = false
+        setLoadingOfferings(false)
       }
     },
     [source, gateAttribution]
@@ -317,17 +361,40 @@ const PaywallScreen = ({
     fetchOfferings().catch(() => {})
   }, [ready, fetchOfferings])
 
+  // Without prices the screen is a dead end, so try again whenever the user
+  // comes back to the app or the connection returns.
+  const missingOfferings =
+    !currentOfferings || totalPackages(currentOfferings) === 0
+  const awaitingOfferings = ready && !unavailable && missingOfferings
+  useEffect(() => {
+    if (!awaitingOfferings) return
+    const retry = (trigger: OfferingsTrigger) => () => {
+      fetchOfferings({ trigger }).catch(() => {})
+    }
+    const foreground = addForegroundListener(retry('foreground'))
+    const reconnect = addReconnectListener(retry('reconnect'))
+    return () => {
+      foreground.remove()
+      reconnect.remove()
+    }
+  }, [awaitingOfferings, fetchOfferings])
+
+  const retryOfferings = () => {
+    // An empty list may be stale in the SDK's cache; a failure isn't cached.
+    fetchOfferings({ force: !!currentOfferings, trigger: 'retry' }).catch(
+      () => {}
+    )
+  }
+
   const handleDevRefresh = useCallback(async () => {
     if (isRefreshing) return
     setIsRefreshing(true)
     try {
       Purchases.invalidateCustomerInfoCache()
-      hasFetchedOfferings.current = false
-      await fetchOfferings(true)
+      await fetchOfferings({ force: true, trigger: 'retry' })
       await revalidate()
-      hasFetchedOfferings.current = true
     } catch {
-      // fetchOfferings already shows an Alert and reports the error.
+      Alert.alert(i18n.t('errorFetchingOfferings'))
     } finally {
       setIsRefreshing(false)
     }
@@ -363,10 +430,8 @@ const PaywallScreen = ({
               const { customerInfo } = await Purchases.logIn(freshId)
               setCustomer(customerInfo)
               Purchases.invalidateCustomerInfoCache()
-              hasFetchedOfferings.current = false
-              await fetchOfferings(true)
+              await fetchOfferings({ force: true, trigger: 'retry' })
               await revalidate()
-              hasFetchedOfferings.current = true
             } catch (error) {
               logger.error('[Paywall] dev reset failed', error)
               errorTracking.captureException(error)
@@ -408,70 +473,28 @@ const PaywallScreen = ({
     })
   }, [activePackages, priceView, tier])
 
-  const handlePurchase = useCallback(async () => {
-    if (!selectedPackage) {
-      return Alert.alert(i18n.t('noOfferingSelected'))
-    }
+  const [purchasing, setPurchasing] = useState(false)
+  const [restoring, setRestoring] = useState(false)
 
-    const purchaseProperties = {
-      source,
-      feature,
-      ...gateAttribution,
-      tier,
-      billing: tier === 'supporter' ? supporterBilling : 'one_time',
-      product_id: selectedPackage.product.identifier,
-      package_id: selectedPackage.identifier,
-      price: selectedPackage.product.price,
-      currency: selectedPackage.product.currencyCode,
-    }
-    analytics.capture('supporter_purchase_started', purchaseProperties)
-    try {
-      const { productIdentifier } =
-        await Purchases.purchasePackage(selectedPackage)
-      if (productIdentifier) {
-        purchased.current = true
-        analytics.capture('supporter_purchase_completed', purchaseProperties)
-        revalidate()
-        // Pass the purchased tier so the Thank You screen shows the right
-        // tone — a lifetime supporter who tips one-time should see the tip
-        // thank-you, not the full supporter celebration, even though
-        // `isSupporter` is still true.
-        navigation.replace('Thank You', { purchaseTier: tier })
-      }
-    } catch (error: unknown) {
-      const code = (error as PurchasesError).code
-      // User-initiated cancellation from the StoreKit sheet throws here; it's
-      // expected flow, not a failure — swallow it without alerting or paging.
-      const cancelled = code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
-      analytics.capture(
-        cancelled
-          ? 'supporter_purchase_cancelled'
-          : 'supporter_purchase_failed',
-        {
-          ...purchaseProperties,
-          error_code: code ?? 'unknown',
-          offline: isOfflineError(error),
-        }
-      )
-      if (!cancelled) {
-        Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
-        // Offline mid-checkout is expected — the Alert already explains the
-        // network instability; don't report it as an error (JW-TIME-BW).
-        if (!isOfflineError(error)) errorTracking.captureException(error)
-      }
-    }
-  }, [
-    navigation,
-    revalidate,
-    selectedPackage,
-    supporterBilling,
-    tier,
-    source,
-    feature,
-    gateAttribution,
-  ])
+  const showStoreError = (outcome: StoreErrorOutcome) => {
+    Alert.alert(
+      i18n.t(outcome.title),
+      i18n.t(outcome.message),
+      outcome.offerRestore
+        ? [
+            { text: i18n.t('cancel'), style: 'cancel' },
+            {
+              text: i18n.t('restorePurchase'),
+              onPress: () => void handleRestore(),
+            },
+          ]
+        : undefined
+    )
+  }
 
-  const handleRestore = useCallback(async () => {
+  const handleRestore = async () => {
+    if (purchasing || restoring) return
+    setRestoring(true)
     analytics.capture('supporter_restore_started', {
       source,
       ...gateAttribution,
@@ -498,12 +521,67 @@ const PaywallScreen = ({
         error_code: (error as PurchasesError)?.code ?? 'unknown',
         offline: isOfflineError(error),
       })
-      // Offline during restore is expected — show the Alert without reporting an error
-      // (JW-TIME-BW).
-      if (!isOfflineError(error)) errorTracking.captureException(error)
-      Alert.alert(i18n.t('error_restoring_account'))
+      const outcome = storeErrorOutcome(error, 'restore', storePlatform)
+      if (outcome.report) errorTracking.captureException(error)
+      if (!outcome.silent) showStoreError(outcome)
+    } finally {
+      setRestoring(false)
     }
-  }, [setCustomer, source, gateAttribution])
+  }
+
+  const handlePurchase = async () => {
+    if (purchasing || restoring) return
+    if (!selectedPackage) {
+      return Alert.alert(i18n.t('noOfferingSelected'))
+    }
+
+    const purchaseProperties = {
+      source,
+      feature,
+      ...gateAttribution,
+      tier,
+      billing: tier === 'supporter' ? supporterBilling : 'one_time',
+      product_id: selectedPackage.product.identifier,
+      package_id: selectedPackage.identifier,
+      price: selectedPackage.product.price,
+      currency: selectedPackage.product.currencyCode,
+    }
+    setPurchasing(true)
+    analytics.capture('supporter_purchase_started', purchaseProperties)
+    try {
+      const { productIdentifier } =
+        await Purchases.purchasePackage(selectedPackage)
+      if (productIdentifier) {
+        purchased.current = true
+        analytics.capture('supporter_purchase_completed', purchaseProperties)
+        revalidate()
+        // Pass the purchased tier so the Thank You screen shows the right
+        // tone — a lifetime supporter who tips one-time should see the tip
+        // thank-you, not the full supporter celebration, even though
+        // `isSupporter` is still true.
+        navigation.replace('Thank You', { purchaseTier: tier })
+      }
+    } catch (error: unknown) {
+      const code = (error as PurchasesError).code
+      // Cancelling the store sheet throws here too; it's expected flow, so it
+      // stays silent.
+      const outcome = storeErrorOutcome(error, 'purchase', storePlatform)
+      analytics.capture(
+        outcome.silent
+          ? 'supporter_purchase_cancelled'
+          : 'supporter_purchase_failed',
+        {
+          ...purchaseProperties,
+          error_code: code ?? 'unknown',
+          offline: isOfflineError(error),
+        }
+      )
+      if (outcome.report) errorTracking.captureException(error)
+      if (!outcome.silent) showStoreError(outcome)
+    } finally {
+      setPurchasing(false)
+    }
+  }
 
   const ctaLabel = useMemo(() => {
     if (!selectedPackage) return i18n.t('paywallCtaSelectPrice')
@@ -515,15 +593,70 @@ const PaywallScreen = ({
     return i18n.t('paywallCtaSupporterMonthly', { price })
   }, [selectedPackage, tier, supporterBilling])
 
-  if (!currentOfferings) {
+  if (!currentOfferings || missingOfferings) {
+    const empty = !!currentOfferings && !offeringsError
     return (
       <Wrapper
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 15,
+        }}
       >
         {unavailable ? (
-          <Text>{i18n.t('purchasesUnavailable')}</Text>
+          <Empty
+            icon={
+              <LucideIcon
+                icon={CircleAlertIcon}
+                size={24}
+                color={theme.colors.text}
+              />
+            }
+            title={i18n.t('errorFetchingOfferings')}
+            description={i18n.t('purchasesUnavailable')}
+          />
+        ) : offeringsError || empty ? (
+          <Empty
+            icon={
+              <LucideIcon
+                icon={
+                  empty
+                    ? PackageOpenIcon
+                    : offeringsError === 'offline'
+                      ? WifiOffIcon
+                      : CircleAlertIcon
+                }
+                size={24}
+                color={theme.colors.text}
+              />
+            }
+            title={
+              empty
+                ? i18n.t('paywall_noOptionsTitle')
+                : offeringsError === 'offline'
+                  ? i18n.t('common_offlineTitle')
+                  : i18n.t('errorFetchingOfferings')
+            }
+            description={
+              empty
+                ? i18n.t('thereAreNoOfferings')
+                : offeringsError === 'offline'
+                  ? i18n.t('paywall_offline')
+                  : i18n.t('paywall_offeringsError')
+            }
+            action={
+              <ActionButton onPress={retryOfferings} loading={loadingOfferings}>
+                {i18n.t('common_tryAgain')}
+              </ActionButton>
+            }
+          />
         ) : (
-          <Spinner />
+          <Spinner
+            size='large'
+            delayMs={300}
+            label={i18n.t('paywall_loadingOptions')}
+          />
         )}
       </Wrapper>
     )
@@ -671,6 +804,9 @@ const PaywallScreen = ({
       )}
 
       <View style={{ gap: 6 }}>
+        {activePackages.length === 0 && (
+          <InlineNotice tone='info' message={i18n.t('thereAreNoOfferings')} />
+        )}
         {(isWide && showAllOptions ? activePackages : visiblePackages).map(
           (pkg) => renderPriceOption(pkg)
         )}
@@ -718,10 +854,11 @@ const PaywallScreen = ({
       <Divider />
       <PaywallLegalFooter
         onRestore={handleRestore}
+        restoring={restoring}
         showRestore={!hasPurchasedBefore}
       />
       {hasPurchasedBefore && customer && (
-        <PreviousDonations customer={customer} revalidate={revalidate} />
+        <PreviousDonations customer={customer} />
       )}
     </View>
   )
@@ -731,6 +868,7 @@ const PaywallScreen = ({
       tier={tier}
       ctaLabel={ctaLabel}
       onPurchase={handlePurchase}
+      purchasing={purchasing}
     />
   )
 

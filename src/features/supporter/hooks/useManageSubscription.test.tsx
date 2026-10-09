@@ -171,7 +171,22 @@ describe('useManageSubscription', () => {
       state: 'renewing',
       pause_options: 3,
       pause_unavailable_reason: null,
+      product_lookup_failed: false,
     })
+  })
+
+  it('reports a failed product lookup and loads it again on retry', async () => {
+    runtime.getProducts.mockRejectedValueOnce(new Error('network error'))
+    await render()
+    expect(hook.productError).toBe('failed')
+    expect(runtime.capture).toHaveBeenCalledWith(
+      'supporter_manage_viewed',
+      expect.objectContaining({ product_lookup_failed: true })
+    )
+    await act(async () => hook.retryProduct())
+    expect(runtime.getProducts).toHaveBeenCalledTimes(2)
+    expect(hook.productError).toBeNull()
+    expect(offer(3).months).toBe(3)
   })
 
   it('redeems the free offer and records when payments resume', async () => {

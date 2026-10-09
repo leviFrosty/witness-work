@@ -5,7 +5,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import { ReactNode } from 'react'
 import { PurchasesPackage } from 'react-native-purchases'

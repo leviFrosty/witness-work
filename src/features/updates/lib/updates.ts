@@ -2,12 +2,15 @@ import { Alert, Platform } from 'react-native'
 import * as Updates from 'expo-updates'
 import i18n from '@/lib/locales'
 import { errorTracking } from '@/lib/errorTracking'
+import { isConnectivityError } from '@/lib/http/networkError'
+import { isKnownOffline } from '@/lib/http/online'
 import { RootStackParamList } from '@/types/rootStack'
 
 type UpdateCheckOutcome =
   | 'available'
   | 'up_to_date'
   | 'unavailable'
+  | 'offline'
   | 'failed'
   | 'busy'
 let checking = false
@@ -22,6 +25,13 @@ export const fetchUpdate = async (
     return 'unavailable'
   }
 
+  // Updating through the store won't help without a connection either.
+  const offline = () => {
+    Alert.alert(i18n.t('common_offlineTitle'), i18n.t('update_offline'))
+    return 'offline' as const
+  }
+  if (isKnownOffline()) return offline()
+
   checking = true
 
   try {
@@ -35,6 +45,7 @@ export const fetchUpdate = async (
 
     return 'up_to_date'
   } catch (error) {
+    if (isConnectivityError(error)) return offline()
     Alert.alert(
       i18n.t(
         Platform.OS === 'android'

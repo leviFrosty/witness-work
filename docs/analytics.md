@@ -267,6 +267,12 @@ Intermediate tier, billing, price, expansion, FAQ, and legal-link clicks are
 removed. Closing the app is not a navigation-close event. A completed purchase
 is a client RevenueCat result, not a renewal/refund or revenue ledger.
 
+`paywall_offerings_failed` carries `trigger`: `initial` (the paywall opened),
+`retry` (Try Again), `foreground` or `reconnect` (automatic retries while the
+paywall shows no prices). `paywall_offerings_empty` fires when a load succeeds
+with no packages at all (a store or dashboard configuration problem), with the
+same `trigger`. Compare failures by trigger to see whether users recover.
+
 ### Supporter feature conversions
 
 All `IsSupporter` placements use the same ordered journey:
@@ -345,14 +351,14 @@ cancel/change screen (ADR 0016). The events answer how many Supporters reach
 the intercept, how many pause rather than continue to the store, which pause
 length they choose, and why a pause isn't offered.
 
-| Event                           | Meaning                                                                                                                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null). |
-| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                 |
-| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                            |
-| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                   |
-| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                         |
-| `supporter_manage_store_opened` | The store's subscription management opened. `intent: pause` is Android's Pause in Google Play; `intent: cancel` is the footer button on both platforms.                                       |
+| Event                           | Meaning                                                                                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null), `product_lookup_failed`. |
+| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                                          |
+| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                                                     |
+| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                                            |
+| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                                                  |
+| `supporter_manage_store_opened` | The store's subscription management opened. `intent: pause` is Android's Pause in Google Play; `intent: cancel` is the footer button on both platforms.                                                                |
 
 All carry `source` (`paywall`, `settings`), `billing` (`monthly`, `annual`,
 `other`), and `store`. `supporter_manage_store_opened` records intent only:

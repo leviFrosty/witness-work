@@ -7,11 +7,13 @@ import {
   Undo2 as Undo2Icon,
 } from 'lucide-react-native'
 import { Alert } from 'react-native'
+import { useState } from 'react'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
+import Spinner from '@/components/ui/Spinner'
 import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
@@ -45,6 +47,17 @@ const MoreScreen = () => {
 
   const pushScreen = (screen: keyof RootStackParamList) => {
     navigation.dispatch(StackActions.push(screen))
+  }
+
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const checkForUpdate = async () => {
+    if (checkingUpdate) return
+    setCheckingUpdate(true)
+    try {
+      await fetchUpdate(pushScreen)
+    } finally {
+      setCheckingUpdate(false)
+    }
   }
 
   const callbacks: ImportHandlerCallbacks = {
@@ -121,9 +134,13 @@ const MoreScreen = () => {
             <InputRowButton
               leftIcon={DownloadIcon}
               label={i18n.t('checkForUpdate')}
-              onPress={() => fetchUpdate(pushScreen)}
+              onPress={checkForUpdate}
             >
-              <IconButton icon={ChevronRightIcon} />
+              {checkingUpdate ? (
+                <Spinner size='small' label={i18n.t('update_checking')} />
+              ) : (
+                <IconButton icon={ChevronRightIcon} />
+              )}
             </InputRowButton>
             <InputRowButton
               leftIcon={SproutIcon}

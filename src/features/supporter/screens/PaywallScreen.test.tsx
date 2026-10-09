@@ -12,11 +12,15 @@ const runtime = vi.hoisted(() => {
     getOfferings: vi.fn(),
     revalidate: vi.fn(),
     replace: vi.fn(),
+    alert: vi.fn(),
+    captureException: vi.fn(),
+    foreground: new Set<() => void>(),
+    reconnect: new Set<() => void>(),
     beforeRemove: undefined as (() => void) | undefined,
   }
 })
 vi.mock('react-native', () => ({
-  Alert: { alert: vi.fn() },
+  Alert: { alert: runtime.alert },
   Platform: {
     get OS() {
       return runtime.platform
@@ -28,9 +32,12 @@ vi.mock('react-native', () => ({
 }))
 vi.mock('lucide-react-native', () => ({
   ChevronDown: 'ChevronDown',
+  CircleAlert: 'CircleAlert',
   CircleQuestionMark: 'CircleQuestionMark',
+  PackageOpen: 'PackageOpen',
   RotateCw: 'RotateCw',
   Trash2: 'Trash2',
+  WifiOff: 'WifiOff',
 }))
 vi.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: runtime.params }),
@@ -44,7 +51,10 @@ vi.mock('@react-navigation/native', () => ({
   }),
 }))
 vi.mock('react-native-purchases', () => ({
-  PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 'cancelled' },
+  PURCHASES_ERROR_CODE: {
+    PURCHASE_CANCELLED_ERROR: 'cancelled',
+    PAYMENT_PENDING_ERROR: 'pending',
+  },
   default: {
     getOfferings: runtime.getOfferings,
     purchasePackage: runtime.purchase,
@@ -65,14 +75,31 @@ vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, numbers: {}, fontSize: () => 14 }),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
-vi.mock('@/lib/logger', () => ({ logger: { log: () => {}, error: () => {} } }))
+vi.mock('@/lib/logger', () => ({
+  logger: { log: () => {}, warn: () => {}, error: () => {} },
+}))
 vi.mock('@/lib/offlineError', () => ({ isOfflineError: () => false }))
 vi.mock('@/lib/account', () => ({ clearAdoptedAccountId: () => {} }))
 vi.mock('@/lib/errorTracking', () => ({
-  errorTracking: { captureException: vi.fn() },
+  errorTracking: { captureException: runtime.captureException },
+}))
+vi.mock('@/lib/appLifecycle', () => ({
+  addForegroundListener: (listener: () => void) => {
+    runtime.foreground.add(listener)
+    return { remove: () => runtime.foreground.delete(listener) }
+  },
+}))
+vi.mock('@/lib/http/online', () => ({
+  addReconnectListener: (listener: () => void) => {
+    runtime.reconnect.add(listener)
+    return { remove: () => runtime.reconnect.delete(listener) }
+  },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
-vi.mock('tamagui', () => ({ Spinner: 'Spinner' }))
+vi.mock('@/components/ui/Spinner', () => ({ default: 'Spinner' }))
+vi.mock('@/components/ui/Empty', () => ({ default: 'Empty' }))
+vi.mock('@/components/ui/ActionButton', () => ({ default: 'ActionButton' }))
+vi.mock('@/components/ui/InlineNotice', () => ({ default: 'InlineNotice' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
@@ -149,6 +176,8 @@ beforeEach(() => {
     gateAttribution: attribution,
   }
   runtime.beforeRemove = undefined
+  runtime.foreground.clear()
+  runtime.reconnect.clear()
   runtime.purchase.mockResolvedValue({ productIdentifier: 'annual' })
   const annual = pkg('annual')
   const tip = pkg('tip')
@@ -231,4 +260,104 @@ it('does not reuse feature-gate attribution when the paywall opens from settings
   expect(properties.source).toBe('settings')
   expect(properties.gate_flow_id).toBeUndefined()
   expect(properties.source_screen).toBeUndefined()
+})
+
+describe('offerings', () => {
+  const empty = () => renderer!.root.findAllByType('Empty' as never)
+  const tryAgain = async () => {
+    await act(async () => {
+      empty()[0].props.action.props.onPress()
+    })
+  }
+
+  it('shows a failure with Try Again instead of spinning forever', async () => {
+    const offerings = await runtime.getOfferings()
+    runtime.getOfferings.mockRejectedValueOnce({ code: '2', message: 'nope' })
+    await render()
+    expect(empty()[0].props.title).toBe('errorFetchingOfferings')
+    expect(runtime.alert).not.toHaveBeenCalled()
+    expect(runtime.captureException).toHaveBeenCalledOnce()
+    expect(events('paywall_offerings_failed')[0][1]).toMatchObject({
+      ...attribution,
+      trigger: 'initial',
+    })
+
+    runtime.getOfferings.mockResolvedValueOnce(offerings)
+    await tryAgain()
+    expect(empty()).toHaveLength(0)
+    expect(renderer!.root.findAllByType(PaywallPurchaseFooter)).toHaveLength(1)
+  })
+
+  it('says when the device is offline, without reporting it', async () => {
+    runtime.getOfferings.mockRejectedValueOnce(
+      new Error('The Internet connection appears to be offline.')
+    )
+    await render()
+    expect(empty()[0].props).toMatchObject({
+      title: 'common_offlineTitle',
+      description: 'paywall_offline',
+    })
+    expect(runtime.captureException).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['foreground', runtime.foreground],
+    ['reconnect', runtime.reconnect],
+  ])('loads again on %s after a failure', async (trigger, listeners) => {
+    runtime.getOfferings.mockRejectedValueOnce(new Error('network error'))
+    await render()
+    expect(listeners.size).toBe(1)
+    await act(async () => listeners.forEach((listener) => listener()))
+    expect(runtime.getOfferings).toHaveBeenCalledTimes(2)
+    expect(empty()).toHaveLength(0)
+    // Loaded: nothing left to retry.
+    expect(listeners.size).toBe(0)
+    expect(events('paywall_offerings_failed')[0][1].trigger).toBe('initial')
+    expect(trigger).toBeTruthy()
+  })
+
+  it('explains an empty store instead of showing no prices', async () => {
+    runtime.getOfferings.mockResolvedValueOnce({ current: null, all: {} })
+    await render()
+    expect(empty()[0].props).toMatchObject({
+      title: 'paywall_noOptionsTitle',
+      description: 'thereAreNoOfferings',
+    })
+    expect(events('paywall_offerings_empty')).toHaveLength(1)
+  })
+})
+
+describe('purchase in flight', () => {
+  it('ignores presses until the store answers and shows progress', async () => {
+    let finish: (value: { productIdentifier: string }) => void = () => {}
+    runtime.purchase.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve
+      })
+    )
+    await render()
+    const footer = () => renderer!.root.findByType(PaywallPurchaseFooter)
+    await act(async () => {
+      void footer().props.onPurchase()
+    })
+    expect(footer().props.purchasing).toBe(true)
+    await act(async () => {
+      void footer().props.onPurchase()
+    })
+    expect(runtime.purchase).toHaveBeenCalledOnce()
+    await act(async () => finish({ productIdentifier: 'annual' }))
+    expect(footer().props.purchasing).toBe(false)
+  })
+
+  it('treats Ask to Buy as waiting for approval, not an error', async () => {
+    runtime.purchase.mockRejectedValue({ code: 'pending' })
+    await render()
+    await purchase()
+    expect(runtime.alert).toHaveBeenCalledWith(
+      'storeError_pendingTitle',
+      'storeError_pending',
+      undefined
+    )
+    expect(runtime.captureException).not.toHaveBeenCalled()
+  })
 })

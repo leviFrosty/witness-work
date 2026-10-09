@@ -2,13 +2,14 @@ import { X as XIcon } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, Platform, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
+import InlineNotice from '@/components/ui/InlineNotice'
 import InfoPopover from '@/components/ui/InfoPopover'
 import XView from '@/components/ui/layout/XView'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -41,8 +42,15 @@ const isAndroid = storePlatform === 'android'
 const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
-  const { state, productLoaded, pausingMonths, pause, openStore } =
-    useManageSubscription(open, source)
+  const {
+    state,
+    productLoaded,
+    productError,
+    retryProduct,
+    pausingMonths,
+    pause,
+    openStore,
+  } = useManageSubscription(open, source)
   // Keep the native Modal mounted through the Sheet's dismiss animation.
   const [mounted, setMounted] = useState(open)
   const afterDismiss = useRef<(() => void) | null>(null)
@@ -166,12 +174,15 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
                   icon={XIcon}
                   size='xl'
                   onPress={close}
+                  accessibilityLabel={i18n.t('close')}
                 />
               </View>
 
               <ManageSubscriptionBody
                 state={state}
                 productLoaded={productLoaded}
+                productError={productError}
+                onRetryProduct={retryProduct}
                 pausingMonths={pausingMonths}
                 onPause={(offer) => void pause(offer)}
                 onPlayPause={() => closeThenOpenStore('pause')}
@@ -227,12 +238,16 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
 const ManageSubscriptionBody = ({
   state,
   productLoaded,
+  productError,
+  onRetryProduct,
   pausingMonths,
   onPause,
   onPlayPause,
 }: {
   state: ManageSubscriptionState
   productLoaded: boolean
+  productError: 'offline' | 'failed' | null
+  onRetryProduct: () => void
   pausingMonths: number | null
   onPause: (offer: PauseOffer) => void
   onPlayPause: () => void
@@ -292,6 +307,21 @@ const ManageSubscriptionBody = ({
 
   if (!productLoaded) {
     return <Spinner color={theme.colors.textAlt} />
+  }
+
+  // These two only mean "no pause" when the product loaded.
+  if (
+    productError &&
+    pause.kind === 'unavailable' &&
+    (pause.reason === 'no_offers' || pause.reason === 'unsupported_plan')
+  ) {
+    return (
+      <InlineNotice
+        tone={productError === 'offline' ? 'offline' : 'error'}
+        message={i18n.t('manageSupport_pauseLoadFailed')}
+        onRetry={onRetryProduct}
+      />
+    )
   }
 
   if (pause.kind === 'unavailable') {

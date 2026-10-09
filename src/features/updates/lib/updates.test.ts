@@ -7,6 +7,7 @@ const runtime = vi.hoisted(() => ({
   alert: vi.fn(),
   capture: vi.fn(),
   captureException: vi.fn(),
+  knownOffline: false,
 }))
 vi.mock('react-native', () => ({
   Alert: { alert: runtime.alert },
@@ -27,6 +28,9 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: runtime.captureException },
 }))
+vi.mock('@/lib/http/online', () => ({
+  isKnownOffline: () => runtime.knownOffline,
+}))
 
 import { fetchUpdate } from './updates'
 
@@ -35,6 +39,7 @@ beforeEach(() => {
   vi.stubGlobal('__DEV__', false)
   runtime.enabled = true
   runtime.platform = 'ios'
+  runtime.knownOffline = false
   runtime.check.mockResolvedValue({ isAvailable: false })
 })
 
@@ -95,3 +100,21 @@ it.each(['ios', 'android'])(
     expect(runtime.captureException).toHaveBeenCalledWith(error)
   }
 )
+
+it('tells an offline user to connect instead of updating through the store', async () => {
+  runtime.check.mockRejectedValue(
+    new Error('The Internet connection appears to be offline.')
+  )
+  expect(await fetchUpdate(vi.fn())).toBe('offline')
+  expect(runtime.alert).toHaveBeenCalledWith(
+    'common_offlineTitle',
+    'update_offline'
+  )
+  expect(runtime.captureException).not.toHaveBeenCalled()
+})
+
+it('skips the check when the OS already reports no connection', async () => {
+  runtime.knownOffline = true
+  expect(await fetchUpdate(vi.fn())).toBe('offline')
+  expect(runtime.check).not.toHaveBeenCalled()
+})

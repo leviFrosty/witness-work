@@ -3,6 +3,7 @@ import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
 import useCustomer from '@/hooks/useCustomer'
 import { logger } from '@/lib/logger'
+import { isConnectivityError } from '@/lib/http/networkError'
 
 /**
  * Returns the cheapest per-month-equivalent supporter price across all
@@ -49,7 +50,7 @@ const useCheapestSupporterPrice = () => {
         // available — no user-facing error needed.
         hasFetched.current = false
         logger.warn('[useCheapestSupporterPrice] getOfferings failed', error)
-        errorTracking.captureException(error)
+        if (!isConnectivityError(error)) errorTracking.captureException(error)
       })
   }, [ready])
 

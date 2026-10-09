@@ -164,6 +164,7 @@ export const analyticsEventNames = [
   'onboarding_step_viewed',
   // Supporter conversion and purchase outcomes.
   'paywall_closed',
+  'paywall_offerings_empty',
   'paywall_offerings_failed',
   'paywall_viewed',
   'supporter_feature_gate_clicked',

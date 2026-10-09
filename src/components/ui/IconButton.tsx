@@ -32,6 +32,8 @@ type Props = {
    * the inner edge of the first button fires the second.
    */
   hitSlop?: number | Insets
+  /** Swaps the icon for a spinner and blocks presses; see `Button`. */
+  loading?: boolean
 }
 
 const IconButton = ({
@@ -46,6 +48,7 @@ const IconButton = ({
   noTransform,
   accessibilityLabel,
   hitSlop,
+  loading,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -65,6 +68,8 @@ const IconButton = ({
       onLongPress={onLongPress}
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
+      loading={loading}
+      loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
     >
       <Icon
         color={iconColor}

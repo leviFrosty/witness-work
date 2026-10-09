@@ -7,13 +7,13 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   ScrollView,
   TouchableOpacity,
   View,
 } from 'react-native'
+import Spinner from '@/components/ui/Spinner'
 import Switch from '@/components/ui/Switch'
 
 import { countTruthyValueStrings } from '@/lib/objects'
@@ -310,7 +310,7 @@ export default function MapOnboarding() {
         </View>
         <View style={{ width: 20, alignItems: 'center' }}>
           {status === 'loading' && (
-            <ActivityIndicator size='small' color={theme.colors.accent} />
+            <Spinner size='small' color={theme.colors.accent} />
           )}
           {status === 'success' && (
             <LucideIcon

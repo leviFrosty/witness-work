@@ -1,5 +1,12 @@
-import React, { PropsWithChildren, ReactElement, useState } from 'react'
+import React, {
+  isValidElement,
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+  useState,
+} from 'react'
 import {
+  ActivityIndicator,
   GestureResponderEvent,
   LayoutChangeEvent,
   Pressable,
@@ -122,6 +129,14 @@ export interface ButtonProps extends PressableProps {
    * owns the hover (e.g. a row that tints as a whole).
    */
   pointerEffect?: PointerEffect | 'tint' | 'auto'
+  /**
+   * Work this button started is running: a spinner covers the content, which
+   * stays laid out (invisible) so the width doesn't change. The button can't be
+   * pressed and reads as busy to screen readers.
+   */
+  loading?: boolean
+  /** Spinner color while `loading`; match the label. Defaults to `textAlt`. */
+  loadingColor?: string
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -135,6 +150,74 @@ const isOpaque = (color: unknown) =>
   color !== 'transparent' &&
   !/^rgba|^hsla/.test(color) &&
   !/^#([0-9a-f]{4}|[0-9a-f]{8})$/i.test(color)
+
+const LAYOUT_KEYS = [
+  'flexDirection',
+  'alignItems',
+  'justifyContent',
+  'flexWrap',
+  'gap',
+  'rowGap',
+  'columnGap',
+] as const
+
+/**
+ * While loading, the children sit invisible in a box laid out like the button,
+ * so its size holds, and a spinner covers them. The children stay in the
+ * accessibility tree, so the button keeps its label.
+ */
+const LoadingContent: React.FC<
+  PropsWithChildren<{ surfaceStyle: ViewStyle; color: string | undefined }>
+> = ({ surfaceStyle, color, children }) => {
+  const theme = useTheme()
+  const layout: ViewStyle = {}
+  for (const key of LAYOUT_KEYS) {
+    if (surfaceStyle[key] !== undefined)
+      (layout as Record<string, unknown>)[key] = surfaceStyle[key]
+  }
+  return (
+    <>
+      <View style={[layout, { flexShrink: 1, opacity: 0 }]}>{children}</View>
+      <View
+        pointerEvents='none'
+        accessibilityElementsHidden
+        importantForAccessibility='no-hide-descendants'
+        style={[
+          StyleSheet.absoluteFill,
+          { alignItems: 'center', justifyContent: 'center' },
+        ]}
+      >
+        <ActivityIndicator size='small' color={color ?? theme.colors.textAlt} />
+      </View>
+    </>
+  )
+}
+
+/** The text inside `node`, for a label once the children are hidden. */
+const textContent = (node: ReactNode): string => {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node))
+    return node.map(textContent).filter(Boolean).join(' ')
+  if (isValidElement(node))
+    return textContent((node.props as { children?: ReactNode }).children)
+  return ''
+}
+
+/**
+ * Android leaves the invisible children out of the button's description, so a
+ * loading button names itself from their text.
+ */
+const loadingLabel = (
+  loading: boolean | undefined,
+  label: string | undefined,
+  children: ReactNode
+) => label ?? (loading ? textContent(children) || undefined : undefined)
+
+const busyState = (
+  loading: boolean | undefined,
+  state: ButtonProps['accessibilityState']
+): ButtonProps['accessibilityState'] =>
+  loading ? { ...state, busy: true } : state
 
 /**
  * Picks the pointer treatment from the rendered size and fill. Returns a
@@ -231,6 +314,10 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   glassColorScheme,
   pointerEffect,
   onLayout,
+  loading,
+  loadingColor,
+  accessibilityState,
+  accessibilityLabel,
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
@@ -246,7 +333,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
     pointerEffect,
     surfaceStyle,
     onLayout,
-    disabled
+    disabled || loading
   )
 
   const _onPress = (event: GestureResponderEvent) => {
@@ -262,7 +349,9 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   return pointer.wrap(
     <Pressable
       hitSlop={10}
-      disabled={disabled}
+      disabled={disabled || loading}
+      accessibilityState={busyState(loading, accessibilityState)}
+      accessibilityLabel={loadingLabel(loading, accessibilityLabel, children)}
       onPress={onPress ? _onPress : undefined}
       onLongPress={onLongPress ? _onLongPress : undefined}
       onLayout={pointer.onLayout}
@@ -283,7 +372,13 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
           style={[StyleSheet.absoluteFill, { borderRadius: glassBorderRadius }]}
         />
       )}
-      {children}
+      {loading ? (
+        <LoadingContent surfaceStyle={surfaceStyle} color={loadingColor}>
+          {children}
+        </LoadingContent>
+      ) : (
+        children
+      )}
       {pointer.overlay}
     </Pressable>
   )
@@ -300,6 +395,10 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   glassColorScheme,
   pointerEffect,
   onLayout,
+  loading,
+  loadingColor,
+  accessibilityState,
+  accessibilityLabel,
   ...props
 }) => {
   const translateY = useSharedValue(0)
@@ -312,7 +411,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
     pointerEffect,
     surfaceStyle,
     onLayout,
-    disabled
+    disabled || loading
   )
 
   const _onPress = (event: GestureResponderEvent) => {
@@ -349,7 +448,9 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   return pointer.wrap(
     <AnimatedPressable
       hitSlop={10}
-      disabled={disabled}
+      disabled={disabled || loading}
+      accessibilityState={busyState(loading, accessibilityState)}
+      accessibilityLabel={loadingLabel(loading, accessibilityLabel, children)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onPress={onPress ? _onPress : undefined}
@@ -368,7 +469,13 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
           style={[StyleSheet.absoluteFill, { borderRadius: glassBorderRadius }]}
         />
       )}
-      {children}
+      {loading ? (
+        <LoadingContent surfaceStyle={surfaceStyle} color={loadingColor}>
+          {children}
+        </LoadingContent>
+      ) : (
+        children
+      )}
       {pointer.overlay}
     </AnimatedPressable>
   )
@@ -389,6 +496,8 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   noTransform: _noTransform,
   hitSlop: _hitSlop,
   pointerEffect: _pointerEffect,
+  loading: _loading,
+  loadingColor: _loadingColor,
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)

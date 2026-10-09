@@ -28,8 +28,10 @@ vi.mock('tamagui', () => {
   Sheet.Handle = 'SheetHandle'
   Sheet.Overlay = 'SheetOverlay'
   Sheet.Frame = 'SheetFrame'
-  return { Sheet, Spinner: 'Spinner' }
+  return { Sheet }
 })
+vi.mock('@/components/ui/Spinner', () => ({ default: 'Spinner' }))
+vi.mock('@/components/ui/InlineNotice', () => ({ default: 'InlineNotice' }))
 vi.mock('lucide-react-native', () => ({ X: 'X' }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, numbers: {}, fontSize: () => 14 }),
@@ -150,6 +152,29 @@ describe('ManageSubscriptionSheet', () => {
       await render()
       expect(footer().props.disabled).toBe(false)
     }
+  })
+
+  it('offers a retry when the pause options failed to load', async () => {
+    const retryProduct = vi.fn()
+    runtime.hook = {
+      productError: 'offline',
+      retryProduct,
+      state: {
+        kind: 'renewing',
+        sub,
+        renewsAt: new Date(sub.expiresDate),
+        pause: { kind: 'unavailable', reason: 'no_offers' },
+      },
+    }
+    await render()
+    const notice = tree.root.findByType('InlineNotice' as never)
+    expect(notice.props).toMatchObject({
+      tone: 'offline',
+      message: 'manageSupport_pauseLoadFailed',
+    })
+    notice.props.onRetry()
+    expect(retryProduct).toHaveBeenCalledOnce()
+    expect(footer().props.disabled).toBe(false)
   })
 
   it('hands Android pauses to Google Play with its own wording', async () => {

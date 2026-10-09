@@ -16,6 +16,11 @@ import useTheme from '@/contexts/theme'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import InlineNotice from '@/components/ui/InlineNotice'
+import PointerTooltip from '@/components/ui/PointerTooltip'
+import Spinner from '@/components/ui/Spinner'
+import useCustomer from '@/hooks/useCustomer'
+import { isConnectivityError } from '@/lib/http/networkError'
 import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
 import {
   billingKind,
@@ -26,41 +31,120 @@ import ManageSubscriptionSheet from '@/features/supporter/components/ManageSubsc
 
 interface PreviousDonationsProps {
   customer: CustomerInfo
-  revalidate: () => Promise<void>
 }
 
-const PreviousDonations = ({
-  customer,
-  revalidate,
-}: PreviousDonationsProps) => {
-  const theme = useTheme()
+/** Why a store call failed, as the notice's tone. */
+type Failure = 'offline' | 'error'
+
+const failure = (error: unknown): Failure => {
+  if (isConnectivityError(error)) return 'offline'
+  errorTracking.captureException(error)
+  return 'error'
+}
+
+/**
+ * The store products behind the customer's purchases, for their prices. Fetches
+ * again only when the set of product ids changes or on `retry`.
+ */
+const usePurchasedProducts = (customer: CustomerInfo) => {
+  // Union purchase history with the live subscription map so we can always
+  // resolve price + billing period for the active-subscription cards —
+  // including users whose entitlement was granted manually in the RC
+  // dashboard. Their real store subscription still lands in these maps with
+  // its real product identifier, even though the granted entitlement points
+  // at a synthetic promotional product that `getProducts` can't resolve.
+  const idsKey = JSON.stringify(
+    Array.from(
+      new Set([
+        ...Object.keys(customer.allPurchaseDates),
+        ...Object.keys(customer.subscriptionsByProductIdentifier ?? {}),
+      ])
+    ).sort()
+  )
+  const [attempt, setAttempt] = useState(0)
   const [products, setProducts] = useState<PurchasesStoreProduct[]>([])
+  const [settled, setSettled] = useState<{
+    key: string
+    error: Failure | null
+  } | null>(null)
+  const key = `${attempt}:${idsKey}`
+
+  useEffect(() => {
+    let current = true
+    const ids = JSON.parse(idsKey) as string[]
+    Purchases.getProducts(ids)
+      .then((found) => {
+        if (!current) return
+        setProducts(found)
+        setSettled({ key, error: null })
+      })
+      .catch((error: unknown) => {
+        const kind = failure(error)
+        if (current) setSettled({ key, error: kind })
+      })
+    return () => {
+      current = false
+    }
+  }, [idsKey, key])
+
+  const done = settled?.key === key
+  return {
+    products,
+    loading: !done,
+    error: done ? settled.error : null,
+    retry: () => setAttempt((n) => n + 1),
+  }
+}
+
+const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
+  const theme = useTheme()
+  const { setCustomer } = useCustomer()
+  const prices = usePurchasedProducts(customer)
+  const { products } = prices
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<Failure | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
   const status = useSubscriptionStatus()
   const manageableProduct =
     status.state.kind === 'none' ? null : status.state.sub.productIdentifier
 
-  useEffect(() => {
-    const getProducts = async () => {
-      // Union purchase history with the live subscription map so we can always
-      // resolve price + billing period for the active-subscription cards —
-      // including users whose entitlement was granted manually in the RC
-      // dashboard. Their real store subscription still lands in these maps with
-      // its real product identifier, even though the granted entitlement points
-      // at a synthetic promotional product that `getProducts` can't resolve.
-      const ids = Array.from(
-        new Set([
-          ...Object.keys(customer.allPurchaseDates),
-          ...Object.keys(customer.subscriptionsByProductIdentifier ?? {}),
-        ])
-      )
-
-      const products = await Purchases.getProducts(ids)
-      setProducts(products)
+  const refresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setRefreshError(null)
+    try {
+      await Purchases.invalidateCustomerInfoCache()
+      setCustomer(await Purchases.getCustomerInfo())
+      prices.retry()
+    } catch (error) {
+      setRefreshError(failure(error))
+    } finally {
+      setRefreshing(false)
     }
+  }
 
-    getProducts().catch((error) => errorTracking.captureException(error))
-  }, [customer.allPurchaseDates, customer.subscriptionsByProductIdentifier])
+  const notice = refreshError
+    ? {
+        tone: refreshError,
+        message:
+          refreshError === 'offline'
+            ? i18n.t('storeError_offline')
+            : i18n.t('yourDonations_refreshFailed'),
+        onRetry: refresh,
+        retrying: refreshing,
+      }
+    : prices.error
+      ? {
+          tone: prices.error,
+          message:
+            prices.error === 'offline'
+              ? i18n.t('storeError_offline')
+              : i18n.t('yourDonations_pricesFailed'),
+          onRetry: prices.retry,
+          retrying: prices.loading,
+        }
+      : null
+  const priceSpinner = prices.loading ? <Spinner size='small' /> : null
 
   const nonSubscriptions = useMemo(() => {
     return customer.nonSubscriptionTransactions
@@ -118,12 +202,17 @@ const PreviousDonations = ({
         >
           {i18n.t('yourDonations')}
         </Text>
-        <IconButton
-          icon={RefreshCwIcon}
-          onPress={revalidate}
-          color={theme.colors.textAlt}
-        />
+        <PointerTooltip label={i18n.t('yourDonations_refresh')}>
+          <IconButton
+            icon={RefreshCwIcon}
+            onPress={refresh}
+            loading={refreshing}
+            accessibilityLabel={i18n.t('yourDonations_refresh')}
+            color={theme.colors.textAlt}
+          />
+        </PointerTooltip>
       </XView>
+      {notice && <InlineNotice {...notice} />}
       {lifetimeSupporterEntitlement && (
         <Card>
           <Text
@@ -181,11 +270,13 @@ const PreviousDonations = ({
                 {title}
               </Text>
               <XView style={{ gap: 10, flexWrap: 'wrap' }}>
-                {!!product?.priceString && (
+                {product?.priceString ? (
                   <Text style={{ fontFamily: theme.fonts.bold }}>
                     {product.priceString}
                     {periodSuffix ? ` ${periodSuffix}` : ''}
                   </Text>
+                ) : (
+                  priceSpinner
                 )}
                 <Badge
                   color={
@@ -251,9 +342,13 @@ const PreviousDonations = ({
                 key={transaction.transactionIdentifier}
                 style={{ flexWrap: 'wrap', gap: 12 }}
               >
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {transaction.name}
-                </Text>
+                {transaction.name ? (
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {transaction.name}
+                  </Text>
+                ) : (
+                  priceSpinner
+                )}
                 <Text>{formatDate(transaction.purchaseDate)}</Text>
               </XView>
             )

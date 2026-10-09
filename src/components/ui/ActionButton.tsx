@@ -14,6 +14,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   children,
   disabled,
   size = 'lg',
+  loadingColor,
   ...props
 }) => {
   const theme = useTheme()
@@ -35,6 +36,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
       ]}
       onPress={onPress}
       disabled={disabled}
+      loadingColor={loadingColor ?? theme.colors.textInverse}
       {...props}
     >
       {typeof children === 'string' ? (

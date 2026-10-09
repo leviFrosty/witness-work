@@ -38,7 +38,7 @@ const AuxiliaryMonthSheet = ({
 }: AuxiliaryMonthSheetProps) => {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
-  const { publisherHours } = usePreferences()
+  const publisherHours = usePreferences((s) => s.publisherHours)
   const { months, setAuxiliary } = useAuxiliaryMonths()
   const [thisMonth, nextMonth] = months
 

@@ -1,7 +1,7 @@
 import { perf } from '@/lib/perf'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -41,17 +41,40 @@ import MileageHomeSection from '@/features/mileage/components/MileageHomeSection
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
+import useLocalDay from '@/hooks/useLocalDay'
+import { useShallow } from 'zustand/react/shallow'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import type { TimeEntry } from '@/types/timeEntry'
+
+// Pull first so any remote-side changes land before we push ours — avoids a
+// fight between two devices that both just pulled to refresh.
+const pullThenPush = async () => {
+  await iCloudSync.pullAndMerge('pull-to-refresh')
+  await iCloudSync.push('pull-to-refresh')
+}
 
 export const HomeScreen = () => {
   perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
-  const { homeChecklistDismissed, iCloudSyncEnabled } = usePreferences()
-  const { serviceReports } = useServiceReport()
+  const {
+    homeChecklistDismissed,
+    iCloudSyncEnabled,
+    homeScreenElements,
+    homeScreenElementsOrder,
+    mileageTrackingEnabled,
+  } = usePreferences(
+    useShallow((s) => ({
+      homeChecklistDismissed: s.homeChecklistDismissed,
+      iCloudSyncEnabled: s.iCloudSyncEnabled,
+      homeScreenElements: s.homeScreenElements,
+      homeScreenElementsOrder: s.homeScreenElementsOrder,
+      mileageTrackingEnabled: s.mileageTrackingEnabled,
+    }))
+  )
+  const serviceReports = useServiceReport((s) => s.serviceReports)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({
@@ -60,28 +83,13 @@ export const HomeScreen = () => {
     })
   const pendingNavigation = useRef<(() => void) | null>(null)
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = () => {
     setRefreshing(true)
-    try {
-      // Pull first so any remote-side changes land before we push ours —
-      // avoids a fight between two devices that both just pulled to refresh.
-      await iCloudSync.pullAndMerge('pull-to-refresh')
-      await iCloudSync.push('pull-to-refresh')
-    } finally {
-      setRefreshing(false)
-    }
-  }, [])
+    return pullThenPush().finally(() => setRefreshing(false))
+  }
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
-  const {
-    homeScreenElements,
-    homeScreenElementsOrder,
-    mileageTrackingEnabled,
-  } = usePreferences()
-  const effectiveOrder = useMemo(
-    () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
-    [homeScreenElementsOrder]
-  )
+  const effectiveOrder = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
   // Anchor the "Did you know" tip card to the bottom of the scroll view only
   // when the user has it in its default trailing position. Once they reorder
   // it inline, drop the auto-margin so it flows with surrounding sections.
@@ -89,21 +97,20 @@ export const HomeScreen = () => {
     effectiveOrder[effectiveOrder.length - 1] === 'didYouKnow'
   const navigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
-  const serviceYear = getServiceYearFromDate(moment())
-  const currentMonth = moment().month()
-  const currentYear = moment().year()
-  const currentMonthsReports = useMemo(
-    () => getMonthsReports(serviceReports, currentMonth, currentYear),
-    [serviceReports, currentMonth, currentYear]
+  // Keyed on the day so the compiled screen moves on at midnight.
+  const today = moment(useLocalDay(), 'YYYY-MM-DD')
+  const serviceYear = getServiceYearFromDate(today)
+  const currentMonth = today.month()
+  const currentYear = today.year()
+  const currentMonthsReports = getMonthsReports(
+    serviceReports,
+    currentMonth,
+    currentYear
   )
-  const selectedDateReports = useMemo(
-    () =>
-      getMonthsReports(
-        serviceReports,
-        moment(selectedDateSheet.date).month(),
-        moment(selectedDateSheet.date).year()
-      ),
-    [selectedDateSheet.date, serviceReports]
+  const selectedDateReports = getMonthsReports(
+    serviceReports,
+    moment(selectedDateSheet.date).month(),
+    moment(selectedDateSheet.date).year()
   )
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)

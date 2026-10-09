@@ -16,7 +16,7 @@ import { usePreferences } from '@/stores/preferences'
  */
 const useGlassColorScheme = (): GlassColorScheme => {
   const system = useColorScheme()
-  const { colorScheme: preference } = usePreferences()
+  const preference = usePreferences((s) => s.colorScheme)
   const override = useContext(GlassColorSchemeOverrideContext)
 
   if (override) return override

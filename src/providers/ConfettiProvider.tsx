@@ -1,14 +1,9 @@
-import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
-import { Confetti, ConfettiConfig, useConfetti } from '@/vendor/ConfettiSkia'
+import useConfetti from '@/vendor/ConfettiSkia/react/useConfetti'
+import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
+import type ConfettiComponent from '@/vendor/ConfettiSkia/react/Confetti'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 
 /**
@@ -35,60 +30,40 @@ const DEFAULT_STAGGER_MS = 180
 interface Props {}
 
 const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
-  const confetti = useConfetti()
+  const { ref: confettiRef } = useConfetti()
   const { width, height } = useWindowDimensions()
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingTriggersRef = useRef<Partial<ConfettiConfig>[]>([])
 
-  /**
-   * Drains any triggers that arrived while the FullWindowOverlay was still
-   * mounting (and therefore before `confetti.ref.current` had attached).
-   * Without this, the first burst after an idle period would silently no-op.
-   */
-  const drainPendingTriggers = useCallback(() => {
-    const handle = confetti.ref.current
-    if (!handle) return
-    const queued = pendingTriggersRef.current
-    if (queued.length === 0) return
-    pendingTriggersRef.current = []
-    for (const cfg of queued) handle.trigger(cfg)
-  }, [confetti.ref])
+  const triggerBurst = (cfg?: Partial<ConfettiConfig>) => {
+    const handle = confettiRef.current
+    if (handle) {
+      handle.trigger(cfg)
+      return
+    }
+    // Overlay not mounted yet — queue, mount, drain on next frame.
+    pendingTriggersRef.current.push(cfg ?? {})
+    setOverlayMounted(true)
+  }
 
-  const triggerBurst = useCallback(
-    (cfg?: Partial<ConfettiConfig>) => {
-      const handle = confetti.ref.current
-      if (handle) {
-        handle.trigger(cfg)
-        return
-      }
-      // Overlay not mounted yet — queue, mount, drain on next frame.
-      pendingTriggersRef.current.push(cfg ?? {})
-      setOverlayMounted(true)
-    },
-    [confetti.ref]
-  )
+  const fire = (opts?: FireOpts) => {
+    const count = opts?.count ?? DEFAULT_COUNT
+    const velocity = opts?.velocity ?? DEFAULT_VELOCITY
+    const fade = opts?.fade ?? DEFAULT_FADE
+    const staggerMs = opts?.staggerMs ?? DEFAULT_STAGGER_MS
+    const spots = opts?.spots ?? DEFAULT_SPOTS
 
-  const fire = useCallback(
-    (opts?: FireOpts) => {
-      const count = opts?.count ?? DEFAULT_COUNT
-      const velocity = opts?.velocity ?? DEFAULT_VELOCITY
-      const fade = opts?.fade ?? DEFAULT_FADE
-      const staggerMs = opts?.staggerMs ?? DEFAULT_STAGGER_MS
-      const spots = opts?.spots ?? DEFAULT_SPOTS
-
-      spots.forEach((spot, i) => {
-        setTimeout(() => {
-          triggerBurst({
-            position: { x: width * spot.x, y: height * spot.y },
-            count,
-            velocity,
-            fade,
-          })
-        }, i * staggerMs)
-      })
-    },
-    [triggerBurst, width, height]
-  )
+    spots.forEach((spot, i) => {
+      setTimeout(() => {
+        triggerBurst({
+          position: { x: width * spot.x, y: height * spot.y },
+          count,
+          velocity,
+          fade,
+        })
+      }, i * staggerMs)
+    })
+  }
 
   /**
    * Confetti reports `true` the moment its engine accepts a trigger and `false`
@@ -97,22 +72,26 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
    * sheets/pickers underneath aren't competing with a UIWindow-level container
    * that React Native's touch handler is attached to.
    */
-  const handleActiveChange = useCallback((active: boolean) => {
+  const handleActiveChange = (active: boolean) => {
     if (!active) setOverlayMounted(false)
-  }, [])
+  }
 
+  /**
+   * Drains any triggers that arrived while the FullWindowOverlay was still
+   * mounting (and therefore before `confettiRef.current` had attached). Without
+   * this, the first burst after an idle period would silently no-op.
+   */
   useEffect(() => {
     if (!overlayMounted) return
-    drainPendingTriggers()
-  }, [overlayMounted, drainPendingTriggers])
+    const handle = confettiRef.current
+    if (!handle) return
+    const queued = pendingTriggersRef.current
+    if (queued.length === 0) return
+    pendingTriggersRef.current = []
+    for (const cfg of queued) handle.trigger(cfg)
+  }, [overlayMounted, confettiRef])
 
-  const ctx = useMemo<FireworksCtx>(
-    () => ({
-      fire,
-      triggerBurst,
-    }),
-    [fire, triggerBurst]
-  )
+  const ctx: FireworksCtx = { fire, triggerBurst }
 
   return (
     <ConfettiContext.Provider value={ctx}>
@@ -134,12 +113,33 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
          * a permanent UIWindow-level touch surface.
          */}
         {overlayMounted ? (
-          <FullWindowOverlay>
-            <Confetti ref={confetti.ref} onActiveChange={handleActiveChange} />
-          </FullWindowOverlay>
+          <SkiaConfetti
+            confettiRef={confettiRef}
+            onActiveChange={handleActiveChange}
+          />
         ) : null}
       </View>
     </ConfettiContext.Provider>
+  )
+}
+
+/**
+ * The Skia confetti, required the first time fireworks fire so launch doesn't
+ * set up Skia for them.
+ */
+function SkiaConfetti({
+  confettiRef,
+  onActiveChange,
+}: {
+  confettiRef: ReturnType<typeof useConfetti>['ref']
+  onActiveChange: (active: boolean) => void
+}) {
+  const Confetti: typeof ConfettiComponent =
+    require('@/vendor/ConfettiSkia/react/Confetti').default
+  return (
+    <FullWindowOverlay>
+      <Confetti ref={confettiRef} onActiveChange={onActiveChange} />
+    </FullWindowOverlay>
   )
 }
 

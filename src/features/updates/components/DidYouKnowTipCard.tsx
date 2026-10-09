@@ -9,6 +9,7 @@ import { DID_YOU_KNOW_TIPS } from '@/features/updates/lib/didYouKnowTips'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Home-screen tip card that drip-feeds lesser-known features one at a time. On
@@ -21,7 +22,9 @@ import HomeSectionMenu from '@/components/HomeSectionMenu'
  */
 const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const theme = useTheme()
-  const { seenTipIds, set } = usePreferences()
+  const { seenTipIds, set } = usePreferences(
+    useShallow((s) => ({ seenTipIds: s.seenTipIds, set: s.set }))
+  )
   const [dismissed, setDismissed] = useState(false)
 
   // Lock the chosen tip at mount so dismissal doesn't pop another card into

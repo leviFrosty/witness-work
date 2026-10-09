@@ -114,7 +114,7 @@ const ProfileDetailOverlay = () => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
-  const { tenureStartDate } = usePreferences()
+  const tenureStartDate = usePreferences((s) => s.tenureStartDate)
 
   const handleEdit = () => {
     onClose()

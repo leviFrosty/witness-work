@@ -7,13 +7,16 @@ import {
   UPDATE_REVEAL_VERSION,
 } from '@/features/updates/constants/updateReveal'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Lets a User who closed the update reveal before the tour replay it. Gone once
  * the tour is opened or the item is dismissed.
  */
 export default function useUpdateRevealNotification(): NotificationItem | null {
-  const { updateReveal, set } = usePreferences()
+  const { updateReveal, set } = usePreferences(
+    useShallow((s) => ({ updateReveal: s.updateReveal, set: s.set }))
+  )
   const requestReveal = useUpdateRevealStore((s) => s.request)
   if (
     updateReveal?.version !== UPDATE_REVEAL_VERSION ||

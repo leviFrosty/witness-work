@@ -135,7 +135,7 @@ export const HeadlineLine = ({
   onHeight,
 }: LineProps) => {
   const theme = useTheme()
-  const { fontSizeOffset } = usePreferences()
+  const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const words = text.split(/\s+/).filter(Boolean)
   const enter = useSharedValue(0)
   const exit = useSharedValue(0)
@@ -280,7 +280,7 @@ const WelcomeHeadline = ({
   holdMs,
   reduceMotion,
 }: Props) => {
-  const { fontSizeOffset } = usePreferences()
+  const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const [heights, setHeights] = useState<Partial<Record<LineId, number>>>({})
   const story = lines.filter((line) => line.id !== 'welcome')
   const storyIndex = story.findIndex((line) => line.id === current)

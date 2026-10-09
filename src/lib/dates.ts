@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { getCalendars, getLocales } from 'expo-localization'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
+import { loadMomentLocale } from '@/lib/momentLocales'
 
 /**
  * Format Region seam — see
@@ -21,9 +22,9 @@ export type TimeFormat = '12' | '24'
 export type DateOrder = 'mdy' | 'dmy' | 'ymd'
 
 /**
- * Curated Format Region options. Every key MUST have its moment locale imported
- * in `src/lib/locales.ts` — `moment.localeData('<unimported>')` silently falls
- * back to `en` (US conventions), which would make the picker lie. `'en'`
+ * Curated Format Region options. Every key MUST have its moment locale listed
+ * in `src/lib/momentLocales.ts` — `moment.localeData('<unloaded>')` silently
+ * falls back to `en` (US conventions), which would make the picker lie. `'en'`
  * (United States) ships inside moment itself.
  */
 export const FORMAT_REGIONS = [
@@ -87,6 +88,7 @@ export interface ResolvedFormatSettings {
 
 const safeLocaleData = (key: string | undefined): moment.Locale | null => {
   if (!key) return null
+  loadMomentLocale(key)
   const loaded = moment.locales()
   const safeKey = loaded.includes(key)
     ? key
@@ -105,14 +107,15 @@ const safeLocaleData = (key: string | undefined): moment.Locale | null => {
  * Activates a moment locale without ever triggering moment's lazy
  * `require('./locale/<key>')`. Under Metro that dynamic require throws an
  * UNCATCHABLE fatal ("Requiring unknown module …/locale/ko-kr") for any locale
- * file we didn't statically import in `src/lib/locales.ts` — so a device whose
- * language resolves to a region-suffixed key (`ko-kr`, `ja-jp`, …) crashed the
- * app at init. We only ever hand `moment.locale` a key it already loaded: the
- * full tag, else its base language, else moment's built-in default.
+ * file `src/lib/momentLocales.ts` doesn't list — so a device whose language
+ * resolves to a region-suffixed key (`ko-kr`, `ja-jp`, …) crashed the app at
+ * init. We only ever hand `moment.locale` a key it already loaded: the full
+ * tag, else its base language, else moment's built-in default.
  *
  * Returns the key moment ended up on, which is what every patch below targets.
  */
 const safeMomentLocale = (key: string): string => {
+  loadMomentLocale(key)
   const loaded = moment.locales()
   if (loaded.includes(key)) {
     moment.locale(key)
@@ -180,6 +183,7 @@ const LT_PATTERNS: Record<TimeFormat, { LT: string; LTS: string }> = {
 const deviceLocaleData = (): moment.Locale | null => {
   const tag = getLocales()[0]?.languageTag?.toLowerCase()
   if (!tag) return null
+  loadMomentLocale(tag)
   // `moment.localeData('<unloaded>')` silently resolves to a parent or `en`,
   // which would smuggle US conventions in as "the device's". Only trust keys
   // moment has actually loaded.

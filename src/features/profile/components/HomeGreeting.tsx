@@ -14,6 +14,7 @@ import Text from '@/components/ui/MyText'
 import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
 import { pickGreeting } from '@/features/profile/lib/greeting'
 import { consecutiveDaysStreak } from '@/features/profile/lib/profileStats'
+import { useShallow } from 'zustand/react/shallow'
 
 /** A one-line welcome at the top of Home that reads the clock and progress. */
 const HomeGreeting = () => {
@@ -23,7 +24,12 @@ const HomeGreeting = () => {
   const year = now.getFullYear()
   const { type: role, showsTimeEntry } = usePublisher({ month, year })
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const { serviceReports } = useServiceReport()
   const daily = useDailyMinutes()
 

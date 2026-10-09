@@ -13,6 +13,7 @@ import { getServiceYearReports } from '@/lib/serviceYear'
 import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
 import StripedFill from '@/components/ui/StripedFill'
 import Text from '@/components/ui/MyText'
+import { useShallow } from 'zustand/react/shallow'
 
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]
@@ -289,7 +290,13 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
   )
   const roleFor = useRoleForMonth()
   const { milestoneOverrides, overrideCreditLimit, customCreditLimitHours } =
-    usePreferences()
+    usePreferences(
+      useShallow((s) => ({
+        milestoneOverrides: s.milestoneOverrides,
+        overrideCreditLimit: s.overrideCreditLimit,
+        customCreditLimitHours: s.customCreditLimitHours,
+      }))
+    )
   const { serviceReports } = useServiceReport()
 
   const totalMinutesForServiceYear = useMemo(() => {

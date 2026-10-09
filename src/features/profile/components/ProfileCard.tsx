@@ -23,6 +23,7 @@ import i18n from '@/lib/locales'
 import MyTextInput from '@/components/ui/TextInput'
 import { profileBadges } from '@/lib/badges/display'
 import ProfileCardBadges from '@/features/profile/components/ProfileCardBadges'
+import { useShallow } from 'zustand/react/shallow'
 
 const daysSince = (from: Date): number =>
   Math.max(1, moment().diff(moment(from), 'days'))
@@ -93,7 +94,14 @@ interface Props {
 const ProfileCard = ({ readOnly, hideBadges }: Props) => {
   const theme = useTheme()
   const { installedOn, tenureStartDate, earnedBadges, showBadges } =
-    usePreferences()
+    usePreferences(
+      useShallow((s) => ({
+        installedOn: s.installedOn,
+        tenureStartDate: s.tenureStartDate,
+        earnedBadges: s.earnedBadges,
+        showBadges: s.showBadges,
+      }))
+    )
   const badges = showBadges && !hideBadges ? profileBadges(earnedBadges) : []
   // Profile-shaped fields live in the Profile store (wave-3 store split).
   // ProfileCard reads + writes both stores because the card is the editing

@@ -110,7 +110,7 @@ export default function SettingsSplitScreen() {
         <SettingsDetailStack.Screen
           key={screen.name}
           name={screen.name}
-          component={screen.component}
+          getComponent={screen.getComponent}
           options={({ navigation, route }) => {
             const isRoot = navigation.getState().routes[0]?.key === route.key
             return {

@@ -29,6 +29,7 @@ import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
 import { isCountableEntry } from '@/lib/serviceReport'
+import { useShallow } from 'zustand/react/shallow'
 
 const boxSize = 40
 
@@ -356,7 +357,12 @@ const CalendarDay = (
   const recurringPlans = props.recurringPlansOverride ?? store.recurringPlans
   const translateY = useSharedValue(0)
   const theme = useTheme()
-  const { howToAddPlan, removeHint } = usePreferences()
+  const { howToAddPlan, removeHint } = usePreferences(
+    useShallow((s) => ({
+      howToAddPlan: s.howToAddPlan,
+      removeHint: s.removeHint,
+    }))
+  )
 
   const isToday = moment().isSame(props.date?.dateString, 'day')
 

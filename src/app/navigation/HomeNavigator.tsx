@@ -22,7 +22,7 @@ const Stack = createNativeStackNavigator()
 
 const HomeNavigator = () => {
   const notesImportEnabled = useNotesImportEnabled()
-  const { set } = usePreferences()
+  const set = usePreferences((s) => s.set)
   const theme = useTheme()
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
   const focusNotesImports = useNotesImportManager((s) => s.focus)

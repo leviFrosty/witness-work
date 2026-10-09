@@ -8,6 +8,7 @@ import {
   calendarMonthOf,
   publisherCapabilitiesForMonth,
 } from '@/lib/roleHistory'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Resolves the User's field-ministry role to a fully derived
@@ -33,7 +34,18 @@ const usePublisher = (
     overrideCreditLimit,
     customCreditLimitHours,
     logsHours,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      role: s.role,
+      roleHistory: s.roleHistory,
+      publisherHours: s.publisherHours,
+      userSpecifiedHasAnnualGoal: s.userSpecifiedHasAnnualGoal,
+      milestoneOverrides: s.milestoneOverrides,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      logsHours: s.logsHours,
+    }))
+  )
 
   if (target === 'standing') {
     return derivePublisherCapabilities({

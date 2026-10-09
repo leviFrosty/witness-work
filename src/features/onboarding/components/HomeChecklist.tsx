@@ -37,6 +37,7 @@ import PointerHover from '@/components/ui/PointerHover'
 import SupporterNote from '@/features/supporter/components/SupporterNote'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Checklist item ids. Stable because manual completions are persisted (and
@@ -83,7 +84,15 @@ const HomeChecklist = () => {
     homeChecklistAllDoneCelebrated,
     submittedReportMonths,
     set: setPref,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      homeChecklistDismissed: s.homeChecklistDismissed,
+      homeChecklistManualCompletions: s.homeChecklistManualCompletions,
+      homeChecklistAllDoneCelebrated: s.homeChecklistAllDoneCelebrated,
+      submittedReportMonths: s.submittedReportMonths,
+      set: s.set,
+    }))
+  )
   const fireworks = useFireworks()
   const sealScale = useSharedValue(1)
   const sealAnimatedStyle = useAnimatedStyle(() => ({

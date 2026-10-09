@@ -9,17 +9,21 @@ import { analytics } from '@/lib/analytics'
 export default function SupporterSyncLapseGate() {
   const { customer } = useCustomer()
   const { isSupporter } = useIsSupporter()
-  const { iCloudSyncEnabled, set } = usePreferences()
+  const iCloudSyncEnabled = usePreferences((s) => s.iCloudSyncEnabled)
+  const set = usePreferences((s) => s.set)
   const supporterStatusKnown = customer !== null
 
   useEffect(() => {
     if (!hasSyncTransport()) return
     if (!supporterStatusKnown) return
+    // Writes (and reports) only when the pause actually changes, not on every
+    // launch.
+    const pausedForLapse = usePreferences.getState().iCloudSyncPausedForLapse
     if (isSupporter) {
-      set({ iCloudSyncPausedForLapse: false })
+      if (pausedForLapse) set({ iCloudSyncPausedForLapse: false })
       return
     }
-    if (!iCloudSyncEnabled) return
+    if (!iCloudSyncEnabled || pausedForLapse) return
     set({ iCloudSyncPausedForLapse: true })
     analytics.capture('icloud_sync_paused', {
       enabled: false,

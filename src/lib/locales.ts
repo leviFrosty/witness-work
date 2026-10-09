@@ -1,79 +1,38 @@
 import { I18n, TranslateOptions } from 'i18n-js'
-import deDE from '@/locales/de-DE.json'
-import esES from '@/locales/es-ES.json'
 import enUS from '@/locales/en-US.json'
-import frFR from '@/locales/fr-FR.json'
-import itIT from '@/locales/it-IT.json'
-import jaJP from '@/locales/ja-JP.json'
-import koKR from '@/locales/ko-KR.json'
-import nlNL from '@/locales/nl-NL.json'
-import ruRU from '@/locales/ru-RU.json'
-import ptBR from '@/locales/pt-BR.json'
-import ptPT from '@/locales/pt-PT.json'
-import viVN from '@/locales/vi-VN.json'
-import zhTW from '@/locales/zh-TW.json'
-import zhCN from '@/locales/zh-CN.json'
-import swKE from '@/locales/sw-KE.json'
-import ukUA from '@/locales/uk-UA.json'
-import rwRW from '@/locales/rw-RW.json'
-import bemZM from '@/locales/bem-ZM.json'
-
-import 'moment/locale/en-au'
-import 'moment/locale/en-ca'
-import 'moment/locale/en-gb'
-import 'moment/locale/en-ie'
-import 'moment/locale/en-il'
-import 'moment/locale/en-nz'
-import 'moment/locale/en-sg'
-import 'moment/locale/de-at'
-import 'moment/locale/de-ch'
-import 'moment/locale/de'
-import 'moment/locale/fr-ca'
-import 'moment/locale/fr-ch'
-import 'moment/locale/fr'
-import 'moment/locale/it'
-import 'moment/locale/it-ch'
-import 'moment/locale/ja'
-import 'moment/locale/ko'
-import 'moment/locale/pt'
-import 'moment/locale/pt-br'
-import 'moment/locale/ru'
-import 'moment/locale/vi'
-import 'moment/locale/nl-be'
-import 'moment/locale/nl'
-import 'moment/locale/es'
-import 'moment/locale/zh-cn'
-import 'moment/locale/zh-tw'
-import 'moment/locale/es-do'
-import 'moment/locale/es-us'
-import 'moment/locale/es'
-import 'moment/locale/sw'
-import 'moment/locale/uk'
-import { mmkvStorage } from '@/stores/mmkv'
 import { getLocales } from 'expo-localization'
-import { applyFormatRegion } from '@/lib/dates'
+import { applyFormatRegion, type DateOrder, type TimeFormat } from '@/lib/dates'
+import { readBootPreferences } from '@/stores/bootPreferences'
 
-export const translations = {
-  'en-us': enUS,
-  'de-de': deDE,
-  'es-es': esES,
-  'fr-fr': frFR,
-  'it-it': itIT,
-  'ja-jp': jaJP,
-  'ko-kr': koKR,
-  'nl-nl': nlNL,
-  'pt-br': ptBR,
-  'pt-pt': ptPT,
-  'ru-ru': ruRU,
-  'vi-vn': viVN,
-  'zh-hant-tw': zhTW, // Traditional
-  'zh-hans-cn': zhCN, // Simplified
-  'sw-ke': swKE,
-  'uk-ua': ukUA,
-  'bem-zm': bemZM, // Bemba
-  'rw-rw': rwRW,
-} as const
-export type TranslatedLocale = keyof typeof translations
+type Translations = typeof enUS
+
+// English is the fallback for every missing key, so it always loads. The
+// others (about 3 MB together) load when they become the active language.
+const translationLoaders = {
+  'en-us': () => enUS,
+  'de-de': () => require('../locales/de-DE.json'),
+  'es-es': () => require('../locales/es-ES.json'),
+  'fr-fr': () => require('../locales/fr-FR.json'),
+  'it-it': () => require('../locales/it-IT.json'),
+  'ja-jp': () => require('../locales/ja-JP.json'),
+  'ko-kr': () => require('../locales/ko-KR.json'),
+  'nl-nl': () => require('../locales/nl-NL.json'),
+  'pt-br': () => require('../locales/pt-BR.json'),
+  'pt-pt': () => require('../locales/pt-PT.json'),
+  'ru-ru': () => require('../locales/ru-RU.json'),
+  'vi-vn': () => require('../locales/vi-VN.json'),
+  'zh-hant-tw': () => require('../locales/zh-TW.json'), // Traditional
+  'zh-hans-cn': () => require('../locales/zh-CN.json'), // Simplified
+  'sw-ke': () => require('../locales/sw-KE.json'),
+  'uk-ua': () => require('../locales/uk-UA.json'),
+  'bem-zm': () => require('../locales/bem-ZM.json'), // Bemba
+  'rw-rw': () => require('../locales/rw-RW.json'),
+} as const satisfies Record<string, () => Partial<Translations>>
+export type TranslatedLocale = keyof typeof translationLoaders
+
+export const translatedLocales = Object.keys(
+  translationLoaders
+) as TranslatedLocale[]
 
 export const translationsLabels: { [K in TranslatedLocale]: string } = {
   'en-us': 'English',
@@ -96,16 +55,39 @@ export const translationsLabels: { [K in TranslatedLocale]: string } = {
   'rw-rw': 'Kinyarwanda',
 } as const
 
-export const _i18n = new I18n(translations)
-_i18n.enableFallback = true
 export const DEFAULT_LOCALE = 'en-us'
+export const _i18n = new I18n({ [DEFAULT_LOCALE]: enUS })
+_i18n.enableFallback = true
 _i18n.defaultLocale = DEFAULT_LOCALE
 
+const loadedLocales = new Set<TranslatedLocale>([DEFAULT_LOCALE])
+
+/** Makes `locale` the language `i18n.t` answers in, loading it if needed. */
+export function setI18nLocale(locale: TranslatedLocale): void {
+  if (!loadedLocales.has(locale)) {
+    _i18n.store({ [locale]: translationLoaders[locale]() })
+    loadedLocales.add(locale)
+  }
+  _i18n.locale = locale
+}
+
+// Set up the language and date conventions before anything renders, and for
+// runtimes that never mount the app (widget refresh, background tasks).
+type BootLocalePreferences = {
+  locale?: string
+  formatRegion?: string
+  startOfWeek?: number
+  timeFormat?: TimeFormat
+  dateOrder?: DateOrder
+}
+
 try {
-  const preferences = JSON.parse(mmkvStorage.getString('preferences') || '')
-  const rawLocale =
-    preferences.state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+  const state =
+    (readBootPreferences() as { state?: BootLocalePreferences } | null)
+      ?.state ?? {}
+  const rawLocale = state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
   const { locale: localeOrFallback } = handleLangFallback(rawLocale)
+  setI18nLocale(localeOrFallback)
   const locale = formatLocaleForMoment(localeOrFallback)
   // Sets moment.locale to the Language and overlays the Format Region's
   // conventions (ADR 0006). Reads the raw persisted blob pre-migration, so a
@@ -113,10 +95,10 @@ try {
   // `useUserLocalePrefs` re-applies post-hydration.
   applyFormatRegion({
     language: locale,
-    region: preferences.state.formatRegion ?? undefined,
-    startOfWeekOverride: preferences.state.startOfWeek ?? undefined,
-    timeFormatOverride: preferences.state.timeFormat ?? undefined,
-    dateOrderOverride: preferences.state.dateOrder ?? undefined,
+    region: state.formatRegion ?? undefined,
+    startOfWeekOverride: state.startOfWeek ?? undefined,
+    timeFormatOverride: state.timeFormat ?? undefined,
+    dateOrderOverride: state.dateOrder ?? undefined,
   })
 } catch (err) {
   applyFormatRegion({ language: DEFAULT_LOCALE })
@@ -128,7 +110,7 @@ export function handleLangFallback(locale: string): {
   fallback: boolean
 } {
   const userLanguage = locale.slice(0, locale.lastIndexOf('-')) // Guaranteed
-  const validTranslationLocales = Object.keys(translations)
+  const validTranslationLocales: string[] = translatedLocales
   let languageFound = false
   let fallback = false
 

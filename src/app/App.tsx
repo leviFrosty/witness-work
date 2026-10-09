@@ -19,6 +19,7 @@ import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import { markLaunched } from '@/app/launch/launchState'
+import { useAfterLaunch } from '@/app/launch/useAfterLaunch'
 import { captureLaunchTiming } from '@/app/launch/captureLaunchTiming'
 import { perf } from '@/lib/perf'
 import { reportLaunch } from '@/lib/perfProbe'
@@ -53,30 +54,43 @@ import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { analytics } from '@/lib/analytics'
-import { errorTracking } from '@/lib/errorTracking'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 
 initializeApp()
+
+/**
+ * Launch work that the first screen doesn't need. Each piece starts once that
+ * screen is up, the heavier ones later still, so they don't compete with the
+ * splash handing over. A component of its own so these stages don't re-render
+ * the app.
+ */
+function LaunchWork() {
+  const afterFirstScreen = useAfterLaunch('firstScreen')
+  const afterReminderDelay = useAfterLaunch(2_000)
+  // First, so the launch pull that rollover waits on starts straight away.
+  useICloudSync(afterFirstScreen)
+  // Each starts in its own idle period, in this order.
+  useWidgetSync(useAfterLaunch('idle'))
+  useWatchSync(useAfterLaunch('idle'))
+  useCalendarSync(useAfterLaunch('idle'))
+  useReconciledReminders(afterReminderDelay)
+  useLocalAvatarCleanup(useAfterLaunch('idle'))
+  useDeletedContactRetention(useAfterLaunch('idle'))
+  useTimeEntryCreditNormalization(useAfterLaunch('idle'))
+  return null
+}
 
 export default function App() {
   perf.count('render:App')
   perf.mark('appFirstRender')
   const systemColorScheme = useColorScheme()
-  const { colorScheme } = usePreferences()
+  const colorScheme = usePreferences((s) => s.colorScheme)
   const { loadedLocale } = useUserLocalePrefs()
   const fontsLoaded = useAppFonts()
   const routeNameRef = useRef<string | undefined>(undefined)
   const devRemountKey = useDevRemountKey()
   useNotesImportResume()
   const hasMigrated = useAppMigrations()
-  useWidgetSync(hasMigrated)
-  useWatchSync(hasMigrated)
-  useICloudSync(hasMigrated)
-  useCalendarSync(hasMigrated)
-  useReconciledReminders(hasMigrated)
-  useLocalAvatarCleanup(hasMigrated)
-  useDeletedContactRetention(hasMigrated)
-  useTimeEntryCreditNormalization(hasMigrated)
 
   // Rendering anything hides the native splash, so keep showing its exact
   // replica until the app is ready — the first screen then picks up from it.
@@ -85,82 +99,77 @@ export default function App() {
   }
   perf.mark('appTreeRender')
 
-  try {
-    return (
-      <CustomerProvider>
-        <AccountProvider>
-          <FeatureFlagsRuntime />
-          <NotesImportAttestPreparation />
-          <SupporterStoreSync />
-          <SupporterSyncDefault />
-          <SupporterSyncLapseGate />
-          <AppIconSync />
-          <ThemeProvider>
-            <SafeAreaProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <NavigationContainer
-                  key={devRemountKey}
-                  ref={navigationRef}
-                  linking={linking}
-                  // Shown while deep links resolve, before the first screen.
-                  fallback={<LaunchSplash />}
-                  onReady={() => {
-                    markLaunched()
-                    reportLaunch()
-                    captureLaunchTiming()
-                    const initialScreen =
-                      navigationRef.current?.getCurrentRoute()?.name
-                    routeNameRef.current = initialScreen
-                    if (initialScreen) analytics.screen(initialScreen)
-                  }}
-                  onStateChange={() => {
-                    const previousScreen = routeNameRef.current
-                    const currentScreen =
-                      navigationRef.current?.getCurrentRoute()?.name
-                    if (currentScreen && currentScreen !== previousScreen) {
-                      analytics.screen(currentScreen, {
-                        previous_screen: previousScreen,
-                      })
+  return (
+    <CustomerProvider>
+      <LaunchWork />
+      <AccountProvider>
+        <FeatureFlagsRuntime />
+        <NotesImportAttestPreparation />
+        <SupporterStoreSync />
+        <SupporterSyncDefault />
+        <SupporterSyncLapseGate />
+        <AppIconSync />
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <NavigationContainer
+                key={devRemountKey}
+                ref={navigationRef}
+                linking={linking}
+                // Shown while deep links resolve, before the first screen.
+                fallback={<LaunchSplash />}
+                onReady={() => {
+                  markLaunched()
+                  reportLaunch()
+                  captureLaunchTiming()
+                  const initialScreen =
+                    navigationRef.current?.getCurrentRoute()?.name
+                  routeNameRef.current = initialScreen
+                  if (initialScreen) analytics.screen(initialScreen)
+                }}
+                onStateChange={() => {
+                  const previousScreen = routeNameRef.current
+                  const currentScreen =
+                    navigationRef.current?.getCurrentRoute()?.name
+                  if (currentScreen && currentScreen !== previousScreen) {
+                    analytics.screen(currentScreen, {
+                      previous_screen: previousScreen,
+                    })
+                  }
+                  routeNameRef.current = currentScreen
+                }}
+              >
+                {/* Toast context must also reach Tamagui’s portaled sheets. */}
+                <ToastProvider>
+                  <TamaguiProvider
+                    defaultTheme={
+                      colorScheme ? colorScheme : systemColorScheme || undefined
                     }
-                    routeNameRef.current = currentScreen
-                  }}
-                >
-                  {/* Toast context must also reach Tamagui’s portaled sheets. */}
-                  <ToastProvider>
-                    <TamaguiProvider
-                      defaultTheme={
-                        colorScheme
-                          ? colorScheme
-                          : systemColorScheme || undefined
-                      }
-                      config={tamaguiConfig}
-                    >
-                      <StatusBar />
-                      <ToastViewport />
-                      <ConfettiProvider>
-                        <AnimationViewProvider>
-                          <SurveyProvider>
-                            <DeepLinkListeners />
-                            <BuddiesRuntime />
-                            <BadgesRuntime />
-                            <NotificationResponseListener />
-                            <SilentForegroundAlerts />
-                            <SystemMenu language={loadedLocale} />
-                            <RootStackComponent />
-                            <PointerTooltipLayer />
-                          </SurveyProvider>
-                        </AnimationViewProvider>
-                      </ConfettiProvider>
-                    </TamaguiProvider>
-                  </ToastProvider>
-                </NavigationContainer>
-              </GestureHandlerRootView>
-            </SafeAreaProvider>
-          </ThemeProvider>
-        </AccountProvider>
-      </CustomerProvider>
-    )
-  } catch (error) {
-    errorTracking.captureException(error)
-  }
+                    config={tamaguiConfig}
+                  >
+                    <StatusBar />
+                    <ToastViewport />
+                    <ConfettiProvider>
+                      <AnimationViewProvider>
+                        <SurveyProvider>
+                          <DeepLinkListeners />
+                          <BuddiesRuntime />
+                          <BadgesRuntime />
+                          <NotificationResponseListener />
+                          <SilentForegroundAlerts />
+                          <SystemMenu language={loadedLocale} />
+                          <RootStackComponent />
+                          <PointerTooltipLayer />
+                        </SurveyProvider>
+                      </AnimationViewProvider>
+                    </ConfettiProvider>
+                  </TamaguiProvider>
+                </ToastProvider>
+              </NavigationContainer>
+            </GestureHandlerRootView>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </AccountProvider>
+    </CustomerProvider>
+  )
 }

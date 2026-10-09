@@ -7,6 +7,7 @@ import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { backupReminderDueAt } from '@/features/settings/lib/backupReminder'
 import { syncTransport } from '@/lib/syncTransport'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Tray reminder to export a backup once it's been
@@ -28,7 +29,20 @@ export default function useBackupNotification(
     lastiCloudPulledAt,
     lastiCloudUploadedAt,
     set,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      remindMeAboutBackups: s.remindMeAboutBackups,
+      backupNotificationFrequencyAsDays: s.backupNotificationFrequencyAsDays,
+      installedOn: s.installedOn,
+      lastBackupDate: s.lastBackupDate,
+      backupReminderSnoozedAt: s.backupReminderSnoozedAt,
+      iCloudSyncEnabled: s.iCloudSyncEnabled,
+      lastiCloudPushedAt: s.lastiCloudPushedAt,
+      lastiCloudPulledAt: s.lastiCloudPulledAt,
+      lastiCloudUploadedAt: s.lastiCloudUploadedAt,
+      set: s.set,
+    }))
+  )
 
   const dueAt = backupReminderDueAt({
     remindMeAboutBackups,

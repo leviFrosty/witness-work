@@ -52,7 +52,7 @@ const GoalBar = ({
   labels = true,
 }: Props) => {
   const theme = useTheme()
-  const { timeDisplayFormat } = usePreferences()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const [trackWidth, setTrackWidth] = useState(0)
   const [labelWidths, setLabelWidths] = useState({ goal: 0, total: 0 })
   const dims = SIZES[size]

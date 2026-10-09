@@ -21,7 +21,7 @@ export type SupporterStatus = {
  */
 const useIsSupporter = (): SupporterStatus => {
   const { customer } = useCustomer()
-  const { devSupporterOverride } = usePreferences()
+  const devSupporterOverride = usePreferences((s) => s.devSupporterOverride)
   return useMemo(() => {
     if (__DEV__ && devSupporterOverride) {
       return { isSupporter: true, since: new Date(devSupporterOverride) }

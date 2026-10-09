@@ -1,4 +1,5 @@
 let launching = true
+const listeners = new Set<() => void>()
 
 /**
  * True until navigation puts its first screen on display. A screen rendered
@@ -9,5 +10,15 @@ export const isLaunching = () => launching
 
 /** Called once navigation is ready and its first screen is up. */
 export const markLaunched = () => {
+  if (!launching) return
   launching = false
+  listeners.forEach((listener) => listener())
+}
+
+/** For `useSyncExternalStore`: notifies once, when the first screen is up. */
+export const subscribeLaunched = (listener: () => void) => {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
 }

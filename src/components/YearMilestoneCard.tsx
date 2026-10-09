@@ -42,6 +42,7 @@ import MilestoneProgressBar from '@/components/MilestoneProgressBar'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import ContextMenu from '@/components/ui/ContextMenu'
+import { useShallow } from 'zustand/react/shallow'
 
 interface YearMilestoneCardProps {
   /**
@@ -97,7 +98,17 @@ const YearMilestoneCard = ({
     markMilestoneCelebrated,
     overrideCreditLimit,
     customCreditLimitHours,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      roleHistory: s.roleHistory,
+      milestoneOverrides: s.milestoneOverrides,
+      timeDisplayFormat: s.timeDisplayFormat,
+      celebratedMilestones: s.celebratedMilestones,
+      markMilestoneCelebrated: s.markMilestoneCelebrated,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const { serviceReports } = useServiceReport()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
   const fireworks = useFireworks()

@@ -30,6 +30,7 @@ import LottieView from 'lottie-react-native'
 import { useNavigation } from '@react-navigation/native'
 import ContextMenu from '@/components/ui/ContextMenu'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function PublisherCheckBoxCard() {
   const theme = useTheme()
@@ -39,7 +40,12 @@ export default function PublisherCheckBoxCard() {
     useServiceReport()
   const { playConfetti } = useAnimation()
   const { type: publisher, showsTimeEntry } = usePublisher()
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]

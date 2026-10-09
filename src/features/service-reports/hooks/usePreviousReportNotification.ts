@@ -9,6 +9,7 @@ import useServiceReport from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { shouldShowPreviousReportReminder } from '@/features/service-reports/lib/previousReportReminder'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Tray reminder to submit last month's Service Report. Clears once it's sent
@@ -20,7 +21,13 @@ export default function usePreviousReportNotification(
 ): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
   const { submittedReportMonths, installedOn, markReportSubmitted } =
-    usePreferences()
+    usePreferences(
+      useShallow((s) => ({
+        submittedReportMonths: s.submittedReportMonths,
+        installedOn: s.installedOn,
+        markReportSubmitted: s.markReportSubmitted,
+      }))
+    )
   const serviceReports = useServiceReport((state) => state.serviceReports)
 
   const previousMonth = moment(now).subtract(1, 'month')

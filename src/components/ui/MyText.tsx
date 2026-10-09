@@ -16,7 +16,7 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   ...props
 }) => {
   const theme = useTheme()
-  const { fontSizeOffset } = usePreferences()
+  const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
 
   const flatStyle = (StyleSheet.flatten(style) ?? {}) as TextStyle
   const incomingFontSize = flatStyle.fontSize ?? theme.fontSize('md')

@@ -119,7 +119,7 @@ const ShimmerText = ({
   ...textProps
 }: Props) => {
   const theme = useTheme()
-  const { fontSizeOffset } = usePreferences()
+  const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const reduceMotion = useReducedMotion()
   const time = useSharedValue(0)
   const active = enabled && !reduceMotion

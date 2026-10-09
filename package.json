@@ -43,7 +43,8 @@
     "check:env:android": "node scripts/with-local-env.mjs development android --check",
     "check:env:ios": "node scripts/with-local-env.mjs development ios --check",
     "test:local-env": "node --test scripts/tests/local-env.node.mjs",
-    "test:verify": "node --test scripts/tests/verify-locks.node.mjs"
+    "test:verify": "node --test scripts/tests/verify-locks.node.mjs",
+    "test:perf": "node --test scripts/tests/perf.node.mjs"
   },
   "dependencies": {
     "@bacons/apple-targets": "5.0.0",

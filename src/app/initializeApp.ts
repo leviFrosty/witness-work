@@ -45,5 +45,9 @@ export function initializeApp() {
   // bundles because Metro drops the dead branch before resolving it.
   if (__DEV__) {
     require('@/app/dev-harness/installDevHarness').installDevHarness()
+  } else if (process.env.EXPO_PUBLIC_PERF_PROBE === '1') {
+    // Profiling builds (scripts/perf). The env var is inlined, so the branch
+    // is dead in every other release bundle too.
+    require('@/app/dev-harness/perfSetup').installPerfSetup()
   }
 }

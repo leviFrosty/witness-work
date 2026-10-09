@@ -30,11 +30,15 @@ export type FeatureFlagsStatus =
   | 'loaded'
   | 'failed'
 
+/** Dev builds, and profiling builds (scripts/perf), which force Buddies on. */
+const overridesAllowed = () =>
+  __DEV__ || process.env.EXPO_PUBLIC_PERF_PROBE === '1'
+
 const useFlags = create<{
   values: FlagValues
   distinctId?: string
   status: FeatureFlagsStatus
-  /** Dev builds only (verification harness); survives remote refreshes. */
+  /** Dev and profiling builds only (harnesses); survive remote refreshes. */
   devOverrides: FlagValues
 }>(() => ({
   values: {},
@@ -42,12 +46,12 @@ const useFlags = create<{
   devOverrides: {},
 }))
 
-/** Dev builds only: force a flag on/off, or pass undefined to clear. */
+/** Dev and profiling builds only: force a flag on/off, or undefined to clear. */
 export function setDevFlagOverride(
   flag: FeatureFlag,
   value: boolean | string | undefined
 ): void {
-  if (!__DEV__) return
+  if (!overridesAllowed()) return
   useFlags.setState(({ devOverrides }) => ({
     devOverrides: { ...devOverrides, [flag]: value },
   }))
@@ -173,7 +177,7 @@ export function useFeatureFlagValue(
       logger.debug('[Analytics] Feature flag exposure unavailable')
     }
   }, [flag, currentValue, distinctId, analyticsEnabled])
-  if (devOverride !== undefined && __DEV__) return devOverride
+  if (devOverride !== undefined && overridesAllowed()) return devOverride
   return currentValue
 }
 

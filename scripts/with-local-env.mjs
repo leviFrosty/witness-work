@@ -57,6 +57,9 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
     env.EXPO_PUBLIC_API_BASE_URL = inherited.WW_VERIFY_API_BASE_URL
     env.EXPO_PUBLIC_API_DEV_BYPASS = inherited.WW_VERIFY_API_DEV_BYPASS ?? ''
   }
+  // `scripts/perf` builds a development app with the profiling probe on.
+  if (variant === 'development' && inherited.WW_PERF_PROBE === '1')
+    env.EXPO_PUBLIC_PERF_PROBE = '1'
   Object.assign(env, {
     APP_VARIANT: variant,
     NODE_ENV: variant === 'development' ? 'development' : 'production',
@@ -104,6 +107,17 @@ export function validateLocalEnv(env, platform) {
   return api
 }
 
+/**
+ * Profiling builds are Release builds, and RevenueCat refuses a Test Store key
+ * in a non-debuggable Android app (a dialog that closes the app). Without a
+ * key, Android takes its existing purchases-unavailable path instead.
+ */
+export function applyPerfProbe(env, platform) {
+  if (env.EXPO_PUBLIC_PERF_PROBE === '1' && platform === 'android')
+    env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY = ''
+  return env
+}
+
 export function forwardAndroidBackend(api, env, run = spawnSync) {
   if (!['localhost', '127.0.0.1', '[::1]'].includes(api.hostname)) return
   const port = api.port || (api.protocol === 'https:' ? '443' : '80')
@@ -139,6 +153,7 @@ function main() {
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files } = loadLocalEnv(root, variant)
   const api = validateLocalEnv(env, platform)
+  applyPerfProbe(env, platform)
   if (separator !== '--check' && (separator !== '--' || !command)) {
     throw new Error(
       'Usage: node scripts/with-local-env.mjs <variant> <ios|android> <--check|-- command ...>'

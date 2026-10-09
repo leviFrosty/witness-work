@@ -44,11 +44,42 @@ function diff(after: Counters, before: Counters): Counters {
   return result
 }
 
-function report(payload: Record<string, unknown>) {
+/** Hermes heap figures, or null on another engine. */
+function jsHeap() {
+  const stats = (
+    globalThis as {
+      HermesInternal?: { getInstrumentedStats?: () => Record<string, number> }
+    }
+  ).HermesInternal?.getInstrumentedStats?.()
+  if (!stats) return null
+  return {
+    heapSize: stats.js_heapSize,
+    allocatedBytes: stats.js_allocatedBytes,
+    numGCs: stats.js_numGCs,
+  }
+}
+
+/** Os_log truncates messages near 1 KB (logcat near 4 KB). */
+const MAX_LINE = 800
+
+/**
+ * Prints a report for scripts/perf, which reads it from the device log. Stays
+ * out of the logger, which is silent in release builds. Longer reports go out
+ * as numbered `[ww-perf~<id>:<i>/<n>]` parts.
+ */
+export function reportPerf(payload: Record<string, unknown>) {
   if (!perfProbeEnabled) return
-  // Read by scripts/perf from the device log; stays out of the logger, which
-  // is silent in release builds.
-  console.log(`[ww-perf] ${JSON.stringify(payload)}`)
+  const json = JSON.stringify(payload)
+  if (json.length <= MAX_LINE) {
+    console.log(`[ww-perf] ${json}`)
+    return
+  }
+  const id = Math.random().toString(36).slice(2, 8)
+  const total = Math.ceil(json.length / MAX_LINE)
+  for (let i = 0; i < total; i++)
+    console.log(
+      `[ww-perf~${id}:${i + 1}/${total}] ${json.slice(i * MAX_LINE, (i + 1) * MAX_LINE)}`
+    )
 }
 
 let installed = false
@@ -72,12 +103,13 @@ export function installPerfProbe(): void {
     const before = { ...counters }
     const startedAt = now()
     void measureBlocking(SETTLE_WINDOW_MS).then((blockedMs) =>
-      report({
+      reportPerf({
         type: kind,
         at: Date.now(),
         windowMs: Math.round(now() - startedAt),
         blockedMs,
         counters: diff(counters, before),
+        jsHeap: jsHeap(),
       })
     )
   })
@@ -91,13 +123,14 @@ export function reportLaunch(): void {
   const wallNavReady = Date.now()
   const before = { ...counters }
   void measureBlocking(SETTLE_WINDOW_MS).then((blockedMs) =>
-    report({
+    reportPerf({
       type: 'launch',
       at: Date.now(),
       wallNavReady,
       blockedMsAfterReady: blockedMs,
       ...perf.snapshot(),
       countersAfterReady: diff(counters, before),
+      jsHeap: jsHeap(),
     })
   )
 }
@@ -105,21 +138,35 @@ export function reportLaunch(): void {
 function requestKey(url: string): string {
   try {
     const parsed = new URL(url)
-    // Ids and tokens live in query strings; the host and the first two path
-    // segments name the endpoint well enough.
-    const path = parsed.pathname.split('/').filter(Boolean).slice(0, 3)
+    // The host and the first three path segments name the endpoint well
+    // enough. Ids and tokens in the path (long, with digits) become `:id`, so
+    // one endpoint stays one counter and reports carry no tokens.
+    const path = parsed.pathname
+      .split('/')
+      .filter(Boolean)
+      .slice(0, 3)
+      .map((segment) =>
+        segment.length >= 16 && /\d/.test(segment) ? ':id' : segment
+      )
     return `net:${parsed.host}/${path.join('/')}`
   } catch {
     return 'net:unparsed'
   }
 }
 
+function countRequest(url: string) {
+  perf.count('net:total')
+  perf.count(requestKey(url))
+}
+
 /**
- * Counts every XMLHttpRequest (React Native's fetch and axios both use it) and
- * WebSocket, by endpoint. Native SDK traffic (RevenueCat, iCloud) is counted at
- * its JS call sites instead.
+ * Counts every fetch (Expo installs its own native fetch, which bypasses
+ * XMLHttpRequest), XMLHttpRequest (axios) and WebSocket, by endpoint. Native
+ * SDK traffic (RevenueCat, iCloud) is counted at its JS call sites instead.
  */
 function countNetworkRequests() {
+  // A fetch built on XMLHttpRequest opens it synchronously; count it once.
+  let inFetch = 0
   const open = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = function (
     this: XMLHttpRequest,
@@ -127,10 +174,33 @@ function countNetworkRequests() {
     url: string | URL,
     ...rest: unknown[]
   ) {
-    perf.count('net:total')
-    perf.count(requestKey(String(url)))
+    if (!inFetch) countRequest(String(url))
     // @ts-expect-error forwarding the overloads' optional arguments
     return open.call(this, method, url, ...rest)
+  }
+  // Reading it first resolves Expo's lazy global.
+  const nativeFetch = globalThis.fetch
+  if (nativeFetch) {
+    const counted: typeof fetch = (input, init) => {
+      countRequest(
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url
+      )
+      inFetch++
+      try {
+        return nativeFetch(input, init)
+      } finally {
+        inFetch--
+      }
+    }
+    Object.defineProperty(globalThis, 'fetch', {
+      value: counted,
+      writable: true,
+      configurable: true,
+    })
   }
   const NativeWebSocket = globalThis.WebSocket
   if (NativeWebSocket) {

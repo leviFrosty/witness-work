@@ -5,6 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import {
+  applyPerfProbe,
   forwardAndroidBackend,
   loadLocalEnv,
   validateLocalEnv,
@@ -208,4 +209,40 @@ test('a verification run can point development, and only development, at its own
   const production = loadLocalEnv(root, 'production', inherited).env
   assert.equal(production.EXPO_PUBLIC_API_BASE_URL, 'https://prod')
   assert.equal(production.EXPO_PUBLIC_API_DEV_BYPASS, undefined)
+})
+
+test('a profiling build turns the probe on in development only, and never inherits it', () => {
+  const root = fixture()
+  write(root, '.env', 'EXPO_PUBLIC_API_BASE_URL=http://localhost:8787\n')
+  write(root, '.env.production', 'EXPO_PUBLIC_API_BASE_URL=https://prod\n')
+  const leaked = loadLocalEnv(root, 'development', {
+    EXPO_PUBLIC_PERF_PROBE: '1',
+  }).env
+  assert.equal(leaked.EXPO_PUBLIC_PERF_PROBE, undefined)
+  const inherited = { WW_PERF_PROBE: '1' }
+  const { env } = loadLocalEnv(root, 'development', inherited)
+  assert.equal(env.EXPO_PUBLIC_PERF_PROBE, '1')
+  const production = loadLocalEnv(root, 'production', inherited).env
+  assert.equal(production.EXPO_PUBLIC_PERF_PROBE, undefined)
+})
+
+test('a profiling build leaves RevenueCat unconfigured on Android only', () => {
+  const env = () => ({
+    EXPO_PUBLIC_PERF_PROBE: '1',
+    EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'test_google',
+    EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'test_apple',
+  })
+  assert.equal(
+    applyPerfProbe(env(), 'android').EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY,
+    ''
+  )
+  assert.equal(
+    applyPerfProbe(env(), 'ios').EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY,
+    'test_apple'
+  )
+  const normal = { EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'test_google' }
+  assert.equal(
+    applyPerfProbe(normal, 'android').EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY,
+    'test_google'
+  )
 })

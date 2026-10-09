@@ -660,19 +660,28 @@ function realPath(p) {
 }
 
 // Builds use a worktree-local DerivedData, so ownership and cleanup are just
-// this folder (and android/app/build).
-const DERIVED_DATA = path.join(STATE_DIR, 'DerivedData')
-const IOS_PRODUCT = path.join(
-  DERIVED_DATA,
-  'Build/Products/Debug-iphonesimulator/WitnessWorkDev.app'
-)
-const ANDROID_BUILD = path.join(ROOT, 'android/app/build')
-const ANDROID_PRODUCT = path.join(
-  ANDROID_BUILD,
-  'outputs/apk/debug/app-debug.apk'
-)
-const buildDirs = (platform) =>
-  platform === 'ios' ? [DERIVED_DATA] : [ANDROID_BUILD]
+// this folder (and android/app/build). `root` is another checkout only for
+// scripts/perf, which builds a commit's Release app in its own worktree.
+const derivedData = (root = ROOT) => path.join(root, '.verify/DerivedData')
+const androidBuild = (root = ROOT) => path.join(root, 'android/app/build')
+
+/** The app a build produces: Debug is the dev client, Release the perf app. */
+export function buildProduct(
+  platform,
+  { root = ROOT, configuration = 'Debug' } = {}
+) {
+  const config = configuration.toLowerCase()
+  return platform === 'ios'
+    ? path.join(
+        derivedData(root),
+        `Build/Products/${configuration}-iphonesimulator/WitnessWorkDev.app`
+      )
+    : path.join(androidBuild(root), `outputs/apk/${config}/app-${config}.apk`)
+}
+const IOS_PRODUCT = buildProduct('ios')
+const ANDROID_PRODUCT = buildProduct('android')
+export const buildDirs = (platform, root = ROOT) =>
+  platform === 'ios' ? [derivedData(root)] : [androidBuild(root)]
 
 // ---------- Android ----------
 
@@ -854,8 +863,8 @@ function cacheBuild(platform, fingerprint, artifact) {
 }
 
 /** Frees this worktree's build output (after caching, or after a failure). */
-function removeBuildDirs(platform) {
-  removeDirs(buildDirs(platform), (message) =>
+export function removeBuildDirs(platform, root = ROOT) {
+  removeDirs(buildDirs(platform, root), (message) =>
     log(`${message} (keep build dirs with --keep-build-dirs)`)
   )
 }
@@ -895,9 +904,13 @@ export function assertDevArtifact(artifact) {
 
 /**
  * The build steps; run by `_build` inside the detached build process group,
- * never against a device (the artifact is installed after a lease).
+ * never against a device (the artifact is installed after a lease). Release
+ * embeds the JS as Hermes bytecode with dev mode off; scripts/perf uses it.
  */
-function buildSteps(platform) {
+export function buildSteps(
+  platform,
+  { root = ROOT, configuration = 'Debug' } = {}
+) {
   const env = (variant) => [
     'pnpm',
     'exec',
@@ -921,14 +934,21 @@ function buildSteps(platform) {
         '-scheme',
         'WitnessWorkDev',
         '-configuration',
-        'Debug',
+        configuration,
         '-destination',
         'generic/platform=iOS Simulator',
         '-derivedDataPath',
-        DERIVED_DATA,
+        derivedData(root),
         `ARCHS=${os.arch() === 'arm64' ? 'arm64' : 'x86_64'}`,
         'ONLY_ACTIVE_ARCH=YES',
         'COMPILER_INDEX_STORE_ENABLE=NO',
+        // RevenueCat crashes a Release build that uses the dev variant's Test
+        // Store key (an alert, then fatalError); its own opt-out flag.
+        ...(configuration === 'Release'
+          ? [
+              'SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) BYPASS_SIMULATED_STORE_RELEASE_CHECK',
+            ]
+          : []),
         'build',
       ],
     ]
@@ -943,10 +963,10 @@ function buildSteps(platform) {
     ],
     [
       ...env('android'),
-      path.join(ROOT, 'android/gradlew'),
+      path.join(root, 'android/gradlew'),
       '-p',
       'android',
-      ':app:assembleDebug',
+      `:app:assemble${configuration}`,
       '--no-daemon',
       `--max-workers=${GRADLE_WORKERS}`,
       `-PreactNativeArchitectures=${os.arch() === 'arm64' ? 'arm64-v8a' : 'x86_64'}`,
@@ -982,15 +1002,22 @@ let buildGroup = null
  * the build slot. If this `up` dies, the reaper (`gc`, or the next `up`) kills
  * the orphaned group and removes its build dirs.
  */
-async function buildNative(platform) {
-  const logPath = path.join(STATE_DIR, `build-${platform}.log`)
+export async function buildNative(
+  platform,
+  {
+    root = ROOT,
+    configuration = 'Debug',
+    logPath = path.join(STATE_DIR, `build-${platform}.log`),
+    env = {},
+  } = {}
+) {
   log(
-    `building ${platform} dev client (several minutes); log: ${path.relative(ROOT, logPath)}`
+    `building ${platform} ${configuration === 'Debug' ? 'dev client' : `${configuration} app`} (several minutes); log: ${path.relative(ROOT, logPath)}`
   )
   if (
     platform === 'ios' &&
-    fs.existsSync(path.join(ROOT, 'ios')) &&
-    !fs.existsSync(path.join(ROOT, 'ios/WitnessWorkDev.xcworkspace'))
+    fs.existsSync(path.join(root, 'ios')) &&
+    !fs.existsSync(path.join(root, 'ios/WitnessWorkDev.xcworkspace'))
   )
     fail(
       'ios/ holds a non-development project (no WitnessWorkDev.xcworkspace). Delete ios/ and rerun up; the harness never overwrites another variant'
@@ -998,16 +1025,24 @@ async function buildNative(platform) {
   const out = fs.openSync(logPath, 'w')
   const child = spawn(
     process.execPath,
-    [fileURLToPath(import.meta.url), '_build', platform, '--worktree', ROOT],
+    [
+      fileURLToPath(import.meta.url),
+      '_build',
+      platform,
+      '--worktree',
+      root,
+      '--configuration',
+      configuration,
+    ],
     {
-      cwd: ROOT,
+      cwd: root,
       detached: true,
       stdio: ['ignore', out, out],
-      env: buildEnv(platform),
+      env: { ...buildEnv(platform), ...env },
     }
   )
   buildGroup = child.pid
-  setBuildGroup(child.pid, buildDirs(platform))
+  setBuildGroup(child.pid, buildDirs(platform, root))
   const status = await new Promise((resolve) => {
     child.on('exit', (code, signal) => resolve(signal ? 1 : code))
     child.on('error', () => resolve(1))
@@ -1016,10 +1051,18 @@ async function buildNative(platform) {
   killTree(child.pid)
   buildGroup = null
   if (status !== 0) fail(`${platform} build failed; tail ${logPath}`)
-  const artifact = platform === 'ios' ? IOS_PRODUCT : ANDROID_PRODUCT
+  const artifact = buildProduct(platform, { root, configuration })
   if (!fs.existsSync(artifact))
-    fail(`Build finished but ${path.relative(ROOT, artifact)} is missing`)
+    fail(`Build finished but ${path.relative(root, artifact)} is missing`)
   return artifact
+}
+
+/** Kills a build this process started (on a signal), like `up`'s cleanup. */
+export function killOwnBuild() {
+  if (!buildGroup) return false
+  killTree(buildGroup)
+  buildGroup = null
+  return true
 }
 
 /** Installs a cached dev artifact; a dying simulator gets one more try. */
@@ -2009,11 +2052,16 @@ const commands = {
   },
 
   // Internal: the build steps, run detached in their own process group.
-  async _build({ positional }) {
+  async _build({ positional, flags }) {
     const platform = positional[0]
-    for (const [cmd, ...args] of buildSteps(platform)) {
+    const root = flags.worktree || ROOT
+    const configuration = flags.configuration || 'Debug'
+    for (const [cmd, ...args] of buildSteps(platform, {
+      root,
+      configuration,
+    })) {
       console.log(`$ ${cmd} ${args.join(' ')}`)
-      const result = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit' })
+      const result = spawnSync(cmd, args, { cwd: root, stdio: 'inherit' })
       if (result.status !== 0) process.exit(result.status ?? 1)
     }
   },
@@ -2553,6 +2601,40 @@ const commands = {
   warm                                     boot devices up to WW_VERIFY_WARM_MIN per platform
   gc                                       reap expired leases (also runs on every up)`)
   },
+}
+
+// scripts/perf drives Release builds through the same leases, build slots and
+// install records.
+export {
+  BUNDLE_ID,
+  Failure,
+  INSTALLS,
+  ROOT,
+  agentDevice,
+  artifactHash,
+  bootAndroid,
+  bootIos,
+  fail,
+  installedHash,
+  killIosRunner,
+  leaseDevice,
+  log,
+  readJson,
+  readState,
+  reapExpired,
+  releasePlatform,
+  run,
+  sessionName,
+  shutdownWarmDevice,
+  simctlDevices,
+  sleep,
+  startHeartbeat,
+  takeLease,
+  toolEnv,
+  updateInstalls,
+  waitLogger,
+  writeJson,
+  writeState,
 }
 
 const [command = 'help', ...rest] = process.argv.slice(2)

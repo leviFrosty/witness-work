@@ -1,5 +1,5 @@
 import { perf } from '@/lib/perf'
-import { AppState, AppStateStatus, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
 import debounce from 'lodash/debounce'
@@ -21,6 +21,9 @@ import { logger } from '@/lib/logger'
 import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { mmkvStorage } from '@/stores/mmkv'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import { contentHash } from '@/lib/contentHash'
+import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { currentBuddyDayMarkers } from '@/features/buddies/lib/currentBuddyDayMarkers'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
@@ -34,6 +37,31 @@ let installed = false
  * feature flags are unknown (backgrounded, offline, or a background task).
  */
 const BUDDIES_ENABLED_KEY = 'widgetBuddiesEnabled'
+/** The last snapshot written, without its `updatedAt`. */
+const SNAPSHOT_HASH_KEY = 'widgetSnapshotHash'
+
+/** The preferences `pushSnapshot` reads; other preference writes are ignored. */
+const WIDGET_PREFERENCES = [
+  'customAccentColor',
+  'locale',
+  'formatRegion',
+  'startOfWeek',
+  'timeFormat',
+  'dateOrder',
+  'role',
+  'roleHistory',
+  'logsHours',
+  'publisherHours',
+  'monthlyGoalOverrides',
+  'overrideCreditLimit',
+  'customCreditLimitHours',
+  'timeDisplayFormat',
+  'defaultNavigationMapProvider',
+  'stalenessBreakpoints',
+  'widgetContactSort',
+  'widgetContactAction',
+  'widgetAppointmentWindow',
+] as const satisfies (keyof ReturnType<typeof usePreferences.getState>)[]
 
 /** Called from React whenever the app knows whether Buddies is shown. */
 export function setWidgetBuddiesEnabled(enabled: boolean): void {
@@ -60,8 +88,10 @@ function buddyMarkers(): Record<string, BuddyDayMarker> {
 /**
  * Reads the current zustand state synchronously and pushes a freshly built
  * widget snapshot into the iOS App Group container, then asks WidgetKit to
- * reload all timelines. Safe to call from React effects, AppState handlers, and
- * background fetch tasks alike — none of these go through React.
+ * reload all timelines. Skipped when the snapshot is the one already written,
+ * since timeline reloads come out of a daily budget. Safe to call from React
+ * effects, AppState handlers, and background fetch tasks alike — none of these
+ * go through React.
  */
 function pushSnapshot(reason: string): void {
   perf.count('widget:push')
@@ -126,11 +156,19 @@ function pushSnapshot(reason: string): void {
       accentColor,
     })
 
+    const { updatedAt: _updatedAt, ...content } = snapshot
+    const hash = contentHash(JSON.stringify(content))
+    if (hash === mmkvStorage.getString(SNAPSHOT_HASH_KEY)) {
+      perf.count('widget:skip')
+      return
+    }
     WidgetBridge.writeSnapshot(JSON.stringify(snapshot))
     perf.count('widget:reload')
     WidgetBridge.reloadAllTimelines()
+    mmkvStorage.set(SNAPSHOT_HASH_KEY, hash)
   } catch (e) {
     logger.error(`[widgetSync] failed to push snapshot (${reason})`, e)
+    captureExceptionThrottled('widgetSync', e, { widgetSync: reason })
   }
 }
 
@@ -143,7 +181,6 @@ const debouncedPush = debounce(() => pushSnapshot('store-change'), 500, {
 // cold boot. Idempotent — TaskManager dedupes by name.
 if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
   TaskManager.defineTask(WIDGET_REFRESH_TASK, async () => {
-    pushSnapshot('background-fetch')
     // Piggyback on the widget-refresh task to pull any remote iCloud updates
     // and push pending local writes. Gated on the sync opt-in so it's a
     // no-op when the feature is off. Errors are handled inside the sync
@@ -153,6 +190,11 @@ if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
       await iCloudSync.push('background-fetch')
     } catch (e) {
       logger.error('[widgetSync] iCloud sync in background task failed', e)
+    } finally {
+      // After the pull, so one push carries what it merged; the store-change
+      // debounce might not fire before the task is suspended.
+      debouncedPush.cancel()
+      pushSnapshot('background-fetch')
     }
     return BackgroundTask.BackgroundTaskResult.Success
   })
@@ -169,15 +211,32 @@ export function installWidgetSync(): () => void {
   if (installed) return () => {}
   installed = true
 
-  // 1. Subscribe to relevant zustand stores. Each write debounces a push.
-  const unsubServiceReport = useServiceReport.subscribe(() => debouncedPush())
-  const unsubPreferences = usePreferences.subscribe(() => debouncedPush())
-  const unsubContacts = useContacts.subscribe(() => debouncedPush())
-  const unsubConversations = useConversations.subscribe(() => debouncedPush())
+  // 1. Subscribe to the slices the snapshot reads. Each change debounces a
+  //    push. Sync bookkeeping writes preferences often; those are ignored.
+  const unsubServiceReport = useServiceReport.subscribe((state, previous) => {
+    if (
+      state.serviceReports !== previous.serviceReports ||
+      state.dayPlans !== previous.dayPlans ||
+      state.recurringPlans !== previous.recurringPlans
+    )
+      debouncedPush()
+  })
+  const unsubPreferences = usePreferences.subscribe((state, previous) => {
+    if (WIDGET_PREFERENCES.some((key) => state[key] !== previous[key]))
+      debouncedPush()
+  })
+  const unsubContacts = useContacts.subscribe((state, previous) => {
+    if (state.contacts !== previous.contacts) debouncedPush()
+  })
+  const unsubConversations = useConversations.subscribe((state, previous) => {
+    if (state.conversations !== previous.conversations) debouncedPush()
+  })
   // Supporter status flips the accent gate on/off — re-push when it changes so
   // a newly-active supporter's custom accent appears in widgets without
   // waiting for the next unrelated store write.
-  const unsubSupporter = useSupporter.subscribe(() => debouncedPush())
+  const unsubSupporter = useSupporter.subscribe((state, previous) => {
+    if (state.isSupporter !== previous.isSupporter) debouncedPush()
+  })
   // Only the slices the calendar's buddy badges read; the store also holds
   // notifications and sync bookkeeping that change far more often.
   const unsubBuddies = useBuddies.subscribe((state, previous) => {
@@ -192,11 +251,9 @@ export function installWidgetSync(): () => void {
   })
 
   // 2. Foreground rewrite — covers locale switches, midnight rollover, and
-  //    any other state that changes while the app was backgrounded.
-  const onAppState = (state: AppStateStatus) => {
-    if (state === 'active') pushSnapshot('foreground')
-  }
-  const appStateSub = AppState.addEventListener('change', onAppState)
+  //    any other state that changes while the app was backgrounded. Written
+  //    only when that changed the snapshot.
+  const foregroundSub = addForegroundListener(() => pushSnapshot('foreground'))
 
   // 3. Initial push on cold start so the widget reflects current data even if
   //    the user never interacts with the app this session.
@@ -217,7 +274,8 @@ export function installWidgetSync(): () => void {
     unsubConversations()
     unsubSupporter()
     unsubBuddies()
-    appStateSub.remove()
+    debouncedPush.cancel()
+    foregroundSub.remove()
     BackgroundTask.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
     installed = false
   }

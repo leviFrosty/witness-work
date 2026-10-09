@@ -5,6 +5,10 @@ import Foundation
 public final class CalendarBridgeModule: Module {
   // Static executor covers module recreation / JS reloads in the same process.
   private static let queue = DispatchQueue(label: "witnesswork.calendar", qos: .utility)
+  /// EventKit reports this app's own commits as changes too, a little later.
+  private static let ownChangeWindow: TimeInterval = 5
+  private static let commitLock = NSLock()
+  private static var lastCommitAt: Date?
   private let ownership = CalendarOwnership()
   private let events = CalendarEvents()
   private var changeObserver: NSObjectProtocol?
@@ -16,6 +20,7 @@ public final class CalendarBridgeModule: Module {
     OnStartObserving {
       self.stopObserving()
       self.changeObserver = NotificationCenter.default.addObserver(forName: .EKEventStoreChanged, object: nil, queue: nil) { [weak self] _ in
+        guard !Self.committedRecently() else { return }
         self?.sendEvent("onCalendarChange", [:])
       }
     }
@@ -107,9 +112,14 @@ public final class CalendarBridgeModule: Module {
     AsyncFunction("publish") { (id: String, name: String, calendarId: String, raw: [String: Any], repair: Bool, expectedConfigurationToken: String, promise: Promise) in
       self.run(promise) {
         let snapshot = try JSONDecoder().decode(CalendarSnapshot.self, from: JSONSerialization.data(withJSONObject: raw))
-        let keys: [String] = try self.withOwnership(id: id, name: name, horizon: snapshot.entries.filter(\.validDates).map { $0.end / 1000 }.max(), expectedConfigurationToken: expectedConfigurationToken, manifest: { $0 }) { state in
+        let horizon = snapshot.entries.filter(\.validDates).map { $0.end / 1000 }.max()
+        if !repair, let keys = self.unchangedKeys(id: id, calendarId: calendarId, snapshot: snapshot, horizon: horizon, expectedConfigurationToken: expectedConfigurationToken) {
+          return keys.count
+        }
+        let keys: [String] = try self.withOwnership(id: id, name: name, horizon: horizon, expectedConfigurationToken: expectedConfigurationToken, manifest: { $0 }) { state in
           return try self.events.publish(calendarId: calendarId, snapshot: snapshot, state: state, repair: repair) {
             try CalendarOperationJournal.write(calendarId: calendarId, namespace: state.namespace)
+            Self.noteCommit()
           }
         }
         return keys.count
@@ -120,11 +130,40 @@ public final class CalendarBridgeModule: Module {
         let _: [String] = try self.withOwnership(id: id, name: name, disconnecting: true, expectedConfigurationToken: expectedConfigurationToken, manifest: { $0 }) { state in
           try self.events.publish(calendarId: calendarId, snapshot: CalendarSnapshot(title: "", entries: [], removed: [], deletedContactIds: []), state: state, removeAll: true) {
             try CalendarOperationJournal.write(calendarId: calendarId, namespace: state.namespace)
+            Self.noteCommit()
           }
         }
         return true
       }
     }
+  }
+
+  /// A publish that would write nothing, checked against the ownership state
+  /// `registerDevice` just read: the published keys it would leave, so the
+  /// CloudKit lock (a fetch and a save each to take and release it) can be
+  /// skipped. Nil, so the locked path runs, when anything would change or
+  /// can't be checked here.
+  private func unchangedKeys(id: String, calendarId: String, snapshot: CalendarSnapshot, horizon: Double?, expectedConfigurationToken: String) -> [String]? {
+    guard let state = ownership.recentState(), state.primary == id, state.busy == nil,
+          state.publishingToken == expectedConfigurationToken,
+          (horizon ?? 0) <= state.horizon,
+          let keys = try? events.unchangedKeys(calendarId: calendarId, snapshot: snapshot, state: state),
+          Set(keys) == Set(state.publishedKeys)
+    else { return nil }
+    return keys
+  }
+
+  private static func noteCommit() {
+    commitLock.lock()
+    defer { commitLock.unlock() }
+    lastCommitAt = Date()
+  }
+
+  private static func committedRecently() -> Bool {
+    commitLock.lock()
+    defer { commitLock.unlock() }
+    guard let at = lastCommitAt else { return false }
+    return Date().timeIntervalSince(at) < ownChangeWindow
   }
 
   /// `manifest` records the published keys on release, so a successful write

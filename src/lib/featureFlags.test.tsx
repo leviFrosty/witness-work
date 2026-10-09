@@ -19,19 +19,35 @@ const mocks = vi.hoisted(() => ({
     StoreApi<{ analyticsEnabled: boolean }>
   > | null,
   appState: 'active',
-  network: {} as { isConnected?: boolean; isInternetReachable?: boolean },
+  appStateListeners: new Set<(state: string) => void>(),
+  online: true as boolean | null,
+  onlineListeners: new Set<() => void>(),
 }))
 vi.mock('react-native', () => ({
   AppState: {
     get currentState() {
       return mocks.appState
     },
-    addEventListener: () => ({ remove() {} }),
+    addEventListener: (_: string, listener: (state: string) => void) => {
+      mocks.appStateListeners.add(listener)
+      return { remove: () => mocks.appStateListeners.delete(listener) }
+    },
   },
 }))
-vi.mock('expo-network', () => ({
-  useNetworkState: () => mocks.network,
-}))
+vi.mock('@/lib/http/online', async () => {
+  const { useSyncExternalStore } = await import('react')
+  return {
+    getOnline: () => mocks.online,
+    useOnline: () =>
+      useSyncExternalStore(
+        (listener) => {
+          mocks.onlineListeners.add(listener)
+          return () => mocks.onlineListeners.delete(listener)
+        },
+        () => mocks.online
+      ),
+  }
+})
 vi.mock('@/lib/posthogClient', () => ({
   posthogClient: {
     reloadFeatureFlagsAsync: mocks.reload,
@@ -57,6 +73,14 @@ vi.mock('@/stores/preferences', async () => {
   return { usePreferences }
 })
 
+function setAppState(state: string) {
+  mocks.appState = state
+  mocks.appStateListeners.forEach((listener) => listener(state))
+}
+function setOnline(online: boolean | null) {
+  mocks.online = online
+  mocks.onlineListeners.forEach((listener) => listener())
+}
 function publish(values: Record<string, boolean | string>) {
   mocks.cached = values
   for (const listener of mocks.listeners) listener()
@@ -72,7 +96,9 @@ beforeEach(async () => {
   mocks.exposures = []
   mocks.listeners.clear()
   mocks.appState = 'active'
-  mocks.network = { isConnected: true, isInternetReachable: true }
+  mocks.appStateListeners.clear()
+  mocks.online = true
+  mocks.onlineListeners.clear()
   const policy = await import('./analyticsPolicy')
   policy.setAnalyticsEventsAllowed(true)
   policy.setAnalyticsProduction(true)
@@ -203,7 +229,7 @@ it('waits for reset reload, then exposes the new identity and variant after rapi
   expect(mocks.reload).toHaveBeenCalledOnce() // The SDK owns the reset reload.
 })
 
-it.each(['request', 'quota', 'partial'] as const)(
+it.each(['quota', 'partial'] as const)(
   'closes cached flags on a %s failure',
   async (failure) => {
     await mountReader()
@@ -284,20 +310,19 @@ describe('useFeatureFlagsStatus', () => {
     expect(shownStatus()).toBe('failed')
   })
 
-  it('is failed when the SDK reports a request error', async () => {
-    await mountStatus()
+  it('is failed when the first load reports a request error', async () => {
     mocks.failure = 'request'
-    await act(async () => publish({ buddies: true }))
+    await mountStatus()
     expect(shownStatus()).toBe('failed')
   })
 
   it('is offline without a connection, and loading while that is unknown', async () => {
-    mocks.network = { isConnected: false, isInternetReachable: false }
+    mocks.online = false
     await mountStatus()
     expect(shownStatus()).toBe('offline')
     expect(mocks.reload).not.toHaveBeenCalled()
     await act(async () => root?.unmount())
-    mocks.network = {}
+    mocks.online = null
     await mountStatus()
     expect(shownStatus()).toBe('loading')
     expect(mocks.reload).not.toHaveBeenCalled()
@@ -319,5 +344,91 @@ describe('useFeatureFlagsStatus', () => {
     expect(shownStatus()).toBe('loading')
     await act(async () => publish({ buddies: false }))
     expect(shownStatus()).toBe('loaded')
+  })
+})
+
+describe('keeping flags loaded', () => {
+  const comeBack = async () =>
+    act(async () => {
+      setAppState('background')
+      setAppState('active')
+    })
+
+  it('keeps values through the background, offline, and a failed reload', async () => {
+    await mountReader()
+    expect(shownValue()).toBe(true)
+    await act(async () => setAppState('background'))
+    expect(shownValue()).toBe(true)
+    await act(async () => setOnline(false))
+    expect(shownValue()).toBe(true)
+    await act(async () => setOnline(true))
+    await act(async () => setAppState('active'))
+    // A reload that can't reach PostHog keeps them too.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.now() + 11 * 60_000)
+    mocks.failure = 'request'
+    mocks.reload.mockImplementation(async () => {
+      publish({})
+      return undefined
+    })
+    await comeBack()
+    vi.useRealTimers()
+    expect(mocks.reload).toHaveBeenCalledTimes(2)
+    expect(shownValue()).toBe(true)
+  })
+
+  it('reloads on returning to the app at most every 10 minutes', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    await mountReader()
+    expect(mocks.reload).toHaveBeenCalledOnce()
+    // Control Center and Face ID pass through inactive; not a return.
+    await act(async () => {
+      setAppState('inactive')
+      setAppState('active')
+    })
+    await comeBack()
+    expect(mocks.reload).toHaveBeenCalledOnce()
+    vi.setSystemTime(Date.now() + 10 * 60_000)
+    await comeBack()
+    vi.useRealTimers()
+    expect(mocks.reload).toHaveBeenCalledTimes(2)
+  })
+
+  it('loads once the app is in use after a background launch', async () => {
+    mocks.appState = 'background'
+    await mountReader()
+    expect(mocks.reload).not.toHaveBeenCalled()
+    await act(async () => setAppState('active'))
+    expect(mocks.reload).toHaveBeenCalledOnce()
+    expect(shownValue()).toBe(true)
+  })
+
+  it('retries on reconnecting after a failed load, then stops', async () => {
+    mocks.reload.mockRejectedValueOnce(new Error('offline'))
+    await mountReader()
+    expect(shownValue()).toBeUndefined()
+    await act(async () => setOnline(false))
+    await act(async () => setOnline(true))
+    expect(mocks.reload).toHaveBeenCalledTimes(2)
+    expect(shownValue()).toBe(true)
+    await act(async () => setOnline(false))
+    await act(async () => setOnline(true))
+    expect(mocks.reload).toHaveBeenCalledTimes(2)
+  })
+
+  it("doesn't re-render the app root when the network or app state changes", async () => {
+    const { FeatureFlagsRuntime } = await import('./featureFlags')
+    let renders = 0
+    function Root() {
+      renders++
+      return <FeatureFlagsRuntime />
+    }
+    await act(async () => {
+      root = create(<Root />)
+    })
+    await act(async () => setOnline(false))
+    await act(async () => setAppState('background'))
+    await act(async () => setOnline(true))
+    expect(renders).toBe(1)
   })
 })

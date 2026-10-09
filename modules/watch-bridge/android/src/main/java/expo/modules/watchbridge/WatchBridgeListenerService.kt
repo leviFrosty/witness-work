@@ -34,7 +34,8 @@ class WatchBridgeListenerService : WearableListenerService() {
       Wearable.getDataClient(this).deleteDataItems(item.uri)
       handled = true
     }
-    if (handled) coordinator.publishSoon()
+    // The watch waits to see its queued requests applied.
+    if (handled) coordinator.publishSoon(urgent = true)
   }
 
   override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {

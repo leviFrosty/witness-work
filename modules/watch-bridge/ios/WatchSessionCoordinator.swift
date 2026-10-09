@@ -76,6 +76,8 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
   private static let maxContextResolvedIds = 200
   private static let maxHandledRequestIds = 200
   private static let maxEvents = 100
+  private static let maxErrors = 20
+  private static let complicationSignatureKey = "WatchBridge.complicationSignature"
 
   private let queue = DispatchQueue(label: "WatchBridge.coordinator")
   // Everything below is only touched on `queue`, except `backgroundTask`
@@ -86,7 +88,14 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
   /// inbox is never overwritten with an empty one.
   private var loaded = false
   private var activated = false
-  private var lastComplicationSignature: Data?
+  /// What the complications were last sent. Kept across launches, so a
+  /// background wake doesn't spend the daily budget resending the same thing.
+  private lazy var lastComplicationSignature: Data? =
+    UserDefaults.standard.data(forKey: Self.complicationSignatureKey)
+  /// Failures JS hasn't reported yet; release builds log nothing.
+  private var errors: [String] = []
+  /// The context last sent to this watch, without `sentAt`.
+  private var lastPublishedContext: Data?
   private var stopwatchObserver: NSObjectProtocol?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
@@ -118,9 +127,13 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
   func setSnapshot(_ json: String) throws {
     let snapshot = try JSONDecoder().decode(WatchSnapshot.self, from: Data(json.utf8))
     queue.async {
+      self.loadIfNeeded()
+      // Already stored and sent: launch and status pushes often repeat it.
+      if self.loaded, let stored = self.inbox.snapshot, Self.sameContent(stored, snapshot) {
+        return
+      }
       // The Siri extension reads it from the App Group.
       IntentInbox.saveSnapshot(snapshot)
-      self.loadIfNeeded()
       guard self.loaded else { return }
       self.inbox.snapshot = snapshot
       self.persist()
@@ -169,6 +182,20 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
       loadIfNeeded()
       return inbox.complications
     }
+  }
+
+  func takeErrors() -> [String] {
+    queue.sync {
+      let taken = errors
+      errors = []
+      return taken
+    }
+  }
+
+  /// Call on `queue`.
+  private func recordError(_ message: String) {
+    errors.append(message)
+    errors = Array(errors.suffix(Self.maxErrors))
   }
 
   func takeEvents() -> [WatchInbox.Event] {
@@ -372,28 +399,54 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
     loadIfNeeded()
     guard loaded else { return }
     let context = makeContext()
-    guard let payload = try? WatchProtocol.encode(context) else { return }
-    try? session.updateApplicationContext(payload)
+    let content = try? Self.sortedEncoder.encode(PhoneContext(
+      sentAt: 0, snapshot: context.snapshot, timer: context.timer,
+      resolvedEntryIds: context.resolvedEntryIds))
+    // Nothing but `sentAt` would change: already published, complications too.
+    if let content = content, content == lastPublishedContext { return }
+    let payload: [String: Any]
+    do {
+      payload = try WatchProtocol.encode(context)
+      try session.updateApplicationContext(payload)
+    } catch {
+      recordError("publish: \(error)")
+      return
+    }
+    lastPublishedContext = content
 
     // Complications refresh on a daily budget; spend it only when what they
-    // show changed. JS sends a snapshot only when its content changed, unless
-    // forced.
+    // show changed. JS sends a snapshot only when its content changed.
     guard session.isComplicationEnabled, let snapshot = context.snapshot else { return }
     let signature = Self.contentSignature(snapshot)
     if signature != lastComplicationSignature,
        session.remainingComplicationUserInfoTransfers > 0 {
       session.transferCurrentComplicationUserInfo(payload)
       lastComplicationSignature = signature
+      UserDefaults.standard.set(signature, forKey: Self.complicationSignatureKey)
     }
   }
 
-  /// Everything in `snapshot` except when it was built.
+  /// Everything in `snapshot` except when it was built, plus the day it was
+  /// built: the watch reads `reportedToday` against that day.
   private static func contentSignature(_ snapshot: WatchSnapshot) -> Data? {
     guard let data = try? JSONEncoder().encode(snapshot),
           var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     else { return nil }
-    object["generatedAt"] = nil
+    let built = Date(timeIntervalSince1970: snapshot.generatedAt / 1000)
+    let day = Calendar.current.dateComponents([.year, .month, .day], from: built)
+    object["generatedAt"] = [day.year ?? 0, day.month ?? 0, day.day ?? 0]
     return try? JSONSerialization.data(withJSONObject: object, options: .sortedKeys)
+  }
+
+  private static let sortedEncoder: JSONEncoder = {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = .sortedKeys
+    return encoder
+  }()
+
+  private static func sameContent(_ a: WatchSnapshot, _ b: WatchSnapshot) -> Bool {
+    guard let signature = contentSignature(a) else { return false }
+    return signature == contentSignature(b)
   }
 
   // MARK: Siri on the iPhone
@@ -468,6 +521,7 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
         to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
       return true
     } catch {
+      recordError("persist: \(error)")
       return false
     }
   }
@@ -502,7 +556,11 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
     _ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState,
     error: Error?
   ) {
-    queue.async { self.publish() }
+    queue.async {
+      // A new session, possibly with another watch.
+      self.lastPublishedContext = nil
+      self.publish()
+    }
     postStatusChange()
   }
 
@@ -510,11 +568,20 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
 
   /// The user switched to another paired watch; reactivate to talk to it.
   func sessionDidDeactivate(_ session: WCSession) {
+    // The next watch's complications haven't been sent anything yet.
+    queue.async {
+      self.lastComplicationSignature = nil
+      UserDefaults.standard.removeObject(forKey: Self.complicationSignatureKey)
+    }
     session.activate()
   }
 
   func sessionWatchStateDidChange(_ session: WCSession) {
-    queue.async { self.publish() }
+    queue.async {
+      // E.g. the watch app was just installed.
+      self.lastPublishedContext = nil
+      self.publish()
+    }
     postStatusChange()
   }
 

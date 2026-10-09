@@ -1,6 +1,10 @@
 import React from 'react'
 import moment from 'moment'
-import { act, create, type ReactTestRenderer } from 'react-test-renderer'
+import {
+  act as reactAct,
+  create,
+  type ReactTestRenderer,
+} from 'react-test-renderer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
@@ -8,6 +12,8 @@ import type { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
+  storage: new Map<string, string>(),
+  appState: new Set<(state: string) => void>(),
   scheduled: [] as { identifier: string }[],
   presented: [] as {
     request: { identifier: string; content: { data: unknown } }
@@ -19,7 +25,18 @@ vi.mock('react-native', () => ({
       return runtime.platform
     },
   },
-  AppState: { addEventListener: () => ({ remove: vi.fn() }) },
+  AppState: {
+    addEventListener: (_: string, listener: (state: string) => void) => {
+      runtime.appState.add(listener)
+      return { remove: () => runtime.appState.delete(listener) }
+    },
+  },
+}))
+vi.mock('@/stores/mmkv', () => ({
+  mmkvStorage: {
+    getString: (key: string) => runtime.storage.get(key),
+    set: (key: string, value: string) => runtime.storage.set(key, value),
+  },
 }))
 vi.mock('@/stores/contactsStore', async () => ({
   default: (await import('zustand')).create(() => ({
@@ -67,8 +84,14 @@ vi.mock('expo-notifications', () => ({
     )
   }),
   getPermissionsAsync: vi.fn(async () => ({ granted: true })),
+  // Like the OS, scheduling an id again replaces it.
   scheduleNotificationAsync: vi.fn(async (request: { identifier: string }) => {
-    runtime.scheduled.push({ identifier: request.identifier })
+    runtime.scheduled = [
+      ...runtime.scheduled.filter(
+        (item) => item.identifier !== request.identifier
+      ),
+      { identifier: request.identifier },
+    ]
     return request.identifier
   }),
   setNotificationChannelAsync: vi.fn(async () => {}),
@@ -88,13 +111,24 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useReconciledReminders } from './useReconciledReminders'
+/** Runs `change`, then lets the debounced pass run to the end. */
+async function act(change: () => unknown) {
+  await reactAct(async () => {
+    await change()
+  })
+  await reactAct(async () => {
+    await vi.advanceTimersByTimeAsync(1_000)
+  })
+}
 const Harness = () => {
   useReconciledReminders(true)
   return null
 }
 let renderer: ReactTestRenderer | undefined
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   vi.clearAllMocks()
+  runtime.storage.clear()
   runtime.scheduled = []
   runtime.presented = []
   useContacts.setState({
@@ -112,9 +146,10 @@ beforeEach(() => {
   })
   useNotificationsTray.setState({ unread: null })
 })
-afterEach(() => {
-  act(() => renderer?.unmount())
+afterEach(async () => {
+  await act(() => renderer?.unmount())
   renderer = undefined
+  vi.useRealTimers()
 })
 
 it.each(['ios', 'android'])(
@@ -714,4 +749,115 @@ it.each([
     change()
   })
   expect(runtime.presented).toEqual([])
+})
+
+const comeBack = () => {
+  runtime.appState.forEach((listener) => listener('background'))
+  runtime.appState.forEach((listener) => listener('active'))
+}
+
+it('reschedules only the reminder of the one Visit edited', async () => {
+  runtime.platform = 'ios'
+  useConversations.setState({ conversations: followUps(['a', 'b', 'c']) })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledTimes(3)
+  vi.clearAllMocks()
+  const moved = new Date(Date.now() + 2 * 24 * 60 * 60_000 + 60 * 60_000)
+  await act(() =>
+    useConversations.setState({
+      conversations: useConversations
+        .getState()
+        .conversations.map((visit) =>
+          visit.id === 'b'
+            ? { ...visit, followUp: { date: moved, notifyMe: true } }
+            : visit
+        ),
+    })
+  )
+  expect(badges()).toEqual([['witness-work-visit-b', undefined]])
+  expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalled()
+  expect(runtime.scheduled.map((item) => item.identifier).sort()).toEqual([
+    'witness-work-visit-a',
+    'witness-work-visit-b',
+    'witness-work-visit-c',
+  ])
+})
+
+it('leaves the OS alone when an edit changes no reminder', async () => {
+  runtime.platform = 'ios'
+  const visits = followUps(['a', 'b'])
+  useConversations.setState({ conversations: visits })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  vi.clearAllMocks()
+  await act(() =>
+    useConversations.setState({
+      conversations: [{ ...visits[0], note: 'Edited' }, visits[1]],
+    })
+  )
+  expect(Notifications.getAllScheduledNotificationsAsync).not.toHaveBeenCalled()
+  expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+  expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalled()
+})
+
+it('skips launch and returns to the app while the schedule is unchanged', async () => {
+  runtime.platform = 'ios'
+  useConversations.setState({ conversations: followUps(['a', 'b']) })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(() => renderer?.unmount())
+  vi.clearAllMocks()
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(comeBack)
+  expect(Notifications.getAllScheduledNotificationsAsync).not.toHaveBeenCalled()
+  expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+  // A new permission is a change: everything is cancelled once it's revoked.
+  vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
+    granted: false,
+  } as Notifications.NotificationPermissionsStatus)
+  await act(comeBack)
+  expect(runtime.scheduled).toEqual([])
+})
+
+it('checks the OS schedule again on a new day without rescheduling', async () => {
+  runtime.platform = 'ios'
+  useConversations.setState({ conversations: followUps(['a']) })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(() => renderer?.unmount())
+  const stored = JSON.parse(runtime.storage.get('reminderSchedule')!)
+  runtime.storage.set(
+    'reminderSchedule',
+    JSON.stringify({ ...stored, day: 'yesterday' })
+  )
+  vi.clearAllMocks()
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(Notifications.getAllScheduledNotificationsAsync).toHaveBeenCalledOnce()
+  expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+})
+
+it('schedules the new reminders before cancelling the old ones', async () => {
+  runtime.platform = 'ios'
+  const [first, second] = followUps(['first', 'second'])
+  useConversations.setState({ conversations: [first] })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  vi.mocked(Notifications.scheduleNotificationAsync).mockImplementationOnce(
+    // Suspended mid-pass, as in a background wake.
+    () => new Promise(() => {})
+  )
+  await act(() => useConversations.setState({ conversations: [second] }))
+  expect(runtime.scheduled).toEqual([
+    { identifier: 'witness-work-visit-first' },
+  ])
 })

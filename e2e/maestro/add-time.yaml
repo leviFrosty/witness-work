@@ -8,13 +8,13 @@ name: Log time from the Home service report card
     timeout: 60000
 - tapOn: Add Time
 - assertVisible: Submit
-# Note opens in place with the cursor already in it.
+# Note opens the full-screen note editor with the cursor already in it.
 - tapOn:
     id: time-entry-note-row
 - inputText: Cart witnessing
-# Return adds a line in a note, so Done closes the keyboard.
+# Done closes the editor; the note stays on the form until it's saved.
 - tapOn:
-    id: time-entry-note-done
+    id: note-editor-done
 - tapOn:
     id: time-entry-duration-pill
 # The hours and minutes wheels both show a "2"; either one logs time. Android's

@@ -8,6 +8,8 @@ import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 import confirmDestructive from '@/lib/confirmDestructive'
 import { isAppointment } from '@/lib/conversations'
 import i18n from '@/lib/locales'
+import { richTextLinks } from '@/lib/richText/inspect'
+import { getNoteDoc } from '@/lib/richText/notes'
 import useConversations from '@/stores/conversationStore'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Visit } from '@/types/visit'
@@ -82,7 +84,7 @@ export default function useVisitMenuActions(
         systemImage: 'calendar.badge.clock',
         onPress: reschedule,
       },
-      openLinksItem(note),
+      openLinksItem(richTextLinks(getNoteDoc(visit))),
       !!note &&
         copyAction(note, { id: 'copy_note', title: i18n.t('copyNote') }),
       !!topic &&

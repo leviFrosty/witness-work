@@ -1,11 +1,12 @@
 import { View } from 'react-native'
-import RichNoteText from '@/components/RichNoteText'
+import RichNote from '@/components/RichNote'
 import EmphasizedText from '@/components/ui/EmphasizedText'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { hasNote } from '@/lib/richText/notes'
 import useConversations from '@/stores/conversationStore'
 import type { Visit } from '@/types/visit'
 import {
@@ -26,8 +27,10 @@ export default function VisitPastStop({
 }) {
   const theme = useTheme()
   const fieldDefs = useConversations((state) => state.conversationFieldDefs)
+  const updateConversation = useConversations(
+    (state) => state.updateConversation
+  )
   const date = new Date(visit.date)
-  const note = visit.note?.trim()
   const fields = activeCustomFieldDefs(fieldDefs).flatMap((def) => {
     const value = visit.customFields?.[def.id]?.trim()
     return value ? [{ id: def.id, label: def.label, value }] : []
@@ -46,7 +49,7 @@ export default function VisitPastStop({
       >
         {`${detailsDateTime(date)} · ${formatRelative(date)}`}
       </Text>
-      {note ? (
+      {hasNote(visit) ? (
         <View
           style={{
             marginTop: 4,
@@ -55,7 +58,10 @@ export default function VisitPastStop({
             borderLeftColor: theme.colors.border,
           }}
         >
-          <RichNoteText text={note} />
+          <RichNote
+            note={visit}
+            onChange={(fields) => updateConversation({ ...visit, ...fields })}
+          />
         </View>
       ) : null}
       {fields.length > 0 ? (

@@ -8,6 +8,8 @@ import {
   recordIdSchema,
   timestampSchema,
 } from '@/lib/recordValidation'
+import { withoutRichTextImages } from '@/lib/richText/inspect'
+import { parseRichText } from '@/lib/richText/parse'
 
 /**
  * The shared-contact format: what a contact share carries, whether it travels
@@ -113,6 +115,15 @@ const id = z.string().max(LIMITS.MAX_ID_CHARS).pipe(recordIdSchema)
 const date = z.string().max(LIMITS.MAX_DATE_CHARS).pipe(dateStringSchema)
 const shortText = z.string().max(LIMITS.MAX_SHORT_TEXT_CHARS)
 const text = z.string().max(LIMITS.MAX_TEXT_CHARS)
+/**
+ * A note's formatting. Photos never travel (the files are the sender's), and
+ * formatting that doesn't read is dropped rather than failing the share: the
+ * plain-text `note` beside it still imports.
+ */
+const richNote = z.unknown().transform((value) => {
+  const rich = parseRichText(value)
+  return rich ? { ...rich, doc: withoutRichTextImages(rich.doc) } : undefined
+})
 
 /** Builds the strict import schema for a field table; unknown keys drop. */
 function schemaFor<T>(rules: FieldRules<T>) {
@@ -212,6 +223,7 @@ const VISIT_FIELDS: FieldRules<Visit> = {
   date: always(date),
   isBibleStudy: always(z.boolean()),
   note: optional(text),
+  noteDoc: optional(richNote),
   followUp: optional(schemaFor(FOLLOW_UP_FIELDS)),
   notAtHome: optional(z.boolean()),
   // Conversation field definitions aren't shared, so the recipient couldn't
@@ -271,12 +283,22 @@ export function sharedContactFields(contact: Contact): Partial<Contact> {
   return shared
 }
 
-/** The visit fields a share carries. Also applied to every import. */
-export function sharedVisitFields(visit: Visit): Partial<Visit> {
+/**
+ * The visit fields a share carries. Also applied to every import. Links leave
+ * formatting out (`richNotes: false`) so they fit more visits; the plain-text
+ * note still travels.
+ */
+export function sharedVisitFields(
+  visit: Visit,
+  { richNotes = true }: { richNotes?: boolean } = {}
+): Partial<Visit> {
   const shared = pickShared(visit, VISIT_FIELDS)
   if (shared.followUp) {
     shared.followUp = pickShared(shared.followUp, FOLLOW_UP_FIELDS) as FollowUp
   }
+  const rich = richNotes ? parseRichText(shared.noteDoc) : null
+  if (rich) shared.noteDoc = { ...rich, doc: withoutRichTextImages(rich.doc) }
+  else delete shared.noteDoc
   return shared
 }
 
@@ -332,7 +354,8 @@ export function buildContactShareData(
   contact: Contact,
   visits: Visit[],
   customFieldDefs: CustomFieldDefinition[] = [],
-  now: Date = new Date()
+  now: Date = new Date(),
+  options: { richNotes?: boolean } = {}
 ): ContactImportData {
   const shared = sharedContactFields(contact) as Contact
   const defs = sharedCustomFieldDefs(shared, customFieldDefs)
@@ -342,7 +365,11 @@ export function buildContactShareData(
     exportedAt: now.toISOString(),
     contact: shared,
     ...(visits.length > 0
-      ? { conversations: visits.map((v) => sharedVisitFields(v) as Visit) }
+      ? {
+          conversations: visits.map(
+            (v) => sharedVisitFields(v, options) as Visit
+          ),
+        }
       : {}),
     ...(defs.length > 0 ? { customFieldDefs: defs } : {}),
   }

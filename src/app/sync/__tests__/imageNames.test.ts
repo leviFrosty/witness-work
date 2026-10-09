@@ -7,6 +7,9 @@ import {
   parseContactMarker,
   isProfileMarker,
   isValidImageFilename,
+  isAvatarImageFilename,
+  filenameForNoteImage,
+  noteImageIdFromFilename,
 } from '@/app/sync/imageNames'
 
 describe('imageNames', () => {
@@ -108,6 +111,26 @@ describe('imageNames', () => {
     it('rejects empty / trivial strings', () => {
       expect(isValidImageFilename('')).toBe(false)
       expect(isValidImageFilename('witness-work-img-.jpg')).toBe(false)
+    })
+  })
+
+  describe('note photos', () => {
+    const id = 'a1b2c3d4-0000-4000-8000-000000000000'
+
+    it('names a photo by its id, in its own namespace', () => {
+      expect(filenameForNoteImage(id)).toBe(`witness-work-note-${id}.jpg`)
+      expect(noteImageIdFromFilename(filenameForNoteImage(id))).toBe(id)
+      expect(isValidImageFilename(filenameForNoteImage(id))).toBe(true)
+      expect(isAvatarImageFilename(filenameForNoteImage(id))).toBe(false)
+      expect(isAvatarImageFilename(filenameForContact('c'))).toBe(true)
+    })
+
+    it('reads ids only from well-formed note photo names', () => {
+      expect(noteImageIdFromFilename(filenameForContact('abcdefgh'))).toBeNull()
+      expect(noteImageIdFromFilename('witness-work-note-../x.jpg')).toBeNull()
+      expect(noteImageIdFromFilename('witness-work-note-.jpg')).toBeNull()
+      expect(isValidImageFilename('witness-work-note-.jpg')).toBe(false)
+      expect(isValidImageFilename('witness-work-note-a/b.jpg')).toBe(false)
     })
   })
 })

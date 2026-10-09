@@ -17,6 +17,8 @@ import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import { appleMapsUrl } from '@/lib/placeSearch'
+import { richTextLinks } from '@/lib/richText/inspect'
+import { getNoteDoc, getNoteText } from '@/lib/richText/notes'
 import {
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
@@ -60,7 +62,7 @@ const effectiveValues = (item: PlanListItem) =>
       }
     : {
         minutes: item.plan.minutes,
-        note: item.plan.note,
+        note: { note: item.plan.note, noteDoc: item.plan.noteDoc },
         startTimeInMinutes:
           item.plan.startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES,
         anytime: !!item.plan.anytime,
@@ -89,6 +91,8 @@ export default function usePlanMenuActions(
   const isRecurring = item.type === 'recurring'
   const effective = effectiveValues(item)
   const dateMoment = moment(date)
+  const noteLinks = richTextLinks(getNoteDoc(effective.note))
+  const noteText = getNoteText(effective.note)
   const mapsUrl = plan.location ? appleMapsUrl(plan.location) : undefined
 
   const go = (navigate: () => void) =>
@@ -143,7 +147,8 @@ export default function usePlanMenuActions(
                 .toISOString(),
           ...(effective.anytime ? { anytime: true } : {}),
           minutes: effective.minutes,
-          note: effective.note || undefined,
+          note: effective.note.note,
+          noteDoc: effective.note.noteDoc,
           title: plan.title,
           location: plan.location,
           categoryId: plan.categoryId,
@@ -190,13 +195,13 @@ export default function usePlanMenuActions(
         systemImage: 'doc.on.doc',
         onPress: () => void copyText(planLocationText(plan.location!)),
       },
-      openLinksItem(effective.note),
-      effective.note
+      openLinksItem(noteLinks),
+      noteText
         ? {
             id: 'copy_note',
             title: i18n.t('copyNote'),
             systemImage: 'doc.on.doc',
-            onPress: () => void copyText(effective.note!),
+            onPress: () => void copyText(noteText),
           }
         : null,
     ],

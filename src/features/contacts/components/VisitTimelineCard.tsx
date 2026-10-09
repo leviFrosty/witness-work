@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
-import RichNoteText from '@/components/RichNoteText'
+import RichNote from '@/components/RichNote'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
@@ -9,13 +9,13 @@ import useTheme from '@/contexts/theme'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
-import { noteTextAroundCards } from '@/lib/linkPreview'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
+import { richTextImages } from '@/lib/richText/inspect'
+import { getNoteDoc, hasNote } from '@/lib/richText/notes'
 import useConversations from '@/stores/conversationStore'
 import { Visit } from '@/types/visit'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
-import { visibleNote } from '@/features/contacts/lib/visitTimeline'
 
 const NOTE_LINES = 3
 
@@ -35,10 +35,12 @@ const VisitTimelineCard = ({
   const { open, requestDelete, menu } = useVisitMenuActions(visit)
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
-  const note = visibleNote(visit.note)
+  const updateConversation = useConversations((s) => s.updateConversation)
+  const showsNote = hasNote(visit)
   // Links show as preview cards below the text, so only the text can clamp.
-  const noteText = note ? noteTextAroundCards(note) : ''
-  const canExpand = !!noteText && (truncates || expanded)
+  // Photos show only when the note is expanded.
+  const hasPhotos = richTextImages(getNoteDoc(visit)).length > 0
+  const canExpand = showsNote && (truncates || hasPhotos || expanded)
   const dayLabel = visitDayLabel(visit.date)
   const fields = activeCustomFieldDefs(
     useConversations((state) => state.conversationFieldDefs)
@@ -46,6 +48,8 @@ const VisitTimelineCard = ({
     const value = visit.customFields?.[def.id]?.trim()
     return value ? [{ id: def.id, label: def.label, value }] : []
   })
+
+  const noteStyle = { fontSize: theme.fontSize('sm') + 1, lineHeight: 19 }
 
   return (
     <Swipeable
@@ -105,38 +109,49 @@ const VisitTimelineCard = ({
               {formatTime(visit.date)}
             </Text>
           </View>
-          {note ? (
+          {showsNote ? (
             <View style={{ gap: 4 }}>
-              {/* Invisible unclamped copy: iOS only reports the visible lines
-                of a clamped Text, so measure the full note here instead. */}
-              {noteText ? (
-                <Text
-                  aria-hidden
-                  pointerEvents='none'
-                  onTextLayout={(e) =>
-                    setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
+              {expanded ? (
+                <RichNote
+                  note={visit}
+                  nested
+                  style={noteStyle}
+                  onChange={(fields) =>
+                    updateConversation({ ...visit, ...fields })
                   }
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    opacity: 0,
-                    fontSize: theme.fontSize('sm') + 1,
-                    lineHeight: 19,
-                  }}
-                >
-                  {noteText}
-                </Text>
-              ) : null}
-              <RichNoteText
-                text={note}
-                numberOfLines={expanded ? undefined : NOTE_LINES}
-                interactive={false}
-                style={{
-                  fontSize: theme.fontSize('sm') + 1,
-                  lineHeight: 19,
-                }}
-              />
+                />
+              ) : (
+                <>
+                  {/* Invisible unclamped copy: iOS only reports the visible
+                    lines of a clamped Text, so measure the full note here. */}
+                  <View
+                    aria-hidden
+                    pointerEvents='none'
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      opacity: 0,
+                    }}
+                  >
+                    <RichNote
+                      note={visit}
+                      preview
+                      interactive={false}
+                      style={noteStyle}
+                      onTextLayout={(e) =>
+                        setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
+                      }
+                    />
+                  </View>
+                  <RichNote
+                    note={visit}
+                    numberOfLines={NOTE_LINES}
+                    interactive={false}
+                    style={noteStyle}
+                  />
+                </>
+              )}
               {canExpand && (
                 <Pressable
                   onPress={() => setExpanded((value) => !value)}

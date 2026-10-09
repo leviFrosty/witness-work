@@ -33,6 +33,7 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 - [Onboarding](./onboarding.md) covers the fresh install welcome, the publisher-type choice, the Buddies step and finishing setup.
 - [Time entry](./time-entry.md) covers logging time from the Home card, the Quick Action menu and the `add-time` deep link, with read-back.
 - [Contacts and visits](./contacts-visits.md) covers creating a contact, logging a visit and follow-ups, and the `contact/:id` deep link.
+- [Rich notes](./rich-notes.md) covers the full-screen note editor (formatting toolbar on the keyboard, checklists, links, photos) from every note field, and how notes read back.
 - [Schedule and plans](./schedule-plans.md) covers the month calendar, creating a plan, Plan Details and the `day` deep link.
 - [Progress and goals](./progress-goals.md) covers the Month, Year and All-time tabs, pace and projection for pioneers, and the checkbox report for publishers.
 - [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, two-device invites, and the onboarding entry point.

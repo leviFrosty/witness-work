@@ -19,7 +19,7 @@ import type { DayPlan, PlanListItem } from '@/types/timeEntry'
 import { useFormattedMinutes } from '@/lib/minutes'
 import Badge from '@/components/ui/Badge'
 import PlanLocationLink from '@/components/PlanLocationLink'
-import RichNoteText from '@/components/RichNoteText'
+import RichNote from '@/components/RichNote'
 import usePlanMenuActions from '@/hooks/usePlanMenuActions'
 import {
   formatDate,
@@ -33,6 +33,9 @@ import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
   isRecurringPlanAnytimeOnDate,
 } from '@/lib/recurrence'
+import { richTextImages } from '@/lib/richText/inspect'
+import { getNoteDoc, getNoteText, hasNote } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 
 /** For ordering a day's Plans; anytime Plans come first, like all-day events. */
 export const getPlanItemStartTime = (item: PlanListItem): number => {
@@ -75,10 +78,19 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
   )
 }
 
-/** Notes longer than this are clipped in the row and shown whole in the preview. */
+/**
+ * Notes longer than this are clipped in the row and shown whole in the preview;
+ * so are notes with photos, which the row leaves out.
+ */
 const NOTE_PREVIEW_LINES = 3
-const isLongNote = (note: string) =>
-  note.length > 140 || note.split('\n').length > NOTE_PREVIEW_LINES
+const isLongNote = (note: NoteFields) => {
+  const text = getNoteText(note)
+  return (
+    text.length > 140 ||
+    text.split('\n').length > NOTE_PREVIEW_LINES ||
+    richTextImages(getNoteDoc(note)).length > 0
+  )
+}
 
 /**
  * The long-press preview for a row whose note is clipped: the plan's details
@@ -87,7 +99,7 @@ const isLongNote = (note: string) =>
 const PlanPreview = (props: {
   heading: string
   title?: string
-  note: string
+  note: NoteFields
   location?: DayPlan['location']
 }) => {
   const theme = useTheme()
@@ -108,8 +120,8 @@ const PlanPreview = (props: {
       {props.location ? (
         <PlanLocationLink location={props.location} interactive={false} />
       ) : null}
-      <RichNoteText
-        text={props.note}
+      <RichNote
+        note={props.note}
         interactive={false}
         style={{
           color: theme.colors.textAlt,
@@ -146,6 +158,7 @@ const PlanRow = (props: {
     { go: props.onNavigate }
   )
   const displayNote = effective.note
+  const showsNote = hasNote(displayNote)
   const noteStyle = {
     color: theme.colors.textAlt,
     fontSize: theme.fontSize('sm'),
@@ -175,7 +188,7 @@ const PlanRow = (props: {
       ? i18n.t('planAnytime')
       : formatStartTime(effective.startTimeInMinutes)
   }`
-  const longNote = !!displayNote && isLongNote(displayNote)
+  const longNote = showsNote && isLongNote(displayNote)
 
   const handleSwipeOpen = (
     direction: 'left' | 'right',
@@ -206,7 +219,7 @@ const PlanRow = (props: {
         onPress={open}
         hoverRadius={cardStyle.borderRadius}
         preview={
-          longNote && displayNote ? (
+          longNote ? (
             <PlanPreview
               heading={heading}
               title={plan.title}
@@ -278,12 +291,13 @@ const PlanRow = (props: {
                 />
               ) : null}
 
-              {displayNote ? (
-                <RichNoteText
-                  text={displayNote}
+              {showsNote ? (
+                <RichNote
+                  note={displayNote}
                   style={noteStyle}
                   numberOfLines={NOTE_PREVIEW_LINES}
                   interactive={false}
+                  thumbnails
                 />
               ) : null}
 

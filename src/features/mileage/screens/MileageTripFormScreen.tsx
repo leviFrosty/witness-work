@@ -37,6 +37,9 @@ import {
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useTripActions from '@/features/mileage/hooks/useTripActions'
 import TripNoteRow from '@/features/mileage/components/TripNoteRow'
+import { richTextImages } from '@/lib/richText/inspect'
+import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 import type { RootStackParamList } from '@/types/rootStack'
 import type { MileageEntryMode, Trip } from '@/types/mileage'
 
@@ -91,7 +94,10 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const [odometerEnd, setOdometerEnd] = useState(() =>
     toInput(existing?.odometerEndMiles)
   )
-  const [note, setNote] = useState(template?.note ?? '')
+  const [note, setNote] = useState<NoteFields>({
+    note: template?.note,
+    noteDoc: template?.noteDoc,
+  })
 
   const dateKey = toDateKey(date)
   const suggestedStart = vehicleId
@@ -138,7 +144,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
         odometer && endValue !== undefined
           ? distanceToMiles(endValue, unit)
           : undefined,
-      note: note.trim() || undefined,
+      ...noteFields(getNoteDoc(note)),
       createdAt: existing?.createdAt ?? Date.now(),
       updatedAt: existing?.updatedAt,
     }
@@ -149,7 +155,9 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
       analytics.capture('mileage_trip_added', {
         entry_mode: mode,
         round_trip: !!trip.roundTrip,
-        has_note: !!trip.note,
+        has_note: hasNote(trip),
+        has_formatting: !!trip.noteDoc,
+        note_photos: trip.noteDoc ? richTextImages(trip.noteDoc.doc).length : 0,
         logged_again: !existing && !!template,
         source: route.params?.source,
       })
@@ -270,7 +278,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
           ) : null}
         </View>
 
-        <TripNoteRow value={note} onChangeText={setNote} />
+        <TripNoteRow note={note} onChange={setNote} />
 
         <View style={{ gap: 8 }}>
           <ActionButton disabled={!submittable} onPress={save}>

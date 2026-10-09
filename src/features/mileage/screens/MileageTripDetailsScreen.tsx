@@ -21,6 +21,8 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import useTripActions from '@/features/mileage/hooks/useTripActions'
 import type { RootStackParamList } from '@/types/rootStack'
+import RichNote from '@/components/RichNote'
+import { hasNote } from '@/lib/richText/notes'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageTripDetails'>
 
@@ -50,7 +52,7 @@ function DetailRow({
 export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { trips, vehicles, fuels } = useMileage()
+  const { trips, vehicles, fuels, saveTrip } = useMileage()
   const format = useMileageFormatter()
   const index = useMileageIndex()
   const actions = useTripActions()
@@ -172,14 +174,17 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
             ))}
           </Section>
         )}
-        {trip.note ? (
+        {hasNote(trip) ? (
           <Section>
             <InputRowContainer
               label={i18n.t('note')}
               lastInSection
               controlWidth='full'
             >
-              <Text selectable>{trip.note}</Text>
+              <RichNote
+                note={trip}
+                onChange={(fields) => saveTrip({ ...trip, ...fields })}
+              />
             </InputRowContainer>
           </Section>
         ) : null}

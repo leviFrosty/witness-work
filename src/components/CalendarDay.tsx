@@ -21,6 +21,7 @@ import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
 import { isCountableEntry } from '@/lib/serviceReport'
+import { hasNote as noteExists } from '@/lib/richText/notes'
 
 const boxSize = 40
 
@@ -203,12 +204,12 @@ const PlannedDay = (
       plan,
       moment(props.date!.dateString).toDate()
     )
-    return !!effectiveNote
+    return noteExists(effectiveNote)
   })
 
   const hasNote = !!(
-    props.dayPlans?.some((plan) => plan.note) ||
-    props.serviceReports?.some((report) => report.note) ||
+    props.dayPlans?.some(noteExists) ||
+    props.serviceReports?.some(noteExists) ||
     recurringPlanHasNote
   )
   const hitGoal =

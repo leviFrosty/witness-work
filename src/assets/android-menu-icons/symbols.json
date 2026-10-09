@@ -15,5 +15,7 @@
   "qrcode": "ww_menu_qr_code",
   "qrcode.viewfinder": "ww_menu_qr_scan",
   "arrow.uturn.backward": "ww_menu_undo",
-  "target": "ww_menu_target"
+  "target": "ww_menu_target",
+  "camera": "ww_menu_camera",
+  "photo.on.rectangle": "ww_menu_photo_library"
 }

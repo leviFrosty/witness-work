@@ -1,5 +1,5 @@
 import type { ContextMenuItem } from '@/components/ui/ContextMenu.types'
-import { findLinks, getHostname } from '@/lib/linkPreview'
+import { getHostname } from '@/lib/linkPreview'
 import i18n from '@/lib/locales'
 
 /**
@@ -7,10 +7,9 @@ import i18n from '@/lib/locales'
  * for a single link, a submenu of hostnames for several.
  */
 export function openLinksMenuItem(
-  text: string | null | undefined,
+  links: string[],
   open: (url: string) => void
 ): ContextMenuItem | null {
-  const links = text ? findLinks(text) : []
   if (links.length === 0) return null
   if (links.length === 1) {
     return {

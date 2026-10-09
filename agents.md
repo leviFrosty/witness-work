@@ -83,7 +83,7 @@ If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**`.
 - **Keep UI simple.** Make features understandable through clear labels, sensible defaults, and progressive disclosure. Avoid long feature descriptions on screens. When extra explanation is still useful, put optional details in `InfoPopover` from `@/components/ui/InfoPopover` beside the relevant label. Keep essential instructions, warnings, and values visible; don't nest `InfoPopover` inside another popover.
-- **Bundle size — deep imports when packages require it.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`). For Lucide icons, use named static imports from `lucide-react-native` and never `import * as icons from 'lucide-react-native/icons'`, which imports the full icon set.
+- **Bundle size — deep imports when packages require it.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`). For Lucide icons, use named static imports from `lucide-react-native` (`babel/lucide-imports.js` rewrites them to per-icon files) and never a namespace import or `import * as icons from 'lucide-react-native/icons'`, which imports the full icon set.
 
 ## PostHog (analytics, featureflags, error tracking, surveys, etc.)
 

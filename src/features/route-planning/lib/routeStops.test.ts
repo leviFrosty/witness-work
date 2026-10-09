@@ -54,7 +54,8 @@ const contacts = [
   contact('pinned', { userDraggedCoordinate: true }),
   contact('addressed'),
   contact('unlocated', { coordinate: undefined }),
-  contact('dismissed', { dismissedUntil: at(9, 0, 3) }),
+  // Dismissal is checked against the real clock, so keep it in the future.
+  contact('dismissed', { dismissedUntil: moment().add(1, 'year').toDate() }),
   contact('answered'),
   contact('noAddress', { address: undefined }),
 ]

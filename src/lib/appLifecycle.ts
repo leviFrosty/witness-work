@@ -7,6 +7,8 @@ const foreground = new Set<Entry>()
 const background = new Set<Listener>()
 let backgrounded = AppState.currentState === 'background'
 let subscribed = false
+/** Launch counts as coming back. */
+let lastForeground = Date.now()
 
 function onChange(state: AppStateStatus) {
   if (state === 'background') {
@@ -20,6 +22,7 @@ function onChange(state: AppStateStatus) {
   if (state !== 'active' || !backgrounded) return
   backgrounded = false
   const at = Date.now()
+  lastForeground = at
   foreground.forEach((entry) => {
     if (at - entry.lastRunAt < entry.minIntervalMs) return
     entry.lastRunAt = at
@@ -46,6 +49,12 @@ export function addForegroundListener(
   const entry: Entry = { listener, minIntervalMs, lastRunAt: 0 }
   foreground.add(entry)
   return { remove: () => foreground.delete(entry) }
+}
+
+/** When the app launched or last came back from the background (epoch ms). */
+export function lastForegroundAt(): number {
+  subscribe()
+  return lastForeground
 }
 
 /** Runs when the app moves to the background. */

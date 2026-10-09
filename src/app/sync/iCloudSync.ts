@@ -7,6 +7,7 @@
  * file and its preferences predate Android and describe either transport.
  */
 import { perf } from '@/lib/perf'
+import { lastForegroundAt } from '@/lib/appLifecycle'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import type { MergeResult } from '@/app/sync/merge'
 type LocalMergeState = Omit<MergeResult, 'changed'>
@@ -272,6 +273,9 @@ let lastReadFoundFiles = false
  */
 let pullInFlight: Promise<PullOutcome> | null = null
 let pullQueuedReason: string | null = null
+/** When `pullInFlight` started, and when the last complete read started. */
+let pullInFlightStartedAt = 0
+let completePullStartedAt = -Infinity
 
 /**
  * The running image GC. It deletes binaries no local contact owns, judged
@@ -1707,7 +1711,13 @@ export async function pullBeforeCalendarPublish(): Promise<void> {
   if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
   if (!(await syncTransport().waitForInitialScan()))
     throw new ICloudReadError('iCloud data scan incomplete')
-  check(await pull('calendar-publish'))
+  // A read that started since the app came back (the foreground catch-up)
+  // already has other devices' changes; reading again would only repeat it.
+  const since = lastForegroundAt()
+  const fresh = pullInFlight
+    ? pullInFlightStartedAt >= since
+    : completePullStartedAt >= since
+  if (!fresh) check(await pull('calendar-publish'))
   while (pullInFlight) check(await pullInFlight)
   if (!canSync()) throw new ICloudReadError('iCloud data sync unavailable')
 }
@@ -1723,6 +1733,8 @@ function pull(reason: string): Promise<PullOutcome> {
     if (!pullQueuedReason) pullQueuedReason = reason
     return pullInFlight
   }
+  const startedAt = Date.now()
+  pullInFlightStartedAt = startedAt
   // Defer execution until the promise is assigned, including a skipped pull.
   pullInFlight = Promise.resolve().then(async () => {
     try {
@@ -1740,6 +1752,7 @@ function pull(reason: string): Promise<PullOutcome> {
       lastReadFoundFiles = false
       const outcome = await pullAndMergeInner(reason)
       lastPullComplete = outcome.complete
+      if (outcome.complete) completePullStartedAt = startedAt
       if (outcome.complete && lastReadFoundFiles) markCompleteICloudPull()
       return outcome
     } finally {

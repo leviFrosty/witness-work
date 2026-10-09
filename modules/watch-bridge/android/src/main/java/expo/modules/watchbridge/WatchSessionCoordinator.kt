@@ -18,6 +18,8 @@ import expo.modules.stopwatchbridge.StopwatchState
 import expo.modules.stopwatchbridge.StopwatchStore
 import org.json.JSONObject
 import java.io.File
+import java.time.Instant
+import java.time.ZoneId
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
@@ -33,6 +35,7 @@ class WatchSessionCoordinator private constructor(context: Context) {
   companion object {
     private const val TAG = "WatchBridge"
     private const val INBOX_FILE = "WatchBridge/inbox.json"
+    private const val MAX_ERRORS = 20
     /** Kind the Wear OS app reports for its tile, alongside complication kinds. */
     const val TILE_KIND = "WitnessWorkTile"
 
@@ -57,6 +60,10 @@ class WatchSessionCoordinator private constructor(context: Context) {
   private var inbox = WatchInbox()
   private var loaded = false
   @Volatile private var status = Status()
+  /** The last context published, without `sentAt`. Only touched on `worker`. */
+  private var lastPublished: String? = null
+  /** Failures JS hasn't reported yet; release builds log nothing. Guarded by `lock`. */
+  private val errors = mutableListOf<String>()
 
   /** Background work: Data Layer calls block, and never on the main thread. */
   private val worker = Executors.newSingleThreadExecutor { Thread(it, "WatchBridge") }
@@ -84,7 +91,7 @@ class WatchSessionCoordinator private constructor(context: Context) {
 
   init {
     // A change made in the app, by the watch or anywhere else reaches the watch.
-    StopwatchStore.addListener { publishSoon() }
+    StopwatchStore.addListener { publishSoon(urgent = true) }
     refreshStatus()
   }
 
@@ -108,23 +115,51 @@ class WatchSessionCoordinator private constructor(context: Context) {
 
   private fun notifyJS() = inboxListeners.forEach { it() }
 
+  private fun recordError(message: String, error: Exception) {
+    Log.w(TAG, message, error)
+    synchronized(lock) {
+      errors.add("$message: ${error.javaClass.simpleName}: ${error.message}")
+      while (errors.size > MAX_ERRORS) errors.removeAt(0)
+    }
+  }
+
   // MARK: JS API
 
   fun status(): Status = status
 
   fun activeComplications(): List<String>? = synchronized(lock) { loadIfNeeded().complications }
 
-  /** Throws if `json` isn't a snapshot the watch can read. */
-  fun setSnapshot(json: String) {
+  /**
+   * Throws if `json` isn't a snapshot the watch can read. `urgent` for what the user is waiting
+   * to see; anything else the Data Layer may batch to save battery.
+   */
+  fun setSnapshot(json: String, urgent: Boolean) {
     val snapshot = WatchSnapshot.fromJson(JSONObject(json))
     synchronized(lock) {
       loadIfNeeded()
       if (!loaded) return
+      // Already stored and sent: launch and status pushes often repeat it.
+      if (inbox.snapshot?.let { sameContent(it, snapshot) } == true) return
       inbox.snapshot = snapshot
       persist()
     }
-    publishSoon()
+    publishSoon(urgent)
   }
+
+  /** Equal apart from when they were built, on the same day (`reportedToday` reads that day). */
+  private fun sameContent(a: WatchSnapshot, b: WatchSnapshot): Boolean {
+    fun day(snapshot: WatchSnapshot) =
+      Instant.ofEpochMilli(snapshot.generatedAt.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
+    return day(a) == day(b) &&
+      a.copy(generatedAt = 0.0).toJson().toString() == b.copy(generatedAt = 0.0).toJson().toString()
+  }
+
+  fun takeErrors(): List<String> =
+    synchronized(lock) {
+      val taken = errors.toList()
+      errors.clear()
+      taken
+    }
 
   fun pendingEntries(): List<WatchEntryDraft> = synchronized(lock) { loadIfNeeded().pending.map { it.draft } }
 
@@ -143,7 +178,8 @@ class WatchSessionCoordinator private constructor(context: Context) {
         inbox.resolvedEntryIds.takeLast(WatchRequestHandler.MAX_RESOLVED_IDS).toMutableList()
       persist()
     }
-    publishSoon()
+    // The watch shows these as syncing until it hears.
+    publishSoon(urgent = true)
   }
 
   fun takeEvents(): List<WatchInbox.Event> =
@@ -163,27 +199,33 @@ class WatchSessionCoordinator private constructor(context: Context) {
   // MARK: Publishing
 
   /** Publishes the context off the calling thread. */
-  fun publishSoon() {
-    worker.execute { publish() }
+  fun publishSoon(urgent: Boolean) {
+    worker.execute { publish(urgent) }
   }
 
   /**
    * Replaces the context data item. The Data Layer keeps it and syncs it to the watch whenever
-   * they connect, like WatchConnectivity's application context. Only once a watch has the app.
+   * they connect, like WatchConnectivity's application context. Only once a watch has the app,
+   * and only when something besides `sentAt` changed. Non-urgent items may be delayed to save
+   * battery.
    */
-  private fun publish() {
+  private fun publish(urgent: Boolean) {
     if (!status.isWatchAppInstalled) return
-    val payload =
+    val (payload, content) =
       synchronized(lock) {
         loadIfNeeded()
         if (!loaded) return
-        WatchProtocol.encode(handler.makeContext(inbox))
+        val phoneContext = handler.makeContext(inbox)
+        WatchProtocol.encode(phoneContext) to phoneContext.copy(sentAt = 0.0).toJson().toString()
       }
+    if (content == lastPublished) return
     try {
-      val request = PutDataRequest.create(WatchProtocol.CONTEXT_PATH).setData(payload).setUrgent()
+      val request = PutDataRequest.create(WatchProtocol.CONTEXT_PATH).setData(payload)
+      if (urgent) request.setUrgent()
       Tasks.await(Wearable.getDataClient(context).putDataItem(request))
+      lastPublished = content
     } catch (error: Exception) {
-      Log.w(TAG, "Couldn't publish the watch context", error)
+      recordError("Couldn't publish the watch context", error)
     }
   }
 
@@ -217,7 +259,11 @@ class WatchSessionCoordinator private constructor(context: Context) {
         }
       val changed = next != status
       status = next
-      publish()
+      if (changed) {
+        // A watch that just got the app needs the context, even an unchanged one.
+        lastPublished = null
+        publish(urgent = true)
+      }
       if (changed || announce) statusListeners.forEach { it() }
     }
   }
@@ -239,7 +285,7 @@ class WatchSessionCoordinator private constructor(context: Context) {
       try {
         WatchInbox.fromJson(JSONObject(file.readText()))
       } catch (error: Exception) {
-        Log.w(TAG, "Unreadable watch inbox; starting over", error)
+        recordError("Unreadable watch inbox; starting over", error)
         WatchInbox()
       }
     loaded = true
@@ -256,7 +302,7 @@ class WatchSessionCoordinator private constructor(context: Context) {
       temporary.writeText(inbox.toJson().toString())
       temporary.renameTo(file)
     } catch (error: Exception) {
-      Log.w(TAG, "Couldn't store the watch inbox", error)
+      recordError("Couldn't store the watch inbox", error)
       false
     }
   }

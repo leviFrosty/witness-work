@@ -1,5 +1,5 @@
 import { perf } from '@/lib/perf'
-import { AppState, AppStateStatus, Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import debounce from 'lodash/debounce'
 import * as WatchBridge from '../../../modules/watch-bridge'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -12,6 +12,8 @@ import { mmkvStorage } from '@/stores/mmkv'
 import { analytics } from '@/lib/analytics'
 import type { AnalyticsEventName } from '@/lib/analyticsEvents'
 import { logger } from '@/lib/logger'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import {
   addCalendarMonths,
   calendarMonthOf,
@@ -52,13 +54,13 @@ let draining = false
 /**
  * Builds the watch snapshot from the stores and hands it to the native layer,
  * which keeps it for Siri on this device and sends it to a paired Apple Watch,
- * or on Android to a Wear OS watch. Skipped when nothing in it changed, unless
- * `force`d. `reflectedEntryIds` are watch entries just saved but not yet
- * resolved.
+ * or on Android to a Wear OS watch. Skipped when nothing in it changed since
+ * the last push; the native layer also skips one it already has, so a new
+ * launch or watch doesn't resend it. `reflectedEntryIds` are watch entries just
+ * saved but not yet resolved.
  */
 export function pushWatchSnapshot(
   reason: string,
-  force = false,
   reflectedEntryIds: string[] = []
 ): void {
   perf.count('watch:push')
@@ -107,12 +109,30 @@ export function pushWatchSnapshot(
     })
 
     const { generatedAt, ...content } = snapshot
-    const contentKey = JSON.stringify(content)
-    if (!force && contentKey === lastPushedContent) return
-    WatchBridge.setSnapshot(JSON.stringify(snapshot))
+    // The watch reads `reportedToday` against the day it was built.
+    const contentKey = JSON.stringify([
+      new Date(generatedAt).toDateString(),
+      content,
+    ])
+    if (contentKey === lastPushedContent) return
+    WatchBridge.setSnapshot(JSON.stringify(snapshot), {
+      // Wear OS may hold back the rest, e.g. a sync merged in the background.
+      urgent: reason === 'watch-entries' || AppState.currentState === 'active',
+    })
     lastPushedContent = contentKey
   } catch (e) {
     logger.error(`[watchSync] failed to push snapshot (${reason})`, e)
+    captureExceptionThrottled('watchSync:push', e, { watchSync: reason })
+  }
+}
+
+/** Failures the native layer recorded, which release builds don't log. */
+function reportNativeErrors(): void {
+  for (const message of WatchBridge.takeErrors()) {
+    captureExceptionThrottled(
+      `watchBridge:${message.split(':')[0]}`,
+      new Error(`[watchBridge] ${message}`)
+    )
   }
 }
 
@@ -179,7 +199,7 @@ function drainInbox(): void {
       // Send the updated progress before the watch stops showing these
       // entries as syncing, so its total never dips. Until they're resolved
       // the watch also adds them itself, so name them as already counted.
-      pushWatchSnapshot('watch-entries', true, handled)
+      pushWatchSnapshot('watch-entries', handled)
       WatchBridge.resolveEntries(handled)
     }
 
@@ -190,6 +210,7 @@ function drainInbox(): void {
     }
   } catch (e) {
     logger.error('[watchSync] failed to save watch entries', e)
+    captureExceptionThrottled('watchSync:drain', e)
   } finally {
     draining = false
   }
@@ -246,29 +267,30 @@ export function installWatchSync(): () => void {
 
   // Foreground covers midnight and month rollover, language changes, and
   // entries delivered or made with Siri while JS couldn't run.
-  const onAppState = (state: AppStateStatus) => {
-    if (state !== 'active') return
+  const foregroundSub = addForegroundListener(() => {
     drainInbox()
     pushWatchSnapshot('foreground')
     captureWatchStatus()
-  }
-  const appStateSub = AppState.addEventListener('change', onAppState)
+    reportNativeErrors()
+  })
   const inboxSub = WatchBridge.onInboxChange(drainInbox)
-  // A newly paired watch or newly installed watch app needs the snapshot even
-  // though nothing in the stores changed.
+  // A newly paired watch or newly installed watch app gets the snapshot the
+  // native layer keeps; this only adds one the stores changed meanwhile (on
+  // Android, none is built until a watch has the app).
   const statusSub = WatchBridge.onStatusChange(() => {
-    pushWatchSnapshot('status-change', true)
+    pushWatchSnapshot('status-change')
     captureWatchStatus()
   })
 
   drainInbox()
-  pushWatchSnapshot('cold-start', true)
+  pushWatchSnapshot('cold-start')
   captureWatchStatus()
+  reportNativeErrors()
 
   return () => {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
     debouncedPush.cancel()
-    appStateSub.remove()
+    foregroundSub.remove()
     inboxSub.remove()
     statusSub.remove()
     lastPushedContent = null

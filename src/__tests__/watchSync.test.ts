@@ -13,6 +13,9 @@ const bridge = vi.hoisted(() => ({
   snapshots: [] as string[],
   resolved: [] as string[][],
   inboxListener: null as null | (() => void),
+  statusListener: null as null | (() => void),
+  errors: [] as string[],
+  urgent: [] as boolean[],
 }))
 
 vi.mock('../../modules/watch-bridge', () => ({
@@ -24,7 +27,10 @@ vi.mock('../../modules/watch-bridge', () => ({
     isComplicationEnabled: bridge.activeComplications != null,
     activeComplications: bridge.activeComplications,
   }),
-  setSnapshot: (json: string) => bridge.snapshots.push(json),
+  setSnapshot: (json: string, { urgent }: { urgent: boolean }) => {
+    bridge.snapshots.push(json)
+    bridge.urgent.push(urgent)
+  },
   getPendingEntries: () => bridge.pending,
   getPendingTrips: () => bridge.pendingTrips,
   resolveEntries: (ids: string[]) => {
@@ -35,14 +41,22 @@ vi.mock('../../modules/watch-bridge', () => ({
     )
   },
   takeEvents: () => bridge.events.splice(0),
+  takeErrors: () => bridge.errors.splice(0),
   onInboxChange: (listener: () => void) => {
     bridge.inboxListener = listener
     return { remove: () => (bridge.inboxListener = null) }
   },
-  onStatusChange: () => ({ remove: () => {} }),
+  onStatusChange: (listener: () => void) => {
+    bridge.statusListener = listener
+    return { remove: () => (bridge.statusListener = null) }
+  },
 }))
 
 const capture = vi.hoisted(() => vi.fn())
+const captureException = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/errorTracking', () => ({
+  errorTracking: { captureException },
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', async () => ({
@@ -170,7 +184,10 @@ describe('watch sync', () => {
     bridge.events = []
     bridge.snapshots = []
     bridge.resolved = []
+    bridge.errors = []
+    bridge.urgent = []
     capture.mockClear()
+    captureException.mockClear()
   })
 
   afterEach(() => {
@@ -442,6 +459,47 @@ describe('watch sync', () => {
     expect(capture).not.toHaveBeenCalledWith(
       'unexpected_event',
       expect.anything()
+    )
+  })
+
+  it('sends a status change only what the watch is missing', () => {
+    teardown = installWatchSync()
+    expect(bridge.snapshots).toHaveLength(1)
+
+    // The native layer already sends a new watch the snapshot it keeps.
+    bridge.statusListener?.()
+    expect(bridge.snapshots).toHaveLength(1)
+
+    useServiceReport.getState().addServiceReport({
+      id: 'phone-1',
+      date: new Date(2026, 9, 4),
+      hours: 1,
+      minutes: 0,
+    })
+    bridge.statusListener?.()
+    expect(bridge.snapshots).toHaveLength(2)
+  })
+
+  it('sends an unchanged snapshot again on a new day', () => {
+    teardown = installWatchSync()
+    vi.setSystemTime(new Date(2026, 9, 5, 9))
+    bridge.statusListener?.()
+    expect(bridge.snapshots).toHaveLength(2)
+  })
+
+  it('marks only watch entries and foreground pushes urgent', () => {
+    bridge.pending = [draft()]
+    teardown = installWatchSync()
+    // A watch entry, then a push from a background wake (no active app).
+    expect(bridge.urgent).toEqual([true, false])
+  })
+
+  it('reports failures the native layer recorded, once an hour each', () => {
+    bridge.errors = ['publish: WCErrorDomain 7007', 'publish: again']
+    teardown = installWatchSync()
+    expect(captureException).toHaveBeenCalledOnce()
+    expect(captureException.mock.calls[0][0]).toEqual(
+      new Error('[watchBridge] publish: WCErrorDomain 7007')
     )
   })
 })

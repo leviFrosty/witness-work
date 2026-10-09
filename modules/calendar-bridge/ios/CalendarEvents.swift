@@ -130,7 +130,18 @@ final class CalendarEvents {
       .compactMap { marker($0, namespace: state.namespace) }
   }
 
+  /// Read-only: the keys `publish` would leave published if it would write
+  /// nothing, or nil if it would write. Needs no publishing lock.
+  func unchangedKeys(calendarId: String, snapshot: CalendarSnapshot, state: CalendarPublishingState) throws -> [String]? {
+    try reconcile(calendarId: calendarId, snapshot: snapshot, state: state, removeAll: false, repair: false, apply: false) {}
+  }
+
   func publish(calendarId: String, snapshot: CalendarSnapshot, state: CalendarPublishingState, removeAll: Bool = false, repair: Bool = false, beforeCommit: () throws -> Void) throws -> [String] {
+    try reconcile(calendarId: calendarId, snapshot: snapshot, state: state, removeAll: removeAll, repair: repair, apply: true, beforeCommit: beforeCommit) ?? []
+  }
+
+  /// Without `apply`, returns nil at the first write it would make.
+  private func reconcile(calendarId: String, snapshot: CalendarSnapshot, state: CalendarPublishingState, removeAll: Bool, repair: Bool, apply: Bool, beforeCommit: () throws -> Void) throws -> [String]? {
     try requireAccess()
     let calendar = try destination(calendarId)
     try state.validateDestination(title: calendar.title, account: calendar.source.title)
@@ -157,6 +168,7 @@ final class CalendarEvents {
     var retained = existing.filter { !removeAll && !removed.contains(marker($0, namespace: state.namespace)!) }
     var changed = false
     for event in existing where removeAll || removed.contains(marker(event, namespace: state.namespace)!) {
+      guard apply else { return nil }
       try store.remove(event, span: .thisEvent, commit: false)
       changed = true
     }
@@ -166,6 +178,7 @@ final class CalendarEvents {
       // turned off. Redact even events whose Visit/Contact is absent locally.
       if state.includeDetails != true {
         for event in retained where event.title != snapshot.title || !(event.location ?? "").isEmpty {
+          guard apply else { return nil }
           event.title = snapshot.title
           event.location = nil
           try store.save(event, span: .thisEvent, commit: false)
@@ -177,6 +190,8 @@ final class CalendarEvents {
         let matches = (groups[item.key] ?? []).sorted { $0.calendarItemIdentifier < $1.calendarItemIdentifier }
         // Do not backfill past appointments. Known events still receive repairs.
         if matches.isEmpty && item.start < now { continue }
+        // A new event or a duplicate to remove is a write.
+        guard apply || matches.count == 1 else { return nil }
         let event = matches.first ?? EKEvent(eventStore: store)
         var parts = URLComponents(string: item.url)
         // The alert is part of the marker, so changing Notify Me rewrites the
@@ -195,6 +210,7 @@ final class CalendarEvents {
         let location = state.includeDetails == true ? item.location : ""
         if event.title != title || event.startDate != start || event.endDate != end ||
           event.url != url || (event.location ?? "") != location || event.isAllDay {
+          guard apply else { return nil }
           event.calendar = calendar
           event.title = title
           event.startDate = start
@@ -215,6 +231,7 @@ final class CalendarEvents {
         }
       }
     }
+    guard apply else { return Array(Set(retained.compactMap { marker($0, namespace: state.namespace) })) }
     // Own EventKit notifications trigger another reconciliation. A no-op must
     // not commit again, or it can keep that loop running indefinitely.
     if changed {

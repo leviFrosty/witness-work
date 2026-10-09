@@ -34,7 +34,7 @@ import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSy
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
 import SupporterSyncLapseGate from '@/app/sync/components/SupporterSyncLapseGate'
 import AppIconSync from '@/features/settings/components/AppIconSync'
-import { useInitializeFeatureFlags } from '@/lib/featureFlags'
+import { FeatureFlagsRuntime } from '@/lib/featureFlags'
 import '@/lib/analyticsConsent'
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
@@ -61,7 +61,6 @@ initializeApp()
 export default function App() {
   perf.count('render:App')
   perf.mark('appFirstRender')
-  useInitializeFeatureFlags()
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
   const { loadedLocale } = useUserLocalePrefs()
@@ -90,6 +89,7 @@ export default function App() {
     return (
       <CustomerProvider>
         <AccountProvider>
+          <FeatureFlagsRuntime />
           <NotesImportAttestPreparation />
           <SupporterStoreSync />
           <SupporterSyncDefault />

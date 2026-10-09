@@ -41,6 +41,9 @@ function createClient(): PostHog | null {
       // Anonymous usage statistics only: never create person profiles, so
       // identify/alias/group are no-ops and events are not linked to a person.
       personProfiles: 'never',
+      // `FeatureFlagsRuntime` loads flags when the app is in use; the SDK's
+      // own load after remote config would be a second request at launch.
+      preloadFeatureFlags: false,
       captureAppLifecycleEvents: true,
       // The native plugin supplies crash capture; push analytics stay opt-in.
       capturePushNotificationSubscriptions: false,

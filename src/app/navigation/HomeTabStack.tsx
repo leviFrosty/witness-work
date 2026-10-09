@@ -9,10 +9,6 @@ import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOve
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'
 import { useEffect, useRef, useState } from 'react'
-import ToolsScreen from '@/app/navigation/ToolsScreen'
-import ProgressScreen from '@/features/progress/screens/ProgressScreen'
-import ScheduleScreen from '@/features/plans/screens/ScheduleScreen'
-import ContactsTabScreen from '@/app/contacts/ContactsTabScreen'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
@@ -26,7 +22,6 @@ import {
   getReleaseAnnounceBetween,
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import SettingsSplitScreen from '@/app/navigation/SettingsSplitScreen'
 import {
   getEffectiveTabOrder,
   type TabOrderKey,
@@ -84,17 +79,43 @@ const renderTabScreen = (name: TabOrderKey) => {
     case 'Home':
       return <Tab.Screen key={name} name={name} component={HomeNavigator} />
     case 'Schedule':
-      return <Tab.Screen key={name} name={name} component={ScheduleScreen} />
+      return (
+        <Tab.Screen
+          key={name}
+          name={name}
+          getComponent={() =>
+            require('@/features/plans/screens/ScheduleScreen').default
+          }
+        />
+      )
     case 'Contacts':
-      return <Tab.Screen key={name} name={name} component={ContactsTabScreen} />
+      return (
+        <Tab.Screen
+          key={name}
+          name={name}
+          getComponent={() =>
+            require('@/app/contacts/ContactsTabScreen').default
+          }
+        />
+      )
     case 'Progress':
-      return <Tab.Screen key={name} name={name} component={ProgressScreen} />
+      return (
+        <Tab.Screen
+          key={name}
+          name={name}
+          getComponent={() =>
+            require('@/features/progress/screens/ProgressScreen').default
+          }
+        />
+      )
   }
 }
 
 const HomeTabStack = () => {
   const { hasSidebar } = useAdaptiveLayout()
-  const { developerTools, tabOrder: storedTabOrder, set } = usePreferences()
+  const developerTools = usePreferences((s) => s.developerTools)
+  const storedTabOrder = usePreferences((s) => s.tabOrder)
+  const set = usePreferences((s) => s.set)
   const { showsYearTabs } = usePublisher()
   const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
     (name) => name !== 'Progress' || showsYearTabs
@@ -130,7 +151,7 @@ const HomeTabStack = () => {
   }, [launch, set])
 
   const rollover = useRollover()
-  const { autoRolloverEnabled } = usePreferences()
+  const autoRolloverEnabled = usePreferences((s) => s.autoRolloverEnabled)
   // With iCloud sync on, another device may already have rolled this month
   // over or dismissed it. Its pair and synced marker only arrive with a pull,
   // so auto mode waits for one (or a timeout), then decides on fresh data.
@@ -162,9 +183,19 @@ const HomeTabStack = () => {
             Tab Order). Features join an existing destination (Map in
             Contacts, Buddies in Schedule) rather than adding tabs. */}
         {tabOrder.map(renderTabScreen)}
-        {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
+        {developerTools && (
+          <Tab.Screen
+            name='Tools'
+            getComponent={() => require('@/app/navigation/ToolsScreen').default}
+          />
+        )}
         {hasSidebar && (
-          <Tab.Screen name='Settings' component={SettingsSplitScreen} />
+          <Tab.Screen
+            name='Settings'
+            getComponent={() =>
+              require('@/app/navigation/SettingsSplitScreen').default
+            }
+          />
         )}
       </Tab.Navigator>
       {/* One instance for every root header's account menu. */}

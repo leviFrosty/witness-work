@@ -37,7 +37,7 @@ export default function StalenessColorKey({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const colors = useMarkerColors()
-  const { stalenessBreakpoints } = usePreferences()
+  const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
 
   const goToSettings = () => {
     onBeforeNavigate?.()

@@ -10,7 +10,7 @@ import { menuGroups, runMenuCommand } from './menuCommands'
 
 /** One native menu adapter, with all behavior owned by existing app flows. */
 export default function SystemMenu({ language }: { language: string }) {
-  const { onboardingComplete } = usePreferences()
+  const onboardingComplete = usePreferences((s) => s.onboardingComplete)
   const { showsTimeEntry } = usePublisher()
   const { hasSidebar } = useAdaptiveLayout()
   const [checkingUpdate, setCheckingUpdate] = useState(false)
@@ -41,13 +41,10 @@ export default function SystemMenu({ language }: { language: string }) {
       if (!navigationRef.isReady() || !command) return
 
       if (action === 'check_update') setCheckingUpdate(true)
-      try {
-        await runMenuCommand(command, hasSidebar)
-      } catch (error) {
+      await runMenuCommand(command, hasSidebar).catch((error: unknown) => {
         errorTracking.captureException(error)
-      } finally {
-        if (action === 'check_update') setCheckingUpdate(false)
-      }
+      })
+      if (action === 'check_update') setCheckingUpdate(false)
     })
     return () => subscription?.remove()
   }, [onboardingComplete, showsTimeEntry, checkingUpdate, hasSidebar, language])

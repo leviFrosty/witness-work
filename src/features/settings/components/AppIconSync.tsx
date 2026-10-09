@@ -14,7 +14,7 @@ import {
 export default function AppIconSync() {
   const { customer } = useCustomer()
   const { isSupporter } = useIsSupporter()
-  const { customAppIcon } = usePreferences()
+  const customAppIcon = usePreferences((s) => s.customAppIcon)
   const supporterStatusKnown = customer !== null
 
   useEffect(() => {

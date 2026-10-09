@@ -5,19 +5,21 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
-import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 
-// CJK handwriting fonts are downloaded on demand by service-reports/lib/handwritingFont.
+// Tamagui's config names its faces `Inter` and `InterBold`; they're the same
+// Medium and Bold files the app already loads, registered under those names
+// too. Kalam loads with the Service Report (service-reports/lib/handwritingFont),
+// and CJK handwriting fonts download on demand there.
 export function useAppFonts() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, error] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
-    Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
-    InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
-    Kalam_400Regular,
-    Kalam_700Bold,
+    Inter: Inter_500Medium,
+    InterBold: Inter_700Bold,
   })
-  return fontsLoaded
+  // A font that fails to load falls back to the system font; the splash must
+  // still go away.
+  return fontsLoaded || !!error
 }

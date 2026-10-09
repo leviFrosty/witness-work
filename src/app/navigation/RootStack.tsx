@@ -1,51 +1,15 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
-import VisitFormRoute from '@/app/visits/VisitFormRoute'
-import ContactDetailsScreen from '@/features/contacts/screens/ContactDetailsScreen'
-import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'
-import RecoverContactsScreen from '@/features/contacts/screens/RecoverContactsScreen'
-import DismissedContactsScreen from '@/features/contacts/screens/DismissedContactsScreen'
-import ContactsSortAndFilterScreen from '@/features/contacts/screens/ContactsSortAndFilterScreen'
-import SavedViewsScreen from '@/features/contacts/screens/SavedViewsScreen'
-import OnBoarding from '@/features/onboarding/components/Onboarding'
 import { usePreferences } from '@/stores/preferences'
-import UpdateScreen from '@/features/updates/screens/UpdateScreen'
 import HomeTabStack from '@/app/navigation/HomeTabStack'
 import i18n from '@/lib/locales'
-import PaywallRouteScreen from '@/app/navigation/PaywallRouteScreen'
-import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
-import RescheduleVisitScreen from '@/features/visits/screens/RescheduleVisitScreen'
-import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
-import PlanDetailsScreen from '@/features/plans/screens/PlanDetailsScreen'
-import TodayRouteScreen from '@/features/route-planning/screens/TodayRouteScreen'
-import RolloverScreen from '@/features/service-reports/screens/RolloverScreen'
-import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShowcaseScreen'
-import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
-import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
-import ServiceHistoryScreen from '@/features/service-reports/screens/ServiceHistoryScreen'
-import BuddyCodeScreen from '@/features/buddies/screens/BuddyCodeScreen'
-import BuddyDetailScreen from '@/features/buddies/screens/BuddyDetailScreen'
-import BuddyInviteScreen from '@/features/buddies/screens/BuddyInviteScreen'
-import BuddiesSettingsScreen from '@/features/buddies/screens/BuddiesSettingsScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
-import BuddiesFeedbackScreen from '@/features/buddies/screens/BuddiesFeedbackScreen'
-import BuddiesRouteScreen from '@/app/buddies/BuddiesRouteScreen'
-import SettingsScreen from '@/features/settings/screens/SettingsScreen'
-import MileageScreen from '@/features/mileage/screens/MileageScreen'
-import MileageTripFormScreen from '@/features/mileage/screens/MileageTripFormScreen'
-import MileageTripDetailsScreen from '@/features/mileage/screens/MileageTripDetailsScreen'
-import MileageSettingsScreen from '@/features/mileage/screens/MileageSettingsScreen'
-import MileageVehicleFormScreen from '@/features/mileage/screens/MileageVehicleFormScreen'
-import MileageFuelFormScreen from '@/features/mileage/screens/MileageFuelFormScreen'
-import BadgesRouteScreen from '@/app/badges/BadgesRouteScreen'
-import BadgeViewRouteScreen from '@/app/badges/BadgeViewRouteScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
-  const { onboardingComplete } = usePreferences()
+  const onboardingComplete = usePreferences((s) => s.onboardingComplete)
 
   return (
     <RootStack.Navigator>
@@ -70,15 +34,27 @@ const RootStackComponent = () => {
           <RootStack.Screen
             options={{ header: () => undefined }}
             name='Onboarding'
-            component={OnBoarding}
+            getComponent={() =>
+              require('@/features/onboarding/components/Onboarding').default
+            }
           />
         )}
         <RootStack.Screen
           name='Contact Details'
-          component={ContactDetailsScreen}
+          getComponent={() =>
+            require('@/features/contacts/screens/ContactDetailsScreen').default
+          }
         />
-        <RootStack.Screen name='Contact Form' component={ContactFormScreen} />
-        <RootStack.Screen name='Visit Form' component={VisitFormRoute} />
+        <RootStack.Screen
+          name='Contact Form'
+          getComponent={() =>
+            require('@/features/contacts/screens/ContactFormScreen').default
+          }
+        />
+        <RootStack.Screen
+          name='Visit Form'
+          getComponent={() => require('@/app/visits/VisitFormRoute').default}
+        />
         <RootStack.Screen
           name='Add Time'
           options={{
@@ -86,7 +62,9 @@ const RootStackComponent = () => {
               <Header noInsets buttonType='back' title={i18n.t('addTime')} />
             ),
           }}
-          component={AddTimeScreen}
+          getComponent={() =>
+            require('@/features/service-reports/screens/AddTimeScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -94,7 +72,9 @@ const RootStackComponent = () => {
             header: () => <Header noInsets buttonType='back' title='' />,
           }}
           name='Recover Contacts'
-          component={RecoverContactsScreen}
+          getComponent={() =>
+            require('@/features/contacts/screens/RecoverContactsScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -103,7 +83,10 @@ const RootStackComponent = () => {
             ),
           }}
           name='Dismissed Contacts'
-          component={DismissedContactsScreen}
+          getComponent={() =>
+            require('@/features/contacts/screens/DismissedContactsScreen')
+              .default
+          }
         />
         <RootStack.Screen
           // Native iOS form sheet — handles drag-to-dismiss + inner ScrollView
@@ -116,7 +99,10 @@ const RootStackComponent = () => {
             headerShown: false,
           }}
           name='Contacts Sort And Filter'
-          component={ContactsSortAndFilterScreen}
+          getComponent={() =>
+            require('@/features/contacts/screens/ContactsSortAndFilterScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -128,18 +114,22 @@ const RootStackComponent = () => {
             ),
           }}
           name='Saved Contact Views'
-          component={SavedViewsScreen}
+          getComponent={() =>
+            require('@/features/contacts/screens/SavedViewsScreen').default
+          }
         />
         <RootStack.Screen
           options={{ header: () => null }}
           name='Update'
-          component={UpdateScreen}
+          getComponent={() =>
+            require('@/features/updates/screens/UpdateScreen').default
+          }
         />
         {settingsDetailScreens.map((screen) => (
           <RootStack.Screen
             key={screen.name}
             name={screen.name}
-            component={screen.component}
+            getComponent={screen.getComponent}
             options={{
               header: () => (
                 <Header
@@ -156,14 +146,19 @@ const RootStackComponent = () => {
             header: () => <Header buttonType='back' title={i18n.t('donate')} />,
           }}
           name='Paywall'
-          component={PaywallRouteScreen}
+          getComponent={() =>
+            require('@/app/navigation/PaywallRouteScreen').default
+          }
         />
         <RootStack.Screen
           options={{
             header: () => null,
           }}
           name='Thank You'
-          component={PaywallThankYouScreen}
+          getComponent={() =>
+            require('@/features/supporter/screens/PaywallThankYouScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -173,7 +168,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='RescheduleVisit'
-          component={RescheduleVisitScreen}
+          getComponent={() =>
+            require('@/features/visits/screens/RescheduleVisitScreen').default
+          }
         />
         <RootStack.Screen
           options={({ route }) => {
@@ -190,12 +187,16 @@ const RootStackComponent = () => {
             }
           }}
           name='PlanDay'
-          component={PlanDayScreen}
+          getComponent={() =>
+            require('@/features/plans/screens/PlanDayScreen').default
+          }
         />
         <RootStack.Screen
           options={{ header: () => null }}
           name='Plan Details'
-          component={PlanDetailsScreen}
+          getComponent={() =>
+            require('@/features/plans/screens/PlanDetailsScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -209,7 +210,10 @@ const RootStackComponent = () => {
             ),
           }}
           name='TodayRoute'
-          component={TodayRouteScreen}
+          getComponent={() =>
+            require('@/features/route-planning/screens/TodayRouteScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -218,7 +222,9 @@ const RootStackComponent = () => {
             header: () => null,
           }}
           name='Rollover'
-          component={RolloverScreen}
+          getComponent={() =>
+            require('@/features/service-reports/screens/RolloverScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -226,7 +232,10 @@ const RootStackComponent = () => {
             header: () => null,
           }}
           name='MilestoneShowcase'
-          component={MilestoneShowcaseScreen}
+          getComponent={() =>
+            require('@/features/milestones/screens/MilestoneShowcaseScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -234,7 +243,10 @@ const RootStackComponent = () => {
             header: () => null,
           }}
           name='ServiceReportView'
-          component={ServiceReportViewScreen}
+          getComponent={() =>
+            require('@/features/service-reports/screens/ServiceReportViewScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -246,7 +258,10 @@ const RootStackComponent = () => {
             ),
           }}
           name='OnboardingBackfill'
-          component={OnboardingBackfillScreen}
+          getComponent={() =>
+            require('@/features/service-reports/screens/OnboardingBackfillScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -258,14 +273,19 @@ const RootStackComponent = () => {
             ),
           }}
           name='ServiceHistory'
-          component={ServiceHistoryScreen}
+          getComponent={() =>
+            require('@/features/service-reports/screens/ServiceHistoryScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
             header: () => <Header buttonType='back' noBottomBorder />,
           }}
           name='SettingsMenu'
-          component={SettingsScreen}
+          getComponent={() =>
+            require('@/features/settings/screens/SettingsScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -274,7 +294,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddies'
-          component={BuddiesRouteScreen}
+          getComponent={() =>
+            require('@/app/buddies/BuddiesRouteScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -283,7 +305,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddy'
-          component={BuddyDetailScreen}
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddyDetailScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -299,7 +323,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddy Code'
-          component={BuddyCodeScreen}
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddyCodeScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -313,7 +339,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddy Invite'
-          component={BuddyInviteScreen}
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddyInviteScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -325,7 +353,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddies Settings'
-          component={BuddiesSettingsScreen}
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddiesSettingsScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -341,12 +371,16 @@ const RootStackComponent = () => {
             ),
           }}
           name='Buddies Feedback'
-          component={BuddiesFeedbackScreen}
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddiesFeedbackScreen').default
+          }
         />
         <RootStack.Screen
           options={{ header: () => null }}
           name='Mileage'
-          component={MileageScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageScreen').default
+          }
         />
         <RootStack.Screen
           options={({ route }) => ({
@@ -362,12 +396,17 @@ const RootStackComponent = () => {
             ),
           })}
           name='MileageTripForm'
-          component={MileageTripFormScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageTripFormScreen').default
+          }
         />
         <RootStack.Screen
           options={{ header: () => null }}
           name='MileageTripDetails'
-          component={MileageTripDetailsScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageTripDetailsScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={{
@@ -376,7 +415,9 @@ const RootStackComponent = () => {
             ),
           }}
           name='MileageSettings'
-          component={MileageSettingsScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageSettingsScreen').default
+          }
         />
         <RootStack.Screen
           options={({ route }) => ({
@@ -392,7 +433,10 @@ const RootStackComponent = () => {
             ),
           })}
           name='MileageVehicleForm'
-          component={MileageVehicleFormScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageVehicleFormScreen')
+              .default
+          }
         />
         <RootStack.Screen
           options={({ route }) => ({
@@ -408,7 +452,9 @@ const RootStackComponent = () => {
             ),
           })}
           name='MileageFuelForm'
-          component={MileageFuelFormScreen}
+          getComponent={() =>
+            require('@/features/mileage/screens/MileageFuelFormScreen').default
+          }
         />
         <RootStack.Screen
           options={{
@@ -417,7 +463,7 @@ const RootStackComponent = () => {
             ),
           }}
           name='Badges'
-          component={BadgesRouteScreen}
+          getComponent={() => require('@/app/badges/BadgesRouteScreen').default}
         />
         <RootStack.Screen
           // Over everything, transparent, and unanimated: the screen grows
@@ -430,7 +476,9 @@ const RootStackComponent = () => {
             contentStyle: { backgroundColor: 'transparent' },
           }}
           name='BadgeView'
-          component={BadgeViewRouteScreen}
+          getComponent={() =>
+            require('@/app/badges/BadgeViewRouteScreen').default
+          }
         />
       </RootStack.Group>
     </RootStack.Navigator>

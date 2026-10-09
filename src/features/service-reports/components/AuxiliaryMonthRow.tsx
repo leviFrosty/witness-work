@@ -39,7 +39,7 @@ const AuxiliaryMonthRow = ({
 }) => {
   const theme = useTheme()
   const { entryMode } = usePublisher('standing')
-  const { publisherHours } = usePreferences()
+  const publisherHours = usePreferences((s) => s.publisherHours)
   const { months, setAuxiliary } = useAuxiliaryMonths()
   const [open, setOpen] = useState(false)
   if (entryMode !== 'checkbox') return null

@@ -64,7 +64,7 @@ export const formatMinutes = (
  * `timeDisplayFormat` preference. No behavior of its own.
  */
 export const useFormattedMinutes = (minutes: number) => {
-  const { timeDisplayFormat } = usePreferences()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   return formatMinutes(minutes, timeDisplayFormat)
 }
 

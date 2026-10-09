@@ -2,44 +2,20 @@ import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
 import { syncKey } from '@/lib/syncCopy'
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
-import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
-import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposerRouteScreen'
-import PreferencesScreen from '@/features/settings/screens/preferences/PreferencesScreen'
-import WhatsNewScreen from '@/features/updates/screens/WhatsNewScreen'
-import FAQScreen from '@/features/updates/screens/FAQScreen'
-import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
-import MoreScreen from '@/features/settings/screens/MoreScreen'
-import ShareAppScreen from '@/features/settings/screens/ShareAppScreen'
-import OpenSourceLicensesScreen from '@/features/settings/screens/OpenSourceLicensesScreen'
-import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
-import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
-import PreferencesCalendarScreen from '@/features/settings/screens/preferences/screens/PreferencesCalendarScreen'
-import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
-import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
-import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
-import PreferencesAudioAndHapticsScreen from '@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen'
-import PreferencesScheduleScreen from '@/features/settings/screens/preferences/screens/PreferencesScheduleScreen'
-import PreferencesTabOrderScreen from '@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen'
-import PreferencesHomeScreen from '@/features/settings/screens/preferences/screens/PreferencesHomeScreen'
-import PreferencesBackupsScreen from '@/features/settings/screens/preferences/screens/PreferencesBackupsScreen'
-import PreferencesAppearanceScreen from '@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen'
-import PreferencesPersonalizationScreen from '@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen'
-import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen'
-import PreferencesPrivacyScreen from '@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen'
-import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
-import PreferencesiCloudDevicesScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudDevicesScreen'
-import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
-import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
-import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
-import PreferencesConversationFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationFieldsScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
-const NotesImportHeaderRight = () =>
-  useNotesImportEnabled() ? <NotesImportHeaderActions /> : null
+const NotesImportHeaderRight = () => {
+  const enabled = useNotesImportEnabled()
+  if (!enabled) return null
+  const NotesImportHeaderActions: ComponentType =
+    require('@/features/notes-import/components/NotesImportHeaderActions').default
+  return <NotesImportHeaderActions />
+}
 
 type SettingsDetailScreen = {
   name: keyof RootStackParamList
-  component: ComponentType
+  /** Required on first open, so launch doesn't load every settings screen. */
+  getComponent: () => ComponentType
   title: () => string
   headerRight?: ComponentType
 }
@@ -52,140 +28,197 @@ type SettingsDetailScreen = {
 export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'Preferences',
-    component: PreferencesScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/PreferencesScreen')
+        .default,
     title: () => i18n.t('preferences'),
   },
   {
     name: 'Whats New',
-    component: WhatsNewScreen,
+    getComponent: () =>
+      require('@/features/updates/screens/WhatsNewScreen').default,
     title: () => i18n.t('whatsNew'),
   },
   {
     name: 'Import and Export',
-    component: ImportAndExportScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/ImportAndExportScreen').default,
     title: () => i18n.t('importAndExport'),
   },
   {
     name: 'MytimeImport',
-    component: MytimeImportScreen,
+    getComponent: () =>
+      require('@/features/mytime-import/screens/MytimeImportScreen').default,
     title: () => i18n.t('mytimeImport'),
   },
   {
     name: 'NotesImportComposer',
-    component: NotesImportComposerRouteScreen,
+    getComponent: () =>
+      require('@/app/navigation/NotesImportComposerRouteScreen').default,
     title: () => i18n.t('notesImport_title'),
     headerRight: NotesImportHeaderRight,
   },
   {
     name: 'PreferencesPublisher',
-    component: PreferencesPublisherScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesPublisherScreen')
+        .default,
     title: () => i18n.t('profileEditTitle'),
   },
   {
     name: 'PreferencesCalendar',
-    component: PreferencesCalendarScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesCalendarScreen')
+        .default,
     title: () => i18n.t('calendarSync'),
   },
   {
     name: 'PreferencesConversation',
-    component: PreferencesConversationScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesConversationScreen')
+        .default,
     title: () => i18n.t('conversations'),
   },
   {
     name: 'PreferencesPlans',
-    component: PreferencesPlansScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesPlansScreen')
+        .default,
     title: () => i18n.t('plans'),
   },
   {
     name: 'PreferencesCustomFields',
-    component: PreferencesCustomFieldsScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen')
+        .default,
     title: () => i18n.t('contactFields'),
   },
   {
     name: 'PreferencesConversationFields',
-    component: PreferencesConversationFieldsScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesConversationFieldsScreen')
+        .default,
     title: () => i18n.t('conversationFields'),
   },
   {
     name: 'PreferencesNavigation',
-    component: PreferencesNavigationScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesNavigationScreen')
+        .default,
     title: () => i18n.t('navigation'),
   },
   {
     name: 'PreferencesAudioAndHaptics',
-    component: PreferencesAudioAndHapticsScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen')
+        .default,
     title: () => i18n.t('audioAndHaptics'),
   },
   {
     name: 'PreferencesTabOrder',
-    component: PreferencesTabOrderScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen')
+        .default,
     title: () => i18n.t('tabOrder'),
   },
   {
     name: 'PreferencesHomeScreen',
-    component: PreferencesHomeScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesHomeScreen')
+        .default,
     title: () => i18n.t('homeScreen'),
   },
   {
     name: 'PreferencesScheduleScreen',
-    component: PreferencesScheduleScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesScheduleScreen')
+        .default,
     title: () => i18n.t('milestoneSecondary_schedule_title'),
   },
   {
     name: 'PreferencesBackups',
-    component: PreferencesBackupsScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesBackupsScreen')
+        .default,
     title: () => i18n.t('backups'),
   },
   {
     name: 'PreferencesAppearance',
-    component: PreferencesAppearanceScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen')
+        .default,
     title: () => i18n.t('regionAndFormats'),
   },
   {
     name: 'PreferencesPersonalization',
-    component: PreferencesPersonalizationScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen')
+        .default,
     title: () => i18n.t('personalization'),
   },
   {
     name: 'PreferencesWidgets',
-    component: PreferencesWidgetsScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen')
+        .default,
     title: () => i18n.t('widgets'),
   },
   {
     name: 'PreferencesPrivacy',
-    component: PreferencesPrivacyScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen')
+        .default,
     title: () => i18n.t('privacy'),
   },
   {
     name: 'PreferencesiCloud',
-    component: PreferencesiCloudScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesiCloudScreen')
+        .default,
     title: () => i18n.t(syncKey('iCloudSync')),
   },
   {
     name: 'PreferencesiCloudDevices',
-    component: PreferencesiCloudDevicesScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesiCloudDevicesScreen')
+        .default,
     title: () => i18n.t('iCloudDevices'),
   },
   {
     name: 'PreferencesAppIcon',
-    component: PreferencesAppIconScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesAppIconScreen')
+        .default,
     title: () => i18n.t('appIconScreenTitle'),
   },
   {
     name: 'PreferencesColorKey',
-    component: PreferencesColorKeyScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen')
+        .default,
     title: () => i18n.t('colorKeyScreenTitle'),
   },
   {
     name: 'ShareApp',
-    component: ShareAppScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/ShareAppScreen').default,
     title: () => i18n.t('shareApp_title'),
   },
   {
     name: 'OpenSourceLicenses',
-    component: OpenSourceLicensesScreen,
+    getComponent: () =>
+      require('@/features/settings/screens/OpenSourceLicensesScreen').default,
     title: () => i18n.t('openSourceLicenses'),
   },
-  { name: 'FAQ', component: FAQScreen, title: () => i18n.t('helpCenter') },
-  { name: 'More', component: MoreScreen, title: () => i18n.t('more') },
+  {
+    name: 'FAQ',
+    getComponent: () => require('@/features/updates/screens/FAQScreen').default,
+    title: () => i18n.t('helpCenter'),
+  },
+  {
+    name: 'More',
+    getComponent: () =>
+      require('@/features/settings/screens/MoreScreen').default,
+    title: () => i18n.t('more'),
+  },
 ]

@@ -1,4 +1,4 @@
-import LottieView from 'lottie-react-native'
+import type LottieView from 'lottie-react-native'
 import {
   PropsWithChildren,
   useCallback,
@@ -12,8 +12,7 @@ import {
   AnimationViewContext,
   AnimationViewCtx,
 } from '@/contexts/AnimationView'
-import confetti from '@/assets/lottie/confetti.json'
-import { useSound } from '@/lib/audio'
+import { useLazySound } from '@/lib/audio'
 
 interface Props {}
 
@@ -32,7 +31,8 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
-  const playSound = useSound('successChime')
+  // Created on the first celebration, not at launch.
+  const playSound = useLazySound('successChime')
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingPlayRef = useRef(false)
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -112,34 +112,54 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
          * only during playback removes the surface entirely while idle.
          */}
         {overlayMounted ? (
-          <FullWindowOverlay>
-            <View
-              pointerEvents='none'
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            >
-              <LottieView
-                autoPlay={false}
-                loop={false}
-                onAnimationFinish={handleAnimationFinish}
-                resizeMode='cover'
-                ref={lottieViewRef}
-                source={confetti}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                }}
-              />
-            </View>
-          </FullWindowOverlay>
+          <ConfettiLottie
+            lottieViewRef={lottieViewRef}
+            onAnimationFinish={handleAnimationFinish}
+          />
         ) : null}
       </View>
     </AnimationViewContext.Provider>
+  )
+}
+
+/**
+ * The overlay's Lottie view and its 290 KB animation, required the first time a
+ * celebration plays rather than at launch.
+ */
+function ConfettiLottie({
+  lottieViewRef,
+  onAnimationFinish,
+}: {
+  lottieViewRef: React.RefObject<LottieView | null>
+  onAnimationFinish: () => void
+}) {
+  const Lottie: typeof LottieView = require('lottie-react-native').default
+  return (
+    <FullWindowOverlay>
+      <View
+        pointerEvents='none'
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      >
+        <Lottie
+          autoPlay={false}
+          loop={false}
+          onAnimationFinish={onAnimationFinish}
+          resizeMode='cover'
+          ref={lottieViewRef}
+          source={require('@/assets/lottie/confetti.json')}
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </View>
+    </FullWindowOverlay>
   )
 }
 

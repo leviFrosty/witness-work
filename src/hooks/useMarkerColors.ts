@@ -3,7 +3,7 @@ import useTheme from '@/contexts/theme'
 import { MarkerColors, usePreferences } from '@/stores/preferences'
 
 export function useMarkerColors(): MarkerColors {
-  const { mapKeyColors } = usePreferences()
+  const mapKeyColors = usePreferences((s) => s.mapKeyColors)
   const theme = useTheme()
 
   // Stable identity so consumers that key memoisation off the returned object

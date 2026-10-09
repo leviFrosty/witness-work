@@ -5,6 +5,7 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Announces a passively announced release in the tray until What's New is
@@ -12,7 +13,12 @@ import type { RootStackNavigation } from '@/types/rootStack'
  */
 export default function useWhatsNewNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
-  const { unreadReleaseNotes, set } = usePreferences()
+  const { unreadReleaseNotes, set } = usePreferences(
+    useShallow((s) => ({
+      unreadReleaseNotes: s.unreadReleaseNotes,
+      set: s.set,
+    }))
+  )
   if (!unreadReleaseNotes || unreadReleaseNotes.cardDismissed) return null
 
   const version = Constants.expoConfig?.version ?? ''

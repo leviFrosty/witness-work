@@ -7,6 +7,7 @@ import {
   roleForMonth,
 } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 
 export type AuxiliaryMonthSource = 'home' | 'settings' | 'notifications_tray'
 
@@ -27,7 +28,14 @@ export type AuxiliaryGoal = 'regularAuxiliary' | 'regularAuxiliaryReduced'
  */
 const useAuxiliaryMonths = () => {
   const { role, roleHistory, monthlyGoalOverrides, setMonthStatus } =
-    usePreferences()
+    usePreferences(
+      useShallow((s) => ({
+        role: s.role,
+        roleHistory: s.roleHistory,
+        monthlyGoalOverrides: s.monthlyGoalOverrides,
+        setMonthStatus: s.setMonthStatus,
+      }))
+    )
   const thisMonth = calendarMonthOf()
 
   const months: AuxiliaryMonth[] = ([0, 1] as const).map((offset) => {

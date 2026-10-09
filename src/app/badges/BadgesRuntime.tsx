@@ -60,7 +60,7 @@ const BadgesRuntime = () => {
       })
     }
     const schedule = () => {
-      changedAt ??= Date.now()
+      if (changedAt === null) changedAt = Date.now()
       if (timer) clearTimeout(timer)
       timer = setTimeout(evaluate, EVALUATE_DEBOUNCE_MS)
     }

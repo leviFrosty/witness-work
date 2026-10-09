@@ -59,6 +59,13 @@ export function createFakeRelay(now: () => number) {
   const alerts: { inboxId: string; deviceId: string; kind: string }[] = []
   /** Card and event writes per `inboxId|slotId` (60 per rolling hour). */
   const writes = new Map<string, number[]>()
+  /** Shared photos, by `inboxId|blobId`. */
+  const blobs = new Map<
+    string,
+    { data: Uint8Array; tokenHash: string; expiresAt: number }
+  >()
+  /** What `inbox/sync` says the relay offers. */
+  const capabilities = { photos: true }
 
   function withinWriteLimit(inboxId: string, slotId: string) {
     const key = `${inboxId}|${slotId}`
@@ -92,8 +99,54 @@ export function createFakeRelay(now: () => number) {
     inbox.events = inbox.events.filter((event) => event.slotId !== slotId)
   }
 
+  /** `blob/put`: the envelope rides in headers; the body is the bytes. */
+  function putBlob(init: RequestInit | undefined) {
+    if (!capabilities.photos) return fail(503, 'photos_disabled')
+    const headers = (init?.headers ?? {}) as Record<string, string>
+    const bytes = fromB64u(headers['x-buddies-p'])
+    const payload = JSON.parse(fromUtf8(bytes)) as {
+      inboxId: string
+      blobId: string
+      bytes: number
+      expiresAt: number
+      readTokenHash: string
+    }
+    const inbox = inboxes.get(payload.inboxId)
+    if (!inbox) return fail(404, 'not_found')
+    const signed = ed25519Verify(
+      fromB64u(headers['x-buddies-s']),
+      concatBytes(utf8('ww-buddies/v1\nblob/put\n'), bytes),
+      fromB64u(inbox.ownerPub)
+    )
+    if (!signed) return fail(401, 'bad_signature')
+    const data = init?.body as Uint8Array
+    if (data.length > 1024 * 1024) return fail(413, 'too_large')
+    // Like the relay: at most 90 days out, and only from an inbox with a buddy.
+    if (
+      payload.expiresAt <= now() ||
+      payload.expiresAt > now() + 90 * 24 * 60 * 60 * 1000
+    )
+      return fail(400, 'bad_request')
+    if (!inbox.slots.size) return fail(403, 'no_buddies')
+    if (
+      data.length !== payload.bytes ||
+      toB64u(sha256(data)) !== payload.blobId
+    )
+      return fail(400, 'bad_request')
+    const key = `${payload.inboxId}|${payload.blobId}`
+    const existing = blobs.get(key)
+    const expiresAt = Math.max(existing?.expiresAt ?? 0, payload.expiresAt)
+    blobs.set(key, {
+      data,
+      tokenHash: existing?.tokenHash ?? payload.readTokenHash,
+      expiresAt,
+    })
+    return ok({ expiresAt })
+  }
+
   async function fetchImpl(url: string | URL | Request, init?: RequestInit) {
     const op = String(url).split('/buddies/v1/')[1]
+    if (op === 'blob/put') return putBlob(init)
     const body = JSON.parse(String(init?.body)) as { p: string; s?: string }
     const bytes = fromB64u(body.p)
     const payload = JSON.parse(fromUtf8(bytes)) as Record<string, never>
@@ -144,6 +197,22 @@ export function createFakeRelay(now: () => number) {
         },
       })
       return ok()
+    }
+
+    if (op === 'blob/get') {
+      if (!capabilities.photos) return fail(503, 'photos_disabled')
+      const blob = blobs.get(`${payload.inboxId}|${payload.blobId}`)
+      const token = payload.token as string
+      if (
+        !blob ||
+        blob.expiresAt <= now() ||
+        toB64u(sha256(fromB64u(token))) !== blob.tokenHash
+      )
+        return fail(404, 'not_found')
+      return new Response(blob.data as BodyInit, {
+        status: 200,
+        headers: { 'content-type': 'application/octet-stream' },
+      })
     }
 
     if (op === 'inbox/register') {
@@ -244,8 +313,13 @@ export function createFakeRelay(now: () => number) {
           events: inbox.events.filter((event) => event.seq > since),
           roster:
             inbox.roster && inbox.roster.seq > since ? inbox.roster : null,
+          capabilities: { ...capabilities },
         })
       }
+      case 'blob/delete':
+        for (const blobId of payload.blobIds as string[])
+          blobs.delete(`${payload.inboxId}|${blobId}`)
+        return ok()
       case 'inbox/delete':
         for (const inviteId of inbox.openInvites) invites.delete(inviteId)
         inboxes.delete(payload.inboxId)
@@ -299,5 +373,14 @@ export function createFakeRelay(now: () => number) {
     }
   }
 
-  return { fetchImpl, inboxes, invites, pushes, markers, alerts }
+  return {
+    fetchImpl,
+    inboxes,
+    invites,
+    pushes,
+    markers,
+    alerts,
+    blobs,
+    capabilities,
+  }
 }

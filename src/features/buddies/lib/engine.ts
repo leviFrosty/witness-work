@@ -40,6 +40,7 @@ import {
   buddyCardSchema,
   BuddyStreak,
   joinRequestSchema,
+  MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
   PairingCard,
   pairingCardSchema,
@@ -51,6 +52,7 @@ import {
   ShareReply,
   shareReplySchema,
   ShareType,
+  type SharedPhoto,
 } from '@/features/buddies/lib/schemas'
 import {
   type BuddiesPushMarker,
@@ -102,7 +104,13 @@ import {
   pairingEnded,
   PendingRemoval,
   SentBadgeReaction,
+  type UploadedSharedPhoto,
 } from '@/features/buddies/lib/state'
+import {
+  LEGACY_SHARE_RETENTION_MS,
+  shareEventExpiry,
+} from '@/features/buddies/lib/shares'
+import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import type { RecurringPlan } from '@/lib/recurrence'
@@ -112,6 +120,16 @@ import {
   type SharedBadge,
 } from '@/types/badges'
 import type { DayPlan } from '@/types/timeEntry'
+import type { RichTextImageAttrs } from '@/types/richText'
+import { mapRichTextImages, richTextImages } from '@/lib/richText/inspect'
+import {
+  encodeSharedNoteDoc,
+  localSharedPhotoId,
+  openSharedPhoto,
+  sealSharedPhoto,
+  sharedPhotoCovers,
+  sharedPhotoExpiry,
+} from '@/features/buddies/lib/sharedNotes'
 
 /**
  * Buddies client orchestration: pairing, sync, Buddy Card publishing, and
@@ -171,6 +189,20 @@ export type BuddiesEngineDeps = {
   isEnabled?: () => boolean
   /** Runs `run` after `ms`, e.g. to send what had to wait; skipped when absent. */
   later?: (run: () => void, ms: number) => void
+  /**
+   * One of this User's note photos as JPEG bytes to share (made smaller than
+   * the original), or null when its file is gone. Without it, shared notes
+   * carry no photos.
+   */
+  readSharedPhoto?: (
+    image: RichTextImageAttrs
+  ) => Promise<{ bytes: Uint8Array; width: number; height: number } | null>
+  /** Whether a buddy's shared photo is on this device already. */
+  hasSharedPhoto?: (localId: string) => Promise<boolean>
+  /** Keeps a buddy's shared photo (JPEG bytes) as a note photo. */
+  saveSharedPhoto?: (localId: string, bytes: Uint8Array) => Promise<void>
+  /** Buddies' shared photos were saved, so notes showing them can refresh. */
+  onSharedPhotosSaved?: () => void
 }
 
 /** See `sync`. */
@@ -747,7 +779,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           { ...entry, at: entry.at ?? deps.now(), read },
           ...state.notifications.filter((n) => n.id !== entry.id),
         ],
-        state
+        state,
+        deps.now()
       ),
     }))
   }
@@ -1471,22 +1504,211 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (push) lastAlertSentAt.set(buddy.inboxId, deps.now())
   }
 
-  /** Shortens the note until the invitation fits the relay's event cap. */
+  /**
+   * Fits the invitation in the relay's event cap: leaves photos out (the last
+   * first), then the formatting, then shortens the note.
+   */
   function fitEvent(invite: ShareInvite): ShareInvite {
     let fitted = invite
+    const withDetails = (details: Partial<ShareInvite['details']>) => {
+      fitted = { ...fitted, details: { ...fitted.details, ...details } }
+    }
     for (;;) {
       const over = json(fitted).length - MAX_EVENT_PLAINTEXT_BYTES
-      const note = fitted.details.note
-      if (over <= 0 || !note) return fitted
+      if (over <= 0) return fitted
+      const { photos, noteDoc, note } = fitted.details
+      if (photos?.length) {
+        withDetails({
+          photos: photos.length > 1 ? photos.slice(0, -1) : undefined,
+        })
+        continue
+      }
+      if (noteDoc) {
+        withDetails({ noteDoc: undefined })
+        continue
+      }
+      if (!note) return fitted
       // A character is at most 6 bytes of JSON (`\uXXXX`).
       const kept = note
         .slice(0, Math.max(0, note.length - Math.ceil(over / 6)))
         .replace(/[\uD800-\uDBFF]$/, '')
-      fitted = {
-        ...fitted,
-        details: { ...fitted.details, note: kept || undefined },
+      withDetails({ note: kept || undefined })
+    }
+  }
+
+  /**
+   * A photo in a shared note, uploaded (encrypted with its own key) under this
+   * User's inbox to stay on the relay as long as its share (a month after the
+   * Plan ends), or at most `SHARED_PHOTO_MAX_LIFETIME_MS`. One upload serves
+   * every share of the photo while it lasts; one running short for a Plan
+   * further out is replaced by a new upload, and the old copy deleted.
+   */
+  async function uploadSharedPhoto(
+    me: BuddyIdentity,
+    image: RichTextImageAttrs,
+    spec: OutgoingShareSpec
+  ): Promise<SharedPhoto | null> {
+    const now = deps.now()
+    const until = spec.expiresAt
+    const cached = store.getState().sharedPhotos[image.id]
+    const ref = (photo: UploadedSharedPhoto): SharedPhoto => ({
+      id: image.id,
+      blob: photo.blob,
+      token: photo.token,
+      key: photo.key,
+      w: photo.w,
+      h: photo.h,
+    })
+    if (cached && sharedPhotoCovers(cached.expiresAt, until, now)) {
+      return ref(cached)
+    }
+    const expiresAt = sharedPhotoExpiry(until, now)
+    const file = await deps.readSharedPhoto?.(image)
+    if (!file) return null
+    const key = deps.randomBytes(32)
+    const token = deps.randomBytes(32)
+    const { sealed, blobId } = sealSharedPhoto(
+      file.bytes,
+      key,
+      deps.randomBytes(12)
+    )
+    await relay.putBlob(ownerAuth(me), {
+      blobId,
+      data: sealed,
+      expiresAt,
+      readTokenHash: toB64u(sha256(token)),
+    })
+    const uploaded: UploadedSharedPhoto = {
+      blob: blobId,
+      key: toB64u(key),
+      token: toB64u(token),
+      expiresAt,
+      w: file.width,
+      h: file.height,
+    }
+    store.setState((state) => ({
+      sharedPhotos: { ...state.sharedPhotos, [image.id]: uploaded },
+    }))
+    if (cached && cached.blob !== blobId && cached.expiresAt > now) {
+      await relay.deleteBlobs(ownerAuth(me), [cached.blob]).catch(() => {})
+    }
+    return ref(uploaded)
+  }
+
+  /**
+   * A share's details with its note's formatting and photos. A photo that can't
+   * be uploaded now (offline, photos off on the relay) is left out, and the
+   * next publish sends it once it can.
+   */
+  async function sharedDetails(
+    me: BuddyIdentity,
+    spec: OutgoingShareSpec
+  ): Promise<ShareInvite['details']> {
+    if (!spec.noteDoc) return spec.details
+    const photos: SharedPhoto[] = []
+    if (store.getState().photosAvailable) {
+      const images = new Map(
+        richTextImages(spec.noteDoc).map((image) => [image.id, image])
+      )
+      for (const image of [...images.values()].slice(0, MAX_SHARED_PHOTOS)) {
+        try {
+          const photo = await uploadSharedPhoto(me, image, spec)
+          if (photo) photos.push(photo)
+        } catch (error) {
+          if (isRelayError(error, 'photos_disabled')) {
+            store.setState({ photosAvailable: false })
+            break
+          }
+          // Only an inbox with a buddy can store photos.
+          if (isRelayError(error, 'no_buddies')) break
+          if (isRelayError(error, 'cancelled')) throw error
+        }
       }
     }
+    const shared = new Set(photos.map((photo) => photo.id))
+    const doc = mapRichTextImages(spec.noteDoc, (image) =>
+      shared.has(image.id) ? image : null
+    )
+    return {
+      ...spec.details,
+      noteDoc: encodeSharedNoteDoc(doc),
+      ...(photos.length ? { photos } : {}),
+    }
+  }
+
+  /**
+   * Forgets uploads no current share uses (the photo was taken out, or its Plan
+   * deleted or unshared), and asks the relay to delete the ones that haven't
+   * expired. Best effort: the relay deletes them at `expiresAt` anyway.
+   */
+  async function pruneSharedPhotos(
+    me: BuddyIdentity,
+    specs: OutgoingShareSpec[]
+  ) {
+    const used = new Set(
+      specs.flatMap((spec) =>
+        spec.noteDoc
+          ? richTextImages(spec.noteDoc).map((image) => image.id)
+          : []
+      )
+    )
+    const now = deps.now()
+    const unused = Object.entries(store.getState().sharedPhotos).filter(
+      ([id, photo]) => !used.has(id) || photo.expiresAt <= now
+    )
+    if (!unused.length) return
+    const live = unused
+      .filter(([, photo]) => photo.expiresAt > now)
+      .map(([, photo]) => photo.blob)
+    for (let start = 0; start < live.length; start += 50) {
+      await relay
+        .deleteBlobs(ownerAuth(me), live.slice(start, start + 50))
+        .catch(() => {})
+    }
+    const gone = new Set(unused.map(([id]) => id))
+    store.setState((state) => ({
+      sharedPhotos: Object.fromEntries(
+        Object.entries(state.sharedPhotos).filter(([id]) => !gone.has(id))
+      ),
+    }))
+  }
+
+  /**
+   * Brings buddies' shared photos onto this device: those in invitations still
+   * open and in Plans this User follows. Each is checked against its hash and
+   * opened with its key; one that fails is tried again on the next sync.
+   */
+  async function downloadSharedPhotos(call: RelayCallOptions) {
+    const { hasSharedPhoto, saveSharedPhoto } = deps
+    if (!hasSharedPhoto || !saveSharedPhoto) return
+    const now = deps.now()
+    const wanted = new Map<string, { from: string; photo: SharedPhoto }>()
+    for (const share of Object.values(store.getState().incomingShares)) {
+      if (share.expiresAt <= now) continue
+      if (share.status === 'cancelled' || share.status === 'declined') continue
+      for (const photo of share.details.photos ?? []) {
+        wanted.set(localSharedPhotoId(photo.blob), { from: share.from, photo })
+      }
+    }
+    let saved = 0
+    for (const [localId, { from, photo }] of wanted) {
+      cancelled(call)
+      if (await hasSharedPhoto(localId)) continue
+      try {
+        const sealed = await relay.getBlob(
+          { inboxId: from, blobId: photo.blob, token: photo.token },
+          call
+        )
+        const bytes = openSharedPhoto(sealed, photo)
+        if (!bytes) continue
+        await saveSharedPhoto(localId, bytes)
+        saved++
+      } catch (error) {
+        if (isRelayError(error, 'cancelled')) throw error
+        // Gone, expired, or offline: the next sync tries again.
+      }
+    }
+    if (saved) deps.onSharedPhotosSaved?.()
   }
 
   /**
@@ -1594,22 +1816,27 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }))
 
     for (const spec of specs) {
+      const previous = store.getState().outgoingShares[spec.key]
+      // Once it has happened, a share is history: it goes on, quietly, only to
+      // buddies who already have it, never to anyone new.
+      const ended = spec.endsAt <= now
+      if (ended && !Object.keys(previous?.sent ?? {}).length) continue
       const shareId = shareIdFor(me.inboxId, spec.key)
       const prefix = SHARE_KIND_PREFIX[spec.type]
+      const details = await sharedDetails(me, spec)
       const hash = toB64u(
         sha256(
           json({
             type: spec.type,
-            details: spec.details,
+            details,
             expiresAt: spec.expiresAt,
           })
         )
       )
-      const previous = store.getState().outgoingShares[spec.key]
       const revs = shareRevs(previous, hash, now)
       // Only a change to when or where pushes; a new title or note arrives
       // quietly, sparing the relay's daily push budget for what matters.
-      const { d, s, m, location } = spec.details
+      const { d, s, m, location } = details
       const timing = toB64u(sha256(json({ d, s, m, location })))
       const recipients = new Set(spec.recipients.filter(activeBuddy))
       const sent = { ...previous?.sent }
@@ -1619,14 +1846,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         id: shareId,
         rev: revs.fresh,
         type: spec.type,
-        expiresAt: spec.expiresAt,
-        details: spec.details,
+        ...shareEventExpiry(spec),
+        details,
       })
       for (const inboxId of recipients) {
         if (sent[inboxId] === hash) continue
         const update = sent[inboxId] !== undefined
+        if (ended && !update) continue
         const kind = `${prefix}.${update ? 'update' : 'invite'}`
-        const push = !update || sentTiming[inboxId] !== timing
+        const push = !ended && (!update || sentTiming[inboxId] !== timing)
         const rev = revs.take(inboxId, kind)
         if (await deliver(inboxId, kind, { ...body, rev }, push)) {
           sent[inboxId] = hash
@@ -1638,7 +1866,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const kind = `${prefix}.cancel`
         const rev = revs.take(inboxId, kind)
         const cancel = { v: 1, id: shareId, rev }
-        if (await deliver(inboxId, kind, cancel)) {
+        if (await deliver(inboxId, kind, cancel, !ended)) {
           delete sent[inboxId]
           delete sentTiming[inboxId]
         } else revs.leave(inboxId, kind, rev)
@@ -1646,6 +1874,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       saveSent(spec.key, {
         shareId,
         type: spec.type,
+        endsAt: spec.endsAt,
         expiresAt: spec.expiresAt,
         sent,
         sentTiming,
@@ -1662,10 +1891,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const revs = shareRevs(share, 'deleted', now)
       if (share.expiresAt > now) {
         const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
+        // Deleting one that has happened goes quietly.
+        const ended =
+          (share.endsAt ?? share.expiresAt - LEGACY_SHARE_RETENTION_MS) <= now
         for (const inboxId of Object.keys(sent)) {
           const rev = revs.take(inboxId, kind)
           const cancel = { v: 1, id: share.shareId, rev }
-          if (await deliver(inboxId, kind, cancel)) delete sent[inboxId]
+          if (await deliver(inboxId, kind, cancel, !ended)) delete sent[inboxId]
           else revs.leave(inboxId, kind, rev)
         }
       }
@@ -1677,6 +1909,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           : null
       )
     }
+    await pruneSharedPhotos(me, specs)
     if (failure) throw failure
   }
 
@@ -1731,7 +1964,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   function applyInvite(buddy: Buddy, source: EventSource, invite: ShareInvite) {
-    if (invite.expiresAt <= deps.now()) return
+    const expiresAt = Math.max(invite.expiresAt, invite.keepUntil ?? 0)
+    if (expiresAt <= deps.now()) return
     const key = incomingShareKey(buddy.inboxId, invite.id)
     const existing = store.getState().incomingShares[key]
     if (existing && existing.rev >= invite.rev) return
@@ -1745,7 +1979,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       type: invite.type,
       rev: invite.rev,
       details: invite.details,
-      expiresAt: invite.expiresAt,
+      expiresAt,
       receivedAt: deps.now(),
       status: reopened ? 'pending' : existing.status,
       unsentReplyRev: reopened ? undefined : existing.unsentReplyRev,
@@ -1763,7 +1997,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             )
           : state.askedToJoin,
     }))
-    if (!changed) return
+    // A change to a Plan that has happened isn't news: it's history by then.
+    if (!changed || hasSharedEventEnded(share, deps.now())) return
     // A change to an invitation not yet seen is still news of an invitation.
     const unseenInvite = store
       .getState()
@@ -1804,6 +2039,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
+    if (hasSharedEventEnded(existing, deps.now())) return
     notify({
       ...source,
       kind: 'shareCancel',
@@ -1870,6 +2106,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const share = store.getState().incomingShares[key]
     if (!share || share.status === 'cancelled') return
     const now = deps.now()
+    // Over: it can still be looked at, but not answered.
+    if (hasSharedEventEnded(share, now)) return
     store.setState((state) => ({
       incomingShares: {
         ...state.incomingShares,
@@ -2899,7 +3137,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function dismissNotification(id: string) {
     const state = store.getState()
     const entry = state.notifications.find((n) => n.id === id)
-    if (!entry || awaitsAnswer(entry, state)) return
+    if (!entry || awaitsAnswer(entry, state, deps.now())) return
     if (entry.kind === 'joinRequest' && entry.shareKey) {
       dismissJoinRequest(entry.shareKey)
       return
@@ -3102,6 +3340,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (recentEvents.size > RECENT_EVENTS)
         recentEvents.delete(recentEvents.keys().next().value!)
     }
+    const photosAvailable = response.capabilities?.photos === true
+    if (store.getState().photosAvailable !== photosAvailable)
+      store.setState({ photosAvailable })
     return response
   }
 
@@ -3210,6 +3451,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishCards()
     cancelled(call)
     await publishShares()
+    cancelled(call)
+    await downloadSharedPhotos(call)
   }
 
   /**

@@ -24,7 +24,7 @@ import sendJoinRequestInvite from '@/features/buddies/lib/sendJoinRequestInvite'
 import {
   effectiveShareStatus,
   isOpenFollowUpInvitation,
-  isOpenPlanInvitation,
+  isShownPlanShare,
 } from '@/features/buddies/lib/linkedPlans'
 import { holdsBadge, sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
@@ -205,12 +205,12 @@ export default function useBuddyNotifications(): NotificationItem[] {
           })
 
   /**
-   * A buddy's Plan or Follow-up invitation opens it, answered or not, while
-   * it's open.
+   * A buddy's Plan invitation opens it, answered or not, while it's kept: a
+   * month after the Plan. A Follow-up invitation opens while it's open.
    */
   const invitationTarget = (shareKey: string) => {
     const share = incomingShares[shareKey]
-    if (isOpenPlanInvitation(share, now)) {
+    if (isShownPlanShare(share, now)) {
       const { from, shareId } = share
       return () =>
         navigation.navigate('Plan Details', { share: { from, shareId } })
@@ -317,7 +317,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
     const answered =
       !!share && effectiveShareStatus(share, dayPlans) !== 'pending'
     const needsAnswer =
-      awaitsAnswer(entry, { incomingClaims, incomingShares }) && !answered
+      awaitsAnswer(entry, { incomingClaims, incomingShares }, now) && !answered
     const invite = joinRequest
       ? joinRequestInvite(joinRequest, dayPlans, recurringPlans)
       : undefined

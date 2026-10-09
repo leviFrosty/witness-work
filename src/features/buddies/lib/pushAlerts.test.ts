@@ -55,6 +55,7 @@ const planSpec = (recipients: string[], details = saturday) =>
     type: 'plan',
     details,
     recipients,
+    endsAt: Date.parse('2026-09-27T00:00:00Z'),
     expiresAt: Date.parse('2026-09-28T00:00:00Z'),
   }) satisfies OutgoingShareSpec
 const followUpSpec = (recipients: string[]) =>
@@ -69,6 +70,7 @@ const followUpSpec = (recipients: string[]) =>
       location: { address: '22 Elm Street' },
     },
     recipients,
+    endsAt: Date.parse('2026-09-26T00:00:00Z'),
     expiresAt: Date.parse('2026-09-27T00:00:00Z'),
   }) satisfies OutgoingShareSpec
 

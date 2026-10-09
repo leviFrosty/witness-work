@@ -21,9 +21,25 @@ function addImages(ids: Set<string>, record: NoteFields | undefined) {
   for (const image of richTextImages(rich.doc)) ids.add(image.id)
 }
 
+const extraReferences = new Set<() => Iterable<string>>()
+
+/**
+ * Keeps photos that aren't in any record yet, e.g. those in a buddy's open
+ * invitation. Returns a function that stops.
+ */
+export function addNoteImageReferences(
+  provider: () => Iterable<string>
+): () => void {
+  extraReferences.add(provider)
+  return () => extraReferences.delete(provider)
+}
+
 /** Photo ids every note on this device refers to. */
 export function referencedNoteImageIds(): Set<string> {
   const ids = new Set<string>()
+  for (const provider of extraReferences) {
+    for (const id of provider()) ids.add(id)
+  }
   for (const visit of useConversations.getState().conversations) {
     addImages(ids, visit)
   }

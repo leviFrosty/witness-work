@@ -30,6 +30,7 @@ import {
   type BuddyNotification,
 } from '@/features/buddies/lib/state'
 import type { DayPlan } from '@/types/timeEntry'
+import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { noteUserAction } from '@/lib/userAction'
@@ -95,6 +96,8 @@ export default function BuddyNotificationRow({
   )
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const status = share ? effectiveShareStatus(share, dayPlans) : undefined
+  // A Plan or Follow-up that has happened can't be answered any more.
+  const ended = !!share && hasSharedEventEnded(share, Date.now())
   const replyDelivery = useReplyDelivery(share ? entry.shareKey : undefined)
 
   const run = async (action: () => Promise<void>) => {
@@ -164,7 +167,10 @@ export default function BuddyNotificationRow({
     )
 
   const canAnswer =
-    !!share && status !== 'cancelled' && (status === 'pending' || changing)
+    !!share &&
+    !ended &&
+    status !== 'cancelled' &&
+    (status === 'pending' || changing)
 
   const title = notificationHeadline({
     ...entry,
@@ -298,15 +304,17 @@ export default function BuddyNotificationRow({
             )}
             {replyDelivery ? ` · ${replyDelivery}` : null}
           </Text>
-          <Button
-            onPress={() => {
-              setChanging(true)
-            }}
-          >
-            <Text style={{ color: theme.colors.accent }}>
-              {i18n.t('buddies_changeAnswer')}
-            </Text>
-          </Button>
+          {ended ? null : (
+            <Button
+              onPress={() => {
+                setChanging(true)
+              }}
+            >
+              <Text style={{ color: theme.colors.accent }}>
+                {i18n.t('buddies_changeAnswer')}
+              </Text>
+            </Button>
+          )}
         </XView>
       ) : null}
 

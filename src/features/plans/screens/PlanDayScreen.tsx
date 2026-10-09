@@ -1092,6 +1092,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     (buddy) => buddy.status === 'active'
   )
   const buddyRequests = useBuddies((state) => state.incomingClaims.length)
+  // A Plan that has happened is history: nobody new is invited to it.
+  const planHasEnded =
+    date.getTime() + (hours * 60 + minutes) * 60 * 1000 <= Date.now()
   const invitedBuddyNames = activeBuddies
     .filter((buddy) => invitedBuddies.includes(buddy.inboxId))
     .map(buddyDisplayName)
@@ -1108,7 +1111,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   // Before any buddy is confirmed, the row opens Buddies to set it up; not
   // while Buddies is turned off, which couldn't pair anyone.
   const buddiesRow =
-    !oneTime || linkedShare
+    !oneTime || linkedShare || planHasEnded
       ? undefined
       : activeBuddies.length && buddiesAvailability !== 'hidden'
         ? {

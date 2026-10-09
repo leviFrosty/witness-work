@@ -1,3 +1,4 @@
+import type { RichTextDoc } from '@/types/richText'
 import type {
   BuddyAvatar,
   BuddyCardDay,
@@ -12,6 +13,7 @@ import type {
 import type { BadgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import type { SharedBadge } from '@/types/badges'
 import type { BuddyShareRef } from '@/types/timeEntry'
+import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 
 /** Active buddies plus pending invites never exceed this (relay enforces too). */
 export const MAX_BUDDIES = 5
@@ -198,15 +200,43 @@ export type OutgoingShareSpec = {
   key: string
   type: ShareType
   details: ShareDetails
+  /**
+   * Plans only: the note with its formatting, photos as this device's note
+   * photo ids. Sending uploads the photos and puts the doc in `details`.
+   */
+  noteDoc?: RichTextDoc
   /** Buddy inbox ids. */
   recipients: string[]
+  /**
+   * When the Plan ends or the Follow-up happens. After it, the share is
+   * history: buddies who have it get changes quietly, and nobody new gets it.
+   */
+  endsAt: number
+  /** When both phones wipe it. */
   expiresAt: number
+}
+
+/**
+ * One of this User's note photos as uploaded for buddies: an encrypted blob
+ * under this User's inbox (`blob`), and what reads it. One upload serves every
+ * share of the photo until `expiresAt`.
+ */
+export type UploadedSharedPhoto = {
+  blob: string
+  key: string
+  token: string
+  /** When the relay deletes it. */
+  expiresAt: number
+  w: number
+  h: number
 }
 
 /** What this device has sent for one share. */
 export type OutgoingShare = {
   shareId: string
   type: ShareType
+  /** As `OutgoingShareSpec.endsAt`; missing from shares sent before it was. */
+  endsAt?: number
   expiresAt: number
   /** Recipient inboxId → content hash last delivered to them. */
   sent: Record<string, string>
@@ -500,6 +530,10 @@ export type BuddiesState = {
   publishedCardHashes: Record<string, string>
   /** Shares this device has sent, by spec key. */
   outgoingShares: Record<string, OutgoingShare>
+  /** This User's note photos uploaded for shares, by note photo id. */
+  sharedPhotos: Record<string, UploadedSharedPhoto>
+  /** The relay takes shared photos (its last sync said so). */
+  photosAvailable: boolean
   /** Buddies' replies to this User's shares: shareId → inboxId → reply. */
   shareReplies: Record<string, Record<string, ReceivedReply>>
   /** Invitations from buddies, by `incomingShareKey`. */
@@ -578,6 +612,8 @@ export const initialBuddiesState: BuddiesState = {
   cards: {},
   publishedCardHashes: {},
   outgoingShares: {},
+  sharedPhotos: {},
+  photosAvailable: false,
   shareReplies: {},
   incomingShares: {},
   joinRequests: {},
@@ -674,7 +710,8 @@ export function withoutExpired(
     ),
     notifications: state.notifications.filter(
       (n) =>
-        (recent(n.at) || awaitsAnswer(n, { incomingClaims, incomingShares })) &&
+        (recent(n.at) ||
+          awaitsAnswer(n, { incomingClaims, incomingShares }, now)) &&
         (n.kind === 'joinRequest'
           ? !!n.shareKey &&
             n.shareKey in joinRequests &&
@@ -692,17 +729,20 @@ type AnswerState = Pick<BuddiesState, 'incomingClaims' | 'incomingShares'>
 
 /**
  * A request still waiting on this User: an open claim or an invitation not yet
- * answered. Answering is what clears it, so it can't be dismissed, evicted, or
- * aged out of the queue.
+ * answered whose Plan or Follow-up hasn't happened. Answering is what clears
+ * it, so it can't be dismissed, evicted, or aged out of the queue.
  */
 export function awaitsAnswer(
   entry: BuddyNotification,
-  state: AnswerState
+  state: AnswerState,
+  now: number
 ): boolean {
   if (entry.kind === 'claim')
     return state.incomingClaims.some((c) => c.inviteId === entry.inviteId)
-  if (entry.kind === 'shareInvite' || entry.kind === 'shareUpdate')
-    return state.incomingShares[entry.shareKey ?? '']?.status === 'pending'
+  if (entry.kind === 'shareInvite' || entry.kind === 'shareUpdate') {
+    const share = state.incomingShares[entry.shareKey ?? '']
+    return share?.status === 'pending' && !hasSharedEventEnded(share, now)
+  }
   return false
 }
 
@@ -712,14 +752,17 @@ export function awaitsAnswer(
  */
 export function cappedQueue(
   notifications: BuddyNotification[],
-  state: AnswerState
+  state: AnswerState,
+  now: number
 ): BuddyNotification[] {
   if (notifications.length <= MAX_NOTIFICATIONS) return notifications
   const room =
     MAX_NOTIFICATIONS -
-    notifications.filter((n) => awaitsAnswer(n, state)).length
+    notifications.filter((n) => awaitsAnswer(n, state, now)).length
   let kept = 0
-  return notifications.filter((n) => awaitsAnswer(n, state) || kept++ < room)
+  return notifications.filter(
+    (n) => awaitsAnswer(n, state, now) || kept++ < room
+  )
 }
 
 /** Queue id for an invitation listed again after its entry was lost. */
@@ -743,6 +786,7 @@ export function withPendingInvitesQueued(
   const missing = Object.entries(state.incomingShares).flatMap(
     ([key, share]): BuddyNotification[] => {
       if (share.status !== 'pending' || share.expiresAt <= now) return []
+      if (hasSharedEventEnded(share, now)) return []
       if (listed.has(key)) return []
       const buddy = state.buddies.find((b) => b.inboxId === share.from)
       if (!buddy) return []

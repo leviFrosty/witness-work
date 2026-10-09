@@ -5,8 +5,9 @@ import type { JoinRequestInvite } from '@/features/buddies/lib/joinRequests'
 
 /**
  * Invite answers a request to join in place: the buddy is added to the Plan,
- * which shares it with them like saving it from the Plan's screen would.
- * Returns the id of the one-time Plan that now carries the invitation.
+ * which shares it with them like saving it from the Plan's screen would. A
+ * recurring instance becomes a one-time Plan in its place. Returns the id of
+ * the one-time Plan that now carries the invitation.
  */
 export default function sendJoinRequestInvite(
   invite: Extract<JoinRequestInvite, { kind: 'invite' }>
@@ -22,5 +23,10 @@ export default function sendJoinRequestInvite(
     id,
     notifyMe: usePreferences.getState().planAlwaysNotify,
   })
+  if (invite.skipRecurringPlanId)
+    report.deleteSingleEventFromRecurringPlan(
+      invite.skipRecurringPlanId,
+      invite.add.date
+    )
   return id
 }

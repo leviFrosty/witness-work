@@ -6,9 +6,9 @@ import { tracksHours } from '@/lib/publisherCapabilities'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import {
   RecurringPlan,
-  getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   getPlansIntersectingDay,
+  plannedMinutesForDay,
 } from '@/lib/recurrence'
 import { formatMinutesCompact } from '@/lib/minutes'
 import i18n from '@/lib/locales'
@@ -238,15 +238,11 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       args.recurringPlans
     )
 
-    const highestRecurringEffectiveMinutes = recurringPlansForDay
-      .map((plan) => getEffectiveMinutesForRecurringPlan(plan, dDate))
-      .sort((a, b) => b - a)[0]
-
-    // Day Plans stack additively and take the day; recurring counts only when
-    // no Day Plan exists.
-    const plannedMinutes = dayPlansForDay.length
-      ? dayPlansForDay.reduce((acc, p) => acc + p.minutes, 0)
-      : highestRecurringEffectiveMinutes || 0
+    const plannedMinutes = plannedMinutesForDay(
+      dDate,
+      dayPlansForDay,
+      recurringPlansForDay
+    )
     const hasPlan = dayPlansForDay.length > 0 || recurringPlansForDay.length > 0
 
     const recurringHasNote = recurringPlansForDay.some(

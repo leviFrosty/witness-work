@@ -199,6 +199,7 @@ export const FAQS: FAQEntry[] = [
     category: 'plans',
     related: [105],
   },
+  { id: 'multiplePlansOneDay', category: 'plans', related: [547] },
   { id: 'planFirstMonth', category: 'plans' },
   { id: 'logTimeReminders', category: 'plans', related: [203] },
   { id: 'streaks', category: 'streaks' },

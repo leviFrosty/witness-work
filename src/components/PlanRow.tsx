@@ -39,13 +39,9 @@ export const getPlanItemStartTime = (item: PlanListItem): number => {
   return getEffectiveStartTimeInMinutesForRecurringPlan(item.plan, item.date)
 }
 
-const PlanKindIcon = (props: {
-  recurring: boolean
-  countingStatus: 'counted' | 'notCounted'
-}) => {
+const PlanKindIcon = (props: { recurring: boolean }) => {
   const theme = useTheme()
-  const emphasizedOneTime =
-    !props.recurring && props.countingStatus === 'counted'
+  const emphasizedOneTime = !props.recurring
 
   return (
     <View
@@ -124,7 +120,6 @@ const PlanRow = (props: {
   dateDisplay?: 'full' | 'monthList'
   contextMonth?: number
   contextYear?: number
-  countingStatus?: 'counted' | 'notCounted'
   /** Extra lines under the details, e.g. who the Plan is with. */
   footer?: ReactNode
   /**
@@ -136,8 +131,6 @@ const PlanRow = (props: {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const categories = useCategories((state) => state.categories)
-  const countingStatus = props.countingStatus ?? 'counted'
-  const isNotCounted = countingStatus === 'notCounted'
 
   const isRecurring = props.item.type === 'recurring'
   const plan = props.item.plan
@@ -217,10 +210,6 @@ const PlanRow = (props: {
           testID={`plan-row-${plan.id}`}
           style={{
             ...cardStyle,
-            backgroundColor: isNotCounted
-              ? theme.colors.backgroundLighter
-              : cardStyle.backgroundColor,
-            shadowOpacity: isNotCounted ? 0 : cardStyle.shadowOpacity,
             paddingVertical: 12,
             paddingHorizontal: 14,
           }}
@@ -228,11 +217,8 @@ const PlanRow = (props: {
           <View
             style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
           >
-            <PlanKindIcon
-              recurring={isRecurring}
-              countingStatus={countingStatus}
-            />
-            <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
+            <PlanKindIcon recurring={isRecurring} />
+            <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 8 }}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -256,10 +242,10 @@ const PlanRow = (props: {
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
-                    flexShrink: 1,
                     maxWidth: '45%',
                     textAlign: 'right',
                   }}
+                  numberOfLines={1}
                 >
                   {formattedDuration.formatted}
                 </Text>
@@ -294,11 +280,6 @@ const PlanRow = (props: {
               {props.footer}
 
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {isNotCounted && (
-                  <Badge size='xs' color={theme.colors.background}>
-                    {i18n.t('notCounted')}
-                  </Badge>
-                )}
                 {hasCategory && <Badge size='xs'>{categoryLabel}</Badge>}
                 {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
               </View>

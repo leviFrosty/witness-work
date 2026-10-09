@@ -1,7 +1,5 @@
 import {
   CalendarDays as CalendarDaysIcon,
-  ChevronDown as ChevronDownIcon,
-  ChevronUp as ChevronUpIcon,
   Clock as ClockIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
@@ -21,11 +19,14 @@ import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { ReactNode, useMemo, useState } from 'react'
+import { ReactNode, useMemo } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
 import { useFormattedMinutes } from '@/lib/minutes'
-import { PlannedDayContribution, resolvePlannedDay } from '@/lib/recurrence'
+import {
+  PlannedDayContribution,
+  resolvePlannedContributionsForDay,
+} from '@/lib/recurrence'
 import PlanRow, { getPlanItemStartTime } from '@/components/PlanRow'
 import type { PlanListItem } from '@/types/timeEntry'
 import Circle from '@/components/ui/Circle'
@@ -106,7 +107,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   // (no Progress tab, and the report only says whether they shared).
   const onAddTime = showsTimeEntry ? onAddTimeProp : undefined
   const { dayPlans, recurringPlans } = useServiceReport()
-  const [notCountedExpanded, setNotCountedExpanded] = useState(false)
 
   const thisDaysReports = useMemo(
     () => serviceReports?.filter((r) => isStoredDateOnLocalDay(r.date, date)),
@@ -127,23 +127,17 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     return dayPlans.filter((dp) => isStoredDateOnLocalDay(dp.date, date))
   }, [dayPlans, date])
 
-  const planResolution = resolvePlannedDay(
+  const contributions = resolvePlannedContributionsForDay(
     date,
     dayPlansForToday,
     recurringPlans
   )
-  const countedPlanItems = planResolution.counted
+  const planItems = contributions
     .map((contribution) => contributionToPlanListItem(contribution, date))
     .sort((a, b) => getPlanItemStartTime(a) - getPlanItemStartTime(b))
-  const notCountedPlanItems = planResolution.notCounted
-    .map((contribution) => ({
-      item: contributionToPlanListItem(contribution, date),
-      reason: contribution.reason,
-    }))
-    .sort((a, b) => getPlanItemStartTime(a.item) - getPlanItemStartTime(b.item))
 
-  const goalMinutes = planResolution.counted.length
-    ? planResolution.counted.reduce(
+  const goalMinutes = contributions.length
+    ? contributions.reduce(
         (total, contribution) => total + contribution.minutes,
         0
       )
@@ -153,7 +147,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const goalDisplay = useFormattedMinutes(goalMinutes ?? 0)
 
   const hasTimeReports = !!thisDaysReports?.length
-  const hasPlans = countedPlanItems.length > 0 || notCountedPlanItems.length > 0
+  const hasPlans = planItems.length > 0
   const wentInService = !!thisDaysReports?.some(isCountableEntry)
   const isToday = moment().isSame(date, 'day')
   const dateInPast = moment(date).isSameOrBefore(moment(), 'day')
@@ -315,7 +309,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
         <View style={{ flex: 1, minHeight: 10 }}>
           <FlashList
             scrollEnabled={false}
-            data={countedPlanItems}
+            data={planItems}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             renderItem={({ item }) => (
               <PlanRow
@@ -350,89 +344,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               />
             }
           />
-
-          {notCountedPlanItems.length > 0 && (
-            <View style={{ gap: 10, marginTop: 10 }}>
-              <Button
-                noTransform
-                variant='outline'
-                onPress={() => setNotCountedExpanded((expanded) => !expanded)}
-                accessibilityRole='button'
-                accessibilityState={{ expanded: notCountedExpanded }}
-                accessibilityLabel={i18n.t('notCountedToday', {
-                  count: notCountedPlanItems.length,
-                })}
-                style={{
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  borderRadius: theme.numbers.borderRadiusLg,
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('notCountedToday', {
-                    count: notCountedPlanItems.length,
-                  })}
-                </Text>
-                <LucideIcon
-                  icon={notCountedExpanded ? ChevronUpIcon : ChevronDownIcon}
-                  size={16}
-                  color={theme.colors.textAlt}
-                />
-              </Button>
-
-              {notCountedExpanded && (
-                <View style={{ gap: 10 }}>
-                  {notCountedPlanItems.some(
-                    ({ reason }) => reason === 'replacedByDayPlans'
-                  ) && (
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('sm'),
-                        lineHeight: theme.fontSize('sm') * 1.4,
-                      }}
-                    >
-                      {i18n.t('dayPlansReplaceRecurringPlans_description')}
-                    </Text>
-                  )}
-                  {notCountedPlanItems.some(
-                    ({ reason }) => reason === 'lowerRecurringPriority'
-                  ) && (
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('sm'),
-                        lineHeight: theme.fontSize('sm') * 1.4,
-                      }}
-                    >
-                      {i18n.t('highestRecurringPlanCounts_description')}
-                    </Text>
-                  )}
-
-                  {notCountedPlanItems.map(({ item }) => (
-                    <PlanRow
-                      key={`${item.type}-${item.plan.id}`}
-                      item={item}
-                      countingStatus='notCounted'
-                      onNavigate={onNavigate}
-                      footer={
-                        item.type === 'day'
-                          ? renderDayPlanFooter?.(item.plan)
-                          : undefined
-                      }
-                    />
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
         </View>
       </View>
     </View>

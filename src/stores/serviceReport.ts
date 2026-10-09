@@ -25,6 +25,7 @@ import {
 } from '@/lib/normalizeDate'
 import { PersistStorage } from '@/stores/mmkv'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
+import { skipRecurringInstancesOnDayPlanDates } from '@/lib/recurrence'
 
 const initialState = {
   serviceReports: {} as TimeEntriesByYear,
@@ -126,6 +127,10 @@ export const migrateServiceReports = (
  *   in a boot-time runner (`migrateLdcToCategory` in `src/lib/categories.ts`)
  *   for the same multi-store coordination reason. Same no-op pattern — the
  *   version bump tags the on-disk shape as post-collapse.
+ * - V4 → v5: Plans on one day now add up, where a Day Plan used to hide that
+ *   day's recurring instances. Skips each of those instances
+ *   (`skipRecurringInstancesOnDayPlanDates`) so every forecast stays as it
+ *   was.
  *
  * Additive fields need no bump: persist's default shallow merge fills any key
  * missing from the saved state from `initialState`, which is how existing
@@ -171,6 +176,16 @@ export const migrateServiceReportPersistedState = (
   // `src/app/App.tsx` (`migrateLdcToCategory`) coordinates the actual change
   // because it needs to write across the categories + service reports +
   // preferences stores in one shot.
+  if (version < 5) {
+    next = {
+      ...next,
+      recurringPlans: skipRecurringInstancesOnDayPlanDates(
+        next.dayPlans ?? [],
+        next.recurringPlans ?? [],
+        syncTimestamp
+      ),
+    }
+  }
   return next
 }
 
@@ -699,7 +714,7 @@ export const useServiceReport = create(
     {
       name: 'serviceReports',
       storage: createJSONStorage(() => PersistStorage),
-      version: 4,
+      version: 5,
       migrate: (persistedState, version) =>
         migrateServiceReportPersistedState(persistedState, version),
     }

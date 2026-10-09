@@ -12,7 +12,7 @@ import i18n from '@/lib/locales'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import {
   getPlansIntersectingDay,
-  getEffectiveMinutesForRecurringPlan,
+  plannedMinutesForDay,
   type RecurringPlan,
 } from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
@@ -271,24 +271,15 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       const dayPlansForDay = dayPlans.filter((dp) =>
         isStoredDateOnLocalDay(dp.date, day)
       )
-      const dayPlanMinutes = dayPlansForDay.reduce(
-        (acc, dp) => acc + dp.minutes,
-        0
-      )
       const recurringPlansForDay = getPlansIntersectingDay(
         dayDate,
         recurringPlans
       )
-      const highestRecurringPlanMinutes = recurringPlansForDay.reduce(
-        (max, plan) =>
-          Math.max(max, getEffectiveMinutesForRecurringPlan(plan, dayDate)),
-        0
+      const goalMinutes = plannedMinutesForDay(
+        dayDate,
+        dayPlansForDay,
+        recurringPlansForDay
       )
-      // Day Plans stack additively and take the day; recurring counts only
-      // when no Day Plan exists.
-      const goalMinutes = dayPlansForDay.length
-        ? dayPlanMinutes
-        : highestRecurringPlanMinutes || 0
       const hasPlan = goalMinutes > 0
 
       let planDotColor: string | null = null

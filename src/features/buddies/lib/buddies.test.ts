@@ -209,7 +209,7 @@ describe('buildBuddyCardDays', () => {
     expect(days).toEqual([{ d: '2026-09-25', p: [{ s: 540, m: 120 }] }])
   })
 
-  it('lets a Day Plan replace the recurring instance on its day', () => {
+  it('shares a Day Plan beside the recurring instance on its day', () => {
     const days = buildBuddyCardDays(
       [dayPlan('2026-09-30', 90)],
       [weeklyPlan('2026-09-23', 180)],
@@ -221,7 +221,7 @@ describe('buildBuddyCardDays', () => {
       '2026-09-30',
       '2026-10-07',
     ])
-    expect(days[1].p).toEqual([{ m: 90 }])
+    expect(days[1].p).toEqual([{ m: 90 }, { m: 180 }])
     expect(days[0].p).toEqual([{ m: 180 }])
   })
 })

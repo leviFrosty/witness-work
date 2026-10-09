@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import type { ShareReply, ShareType } from '@/features/buddies/lib/schemas'
 import { replyHoldMs } from '@/features/buddies/lib/state'
+import offerReplaceOverlappingPlans from '@/features/buddies/lib/offerReplaceOverlappingPlans'
 import {
   type ShareAnswerSource,
   trackShareAnswer,
@@ -12,7 +13,8 @@ import { noteUserAction } from '@/lib/userAction'
  * Answers a buddy's invitation. The answer is saved at once; Going is sent
  * right away, Can't Make It after a short wait so it can still change
  * (`replyHoldMs`, counted down by `useReplyDelivery`). One that can't be sent
- * goes out on a later sync.
+ * goes out on a later sync. Going then offers to replace the User's own Plans
+ * at that time.
  */
 export default function useAnswerShare(source: ShareAnswerSource) {
   const [busy, setBusy] = useState(false)
@@ -29,6 +31,7 @@ export default function useAnswerShare(source: ShareAnswerSource) {
       await buddiesEngine.replyToShare(shareKey, reply, {
         holdMs: replyHoldMs(reply),
       })
+      if (reply === 'going') offerReplaceOverlappingPlans(shareKey)
     } finally {
       setBusy(false)
     }

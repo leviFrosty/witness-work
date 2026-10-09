@@ -131,3 +131,92 @@ describe('persist migrate v1 → v2', () => {
     expect(JSON.stringify(v2Again)).toEqual(JSON.stringify(v2State))
   })
 })
+
+describe('persist migrate v4 → v5', () => {
+  // Plans used to resolve with a Day Plan hiding every recurring instance on
+  // its date. Plans now add up, so the migration skips those instances to keep
+  // every forecast as it was. Persisted Dates arrive as JSON strings.
+  const persisted = (state: object) => JSON.parse(JSON.stringify(state))
+  const at = (day: string) => new Date(`${day}T12:00:00.000Z`)
+  const weekly = (id: string, start: string, extra?: Partial<RecurringPlan>) =>
+    ({
+      id,
+      startDate: at(start),
+      minutes: 120,
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+      updatedAt: 1,
+      ...extra,
+    }) as RecurringPlan
+
+  const run = () => {
+    const migrated = migrateServiceReportPersistedState(
+      persisted({
+        serviceReports: {},
+        dayPlans: [
+          { id: 'cart', date: at('2026-10-09'), minutes: 60 },
+          { id: 'day-off', date: at('2026-10-16'), minutes: 0 },
+          { id: 'thursday', date: at('2026-10-15'), minutes: 60 },
+        ],
+        recurringPlans: [
+          weekly('morning', '2026-10-02'),
+          weekly('study', '2026-10-02', {
+            deletedDates: [at('2026-10-09')],
+          }),
+          weekly('monday', '2026-10-05'),
+        ],
+      }),
+      4
+    )
+    const byId = (id: string) =>
+      migrated.recurringPlans.find((plan: RecurringPlan) => plan.id === id)
+    return { migrated, byId }
+  }
+
+  it('skips each recurring instance a Day Plan hid', () => {
+    const { byId } = run()
+    expect(
+      byId('morning').deletedDates.map((date: Date) =>
+        momentStoredDate(date).format('YYYY-MM-DD')
+      )
+    ).toEqual(['2026-10-09', '2026-10-16'])
+    expect(byId('morning').updatedAt).toBeGreaterThan(1)
+  })
+
+  it("doesn't skip an instance twice or touch Plans no Day Plan hid", () => {
+    const { byId } = run()
+    expect(
+      byId('study').deletedDates.map((date: Date | string) =>
+        momentStoredDate(date).format('YYYY-MM-DD')
+      )
+    ).toEqual(['2026-10-09', '2026-10-16'])
+    expect(byId('monday').deletedDates).toBeUndefined()
+    expect(byId('monday').updatedAt).toBe(1)
+  })
+
+  it('reads stored days the same far east of UTC', () => {
+    setTZ('Pacific/Kiritimati')
+    try {
+      const { byId } = run()
+      expect(
+        byId('morning').deletedDates.map((date: Date) =>
+          momentStoredDate(date).format('YYYY-MM-DD')
+        )
+      ).toEqual(['2026-10-09', '2026-10-16'])
+    } finally {
+      setTZ('America/Los_Angeles')
+    }
+  })
+
+  it('leaves a v5 state alone', () => {
+    const state = persisted({
+      serviceReports: {},
+      dayPlans: [{ id: 'cart', date: at('2026-10-09'), minutes: 60 }],
+      recurringPlans: [weekly('morning', '2026-10-02')],
+    })
+    expect(migrateServiceReportPersistedState(state, 5)).toEqual(state)
+  })
+})

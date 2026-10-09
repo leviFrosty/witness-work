@@ -194,9 +194,9 @@ describe('computeProjectedTotal', () => {
     expect(result.plannedMinutes).toBe(180)
   })
 
-  it('day plan supersedes a recurring instance on the same day', () => {
+  it('day plan adds to a recurring instance on the same day', () => {
     // Recurring weekly Wed at 90 min, day plan 120 min on 2026-05-20 (a Wed).
-    // Future Wednesdays from 2026-05-15: 20 (day plan wins → 120), 27 (recurring → 90).
+    // Future Wednesdays from 2026-05-15: 20 (both → 120 + 90), 27 (recurring → 90).
     const result = computeProjectedTotal({
       scope: { kind: 'month', year: 2026, month: 4 },
       today: normalizeDateForStorage('2026-05-15'),
@@ -208,7 +208,7 @@ describe('computeProjectedTotal', () => {
       creditCapMinutes: null,
     })
 
-    expect(result.plannedMinutes).toBe(120 + 90)
+    expect(result.plannedMinutes).toBe(120 + 90 + 90)
   })
 
   describe('mirror cap semantics (ADR 0005)', () => {
@@ -350,11 +350,11 @@ describe('computeProjectedTotal', () => {
       expect(result.projectedMinutes).toBe(60 * 60)
     })
 
-    it("a Day Plan's Type wins the day over a recurring instance", () => {
-      // Wed 2026-05-20: recurring 3h credit vs Day Plan 2h standard — the Day
-      // Plan wins the day, so its 2h count as standard on top of 55h logged
-      // standard (57h). The recurring instance on the 27th still forecasts
-      // credit, which the cap squeezes to nothing.
+    it('a Day Plan and a recurring instance on one day each keep their own Type', () => {
+      // Wed 2026-05-20: recurring 3h credit plus Day Plan 2h standard. The Day
+      // Plan's 2h count as standard on top of 55h logged standard (57h); the
+      // recurring instances on the 20th and 27th forecast credit, which the cap
+      // squeezes to nothing.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -378,16 +378,15 @@ describe('computeProjectedTotal', () => {
       expect(result.projectedMinutes).toBe(57 * 60)
     })
 
-    it('stacks multiple Day Plans on one day additively, each with its own Type', () => {
-      // Wed 2026-05-20 holds two Day Plans: 1h standard + 3h credit. Together
-      // they take the day (the 3h-credit recurring instance that also lands on
-      // the 20th is excluded), and each contributes under its own Type:
-      // standard 51h + 1h = 52h, credit 3h fits fully under the 55h cap.
+    it('stacks Day Plans and a recurring instance on one day additively, each with its own Type', () => {
+      // Wed 2026-05-20 holds two Day Plans (1h standard + 3h credit) and a 3h
+      // credit recurring instance. Each contributes under its own Type:
+      // standard 45h + 1h = 46h, credit 3h + 3h = 6h fits fully under the cap.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
         goalMinutes: 50 * 60,
-        loggedMonths: [logged(2026, 4, 51 * 60)],
+        loggedMonths: [logged(2026, 4, 45 * 60)],
         dayPlans: [
           {
             ...dayPlan('2026-05-20', 1 * 60, STANDARD_CATEGORY.id),
@@ -411,15 +410,14 @@ describe('computeProjectedTotal', () => {
         creditCapMinutes: 55 * 60,
       })
 
-      expect(result.plannedMinutes).toBe(4 * 60)
-      expect(result.projectedMinutes).toBe(55 * 60)
+      expect(result.plannedMinutes).toBe(7 * 60)
+      expect(result.projectedMinutes).toBe(52 * 60)
     })
 
-    it('breaks recurring minute-ties deterministically — credit beats standard regardless of array order', () => {
-      // Two recurring instances tie at 2h on Wed 2026-05-20. The conservative
-      // forecast (credit, which the cap can squeeze) must win on BOTH array
-      // orders, so two devices holding the plans in different orders after a
-      // sync merge project the same number.
+    it('projects the same total regardless of recurring Plan order', () => {
+      // Two recurring instances of 2h on Wed 2026-05-20, one credit and one
+      // standard. Both count, on BOTH array orders, so two devices holding the
+      // plans in different orders after a sync merge project the same number.
       const credit = weeklyRecurring(
         'rec-credit',
         '2026-05-20',
@@ -448,17 +446,17 @@ describe('computeProjectedTotal', () => {
 
       const a = run([credit, standard])
       const b = run([standard, credit])
-      // 55h logged standard is already at the cap, so a credit-typed day adds
-      // nothing — the tie must NOT let the standard instance through.
-      expect(a.projectedMinutes).toBe(55 * 60)
+      // 55h logged standard is already at the cap, so the credit instance adds
+      // nothing and the standard one adds its 2h.
+      expect(a.projectedMinutes).toBe(57 * 60)
       expect(b.projectedMinutes).toBe(a.projectedMinutes)
       expect(b.plannedMinutes).toBe(a.plannedMinutes)
     })
 
-    it("the highest-minutes recurring instance's Type tags the whole day", () => {
-      // Two recurring instances on Wed 2026-05-20 only: 3h credit beats 2h
-      // standard, so the day forecasts 3h credit — of which 1h fits under the
-      // cap on top of 54h logged standard.
+    it('every recurring instance on a day counts under its own Type', () => {
+      // Two recurring instances on Wed 2026-05-20 only: 3h credit and 2h
+      // standard. Standard reaches 54h + 2h = 56h, past the cap, so the credit
+      // instance adds nothing.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -485,8 +483,8 @@ describe('computeProjectedTotal', () => {
         creditCapMinutes: 55 * 60,
       })
 
-      expect(result.plannedMinutes).toBe(1 * 60)
-      expect(result.projectedMinutes).toBe(55 * 60)
+      expect(result.plannedMinutes).toBe(2 * 60)
+      expect(result.projectedMinutes).toBe(56 * 60)
     })
   })
 

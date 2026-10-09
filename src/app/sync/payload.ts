@@ -108,6 +108,13 @@ export type SyncPayload = {
      */
     deletedDayPlans?: { id: string; deletedAt: number }[]
     deletedRecurringPlans?: { id: string; deletedAt: number }[]
+    /**
+     * `true` when written by a build where every Plan on a day adds up. Absent
+     * on payloads from older builds, where a Day Plan hid that day's recurring
+     * instances; `parsePayload` skips those instances on read. Additive so
+     * older builds keep accepting our payloads. See `payloadAdditivePlans.ts`.
+     */
+    additivePlans?: boolean
   }
   /**
    * User-defined Category records (the first-class shape that replaces the
@@ -245,6 +252,7 @@ export function buildPayload(args: {
       deletedServiceReports: serviceReports.deletedServiceReports,
       deletedDayPlans: serviceReports.deletedDayPlans,
       deletedRecurringPlans: serviceReports.deletedRecurringPlans,
+      additivePlans: true,
     },
     categoryStore: {
       categories: categories.categories,
@@ -271,6 +279,7 @@ export function buildPayload(args: {
 
 import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames'
 import { normalizeLegacyFollowUps } from '@/app/sync/payloadFollowUps'
+import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
 
 /**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
@@ -278,11 +287,13 @@ import { normalizeLegacyFollowUps } from '@/app/sync/payloadFollowUps'
  * "leave local state alone, surface a sync error in settings."
  *
  * Also translates legacy preference field names from older app versions so the
- * merge step sees the canonical schema, and strips placeholder follow-ups from
- * payloads written before the visit form's Follow Up switch existed. The wire
- * payload version (`PAYLOAD_VERSION`) is intentionally NOT bumped for either —
+ * merge step sees the canonical schema, strips placeholder follow-ups from
+ * payloads written before the visit form's Follow Up switch existed, and skips
+ * recurring instances that older builds hid behind a Day Plan. The wire payload
+ * version (`PAYLOAD_VERSION`) is intentionally NOT bumped for either —
  * receivers normalize on read. See `payloadFieldRenames.ts` for the rename
- * table and `payloadFollowUps.ts` for the follow-up rule.
+ * table, `payloadFollowUps.ts` for the follow-up rule, and
+ * `payloadAdditivePlans.ts` for the Plan rule.
  */
 export function parsePayload(json: string): SyncPayload | null {
   let data: unknown
@@ -298,6 +309,7 @@ export function parsePayload(json: string): SyncPayload | null {
     const d = result.data
     normalizeLegacyPayloadFieldNames(d)
     normalizeLegacyFollowUps(d)
+    normalizeLegacyPlans(d)
     dropUnreadableSavedViews(d.preferencesStore)
     if (
       !validSettingValues(d.preferencesStore.values, PREFERENCE_DEFAULTS) ||

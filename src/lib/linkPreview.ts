@@ -14,7 +14,10 @@ export type TextSegment =
 const FETCH_TIMEOUT_MS = 6000
 const MAX_BODY_BYTES = 512 * 1024
 const SUCCESS_TTL_MS = 7 * 24 * 60 * 60 * 1000
+/** A page that answered without usable metadata won't grow some soon. */
 const FAILURE_TTL_MS = 24 * 60 * 60 * 1000
+/** A 408, 429 or 5xx is the site having a moment; check back shortly. */
+const RETRYABLE_FAILURE_TTL_MS = 5 * 60 * 1000
 const CACHE_KEY_PREFIX = 'linkPreview:v1:'
 
 const MAX_TITLE_LENGTH = 200
@@ -273,7 +276,25 @@ export function parseOpenGraph(html: string, pageUrl: string): LinkPreview {
 // Fetching + cache
 // ---------------------------------------------------------------------------
 
-type CacheEntry = { fetchedAt: number; preview: LinkPreview | null }
+type CacheEntry = {
+  fetchedAt: number
+  preview: LinkPreview | null
+  /** A failure worth retrying soon (408, 429, 5xx). */
+  retryable?: boolean
+}
+
+/**
+ * Parsed MMKV entries, so a card re-rendering doesn't parse JSON each time.
+ * `null` records that MMKV has nothing for the URL.
+ */
+const memoryCache = new Map<string, CacheEntry | null>()
+
+const entryTtl = (entry: CacheEntry) =>
+  entry.preview
+    ? SUCCESS_TTL_MS
+    : entry.retryable
+      ? RETRYABLE_FAILURE_TTL_MS
+      : FAILURE_TTL_MS
 
 const cacheKey = (url: string) => `${CACHE_KEY_PREFIX}${url}`
 
@@ -284,34 +305,50 @@ const cacheKey = (url: string) => `${CACHE_KEY_PREFIX}${url}`
 export function getCachedLinkPreview(
   url: string
 ): { preview: LinkPreview | null } | undefined {
-  let raw: string | undefined
-  try {
-    raw = mmkvStorage.getString(cacheKey(url))
-  } catch {
-    return undefined
-  }
-  if (!raw) return undefined
-  try {
-    const entry = JSON.parse(raw) as CacheEntry
-    const ttl = entry.preview ? SUCCESS_TTL_MS : FAILURE_TTL_MS
-    if (typeof entry.fetchedAt !== 'number') return undefined
-    if (Date.now() - entry.fetchedAt > ttl) {
+  const entry = memoryCache.has(url) ? memoryCache.get(url) : readEntry(url)
+  if (!entry) return undefined
+  if (Date.now() - entry.fetchedAt > entryTtl(entry)) {
+    memoryCache.set(url, null)
+    try {
       mmkvStorage.delete(cacheKey(url))
-      return undefined
+    } catch {
+      // Cache is best-effort.
     }
-    return { preview: entry.preview }
-  } catch {
     return undefined
   }
+  return { preview: entry.preview }
 }
 
-function writeCache(url: string, preview: LinkPreview | null) {
+function readEntry(url: string): CacheEntry | null {
+  let entry: CacheEntry | null = null
   try {
-    const entry: CacheEntry = { fetchedAt: Date.now(), preview }
+    const raw = mmkvStorage.getString(cacheKey(url))
+    const parsed = raw ? (JSON.parse(raw) as CacheEntry) : null
+    if (typeof parsed?.fetchedAt === 'number') entry = parsed
+  } catch {
+    // Unreadable entries count as missing.
+  }
+  memoryCache.set(url, entry)
+  return entry
+}
+
+function writeCache(url: string, result: PreviewResult) {
+  const entry: CacheEntry = {
+    fetchedAt: Date.now(),
+    preview: result.preview,
+    ...(result.retryable && { retryable: true }),
+  }
+  memoryCache.set(url, entry)
+  try {
     mmkvStorage.set(cacheKey(url), JSON.stringify(entry))
   } catch {
     // Cache is best-effort.
   }
+}
+
+/** Test hook: forget parsed entries so the next read goes to MMKV. */
+export function clearLinkPreviewMemoryCache() {
+  memoryCache.clear()
 }
 
 async function readLimitedText(response: Response): Promise<string> {
@@ -339,7 +376,16 @@ async function readLimitedText(response: Response): Promise<string> {
   return text.slice(0, MAX_BODY_BYTES)
 }
 
-async function requestPreview(url: string): Promise<LinkPreview | null> {
+type PreviewResult = { preview: LinkPreview | null; retryable?: boolean }
+
+const isRetryableStatus = (status: number) =>
+  status === 408 || status === 429 || status >= 500
+
+/**
+ * Plain fetch rather than `request()`: the body is streamed and cut off after
+ * `</head>`, and the timeout covers that read too.
+ */
+async function requestPreview(url: string): Promise<PreviewResult> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
   try {
@@ -350,14 +396,20 @@ async function requestPreview(url: string): Promise<LinkPreview | null> {
         Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
       },
     })
-    if (!response.ok) return null
+    if (!response.ok) {
+      return {
+        preview: null,
+        retryable: isRetryableStatus(response.status),
+      }
+    }
     const contentType = response.headers.get('content-type') ?? ''
-    if (contentType && !/html|xml/i.test(contentType)) return null
+    if (contentType && !/html|xml/i.test(contentType)) return { preview: null }
     const html = await readLimitedText(response)
     const preview = parseOpenGraph(html, response.url || url)
-    return preview.title || preview.imageUrl || preview.siteName
-      ? preview
-      : null
+    return {
+      preview:
+        preview.title || preview.imageUrl || preview.siteName ? preview : null,
+    }
   } finally {
     clearTimeout(timeout)
   }
@@ -367,8 +419,9 @@ const inFlight = new Map<string, Promise<LinkPreview | null>>()
 
 /**
  * Fetches and caches OpenGraph metadata for `url`. Resolves `null` when the
- * page can't be fetched or has no usable metadata. Never rejects. Non-OK
- * responses and pages without metadata are cached as failures for a day.
+ * page can't be fetched or has no usable metadata. Never rejects. Pages without
+ * metadata and 4xx answers are cached as failures for a day; 408, 429 and 5xx
+ * answers for five minutes.
  */
 export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
   if (!isHttpUrl(url)) return Promise.resolve(null)
@@ -380,9 +433,9 @@ export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
   if (existing) return existing
 
   const request = requestPreview(url)
-    .then((preview) => {
-      writeCache(url, preview)
-      return preview
+    .then((result) => {
+      writeCache(url, result)
+      return result.preview
     })
     // Network errors and timeouts are usually transient (offline, flaky
     // signal), so they aren't cached as failures; the next mount retries.

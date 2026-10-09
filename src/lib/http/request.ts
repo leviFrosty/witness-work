@@ -9,7 +9,9 @@ import {
 /**
  * A failed `request()`. `kind` says what went wrong (see `NetworkErrorKind`);
  * `serverCode` is the service's own code from the body (`error` or `code`),
- * which ww-api, the Buddies relay and Notes Import all send.
+ * which ww-api, the Buddies relay and Notes Import all send. `body` is the
+ * parsed JSON error body (null when there was none or it wasn't JSON), for
+ * callers that need more than the code.
  */
 export class HttpError extends Error {
   constructor(
@@ -17,7 +19,8 @@ export class HttpError extends Error {
     readonly status: number | null = null,
     readonly serverCode: string | null = null,
     readonly retryAfterMs: number | null = null,
-    message?: string
+    message?: string,
+    readonly body: unknown = null
   ) {
     super(message ?? (serverCode ? `${kind}: ${serverCode}` : kind))
     this.name = 'HttpError'
@@ -135,11 +138,14 @@ async function attemptRequest<T>(
     })
     const text = options.responseType === 'none' ? '' : await response.text()
     if (!response.ok) {
+      const errorBody = jsonOrNull(text)
       throw new HttpError(
         kindForStatus(response.status),
         response.status,
-        serverCodeFrom(text),
-        retryAfterMs(response.headers.get('retry-after'))
+        serverCodeFrom(errorBody),
+        retryAfterMs(response.headers.get('retry-after')),
+        undefined,
+        errorBody
       )
     }
     let data: unknown = text
@@ -186,16 +192,21 @@ function toHttpError(error: unknown): HttpError {
   )
 }
 
-function serverCodeFrom(text: string): string | null {
+function jsonOrNull(text: string): unknown {
   try {
-    // ww-api sends a stable `code`; some routes keep a human `error` message
-    // for older builds, so `error` is only the fallback.
-    const parsed = JSON.parse(text) as { error?: unknown; code?: unknown }
-    if (typeof parsed?.code === 'string') return parsed.code
-    return typeof parsed?.error === 'string' ? parsed.error : null
+    return text ? JSON.parse(text) : null
   } catch {
     return null
   }
+}
+
+function serverCodeFrom(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null) return null
+  // ww-api sends a stable `code`; some routes keep a human `error` message
+  // for older builds, so `error` is only the fallback.
+  const parsed = body as { error?: unknown; code?: unknown }
+  if (typeof parsed.code === 'string') return parsed.code
+  return typeof parsed.error === 'string' ? parsed.error : null
 }
 
 /** Seconds or an HTTP date, as servers send it. */

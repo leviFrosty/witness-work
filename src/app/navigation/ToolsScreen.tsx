@@ -40,7 +40,7 @@ import Constants from 'expo-constants'
 import semver from 'semver'
 import { hasMigratedFromAsyncStorage } from '@/stores/mmkv'
 import useConversations from '@/stores/conversationStore'
-import axios from 'axios'
+import { request } from '@/lib/http/request'
 import moment from 'moment'
 import { useState } from 'react'
 import { useToastController } from '@tamagui/toast'
@@ -303,9 +303,8 @@ export default function ToolsScreen() {
 
   const probeProxy = async () => {
     const [health, status] = await Promise.all([
-      axios
-        .get(apis.notesImportHealth, { timeout: 10_000 })
-        .then((r) => r.data as unknown)
+      request({ url: apis.notesImportHealth, timeoutMs: 10_000 })
+        .then((r) => r.data)
         .catch((e) => ({ error: (e as Error).message })),
       getNotesImportStatus().catch((e) => ({
         error: (e as Error).message,
@@ -351,9 +350,10 @@ export default function ToolsScreen() {
   }
 
   const generateContacts = async (count = DEFAULT_MOCK_CONTACT_COUNT) => {
-    const { data } = await axios.get(
-      'https://jsonplaceholder.typicode.com/users'
-    )
+    const { data } = await request<unknown>({
+      url: 'https://jsonplaceholder.typicode.com/users',
+      timeoutMs: 15_000,
+    })
     if (Array.isArray(data) && data.length > 0) {
       // customFields is id-keyed against contactsStore.customFieldDefs (see
       // customFieldsMigration.ts) — writing the raw company object would

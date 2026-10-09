@@ -177,24 +177,77 @@ export type RunOutcomeDecision =
     }
 
 /**
+ * Whether retrying the same import can succeed. Allowance denials need the
+ * window to reset (or Supporter), and an ineligible device stays ineligible, so
+ * those offer no Retry.
+ */
+export const isRetryableNotesImportError = (
+  code: NotesImportErrorCode
+): boolean =>
+  code !== 'limit_reached' &&
+  code !== 'refinement_limit' &&
+  code !== 'device_ineligible'
+
+/**
+ * `active_cap` backoff: the server's Retry-After plus jitter when it sends one;
+ * otherwise (older servers) 4 s doubling to a 60 s ceiling, each wait drawn
+ * from its upper half at random so queued imports across devices don't retry in
+ * lockstep. After {@link ACTIVE_CAP_MAX_ATTEMPTS} waits (about 3 minutes) the
+ * error is surfaced instead.
+ */
+export const ACTIVE_CAP_BASE_MS = 4_000
+export const ACTIVE_CAP_MAX_DELAY_MS = 60_000
+export const ACTIVE_CAP_MAX_ATTEMPTS = 6
+
+/** The wait before re-trying after `attempt` (0-based) `active_cap` answers. */
+export const activeCapCooldownMs = (
+  attempt: number,
+  random: () => number = Math.random,
+  retryAfterMs?: number
+): number => {
+  // The server says when a slot frees up (Retry-After 15); add up to a fifth
+  // more so queued imports don't all return on the same second.
+  if (retryAfterMs !== undefined && retryAfterMs > 0) {
+    return Math.round(retryAfterMs * (1 + 0.2 * random()))
+  }
+  const ceiling = Math.min(
+    ACTIVE_CAP_MAX_DELAY_MS,
+    ACTIVE_CAP_BASE_MS * 2 ** attempt
+  )
+  return Math.round(ceiling / 2 + (ceiling / 2) * random())
+}
+
+/**
  * Classify a failed run. An aborted run was a user/teardown cancel (stays
- * Queued, no error). `active_cap` raced the backend cap — back off and retry.
- * Anything else is a surfaced failure; `unknown`/`model_error` additionally get
- * logged + reported (the store performs the actual error
- * tracking/setTimeout/patch).
+ * Queued, no error). `active_cap` raced the backend cap — back off and retry,
+ * until `activeCapAttempts` (prior back-offs for this import) reaches the cap,
+ * then surface it. Anything else is a surfaced failure; `unknown`/`model_error`
+ * additionally get logged + reported (the store performs the actual error
+ * tracking/setTimeout/patch, and skips reporting connectivity failures).
  */
 export const classifyRunOutcome = (
-  args: { aborted: boolean; code: NotesImportErrorCode },
-  opts: { cooldownMs: number }
+  args: {
+    aborted: boolean
+    code: NotesImportErrorCode
+    activeCapAttempts?: number
+    retryAfterMs?: number
+  },
+  opts: { random?: () => number } = {}
 ): RunOutcomeDecision => {
   if (args.aborted) return { kind: 'cancelled' }
-  if (args.code === 'active_cap')
-    return { kind: 'cooldown', cooldownMs: opts.cooldownMs }
+  const capAttempts = args.activeCapAttempts ?? 0
+  if (args.code === 'active_cap' && capAttempts < ACTIVE_CAP_MAX_ATTEMPTS) {
+    return {
+      kind: 'cooldown',
+      cooldownMs: activeCapCooldownMs(
+        capAttempts,
+        opts.random,
+        args.retryAfterMs
+      ),
+    }
+  }
   const report = args.code === 'unknown' || args.code === 'model_error'
-  const retryable =
-    args.code !== 'limit_reached' &&
-    args.code !== 'refinement_limit' &&
-    args.code !== 'device_ineligible'
+  const retryable = isRetryableNotesImportError(args.code)
   return { kind: 'failed', code: args.code, report, retryable }
 }
 

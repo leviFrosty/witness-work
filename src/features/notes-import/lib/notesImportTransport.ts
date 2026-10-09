@@ -1,5 +1,7 @@
-import axios, { isAxiosError, isCancel } from 'axios'
 import apis from '@/constants/apis'
+import { apiDevBypass } from '@/lib/http/devBypass'
+import { HttpError, request } from '@/lib/http/request'
+import { perf } from '@/lib/perf'
 import {
   NotesImportAppAttestHttpError,
   type NotesImportAppAttestEndpoint,
@@ -7,18 +9,29 @@ import {
 
 /**
  * HTTP transport shared by both Notes Import authorizers (App Attest on iOS,
- * Play Integrity on Android). Failures become sanitized
- * {@link NotesImportAppAttestHttpError}s carrying only stable metadata.
+ * Play Integrity on Android) and the availability check. Failures become
+ * sanitized {@link NotesImportAppAttestHttpError}s carrying only stable
+ * metadata.
  */
 
-const REQUEST_TIMEOUT_MS = 90_000
-const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_API_DEV_BYPASS || ''
+/** Unauthenticated availability/capability probe. */
+export const STATUS_TIMEOUT_MS = 8_000
+/**
+ * Per-endpoint budgets. Only the legacy blocking POST waits for the model; the
+ * attestation round-trips and the streaming kickoff return quickly, so a
+ * stalled connection there fails in seconds instead of a minute and a half.
+ */
+export const ENDPOINT_TIMEOUT_MS: Record<NotesImportAppAttestEndpoint, number> =
+  {
+    challenge: 15_000,
+    registration: 15_000,
+    verify: 15_000,
+    kickoff: 15_000,
+    legacy: 90_000,
+  }
 
-export const notesImportDevBypass = {
-  enabled:
-    typeof __DEV__ !== 'undefined' && __DEV__ && DEV_BYPASS_TOKEN.length > 0,
-  token: DEV_BYPASS_TOKEN,
-}
+/** The shared dev-worker bypass (`@/lib/http/devBypass`). */
+export const notesImportDevBypass = apiDevBypass
 
 export const notesImportBaseUrl = apis.notesImport.replace(
   /\/notes-import$/,
@@ -40,59 +53,95 @@ const endpointUrl = (endpoint: NotesImportAppAttestEndpoint): string => {
   }
 }
 
-const toHttpError = (error: unknown): NotesImportAppAttestHttpError => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/**
+ * `request()` failures in the shape the authorizers branch on. Notes Import
+ * bodies carry the stable code in `code` (`error` is human text), so read it
+ * from the body rather than `HttpError.serverCode`.
+ */
+export const toNotesImportHttpError = (
+  error: unknown
+): NotesImportAppAttestHttpError => {
   if (error instanceof NotesImportAppAttestHttpError) return error
-  if (
-    isCancel(error) ||
-    (isAxiosError(error) && error.code === 'ERR_CANCELED') ||
-    (error instanceof Error && error.name === 'AbortError')
-  ) {
+  if (!(error instanceof HttpError)) {
+    return new NotesImportAppAttestHttpError({
+      kind:
+        error instanceof Error && error.name === 'AbortError'
+          ? 'cancelled'
+          : 'network',
+    })
+  }
+  if (error.kind === 'cancelled') {
     return new NotesImportAppAttestHttpError({ kind: 'cancelled' })
   }
-  if (!isAxiosError(error)) {
-    return new NotesImportAppAttestHttpError({ kind: 'network' })
+  if (error.status === null) {
+    // No response: offline, refused, or the timeout fired.
+    return new NotesImportAppAttestHttpError({
+      kind: 'network',
+      timedOut: error.kind === 'timeout',
+    })
   }
-  const payload =
-    typeof error.response?.data === 'object' &&
-    error.response.data !== null &&
-    !Array.isArray(error.response.data)
-      ? (error.response.data as Record<string, unknown>)
-      : null
+  const payload = isRecord(error.body) ? error.body : null
+  const bodyRetryAfter =
+    typeof payload?.retryAfter === 'number' ? payload.retryAfter * 1000 : null
+  const retryAfterMs = error.retryAfterMs ?? bodyRetryAfter
   return new NotesImportAppAttestHttpError({
-    kind: error.response ? 'http' : 'network',
-    status: error.response?.status,
+    kind: 'http',
+    status: error.status,
     serverCode: typeof payload?.code === 'string' ? payload.code : undefined,
     reason: typeof payload?.reason === 'string' ? payload.reason : undefined,
     action: typeof payload?.action === 'string' ? payload.action : undefined,
     credits: payload?.credits,
+    ...(retryAfterMs !== null && { retryAfterMs }),
   })
 }
 
+let statusInFlight: Promise<unknown> | null = null
+
+/**
+ * The one status probe. Availability, App Attest protocol negotiation and Play
+ * Integrity's capability lookup all read it; concurrent callers share a single
+ * request.
+ */
+const getStatus = (): Promise<unknown> => {
+  if (statusInFlight) return statusInFlight
+  perf.count('notesImport:statusProbe')
+  const pending = request<unknown>({
+    url: apis.notesImportStatus,
+    timeoutMs: STATUS_TIMEOUT_MS,
+  })
+    .then(({ data }) => data)
+    .catch((error: unknown) => {
+      throw toNotesImportHttpError(error)
+    })
+    .finally(() => {
+      if (statusInFlight === pending) statusInFlight = null
+    })
+  statusInFlight = pending
+  return pending
+}
+
 export const notesImportTransport = {
-  getStatus: async (): Promise<unknown> => {
-    try {
-      const { data } = await axios.get<unknown>(apis.notesImportStatus, {
-        timeout: 8_000,
-      })
-      return data
-    } catch (error) {
-      throw toHttpError(error)
-    }
-  },
+  getStatus,
   post: async <T>(
     endpoint: NotesImportAppAttestEndpoint,
     body: Record<string, unknown>,
     options?: { headers?: Record<string, string>; signal?: AbortSignal }
   ): Promise<T> => {
     try {
-      const { data } = await axios.post<T>(endpointUrl(endpoint), body, {
-        timeout: REQUEST_TIMEOUT_MS,
+      const { data } = await request<T>({
+        url: endpointUrl(endpoint),
+        method: 'POST',
+        json: body,
         headers: options?.headers,
         signal: options?.signal,
+        timeoutMs: ENDPOINT_TIMEOUT_MS[endpoint],
       })
       return data
     } catch (error) {
-      throw toHttpError(error)
+      throw toNotesImportHttpError(error)
     }
   },
 }

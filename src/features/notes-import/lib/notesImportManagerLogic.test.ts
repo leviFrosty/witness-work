@@ -6,6 +6,9 @@ import {
   prepareNotesImportCommit,
   foldStreamEvent,
   classifyRunOutcome,
+  activeCapCooldownMs,
+  isRetryableNotesImportError,
+  ACTIVE_CAP_MAX_ATTEMPTS,
   classifyStartRun,
   buildQueueItems,
   approxTokens,
@@ -196,7 +199,7 @@ describe('foldStreamEvent', () => {
 })
 
 describe('classifyRunOutcome', () => {
-  const opts = { cooldownMs: 4_000 }
+  const opts = { random: () => 1 }
 
   it('an aborted run is a cancel (regardless of code)', () => {
     expect(
@@ -204,10 +207,62 @@ describe('classifyRunOutcome', () => {
     ).toEqual({ kind: 'cancelled' })
   })
 
-  it('active_cap backs off with the supplied cooldown', () => {
+  it('active_cap backs off exponentially with jitter, then surfaces', () => {
+    const waits = Array.from({ length: ACTIVE_CAP_MAX_ATTEMPTS }, (_, n) =>
+      classifyRunOutcome(
+        { aborted: false, code: 'active_cap', activeCapAttempts: n },
+        opts
+      )
+    )
+    expect(waits.map((w) => w.kind === 'cooldown' && w.cooldownMs)).toEqual([
+      4_000, 8_000, 16_000, 32_000, 60_000, 60_000,
+    ])
     expect(
-      classifyRunOutcome({ aborted: false, code: 'active_cap' }, opts)
-    ).toEqual({ kind: 'cooldown', cooldownMs: 4_000 })
+      classifyRunOutcome(
+        {
+          aborted: false,
+          code: 'active_cap',
+          activeCapAttempts: ACTIVE_CAP_MAX_ATTEMPTS,
+        },
+        opts
+      )
+    ).toEqual({
+      kind: 'failed',
+      code: 'active_cap',
+      report: false,
+      retryable: true,
+    })
+  })
+
+  it('waits for the server Retry-After on active_cap, plus up to a fifth', () => {
+    expect(activeCapCooldownMs(0, () => 0, 15_000)).toBe(15_000)
+    expect(activeCapCooldownMs(3, () => 1, 15_000)).toBe(18_000)
+    expect(
+      classifyRunOutcome(
+        { aborted: false, code: 'active_cap', retryAfterMs: 15_000 },
+        { random: () => 0 }
+      )
+    ).toEqual({ kind: 'cooldown', cooldownMs: 15_000 })
+  })
+
+  it('draws each active_cap wait from the upper half of its ceiling', () => {
+    expect(activeCapCooldownMs(0, () => 0)).toBe(2_000)
+    expect(activeCapCooldownMs(0, () => 0.5)).toBe(3_000)
+    expect(activeCapCooldownMs(10, () => 0)).toBe(30_000)
+    expect(activeCapCooldownMs(10, () => 1)).toBe(60_000)
+    // Defaults to Math.random within bounds.
+    const wait = activeCapCooldownMs(1)
+    expect(wait).toBeGreaterThanOrEqual(4_000)
+    expect(wait).toBeLessThanOrEqual(8_000)
+  })
+
+  it('offers Retry for everything but allowance denials and ineligible devices', () => {
+    expect(isRetryableNotesImportError('device_ineligible')).toBe(false)
+    expect(isRetryableNotesImportError('limit_reached')).toBe(false)
+    expect(isRetryableNotesImportError('refinement_limit')).toBe(false)
+    expect(isRetryableNotesImportError('attestation_unavailable')).toBe(true)
+    expect(isRetryableNotesImportError('network')).toBe(true)
+    expect(isRetryableNotesImportError('active_cap')).toBe(true)
   })
 
   it('unknown and model_error fail WITH a report (logged + error tracking)', () => {

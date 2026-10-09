@@ -214,9 +214,17 @@ and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compa
 platforms during the `notes-import-android` rollout. Android verification failures
 use bounded `error_code` values: `device_ineligible` (Play Integrity rejected the
 device or app build), `play_services_required` (Play Store/services missing or
-outdated), or `attestation_failed` (temporary). Their share of Android attempts
-shows whether the device requirement blocks real users. No verdicts, tokens, or
-identifiers are attached.
+outdated), `attestation_unavailable` (the verification service, our verifier
+or secure storage had trouble; temporary, on both platforms), or
+`attestation_failed` (verification ran and didn't pass). Their share of Android
+attempts shows whether the device requirement blocks real users. No verdicts,
+tokens, or identifiers are attached. `active_cap` appears only after the
+automatic back-off (about 3 minutes) gives up.
+
+`notes_import_availability_failed` fires at most once per composer visit when
+the availability check couldn't run, with `state`: `offline` (no connection) or
+`check_failed` (online, but the service didn't answer). Explicit outages
+(kill switch, version floor) don't send it, and background re-checks never do.
 
 Notes previews retain `empty`/warning counts and the ledger's original source
 across background work, relaunches, and refinements. `input_method` (`text`,
@@ -541,12 +549,12 @@ event answers which placements people find, and three outcome events answer
 whether Supporters use it, whether a planned route turns into a drive, and why
 planning fails:
 
-| Event                           | When / properties                                                                                                                                                                                                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `route_plan_entry_opened`       | An entry point opened the route screen. `surface`: `home_follow_ups` (Plan Route on Home's conversations card), `home_day` (Home's day sheet), `schedule_day` (Schedule's day sheet), or `schedule_inspector` (iPad); `supporter` (boolean).                                            |
-| `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                               |
-| `route_plan_failed`             | Planning stopped with `error_code`: `location`, `offline`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift.             |
-| `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened. |
+| Event                           | When / properties                                                                                                                                                                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `route_plan_entry_opened`       | An entry point opened the route screen. `surface`: `home_follow_ups` (Plan Route on Home's conversations card), `home_day` (Home's day sheet), `schedule_day` (Schedule's day sheet), or `schedule_inspector` (iPad); `supporter` (boolean).                                                                       |
+| `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                                                          |
+| `route_plan_failed`             | Planning stopped with `error_code`: `location` (no fix), `location_denied`, `offline`, `timeout`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift. |
+| `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened.                            |
 
 Opening the screen is covered by screen tracking (`TodayRoute`), so
 `$screen` → `route_plan_created` → `route_plan_navigation_started` is the

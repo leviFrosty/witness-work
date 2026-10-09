@@ -1,14 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const store = vi.hoisted(() => new Map<string, string>())
+const getString = vi.hoisted(() => vi.fn((key: string) => store.get(key)))
 vi.mock('@/stores/mmkv', () => ({
   mmkvStorage: {
-    getString: () => undefined,
-    set: () => {},
-    delete: () => {},
+    getString,
+    set: (key: string, value: string) => store.set(key, value),
+    delete: (key: string) => store.delete(key),
   },
 }))
 
 import {
+  clearLinkPreviewMemoryCache,
+  fetchLinkPreview,
+  getCachedLinkPreview,
   findLinks,
   getHostname,
   parseOpenGraph,
@@ -201,5 +206,57 @@ describe('resolveUrl', () => {
 describe('getHostname', () => {
   it('strips www and lowercases', () => {
     expect(getHostname('https://WWW.Example.com:8080/a')).toBe('example.com')
+  })
+})
+
+describe('fetchLinkPreview caching', () => {
+  const fetchMock = vi.fn()
+  vi.stubGlobal('fetch', fetchMock)
+  const html = '<head><meta property="og:title" content="Example"></head>'
+
+  beforeEach(() => {
+    store.clear()
+    clearLinkPreviewMemoryCache()
+    fetchMock.mockReset()
+    getString.mockClear()
+    vi.useRealTimers()
+  })
+
+  it('caches a 503 for five minutes, not a day', async () => {
+    vi.useFakeTimers({ now: 0, toFake: ['Date'] })
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 503 }))
+    await expect(fetchLinkPreview('https://a.test/1')).resolves.toBeNull()
+    expect(getCachedLinkPreview('https://a.test/1')).toEqual({ preview: null })
+    vi.setSystemTime(5 * 60 * 1000 + 1)
+    expect(getCachedLinkPreview('https://a.test/1')).toBeUndefined()
+  })
+
+  it('caches a 404 for a day', async () => {
+    vi.useFakeTimers({ now: 0, toFake: ['Date'] })
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 404 }))
+    await fetchLinkPreview('https://a.test/2')
+    vi.setSystemTime(60 * 60 * 1000)
+    expect(getCachedLinkPreview('https://a.test/2')).toEqual({ preview: null })
+  })
+
+  it('does not cache a network failure', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'))
+    await expect(fetchLinkPreview('https://a.test/3')).resolves.toBeNull()
+    expect(getCachedLinkPreview('https://a.test/3')).toBeUndefined()
+  })
+
+  it('parses a stored entry once', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(html, { headers: { 'content-type': 'text/html' } })
+    )
+    await fetchLinkPreview('https://a.test/4')
+    clearLinkPreviewMemoryCache()
+    getString.mockClear()
+    for (let i = 0; i < 3; i++) {
+      expect(getCachedLinkPreview('https://a.test/4')?.preview?.title).toBe(
+        'Example'
+      )
+    }
+    expect(getString).toHaveBeenCalledTimes(1)
   })
 })

@@ -119,6 +119,24 @@ describe('request', () => {
     expect(clientError).toHaveBeenCalledTimes(1)
   })
 
+  it('attaches the parsed error body, or null when it is not JSON', async () => {
+    const body = { code: 'limit_reached', reason: 'window', credits: { n: 1 } }
+    await expect(
+      request({
+        url: 'https://api.test/x',
+        timeoutMs: 1000,
+        fetchImpl: vi.fn(async () => json(429, body)),
+      })
+    ).rejects.toMatchObject({ kind: 'rateLimited', status: 429, body })
+    await expect(
+      request({
+        url: 'https://api.test/x',
+        timeoutMs: 1000,
+        fetchImpl: vi.fn(async () => new Response('oops', { status: 502 })),
+      })
+    ).rejects.toMatchObject({ kind: 'server', serverCode: null, body: null })
+  })
+
   it('never retries a POST unless it is marked idempotent', async () => {
     const fetchImpl = vi.fn(async () => json(503, {}))
     await expect(

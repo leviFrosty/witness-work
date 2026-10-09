@@ -1,6 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { create } from 'zustand'
 import { errorTracking } from '@/lib/errorTracking'
+import { isConnectivityError } from '@/lib/http/networkError'
 import { logger } from '@/lib/logger'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
@@ -94,9 +95,6 @@ const DEFAULT_RUNTIME: ImportRuntime = {
   paused: false,
 }
 
-/** Backoff before re-attempting a run the backend rejected as over its cap. */
-const ACTIVE_CAP_COOLDOWN_MS = 4_000
-
 /**
  * A valid empty parse, used as the refinement baseline when a live FIRST parse
  * is interrupted before it ever produced a result — the typed instruction then
@@ -117,7 +115,8 @@ const EMPTY_PARSE_RESULT: NotesImportResult = {
 // In-memory machinery, deliberately OUTSIDE the reactive state (not serializable,
 // must survive re-renders): abort controllers + the in-flight set are the source
 // of truth for "is this import running"; pendingRefinement carries a queued
-// refinement into its run; cooldownUntil backs off an `active_cap` race.
+// refinement into its run; cooldownUntil backs off an `active_cap` race and
+// activeCapAttempts counts those back-offs so they stop after a few.
 const controllers = new Map<string, AbortController>()
 const inFlight = new Set<string>()
 const pendingRefinement = new Map<
@@ -125,6 +124,13 @@ const pendingRefinement = new Map<
   { previousResultJSON: string; instruction: string }
 >()
 const cooldownUntil = new Map<string, number>()
+const activeCapAttempts = new Map<string, number>()
+
+/** Forget an import's `active_cap` back-off (a retry, stop, or removal). */
+const clearCooldown = (hash: string) => {
+  cooldownUntil.delete(hash)
+  activeCapAttempts.delete(hash)
+}
 
 const reconcileMessages = {
   ambiguousContact: (name: string) =>
@@ -505,6 +511,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // or re-create a deleted one as an empty Ready row with no notes.
           if (controller.signal.aborted) return
           pendingRefinement.delete(hash)
+          activeCapAttempts.delete(hash)
           // Terminal success is authoritative after the server commits usage.
           // A malformed/missing snapshot leaves the last valid state untouched.
           applyCredits(hash, res.credits, 'terminal')
@@ -538,10 +545,13 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           ) {
             applyCredits(hash, e.credits, 'denial')
           }
-          const decision = classifyRunOutcome(
-            { aborted: controller.signal.aborted, code },
-            { cooldownMs: ACTIVE_CAP_COOLDOWN_MS }
-          )
+          const decision = classifyRunOutcome({
+            aborted: controller.signal.aborted,
+            code,
+            activeCapAttempts: activeCapAttempts.get(hash) ?? 0,
+            retryAfterMs:
+              e instanceof NotesImportClientError ? e.retryAfterMs : undefined,
+          })
           // A kickoff preview is optimistic. If this attempt still owns the
           // hash and did not end in an authoritative allowance denial, restore
           // display from authority so a failed/cancelled run never looks spent.
@@ -565,11 +575,16 @@ export const useNotesImportManager = create<NotesImportManagerState>(
               break
             case 'cooldown':
               // Raced past the backend cap — back off and retry, no error shown.
+              activeCapAttempts.set(
+                hash,
+                (activeCapAttempts.get(hash) ?? 0) + 1
+              )
               cooldownUntil.set(hash, Date.now() + decision.cooldownMs)
               patchRuntime(hash, { running: false, phase: null, error: null })
               setTimeout(() => get().tick(), decision.cooldownMs + 50)
               break
             case 'failed':
+              activeCapAttempts.delete(hash)
               analytics.capture('import_failed', {
                 import_type: 'notes',
                 source,
@@ -577,7 +592,8 @@ export const useNotesImportManager = create<NotesImportManagerState>(
                 error_code: decision.code,
                 elapsed_ms: Date.now() - startedAt,
               })
-              if (decision.report) {
+              // Offline, timed out and cancelled are expected, never bugs.
+              if (decision.report && !isConnectivityError(e)) {
                 logger.error('Notes import: run failed', e)
                 errorTracking.captureException(e)
               }
@@ -766,7 +782,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         controllers.get(hash)?.abort()
         controllers.delete(hash)
         inFlight.delete(hash)
-        cooldownUntil.delete(hash)
+        clearCooldown(hash)
 
         // Refine against the last COMPLETED result — the in-flight turn we just
         // aborted never produced one. With a prior result (a refine loop, or a
@@ -898,7 +914,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         controllers.delete(hash)
         inFlight.delete(hash)
         pendingRefinement.delete(hash)
-        cooldownUntil.delete(hash)
+        clearCooldown(hash)
         deleteLedgerEntry(hash)
         get().hydrate()
       },
@@ -933,12 +949,12 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         controllers.delete(hash)
         inFlight.delete(hash)
         pendingRefinement.delete(hash)
-        cooldownUntil.delete(hash)
+        clearCooldown(hash)
         get().hydrate()
       },
 
       retry: (hash) => {
-        cooldownUntil.delete(hash)
+        clearCooldown(hash)
         patchRuntime(hash, { error: null, paused: false })
         get().tick()
       },

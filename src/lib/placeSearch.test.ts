@@ -4,7 +4,8 @@ const native = vi.hoisted(() => ({
   version: 0,
   autocomplete: vi.fn(async () => [{ id: 'a', title: 'A', subtitle: '' }]),
   resolve: vi.fn(async () => null),
-  get: vi.fn(),
+  fetch: vi.fn(),
+  offline: false,
 }))
 
 vi.mock('../../modules/place-search', () => ({
@@ -17,7 +18,15 @@ vi.mock('../../modules/place-search', () => ({
   autocomplete: native.autocomplete,
   resolve: native.resolve,
 }))
-vi.mock('axios', () => ({ default: { get: native.get } }))
+vi.mock('@/lib/http/online', () => ({
+  isKnownOffline: () => native.offline,
+  isDeviceOffline: (kind: string) => kind === 'offline' && native.offline,
+}))
+vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
+vi.stubGlobal('fetch', native.fetch)
+
+const respond = (status: number, body: unknown) =>
+  native.fetch.mockResolvedValue(new Response(JSON.stringify(body), { status }))
 vi.mock('@/constants/apis', () => ({
   default: { autocomplete: 'https://api.test/autocomplete' },
 }))
@@ -25,6 +34,8 @@ vi.mock('@/constants/apis', () => ({
 import {
   appleMapsUrl,
   formatPlanLocation,
+  isUnexpectedPlaceSearchError,
+  placeSearchFailure,
   placeSearchProvider,
   resolvePlace,
   searchPlaces,
@@ -32,7 +43,9 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.useRealTimers()
   native.version = 0
+  native.offline = false
 })
 
 describe('placeSearchProvider', () => {
@@ -62,27 +75,25 @@ describe('searchPlaces', () => {
       near,
       'address'
     )
-    expect(native.get).not.toHaveBeenCalled()
+    expect(native.fetch).not.toHaveBeenCalled()
   })
 
   it('maps HERE addresses into a title, subtitle, and parts', async () => {
-    native.get.mockResolvedValue({
-      data: {
-        items: [
-          {
-            id: 'here:1',
-            address: {
-              label: '12 Oak St, Springfield, IL 62701, United States',
-              houseNumber: '12',
-              street: 'Oak St',
-              city: 'Springfield',
-              state: 'Illinois',
-              postalCode: '62701',
-              countryName: 'United States',
-            },
+    respond(200, {
+      items: [
+        {
+          id: 'here:1',
+          address: {
+            label: '12 Oak St, Springfield, IL 62701, United States',
+            houseNumber: '12',
+            street: 'Oak St',
+            city: 'Springfield',
+            state: 'Illinois',
+            postalCode: '62701',
+            countryName: 'United States',
           },
-        ],
-      },
+        },
+      ],
     })
     const [suggestion] = await searchPlaces(
       '12 Oak',
@@ -90,7 +101,7 @@ describe('searchPlaces', () => {
       'address'
     )
 
-    const url = new URL(native.get.mock.lastCall![0])
+    const url = new URL(native.fetch.mock.lastCall![0])
     expect(url.searchParams.get('q')).toBe('12 Oak')
     expect(url.searchParams.get('in')).toBe('circle:39.8,-89.6;r=1000000')
     expect(suggestion).toEqual({
@@ -138,7 +149,91 @@ describe('searchPlaces', () => {
 
   it('finds no points of interest without MapKit', async () => {
     expect(await searchPlaces('Kingdom Hall', undefined, 'all')).toEqual([])
-    expect(native.get).not.toHaveBeenCalled()
+    expect(native.fetch).not.toHaveBeenCalled()
+  })
+
+  it('drops malformed HERE items and rejects a malformed body', async () => {
+    respond(200, {
+      items: [{ id: 'here:1' }, { id: 'here:2', address: { label: 'Oak St' } }],
+    })
+    const results = await searchPlaces('Oak', undefined, 'address')
+    expect(results.map((r) => r.id)).toEqual(['here:2'])
+
+    respond(200, { error: 'nope' })
+    await expect(searchPlaces('Oak', undefined, 'address')).rejects.toThrow()
+  })
+
+  it('passes the caller signal to HERE and reports a cancel', async () => {
+    const controller = new AbortController()
+    native.fetch.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) =>
+          init.signal!.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError'))
+          )
+        )
+    )
+    const search = searchPlaces('Oak', undefined, 'address', controller.signal)
+    controller.abort()
+    await expect(search).rejects.toMatchObject({ kind: 'cancelled' })
+  })
+
+  it('reads a passed-through HERE 404 as nothing found', async () => {
+    respond(404, { ok: false, error: 'Not found', code: 'not_found' })
+    await expect(searchPlaces('Oak', undefined, 'address')).resolves.toEqual([])
+  })
+
+  it('shows a HERE 429 as busy', async () => {
+    respond(429, { error: 'rate_limited' })
+    const failure = await searchPlaces('Oak', undefined, 'address').catch(
+      (error: unknown) => error
+    )
+    expect(placeSearchFailure(failure)).toBe('busy')
+    expect(isUnexpectedPlaceSearchError(failure)).toBe(false)
+  })
+
+  it('fails fast offline instead of asking MapKit', async () => {
+    native.version = 2
+    native.offline = true
+    const failure = await searchPlaces('Oak', undefined, 'all').catch(
+      (error: unknown) => error
+    )
+    expect(placeSearchFailure(failure)).toBe('offline')
+    expect(native.autocomplete).not.toHaveBeenCalled()
+  })
+
+  it('blames the service, not the connection, when the device is online', async () => {
+    native.fetch.mockRejectedValueOnce(new TypeError('Network request failed'))
+    const failure = await searchPlaces('Oak', undefined, 'address').catch(
+      (error: unknown) => error
+    )
+    expect(placeSearchFailure(failure)).toBe('failed')
+  })
+
+  it('times out a MapKit search that never answers', async () => {
+    vi.useFakeTimers()
+    native.version = 2
+    native.autocomplete.mockReturnValueOnce(new Promise(() => {}))
+    const search = searchPlaces('Oak', undefined, 'all').catch(
+      (error: unknown) => error
+    )
+    await vi.advanceTimersByTimeAsync(8_000)
+    expect(await search).toMatchObject({ kind: 'timeout' })
+  })
+
+  it('treats MapKit service failures as expected, other errors as bugs', () => {
+    const mapKit = Object.assign(new Error('MKErrorDomain 2'), {
+      code: 'place_search_failed',
+    })
+    expect(placeSearchFailure(mapKit)).toBe('failed')
+    expect(isUnexpectedPlaceSearchError(mapKit)).toBe(false)
+    expect(isUnexpectedPlaceSearchError(new TypeError('x is undefined'))).toBe(
+      true
+    )
+    const throttled = Object.assign(new Error('throttled'), {
+      code: 'rate_limited',
+    })
+    expect(placeSearchFailure(throttled)).toBe('busy')
   })
 })
 

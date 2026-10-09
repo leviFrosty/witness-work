@@ -9,6 +9,7 @@ import {
 import {
   buildPlayIntegrityClientData,
   createNotesImportPlayIntegrity,
+  tokenRetryDelayMs,
   type NotesImportPlayIntegrityDependencies,
   type PlayIntegrityNativeFailureCode,
 } from '@/features/notes-import/lib/notesImportPlayIntegrity'
@@ -64,6 +65,8 @@ const createHarness = (
     devBypass?: boolean
     post?: PostHandler
     requestToken?: (project: string, hash: string) => Promise<string>
+    getStatus?: () => Promise<unknown>
+    random?: () => number
   } = {}
 ) => {
   let operation = 0
@@ -109,7 +112,9 @@ const createHarness = (
       randomUuid: () => `operation-${++operation}`,
     },
     transport: {
-      getStatus: vi.fn(async () => options.status ?? STATUS),
+      getStatus: vi.fn(
+        options.getStatus ?? (async () => options.status ?? STATUS)
+      ),
       post: vi.fn(async (endpoint, body, requestOptions) => {
         posts.push({ endpoint, body, headers: requestOptions?.headers })
         const result = await (options.post ?? defaultPost)(
@@ -125,6 +130,7 @@ const createHarness = (
     baseUrl: 'https://api.example',
     now: () => 0,
     sleep: vi.fn(async () => {}),
+    random: options.random ?? (() => 0),
   }
   return {
     dependencies,
@@ -344,6 +350,54 @@ describe('Notes Import Play Integrity', () => {
     await expect(kickoff(harness)).resolves.toMatchObject({ importId: 'imp_1' })
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(1, 5_000)
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(2, 10_000)
+  })
+
+  it('stretches each token backoff by up to half again at random', async () => {
+    let calls = 0
+    const harness = createHarness({
+      random: () => 0.5,
+      requestToken: async () => {
+        calls += 1
+        if (calls < 3) throw new NativeError('tooManyRequests')
+        return 'integrity.token'
+      },
+    })
+
+    await expect(kickoff(harness)).resolves.toMatchObject({ importId: 'imp_1' })
+    expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(1, 6_250)
+    expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(2, 12_500)
+  })
+
+  it('keeps every jittered wait between the base and one and a half times it', () => {
+    for (const r of [0, 0.25, 0.999]) {
+      const first = tokenRetryDelayMs(0, () => r)!
+      const second = tokenRetryDelayMs(1, () => r)!
+      expect(first).toBeGreaterThanOrEqual(5_000)
+      expect(first).toBeLessThan(7_500)
+      expect(second).toBeGreaterThanOrEqual(10_000)
+      expect(second).toBeLessThan(15_000)
+    }
+    expect(tokenRetryDelayMs(2)).toBeUndefined()
+  })
+
+  it('reports an unreachable capability probe as a network failure, not an outage', async () => {
+    const harness = createHarness({
+      getStatus: async () => {
+        throw new NotesImportAppAttestHttpError({ kind: 'network' })
+      },
+    })
+    await expect(kickoff(harness)).rejects.toMatchObject({ code: 'network' })
+  })
+
+  it('reports a failing capability probe as protocolUnavailable', async () => {
+    const harness = createHarness({
+      getStatus: async () => {
+        throw new NotesImportAppAttestHttpError({ kind: 'http', status: 503 })
+      },
+    })
+    await expect(kickoff(harness)).rejects.toMatchObject({
+      code: 'protocolUnavailable',
+    })
   })
 
   it('surfaces a persistent network failure after the retries', async () => {

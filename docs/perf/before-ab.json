@@ -1,0 +1,3006 @@
+{
+  "version": 1,
+  "ref": "a2c04fb0",
+  "sha": "a2c04fb0fc31def92f14b10636088da123cefb5c",
+  "sourceKey": "b1a08c7a2e769384",
+  "capturedAt": "2026-10-09T03:21:28.929Z",
+  "command": "node scripts/perf/run.mjs --ref a2c04fb0 --name before-ab",
+  "machine": {
+    "host": "mini",
+    "cpu": "Apple M6",
+    "cores": 12,
+    "ramGb": 16,
+    "os": "Darwin 27.0.0",
+    "atStart": {
+      "at": 1791516088935,
+      "load1": 9.24,
+      "load5": 9.45,
+      "memoryFreePct": 64,
+      "otherDevices": 0,
+      "otherLeases": [],
+      "builds": []
+    },
+    "atEnd": {
+      "at": 1791516848598,
+      "load1": 1.61,
+      "load5": 2.54,
+      "memoryFreePct": 74,
+      "otherDevices": 0,
+      "otherLeases": [],
+      "builds": []
+    }
+  },
+  "api": {
+    "mode": "local",
+    "port": 8780
+  },
+  "builds": {
+    "ios": {
+      "builtAt": "2026-10-09T03:16:48.780Z",
+      "path": "/Users/levi/.ww-verify/perf-builds/ios-b1a08c7a2e769384-v2.app"
+    },
+    "android": {
+      "builtAt": "2026-10-09T03:21:14.970Z",
+      "path": "/Users/levi/.ww-verify/perf-builds/android-b1a08c7a2e769384-v2.apk"
+    }
+  },
+  "static": {
+    "ios": {
+      "jsBytes": 18686282,
+      "hbcBytes": 23036910,
+      "modules": 7526,
+      "embeddedHbcBytes": 24609337
+    },
+    "android": {
+      "jsBytes": 18683318,
+      "hbcBytes": 22995871,
+      "modules": 7512,
+      "embeddedHbcBytes": 20800152
+    }
+  },
+  "platforms": {
+    "ios": {
+      "device": "WW Verify iPhone 1",
+      "setup": {
+        "type": "setup",
+        "at": 1791516100061,
+        "scenario": "busy",
+        "notifications": "granted",
+        "calendar": "error: CALENDAR_UNAVAILABLE: undefined reason (at ExpoModulesCore/Promise.swift:65)",
+        "buddies": "ok"
+      },
+      "launch": {
+        "runs": [
+          {
+            "index": 0,
+            "discarded": true,
+            "launchWall": 1791516113591,
+            "launchCommandMs": 139,
+            "pid": 67412,
+            "conditions": {
+              "at": 1791516113591,
+              "load1": 7.14,
+              "load5": 8.96,
+              "memoryFreePct": 67,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2667,
+              "preJsMs": null,
+              "bundleToReadyMs": null,
+              "bundleToInitializeMs": null,
+              "initializeToFirstRenderMs": 1.989666998386383,
+              "firstRenderToTreeMs": 46.44037500023842,
+              "treeToReadyMs": 180.72291699051857,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 612.640625,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 139
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516124262,
+              "wallNavReady": 1791516116258,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 176342601.439166,
+                "appFirstRender": 176342603.428833,
+                "appTreeRender": 176342649.869208,
+                "navReady": 176342830.592125
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 2,
+                "prefs:set": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 5,
+                "reminders:schedule": 5,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176342433.43000004,
+                "initializeRuntimeStart": null,
+                "executeJavaScriptBundleEntryPointStart": null,
+                "endTime": 176342601.55520838
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "watch:push": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 2,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 72119256,
+                "numGCs": 50
+              }
+            }
+          },
+          {
+            "index": 1,
+            "discarded": false,
+            "launchWall": 1791516127427,
+            "launchCommandMs": 128,
+            "pid": 67473,
+            "conditions": {
+              "at": 1791516127427,
+              "load1": 6.35,
+              "load5": 8.73,
+              "memoryFreePct": 67,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2445,
+              "preJsMs": 1999.596166729927,
+              "bundleToReadyMs": 445.40383327007294,
+              "bundleToInitializeMs": 197.82433328032494,
+              "initializeToFirstRenderMs": 7.125582993030548,
+              "firstRenderToTreeMs": 61.924291998147964,
+              "treeToReadyMs": 178.5296249985695,
+              "blockedMsAfterReady": 51,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 608.015625,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 128
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516137878,
+              "wallNavReady": 1791516129872,
+              "blockedMsAfterReady": 51,
+              "marks": {
+                "initializeApp": 176356197.5575,
+                "appFirstRender": 176356204.683083,
+                "appTreeRender": 176356266.607375,
+                "navReady": 176356445.137
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 5,
+                "reminders:schedule": 5,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176355999.73575002,
+                "initializeRuntimeStart": 176355999.73562503,
+                "executeJavaScriptBundleEntryPointStart": 176355999.73316672,
+                "endTime": 176356197.67825
+              },
+              "countersAfterReady": {
+                "widget:push": 1,
+                "widget:reload": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 2,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 71787912,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 2,
+            "discarded": false,
+            "launchWall": 1791516141040,
+            "launchCommandMs": 130,
+            "pid": 67536,
+            "conditions": {
+              "at": 1791516141040,
+              "load1": 5.46,
+              "load5": 8.42,
+              "memoryFreePct": 67,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2432,
+              "preJsMs": 1988.5961673557758,
+              "bundleToReadyMs": 443.40383264422417,
+              "bundleToInitializeMs": 196.64091661572456,
+              "initializeToFirstRenderMs": 6.975833028554916,
+              "firstRenderToTreeMs": 61.92233297228813,
+              "treeToReadyMs": 177.86475002765656,
+              "blockedMsAfterReady": 115,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 607.453125,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 130
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516151478,
+              "wallNavReady": 1791516143472,
+              "blockedMsAfterReady": 115,
+              "marks": {
+                "initializeApp": 176369797.887125,
+                "appFirstRender": 176369804.862958,
+                "appTreeRender": 176369866.785291,
+                "navReady": 176370044.650041
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176369601.24887502,
+                "initializeRuntimeStart": 176369601.24875003,
+                "executeJavaScriptBundleEntryPointStart": 176369601.24620837,
+                "endTime": 176369798.01687506
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 73357768,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 3,
+            "discarded": false,
+            "launchWall": 1791516154633,
+            "launchCommandMs": 114,
+            "pid": 68137,
+            "conditions": {
+              "at": 1791516154633,
+              "load1": 4.54,
+              "load5": 8.07,
+              "memoryFreePct": 67,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2409,
+              "preJsMs": 1964.550584077835,
+              "bundleToReadyMs": 444.4494159221649,
+              "bundleToInitializeMs": 195.77737492322922,
+              "initializeToFirstRenderMs": 6.880666017532349,
+              "firstRenderToTreeMs": 62.44716700911522,
+              "treeToReadyMs": 179.34420797228813,
+              "blockedMsAfterReady": 51,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 607.984375,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 114
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516165044,
+              "wallNavReady": 1791516157042,
+              "blockedMsAfterReady": 51,
+              "marks": {
+                "initializeApp": 176383365.9315,
+                "appFirstRender": 176383372.812166,
+                "appTreeRender": 176383435.259333,
+                "navReady": 176383614.603541
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 5,
+                "reminders:schedule": 5,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176383170.15662503,
+                "initializeRuntimeStart": 176383170.15658337,
+                "executeJavaScriptBundleEntryPointStart": 176383170.15412506,
+                "endTime": 176383366.04775006
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 2,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 72675648,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 4,
+            "discarded": false,
+            "launchWall": 1791516168190,
+            "launchCommandMs": 129,
+            "pid": 68222,
+            "conditions": {
+              "at": 1791516168190,
+              "load1": 3.99,
+              "load5": 7.84,
+              "memoryFreePct": 68,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2445,
+              "preJsMs": 1995.097125351429,
+              "bundleToReadyMs": 449.902874648571,
+              "bundleToInitializeMs": 202.0531666278839,
+              "initializeToFirstRenderMs": 6.869666010141373,
+              "firstRenderToTreeMs": 63.11245900392532,
+              "treeToReadyMs": 177.8675830066204,
+              "blockedMsAfterReady": 51,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 608.15625,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 129
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516178644,
+              "wallNavReady": 1791516170635,
+              "blockedMsAfterReady": 51,
+              "marks": {
+                "initializeApp": 176396959.6605,
+                "appFirstRender": 176396966.530166,
+                "appTreeRender": 176397029.642625,
+                "navReady": 176397207.510208
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176396757.60995838,
+                "initializeRuntimeStart": 176396757.60987502,
+                "executeJavaScriptBundleEntryPointStart": 176396757.60733336,
+                "endTime": 176396959.78304172
+              },
+              "countersAfterReady": {
+                "widget:push": 1,
+                "widget:reload": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 71752152,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 5,
+            "discarded": false,
+            "launchWall": 1791516181803,
+            "launchCommandMs": 131,
+            "pid": 68281,
+            "conditions": {
+              "at": 1791516181803,
+              "load1": 3.62,
+              "load5": 7.57,
+              "memoryFreePct": 68,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2433,
+              "preJsMs": 1981.2429166734219,
+              "bundleToReadyMs": 451.75708332657814,
+              "bundleToInitializeMs": 203.4472913146019,
+              "initializeToFirstRenderMs": 6.777292013168335,
+              "firstRenderToTreeMs": 62.32012498378754,
+              "treeToReadyMs": 179.21237501502037,
+              "blockedMsAfterReady": 113,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 607.578125,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 131
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516192244,
+              "wallNavReady": 1791516184236,
+              "blockedMsAfterReady": 113,
+              "marks": {
+                "initializeApp": 176410560.359083,
+                "appFirstRender": 176410567.136375,
+                "appTreeRender": 176410629.4565,
+                "navReady": 176410808.668875
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176410356.91412503,
+                "initializeRuntimeStart": 176410356.9140834,
+                "executeJavaScriptBundleEntryPointStart": 176410356.91179168,
+                "endTime": 176410560.48995838
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 73398512,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 6,
+            "discarded": false,
+            "launchWall": 1791516195401,
+            "launchCommandMs": 137,
+            "pid": 68343,
+            "conditions": {
+              "at": 1791516195401,
+              "load1": 3.53,
+              "load5": 7.36,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2425,
+              "preJsMs": 1979.8965003788471,
+              "bundleToReadyMs": 445.1034996211529,
+              "bundleToInitializeMs": 198.59070762991905,
+              "initializeToFirstRenderMs": 6.970999985933304,
+              "firstRenderToTreeMs": 62.247667014598846,
+              "treeToReadyMs": 177.29412499070168,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 608.21875,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 137
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516205828,
+              "wallNavReady": 1791516197826,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 176424152.258291,
+                "appFirstRender": 176424159.229291,
+                "appTreeRender": 176424221.476958,
+                "navReady": 176424398.771083
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176423953.6701667,
+                "initializeRuntimeStart": 176423953.67008337,
+                "executeJavaScriptBundleEntryPointStart": 176423953.66758338,
+                "endTime": 176424152.37733337
+              },
+              "countersAfterReady": {
+                "widget:push": 1,
+                "widget:reload": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 71748496,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 7,
+            "discarded": false,
+            "launchWall": 1791516208975,
+            "launchCommandMs": 131,
+            "pid": 68404,
+            "conditions": {
+              "at": 1791516208975,
+              "load1": 3.2,
+              "load5": 7.09,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2431,
+              "preJsMs": 1977.7922920286655,
+              "bundleToReadyMs": 453.20770797133446,
+              "bundleToInitializeMs": 203.4576659798622,
+              "initializeToFirstRenderMs": 6.820416986942291,
+              "firstRenderToTreeMs": 63.67408302426338,
+              "treeToReadyMs": 179.25554198026657,
+              "blockedMsAfterReady": 53,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 607.65625,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 131
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516219411,
+              "wallNavReady": 1791516211406,
+              "blockedMsAfterReady": 53,
+              "marks": {
+                "initializeApp": 176437729.165041,
+                "appFirstRender": 176437735.985458,
+                "appTreeRender": 176437799.659541,
+                "navReady": 176437978.915083
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176437525.70987505,
+                "initializeRuntimeStart": 176437525.7097917,
+                "executeJavaScriptBundleEntryPointStart": 176437525.70737502,
+                "endTime": 176437729.29912502
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 72665520,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 8,
+            "discarded": false,
+            "launchWall": 1791516222568,
+            "launchCommandMs": 134,
+            "pid": 69051,
+            "conditions": {
+              "at": 1791516222568,
+              "load1": 2.86,
+              "load5": 6.89,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2418,
+              "preJsMs": 1974.7892923653126,
+              "bundleToReadyMs": 443.2107076346874,
+              "bundleToInitializeMs": 194.58437463641167,
+              "initializeToFirstRenderMs": 6.821125000715256,
+              "firstRenderToTreeMs": 63.02129200100899,
+              "treeToReadyMs": 178.7839159965515,
+              "blockedMsAfterReady": 60,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 607.296875,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 134
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516232994,
+              "wallNavReady": 1791516224986,
+              "blockedMsAfterReady": 60,
+              "marks": {
+                "initializeApp": 176451310.317458,
+                "appFirstRender": 176451317.138583,
+                "appTreeRender": 176451380.159875,
+                "navReady": 176451558.943791
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176451115.73583335,
+                "initializeRuntimeStart": 176451115.73575002,
+                "executeJavaScriptBundleEntryPointStart": 176451115.73308337,
+                "endTime": 176451310.43483338
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 73532576,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 9,
+            "discarded": false,
+            "launchWall": 1791516236154,
+            "launchCommandMs": 130,
+            "pid": 69109,
+            "conditions": {
+              "at": 1791516236154,
+              "load1": 2.92,
+              "load5": 6.72,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2419,
+              "preJsMs": 1975.5241256952286,
+              "bundleToReadyMs": 443.4758743047714,
+              "bundleToInitializeMs": 196.73904129862785,
+              "initializeToFirstRenderMs": 6.969667017459869,
+              "firstRenderToTreeMs": 62.1659579873085,
+              "treeToReadyMs": 177.6012080013752,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 608.0625,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 130
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516246578,
+              "wallNavReady": 1791516238573,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 176464898.724208,
+                "appFirstRender": 176464905.693875,
+                "appTreeRender": 176464967.859833,
+                "navReady": 176465145.461041
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176464701.98750004,
+                "initializeRuntimeStart": 176464701.98737505,
+                "executeJavaScriptBundleEntryPointStart": 176464701.9851667,
+                "endTime": 176464898.8439167
+              },
+              "countersAfterReady": {
+                "widget:push": 1,
+                "widget:reload": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 71747728,
+                "numGCs": 48
+              }
+            }
+          },
+          {
+            "index": 10,
+            "discarded": false,
+            "launchWall": 1791516249703,
+            "launchCommandMs": 134,
+            "pid": 69171,
+            "conditions": {
+              "at": 1791516249703,
+              "load1": 2.64,
+              "load5": 6.47,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 2419,
+              "preJsMs": 1975.7687500417233,
+              "bundleToReadyMs": 443.23124995827675,
+              "bundleToInitializeMs": 196.29462495446205,
+              "initializeToFirstRenderMs": 6.7390410006046295,
+              "firstRenderToTreeMs": 62.66366699337959,
+              "treeToReadyMs": 177.53391700983047,
+              "blockedMsAfterReady": 53,
+              "netRequests": 3,
+              "jsHeapMb": 76,
+              "rssMb": 608.421875,
+              "androidTotalTimeMs": null,
+              "iosLaunchCommandMs": 134
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516260128,
+              "wallNavReady": 1791516252122,
+              "blockedMsAfterReady": 53,
+              "marks": {
+                "initializeApp": 176478448.045625,
+                "appFirstRender": 176478454.784666,
+                "appTreeRender": 176478517.448333,
+                "navReady": 176478694.98225
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 5,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 3,
+                "rc:identify": 1,
+                "reminders:cancel": 4,
+                "reminders:schedule": 4,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 176478251.7532917,
+                "initializeRuntimeStart": 176478251.75320837,
+                "executeJavaScriptBundleEntryPointStart": 176478251.75100005,
+                "endTime": 176478448.16395837
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "widget:push": 1,
+                "widget:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 1,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 79691776,
+                "allocatedBytes": 72637472,
+                "numGCs": 48
+              }
+            }
+          }
+        ],
+        "discarded": 1,
+        "summary": {
+          "metrics": {
+            "endToEndMs": {
+              "n": 10,
+              "median": 2428,
+              "p90": 2445,
+              "min": 2409,
+              "max": 2445,
+              "mean": 2427.6
+            },
+            "preJsMs": {
+              "n": 10,
+              "median": 1978.8,
+              "p90": 1995.5,
+              "min": 1964.6,
+              "max": 1999.6,
+              "mean": 1981.3
+            },
+            "bundleToReadyMs": {
+              "n": 10,
+              "median": 444.8,
+              "p90": 451.9,
+              "min": 443.2,
+              "max": 453.2,
+              "mean": 446.3
+            },
+            "bundleToInitializeMs": {
+              "n": 10,
+              "median": 197.3,
+              "p90": 203.4,
+              "min": 194.6,
+              "max": 203.5,
+              "mean": 198.5
+            },
+            "initializeToFirstRenderMs": {
+              "n": 10,
+              "median": 6.9,
+              "p90": 7,
+              "min": 6.7,
+              "max": 7.1,
+              "mean": 6.9
+            },
+            "firstRenderToTreeMs": {
+              "n": 10,
+              "median": 62.4,
+              "p90": 63.2,
+              "min": 61.9,
+              "max": 63.7,
+              "mean": 62.5
+            },
+            "treeToReadyMs": {
+              "n": 10,
+              "median": 178.2,
+              "p90": 179.3,
+              "min": 177.3,
+              "max": 179.3,
+              "mean": 178.3
+            },
+            "blockedMsAfterReady": {
+              "n": 10,
+              "median": 52,
+              "p90": 113.2,
+              "min": 0,
+              "max": 115,
+              "mean": 54.7
+            },
+            "netRequests": {
+              "n": 10,
+              "median": 3,
+              "p90": 3,
+              "min": 3,
+              "max": 3,
+              "mean": 3
+            },
+            "jsHeapMb": {
+              "n": 10,
+              "median": 76,
+              "p90": 76,
+              "min": 76,
+              "max": 76,
+              "mean": 76
+            },
+            "rssMb": {
+              "n": 10,
+              "median": 608,
+              "p90": 608.2,
+              "min": 607.3,
+              "max": 608.4,
+              "mean": 607.9
+            },
+            "iosLaunchCommandMs": {
+              "n": 10,
+              "median": 130.5,
+              "p90": 134.3,
+              "min": 114,
+              "max": 137,
+              "mean": 129.8
+            }
+          },
+          "counters": {
+            "account:reconcile": 3,
+            "buddies:sync": 0,
+            "calendar:run": 1,
+            "flags:reload": 1,
+            "net:total": 3,
+            "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 2,
+            "rc:identify": 1,
+            "reminders:cancel": 4,
+            "reminders:schedule": 4,
+            "render:App": 5,
+            "render:Home": 1,
+            "sync:catchUp": 1,
+            "watch:push": 1,
+            "widget:push": 2,
+            "widget:reload": 2,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          },
+          "countersAfterReady": {
+            "account:reconcile": 1,
+            "calendar:run": 1,
+            "net:total": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 1,
+            "reminders:cancel": 1,
+            "reminders:schedule": 3,
+            "render:App": 1,
+            "widget:push": 1,
+            "widget:reload": 1,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          }
+        }
+      },
+      "foreground": {
+        "cycles": [
+          {
+            "index": 0,
+            "at": 1791516285318,
+            "conditions": {
+              "at": 1791516280150,
+              "load1": 2.43,
+              "load5": 6.04,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516293913,
+              "windowMs": 8003,
+              "blockedMs": 62,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 83886080,
+                "allocatedBytes": 75653624,
+                "numGCs": 58
+              }
+            }
+          },
+          {
+            "index": 1,
+            "at": 1791516319082,
+            "conditions": {
+              "at": 1791516313929,
+              "load1": 2.3,
+              "load5": 5.67,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516327697,
+              "windowMs": 8002,
+              "blockedMs": 65,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 88080384,
+                "allocatedBytes": 82358936,
+                "numGCs": 67
+              }
+            }
+          },
+          {
+            "index": 2,
+            "at": 1791516352872,
+            "conditions": {
+              "at": 1791516347713,
+              "load1": 2.37,
+              "load5": 5.32,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516361481,
+              "windowMs": 8011,
+              "blockedMs": 0,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 92274688,
+                "allocatedBytes": 84425976,
+                "numGCs": 77
+              }
+            }
+          },
+          {
+            "index": 3,
+            "at": 1791516386656,
+            "conditions": {
+              "at": 1791516381496,
+              "load1": 1.84,
+              "load5": 4.87,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516395281,
+              "windowMs": 8015,
+              "blockedMs": 64,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 96468992,
+                "allocatedBytes": 87183320,
+                "numGCs": 87
+              }
+            }
+          },
+          {
+            "index": 4,
+            "at": 1791516420456,
+            "conditions": {
+              "at": 1791516415296,
+              "load1": 1.51,
+              "load5": 4.46,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516429081,
+              "windowMs": 8013,
+              "blockedMs": 64,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 96468992,
+                "allocatedBytes": 93167752,
+                "numGCs": 96
+              }
+            }
+          }
+        ],
+        "summary": {
+          "blockedMs": {
+            "n": 5,
+            "median": 64,
+            "p90": 64.6,
+            "min": 0,
+            "max": 65,
+            "mean": 51
+          },
+          "counters": {
+            "account:reconcile": 1,
+            "buddies:sync": 1,
+            "calendar:run": 1,
+            "flags:reload": 1,
+            "net:total": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 1,
+            "reminders:cancel": 3,
+            "reminders:schedule": 3,
+            "render:App": 3,
+            "sync:catchUp": 1,
+            "watch:push": 1,
+            "widget:push": 2,
+            "widget:reload": 2,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          },
+          "perCycle": [
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            }
+          ]
+        }
+      },
+      "active": {
+        "cycles": [
+          {
+            "index": 0,
+            "at": 1791516450668,
+            "conditions": {
+              "at": 1791516462411,
+              "load1": 1.8,
+              "load5": 4.1,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "active",
+              "at": 1791516462397,
+              "windowMs": 8013,
+              "blockedMs": 54,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 100663296,
+                "allocatedBytes": 69529536,
+                "numGCs": 104
+              }
+            }
+          },
+          {
+            "index": 1,
+            "at": 1791516482412,
+            "conditions": {
+              "at": 1791516493979,
+              "load1": 1.64,
+              "load5": 3.84,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "active",
+              "at": 1791516493965,
+              "windowMs": 8009,
+              "blockedMs": 52,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 100663296,
+                "allocatedBytes": 73752920,
+                "numGCs": 112
+              }
+            }
+          },
+          {
+            "index": 2,
+            "at": 1791516513981,
+            "conditions": {
+              "at": 1791516525577,
+              "load1": 1.41,
+              "load5": 3.55,
+              "memoryFreePct": 69,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "active",
+              "at": 1791516525564,
+              "windowMs": 8006,
+              "blockedMs": 104,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "widget:push": 2,
+                "widget:reload": 2,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 100663296,
+                "allocatedBytes": 77455912,
+                "numGCs": 119
+              }
+            }
+          }
+        ],
+        "summary": {
+          "blockedMs": {
+            "n": 3,
+            "median": 54,
+            "p90": 94,
+            "min": 52,
+            "max": 104,
+            "mean": 70
+          },
+          "counters": {
+            "account:reconcile": 1,
+            "buddies:sync": 1,
+            "calendar:run": 1,
+            "flags:reload": 1,
+            "net:total": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 1,
+            "reminders:cancel": 3,
+            "reminders:schedule": 3,
+            "render:App": 3,
+            "sync:catchUp": 1,
+            "watch:push": 1,
+            "widget:push": 2,
+            "widget:reload": 2
+          },
+          "perCycle": [
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "widget:push": 2,
+              "widget:reload": 2,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            }
+          ]
+        }
+      }
+    },
+    "android": {
+      "device": "ww-verify-1",
+      "setup": {
+        "type": "setup",
+        "at": 1791516540212,
+        "scenario": "busy",
+        "notifications": "granted",
+        "calendar": "connected",
+        "buddies": "ok"
+      },
+      "launch": {
+        "runs": [
+          {
+            "index": 0,
+            "discarded": true,
+            "launchWall": 1791516552426,
+            "launchWallSource": "device",
+            "pid": 9878,
+            "totalTimeMs": 639,
+            "conditions": {
+              "at": 1791516551973,
+              "load1": 1.41,
+              "load5": 3.38,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 1360,
+              "preJsMs": null,
+              "bundleToReadyMs": null,
+              "bundleToInitializeMs": null,
+              "initializeToFirstRenderMs": 2.5413750000298023,
+              "firstRenderToTreeMs": 18.107625000178814,
+              "treeToReadyMs": 251.4347500000149,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 474.35546875,
+              "androidTotalTimeMs": 639,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516561808,
+              "wallNavReady": 1791516553786,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 4876050.508574,
+                "appFirstRender": 4876053.049949,
+                "appTreeRender": 4876071.157574,
+                "navReady": 4876322.592324
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 2,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4875724,
+                "initializeRuntimeStart": null,
+                "executeJavaScriptBundleEntryPointStart": null,
+                "endTime": 4876050
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 50995632,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 1,
+            "discarded": false,
+            "launchWall": 1791516564990,
+            "launchWallSource": "device",
+            "pid": 10066,
+            "totalTimeMs": 551,
+            "conditions": {
+              "at": 1791516564543,
+              "load1": 1.27,
+              "load5": 3.28,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 882,
+              "preJsMs": 193.15166999958456,
+              "bundleToReadyMs": 688.8483300004154,
+              "bundleToInitializeMs": 330.2402050001547,
+              "initializeToFirstRenderMs": 1.9351249998435378,
+              "firstRenderToTreeMs": 21.154167000204325,
+              "treeToReadyMs": 335.5188330002129,
+              "blockedMsAfterReady": 58,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 452.01171875,
+              "androidTotalTimeMs": 551,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516573894,
+              "wallNavReady": 1791516565872,
+              "blockedMsAfterReady": 58,
+              "marks": {
+                "initializeApp": 4888050.240205,
+                "appFirstRender": 4888052.17533,
+                "appTreeRender": 4888073.329497,
+                "navReady": 4888408.84833
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4887720,
+                "initializeRuntimeStart": 4887720,
+                "executeJavaScriptBundleEntryPointStart": 4887720,
+                "endTime": 4888050
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 2,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 2,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51101240,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 2,
+            "discarded": false,
+            "launchWall": 1791516577072,
+            "launchWallSource": "device",
+            "pid": 10200,
+            "totalTimeMs": 568,
+            "conditions": {
+              "at": 1791516576618,
+              "load1": 1.21,
+              "load5": 3.17,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 957,
+              "preJsMs": 231.9132890002802,
+              "bundleToReadyMs": 725.0867109997198,
+              "bundleToInitializeMs": 310.83829400036484,
+              "initializeToFirstRenderMs": 2.4055419992655516,
+              "firstRenderToTreeMs": 31.67475000023842,
+              "treeToReadyMs": 380.168124999851,
+              "blockedMsAfterReady": 55,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 425.92578125,
+              "androidTotalTimeMs": 568,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516586059,
+              "wallNavReady": 1791516578029,
+              "blockedMsAfterReady": 55,
+              "marks": {
+                "initializeApp": 4900151.838294,
+                "appFirstRender": 4900154.243836,
+                "appTreeRender": 4900185.918586,
+                "navReady": 4900566.086711
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4899841,
+                "initializeRuntimeStart": 4899841,
+                "executeJavaScriptBundleEntryPointStart": 4899841,
+                "endTime": 4900152
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51795688,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 3,
+            "discarded": false,
+            "launchWall": 1791516589227,
+            "launchWallSource": "device",
+            "pid": 10336,
+            "totalTimeMs": 597,
+            "conditions": {
+              "at": 1791516588774,
+              "load1": 1.25,
+              "load5": 3.11,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 907,
+              "preJsMs": 225.32028300035745,
+              "bundleToReadyMs": 681.6797169996426,
+              "bundleToInitializeMs": 335.40967500023544,
+              "initializeToFirstRenderMs": 2.4134579999372363,
+              "firstRenderToTreeMs": 17.071458999998868,
+              "treeToReadyMs": 326.785124999471,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 452.28125,
+              "androidTotalTimeMs": 597,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516598141,
+              "wallNavReady": 1791516590134,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 4912324.409675,
+                "appFirstRender": 4912326.823133,
+                "appTreeRender": 4912343.894592,
+                "navReady": 4912670.679717
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4911989,
+                "initializeRuntimeStart": 4911989,
+                "executeJavaScriptBundleEntryPointStart": 4911989,
+                "endTime": 4912324
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 2,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51037640,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 4,
+            "discarded": false,
+            "launchWall": 1791516601314,
+            "launchWallSource": "device",
+            "pid": 10467,
+            "totalTimeMs": 603,
+            "conditions": {
+              "at": 1791516600859,
+              "load1": 0.97,
+              "load5": 2.96,
+              "memoryFreePct": 73,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 886,
+              "preJsMs": 222.23106900043786,
+              "bundleToReadyMs": 663.7689309995621,
+              "bundleToInitializeMs": 354.4676810000092,
+              "initializeToFirstRenderMs": 1.7263749996200204,
+              "firstRenderToTreeMs": 13.363499999977648,
+              "treeToReadyMs": 294.2113749999553,
+              "blockedMsAfterReady": 61,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 452.91796875,
+              "androidTotalTimeMs": 603,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516610228,
+              "wallNavReady": 1791516602200,
+              "blockedMsAfterReady": 61,
+              "marks": {
+                "initializeApp": 4924427.467681,
+                "appFirstRender": 4924429.194056,
+                "appTreeRender": 4924442.557556,
+                "navReady": 4924736.768931
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4924073,
+                "initializeRuntimeStart": 4924073,
+                "executeJavaScriptBundleEntryPointStart": 4924073,
+                "endTime": 4924427
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:cancel": 3,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51376560,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 5,
+            "discarded": false,
+            "launchWall": 1791516613400,
+            "launchWallSource": "device",
+            "pid": 10600,
+            "totalTimeMs": 532,
+            "conditions": {
+              "at": 1791516612947,
+              "load1": 1.54,
+              "load5": 3.01,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 876,
+              "preJsMs": 170.62598000001162,
+              "bundleToReadyMs": 705.3740199999884,
+              "bundleToInitializeMs": 337.2225200003013,
+              "initializeToFirstRenderMs": 0.5287499995902181,
+              "firstRenderToTreeMs": 13.813416000455618,
+              "treeToReadyMs": 353.80933399964124,
+              "blockedMsAfterReady": 119,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 452.875,
+              "androidTotalTimeMs": 532,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516622308,
+              "wallNavReady": 1791516614276,
+              "blockedMsAfterReady": 119,
+              "marks": {
+                "initializeApp": 4936444.22252,
+                "appFirstRender": 4936444.75127,
+                "appTreeRender": 4936458.564686,
+                "navReady": 4936812.37402
+              },
+              "counters": {
+                "render:App": 7,
+                "watch:push": 3,
+                "sync:catchUp": 2,
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4936107,
+                "initializeRuntimeStart": 4936107,
+                "executeJavaScriptBundleEntryPointStart": 4936107,
+                "endTime": 4936444
+              },
+              "countersAfterReady": {
+                "render:App": 1,
+                "net:total": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51935848,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 6,
+            "discarded": false,
+            "launchWall": 1791516625496,
+            "launchWallSource": "device",
+            "pid": 10734,
+            "totalTimeMs": 521,
+            "conditions": {
+              "at": 1791516625037,
+              "load1": 2.04,
+              "load5": 3.07,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 870,
+              "preJsMs": 161.8584740003571,
+              "bundleToReadyMs": 708.1415259996429,
+              "bundleToInitializeMs": 320.60131699964404,
+              "initializeToFirstRenderMs": 2.6485419999808073,
+              "firstRenderToTreeMs": 29.074041000567377,
+              "treeToReadyMs": 355.8176259994507,
+              "blockedMsAfterReady": 56,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 451.81640625,
+              "androidTotalTimeMs": 521,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516634374,
+              "wallNavReady": 1791516626366,
+              "blockedMsAfterReady": 56,
+              "marks": {
+                "initializeApp": 4948515.601317,
+                "appFirstRender": 4948518.249859,
+                "appTreeRender": 4948547.3239,
+                "navReady": 4948903.141526
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4948195,
+                "initializeRuntimeStart": 4948195,
+                "executeJavaScriptBundleEntryPointStart": 4948195,
+                "endTime": 4948515
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 50963560,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 7,
+            "discarded": false,
+            "launchWall": 1791516637550,
+            "launchWallSource": "device",
+            "pid": 10873,
+            "totalTimeMs": 556,
+            "conditions": {
+              "at": 1791516637099,
+              "load1": 2.99,
+              "load5": 3.25,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 843,
+              "preJsMs": 195.58126000035554,
+              "bundleToReadyMs": 647.4187399996445,
+              "bundleToInitializeMs": 334.29553100001067,
+              "initializeToFirstRenderMs": 1.7322500003501773,
+              "firstRenderToTreeMs": 13.937791999429464,
+              "treeToReadyMs": 297.45316699985415,
+              "blockedMsAfterReady": 59,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 452.4453125,
+              "androidTotalTimeMs": 556,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516646393,
+              "wallNavReady": 1791516638393,
+              "blockedMsAfterReady": 59,
+              "marks": {
+                "initializeApp": 4960616.295531,
+                "appFirstRender": 4960618.027781,
+                "appTreeRender": 4960631.965573,
+                "navReady": 4960929.41874
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4960282,
+                "initializeRuntimeStart": 4960282,
+                "executeJavaScriptBundleEntryPointStart": 4960282,
+                "endTime": 4960616
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 2,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51015960,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 8,
+            "discarded": false,
+            "launchWall": 1791516649553,
+            "launchWallSource": "device",
+            "pid": 11005,
+            "totalTimeMs": 549,
+            "conditions": {
+              "at": 1791516649100,
+              "load1": 2.61,
+              "load5": 3.16,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 869,
+              "preJsMs": 207.5765880001709,
+              "bundleToReadyMs": 661.4234119998291,
+              "bundleToInitializeMs": 320.7921200003475,
+              "initializeToFirstRenderMs": 1.9998339992016554,
+              "firstRenderToTreeMs": 39.20504100061953,
+              "treeToReadyMs": 299.42641699966043,
+              "blockedMsAfterReady": 59,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 426.75390625,
+              "androidTotalTimeMs": 549,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516658428,
+              "wallNavReady": 1791516650422,
+              "blockedMsAfterReady": 59,
+              "marks": {
+                "initializeApp": 4972617.79212,
+                "appFirstRender": 4972619.791954,
+                "appTreeRender": 4972658.996995,
+                "navReady": 4972958.423412
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "buddies:sync": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4972297,
+                "initializeRuntimeStart": 4972297,
+                "executeJavaScriptBundleEntryPointStart": 4972297,
+                "endTime": 4972618
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 2,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51789200,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 9,
+            "discarded": false,
+            "launchWall": 1791516661586,
+            "launchWallSource": "device",
+            "pid": 11139,
+            "totalTimeMs": 563,
+            "conditions": {
+              "at": 1791516661137,
+              "load1": 2.39,
+              "load5": 3.08,
+              "memoryFreePct": 73,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 904,
+              "preJsMs": 207.71104000043124,
+              "bundleToReadyMs": 696.2889599995688,
+              "bundleToInitializeMs": 329.052001000382,
+              "initializeToFirstRenderMs": 2.2239169999957085,
+              "firstRenderToTreeMs": 12.618832999840379,
+              "treeToReadyMs": 352.39420899935067,
+              "blockedMsAfterReady": 0,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 451.9375,
+              "androidTotalTimeMs": 563,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516670509,
+              "wallNavReady": 1791516662490,
+              "blockedMsAfterReady": 0,
+              "marks": {
+                "initializeApp": 4984660.052001,
+                "appFirstRender": 4984662.275918,
+                "appTreeRender": 4984674.894751,
+                "navReady": 4985027.28896
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4984331,
+                "initializeRuntimeStart": 4984331,
+                "executeJavaScriptBundleEntryPointStart": 4984331,
+                "endTime": 4984660
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 2,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51059496,
+                "numGCs": 29
+              }
+            }
+          },
+          {
+            "index": 10,
+            "discarded": false,
+            "launchWall": 1791516673672,
+            "launchWallSource": "device",
+            "pid": 11279,
+            "totalTimeMs": 585,
+            "conditions": {
+              "at": 1791516673221,
+              "load1": 2.89,
+              "load5": 3.16,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "metrics": {
+              "endToEndMs": 942,
+              "preJsMs": 230.99165999982506,
+              "bundleToReadyMs": 711.0083400001749,
+              "bundleToInitializeMs": 331.15646499954164,
+              "initializeToFirstRenderMs": 1.6570000005885959,
+              "firstRenderToTreeMs": 16.23424999974668,
+              "treeToReadyMs": 361.960625000298,
+              "blockedMsAfterReady": 54,
+              "netRequests": 3,
+              "jsHeapMb": 56,
+              "rssMb": 451.1328125,
+              "androidTotalTimeMs": 585,
+              "iosLaunchCommandMs": null
+            },
+            "report": {
+              "type": "launch",
+              "at": 1791516682642,
+              "wallNavReady": 1791516674614,
+              "blockedMsAfterReady": 54,
+              "marks": {
+                "initializeApp": 4996771.156465,
+                "appFirstRender": 4996772.813465,
+                "appTreeRender": 4996789.047715,
+                "navReady": 4997151.00834
+              },
+              "counters": {
+                "net:total": 3,
+                "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+                "render:App": 6,
+                "watch:push": 2,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 2,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "render:Home": 1,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "startup": {
+                "startTime": 4996440,
+                "initializeRuntimeStart": 4996440,
+                "executeJavaScriptBundleEntryPointStart": 4996440,
+                "endTime": 4996771
+              },
+              "countersAfterReady": {
+                "net:total": 1,
+                "render:App": 2,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "reminders:cancel": 2,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 51131648,
+                "numGCs": 29
+              }
+            }
+          }
+        ],
+        "discarded": 1,
+        "summary": {
+          "metrics": {
+            "endToEndMs": {
+              "n": 10,
+              "median": 884,
+              "p90": 943.5,
+              "min": 843,
+              "max": 957,
+              "mean": 893.6
+            },
+            "preJsMs": {
+              "n": 10,
+              "median": 207.6,
+              "p90": 231.1,
+              "min": 161.9,
+              "max": 231.9,
+              "mean": 204.7
+            },
+            "bundleToReadyMs": {
+              "n": 10,
+              "median": 692.6,
+              "p90": 712.4,
+              "min": 647.4,
+              "max": 725.1,
+              "mean": 688.9
+            },
+            "bundleToInitializeMs": {
+              "n": 10,
+              "median": 330.7,
+              "p90": 338.9,
+              "min": 310.8,
+              "max": 354.5,
+              "mean": 330.4
+            },
+            "initializeToFirstRenderMs": {
+              "n": 10,
+              "median": 2,
+              "p90": 2.4,
+              "min": 0.5,
+              "max": 2.6,
+              "mean": 1.9
+            },
+            "firstRenderToTreeMs": {
+              "n": 10,
+              "median": 16.7,
+              "p90": 32.4,
+              "min": 12.6,
+              "max": 39.2,
+              "mean": 20.8
+            },
+            "treeToReadyMs": {
+              "n": 10,
+              "median": 344,
+              "p90": 363.8,
+              "min": 294.2,
+              "max": 380.2,
+              "mean": 335.8
+            },
+            "blockedMsAfterReady": {
+              "n": 10,
+              "median": 57,
+              "p90": 66.8,
+              "min": 0,
+              "max": 119,
+              "mean": 52.1
+            },
+            "netRequests": {
+              "n": 10,
+              "median": 3,
+              "p90": 3,
+              "min": 3,
+              "max": 3,
+              "mean": 3
+            },
+            "jsHeapMb": {
+              "n": 10,
+              "median": 56,
+              "p90": 56,
+              "min": 56,
+              "max": 56,
+              "mean": 56
+            },
+            "rssMb": {
+              "n": 10,
+              "median": 452,
+              "p90": 452.9,
+              "min": 425.9,
+              "max": 452.9,
+              "mean": 447
+            },
+            "androidTotalTimeMs": {
+              "n": 10,
+              "median": 559.5,
+              "p90": 597.6,
+              "min": 521,
+              "max": 603,
+              "mean": 562.5
+            }
+          },
+          "counters": {
+            "account:reconcile": 1,
+            "buddies:sync": 0,
+            "calendar:run": 1,
+            "flags:reload": 1,
+            "net:total": 3,
+            "net:ww-api-r.leviwilkerson.com/array/:id/config": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 2,
+            "reminders:cancel": 3,
+            "reminders:schedule": 3,
+            "render:App": 6,
+            "render:Home": 1,
+            "sync:catchUp": 1,
+            "watch:push": 2,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          },
+          "countersAfterReady": {
+            "calendar:run": 1,
+            "net:total": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 1,
+            "reminders:cancel": 2,
+            "reminders:schedule": 3,
+            "render:App": 1,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          }
+        }
+      },
+      "foreground": {
+        "cycles": [
+          {
+            "index": 0,
+            "at": 1791516707380,
+            "conditions": {
+              "at": 1791516702339,
+              "load1": 2.31,
+              "load5": 3,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516715877,
+              "windowMs": 8025,
+              "blockedMs": 0,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 52178248,
+                "numGCs": 30
+              }
+            }
+          },
+          {
+            "index": 1,
+            "at": 1791516740518,
+            "conditions": {
+              "at": 1791516735480,
+              "load1": 1.97,
+              "load5": 2.85,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516748992,
+              "windowMs": 8004,
+              "blockedMs": 0,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 53352024,
+                "numGCs": 31
+              }
+            }
+          },
+          {
+            "index": 2,
+            "at": 1791516773626,
+            "conditions": {
+              "at": 1791516768592,
+              "load1": 2.45,
+              "load5": 2.91,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516782126,
+              "windowMs": 8022,
+              "blockedMs": 0,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 54169224,
+                "numGCs": 32
+              }
+            }
+          },
+          {
+            "index": 3,
+            "at": 1791516806767,
+            "conditions": {
+              "at": 1791516801729,
+              "load1": 2.05,
+              "load5": 2.76,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516815258,
+              "windowMs": 8017,
+              "blockedMs": 53,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 58720256,
+                "allocatedBytes": 55287224,
+                "numGCs": 33
+              }
+            }
+          },
+          {
+            "index": 4,
+            "at": 1791516839899,
+            "conditions": {
+              "at": 1791516834859,
+              "load1": 1.68,
+              "load5": 2.6,
+              "memoryFreePct": 74,
+              "otherDevices": 0,
+              "otherLeases": [],
+              "builds": []
+            },
+            "report": {
+              "type": "foreground",
+              "at": 1791516848374,
+              "windowMs": 8006,
+              "blockedMs": 68,
+              "counters": {
+                "net:total": 1,
+                "render:App": 3,
+                "watch:push": 1,
+                "sync:catchUp": 1,
+                "flags:reload": 1,
+                "net:ww-api-r.leviwilkerson.com/flags": 1,
+                "account:reconcile": 1,
+                "reminders:cancel": 3,
+                "ws:open": 1,
+                "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+                "reminders:schedule": 3,
+                "calendar:run": 1,
+                "buddies:sync": 1
+              },
+              "jsHeap": {
+                "heapSize": 62914560,
+                "allocatedBytes": 56039328,
+                "numGCs": 34
+              }
+            }
+          }
+        ],
+        "summary": {
+          "blockedMs": {
+            "n": 5,
+            "median": 0,
+            "p90": 62,
+            "min": 0,
+            "max": 68,
+            "mean": 24.2
+          },
+          "counters": {
+            "account:reconcile": 1,
+            "buddies:sync": 1,
+            "calendar:run": 1,
+            "flags:reload": 1,
+            "net:total": 1,
+            "net:ww-api-r.leviwilkerson.com/flags": 1,
+            "reminders:cancel": 3,
+            "reminders:schedule": 3,
+            "render:App": 3,
+            "sync:catchUp": 1,
+            "watch:push": 1,
+            "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+            "ws:open": 1
+          },
+          "perCycle": [
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            },
+            {
+              "net:total": 1,
+              "render:App": 3,
+              "watch:push": 1,
+              "sync:catchUp": 1,
+              "flags:reload": 1,
+              "net:ww-api-r.leviwilkerson.com/flags": 1,
+              "account:reconcile": 1,
+              "reminders:cancel": 3,
+              "ws:open": 1,
+              "ws:127.0.0.1:8780/buddies/v1/inbox": 1,
+              "reminders:schedule": 3,
+              "calendar:run": 1,
+              "buddies:sync": 1
+            }
+          ]
+        }
+      },
+      "active": {
+        "skipped": "Android has no inactive state"
+      }
+    }
+  }
+}

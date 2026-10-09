@@ -1,16 +1,19 @@
 import moment from 'moment'
 import { View } from 'react-native'
-import Animated from 'react-native-reanimated'
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated'
 import CalendarDay from '@/components/CalendarDay'
 import useTheme from '@/contexts/theme'
-import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { RecurringPlan } from '@/lib/recurrence'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
 import BuddyDayBadge from '@/features/buddies/components/BuddyDayBadge'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import type { ScheduleDayIndex } from '@/features/plans/lib/scheduleDayIndex'
 import {
-  sameCalendarMonth,
+  monthOrdinal,
   type ScheduleDay,
   type ScheduleWeekRow as WeekRow,
 } from '@/features/plans/lib/scheduleRows'
@@ -20,13 +23,15 @@ export const WEEK_ROW_GUTTER = 10
 export const WEEK_ROW_HEIGHT = WEEK_ROW_GUTTER + 40 + 10
 /** How far days outside the focused month fade back. */
 const DIMMED_OPACITY = 0.5
+const DIM_DURATION = 220
 const SELECTED_RING = 2
 const NO_REPORTS: TimeEntry[] = []
 const NO_DAY_PLANS: DayPlan[] = []
 
 type Props = {
   row: WeekRow
-  focusedMonth: CalendarMonth
+  /** The focused month's {@link monthOrdinal}. */
+  focusedOrdinal: SharedValue<number>
   selectedKey?: string
   index: ScheduleDayIndex
   recurringPlans: RecurringPlan[]
@@ -42,7 +47,7 @@ type Props = {
  */
 export default function ScheduleWeekRow({
   row,
-  focusedMonth,
+  focusedOrdinal,
   selectedKey,
   index,
   recurringPlans,
@@ -59,7 +64,6 @@ export default function ScheduleWeekRow({
             key={column}
             day={day}
             rule={!row.firstOfMonth}
-            focused={sameCalendarMonth(day, focusedMonth)}
             selected={day.key === selectedKey}
             reports={index.reportsByDay.get(day.key) ?? NO_REPORTS}
             dayPlans={index.dayPlansByDay.get(day.key) ?? NO_DAY_PLANS}
@@ -71,14 +75,59 @@ export default function ScheduleWeekRow({
           <View key={`empty-${column}`} style={{ flex: 1 }} />
         )
       )}
+      {/* Keyed by week, so a recycled row shows its new week's dimming at once
+      instead of fading from the last one's. */}
+      <FocusVeil key={row.key} row={row} focusedOrdinal={focusedOrdinal} />
     </View>
+  )
+}
+
+/**
+ * Fades the week's days back by veiling them in the background color, which
+ * reads the same as fading the days themselves. It runs on the UI thread, so
+ * crossing into another month re-renders no week. The rules above the days stay
+ * sharp.
+ */
+function FocusVeil({
+  row,
+  focusedOrdinal,
+}: {
+  row: WeekRow
+  focusedOrdinal: SharedValue<number>
+}) {
+  const theme = useTheme()
+  const month = monthOrdinal(row.month)
+  // Only the week's own days: the empty columns of a split week stay bare.
+  const first = row.days.findIndex((day) => day !== null)
+  const last = row.days.findLastIndex((day) => day !== null)
+  const veil = useAnimatedStyle(() => ({
+    opacity: withTiming(
+      focusedOrdinal.value === month ? 0 : 1 - DIMMED_OPACITY,
+      { duration: DIM_DURATION }
+    ),
+  }))
+
+  return (
+    <Animated.View
+      pointerEvents='none'
+      style={[
+        {
+          position: 'absolute',
+          top: WEEK_ROW_GUTTER - SELECTED_RING,
+          bottom: 0,
+          left: `${(first / 7) * 100}%`,
+          right: `${((6 - last) / 7) * 100}%`,
+          backgroundColor: theme.colors.background,
+        },
+        veil,
+      ]}
+    />
   )
 }
 
 function DayCell({
   day,
   rule,
-  focused,
   selected,
   reports,
   dayPlans,
@@ -89,7 +138,6 @@ function DayCell({
   day: ScheduleDay
   /** Draws the week's rule over this day. */
   rule: boolean
-  focused: boolean
   selected: boolean
   reports: TimeEntry[]
   dayPlans: DayPlan[]
@@ -134,25 +182,6 @@ function DayCell({
           overlay={marker ? <BuddyDayBadge marker={marker} /> : undefined}
         />
       </View>
-      {/* Fades the day back by veiling it in the background color, which reads
-      the same as fading the day itself. Keyed by day, so a recycled cell shows
-      its new day at once instead of animating from the last one. The rule sits
-      above it and stays sharp. */}
-      <Animated.View
-        key={day.key}
-        pointerEvents='none'
-        style={{
-          position: 'absolute',
-          top: WEEK_ROW_GUTTER - SELECTED_RING,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: theme.colors.background,
-          opacity: focused ? 0 : 1 - DIMMED_OPACITY,
-          transitionProperty: 'opacity',
-          transitionDuration: 220,
-        }}
-      />
       {rule ? (
         <View
           pointerEvents='none'

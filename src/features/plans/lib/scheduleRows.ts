@@ -70,6 +70,10 @@ export const calendarMonthKey = ({ year, month }: CalendarMonth) =>
 export const dayKeyOf = (year: number, month: number, day: number) =>
   `${calendarMonthKey({ year, month })}-${String(day).padStart(2, '0')}`
 
+/** A month as one number, which the UI thread can compare without objects. */
+export const monthOrdinal = ({ year, month }: CalendarMonth) =>
+  year * 12 + month
+
 /**
  * The Schedule's continuous week grid, the way Apple's Calendar scrolls months:
  * each month opens with a row naming it, set over the column of its 1st, and a

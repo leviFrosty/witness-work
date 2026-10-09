@@ -49,6 +49,8 @@ export default function ScheduleCalendarStage({
     zoom,
     schedule,
     focusedMonth,
+    focusedOrdinal,
+    yearFocusedMonth,
     initialRowIndex,
     listRef,
     yearRef,
@@ -101,6 +103,7 @@ export default function ScheduleCalendarStage({
           <ScheduleMonthView
             schedule={schedule}
             focusedMonth={focusedMonth}
+            focusedOrdinal={focusedOrdinal}
             initialRowIndex={initialRowIndex}
             listRef={listRef}
             index={index}
@@ -129,7 +132,7 @@ export default function ScheduleCalendarStage({
           <ScheduleYearView
             ref={yearRef}
             serviceYear={yearServiceYear}
-            focusedMonth={focusedMonth}
+            focusedMonth={yearFocusedMonth}
             index={index}
             bottomInset={bottomInset}
             zoomStyle={zoom.yearZoomStyle}

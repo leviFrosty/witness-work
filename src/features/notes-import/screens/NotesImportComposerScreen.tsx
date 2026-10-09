@@ -4,6 +4,7 @@ import {
   History as HistoryIcon,
   RotateCcw as RotateCcwIcon,
   Sparkles as SparklesIcon,
+  WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import {
@@ -23,6 +24,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  ActivityIndicator,
   Alert,
   Keyboard,
   Pressable,
@@ -96,6 +98,7 @@ import {
 } from '@/features/notes-import/lib/notesImportMessages'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
+import { isRetryableNotesImportError } from '@/features/notes-import/lib/notesImportManagerLogic'
 import { analytics } from '@/lib/analytics'
 
 interface Props {
@@ -180,6 +183,22 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // (kill-switch or no healthy provider), surface a banner instead of letting a
   // user paste into a feature that will only reject the import server-side.
   const availability = useNotesImportAvailability()
+  // Couldn't check (offline, or no answer): once per visit, so the share of
+  // blocked composer visits is measurable without an event per probe.
+  const availabilityFailure =
+    availability.status === 'offline'
+      ? 'offline'
+      : availability.status === 'failed'
+        ? 'check_failed'
+        : null
+  const reportedAvailabilityFailureRef = useRef(false)
+  useEffect(() => {
+    if (!availabilityFailure || reportedAvailabilityFailureRef.current) return
+    reportedAvailabilityFailureRef.current = true
+    analytics.capture('notes_import_availability_failed', {
+      state: availabilityFailure,
+    })
+  }, [availabilityFailure])
 
   // A single draft buffer backs the footer input across every mode (new import,
   // refine, interrupt-refine). Keeping ONE source of truth is what fixes
@@ -789,6 +808,68 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     )
   }
 
+  // Pinned notice when the check itself couldn't run: no connection, or the
+  // service didn't answer. Calmer than the outage banner, with Try Again (it
+  // also re-checks by itself on reconnect and on returning to the app).
+  const checkFailedBanner = () => {
+    const offline = availability.status === 'offline'
+    return (
+      <View style={{ paddingHorizontal: 15, paddingTop: 12 }}>
+        <Card style={{ gap: 12 }}>
+          <View
+            style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+          >
+            <LucideIcon
+              icon={offline ? WifiOffIcon : CircleAlertIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text style={{ flex: 1, lineHeight: 20 }}>
+              {i18n.t(
+                offline
+                  ? 'notesImport_offlineBanner'
+                  : 'notesImport_checkFailedBanner'
+              )}
+            </Text>
+          </View>
+          <Button
+            onPress={availability.retry}
+            disabled={availability.refreshing}
+            accessibilityRole='button'
+            accessibilityState={{ busy: availability.refreshing }}
+            style={{
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: theme.colors.accent,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              marginLeft: 30,
+              opacity: availability.refreshing ? 0.6 : 1,
+            }}
+          >
+            {availability.refreshing && (
+              <ActivityIndicator
+                size='small'
+                color={theme.colors.textInverse}
+              />
+            )}
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('common_tryAgain')}
+            </Text>
+          </Button>
+        </Card>
+      </View>
+    )
+  }
+
   const errorBlock = () => (
     <Card style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
@@ -805,16 +886,19 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           )}
         </Text>
       </View>
-      <ActionButton onPress={() => activeHash && retry(activeHash)}>
-        <Text
-          style={{
-            color: theme.colors.textInverse,
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {i18n.t('notesImport_retry')}
-        </Text>
-      </ActionButton>
+      {/* Retrying can't fix an ineligible device, so it gets no Retry. */}
+      {isRetryableNotesImportError(errorCode as NotesImportErrorCode) && (
+        <ActionButton onPress={() => activeHash && retry(activeHash)}>
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('notesImport_retry')}
+          </Text>
+        </ActionButton>
+      )}
     </Card>
   )
 
@@ -1235,9 +1319,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
       <Animated.View style={[{ flex: 1 }, keyboardPadding]}>
-        {!availability.available &&
-          !availability.loading &&
-          unavailableBanner()}
+        {availabilityFailure
+          ? checkFailedBanner()
+          : !availability.available &&
+            !availability.loading &&
+            unavailableBanner()}
         <ScrollView
           ref={scrollRef}
           // Must flex — RN 0.86's Yoga no longer clamps an unflexed
@@ -1340,13 +1426,15 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             placeholder={
               voicePhase === 'recording'
                 ? i18n.t('notesImport_voiceListening')
-                : refineMode
-                  ? i18n.t('notesImport_refinePlaceholder')
-                  : // Once the notes are submitted and the run is in flight, the
-                    // paste prompt is stale — drop it rather than invite a re-paste.
-                    composerDisabled
-                    ? ''
-                    : i18n.t('notesImport_placeholder')
+                : availability.loading
+                  ? i18n.t('notesImport_availabilityChecking')
+                  : refineMode
+                    ? i18n.t('notesImport_refinePlaceholder')
+                    : // Once the notes are submitted and the run is in flight, the
+                      // paste prompt is stale — drop it rather than invite a re-paste.
+                      composerDisabled
+                      ? ''
+                      : i18n.t('notesImport_placeholder')
             }
             accessibilityLabel={
               refineMode
@@ -1398,7 +1486,28 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               )
             }
             trailingAction={
-              voicePhase !== 'idle' ? (
+              // The first availability check is running: a spinner where Send
+              // would be, so the locked composer reads as waiting, not broken.
+              availability.loading && !isThinking ? (
+                <View
+                  accessible
+                  accessibilityRole='progressbar'
+                  accessibilityLabel={i18n.t(
+                    'notesImport_availabilityChecking'
+                  )}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ActivityIndicator
+                    size='small'
+                    color={theme.colors.textAlt}
+                  />
+                </View>
+              ) : voicePhase !== 'idle' ? (
                 <NotesImportVoiceButton
                   recording
                   disabled={voicePhase !== 'recording'}

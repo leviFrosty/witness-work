@@ -46,6 +46,15 @@ export function isKnownOffline(): boolean {
   return getOnline() === false
 }
 
+/**
+ * A failure that reads as "no connection" is the device's, not the server's: a
+ * refused or dropped connection while the OS reports one means the service
+ * didn't answer, which callers word differently.
+ */
+export function isDeviceOffline(kind: string): boolean {
+  return kind === 'offline' && getOnline() !== true
+}
+
 export function useOnline(): Online {
   return useSyncExternalStore(
     (listener) => {

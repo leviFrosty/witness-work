@@ -41,6 +41,7 @@ const stop = (n: number): RouteStop => ({
 })
 
 let planner: ReturnType<typeof useRoutePlanner>
+let renderer: ReturnType<typeof create>
 const mount = async (stops: RouteStop[]) => {
   function Consumer() {
     const value = useRoutePlanner(stops)
@@ -50,7 +51,7 @@ const mount = async (stops: RouteStop[]) => {
     return null
   }
   await act(async () => {
-    create(createElement(Consumer))
+    renderer = create(createElement(Consumer))
   })
 }
 
@@ -59,7 +60,7 @@ const here = { latitude: 39, longitude: -84.5 }
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.provider = 'google'
-  mocks.currentCoordinate.mockResolvedValue(here)
+  mocks.currentCoordinate.mockResolvedValue({ ok: true, coordinate: here })
 })
 
 describe('useRoutePlanner', () => {
@@ -93,6 +94,7 @@ describe('useRoutePlanner', () => {
       accountId: 'account-1234',
       start: here,
       stops: [stop(1), stop(2), stop(3)].map((s) => s.coordinate),
+      signal: expect.any(AbortSignal),
     })
     expect(planner.route?.stops.map((s) => s.title)).toEqual([
       'Stop 3',
@@ -166,18 +168,28 @@ describe('useRoutePlanner', () => {
   })
 
   it('explains a missing location or a refused request, and records the failure', async () => {
-    mocks.currentCoordinate.mockResolvedValueOnce(null)
+    mocks.currentCoordinate.mockResolvedValueOnce({
+      ok: false,
+      reason: 'unavailable',
+    })
     await mount([stop(1), stop(2)])
     await act(async () => planner.plan())
-    expect(planner.error).toBe('location')
+    expect(planner.error).toEqual({ code: 'location' })
     expect(planner.route).toBeNull()
+
+    mocks.currentCoordinate.mockResolvedValueOnce({
+      ok: false,
+      reason: 'denied',
+    })
+    await act(async () => planner.plan())
+    expect(planner.error).toEqual({ code: 'location_denied' })
 
     mocks.optimizeRoute.mockResolvedValueOnce({
       ok: false,
       error: 'daily_limit',
     })
     await act(async () => planner.plan())
-    expect(planner.error).toBe('daily_limit')
+    expect(planner.error).toEqual({ code: 'daily_limit' })
     expect(mocks.capture).toHaveBeenCalledWith('route_plan_failed', {
       error_code: 'daily_limit',
     })
@@ -186,5 +198,45 @@ describe('useRoutePlanner', () => {
     // Changing the stops clears the message.
     await act(async () => planner.remove('followUp:1'))
     expect(planner.error).toBeNull()
+  })
+
+  it('keeps the server wait time with a rate limit', async () => {
+    mocks.optimizeRoute.mockResolvedValueOnce({
+      ok: false,
+      error: 'rate_limited',
+      retryAfterMs: 30_000,
+    })
+    await mount([stop(1), stop(2)])
+    await act(async () => planner.plan())
+    expect(planner.error).toEqual({
+      code: 'rate_limited',
+      retryAfterMs: 30_000,
+    })
+  })
+
+  it('cancels a plan in flight when the screen goes away', async () => {
+    let signal: AbortSignal | undefined
+    mocks.optimizeRoute.mockImplementationOnce(
+      (args: { signal: AbortSignal }) => {
+        signal = args.signal
+        return new Promise((resolve) =>
+          args.signal.addEventListener('abort', () =>
+            resolve({ ok: false, error: 'cancelled' })
+          )
+        )
+      }
+    )
+    await mount([stop(1), stop(2)])
+    let planning: Promise<void> | undefined
+    await act(async () => {
+      planning = planner.plan()
+    })
+    await act(async () => renderer.unmount())
+    await planning
+    expect(signal?.aborted).toBe(true)
+    expect(mocks.capture).not.toHaveBeenCalledWith(
+      'route_plan_failed',
+      expect.anything()
+    )
   })
 })

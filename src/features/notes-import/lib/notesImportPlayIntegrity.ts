@@ -27,8 +27,23 @@ import {
 const PROVIDER = 'play-integrity'
 const PROTOCOL = 'witnesswork.play-integrity'
 const PROTOCOL_VERSION = 1 as const
-/** Google's backoff for retryable token errors: 5 s, then 10 s. */
+/**
+ * Google's backoff for retryable token errors: 5 s, then 10 s. Each wait is
+ * stretched by up to half again at random, so devices that failed together (a
+ * Play services outage) don't all retry in the same second.
+ */
 const TOKEN_RETRY_DELAYS_MS = [5_000, 10_000] as const
+const TOKEN_RETRY_JITTER = 0.5
+
+/** The jittered wait before token retry `attempt` (0-based), or undefined. */
+export const tokenRetryDelayMs = (
+  attempt: number,
+  random: () => number = Math.random
+): number | undefined => {
+  const base = TOKEN_RETRY_DELAYS_MS[attempt]
+  if (base === undefined) return undefined
+  return Math.round(base * (1 + TOKEN_RETRY_JITTER * random()))
+}
 
 type PlayPurpose = 'notes-import-kickoff' | 'notes-import-verify'
 
@@ -84,6 +99,8 @@ export interface NotesImportPlayIntegrityDependencies {
   baseUrl: string
   now(): number
   sleep(ms: number): Promise<void>
+  /** Jitter source for token retries; defaults to Math.random. */
+  random?(): number
 }
 
 export interface NotesImportPlayIntegritySnapshot {
@@ -290,6 +307,13 @@ export const createNotesImportPlayIntegrity = (
       })
       .catch((error: unknown) => {
         if (error instanceof NotesImportAppAttestError) throw error
+        // Offline or cancelled is not an outage; say so.
+        if (
+          error instanceof NotesImportAppAttestHttpError &&
+          error.kind !== 'http'
+        ) {
+          throw playHttpAuthError(error) ?? error
+        }
         throw new NotesImportAppAttestError('protocolUnavailable')
       })
     capabilityPromise = pending
@@ -332,7 +356,10 @@ export const createNotesImportPlayIntegrity = (
       } catch (error) {
         const code =
           dependencies.playIntegrity.classifyError(error) ?? 'unknown'
-        const delay = TOKEN_RETRY_DELAYS_MS[attempt]
+        const delay = tokenRetryDelayMs(
+          attempt,
+          dependencies.random ?? Math.random
+        )
         if (!RETRYABLE_NATIVE_FAILURES.has(code) || delay === undefined) {
           throw new NotesImportAppAttestError(nativeFailureToErrorCode(code))
         }

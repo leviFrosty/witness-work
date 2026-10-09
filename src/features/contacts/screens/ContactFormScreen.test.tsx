@@ -7,7 +7,11 @@ import { RootStackParamList } from '@/types/rootStack'
 const mocks = vi.hoisted(() => ({
   addContact: vi.fn(),
   updateContact: vi.fn(),
-  geocode: vi.fn(async () => ({ latitude: 12, longitude: 34 })),
+  geocode: vi.fn<() => Promise<unknown>>(async () => ({
+    latitude: 12,
+    longitude: 34,
+  })),
+  alert: vi.fn(),
   updatePrefillAddress: vi.fn(),
   clearPrefillAddress: vi.fn(),
   dataProtectionMode: false,
@@ -20,7 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('react-native', () => ({
   View: 'View',
   TextInput: 'TextInput',
-  Alert: { alert: vi.fn() },
+  Alert: { alert: mocks.alert },
 }))
 vi.mock('react-native-keyboard-aware-scroll-view', () => ({
   KeyboardAwareScrollView: 'ScrollView',
@@ -48,6 +52,9 @@ vi.mock('@/stores/preferences', () => ({
 }))
 vi.mock('@/lib/address', () => ({ fetchCoordinateFromAddress: mocks.geocode }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/http/online', () => ({
+  isDeviceOffline: (kind: string) => kind === 'offline',
+}))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
@@ -208,6 +215,25 @@ describe('Contact Form map coordinates', () => {
       })
     )
   })
+
+  it.each([
+    ['offline', 1],
+    ['timeout', 0],
+    ['rateLimited', 0],
+  ])(
+    'keeps the contact when geocoding fails %s, alerting only offline',
+    async (kind, alerts) => {
+      mocks.geocode.mockRejectedValueOnce({ kind })
+      await mount({ id: 'new-contact' })
+      await act(async () => {
+        root.root.findByType(ContactIdentityCard).props.onNameChange('Neighbor')
+      })
+      await save()
+      expect(mocks.addContact).toHaveBeenCalledOnce()
+      expect(mocks.updateContact).not.toHaveBeenCalled()
+      expect(mocks.alert).toHaveBeenCalledTimes(alerts)
+    }
+  )
 
   it('saves the coordinate of a picked search result without geocoding', async () => {
     await mount({ id: 'new-contact' })

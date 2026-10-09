@@ -40,6 +40,8 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 import LocationPreview from '@/features/map/components/LocationPreview'
 import { analytics } from '@/lib/analytics'
+import { classifyNetworkError } from '@/lib/http/networkError'
+import { isDeviceOffline, isKnownOffline } from '@/lib/http/online'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -157,9 +159,20 @@ export default function MapOnboarding() {
 
   const fetchContacts = useCallback(
     async (contactsToFetch: Contact[]) => {
+      const alertOffline = () =>
+        Alert.alert(
+          i18n.t('internetUnavailable'),
+          i18n.t('couldNotFetchCoordinatesFromAddress')
+        )
+      if (isKnownOffline()) {
+        alertOffline()
+        return
+      }
       setFetching(true)
       setFetchSnapshot(contactsToFetch)
-      abortController.current = new AbortController()
+      const controller = new AbortController()
+      abortController.current = controller
+      let wentOffline = false
 
       const initialStatuses: Record<string, FetchStatus> = {}
       contactsToFetch.forEach((c) => {
@@ -171,16 +184,16 @@ export default function MapOnboarding() {
 
       const worker = async () => {
         while (queue.length > 0) {
-          if (abortController.current?.signal.aborted) break
+          if (controller.signal.aborted) break
           const contact = queue.shift()
           if (!contact) break
           try {
             const position = await fetchCoordinateFromAddress(
               incrementGeocodeApiCallCount,
               contact.address,
-              abortController.current ?? undefined
+              controller.signal
             )
-            if (abortController.current?.signal.aborted) break
+            if (controller.signal.aborted) break
             if (position) {
               const latest = useContacts
                 .getState()
@@ -194,8 +207,15 @@ export default function MapOnboarding() {
             } else {
               setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
             }
-          } catch {
-            if (abortController.current?.signal.aborted) break
+          } catch (error) {
+            if (controller.signal.aborted) break
+            // Every other contact would fail the same way: stop the whole
+            // batch once rather than once per worker.
+            if (isDeviceOffline(classifyNetworkError(error))) {
+              wentOffline = true
+              controller.abort()
+              break
+            }
             setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
           }
         }
@@ -204,6 +224,13 @@ export default function MapOnboarding() {
       await Promise.all(Array.from({ length: 3 }, worker))
 
       setFetching(false)
+      if (wentOffline) {
+        // Back to the picker, where the contacts still missing a pin can be
+        // fetched again once the connection is back.
+        setStatuses({})
+        setFetchSnapshot([])
+        alertOffline()
+      }
     },
     [incrementGeocodeApiCallCount, updateContact]
   )

@@ -1,11 +1,17 @@
-import axios, { isAxiosError } from 'axios'
 import { fetch as expoFetch } from 'expo/fetch'
 import apis from '@/constants/apis'
+import { HttpError, request } from '@/lib/http/request'
+import { perf } from '@/lib/perf'
 import {
   NotesImportAppAttestError,
   NotesImportAppAttestHttpError,
+  type NotesImportAppAttestErrorCode,
 } from '@/features/notes-import/lib/notesImportAppAttest'
 import { notesImportAuth } from '@/features/notes-import/lib/notesImportAuthRuntime'
+import {
+  notesImportTransport,
+  toNotesImportHttpError,
+} from '@/features/notes-import/lib/notesImportTransport'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import type {
   NotesImportContext,
@@ -74,6 +80,12 @@ export type NotesImportErrorCode =
   | 'too_large'
   | 'attestation_required'
   | 'attestation_failed'
+  /**
+   * Device verification couldn't run right now (the attestation service, our
+   * server's verifier, or secure storage had trouble). Temporary: retry later.
+   * Distinct from `attestation_failed` / `device_ineligible`.
+   */
+  | 'attestation_unavailable'
   | 'model_error'
   | 'bad_request'
   | 'active_cap'
@@ -104,6 +116,8 @@ export class NotesImportClientError extends Error {
   /** Stable App Attest semantic metadata, when supplied by the backend. */
   reason?: string
   action?: string
+  /** How long the server asked to wait (`active_cap`, outages), when it said. */
+  retryAfterMs?: number
   constructor(
     code: NotesImportErrorCode,
     message: string,
@@ -135,40 +149,38 @@ export type NotesImportUnavailableReason =
   | 'version_below_min'
 export type { NotesImportStatus } from '@/features/notes-import/lib/notesImportUsage'
 
+/** The status endpoint answered, but not in the shape this build reads. */
+export class NotesImportStatusContractError extends Error {
+  constructor() {
+    super('Notes Import status response was malformed')
+    this.name = 'NotesImportStatusContractError'
+  }
+}
+
 /**
  * Cheap, unauthenticated availability probe (no App Attest, no inference).
- * Returns null on network or contract failure; callers keep access closed.
+ * Throws the transport's {@link NotesImportAppAttestHttpError} on a network or
+ * HTTP failure (classify it with `classifyNetworkError`), or
+ * {@link NotesImportStatusContractError} on a malformed body.
  */
+export const fetchNotesImportStatus = async (): Promise<NotesImportStatus> => {
+  const status = normalizeNotesImportStatus(
+    await notesImportTransport.getStatus()
+  )
+  if (!status) throw new NotesImportStatusContractError()
+  return status
+}
+
+/** {@link fetchNotesImportStatus}, or null on any failure. */
 export const getNotesImportStatus =
-  async (): Promise<NotesImportStatus | null> => {
-    try {
-      const { data } = await axios.get<unknown>(apis.notesImportStatus, {
-        timeout: 8_000,
-      })
-      return normalizeNotesImportStatus(data)
-    } catch {
-      return null
-    }
-  }
+  async (): Promise<NotesImportStatus | null> =>
+    fetchNotesImportStatus().catch(() => null)
 
 export interface RequestNotesImportArgs {
   notesText: string
   context: NotesImportContext
   /** Present for a stateless follow-up refinement of an earlier parse. */
   refinement?: { previousResultJSON: string; instruction: string }
-}
-
-/** DEV-only exchange metadata. Raw bodies and auth material are never included. */
-const buildDebugInfo = (e: unknown): string | undefined => {
-  if (typeof __DEV__ === 'undefined' || !__DEV__ || !isAxiosError(e)) {
-    return undefined
-  }
-  const method = e.config?.method?.toUpperCase() ?? 'POST'
-  const url = e.config?.url ?? '(unknown url)'
-  const status = e.response?.status ?? '(no response)'
-  const payload = isRecord(e.response?.data) ? e.response.data : null
-  const code = typeof payload?.code === 'string' ? payload.code : 'none'
-  return `${method} ${url}\n→ ${status}\ncode=${code}`
 }
 
 const NOTES_IMPORT_ERROR_CODES = new Set<NotesImportErrorCode>([
@@ -192,31 +204,53 @@ const isNotesImportErrorCode = (
   typeof value === 'string' &&
   NOTES_IMPORT_ERROR_CODES.has(value as NotesImportErrorCode)
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const developerDebug = (value: string): string | undefined =>
   typeof __DEV__ !== 'undefined' && __DEV__ ? value : undefined
 
+/**
+ * Authorization codes that mean verification couldn't run right now, not that
+ * this device failed it: Apple's or Google's attestation service is down, our
+ * verifier or its storage is, the capability probe failed, or the device's
+ * secure storage was briefly unreadable.
+ */
+const TEMPORARY_AUTH_CODES = new Set<NotesImportAppAttestErrorCode>([
+  'serverUnavailable',
+  'protocolUnavailable',
+  'storageFailure',
+])
+
+const authErrorCode = (
+  code: NotesImportAppAttestErrorCode
+): NotesImportErrorCode => {
+  if (code === 'cancelled') return 'cancelled'
+  if (code === 'network') return 'network'
+  if (code === 'deviceIneligible') return 'device_ineligible'
+  if (code === 'playServicesUnavailable') return 'play_services_required'
+  if (TEMPORARY_AUTH_CODES.has(code)) return 'attestation_unavailable'
+  return 'attestation_failed'
+}
+
+/**
+ * A 429 or 5xx whose code this build doesn't know (`server_error`, the per-IP
+ * `rate_limited`, a proxy's bare 502): the service is busy, not the app
+ * broken.
+ */
+const isTemporaryHttpFailure = (status: number | undefined) =>
+  status === 429 || (status !== undefined && status >= 500)
+
 const toClientError = (e: unknown): NotesImportClientError => {
   if (e instanceof NotesImportClientError) return e
+  if (e instanceof HttpError) return toClientError(toNotesImportHttpError(e))
   if (e instanceof NotesImportAppAttestError) {
-    const code: NotesImportErrorCode =
-      e.code === 'cancelled'
-        ? 'cancelled'
-        : e.code === 'network'
-          ? 'network'
-          : e.code === 'deviceIneligible'
-            ? 'device_ineligible'
-            : e.code === 'playServicesUnavailable'
-              ? 'play_services_required'
-              : 'attestation_failed'
+    const code = authErrorCode(e.code)
     const message =
       code === 'cancelled'
         ? 'Import cancelled'
         : code === 'network'
           ? 'Network error'
-          : 'Device verification failed'
+          : code === 'attestation_unavailable'
+            ? 'Device verification unavailable'
+            : 'Device verification failed'
     return new NotesImportClientError(
       code,
       message,
@@ -234,14 +268,16 @@ const toClientError = (e: unknown): NotesImportClientError => {
         ? 'cancelled'
         : e.kind === 'network'
           ? 'network'
-          : 'unknown'
+          : isTemporaryHttpFailure(e.status)
+            ? 'unavailable'
+            : 'unknown'
     const message =
       code === 'cancelled'
         ? 'Import cancelled'
         : code === 'network'
           ? 'Network error'
           : 'Notes Import request failed'
-    return new NotesImportClientError(
+    const error = new NotesImportClientError(
       code,
       message,
       e.status,
@@ -250,57 +286,8 @@ const toClientError = (e: unknown): NotesImportClientError => {
       e.reason,
       e.action
     )
-  }
-  if (isAxiosError(e)) {
-    const status = e.response?.status
-    const debug = buildDebugInfo(e)
-    if (e.code === 'ERR_CANCELED') {
-      return new NotesImportClientError(
-        'cancelled',
-        'Import cancelled',
-        status,
-        debug
-      )
-    }
-    const payload = isRecord(e.response?.data) ? e.response.data : null
-    const code = isNotesImportErrorCode(payload?.code)
-      ? payload.code
-      : undefined
-    const message =
-      typeof payload?.error === 'string' ? payload.error : e.message
-    const credits = normalizeNotesImportCredits(payload?.credits) ?? undefined
-    const reason =
-      typeof payload?.reason === 'string' ? payload.reason : undefined
-    const action =
-      typeof payload?.action === 'string' ? payload.action : undefined
-    if (code) {
-      return new NotesImportClientError(
-        code,
-        message,
-        status,
-        debug,
-        credits,
-        reason,
-        action
-      )
-    }
-    if (!e.response) {
-      return new NotesImportClientError(
-        'network',
-        'Network error',
-        status,
-        debug
-      )
-    }
-    return new NotesImportClientError(
-      'unknown',
-      message,
-      status,
-      debug,
-      undefined,
-      reason,
-      action
-    )
+    if (e.retryAfterMs !== undefined) error.retryAfterMs = e.retryAfterMs
+    return error
   }
   if (e instanceof Error && e.name === 'AbortError') {
     return new NotesImportClientError('cancelled', 'Import cancelled')
@@ -437,7 +424,11 @@ const kickoffNotesImport = async ({
   }
 }
 
-/** Parse one SSE frame into its id + concatenated data (ignoring comments). */
+/**
+ * Parse one SSE frame into its id + concatenated data. Comment lines (`:`),
+ * such as the server's `: heartbeat` keep-alives, are ignored, so a
+ * comment-only frame yields neither.
+ */
 const parseFrame = (frame: string): { id?: string; data?: string } => {
   let id: string | undefined
   let data = ''
@@ -451,10 +442,29 @@ const parseFrame = (frame: string): { id?: string; data?: string } => {
 }
 
 /**
+ * How long the stream may stay silent before we treat it as stalled. The server
+ * sends a `: heartbeat` comment every 15 s, so this spans three missed beats;
+ * servers without heartbeats still send progress well inside it. A stalled
+ * connection (Wi-Fi handoff, a proxy that went quiet) otherwise waits forever.
+ */
+export const SSE_IDLE_TIMEOUT_MS = 45_000
+
+class StreamIdleError extends Error {
+  constructor() {
+    super('Notes Import stream went quiet')
+    this.name = 'StreamIdleError'
+  }
+}
+
+/**
  * Open the SSE stream and pump events until a terminal one or the connection
- * closes. Returns the outcome; throws only if the AbortSignal fires. Uses
- * `expo/fetch` because React Native's built-in fetch can't read a streaming
- * body and has no EventSource.
+ * closes. Returns the outcome; throws if the AbortSignal fires or the
+ * connection errors. Uses `expo/fetch` because React Native's built-in fetch
+ * can't read a streaming body and has no EventSource.
+ *
+ * An idle watchdog ({@link SSE_IDLE_TIMEOUT_MS}, reset by every chunk,
+ * heartbeats included) aborts a stalled connection and returns `closed`, so the
+ * caller falls through to its snapshot-and-reconnect path.
  *
  * Exported so the resume path can re-enter a live run by its persisted
  * `subscribeToken` without a fresh kickoff.
@@ -471,77 +481,116 @@ export const consumeStream = async (
   const resuming = lastEventId && lastEventId !== '0'
   if (resuming) params.set('lastEventId', lastEventId)
 
-  const res = await expoFetch(
-    `${apis.notesImportEvents(importId)}?${params.toString()}`,
-    {
-      method: 'GET',
-      headers: {
-        Accept: 'text/event-stream',
-        ...(resuming ? { 'Last-Event-ID': lastEventId } : {}),
-      },
-      signal,
-    }
-  )
-  if (res.status === 401) {
-    return {
-      kind: 'error',
-      code: 'attestation_required',
-      message: 'Stream token expired',
-    }
-  }
-  if (!res.ok || !res.body) return { kind: 'closed' }
+  // Our own controller, so the watchdog can drop the connection without
+  // touching the caller's signal. Hermes may lack AbortSignal.any.
+  const controller = new AbortController()
+  const onCallerAbort = () => controller.abort()
+  if (signal?.aborted) controller.abort()
+  signal?.addEventListener('abort', onCallerAbort)
 
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let buf = ''
-  // Read until a terminal event or natural close. We do NOT call reader.cancel()
-  // on a terminal event: the server closes its side right after sending it, so
-  // cancelling here would try to close an already-closed stream (expo/fetch logs
-  // "The stream is not in a state that permits close"). On user cancel, the
-  // AbortSignal aborts the fetch and read() rejects — handled by the caller.
-  for (;;) {
-    const { value, done } = await reader.read()
-    if (done) return { kind: 'closed' }
-    buf += decoder.decode(value, { stream: true })
-    let idx = buf.indexOf('\n\n')
-    while (idx !== -1) {
-      const { id, data } = parseFrame(buf.slice(0, idx))
-      buf = buf.slice(idx + 2)
-      if (id) onCursor(id)
-      if (data) {
-        let ev: ImportStreamEvent | null = null
-        try {
-          const wireEvent = JSON.parse(data) as ImportStreamWireEvent
-          if (wireEvent.type === 'done') {
-            ev = {
-              ...wireEvent,
-              payload: normalizeNotesImportResponse(wireEvent.payload),
-            }
-          } else if (wireEvent.type === 'error') {
-            const credits =
-              normalizeNotesImportCredits(wireEvent.credits) ?? undefined
-            ev = { ...wireEvent, credits }
-          } else {
-            ev = wireEvent
-          }
-        } catch {
-          ev = null
-        }
-        if (ev) {
-          onEvent(ev)
-          if (ev.type === 'done') return { kind: 'done', payload: ev.payload }
-          if (ev.type === 'error') {
-            return {
-              kind: 'error',
-              code: ev.code,
-              message: ev.message,
-              credits: ev.credits,
-            }
-          }
-        }
+  let idleTimer: ReturnType<typeof setTimeout> | undefined
+  let rejectIdle: (error: StreamIdleError) => void = () => {}
+  const idle = new Promise<never>((_, reject) => {
+    rejectIdle = reject
+  })
+  // Raced against every await below; never left unhandled.
+  idle.catch(() => {})
+  const armIdle = () => {
+    clearTimeout(idleTimer)
+    idleTimer = setTimeout(() => {
+      perf.count('notesImport:sseIdleAbort')
+      rejectIdle(new StreamIdleError())
+      controller.abort()
+    }, SSE_IDLE_TIMEOUT_MS)
+  }
+
+  try {
+    armIdle()
+    const res = await Promise.race([
+      expoFetch(`${apis.notesImportEvents(importId)}?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'text/event-stream',
+          ...(resuming ? { 'Last-Event-ID': lastEventId } : {}),
+        },
+        signal: controller.signal,
+      }),
+      idle,
+    ])
+    if (res.status === 401) {
+      return {
+        kind: 'error',
+        code: 'attestation_required',
+        message: 'Stream token expired',
       }
-      idx = buf.indexOf('\n\n')
     }
+    if (!res.ok || !res.body) return { kind: 'closed' }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+    // Read until a terminal event or natural close. We do NOT call
+    // reader.cancel() on a terminal event: the server closes its side right
+    // after sending it, so cancelling here would try to close an already-closed
+    // stream (expo/fetch logs "The stream is not in a state that permits
+    // close"). On user cancel or an idle abort, the controller aborts the fetch
+    // and read() rejects; the race against `idle` unblocks us even if it
+    // doesn't.
+    for (;;) {
+      const { value, done } = await Promise.race([reader.read(), idle])
+      if (done) return { kind: 'closed' }
+      // Any bytes, heartbeat comments included, prove the connection is alive.
+      armIdle()
+      buf += decoder.decode(value, { stream: true })
+      let idx = buf.indexOf('\n\n')
+      while (idx !== -1) {
+        const { id, data } = parseFrame(buf.slice(0, idx))
+        buf = buf.slice(idx + 2)
+        if (id) onCursor(id)
+        if (data) {
+          let ev: ImportStreamEvent | null = null
+          try {
+            const wireEvent = JSON.parse(data) as ImportStreamWireEvent
+            if (wireEvent.type === 'done') {
+              ev = {
+                ...wireEvent,
+                payload: normalizeNotesImportResponse(wireEvent.payload),
+              }
+            } else if (wireEvent.type === 'error') {
+              const credits =
+                normalizeNotesImportCredits(wireEvent.credits) ?? undefined
+              ev = { ...wireEvent, credits }
+            } else {
+              ev = wireEvent
+            }
+          } catch {
+            ev = null
+          }
+          if (ev) {
+            onEvent(ev)
+            if (ev.type === 'done') return { kind: 'done', payload: ev.payload }
+            if (ev.type === 'error') {
+              return {
+                kind: 'error',
+                code: ev.code,
+                message: ev.message,
+                credits: ev.credits,
+              }
+            }
+          }
+        }
+        idx = buf.indexOf('\n\n')
+      }
+    }
+  } catch (error) {
+    // A stall, not a cancel: hand back to snapshot-and-reconnect.
+    if (error instanceof StreamIdleError && !signal?.aborted) {
+      return { kind: 'closed' }
+    }
+    throw error
+  } finally {
+    clearTimeout(idleTimer)
+    signal?.removeEventListener('abort', onCallerAbort)
   }
 }
 
@@ -551,12 +600,13 @@ export const fetchNotesImportResult = async (
   subscribeToken: string,
   signal?: AbortSignal
 ): Promise<ResultSnapshot> => {
-  const { data } = await axios.get<WireResultSnapshot>(
-    `${apis.notesImportResult(importId)}?token=${encodeURIComponent(
+  const { data } = await request<WireResultSnapshot>({
+    url: `${apis.notesImportResult(importId)}?token=${encodeURIComponent(
       subscribeToken
     )}`,
-    { timeout: 15_000, signal }
-  )
+    timeoutMs: 15_000,
+    signal,
+  })
   return {
     ...data,
     payload: data.payload
@@ -591,13 +641,14 @@ export const destroyNotesImport = async (
   run: NotesImportRunHandle
 ): Promise<void> => {
   try {
-    await axios.post(
-      `${apis.notesImportDestroy(run.importId)}?token=${encodeURIComponent(
+    await request({
+      url: `${apis.notesImportDestroy(run.importId)}?token=${encodeURIComponent(
         run.subscribeToken
       )}`,
-      undefined,
-      { timeout: 10_000 }
-    )
+      method: 'POST',
+      timeoutMs: 10_000,
+      responseType: 'none',
+    })
   } catch {
     // Best-effort: a failed destroy just falls back to the DO self-evicting.
   }

@@ -215,7 +215,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               color={theme.colors.cyan}
               titleKey='onboardingPickUp_notes'
               descKey='onboardingPickUp_notesDesc'
-              disabled={!notesImport.available}
+              disabled={notesImport.status === 'unavailable'}
               disabledNoteKey='notesImport_unavailable'
               onPress={() => selectImport('notes')}
             />

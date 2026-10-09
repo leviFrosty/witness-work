@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import useAccount from '@/hooks/useAccount'
 import { analytics } from '@/lib/analytics'
@@ -19,7 +19,16 @@ import {
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import type { RouteStop } from '@/features/route-planning/lib/routeStops'
 
-export type RoutePlannerError = RoutePlanningError | 'location'
+export type RoutePlannerError =
+  | Exclude<RoutePlanningError, 'cancelled'>
+  | 'location'
+  | 'location_denied'
+
+export type RoutePlannerFailure = {
+  code: RoutePlannerError
+  /** How long the server asked to wait, when it said. */
+  retryAfterMs?: number
+}
 
 export type PlannedRoute = {
   /** Visiting order; a chosen starting stop comes first. */
@@ -42,10 +51,13 @@ export default function useRoutePlanner(stops: RouteStop[]) {
   )
   const [startKey, setStartKey] = useState<string | null>(null)
   const [planning, setPlanning] = useState(false)
-  const [error, setError] = useState<RoutePlannerError | null>(null)
+  const [error, setError] = useState<RoutePlannerFailure | null>(null)
   const [route, setRoute] = useState<PlannedRoute | null>(null)
   /** Stop-by-stop handoff: the last link opened. */
   const [lastOpened, setLastOpened] = useState<number | null>(null)
+  /** Leaving the screen cancels a plan in flight. */
+  const planAbort = useRef<AbortController>(null)
+  useEffect(() => () => planAbort.current?.abort(), [])
 
   const included = stops.filter((stop) => !removedKeys.includes(stop.key))
   const removed = stops.filter((stop) => removedKeys.includes(stop.key))
@@ -69,13 +81,15 @@ export default function useRoutePlanner(stops: RouteStop[]) {
     setError(null)
   }
 
-  const fail = (code: RoutePlannerError) => {
-    setError(code)
+  const fail = (code: RoutePlannerError, retryAfterMs?: number) => {
+    setError({ code, ...(retryAfterMs !== undefined && { retryAfterMs }) })
     analytics.capture('route_plan_failed', { error_code: code })
   }
 
   const plan = async () => {
     if (planning || included.length === 0) return
+    const controller = new AbortController()
+    planAbort.current = controller
     setPlanning(true)
     setError(null)
     try {
@@ -84,15 +98,29 @@ export default function useRoutePlanner(stops: RouteStop[]) {
       let summary: PlannedRoute['summary']
       // One stop to visit has nothing to reorder; skip the server.
       if (destinations.length > 1) {
-        const start = startStop?.coordinate ?? (await currentCoordinate())
-        if (!start) return fail('location')
+        let start = startStop?.coordinate
+        if (!start) {
+          const here = await currentCoordinate()
+          if (controller.signal.aborted) return
+          if (!here.ok) {
+            return fail(
+              here.reason === 'denied' ? 'location_denied' : 'location'
+            )
+          }
+          start = here.coordinate
+        }
         if (!accountId) return fail('failed')
         const result = await optimizeRoute({
           accountId,
           start,
           stops: destinations.map((stop) => stop.coordinate),
+          signal: controller.signal,
         })
-        if (!result.ok) return fail(result.error)
+        if (controller.signal.aborted) return
+        if (!result.ok) {
+          if (result.error === 'cancelled') return
+          return fail(result.error, result.retryAfterMs)
+        }
         ordered = result.order.map((index) => destinations[index]!)
         summary = {
           distanceMeters: result.distanceMeters,
@@ -119,7 +147,7 @@ export default function useRoutePlanner(stops: RouteStop[]) {
         optimized: !!summary,
       })
     } finally {
-      setPlanning(false)
+      if (!controller.signal.aborted) setPlanning(false)
     }
   }
 

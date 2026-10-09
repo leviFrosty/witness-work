@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/lib/http/online', () => ({
+  isKnownOffline: () => false,
+  isDeviceOffline: () => false,
+}))
 vi.mock('../../modules/place-search', () => ({
   isAvailable: false,
   autocomplete: vi.fn(async () => []),

@@ -765,6 +765,7 @@ it('uploads only the photo revision included in the successful JSON snapshot', a
   useContacts.setState({ contacts: [localPhoto('b')] })
   finish(1)
   await push
+  await iCloudSync.imagePushesSettled()
   expect(bridge.writeBinary).toHaveBeenCalledWith(
     'witness-work-img-contact-c--a.jpg',
     localPhoto().avatar.value
@@ -775,7 +776,7 @@ it('uploads only the photo revision included in the successful JSON snapshot', a
   )
 })
 
-it('pushes edits whose debounce fired during a slow photo upload', async () => {
+it('pushes edits made during a slow photo upload without waiting for it', async () => {
   vi.useFakeTimers()
   try {
     runtime.appState = 'background'
@@ -803,13 +804,11 @@ it('pushes edits whose debounce fired during a slow photo upload', async () => {
     const push = iCloudSync.push('manual')
     await vi.advanceTimersByTimeAsync(0)
     expect(bridge.writeBinary).toHaveBeenCalledOnce()
+    // The snapshot is published; its photo is still uploading.
+    expect(await push).toBe(true)
     useContacts.setState({
       contacts: [{ ...localPhoto(), name: 'Edited while uploading' }],
     })
-    await vi.advanceTimersByTimeAsync(5000)
-    expect(bridge.write).toHaveBeenCalledOnce()
-    finish(1000)
-    await push
     await vi.advanceTimersByTimeAsync(5000)
     expect(bridge.write).toHaveBeenCalledTimes(2)
     const json = vi.mocked(bridge.write).mock.calls[1][1]
@@ -817,6 +816,8 @@ it('pushes edits whose debounce fired during a slow photo upload', async () => {
       'Edited while uploading'
     )
     expect(usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+    finish(1000)
+    await iCloudSync.imagePushesSettled()
   } finally {
     vi.useRealTimers()
   }

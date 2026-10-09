@@ -45,6 +45,19 @@ export function markCompleteICloudPull(at: number = Date.now()): void {
   notify()
 }
 
+let syncCanPull: () => boolean = () => true
+
+/**
+ * Registered by the sync engine: whether a pull can come at all right now
+ * (Supporter, signed in, online). When it can't, waiting would only delay the
+ * decision by `ICLOUD_PULL_WAIT_MS` on every return to the app.
+ */
+export function setICloudPullWaitGate(canPull: () => boolean): void {
+  syncCanPull = canPull
+}
+
+export const iCloudPullCanCome = (): boolean => syncCanPull()
+
 export function subscribeICloudPullWait(listener: () => void): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)

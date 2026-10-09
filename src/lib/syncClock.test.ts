@@ -64,4 +64,27 @@ describe('sync clock', () => {
     await vi.advanceTimersByTimeAsync(3000)
     expect(await refresh).toBeNull()
   })
+  it('backs off after failed calibrations instead of retrying every push', async () => {
+    let elapsed = 0
+    vi.stubGlobal('performance', { now: () => elapsed })
+    const fetch = vi.fn(async () => {
+      throw new Error('Network request failed')
+    })
+    vi.stubGlobal('fetch', fetch)
+    const clock = await import('@/lib/syncClock')
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(1)
+    elapsed += clock.calibrationBackoffMs(1)
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    // The second failure waits twice as long.
+    elapsed += clock.calibrationBackoffMs(1)
+    await clock.refreshSyncClock()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    elapsed += clock.calibrationBackoffMs(1)
+    await clock.refreshSyncClock()
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(clock.calibrationBackoffMs(20)).toBe(60 * 60_000)
+  })
 })

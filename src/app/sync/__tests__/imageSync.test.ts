@@ -4,7 +4,9 @@ import {
   pullMissingImages,
   gcOrphanImages,
   ImageSyncDeps,
+  uploadBackoffMs,
 } from '@/app/sync/imageSync'
+import { SyncTransportError } from '@/lib/syncTransport/types'
 
 const makeDeps = (overrides: Partial<ImageSyncDeps> = {}): ImageSyncDeps => ({
   bridge: {
@@ -129,11 +131,12 @@ describe('pushAllImages', () => {
     })
   })
 
-  it('records a transient failure and retries on the next push', async () => {
+  it('records a transient failure and retries once its backoff passes', async () => {
     const writeBinary = vi
       .fn()
       .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValueOnce(2000)
+    let now = 12345
     const deps = makeDeps({
       bridge: {
         writeBinary,
@@ -141,7 +144,7 @@ describe('pushAllImages', () => {
         listBinaryFiles: vi.fn(async () => []),
         deleteBinaryFile: vi.fn(),
       },
-      now: () => 12345,
+      now: () => now,
     })
 
     // First push — fails.
@@ -164,8 +167,26 @@ describe('pushAllImages', () => {
     expect(entryAfterFail.uploadedMtime).toBeNull()
     expect(entryAfterFail.failedAt).toBe(12345)
     expect(entryAfterFail.lastError).toBeDefined()
+    expect(entryAfterFail.failures).toBe(1)
 
-    // Second push — retries and succeeds.
+    // An edit right after doesn't upload the same file again yet.
+    const waiting = await pushAllImages({
+      sources: [
+        {
+          kind: 'contact',
+          id: 'abc',
+          localPath: 'file:///docs/contact-abc-avatar.jpg',
+        },
+      ],
+      bookkeeping: first.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(waiting.skipped).toBe(1)
+    expect(writeBinary).toHaveBeenCalledTimes(1)
+
+    // Once the backoff passes, it retries and succeeds.
+    now += uploadBackoffMs(1)
     const second = await pushAllImages({
       sources: [
         {
@@ -240,11 +261,13 @@ describe('pushAllImages', () => {
     expect(second.failed).toBe(0)
   })
 
-  it('retries a quota-failed entry when triggered by foreground', async () => {
+  it('recognises a Drive storage-full error by its code, not its message', async () => {
     const writeBinary = vi
       .fn()
-      .mockRejectedValueOnce(new Error('iCloud quota exceeded'))
-      .mockResolvedValueOnce(3000)
+      .mockRejectedValue(
+        new SyncTransportError('storage-full', 'Drive upload 403')
+      )
+    let now = 0
     const deps = makeDeps({
       bridge: {
         writeBinary,
@@ -252,6 +275,62 @@ describe('pushAllImages', () => {
         listBinaryFiles: vi.fn(async () => []),
         deleteBinaryFile: vi.fn(),
       },
+      now: () => now,
+    })
+    const sources = [
+      {
+        kind: 'contact' as const,
+        id: 'abc',
+        localPath: 'file:///docs/contact-abc-avatar.jpg',
+      },
+    ]
+    const first = await pushAllImages({
+      sources,
+      bookkeeping: {},
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(first.bookkeeping['witness-work-img-contact-abc.jpg']).toMatchObject(
+      { errorCode: 'storage-full', failures: 1 }
+    )
+    // Long past its backoff, an edit still doesn't retry a full account.
+    now = 24 * 60 * 60_000
+    const edit = await pushAllImages({
+      sources,
+      bookkeeping: first.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(edit.skipped).toBe(1)
+    const foreground = await pushAllImages({
+      sources,
+      bookkeeping: first.bookkeeping,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(2)
+    // Each failure in a row waits longer.
+    expect(
+      foreground.bookkeeping['witness-work-img-contact-abc.jpg'].failures
+    ).toBe(2)
+    expect(uploadBackoffMs(2)).toBeGreaterThan(uploadBackoffMs(1))
+    expect(uploadBackoffMs(50)).toBe(60 * 60_000)
+  })
+
+  it('retries a quota-failed entry when triggered by foreground', async () => {
+    const writeBinary = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('iCloud quota exceeded'))
+      .mockResolvedValueOnce(3000)
+    let now = 0
+    const deps = makeDeps({
+      bridge: {
+        writeBinary,
+        readBinary: vi.fn(),
+        listBinaryFiles: vi.fn(async () => []),
+        deleteBinaryFile: vi.fn(),
+      },
+      now: () => now,
     })
 
     const first = await pushAllImages({
@@ -269,7 +348,8 @@ describe('pushAllImages', () => {
     expect(first.failed).toBe(1)
 
     // Foreground retry — user may have cleaned up iCloud in Settings, so
-    // give it another shot at the same local mtime.
+    // give it another shot at the same local mtime once its backoff passed.
+    now = uploadBackoffMs(1)
     const second = await pushAllImages({
       sources: [
         {

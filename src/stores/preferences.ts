@@ -663,6 +663,19 @@ export const PREFERENCE_DEFAULTS = {
     | 'read-failed'
     | 'push-failed'
     | null,
+  /**
+   * Why the last failed push or read failed, as the transport classified it
+   * (`SyncTransportErrorCode`). Lets the status tell offline, throttled, full
+   * and signed-out apart. Cleared with `iCloudSyncIssue`.
+   */
+  iCloudSyncErrorCode: null as
+    | 'storage-full'
+    | 'unauthorized'
+    | 'network'
+    | 'rate-limited'
+    | 'not-found'
+    | 'unknown'
+    | null,
   iCloudSyncNeedsResolution: false,
   /**
    * The iCloud reset generation this device has adopted; null is generation
@@ -746,9 +759,9 @@ export const PREFERENCE_DEFAULTS = {
    *   `uploadedMtime` and the entry becomes dirty.
    * - `uploadedMtime`: local-file mtime at the point of the last successful
    *   upload. `null` means "never uploaded" (brand new or bookkeeping lost).
-   * - `lastError` / `failedAt`: last failure classification and timestamp.
-   *   `'quota'` errors suppress store-edit retries and only retry on
-   *   foreground; other errors retry freely on the next push cycle.
+   * - `lastError` / `errorCode` / `failedAt` / `failures`: the last failed
+   *   upload. A failed file backs off before its next attempt; a full account
+   *   (`storage-full`) retries only on foreground.
    *
    * Per-device (non-syncable) — this is purely local queue state and must not
    * ride the JSON payload, otherwise a stale entry from Device A could cause
@@ -761,7 +774,9 @@ export const PREFERENCE_DEFAULTS = {
       uploadedMtime: number | null
       containerMtime?: number
       lastError?: string
+      errorCode?: string
       failedAt?: number
+      failures?: number
     }
   >,
   /**

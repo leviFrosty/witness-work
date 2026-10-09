@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { hasSyncTransport } from '@/lib/syncTransport/platform'
 import { usePreferences } from '@/stores/preferences'
 import {
+  iCloudPullCanCome,
   iCloudPullWaitRemainingMs,
   subscribeICloudPullWait,
 } from '@/lib/iCloudPullWait'
@@ -14,7 +15,10 @@ import {
  */
 export default function useICloudPullSettled(): boolean {
   const iCloudSyncEnabled = usePreferences((s) => s.iCloudSyncEnabled)
-  const iCloudSyncOn = hasSyncTransport() && iCloudSyncEnabled === true
+  // Enabled but unable to pull (lapsed, signed out, offline) waits for
+  // nothing.
+  const iCloudSyncOn =
+    hasSyncTransport() && iCloudSyncEnabled === true && iCloudPullCanCome()
   const [, rerender] = useState(0)
   const remainingMs = iCloudPullWaitRemainingMs({ iCloudSyncOn })
 

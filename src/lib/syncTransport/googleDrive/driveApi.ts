@@ -8,9 +8,10 @@ import {
  * hidden app data folder (`spaces=appDataFolder`, scope `drive.appdata`). No
  * other folder of the user's Drive is reachable with that scope.
  *
- * Every call carries a fresh OAuth access token from `getToken`. A 401 asks for
- * a refreshed token once; throttling and server errors back off and retry a few
- * times; everything else is classified into a `SyncTransportError`.
+ * Every call carries a fresh OAuth access token from `getToken`. A rejected
+ * token (401, or a 403 whose reason is about access) asks for a refreshed token
+ * once; throttling and server errors back off and retry a few times; everything
+ * else is classified into a `SyncTransportError`.
  */
 
 export const DRIVE_API_ORIGIN = 'https://www.googleapis.com'
@@ -24,7 +25,12 @@ export type DriveFile = {
   size: number | null
 }
 
-export type DriveUploadResult = { status: number; body: string }
+export type DriveUploadResult = {
+  status: number
+  body: string
+  /** `Retry-After` from the response, when it had one. */
+  retryAfter?: string | null
+}
 
 /** A successful response, read in full within the request timeout. */
 type DriveResponse = { body: string; headers: Headers }
@@ -43,7 +49,12 @@ export type DriveFileTransfer = {
     url: string
     destinationPath: string
     headers: Record<string, string>
-  }): Promise<{ status: number }>
+  }): Promise<{
+    status: number
+    /** The error body of a failed download, when it could be read. */
+    body?: string
+    retryAfter?: string | null
+  }>
 }
 
 export type DriveApiOptions = {
@@ -60,8 +71,19 @@ export type DriveApiOptions = {
 
 const FILE_FIELDS = 'id,name,modifiedTime,size'
 const REQUEST_TIMEOUT_MS = 30_000
-/** Waits before each retry of a throttled or failed request. */
-const RETRY_DELAYS_MS = [1_000, 3_000]
+/**
+ * Retries of a throttled or failed request, waiting 1, 2, 4 and 8 s plus up to
+ * 1 s of jitter (Google's recommended exponential backoff), or what
+ * `Retry-After` asks for. A wait longer than `MAX_RETRY_DELAY_MS` isn't waited
+ * out here: the error goes back to the sync engine, which backs off itself.
+ */
+const MAX_RETRIES = 4
+const MAX_RETRY_DELAY_MS = 32_000
+/**
+ * Google documents multipart uploads for files up to 5 MB. Larger JSON goes
+ * through a resumable session.
+ */
+export const RESUMABLE_JSON_BYTES = 4 * 1024 * 1024
 
 const query = (params: Record<string, string | undefined>): string =>
   Object.entries(params)
@@ -98,19 +120,83 @@ export function driveFileFrom(resource: DriveFileResource): DriveFile {
   }
 }
 
-/** First `errors[].reason` from a Drive error body, if any. */
-function errorReason(body: string): string | null {
+/**
+ * The reason of a Drive error body: the first `errors[].reason`, else the first
+ * `details[].reason` (newer Google APIs), else `status`.
+ */
+export function errorReason(body: string | undefined): string | null {
+  if (!body) return null
   try {
     const parsed = JSON.parse(body) as {
-      error?: { errors?: Array<{ reason?: unknown }>; status?: unknown }
+      error?: {
+        errors?: Array<{ reason?: unknown }>
+        details?: Array<{ reason?: unknown }>
+        status?: unknown
+      }
     }
-    const reason = parsed.error?.errors?.[0]?.reason
+    const reason =
+      parsed.error?.errors?.[0]?.reason ?? parsed.error?.details?.[0]?.reason
     if (typeof reason === 'string') return reason
     return typeof parsed.error?.status === 'string' ? parsed.error.status : null
   } catch {
     return null
   }
 }
+
+/** `Retry-After` in ms, from seconds or an HTTP date; null when absent. */
+export function retryAfterMs(
+  value: string | null | undefined,
+  now = Date.now()
+): number | null {
+  if (!value) return null
+  const seconds = Number(value)
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000)
+  const at = Date.parse(value)
+  return Number.isFinite(at) ? Math.max(0, at - now) : null
+}
+
+/** UTF-8 length of `text`, without allocating its bytes. */
+export function utf8Length(text: string): number {
+  let bytes = 0
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i)
+    if (code < 0x80) bytes += 1
+    else if (code < 0x800) bytes += 2
+    else if (code >= 0xd800 && code <= 0xdbff) {
+      // A surrogate pair is one 4-byte code point.
+      bytes += 4
+      i++
+    } else bytes += 3
+  }
+  return bytes
+}
+
+/**
+ * 403 reasons that mean the token or the grant is the problem, so a fresh token
+ * (or the user) can fix it.
+ */
+const AUTH_REASONS = new Set([
+  'authError',
+  'insufficientPermissions',
+  'insufficientScopes',
+  'insufficientFilePermissions',
+  'appNotAuthorizedToFile',
+  'PERMISSION_DENIED',
+  'ACCESS_TOKEN_SCOPE_INSUFFICIENT',
+  'forbidden',
+])
+
+const RATE_LIMIT_REASONS = new Set([
+  'userRateLimitExceeded',
+  'rateLimitExceeded',
+  'sharingRateLimitExceeded',
+  // `quotaExceeded` and `dailyLimitExceeded` are API usage limits, not the
+  // user's storage.
+  'quotaExceeded',
+  'dailyLimitExceeded',
+  'RATE_LIMIT_EXCEEDED',
+  'RESOURCE_EXHAUSTED',
+])
 
 /**
  * Drive's documented error responses, mapped to what sync can act on. Drive
@@ -127,17 +213,11 @@ export function classifyDriveError(
   if (status === 429) return 'rate-limited'
   if (status === 403) {
     if (reason === 'storageQuotaExceeded') return 'storage-full'
-    // `quotaExceeded` and `dailyLimitExceeded` are API usage limits, not the
-    // user's storage.
-    if (
-      reason === 'userRateLimitExceeded' ||
-      reason === 'rateLimitExceeded' ||
-      reason === 'sharingRateLimitExceeded' ||
-      reason === 'quotaExceeded' ||
-      reason === 'dailyLimitExceeded'
-    )
-      return 'rate-limited'
-    return 'unauthorized'
+    if (reason !== null && RATE_LIMIT_REASONS.has(reason)) return 'rate-limited'
+    if (reason !== null && AUTH_REASONS.has(reason)) return 'unauthorized'
+    // Without a reason we can't tell; refreshing the token or asking the user
+    // to reconnect over a 403 Drive didn't explain would be a guess.
+    return 'unknown'
   }
   if (status === 408 || status >= 500) return 'network'
   return 'unknown'
@@ -154,8 +234,8 @@ export function createDriveApi(options: DriveApiOptions) {
     ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
 
   /**
-   * Runs `attempt` with a token, refreshing it once on 401 and backing off on
-   * throttling and server errors.
+   * Runs `attempt` with a token, refreshing it once when Drive rejects it and
+   * backing off on throttling and server errors.
    */
   async function withRetries<T>(
     attempt: (token: string) => Promise<T>
@@ -178,13 +258,22 @@ export function createDriveApi(options: DriveApiOptions) {
           retry--
           continue
         }
-        const delay = RETRY_DELAYS_MS[retry]
-        if (!retryable(code) || delay === undefined) {
+        const asked =
+          error instanceof SyncTransportError ? error.retryAfterMs : null
+        const delay = Math.max(
+          asked ?? 0,
+          1_000 * 2 ** retry + Math.floor(Math.random() * 1_000)
+        )
+        if (
+          !retryable(code) ||
+          retry >= MAX_RETRIES ||
+          (asked ?? 0) > MAX_RETRY_DELAY_MS
+        ) {
           throw error instanceof SyncTransportError
             ? error
             : new SyncTransportError('network', String(error))
         }
-        await sleep(delay + Math.floor(Math.random() * 250))
+        await sleep(Math.min(delay, MAX_RETRY_DELAY_MS))
       }
     }
   }
@@ -204,11 +293,13 @@ export function createDriveApi(options: DriveApiOptions) {
     const timer = controller
       ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
       : null
+    // A resumable session's upload URL is absolute.
+    const url = /^https?:/.test(path) ? path : `${origin}${path}`
     let status: number
     let body: string
     let headers: Headers
     try {
-      const response = await fetchImpl(`${origin}${path}`, {
+      const response = await fetchImpl(url, {
         method: init.method,
         headers: { ...init.headers, Authorization: `Bearer ${token}` },
         body: init.body,
@@ -226,10 +317,25 @@ export function createDriveApi(options: DriveApiOptions) {
       if (timer) clearTimeout(timer)
     }
     if (status >= 200 && status < 300) return { body, headers }
+    throw driveError(
+      `Drive ${init.method}`,
+      status,
+      body,
+      headers.get('retry-after')
+    )
+  }
+
+  function driveError(
+    label: string,
+    status: number,
+    body: string | undefined,
+    retryAfter: string | null | undefined
+  ): SyncTransportError {
     const reason = errorReason(body)
-    throw new SyncTransportError(
+    return new SyncTransportError(
       classifyDriveError(status, reason),
-      `Drive ${init.method} ${status}${reason ? ` ${reason}` : ''}`
+      `${label} ${status}${reason ? ` ${reason}` : ''}`,
+      retryAfterMs(retryAfter)
     )
   }
 
@@ -245,6 +351,46 @@ export function createDriveApi(options: DriveApiOptions) {
     path: string,
     init: { method: string; headers?: Record<string, string>; body?: string }
   ) => withRetries((token) => send(token, path, init))
+
+  /**
+   * A large JSON file: Drive opens a session for its metadata, then takes the
+   * content in one PUT and creates the file only once all of it arrived.
+   */
+  function createJsonResumable(name: string, json: string): Promise<DriveFile> {
+    return withRetries(async (token) => {
+      const session = await send(
+        token,
+        `/upload/drive/v3/files?${query({
+          uploadType: 'resumable',
+          fields: FILE_FIELDS,
+        })}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            parents: ['appDataFolder'],
+            mimeType: 'application/json',
+          }),
+        }
+      )
+      const location = session.headers.get('location')
+      if (!location)
+        throw new SyncTransportError('unknown', 'Drive gave no upload URL')
+      return driveFileFrom(
+        parse(
+          await send(token, location, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: json,
+          })
+        )
+      )
+    })
+  }
 
   return {
     /** Every file in the app data folder, all pages. */
@@ -283,8 +429,13 @@ export function createDriveApi(options: DriveApiOptions) {
       return response.body
     },
 
-    /** Creates a JSON file in the app data folder in one request. */
+    /**
+     * Creates a JSON file in the app data folder: in one multipart request, or
+     * through a resumable session above `RESUMABLE_JSON_BYTES`.
+     */
     async createJson(name: string, json: string): Promise<DriveFile> {
+      if (utf8Length(json) > RESUMABLE_JSON_BYTES)
+        return createJsonResumable(name, json)
       const boundary = `witness-work-${Date.now().toString(36)}${Math.random()
         .toString(36)
         .slice(2)}`
@@ -413,35 +564,38 @@ export function createDriveApi(options: DriveApiOptions) {
             `Drive upload failed: ${String(error)}`
           )
         }
-        if (result.status < 200 || result.status >= 300) {
-          throw new SyncTransportError(
-            classifyDriveError(result.status, errorReason(result.body)),
-            `Drive upload ${result.status}`
+        if (result.status < 200 || result.status >= 300)
+          throw driveError(
+            'Drive upload',
+            result.status,
+            result.body,
+            result.retryAfter
           )
-        }
         return driveFileFrom(JSON.parse(result.body))
       })
     },
 
     async downloadBinary(id: string, destinationPath: string): Promise<void> {
       await withRetries(async (token) => {
-        let status: number
+        let result: Awaited<ReturnType<DriveFileTransfer['download']>>
         try {
-          ;({ status } = await options.transfer.download({
+          result = await options.transfer.download({
             url: `${origin}/drive/v3/files/${encodeURIComponent(id)}?alt=media`,
             destinationPath,
             headers: { Authorization: `Bearer ${token}` },
-          }))
+          })
         } catch (error) {
           throw new SyncTransportError(
             'network',
             `Drive download failed: ${String(error)}`
           )
         }
-        if (status < 200 || status >= 300)
-          throw new SyncTransportError(
-            classifyDriveError(status, null),
-            `Drive download ${status}`
+        if (result.status < 200 || result.status >= 300)
+          throw driveError(
+            'Drive download',
+            result.status,
+            result.body,
+            result.retryAfter
           )
       })
     },

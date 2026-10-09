@@ -7,6 +7,18 @@ const uncalibratedStamps = new Set<number>()
 const correctedStamps = new Map<number, number>()
 let calibratedAt = 0
 let calibration: Promise<number | null> | undefined
+/** Consecutive failed calibrations, and when the last one failed. */
+let failures = 0
+let failedAt = 0
+/** Waits after 1, 2, 3… failed calibrations: 1, 2, 4… min, at most an hour. */
+const FAILURE_BACKOFF_MS = 60_000
+const MAX_FAILURE_BACKOFF_MS = 60 * 60_000
+
+/** How long after a failure before trying again. */
+export const calibrationBackoffMs = (failed: number): number =>
+  failed === 0
+    ? 0
+    : Math.min(FAILURE_BACKOFF_MS * 2 ** (failed - 1), MAX_FAILURE_BACKOFF_MS)
 
 const elapsedNow = () => globalThis.performance?.now() ?? Date.now()
 
@@ -24,6 +36,8 @@ export function setSyncClockOffset(value: number, calibrated = false): void {
   calibratedOffset = calibrated && Number.isFinite(value)
   anchor = undefined
   calibratedAt = 0
+  failures = 0
+  failedAt = 0
 }
 
 /**
@@ -47,10 +61,16 @@ export function syncTimestamp(previous = 0): number {
 export const correctedSyncTimestamp = (value: number) =>
   correctedStamps.get(value) ?? value
 
-/** Best effort HTTPS Date calibration using the existing public health endpoint. */
+/**
+ * Best effort HTTPS Date calibration using the existing public health endpoint.
+ * Hourly after a success; after failures (offline, ww-api down) it backs off
+ * instead of adding a request, and up to 3 s, to every push.
+ */
 export function refreshSyncClock(): Promise<number | null> {
   if (calibration) return calibration
   if (calibratedAt && elapsedNow() - calibratedAt < 60 * 60_000)
+    return Promise.resolve(null)
+  if (failures && elapsedNow() - failedAt < calibrationBackoffMs(failures))
     return Promise.resolve(null)
   calibration = (async () => {
     const controller = new AbortController()
@@ -62,7 +82,11 @@ export function refreshSyncClock(): Promise<number | null> {
         cache: 'no-store',
       })
       const serverTime = Date.parse(response.headers.get('date') ?? '')
-      if (!response.ok || !Number.isFinite(serverTime)) return null
+      if (!response.ok || !Number.isFinite(serverTime)) {
+        failures++
+        failedAt = elapsedNow()
+        return null
+      }
       const time = serverTime + (elapsedNow() - started) / 2
       const previousOffset = offsetMs
       offsetMs = time - Date.now()
@@ -77,8 +101,11 @@ export function refreshSyncClock(): Promise<number | null> {
       calibratedOffset = true
       anchor = { time, elapsed: elapsedNow() }
       calibratedAt = elapsedNow()
+      failures = 0
       return offsetMs
     } catch {
+      failures++
+      failedAt = elapsedNow()
       return null
     } finally {
       clearTimeout(timeout)

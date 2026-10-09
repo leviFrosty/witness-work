@@ -37,8 +37,9 @@ import { usePreferences } from '@/stores/preferences'
  *   copy-on-write instead: create the new copy, then delete the old one, so a
  *   reader always finds one complete copy and nothing accumulates.
  * - **No change events.** Drive pushes only to public webhooks, so while the app
- *   is in the foreground the folder is listed every `POLL_INTERVAL_MS` and a
- *   file another device changed fires the remote-change event.
+ *   is in the foreground (and `shouldPoll` allows) the folder is listed every
+ *   `POLL_INTERVAL_MS` and a file another device changed fires the
+ *   remote-change event. Listings are shared for `LISTING_REUSE_MS`.
  *
  * Writes resolve once Drive has stored the file (`writeConfirmsUpload`), and
  * there's no offline queue: the sync engine's pending-push flag and retries
@@ -64,6 +65,14 @@ export const isSyncImageName = (name: string): boolean =>
 
 /** Listing while the app is active, to notice other devices' writes. */
 export const POLL_INTERVAL_MS = 60_000
+/**
+ * A listing this recent answers the next caller instead of a new request. One
+ * peer change otherwise lists the folder about three times in a row: the
+ * engine's pull, the account reconcile and the photo pass.
+ */
+export const LISTING_REUSE_MS = 3_000
+/** Longest one photo upload or download may take before it's cancelled. */
+export const TRANSFER_TIMEOUT_MS = 90_000
 /** Longest wait between polls after failures. */
 const MAX_POLL_INTERVAL_MS = 10 * 60_000
 const DOWNLOAD_CONCURRENCY = 4
@@ -87,6 +96,37 @@ async function inBatches<T>(
 }
 
 /**
+ * Runs a native transfer, cancelling it after `TRANSFER_TIMEOUT_MS`: neither of
+ * expo-file-system's transfers has a timeout of its own, and one that never
+ * finishes would hold every later photo transfer.
+ */
+async function withCancel<T>(
+  run: () => Promise<T>,
+  cancel: () => Promise<void>,
+  what: string
+): Promise<T> {
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    void cancel().catch(() => {})
+  }, TRANSFER_TIMEOUT_MS)
+  try {
+    const result = await run()
+    if (timedOut) throw new Error(`${what} timed out`)
+    return result
+  } catch (error) {
+    throw timedOut ? new Error(`${what} timed out`) : error
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+const header = (headers: Record<string, string> | undefined, name: string) =>
+  Object.entries(headers ?? {}).find(
+    ([key]) => key.toLowerCase() === name
+  )?.[1] ?? null
+
+/**
  * `expo-file-system`, downloading to a sibling file and moving it in place.
  * Loaded on first transfer so importing the transport stays native-free.
  */
@@ -94,23 +134,51 @@ const fileSystem = () => import('expo-file-system/legacy')
 const fileSystemTransfer: DriveFileTransfer = {
   async upload({ url, sourcePath, headers }) {
     const FileSystem = await fileSystem()
-    const result = await FileSystem.uploadAsync(url, sourcePath, {
+    const task = FileSystem.createUploadTask(url, sourcePath, {
       httpMethod: 'PUT',
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       headers,
     })
-    return { status: result.status, body: result.body }
+    const result = await withCancel(
+      () => task.uploadAsync(),
+      () => task.cancelAsync(),
+      'Drive upload'
+    )
+    if (!result) throw new Error('Drive upload cancelled')
+    return {
+      status: result.status,
+      body: result.body,
+      retryAfter: header(result.headers, 'retry-after'),
+    }
   },
   async download({ url, destinationPath, headers }) {
     const FileSystem = await fileSystem()
     const partial = `${destinationPath}.part`
     try {
-      const result = await FileSystem.downloadAsync(url, partial, { headers })
+      const download = FileSystem.createDownloadResumable(url, partial, {
+        headers,
+      })
+      const result = await withCancel(
+        () => download.downloadAsync(),
+        () => download.cancelAsync(),
+        'Drive download'
+      )
+      if (!result) throw new Error('Drive download cancelled')
       if (result.status >= 200 && result.status < 300) {
         await FileSystem.deleteAsync(destinationPath, { idempotent: true })
         await FileSystem.moveAsync({ from: partial, to: destinationPath })
+        return { status: result.status }
       }
-      return { status: result.status }
+      // Drive's error JSON landed in the file; its reason tells a throttle
+      // from a refused token.
+      const body = await FileSystem.readAsStringAsync(partial).catch(
+        () => undefined
+      )
+      return {
+        status: result.status,
+        body: body && body.length < 16_384 ? body : undefined,
+        retryAfter: header(result.headers, 'retry-after'),
+      }
     } finally {
       await FileSystem.deleteAsync(partial, { idempotent: true })
     }
@@ -126,6 +194,7 @@ export function createGoogleDriveTransport(deps: {
   isConnected: () => boolean
   accountToken: () => string | null
   addAvailabilityListener: typeof addGoogleDriveAvailabilityListener
+  now?: () => number
   appState?: () => {
     current: AppStateStatus
     subscribe: (listener: (state: AppStateStatus) => void) => {
@@ -148,6 +217,12 @@ export function createGoogleDriveTransport(deps: {
   const queues = new Map<string, Promise<unknown>>()
   /** The account the caches above describe; another account starts over. */
   let cachedAccount: string | null = null
+  /** When `index` was last listed in full, for `LISTING_REUSE_MS`. */
+  let listedAt = 0
+  /** The listing request in flight, shared by every caller meanwhile. */
+  let listing: { account: string | null; promise: Promise<void> } | null = null
+  let shouldPoll: () => boolean = () => true
+  const now = deps.now ?? Date.now
 
   /**
    * Captures the account when an operation is called, so the operation (even
@@ -163,6 +238,7 @@ export function createGoogleDriveTransport(deps: {
     if (account === cachedAccount) return
     cachedAccount = account
     index = null
+    listedAt = 0
     observed.clear()
     announced.clear()
     contents.clear()
@@ -189,8 +265,7 @@ export function createGoogleDriveTransport(deps: {
     return next
   }
 
-  async function list(op: Op): Promise<Map<string, DriveFile[]>> {
-    forAccount(op.account)
+  async function listNow(op: Op): Promise<void> {
     const next = new Map<string, DriveFile[]>()
     for (const file of await op.api.listFiles()) {
       const copies = next.get(file.name)
@@ -198,13 +273,42 @@ export function createGoogleDriveTransport(deps: {
       else next.set(file.name, [file])
     }
     for (const copies of next.values()) copies.sort(newestFirst)
+    // Another account was connected while this listed.
+    if (op.account !== cachedAccount) return
     index = next
+    listedAt = now()
     const live = new Set(
       [...next.values()].flatMap((copies) => copies.map((f) => f.id))
     )
     for (const id of [...contents.keys()])
       if (!live.has(id)) contents.delete(id)
-    return next
+  }
+
+  /**
+   * The folder's current listing. Callers within `LISTING_REUSE_MS` of the last
+   * one, or while one is in flight, share it; `fresh` always lists anew (after
+   * a read found a copy already gone).
+   */
+  async function list(
+    op: Op,
+    { fresh = false }: { fresh?: boolean } = {}
+  ): Promise<Map<string, DriveFile[]>> {
+    forAccount(op.account)
+    if (!fresh && index && now() - listedAt < LISTING_REUSE_MS) return index
+    if (!fresh && listing?.account === op.account) await listing.promise
+    else {
+      const promise = listNow(op)
+      const entry = { account: op.account, promise }
+      listing = entry
+      try {
+        await promise
+      } finally {
+        if (listing === entry) listing = null
+      }
+    }
+    forAccount(op.account)
+    if (!index) throw new SyncTransportError('network', 'Drive listing lost')
+    return index
   }
 
   const copiesOf = async (op: Op, name: string): Promise<DriveFile[]> => {
@@ -277,10 +381,12 @@ export function createGoogleDriveTransport(deps: {
   }
 
   async function pollNow(): Promise<void> {
-    if (!deps.isConnected()) return
+    if (!deps.isConnected() || !shouldPoll()) return
     let listing: Map<string, DriveFile[]>
     try {
-      listing = await list(begin())
+      // A poll exists to see what changed, so it always lists anew; the
+      // engine's pull right after reuses this listing.
+      listing = await list(begin(), { fresh: true })
       pollDelay = POLL_INTERVAL_MS
     } catch (error) {
       pollDelay = Math.min(pollDelay * 2, MAX_POLL_INTERVAL_MS)
@@ -353,28 +459,54 @@ export function createGoogleDriveTransport(deps: {
 
     async readFiles(include): Promise<SyncRead> {
       const op = begin()
-      const listing = await list(op)
-      const wanted = [...listing.entries()]
-        .filter(([name]) => isSyncJsonName(name) && include(name))
-        .map(([, copies]) => copies[0])
+      const wantedIn = (listing: Map<string, DriveFile[]>) =>
+        [...listing.entries()]
+          .filter(([name]) => isSyncJsonName(name) && include(name))
+          .map(([, copies]) => copies[0])
       const files: SyncFile[] = []
       const pending: string[] = []
-      await inBatches(wanted, DOWNLOAD_CONCURRENCY, async (file) => {
-        try {
-          let json = contents.get(file.id)
-          if (json === undefined) {
-            json = await op.api.downloadText(file.id)
-            contents.set(file.id, json)
+      /** Copies another device replaced (copy-on-write) after the listing. */
+      const replaced: string[] = []
+      const read = (wanted: DriveFile[], last: boolean) =>
+        inBatches(wanted, DOWNLOAD_CONCURRENCY, async (file) => {
+          try {
+            let json = contents.get(file.id)
+            if (json === undefined) {
+              json = await op.api.downloadText(file.id)
+              contents.set(file.id, json)
+            }
+            files.push({
+              filename: file.name,
+              json,
+              modifiedAt: file.modifiedAt,
+            })
+            observed.set(file.name, file)
+          } catch (error) {
+            if (!last && syncTransportErrorCode(error) === 'not-found') {
+              replaced.push(file.name)
+              return
+            }
+            logger.warn('[GoogleDrive] file not read', {
+              name: file.name,
+              error,
+            })
+            pending.push(file.name)
+            // Still unread: the next poll announces it again.
+            announced.delete(file.name)
           }
-          files.push({ filename: file.name, json, modifiedAt: file.modifiedAt })
-          observed.set(file.name, file)
-        } catch (error) {
-          logger.warn('[GoogleDrive] file not read', { name: file.name, error })
-          pending.push(file.name)
-          // Still unread: the next poll announces it again.
-          announced.delete(file.name)
-        }
-      })
+        })
+      await read(wantedIn(await list(op)), false)
+      if (replaced.length) {
+        // Read the copy that replaced it; a name that's gone entirely was
+        // deleted, which isn't a failed read.
+        const names = new Set(replaced)
+        await read(
+          wantedIn(await list(op, { fresh: true })).filter((file) =>
+            names.has(file.name)
+          ),
+          true
+        )
+      }
       files.sort((a, b) => a.filename.localeCompare(b.filename))
       return { files, pending }
     },
@@ -482,6 +614,10 @@ export function createGoogleDriveTransport(deps: {
 
     addAvailabilityChangeListener: (listener) =>
       deps.addAvailabilityListener(listener),
+
+    setShouldPoll(next) {
+      shouldPoll = next
+    },
 
     poll,
   }

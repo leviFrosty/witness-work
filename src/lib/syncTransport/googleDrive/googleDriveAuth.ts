@@ -8,7 +8,12 @@ import {
   SyncTransportError,
   type TransportSubscription,
 } from '@/lib/syncTransport/types'
-import { DRIVE_API_ORIGIN } from '@/lib/syncTransport/googleDrive/driveApi'
+import {
+  DRIVE_API_ORIGIN,
+  classifyDriveError,
+  errorReason,
+  retryAfterMs,
+} from '@/lib/syncTransport/googleDrive/driveApi'
 import {
   GoogleDriveAuthError,
   googleDriveAuthErrorCode,
@@ -128,7 +133,8 @@ async function currentAccount(token: string): Promise<string> {
     ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     : null
   let status: number
-  let body: { user?: { permissionId?: unknown } } | null = null
+  let text = ''
+  let retryAfter: string | null = null
   try {
     const response = await fetch(
       `${googleDriveOrigin()}/drive/v3/about?fields=${encodeURIComponent('user(permissionId)')}`,
@@ -138,16 +144,32 @@ async function currentAccount(token: string): Promise<string> {
       }
     )
     status = response.status
-    if (response.ok) body = await response.json()
+    retryAfter = response.headers?.get?.('retry-after') ?? null
+    text = await response.text()
   } catch (error) {
     throw new SyncTransportError('network', String(error))
   } finally {
     if (timer) clearTimeout(timer)
   }
-  if (status === 401 || status === 403)
-    throw unauthorized('Drive refused the token')
-  if (!body) throw new SyncTransportError('network', `Drive about ${status}`)
-  const id = body.user?.permissionId
+  if (status < 200 || status >= 300) {
+    // Only a refused token is `unauthorized`, which can end in "Reconnect
+    // Google Drive". A throttled or over-quota project answers 403 too, and
+    // must not disconnect anyone.
+    const reason = errorReason(text)
+    const code = classifyDriveError(status, reason)
+    throw new SyncTransportError(
+      code === 'unknown' ? 'network' : code,
+      `Drive about ${status}${reason ? ` ${reason}` : ''}`,
+      retryAfterMs(retryAfter)
+    )
+  }
+  let body: { user?: { permissionId?: unknown } } | null = null
+  try {
+    body = JSON.parse(text)
+  } catch {
+    throw new SyncTransportError('unknown', 'Drive returned malformed JSON')
+  }
+  const id = body?.user?.permissionId
   if (typeof id !== 'string' || !id)
     throw new SyncTransportError('unknown', 'Drive returned no account')
   return hashGoogleDriveAccount(id)

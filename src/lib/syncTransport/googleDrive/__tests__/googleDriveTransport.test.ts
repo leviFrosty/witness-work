@@ -34,11 +34,12 @@ vi.mock('@/lib/syncTransport/googleDrive/googleDriveAuth', () => ({
   isGoogleDriveConnected: () => true,
 }))
 
-const { createGoogleDriveTransport, POLL_INTERVAL_MS } = await import(
-  '@/lib/syncTransport/googleDrive/googleDriveTransport'
-)
+const { createGoogleDriveTransport, POLL_INTERVAL_MS, LISTING_REUSE_MS } =
+  await import('@/lib/syncTransport/googleDrive/googleDriveTransport')
 
-const setup = (account = 'acct') => {
+const clock = { now: 0 }
+
+const setup = (account = 'acct', options: { now?: () => number } = {}) => {
   const kit = driveKit()
   const api = kit.api(account)
   const transport = createGoogleDriveTransport({
@@ -46,6 +47,9 @@ const setup = (account = 'acct') => {
     isConnected: () => true,
     accountToken: () => `hash-${account}`,
     addAvailabilityListener: () => ({ remove: () => {} }),
+    // Each call is later than the last, past `LISTING_REUSE_MS`, unless a
+    // test holds the clock still.
+    now: options.now ?? (() => (clock.now += LISTING_REUSE_MS)),
   })
   return { ...kit, transport, account }
 }
@@ -124,7 +128,8 @@ describe('JSON files', () => {
     const kit = setup()
     kit.drive.put(kit.account, 'witness-work-phone.json', '{"p":1}')
     kit.drive.put(kit.account, 'witness-work-tablet.json', '{"t":1}')
-    for (let i = 0; i < 3; i++)
+    // Every attempt: the first and its four retries.
+    for (let i = 0; i < 5; i++)
       kit.drive.failNext(
         (r) =>
           r.url.includes('alt=media') &&
@@ -213,7 +218,7 @@ describe('remote changes', () => {
     kit.drive.put(kit.account, 'witness-work-phone.json', '{}')
     await kit.transport.poll()
     expect(listener).toHaveBeenCalledTimes(1)
-    for (let i = 0; i < 3; i++)
+    for (let i = 0; i < 5; i++)
       kit.drive.failNext((r) => r.url.includes('alt=media'), 503)
     expect((await kit.transport.readFiles(all)).pending).toEqual([
       'witness-work-phone.json',
@@ -362,5 +367,73 @@ describe('account identity', () => {
     await expect(
       kit.transport.write('witness-work-d1.json', '{"big":true}')
     ).rejects.toMatchObject({ code: 'storage-full' })
+  })
+})
+
+describe('fewer requests', () => {
+  const listings = (kit: ReturnType<typeof setup>) =>
+    kit.drive.log.filter((r) => r.path === '/drive/v3/files').length
+
+  it('shares one listing between callers a few seconds apart', async () => {
+    let now = 0
+    const kit = setup('acct', { now: () => now })
+    kit.drive.put(kit.account, 'witness-work-phone.json', '{}')
+    // Concurrent callers share the request in flight.
+    await Promise.all([
+      kit.transport.readFiles(all),
+      kit.transport.listBinaryFiles(),
+    ])
+    expect(listings(kit)).toBe(1)
+    // A caller soon after reuses it: one peer change no longer lists three
+    // times.
+    now += LISTING_REUSE_MS - 1
+    await kit.transport.readFiles(all)
+    expect(listings(kit)).toBe(1)
+    now += 2
+    await kit.transport.readFiles(all)
+    expect(listings(kit)).toBe(2)
+    // A poll always lists anew.
+    await kit.transport.poll()
+    expect(listings(kit)).toBe(3)
+  })
+
+  it('reads the replacing copy when a file is replaced after the listing', async () => {
+    const kit = setup()
+    const old = kit.drive.put(kit.account, 'witness-work-phone.json', '{"v":1}')
+    // Another device writes copy-on-write between this listing and the read:
+    // the listed copy is gone, a newer one exists.
+    kit.drive.failNext((r) => r.url.includes(`${old.id}?alt=media`), 404)
+    kit.drive.put(kit.account, 'witness-work-phone.json', '{"v":2}')
+    const { files, pending } = await kit.transport.readFiles(
+      (name) => name === 'witness-work-phone.json'
+    )
+    expect(pending).toEqual([])
+    expect(files.map((f) => f.json)).toEqual(['{"v":2}'])
+  })
+
+  it('treats a file deleted after the listing as gone, not pending', async () => {
+    const kit = setup('acct', { now: () => 0 })
+    const gone = kit.drive.put(kit.account, 'witness-work-old.json', '{}')
+    await kit.transport.listBinaryFiles()
+    // Removed from the Devices list on another device; this read reuses the
+    // listing that still had it.
+    await kit.api(kit.account).deleteFile(gone.id)
+    const { files, pending } = await kit.transport.readFiles(all)
+    expect(pending).toEqual([])
+    expect(files).toEqual([])
+  })
+
+  it('skips polls while sync has no use for them', async () => {
+    const kit = setup()
+    let allowed = false
+    kit.transport.setShouldPoll?.(() => allowed)
+    const listener = vi.fn()
+    kit.transport.addRemoteChangeListener(listener)
+    kit.drive.put(kit.account, 'witness-work-phone.json', '{}')
+    await kit.transport.poll()
+    expect(listings(kit)).toBe(0)
+    allowed = true
+    await kit.transport.poll()
+    expect(listener).toHaveBeenCalledTimes(1)
   })
 })

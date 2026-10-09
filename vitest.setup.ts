@@ -15,3 +15,14 @@ vi.mock('expo-notifications', () => ({
   requestPermissionsAsync: vi.fn(async () => ({ granted: false })),
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
+
+// Stub expo-network globally: sync, onboarding and other shared modules read
+// connectivity through `@/lib/http/online`, and the real module needs expo's
+// native runtime. Tests that care mock it themselves.
+vi.mock('expo-network', () => ({
+  addNetworkStateListener: vi.fn(() => ({ remove: vi.fn() })),
+  getNetworkStateAsync: vi.fn(async () => ({
+    isConnected: true,
+    isInternetReachable: true,
+  })),
+}))

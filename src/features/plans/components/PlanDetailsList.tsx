@@ -31,6 +31,8 @@ import { type TypeSelection } from '@/components/TypeSelectorRow'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatPlanLocation, toPlanLocation } from '@/lib/placeSearch'
+import type { NoteUpdate } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 import type { PlanLocation } from '@/types/timeEntry'
 
 type Props = {
@@ -41,8 +43,8 @@ type Props = {
     value?: PlanLocation
     onChange: (location?: PlanLocation) => void
   }
-  note: string
-  setNote: (note: string) => void
+  note: NoteFields
+  setNote: (note: NoteUpdate) => void
   /** Omitted when there's no confirmed buddy to invite. */
   buddies?: { picker: ReactNode; summary?: string }
   /** Omitted for recurring plans, which don't have reminders. */
@@ -282,14 +284,19 @@ const EndDateRow = (props: NonNullable<Props['end']>) => (
 
 /**
  * The optional half of the Plan form. Each row behaves like its data: Title and
- * Type edit in place, Location searches in place, and Note, Invite Buddies and
- * Notify Me open under their row.
+ * Type edit in place, Location searches in place, Note opens the note editor,
+ * and Invite Buddies and Notify Me open under their row.
  */
 const PlanDetailsList = (props: Props) => (
   <FormDetailsSection>
     <TitleRow title={props.title} setTitle={props.setTitle} />
     {props.location && <LocationRow {...props.location} />}
-    <NoteFormRow note={props.note} setNote={props.setNote} testID='plan-note' />
+    <NoteFormRow
+      note={props.note}
+      onChange={props.setNote}
+      surface='plan'
+      testID='plan-note'
+    />
     {props.buddies && <BuddiesRow {...props.buddies} />}
     {props.notifyMe && <NotifyMeRow {...props.notifyMe} />}
     {props.end && <EndDateRow {...props.end} />}

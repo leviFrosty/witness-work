@@ -92,17 +92,17 @@ describe('splitTextWithLinks', () => {
   it('interleaves text and link segments, keeping trimmed punctuation', () => {
     expect(splitTextWithLinks('Read https://a.com/x. Then www.b.com')).toEqual([
       { type: 'text', text: 'Read ' },
-      { type: 'link', url: 'https://a.com/x' },
+      { type: 'link', url: 'https://a.com/x', text: 'https://a.com/x' },
       { type: 'text', text: '. Then ' },
-      { type: 'link', url: 'https://www.b.com' },
+      { type: 'link', url: 'https://www.b.com', text: 'www.b.com' },
     ])
   })
 
   it('keeps duplicate links as separate segments', () => {
     expect(splitTextWithLinks('https://a.com https://a.com')).toEqual([
-      { type: 'link', url: 'https://a.com' },
+      { type: 'link', url: 'https://a.com', text: 'https://a.com' },
       { type: 'text', text: ' ' },
-      { type: 'link', url: 'https://a.com' },
+      { type: 'link', url: 'https://a.com', text: 'https://a.com' },
     ])
   })
 })

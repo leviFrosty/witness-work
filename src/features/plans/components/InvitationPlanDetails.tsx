@@ -27,7 +27,7 @@ export default function InvitationPlanDetails({
         startTimeInMinutes={details.s}
         minutes={details.m}
         location={details.location}
-        note={details.note}
+        note={details.note ? { note: details.note } : undefined}
         lead={
           <PlanDetailsInvitation
             from={share.from}

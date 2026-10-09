@@ -20,6 +20,9 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import VisitCustomFieldsSection from '@/features/visits/components/VisitCustomFieldsSection'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
+import NoteInputRow from '@/components/ui/inputs/NoteInputRow'
+import { richTextImages } from '@/lib/richText/inspect'
+import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import moment from 'moment'
 import useConversations from '@/stores/conversationStore'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -267,6 +270,7 @@ const VisitFormScreen = ({
             : {}),
         },
         note: conversationToUpdate.note,
+        noteDoc: conversationToUpdate.noteDoc,
         notAtHome: conversationToUpdate.notAtHome,
         ...(conversationToUpdate.customFields
           ? { customFields: conversationToUpdate.customFields }
@@ -279,7 +283,6 @@ const VisitFormScreen = ({
         id: contactId || '',
       },
       date: new Date(),
-      note: '',
       followUp: {
         date: moment()
           .add(
@@ -362,15 +365,16 @@ const VisitFormScreen = ({
     // Saves only the reminder intent. `useReconciledReminders` schedules (or
     // cancels) this device's OS reminder from it, once permission allows.
     const buildVisit = (): Visit => {
-      if (!followUpEnabled || !conversation.followUp) {
+      const visit = { ...conversation, ...noteFields(getNoteDoc(conversation)) }
+      if (!followUpEnabled || !visit.followUp) {
         // `followUp: undefined` (not an omitted key) so
         // `updateConversation`'s spread clears a saved one.
-        return { ...conversation, followUp: undefined }
+        return { ...visit, followUp: undefined }
       }
-      const { followUp } = conversation
+      const { followUp } = visit
       const minutes = followUp.notifyMe ? offsetToMinutes(notifyMeOffset) : null
       return {
-        ...conversation,
+        ...visit,
         followUp: {
           ...followUp,
           reminderOffsetMinutes: minutes ?? undefined,
@@ -391,15 +395,16 @@ const VisitFormScreen = ({
     }
 
     noteUserAction('visit')
-    if (params.visitToEditId) updateConversation(buildVisit())
-    else addConversation(buildVisit())
+    const visit = buildVisit()
+    if (params.visitToEditId) updateConversation(visit)
+    else addConversation(visit)
     toast.show(i18n.t('success'), {
       message: i18n.t(
         conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
       ),
       native: true,
     })
-    return Promise.resolve(conversation)
+    return Promise.resolve(visit)
   }, [
     addConversation,
     conversation,
@@ -445,8 +450,8 @@ const VisitFormScreen = ({
             >
               <Button
                 onPress={async () => {
-                  const succeeded = await submit()
-                  if (!succeeded) {
+                  const saved = await submit()
+                  if (!saved) {
                     // Failed validation if didn't submit
                     return
                   }
@@ -461,6 +466,11 @@ const VisitFormScreen = ({
                       custom_field_count: Object.keys(
                         conversation.customFields ?? {}
                       ).length,
+                      has_note: hasNote(saved),
+                      has_formatting: !!saved.noteDoc,
+                      note_photos: saved.noteDoc
+                        ? richTextImages(saved.noteDoc.doc).length
+                        : 0,
                     })
 
                   await maybeRequestStoreReview({
@@ -596,21 +606,23 @@ const VisitFormScreen = ({
               iOSMode='datetime'
             />
           </InputRowContainer>
-          <TextInputRow
+          <NoteInputRow
             label={i18n.t('note')}
             info={
               dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
             }
-            textInputProps={{
-              placeholder: i18n.t('note_placeholder'),
-              multiline: true,
-              enterKeyHint: 'enter',
-              defaultValue: conversation.note,
-              textAlign: 'left',
-              onChangeText: (note: string) =>
-                setConversation({ ...conversation, note }),
-            }}
+            placeholder={i18n.t('note_placeholder')}
+            note={conversation}
+            // Functional: the note editor calls this after other fields may
+            // have changed.
+            onChange={(note) =>
+              setConversation((current) => ({ ...current, ...note }))
+            }
+            surface='visit'
+            // A photo of someone's home is householder data.
+            allowImages={!dataProtectionMode}
             lastInSection={notAtHome}
+            testID='visit-note'
           />
           {!notAtHome && (
             <InputRowSwitch

@@ -16,6 +16,7 @@ import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
+import { getNoteText } from '@/lib/richText/notes'
 
 type Props = {
   /** Local day. */
@@ -64,7 +65,7 @@ export default function DayPreview({
     return {
       key: report.id,
       primary: `${duration(minutes)} · ${type}`,
-      secondary: report.note || undefined,
+      secondary: getNoteText(report) || undefined,
     }
   })
 
@@ -73,13 +74,14 @@ export default function DayPreview({
       key: plan.id,
       start: getStartTimeInMinutes(plan),
       minutes: plan.minutes,
-      detail: plan.title || plan.note,
+      detail: plan.title || getNoteText(plan),
     })),
     ...recurringPlans.map((plan) => ({
       key: plan.id,
       start: getEffectiveStartTimeInMinutesForRecurringPlan(plan, date),
       minutes: getEffectiveMinutesForRecurringPlan(plan, date),
-      detail: plan.title || getEffectiveNoteForRecurringPlan(plan, date),
+      detail:
+        plan.title || getNoteText(getEffectiveNoteForRecurringPlan(plan, date)),
     })),
   ]
     .sort((a, b) => a.start - b.start)

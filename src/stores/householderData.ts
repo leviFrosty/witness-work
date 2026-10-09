@@ -2,6 +2,10 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { deleteAvatarFiles } from '@/lib/contactAvatarFiles'
+import {
+  deleteUnreferencedNoteImages,
+  noteImageIdsOf,
+} from '@/stores/noteImages'
 import { stripContactForTombstone } from '@/lib/dataProtection'
 import type { Contact } from '@/types/contact'
 
@@ -33,10 +37,10 @@ export const deleteHouseholderContact = (contactId: string) => {
   const redact = usePreferences.getState().dataProtectionMode === true
   if (redact) {
     const { conversations, deleteConversation } = useConversations.getState()
-    for (const visit of conversations) {
-      if (visit.contact.id === contactId) deleteConversation(visit.id)
-    }
+    const visits = conversations.filter((v) => v.contact.id === contactId)
+    for (const visit of visits) deleteConversation(visit.id)
     void deleteAvatarFiles(contactId)
+    void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
   }
   useContacts.getState().deleteContact(contactId, { redact })
 }
@@ -50,10 +54,10 @@ export const deleteHouseholderContacts = (contactIds: string[]) => {
   if (redact) {
     const targets = new Set(contactIds)
     const { conversations, deleteConversation } = useConversations.getState()
-    for (const visit of conversations) {
-      if (targets.has(visit.contact.id)) deleteConversation(visit.id)
-    }
+    const visits = conversations.filter((v) => targets.has(v.contact.id))
+    for (const visit of visits) deleteConversation(visit.id)
     contactIds.forEach((id) => void deleteAvatarFiles(id))
+    void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
   }
   useContacts.getState().deleteContacts(contactIds, { redact })
 }
@@ -67,8 +71,8 @@ export type DeleteAllHouseholderDataResult = {
 
 /**
  * Erases every householder record this device holds: all contacts, all visits,
- * every contact avatar on disk, and the content of any tombstone left behind by
- * an earlier soft delete.
+ * every contact avatar and visit note photo on disk, and the content of any
+ * tombstone left behind by an earlier soft delete.
  *
  * This is the "erase all householder data" affordance from
  * `docs/gdpr-mode-research.md` §9.6 — the counterpart to per-contact deletion,
@@ -96,6 +100,7 @@ export const deleteAllHouseholderData = (): DeleteAllHouseholderDataResult => {
   for (const visit of visits) {
     deleteConversation(visit.id)
   }
+  void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
 
   // Existing soft-delete tombstones still hold full householder records, so
   // they are redacted in place rather than left as they are.

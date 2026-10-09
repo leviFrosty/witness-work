@@ -41,6 +41,7 @@ export default function OwnPlanDetails({
   const getRecurringPlanForDate = useServiceReport(
     (state) => state.getRecurringPlanForDate
   )
+  const updateDayPlan = useServiceReport((state) => state.updateDayPlan)
   const { plan } = item
   const track = (action: PlanDetailsAction) =>
     trackPlanDetailsAction(action, {
@@ -89,6 +90,13 @@ export default function OwnPlanDetails({
         }
         location={plan.location}
         note={effective.note}
+        // Ticking off a checklist item edits a Day Plan. A Recurring Plan's
+        // note covers every date, and a linked Plan's is the organizer's.
+        onNoteChange={
+          item.type === 'day' && !item.plan.buddyShare
+            ? (fields) => updateDayPlan({ id: item.plan.id, ...fields })
+            : undefined
+        }
         lead={
           item.type === 'day' && item.plan.buddyShare ? (
             <PlanDetailsInvitation

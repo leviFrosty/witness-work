@@ -7,6 +7,8 @@ import {
   RecurringPlanOverride,
 } from '@/types/timeEntry'
 import { logger } from '@/lib/logger'
+import { hasNote } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
   momentStoredDate,
@@ -171,15 +173,16 @@ export const getEffectiveMinutesForRecurringPlan = (
 }
 
 /**
- * Gets the effective note for a recurring plan on a specific date, accounting
- * for overrides.
+ * The note that applies to a recurring plan on a specific date: the date's
+ * override's when it has one, otherwise the plan's.
  */
 export const getEffectiveNoteForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
-): string | undefined => {
+): NoteFields => {
   const override = findOverrideForDay(plan, date)
-  return override?.note || plan.note
+  const source = override && hasNote(override) ? override : plan
+  return { note: source.note, noteDoc: source.noteDoc }
 }
 
 /**

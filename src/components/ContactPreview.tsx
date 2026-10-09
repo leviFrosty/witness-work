@@ -8,6 +8,8 @@ import { formatDate, formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
+import RichNote from '@/components/RichNote'
+import { hasNote } from '@/lib/richText/notes'
 
 type ContactPreviewProps = {
   contact: Contact
@@ -84,16 +86,17 @@ export default function ContactPreview({
             ? `${formatDate(lastVisit.date, { style: 'medium' })} · ${formatRelative(lastVisit.date)}`
             : i18n.t('noConversationYet')}
         </Text>
-        {lastVisit?.note ? (
-          <Text
+        {lastVisit && hasNote(lastVisit) ? (
+          <RichNote
+            note={lastVisit}
             numberOfLines={4}
+            interactive={false}
+            linkCards={false}
             style={{
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,
             }}
-          >
-            {lastVisit.note}
-          </Text>
+          />
         ) : null}
       </View>
       {followUp ? (

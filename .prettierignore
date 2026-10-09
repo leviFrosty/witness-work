@@ -11,3 +11,6 @@ targets/widgets/Stopwatch/*.swift
 # Firebase config, byte for byte as Firebase writes it: it is a native
 # fingerprint input, so reformatting it forces a native rebuild.
 google-services.json
+# pnpm owns the lockfile's format, and it writes keys longer than YAML's
+# 1024-character limit (expo's snapshot key), which Prettier can't parse.
+pnpm-lock.yaml

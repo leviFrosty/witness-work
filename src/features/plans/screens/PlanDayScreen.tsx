@@ -69,6 +69,9 @@ import PlanKindToggle from '@/features/plans/components/PlanKindToggle'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
 import WhenDock from '@/components/WhenDock'
 import { noteUserAction } from '@/lib/userAction'
+import { richTextImages } from '@/lib/richText/inspect'
+import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 
 type NotifyMeOffset = {
   amount: number
@@ -570,9 +573,13 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     }
   }
 
-  const [note, setNote] = useState(
-    existingDayPlan?.note ?? recurringPlanData?.note ?? prefill?.note ?? ''
-  )
+  const initialNote = (): NoteFields => {
+    const source = existingDayPlan ?? recurringPlanData ?? prefill
+    return source ? { note: source.note, noteDoc: source.noteDoc } : {}
+  }
+  const [note, setNote] = useState<NoteFields>(initialNote)
+  /** The note as it saves: normalized, and rebuilt if it went stale. */
+  const savedNote = noteFields(getNoteDoc(note))
   const [title, setTitle] = useState(
     existingDayPlan?.title ??
       existingRecurringPlan?.title ??
@@ -684,9 +691,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     setWeekOfMonth(
       existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
     )
-    setNote(
-      existingDayPlan?.note ?? recurringPlanData?.note ?? prefill?.note ?? ''
-    )
+    setNote(initialNote())
     setTitle(
       existingDayPlan?.title ??
         existingRecurringPlan?.title ??
@@ -752,7 +757,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       },
       title: title.trim() || undefined,
       location,
-      note: note || undefined,
+      ...savedNote,
     }
   }
 
@@ -800,6 +805,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           title: payload.title,
           location: payload.location,
           note: payload.note,
+          noteDoc: payload.noteDoc,
           notifyMe: false,
           notifications: [],
         })
@@ -812,6 +818,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         minutes: payload.minutes,
         startTimeInMinutes: payload.startTimeInMinutes,
         note: payload.note,
+        noteDoc: payload.noteDoc,
       }
 
       const existingOverride = existingRecurringPlan.overrides?.some((o) =>
@@ -876,7 +883,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     noteUserAction('plan')
     const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     const plannedMinutes = hours * 60 + minutes
-    const plannedNote = note || undefined
     const plannedTitle = title.trim() || undefined
     const plannedBuddies =
       !linkedShare && invitedBuddies.length > 0 ? invitedBuddies : undefined
@@ -895,7 +901,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           categoryId: selectedCategoryId,
           title: plannedTitle,
           location,
-          note: plannedNote,
+          ...savedNote,
           buddies: plannedBuddies,
           ...planReminderIntent(
             existingDayPlan.id,
@@ -924,7 +930,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           categoryId: selectedCategoryId,
           title: plannedTitle,
           location,
-          note: plannedNote,
+          ...savedNote,
           buddies: plannedBuddies,
           ...planReminderIntent(id, planDate, startTimeInMinutes),
         })
@@ -951,7 +957,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         scope: scope ?? 'all',
         frequency: oneTime ? undefined : frequency,
         has_category: !!selectedCategoryId,
-        has_note: !!plannedNote,
+        has_note: hasNote(savedNote),
+        has_formatting: !!savedNote.noteDoc,
+        note_photos: savedNote.noteDoc
+          ? richTextImages(savedNote.noteDoc.doc).length
+          : 0,
         has_title: !!plannedTitle,
         has_location: !!location,
         invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
@@ -1123,7 +1133,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               ? { value: location, onChange: setLocation }
               : undefined
           }
-          note={note ?? ''}
+          note={note}
           setNote={setNote}
           buddies={
             oneTime && !linkedShare && buddiesEnabled && activeBuddies.length

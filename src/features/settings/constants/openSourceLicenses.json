@@ -654,6 +654,12 @@
     "license": "MIT"
   },
   {
+    "name": "@expo/metro-runtime",
+    "version": "57.0.16",
+    "license": "MIT",
+    "author": "650 Industries, Inc."
+  },
+  {
     "name": "@expo/osascript",
     "version": "2.7.1",
     "license": "MIT"
@@ -1756,6 +1762,151 @@
     "license": "MIT"
   },
   {
+    "name": "@tiptap/core",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-blockquote",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-bold",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-bubble-menu",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-bullet-list",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-code",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-code-block",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-document",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-dropcursor",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-floating-menu",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-gapcursor",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-hard-break",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-heading",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-horizontal-rule",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-image",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-italic",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-link",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-list",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-list-item",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-list-keymap",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-ordered-list",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-paragraph",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-strike",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-text",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extension-underline",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/extensions",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/pm",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/react",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@tiptap/starter-kit",
+    "version": "3.31.4",
+    "license": "MIT"
+  },
+  {
     "name": "@tootallnate/once",
     "version": "3.0.1",
     "license": "MIT",
@@ -1888,6 +2039,11 @@
   {
     "name": "@types/tough-cookie",
     "version": "4.0.5",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/use-sync-external-store",
+    "version": "0.0.6",
     "license": "MIT"
   },
   {
@@ -3503,6 +3659,12 @@
     "author": "Evgeny Poberezkin"
   },
   {
+    "name": "fast-equals",
+    "version": "5.4.3",
+    "license": "MIT",
+    "author": "Tony Quetano"
+  },
+  {
     "name": "fast-json-stable-stringify",
     "version": "2.1.0",
     "license": "MIT",
@@ -4302,6 +4464,12 @@
     "author": "Brian Donovan"
   },
   {
+    "name": "linkifyjs",
+    "version": "4.3.3",
+    "license": "MIT",
+    "author": "Nick Frasser"
+  },
+  {
     "name": "locate-path",
     "version": "5.0.0",
     "license": "MIT",
@@ -4791,6 +4959,12 @@
     "author": "Sindre Sorhus"
   },
   {
+    "name": "orderedmap",
+    "version": "2.1.1",
+    "license": "MIT",
+    "author": "Marijn Haverbeke"
+  },
+  {
     "name": "p-limit",
     "version": "2.3.0",
     "license": "MIT",
@@ -5002,6 +5176,71 @@
     "license": "MIT"
   },
   {
+    "name": "prosemirror-changeset",
+    "version": "2.4.4",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-commands",
+    "version": "1.7.2",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-dropcursor",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-gapcursor",
+    "version": "1.4.1",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-history",
+    "version": "1.5.1",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-inputrules",
+    "version": "1.5.1",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-keymap",
+    "version": "1.2.3",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-model",
+    "version": "1.25.12",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-schema-list",
+    "version": "1.5.1",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-state",
+    "version": "1.4.4",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-tables",
+    "version": "1.8.5",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-transform",
+    "version": "1.12.2",
+    "license": "MIT"
+  },
+  {
+    "name": "prosemirror-view",
+    "version": "1.42.6",
+    "license": "MIT"
+  },
+  {
     "name": "proxy-from-env",
     "version": "2.1.0",
     "license": "MIT",
@@ -5160,6 +5399,12 @@
     "author": "Alvaro Medina Ballester"
   },
   {
+    "name": "react-native-keyboard-controller",
+    "version": "1.21.9",
+    "license": "MIT",
+    "author": "Kiryl Ziusko"
+  },
+  {
     "name": "react-native-maps",
     "version": "1.27.2",
     "license": "MIT",
@@ -5249,6 +5494,12 @@
     "version": "0.21.2",
     "license": "MIT",
     "author": "Nicolas Gallagher"
+  },
+  {
+    "name": "react-native-webview",
+    "version": "13.16.1",
+    "license": "MIT",
+    "author": "Jamon Holmgren"
   },
   {
     "name": "react-native-worklets",
@@ -5420,6 +5671,12 @@
     "author": "Sindre Sorhus"
   },
   {
+    "name": "rope-sequence",
+    "version": "1.3.4",
+    "license": "MIT",
+    "author": "Marijn Haverbeke"
+  },
+  {
     "name": "rtl-detect",
     "version": "1.1.2",
     "license": "BSD-3-Clause",
@@ -5556,7 +5813,7 @@
   },
   {
     "name": "shell-quote",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "license": "MIT",
     "author": "James Halliday"
   },
@@ -6167,6 +6424,12 @@
     "version": "1.0.1",
     "license": "MIT",
     "author": "Rich Harris"
+  },
+  {
+    "name": "w3c-keyname",
+    "version": "2.2.8",
+    "license": "MIT",
+    "author": "Marijn Haverbeke"
   },
   {
     "name": "w3c-xmlserializer",

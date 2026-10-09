@@ -1,3 +1,5 @@
+import type { RichText } from '@/types/richText'
+
 /**
  * A single logged session of field-ministry time on a given date (hours and
  * minutes, optional category, optional note, optional credit flag). The
@@ -54,6 +56,8 @@ export type TimeEntry = {
   rolloverGroupId?: string
   /** Optional note for the entry. */
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
   /**
    * Epoch ms of the most recent change on this record. Populated by store
    * actions for iCloud merge. Optional for historical records that predate sync
@@ -155,6 +159,8 @@ export type DayPlan = {
   title?: string
   location?: PlanLocation
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
   /**
    * Buddies (their inbox ids) invited to this Plan. Each gets the date, time,
    * title, location, and note end to end encrypted, and follows changes.
@@ -211,6 +217,8 @@ export type RecurringPlanOverride = {
    */
   startTimeInMinutes?: number
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
 }
 
 export type RecurringPlan = {
@@ -241,6 +249,8 @@ export type RecurringPlan = {
     monthlyByWeekdayConfig?: MonthlyByWeekdayConfig
   }
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
   /** Epoch ms of the most recent change. Used for iCloud merge. */

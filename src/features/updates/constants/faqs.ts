@@ -2,6 +2,7 @@ export type FAQCategory =
   | 'time'
   | 'contacts'
   | 'plans'
+  | 'notes'
   | 'streaks'
   | 'buddies'
   | 'badges'
@@ -34,6 +35,9 @@ export interface FAQEntry {
  * The screen is search-friendly, so write the answer to be self-contained.
  */
 export const FAQS: FAQEntry[] = [
+  { id: 'notesFormatting', category: 'notes' },
+  { id: 'notesPhotos', category: 'notes' },
+  { id: 'notesSync', category: 'notes' },
   { id: 'tabletSidebar', category: 'customization' },
   { id: 'menuBar', category: 'general' },
   { id: 'navigationShortcuts', category: 'general' },
@@ -317,6 +321,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'time',
   'contacts',
   'plans',
+  'notes',
   'streaks',
   'buddies',
   'badges',

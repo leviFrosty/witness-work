@@ -32,6 +32,8 @@ import { usePreferences } from '@/stores/preferences'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import type { Category } from '@/types/category'
+import RichNote from '@/components/RichNote'
+import { getNoteText, hasNote } from '@/lib/richText/notes'
 
 interface TimeReportRowProps {
   report: TimeEntry
@@ -48,6 +50,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const cardStyle = useCardStyle()
   const { deleteServiceReport, deleteRolloverPair, updateServiceReport } =
     useServiceReport()
+  const showsNote = hasNote(report)
   const { categories } = useCategories()
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const navigation = useNavigation<RootStackNavigation>()
@@ -146,7 +149,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
 
   const copy = async () => {
     const duration = formatMinutes(totalMinutes, timeDisplayFormat).formatted
-    const text = [`${dateLabel} · ${duration}`, report.note]
+    const text = [`${dateLabel} · ${duration}`, getNoteText(report)]
       .filter(Boolean)
       .join('\n')
     Haptics.success().catch(() => {})
@@ -339,7 +342,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
               </Text>
             </View>
           )}
-          {!isRollover && (isLdc || categoryLabel || report.note) && (
+          {!isRollover && (isLdc || categoryLabel || showsNote) && (
             <View style={{ gap: 5 }}>
               {(isLdc || categoryLabel) && (
                 <View
@@ -361,16 +364,19 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
                   {(report.credit || isLdc) && <CreditBadge />}
                 </View>
               )}
-              {report.note && (
-                <Text
+              {showsNote && (
+                <RichNote
+                  note={report}
+                  nested
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
                     lineHeight: 18,
                   }}
-                >
-                  {report.note}
-                </Text>
+                  onChange={(fields) =>
+                    updateServiceReport({ ...report, ...fields })
+                  }
+                />
               )}
             </View>
           )}

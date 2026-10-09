@@ -225,6 +225,7 @@ For Buddies between two people, bring up a second device with `wwv up --platform
 - `scripts/verify/ww-verify.mjs` is the CLI above (`wwv help`).
 - `scripts/verify/monkey.mjs` is the monkey engine (`wwv monkey`).
 - `scripts/verify/flows.mjs` is the flow interpreter (`wwv flow`).
+- `scripts/perf/run.mjs` profiles a commit's Release build through the same build slots, leases and install records (see `docs/perf/README.md`). `wwv up` reinstalls the dev client over it.
 - `src/app/dev-harness/` holds the dev-only in-app API, scenarios and reset. It is installed from `initializeApp` under `__DEV__` and is absent from release bundles.
 - `e2e/maestro/` holds the shared flows.
 - Backend: the `verify-ww-api` skill in the ww-api repo (`scripts/verify/dev.mjs`, `pnpm test:e2e`, `pnpm fuzz:buddies`).

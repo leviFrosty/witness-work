@@ -17,6 +17,10 @@ const APP_VARIANT: AppVariant =
     : 'production'
 const IS_DEV = APP_VARIANT === 'development'
 const IS_BETA = APP_VARIANT === 'beta'
+// scripts/perf profiles a Release build of the development app: no OTA update
+// may replace the bundle under test, and Android must reach the local API over
+// plain HTTP. Without the probe the resolved config is unchanged.
+const PERF_PROBE = IS_DEV && process.env.EXPO_PUBLIC_PERF_PROBE === '1'
 
 // App Group and iCloud container ids derive from the bundle id; the widget's
 // SnapshotLoader relies on `group.<host bundle id>`.
@@ -198,6 +202,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Beta OTA updates should land on the next cold launch instead of the
       // one after, so wait briefly for a newer update before using the cache.
       ...(IS_BETA && { fallbackToCacheTimeout: 10000 }),
+      ...(PERF_PROBE && { enabled: false }),
     },
     // MUST stay top-level. `@expo/config-plugins` reads this key to write
     // EXUpdatesRuntimeVersion into Expo.plist at prebuild; the expo-updates
@@ -212,7 +217,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     runtimeVersion: { policy: IS_BETA ? 'fingerprint' : 'appVersion' },
     plugins: [
       // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
-      ['expo-build-properties', { ios: { enableSceneSupport: true } }],
+      [
+        'expo-build-properties',
+        {
+          ios: { enableSceneSupport: true },
+          ...(PERF_PROBE && { android: { usesCleartextTraffic: true } }),
+        },
+      ],
       './plugins/with-android-build-memory',
       './plugins/with-android-menu-icons',
       './plugins/with-force-load-local-modules',

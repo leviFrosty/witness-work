@@ -141,13 +141,9 @@ type PlannedMonthBuckets = { standard: number; credit: number }
 
 /**
  * Sums future planned minutes per month, split into standard/credit by each
- * plan's Category (derived at read time — `isPlanCreditTime`). Day Plans take
- * the whole day and stack additively, each tagging its own minutes with its own
- * Type; otherwise the single highest-minutes recurring instance counts.
- * Recurring ties on minutes break deterministically — credit beats standard
- * (the conservative forecast: the projection never overpromises), then lowest
- * id — so two devices holding the same plans in different array orders after an
- * iCloud merge project the same number.
+ * plan's Category (derived at read time — `isPlanCreditTime`). Every Day Plan
+ * and recurring instance on a day stacks additively, each tagging its own
+ * minutes with its own Type.
  *
  * Days in `loggedDayKeys` are skipped entirely: a day with actual logged time
  * is already counted via `loggedMonths`, so its plan is dropped rather than

@@ -15,10 +15,10 @@ import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 export const BUDDY_CARD_HORIZON_DAYS = 56
 
 /**
- * The Plans a Buddy Card shares: for each local day in the window, the Plans
- * that actually count for that day under the app's own resolution rule (Day
- * Plans replace recurring instances). Only start time and minutes leave the
- * device — never Categories, notes, or Time Entries.
+ * The Plans a Buddy Card shares: for each local day in the window, every Plan
+ * that counts for that day (Day Plans and recurring instances alike, skipped
+ * instances left out). Only start time and minutes leave the device — never
+ * Categories, notes, or Time Entries.
  */
 export function buildBuddyCardDays(
   dayPlans: DayPlan[],

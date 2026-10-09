@@ -95,11 +95,7 @@ export function findJoinRequestPlan(
   recurringPlans: RecurringPlan[]
 ): PlannedDayContribution | undefined {
   const day = moment(request.d, 'YYYY-MM-DD').toDate()
-  const contributions = resolvePlannedContributionsForDay(
-    day,
-    dayPlans.filter((plan) => storedDayKey(plan.date) === request.d),
-    recurringPlans
-  )
+  const contributions = plansOnDay(request.d, dayPlans, recurringPlans)
   return (
     contributions.find(
       (contribution) => contributionStart(contribution, day) === request.s
@@ -131,6 +127,19 @@ export function openJoinRequestsForPlan(
   )
 }
 
+/** Every Plan on `dayKey`: its one-time Plans and recurring instances. */
+function plansOnDay(
+  dayKey: string,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): PlannedDayContribution[] {
+  return resolvePlannedContributionsForDay(
+    moment(dayKey, 'YYYY-MM-DD').toDate(),
+    dayPlans.filter((plan) => storedDayKey(plan.date) === dayKey),
+    recurringPlans
+  )
+}
+
 function contributionStart(
   contribution: PlannedDayContribution,
   day: Date
@@ -143,14 +152,19 @@ function contributionStart(
 /**
  * What Invite does for a request: add the buddy to the owner's one-time Plan at
  * that time, or add a one-time Plan with them, seeded from the recurring
- * instance there (a one-time Plan replaces that day's recurring ones, so it
- * isn't counted twice). Nothing when the Plan follows someone else's invitation
+ * instance there and skipping that instance (`skipRecurringPlanId`) so the day
+ * isn't counted twice. Nothing when the Plan follows someone else's invitation
  * (only its organizer can invite), or when the owner's Plans that day changed
  * and none match: a new Plan beside them would count twice.
  */
 export type JoinRequestInvite =
   | { kind: 'invite'; update: Pick<DayPlan, 'id' | 'buddies'> }
-  | { kind: 'invite'; add: Omit<DayPlan, 'id' | 'notifyMe'> }
+  | {
+      kind: 'invite'
+      add: Omit<DayPlan, 'id' | 'notifyMe'>
+      /** The recurring Plan whose instance on that day the new Plan replaces. */
+      skipRecurringPlanId?: string
+    }
   | { kind: 'linked'; organizer: string }
   | { kind: 'changed' }
 
@@ -174,11 +188,12 @@ export function joinRequestInvite(
       },
     }
   }
-  if (!match && dayPlans.some((plan) => storedDayKey(plan.date) === request.d))
+  if (!match && plansOnDay(request.d, dayPlans, recurringPlans).length > 0)
     return { kind: 'changed' }
   const day = moment(request.d, 'YYYY-MM-DD')
   return {
     kind: 'invite',
+    ...(match ? { skipRecurringPlanId: match.plan.id } : {}),
     add: {
       date: day.toDate(),
       startTimeInMinutes: match
@@ -195,20 +210,34 @@ export function joinRequestInvite(
 }
 
 /**
- * This User's own one-time Plans that overlap a buddy's invitation in time,
- * which "Going" would count twice. Plans that invite buddies themselves or
- * follow another invitation are left alone.
+ * This User's own Plans that overlap a buddy's invitation in time, which
+ * "Going" would count twice: one-time Plans and recurring instances that day.
+ * One-time Plans that invite buddies themselves or follow another invitation
+ * are left alone.
  */
 export function overlappingOwnPlans(
   details: Pick<ShareDetails, 'd' | 's' | 'm'>,
-  dayPlans: DayPlan[]
-): DayPlan[] {
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): PlannedDayContribution[] {
   const start = details.s ?? DEFAULT_START_TIME_IN_MINUTES
   const end = start + (details.m ?? 60)
-  return dayPlans.filter((plan) => {
-    if (storedDayKey(plan.date) !== details.d) return false
-    if (plan.buddyShare || plan.buddies?.length) return false
-    const planStart = getStartTimeInMinutes(plan)
-    return planStart < end && planStart + plan.minutes > start
-  })
+  const day = moment(details.d, 'YYYY-MM-DD').toDate()
+  return plansOnDay(details.d, dayPlans, recurringPlans).filter(
+    (contribution) => {
+      if (
+        contribution.source === 'day' &&
+        (contribution.plan.buddyShare || contribution.plan.buddies?.length)
+      )
+        return false
+      const planStart =
+        contribution.source === 'day'
+          ? getStartTimeInMinutes(contribution.plan)
+          : getEffectiveStartTimeInMinutesForRecurringPlan(
+              contribution.plan,
+              day
+            )
+      return planStart < end && planStart + contribution.minutes > start
+    }
+  )
 }

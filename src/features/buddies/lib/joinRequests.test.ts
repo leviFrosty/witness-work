@@ -19,6 +19,22 @@ import type {
 const thursday = '2026-10-08'
 const nine = { s: 540, m: 120 }
 
+const weeklyPlan = (
+  id: string,
+  fields: Partial<RecurringPlan> = {}
+): RecurringPlan => ({
+  id,
+  startDate: normalizeDateForStorage('2026-10-01T12:00:00'),
+  minutes: 120,
+  startTimeInMinutes: 540,
+  recurrence: {
+    frequency: RecurringPlanFrequencies.WEEKLY,
+    interval: 1,
+    endDate: null,
+  },
+  ...fields,
+})
+
 const dayPlan = (id: string, fields: Partial<DayPlan> = {}): DayPlan => ({
   id,
   date: normalizeDateForStorage(`${thursday}T12:00:00`),
@@ -161,21 +177,15 @@ describe('joinRequestInvite', () => {
     })
   })
 
-  it('adds a one-time Plan seeded from the recurring instance there', () => {
-    const weekly: RecurringPlan = {
-      id: 'weekly',
-      startDate: normalizeDateForStorage('2026-10-01T12:00:00'),
-      minutes: 120,
-      startTimeInMinutes: 540,
+  it('adds a one-time Plan seeded from the recurring instance there, skipping that instance', () => {
+    const weekly = weeklyPlan('weekly', {
       title: 'Cart witnessing',
       categoryId: 'cart',
-      recurrence: {
-        frequency: RecurringPlanFrequencies.WEEKLY,
-        interval: 1,
-        endDate: null,
-      },
-    }
-    const add = addOf(joinRequestInvite(request, [], [weekly]))
+    })
+    const invite = joinRequestInvite(request, [], [weekly])
+    // The new Plan takes the instance's place, so the day isn't counted twice.
+    expect(invite).toMatchObject({ skipRecurringPlanId: 'weekly' })
+    const add = addOf(invite)
     expect(add).toMatchObject({
       startTimeInMinutes: 540,
       minutes: 120,
@@ -204,10 +214,23 @@ describe('joinRequestInvite', () => {
       dayPlan('three', { startTimeInMinutes: 900 }),
     ]
     expect(joinRequestInvite(request, moved, [])).toEqual({ kind: 'changed' })
+    // Recurring Plans that day count too: a new Plan would add to them.
+    expect(
+      joinRequestInvite(
+        request,
+        [],
+        [
+          weeklyPlan('ten', { startTimeInMinutes: 600 }),
+          weeklyPlan('three', { startTimeInMinutes: 900 }),
+        ]
+      )
+    ).toEqual({ kind: 'changed' })
   })
 
   it('adds a new Plan when the owner no longer has one then', () => {
-    const add = addOf(joinRequestInvite(request, [], []))
+    const invite = joinRequestInvite(request, [], [])
+    expect(invite).not.toHaveProperty('skipRecurringPlanId')
+    const add = addOf(invite)
     expect(add).toMatchObject({
       startTimeInMinutes: 540,
       minutes: 120,
@@ -230,8 +253,37 @@ describe('overlappingOwnPlans', () => {
       dayPlan('invites', { buddies: ['mom'] }),
     ]
     expect(
-      overlappingOwnPlans({ d: thursday, ...nine }, plans).map((p) => p.id)
+      overlappingOwnPlans({ d: thursday, ...nine }, plans, []).map(
+        (p) => p.plan.id
+      )
     ).toEqual(['same', 'overlaps'])
+  })
+
+  it('finds recurring instances that overlap the invitation in time', () => {
+    const overlapping = overlappingOwnPlans(
+      { d: thursday, ...nine },
+      [],
+      [
+        weeklyPlan('morning', { startTimeInMinutes: 480 }),
+        weeklyPlan('evening', { startTimeInMinutes: 1080, minutes: 60 }),
+        // Overridden that day to start after the invitation ends.
+        weeklyPlan('moved', {
+          overrides: [
+            {
+              date: normalizeDateForStorage(`${thursday}T12:00:00`),
+              minutes: 120,
+              startTimeInMinutes: 720,
+            },
+          ],
+        }),
+        weeklyPlan('skipped', {
+          deletedDates: [normalizeDateForStorage(`${thursday}T12:00:00`)],
+        }),
+      ]
+    )
+    expect(overlapping.map((p) => [p.source, p.plan.id])).toEqual([
+      ['recurring', 'morning'],
+    ])
   })
 })
 

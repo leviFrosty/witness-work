@@ -206,6 +206,7 @@ export const payloadSchema = z.object({
     // Absent from payloads written before Plan deletions synced.
     deletedDayPlans: z.array(tombstone).optional(),
     deletedRecurringPlans: z.array(tombstone).optional(),
+    additivePlans: z.boolean().optional(),
   }),
   categoryStore: z
     .object({

@@ -1,7 +1,7 @@
 import { storedDayKey } from '@/lib/normalizeDate'
 import {
-  getEffectiveMinutesForRecurringPlan,
   getPlansIntersectingDay,
+  plannedMinutesForDay,
   type RecurringPlan,
 } from '@/lib/recurrence'
 import { serviceYearMonths } from '@/lib/roleHistory'
@@ -67,21 +67,12 @@ export function serviceYearDayStatuses({
       const key = dayKeyOf(year, month, day)
       const date = new Date(year, month, day, 12)
       const dayPlans = index.dayPlansByDay.get(key) ?? []
-      const recurring = dayPlans.length
-        ? []
-        : getPlansIntersectingDay(date, recurringPlans)
+      const recurring = getPlansIntersectingDay(date, recurringPlans)
       // A Time Rollover moves time between months; it isn't that day's service.
       const reports = (index.reportsByDay.get(key) ?? []).filter(
         isCountableEntry
       )
-      const plannedMinutes = dayPlans.length
-        ? dayPlans.reduce((total, plan) => total + plan.minutes, 0)
-        : Math.max(
-            0,
-            ...recurring.map((plan) =>
-              getEffectiveMinutesForRecurringPlan(plan, date)
-            )
-          )
+      const plannedMinutes = plannedMinutesForDay(date, dayPlans, recurring)
       statuses.set(
         key,
         dayStatus({

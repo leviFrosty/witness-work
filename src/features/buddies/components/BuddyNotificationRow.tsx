@@ -9,12 +9,10 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
-import { formatRelative, formatStartTime } from '@/lib/dates'
+import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
 import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
@@ -22,7 +20,7 @@ import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
-import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
+import offerReplaceOverlappingPlans from '@/features/buddies/lib/offerReplaceOverlappingPlans'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import { notificationHeadline } from '@/features/buddies/lib/notificationText'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
@@ -110,51 +108,6 @@ export default function BuddyNotificationRow({
       setBusy(false)
     }
   }
-  /**
-   * "Going" adds the buddy's Plan to this User's; one of their own at the same
-   * time would then be counted twice, so offer to replace it.
-   */
-  const offerReplace = () => {
-    if (!share || share.type !== 'plan') return
-    const overlapping = overlappingOwnPlans(share.details, dayPlans)
-    if (overlapping.length === 0) return
-    const [first] = overlapping
-    const date = moment(storedDayKey(first.date), 'YYYY-MM-DD').format(
-      'ddd, MMM D'
-    )
-    const resolve = (choice: 'replace' | 'keep_both') => {
-      analytics.capture('buddy_invite_overlap_resolved', { choice })
-      if (choice !== 'replace') return
-      const { deleteDayPlan } = useServiceReport.getState()
-      for (const plan of overlapping) deleteDayPlan(plan.id)
-    }
-    Alert.alert(
-      i18n.t('buddies_replacePlanTitle'),
-      overlapping.length === 1
-        ? i18n.t('buddies_replacePlanBody', {
-            time: formatStartTime(getStartTimeInMinutes(first)),
-            date,
-            name: buddy ? buddyDisplayName(buddy) : entry.name,
-          })
-        : i18n.t('buddies_replacePlansBody', {
-            count: overlapping.length,
-            date,
-            name: buddy ? buddyDisplayName(buddy) : entry.name,
-          }),
-      [
-        {
-          text: i18n.t('buddies_keepBoth'),
-          style: 'cancel',
-          onPress: () => resolve('keep_both'),
-        },
-        {
-          text: i18n.t('buddies_replacePlan'),
-          style: 'destructive',
-          onPress: () => resolve('replace'),
-        },
-      ]
-    )
-  }
   const askerName = buddy ? buddyDisplayName(buddy) : entry.name
   // Nothing to turn off when this buddy's requests already can't alert.
   const mutedJoinRequests = useBuddies((state) =>
@@ -168,7 +121,8 @@ export default function BuddyNotificationRow({
       await buddiesEngine.replyToShare(entry.shareKey!, answer, {
         holdMs: replyHoldMs(answer),
       })
-      if (answer === 'going') offerReplace()
+      if (answer === 'going')
+        offerReplaceOverlappingPlans(entry.shareKey!, entry.name)
     })
   }
   const invite = () => {

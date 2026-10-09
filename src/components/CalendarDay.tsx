@@ -14,8 +14,8 @@ import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import {
   RecurringPlan,
   getPlansIntersectingDay,
-  getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
+  plannedMinutesForDay,
 } from '@/lib/recurrence'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
@@ -181,31 +181,14 @@ const PlannedDay = (
     ) || 0
 
   const disabled = props.state === 'disabled'
-  // Get effective minutes for recurring plans (accounting for overrides)
-  const recurringPlansWithEffectiveMinutes = props.recurringPlans?.map(
-    (plan) => ({
-      plan,
-      effectiveMinutes: getEffectiveMinutesForRecurringPlan(
-        plan,
-        moment(props.date!.dateString).toDate()
-      ),
-    })
-  )
-
-  const highestRecurringPlanEffectiveMinutes =
-    recurringPlansWithEffectiveMinutes?.sort(
-      (a, b) => b.effectiveMinutes - a.effectiveMinutes
-    )[0]?.effectiveMinutes
-
-  // Day Plans take the whole day and stack additively; recurring only counts
-  // when no Day Plan exists, and then only the highest instance.
+  // Every Plan on the day adds up: each Day Plan and each recurring instance
+  // (with its override for the day).
   const hasDayPlans = !!props.dayPlans?.length
-  const dayPlanMinutes =
-    props.dayPlans?.reduce((acc, plan) => acc + plan.minutes, 0) ?? 0
-
-  const plannedMinutes = hasDayPlans
-    ? dayPlanMinutes
-    : highestRecurringPlanEffectiveMinutes || 0
+  const plannedMinutes = plannedMinutesForDay(
+    moment(props.date!.dateString).toDate(),
+    props.dayPlans ?? [],
+    props.recurringPlans ?? []
+  )
   const plannedDurationText = formatMinutesCompact(plannedMinutes)
   const actualDurationText = formatMinutesCompact(minutesForDay)
   const wentInService = !!props.serviceReports?.some(isCountableEntry)
@@ -228,15 +211,8 @@ const PlannedDay = (
     props.serviceReports?.some((report) => report.note) ||
     recurringPlanHasNote
   )
-  const hitDayPlanGoal =
-    wentInService && dayPlanMinutes && minutesForDay >= dayPlanMinutes
-
-  const hitRecurringPlanGoal =
-    wentInService &&
-    highestRecurringPlanEffectiveMinutes &&
-    minutesForDay >= highestRecurringPlanEffectiveMinutes
-
-  const hitGoal = hasDayPlans ? !!hitDayPlanGoal : !!hitRecurringPlanGoal
+  const hitGoal =
+    wentInService && plannedMinutes > 0 && minutesForDay >= plannedMinutes
   const dateInPast = moment(props.date?.dateString).isSameOrBefore(
     moment(),
     'day'

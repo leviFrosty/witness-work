@@ -114,7 +114,7 @@ function plannedDay(
   recurringPlans: RecurringPlan[]
 ): UnloggedDay | null {
   const noon = new Date(day.year(), day.month(), day.date(), 12)
-  // A zero-minute Day Plan marks a day off, so it plans nothing.
+  // A zero-minute Plan plans nothing.
   const planned = resolvePlannedContributionsForDay(
     noon,
     dayPlans,

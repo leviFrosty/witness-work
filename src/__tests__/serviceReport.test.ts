@@ -1232,7 +1232,7 @@ describe('lib/serviceReport', () => {
       expect(result).toBe(0)
     })
 
-    it('sums multiple day plans on the same day and excludes recurring plans on that day', () => {
+    it('sums multiple day plans and the recurring plan on the same day', () => {
       // Jan 15, 2024 is a Monday — the weekly plan below also lands on it.
       const dayPlans = [
         {
@@ -1259,8 +1259,8 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      // 4 recurring Mondays (the 15th is taken by the day plans) + 60 + 180.
-      const expected = 4 * 60 + 60 + 180
+      // 5 recurring Mondays (including the 15th) + 60 + 180.
+      const expected = 5 * 60 + 60 + 180
 
       expect(
         calculateMonthlyPlannedMinutesOptimized(
@@ -1444,7 +1444,7 @@ describe('lib/serviceReport', () => {
       expect(totalMinutes).toBe(1200)
     })
 
-    it('should prioritize highest override when multiple plans intersect', () => {
+    it("sums each plan's override when multiple plans intersect", () => {
       const plan1: RecurringPlan = {
         id: 'plan-1',
         startDate: moment('2024-01-01').toDate(),
@@ -1486,10 +1486,9 @@ describe('lib/serviceReport', () => {
         [plan1, plan2]
       )
 
-      // For most days, plan1 (300) > plan2 (200), so plan1 is used
-      // But on Jan 15th, plan2 override (400) > plan1 override (60)
-      // Should be 4 * 300 + 1 * 400 = 1200 + 400 = 1600 minutes
-      expect(totalMinutes).toBe(1600)
+      // Most Mondays count both plans (300 + 200); on Jan 15th both overrides
+      // count (60 + 400). 4 * 500 + 460 = 2460 minutes.
+      expect(totalMinutes).toBe(2460)
     })
   })
 })

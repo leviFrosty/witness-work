@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'

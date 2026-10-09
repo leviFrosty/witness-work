@@ -1,5 +1,8 @@
-import axios, { isAxiosError } from 'axios'
 import apis from '@/constants/apis'
+import { devBypassHeaders } from '@/lib/http/devBypass'
+import { errorBodyCode } from '@/lib/http/errorBody'
+import { classifyNetworkError } from '@/lib/http/networkError'
+import { HttpError, request } from '@/lib/http/request'
 import type { Coordinate } from '@/types/contact'
 
 /**
@@ -24,11 +27,18 @@ export type RoutePlanningError =
   | 'no_route'
   | 'unavailable'
   | 'offline'
+  | 'timeout'
+  | 'cancelled'
   | 'failed'
 
 export type OptimizeRouteResult =
   | ({ ok: true } & RouteOptimization)
-  | { ok: false; error: RoutePlanningError }
+  | {
+      ok: false
+      error: RoutePlanningError
+      /** From the server's Retry-After, when it sent one. */
+      retryAfterMs?: number
+    }
 
 const SERVER_ERRORS = new Set<RoutePlanningError>([
   'supporter_required',
@@ -39,9 +49,8 @@ const SERVER_ERRORS = new Set<RoutePlanningError>([
   'unavailable',
 ])
 
-// Dev builds talk to the dev worker, which accepts this in place of a real
-// Supporter entitlement. Production builds never send it.
-const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_API_DEV_BYPASS || ''
+/** The server solves up to ten stops in a few seconds. */
+const OPTIMIZE_TIMEOUT_MS = 30_000
 
 const point = ({ latitude, longitude }: Coordinate) => ({
   lat: latitude,
@@ -58,23 +67,23 @@ export const optimizeRoute = async ({
   accountId,
   start,
   stops,
+  signal,
 }: {
   accountId: string
   start: Coordinate
   stops: Coordinate[]
+  signal?: AbortSignal
 }): Promise<OptimizeRouteResult> => {
   try {
-    const { data } = await axios.post<Record<string, unknown>>(
-      apis.routePlanningOptimize,
-      { accountId, start: point(start), stops: stops.map(point) },
-      {
-        timeout: 30_000,
-        headers:
-          typeof __DEV__ !== 'undefined' && __DEV__ && DEV_BYPASS_TOKEN
-            ? { 'x-ww-dev-bypass': DEV_BYPASS_TOKEN }
-            : undefined,
-      }
-    )
+    // Not retried: each call counts toward the daily route limit.
+    const { data } = await request<Record<string, unknown> | null>({
+      url: apis.routePlanningOptimize,
+      method: 'POST',
+      json: { accountId, start: point(start), stops: stops.map(point) },
+      headers: devBypassHeaders(),
+      timeoutMs: OPTIMIZE_TIMEOUT_MS,
+      signal,
+    })
     const distanceMeters = Number(data?.distanceMeters)
     const durationSeconds = Number(data?.durationSeconds)
     if (
@@ -86,14 +95,26 @@ export const optimizeRoute = async ({
     }
     return { ok: true, order: data.order, distanceMeters, durationSeconds }
   } catch (error) {
-    if (!isAxiosError(error)) return { ok: false, error: 'failed' }
-    if (!error.response) return { ok: false, error: 'offline' }
-    const code = (error.response.data as { code?: unknown } | undefined)?.code
-    return {
-      ok: false,
-      error: SERVER_ERRORS.has(code as RoutePlanningError)
-        ? (code as RoutePlanningError)
-        : 'failed',
+    // `code` is the stable code; `error` is a message older builds show.
+    const code = errorBodyCode(error)
+    if (SERVER_ERRORS.has(code as RoutePlanningError)) {
+      return {
+        ok: false,
+        error: code as RoutePlanningError,
+        ...(error instanceof HttpError && error.retryAfterMs !== null
+          ? { retryAfterMs: error.retryAfterMs }
+          : {}),
+      }
+    }
+    switch (classifyNetworkError(error)) {
+      case 'offline':
+        return { ok: false, error: 'offline' }
+      case 'timeout':
+        return { ok: false, error: 'timeout' }
+      case 'cancelled':
+        return { ok: false, error: 'cancelled' }
+      default:
+        return { ok: false, error: 'failed' }
     }
   }
 }

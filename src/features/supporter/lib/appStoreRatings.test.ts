@@ -9,8 +9,8 @@ vi.mock('react-native-mmkv', () => ({
 }))
 
 const get = vi.fn()
-vi.mock('axios', () => ({
-  default: { get: (...args: unknown[]) => get(...args) },
+vi.mock('@/lib/http/request', () => ({
+  request: (...args: unknown[]) => get(...args),
 }))
 
 import {

@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
+  /** When the app last came back to the foreground. */
+  since: 0,
   enabled: true,
   readFiles: vi.fn(),
   scan: vi.fn(async () => true),
 }))
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' }, AppState: {} }))
+vi.mock('@/lib/appLifecycle', () => ({
+  lastForegroundAt: () => state.since,
+}))
 vi.mock('expo-file-system/legacy', () => ({ documentDirectory: '' }))
 vi.mock('expo-device', () => ({ modelName: 'iPhone' }))
 vi.mock('../../../../modules/icloud-bridge', () => ({
@@ -60,7 +65,11 @@ vi.mock('@/lib/errorTracking', () => ({
 import { pullAndMerge, pullBeforeCalendarPublish } from '@/app/sync/iCloudSync'
 
 describe('data refresh before calendar publishing', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Each test starts just after a return to the app, a moment after the
+    // previous test's reads.
+    await new Promise((resolve) => setTimeout(resolve, 2))
+    state.since = Date.now()
     state.enabled = true
     state.readFiles.mockReset()
     state.scan.mockResolvedValue(true)
@@ -126,6 +135,9 @@ describe('data refresh before calendar publishing', () => {
           })
       )
     const foreground = pullAndMerge('foreground')
+    // That pull began before the app last came back, so it may be stale.
+    await new Promise((resolve) => setTimeout(resolve, 2))
+    state.since = Date.now()
     let ready = false
     const exporting = pullBeforeCalendarPublish().then(() => {
       ready = true
@@ -138,6 +150,48 @@ describe('data refresh before calendar publishing', () => {
     finishSecond()
     await exporting
     expect(ready).toBe(true)
+  })
+
+  it('joins a pull that started since the app came back instead of reading again', async () => {
+    let finish!: () => void
+    state.readFiles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({ files: [] })
+        })
+    )
+    const foreground = pullAndMerge('foreground')
+    let ready = false
+    const exporting = pullBeforeCalendarPublish().then(() => {
+      ready = true
+    })
+    await vi.waitFor(() => expect(state.readFiles).toHaveBeenCalledTimes(1))
+    expect(ready).toBe(false)
+    finish()
+    await foreground
+    await exporting
+    expect(ready).toBe(true)
+    expect(state.readFiles).toHaveBeenCalledTimes(1)
+  })
+
+  it('reuses a complete read made since the app came back', async () => {
+    state.readFiles.mockResolvedValue({ files: [] })
+    await pullAndMerge('foreground')
+    await pullBeforeCalendarPublish()
+    expect(state.readFiles).toHaveBeenCalledTimes(1)
+    // After the next return to the app, it reads again.
+    await new Promise((resolve) => setTimeout(resolve, 2))
+    state.since = Date.now()
+    await pullBeforeCalendarPublish()
+    expect(state.readFiles).toHaveBeenCalledTimes(2)
+  })
+
+  it('reads again when the read since the app came back was incomplete', async () => {
+    state.readFiles.mockRejectedValueOnce(new Error('offline'))
+    await pullAndMerge('foreground')
+    state.readFiles.mockResolvedValue({ files: [] })
+    await pullBeforeCalendarPublish()
+    expect(state.readFiles).toHaveBeenCalledTimes(2)
   })
 
   it('stops if sync is disabled while waiting for a queued refresh', async () => {

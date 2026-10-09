@@ -25,9 +25,9 @@ class WatchBridgeModule : Module() {
     Events("onInboxChange", "onStatusChange")
 
     OnCreate {
+      // Creating the coordinator checks the status; JS asks again when it starts listening.
       coordinator.addInboxListener(onInbox)
       coordinator.addStatusListener(onStatus)
-      coordinator.refreshStatus()
     }
 
     // The first status can arrive before JS listens; JS sends the watch its snapshot on it.
@@ -51,7 +51,7 @@ class WatchBridgeModule : Module() {
       )
     }
 
-    Function("setSnapshot") { json: String -> coordinator.setSnapshot(json) }
+    Function("setSnapshot") { json: String, urgent: Boolean? -> coordinator.setSnapshot(json, urgent ?: true) }
 
     Function("getPendingEntries") {
       coordinator.pendingEntries().map { entry ->
@@ -80,6 +80,8 @@ class WatchBridgeModule : Module() {
     }
 
     Function("resolveEntries") { ids: List<String> -> coordinator.resolveEntries(ids) }
+
+    Function("takeErrors") { coordinator.takeErrors() }
 
     Function("takeEvents") {
       coordinator.takeEvents().map { event -> mapOf("name" to event.name, "properties" to event.properties) }

@@ -26,14 +26,16 @@ import { Errors } from '@/types/textInput'
 import ContactIdentityCard from '@/features/contacts/components/ContactIdentityCard'
 import ContactConsentSection from '@/features/contacts/components/ContactConsentSection'
 import { analytics } from '@/lib/analytics'
+import { classifyNetworkError } from '@/lib/http/networkError'
+import { isDeviceOffline } from '@/lib/http/online'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
 /**
  * Max time Save keeps the user on the form (spinner showing) waiting for a
  * geocode before navigating anyway. The geocode keeps running in the background
- * past this and patches the coordinate when it resolves, so a slow or hung
- * request (axios has no timeout) can never stall navigation.
+ * past this (up to its own timeout) and patches the coordinate when it
+ * resolves, so a slow lookup never stalls navigation.
  */
 const GEOCODE_NAV_TIMEOUT_MS = 4000
 
@@ -58,7 +60,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   )
   const contactToUpdate = originalContact.current
   const locales = Localization.getLocales()
-  const geocodeAbortController = useRef<AbortController>(null)
   /**
    * The last address picked from search with the coordinate MapKit returned for
    * it. Saving that same address reuses the coordinate instead of geocoding it
@@ -276,13 +277,26 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const handleFetchCoordinate = useCallback(
     async (c: Contact): Promise<Contact> => {
       setFetching(true)
-      const position = await fetchCoordinateFromAddress(
-        incrementGeocodeApiCallCount,
-        c.address,
-        geocodeAbortController.current ?? undefined
-      )
-      if (position) {
-        return { ...c, coordinate: position, userDraggedCoordinate: undefined }
+      try {
+        const position = await fetchCoordinateFromAddress(
+          incrementGeocodeApiCallCount,
+          c.address
+        )
+        if (position) {
+          return {
+            ...c,
+            coordinate: position,
+            userDraggedCoordinate: undefined,
+          }
+        }
+      } catch (error) {
+        // The contact is already saved; it just has no map pin yet.
+        if (isDeviceOffline(classifyNetworkError(error))) {
+          Alert.alert(
+            i18n.t('internetUnavailable'),
+            i18n.t('couldNotFetchCoordinatesFromAddress')
+          )
+        }
       }
       return c
     },
@@ -493,13 +507,11 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   ])
 
   useEffect(() => {
-    // Cancels coordinate fetch request if user navigates away
+    // Saving navigates away mid-geocode on purpose: the lookup keeps going
+    // and patches the saved contact, so only the spinner stops here.
     const unsubscribeFromNavListener = navigation.addListener(
       'transitionStart',
-      () => {
-        geocodeAbortController.current?.abort()
-        setFetching(false)
-      }
+      () => setFetching(false)
     )
 
     return unsubscribeFromNavListener

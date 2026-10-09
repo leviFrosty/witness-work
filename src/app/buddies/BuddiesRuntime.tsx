@@ -2,6 +2,10 @@ import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import * as Notifications from 'expo-notifications'
+import {
+  addBackgroundListener,
+  addForegroundListener,
+} from '@/lib/appLifecycle'
 
 import { useBuddiesAlertContext } from '@/app/buddies/buddiesAlertContext'
 import { reportAlertOutcomes } from '@/app/buddies/buddiesAlertOutcomes'
@@ -23,6 +27,7 @@ import {
   buddiesEngine,
   currentBuddyStreak,
 } from '@/features/buddies/lib/buddiesService'
+import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import {
   forgetBuddiesInData,
@@ -40,16 +45,13 @@ import {
   useBuddiesDiagnostics,
 } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
+import { useBuddyTraySync } from '@/features/buddies/stores/buddyTraySync'
 import {
   markSeen,
   useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
 
-/** Returning to the app syncs, but not more often than this. */
-const FOREGROUND_SYNC_FLOOR_MS = 30 * 1000
-/** While the notifications tray is open, buddy events are checked this often. */
-const OPEN_TRAY_REFRESH_MS = 90 * 1000
 /**
  * Push registration is checked at most this often; the engine only re-sends an
  * unchanged one once a day.
@@ -118,11 +120,12 @@ function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
 }
 
 /**
- * A Buddies push arrived while the app is open: pull the event it announced,
- * and report failures through diagnostics.
+ * A Buddies push arrived while the app is open: pull the event it announced
+ * (unless a sync already got past it), and report failures through
+ * diagnostics.
  */
-function syncAfterPush() {
-  void buddiesEngine.sync().catch(logFailure)
+function syncAfterPush(seq: number | undefined) {
+  void buddiesEngine.sync({ minSeq: seq, automatic: true }).catch(logFailure)
 }
 
 /** Who this User has invited to what; see `shareRecipientsKey`. */
@@ -136,10 +139,12 @@ const currentRecipients = () =>
  * The background half of Buddies. Renders nothing; runs only once the User has
  * started using Buddies (an inbox exists), so everyone else pays no network or
  * battery cost. Pulls on launch, on every return to the app, and whenever the
- * relay's live signal says the inbox changed while the app is open (plus every
- * 90 seconds while the notifications tray is open). Publishes a Buddy Card and
- * shared Plans after the data behind them changes: at once when who's invited
- * changes, so a buddy sees an invitation as it's sent, otherwise debounced.
+ * relay's live signal says the inbox changed while the app is open (polling the
+ * open notifications tray only while that signal is down). While the relay's
+ * kill switch is on, the live signal stays off and only returns to the app
+ * check back, every 15 minutes at most. Publishes a Buddy Card and shared Plans
+ * after the data behind them changes: at once when who's invited changes, so a
+ * buddy sees an invitation as it's sent, otherwise debounced.
  */
 export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
@@ -157,8 +162,7 @@ export default function BuddiesRuntime() {
     if (!running) return
     let publishTimer: ReturnType<typeof setTimeout> | null = null
     let replyTimer: ReturnType<typeof setTimeout> | null = null
-    let trayTimer: ReturnType<typeof setInterval> | null = null
-    let lastSyncAttempt = 0
+    let stopTrayPoll: (() => void) | null = null
     let lastPushCheck = 0
     let recipients = currentRecipients()
 
@@ -169,24 +173,19 @@ export default function BuddiesRuntime() {
       void buddiesEngine.publishShares().catch(logFailure)
       void buddiesEngine.deliverReplies().catch(logFailure)
     }
-    const syncNow = () => {
-      const last = Math.max(lastSyncAttempt, useBuddies.getState().lastSyncAt)
-      if (Date.now() - last < FOREGROUND_SYNC_FLOOR_MS) return
-      lastSyncAttempt = Date.now()
-      void buddiesEngine.sync().catch(logFailure)
-    }
+    const syncNow = () => void syncSoon().catch(logFailure)
     const checkPushRegistration = () => {
       if (Date.now() - lastPushCheck < PUSH_CHECK_INTERVAL_MS) return
       lastPushCheck = Date.now()
       void registerBuddiesPush().catch(logFailure)
     }
     const refreshWhileTrayOpen = (open: boolean) => {
-      if (trayTimer) clearInterval(trayTimer)
-      trayTimer = open
-        ? setInterval(() => {
-            if (AppState.currentState === 'active')
-              void syncBuddyNotifications('poll')
-          }, OPEN_TRAY_REFRESH_MS)
+      stopTrayPoll?.()
+      stopTrayPoll = open
+        ? startFallbackPoll(async () => {
+            await syncBuddyNotifications('poll')
+            return useBuddyTraySync.getState().failedAt === null
+          })
         : null
     }
 
@@ -225,9 +224,18 @@ export default function BuddiesRuntime() {
     const live = createLiveInbox({
       open: () => buddiesEngine.openLive(),
       syncedSeq: () => useBuddies.getState().syncSeq,
-      onChange: () => void buddiesEngine.sync().catch(logFailure),
+      // A sync already running that reaches `seq` covers this change too.
+      onChange: (seq) =>
+        void buddiesEngine
+          .sync({ minSeq: seq, automatic: true })
+          .catch(logFailure),
       onEvent: recordLiveEvent,
     })
+    /** Off while the relay's kill switch is on: it would only be refused. */
+    const startLive = () => {
+      if (useBuddiesSession.getState().relayDisabled) return
+      live.start()
+    }
     useBuddiesDiagnostics.setState({
       controls: { reconnect: live.reconnect, ping: live.ping },
     })
@@ -243,20 +251,37 @@ export default function BuddiesRuntime() {
     syncNow()
     checkPushRegistration()
     reportAlertOutcomes()
-    if (AppState.currentState === 'active') live.start()
-    const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        buddiesEngine.expire()
-        syncNow()
-        checkPushRegistration()
-        reportAlertOutcomes()
-        live.start()
-      } else if (state === 'background') {
-        live.stop()
-        if (publishTimer) publishNow()
-        // A held answer goes out now; the app may not run again for a while.
-        void buddiesEngine.sendHeldReplies().catch(logFailure)
-      }
+    if (AppState.currentState === 'active') startLive()
+    // A real return from the background; Control Center and Face ID aren't.
+    const foreground = addForegroundListener(() => {
+      buddiesEngine.expire()
+      syncNow()
+      checkPushRegistration()
+      reportAlertOutcomes()
+      startLive()
+    })
+    const background = addBackgroundListener(() => {
+      live.stop()
+      if (publishTimer) publishNow()
+      // A held answer goes out now; the app may not run again for a while.
+      void buddiesEngine.sendHeldReplies().catch(logFailure)
+    })
+    // The kill switch turned on: stop the live signal. Off again (a sync
+    // worked): start it.
+    const session = useBuddiesSession.subscribe((state, previous) => {
+      if (state.relayDisabled === previous.relayDisabled) return
+      if (state.relayDisabled) live.stop()
+      else if (AppState.currentState === 'active') startLive()
+    })
+    // A new push token (restore, or the system rotating it) must reach the
+    // relay, or pushes stop until the daily refresh. Every token read fires
+    // this too, registering included, so only a different token registers.
+    let lastToken: string | null = null
+    const pushToken = Notifications.addPushTokenListener((token) => {
+      const value = String(token.data)
+      const rotated = lastToken !== null && value !== lastToken
+      lastToken = value
+      if (rotated) void registerBuddiesPush().catch(logFailure)
     })
     refreshWhileTrayOpen(useNotificationsTray.getState().open)
     const tray = useNotificationsTray.subscribe((state, previous) => {
@@ -356,18 +381,22 @@ export default function BuddiesRuntime() {
           type?: string
         } | null
         if (trigger?.type !== 'push') return
-        if (!buddiesPushData(notification)) return
-        syncAfterPush()
+        const push = buddiesPushData(notification)
+        if (!push) return
+        syncAfterPush(push.seq)
         void postBuddiesAlert(remoteMessageData(notification)).catch(logFailure)
       }
     )
     return () => {
       if (publishTimer) clearTimeout(publishTimer)
-      if (trayTimer) clearInterval(trayTimer)
+      stopTrayPoll?.()
       if (replyTimer) clearTimeout(replyTimer)
       live.stop()
       useBuddiesDiagnostics.setState({ controls: null })
-      appState.remove()
+      foreground.remove()
+      background.remove()
+      session()
+      pushToken.remove()
       tray()
       plans()
       timeEntries()

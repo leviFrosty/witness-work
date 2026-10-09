@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
 import {
@@ -14,10 +15,12 @@ import {
 import {
   calendarAction,
   finishDisconnect,
+  noteCalendarChanged,
   publishCalendar,
   reconnectSharedCalendar,
   refreshPublishing,
 } from '@/app/calendar/calendarSync'
+import { addForegroundListener } from '@/lib/appLifecycle'
 
 /**
  * Foreground maintenance only. Pending exports survive because domain state
@@ -63,6 +66,7 @@ export function useCalendarSync(ready: boolean | undefined) {
       ])
     const run = () => {
       if (stopped || running || AppState.currentState !== 'active') return
+      perf.count('calendar:run')
       const settings = useCalendarSettings.getState()
       const withPull = pull
       pull = false
@@ -79,7 +83,8 @@ export function useCalendarSync(ready: boolean | undefined) {
       // other publisher to take over from.
       if (!settings.enabled && (!withPull || Platform.OS === 'android')) return
       running = true
-      const before = fingerprint()
+      // Only a publishing device watches data (see `watchData`).
+      const before = settings.enabled ? fingerprint() : undefined
       let failed = false
       void calendarAction(
         async () => {
@@ -112,7 +117,11 @@ export function useCalendarSync(ready: boolean | undefined) {
           // Edits made during a network request must not be dropped. Comparing
           // content avoids a loop when an iCloud merge replaces equal arrays.
           if (stopped) return
-          if (fingerprint() !== before || pull || calendarChanged) {
+          if (
+            (before !== undefined && fingerprint() !== before) ||
+            pull ||
+            calendarChanged
+          ) {
             calendarChanged = false
             schedule({ withPull: failed && withPull })
           } else if (failed && retries < retryDelays.length) {
@@ -128,18 +137,53 @@ export function useCalendarSync(ready: boolean | undefined) {
       clearTimeout(timer)
       timer = setTimeout(run, 1500)
     }
-    let lastFingerprint = fingerprint()
-    const onDataChange = () => {
-      const next = fingerprint()
-      if (next === lastFingerprint) return
-      lastFingerprint = next
-      schedule()
+    // Data edits only matter to a device that publishes, so only it watches
+    // them, and only the slices the snapshot reads: most devices never turn
+    // Calendar Sync on, and preferences change often for other reasons.
+    let unwatchData: (() => void) | undefined
+    const watchData = () => {
+      if (!useCalendarSettings.getState().enabled) {
+        unwatchData?.()
+        unwatchData = undefined
+        return
+      }
+      if (unwatchData) return
+      let lastFingerprint = fingerprint()
+      const onDataChange = () => {
+        const next = fingerprint()
+        if (next === lastFingerprint) return
+        lastFingerprint = next
+        schedule()
+      }
+      const unsubscribes = [
+        useContacts.subscribe((state, previous) => {
+          if (
+            state.contacts !== previous.contacts ||
+            state.deletedContacts !== previous.deletedContacts
+          )
+            onDataChange()
+        }),
+        useConversations.subscribe((state, previous) => {
+          if (
+            state.conversations !== previous.conversations ||
+            state.deletedConversations !== previous.deletedConversations
+          )
+            onDataChange()
+        }),
+        usePreferences.subscribe((state, previous) => {
+          if (
+            state.returnVisitNotificationOffset !==
+            previous.returnVisitNotificationOffset
+          )
+            onDataChange()
+        }),
+      ]
+      unwatchData = () => unsubscribes.forEach((unsubscribe) => unsubscribe())
     }
+    watchData()
     const subscriptions = [
-      useContacts.subscribe(onDataChange),
-      useConversations.subscribe(onDataChange),
-      usePreferences.subscribe(onDataChange),
       useCalendarSettings.subscribe((state, previous) => {
+        if (state.enabled !== previous.enabled) watchData()
         if (
           state.enabled !== previous.enabled ||
           state.includeDetails !== previous.includeDetails
@@ -151,17 +195,18 @@ export function useCalendarSync(ready: boolean | undefined) {
           schedule({ withPull: true })
       }),
     ]
+    // Native ignores the change notifications of this app's own commits.
     const calendarChanges = subscribeCalendarChanges(() => {
+      noteCalendarChanged()
       calendarChanged = running
       schedule()
     })
-    const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active') schedule({ withPull: true })
-    })
+    const foreground = addForegroundListener(() => schedule({ withPull: true }))
     schedule({ withPull: true })
     return () => {
       stopped = true
       clearTimeout(timer)
+      unwatchData?.()
       subscriptions.forEach((unsubscribe) => unsubscribe())
       foreground.remove()
       calendarChanges?.remove()

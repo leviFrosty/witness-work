@@ -72,11 +72,19 @@ export class NotesImportAppAttestError extends Error {
 
 export interface NotesImportAppAttestHttpErrorOptions {
   kind: 'network' | 'http' | 'cancelled'
+  /**
+   * A `network` failure that started but didn't finish in time, rather than one
+   * that never connected. The state machines treat both alike; the message
+   * differs so `classifyNetworkError` reads `timeout` instead of `offline`.
+   */
+  timedOut?: boolean
   status?: number
   serverCode?: string
   reason?: string
   action?: string
   credits?: unknown
+  /** From the server's Retry-After (or `retryAfter` in the body). */
+  retryAfterMs?: number
 }
 
 /**
@@ -85,27 +93,34 @@ export interface NotesImportAppAttestHttpErrorOptions {
  */
 export class NotesImportAppAttestHttpError extends Error {
   readonly kind: 'network' | 'http' | 'cancelled'
+  readonly timedOut: boolean
   readonly status?: number
   readonly serverCode?: string
   readonly reason?: string
   readonly action?: string
   readonly credits?: unknown
+  readonly retryAfterMs?: number
 
   constructor(options: NotesImportAppAttestHttpErrorOptions) {
+    const timedOut = options.kind === 'network' && options.timedOut === true
     super(
       options.kind === 'cancelled'
         ? 'Notes Import request cancelled'
-        : options.kind === 'network'
-          ? 'Notes Import network request failed'
-          : 'Notes Import HTTP request failed'
+        : timedOut
+          ? 'Notes Import request timed out'
+          : options.kind === 'network'
+            ? 'Notes Import network request failed'
+            : 'Notes Import HTTP request failed'
     )
     this.name = 'NotesImportAppAttestHttpError'
     this.kind = options.kind
+    this.timedOut = timedOut
     this.status = options.status
     this.serverCode = options.serverCode
     this.reason = options.reason
     this.action = options.action
     this.credits = options.credits
+    this.retryAfterMs = options.retryAfterMs
   }
 }
 

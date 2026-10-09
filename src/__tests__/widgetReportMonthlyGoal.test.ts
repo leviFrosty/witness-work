@@ -98,4 +98,14 @@ describe('widget Monthly Goal', () => {
 
     expect(report.aheadBehindMinutes).toBe(10 * 60)
   })
+
+  it('keeps one encouragement phrase all day, so an unchanged widget is not rewritten', () => {
+    const phrases = new Set(
+      [9, 12, 18, 23].map((hour) => {
+        vi.setSystemTime(new Date(2026, 6, 9, hour))
+        return buildReport(baseArgs()).encouragementPhrase
+      })
+    )
+    expect(phrases.size).toBe(1)
+  })
 })

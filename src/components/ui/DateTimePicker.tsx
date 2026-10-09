@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { useShallow } from 'zustand/react/shallow'
 
 type IOSMode = 'date' | 'time' | 'datetime'
 
@@ -28,7 +29,12 @@ const DateTimePicker = ({
   minimumDate,
   iOSMode = 'date',
 }: Props) => {
-  const { colorScheme, timeFormat } = usePreferences()
+  const { colorScheme, timeFormat } = usePreferences(
+    useShallow((s) => ({
+      colorScheme: s.colorScheme,
+      timeFormat: s.timeFormat,
+    }))
+  )
   const theme = useTheme()
 
   if (Platform.OS === 'android') {

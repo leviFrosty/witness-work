@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { request } from '@/lib/http/request'
 import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
 
@@ -93,8 +93,7 @@ export const refreshAppStoreRatingsIfStale = (
   if (attemptedThisSession) return Promise.resolve(null)
   attemptedThisSession = true
 
-  inFlight = axios
-    .get<unknown>(apis.appStoreRatings, { timeout: 8_000 })
+  inFlight = request<unknown>({ url: apis.appStoreRatings, timeoutMs: 8_000 })
     .then(({ data }) => {
       const ratings = normalizeAppStoreRatings(data)
       if (ratings) {

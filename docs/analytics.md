@@ -32,23 +32,24 @@ queue restoration, and every delivery/retry attempt. SDK `$set`, `$identify`,
 `Application Updated`, `Application Backgrounded`, and other unregistered
 automatic events are discarded. Touch/text autocapture and session replay stay off.
 
-| Event                                                                             | Retained frequency / interpretation                                                                                           |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `$screen`                                                                         | One route per PostHog session; reach rather than repeated navigation. Sessions expire after 30 minutes idle.                  |
-| `Application Installed`, `Application Opened`                                     | Installation and cold-launch signals. All launch URLs are removed at capture and delivery, including legacy anonymous queues. |
-| `Application Became Active`                                                       | Once per UTC day per anonymous installation; daily active reach, not foreground count.                                        |
-| `onboarding_checklist_viewed`, `supporter_nudge_viewed`, `backup_reminder_viewed` | Once per UTC day and bounded source/variant context. Measure daily reach.                                                     |
-| `pointer_hover_detected`                                                          | Once per UTC day; daily reach of trackpad, mouse, or Pencil hover users.                                                      |
-| `timer_action_completed`                                                          | `action: started` only, once per session. Measures timer adoption, not pauses/resets or exact timer-start counts.             |
-| `buddies_opened`                                                                  | Once per session and source.                                                                                                  |
-| `badges_opened`                                                                   | Once per session and source; reach of the Badges screen, not repeat visits.                                                   |
-| `contacts_staleness_chip_applied`                                                 | Once per session, group (`variant`) and surface (`source`); reach of the Contacts quick filters, not every tap.               |
-| `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                      |
-| `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                            |
-| `saved_view_applied`                                                              | Once per session and surface (`source`); reach of Saved View switching, not how often people switch.                          |
-| `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                    |
-| Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                   |
-| `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                |
+| Event                                                                             | Retained frequency / interpretation                                                                                                                                                                                                |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$screen`                                                                         | One route per PostHog session; reach rather than repeated navigation. Sessions expire after 30 minutes idle.                                                                                                                       |
+| `Application Installed`, `Application Opened`                                     | Installation and cold-launch signals. All launch URLs are removed at capture and delivery, including legacy anonymous queues.                                                                                                      |
+| `Application Became Active`                                                       | Once per UTC day per anonymous installation; daily active reach, not foreground count.                                                                                                                                             |
+| `app_launch_timed`                                                                | Once per UTC day per installation. `launch_ms` (React Native start to first screen) and `js_ms` (bundle start to first screen) measure real-world launch speed across releases. Launches that start in the background are skipped. |
+| `onboarding_checklist_viewed`, `supporter_nudge_viewed`, `backup_reminder_viewed` | Once per UTC day and bounded source/variant context. Measure daily reach.                                                                                                                                                          |
+| `pointer_hover_detected`                                                          | Once per UTC day; daily reach of trackpad, mouse, or Pencil hover users.                                                                                                                                                           |
+| `timer_action_completed`                                                          | `action: started` only, once per session. Measures timer adoption, not pauses/resets or exact timer-start counts.                                                                                                                  |
+| `buddies_opened`                                                                  | Once per session and source.                                                                                                                                                                                                       |
+| `badges_opened`                                                                   | Once per session and source; reach of the Badges screen, not repeat visits.                                                                                                                                                        |
+| `contacts_staleness_chip_applied`                                                 | Once per session, group (`variant`) and surface (`source`); reach of the Contacts quick filters, not every tap.                                                                                                                    |
+| `buddies_push_registration`                                                       | Once per session for each outcome/reason; recovery and distinct failures remain visible.                                                                                                                                           |
+| `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                                                                                                                                 |
+| `saved_view_applied`                                                              | Once per session and surface (`source`); reach of Saved View switching, not how often people switch.                                                                                                                               |
+| `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                                                                                                                         |
+| Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
+| `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
 [`analyticsFrequency.ts`](../src/lib/analyticsFrequency.ts) persists only the UTC
 day and bounded event/context keys in a separate MMKV store; it stores no identity
@@ -213,9 +214,17 @@ and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compa
 platforms during the `notes-import-android` rollout. Android verification failures
 use bounded `error_code` values: `device_ineligible` (Play Integrity rejected the
 device or app build), `play_services_required` (Play Store/services missing or
-outdated), or `attestation_failed` (temporary). Their share of Android attempts
-shows whether the device requirement blocks real users. No verdicts, tokens, or
-identifiers are attached.
+outdated), `attestation_unavailable` (the verification service, our verifier
+or secure storage had trouble; temporary, on both platforms), or
+`attestation_failed` (verification ran and didn't pass). Their share of Android
+attempts shows whether the device requirement blocks real users. No verdicts,
+tokens, or identifiers are attached. `active_cap` appears only after the
+automatic back-off (about 3 minutes) gives up.
+
+`notes_import_availability_failed` fires at most once per composer visit when
+the availability check couldn't run, with `state`: `offline` (no connection) or
+`check_failed` (online, but the service didn't answer). Explicit outages
+(kill switch, version floor) don't send it, and background re-checks never do.
 
 Notes previews retain `empty`/warning counts and the ledger's original source
 across background work, relaunches, and refinements. `input_method` (`text`,
@@ -265,6 +274,12 @@ from Supporter access, with final billing/product choice on purchase events.
 Intermediate tier, billing, price, expansion, FAQ, and legal-link clicks are
 removed. Closing the app is not a navigation-close event. A completed purchase
 is a client RevenueCat result, not a renewal/refund or revenue ledger.
+
+`paywall_offerings_failed` carries `trigger`: `initial` (the paywall opened),
+`retry` (Try Again), `foreground` or `reconnect` (automatic retries while the
+paywall shows no prices). `paywall_offerings_empty` fires when a load succeeds
+with no packages at all (a store or dashboard configuration problem), with the
+same `trigger`. Compare failures by trigger to see whether users recover.
 
 ### Supporter feature conversions
 
@@ -344,14 +359,14 @@ cancel/change screen (ADR 0016). The events answer how many Supporters reach
 the intercept, how many pause rather than continue to the store, which pause
 length they choose, and why a pause isn't offered.
 
-| Event                           | Meaning                                                                                                                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null). |
-| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                 |
-| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                            |
-| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                   |
-| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                         |
-| `supporter_manage_store_opened` | The store's subscription management opened. `intent: pause` is Android's Pause in Google Play; `intent: cancel` is the footer button on both platforms.                                       |
+| Event                           | Meaning                                                                                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null), `product_lookup_failed`. |
+| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                                          |
+| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                                                     |
+| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                                            |
+| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                                                  |
+| `supporter_manage_store_opened` | The store's subscription management opened. `intent: pause` is Android's Pause in Google Play; `intent: cancel` is the footer button on both platforms.                                                                |
 
 All carry `source` (`paywall`, `settings`), `billing` (`monthly`, `annual`,
 `other`), and `store`. `supporter_manage_store_opened` records intent only:
@@ -382,7 +397,14 @@ Unchanged values, hydration, and developer resets do not emit transitions.
 upload failed/recovered, and account-changed outcomes remain.
 
 First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
-sync and reset retain started/outcome; reset adoption remains. Image toggle/outcome,
+sync and reset retain started/outcome; reset adoption remains.
+`icloud_sync_manual_outcome` has `outcome` `completed`, `failed`, `offline` (the
+OS reported no connection, so nothing was tried) or `needs_reconnect` (Android,
+Google Drive needs the user again); a failure carries the transport's
+`error_code` (`network`, `rate-limited`, `storage-full`, `unauthorized`,
+`not-found`, `unknown`, or `none`). It answers how often "Sync now" fails, and
+why. `icloud_restore_probe_result` has `status: offline` when onboarding
+couldn't reach the cloud to look for a backup. Image toggle/outcome,
 automatic enable outcome, cloud photo removal, and device remove/failure remain.
 Device list views, generic sync notices, and resolution-link clicks are removed.
 A local manual-sync completion does not prove Apple's cloud replication finished.
@@ -527,12 +549,12 @@ event answers which placements people find, and three outcome events answer
 whether Supporters use it, whether a planned route turns into a drive, and why
 planning fails:
 
-| Event                           | When / properties                                                                                                                                                                                                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `route_plan_entry_opened`       | An entry point opened the route screen. `surface`: `home_follow_ups` (Plan Route on Home's conversations card), `home_day` (Home's day sheet), `schedule_day` (Schedule's day sheet), or `schedule_inspector` (iPad); `supporter` (boolean).                                            |
-| `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                               |
-| `route_plan_failed`             | Planning stopped with `error_code`: `location`, `offline`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift.             |
-| `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened. |
+| Event                           | When / properties                                                                                                                                                                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `route_plan_entry_opened`       | An entry point opened the route screen. `surface`: `home_follow_ups` (Plan Route on Home's conversations card), `home_day` (Home's day sheet), `schedule_day` (Schedule's day sheet), or `schedule_inspector` (iPad); `supporter` (boolean).                                                                       |
+| `route_plan_created`            | A route was planned. `stop_count` (stops in the route, a chosen start included), `removed_count` (stops the user took out), `start` (`current_location` or `stop`), `optimized` (`false` when only one stop needed visiting, so the server wasn't asked).                                                          |
+| `route_plan_failed`             | Planning stopped with `error_code`: `location` (no fix), `location_denied`, `offline`, `timeout`, `no_route`, `daily_limit`, `rate_limited`, `supporter_required`, `supporter_check_failed`, `unavailable`, or `failed`. `supporter_required` on a device that shows Supporter status points at entitlement drift. |
+| `route_plan_navigation_started` | The first navigation-app hand-off for a planned route: `app` (`apple`, `google`, `waze`), `handoff` (`route` for one multi-stop link, `stopByStop` for one stop at a time), `stop_count`. Later stops and repeat taps aren't captured. Opening the app is not proof the drive happened.                            |
 
 Opening the screen is covered by screen tracking (`TodayRoute`), so
 `$screen` → `route_plan_created` → `route_plan_navigation_started` is the

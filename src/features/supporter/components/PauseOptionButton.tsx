@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { Spinner } from 'tamagui'
+import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'

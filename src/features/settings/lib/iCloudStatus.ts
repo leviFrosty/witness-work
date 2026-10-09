@@ -22,6 +22,15 @@ export type ICloudStatusInput = {
   uploadConfirmationSupported: boolean
   /** Android: Google stopped granting Drive access until the user reconnects. */
   needsReconnect?: boolean
+  /** The OS reports no connection. */
+  offline?: boolean
+  /** Why the last push or read failed (`iCloudSyncErrorCode`). */
+  errorCode?: string | null
+  /**
+   * Whether the transport talks to its cloud directly (Drive), so a `network`
+   * failure means no connection. iCloud's are local container I/O.
+   */
+  networkErrorsMeanOffline?: boolean
   lastPulledAt: number | null
   lastPushedAt: number | null
   lastUploadedAt: number | null
@@ -29,6 +38,12 @@ export type ICloudStatusInput = {
 }
 
 export type ICloudStatusDisplay = { text: string; subtitle?: string }
+
+/**
+ * Same order on iOS and Android: what blocks sync entirely (a choice, lapse,
+ * off, reconnect, signed out), then no connection, a full account, throttling,
+ * read and upload problems, pending edits, and finally when it last synced.
+ */
 
 export function buildICloudStatus({
   enabled,
@@ -41,6 +56,9 @@ export function buildICloudStatus({
   uploadPendingSince,
   uploadConfirmationSupported,
   needsReconnect = false,
+  offline = false,
+  errorCode = null,
+  networkErrorsMeanOffline = false,
   lastPulledAt,
   lastPushedAt,
   lastUploadedAt,
@@ -52,9 +70,14 @@ export function buildICloudStatus({
   if (!enabled) return { text: i18n.t(syncKey('iCloudStatusDisabled')) }
   if (needsReconnect) return { text: i18n.t('googleDriveStatusNeedsReconnect') }
   if (!available) return { text: i18n.t(syncKey('iCloudStatusUnavailable')) }
+  // Nothing else can be known until the connection is back; edits are kept.
+  if (offline || (issue && errorCode === 'network' && networkErrorsMeanOffline))
+    return { text: i18n.t('iCloudStatusOffline') }
   // Before read issues: nothing this device writes leaves it until there's room.
-  if (uploadIssue === 'icloud-full')
+  if (uploadIssue === 'icloud-full' || (issue && errorCode === 'storage-full'))
     return { text: i18n.t(syncKey('iCloudStatusStorageFull')) }
+  if (issue && errorCode === 'rate-limited')
+    return { text: i18n.t(syncKey('iCloudStatusRateLimited')) }
   if (issue)
     return {
       text: i18n.t(

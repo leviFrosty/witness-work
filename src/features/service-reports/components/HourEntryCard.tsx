@@ -14,11 +14,17 @@ import {
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function HourEntryCard() {
   const theme = useTheme()
   const { type: publisher } = usePublisher()
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const { serviceReports } = useServiceReport()
   const now = moment()
 

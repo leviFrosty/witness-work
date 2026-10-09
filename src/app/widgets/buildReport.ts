@@ -11,6 +11,7 @@ import { RecurringPlan } from '@/lib/recurrence'
 import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
 import { goalProgress } from '@/lib/goalProgress'
 import { formatMinutes } from '@/lib/minutes'
+import { contentHash } from '@/lib/contentHash'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
@@ -159,14 +160,19 @@ const PHRASES_DONE: readonly TranslationKey[] = [
   'phrasesDone.onARoll',
 ]
 
-function pickEncouragementPhrase(progress: number): string {
+/**
+ * One phrase a day per pool, so an unchanged snapshot hashes the same and isn't
+ * rewritten (and the widget reloaded) just for a new phrase.
+ */
+function pickEncouragementPhrase(progress: number, now: moment.Moment): string {
   let pool: readonly TranslationKey[]
   if (progress >= 1) pool = PHRASES_DONE
   else if (progress >= 0.6) pool = PHRASES_CLOSE
   else pool = PHRASES_FAR
 
-  const key = pool[Math.floor(Math.random() * pool.length)]
-  return i18n.t(key)
+  const index =
+    parseInt(contentHash(now.format('YYYY-MM-DD')), 36) % pool.length
+  return i18n.t(pool[index])
 }
 
 export function buildReport(args: BuildReportArgs): ReportFields {
@@ -281,6 +287,6 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     publisherState,
     monthConversationCount,
     monthBibleStudyCount,
-    encouragementPhrase: pickEncouragementPhrase(progress),
+    encouragementPhrase: pickEncouragementPhrase(progress, now),
   }
 }

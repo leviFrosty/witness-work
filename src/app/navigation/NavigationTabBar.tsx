@@ -36,7 +36,7 @@ export default function NavigationTabBar(props: BottomTabBarProps) {
         )
         if (!route) return
         const selected = props.state.routes[props.state.index]
-        try {
+        const pressTab = () => {
           const event = props.navigation.emit({
             type: 'tabPress',
             target: route.key,
@@ -46,6 +46,10 @@ export default function NavigationTabBar(props: BottomTabBarProps) {
           if (selected.key !== route.key && !event.defaultPrevented) {
             props.navigation.navigate(route.name, route.params)
           }
+        }
+        // Only a call inside try/catch, so React Compiler can compile this.
+        try {
+          pressTab()
         } catch (error) {
           errorTracking.captureException(error)
         }

@@ -1,7 +1,10 @@
-import axios from 'axios'
 import * as PlaceSearchNative from '../../modules/place-search'
 import type { PlaceSearchScope } from '../../modules/place-search'
 import apis from '@/constants/apis'
+import { errorBodyCode } from '@/lib/http/errorBody'
+import { classifyNetworkError } from '@/lib/http/networkError'
+import { isDeviceOffline, isKnownOffline } from '@/lib/http/online'
+import { HttpError, request } from '@/lib/http/request'
 import type { Address } from '@/types/contact'
 import type { PlanLocation } from '@/types/timeEntry'
 
@@ -40,6 +43,13 @@ export function placeSearchProvider(
 
 const HERE_SEARCH_RADIUS_METERS = 1_000_000
 const HERE_MAX_SUGGESTIONS = 5
+/**
+ * Autocomplete answers in well under a second; past this the publisher has
+ * moved on. MapKit has its own native timeouts, so this only backstops binaries
+ * that predate them.
+ */
+const SEARCH_TIMEOUT_MS = 8_000
+const RESOLVE_TIMEOUT_MS = 10_000
 
 type HereAutocompleteItem = {
   id: string
@@ -52,6 +62,26 @@ type HereAutocompleteItem = {
     postalCode?: string
     countryName?: string
   }
+}
+
+const optionalString = (value: unknown) =>
+  value === undefined || typeof value === 'string'
+
+const isHereItem = (value: unknown): value is HereAutocompleteItem => {
+  const item = value as Partial<HereAutocompleteItem> | null
+  const address = item?.address as Record<string, unknown> | undefined
+  return (
+    typeof item?.id === 'string' &&
+    typeof address?.label === 'string' &&
+    [
+      'houseNumber',
+      'street',
+      'city',
+      'state',
+      'postalCode',
+      'countryName',
+    ].every((key) => optionalString(address[key]))
+  )
 }
 
 const hereSuggestion = ({ id, address }: HereAutocompleteItem) => {
@@ -81,7 +111,8 @@ const hereSuggestion = ({ id, address }: HereAutocompleteItem) => {
 
 async function searchHere(
   query: string,
-  near?: Coordinate
+  near: Coordinate | undefined,
+  signal: AbortSignal | undefined
 ): Promise<PlaceSuggestion[]> {
   const params = new URLSearchParams({
     q: query,
@@ -93,27 +124,113 @@ async function searchHere(
       `circle:${near.latitude},${near.longitude};r=${HERE_SEARCH_RADIUS_METERS}`
     )
   }
-  const { data } = await axios.get<{ items: HereAutocompleteItem[] }>(
-    `${apis.autocomplete}?${params.toString()}`
-  )
-  return data.items.map(hereSuggestion)
+  // No retries: the next keystroke is the retry, and every request counts
+  // against ww-api's per-IP limit that geocoding and Notes Import share.
+  let data: { items?: unknown } | null
+  try {
+    ;({ data } = await request<{ items?: unknown } | null>({
+      url: `${apis.autocomplete}?${params.toString()}`,
+      timeoutMs: SEARCH_TIMEOUT_MS,
+      signal,
+    }))
+  } catch (error) {
+    // ww-api passes HERE's 404 through: nothing found.
+    if (errorBodyCode(error) === 'not_found') return []
+    throw error
+  }
+  if (!Array.isArray(data?.items)) {
+    throw new HttpError('unknown', null, null, null, 'invalid autocomplete')
+  }
+  return data.items.filter(isHereItem).map(hereSuggestion)
+}
+
+/**
+ * Settles with `promise`, or rejects with a timeout or a cancel first. The
+ * native MapKit calls can't be aborted, so their late answers are dropped.
+ */
+function bounded<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  signal?: AbortSignal
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new HttpError('cancelled'))
+    const done = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+    }
+    const onAbort = () => {
+      done()
+      reject(new HttpError('cancelled'))
+    }
+    const timer = setTimeout(() => {
+      done()
+      reject(new HttpError('timeout'))
+    }, timeoutMs)
+    signal?.addEventListener('abort', onAbort, { once: true })
+    promise.then(
+      (value) => {
+        done()
+        resolve(value)
+      },
+      (error: unknown) => {
+        done()
+        reject(error)
+      }
+    )
+  })
 }
 
 /** Places matching `query` within `scope`, biased toward `near`. */
 export async function searchPlaces(
   query: string,
   near?: Coordinate,
-  scope: PlaceSearchScope = 'all'
+  scope: PlaceSearchScope = 'all',
+  signal?: AbortSignal
 ): Promise<PlaceSuggestion[]> {
   if (!query.trim()) return []
   switch (placeSearchProvider(scope)) {
     case 'mapkit':
-      return PlaceSearchNative.autocomplete(query, near, scope)
+      // MapKit reports offline as a generic failure, so fail fast here and
+      // let the field say why.
+      if (isKnownOffline()) throw new HttpError('offline')
+      return bounded(
+        PlaceSearchNative.autocomplete(query, near, scope),
+        SEARCH_TIMEOUT_MS,
+        signal
+      )
     case 'here':
-      return searchHere(query, near)
+      return searchHere(query, near, signal)
     default:
       return []
   }
+}
+
+/** Why a search or resolve failed, for the field's inline message. */
+export type PlaceSearchFailure = 'offline' | 'busy' | 'failed'
+
+export function placeSearchFailure(error: unknown): PlaceSearchFailure {
+  const kind = classifyNetworkError(error)
+  if (isDeviceOffline(kind)) return 'offline'
+  switch (kind) {
+    case 'rateLimited':
+      return 'busy'
+    default:
+      return 'failed'
+  }
+}
+
+/**
+ * Whether a failure is a bug worth reporting rather than the network or the
+ * service. The native module rejects with `place_search_failed` for MapKit
+ * service errors.
+ */
+export function isUnexpectedPlaceSearchError(error: unknown): boolean {
+  if ((error as { code?: unknown } | null)?.code === 'place_search_failed') {
+    return false
+  }
+  const kind = classifyNetworkError(error)
+  return kind === 'unknown' || kind === 'client'
 }
 
 /**
@@ -142,7 +259,11 @@ export async function resolvePlace(
   suggestion: PlaceSuggestion
 ): Promise<ResolvedPlace | undefined> {
   if (suggestion.place) return suggestion.place
-  const place = await PlaceSearchNative.resolve(suggestion)
+  if (isKnownOffline()) throw new HttpError('offline')
+  const place = await bounded(
+    PlaceSearchNative.resolve(suggestion),
+    RESOLVE_TIMEOUT_MS
+  )
   if (!place) return undefined
   return {
     ...(place.name ? { name: place.name } : {}),

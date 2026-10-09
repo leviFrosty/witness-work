@@ -1,20 +1,35 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as Font from 'expo-font'
+import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
+import { fonts } from '@/constants/theme'
 
 /**
  * Handwriting fonts for the printed-style Service Report view.
  *
- * The Latin fallback (Kalam, ~0.9MB) is bundled into the binary at startup. The
- * CJK handwriting faces are enormous — Klee One ~8.7MB, Ma Shan Zheng ~5.9MB,
- * Gaegu ~3MB each — and only a Korean/Japanese/Chinese user viewing this one
- * screen ever needs them. Bundling all three shipped ~26MB of fonts to every
- * user. Instead we download the matching face on demand from Google Fonts' free
- * OFL mirror (github.com/google/fonts) and cache it, falling back to the
- * bundled Latin face while it loads or if the download fails.
+ * The Latin fallback (Kalam, ~0.9MB) is bundled, and loaded the first time this
+ * screen opens rather than at app launch. The CJK handwriting faces are
+ * enormous — Klee One ~8.7MB, Ma Shan Zheng ~5.9MB, Gaegu ~3MB each — and only
+ * a Korean/Japanese/Chinese user viewing this one screen ever needs them.
+ * Bundling all three shipped ~26MB of fonts to every user. Instead we download
+ * the matching face on demand from Google Fonts' free OFL mirror
+ * (github.com/google/fonts) and cache it, falling back to the bundled Latin
+ * face while it loads or if the download fails.
  */
 
 const FALLBACK = 'Kalam_400Regular'
 const FALLBACK_BOLD = 'Kalam_700Bold'
+
+let bundledLoad: Promise<void> | undefined
+const bundledLoaded = () =>
+  Font.isLoaded(FALLBACK) && Font.isLoaded(FALLBACK_BOLD)
+const loadBundled = () =>
+  (bundledLoad ??= Font.loadAsync({
+    [FALLBACK]: Kalam_400Regular,
+    [FALLBACK_BOLD]: Kalam_700Bold,
+  }).catch(() => {
+    // Try again next time the screen opens.
+    bundledLoad = undefined
+  }))
 
 /** Remote OFL sources, keyed by the font-family name we register them under. */
 const REMOTE_FONTS: Record<string, string> = {
@@ -65,6 +80,18 @@ export function useHandwritingFonts(locale: string): FontPair {
   const [ready, setReady] = useState(
     () => Object.keys(remoteToLoad).length === 0
   )
+  const [bundledReady, setBundledReady] = useState(bundledLoaded)
+
+  useEffect(() => {
+    if (bundledReady) return
+    let cancelled = false
+    void loadBundled().then(() => {
+      if (!cancelled && bundledLoaded()) setBundledReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [bundledReady])
 
   useEffect(() => {
     if (Object.keys(remoteToLoad).length === 0) {
@@ -82,5 +109,10 @@ export function useHandwritingFonts(locale: string): FontPair {
     }
   }, [remoteToLoad])
 
-  return ready ? target : { regular: FALLBACK, bold: FALLBACK_BOLD }
+  if (ready && target.regular !== FALLBACK) return target
+  // The app's own font for the moment Kalam takes to load, rather than a family
+  // the system doesn't know yet.
+  return bundledReady
+    ? { regular: FALLBACK, bold: FALLBACK_BOLD }
+    : { regular: fonts.regular, bold: fonts.bold }
 }

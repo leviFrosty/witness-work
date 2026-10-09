@@ -156,7 +156,10 @@ describe('applyFormatRegion', () => {
     expect(() => applyFormatRegion({ language: 'ja-jp' })).not.toThrow()
     expect(moment.locale()).toBe('ja')
     expect(() => applyFormatRegion({ language: 'ko-kr' })).not.toThrow()
-    // 'ko' isn't imported in this test bundle, so it falls back to 'en'.
+    // 'ko' isn't imported above; it loads on demand as its base language.
+    expect(moment.locale()).toBe('ko')
+    // A language moment doesn't ship at all falls back to 'en'.
+    expect(() => applyFormatRegion({ language: 'rw-rw' })).not.toThrow()
     expect(moment.locale()).toBe('en')
   })
 

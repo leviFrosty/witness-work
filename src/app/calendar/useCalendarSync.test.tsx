@@ -10,7 +10,7 @@ const runtime = vi.hoisted(() => ({
   /** Android binaries before Calendar Sync lack the native module. */
   androidModule: true,
   appState: 'active',
-  foreground: (_state: string) => {},
+  foreground: () => {},
   calendarChanged: () => {},
   removeForeground: vi.fn(),
   removeCalendar: vi.fn(),
@@ -23,6 +23,7 @@ const publishing = vi.hoisted(() => ({
   refresh: vi.fn(),
   reconnect: vi.fn(),
   finish: vi.fn(),
+  noteChanged: vi.fn(),
 }))
 
 vi.mock('react-native', () => ({
@@ -35,11 +36,13 @@ vi.mock('react-native', () => ({
     get currentState() {
       return runtime.appState
     },
-    addEventListener: (_event: string, listener: (state: string) => void) => {
-      runtime.addForeground()
-      runtime.foreground = listener
-      return { remove: runtime.removeForeground }
-    },
+  },
+}))
+vi.mock('@/lib/appLifecycle', () => ({
+  addForegroundListener: (listener: () => void) => {
+    runtime.addForeground()
+    runtime.foreground = listener
+    return { remove: runtime.removeForeground }
   },
 }))
 vi.mock('../../../modules/calendar-bridge', () => ({
@@ -58,6 +61,7 @@ vi.mock('@/app/calendar/calendarSync', () => ({
   refreshPublishing: publishing.refresh,
   reconnectSharedCalendar: publishing.reconnect,
   finishDisconnect: publishing.finish,
+  noteCalendarChanged: publishing.noteChanged,
 }))
 vi.mock('@/stores/contactsStore', async () => ({
   default: (await import('zustand')).create(() => ({
@@ -259,7 +263,7 @@ describe('foreground calendar maintenance', () => {
     })
     expect(publishing.refresh).not.toHaveBeenCalled()
     expect(publishing.reconnect).not.toHaveBeenCalled()
-    await act(async () => runtime.foreground('active'))
+    await act(async () => runtime.foreground())
     await advance(300_000)
     expect(publishing.finish).toHaveBeenCalledOnce()
   })
@@ -271,7 +275,7 @@ describe('foreground calendar maintenance', () => {
       optedOut: true,
     })
     await mount()
-    await act(async () => runtime.foreground('active'))
+    await act(async () => runtime.foreground())
     await advance(300_000)
     expect(publishing.action).not.toHaveBeenCalled()
   })
@@ -320,7 +324,7 @@ describe('foreground calendar maintenance', () => {
     })
     useCalendarPublishing.setState({ state: null })
     await mount()
-    await act(async () => runtime.foreground('active'))
+    await act(async () => runtime.foreground())
     await advance(300_000)
     // No ownership to release: the iOS check-in would fail on Android.
     expect(publishing.action).not.toHaveBeenCalled()
@@ -457,5 +461,55 @@ describe('foreground calendar maintenance', () => {
     await advance(300_000)
     expect(publishing.publish).toHaveBeenCalledOnce()
     expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it("doesn't watch data on a device that never turned Calendar Sync on", async () => {
+    useCalendarSettings.setState({
+      enabled: false,
+      registered: false,
+      sharedCalendar: null,
+    })
+    const subscribe = vi.spyOn(useConversations, 'subscribe')
+    await mount()
+    await advance(1500)
+    expect(subscribe).not.toHaveBeenCalled()
+    await act(async () => {
+      useCalendarSettings.setState({ enabled: true })
+    })
+    expect(subscribe).toHaveBeenCalledOnce()
+    await advance(1500)
+    publishing.publish.mockClear()
+    await act(async () => {
+      useConversations.setState({
+        conversations: [
+          {
+            ...visit(),
+            followUp: { ...visit().followUp!, date: new Date('2026-11-03') },
+          },
+        ],
+      })
+    })
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledExactlyOnceWith({ pull: false })
+  })
+
+  it("ignores preference writes the calendar doesn't read", async () => {
+    await mount()
+    await advance(1500)
+    publishing.publish.mockClear()
+    await act(async () => {
+      usePreferences.setState({ lastSyncedAt: 1 } as never)
+    })
+    await advance(60_000)
+    expect(publishing.publish).not.toHaveBeenCalled()
+  })
+
+  it('marks a calendar change so the next publish checks the calendar', async () => {
+    await mount()
+    await advance(1500)
+    await act(async () => runtime.calendarChanged())
+    expect(publishing.noteChanged).toHaveBeenCalledOnce()
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledTimes(2)
   })
 })

@@ -15,6 +15,9 @@ import { currentCalendarSnapshot } from '@/app/calendar/currentSnapshot'
 import * as android from '@/app/calendar/calendarSyncAndroid'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
+import { perf } from '@/lib/perf'
+import { canonicalJson } from '@/lib/canonicalJson'
+import { contentHash } from '@/lib/contentHash'
 
 /** IOS 16+ reports a generic "iPhone" without a special entitlement. */
 const GENERIC_DEVICE_NAMES = ['iPhone', 'iPad', 'iPod touch']
@@ -68,6 +71,11 @@ function errorKey(code: string) {
   return 'calendarConnectionError'
 }
 
+/** Rewrites the same calendar anyway after this long, as a backstop. */
+const REPUBLISH_UNCHANGED_AFTER_MS = 6 * 60 * 60_000
+/** What the last successful publish wrote; null to publish regardless. */
+let lastPublished: { key: string; at: number } | null = null
+
 /**
  * Serialize UI actions and auto-publishing; native serialization is the final
  * gate. Background runs don't disable the UI, and an error stays visible until
@@ -89,16 +97,23 @@ export function calendarAction<T>(
       try {
         return await action()
       } catch (error) {
+        // The next publish goes through, so success clears the error shown.
+        lastPublished = null
         if (!report) throw error
         const errorKey = calendarErrorKey(error)
+        // Background retries repeat the same failure; count it once until it
+        // changes or publishing works again.
+        const repeated =
+          background && useCalendarPublishing.getState().error === errorKey
         useCalendarPublishing.setState({ error: errorKey })
         const settings = useCalendarSync.getState()
         if (settings.enabled && !settings.failingSince)
           useCalendarSync.setState({ failingSince: Date.now() })
-        analytics.capture('calendar_sync_failed', {
-          error_key: errorKey,
-          background,
-        })
+        if (!repeated)
+          analytics.capture('calendar_sync_failed', {
+            error_key: errorKey,
+            background,
+          })
         throw error
       } finally {
         if (!background) useCalendarPublishing.setState({ working: false })
@@ -376,6 +391,14 @@ export async function finishDisconnect() {
 }
 
 /**
+ * The calendar changed outside this app (Calendar.app, the account's sync), so
+ * the next publish checks it even if the snapshot is unchanged.
+ */
+export function noteCalendarChanged() {
+  lastPublished = null
+}
+
+/**
  * `pull`: refresh app data first. Needed when publishing after launch or
  * foreground; local edits already reflect the merged data.
  */
@@ -436,20 +459,38 @@ async function publishCurrentCalendar({
     publishedKeys: state.publishedKeys,
     includeDetails: state.includeDetails ?? false,
   })
+  const token = state.configurationToken ?? state.namespace
+  const key = contentHash(
+    canonicalJson([snapshot, state.publishedKeys, destination.id, token])
+  )
+  const now = Date.now()
+  // Past follow-ups are never backfilled, so only upcoming ones are counted.
+  const upcomingCount = snapshot.entries.filter(
+    (entry) => entry.start >= now
+  ).length
+  if (
+    !repair &&
+    lastPublished?.key === key &&
+    now - lastPublished.at < REPUBLISH_UNCHANGED_AFTER_MS
+  ) {
+    perf.count('calendar:skip')
+    if (useCalendarSync.getState().upcomingCount !== upcomingCount)
+      useCalendarSync.setState({ upcomingCount })
+    return
+  }
+  lastPublished = null
   await calendarBridge().publish(
     id,
     name,
     destination.id,
     snapshot,
     repair,
-    state.configurationToken ?? state.namespace
+    token
   )
-  const now = Date.now()
-  // Past follow-ups are never backfilled, so only upcoming ones are counted.
+  lastPublished = { key, at: now }
   useCalendarSync.setState({
     lastSyncedAt: now,
-    upcomingCount: snapshot.entries.filter((entry) => entry.start >= now)
-      .length,
+    upcomingCount,
     failingSince: null,
   })
   useCalendarPublishing.setState({ error: null })

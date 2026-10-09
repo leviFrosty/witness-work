@@ -1,4 +1,5 @@
-import { useAudioPlayer } from 'expo-audio'
+import { useEffect, useRef } from 'react'
+import { createAudioPlayer, useAudioPlayer, type AudioPlayer } from 'expo-audio'
 import { usePreferences } from '@/stores/preferences'
 // @ts-expect-error MP3 doesn't export module
 import successChime from '@/assets/audio/success-chime.mp3'
@@ -41,4 +42,37 @@ export function useSound(name: SoundName) {
       // Silently fail if playback cannot start
     }
   }
+}
+
+/**
+ * Like `useSound`, but creates the player the first time it plays instead of on
+ * mount. For players mounted at launch that rarely play.
+ */
+export function useLazySound(name: SoundName) {
+  const playerRef = useRef<AudioPlayer | null>(null)
+  useEffect(
+    () => () => {
+      playerRef.current?.remove()
+      playerRef.current = null
+    },
+    []
+  )
+
+  return () => {
+    if (!isAudioEnabled()) return
+    try {
+      playFromStart(playerRef, name)
+    } catch {
+      // Silently fail if playback cannot start
+    }
+  }
+}
+
+const playFromStart = (
+  playerRef: { current: AudioPlayer | null },
+  name: SoundName
+) => {
+  if (!playerRef.current) playerRef.current = createAudioPlayer(SOUNDS[name])
+  playerRef.current.seekTo(0)
+  playerRef.current.play()
 }

@@ -101,38 +101,54 @@ const useManageSubscription = (
   const pauseRecord = usePauseRecord()
   const productIdentifier =
     manageableSubscription(customer, storePlatform)?.productIdentifier ?? null
+  const [lookupAttempt, setLookupAttempt] = useState(0)
   const [lookup, setLookup] = useState<{
     identifier: string
+    attempt: number
     product: PurchasesStoreProduct | null
+    /** Why the lookup failed, if it did. */
+    error: 'offline' | 'failed' | null
   } | null>(null)
   const [pausingMonths, setPausingMonths] = useState<number | null>(null)
   const viewed = useRef(false)
 
-  const productLoaded =
-    !productIdentifier || lookup?.identifier === productIdentifier
+  const lookedUp =
+    lookup?.identifier === productIdentifier && lookup.attempt === lookupAttempt
+  const productLoaded = !productIdentifier || lookedUp
   const product =
     productIdentifier && lookup?.identifier === productIdentifier
       ? lookup.product
       : null
+  // Without the product, pause options can't be offered; say so with a retry
+  // rather than leaving them out.
+  const productError = productIdentifier && lookedUp ? lookup.error : null
 
   useEffect(() => {
     if (!open || !productIdentifier) return
     let current = true
     Purchases.getProducts([baseProductId(productIdentifier)])
-      .then((products) => matchStoreProduct(products, productIdentifier))
+      .then((products) => ({
+        product: matchStoreProduct(products, productIdentifier) ?? null,
+        error: null,
+      }))
       .catch((error: unknown) => {
-        if (!isOfflineError(error)) errorTracking.captureException(error)
-        return undefined
+        const offline = isOfflineError(error)
+        if (!offline) errorTracking.captureException(error)
+        return { product: null, error: offline ? 'offline' : 'failed' } as const
       })
-      .then((match) => {
+      .then((result) => {
         if (current) {
-          setLookup({ identifier: productIdentifier, product: match ?? null })
+          setLookup({
+            identifier: productIdentifier,
+            attempt: lookupAttempt,
+            ...result,
+          })
         }
       })
     return () => {
       current = false
     }
-  }, [open, productIdentifier])
+  }, [open, productIdentifier, lookupAttempt])
 
   const state = manageSubscriptionState({
     customer,
@@ -172,6 +188,7 @@ const useManageSubscription = (
         state.kind === 'renewing' && state.pause.kind === 'unavailable'
           ? state.pause.reason
           : null,
+      product_lookup_failed: productError !== null,
     })
   })
 
@@ -270,6 +287,8 @@ const useManageSubscription = (
     state,
     product,
     productLoaded,
+    productError,
+    retryProduct: () => setLookupAttempt((n) => n + 1),
     pausingMonths,
     pause,
     openStore,

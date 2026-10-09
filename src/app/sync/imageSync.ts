@@ -1,4 +1,5 @@
 import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
+import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 
 /**
  * Dependencies injected by the caller (`iCloudSync.ts`). Keeping the module
@@ -55,8 +56,9 @@ export type AvatarSource =
  *   successful download — drives "do I need to re-download?" on the pull side.
  *   Independent of the upload fields because the container mtime is
  *   server-assigned and has no relation to the local file's mtime.
- * - `lastError` / `failedAt`: last failure classification and timestamp. Drives
- *   foreground-only backoff for quota errors.
+ * - `lastError` / `failedAt`: last failure message and timestamp.
+ * - `errorCode`: the transport's classification of it (`storage-full`, …).
+ * - `failures`: consecutive failed uploads of this file, for `uploadBackoffMs`.
  */
 export type ImageSyncBookkeeping = Record<
   string,
@@ -65,7 +67,9 @@ export type ImageSyncBookkeeping = Record<
     uploadedMtime: number | null
     containerMtime?: number
     lastError?: string
+    errorCode?: string
     failedAt?: number
+    failures?: number
   }
 >
 
@@ -85,19 +89,21 @@ export function filenameForSource(source: AvatarSource): string {
 }
 
 /**
- * Rough error classifier for write/read failures. A genuine "iCloud is full"
- * response must back off to foreground-only retries so the debounced push on
- * every store edit doesn't thrash the network. Everything else is treated as
- * transient and freely retried on the next push.
- *
- * Pattern-matches on the Swift bridge's rejection message — the native layer
- * passes `NSError.localizedDescription` through, so we watch for the keywords
- * iOS surfaces when iCloud storage is exhausted. Over-classifying here is cheap
- * (we just wait until the next foreground) so err towards the backoff when in
- * doubt.
+ * Whether a failed upload hit a full account. Those retry only on foreground,
+ * so the debounced push on every store edit doesn't thrash the network. The
+ * transport's code decides (Drive's 403 `storageQuotaExceeded`); entries
+ * recorded before codes existed fall back to the message.
  */
-function isQuotaError(message: string): boolean {
-  return /quota|out of space|not enough space|storage/i.test(message)
+function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
+  if (entry.errorCode) return entry.errorCode === 'storage-full'
+  return /quota|out of space|not enough space|storage/i.test(
+    entry.lastError ?? ''
+  )
+}
+
+/** Waits after 1, 2, 3… failed uploads of one file: 30 s, 2 min, 8 min… 1 h. */
+export function uploadBackoffMs(failures: number): number {
+  return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
 }
 
 /**
@@ -140,17 +146,18 @@ export async function pushAllImages(args: {
       skipped++
       continue
     }
-    // Quota-failed entries get a foreground-only retry policy so routine
-    // store-edit pushes don't spam the network when iCloud is full. On
-    // foreground, the user may have freed up space, so we retry once.
-    if (
-      args.trigger === 'store-edit' &&
-      entry?.lastError &&
-      isQuotaError(entry.lastError) &&
-      entry.localMtime === localMtime
-    ) {
-      skipped++
-      continue
+    // A file that failed backs off before it's tried again, unless the user
+    // picked a new photo. A full account retries only on foreground: routine
+    // store-edit pushes mustn't spam the network, and by then the user may
+    // have freed up space.
+    if (entry?.lastError && entry.localMtime === localMtime) {
+      const waiting =
+        deps.now() - (entry.failedAt ?? 0) <
+        uploadBackoffMs(entry.failures ?? 1)
+      if (waiting || (args.trigger === 'store-edit' && isQuotaFailure(entry))) {
+        skipped++
+        continue
+      }
     }
     try {
       if (deps.canTransfer && !deps.canTransfer()) break
@@ -166,11 +173,17 @@ export async function pushAllImages(args: {
       uploaded++
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
+      const errorCode = syncTransportErrorCode(e)
       bookkeeping[filename] = {
         localMtime,
         uploadedMtime: entry?.uploadedMtime ?? null,
         lastError: message,
+        ...(errorCode ? { errorCode } : {}),
         failedAt: deps.now(),
+        failures:
+          entry?.lastError && entry.localMtime === localMtime
+            ? (entry.failures ?? 1) + 1
+            : 1,
       }
       failed++
     }

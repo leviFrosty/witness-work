@@ -4,20 +4,33 @@ import getThemeFromColorScheme from '@/constants/theme'
 import { useColorScheme } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
-import useFeatureAccess from '@/hooks/useFeatureAccess'
+import { useShallow } from 'zustand/react/shallow'
+import { evaluateFeatureAccess } from '@/lib/featureAccess'
+import { useSupporter } from '@/stores/supporterStatus'
 import { mix, withAlpha } from '@/lib/color'
 
 interface Props {}
 
 const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const colorScheme = useColorScheme()
-  const { colorScheme: theme, customAccentColor } = usePreferences()
+  const { colorScheme: theme, customAccentColor } = usePreferences(
+    useShallow((s) => ({
+      colorScheme: s.colorScheme,
+      customAccentColor: s.customAccentColor,
+    }))
+  )
   // `customAvatarBackground` is profile-shaped (it tints the User's avatar),
   // so it lives in the Profile store. The theme still consumes it because the
   // avatar background also drives `accentBackground` system-wide.
-  const { customAvatarBackground } = useProfile()
-  const { hasAccess: canCustomizeAccent } =
-    useFeatureAccess('customAccentColor')
+  const customAvatarBackground = useProfile((s) => s.customAvatarBackground)
+  // The supporter mirror starts from the last known status, so a supporter's
+  // accent doesn't flash to the default while RevenueCat loads. It's cosmetic,
+  // so the cached hint is enough here.
+  const isSupporter = useSupporter((s) => s.isSupporter)
+  const { hasAccess: canCustomizeAccent } = evaluateFeatureAccess(
+    'customAccentColor',
+    { isSupporter }
+  )
   const scheme = colorScheme === 'unspecified' ? undefined : colorScheme
   const resolvedScheme = theme ?? scheme
   const userSelectedTheme = getThemeFromColorScheme(resolvedScheme)

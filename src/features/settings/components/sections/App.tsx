@@ -55,9 +55,11 @@ const AppSection = ({
           <InputRowButton
             leftIcon={FileTextIcon}
             label={i18n.t('notesImport_settingsLabel')}
-            disabled={!notesImport.available}
+            // Only a real answer closes it. While checking, offline or after a
+            // failed check, the composer explains and offers Try Again.
+            disabled={notesImport.status === 'unavailable'}
             sublabel={
-              notesImport.available
+              notesImport.status !== 'unavailable'
                 ? undefined
                 : notesImport.updateRequired
                   ? i18n.t('notesImport_updateRequired')

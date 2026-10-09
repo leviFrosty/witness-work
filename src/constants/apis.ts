@@ -24,8 +24,6 @@ export default {
     `${BASE_URL}/notes-import/${importId}/events`,
   notesImportResult: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/result`,
-  notesImportCancel: (importId: string) =>
-    `${BASE_URL}/notes-import/${importId}/cancel`,
   notesImportDestroy: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/destroy`,
   // Supporter-only shortest order for today's stops; coordinates only.

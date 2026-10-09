@@ -4,6 +4,9 @@ import android.util.Base64
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.functions.Coroutine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Holds the Buddies root seed on Android: sealed by the Android Keystore on
@@ -37,6 +40,22 @@ class BuddiesKeychainModule : Module() {
 
     Function("rootSeedBackup") { ->
       store.backupState()
+    }
+
+    // The same, off the JS thread: a first read can wait on Block Store (Google
+    // Play services) for up to 10 seconds. On the IO pool rather than the
+    // shared modules queue, so a slow Block Store holds up no other module. JS
+    // falls back to the functions above on binaries without these.
+    AsyncFunction("peekRootSeedAsync") Coroutine { ->
+      withContext(Dispatchers.IO) { store.peek()?.let { base64url(it) } }
+    }
+
+    AsyncFunction("getOrCreateRootSeedAsync") Coroutine { ->
+      withContext(Dispatchers.IO) { base64url(store.getOrCreate()) }
+    }
+
+    AsyncFunction("deleteRootSeedAsync") Coroutine { ->
+      withContext(Dispatchers.IO) { store.delete() }
     }
   }
 

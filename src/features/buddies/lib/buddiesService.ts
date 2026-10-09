@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
+import { refreshSyncClock, syncNow } from '@/lib/syncClock'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
@@ -11,10 +12,13 @@ import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { currentBuddyProfile } from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
-import { createBuddiesEngine } from '@/features/buddies/lib/engine'
+import {
+  type BuddiesSyncOptions,
+  createBuddiesEngine,
+} from '@/features/buddies/lib/engine'
 import type { BuddyStreak } from '@/features/buddies/lib/schemas'
 import { randomBytes } from '@/features/buddies/lib/random'
-import { createRelayClient } from '@/features/buddies/lib/relay'
+import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
 import { buildOutgoingShares } from '@/features/buddies/lib/shares'
 import { trackSync } from '@/features/buddies/lib/syncStatus'
@@ -35,11 +39,21 @@ export function currentBuddyStreak(
 }
 
 const engine = createBuddiesEngine({
-  relay: createRelayClient({ baseUrl: apis.buddies, randomBytes }),
+  relay: createRelayClient({
+    baseUrl: apis.buddies,
+    randomBytes,
+    // The relay refuses a signed call more than 5 minutes off its clock, so a
+    // device clock that's wrong would otherwise fail every call for good.
+    now: syncNow,
+    recalibrate: () => refreshSyncClock({ force: true }),
+  }),
   store: useBuddies,
   randomBytes,
+  // Revs, expiries, and lastSyncAt stay on the device clock, as before: a
+  // calibration mid-session must never make a newer rev look older.
   now: Date.now,
-  getRootSeed: () => fromB64u(BuddiesKeychain.getOrCreateRootSeed()),
+  getRootSeed: async () =>
+    fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
   deleteRootSeed: () => BuddiesKeychain.deleteRootSeed(),
   getPlans: () => {
     const { dayPlans, recurringPlans } = useServiceReport.getState()
@@ -88,13 +102,18 @@ function sending<Args extends unknown[]>(
  */
 export const buddiesEngine: typeof engine = {
   ...engine,
-  sync: () =>
-    trackSync(engine.sync, {
-      update: (change) => useBuddiesSession.setState(change),
-      lastSyncAt: () => useBuddies.getState().lastSyncAt,
-      now: Date.now,
-      failureReason: buddiesFailureReason,
-    }),
+  sync: (options?: BuddiesSyncOptions) =>
+    // Waiting out the relay's back-off isn't a sync, and says nothing new.
+    options?.automatic && engine.coolingDown()
+      ? engine.sync(options)
+      : trackSync(() => engine.sync(options), {
+          update: (change) => useBuddiesSession.setState(change),
+          lastSyncAt: () => useBuddies.getState().lastSyncAt,
+          now: Date.now,
+          failureReason: buddiesFailureReason,
+          skipped: (outcome) => outcome === 'skipped',
+          cancelled: (error) => isRelayError(error, 'cancelled'),
+        }),
   replyToShare: sending(engine.replyToShare),
   deliverReplies: sending(engine.deliverReplies),
   sendHeldReplies: sending(engine.sendHeldReplies),

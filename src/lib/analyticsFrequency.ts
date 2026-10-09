@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 // these caps: their visit identifier links the Supporter conversion funnel.
 const dailyEvents = new Set([
   'Application Became Active',
+  'app_launch_timed',
   '$feature_flag_called',
   'onboarding_checklist_viewed',
   'supporter_nudge_viewed',

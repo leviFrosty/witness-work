@@ -49,10 +49,12 @@ export const analyticsEventNames = [
   'import_type_selected',
   'import_undone',
   'notes_import_accepted',
+  'notes_import_availability_failed',
   'notes_import_capture_finished',
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.
+  'app_launch_timed',
   'app_share_completed',
   'app_share_failed',
   'app_share_tapped',
@@ -163,6 +165,7 @@ export const analyticsEventNames = [
   'onboarding_step_viewed',
   // Supporter conversion and purchase outcomes.
   'paywall_closed',
+  'paywall_offerings_empty',
   'paywall_offerings_failed',
   'paywall_viewed',
   'supporter_feature_gate_clicked',

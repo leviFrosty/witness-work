@@ -5,6 +5,7 @@ import ColorSwatchPicker, {
 import { usePreferences } from '@/stores/preferences'
 import { lightModeColors } from '@/constants/theme'
 import i18n from '@/lib/locales'
+import { useShallow } from 'zustand/react/shallow'
 
 /** The default accent followed by the shared `COLOR_PRESETS`. */
 export const ACCENT_PRESETS: { value: string; label: string }[] = [
@@ -13,7 +14,9 @@ export const ACCENT_PRESETS: { value: string; label: string }[] = [
 ]
 
 const PickerContents = () => {
-  const { customAccentColor, set } = usePreferences()
+  const { customAccentColor, set } = usePreferences(
+    useShallow((s) => ({ customAccentColor: s.customAccentColor, set: s.set }))
+  )
   return (
     <ColorSwatchPicker
       value={customAccentColor}

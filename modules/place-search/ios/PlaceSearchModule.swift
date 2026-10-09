@@ -32,21 +32,31 @@ public class PlaceSearchModule: Module {
         query: query,
         center: Self.coordinate(latitude, longitude),
         addressesOnly: scope == "address"
-      ) { completions in
-        let serialized: [[String: Any]] = completions.map { Self.serializeCompletion($0) }
-        promise.resolve(serialized as Any?)
+      ) { result in
+        switch result {
+        case .success(let completions):
+          let serialized: [[String: Any]] = completions.map { Self.serializeCompletion($0) }
+          promise.resolve(serialized as Any?)
+        case .failure(let failure):
+          promise.reject(failure.code, failure.message)
+        }
       }
     }.runOnQueue(.main)
 
     AsyncFunction("resolve") { (title: String, subtitle: String, promise: Promise) in
       let searcher = self.mainSearcher()
-      searcher.resolve(title: title, subtitle: subtitle) { mapItem in
-        guard let mapItem else {
-          promise.resolve(nil as Any?)
-          return
+      searcher.resolve(title: title, subtitle: subtitle) { result in
+        switch result {
+        case .success(let mapItem):
+          guard let mapItem else {
+            promise.resolve(nil as Any?)
+            return
+          }
+          let serialized: [String: Any] = Self.serializeMapItem(mapItem)
+          promise.resolve(serialized as Any?)
+        case .failure(let failure):
+          promise.reject(failure.code, failure.message)
         }
-        let serialized: [String: Any] = Self.serializeMapItem(mapItem)
-        promise.resolve(serialized as Any?)
       }
     }.runOnQueue(.main)
   }
@@ -202,17 +212,61 @@ public class PlaceSearchModule: Module {
 }
 
 /**
+ * Why a search failed. `code` matches the JS network error vocabulary
+ * (`offline`, `timeout`, `rate_limited`), or `place_search_failed` for a
+ * MapKit service error, so JS can tell "nothing found" from "couldn't search".
+ */
+struct PlaceSearchFailure: Error {
+  let code: String
+  let message: String
+
+  static let timedOut = PlaceSearchFailure(code: "timeout", message: "Place search timed out")
+
+  /// Nil for "not found", which is an empty result rather than a failure.
+  static func from(_ error: Error) -> PlaceSearchFailure? {
+    let nsError = error as NSError
+    if let url = Self.urlError(nsError) {
+      let code = url.code == NSURLErrorTimedOut ? "timeout" : "offline"
+      return PlaceSearchFailure(code: code, message: url.localizedDescription)
+    }
+    if nsError.domain == MKError.errorDomain {
+      switch MKError.Code(rawValue: UInt(nsError.code)) {
+      case .placemarkNotFound, .directionsNotFound:
+        return nil
+      case .loadingThrottled:
+        return PlaceSearchFailure(code: "rate_limited", message: nsError.localizedDescription)
+      default:
+        break
+      }
+    }
+    return PlaceSearchFailure(
+      code: "place_search_failed",
+      message: "\(nsError.domain) \(nsError.code)"
+    )
+  }
+
+  private static func urlError(_ error: NSError) -> NSError? {
+    if error.domain == NSURLErrorDomain { return error }
+    if let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError {
+      return urlError(underlying)
+    }
+    return nil
+  }
+}
+
+/**
  * Bridges the delegate-based `MKLocalSearchCompleter` to a single callback per
  * query. A newer query supersedes an older one (the older callback receives an
- * empty list), and a timeout delivers whatever results exist so JS never
- * hangs. Main queue only.
+ * empty list). A timeout delivers whatever results exist, or a timeout failure
+ * when there are none yet, so JS never hangs. Main queue only.
  */
 final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
   private static let timeout: TimeInterval = 4
+  private static let resolveTimeout: TimeInterval = 8
   private static let biasRadiusMeters: CLLocationDistance = 50_000
 
   private let completer = MKLocalSearchCompleter()
-  private var pending: (([MKLocalSearchCompletion]) -> Void)?
+  private var pending: ((Result<[MKLocalSearchCompletion], PlaceSearchFailure>) -> Void)?
   private var generation = 0
   private var lastRegion: MKCoordinateRegion?
   private var addressesOnly = false
@@ -234,7 +288,7 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
     query: String,
     center: CLLocationCoordinate2D?,
     addressesOnly: Bool,
-    callback: @escaping ([MKLocalSearchCompletion]) -> Void
+    callback: @escaping (Result<[MKLocalSearchCompletion], PlaceSearchFailure>) -> Void
   ) {
     // Supersede any in-flight query; JS ignores stale responses anyway.
     finish(with: [])
@@ -242,9 +296,19 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else {
       completer.cancel()
-      callback([])
+      callback(.success([]))
       return
     }
+
+    #if DEBUG
+      // A simulator can't go offline, so dev builds fake MapKit failures for
+      // queries like "ww-fail:offline" to exercise the real failure path.
+      if let forced = Self.forcedFailure(trimmed) {
+        pending = callback
+        self.completer(completer, didFailWithError: forced)
+        return
+      }
+    #endif
 
     let region = center.map {
       MKCoordinateRegion(
@@ -269,7 +333,7 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
       !completer.isSearching
     {
       remember(completer.results)
-      callback(completer.results)
+      callback(.success(completer.results))
       return
     }
 
@@ -278,12 +342,21 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
     pending = callback
     DispatchQueue.main.asyncAfter(deadline: .now() + Self.timeout) { [weak self] in
       guard let self, self.generation == current else { return }
-      self.finish(with: self.completer.results)
+      let results = self.completer.results
+      if results.isEmpty, self.completer.isSearching {
+        self.finish(.failure(.timedOut))
+      } else {
+        self.finish(with: results)
+      }
     }
     completer.queryFragment = trimmed
   }
 
-  func resolve(title: String, subtitle: String, callback: @escaping (MKMapItem?) -> Void) {
+  func resolve(
+    title: String,
+    subtitle: String,
+    callback: @escaping (Result<MKMapItem?, PlaceSearchFailure>) -> Void
+  ) {
     let request: MKLocalSearch.Request
     if let completion = completionsById[Self.key(title: title, subtitle: subtitle)] {
       request = MKLocalSearch.Request(completion: completion)
@@ -297,9 +370,27 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
         request.region = lastRegion
       }
     }
-    MKLocalSearch(request: request).start { response, _ in
-      // Search errors (including "not found") resolve to nil for JS.
-      callback(response?.mapItems.first)
+    let search = MKLocalSearch(request: request)
+    var settled = false
+    let settle: (Result<MKMapItem?, PlaceSearchFailure>) -> Void = { result in
+      guard !settled else { return }
+      settled = true
+      callback(result)
+    }
+    // MKLocalSearch has no timeout of its own.
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.resolveTimeout) {
+      guard !settled else { return }
+      search.cancel()
+      settle(.failure(.timedOut))
+    }
+    search.start { response, error in
+      // "Not found" resolves to nil, so JS keeps the picked text; anything
+      // else is a failure JS can show.
+      if let error, let failure = PlaceSearchFailure.from(error) {
+        settle(.failure(failure))
+      } else {
+        settle(.success(response?.mapItems.first))
+      }
     }
   }
 
@@ -308,6 +399,23 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
     finish(with: [])
   }
 
+  #if DEBUG
+    private static func forcedFailure(_ query: String) -> NSError? {
+      switch query {
+      case "ww-fail:offline":
+        return NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet)
+      case "ww-fail:throttled":
+        return NSError(domain: MKError.errorDomain, code: Int(MKError.Code.loadingThrottled.rawValue))
+      case "ww-fail:server":
+        return NSError(domain: MKError.errorDomain, code: Int(MKError.Code.serverFailure.rawValue))
+      case "ww-fail:notfound":
+        return NSError(domain: MKError.errorDomain, code: Int(MKError.Code.placemarkNotFound.rawValue))
+      default:
+        return nil
+      }
+    }
+  #endif
+
   // MARK: MKLocalSearchCompleterDelegate
 
   func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
@@ -315,18 +423,27 @@ final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
   }
 
   func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-    // MKError.placemarkNotFound etc.: no suggestions rather than a JS rejection.
-    finish(with: [])
+    // Not found means no suggestions; anything else (offline, throttled, a
+    // MapKit outage) rejects so JS shows an error instead of "No places found".
+    if let failure = PlaceSearchFailure.from(error) {
+      finish(.failure(failure))
+    } else {
+      finish(with: [])
+    }
   }
 
   // MARK: Private
 
   private func finish(with results: [MKLocalSearchCompletion]) {
+    remember(results)
+    finish(.success(results))
+  }
+
+  private func finish(_ result: Result<[MKLocalSearchCompletion], PlaceSearchFailure>) {
     guard let callback = pending else { return }
     pending = nil
     generation += 1
-    remember(results)
-    callback(results)
+    callback(result)
   }
 
   private func remember(_ results: [MKLocalSearchCompletion]) {

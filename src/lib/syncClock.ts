@@ -2,19 +2,36 @@ import apis from '@/constants/apis'
 
 let offsetMs = 0
 let calibratedOffset = false
-let anchor: { time: number; elapsed: number } | undefined
+let anchor: { time: number; elapsed: number; wall: number } | undefined
 const uncalibratedStamps = new Set<number>()
 const correctedStamps = new Map<number, number>()
 let calibratedAt = 0
 let calibration: Promise<number | null> | undefined
+/** Consecutive failed calibrations, and when the last one failed. */
+let failures = 0
+let failedAt = 0
+/** Waits after 1, 2, 3… failed calibrations: 1, 2, 4… min, at most an hour. */
+const FAILURE_BACKOFF_MS = 60_000
+const MAX_FAILURE_BACKOFF_MS = 60 * 60_000
+
+/** How long after a failure before trying again. */
+export const calibrationBackoffMs = (failed: number): number =>
+  failed === 0
+    ? 0
+    : Math.min(FAILURE_BACKOFF_MS * 2 ** (failed - 1), MAX_FAILURE_BACKOFF_MS)
 
 const elapsedNow = () => globalThis.performance?.now() ?? Date.now()
 
 /** Sync metadata uses a calibrated clock; calendar dates keep the user's clock. */
 export function syncNow(): number {
-  return anchor
-    ? anchor.time + elapsedNow() - anchor.elapsed
-    : Date.now() + offsetMs
+  if (!anchor) return Date.now() + offsetMs
+  // The monotonic clock ignores wall-clock changes, which is the point, but
+  // it also stops while the device sleeps (iOS and Android). Once the wall
+  // clock has moved further, the device slept, so take its larger step: a
+  // stamp that falls behind would lose to older edits from other devices.
+  const elapsed = elapsedNow() - anchor.elapsed
+  const wall = Date.now() - anchor.wall
+  return anchor.time + Math.max(elapsed, wall)
 }
 
 export const hasCalibratedSyncClock = () => calibratedOffset
@@ -24,6 +41,8 @@ export function setSyncClockOffset(value: number, calibrated = false): void {
   calibratedOffset = calibrated && Number.isFinite(value)
   anchor = undefined
   calibratedAt = 0
+  failures = 0
+  failedAt = 0
 }
 
 /**
@@ -47,10 +66,23 @@ export function syncTimestamp(previous = 0): number {
 export const correctedSyncTimestamp = (value: number) =>
   correctedStamps.get(value) ?? value
 
-/** Best effort HTTPS Date calibration using the existing public health endpoint. */
-export function refreshSyncClock(): Promise<number | null> {
+/**
+ * Best effort HTTPS Date calibration using the existing public health endpoint.
+ * Hourly after a success; after failures (offline, ww-api down) it backs off
+ * instead of adding a request, and up to 3 s, to every push. `force` skips both
+ * limits, for a server that just refused a timestamp.
+ */
+export function refreshSyncClock({ force = false } = {}): Promise<
+  number | null
+> {
   if (calibration) return calibration
-  if (calibratedAt && elapsedNow() - calibratedAt < 60 * 60_000)
+  if (!force && calibratedAt && elapsedNow() - calibratedAt < 60 * 60_000)
+    return Promise.resolve(null)
+  if (
+    !force &&
+    failures &&
+    elapsedNow() - failedAt < calibrationBackoffMs(failures)
+  )
     return Promise.resolve(null)
   calibration = (async () => {
     const controller = new AbortController()
@@ -62,7 +94,11 @@ export function refreshSyncClock(): Promise<number | null> {
         cache: 'no-store',
       })
       const serverTime = Date.parse(response.headers.get('date') ?? '')
-      if (!response.ok || !Number.isFinite(serverTime)) return null
+      if (!response.ok || !Number.isFinite(serverTime)) {
+        failures++
+        failedAt = elapsedNow()
+        return null
+      }
       const time = serverTime + (elapsedNow() - started) / 2
       const previousOffset = offsetMs
       offsetMs = time - Date.now()
@@ -75,10 +111,13 @@ export function refreshSyncClock(): Promise<number | null> {
       }
       uncalibratedStamps.clear()
       calibratedOffset = true
-      anchor = { time, elapsed: elapsedNow() }
+      anchor = { time, elapsed: elapsedNow(), wall: Date.now() }
       calibratedAt = elapsedNow()
+      failures = 0
       return offsetMs
     } catch {
+      failures++
+      failedAt = elapsedNow()
       return null
     } finally {
       clearTimeout(timeout)

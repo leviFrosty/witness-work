@@ -106,6 +106,7 @@ import {
   reconnectSharedCalendar,
   setSharedOptions,
   finishDisconnect,
+  noteCalendarChanged,
 } from '@/app/calendar/calendarSync'
 import { analytics } from '@/lib/analytics'
 import { useCalendarSync, useCalendarPublishing } from '@/stores/calendarSync'
@@ -127,6 +128,7 @@ const calendar = { id: 'calendar', title: 'WitnessWork', account: 'iCloud' }
 describe('calendar publishing orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    noteCalendarChanged()
     bridge.registerDevice.mockResolvedValue(owned)
     bridge.destinations.mockResolvedValue([calendar])
     bridge.selectPrimary.mockResolvedValue(owned)
@@ -581,6 +583,61 @@ describe('calendar publishing orchestration', () => {
     )
     await publishCalendar({ pull: false })
     expect(useCalendarPublishing.getState().error).toBeNull()
+  })
+  it('skips the native publish while nothing it would write changed', async () => {
+    useCalendarPublishing.setState({ error: null })
+    await publishCalendar({ pull: false })
+    await publishCalendar({ pull: false })
+    expect(bridge.publish).toHaveBeenCalledOnce()
+    // A change made in Calendar.app or by the account's sync is checked.
+    noteCalendarChanged()
+    await publishCalendar({ pull: false })
+    expect(bridge.publish).toHaveBeenCalledTimes(2)
+    // So is new data, and a repair always goes through.
+    data.contacts = [{ id: 'contact', name: 'Contact' }]
+    data.conversations = [
+      {
+        id: 'visit',
+        date: new Date('2026-10-01'),
+        contact: { id: 'contact' },
+        followUp: { date: new Date(Date.now() + 86_400_000) },
+      },
+    ]
+    await publishCalendar({ pull: false })
+    await publishCalendar({ pull: false, repair: true })
+    expect(bridge.publish).toHaveBeenCalledTimes(4)
+  })
+  it('publishes again after a failure, even with the same snapshot', async () => {
+    await calendarAction(() => publishCalendar({ pull: false }))
+    bridge.registerDevice.mockRejectedValueOnce(new Error('offline'))
+    await calendarAction(() => publishCalendar({ pull: false }), {
+      background: true,
+    }).catch(() => undefined)
+    await calendarAction(() => publishCalendar({ pull: false }))
+    expect(bridge.publish).toHaveBeenCalledTimes(2)
+    expect(useCalendarPublishing.getState().error).toBeNull()
+  })
+  it('counts a repeated background failure once until it changes', async () => {
+    useCalendarPublishing.setState({ error: null })
+    const fail = (code: string) =>
+      calendarAction(
+        async () => {
+          throw new Error(code)
+        },
+        { background: true }
+      ).catch(() => undefined)
+    await fail('offline')
+    await fail('offline')
+    await fail('CALENDAR_MISSING')
+    expect(
+      vi
+        .mocked(analytics.capture)
+        .mock.calls.filter(([event]) => event === 'calendar_sync_failed')
+        .map(([, properties]) => properties)
+    ).toEqual([
+      { error_key: 'calendarConnectionError', background: true },
+      { error_key: 'calendarMissingError', background: true },
+    ])
   })
   it("keeps failures on a device that doesn't publish silent", async () => {
     await calendarAction(

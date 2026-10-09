@@ -25,9 +25,19 @@ vi.mock('@/stores/contactsStore', async () => ({
     set: (value: { deletedContacts: Contact[] }) => void
   }>((set) => ({ deletedContacts: [], set })),
 }))
+vi.mock('@/lib/contactRetention', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/contactRetention')>()
+  return {
+    ...actual,
+    expireDeletedContactDetails: vi.fn(actual.expireDeletedContactDetails),
+  }
+})
 import useContacts from '@/stores/contactsStore'
 import { useDeletedContactRetention } from './useDeletedContactRetention'
-import { DELETED_CONTACT_RETENTION_MS } from '@/lib/contactRetention'
+import {
+  DELETED_CONTACT_RETENTION_MS,
+  expireDeletedContactDetails,
+} from '@/lib/contactRetention'
 const Harness = () => {
   useDeletedContactRetention(true)
   return null
@@ -63,6 +73,7 @@ it.each(['ios', 'android'])(
     expect(useContacts.getState().deletedContacts[0].name).toBe('Private')
     vi.setSystemTime(now + 2000)
     await act(async () => {
+      runtime.foreground('background')
       runtime.foreground('active')
     })
     expect(useContacts.getState().deletedContacts[0]).toMatchObject({
@@ -73,3 +84,27 @@ it.each(['ios', 'android'])(
     expect(useContacts.getState().deletedContacts[0].phone).toBeUndefined()
   }
 )
+
+it('expires once at launch, not again for its own write', async () => {
+  vi.useFakeTimers()
+  const now = Date.now()
+  vi.setSystemTime(now)
+  useContacts.setState({
+    deletedContacts: [
+      {
+        id: 'c',
+        name: 'Private',
+        createdAt: new Date(0),
+        updatedAt: now - DELETED_CONTACT_RETENTION_MS - 1000,
+      },
+    ],
+  })
+  vi.mocked(expireDeletedContactDetails).mockClear()
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(useContacts.getState().deletedContacts[0]).toMatchObject({
+    redacted: true,
+  })
+  expect(expireDeletedContactDetails).toHaveBeenCalledTimes(1)
+})

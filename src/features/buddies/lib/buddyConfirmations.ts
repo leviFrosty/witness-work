@@ -1,15 +1,16 @@
-import { Alert } from 'react-native'
 import confirmDestructive from '@/lib/confirmDestructive'
 import i18n from '@/lib/locales'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 const removeBuddy = (buddy: Buddy) =>
   buddiesEngine
     .removeBuddy(buddy.inboxId)
-    .catch((error) => Alert.alert(buddiesErrorMessage(error)))
+    .catch((error) =>
+      alertBuddiesError(i18n.t('buddies_errorRemoveTitle'), error)
+    )
 
 /** Ends a pairing for both people, after confirming. */
 export const confirmRemoveBuddy = (buddy: Buddy) =>

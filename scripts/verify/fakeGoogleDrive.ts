@@ -266,6 +266,10 @@ export function createFakeGoogleDrive(
     ) {
       faults.push({ match, status, reason })
     },
+    /** Drops every fault `failNext` queued that hasn't fired yet. */
+    clearFaults() {
+      faults.length = 0
+    },
     setQuota(account: string, bytes: number | undefined) {
       if (bytes === undefined) quotas.delete(account)
       else quotas.set(account, bytes)

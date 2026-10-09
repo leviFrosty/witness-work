@@ -16,6 +16,8 @@ import type { BuddyShareRef } from '@/types/timeEntry'
 /** Active buddies plus pending invites never exceed this (relay enforces too). */
 export const MAX_BUDDIES = 5
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+/** The relay keeps at most this many unclaimed invites open per inbox. */
+export const MAX_OPEN_INVITES = 3
 
 /** What this User shares about themself, read from Profile and Preferences. */
 export type BuddyProfile = {
@@ -213,6 +215,15 @@ export type OutgoingShare = {
    * a change that leaves these alone is sent without a push.
    */
   sentTiming?: Record<string, string>
+  /** The newest rev any send of this share has used. */
+  lastRev?: number
+  /**
+   * Sends a publish left undone (`recipient|kind` → rev), for the content hash
+   * they were for (`deleted` once the share is gone). While the content is the
+   * same, a retry reuses its rev and so its event id: one that landed though
+   * its answer was lost is kept, and alerts, once.
+   */
+  pending?: { hash: string; revs: Record<string, number> }
 }
 
 export type IncomingShareStatus = 'pending' | ShareReply | 'cancelled'

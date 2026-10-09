@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import i18n, {
   TranslatedLocale,
-  translations,
+  translatedLocales,
   translationsLabels,
 } from '@/lib/locales'
 import Select from '@/components/ui/Select'
@@ -23,9 +23,9 @@ export default function LanguageSelector() {
     value: TranslatedLocale | null
   }[] = [
     { label: i18n.t('deviceDefault'), value: null },
-    ...Object.keys(translations).map((locale) => ({
-      label: translationsLabels[locale as TranslatedLocale],
-      value: locale as TranslatedLocale,
+    ...translatedLocales.map((locale) => ({
+      label: translationsLabels[locale],
+      value: locale,
     })),
   ]
 

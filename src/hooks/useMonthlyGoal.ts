@@ -6,6 +6,7 @@ import {
   type CalendarMonth,
 } from '@/lib/monthlyGoals'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 
 export type MonthlyGoal = {
   /** The regular Monthly Goal of the role that applied that month. */
@@ -29,7 +30,13 @@ const useMonthlyGoal = (target: CalendarMonth): MonthlyGoal => {
     monthlyGoalOverrides,
     setMonthlyGoalOverride,
     clearMonthlyGoalOverride,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      monthlyGoalOverrides: s.monthlyGoalOverrides,
+      setMonthlyGoalOverride: s.setMonthlyGoalOverride,
+      clearMonthlyGoalOverride: s.clearMonthlyGoalOverride,
+    }))
+  )
   const savedOverride = monthlyGoalOverrides[monthlyGoalKey(target)]
   const overrideGoalHours = isValidMonthlyGoalHours(savedOverride)
     ? savedOverride

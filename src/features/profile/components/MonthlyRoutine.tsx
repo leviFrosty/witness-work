@@ -29,7 +29,7 @@ const Month = ({
 }) => {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const { installedOn } = usePreferences()
+  const installedOn = usePreferences((s) => s.installedOn)
   const { showsYearTabs } = usePublisher()
   const current = moment()
   const toDisplay = moment().month(month).year(year)

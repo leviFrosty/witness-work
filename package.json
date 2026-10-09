@@ -43,7 +43,8 @@
     "check:env:android": "node scripts/with-local-env.mjs development android --check",
     "check:env:ios": "node scripts/with-local-env.mjs development ios --check",
     "test:local-env": "node --test scripts/tests/local-env.node.mjs",
-    "test:verify": "node --test scripts/tests/verify-locks.node.mjs"
+    "test:verify": "node --test scripts/tests/verify-locks.node.mjs",
+    "test:perf": "node --test scripts/tests/perf.node.mjs"
   },
   "dependencies": {
     "@bacons/apple-targets": "5.0.0",
@@ -118,7 +119,7 @@
     "jest-expo": "57.0.5",
     "lodash": "^4.18.1",
     "lottie-react-native": "7.3.8",
-    "lucide-react-native": "^1.23.0",
+    "lucide-react-native": "1.23.0",
     "madge": "^8.0.0",
     "moment": "^2.30.1",
     "posthog-react-native": "4.68.0",

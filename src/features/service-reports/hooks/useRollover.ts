@@ -10,6 +10,7 @@ import {
 } from '@/features/service-reports/lib/rollover'
 import { addRolloverEntries } from '@/features/service-reports/lib/addRolloverEntries'
 import usePublisher from '@/hooks/usePublisher'
+import { useShallow } from 'zustand/react/shallow'
 
 type RolloverContext = {
   pending: PendingRollover[]
@@ -50,7 +51,17 @@ export const useRollover = (): RolloverContext => {
     customCreditLimitHours,
     devRolloverDateOverride,
     set,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      lastRolloverYearMonth: s.lastRolloverYearMonth,
+      autoRolloverEnabled: s.autoRolloverEnabled,
+      rolloverIncludesCredit: s.rolloverIncludesCredit,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      devRolloverDateOverride: s.devRolloverDateOverride,
+      set: s.set,
+    }))
+  )
   const { serviceReports } = useServiceReport()
 
   const overrideMs = devRolloverDateOverride

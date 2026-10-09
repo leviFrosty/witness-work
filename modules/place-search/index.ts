@@ -64,7 +64,9 @@ export const supportsAddressScope: boolean = version >= 2
 /**
  * MapKit autocomplete for points of interest and addresses. Results are biased
  * toward the coordinate when given. A newer call supersedes an in-flight one,
- * which then resolves to an empty list.
+ * which then resolves to an empty list. Rejects when the search fails rather
+ * than finds nothing, with `code` `offline`, `timeout`, `rate_limited` or
+ * `place_search_failed` (binaries before that resolve to an empty list).
  */
 export async function autocomplete(
   query: string,
@@ -81,7 +83,10 @@ export async function autocomplete(
   return native!.autocomplete(query, latitude, longitude, scope)
 }
 
-/** Resolves a completion to coordinates, a POI name, and an address. */
+/**
+ * Resolves a completion to coordinates, a POI name, and an address; null when
+ * MapKit finds nothing. Rejects like `autocomplete` when the lookup fails.
+ */
 export async function resolve(
   completion: Pick<PlaceSearchCompletion, 'title' | 'subtitle'>
 ): Promise<PlaceSearchPlace | null> {

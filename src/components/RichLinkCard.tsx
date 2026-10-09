@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Platform, Share, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Clipboard from 'expo-clipboard'
@@ -16,6 +16,22 @@ import { getHostname, isHttpUrl } from '@/lib/linkPreview'
 import { useLinkPreview } from '@/hooks/useLinkPreview'
 
 const THUMBNAIL_SIZE = 56
+/** Cached and fast previews land before this, so they never flash a spinner. */
+const SPINNER_DELAY_MS = 300
+
+/** True once `active` has stayed true for `delayMs`. */
+function useDelayedFlag(active: boolean, delayMs: number) {
+  const [shown, setShown] = useState(false)
+  useEffect(() => {
+    if (!active) {
+      setShown(false)
+      return
+    }
+    const timer = setTimeout(() => setShown(true), delayMs)
+    return () => clearTimeout(timer)
+  }, [active, delayMs])
+  return active && shown
+}
 
 /** Shared tap / menu behavior for links in notes. */
 export function useLinkActions() {
@@ -83,6 +99,7 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
   const { preview, loading } = useLinkPreview(url)
   const { open, menu } = useLinkActions()
   const [imageFailed, setImageFailed] = useState<string | null>(null)
+  const showSpinner = useDelayedFlag(loading, SPINNER_DELAY_MS)
 
   const hostname = getHostname(url)
   const title = preview?.title || hostname
@@ -95,7 +112,6 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
     preview?.imageUrl && imageFailed !== preview.imageUrl
       ? preview.imageUrl
       : undefined
-  const showThumbnail = loading || !!imageUrl
 
   const card = (
     <View
@@ -110,45 +126,37 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
         backgroundColor: theme.colors.backgroundLighter,
       }}
     >
-      {showThumbnail ? (
-        <View
-          style={{
-            width: THUMBNAIL_SIZE,
-            height: THUMBNAIL_SIZE,
-            borderRadius: theme.numbers.borderRadiusSm,
-            backgroundColor: theme.colors.background,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={{ width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE }}
-              contentFit='cover'
-              transition={150}
-              accessibilityIgnoresInvertColors
-              onError={() => setImageFailed(imageUrl)}
-            />
-          ) : (
-            <ActivityIndicator size='small' color={theme.colors.textAlt} />
-          )}
-        </View>
-      ) : (
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: theme.numbers.borderRadiusSm,
-            backgroundColor: theme.colors.background,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+      {/* One size whatever the outcome, so the card never jumps. */}
+      <View
+        style={{
+          width: THUMBNAIL_SIZE,
+          height: THUMBNAIL_SIZE,
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: theme.colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE }}
+            contentFit='cover'
+            transition={150}
+            accessibilityIgnoresInvertColors
+            onError={() => setImageFailed(imageUrl)}
+          />
+        ) : showSpinner ? (
+          <ActivityIndicator
+            size='small'
+            color={theme.colors.textAlt}
+            accessibilityLabel={i18n.t('richLink_loading')}
+          />
+        ) : (
           <LinkIcon size={18} color={theme.colors.textAlt} />
-        </View>
-      )}
+        )}
+      </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text
           numberOfLines={2}

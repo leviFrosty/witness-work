@@ -11,6 +11,7 @@ import {
 } from '@/lib/dataProtection'
 import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * Data protection mode's retention reminder (`docs/gdpr-mode-research.md`
@@ -32,7 +33,14 @@ export default function useDataProtectionRetentionNotification(
     dataProtectionMode,
     dataProtectionRetentionPromptedAt,
     markDataProtectionRetentionPrompted,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      dataProtectionMode: s.dataProtectionMode,
+      dataProtectionRetentionPromptedAt: s.dataProtectionRetentionPromptedAt,
+      markDataProtectionRetentionPrompted:
+        s.markDataProtectionRetentionPrompted,
+    }))
+  )
   const contacts = useContacts((state) => state.contacts)
   const visits = useConversations((state) => state.conversations)
   if (

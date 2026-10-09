@@ -862,7 +862,7 @@
       "id": "sync.context",
       "area": "Sync",
       "title": "The phone publishes what the watch shows",
-      "description": "The phone publishes one PhoneContext (snapshot, timer, resolved entry ids) whenever any of it changes: WatchConnectivity's application context on iOS, a Data Layer data item on Android. The watch stores it before updating the UI, keeping the newest by sentAt.",
+      "description": "The phone publishes one PhoneContext (snapshot, timer, resolved entry ids) whenever any of it changes, and not when only sentAt would: WatchConnectivity's application context on iOS, a Data Layer data item on Android, marked urgent only for what the user is waiting on (the timer, watch entries, the app in use, a newly installed watch app) so Wear OS can batch background updates. The watch stores it before updating the UI, keeping the newest by sentAt.",
       "shared": [
         "src/app/watch/watchSync.ts#export function pushWatchSnapshot",
         "src/app/watch/buildWatchSnapshot.ts#export function buildWatchSnapshot",

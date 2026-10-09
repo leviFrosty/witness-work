@@ -65,11 +65,14 @@ export type WatchEvent = {
 
 type WatchBridgeNative = {
   getStatus(): WatchStatus
-  setSnapshot(json: string): void
+  /** Android takes `urgent`; iOS takes only the snapshot. */
+  setSnapshot(json: string, urgent?: boolean): void
   getPendingEntries(): WatchEntryDraft[]
   getPendingTrips(): WatchTripDraft[]
   resolveEntries(ids: string[]): void
   takeEvents(): WatchEvent[]
+  /** Absent from binaries built before it was added. */
+  takeErrors?(): string[]
   addListener(
     eventName: 'onInboxChange' | 'onStatusChange',
     listener: () => void
@@ -105,11 +108,20 @@ export function getStatus(): WatchStatus {
 
 /**
  * Stores the snapshot natively (for Siri on iOS), and sends it to the watch
- * when one is paired with the app installed. Throws if the native side can't
- * decode it.
+ * when one is paired with the app installed. Skipped natively when it's what
+ * the watch already has. Throws if the native side can't decode it. `urgent`
+ * (Android) sends it right away; otherwise Wear OS may batch it to save
+ * battery.
  */
-export function setSnapshot(json: string): void {
-  native?.setSnapshot(json)
+export function setSnapshot(
+  json: string,
+  { urgent }: { urgent: boolean }
+): void {
+  if (Platform.OS === 'android' && native?.takeErrors) {
+    native.setSnapshot(json, urgent)
+  } else {
+    native?.setSnapshot(json)
+  }
 }
 
 /** Entries from the watch or Siri not yet saved, oldest first. */
@@ -125,6 +137,11 @@ export function getPendingTrips(): WatchTripDraft[] {
 /** Marks entries and trips as handled (saved or refused) and tells the watch. */
 export function resolveEntries(ids: string[]): void {
   if (ids.length) native?.resolveEntries(ids)
+}
+
+/** Returns and clears failures the native layer recorded, newest last. */
+export function takeErrors(): string[] {
+  return native?.takeErrors?.() ?? []
 }
 
 /** Returns and clears analytics events recorded by the native layer. */

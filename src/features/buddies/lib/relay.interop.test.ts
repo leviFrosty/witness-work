@@ -54,11 +54,11 @@ function user(name: string, badges?: SharedBadge[]) {
     store,
     randomBytes: random,
     now: () => Date.now() + ahead,
-    getRootSeed: () => seed,
+    getRootSeed: async () => seed,
     getProfile: () => ({ name, badges }),
     getShares: () => shares,
     getStreak: () => streak,
-    deleteRootSeed: () => {},
+    deleteRootSeed: async () => {},
     getPlans: () => ({
       dayPlans: [
         {

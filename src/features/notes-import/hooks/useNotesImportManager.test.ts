@@ -424,3 +424,64 @@ describe('useNotesImportManager credit lifecycle', () => {
     })
   })
 })
+
+describe('useNotesImportManager failure handling', () => {
+  const clientError = () => {
+    const ClientError = harness.ClientError
+    if (!ClientError) throw new Error('Client error mock was not initialized')
+    return ClientError
+  }
+
+  it('backs off active_cap with growing waits, then surfaces it', async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const ClientError = clientError()
+    const hash = await useNotesImportManager.getState().submit('capped notes')
+    const waits = [4_000, 8_000, 16_000, 32_000, 60_000, 60_000]
+    for (const [attempt, wait] of waits.entries()) {
+      expect(harness.pending).toHaveLength(attempt + 1)
+      harness.pending[attempt].reject(new ClientError('active_cap', 'cap'))
+      await settle()
+      expect(useNotesImportManager.getState().runtimes[hash!]?.error).toBeNull()
+      // Not before the wait is up.
+      await vi.advanceTimersByTimeAsync(wait - 100)
+      expect(harness.pending).toHaveLength(attempt + 1)
+      await vi.advanceTimersByTimeAsync(200)
+      expect(harness.pending).toHaveLength(attempt + 2)
+    }
+    harness.pending[waits.length].reject(new ClientError('active_cap', 'cap'))
+    await settle()
+    expect(useNotesImportManager.getState().runtimes[hash!]?.error).toBe(
+      'active_cap'
+    )
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(harness.pending).toHaveLength(waits.length + 1)
+
+    // Retry starts the count over.
+    useNotesImportManager.getState().retry(hash!)
+    expect(harness.pending).toHaveLength(waits.length + 2)
+    harness.pending[waits.length + 1].reject(
+      new ClientError('active_cap', 'cap')
+    )
+    await settle()
+    expect(useNotesImportManager.getState().runtimes[hash!]?.error).toBeNull()
+    vi.mocked(Math.random).mockRestore()
+  })
+
+  it('never reports connectivity failures to error tracking', async () => {
+    const { errorTracking } = await import('@/lib/errorTracking')
+    vi.mocked(errorTracking.captureException).mockClear()
+    const ClientError = clientError()
+    await useNotesImportManager.getState().submit('offline notes')
+    harness.pending[0].reject(
+      new ClientError('unknown', 'Network request failed')
+    )
+    await settle()
+    expect(errorTracking.captureException).not.toHaveBeenCalled()
+
+    await useNotesImportManager.getState().submit('broken notes')
+    harness.pending[1].reject(new ClientError('model_error', 'failed'))
+    await settle()
+    expect(errorTracking.captureException).toHaveBeenCalledTimes(1)
+  })
+})

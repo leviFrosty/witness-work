@@ -1,4 +1,4 @@
-import moment from 'moment'
+import { perf } from '@/lib/perf'
 import { CommonActions } from '@react-navigation/native'
 import { LogBox } from 'react-native'
 import useContacts from '@/stores/contactsStore'
@@ -18,11 +18,10 @@ import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
 import apis from '@/constants/apis'
-import { buildScenario, SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
-import { resetLocalData } from '@/app/dev-harness/resetLocalData'
+import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
+import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { mmkvStorage } from '@/stores/mmkv'
 import { iCloudSync } from '@/app/sync/iCloudSync'
-import { runBadgeEvaluation } from '@/app/badges/runBadgeEvaluation'
 import {
   badgeHarnessState,
   earnEveryBadge,
@@ -142,49 +141,9 @@ function summary() {
 }
 
 function seed(name: string) {
-  const scenario = buildScenario(name, moment())
   const fakeDrive = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
-  resetLocalData()
+  seedScenario(name)
   if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
-  const preferences = usePreferences.getState()
-  preferences.setRole(scenario.role)
-  usePreferences.getState().set({
-    onboardingComplete: scenario.onboarded,
-    tenureStartDate: scenario.tenureStartDate,
-    // Keeps the full-screen rollover prompt from covering a fresh seed.
-    lastRolloverYearMonth: moment().format('YYYY-MM'),
-    // Same for the Schedule intro; Schedule's header button still opens it.
-    scheduleIntroSeen: scenario.onboarded,
-    submittedReportMonths: scenario.submittedReportMonths,
-  })
-  if (scenario.onboarded) {
-    useProfile.getState().set({
-      name: scenario.profileName,
-      hasCompletedProfileSetup: true,
-    })
-  }
-  const { addContact } = useContacts.getState()
-  scenario.contacts.forEach(addContact)
-  const { addConversation } = useConversations.getState()
-  scenario.visits.forEach(addConversation)
-  const { addServiceReport, addDayPlan, addRecurringPlan } =
-    useServiceReport.getState()
-  scenario.timeEntries.forEach(addServiceReport)
-  scenario.dayPlans.forEach(addDayPlan)
-  scenario.recurringPlans.forEach(addRecurringPlan)
-  if (scenario.onboarded) {
-    // File every badge the seeded records reach as history now, so a seed
-    // never sets off celebrations or the history summary, and mark them seen
-    // so only badges earned afterwards read as new. A fresh install keeps its
-    // first pass for after onboarding, like a real one.
-    runBadgeEvaluation({ quiet: true })
-    usePreferences.getState().markBadgesSeen()
-    // Start from Home, after RootStack swaps Onboarding out for Root.
-    setTimeout(() => {
-      if (navigationRef.isReady())
-        navigationRef.resetRoot({ index: 0, routes: [{ name: 'Root' }] })
-    }, 100)
-  }
   return summary()
 }
 
@@ -203,6 +162,8 @@ export function installDevHarness() {
     seed,
     reset: () => seed('fresh'),
     state: summary,
+    /** Launch milestones and work counters since launch (src/lib/perf). */
+    perf: () => perf.snapshot(),
     errors: () => [...errors],
     clearErrors: () => {
       errors.length = 0

@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * One-time Home question: track mileage? Yes turns the feature on and asks for
@@ -21,7 +22,12 @@ export default function MileagePromptCard() {
   const theme = useTheme()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
-  const { mileageTrackingEnabled, set } = usePreferences()
+  const { mileageTrackingEnabled, set } = usePreferences(
+    useShallow((s) => ({
+      mileageTrackingEnabled: s.mileageTrackingEnabled,
+      set: s.set,
+    }))
+  )
   if (mileageTrackingEnabled !== undefined) return null
 
   const answer = (enabled: boolean) => {

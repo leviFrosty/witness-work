@@ -38,6 +38,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
 import usePublisher from '@/hooks/usePublisher'
 import useRoleForMonth from '@/hooks/useRoleForMonth'
+import { useShallow } from 'zustand/react/shallow'
 
 const MILESTONE_STEP = 10
 
@@ -85,7 +86,15 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     resetMilestoneOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      milestoneOverrides: s.milestoneOverrides,
+      setMilestoneOverrides: s.setMilestoneOverrides,
+      resetMilestoneOverrides: s.resetMilestoneOverrides,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const { serviceReports } = useServiceReport()
 
   // This month's role and the current Service Year's Annual Goal (prorated

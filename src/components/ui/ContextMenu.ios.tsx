@@ -34,7 +34,7 @@ export default function ContextMenu({
   fitContent = false,
   style,
 }: ContextMenuProps) {
-  const { colorScheme } = usePreferences()
+  const colorScheme = usePreferences((s) => s.colorScheme)
   // Hosted RN content sizes to its own content, so pass the width the
   // surrounding layout gives us down to it explicitly, unless the content is
   // meant to keep its own width.

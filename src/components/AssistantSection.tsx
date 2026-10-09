@@ -42,6 +42,7 @@ import type {
 import AssistantPreviewSheet from '@/components/AssistantPreviewSheet'
 import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
 import { formatWeekdayMonthDayCompact } from '@/lib/dates'
+import { useShallow } from 'zustand/react/shallow'
 
 type Props = {
   /** Calendar year of the month being shown. */
@@ -94,7 +95,19 @@ const AssistantSection = ({
     recordAssistantEvent,
     replaceLastAssistantEvent,
     setHasDismissedRecommendationHash,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      offDays: s.offDays,
+      meetingDays: s.meetingDays,
+      assistantHistory: s.assistantHistory,
+      hasDismissedRecommendationHash: s.hasDismissedRecommendationHash,
+      hasSeenAvailabilityOnboarding: s.hasSeenAvailabilityOnboarding,
+      timeDisplayFormat: s.timeDisplayFormat,
+      recordAssistantEvent: s.recordAssistantEvent,
+      replaceLastAssistantEvent: s.replaceLastAssistantEvent,
+      setHasDismissedRecommendationHash: s.setHasDismissedRecommendationHash,
+    }))
+  )
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)

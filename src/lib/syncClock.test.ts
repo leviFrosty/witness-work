@@ -30,6 +30,29 @@ describe('sync clock', () => {
     expect(clock.syncNow()).toBe(trusted + 1000)
     expect(clock.syncTimestamp(trusted + 2000)).toBe(trusted + 2001)
   })
+  it('keeps up with the wall clock after the device sleeps', async () => {
+    vi.useFakeTimers()
+    const trusted = Date.UTC(2026, 8, 30)
+    vi.setSystemTime(trusted)
+    let elapsed = 0
+    vi.stubGlobal('performance', { now: () => elapsed })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        headers: { get: () => new Date(trusted).toUTCString() },
+      }))
+    )
+    const clock = await import('@/lib/syncClock')
+    await clock.refreshSyncClock()
+    // Asleep for two hours: the monotonic clock stood still.
+    vi.setSystemTime(trusted + 2 * 60 * 60_000)
+    expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000)
+    // A wall clock set back an hour doesn't move sync time backwards.
+    elapsed += 2 * 60 * 60_000 + 1000
+    vi.setSystemTime(trusted + 60 * 60_000)
+    expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000 + 1000)
+  })
   it('uses the cached offset offline and advances an edited record past its old stamp', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(1000)
@@ -63,5 +86,28 @@ describe('sync clock', () => {
     const refresh = clock.refreshSyncClock()
     await vi.advanceTimersByTimeAsync(3000)
     expect(await refresh).toBeNull()
+  })
+  it('backs off after failed calibrations instead of retrying every push', async () => {
+    let elapsed = 0
+    vi.stubGlobal('performance', { now: () => elapsed })
+    const fetch = vi.fn(async () => {
+      throw new Error('Network request failed')
+    })
+    vi.stubGlobal('fetch', fetch)
+    const clock = await import('@/lib/syncClock')
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(1)
+    elapsed += clock.calibrationBackoffMs(1)
+    expect(await clock.refreshSyncClock()).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    // The second failure waits twice as long.
+    elapsed += clock.calibrationBackoffMs(1)
+    await clock.refreshSyncClock()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    elapsed += clock.calibrationBackoffMs(1)
+    await clock.refreshSyncClock()
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(clock.calibrationBackoffMs(20)).toBe(60 * 60_000)
   })
 })

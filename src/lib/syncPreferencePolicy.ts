@@ -5,6 +5,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudClockOffsetMs',
   'iCloudClockCalibrated',
   'iCloudSyncIssue',
+  'iCloudSyncErrorCode',
   'iCloudSyncNeedsResolution',
   'iCloudResetEpoch',
   'iCloudResetAdoptedNotice',

@@ -1,54 +1,34 @@
 import { useEffect } from 'react'
-import { AppState } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import { logger } from '@/lib/logger'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** Someone may accept or confirm any moment; pushes can be off or delayed. */
-const WAITING_POLL_MS = 15 * 1000
-/** Otherwise, buddies' changes still show up while the list is open. */
-const VISIBLE_POLL_MS = 90 * 1000
-
-const syncQuietly = () =>
-  void buddiesEngine
-    .sync()
-    .catch((error) => logger.warn('[buddies] live sync', error))
+const warn = (error: unknown) => logger.warn('[buddies] live sync', error)
 
 /**
- * Keeps the visible Buddies list current: syncs when the screen gains focus or
- * the app returns to the foreground, and polls while it's open — more often
- * while an invite or request is waiting on the other person. Does nothing
+ * Keeps the visible Buddies list current: syncs when the screen gains focus
+ * (within the shared floor; returning to the app is BuddiesRuntime's), and
+ * polls while it's open only when the live connection is down. Does nothing
  * before Buddies has started.
  */
 export default function useLiveBuddiesSync() {
   const focused = useIsFocused()
   const hasInbox = useBuddies((state) => state.registeredInboxId !== null)
-  const waiting = useBuddies(
-    (state) =>
-      state.outgoingInvites.length > 0 ||
-      state.incomingClaims.length > 0 ||
-      state.buddies.some((buddy) => buddy.status === 'awaitingConfirm')
-  )
   const live = focused && hasInbox
 
   useEffect(() => {
     if (!live) return
-    syncQuietly()
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') syncQuietly()
-    })
-    return () => subscription.remove()
-  }, [live])
-
-  useEffect(() => {
-    if (!live) return
-    const timer = setInterval(
-      () => {
-        if (AppState.currentState === 'active') syncQuietly()
-      },
-      waiting ? WAITING_POLL_MS : VISIBLE_POLL_MS
+    void syncSoon().catch(warn)
+    return startFallbackPoll(() =>
+      buddiesEngine.sync({ automatic: true }).then(
+        () => true,
+        (error: unknown) => {
+          warn(error)
+          return false
+        }
+      )
     )
-    return () => clearInterval(timer)
-  }, [live, waiting])
+  }, [live])
 }

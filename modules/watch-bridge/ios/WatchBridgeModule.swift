@@ -83,6 +83,10 @@ public class WatchBridgeModule: Module {
       WatchSessionCoordinator.shared.resolveEntries(ids)
     }
 
+    Function("takeErrors") { () -> [String] in
+      WatchSessionCoordinator.shared.takeErrors()
+    }
+
     Function("takeEvents") { () -> [[String: Any]] in
       WatchSessionCoordinator.shared.takeEvents().map { event in
         ["name": event.name, "properties": event.properties]

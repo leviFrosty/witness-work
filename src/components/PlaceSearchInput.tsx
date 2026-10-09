@@ -1,13 +1,11 @@
 import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  AppState,
   Linking,
   TouchableOpacity,
   View,
 } from 'react-native'
-import { isAxiosError } from 'axios'
 import * as Location from 'expo-location'
 import Text from '@/components/ui/MyText'
 import Empty from '@/components/ui/Empty'
@@ -19,11 +17,16 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 import useLocation from '@/hooks/useLocation'
 import i18n from '@/lib/locales'
+import { addForegroundListener } from '@/lib/appLifecycle'
 import { errorTracking } from '@/lib/errorTracking'
+import { classifyNetworkError } from '@/lib/http/networkError'
 import {
+  isUnexpectedPlaceSearchError,
+  type PlaceSearchFailure,
   type PlaceSearchScope,
   type PlaceSuggestion,
   type ResolvedPlace,
+  placeSearchFailure,
   resolvePlace,
   searchPlaces,
 } from '@/lib/placeSearch'
@@ -32,6 +35,12 @@ const DEBOUNCE_MS = 250
 const MIN_QUERY_LENGTH = 2
 const MAX_SUGGESTIONS = 5
 const SUGGESTION_ROW_MIN_HEIGHT = 44
+
+const FAILURE_MESSAGE_KEYS = {
+  offline: 'placeSearch_error_offline',
+  busy: 'placeSearch_error_busy',
+  failed: 'errorFetchingAddress',
+} as const satisfies Record<PlaceSearchFailure, string>
 
 /**
  * Nearby results need location access, but search works without it, so this
@@ -141,7 +150,11 @@ const SuggestionRow = ({
           )}
         </View>
         {resolving && (
-          <ActivityIndicator size='small' color={theme.colors.textAlt} />
+          <ActivityIndicator
+            size='small'
+            color={theme.colors.textAlt}
+            accessibilityLabel={i18n.t('placeSearch_loadingPlace')}
+          />
         )}
         <HoverTint visible={hovered} />
       </TouchableOpacity>
@@ -188,64 +201,74 @@ export default function PlaceSearchInput({
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
   const [searching, setSearching] = useState(false)
   const [searchedQuery, setSearchedQuery] = useState<string>()
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<PlaceSearchFailure>()
+  const [resolveError, setResolveError] = useState<PlaceSearchFailure>()
   const [resolvingId, setResolvingId] = useState<string>()
-  /** Ignores responses from searches a newer keystroke has superseded. */
-  const latestRequest = useRef(0)
 
   const trimmed = query.trim()
   const latitude = location?.coords.latitude
   const longitude = location?.coords.longitude
 
+  // Settings is where location access gets turned back on.
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'active') refreshStatus()
-    })
+    const subscription = addForegroundListener(refreshStatus)
     return () => subscription.remove()
   }, [refreshStatus])
 
   useEffect(() => {
-    const request = ++latestRequest.current
+    // An old message is about an old query, and the spinner waits for the
+    // debounce so typing doesn't look like loading.
+    setError(undefined)
+    setResolveError(undefined)
+    setSearching(false)
     if (!searchEnabled || trimmed.length < MIN_QUERY_LENGTH) {
       setSuggestions([])
-      setSearching(false)
       setSearchedQuery(undefined)
-      setError(false)
       return
     }
 
-    setSearching(true)
     const near =
       latitude !== undefined && longitude !== undefined
         ? { latitude, longitude }
         : undefined
+    // Aborting a superseded search keeps it off ww-api's per-IP rate limit,
+    // and drops its late answer.
+    const controller = new AbortController()
     const timeout = setTimeout(async () => {
+      setSearching(true)
       try {
-        const results = await searchPlaces(trimmed, near, scope)
-        if (request !== latestRequest.current) return
+        const results = await searchPlaces(
+          trimmed,
+          near,
+          scope,
+          controller.signal
+        )
+        if (controller.signal.aborted) return
         setSuggestions(results.slice(0, MAX_SUGGESTIONS))
-        setError(false)
       } catch (searchError) {
-        if (request !== latestRequest.current) return
-        // Offline and HERE outages show the inline error; anything else is a bug.
-        if (!isAxiosError(searchError)) {
+        if (controller.signal.aborted) return
+        if (isUnexpectedPlaceSearchError(searchError)) {
           errorTracking.captureException(searchError)
         }
         setSuggestions([])
-        setError(true)
+        setError(placeSearchFailure(searchError))
       } finally {
-        if (request === latestRequest.current) {
+        if (!controller.signal.aborted) {
           setSearching(false)
           setSearchedQuery(trimmed)
         }
       }
     }, DEBOUNCE_MS)
 
-    return () => clearTimeout(timeout)
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+    }
   }, [trimmed, latitude, longitude, scope, searchEnabled])
 
   const select = async (suggestion: PlaceSuggestion) => {
     setResolvingId(suggestion.id)
+    setResolveError(undefined)
     try {
       const resolved = await resolvePlace(suggestion)
       // Without a match, keep what the publisher picked as a plain address
@@ -258,12 +281,24 @@ export default function PlaceSearchInput({
         }
       )
       setSuggestions([])
-    } catch (resolveError) {
-      errorTracking.captureException(resolveError)
+    } catch (failure) {
+      // Keep the suggestions so they can pick again.
+      if (isUnexpectedPlaceSearchError(failure)) {
+        errorTracking.captureException(failure)
+      }
+      if (classifyNetworkError(failure) !== 'cancelled') {
+        setResolveError(placeSearchFailure(failure))
+      }
     } finally {
       setResolvingId(undefined)
     }
   }
+
+  const failure = resolveError ?? error
+  const failureMessage =
+    resolveError === 'failed'
+      ? i18n.t('placeSearch_error_resolve')
+      : failure && i18n.t(FAILURE_MESSAGE_KEYS[failure])
 
   const showNoResults =
     !searching &&
@@ -303,6 +338,7 @@ export default function PlaceSearchInput({
             size='small'
             color={theme.colors.textAlt}
             style={{ marginLeft: 8 }}
+            accessibilityLabel={i18n.t('placeSearch_searching')}
           />
         )}
         <LocationStatusControl status={status} onRequest={requestLocation} />
@@ -328,14 +364,15 @@ export default function PlaceSearchInput({
           ))}
         </View>
       )}
-      {error && (
+      {!!failureMessage && (
         <Text
+          accessibilityLiveRegion='polite'
           style={{
             color: theme.colors.error,
             fontFamily: theme.fonts.semiBold,
           }}
         >
-          {i18n.t('errorFetchingAddress')}
+          {failureMessage}
         </Text>
       )}
       {showNoResults && <Empty title={i18n.t('planLocation_noResults')} />}

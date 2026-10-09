@@ -13,7 +13,7 @@ Widget configuration (sort, quick action, time window) lives in **Settings > Wid
 ```
 zustand stores (MMKV) ──▶ buildWidgetSnapshot() ──▶ snapshot.json (App Group) ──▶ Swift TimelineProvider
                                   ▲
-            store.subscribe() / AppState=active / BGTaskScheduler
+      store.subscribe() / addForegroundListener / BGTaskScheduler
                                   │
                             WidgetBridge.writeSnapshot()
                             WidgetBridge.reloadAllTimelines()
@@ -25,11 +25,11 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 
 | File                                                                    | Purpose                                                                                                                            |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/widgets/snapshot.ts`                                           | Snapshot schema + `buildWidgetSnapshot()`. Single source of truth for the JSON shape. Bump `SNAPSHOT_VERSION` on breaking changes. |
-| `src/lib/widgets/buildReport.ts`                                        | Builds the `report` slice. Today/week/month minutes + planned, publisher state machine, conversation+study counts.                 |
-| `src/lib/widgets/buildContacts.ts`                                      | Builds `contacts[]`. Applies user sort (`config.contactSort`) with favorites/studies tiering, computes staleness, formats URLs.    |
-| `src/lib/widgets/buildAppointments.ts`                                  | Builds `appointments[]` from follow-ups within 30d back through 31d forward. Pre-formats `timeFormatted`, flags `isOverdue`.       |
-| `src/lib/widgets/widgetSync.ts`                                         | `installWidgetSync()` — subscribes to relevant stores, foreground events, and registers the background fetch task.                 |
+| `src/app/widgets/snapshot.ts`                                           | Snapshot schema + `buildWidgetSnapshot()`. Single source of truth for the JSON shape. Bump `SNAPSHOT_VERSION` on breaking changes. |
+| `src/app/widgets/buildReport.ts`                                        | Builds the `report` slice. Today/week/month minutes + planned, publisher state machine, conversation+study counts.                 |
+| `src/app/widgets/buildContacts.ts`                                      | Builds `contacts[]`. Applies user sort (`config.contactSort`) with favorites/studies tiering, computes staleness, formats URLs.    |
+| `src/app/widgets/buildAppointments.ts`                                  | Builds `appointments[]` from follow-ups within 30d back through 31d forward. Pre-formats `timeFormatted`, flags `isOverdue`.       |
+| `src/app/widgets/widgetSync.ts`                                         | `installWidgetSync()` — subscribes to the store slices the snapshot reads, foreground returns, and registers the background task.  |
 | `src/lib/linking.ts`                                                    | React Navigation linking config + the `witnesswork://shared-good-news` URL detector.                                               |
 | `src/lib/contactStaleness.ts`                                           | `getContactStaleness()` + `stalenessToColor()` — shared between in-app pin colors and the contacts widget dot.                     |
 | `src/screens/RescheduleConversationScreen.tsx`                          | Modal sheet for overdue follow-ups, reachable from `witnesswork://reschedule/:contactId/:convId`.                                  |
@@ -56,7 +56,7 @@ Dev and beta each have their own group so they can iterate without polluting pro
 
 ## Adding a field to the snapshot
 
-1. Add the field to `WidgetSnapshot` in `src/lib/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()` (or one of the `build*.ts` helpers it composes). Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, `src/lib/contacts.ts`, etc. — never reimplement.
+1. Add the field to `WidgetSnapshot` in `src/app/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()` (or one of the `build*.ts` helpers it composes). Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, `src/lib/contacts.ts`, etc. — never reimplement.
 2. If the new field is for **display strings**, resolve them via `i18n.t()` in JS so the widget never needs Swift-side localization.
 3. If the schema change is breaking (renamed/removed field), bump `SNAPSHOT_VERSION` in both `snapshot.ts` and `SUPPORTED_VERSION` in `targets/widgets/Snapshot.swift`. The widgets will render the empty placeholder until the app rewrites the snapshot.
 4. Add the corresponding field to the Swift `WidgetSnapshot` struct in `targets/widgets/Snapshot.swift` (single file shared across all widgets in the bundle).
@@ -88,14 +88,14 @@ Widgets deep-link into the app via the `witnesswork://` scheme declared in `app.
 
 ## Refresh model
 
-The snapshot is rewritten on:
+The snapshot is rebuilt on:
 
-1. **Any zustand store change** in `serviceReport`, `preferences`, `contacts`, or `conversations` (debounced 500ms).
-2. **App foreground** (`AppState === 'active'`) — covers locale switches and midnight rollover.
-3. **Background fetch** every ~1h via `expo-background-fetch` / `BGTaskScheduler` (iOS treats the interval as a hint, not a guarantee).
+1. **A change to a slice the snapshot reads** (debounced 500ms): `serviceReport`'s reports and plans, `contacts`, `conversations`, Supporter status, Buddies' calendar markers, and the preferences in `WIDGET_PREFERENCES`. Other preference writes (iCloud sync bookkeeping, for one) are ignored.
+2. **Return to the app** (`addForegroundListener`, so not `inactive` blips) — covers locale switches and midnight rollover.
+3. **Background fetch** every ~1h via `expo-background-task` / `BGTaskScheduler` (iOS treats the interval as a hint, not a guarantee), after the iCloud pull that task runs.
 4. **Cold start**.
 
-After every write, `WidgetCenter.shared.reloadAllTimelines()` is called.
+Each rebuild is hashed without `updatedAt` (`widgetSnapshotHash` in MMKV). Only a changed snapshot is written and followed by `WidgetCenter.shared.reloadAllTimelines()`, since reloads come out of WidgetKit's daily budget.
 
 ## Testing the loop end-to-end
 
@@ -106,7 +106,7 @@ After every write, `WidgetCenter.shared.reloadAllTimelines()` is called.
 5. In the app, log a service report time entry. The widget should refresh within ~1s and show the new month-to-date value.
 6. Kill the app — widget should still show the last-written values (proves the snapshot persists).
 7. Locale switch: change app language, foreground the app, confirm the widget label updates next refresh.
-8. Background fetch: Xcode → Debug → Simulate Background Fetch → confirm the snapshot's `updatedAt` advances.
+8. Background fetch: change data on another device, then Xcode → Debug → Simulate Background Fetch → confirm the snapshot's `updatedAt` advances. With nothing changed, it stays put.
 
 ## Limitations
 

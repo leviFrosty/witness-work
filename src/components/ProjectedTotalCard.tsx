@@ -36,7 +36,7 @@ type Props = {
 const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
   const { annualGoalHours } = usePublisher()
-  const { timeDisplayFormat } = usePreferences()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const formatHours = (minutes: number) =>
     formatMinutes(minutes, timeDisplayFormat).formatted
 

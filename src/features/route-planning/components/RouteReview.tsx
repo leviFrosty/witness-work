@@ -20,7 +20,7 @@ import RouteSectionLabel from '@/features/route-planning/components/RouteSection
 import RouteStopRow from '@/features/route-planning/components/RouteStopRow'
 import RouteSupporterPreview from '@/features/route-planning/components/RouteSupporterPreview'
 import { routePlanErrorMessage } from '@/features/route-planning/lib/routePlanErrors'
-import type { RoutePlannerError } from '@/features/route-planning/hooks/useRoutePlanner'
+import type { RoutePlannerFailure } from '@/features/route-planning/hooks/useRoutePlanner'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import type { RouteStop } from '@/features/route-planning/lib/routeStops'
 
@@ -49,7 +49,7 @@ export default function RouteReview({
   /** No access yet: preview the stops and offer Supporter instead of planning. */
   locked: boolean
   planning: boolean
-  error: RoutePlannerError | null
+  error: RoutePlannerFailure | null
   onRemove: (key: string) => void
   onRestore: (key: string) => void
   onChooseStart: (key: string | null) => void

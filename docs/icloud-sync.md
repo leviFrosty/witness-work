@@ -72,15 +72,34 @@ from their first observation. Data protection erasure remains immediate.
 
 `installiCloudSync` subscribes to stores and availability/foreground events.
 Changes set a persisted pending-push flag before scheduling the five-second
-write. Failed writes retry after 5, 20, and 60 seconds while active; the flag
-survives readiness changes, backgrounding, and relaunches. A successful snapshot
-only clears pending changes if it covers the current edit generation.
+write. Failed writes back off: 5 s, 20 s, 1, 2, 5 and then every 15 min while
+active (at least 1 min when throttled, 15 min when the account is full), and
+edits made meanwhile wait for that retry instead of each uploading. Coming back
+to the app, Sync now, and the connection returning start the backoff over. The
+flag survives readiness changes, backgrounding, and relaunches. A successful
+snapshot only clears pending changes if it covers the current edit generation.
 
-Foreground catch-up waits for the metadata scan, pulls, writes deferred data,
-then handles photos. Malformed files are rejected independently; healthy peers
-can still merge. Incomplete reads, invalid files, newer payload versions, and
-pending pushes are visible in Settings. Sync now reports incomplete/failed work.
-A local coordinated write is still not confirmation that Apple uploaded it.
+Every push uploads the whole dataset (and on Drive a new file every other device
+downloads), so foreground catch-up pushes only when edits are pending, a merge
+changed local data, this device's snapshot is missing from the listing, or this
+launch hasn't published yet. It runs on a real return from the background
+(`addForegroundListener`; iOS `inactive` blips such as Control Center don't
+count), and returns within 30 s of the last one only push pending edits.
+Leaving the foreground (including `inactive`) still flushes a debounced push.
+
+Catch-up waits for the metadata scan, pulls, writes deferred data, then handles
+photos. A push resolves once its JSON is written; photos upload as their own
+single-flight job. Writes, deletes and photo transfers time out after 60 s and
+reads after 120 s, keeping the pending flag, so a call that never settles can't
+block later syncs. Malformed files are rejected independently; healthy peers can
+still merge. Incomplete reads, invalid files, newer payload versions, and
+pending pushes are visible in Settings, as are offline ("Waiting for
+connection"), throttled and full-account failures, from the transport's error
+code (`iCloudSyncErrorCode`); iCloud bridge errors are classified the same way
+as Drive's. Sync now reports incomplete/failed work, says when the device is
+offline or Google Drive needs reconnecting instead of trying, and is disabled
+while a sync runs. A local coordinated write is still not confirmation that
+Apple uploaded it.
 
 A supporter lapse pauses transfer and preserves the user’s enable choice.
 Access returning resumes an enabled device. Auto-enable conflicts set a visible
@@ -168,7 +187,16 @@ What differs from iCloud, and where it's handled
   `storageQuotaExceeded`, shown as storage full.
 - **Remote changes.** There are no push events: while the app is in the
   foreground the folder is listed every 60 s, and each copy this device hasn't
-  read fires remote-change once. There's no background pull on Android.
+  read fires remote-change once. With sync off it polls only while this device
+  could adopt another device's Supporter status (not a Supporter itself). A
+  listing is shared by callers within 3 s, so one peer change doesn't list the
+  folder for the pull, the account reconcile and the photo pass separately.
+  There's no background pull on Android.
+- **Errors.** Only 401 and access-related 403 reasons (`insufficientPermissions`
+  and the like) count as a refused token; throttling and API quota 403s are
+  `rate-limited` and never ask the user to reconnect. Requests retry 4 times
+  with exponential backoff (1–8 s plus jitter) or `Retry-After`, up to 32 s.
+  JSON over 4 MB uploads through a resumable session.
 - **Photos** use the same names, references, consent, and cleanup rules,
   uploaded through resumable sessions.
 

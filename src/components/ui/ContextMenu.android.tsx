@@ -41,7 +41,7 @@ export default function ContextMenu({
   style,
 }: ContextMenuProps) {
   const theme = useTheme()
-  const { colorScheme } = usePreferences()
+  const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
   const [submenu, setSubmenu] = useState<ContextMenuSubmenu | null>(null)
   // Hosted RN content sizes to its own content, so pass the width the

@@ -11,11 +11,6 @@ export function shareInviteLink(link: string) {
   })
 }
 
-/** Creates a fresh single-use invite and opens the share sheet for it. */
-export async function createAndShareInvite() {
-  await shareInviteLink(await buddiesEngine.createInvite())
-}
-
 /**
  * Starts Buddies from outside its screen, where the caller has already
  * explained it (setup). Returns `inviteId`'s link while that invite is still

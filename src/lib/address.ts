@@ -1,10 +1,11 @@
 import { Address, Contact, Coordinate } from '@/types/contact'
-import axios from 'axios'
 import { HereGeocodeResponse } from '@/types/here'
 import apis from '@/constants/apis'
-import * as Network from 'expo-network'
 import { errorTracking } from '@/lib/errorTracking'
-import { Alert, Platform } from 'react-native'
+import { errorBodyCode } from '@/lib/http/errorBody'
+import { classifyNetworkError } from '@/lib/http/networkError'
+import { HttpError, request } from '@/lib/http/request'
+import { Platform } from 'react-native'
 import { resolveNavigationMapProvider } from '@/lib/navigationMapProvider'
 import i18n from '@/lib/locales'
 import { countTruthyValueStrings } from '@/lib/objects'
@@ -16,26 +17,21 @@ import { addressToString } from '@/lib/addressToString'
 
 export { addressToString }
 
+/** HERE answers in about a second; past this the lookup is stuck. */
+const GEOCODE_TIMEOUT_MS = 10_000
+
+/**
+ * The coordinate for `address`, or null when there's nothing to look up or HERE
+ * finds no match. Throws an `HttpError` when the lookup itself fails (offline,
+ * timed out, cancelled, rate limited, a server error), so each caller decides
+ * what to tell the publisher. Only failures that look like bugs are reported.
+ */
 export const fetchCoordinateFromAddress = async (
   incrementGeocodeApiCallCount: () => void,
   address?: Address,
-  abortController?: AbortController
+  signal?: AbortSignal
 ): Promise<Coordinate | null> => {
-  if (!address) {
-    return null
-  }
-
-  if (countTruthyValueStrings(address) === 0) {
-    return null
-  }
-
-  const { isInternetReachable } = await Network.getNetworkStateAsync()
-
-  if (!isInternetReachable) {
-    Alert.alert(
-      i18n.t('internetUnavailable'),
-      i18n.t('couldNotFetchCoordinatesFromAddress')
-    )
+  if (!address || countTruthyValueStrings(address) === 0) {
     return null
   }
 
@@ -43,19 +39,22 @@ export const fetchCoordinateFromAddress = async (
     const addressString = addressToString(address)
 
     incrementGeocodeApiCallCount()
-    const { data } = await axios.get<HereGeocodeResponse>(
-      `${apis.geocode}?q=${encodeURIComponent(addressString)}&limit=1`,
-      {
-        signal: abortController?.signal,
-      }
-    )
+    // One retry that honours Retry-After (60 s on a 429), which paces the map
+    // onboarding batch under ww-api's per-IP limit instead of failing every
+    // contact after the 60th.
+    const { data } = await request<HereGeocodeResponse>({
+      url: `${apis.geocode}?q=${encodeURIComponent(addressString)}&limit=1`,
+      timeoutMs: GEOCODE_TIMEOUT_MS,
+      signal,
+      retry: { retries: 1, maxDelayMs: 60_000 },
+    })
 
-    if (data.items.length === 0) {
-      return null
+    if (!Array.isArray(data?.items)) {
+      throw new HttpError('unknown', null, null, null, 'invalid geocode')
     }
 
     const position = data.items[0]?.position
-    if (!position) {
+    if (typeof position?.lat !== 'number' || typeof position.lng !== 'number') {
       return null
     }
 
@@ -64,8 +63,13 @@ export const fetchCoordinateFromAddress = async (
       longitude: position.lng,
     }
   } catch (error) {
-    errorTracking.captureException(error)
-    return null
+    // ww-api passes HERE's 404 through: no match, same as an empty list.
+    if (errorBodyCode(error) === 'not_found') return null
+    const kind = classifyNetworkError(error)
+    if (kind === 'unknown' || kind === 'client') {
+      errorTracking.captureException(error)
+    }
+    throw error
   }
 }
 

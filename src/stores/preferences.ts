@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { syncTimestamp } from '@/lib/syncClock'
 import {
   NON_SYNCABLE_PREFERENCE_KEYS,
@@ -12,7 +13,7 @@ import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { DEFAULT_TAB_ORDER } from '@/lib/tabOrderPreferences'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { persist, combine } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getTenureType } from '@/lib/publisherCapabilities'
 import i18n, { TranslatedLocale } from '@/lib/locales'
@@ -20,7 +21,7 @@ import type { DateOrder, FormatRegion, TimeFormat } from '@/lib/dates'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import { PersistStorage } from '@/stores/mmkv'
+import { createPreferencesStorage } from '@/stores/bootPreferences'
 import { Address } from '@/types/contact'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
@@ -662,6 +663,19 @@ export const PREFERENCE_DEFAULTS = {
     | 'read-failed'
     | 'push-failed'
     | null,
+  /**
+   * Why the last failed push or read failed, as the transport classified it
+   * (`SyncTransportErrorCode`). Lets the status tell offline, throttled, full
+   * and signed-out apart. Cleared with `iCloudSyncIssue`.
+   */
+  iCloudSyncErrorCode: null as
+    | 'storage-full'
+    | 'unauthorized'
+    | 'network'
+    | 'rate-limited'
+    | 'not-found'
+    | 'unknown'
+    | null,
   iCloudSyncNeedsResolution: false,
   /**
    * The iCloud reset generation this device has adopted; null is generation
@@ -745,9 +759,9 @@ export const PREFERENCE_DEFAULTS = {
    *   `uploadedMtime` and the entry becomes dirty.
    * - `uploadedMtime`: local-file mtime at the point of the last successful
    *   upload. `null` means "never uploaded" (brand new or bookkeeping lost).
-   * - `lastError` / `failedAt`: last failure classification and timestamp.
-   *   `'quota'` errors suppress store-edit retries and only retry on
-   *   foreground; other errors retry freely on the next push cycle.
+   * - `lastError` / `errorCode` / `failedAt` / `failures`: the last failed
+   *   upload. A failed file backs off before its next attempt; a full account
+   *   (`storage-full`) retries only on foreground.
    *
    * Per-device (non-syncable) — this is purely local queue state and must not
    * ride the JSON payload, otherwise a stale entry from Device A could cause
@@ -760,7 +774,9 @@ export const PREFERENCE_DEFAULTS = {
       uploadedMtime: number | null
       containerMtime?: number
       lastError?: string
+      errorCode?: string
       failedAt?: number
+      failures?: number
     }
   >,
   /**
@@ -1553,6 +1569,7 @@ export const usePreferences = create(
             ) => Partial<typeof PREFERENCE_DEFAULTS>),
         replace?: boolean
       ) => void = (partial, replace) => {
+        perf.count('prefs:set')
         let resolved =
           typeof partial === 'function' ? partial(getState()) : partial
 
@@ -1574,14 +1591,29 @@ export const usePreferences = create(
           !Array.isArray(resolved) &&
           !replace
         ) {
-          const current = getState().preferenceUpdatedAt ?? {}
+          const state = getState()
+          const keys = Object.keys(resolved) as (keyof typeof state)[]
+          // Nothing changes: skip the notify, and persisting the whole blob.
+          if (keys.every((key) => Object.is(state[key], resolved[key]))) {
+            perf.count('prefs:set:noop')
+            return
+          }
+          const current = state.preferenceUpdatedAt ?? {}
           const next: Record<string, number> = { ...current }
           let changed = false
-          for (const key of Object.keys(resolved)) {
+          for (const key of keys) {
             if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
+            const before = state[key]
+            const after = resolved[key]
+            // Only a real change is stamped. Re-stamping an unchanged value
+            // would let this device's stale copy win over a newer edit made on
+            // another device.
+            if (
+              Object.is(before, after) ||
+              canonicalJson(before) === canonicalJson(after)
+            )
+              continue
             next[key] = syncTimestamp(current[key])
-            const before = getState()[key as keyof typeof PREFERENCE_DEFAULTS]
-            const after = resolved[key as keyof typeof PREFERENCE_DEFAULTS]
             const mapBefore =
               key === 'roleHistory' ? roleHistoryEntries(before) : before
             const mapAfter =
@@ -1998,7 +2030,7 @@ export const usePreferences = create(
     }),
     {
       name: 'preferences',
-      storage: createJSONStorage(() => PersistStorage),
+      storage: createPreferencesStorage(),
       version: 10,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),

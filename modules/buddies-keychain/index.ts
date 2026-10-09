@@ -22,6 +22,13 @@ interface BuddiesKeychainNative {
    * iOS, from Block Store (and its backup) on Android.
    */
   deleteRootSeed(): void
+  /**
+   * The same three off the JS thread. Absent from binaries built before them;
+   * the wrappers below fall back to the blocking versions there.
+   */
+  peekRootSeedAsync?(): Promise<string | null>
+  getOrCreateRootSeedAsync?(): Promise<string>
+  deleteRootSeedAsync?(): Promise<void>
   /** Android only. */
   rootSeedBackup?(): RootSeedBackup
   /**
@@ -51,21 +58,31 @@ export function isAvailable(): boolean {
   )
 }
 
-export function peekRootSeed(): string | null {
+/**
+ * The seed, or null when there is none. Off the JS thread: on Android a first
+ * read can wait on Block Store for up to 10 seconds.
+ */
+export async function peekRootSeed(): Promise<string | null> {
   if (!isAvailable()) return null
-  return native!.peekRootSeed()
+  return native!.peekRootSeedAsync
+    ? native!.peekRootSeedAsync()
+    : native!.peekRootSeed()
 }
 
-export function getOrCreateRootSeed(): string {
+/** The seed, created (32 random bytes, base64url) if absent. Off the JS thread. */
+export async function getOrCreateRootSeed(): Promise<string> {
   if (!isAvailable()) {
     throw new Error('Buddies Keychain requires a newer native binary')
   }
-  return native!.getOrCreateRootSeed()
+  return native!.getOrCreateRootSeedAsync
+    ? native!.getOrCreateRootSeedAsync()
+    : native!.getOrCreateRootSeed()
 }
 
-export function deleteRootSeed(): void {
+export async function deleteRootSeed(): Promise<void> {
   if (!isAvailable()) return
-  native!.deleteRootSeed()
+  if (native!.deleteRootSeedAsync) await native!.deleteRootSeedAsync()
+  else native!.deleteRootSeed()
 }
 
 /**

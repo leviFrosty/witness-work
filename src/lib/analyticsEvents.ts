@@ -94,6 +94,8 @@ export const analyticsEventNames = [
   'mileage_tracking_changed',
   'mileage_trip_added',
   'mileage_vehicle_added',
+  'note_photo_added',
+  'note_photo_failed',
   'notification_opened',
   'pointer_hover_detected',
   'saved_view_applied',

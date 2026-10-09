@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
 import PlanLocationLink from '@/components/PlanLocationLink'
-import RichNoteText from '@/components/RichNoteText'
+import RichNote from '@/components/RichNote'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
@@ -14,6 +14,8 @@ import {
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { hasNote, type NoteUpdate } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 import type { PlanLocation } from '@/types/timeEntry'
 
 /** What a Plan (or a buddy's Plan invitation) shows on Plan Details. */
@@ -31,7 +33,9 @@ export type PlanDetailsFields = {
   /** This date of a Recurring Plan has its own time, length, or note. */
   changedForDate?: boolean
   location?: PlanLocation
-  note?: string
+  note?: NoteFields
+  /** Saves a ticked checklist item; without it the note is read-only. */
+  onNoteChange?: (fields: NoteUpdate) => void
   /**
    * Shown right under the title, e.g. the answer to a buddy's invitation, so it
    * stays put when rows below come and go.
@@ -134,14 +138,14 @@ export default function PlanDetailsSummary(props: PlanDetailsFields) {
           </InputRowContainer>
         ) : null}
       </Section>
-      {props.note ? (
+      {props.note && hasNote(props.note) ? (
         <Section>
           <InputRowContainer
             label={i18n.t('note')}
             lastInSection
             controlWidth='full'
           >
-            <RichNoteText text={props.note} />
+            <RichNote note={props.note} onChange={props.onNoteChange} />
           </InputRowContainer>
         </Section>
       ) : null}

@@ -1336,7 +1336,19 @@ describe('lib/serviceReport', () => {
         planWithOverride,
         testDate
       )
-      expect(effectiveNote).toBe('Override note')
+      expect(effectiveNote).toEqual({ note: 'Override note' })
+    })
+
+    it("should fall back to the plan's note when the override has none", () => {
+      const testDate = moment('2024-01-01').toDate()
+      const effectiveNote = getEffectiveNoteForRecurringPlan(
+        {
+          ...baseRecurringPlan,
+          overrides: [{ date: testDate, minutes: 60, note: '  ' }],
+        },
+        testDate
+      )
+      expect(effectiveNote).toEqual({ note: 'Original plan note' })
     })
 
     it('should return original note when no override exists', () => {
@@ -1345,7 +1357,7 @@ describe('lib/serviceReport', () => {
         baseRecurringPlan,
         testDate
       )
-      expect(effectiveNote).toBe('Original plan note')
+      expect(effectiveNote).toEqual({ note: 'Original plan note' })
     })
   })
 

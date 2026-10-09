@@ -27,6 +27,11 @@
  */
 
 const IMG_PREFIX = 'witness-work-img-'
+/**
+ * Photos in notes. A prefix of their own: builds from before note photos only
+ * accept `witness-work-img-`, so they never list, adopt, or clean these up.
+ */
+const NOTE_IMG_PREFIX = 'witness-work-note-'
 const IMG_EXT = '.jpg'
 const CONTACT_FILENAME_PREFIX = `${IMG_PREFIX}contact-`
 const PROFILE_FILENAME = `${IMG_PREFIX}profile.jpg`
@@ -80,6 +85,21 @@ export function parseContactMarker(value: string): string | null {
   return id
 }
 
+/**
+ * Container filename for a note photo. Photos are immutable (editing one makes
+ * a new id), so one name per id is uploaded once and never rewritten.
+ */
+export function filenameForNoteImage(id: string): string {
+  return `${NOTE_IMG_PREFIX}${id}${IMG_EXT}`
+}
+
+/** The photo id in a note photo's container filename, or null. */
+export function noteImageIdFromFilename(name: string): string | null {
+  if (!name.startsWith(NOTE_IMG_PREFIX) || !name.endsWith(IMG_EXT)) return null
+  const id = name.slice(NOTE_IMG_PREFIX.length, -IMG_EXT.length)
+  return /^[A-Za-z0-9-]{8,64}$/.test(id) ? id : null
+}
+
 /** Narrow check for the profile marker constant. */
 export function isProfileMarker(value: string): boolean {
   return value === MARKER_PROFILE
@@ -92,17 +112,28 @@ export function isProfileMarker(value: string): boolean {
  *
  * Rejects:
  *
- * - Anything outside the `witness-work-img-` prefix / `.jpg` suffix
+ * - Anything outside the `witness-work-img-` (avatars) and `witness-work-note-`
+ *   (note photos) prefixes / `.jpg` suffix
  * - Path separators and `..` components (defence-in-depth against a contact id
  *   ever containing filesystem-traversal bytes)
  * - Empty-middle filenames like `witness-work-img-.jpg`
  */
 export function isValidImageFilename(name: string): boolean {
-  if (!name.startsWith(IMG_PREFIX)) return false
+  const prefix = name.startsWith(IMG_PREFIX)
+    ? IMG_PREFIX
+    : name.startsWith(NOTE_IMG_PREFIX)
+      ? NOTE_IMG_PREFIX
+      : null
+  if (!prefix) return false
   if (!name.endsWith(IMG_EXT)) return false
   if (name.includes('/')) return false
   if (name.includes('..')) return false
-  const middle = name.slice(IMG_PREFIX.length, name.length - IMG_EXT.length)
+  const middle = name.slice(prefix.length, name.length - IMG_EXT.length)
   if (middle.length === 0) return false
   return true
+}
+
+/** An avatar (contact or profile) photo, as opposed to a note photo. */
+export function isAvatarImageFilename(name: string): boolean {
+  return name.startsWith(IMG_PREFIX) && isValidImageFilename(name)
 }

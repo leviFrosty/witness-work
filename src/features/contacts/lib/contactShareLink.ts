@@ -212,7 +212,11 @@ export function buildContactShareLink(
 
   const tryBuild = (convs: Visit[]): string =>
     baseUrl +
-    encodePayload(buildContactShareData(contact, convs, customFieldDefs, now))
+    encodePayload(
+      buildContactShareData(contact, convs, customFieldDefs, now, {
+        richNotes: false,
+      })
+    )
 
   // Fast path: does the whole thing fit?
   const url = tryBuild(hardLimited)

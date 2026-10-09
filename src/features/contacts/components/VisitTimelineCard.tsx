@@ -20,6 +20,9 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { Visit } from '@/types/visit'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
 import { visibleNote } from '@/features/contacts/lib/visitTimeline'
+import RichNote from '@/components/RichNote'
+import { richTextImages, richTextLinks } from '@/lib/richText/inspect'
+import { getNoteDoc, hasNote } from '@/lib/richText/notes'
 
 const NOTE_LINES = 3
 
@@ -37,11 +40,16 @@ const VisitTimelineCard = ({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
-  const { deleteConversation } = useConversations()
+  const { deleteConversation, updateConversation } = useConversations()
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
   const copyAction = useCopyAction()
   const note = visibleNote(visit.note)
+  const showsNote = hasNote(visit)
+  // Photos and link cards show only when the note is expanded.
+  const hasExtras =
+    richTextImages(getNoteDoc(visit)).length > 0 ||
+    richTextLinks(getNoteDoc(visit)).length > 0
   const topic = visit.followUp?.topic?.trim() ?? ''
   const dayLabel = visitDayLabel(visit.date)
   const fields = activeCustomFieldDefs(
@@ -50,6 +58,8 @@ const VisitTimelineCard = ({
     const value = visit.customFields?.[def.id]?.trim()
     return value ? [{ id: def.id, label: def.label, value }] : []
   })
+
+  const noteStyle = { fontSize: theme.fontSize('sm') + 1, lineHeight: 19 }
 
   const edit = () =>
     navigation.navigate('Visit Form', {
@@ -164,37 +174,52 @@ const VisitTimelineCard = ({
               {formatTime(visit.date)}
             </Text>
           </View>
-          {note ? (
+          {showsNote ? (
             <View style={{ gap: 4 }}>
-              {/* Invisible unclamped copy: iOS only reports the visible lines
-                of a clamped Text, so measure the full note here instead. */}
-              <Text
-                aria-hidden
-                pointerEvents='none'
-                onTextLayout={(e) =>
-                  setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
-                }
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  opacity: 0,
-                  fontSize: theme.fontSize('sm') + 1,
-                  lineHeight: 19,
-                }}
-              >
-                {note}
-              </Text>
-              <Text
-                numberOfLines={expanded ? undefined : NOTE_LINES}
-                style={{
-                  fontSize: theme.fontSize('sm') + 1,
-                  lineHeight: 19,
-                }}
-              >
-                {note}
-              </Text>
-              {(truncates || expanded) && (
+              {expanded ? (
+                <RichNote
+                  note={visit}
+                  nested
+                  style={noteStyle}
+                  onChange={(fields) =>
+                    updateConversation({ ...visit, ...fields })
+                  }
+                />
+              ) : (
+                <>
+                  {/* Invisible unclamped copy: iOS only reports the visible
+                    lines of a clamped Text, so measure the full note here. */}
+                  <View
+                    aria-hidden
+                    pointerEvents='none'
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      opacity: 0,
+                    }}
+                  >
+                    <RichNote
+                      note={visit}
+                      preview
+                      interactive={false}
+                      linkCards={false}
+                      style={noteStyle}
+                      onTextLayout={(e) =>
+                        setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
+                      }
+                    />
+                  </View>
+                  <RichNote
+                    note={visit}
+                    numberOfLines={NOTE_LINES}
+                    interactive={false}
+                    linkCards={false}
+                    style={noteStyle}
+                  />
+                </>
+              )}
+              {(truncates || hasExtras || expanded) && (
                 <Pressable
                   onPress={() => setExpanded((value) => !value)}
                   hitSlop={8}

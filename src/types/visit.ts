@@ -1,3 +1,5 @@
+import type { RichText } from '@/types/richText'
+
 export type Notification = {
   date: Date
   id: string
@@ -35,6 +37,8 @@ export type Visit = {
   }
   date: Date
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
   /**
    * Present only when the user turned on the Follow Up switch in the visit
    * form. Absence means "no return visit planned" — history hides the section

@@ -15,6 +15,8 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
+import RichNote from '@/components/RichNote'
+import { hasNote } from '@/lib/richText/notes'
 
 type Props = {
   trip: Trip
@@ -84,16 +86,18 @@ export default function TripRow({ trip, vehicleName }: Props) {
                 {subtitle.join(' · ')}
               </Text>
             )}
-            {trip.note ? (
-              <Text
+            {hasNote(trip) ? (
+              <RichNote
+                note={trip}
+                numberOfLines={2}
+                interactive={false}
+                linkCards={false}
+                thumbnails
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
                 }}
-                numberOfLines={2}
-              >
-                {trip.note}
-              </Text>
+              />
             ) : null}
           </View>
           <View style={{ alignItems: 'flex-end', gap: 4 }}>

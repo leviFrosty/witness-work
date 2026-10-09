@@ -1,0 +1,25 @@
+diff --git a/src/dom/base.ts b/src/dom/base.ts
+index 2288c0af0f669b573b7e13315619c541c3f548c2..53c499c256c9713802186b06d2906552bd343460 100644
+--- a/src/dom/base.ts
++++ b/src/dom/base.ts
+@@ -52,13 +52,14 @@ function getUpdatesBaseURL(): string | null {
+   // If updates is installed and enabled, and we're not running from an embedded launch, we should serve the DOM Components from the `.expo-internal` directory
+   if (shouldServeDomFromUpdates) {
+     const localAssets = ExpoUpdates?.localAssets ?? {};
+-    const anyLocalAsset = Object.values(localAssets).find(
+-      (asset) =>
+-        !asset.startsWith('file:///android_res/') && !asset.startsWith('file:///android_asset/')
++    // iOS also lists the embedded assets (inside the .app bundle) here, in no
++    // set order, so pick an asset the update put in `.expo-internal`.
++    // Backport of expo/expo#50473 (fixes #50465).
++    const updateAsset = Object.values(localAssets).find((asset) =>
++      asset.includes('/.expo-internal/')
+     );
+-    if (anyLocalAsset) {
+-      // Try to get the `.expo-internal` directory from the first local asset
+-      return anyLocalAsset.slice(0, anyLocalAsset.lastIndexOf('/'));
++    if (updateAsset) {
++      return updateAsset.slice(0, updateAsset.lastIndexOf('/'));
+     }
+   }
+   return null;

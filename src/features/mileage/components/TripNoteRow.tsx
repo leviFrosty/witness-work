@@ -1,51 +1,25 @@
-import { useRef } from 'react'
-import { TextInput as RNTextInput, View } from 'react-native'
-import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import TextInput from '@/components/ui/TextInput'
+import NoteInputRow from '@/components/ui/inputs/NoteInputRow'
+import type { NoteUpdate } from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 
-type Props = { value: string; onChangeText: (text: string) => void }
+type Props = { note: NoteFields; onChange: (note: NoteUpdate) => void }
 
-/** Optional free-text note, e.g. a destination or territory. */
-export default function TripNoteRow({ value, onChangeText }: Props) {
-  const theme = useTheme()
-  const input = useRef<RNTextInput>(null)
+/** Optional note, e.g. a destination or territory. */
+export default function TripNoteRow({ note, onChange }: Props) {
   return (
     <Section>
-      <InputRowContainer
+      <NoteInputRow
         label={i18n.t('note')}
+        note={note}
+        onChange={onChange}
+        surface='trip'
+        placeholder={i18n.t('mileage.notePlaceholder')}
+        maxLength={500}
         lastInSection
-        justifyContent='flex-start'
-        onLabelPress={() => input.current?.focus()}
-        controlWidth='full'
-        style={{ gap: 8 }}
-      >
-        <View style={{ flex: 1, paddingTop: 10 }}>
-          <TextInput
-            ref={input}
-            multiline
-            numberOfLines={3}
-            maxLength={500}
-            style={{
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-              borderRadius: theme.numbers.borderRadiusSm,
-              paddingVertical: 12,
-              paddingHorizontal: 10,
-              color: theme.colors.text,
-              minHeight: 80,
-            }}
-            textAlignVertical='top'
-            textAlign='left'
-            onChangeText={onChangeText}
-            value={value}
-            placeholder={i18n.t('mileage.notePlaceholder')}
-            placeholderTextColor={theme.colors.textAlt}
-          />
-        </View>
-      </InputRowContainer>
+        testID='trip-note'
+      />
     </Section>
   )
 }

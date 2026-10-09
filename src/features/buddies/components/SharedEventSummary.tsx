@@ -8,7 +8,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import PlanLocationLink from '@/components/PlanLocationLink'
-import RichNoteText from '@/components/RichNoteText'
+import RichNote from '@/components/RichNote'
 import useTheme from '@/contexts/theme'
 import { formatStartTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
@@ -75,7 +75,7 @@ export default function SharedEventSummary({
           </Text>
         </XView>
       ) : null}
-      {details.note ? <RichNoteText text={details.note} /> : null}
+      {details.note ? <RichNote note={{ note: details.note }} /> : null}
     </View>
   )
 }

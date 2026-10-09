@@ -1,0 +1,87 @@
+diff --git a/android/src/main/java/expo/modules/webview/DomWebViewModule.kt b/android/src/main/java/expo/modules/webview/DomWebViewModule.kt
+index 790b2e05e333756a11a64712d64cc0ea8f872c38..e27e5fc934185e0c81cf02b510bbe77f18a0494a 100644
+--- a/android/src/main/java/expo/modules/webview/DomWebViewModule.kt
++++ b/android/src/main/java/expo/modules/webview/DomWebViewModule.kt
+@@ -77,6 +77,49 @@ class DomWebViewModule : Module() {
+         view.forceReload()
+       }
+ 
++      // Focuses the web view and shows the keyboard: Android only shows it for
++      // a page that focuses an editable element itself (an editor opening)
++      // when the view has focus too. WitnessWork patch.
++      AsyncFunction("requestFocus") { view: DomWebView ->
++        view.webView.post {
++          view.webView.requestFocus()
++          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
++            view.webView.windowInsetsController?.show(
++              android.view.WindowInsets.Type.ime()
++            )
++          } else {
++            val inputMethods = view.context.getSystemService(
++              android.content.Context.INPUT_METHOD_SERVICE
++            ) as? android.view.inputmethod.InputMethodManager
++            inputMethods?.showSoftInput(
++              view.webView,
++              android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT
++            )
++          }
++        }
++      }
++
++      // Keeps Android's back gesture off these rects ([x, y, width, height]
++      // in CSS pixels), such as a selected photo's resize handles near the
++      // screen's edge. WitnessWork patch.
++      AsyncFunction("setGestureExclusion") { view: DomWebView, rects: List<List<Double>> ->
++        view.webView.post {
++          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
++            val density = view.resources.displayMetrics.density
++            view.webView.systemGestureExclusionRects = rects
++              .filter { it.size == 4 }
++              .map { (x, y, width, height) ->
++                android.graphics.Rect(
++                  (x * density).toInt(),
++                  (y * density).toInt(),
++                  ((x + width) * density).toInt(),
++                  ((y + height) * density).toInt()
++                )
++              }
++          }
++        }
++      }
++
+       OnViewDidUpdateProps { view: DomWebView ->
+         view.reload()
+       }
+diff --git a/src/DomWebView.tsx b/src/DomWebView.tsx
+index 3a07ac938325385dc7e314f0e6d557068bc6f622..945c3bc07db2314f6b265880591e000af88f82da 100644
+--- a/src/DomWebView.tsx
++++ b/src/DomWebView.tsx
+@@ -25,6 +25,8 @@ const WebView = React.forwardRef<DomWebViewRef, DomWebViewProps>(
+         scrollTo: (params) => viewRef.current?.scrollTo(params),
+         injectJavaScript: (script: string) => viewRef.current?.injectJavaScript(script),
+         reload: () => viewRef.current?.reload(),
++        requestFocus: () => viewRef.current?.requestFocus(),
++        setGestureExclusion: (rects: number[][]) => viewRef.current?.setGestureExclusion(rects),
+       }),
+       []
+     );
+diff --git a/src/DomWebView.types.ts b/src/DomWebView.types.ts
+index 8e89c59fa2dc3f60813ad764d3101b1f04c070c0..2472c2ece762c057cee425307ddf79f3bd8c956b 100644
+--- a/src/DomWebView.types.ts
++++ b/src/DomWebView.types.ts
+@@ -279,6 +279,15 @@ export type DomWebViewRef = {
+    * Reloads the current page in the `WebView`.
+    */
+   reload: () => void;
++  /**
++   * Android: focuses the web view and shows the keyboard (WitnessWork patch).
++   */
++  requestFocus(): void;
++  /**
++   * Android: keeps the back gesture off these rects, `[x, y, width, height]`
++   * in CSS pixels (WitnessWork patch).
++   */
++  setGestureExclusion(rects: number[][]): void;
+ };
+ 
+ export interface DomWebViewSource {

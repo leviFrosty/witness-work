@@ -74,13 +74,12 @@ vi.mock('@/components/ui/Badge', async () => {
 vi.mock('@/components/ui/swipeableActions/Delete', () => ({
   default: () => null,
 }))
-vi.mock('@/components/RichNoteText', () => ({ default: () => null }))
+vi.mock('@/components/RichNote', () => ({ default: () => null }))
 vi.mock('@/components/PlanLocationLink', () => ({
   default: () => null,
   planLocationText: () => 'Hall',
 }))
 vi.mock('@/lib/linkPreview', () => ({
-  findLinks: (text: string) => text.match(/https?:\/\/\S+/g) ?? [],
   getHostname: (url: string) => new URL(url).hostname,
 }))
 
@@ -134,7 +133,9 @@ vi.mock('@/lib/normalizeDate', () => ({
 vi.mock('@/lib/recurrence', () => ({
   getEffectiveMinutesForRecurringPlan: (plan: { minutes: number }) =>
     plan.minutes,
-  getEffectiveNoteForRecurringPlan: (plan: { note?: string }) => plan.note,
+  getEffectiveNoteForRecurringPlan: (plan: { note?: string }) => ({
+    note: plan.note,
+  }),
   getEffectiveStartTimeInMinutesForRecurringPlan: (plan: {
     startTimeInMinutes?: number
   }) => plan.startTimeInMinutes ?? 12 * 60,

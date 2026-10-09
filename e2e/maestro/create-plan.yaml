@@ -21,13 +21,13 @@ name: Create a one-time Plan from the bottom dock
     id: plan-title-input
 - inputText: Morning cart
 - hideKeyboard
-# Note opens in place with the cursor already in it.
+# Note opens the full-screen note editor with the cursor already in it.
 - tapOn:
     id: plan-note-row
 - inputText: Bring tracts
-# Return adds a line in a note, so Done closes the keyboard.
+# Done closes the editor; the note stays on the form until it's saved.
 - tapOn:
-    id: plan-note-done
+    id: note-editor-done
 - tapOn:
     id: plan-duration-pill
 # Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.

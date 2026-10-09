@@ -280,6 +280,7 @@ export function buildPayload(args: {
 import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames'
 import { normalizeLegacyFollowUps } from '@/app/sync/payloadFollowUps'
 import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
+import { sanitizeNoteDocs } from '@/app/sync/payloadNotes'
 
 /**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
@@ -310,6 +311,7 @@ export function parsePayload(json: string): SyncPayload | null {
     normalizeLegacyPayloadFieldNames(d)
     normalizeLegacyFollowUps(d)
     normalizeLegacyPlans(d)
+    sanitizeNoteDocs(d as unknown as Record<string, unknown>)
     dropUnreadableSavedViews(d.preferencesStore)
     if (
       !validSettingValues(d.preferencesStore.values, PREFERENCE_DEFAULTS) ||

@@ -40,6 +40,17 @@ const RootStackComponent = () => {
           />
         )}
         <RootStack.Screen
+          // Full screen everywhere (iPad too), so the keyboard-pinned toolbar
+          // measures from the window's bottom edge.
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+          name='NoteEditor'
+          getComponent={() => require('@/app/notes/NoteEditorScreen').default}
+        />
+        <RootStack.Screen
           name='Contact Details'
           getComponent={() =>
             require('@/features/contacts/screens/ContactDetailsScreen').default

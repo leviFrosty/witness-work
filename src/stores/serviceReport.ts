@@ -26,6 +26,7 @@ import {
 import { PersistStorage } from '@/stores/mmkv'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { skipRecurringInstancesOnDayPlanDates } from '@/lib/recurrence'
+import { hasNote } from '@/lib/richText/notes'
 
 const initialState = {
   serviceReports: {} as TimeEntriesByYear,
@@ -452,15 +453,18 @@ export const useServiceReport = create(
         )
 
         if (override) {
+          const noteSource = hasNote(override) ? override : plan
           return {
             ...plan,
             minutes: override.minutes,
-            note: override.note,
+            note: noteSource.note,
+            noteDoc: noteSource.noteDoc,
             startTimeInMinutes:
               override.startTimeInMinutes ?? plan.startTimeInMinutes,
             isOverride: true,
             originalMinutes: plan.minutes,
             originalNote: plan.note,
+            originalNoteDoc: plan.noteDoc,
             originalStartTimeInMinutes: plan.startTimeInMinutes,
           }
         }

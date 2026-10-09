@@ -1,157 +1,69 @@
-import { useRef, useState } from 'react'
-import { Keyboard } from 'react-native'
-import type { InputRef } from 'tamagui'
 import { NotebookPen as NotebookPenIcon } from 'lucide-react-native'
-import Button from '@/components/ui/Button'
-import Text from '@/components/ui/MyText'
-import TextInput from '@/components/ui/TextInput'
+import RichNote from '@/components/RichNote'
 import FormRow, {
-  FORM_ROW_MIN_HEIGHT,
-  FORM_ROW_PADDING_X,
   FormRowAddBadge,
-  FormRowChevron,
+  FormRowDisclosure,
   FormRowLabel,
-  formRowInputStyle,
 } from '@/components/ui/inputs/FormRow'
-import { useDockedFormLayout } from '@/components/ui/layout/DockedFormLayout'
 import useTheme from '@/contexts/theme'
+import { useOpenNoteEditor } from '@/hooks/useOpenNoteEditor'
 import i18n from '@/lib/locales'
-
-const NOTE_MAX_HEIGHT = 184
+import type { NoteSurface } from '@/lib/richText/noteEditorSession'
+import {
+  getNoteDoc,
+  hasNote,
+  noteFields,
+  type NoteUpdate,
+} from '@/lib/richText/notes'
+import type { NoteFields } from '@/types/richText'
 
 /**
- * A docked form's Note: a "+" row that opens into a multiline field with the
- * cursor in it, and shows the start of the note once it's closed.
+ * A docked form's Note: a "+" row that opens the note editor, and shows the
+ * start of the note once there is one.
  */
 const NoteFormRow = (props: {
-  note: string
-  setNote: (note: string) => void
+  note: NoteFields
+  onChange: (note: NoteUpdate) => void
+  surface: NoteSurface
   first?: boolean
+  /** Most characters of text the note may hold. */
   maxLength?: number
+  allowImages?: boolean
   /** Prefixes the row's testIDs, e.g. `plan-note-row`. */
   testID: string
 }) => {
   const theme = useTheme()
-  const layout = useDockedFormLayout()
-  const [open, setOpen] = useState(false)
-  const [focused, setFocused] = useState(false)
-  const input = useRef<InputRef>(null)
-  // Opening the row is how the note gets added, so the cursor goes in it.
-  // Focusing waits for the field's first layout: Android drops the keyboard
-  // request for a field that isn't attached yet.
-  const focusOnLayout = useRef(false)
-
-  if (open) {
-    return (
-      <FormRow
-        icon={NotebookPenIcon}
-        first={props.first}
-        trailing={
-          // Return adds a line in a note, and a full keyboard covers the
-          // dock, so Done is the way out while typing.
-          focused ? (
-            <Button
-              noTransform
-              onPress={() => {
-                Keyboard.dismiss()
-                if (!props.note) setOpen(false)
-              }}
-              accessibilityRole='button'
-              // Set explicitly: Android otherwise keeps the label of the Note
-              // button this one replaces.
-              accessibilityLabel={i18n.t('done')}
-              testID={`${props.testID}-done`}
-              style={{
-                height: FORM_ROW_MIN_HEIGHT,
-                paddingHorizontal: FORM_ROW_PADDING_X,
-                marginRight: -FORM_ROW_PADDING_X,
-                justifyContent: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('done')}
-              </Text>
-            </Button>
-          ) : (
-            <Button
-              noTransform
-              onPress={() => setOpen(false)}
-              accessibilityRole='button'
-              accessibilityLabel={i18n.t('note')}
-              accessibilityState={{ expanded: true }}
-              style={{
-                width: 44,
-                height: FORM_ROW_MIN_HEIGHT,
-                marginRight: -FORM_ROW_PADDING_X,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FormRowChevron open />
-            </Button>
-          )
-        }
-      >
-        <TextInput
-          ref={input}
-          multiline
-          value={props.note}
-          onChangeText={props.setNote}
-          maxLength={props.maxLength}
-          onFocus={() => {
-            setFocused(true)
-            layout.fieldFocused()
-          }}
-          onBlur={() => setFocused(false)}
-          onLayout={() => {
-            if (!focusOnLayout.current) return
-            focusOnLayout.current = false
-            requestAnimationFrame(() => input.current?.focus())
-          }}
-          placeholder={i18n.t('optional')}
-          placeholderTextColor={theme.colors.textAlt}
-          accessibilityLabel={i18n.t('note')}
-          testID={`${props.testID}-input`}
-          textAlign='left'
-          textAlignVertical='top'
-          // Past a few lines the note scrolls inside itself, which keeps the
-          // caret in view; a field taller than the space above the keyboard
-          // can't be.
-          style={{
-            ...formRowInputStyle,
-            minHeight: 88,
-            maxHeight: NOTE_MAX_HEIGHT,
-            paddingVertical: 14,
-          }}
-        />
-      </FormRow>
-    )
-  }
+  const openEditor = useOpenNoteEditor()
+  const filled = hasNote(props.note)
 
   return (
     <FormRow
       icon={NotebookPenIcon}
       first={props.first}
-      onPress={() => {
-        focusOnLayout.current = true
-        setOpen(true)
-      }}
-      accessibilityLabel={i18n.t('note')}
-      accessibilityExpanded={false}
-      testID={`${props.testID}-row`}
-      trailing={
-        props.note ? <FormRowChevron open={false} /> : <FormRowAddBadge />
+      onPress={() =>
+        openEditor({
+          surface: props.surface,
+          doc: getNoteDoc(props.note),
+          title: i18n.t('note'),
+          placeholder: i18n.t('optional'),
+          characterLimit: props.maxLength,
+          allowImages: props.allowImages ?? true,
+          onChange: (doc) => props.onChange(noteFields(doc)),
+        })
       }
+      accessibilityLabel={i18n.t('note')}
+      testID={`${props.testID}-row`}
+      trailing={filled ? <FormRowDisclosure /> : <FormRowAddBadge />}
     >
-      {props.note ? (
-        <Text numberOfLines={2} style={{ paddingVertical: 8 }}>
-          {props.note}
-        </Text>
+      {filled ? (
+        <RichNote
+          note={props.note}
+          numberOfLines={3}
+          interactive={false}
+          linkCards={false}
+          thumbnails
+          style={{ paddingVertical: 8, color: theme.colors.text }}
+        />
       ) : (
         <FormRowLabel>{i18n.t('note')}</FormRowLabel>
       )}

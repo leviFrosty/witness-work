@@ -26,7 +26,11 @@ import {
   createResetEpoch,
   newestResetEpoch,
 } from '@/lib/syncResetEpoch'
-import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
+import {
+  filenameForContact,
+  filenameForNoteImage,
+  filenameForProfile,
+} from '@/app/sync/imageNames'
 import {
   SyncDeviceFile,
   SyncDeviceFiles,
@@ -114,6 +118,19 @@ import {
   applyDownloadedAvatars,
   obsoleteDownloadPaths,
 } from '@/app/sync/imageSources'
+import {
+  gcNoteImages,
+  pullNoteImages,
+  pushNoteImages,
+} from '@/app/sync/noteImageSync'
+import {
+  ensureNoteImageDirectory,
+  isNoteImageKnownLocal,
+  markNoteImagesLocal,
+  noteImagePath,
+} from '@/lib/richText/noteImages'
+import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
+import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
 /**
@@ -750,6 +767,9 @@ function deleteUnreferencedCloudPhotos(): Promise<void> {
         keep.add(filenameForContact(contact.id, contact.avatar.revision))
     const { avatar } = useProfile.getState()
     if (avatar?.type === 'image') keep.add(filenameForProfile(avatar.revision))
+    for (const id of referencedNoteImageIds()) {
+      keep.add(filenameForNoteImage(id))
+    }
     const deleted: string[] = []
     for (const { filename } of await withTransportTimeout(
       'photo list',
@@ -1114,7 +1134,75 @@ function pushImagesIfEnabled(
   trigger: 'store-edit' | 'foreground',
   publishedSources?: AvatarSource[]
 ): Promise<void> {
-  return serializeImages(() => pushImagesInner(trigger, publishedSources))
+  return serializeImages(async () => {
+    await pushImagesInner(trigger, publishedSources)
+    await pushNoteImagesInner(!!publishedSources)
+  })
+}
+
+/** Uploads note photos that aren't in the cloud yet. */
+async function pushNoteImagesInner(published: boolean): Promise<void> {
+  const prefs = usePreferences.getState()
+  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!published && prefs.iCloudSyncPendingPush) return
+  if (!hasSyncTransport()) return
+  const ids = referencedNoteImageIds()
+  if (!ids.size) return
+  try {
+    const result = await pushNoteImages({
+      ids,
+      localPath: noteImagePath,
+      bookkeeping: prefs.iCloudImageSync ?? {},
+      deps: buildImageSyncDeps(),
+    })
+    if (!result.uploaded && !result.failed) return
+    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    logger.log(`${tag()} note photo push`, {
+      uploaded: result.uploaded,
+      failed: result.failed,
+    })
+  } catch (e) {
+    logger.error(`${tag()} note photo push failed`, e)
+    errorTracking.captureException(e, { iCloudSync: 'note-image-push' })
+  }
+}
+
+/** Downloads note photos a note refers to that this device doesn't have. */
+async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
+  const prefs = usePreferences.getState()
+  if (!prefs.iCloudSyncIncludeImages) return
+  if (!hasSyncTransport()) return
+  if (!oneShot && !canSync()) return
+  const deps = buildImageSyncDeps(oneShot)
+  const ids: string[] = []
+  for (const id of referencedNoteImageIds()) {
+    if (isNoteImageKnownLocal(id)) continue
+    if ((await deps.fs.getModifiedAt(noteImagePath(id))) != null) {
+      markNoteImagesLocal([id])
+      continue
+    }
+    ids.push(id)
+  }
+  if (!ids.length) return
+  try {
+    const result = await pullNoteImages({
+      ids,
+      localPath: noteImagePath,
+      deps,
+      prepare: ensureNoteImageDirectory,
+    })
+    markNoteImagesLocal(result.downloaded)
+    if (result.downloaded.length) noteImagesArrived()
+    if (result.downloaded.length || result.failed) {
+      logger.log(`${tag()} note photo pull`, {
+        downloaded: result.downloaded.length,
+        failed: result.failed,
+      })
+    }
+  } catch (e) {
+    logger.error(`${tag()} note photo pull failed`, e)
+    errorTracking.captureException(e, { iCloudSync: 'note-image-pull' })
+  }
 }
 async function pushImagesInner(
   trigger: 'store-edit' | 'foreground',
@@ -1170,7 +1258,10 @@ async function pushImagesInner(
  */
 let materializingImages = false
 function pullImagesIfEnabled(oneShot = false): Promise<void> {
-  return serializeImages(() => pullImagesInner(oneShot))
+  return serializeImages(async () => {
+    await pullImagesInner(oneShot)
+    await pullNoteImagesInner(oneShot)
+  })
 }
 async function pullImagesInner(oneShot = false): Promise<void> {
   const prefs = usePreferences.getState()
@@ -1288,6 +1379,9 @@ function gcImagesIfEnabled(): Promise<void> {
   return gcInFlight
 }
 
+const sameIds = (a: Set<string>, b: Set<string>) =>
+  a.size === b.size && [...a].every((id) => b.has(id))
+
 async function gcImages(): Promise<void> {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncIncludeImages) return
@@ -1337,16 +1431,31 @@ async function gcImages(): Promise<void> {
         deleted: result.deleted.length,
       })
     }
-    if (result.deleted.length > 0) {
+    // Note photos no note refers to any more. Like avatars, only safe after
+    // a complete pull; a pull or an edit that starts meanwhile stops it.
+    const referenced = referencedNoteImageIds()
+    const notes = result.stopped
+      ? { deleted: [], stopped: true }
+      : await gcNoteImages({
+          referenced,
+          deps,
+          shouldStop: () =>
+            gcStopRequested || !sameIds(referencedNoteImageIds(), referenced),
+        })
+    const deletedFiles = [...result.deleted, ...notes.deleted]
+    if (deletedFiles.length > 0) {
       // Strip the deleted filenames from bookkeeping so we don't keep stale
       // entries forever. Read it fresh: image uploads and downloads may have
       // updated it during the sweep.
       const next: ImageSyncBookkeeping = {
         ...(usePreferences.getState().iCloudImageSync ?? {}),
       }
-      for (const filename of result.deleted) delete next[filename]
+      for (const filename of deletedFiles) delete next[filename]
       usePreferences.setState({ iCloudImageSync: next })
-      logger.log(`${tag()} image gc`, { deleted: result.deleted.length })
+      logger.log(`${tag()} image gc`, {
+        deleted: result.deleted.length,
+        notePhotos: notes.deleted.length,
+      })
     }
   } catch (e) {
     logger.error(`${tag()} image gc failed`, e)

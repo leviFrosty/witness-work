@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useColorScheme } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useNoteImageCleanup } from '@/app/notes/useNoteImageCleanup'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { TamaguiProvider } from 'tamagui'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import tamaguiConfig from '../../tamagui.config'
@@ -75,6 +77,7 @@ function LaunchWork() {
   useCalendarSync(useAfterLaunch('idle'))
   useReconciledReminders(afterReminderDelay)
   useLocalAvatarCleanup(useAfterLaunch('idle'))
+  useNoteImageCleanup(useAfterLaunch('idle'))
   useDeletedContactRetention(useAfterLaunch('idle'))
   useTimeEntryCreditNormalization(useAfterLaunch('idle'))
   return null
@@ -112,60 +115,71 @@ export default function App() {
         <ThemeProvider>
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-              <NavigationContainer
-                key={devRemountKey}
-                ref={navigationRef}
-                linking={linking}
-                // Shown while deep links resolve, before the first screen.
-                fallback={<LaunchSplash />}
-                onReady={() => {
-                  markLaunched()
-                  reportLaunch()
-                  captureLaunchTiming()
-                  const initialScreen =
-                    navigationRef.current?.getCurrentRoute()?.name
-                  routeNameRef.current = initialScreen
-                  if (initialScreen) analytics.screen(initialScreen)
-                }}
-                onStateChange={() => {
-                  const previousScreen = routeNameRef.current
-                  const currentScreen =
-                    navigationRef.current?.getCurrentRoute()?.name
-                  if (currentScreen && currentScreen !== previousScreen) {
-                    analytics.screen(currentScreen, {
-                      previous_screen: previousScreen,
-                    })
-                  }
-                  routeNameRef.current = currentScreen
-                }}
+              {/* Off except while the note editor is open (it pins its
+                  toolbar to the keyboard); the rest of the app avoids the
+                  keyboard with React Native's own events. */}
+              <KeyboardProvider
+                enabled={false}
+                preload={false}
+                preserveEdgeToEdge
               >
-                {/* Toast context must also reach Tamagui’s portaled sheets. */}
-                <ToastProvider>
-                  <TamaguiProvider
-                    defaultTheme={
-                      colorScheme ? colorScheme : systemColorScheme || undefined
+                <NavigationContainer
+                  key={devRemountKey}
+                  ref={navigationRef}
+                  linking={linking}
+                  // Shown while deep links resolve, before the first screen.
+                  fallback={<LaunchSplash />}
+                  onReady={() => {
+                    markLaunched()
+                    reportLaunch()
+                    captureLaunchTiming()
+                    const initialScreen =
+                      navigationRef.current?.getCurrentRoute()?.name
+                    routeNameRef.current = initialScreen
+                    if (initialScreen) analytics.screen(initialScreen)
+                  }}
+                  onStateChange={() => {
+                    const previousScreen = routeNameRef.current
+                    const currentScreen =
+                      navigationRef.current?.getCurrentRoute()?.name
+                    if (currentScreen && currentScreen !== previousScreen) {
+                      analytics.screen(currentScreen, {
+                        previous_screen: previousScreen,
+                      })
                     }
-                    config={tamaguiConfig}
-                  >
-                    <StatusBar />
-                    <ToastViewport />
-                    <ConfettiProvider>
-                      <AnimationViewProvider>
-                        <SurveyProvider>
-                          <DeepLinkListeners />
-                          <BuddiesRuntime />
-                          <BadgesRuntime />
-                          <NotificationResponseListener />
-                          <SilentForegroundAlerts />
-                          <SystemMenu language={loadedLocale} />
-                          <RootStackComponent />
-                          <PointerTooltipLayer />
-                        </SurveyProvider>
-                      </AnimationViewProvider>
-                    </ConfettiProvider>
-                  </TamaguiProvider>
-                </ToastProvider>
-              </NavigationContainer>
+                    routeNameRef.current = currentScreen
+                  }}
+                >
+                  {/* Toast context must also reach Tamagui’s portaled sheets. */}
+                  <ToastProvider>
+                    <TamaguiProvider
+                      defaultTheme={
+                        colorScheme
+                          ? colorScheme
+                          : systemColorScheme || undefined
+                      }
+                      config={tamaguiConfig}
+                    >
+                      <StatusBar />
+                      <ToastViewport />
+                      <ConfettiProvider>
+                        <AnimationViewProvider>
+                          <SurveyProvider>
+                            <DeepLinkListeners />
+                            <BuddiesRuntime />
+                            <BadgesRuntime />
+                            <NotificationResponseListener />
+                            <SilentForegroundAlerts />
+                            <SystemMenu language={loadedLocale} />
+                            <RootStackComponent />
+                            <PointerTooltipLayer />
+                          </SurveyProvider>
+                        </AnimationViewProvider>
+                      </ConfettiProvider>
+                    </TamaguiProvider>
+                  </ToastProvider>
+                </NavigationContainer>
+              </KeyboardProvider>
             </GestureHandlerRootView>
           </SafeAreaProvider>
         </ThemeProvider>

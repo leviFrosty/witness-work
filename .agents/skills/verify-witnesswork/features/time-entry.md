@@ -25,7 +25,7 @@ Preconditions:
 
 Steps:
 
-- **Open.** Run `wwv ad press 'label="Add Time"' --settle`. The form has the Plan form's layout: a Details list (Note, Type) above a bottom dock with the Date and Time pills and Submit, which is disabled. The dock's controls have testIDs: `time-entry-date-pill`, `time-entry-duration-pill`, `time-entry-picker-done` (the pickers' Done) and `time-entry-save`. The Note row is `time-entry-note-row` (opens into `time-entry-note-input`, closed by `time-entry-note-done`).
+- **Open.** Run `wwv ad press 'label="Add Time"' --settle`. The form has the Plan form's layout: a Details list (Note, Type) above a bottom dock with the Date and Time pills and Submit, which is disabled. The dock's controls have testIDs: `time-entry-date-pill`, `time-entry-duration-pill`, `time-entry-picker-done` (the pickers' Done) and `time-entry-save`. The Note row is `time-entry-note-row`; it opens the full-screen note editor (see [Rich notes](./rich-notes.md)), closed by `note-editor-done`.
 - **Pick hours.** Run `wwv ad press 'id="time-entry-duration-pill"' --settle`, tap a row of the hours wheel (see Gotchas), then `wwv ad press 'id="time-entry-picker-done"' --settle`. The pill shows the duration and Submit is enabled.
 - **Submit.** Run `wwv ad press 'id="time-entry-save"' --settle`. The app returns to Home.
 - **Read back.** Run `wwv eval 'Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap(m => Object.values(m).flat()).filter(e => !e.id.startsWith("verify-") && new Date(e.date).toDateString() === new Date().toDateString())'`. One entry with `hours: 2`.
@@ -39,6 +39,6 @@ Steps:
 
 - The hours and minutes wheels both run from 0, so a label like "2" matches a row on each; `label="2"` fails as ambiguous. Take `wwv ad snapshot -i --json` and press the hours row's center by coordinates, or in a flow use `tapOn: { text: '2', index: 0 }` and assert on total minutes.
 - Wheel values below the visible window need a scroll inside the sheet. Pick visible values. On Android a tap can settle one row short, so read the pill's name ("Time, 2 Hrs" on Android) or the stored entry rather than trusting the tap.
-- The dock fades out and ignores taps while a full keyboard is up, as on the Plan form, so close the note with `time-entry-note-done` before pressing a pill or Submit.
+- The note editor covers the form; close it with `note-editor-done` before pressing a pill or Submit.
 - Time display follows the user's format preference (decimal or "1h 30m"). Assert with the store, not a formatted string.
 - The `pioneer` scenario already has today's entries on Tuesdays and Saturdays. Filter out `verify-` ids when reading back.

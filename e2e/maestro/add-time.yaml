@@ -1,5 +1,5 @@
 # seed: pioneer
-# assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).some((e) => !e.id.startsWith('verify-') && e.hours > 0 && new Date(e.date).toDateString() === new Date().toDateString())
+# assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).some((e) => !e.id.startsWith('verify-') && e.hours * 60 + e.minutes > 0 && e.note === 'Cart witnessing' && new Date(e.date).toDateString() === new Date().toDateString())
 appId: com.leviwilkerson.jwtimedev
 name: Log time from the Home service report card
 ---
@@ -7,15 +7,25 @@ name: Log time from the Home service report card
     visible: Add Time
     timeout: 60000
 - tapOn: Add Time
-- assertVisible: Entering time information below will log service time for that day
-# React Native on Android folds accessibilityValue into the name ("Hours, 0"),
-# so TalkBack and VoiceOver both read "Hours, 0, button".
+- assertVisible: Submit
+# Note opens in place with the cursor already in it.
 - tapOn:
-    text: [Hours, 'Hours, 0']
-    traits: button
-# Android's wheel can settle a row short of the tapped value; the assert reads the stored entry.
-- tapOn: '2'
-- tapOn: Done
-- tapOn: Submit
-- assertNotVisible: Entering time information below will log service time for that day
+    id: time-entry-note-row
+- inputText: Cart witnessing
+# Return adds a line in a note, so Done closes the keyboard.
+- tapOn:
+    id: time-entry-note-done
+- tapOn:
+    id: time-entry-duration-pill
+# The hours and minutes wheels both show a "2"; either one logs time. Android's
+# wheel can settle a row short of the tapped value; the assert reads the stored entry.
+- tapOn:
+    text: '2'
+    index: 0
+- tapOn:
+    id: time-entry-picker-done
+- tapOn:
+    id: time-entry-save
+- assertNotVisible:
+    id: time-entry-save
 - assertVisible: Add Time

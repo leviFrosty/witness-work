@@ -31,6 +31,14 @@ function commandsFor(step) {
     typeof step === 'string' ? [step, undefined] : Object.entries(step)[0]
   switch (name) {
     case 'tapOn':
+      // `index: 0` taps the first of several matches for the text, e.g. one of
+      // two wheels' rows with the same number. Which match is first is
+      // agent-device's choice, not the screen's order.
+      if (value?.index !== undefined) {
+        if (value.index !== 0)
+          throw new Error('tapOn supports only index: 0 (the first match)')
+        return [['find', text(value), 'click', '--first']]
+      }
       // `text: [a, b]` (an extension) tries each label in order, for controls
       // whose accessible name differs by platform.
       if (Array.isArray(value?.text)) {

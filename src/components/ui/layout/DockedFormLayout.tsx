@@ -36,7 +36,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 const KEYBOARD_BAR_MAX_HEIGHT = 120
 const REVEAL_MARGIN = 16
 
-type PlanFormLayoutContextValue = {
+type DockedFormLayoutContextValue = {
   /**
    * A field took focus. `pinToTop` keeps room under it, e.g. for suggestions;
    * `container` reveals the whole row around it instead of just the field.
@@ -50,13 +50,13 @@ type PlanFormLayoutContextValue = {
   revealAfterLayout: (target: RefObject<View | null>) => void
 }
 
-const PlanFormLayoutContext = createContext<PlanFormLayoutContextValue>({
+const DockedFormLayoutContext = createContext<DockedFormLayoutContextValue>({
   fieldFocused: () => {},
   fieldBlurred: () => {},
   revealAfterLayout: () => {},
 })
 
-export const usePlanFormLayout = () => useContext(PlanFormLayoutContext)
+export const useDockedFormLayout = () => useContext(DockedFormLayoutContext)
 
 type LayoutState = {
   scrollY: number
@@ -170,7 +170,8 @@ const flushPendingReveal = (handles: LayoutHandles) => {
 }
 
 /**
- * The Plan form's frame: scrolling details above a dock pinned to the bottom.
+ * A form's frame: scrolling details above a dock pinned to the bottom, where
+ * the thumb already is. The Plan form and Add Time use it.
  *
  * Keyboard avoidance is done by hand, like the Notes Import composer: the
  * scroll view ends exactly at the keyboard's top edge, and the focused field is
@@ -180,7 +181,7 @@ const flushPendingReveal = (handles: LayoutHandles) => {
  * covers the dock, so the dock fades out and stops taking touches; a hardware
  * keyboard's short bar lifts the dock instead.
  */
-const PlanFormLayout = (props: {
+const DockedFormLayout = (props: {
   children: ReactNode
   dock: ReactNode
   contentContainerStyle?: StyleProp<ViewStyle>
@@ -286,7 +287,7 @@ const PlanFormLayout = (props: {
 
   const handles = () => ({ state, scroll, content, dockHeight, barMode })
 
-  const context: PlanFormLayoutContextValue = {
+  const context: DockedFormLayoutContextValue = {
     fieldFocused: (options) => {
       state.current.pinFocusedToTop = !!options?.pinToTop
       state.current.revealContainer = options?.container ?? null
@@ -305,7 +306,7 @@ const PlanFormLayout = (props: {
   }
 
   return (
-    <PlanFormLayoutContext.Provider value={context}>
+    <DockedFormLayoutContext.Provider value={context}>
       <View style={{ flex: 1 }}>
         <Animated.View
           style={[{ flex: 1 }, areaStyle]}
@@ -351,8 +352,8 @@ const PlanFormLayout = (props: {
           {props.dock}
         </Animated.View>
       </View>
-    </PlanFormLayoutContext.Provider>
+    </DockedFormLayoutContext.Provider>
   )
 }
 
-export default PlanFormLayout
+export default DockedFormLayout

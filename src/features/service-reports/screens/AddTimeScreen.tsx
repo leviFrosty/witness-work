@@ -1,14 +1,11 @@
-import { View, Alert, TextInput as RNTextInput } from 'react-native'
+import { Alert } from 'react-native'
 import { noteUserAction } from '@/lib/userAction'
-import { useEffect, useRef, useState } from 'react'
-import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import { useEffect, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import {
   normalizeDateForStorage,
@@ -17,19 +14,19 @@ import {
 import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
-import DateTimePicker from '@/components/ui/DateTimePicker'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import SelectWheel from '@/components/ui/SelectWheel'
+import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
+import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
+import NoteFormRow from '@/components/ui/inputs/NoteFormRow'
+import TypeFormRow from '@/components/TypeFormRow'
+import WhenDock from '@/components/WhenDock'
 import { usePreferences } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
-import TypeSelectorRow, {
+import {
   CUSTOM_TYPE_VALUE,
   STANDARD_TYPE_VALUE,
   type TypeSelection,
 } from '@/components/TypeSelectorRow'
-import TextInput from '@/components/ui/TextInput'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
@@ -54,9 +51,7 @@ type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
 const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const noteInput = useRef<RNTextInput>(null)
   const {
     role: currentRole,
     roleHistory,
@@ -137,16 +132,17 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   }
 
-  const setHours = (hours: number) => {
+  const setDate = (date: Date) => {
     setServiceReport({
       ...serviceReport,
-      hours,
+      date,
     })
   }
 
-  const setMinutes = (minutes: number) => {
+  const setDuration = (hours: number, minutes: number) => {
     setServiceReport({
       ...serviceReport,
+      hours,
       minutes,
     })
   }
@@ -157,26 +153,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       note,
     })
   }
-
-  const handleDateChange = (_: DateTimePickerEvent, date: Date | undefined) => {
-    if (!date) {
-      return
-    }
-    setServiceReport({
-      ...serviceReport,
-      date,
-    })
-  }
-
-  const hourOptions = [...Array(100).keys()].map((value) => ({
-    label: `${value}`,
-    value,
-  }))
-
-  const minuteOptions = [...Array(60).keys()].map((value) => ({
-    label: `${value}`,
-    value,
-  }))
 
   const submit = () => {
     playConfetti()
@@ -316,173 +292,100 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   // we don't have anything to attach the entry to.
   const hasSelectedCategory = selectedValue !== CUSTOM_TYPE_VALUE
   const submittable = hasEnteredTime && hasSelectedCategory
+  // A timer stopped before a minute passed hands over less than a minute.
+  const providedLessThanOneMinute =
+    !route.params?.hours &&
+    route.params?.minutes !== undefined &&
+    route.params.minutes < 1 &&
+    serviceReport.hours === 0 &&
+    serviceReport.minutes < 1
+
+  const dock = (
+    <WhenDock
+      testID='time-entry'
+      date={serviceReport.date}
+      setDate={setDate}
+      hours={serviceReport.hours}
+      minutes={serviceReport.minutes}
+      setDuration={setDuration}
+      durationLabel={i18n.t('time')}
+      maxHours={99}
+      minuteStep={1}
+      notice={
+        providedLessThanOneMinute && (
+          <Text style={{ color: theme.colors.warn }}>
+            {i18n.t('providedTimeIsLessThanOneMinute')}
+          </Text>
+        )
+      }
+      saveButton={
+        <ActionButton
+          disabled={!submittable}
+          onPress={existingServiceReport ? save : submit}
+          testID='time-entry-save'
+        >
+          {i18n.t(existingServiceReport ? 'save' : 'submit')}
+        </ActionButton>
+      }
+    />
+  )
 
   return (
-    <Wrapper
-      style={{
-        flex: 1,
-        flexGrow: 1,
-        justifyContent: 'space-between',
-      }}
-    >
-      <KeyboardAwareScrollView
+    // The dock applies the bottom safe area itself.
+    <Wrapper insets='none' style={{ flex: 1 }}>
+      <DockedFormLayout
+        dock={dock}
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: 'space-between',
-          paddingBottom: insets.bottom + 30,
+          // The details sit just above the dock, near the thumb, rather
+          // than at the top of a tall screen.
+          justifyContent: 'flex-end',
+          gap: 12,
+          paddingTop: 10,
+          paddingBottom: 16,
           paddingHorizontal: inputLayout.horizontalPadding,
           width: '100%',
           maxWidth: inputLayout.contentMaxWidth,
           alignSelf: 'center',
         }}
       >
-        <View style={{ gap: 30 }}>
-          <View style={{ paddingTop: 12, paddingBottom: 0, gap: 5 }}>
-            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
-            </Text>
-            <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-              {i18n.t(
-                existingServiceReport
-                  ? 'updateTime_description'
-                  : 'addTime_description'
-              )}
-            </Text>
-          </View>
-          <Section>
-            <InputRowContainer
-              label={i18n.t('date')}
-              justifyContent='space-between'
-              controlStyle={{ alignItems: 'flex-end' }}
-            >
-              <DateTimePicker
-                value={serviceReport.date}
-                onChange={handleDateChange}
-              />
-            </InputRowContainer>
-            <TypeSelectorRow
-              value={selectedValue}
-              onChange={handleTypeChange}
-              lastInSection
-            />
-          </Section>
-          <Section>
-            {!route.params?.hours &&
-            route.params?.minutes !== undefined &&
-            route.params.minutes < 1 &&
-            serviceReport.hours === 0 &&
-            serviceReport.minutes < 1 ? (
-              <Text style={{ color: theme.colors.warn }}>
-                {i18n.t('providedTimeIsLessThanOneMinute')}
-              </Text>
-            ) : null}
-            <View style={{ flexDirection: 'row' }}>
-              <InputRowContainer
-                label={i18n.t('hours')}
-                lastInSection
-                style={{ width: '50%' }}
-                gap={6}
-              >
-                <SelectWheel
-                  data={hourOptions}
-                  accessibilityLabel={i18n.t('hours')}
-                  placeholder={serviceReport.hours.toString()}
-                  onChange={({ value }) => setHours(value)}
-                  value={serviceReport.hours.toString()}
-                />
-              </InputRowContainer>
-              <InputRowContainer
-                label={i18n.t('minutes')}
-                lastInSection
-                style={{ width: '50%' }}
-                gap={6}
-              >
-                <SelectWheel
-                  data={minuteOptions}
-                  accessibilityLabel={i18n.t('minutes')}
-                  placeholder={serviceReport.minutes.toString()}
-                  onChange={({ value }) => setMinutes(value)}
-                  value={serviceReport.minutes.toString()}
-                />
-              </InputRowContainer>
-            </View>
-          </Section>
-          <Section>
-            <InputRowContainer
-              label={i18n.t('note')}
-              lastInSection
-              justifyContent='flex-start'
-              onLabelPress={() => noteInput.current?.focus()}
-              controlWidth='full'
-              style={{ gap: 8 }}
-            >
-              <View style={{ flex: 1, paddingTop: 10 }}>
-                <TextInput
-                  ref={noteInput}
-                  multiline
-                  numberOfLines={3}
-                  maxLength={500}
-                  style={{
-                    borderColor: theme.colors.border,
-                    borderWidth: 1,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    paddingVertical: 12,
-                    paddingHorizontal: 10,
-                    color: theme.colors.text,
-                    minHeight: 80,
-                  }}
-                  textAlignVertical='top'
-                  textAlign='left'
-                  onChangeText={setNote}
-                  value={serviceReport.note}
-                  placeholder={i18n.t('optionalNote')}
-                  placeholderTextColor={theme.colors.textAlt}
-                />
-              </View>
-            </InputRowContainer>
-          </Section>
-        </View>
-        <View style={{ gap: 8, paddingTop: 20 }}>
-          {!submittable && !hasEnteredTime && (
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {i18n.t('timeNeeded')}
-            </Text>
-          )}
-          {!submittable && !hasSelectedCategory && (
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {i18n.t('categoryNeeded')}
-            </Text>
-          )}
-          <ActionButton
-            disabled={!submittable}
-            onPress={existingServiceReport ? save : submit}
+        <FormDetailsSection>
+          <NoteFormRow
+            first
+            note={serviceReport.note ?? ''}
+            setNote={setNote}
+            maxLength={500}
+            testID='time-entry-note'
+          />
+          <TypeFormRow
+            value={selectedValue}
+            onChange={handleTypeChange}
+            hint={hasSelectedCategory ? undefined : i18n.t('categoryNeeded')}
+          />
+        </FormDetailsSection>
+        {existingServiceReport && (
+          <Button
+            noTransform
+            onPress={handleRequestDelete}
+            accessibilityRole='button'
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+            }}
           >
-            {i18n.t(existingServiceReport ? 'save' : 'submit')}
-          </ActionButton>
-          {existingServiceReport && (
-            <Button
-              noTransform
-              onPress={handleRequestDelete}
-              accessibilityRole='button'
+            <Text
               style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: 12,
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
               }}
             >
-              <Text
-                style={{
-                  color: theme.colors.error,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('md'),
-                }}
-              >
-                {i18n.t('deleteEllipsis')}
-              </Text>
-            </Button>
-          )}
-        </View>
-      </KeyboardAwareScrollView>
+              {i18n.t('deleteEllipsis')}
+            </Text>
+          </Button>
+        )}
+      </DockedFormLayout>
     </Wrapper>
   )
 }

@@ -41,5 +41,5 @@ Steps:
 - Plans forecast Credit Time only through their Category. Assert the category, not a credit flag.
 - Plan rows' accessible labels merge every line of the row, so select a row by its testID or with `wwv ad find "<title>" click`.
 - Plan Details' More menu is a native pull-down; open it with `label="More"`, then press an item by its label.
-- The Plan form's dock fades out and ignores taps while a full keyboard is up (it rides above a hardware keyboard's short bar instead), so dismiss the keyboard (`hideKeyboard` in a flow) before pressing a pill or Save. The form's keyboard avoidance follows the native keyboard frame (`PlanFormLayout`), so fake `keyboardWillShow` events don't move it.
+- The Plan form's dock fades out and ignores taps while a full keyboard is up (it rides above a hardware keyboard's short bar instead), so dismiss the keyboard (`hideKeyboard` in a flow) before pressing a pill or Save. The form's keyboard avoidance follows the native keyboard frame (`DockedFormLayout`, shared with Add Time), so fake `keyboardWillShow` events don't move it.
 - A hardware keyboard on the iOS simulator suppresses the software keyboard, so keyboard-overlap checks need the software keyboard visible. On Android, `wwv ad` uses a hidden test keyboard; open the session with agent-device's `--no-test-ime` to see the real one.

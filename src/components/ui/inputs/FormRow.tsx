@@ -10,13 +10,13 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-export const PLAN_ROW_MIN_HEIGHT = 52
-export const PLAN_ROW_ICON_SIZE = 20
-export const PLAN_ROW_PADDING_X = 14
+export const FORM_ROW_MIN_HEIGHT = 52
+export const FORM_ROW_ICON_SIZE = 20
+export const FORM_ROW_PADDING_X = 14
 const ROW_GAP = 12
 
 /** Borderless input styling for a field that sits directly in a row. */
-export const planRowInputStyle = {
+export const formRowInputStyle = {
   flex: 1,
   minWidth: 0,
   borderWidth: 0,
@@ -25,11 +25,11 @@ export const planRowInputStyle = {
 }
 
 /**
- * One line of the Plan form's details list: an icon, the row's content, and an
+ * One line of a docked form's details list: an icon, the row's content, and an
  * optional trailing control. `expanded` content opens under the row, indented
  * to line up with the label.
  */
-const PlanFormRow = (props: {
+const FormRow = (props: {
   icon: AppIcon
   first?: boolean
   onPress?: () => void
@@ -48,11 +48,11 @@ const PlanFormRow = (props: {
   const headerStyle = {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
-    paddingHorizontal: PLAN_ROW_PADDING_X,
+    paddingHorizontal: FORM_ROW_PADDING_X,
     gap: ROW_GAP,
   }
   const firstLine = {
-    minHeight: PLAN_ROW_MIN_HEIGHT,
+    minHeight: FORM_ROW_MIN_HEIGHT,
     justifyContent: 'center' as const,
   }
   const header = (
@@ -60,7 +60,7 @@ const PlanFormRow = (props: {
       <View style={firstLine}>
         <LucideIcon
           icon={props.icon}
-          size={PLAN_ROW_ICON_SIZE}
+          size={FORM_ROW_ICON_SIZE}
           color={theme.colors.textAlt}
         />
       </View>
@@ -114,8 +114,8 @@ const PlanFormRow = (props: {
       {props.expanded && (
         <View
           style={{
-            paddingLeft: PLAN_ROW_PADDING_X + PLAN_ROW_ICON_SIZE + ROW_GAP,
-            paddingRight: PLAN_ROW_PADDING_X,
+            paddingLeft: FORM_ROW_PADDING_X + FORM_ROW_ICON_SIZE + ROW_GAP,
+            paddingRight: FORM_ROW_PADDING_X,
             paddingBottom: 12,
           }}
         >
@@ -126,7 +126,7 @@ const PlanFormRow = (props: {
   )
 }
 
-export const PlanFormRowLabel = (props: { children: string }) => {
+export const FormRowLabel = (props: { children: string }) => {
   const theme = useTheme()
   return (
     <Text
@@ -138,7 +138,7 @@ export const PlanFormRowLabel = (props: { children: string }) => {
 }
 
 /** Muted value shown at the end of a collapsed row. */
-export const PlanFormRowValue = (props: { children?: string }) => {
+export const FormRowValue = (props: { children?: string }) => {
   const theme = useTheme()
   if (!props.children) return null
   return (
@@ -152,7 +152,7 @@ export const PlanFormRowValue = (props: { children?: string }) => {
 }
 
 /** The round "+" on an empty row that opens when tapped. */
-export const PlanFormAddBadge = () => {
+export const FormRowAddBadge = () => {
   const theme = useTheme()
   return (
     <View
@@ -170,7 +170,7 @@ export const PlanFormAddBadge = () => {
   )
 }
 
-export const PlanFormChevron = (props: { open: boolean }) => {
+export const FormRowChevron = (props: { open: boolean }) => {
   const theme = useTheme()
   return (
     <LucideIcon
@@ -181,4 +181,4 @@ export const PlanFormChevron = (props: { open: boolean }) => {
   )
 }
 
-export default PlanFormRow
+export default FormRow

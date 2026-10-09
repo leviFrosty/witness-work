@@ -3,7 +3,7 @@ import type { ContextMenuAction } from '@/components/ui/ContextMenu.types'
 import useNow from '@/hooks/useNow'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { joinRequestStatus } from '@/features/buddies/lib/joinRequests'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
@@ -47,7 +47,9 @@ export default function useAskToJoin(source: Source) {
     analytics.capture('buddy_join_requested', { source })
     buddiesEngine
       .askToJoin(buddy.inboxId, d, plan, expiresAt)
-      .catch((error) => Alert.alert(buddiesErrorMessage(error)))
+      .catch((error) =>
+        alertBuddiesError(i18n.t('buddies_errorAskToJoinTitle'), error)
+      )
   }
 
   const withdraw = (buddy: Buddy, requestId: string) =>

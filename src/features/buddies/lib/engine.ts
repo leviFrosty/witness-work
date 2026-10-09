@@ -16,11 +16,14 @@ import {
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
 import {
+  isRelayConnectivityError,
   isRelayError,
   OwnerAuth,
   PushAddress,
   PushTemplate,
+  RelayCallOptions,
   RelayClient,
+  RelayError,
   RelaySyncResponse,
   WriterAuth,
 } from '@/features/buddies/lib/relay'
@@ -85,6 +88,7 @@ import {
   JOIN_REQUEST_LEAD_MS,
   MAX_OPEN_JOIN_REQUESTS,
   OutgoingJoinRequest,
+  OutgoingShare,
   incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
@@ -130,9 +134,13 @@ export type BuddiesEngineDeps = {
   store: Store
   randomBytes: (length: number) => Uint8Array
   now: () => number
-  /** The iCloud Keychain root seed, created on first use. */
-  getRootSeed: () => Uint8Array
-  deleteRootSeed: () => void
+  /**
+   * The root seed (iCloud Keychain on iOS, Block Store on Android), created on
+   * first use. Read off the JS thread: on Android a first read can wait on
+   * Block Store for seconds.
+   */
+  getRootSeed: () => Promise<Uint8Array>
+  deleteRootSeed: () => Promise<void>
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
   /** Name, avatar, and Tenure as buddies should see them. */
   getProfile: () => BuddyProfile
@@ -165,6 +173,40 @@ export type BuddiesEngineDeps = {
   later?: (run: () => void, ms: number) => void
 }
 
+/** See `sync`. */
+export type BuddiesSyncOptions = RelayCallOptions & {
+  /**
+   * Satisfied once this device has read the inbox up to this seq (the live
+   * signal's): a call that finds a sync running then needs no second one if
+   * that sync got there.
+   */
+  minSeq?: number
+  /**
+   * The app asked, not the User (a return to the foreground, the live signal, a
+   * poll). Skipped while the relay has asked to back off.
+   */
+  automatic?: boolean
+}
+
+/**
+ * `skipped`: nothing ran (the relay asked to back off, or a sync already got
+ * past `minSeq`), so it says nothing about whether Buddies can be reached.
+ */
+export type SyncOutcome = 'synced' | 'skipped'
+
+/** Rate limited with no Retry-After: automatic syncs wait this long. */
+const RATE_LIMIT_COOL_DOWN_MS = 60 * 1000
+/**
+ * The relay's kill switch is on: automatic syncs wait at least this long, so
+ * the app checks back now and then instead of polling a switched-off service.
+ */
+export const DISABLED_COOL_DOWN_MS = 15 * 60 * 1000
+/** A removal that keeps failing is retried after this, doubling to an hour. */
+const REMOVAL_RETRY_BASE_MS = 60 * 1000
+const REMOVAL_RETRY_MAX_MS = 60 * 60 * 1000
+/** Events read by recent syncs, kept so a push's alert needn't fetch again. */
+const RECENT_EVENTS = 50
+
 export type BuddyPairing = {
   role: 'inviter' | 'invitee'
   /** Absent when the buddy's build doesn't send it. */
@@ -177,6 +219,8 @@ export type BuddyInviteErrorReason =
   | 'own'
   | 'alreadyBuddies'
   | 'limit'
+  /** The relay's cap on unclaimed invites (`MAX_OPEN_INVITES`). */
+  | 'openInvites'
   | 'nameRequired'
 
 export class BuddyInviteError extends Error {
@@ -381,9 +425,24 @@ function newPairedAt(state: BuddiesState, inboxId: string, now: number) {
 export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const { relay, store } = deps
   let cachedIdentity: { seed: string; identity: BuddyIdentity } | null = null
+  let identityLoad: Promise<BuddyIdentity> | null = null
+  let registering: Promise<BuddyIdentity> | null = null
   const pairCache = new Map<string, PairKeys>()
-  let syncInFlight: Promise<void> | null = null
-  let syncQueued: Promise<void> | null = null
+  let syncInFlight: Promise<SyncOutcome> | null = null
+  /** The one sync queued behind the running one; see `sync`. */
+  let followUp: {
+    promise: Promise<SyncOutcome>
+    minSeq: number
+    automatic: boolean
+  } | null = null
+  /** Automatic syncs wait until then: the relay asked to back off. */
+  let coolDownUntil = 0
+  /** Removals that failed: how often in a row, and when to try again. */
+  const removalRetries = new Map<string, { failures: number; at: number }>()
+  /** Events recent syncs read, by seq, for `describePush`. */
+  const recentEvents = new Map<number, SealedEvent>()
+  /** Settles once the running sync has read the inbox (before it sends). */
+  let inboxRead: Promise<void> | null = null
   /** Share events sent per buddy inboxId in the last hour. */
   const shareSends = new Map<string, number[]>()
   /** Slots added while a sync is in flight are missing from its response. */
@@ -405,14 +464,39 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const newId = () => toB64u(deps.randomBytes(16))
   const decode = (bytes: Uint8Array): unknown => JSON.parse(fromUtf8(bytes))
 
-  function identity(): BuddyIdentity {
-    const seed = deps.getRootSeed()
-    const key = toB64u(seed)
-    if (cachedIdentity?.seed !== key) {
-      cachedIdentity = { seed: key, identity: deriveIdentity(seed) }
-      pairCache.clear()
-    }
-    return cachedIdentity.identity
+  /**
+   * This User's identity, from the root seed. The seed is read off the JS
+   * thread, once at a time, then kept; `fresh` reads it again, since another
+   * device's seed may have replaced it through iCloud Keychain.
+   */
+  function identity({ fresh = false } = {}): Promise<BuddyIdentity> {
+    if (!fresh && cachedIdentity)
+      return Promise.resolve(cachedIdentity.identity)
+    identityLoad ??= (async () => {
+      try {
+        const seed = await deps.getRootSeed()
+        const key = toB64u(seed)
+        if (cachedIdentity?.seed !== key) {
+          cachedIdentity = { seed: key, identity: deriveIdentity(seed) }
+          pairCache.clear()
+        }
+        return cachedIdentity.identity
+      } finally {
+        identityLoad = null
+      }
+    })()
+    return identityLoad
+  }
+
+  /** The inbox id, without waiting on the seed: render paths read this. */
+  function knownInboxId(): string | null {
+    return (
+      cachedIdentity?.identity.inboxId ?? store.getState().registeredInboxId
+    )
+  }
+
+  const cancelled = (call?: RelayCallOptions) => {
+    if (call?.signal?.aborted) throw new RelayError('cancelled', 0)
   }
 
   function ownerAuth(me: BuddyIdentity): OwnerAuth {
@@ -493,17 +577,56 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return 0
   }
 
-  async function ensureInbox(): Promise<BuddyIdentity> {
-    const me = identity()
-    if (store.getState().registeredInboxId !== me.inboxId) {
-      await relay.registerInbox(ownerAuth(me))
-      store.setState({
-        registeredInboxId: me.inboxId,
-        syncSeq: 0,
-        pushRegistrationKey: null,
+  /** Registers this User's inbox on first use; callers share one attempt. */
+  async function ensureInbox(call?: RelayCallOptions): Promise<BuddyIdentity> {
+    const me = await identity()
+    if (store.getState().registeredInboxId === me.inboxId) return me
+    registering ??= relay
+      .registerInbox(ownerAuth(me), call)
+      .then(() => {
+        store.setState({
+          registeredInboxId: me.inboxId,
+          syncSeq: 0,
+          pushRegistrationKey: null,
+        })
+        return me
       })
-    }
-    return me
+      .finally(() => {
+        registering = null
+      })
+    return registering
+  }
+
+  /**
+   * Stable per event, so a retry of a send whose answer was lost (or the same
+   * send from another of this User's devices) is the same event, which the
+   * relay stores and alerts once.
+   */
+  function eventIdFor(...parts: (string | number)[]): string {
+    return toB64u(
+      sha256(utf8(`ww-buddies/v1/event|${parts.join('|')}`)).slice(0, 16)
+    )
+  }
+
+  /**
+   * Card, share and answer sends run one at a time, so two publishes can't send
+   * the same event twice. Each kind is queued at most once behind the one
+   * running, which picks up whatever changed meanwhile.
+   */
+  let outboxTail: Promise<void> = Promise.resolve()
+  const outboxQueued = new Map<string, Promise<void>>()
+  function outbox(kind: string, run: () => Promise<void>): Promise<void> {
+    const waiting = outboxQueued.get(kind)
+    if (waiting) return waiting
+    const next = outboxTail.then(() => {
+      outboxQueued.delete(kind)
+      return run()
+    })
+    outboxQueued.set(kind, next)
+    outboxTail = next.catch(() => {
+      // The caller sees the failure; the queue moves on.
+    })
+    return next
   }
 
   async function addSlot(me: BuddyIdentity, keys: DirectionKeys) {
@@ -663,17 +786,28 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const invite = deriveInvite(secret)
     const createdAt = deps.now()
     const expiresAt = createdAt + INVITE_TTL_MS
-    await relay.createInvite(ownerAuth(me), {
-      inviteId: invite.inviteId,
-      claimVerifier: invite.claimVerifier,
-      blob: seal(
-        invite.inviteKey,
-        json(pairingCard(me)),
-        aad.inviteCard(invite.inviteId),
-        nonce()
-      ),
-      expiresAt,
-    })
+    try {
+      await relay.createInvite(ownerAuth(me), {
+        inviteId: invite.inviteId,
+        claimVerifier: invite.claimVerifier,
+        blob: seal(
+          invite.inviteKey,
+          json(pairingCard(me)),
+          aad.inviteCard(invite.inviteId),
+          nonce()
+        ),
+        expiresAt,
+      })
+    } catch (error) {
+      if (!isRelayError(error, 'limit')) throw error
+      // Every spot is taken, or (with spots free here) the relay's cap on
+      // invites still waiting to be accepted, some maybe from another device.
+      throw new BuddyInviteError(
+        occupiedBuddySpots(store.getState()) >= MAX_BUDDIES
+          ? 'limit'
+          : 'openInvites'
+      )
+    }
     store.setState((state) => ({
       outgoingInvites: [
         ...state.outgoingInvites,
@@ -730,7 +864,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       throw new BuddyInviteError('invalid')
     }
 
-    const me = identity()
+    const me = await identity()
     const state = store.getState()
     if (card.inboxId === me.inboxId) throw new BuddyInviteError('own')
     if (state.buddies.some((buddy) => buddy.inboxId === card.inboxId))
@@ -764,17 +898,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     const { incoming } = pairKeys(me, party)
     await addSlot(me, incoming)
+    const claim = seal(
+      invite.inviteKey,
+      json(pairingCard(me)),
+      aad.claim(invite.inviteId),
+      nonce()
+    )
     try {
-      await relay.claimInvite(
-        invite.inviteId,
-        invite.claimSecret,
-        seal(
-          invite.inviteKey,
-          json(pairingCard(me)),
-          aad.claim(invite.inviteId),
-          nonce()
-        )
-      )
+      await claimOnce(invite.inviteId, invite.claimSecret, claim)
     } catch (error) {
       await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
       if (isRelayError(error, 'conflict') || isRelayError(error, 'not_found'))
@@ -806,6 +937,37 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return { name: card.name }
   }
 
+  /**
+   * Claims an invite, finding out what happened when the answer is lost: the
+   * claim may have landed, and claiming isn't repeatable on older relays (a
+   * second try is a `conflict`), while newer ones answer a retry of the same
+   * claim with ok. So it's tried once more, then the invite is read: claimed
+   * means it was this claim, which leaves the slot for the inviter to confirm
+   * into. Throws the connection error when neither answers.
+   */
+  async function claimOnce(
+    inviteId: string,
+    claimSecret: string,
+    blob: string
+  ) {
+    try {
+      await relay.claimInvite(inviteId, claimSecret, blob)
+      return
+    } catch (error) {
+      if (!isRelayConnectivityError(error)) throw error
+    }
+    let retryError: unknown
+    try {
+      await relay.claimInvite(inviteId, claimSecret, blob)
+      return
+    } catch (error) {
+      retryError = error
+    }
+    const fetched = await relay.fetchInvite(inviteId).catch(() => null)
+    if (fetched?.status === 'claimed') return
+    throw retryError
+  }
+
   async function confirmClaim(inviteId: string) {
     const state = store.getState()
     const claim = state.incomingClaims.find(
@@ -833,7 +995,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     const { incoming, outgoing } = pairKeys(me, buddy)
     await addSlot(me, incoming)
-    const eventId = newId()
+    // One per invite: confirming again after a lost answer alerts them once.
+    const eventId = eventIdFor('pair', me.inboxId, buddy.inboxId, inviteId)
     try {
       await relay.putEvent(writerAuth(buddy.inboxId, outgoing), {
         eventId,
@@ -872,9 +1035,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishCards().catch(() => {})
   }
 
+  /**
+   * Turns down a request. Fails, keeping it listed, when the relay can't be
+   * told: the other person would otherwise wait on it until it lapses.
+   */
   async function rejectClaim(inviteId: string) {
     const me = await ensureInbox()
-    await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
+    try {
+      await relay.deleteInvite(ownerAuth(me), inviteId)
+    } catch (error) {
+      if (!isRelayError(error, 'not_found')) throw error
+    }
     dropInvite(inviteId)
     await saveRoster(me)
   }
@@ -897,12 +1068,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /**
    * Removes their slot from my inbox and my slot (and last card) from theirs.
-   * Both are idempotent, so a removal stays queued until both succeed.
+   * Both are idempotent, so a removal stays queued until both succeed. One that
+   * keeps failing waits longer each time (from a minute up to an hour) before
+   * syncs try it again; `force` (the User asking) tries everything now.
    */
-  async function flushRemovals(me: BuddyIdentity) {
+  async function flushRemovals(me: BuddyIdentity, { force = false } = {}) {
     const missing = (error: unknown) =>
       isRelayError(error, 'not_found') || isRelayError(error, 'gone')
     for (const party of store.getState().pendingRemovals) {
+      const retry = removalRetries.get(party.inboxId)
+      if (!force && retry && retry.at > deps.now()) continue
       const { incoming, outgoing } = pairKeys(me, party)
       try {
         await relay
@@ -916,8 +1091,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             if (!missing(error)) throw error
           })
       } catch {
+        const failures = (retry?.failures ?? 0) + 1
+        removalRetries.set(party.inboxId, {
+          failures,
+          at:
+            deps.now() +
+            Math.min(
+              REMOVAL_RETRY_MAX_MS,
+              REMOVAL_RETRY_BASE_MS * 2 ** (failures - 1)
+            ),
+        })
         continue
       }
+      removalRetries.delete(party.inboxId)
       store.setState((state) => ({
         pendingRemovals: state.pendingRemovals.filter(
           (p) => p.inboxId !== party.inboxId
@@ -936,7 +1122,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const me = await ensureInbox()
     // Ends every pairing with them up to now, on all this User's devices.
     queueRemoval([buddy], deps.now())
-    await flushRemovals(me)
+    await flushRemovals(me, { force: true })
     await saveRoster(me)
     if (isPendingRemoval(inboxId)) throw new BuddyRemovalPendingError('buddy')
   }
@@ -1006,14 +1192,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /** Publishes one Buddy Card per active buddy, skipping unchanged content. */
-  async function publishCards() {
+  function publishCards(): Promise<void> {
+    return outbox('cards', sendCards)
+  }
+
+  async function sendCards() {
     const { name, avatar, tenure, badges: shared = [] } = profile()
     const streak = store.getState().sharing.streak
       ? deps.getStreak?.()
       : undefined
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
-    const me = identity()
+    const me = await identity()
     const { dayPlans, recurringPlans } = deps.getPlans()
     const days = buildBuddyCardDays(
       dayPlans,
@@ -1236,9 +1426,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /** Stable per share, so every device of this User sends the same id. */
-  function shareIdFor(me: BuddyIdentity, key: string): string {
+  function shareIdFor(inboxId: string, key: string): string {
     return toB64u(
-      sha256(utf8(`ww-buddies/v1/share|${me.inboxId}|${key}`)).slice(0, 16)
+      sha256(utf8(`ww-buddies/v1/share|${inboxId}|${key}`)).slice(0, 16)
     )
   }
 
@@ -1300,12 +1490,53 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * The revs one publish of a share sends with. A send left undone keeps its
+   * rev, and so its event id, while the content (`hash`) is the same: sent
+   * again after a lost answer, it's the same event, which the relay keeps once.
+   * Every other send gets a rev newer than any this share has used, so a buddy
+   * never drops it as old, even after the clock moves back.
+   */
+  function shareRevs(
+    previous: OutgoingShare | undefined,
+    hash: string,
+    now: number
+  ) {
+    const kept = previous?.pending?.hash === hash ? previous.pending.revs : {}
+    const fresh = Math.max(now, (previous?.lastRev ?? 0) + 1)
+    let lastRev = previous?.lastRev ?? 0
+    const undone: Record<string, number> = {}
+    return {
+      fresh,
+      take(inboxId: string, kind: string) {
+        const rev = kept[`${inboxId}|${kind}`] ?? fresh
+        lastRev = Math.max(lastRev, rev)
+        return rev
+      },
+      leave(inboxId: string, kind: string, rev: number) {
+        undone[`${inboxId}|${kind}`] = rev
+      },
+      saved(): Pick<OutgoingShare, 'lastRev' | 'pending'> {
+        return {
+          ...(lastRev > 0 ? { lastRev } : {}),
+          ...(Object.keys(undone).length > 0
+            ? { pending: { hash, revs: undone } }
+            : {}),
+        }
+      },
+    }
+  }
+
+  /**
    * Brings every buddy's view of this User's shared Plans and Follow-ups in
    * line with the current data: invites new recipients, updates changed
    * details, and cancels removed recipients and deleted shares. Content is
    * hashed per recipient so an unchanged share sends nothing.
    */
-  async function publishShares() {
+  function publishShares(): Promise<void> {
+    return outbox('shares', sendShares)
+  }
+
+  async function sendShares() {
     if (!deps.getShares || !displayName()) return
     const now = deps.now()
     const specs = deps.getShares().filter((spec) => spec.expiresAt > now)
@@ -1313,7 +1544,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const state = store.getState()
     if (specs.length === 0 && Object.keys(state.outgoingShares).length === 0)
       return
-    const me = identity()
+    const me = await identity()
     const activeBuddy = (inboxId: string) =>
       store
         .getState()
@@ -1324,14 +1555,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const deliver = async (
       inboxId: string,
       kind: string,
-      body: unknown,
+      body: { id: string; rev: number },
       push = true
     ) => {
       const buddy = activeBuddy(inboxId)
       if (!buddy) return true
       if (!hasShareBudget(inboxId)) return false
+      const eventId = eventIdFor(
+        'share',
+        me.inboxId,
+        inboxId,
+        body.id,
+        kind,
+        body.rev
+      )
       try {
-        await sendEvent(me, buddy, kind, body, push)
+        await sendEvent(me, buddy, kind, body, push, eventId)
         spendShareBudget(inboxId)
         return true
       } catch (error) {
@@ -1355,7 +1594,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }))
 
     for (const spec of specs) {
-      const shareId = shareIdFor(me, spec.key)
+      const shareId = shareIdFor(me.inboxId, spec.key)
       const prefix = SHARE_KIND_PREFIX[spec.type]
       const hash = toB64u(
         sha256(
@@ -1366,18 +1605,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           })
         )
       )
+      const previous = store.getState().outgoingShares[spec.key]
+      const revs = shareRevs(previous, hash, now)
       // Only a change to when or where pushes; a new title or note arrives
       // quietly, sparing the relay's daily push budget for what matters.
       const { d, s, m, location } = spec.details
       const timing = toB64u(sha256(json({ d, s, m, location })))
       const recipients = new Set(spec.recipients.filter(activeBuddy))
-      const previous = store.getState().outgoingShares[spec.key]
       const sent = { ...previous?.sent }
       const sentTiming = { ...previous?.sentTiming }
       const body = fitEvent({
         v: 1,
         id: shareId,
-        rev: now,
+        rev: revs.fresh,
         type: spec.type,
         expiresAt: spec.expiresAt,
         details: spec.details,
@@ -1387,18 +1627,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const update = sent[inboxId] !== undefined
         const kind = `${prefix}.${update ? 'update' : 'invite'}`
         const push = !update || sentTiming[inboxId] !== timing
-        if (await deliver(inboxId, kind, body, push)) {
+        const rev = revs.take(inboxId, kind)
+        if (await deliver(inboxId, kind, { ...body, rev }, push)) {
           sent[inboxId] = hash
           sentTiming[inboxId] = timing
-        }
+        } else revs.leave(inboxId, kind, rev)
       }
       for (const inboxId of Object.keys(sent)) {
         if (recipients.has(inboxId)) continue
-        const cancel = { v: 1, id: shareId, rev: now }
-        if (await deliver(inboxId, `${prefix}.cancel`, cancel)) {
+        const kind = `${prefix}.cancel`
+        const rev = revs.take(inboxId, kind)
+        const cancel = { v: 1, id: shareId, rev }
+        if (await deliver(inboxId, kind, cancel)) {
           delete sent[inboxId]
           delete sentTiming[inboxId]
-        }
+        } else revs.leave(inboxId, kind, rev)
       }
       saveSent(spec.key, {
         shareId,
@@ -1406,6 +1649,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         expiresAt: spec.expiresAt,
         sent,
         sentTiming,
+        ...revs.saved(),
       })
     }
 
@@ -1415,17 +1659,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )) {
       if (wanted.has(key)) continue
       const sent = { ...share.sent }
+      const revs = shareRevs(share, 'deleted', now)
       if (share.expiresAt > now) {
-        const cancel = { v: 1, id: share.shareId, rev: now }
+        const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
         for (const inboxId of Object.keys(sent)) {
-          const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
+          const rev = revs.take(inboxId, kind)
+          const cancel = { v: 1, id: share.shareId, rev }
           if (await deliver(inboxId, kind, cancel)) delete sent[inboxId]
+          else revs.leave(inboxId, kind, rev)
         }
       }
+      const { pending: _pending, ...rest } = share
       saveSent(
         key,
         share.expiresAt > now && Object.keys(sent).length > 0
-          ? { ...share, sent }
+          ? { ...rest, sent, ...revs.saved() }
           : null
       )
     }
@@ -1658,7 +1906,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /** Sends the answers that haven't reached their buddy yet and are due. */
-  async function deliverReplies() {
+  function deliverReplies(): Promise<void> {
+    return outbox('replies', sendReplies)
+  }
+
+  async function sendReplies() {
     const now = deps.now()
     const unsent = Object.entries(store.getState().incomingShares).filter(
       ([, share]) =>
@@ -1700,12 +1952,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       // Stays unsent until the hourly budget allows; retried on every sync.
       if (!hasShareBudget(buddy.inboxId)) continue
       try {
-        await sendEvent(me, buddy, 'share.reply', {
-          v: 1,
-          id: share.shareId,
-          rev,
-          status: share.status,
-        })
+        await sendEvent(
+          me,
+          buddy,
+          'share.reply',
+          { v: 1, id: share.shareId, rev, status: share.status },
+          true,
+          // A retry of this answer is the same event: one alert, however sent.
+          eventIdFor('reply', me.inboxId, buddy.inboxId, share.shareId, rev)
+        )
         spendShareBudget(buddy.inboxId)
         markSent(key, rev)
       } catch (error) {
@@ -2058,11 +2313,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * Push kinds for join requests from each active buddy whose requests may
    * alert this device; left out of the push registration otherwise.
    */
-  function joinRequestPushKinds(): JoinRequestPushKind[] {
+  async function joinRequestPushKinds(): Promise<JoinRequestPushKind[]> {
     const { buddies, joinRequestNotifications, mutedJoinRequests } =
       store.getState()
     if (!joinRequestNotifications) return []
-    const me = identity()
+    const me = await identity()
     return buddies
       .filter(
         (buddy) =>
@@ -2654,9 +2909,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /** The id buddies know one of this User's shares by. */
+  /**
+   * The id buddies know one of this User's shares by. Renders read it, so it
+   * never waits on the seed; empty before Buddies has started here.
+   */
   function shareIdForKey(key: string): string {
-    return shareIdFor(identity(), key)
+    const inboxId = knownInboxId()
+    return inboxId ? shareIdFor(inboxId, key) : ''
   }
 
   function readRoster(me: BuddyIdentity, blob: string): Roster | null {
@@ -2812,9 +3071,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * buddy's slot so the pairings resume. Flagged in state first so a failure
    * part-way is retried rather than read as buddies having left.
    */
-  async function restoreInbox(me: BuddyIdentity) {
+  async function restoreInbox(me: BuddyIdentity, call?: RelayCallOptions) {
     store.setState({ slotsNeedRestore: true })
-    await relay.registerInbox(ownerAuth(me))
+    // A new inbox counts seq from the start again.
+    recentEvents.clear()
+    await relay.registerInbox(ownerAuth(me), call)
     store.setState({ syncSeq: 0, pushRegistrationKey: null })
     for (const buddy of store.getState().buddies)
       await addSlot(me, pairKeys(me, buddy).incoming)
@@ -2822,26 +3083,52 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await saveRoster(me)
   }
 
-  async function fetchInbox(me: BuddyIdentity, since: number) {
+  async function fetchInbox(
+    me: BuddyIdentity,
+    since: number,
+    call?: RelayCallOptions
+  ) {
+    let response: RelaySyncResponse
     try {
-      return await relay.syncInbox(ownerAuth(me), since)
+      response = await relay.syncInbox(ownerAuth(me), since, call)
     } catch (error) {
       if (!isRelayError(error, 'not_found')) throw error
       // Wiped for inactivity, or deleted by another of this User's devices.
-      await restoreInbox(me)
-      return relay.syncInbox(ownerAuth(me), 0)
+      await restoreInbox(me, call)
+      response = await relay.syncInbox(ownerAuth(me), 0, call)
+    }
+    for (const event of response.events) {
+      recentEvents.set(event.seq, event)
+      if (recentEvents.size > RECENT_EVENTS)
+        recentEvents.delete(recentEvents.keys().next().value!)
+    }
+    return response
+  }
+
+  async function runSync(call: RelayCallOptions) {
+    let markRead = () => {}
+    inboxRead = new Promise((resolve) => {
+      markRead = resolve
+    })
+    try {
+      await readAndSend(call, () => markRead())
+    } finally {
+      markRead()
+      inboxRead = null
     }
   }
 
-  async function runSync() {
+  async function readAndSend(call: RelayCallOptions, onRead: () => void) {
     perf.count('buddies:sync')
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
-    const me = await ensureInbox()
+    // Read again each sync: another device's seed may have synced in.
+    await identity({ fresh: true })
+    const me = await ensureInbox(call)
     slotsAddedDuringSync.clear()
-    if (store.getState().slotsNeedRestore) await restoreInbox(me)
+    if (store.getState().slotsNeedRestore) await restoreInbox(me, call)
     const since = store.getState().syncSeq
-    let response = await fetchInbox(me, since)
+    let response = await fetchInbox(me, since, call)
 
     const readBack = response.roster
       ? readRoster(me, response.roster.blob)
@@ -2852,7 +3139,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (remoteRoster) {
       const learned = mergeRoster(me, remoteRoster)
       // This device already synced past the new buddies' cards and events.
-      if (learned.length > 0 && since > 0) response = await fetchInbox(me, 0)
+      if (learned.length > 0 && since > 0)
+        response = await fetchInbox(me, 0, call)
     }
 
     let rosterChanged = staleRoster
@@ -2891,6 +3179,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
 
     rosterChanged = expireStale() || rosterChanged
+    // Read and applied: kept even if the sends below are cut short.
+    store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
+    onRead()
+    // The relay answered: whatever it asked to wait for is over.
+    coolDownUntil = 0
+    cancelled(call)
     await flushRemovals(me)
     await deliverReplies().catch(() => {
       // Retried on the next sync.
@@ -2904,7 +3198,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await deliverBadgeReactions().catch(() => {
       // Retried on the next sync, for up to a week.
     })
-    store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
     // Write the merged roster back when another device's copy lacks
     // something, which also heals a concurrent last-writer-wins overwrite.
     if (
@@ -2913,31 +3206,91 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
       rosterChanged = true
     if (rosterChanged) await saveRoster(me)
+    cancelled(call)
     await publishCards()
+    cancelled(call)
     await publishShares()
   }
 
   /**
-   * Coalesces concurrent callers. A call made while a sync runs may announce an
-   * event that sync already fetched past, so it gets one more sync afterwards,
-   * shared by everyone who asked meanwhile.
+   * How long the relay asked to be left alone, from a failed call: its
+   * Retry-After, or a default for rate limits and the kill switch.
    */
-  function sync(): Promise<void> {
+  function noteBackPressure(error: unknown) {
+    if (!(error instanceof RelayError)) return
+    const wait =
+      error.code === 'disabled'
+        ? Math.max(error.retryAfterMs ?? 0, DISABLED_COOL_DOWN_MS)
+        : error.code === 'rate_limited'
+          ? (error.retryAfterMs ?? RATE_LIMIT_COOL_DOWN_MS)
+          : error.code === 'limit'
+            ? null
+            : error.retryAfterMs
+    if (wait === null) return
+    coolDownUntil = Math.max(coolDownUntil, deps.now() + wait)
+  }
+
+  /** The relay asked to back off; automatic syncs wait until it's over. */
+  function coolingDown(): boolean {
+    return deps.now() < coolDownUntil
+  }
+
+  /**
+   * Reads the inbox and sends what's waiting. Concurrent callers share one run.
+   * A call made while a sync runs may announce an event that sync already
+   * fetched past, so it gets one more sync afterwards, shared by everyone who
+   * asked meanwhile, unless every one of them gave a `minSeq` that the running
+   * sync reached. Automatic calls do nothing while the relay asked to back off
+   * (Retry-After, the kill switch); the User's own still go.
+   */
+  function sync(options: BuddiesSyncOptions = {}): Promise<SyncOutcome> {
+    const { minSeq, automatic = false, ...call } = options
+    if (automatic && coolingDown()) {
+      perf.count('buddies:syncCoolingDown')
+      return Promise.resolve('skipped')
+    }
+    const reached = (seq: number) => store.getState().syncSeq >= seq
     if (!syncInFlight) {
-      syncInFlight = runSync().finally(() => {
-        syncInFlight = null
-      })
+      if (minSeq !== undefined && reached(minSeq)) {
+        perf.count('buddies:syncSkipped')
+        return Promise.resolve('skipped')
+      }
+      syncInFlight = runSync(call)
+        .then((): SyncOutcome => 'synced')
+        .catch((error: unknown) => {
+          noteBackPressure(error)
+          throw error
+        })
+        .finally(() => {
+          syncInFlight = null
+        })
       return syncInFlight
     }
-    syncQueued ??= syncInFlight
+    const wanted = minSeq ?? Infinity
+    if (followUp) {
+      followUp.minSeq = Math.max(followUp.minSeq, wanted)
+      followUp.automatic &&= automatic
+      return followUp.promise
+    }
+    const next = {
+      promise: Promise.resolve<SyncOutcome>('skipped'),
+      minSeq: wanted,
+      automatic,
+    }
+    next.promise = syncInFlight
       .catch(() => {
         // The follow-up runs either way; its own outcome is what callers see.
       })
-      .then(() => {
-        syncQueued = null
-        return sync()
+      .then((): Promise<SyncOutcome> | SyncOutcome => {
+        followUp = null
+        if (reached(next.minSeq)) {
+          perf.count('buddies:syncSkipped')
+          return 'skipped'
+        }
+        return sync({ ...call, automatic: next.automatic })
       })
-    return syncQueued
+    followUp = next
+    return next.promise
   }
 
   /** Opens this inbox's live signal, which says when to sync. */
@@ -2967,12 +3320,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * What this device needs to word Buddies pushes itself (see `pushAlerts`):
    * each buddy's incoming slot, the key that opens it, and their name here;
    * open invites' keys; and when shared Plans and Follow-ups are, both ways.
-   * Null until Buddies has started here.
+   * Null until Buddies has started here; undefined until the seed has been read
+   * (see `loadIdentity`), which isn't the same as nothing to word.
    */
-  function alertContext(): BuddyAlertContext | null {
+  function alertContext(): BuddyAlertContext | null | undefined {
     const state = store.getState()
     if (state.registeredInboxId === null) return null
-    const me = identity()
+    const me = cachedIdentity?.identity
+    if (!me) return undefined
     const now = deps.now()
     const sharesFrom = (inboxId: string) =>
       Object.fromEntries(
@@ -3007,7 +3362,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         (deps.getShares?.() ?? [])
           .filter((spec) => spec.expiresAt > now)
           .map((spec) => [
-            shareIdFor(me, spec.key),
+            shareIdFor(me.inboxId, spec.key),
             shareWhen(spec.type, spec.details),
           ])
       ),
@@ -3023,23 +3378,35 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   /**
    * Opens the event a push is about and says how to word its alert: from the
    * push itself when the event fit, or fetched from the inbox by its `seq`.
-   * Reads only; the sync that follows a push applies the event as usual.
+   * Reads only; the sync that follows a push applies the event as usual, and an
+   * event that sync (or a recent one) read isn't fetched again.
    */
   async function describePush(
-    marker: BuddiesPushMarker
+    marker: BuddiesPushMarker,
+    call?: RelayCallOptions
   ): Promise<BuddyAlertOutcome> {
+    if (store.getState().registeredInboxId === null)
+      return { failed: 'noContext' }
+    const me = await identity()
     const context = alertContext()
     if (!context) return { failed: 'noContext' }
     let event: SealedEvent | undefined =
       marker.eventId !== undefined && marker.blob !== undefined
         ? { eventId: marker.eventId, kind: marker.kind, blob: marker.blob }
         : undefined
-    if (!event && marker.seq !== undefined && marker.seq > 0) {
-      const { events } = await relay.syncInbox(
-        ownerAuth(identity()),
-        marker.seq - 1
-      )
-      event = events.find((candidate) => candidate.seq === marker.seq)
+    const seq = marker.seq
+    if (!event && seq !== undefined && seq > 0) {
+      event = recentEvents.get(seq)
+      if (!event && inboxRead) {
+        // Only the read; the sends after it don't hold up an alert.
+        await inboxRead
+        event = recentEvents.get(seq)
+      }
+      if (!event) {
+        perf.count('buddies:describeFetch')
+        const { events } = await relay.syncInbox(ownerAuth(me), seq - 1, call)
+        event = events.find((candidate) => candidate.seq === seq)
+      }
     }
     return event ? describeBuddyEvent(context, event) : { failed: 'noEvent' }
   }
@@ -3055,9 +3422,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       /** A kind left out is never pushed to this device. */
       templates: Partial<Record<BuddyPushKind | BadgePushKind, PushTemplate>> &
         Record<JoinRequestPushKind, PushTemplate>
-    }
+    },
+    call?: RelayCallOptions
   ): Promise<PushRegistrationOutcome> {
-    const me = await ensureInbox()
+    const me = await ensureInbox(call)
     let deviceId = store.getState().deviceId
     if (!deviceId) {
       deviceId = newId()
@@ -3072,7 +3440,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (unchanged && age >= 0 && age < PUSH_REGISTRATION_REFRESH_MS)
       return 'unchanged'
     try {
-      await relay.registerDevice(ownerAuth(me), { deviceId, ...device })
+      await relay.registerDevice(ownerAuth(me), { deviceId, ...device }, call)
     } catch (error) {
       // Whatever the relay holds now is unknown; send it again next time.
       store.setState({ pushRegistrationKey: null })
@@ -3091,9 +3459,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * buddy has been left.
    */
   async function deleteEverything() {
-    const me = identity()
+    const me = await identity()
     queueRemoval(store.getState().buddies)
-    await flushRemovals(me)
+    await flushRemovals(me, { force: true })
     if (store.getState().pendingRemovals.length > 0)
       throw new BuddyRemovalPendingError('everything')
     try {
@@ -3101,11 +3469,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     } catch (error) {
       if (!isRelayError(error, 'not_found')) throw error
     }
-    deps.deleteRootSeed()
+    await deps.deleteRootSeed()
     cachedIdentity = null
     pairCache.clear()
     shareSends.clear()
     lastAlertSentAt.clear()
+    removalRetries.clear()
+    recentEvents.clear()
+    coolDownUntil = 0
     // Choices about this device and what to share outlive the data; shared
     // Plans, invitations, replies, and the notification queue don't.
     const {
@@ -3164,6 +3535,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotificationRead,
     dismissNotification,
     sync,
+    coolingDown,
+    /** Reads the seed (off the JS thread) so `alertContext` can answer. */
+    loadIdentity: () => identity().then(() => undefined),
     openLive,
     probeInbox,
     registerPush,

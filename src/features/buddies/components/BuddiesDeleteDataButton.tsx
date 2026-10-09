@@ -4,7 +4,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 
 /** Leaves every buddy and erases this User's Buddies data, after confirming. */
 export default function BuddiesDeleteDataButton() {
@@ -22,7 +22,9 @@ export default function BuddiesDeleteDataButton() {
           onPress: () =>
             buddiesEngine
               .deleteEverything()
-              .catch((error) => Alert.alert(buddiesErrorMessage(error))),
+              .catch((error) =>
+                alertBuddiesError(i18n.t('buddies_errorDeleteAllTitle'), error)
+              ),
         },
       ]
     )

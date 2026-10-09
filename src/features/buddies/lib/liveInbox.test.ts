@@ -75,14 +75,24 @@ describe('createLiveInbox', () => {
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
-  it('syncs once for a burst of changes', async () => {
+  it('syncs once for a burst of changes, always (slot changes keep the seq)', async () => {
     const { live, sockets, onChange, message } = setup()
     live.start()
     await vi.advanceTimersByTimeAsync(0)
-    message(sockets[0], { type: 'changed', seq: 6 })
-    message(sockets[0], { type: 'changed', seq: 7 })
+    message(sockets[0], { type: 'changed', seq: 5 })
+    message(sockets[0], { type: 'changed', seq: 5 })
     await vi.advanceTimersByTimeAsync(1000)
     expect(onChange).toHaveBeenCalledTimes(1)
+    expect(onChange).toHaveBeenCalledWith(undefined)
+  })
+
+  it("passes the hello's seq, so a sync already past it needn't run", async () => {
+    const { live, sockets, onChange, message } = setup(5)
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    message(sockets[0], { type: 'hello', seq: 9 })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(onChange).toHaveBeenCalledWith(9)
   })
 
   it('reconnects with backoff and stops for good when stopped', async () => {

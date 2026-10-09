@@ -83,8 +83,8 @@ export function setup() {
       store,
       randomBytes: random,
       now,
-      getRootSeed: () => (rootSeed ??= random(32)),
-      deleteRootSeed: () => {
+      getRootSeed: async () => (rootSeed ??= random(32)),
+      deleteRootSeed: async () => {
         rootSeed = null
       },
       getPlans: () => plans,

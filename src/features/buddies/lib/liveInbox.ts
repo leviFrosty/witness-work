@@ -49,8 +49,13 @@ export type LiveInboxDeps = {
   open: () => Promise<LiveSocket>
   /** The inbox seq this device has synced to. */
   syncedSeq: () => number
-  /** Something changed in the inbox; pull it. */
-  onChange: () => void
+  /**
+   * Something changed in the inbox; pull it. With `seq` (a `hello` past this
+   * device's cursor), a sync already past it needn't run again. A `changed`
+   * passes none: slot changes (a buddy leaving) don't advance `seq`, so it
+   * always syncs.
+   */
+  onChange: (seq?: number) => void
   onEvent?: (event: LiveEvent) => void
   now?: () => number
 }
@@ -74,6 +79,11 @@ export function createLiveInbox(deps: LiveInboxDeps) {
   let pingTimer: ReturnType<typeof setInterval> | null = null
   let pongTimer: ReturnType<typeof setTimeout> | null = null
   let changeTimer: ReturnType<typeof setTimeout> | null = null
+  /**
+   * What the next sync must reach: a `hello`'s seq, or null once a `changed`
+   * came, which always syncs.
+   */
+  let changedSeq: number | null | undefined
 
   const clearTimers = () => {
     if (pingTimer) clearInterval(pingTimer)
@@ -81,18 +91,25 @@ export function createLiveInbox(deps: LiveInboxDeps) {
     if (changeTimer) clearTimeout(changeTimer)
     pingTimer = pongTimer = changeTimer = null
     pingSentAt = null
+    changedSeq = undefined
   }
 
-  const sync = () => {
+  const sync = (seq?: number) => {
     emit({ type: 'sync' })
-    deps.onChange()
+    deps.onChange(seq)
   }
 
-  const changed = () => {
+  const changed = (seq: number | null) => {
+    changedSeq =
+      seq === null || changedSeq === null
+        ? null
+        : Math.max(changedSeq ?? seq, seq)
     if (changeTimer) clearTimeout(changeTimer)
     changeTimer = setTimeout(() => {
       changeTimer = null
-      sync()
+      const upTo = changedSeq ?? undefined
+      changedSeq = undefined
+      sync(upTo)
     }, CHANGE_DEBOUNCE_MS)
   }
 
@@ -141,10 +158,10 @@ export function createLiveInbox(deps: LiveInboxDeps) {
         failures = 0
         const behind = message.seq > deps.syncedSeq()
         emit({ type: 'hello', seq: message.seq, behind })
-        if (behind) changed()
+        if (behind) changed(message.seq)
       } else if (message?.type === 'changed') {
         emit({ type: 'changed', seq: message.seq })
-        changed()
+        changed(null)
       }
     }
     live.onerror = () => {

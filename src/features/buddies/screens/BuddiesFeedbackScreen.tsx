@@ -91,7 +91,10 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
   const open = () => {
     if (!survey) {
       analytics.capture('buddies_feedback_unavailable', { source })
-      Alert.alert(i18n.t('buddies_feedbackUnavailable'))
+      Alert.alert(
+        i18n.t('buddies_feedbackTitle'),
+        i18n.t('buddies_feedbackUnavailable')
+      )
       return
     }
 
@@ -124,7 +127,10 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
         .catch((error) => {
           analytics.capture('buddies_feedback_attachment_failed', { source })
           errorTracking.captureException(error)
-          Alert.alert(i18n.t('buddies_feedbackAttachmentFailed'))
+          Alert.alert(
+            i18n.t('buddies_feedbackTitle'),
+            i18n.t('buddies_feedbackAttachmentFailed')
+          )
         })
     }
     navigation.goBack()

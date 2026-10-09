@@ -43,17 +43,30 @@ import { useBuddyTraySync } from '@/features/buddies/stores/buddyTraySync'
  */
 export type BuddyTraySyncTrigger = 'open' | 'retry' | 'poll'
 
-/** Pulls new buddy events for the tray, tracking how the check went. */
+/**
+ * Pulls new buddy events for the tray, tracking how the check went. A poll is
+ * automatic, so it waits out the relay's back-off; opening the tray and Try
+ * Again don't. `minSeq` (a tapped push's event) skips a sync already past it.
+ */
 export async function syncBuddyNotifications(
-  trigger: BuddyTraySyncTrigger = 'open'
-) {
+  trigger: BuddyTraySyncTrigger = 'open',
+  minSeq?: number
+): Promise<void> {
   // Opening the tray never starts Buddies; that's the Buddies screen's job.
   if (useBuddies.getState().registeredInboxId === null) return
   const startedAt = Date.now()
   if (trigger !== 'poll') useBuddyTraySync.setState({ syncing: true })
   try {
-    await buddiesEngine.sync()
-    useBuddyTraySync.setState({ syncing: false, failedAt: null })
+    const outcome = await buddiesEngine.sync({
+      automatic: trigger === 'poll',
+      minSeq,
+    })
+    // Nothing ran (waiting out the relay's back-off): nothing new to say.
+    useBuddyTraySync.setState(
+      outcome === 'skipped'
+        ? { syncing: false }
+        : { syncing: false, failedAt: null }
+    )
   } catch (error) {
     // Publishing can fail after the inbox was read; the tray is still current.
     if (useBuddies.getState().lastSyncAt >= startedAt) {

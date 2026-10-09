@@ -17,6 +17,8 @@ export type LiveDiagnostics = {
   lastHelloSeq: number | null
   lastChangedSeq: number | null
   lastPongRttMs: number | null
+  /** When the relay last said anything on this connection (incl. a pong). */
+  lastHeardAt: number | null
   lastClose: { code?: number; reason?: string; at: number } | null
   counts: {
     connects: number
@@ -36,6 +38,7 @@ export const initialLiveDiagnostics: LiveDiagnostics = {
   lastHelloSeq: null,
   lastChangedSeq: null,
   lastPongRttMs: null,
+  lastHeardAt: null,
   lastClose: null,
   counts: {
     connects: 0,
@@ -56,6 +59,24 @@ const STATUS_AFTER: Partial<Record<LiveEvent['type'], LiveStatus>> = {
   stopped: 'stopped',
 }
 
+/**
+ * A connection that has heard nothing this long has missed a ping's answer
+ * (pings go every 25 s and wait 10 s), so it may be dead.
+ */
+export const LIVE_HEALTHY_MS = 35 * 1000
+
+/**
+ * The live connection is open and answering, so it will say when the inbox
+ * changes: polling would only repeat it.
+ */
+export function isLiveHealthy(state: LiveDiagnostics, now: number): boolean {
+  return (
+    state.status === 'open' &&
+    state.lastHeardAt !== null &&
+    now - state.lastHeardAt < LIVE_HEALTHY_MS
+  )
+}
+
 /** Folds one live event into the diagnostics. */
 export function applyLiveEvent(
   state: LiveDiagnostics,
@@ -71,6 +92,13 @@ export function applyLiveEvent(
     counts,
     log: [...state.log, { at, event }].slice(-LIVE_LOG_LIMIT),
   }
+  if (
+    event.type === 'open' ||
+    event.type === 'hello' ||
+    event.type === 'changed' ||
+    event.type === 'pong'
+  )
+    next.lastHeardAt = at
   switch (event.type) {
     case 'connecting':
       counts.connects += 1

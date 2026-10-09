@@ -69,7 +69,11 @@ export default function BuddiesSyncNotice({
         {i18n.t(MESSAGES[notice])}
       </Text>
       {notice !== 'error' ? null : syncing ? (
-        <ActivityIndicator size='small' color={theme.colors.textAlt} />
+        <ActivityIndicator
+          size='small'
+          color={theme.colors.textAlt}
+          accessibilityLabel={i18n.t('buddies_syncing')}
+        />
       ) : (
         <Button noTransform onPress={onRetry}>
           <Text

@@ -21,7 +21,7 @@ import SharedEventSummary from '@/features/buddies/components/SharedEventSummary
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import { notificationHeadline } from '@/features/buddies/lib/notificationText'
@@ -105,7 +105,7 @@ export default function BuddyNotificationRow({
       await action()
       setChanging(false)
     } catch (error) {
-      Alert.alert(buddiesErrorMessage(error))
+      alertBuddiesError(i18n.t('buddies_errorTitle'), error)
     } finally {
       setBusy(false)
     }

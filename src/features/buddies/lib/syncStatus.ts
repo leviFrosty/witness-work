@@ -45,22 +45,35 @@ export function settledSyncStatus(
 
 /**
  * Runs one sync and records how it went. Callers see the same result as an
- * untracked sync.
+ * untracked sync. A sync that didn't run (`skipped`), or that its caller
+ * cancelled, says nothing new and leaves the status as it was.
  */
-export async function trackSync(
-  sync: () => Promise<void>,
+export async function trackSync<Outcome>(
+  sync: () => Promise<Outcome>,
   deps: {
     update: (change: (status: BuddySyncStatus) => BuddySyncStatus) => void
     lastSyncAt: () => number
     now: () => number
     failureReason: (error: unknown) => BuddySyncFailureReason
+    /** Did nothing: e.g. waiting out the relay's back-off. */
+    skipped?: (outcome: Outcome) => boolean
+    cancelled?: (error: unknown) => boolean
   }
-): Promise<void> {
+): Promise<Outcome> {
   const startedAt = deps.now()
+  const untracked = (status: BuddySyncStatus) => ({
+    ...status,
+    syncing: Math.max(0, status.syncing - 1),
+  })
   deps.update((status) => ({ ...status, syncing: status.syncing + 1 }))
+  let outcome: Outcome
   try {
-    await sync()
+    outcome = await sync()
   } catch (error) {
+    if (deps.cancelled?.(error)) {
+      deps.update(untracked)
+      throw error
+    }
     const reason = syncReadInbox(deps.lastSyncAt(), startedAt)
       ? undefined
       : deps.failureReason(error)
@@ -69,7 +82,9 @@ export async function trackSync(
     )
     throw error
   }
-  deps.update((status) => settledSyncStatus(status, { at: deps.now() }))
+  if (deps.skipped?.(outcome)) deps.update(untracked)
+  else deps.update((status) => settledSyncStatus(status, { at: deps.now() }))
+  return outcome
 }
 
 /**

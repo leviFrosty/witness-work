@@ -1,6 +1,7 @@
 package expo.modules.buddieskeychain
 
 import android.content.Context
+import android.os.SystemClock
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import com.google.android.gms.auth.blockstore.Blockstore
@@ -64,6 +65,14 @@ internal class RootSeedStore(context: Context) {
   private var cached: ByteArray? = null
   private var backupChecked = false
 
+  /**
+   * When checking Block Store for a backup last failed, and why. Every Buddies
+   * call needs the seed, so without this each would wait out Block Store again;
+   * instead they fail fast until `RETRIEVE_BACKOFF_MS` has passed.
+   */
+  private var retrieveFailedAt = 0L
+  private var retrieveFailure: RootSeedException? = null
+
   private val sealedFile get() = File(context.noBackupFilesDir, SEALED_FILE)
   private val backupMarker get() = File(context.noBackupFilesDir, BACKUP_MARKER_FILE)
 
@@ -121,6 +130,7 @@ internal class RootSeedStore(context: Context) {
         keyStore().deleteEntry(KEY_ALIAS)
         cached = null
         backupChecked = false
+        retrieveFailure = null
       }
     }
   }
@@ -149,7 +159,19 @@ internal class RootSeedStore(context: Context) {
       return it
     }
     // First use on this install, or a reinstall or new phone: look for a backup.
-    val restored = retrieveBackup() ?: return null
+    retrieveFailure?.let { failure ->
+      if (SystemClock.elapsedRealtime() - retrieveFailedAt < RETRIEVE_BACKOFF_MS) throw failure
+    }
+    val restored =
+      try {
+        retrieveBackup()
+      } catch (error: RootSeedException) {
+        retrieveFailedAt = SystemClock.elapsedRealtime()
+        retrieveFailure = error
+        throw error
+      }
+    retrieveFailure = null
+    if (restored == null) return null
     writeSealed(restored)
     writeMarker(MARKER_RESTORED)
     cached = restored
@@ -322,6 +344,7 @@ internal class RootSeedStore(context: Context) {
     const val TAG_BYTES = 16
     const val FORMAT_VERSION: Byte = 1
     const val TIMEOUT_SECONDS = 10L
+    const val RETRIEVE_BACKOFF_MS = 60_000L
     const val ANDROID_KEYSTORE = "AndroidKeyStore"
     const val TRANSFORMATION = "AES/GCM/NoPadding"
     const val KEY_ALIAS = "com.leviwilkerson.witnesswork.buddies.root-seed"

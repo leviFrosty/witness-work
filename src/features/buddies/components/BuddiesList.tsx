@@ -22,9 +22,12 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  */
 export default function BuddiesList({
   onInvite,
+  inviting,
   loading,
 }: {
   onInvite: () => void
+  /** An invite is being made. */
+  inviting?: boolean
   /** The first sync is still bringing buddies in; nothing to call empty yet. */
   loading?: boolean
 }) {
@@ -59,8 +62,30 @@ export default function BuddiesList({
         description={i18n.t('buddies_emptyBody')}
         action={
           <View style={{ gap: 12, alignItems: 'center' }}>
-            <ActionButton onPress={onInvite}>
-              {i18n.t('buddies_invite')}
+            <ActionButton
+              onPress={onInvite}
+              disabled={inviting}
+              accessibilityState={{ busy: !!inviting }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+              >
+                {inviting && (
+                  <ActivityIndicator
+                    color={theme.colors.textInverse}
+                    accessibilityLabel={i18n.t('buddies_creatingInvite')}
+                  />
+                )}
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('lg'),
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('buddies_invite')}
+                </Text>
+              </View>
             </ActionButton>
             <Button
               onPress={() =>

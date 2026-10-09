@@ -809,13 +809,17 @@ describe('buddies pairing', () => {
     ])
   })
 
-  it('keeps retrying a removal the relay did not finish', async () => {
-    const { fake, offlineOps, user } = setup()
+  it('keeps retrying a removal the relay did not finish, waiting longer each time', async () => {
+    const { fake, offlineOps, user, advance, setAfterOp } = setup()
     const mom = user('Mom')
     const anna = user('Anna')
     await pair(mom, anna)
     const annasSlotsInMomsInbox = () =>
       fake.inboxes.get(mom.inboxId)!.slots.size
+    const tries: string[] = []
+    setAfterOp(async (op) => {
+      if (op === 'slot/remove') tries.push(op)
+    })
 
     offlineOps.add('slot/leave')
     await expect(anna.engine.removeBuddy(mom.inboxId)).rejects.toEqual(
@@ -823,11 +827,22 @@ describe('buddies pairing', () => {
     )
     expect(anna.store.getState().buddies).toEqual([])
     expect(annasSlotsInMomsInbox()).toBe(1)
+    expect(tries).toHaveLength(1)
 
+    // Syncs within the minute after a failure leave it be.
     await anna.engine.sync()
+    expect(tries).toHaveLength(1)
+    advance(60 * 1000)
+    await anna.engine.sync()
+    expect(tries).toHaveLength(2)
     expect(annasSlotsInMomsInbox()).toBe(1)
+    // The next wait is twice as long.
+    advance(60 * 1000)
+    await anna.engine.sync()
+    expect(tries).toHaveLength(2)
 
     offlineOps.clear()
+    advance(60 * 1000)
     await anna.engine.sync()
     expect(annasSlotsInMomsInbox()).toBe(0)
     expect(anna.store.getState().pendingRemovals).toEqual([])
@@ -1179,7 +1194,7 @@ describe('removed buddies stay removed', () => {
   })
 
   it("carries a removal to the User's other devices before the relay has it", async () => {
-    const { fake, offlineOps, user } = setup()
+    const { fake, offlineOps, user, advance } = setup()
     const plans: Plans = { dayPlans: [], recurringPlans: [] }
     const mom = user('Mom')
     const anna = user('Anna')
@@ -1204,6 +1219,7 @@ describe('removed buddies stay removed', () => {
 
     // The iPad finishes the removal itself once it can.
     offlineOps.clear()
+    advance(60 * 1000)
     await momsIpad.engine.sync()
     expect(fake.inboxes.get(mom.inboxId)!.slots.size).toBe(0)
     expect(cardForAnna()).toBeUndefined()
@@ -2182,11 +2198,14 @@ describe('asking to join', () => {
     const levi = env.user('Levi')
     const anna = env.user('Anna', annaPlans)
     await pair(levi, anna)
-    const registerAnna = () =>
+    const registerAnna = async () =>
       anna.engine.registerPush({
         ...device,
         templates: Object.fromEntries(
-          anna.engine.joinRequestPushKinds().map((kind) => [kind, template])
+          (await anna.engine.joinRequestPushKinds()).map((kind) => [
+            kind,
+            template,
+          ])
         ),
       })
     await registerAnna()
@@ -2221,7 +2240,7 @@ describe('asking to join', () => {
     const anna = env.user('Anna')
     await pair(env.user('Levi'), anna)
     await pair(env.user('Mom'), anna)
-    const kinds = anna.engine.joinRequestPushKinds()
+    const kinds = await anna.engine.joinRequestPushKinds()
     expect(new Set(kinds).size).toBe(2)
     for (const kind of kinds) expect(kind).toMatch(/^join\.request\.[0-9a-f]+$/)
     expect(kinds[0].length).toBeLessThanOrEqual(40)
@@ -2397,7 +2416,7 @@ describe('asking to join', () => {
   it('stops alerting for a muted buddy or with Ask to Join alerts off, and lists theirs as read', async () => {
     const { fake, levi, anna, registerAnna, advance } = await duo()
     anna.store.setState({ mutedJoinRequests: [levi.inboxId] })
-    expect(anna.engine.joinRequestPushKinds()).toEqual([])
+    expect(await anna.engine.joinRequestPushKinds()).toEqual([])
     advance(PUSH_REGISTRATION_REFRESH_MS)
     await registerAnna()
     await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
@@ -2410,7 +2429,7 @@ describe('asking to join', () => {
       mutedJoinRequests: [],
       joinRequestNotifications: false,
     })
-    expect(anna.engine.joinRequestPushKinds()).toEqual([])
+    expect(await anna.engine.joinRequestPushKinds()).toEqual([])
   })
 
   it('closes asking two hours before the start and caps open requests per buddy', async () => {

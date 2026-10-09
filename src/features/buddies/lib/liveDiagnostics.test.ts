@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   applyLiveEvent,
   initialLiveDiagnostics,
+  isLiveHealthy,
+  LIVE_HEALTHY_MS,
   LIVE_LOG_LIMIT,
   type LiveDiagnostics,
 } from '@/features/buddies/lib/liveDiagnostics'
@@ -57,5 +59,35 @@ describe('applyLiveEvent', () => {
       type: 'changed',
       seq: LIVE_LOG_LIMIT + 4,
     })
+  })
+})
+
+describe('isLiveHealthy', () => {
+  const open = (at: number) =>
+    [{ type: 'connecting' }, { type: 'open' }].reduce(
+      (state, event) => applyLiveEvent(state, event as LiveEvent, at),
+      initialLiveDiagnostics
+    )
+
+  it('is healthy while open and heard from within the ping window', () => {
+    const state = open(1000)
+    expect(isLiveHealthy(state, 1000 + LIVE_HEALTHY_MS - 1)).toBe(true)
+    expect(isLiveHealthy(state, 1000 + LIVE_HEALTHY_MS)).toBe(false)
+    const ponged = applyLiveEvent(
+      state,
+      { type: 'pong', rttMs: 40 },
+      1000 + LIVE_HEALTHY_MS
+    )
+    expect(isLiveHealthy(ponged, 1000 + LIVE_HEALTHY_MS + 1)).toBe(true)
+  })
+
+  it('is never healthy while reconnecting or stopped', () => {
+    const state = applyLiveEvent(
+      open(1000),
+      { type: 'reconnectScheduled', inMs: 1000, attempt: 1 },
+      1001
+    )
+    expect(isLiveHealthy(state, 1002)).toBe(false)
+    expect(isLiveHealthy(initialLiveDiagnostics, 0)).toBe(false)
   })
 })

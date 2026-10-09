@@ -28,6 +28,7 @@ import { syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
+import { isKnownOffline, useOnline } from '@/lib/http/online'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import GoogleDriveAccountSection from '@/features/settings/components/sync/GoogleDriveAccountSection'
 import { ICloudAccount, iCloudSync } from '@/app/sync/iCloudSync'
@@ -61,6 +62,7 @@ const PreferencesiCloudScreenInner = () => {
     lastiCloudRemoteDeviceName,
     iCloudDeviceId,
     iCloudSyncIssue,
+    iCloudSyncErrorCode,
     iCloudSyncPendingPush,
     iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
@@ -94,6 +96,7 @@ const PreferencesiCloudScreenInner = () => {
   // Re-renders when an unconfirmed upload passes its grace period, so the
   // status switches to "Uploading" without another preference change.
   const [now, setNow] = useState(() => Date.now())
+  const online = useOnline()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
   const deviceCount = usePreferences(
@@ -111,6 +114,12 @@ const PreferencesiCloudScreenInner = () => {
     const timer = setTimeout(() => setNow(Date.now()), remaining)
     return () => clearTimeout(timer)
   }, [iCloudUploadPendingSince])
+
+  // Keeps "Last synced 2 minutes ago" current while the screen is open.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(timer)
+  }, [])
 
   const showAccountChangedNotice =
     iCloudAccountChangedAt !== null && !iCloudSyncEnabled
@@ -380,10 +389,45 @@ const PreferencesiCloudScreenInner = () => {
     void applyFirstEnableChoice(choice)
   }
 
+  const reconnectGoogleDrive = () => {
+    Alert.alert(
+      i18n.t('googleDriveReconnect'),
+      i18n.t('googleDriveSyncNowReconnect_description'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('googleDriveConnectAction'),
+          onPress: () =>
+            void connectGoogleDriveFromUser({ source: 'reconnect' }),
+        },
+      ]
+    )
+  }
+
   const handleSyncNow = async () => {
-    if (!iCloudSyncEnabled) return
-    setSyncing(true)
+    if (!iCloudSyncEnabled || syncing) return
     analytics.capture('icloud_sync_manual_started')
+    // Nothing to try until the user reconnects or the connection returns;
+    // say so instead of a generic failure, or a success that only wrote to
+    // this device.
+    if (googleDrive && usePreferences.getState().googleDriveNeedsReconnect) {
+      analytics.capture('icloud_sync_manual_outcome', {
+        outcome: 'needs_reconnect',
+      })
+      reconnectGoogleDrive()
+      return
+    }
+    if (isKnownOffline()) {
+      analytics.capture('icloud_sync_manual_outcome', { outcome: 'offline' })
+      Alert.alert(
+        i18n.t('iCloudSyncNowOffline_title'),
+        i18n.t('iCloudSyncNowOffline_description')
+      )
+      return
+    }
+    setSyncing(true)
+    // The user asked: skip any backoff from earlier failures.
+    iCloudSync.resetPushBackoff()
     try {
       const merged = await iCloudSync.pullAndMerge('manual')
       const pullIssue = usePreferences.getState().iCloudSyncIssue
@@ -409,15 +453,35 @@ const PreferencesiCloudScreenInner = () => {
         { native: true }
       )
     } catch {
-      analytics.capture('icloud_sync_manual_outcome', { outcome: 'failed' })
-      Alert.alert(
-        i18n.t('error'),
-        i18n.t(
-          usePreferences.getState().iCloudUploadIssue === 'icloud-full'
-            ? syncKey('iCloudStorageFullHelp')
-            : syncKey('iCloudOperationFailed')
+      const prefs = usePreferences.getState()
+      const errorCode = prefs.iCloudSyncErrorCode
+      analytics.capture('icloud_sync_manual_outcome', {
+        outcome: 'failed',
+        error_code: errorCode ?? 'none',
+      })
+      if (googleDrive && prefs.googleDriveNeedsReconnect) {
+        reconnectGoogleDrive()
+      } else if (
+        isKnownOffline() ||
+        (errorCode === 'network' && syncTransport().writeConfirmsUpload)
+      ) {
+        Alert.alert(
+          i18n.t('iCloudSyncNowOffline_title'),
+          i18n.t('iCloudSyncNowOffline_description')
         )
-      )
+      } else {
+        Alert.alert(
+          i18n.t('error'),
+          i18n.t(
+            prefs.iCloudUploadIssue === 'icloud-full' ||
+              errorCode === 'storage-full'
+              ? syncKey('iCloudStorageFullHelp')
+              : errorCode === 'rate-limited'
+                ? syncKey('iCloudSyncNowRateLimited')
+                : syncKey('iCloudOperationFailed')
+          )
+        )
+      }
     } finally {
       setSyncing(false)
     }
@@ -440,6 +504,9 @@ const PreferencesiCloudScreenInner = () => {
       syncTransport().supportsUploadStatus() ||
       syncTransport().writeConfirmsUpload,
     needsReconnect: googleDrive && googleDriveNeedsReconnect,
+    offline: online === false,
+    errorCode: iCloudSyncErrorCode,
+    networkErrorsMeanOffline: syncTransport().writeConfirmsUpload,
     lastPulledAt: lastiCloudPulledAt,
     lastPushedAt: lastiCloudPushedAt,
     lastUploadedAt: lastiCloudUploadedAt,
@@ -883,6 +950,7 @@ const PreferencesiCloudScreenInner = () => {
             <InputRowButton
               label={i18n.t(syncKey('iCloudSyncNow'))}
               onPress={handleSyncNow}
+              disabled={syncing}
               lastInSection
             >
               <Text style={{ color: theme.colors.accent }}>
@@ -987,6 +1055,7 @@ const PreferencesiCloudScreenInner = () => {
             <InputRowButton
               label={i18n.t(syncKey('iCloudReset'))}
               onPress={handleReset}
+              disabled={syncing}
               lastInSection
             >
               <Text style={{ color: theme.colors.error }}>

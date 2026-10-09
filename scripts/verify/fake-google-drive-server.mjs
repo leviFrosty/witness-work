@@ -13,6 +13,11 @@
 //   GET  /__fake/files?account=family   names, sizes and modified times
 //   POST /__fake/quota?account=family&bytes=10   (omit bytes to lift it)
 //   POST /__fake/reset
+//   POST /__fake/fail?path=/drive/v3/about&status=403&reason=userRateLimitExceeded&count=5
+//        the next `count` (default 1) requests whose path starts with `path`
+//        (default: any) fail with Drive's error body for `status` and `reason`
+//   POST /__fake/fail?clear=1   drops the faults that haven't fired yet
+//   GET  /__fake/log   requests served since the last reset, by method and path
 //
 // Usage: node scripts/verify/fake-google-drive-server.mjs [port]
 import http from 'node:http'
@@ -51,6 +56,24 @@ http
         )
         return send(res, 200, { ok: true })
       }
+      if (url.pathname === '/__fake/fail' && req.method === 'POST') {
+        if (url.searchParams.get('clear')) {
+          drive.clearFaults()
+          return send(res, 200, { ok: true })
+        }
+        const path = url.searchParams.get('path') ?? '/'
+        const status = Number(url.searchParams.get('status') ?? 503)
+        const reason = url.searchParams.get('reason') ?? undefined
+        const count = Number(url.searchParams.get('count') ?? 1)
+        for (let i = 0; i < count; i++)
+          drive.failNext(
+            (request) => new URL(request.url).pathname.startsWith(path),
+            status,
+            reason
+          )
+        return send(res, 200, { ok: true })
+      }
+      if (url.pathname === '/__fake/log') return send(res, 200, drive.log)
       if (url.pathname === '/__fake/reset' && req.method === 'POST') {
         drive.reset()
         return send(res, 200, { ok: true })

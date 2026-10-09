@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { AppState } from 'react-native'
+import { addForegroundListener } from '@/lib/appLifecycle'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
 import debounce from 'lodash/debounce'
@@ -26,6 +26,15 @@ import { isOfflineError } from '@/lib/offlineError'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 
 interface Props {}
+
+/**
+ * Foreground reconciles at most this often. A change to the account file fires
+ * `remote-change` on its own (iCloud's metadata query, Drive's poll), and
+ * entitlement changes re-run it through customer state, so the foreground pass
+ * is only a backstop. Each one costs an account-file read, a Drive request on
+ * Android.
+ */
+const FOREGROUND_RECONCILE_INTERVAL_MS = 15 * 60_000
 
 /**
  * Keeps this device's account id in agreement with the user's other devices
@@ -245,14 +254,15 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         if (e.available) void reconcile('icloud-available')
       }
     )
-    const appStateSub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void reconcile('foreground')
-    })
+    const foregroundSub = addForegroundListener(
+      () => void reconcile('foreground'),
+      { minIntervalMs: FOREGROUND_RECONCILE_INTERVAL_MS }
+    )
 
     return () => {
       remoteSub.remove()
       availabilitySub.remove()
-      appStateSub.remove()
+      foregroundSub.remove()
       debouncedReconcile.cancel()
     }
   }, [reconcile])

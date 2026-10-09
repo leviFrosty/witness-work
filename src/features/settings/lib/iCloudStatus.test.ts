@@ -97,4 +97,38 @@ describe('buildICloudStatus', () => {
       text({ uploadConfirmationSupported: false, lastPushedAt: 900 })
     ).toBe('iCloudStatusLastSynced:900')
   })
+
+  it('says it waits for a connection instead of "Last synced" offline', () => {
+    expect(text({ offline: true, lastPulledAt: 900 })).toBe(
+      'iCloudStatusOffline'
+    )
+    // Offline beats a pending push and a stale failure alike.
+    expect(
+      text({ offline: true, pendingPush: true, issue: 'push-failed' })
+    ).toBe('iCloudStatusOffline')
+    // Still below what blocks sync outright.
+    expect(text({ offline: true, needsReconnect: true })).toBe(
+      'googleDriveStatusNeedsReconnect'
+    )
+  })
+
+  it('treats a Drive network failure as offline, but not an iCloud one', () => {
+    const failed = { issue: 'push-failed', errorCode: 'network' }
+    expect(text({ ...failed, networkErrorsMeanOffline: true })).toBe(
+      'iCloudStatusOffline'
+    )
+    expect(text(failed)).toBe('iCloudStatusRetryNeeded')
+  })
+
+  it('tells throttling and a full account apart from other failures', () => {
+    expect(text({ issue: 'push-failed', errorCode: 'rate-limited' })).toBe(
+      'iCloudStatusRateLimited'
+    )
+    expect(text({ issue: 'push-failed', errorCode: 'storage-full' })).toBe(
+      'iCloudStatusStorageFull'
+    )
+    expect(text({ issue: 'read-failed', errorCode: 'unknown' })).toBe(
+      'iCloudStatusRetryNeeded'
+    )
+  })
 })

@@ -3,6 +3,7 @@ import {
   CircleAlert as CircleAlertIcon,
   CircleCheck as CircleCheckIcon,
   Cloud as CloudIcon,
+  CloudOff as CloudOffIcon,
   RotateCw as RotateCwIcon,
   Save as SaveIcon,
 } from 'lucide-react-native'
@@ -27,6 +28,7 @@ import {
   usesGoogleDriveSync,
 } from '@/lib/syncTransport'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
+import { addReconnectListener } from '@/lib/http/online'
 import { ICloudAccount, iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
@@ -46,6 +48,7 @@ type Probe =
   | { state: 'needsConnect' } // Android: Google Drive not connected yet
   | { state: 'noBackup' } // Available but nothing there yet
   | { state: 'incomplete' } // A backup may exist but isn't fully readable yet
+  | { state: 'offline' } // Couldn't reach the cloud to look
   | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
 
 /** Analytics `import_type` for this restore: the service it reads from. */
@@ -64,6 +67,8 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
       // "Nothing to restore" here would send the user through onboarding
       // with fresh defaults that later beat their real data.
       return { state: 'incomplete' }
+    case 'offline':
+      return { state: 'offline' }
     case 'unavailable':
       return { state: 'unavailable' }
   }
@@ -152,9 +157,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     const sub = syncTransport().addRemoteChangeListener(() => {
       if (!cancelled && !found) probeRemote()
     })
+    // Back online after a search that couldn't reach the cloud.
+    const reconnectSub = addReconnectListener(() => {
+      if (!cancelled && !found) probeRemote()
+    })
     return () => {
       cancelled = true
       sub.remove()
+      reconnectSub.remove()
     }
   }, [search])
 
@@ -597,6 +607,34 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           </Card>
         )}
 
+        {probe.state === 'offline' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <LucideIcon
+              icon={CloudOffIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t(syncKey('iCloudRestoreOffline'))}
+            </Text>
+          </Card>
+        )}
+
         {probe.state === 'incomplete' && (
           <Card
             style={{
@@ -759,7 +797,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         )}
         {(probe.state === 'noBackup' ||
           probe.state === 'unavailable' ||
-          probe.state === 'incomplete') && (
+          probe.state === 'incomplete' ||
+          probe.state === 'offline') && (
           <Button
             onPress={() => {
               setSearch((n) => n + 1)

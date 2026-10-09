@@ -389,7 +389,14 @@ Unchanged values, hydration, and developer resets do not emit transitions.
 upload failed/recovered, and account-changed outcomes remain.
 
 First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
-sync and reset retain started/outcome; reset adoption remains. Image toggle/outcome,
+sync and reset retain started/outcome; reset adoption remains.
+`icloud_sync_manual_outcome` has `outcome` `completed`, `failed`, `offline` (the
+OS reported no connection, so nothing was tried) or `needs_reconnect` (Android,
+Google Drive needs the user again); a failure carries the transport's
+`error_code` (`network`, `rate-limited`, `storage-full`, `unauthorized`,
+`not-found`, `unknown`, or `none`). It answers how often "Sync now" fails, and
+why. `icloud_restore_probe_result` has `status: offline` when onboarding
+couldn't reach the cloud to look for a backup. Image toggle/outcome,
 automatic enable outcome, cloud photo removal, and device remove/failure remain.
 Device list views, generic sync notices, and resolution-link clicks are removed.
 A local manual-sync completion does not prove Apple's cloud replication finished.

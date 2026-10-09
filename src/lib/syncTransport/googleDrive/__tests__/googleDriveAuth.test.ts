@@ -166,6 +166,46 @@ describe('googleDriveAccessToken', () => {
     expect(usePreferences.getState().googleDriveNeedsReconnect).toBe(false)
   })
 
+  it.each([
+    ['userRateLimitExceeded', 'rate-limited'],
+    ['dailyLimitExceeded', 'rate-limited'],
+    [undefined, 'network'],
+  ])(
+    'never asks to reconnect over a 403 %s from the account check',
+    async (reason, code) => {
+      const { connectGoogleDrive, googleDriveAccessToken, usePreferences } =
+        await load()
+      await connectGoogleDrive()
+      // Both the first check and the retry with a fresh token.
+      for (let i = 0; i < 2; i++)
+        drive.current!.failNext(
+          (r) => r.url.includes('/drive/v3/about'),
+          403,
+          reason
+        )
+      await expect(
+        googleDriveAccessToken({ refresh: true })
+      ).rejects.toMatchObject({ code })
+      expect(usePreferences.getState().googleDriveNeedsReconnect).toBe(false)
+    }
+  )
+
+  it('still asks to reconnect when Drive refuses the token itself', async () => {
+    const { connectGoogleDrive, googleDriveAccessToken, usePreferences } =
+      await load()
+    await connectGoogleDrive()
+    for (let i = 0; i < 2; i++)
+      drive.current!.failNext(
+        (r) => r.url.includes('/drive/v3/about'),
+        403,
+        'insufficientPermissions'
+      )
+    await expect(
+      googleDriveAccessToken({ refresh: true })
+    ).rejects.toMatchObject({ code: 'unauthorized' })
+    expect(usePreferences.getState().googleDriveNeedsReconnect).toBe(true)
+  })
+
   it('refuses without a connected account', async () => {
     const { googleDriveAccessToken } = await load()
     await expect(

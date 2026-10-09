@@ -67,13 +67,14 @@ export type SyncTransportErrorCode =
 
 /**
  * A failed transport operation, classified so the engine never inspects message
- * text. iCloud's bridge rejects with plain errors and reports quota through
- * `uploadStatus` instead.
+ * text. iCloud reports a full account through `uploadStatus` rather than here.
  */
 export class SyncTransportError extends Error {
   constructor(
     readonly code: SyncTransportErrorCode,
-    message: string = code
+    message: string = code,
+    /** How long the service asked callers to wait (`Retry-After`), if it did. */
+    readonly retryAfterMs: number | null = null
   ) {
     super(message)
     this.name = 'SyncTransportError'
@@ -140,6 +141,11 @@ export interface SyncTransport {
   addRemoteChangeListener(
     listener: (event: { modifiedAt: number }) => void
   ): TransportSubscription
+  /**
+   * Transports that poll for remote changes (Drive) ask `shouldPoll` before
+   * each poll, so a device that doesn't sync doesn't keep listing the folder.
+   */
+  setShouldPoll?(shouldPoll: () => boolean): void
   /** Fires when `isAvailable` or the account behind it changes. */
   addAvailabilityChangeListener(
     listener: (event: { available: boolean }) => void

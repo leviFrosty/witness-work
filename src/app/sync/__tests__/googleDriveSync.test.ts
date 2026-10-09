@@ -73,6 +73,7 @@ const visit = (id: string, contactId: string, updatedAt: number) => ({
 })
 
 let drive = createFakeGoogleDrive()
+let listingClock = 0
 
 /**
  * Boots one device: its own engine, stores and Drive transport, signed in to
@@ -143,6 +144,9 @@ async function device(
     isConnected: auth.isGoogleDriveConnected,
     accountToken: () => usePreferences.getState().googleDriveAccountId,
     addAvailabilityListener: auth.addGoogleDriveAvailabilityListener,
+    // Devices here act within the same millisecond; real ones are seconds
+    // apart, past the window in which a listing is reused.
+    now: () => (listingClock += 60_000),
   })
   registerAndroidSyncTransport(transport)
   /** Connects `next`'s Google Drive, as Settings does. */
@@ -359,6 +363,8 @@ describe('Google Drive sync between Android devices', () => {
       ] as never,
     })
     expect(await phone.iCloudSync.push('manual')).toBe(true)
+    // Photos upload as their own job after the snapshot.
+    await phone.iCloudSync.imagePushesSettled()
     expect(drive.files('family').map((f) => f.name)).toContain(
       'witness-work-img-contact-c1--r1.jpg'
     )

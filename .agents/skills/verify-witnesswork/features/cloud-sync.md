@@ -56,7 +56,9 @@ Steps:
 
 - On a secondary Android user, `wwv ad snapshot` works but `wwv ad press` doesn't reach the app. Tap the element's center from `wwv ad snapshot -i --json` bounds with `adb shell input tap <x> <y>`.
 - Only `wwv` commands refresh the lease. A long stretch of raw `adb` commands lets it go idle and get reaped, so run `wwv doctor` now and then.
-- Taking a device "offline" from the fake: `adb reverse --remove tcp:8795`; edits stay pending and the status reads "Sync needs another attempt". Restore the forward to go back online.
+- Taking a device "offline" from the fake: `adb reverse --remove tcp:8795`; edits stay pending and the status reads "Waiting for connection". For the OS to report offline too (the "You're offline" Sync now alert), also run `adb shell svc wifi disable` and `svc data disable`; Metro and the fake still work over `adb reverse`. Restore the forward and turn both back on; pending edits push on their own.
+- Drive errors from the fake: `curl -XPOST 'localhost:8795/__fake/fail?path=/drive/v3/about&status=403&reason=userRateLimitExceeded&count=4'` fails the next matching requests (`/__fake/fail?clear=1` drops the rest). A throttled about.get must not show "Reconnect Google Drive"; throttled list/upload requests show "Google Drive is busy — retrying soon". `GET /__fake/log` lists the requests served, to count uploads per foreground.
+- Cost of a foreground: after the launch publish, coming back to the app with no edits lists the folder once and uploads nothing (`sync:push-skipped`); returns within 30 s of the last catch-up don't even list (`sync:catchUp-throttled`).
 - The fake skips Google's consent screen. A real connect needs a device signed in to a Google Account and an Android OAuth client for the build's package and signing key (ADR 0019); without one Google returns `DEVELOPER_ERROR`, shown as "Couldn't connect Google Drive".
 - Android has no background sync: edits made while the app is closed arrive the next time it opens.
 - `wwv seed` resets sync settings. Turn sync on again after seeding.

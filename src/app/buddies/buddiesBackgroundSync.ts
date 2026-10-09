@@ -12,10 +12,12 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 const BUDDIES_PUSH_TASK = 'buddies-push-sync'
 /**
  * Background time per push is about 30 seconds on iOS; Android allows a high
- * priority FCM message about 20 seconds before the job may be cut short, but
- * the sync keeps running while the process lives.
+ * priority FCM message about 20 seconds before the job may be cut short.
+ * Posting the alert and syncing both finish, or are cancelled, inside this.
  */
-const BACKGROUND_SYNC_TIMEOUT_MS = 25 * 1000
+const BACKGROUND_BUDGET_MS = 20 * 1000
+/** Each relay call's limit here, so one stalled call leaves time for the rest. */
+const BACKGROUND_REQUEST_TIMEOUT_MS = 8 * 1000
 
 type PushPayload = Exclude<
   Notifications.NotificationTaskPayload,
@@ -27,45 +29,71 @@ export const isBuddiesPush = (
 ): payload is PushPayload =>
   !('actionIdentifier' in payload) && pushMarkerOf(payload.data) !== null
 
+/** Rejects once `signal` aborts, for work that can't be cancelled itself. */
+function untilAborted(signal: AbortSignal): Promise<never> {
+  return new Promise((_, reject) =>
+    signal.addEventListener('abort', () =>
+      reject(new Error('Buddies background push ran out of time'))
+    )
+  )
+}
+
 /**
  * A Buddies push wakes the app in the background (`content-available` on iOS, a
  * data-only FCM message on Android), so what it announced is already pulled
- * when the User opens the app. On Android it also posts the push's alert. While
+ * when the User opens the app. On Android it also posts the push's alert, at
+ * the same time: the alert words itself from the event the sync reads. While
  * the app is open, BuddiesRuntime's received listener does both instead.
  */
 async function syncForPush(payload: Notifications.NotificationTaskPayload) {
   if (!isBuddiesPush(payload) || AppState.currentState === 'active')
     return Notifications.BackgroundNotificationTaskResult.NoData
-  // Android's FCM message has no title: the alert is the app's to post (first,
-  // so it doesn't wait on the sync). iOS's extension words it instead.
-  await postBuddiesAlert(payload.data).catch((error) =>
-    logger.warn('[buddies] background push alert', error)
-  )
-  if (
-    !BuddiesKeychain.isAvailable() ||
-    useBuddies.getState().registeredInboxId === null
-  )
-    return Notifications.BackgroundNotificationTaskResult.NoData
+  const controller = new AbortController()
+  const budget = setTimeout(() => controller.abort(), BACKGROUND_BUDGET_MS)
+  const call = {
+    signal: controller.signal,
+    timeoutMs: BACKGROUND_REQUEST_TIMEOUT_MS,
+  }
+  const outOfTime = untilAborted(controller.signal)
+  outOfTime.catch(() => {
+    // Each race below reports it.
+  })
+  const started =
+    BuddiesKeychain.isAvailable() &&
+    useBuddies.getState().registeredInboxId !== null
   const before = useBuddies.getState().syncSeq
-  let timer: ReturnType<typeof setTimeout> | undefined
   try {
-    await Promise.race([
-      buddiesEngine.sync(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error('Buddies background sync timed out')),
-          BACKGROUND_SYNC_TIMEOUT_MS
+    // Started first, so the alert finds the sync running and reads its event.
+    const synced = started
+      ? Promise.race([
+          buddiesEngine.sync({ ...call, automatic: true }),
+          outOfTime,
+        ]).then(
+          () => true,
+          (error: unknown) => {
+            logger.warn('[buddies] background push sync', error)
+            return false
+          }
         )
-      }),
-    ])
+      : Promise.resolve(null)
+    // Android's FCM message has no title: the alert is the app's to post. iOS's
+    // extension words it instead.
+    const alerted = Promise.race([
+      postBuddiesAlert(payload.data, controller.signal),
+      outOfTime,
+    ]).catch((error: unknown) =>
+      logger.warn('[buddies] background push alert', error)
+    )
+    const [outcome] = await Promise.all([synced, alerted])
+    if (outcome === null)
+      return Notifications.BackgroundNotificationTaskResult.NoData
+    if (!outcome) return Notifications.BackgroundNotificationTaskResult.Failed
     return useBuddies.getState().syncSeq === before
       ? Notifications.BackgroundNotificationTaskResult.NoData
       : Notifications.BackgroundNotificationTaskResult.NewData
-  } catch (error) {
-    logger.warn('[buddies] background push sync', error)
-    return Notifications.BackgroundNotificationTaskResult.Failed
   } finally {
-    clearTimeout(timer)
+    clearTimeout(budget)
+    controller.abort()
   }
 }
 

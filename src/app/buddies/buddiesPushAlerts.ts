@@ -66,12 +66,32 @@ export function remoteMessageData(
   return trigger?.remoteMessage?.data
 }
 
-function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+/**
+ * Runs `work` with a signal that aborts after `ms` or with the caller's; the
+ * result rejects then too, even when `work` can't be cancelled.
+ */
+function withTimeout<T>(
+  work: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+  signal?: AbortSignal
+): Promise<T> {
+  const controller = new AbortController()
   let timer: ReturnType<typeof setTimeout> | undefined
+  const onAbort = () => controller.abort()
+  signal?.addEventListener('abort', onAbort)
+  if (signal?.aborted) controller.abort()
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error('Buddies alert timed out')), ms)
+    const fail = () => reject(new Error('Buddies alert timed out'))
+    timer = setTimeout(() => {
+      controller.abort()
+      fail()
+    }, ms)
+    controller.signal.addEventListener('abort', fail)
   })
-  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+  return Promise.race([work(controller.signal), timeout]).finally(() => {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', onAbort)
+  })
 }
 
 /**
@@ -84,7 +104,9 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
  * shows alerts too; the same push posted twice replaces itself.
  */
 export async function postBuddiesAlert(
-  data: Record<string, unknown> | undefined
+  data: Record<string, unknown> | undefined,
+  /** The background task's: its time is up. */
+  signal?: AbortSignal
 ) {
   if (Platform.OS !== 'android') return
   const push = androidBuddiesPush(data)
@@ -92,8 +114,10 @@ export async function postBuddiesAlert(
   let outcome: BuddyAlertOutcome | { failed: 'error' }
   try {
     outcome = await withTimeout(
-      buddiesEngine.describePush(push.marker),
-      DESCRIBE_TIMEOUT_MS
+      (describeSignal) =>
+        buddiesEngine.describePush(push.marker, { signal: describeSignal }),
+      DESCRIBE_TIMEOUT_MS,
+      signal
     )
   } catch (error) {
     logger.warn('[buddies] alert', error)

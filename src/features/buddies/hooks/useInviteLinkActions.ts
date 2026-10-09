@@ -3,7 +3,7 @@ import { useToastController } from '@tamagui/toast'
 import * as Clipboard from 'expo-clipboard'
 import i18n from '@/lib/locales'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { shareInviteLink } from '@/features/buddies/lib/shareInvite'
 
 /**
@@ -39,7 +39,12 @@ export default function useInviteLinkActions(inviteId: string | null) {
           onPress: () =>
             buddiesEngine
               .cancelInvite(inviteId)
-              .catch((error) => Alert.alert(buddiesErrorMessage(error))),
+              .catch((error) =>
+                alertBuddiesError(
+                  i18n.t('buddies_errorCancelInviteTitle'),
+                  error
+                )
+              ),
         },
       ]
     )

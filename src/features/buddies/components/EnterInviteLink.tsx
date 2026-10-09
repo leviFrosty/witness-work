@@ -49,7 +49,11 @@ export default function EnterInviteLink() {
           onPress: (value?: string) => {
             const link = value?.trim() ?? ''
             if (isInviteLink(link)) open(link)
-            else Alert.alert(i18n.t('buddies_invalidLink'))
+            else
+              Alert.alert(
+                i18n.t('buddies_enterInviteLink'),
+                i18n.t('buddies_invalidLink')
+              )
           },
         },
       ],

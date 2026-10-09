@@ -14,7 +14,11 @@ import { useProfile } from '@/stores/profile'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import InviteShareSummary from '@/features/buddies/components/InviteShareSummary'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
+import {
+  buddiesErrorMessage,
+  isRetryableBuddiesError,
+} from '@/features/buddies/lib/buddiesErrors'
 import { buddyTenureLabel } from '@/features/buddies/lib/buddyProfile'
 import type {
   BuddyAvatar as SharedAvatar,
@@ -33,7 +37,8 @@ type Preview =
       tenure?: BuddyTenure
       expiresAt: number
     }
-  | { state: 'error'; message: string }
+  /** `retryable`: the connection, a rate limit, or something unexpected. */
+  | { state: 'error'; message: string; retryable: boolean }
 
 /**
  * The pre-accept screen: who is inviting, what each side sees, and what is
@@ -45,6 +50,7 @@ export default function BuddyInviteScreen({ route }: Props) {
   const hasName = useProfile((state) => state.name.trim().length > 0)
   const [preview, setPreview] = useState<Preview>({ state: 'loading' })
   const [accepting, setAccepting] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const { link } = route.params
 
   useEffect(() => {
@@ -56,12 +62,21 @@ export default function BuddyInviteScreen({ route }: Props) {
       })
       .catch((error) => {
         if (!cancelled)
-          setPreview({ state: 'error', message: buddiesErrorMessage(error) })
+          setPreview({
+            state: 'error',
+            message: buddiesErrorMessage(error),
+            retryable: isRetryableBuddiesError(error),
+          })
       })
     return () => {
       cancelled = true
     }
-  }, [link])
+  }, [link, attempt])
+
+  const retry = () => {
+    setPreview({ state: 'loading' })
+    setAttempt((count) => count + 1)
+  }
 
   const accept = async () => {
     setAccepting(true)
@@ -74,7 +89,7 @@ export default function BuddyInviteScreen({ route }: Props) {
       )
       navigation.goBack()
     } catch (error) {
-      Alert.alert(buddiesErrorMessage(error))
+      alertBuddiesError(i18n.t('buddies_errorAcceptTitle'), error)
     } finally {
       setAccepting(false)
     }
@@ -83,7 +98,9 @@ export default function BuddyInviteScreen({ route }: Props) {
   if (preview.state === 'loading') {
     return (
       <View style={{ flex: 1, justifyContent: 'center' }}>
-        <ActivityIndicator />
+        <ActivityIndicator
+          accessibilityLabel={i18n.t('buddies_inviteLoading')}
+        />
       </View>
     )
   }
@@ -92,8 +109,13 @@ export default function BuddyInviteScreen({ route }: Props) {
     return (
       <Wrapper insets='bottom' style={{ flex: 1 }}>
         <View style={{ padding: 20 }}>
-          <Card>
+          <Card style={{ gap: 12 }}>
             <Text>{preview.message}</Text>
+            {preview.retryable && (
+              <ActionButton onPress={retry}>
+                {i18n.t('buddies_tryAgain')}
+              </ActionButton>
+            )}
           </Card>
         </View>
       </Wrapper>

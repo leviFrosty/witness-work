@@ -17,14 +17,23 @@ import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyRequestRow from '@/features/buddies/components/BuddyRequestRow'
 import useInviteLinkActions from '@/features/buddies/hooks/useInviteLinkActions'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import {
+  buddiesErrorMessage,
+  isRetryableBuddiesError,
+} from '@/features/buddies/lib/buddiesErrors'
 import { BuddyInviteError } from '@/features/buddies/lib/engine'
-import { MAX_BUDDIES } from '@/features/buddies/lib/state'
+import { isRelayConnectivityError } from '@/features/buddies/lib/relay'
+import { startFallbackPoll } from '@/features/buddies/lib/autoSync'
+import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const QR_SIZE = 240
 const APP_ICON = require('@/assets/icon.png')
-/** In person, the claim should show up while the code is still on screen. */
-const POLL_INTERVAL_MS = 3000
+/**
+ * The live connection shows a claim at once. Without it, in person, the claim
+ * should still show up while the code is on screen.
+ */
+const POLL_INTERVAL_MS = 15 * 1000
 
 /** The invite the last code showed, reused until someone uses it. */
 let lastCodeInviteId: string | null = null
@@ -33,7 +42,9 @@ type CodeState =
   | { state: 'loading' }
   | { state: 'ready'; inviteId: string; link: string }
   | { state: 'full' }
-  | { state: 'error' }
+  /** The relay's cap on invites still waiting to be accepted. */
+  | { state: 'openInvites' }
+  | { state: 'error'; message: string; retryable: boolean }
 
 /** Reuses the invite passed in or the last code shown, else creates one. */
 async function resolveCodeInvite(inviteId?: string): Promise<CodeState> {
@@ -47,14 +58,27 @@ async function resolveCodeInvite(inviteId?: string): Promise<CodeState> {
   try {
     const link = await buddiesEngine.createInvite()
     const created = useBuddies.getState().outgoingInvites.at(-1)
-    if (!created) return { state: 'error' }
+    if (!created) return codeError(null)
     lastCodeInviteId = created.inviteId
     return { state: 'ready', inviteId: created.inviteId, link }
   } catch (error) {
-    return error instanceof BuddyInviteError && error.reason === 'limit'
-      ? { state: 'full' }
-      : { state: 'error' }
+    if (error instanceof BuddyInviteError && error.reason === 'limit')
+      return { state: 'full' }
+    if (error instanceof BuddyInviteError && error.reason === 'openInvites')
+      return { state: 'openInvites' }
+    return codeError(error)
   }
+}
+
+/** Why no code: the connection's copy offers a retry; other causes say what. */
+function codeError(error: unknown): CodeState {
+  return isRelayConnectivityError(error) || error === null
+    ? { state: 'error', message: i18n.t('buddies_codeError'), retryable: true }
+    : {
+        state: 'error',
+        message: buddiesErrorMessage(error),
+        retryable: isRetryableBuddiesError(error),
+      }
 }
 
 /**
@@ -98,13 +122,14 @@ export default function BuddyCodePanel({
     setAttempt((count) => count + 1)
   }
 
-  // Poll while the code waits to be scanned, so the request appears in place.
+  // While the code waits to be scanned, the request appears in place: the live
+  // connection says when, and polls stand in while it's down.
   useEffect(() => {
     if (!shownInviteId || claim) return
-    const timer = setInterval(() => {
-      void buddiesEngine.sync().catch(() => {})
-    }, POLL_INTERVAL_MS)
-    return () => clearInterval(timer)
+    return startFallbackPoll(
+      () => buddiesEngine.sync({ automatic: true }).then(() => true),
+      POLL_INTERVAL_MS
+    )
   }, [shownInviteId, claim])
 
   const closed = code.state === 'ready' && !invite && !claim
@@ -118,7 +143,7 @@ export default function BuddyCodePanel({
   if (code.state === 'loading') {
     return (
       <View style={{ height: QR_SIZE, justifyContent: 'center' }}>
-        <ActivityIndicator />
+        <ActivityIndicator accessibilityLabel={i18n.t('buddies_codeLoading')} />
       </View>
     )
   }
@@ -131,9 +156,11 @@ export default function BuddyCodePanel({
         <Text>
           {code.state === 'full'
             ? i18n.t('buddies_codeFull', { max: MAX_BUDDIES })
-            : i18n.t('buddies_codeError')}
+            : code.state === 'openInvites'
+              ? i18n.t('buddies_openInvitesLimit', { max: MAX_OPEN_INVITES })
+              : code.message}
         </Text>
-        {code.state === 'error' && (
+        {code.state === 'error' && code.retryable && (
           <ActionButton onPress={retry}>
             {i18n.t('buddies_tryAgain')}
           </ActionButton>

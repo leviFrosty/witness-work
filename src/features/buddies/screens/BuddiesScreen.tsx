@@ -1,5 +1,10 @@
 import { ReactNode, useCallback, useState } from 'react'
-import { Alert, RefreshControl, ScrollView, View } from 'react-native'
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ellipsis as EllipsisIcon, Plus as PlusIcon } from 'lucide-react-native'
@@ -18,11 +23,11 @@ import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
 import BuddiesSyncNotice from '@/features/buddies/components/BuddiesSyncNotice'
 import EnterInviteLink from '@/features/buddies/components/EnterInviteLink'
 import useBuddiesSyncStatus from '@/features/buddies/hooks/useBuddiesSyncStatus'
+import useInviteAction from '@/features/buddies/hooks/useInviteAction'
 import useLiveBuddiesSync from '@/features/buddies/hooks/useLiveBuddiesSync'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
-import { createAndShareInvite } from '@/features/buddies/lib/shareInvite'
 import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
@@ -43,6 +48,7 @@ export default function BuddiesScreen({
   const needsOnboarding = useBuddies((state) => !state.onboardingComplete)
   const [refreshing, setRefreshing] = useState(false)
   const syncStatus = useBuddiesSyncStatus()
+  const { invite, inviting } = useInviteAction()
 
   useLiveBuddiesSync()
 
@@ -55,7 +61,7 @@ export default function BuddiesScreen({
       await buddiesEngine.sync()
     } catch (error) {
       if (!syncReadInbox(useBuddies.getState().lastSyncAt, startedAt))
-        Alert.alert(buddiesErrorMessage(error))
+        alertBuddiesError(i18n.t('buddies_errorRefreshTitle'), error)
     } finally {
       setRefreshing(false)
     }
@@ -69,11 +75,6 @@ export default function BuddiesScreen({
       )
     }, [])
   )
-
-  const invite = () =>
-    createAndShareInvite().catch((error) =>
-      Alert.alert(buddiesErrorMessage(error))
-    )
 
   if (needsOnboarding) {
     return (
@@ -163,14 +164,23 @@ export default function BuddiesScreen({
                 />
               </View>
             </PullDownMenu>
-            <IconButton
-              icon={PlusIcon}
-              size='lg'
-              style={headerButton}
-              color={theme.colors.accent}
-              accessibilityLabel={i18n.t('buddies_inviteA11y')}
-              onPress={invite}
-            />
+            {inviting ? (
+              <View style={headerButton}>
+                <ActivityIndicator
+                  color={theme.colors.accent}
+                  accessibilityLabel={i18n.t('buddies_creatingInvite')}
+                />
+              </View>
+            ) : (
+              <IconButton
+                icon={PlusIcon}
+                size='lg'
+                style={headerButton}
+                color={theme.colors.accent}
+                accessibilityLabel={i18n.t('buddies_inviteA11y')}
+                onPress={invite}
+              />
+            )}
           </View>
         </View>
         <BuddiesSyncNotice
@@ -179,7 +189,11 @@ export default function BuddiesScreen({
           onRetry={syncStatus.retry}
         />
         <EnterInviteLink />
-        <BuddiesList onInvite={invite} loading={syncStatus.firstLoad} />
+        <BuddiesList
+          onInvite={invite}
+          inviting={inviting}
+          loading={syncStatus.firstLoad}
+        />
         {hasInbox && <BuddiesNotificationsCard />}
         <BuddiesFeedbackCard />
       </ScrollView>

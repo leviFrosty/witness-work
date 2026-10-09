@@ -33,7 +33,9 @@ export function prepareBuddiesPush({
     try {
       if (useBuddies.getState().registeredInboxId === null)
         throw new Error('Buddies has not started on this device')
-      const me = deriveIdentity(fromB64u(BuddiesKeychain.getOrCreateRootSeed()))
+      const me = deriveIdentity(
+        fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
+      )
       const relay = createRelayClient({ baseUrl: apis.buddies, randomBytes })
       const { events } = await relay.syncInbox(
         { inboxId: me.inboxId, ownerSeed: me.ownerSeed, ownerPub: me.ownerPub },
@@ -45,7 +47,7 @@ export function prepareBuddiesPush({
           : events.find((candidate) => candidate.seq === seq)
       if (!event) throw new Error('No such event in the inbox')
       const templates: Record<string, { title: string; body: string }> =
-        buddiesPushTemplates()
+        await buddiesPushTemplates()
       const template = templates[event.kind] ?? { title: event.kind, body: '' }
       const build = (withEvent: boolean) => ({
         'Simulator Target Bundle': Application.applicationId,

@@ -22,10 +22,12 @@ const WRITE_DEBOUNCE_MS = 1000
  * push, and the app's language and date conventions. Null when there's nothing
  * to word: Buddies not started here, or its notifications off.
  */
-export function buddiesAlertSnapshot(): string | null {
+export function buddiesAlertSnapshot(): string | null | undefined {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
   if (registeredInboxId === null || !notificationsEnabled) return null
   const context = buddiesEngine.alertContext()
+  // The seed isn't read yet: not "nothing to word", so keep what's there.
+  if (context === undefined) return undefined
   if (!context) return null
   return JSON.stringify({
     ...context,
@@ -40,11 +42,19 @@ let written: string | null | undefined
 /** Hands the extension the current snapshot, or clears it. */
 export function writeBuddiesAlertContext() {
   if (!BuddiesKeychain.isAlertContextAvailable()) return
-  let snapshot: string | null
+  let snapshot: string | null | undefined
   try {
     snapshot = buddiesAlertSnapshot()
   } catch (error) {
     logger.warn('[buddies] alert context', error)
+    return
+  }
+  if (snapshot === undefined) {
+    // Written once the seed has been read off the JS thread.
+    void buddiesEngine
+      .loadIdentity()
+      .then(writeBuddiesAlertContext)
+      .catch((error) => logger.warn('[buddies] alert context', error))
     return
   }
   if (snapshot === written) return

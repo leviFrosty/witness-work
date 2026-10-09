@@ -179,7 +179,7 @@ export default function NotificationResponseListener() {
         })
         // Fetch what the push announced while the screen opens; the tray
         // shows the check and offers Try Again if it fails.
-        const synced = syncBuddyNotifications('open')
+        const synced = syncBuddyNotifications('open', push.seq)
         setPending({ type: 'buddies', push, synced })
       }
       setRetry(0)

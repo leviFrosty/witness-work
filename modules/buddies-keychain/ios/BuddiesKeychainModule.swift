@@ -34,23 +34,22 @@ public class BuddiesKeychainModule: Module {
     }
 
     Function("getOrCreateRootSeed") { () throws -> String in
-      if let existing = try self.readRootSeed() {
-        return existing
-      }
-      var bytes = [UInt8](repeating: 0, count: 32)
-      let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-      guard status == errSecSuccess else {
-        throw BuddiesKeychainError(message: "Could not create root seed", status: status)
-      }
-      let created = Self.base64url(Data(bytes))
-      if try self.addRootSeed(created) {
-        return created
-      }
-      // Another device's seed synced in between the read and the add: adopt it.
-      guard let synced = try self.readRootSeed() else {
-        throw BuddiesKeychainError(message: "Root seed vanished after duplicate", status: errSecItemNotFound)
-      }
-      return synced
+      return try self.getOrCreateRootSeed()
+    }
+
+    // The same, off the JS thread, so both platforms share one async API (a
+    // first read on Android can wait on Block Store). JS falls back to the
+    // functions above on binaries without these.
+    AsyncFunction("peekRootSeedAsync") { () throws -> String? in
+      return try self.readRootSeed()
+    }
+
+    AsyncFunction("getOrCreateRootSeedAsync") { () throws -> String in
+      return try self.getOrCreateRootSeed()
+    }
+
+    AsyncFunction("deleteRootSeedAsync") { () throws in
+      try self.deleteRootSeed()
     }
 
     Function("setAlertContext") { (json: String?) throws in
@@ -68,12 +67,36 @@ public class BuddiesKeychainModule: Module {
     }
 
     Function("deleteRootSeed") { () throws in
-      var query = self.baseQuery()
-      query[kSecAttrSynchronizable as String] = kSecAttrSynchronizableAny
-      let status = SecItemDelete(query as CFDictionary)
-      guard status == errSecSuccess || status == errSecItemNotFound else {
-        throw BuddiesKeychainError(message: "Could not delete root seed", status: status)
-      }
+      try self.deleteRootSeed()
+    }
+  }
+
+  private func getOrCreateRootSeed() throws -> String {
+    if let existing = try readRootSeed() {
+      return existing
+    }
+    var bytes = [UInt8](repeating: 0, count: 32)
+    let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+    guard status == errSecSuccess else {
+      throw BuddiesKeychainError(message: "Could not create root seed", status: status)
+    }
+    let created = Self.base64url(Data(bytes))
+    if try addRootSeed(created) {
+      return created
+    }
+    // Another device's seed synced in between the read and the add: adopt it.
+    guard let synced = try readRootSeed() else {
+      throw BuddiesKeychainError(message: "Root seed vanished after duplicate", status: errSecItemNotFound)
+    }
+    return synced
+  }
+
+  private func deleteRootSeed() throws {
+    var query = baseQuery()
+    query[kSecAttrSynchronizable as String] = kSecAttrSynchronizableAny
+    let status = SecItemDelete(query as CFDictionary)
+    guard status == errSecSuccess || status == errSecItemNotFound else {
+      throw BuddiesKeychainError(message: "Could not delete root seed", status: status)
     }
   }
 

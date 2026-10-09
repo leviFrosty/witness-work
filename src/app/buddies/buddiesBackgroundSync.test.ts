@@ -85,15 +85,42 @@ describe('the background push task', () => {
     return task({ data: payload(data) })
   }
 
-  it("posts the push's alert, then syncs what it announced", async () => {
+  it("posts the push's alert while it syncs what it announced, cancellably", async () => {
     calls.length = 0
     const data = {
       fallbackTitle: 'New invitation',
       body: JSON.stringify({ ww: { kind: 'plan.invite', seq: 3 } }),
     }
     await run(data)
-    expect(postBuddiesAlert).toHaveBeenCalledWith(data)
-    expect(calls).toEqual(['alert', 'sync'])
+    expect(postBuddiesAlert).toHaveBeenCalledWith(data, expect.any(AbortSignal))
+    // Started first, so the alert can word itself from the event it reads.
+    expect(calls).toEqual(['sync', 'alert'])
+    expect(sync).toHaveBeenCalledWith({
+      signal: expect.any(AbortSignal),
+      timeoutMs: 8000,
+      automatic: true,
+    })
+  })
+
+  it('gives up on both once the background budget runs out', async () => {
+    vi.useFakeTimers()
+    try {
+      calls.length = 0
+      let syncSignal: AbortSignal | undefined
+      sync.mockImplementationOnce(
+        async (options?: { signal?: AbortSignal }) => {
+          syncSignal = options?.signal
+          await new Promise(() => {})
+        }
+      )
+      postBuddiesAlert.mockImplementationOnce(() => new Promise(() => {}))
+      const result = run({ dataString: JSON.stringify({ ww: { kind: 'x' } }) })
+      await vi.advanceTimersByTimeAsync(20 * 1000)
+      await expect(result).resolves.toBe(3)
+      expect(syncSignal?.aborted).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('still syncs when posting the alert fails', async () => {

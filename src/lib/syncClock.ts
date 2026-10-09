@@ -2,7 +2,7 @@ import apis from '@/constants/apis'
 
 let offsetMs = 0
 let calibratedOffset = false
-let anchor: { time: number; elapsed: number } | undefined
+let anchor: { time: number; elapsed: number; wall: number } | undefined
 const uncalibratedStamps = new Set<number>()
 const correctedStamps = new Map<number, number>()
 let calibratedAt = 0
@@ -24,9 +24,14 @@ const elapsedNow = () => globalThis.performance?.now() ?? Date.now()
 
 /** Sync metadata uses a calibrated clock; calendar dates keep the user's clock. */
 export function syncNow(): number {
-  return anchor
-    ? anchor.time + elapsedNow() - anchor.elapsed
-    : Date.now() + offsetMs
+  if (!anchor) return Date.now() + offsetMs
+  // The monotonic clock ignores wall-clock changes, which is the point, but
+  // it also stops while the device sleeps (iOS and Android). Once the wall
+  // clock has moved further, the device slept, so take its larger step: a
+  // stamp that falls behind would lose to older edits from other devices.
+  const elapsed = elapsedNow() - anchor.elapsed
+  const wall = Date.now() - anchor.wall
+  return anchor.time + Math.max(elapsed, wall)
 }
 
 export const hasCalibratedSyncClock = () => calibratedOffset
@@ -64,13 +69,20 @@ export const correctedSyncTimestamp = (value: number) =>
 /**
  * Best effort HTTPS Date calibration using the existing public health endpoint.
  * Hourly after a success; after failures (offline, ww-api down) it backs off
- * instead of adding a request, and up to 3 s, to every push.
+ * instead of adding a request, and up to 3 s, to every push. `force` skips both
+ * limits, for a server that just refused a timestamp.
  */
-export function refreshSyncClock(): Promise<number | null> {
+export function refreshSyncClock({ force = false } = {}): Promise<
+  number | null
+> {
   if (calibration) return calibration
-  if (calibratedAt && elapsedNow() - calibratedAt < 60 * 60_000)
+  if (!force && calibratedAt && elapsedNow() - calibratedAt < 60 * 60_000)
     return Promise.resolve(null)
-  if (failures && elapsedNow() - failedAt < calibrationBackoffMs(failures))
+  if (
+    !force &&
+    failures &&
+    elapsedNow() - failedAt < calibrationBackoffMs(failures)
+  )
     return Promise.resolve(null)
   calibration = (async () => {
     const controller = new AbortController()
@@ -99,7 +111,7 @@ export function refreshSyncClock(): Promise<number | null> {
       }
       uncalibratedStamps.clear()
       calibratedOffset = true
-      anchor = { time, elapsed: elapsedNow() }
+      anchor = { time, elapsed: elapsedNow(), wall: Date.now() }
       calibratedAt = elapsedNow()
       failures = 0
       return offsetMs

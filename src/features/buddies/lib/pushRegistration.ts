@@ -57,13 +57,15 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
  * One template per buddy whose requests to join may alert this device, all with
  * the same text; a muted buddy's kind is left out.
  */
-const joinRequestTemplates = (): Record<JoinRequestPushKind, PushTemplate> => {
+const joinRequestTemplates = async (): Promise<
+  Record<JoinRequestPushKind, PushTemplate>
+> => {
   const template = {
     title: i18n.t('buddies_pushJoinRequestTitle'),
     body: i18n.t('buddies_pushJoinRequestBody'),
   }
   return Object.fromEntries(
-    buddiesEngine.joinRequestPushKinds().map((kind) => [kind, template])
+    (await buddiesEngine.joinRequestPushKinds()).map((kind) => [kind, template])
   ) as Record<JoinRequestPushKind, PushTemplate>
 }
 
@@ -144,9 +146,9 @@ const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
  * Every template this device registers while Buddies notifications are on: the
  * relay's alert text, which the app replaces with a named alert.
  */
-export const buddiesPushTemplates = () => ({
+export const buddiesPushTemplates = async () => ({
   ...pushTemplates(),
-  ...joinRequestTemplates(),
+  ...(await joinRequestTemplates()),
   ...badgeTemplates(),
 })
 
@@ -158,19 +160,23 @@ let registration: Promise<void> = Promise.resolve()
 
 /**
  * A registration that hangs (the APNs token can, and so can the FCM token
- * without Google Play services) stops holding up the next.
+ * without Google Play services) stops holding up the next; its relay call is
+ * cancelled.
  */
 const REGISTRATION_TIMEOUT_MS = 30 * 1000
 
-function withTimeout(work: Promise<void>): Promise<void> {
+function withTimeout(work: (signal: AbortSignal) => Promise<void>) {
+  const controller = new AbortController()
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(
-      () => reject(new Error('Buddies push registration timed out')),
-      REGISTRATION_TIMEOUT_MS
-    )
+    timer = setTimeout(() => {
+      controller.abort()
+      reject(new Error('Buddies push registration timed out'))
+    }, REGISTRATION_TIMEOUT_MS)
   })
-  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+  return Promise.race([work(controller.signal), timeout]).finally(() =>
+    clearTimeout(timer)
+  )
 }
 
 /**
@@ -178,17 +184,18 @@ function withTimeout(work: Promise<void>): Promise<void> {
  * system allows notifications. With Buddies notifications off here, it
  * registers no templates, so the relay sends this device nothing. An unchanged
  * registration is only re-sent once a day, so calling this often is cheap. Call
- * it again when buddies, join request mutes, or badge alerts change.
+ * it again when buddies, join request mutes, badge alerts, or the push token
+ * change.
  */
 export function registerBuddiesPush(): Promise<void> {
-  const run = registration.then(() => withTimeout(register()))
+  const run = registration.then(() => withTimeout(register))
   registration = run.catch(() => {
     // The caller sees the failure; the next registration still runs.
   })
   return run
 }
 
-async function register() {
+async function register(signal: AbortSignal) {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
   if (registeredInboxId === null) return
   const permission = await Notifications.getPermissionsAsync()
@@ -200,10 +207,13 @@ async function register() {
     return
   }
   try {
-    const outcome = await buddiesEngine.registerPush({
-      ...(await pushAddress()),
-      templates: notificationsEnabled ? buddiesPushTemplates() : {},
-    })
+    const outcome = await buddiesEngine.registerPush(
+      {
+        ...(await pushAddress()),
+        templates: notificationsEnabled ? await buddiesPushTemplates() : {},
+      },
+      { signal }
+    )
     if (outcome !== 'unchanged')
       analytics.capture('buddies_push_registration', { outcome })
   } catch (error) {

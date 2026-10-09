@@ -63,7 +63,9 @@ describe('postBuddiesAlert', () => {
     describePush.mockResolvedValue({ alert: { type: 'share', name: 'Anna' } })
     await postBuddiesAlert(data())
 
-    expect(describePush).toHaveBeenCalledWith(marker)
+    expect(describePush).toHaveBeenCalledWith(marker, {
+      signal: expect.any(AbortSignal),
+    })
     expect(setChannel).toHaveBeenCalled()
     expect(schedule).toHaveBeenCalledWith({
       identifier: 'buddies-12',

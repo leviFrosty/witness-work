@@ -170,7 +170,7 @@ it("opens the tray when a reminder's record is gone", async () => {
   expect(runtime.requestTray).toHaveBeenCalled()
 })
 
-it('syncs and opens the tray for a Buddies push', async () => {
+it('syncs up to the push and opens the tray for a Buddies push', async () => {
   runtime.ready = true
   await act(async () => {
     renderer = create(<NotificationResponseListener />)
@@ -183,7 +183,8 @@ it('syncs and opens the tray for a Buddies push', async () => {
       })
     )
   })
-  expect(runtime.sync).toHaveBeenCalledWith('open')
+  // A sync already past the push's event needn't run again.
+  expect(runtime.sync).toHaveBeenCalledWith('open', 4)
   expect(runtime.requestTray).toHaveBeenCalled()
 })
 

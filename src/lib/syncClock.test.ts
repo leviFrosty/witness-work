@@ -30,6 +30,29 @@ describe('sync clock', () => {
     expect(clock.syncNow()).toBe(trusted + 1000)
     expect(clock.syncTimestamp(trusted + 2000)).toBe(trusted + 2001)
   })
+  it('keeps up with the wall clock after the device sleeps', async () => {
+    vi.useFakeTimers()
+    const trusted = Date.UTC(2026, 8, 30)
+    vi.setSystemTime(trusted)
+    let elapsed = 0
+    vi.stubGlobal('performance', { now: () => elapsed })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        headers: { get: () => new Date(trusted).toUTCString() },
+      }))
+    )
+    const clock = await import('@/lib/syncClock')
+    await clock.refreshSyncClock()
+    // Asleep for two hours: the monotonic clock stood still.
+    vi.setSystemTime(trusted + 2 * 60 * 60_000)
+    expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000)
+    // A wall clock set back an hour doesn't move sync time backwards.
+    elapsed += 2 * 60 * 60_000 + 1000
+    vi.setSystemTime(trusted + 60 * 60_000)
+    expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000 + 1000)
+  })
   it('uses the cached offset offline and advances an edited record past its old stamp', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(1000)

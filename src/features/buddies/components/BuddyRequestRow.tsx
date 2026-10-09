@@ -11,7 +11,7 @@ import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
-import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
+import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import type { IncomingClaim } from '@/features/buddies/lib/state'
 import { noteUserAction } from '@/lib/userAction'
 
@@ -31,7 +31,7 @@ export default function BuddyRequestRow({
     try {
       await action()
     } catch (error) {
-      Alert.alert(buddiesErrorMessage(error))
+      alertBuddiesError(i18n.t('buddies_errorRequestTitle'), error)
     } finally {
       setBusy(false)
     }

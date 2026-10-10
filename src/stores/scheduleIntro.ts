@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 /** What opened the Schedule intro. Bounded, safe as an analytics value. */
-export type ScheduleIntroSource = 'first_visit' | 'help'
+export type ScheduleIntroSource = 'first_visit'
 
 /**
  * Whether the Schedule intro is wanted (waiting for its takeover turn, or on

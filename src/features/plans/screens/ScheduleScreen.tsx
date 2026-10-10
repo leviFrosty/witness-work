@@ -1,4 +1,3 @@
-import { CircleHelp as CircleHelpIcon } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import { BackHandler, Platform, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -25,8 +24,6 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { TimeEntry } from '@/types/timeEntry'
 import RootHeader from '@/components/RootHeader'
-import IconButton from '@/components/ui/IconButton'
-import PointerTooltip from '@/components/ui/PointerTooltip'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -222,15 +219,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         title={i18n.t('Schedule')}
         actions={
           <>
-            <PointerTooltip label={i18n.t('scheduleIntro_howItWorks')}>
-              <IconButton
-                icon={CircleHelpIcon}
-                size='xl'
-                hitSlop={12}
-                accessibilityLabel={i18n.t('scheduleIntro_howItWorks')}
-                onPress={() => openIntro('help')}
-              />
-            </PointerTooltip>
             <ScheduleViewToggle
               value={view}
               onChange={(next) => changeView(next, 'toggle')}

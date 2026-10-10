@@ -425,8 +425,9 @@ Successful setup also records `calendar_connected` (`created`: boolean).
 The one-time `calendar_sync` tray invitation retains setup behavior; outcomes use
 `calendar_connected` / `calendar_sync_failed`, without separate tray click events.
 `calendar_disconnected` records local disconnect (`removed_events`: boolean;
-`source`: `settings`, `tray` for the paused notification's Turn Off, or
-`onboarding` for Skip after a failed setup).
+`source`: `settings`, `tray` for the paused notification's Turn Off,
+`onboarding` for Skip after a failed setup, or `tools` when developer tools
+generate mock data, reset, or clear calendar events).
 `calendar_sync_failed` includes bounded `error_key` and `background`: boolean.
 Android uses the same events (break them down by the SDK's `$os_name`); it never
 reports `elsewhere`. Its `calendar_connected` adds `local_calendar`: boolean, true

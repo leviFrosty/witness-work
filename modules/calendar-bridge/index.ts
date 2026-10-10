@@ -109,6 +109,8 @@ interface CalendarBridgeNative {
     calendarId: string,
     expectedConfigurationToken: string
   ): Promise<void>
+  /** Developer tools: every WitnessWork event in every calendar, any namespace. */
+  removeAllMarkedEvents(): Promise<number>
 }
 
 /** A marked WitnessWork event read from CalendarContract. */

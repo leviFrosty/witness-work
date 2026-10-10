@@ -35,13 +35,14 @@ Steps:
 - **Idempotency and duplicates (Android).** Press "Sync now" repeatedly; the `_id`s don't change. Insert a duplicate with the same description (escape the colon in bindings: `--bind 'description:s:witnesswork\://contact/…'`), press "Sync now", and only one row remains: a row with `_sync_id` (insert it with the sync-adapter URI) wins over unsynced rows, then the lowest `_id`.
 - **Turn off.** "Turn Off Calendar Sync" → "KEEP EVENTS" leaves the rows; "REMOVE EVENTS" deletes the marked rows in the selected calendar only.
 - **Permission.** Revoke while connected and `wwv up`: Settings shows the error with "Open Settings" (opens App info), and the bell lists "Calendar updates paused". `pm grant` both permissions and press Back: the foreground sync clears the error.
+- **Developer tools.** Every mock-data generator in Tools turns Calendar Sync off first (keeping events): `enabled: false`, `optedOut: true`. **Reset all** removes this device's published events before wiping. **Clear calendar events** removes marked events from every writable calendar, in any connection; on iOS it scans 10 years back and 5 ahead.
 - **Proof.** `wwv shot calendar-sync` and `wwv errors`.
 
 ## Gotchas
 
 - On Android, `wwv ad alert accept|dismiss` and pressing labels in the system permission dialog refocus the app, which closes the dialog without granting. Use `adb shell input tap`. A closed dialog doesn't set "don't ask again"; `pm clear-permission-flags <pkg> <perm> user-set user-fixed` resets it if needed.
 - `wwv ad snapshot -i` lists only interactive elements; onboarding step titles ("Follow-ups in Your Calendar") need a full `wwv ad snapshot`.
-- `wwv seed` resets app data but not the in-memory Calendar Sync settings, so a connected calendar and its options survive a reseed.
+- `wwv seed` resets the Calendar Sync settings with the rest of app data but leaves published events in the calendar. Tools → **Clear calendar events** removes every marked event from every calendar.
 - Events deleted from a synced calendar stay as `deleted=1` until their sync adapter runs; filter with `--where "deleted=0"`.
 - The emulator has no Google account, so Google Calendar's handling of the marker and default notifications can't be checked here.
 - iOS needs full calendar access (the harness pre-grants it) and iCloud for ownership; Primary device and publishing across devices can't be proven on a simulator.

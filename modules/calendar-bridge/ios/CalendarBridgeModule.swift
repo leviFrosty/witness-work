@@ -125,6 +125,12 @@ public final class CalendarBridgeModule: Module {
         return keys.count
       }
     }
+    AsyncFunction("removeAllMarkedEvents") { (promise: Promise) in
+      self.run(promise) {
+        defer { Self.noteCommit() }
+        return try self.events.removeAllMarked()
+      }
+    }
     AsyncFunction("removePublished") { (id: String, name: String, calendarId: String, expectedConfigurationToken: String, promise: Promise) in
       self.run(promise) {
         let _: [String] = try self.withOwnership(id: id, name: name, disconnecting: true, expectedConfigurationToken: expectedConfigurationToken, manifest: { $0 }) { state in

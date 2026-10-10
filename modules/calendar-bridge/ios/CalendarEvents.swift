@@ -124,6 +124,35 @@ final class CalendarEvents {
     return Array(found.values)
   }
 
+  /// Developer tools only: every WitnessWork event in every writable calendar,
+  /// from any namespace, including events a forgotten connection left behind.
+  /// Skips the ownership lock, so another publisher may need Repair afterwards.
+  func removeAllMarked() throws -> Int {
+    try requireAccess()
+    let calendars = store.calendars(for: .event).filter(\.allowsContentModifications)
+    guard !calendars.isEmpty else { return 0 }
+    var found: [String: EKEvent] = [:]
+    let now = Date()
+    var start = now.addingTimeInterval(-10 * 365 * 86400)
+    let end = now.addingTimeInterval(5 * 365 * 86400)
+    // EventKit limits predicates to four years.
+    while start < end {
+      let next = min(start.addingTimeInterval(3 * 365 * 86400), end)
+      let predicate = store.predicateForEvents(withStart: start, end: next, calendars: calendars)
+      for event in store.events(matching: predicate) {
+        guard let url = event.url,
+              let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              parts.scheme == "witnesswork", parts.host == "contact",
+              parts.queryItems?.contains(where: { $0.name == "followUp" }) == true else { continue }
+        found[event.calendarItemIdentifier] = event
+      }
+      start = next
+    }
+    for event in found.values { try store.remove(event, span: .thisEvent, commit: false) }
+    if !found.isEmpty { try store.commit() }
+    return found.count
+  }
+
   func publishedKeys(calendarId: String, state: CalendarPublishingState) throws -> [String] {
     try requireAccess()
     return try ownedEvents(calendar: destination(calendarId), state: state)

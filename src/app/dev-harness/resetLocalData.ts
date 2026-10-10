@@ -8,10 +8,12 @@ import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
 import { mmkvStorage } from '@/stores/mmkv'
 import { useBadgeSession } from '@/stores/badgeSession'
+import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 
 /**
  * Wipes this device's data back to a fresh install (Tools "Reset all" and the
- * verification harness). Never touches iCloud.
+ * verification harness). Never touches iCloud or the calendar; Tools removes
+ * published events first (`removeConnectedCalendarEvents`).
  */
 export function resetLocalData() {
   const setPreferences = usePreferences.getState().set
@@ -38,6 +40,10 @@ export function resetLocalData() {
   setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
   useBadgeSession.getState().reset()
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
+  // In memory too: a connection left enabled keeps publishing until restart,
+  // and its events are orphaned once the reset forgets the destination.
+  useCalendarSync.setState(useCalendarSync.getInitialState(), true)
+  useCalendarPublishing.setState(useCalendarPublishing.getInitialState(), true)
   mmkvStorage.clearAll()
   void AsyncStorage.clear()
 }

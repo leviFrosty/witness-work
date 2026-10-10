@@ -1,19 +1,15 @@
-import { Pencil as PencilIcon } from 'lucide-react-native'
 import type { PlanListItem } from '@/types/timeEntry'
-import IconButton from '@/components/ui/IconButton'
-import PointerTooltip from '@/components/ui/PointerTooltip'
-import PullDownMenu from '@/components/ui/PullDownMenu'
+import DetailsHeaderActions from '@/components/DetailsHeaderActions'
 import usePlanMenuActions from '@/hooks/usePlanMenuActions'
-import i18n from '@/lib/locales'
 import { describeRecurrence } from '@/lib/recurrenceText'
 import { planTypeLabel } from '@/lib/planTypeLabel'
 import useCategories from '@/stores/categories'
 import useServiceReport from '@/stores/serviceReport'
 import type { IncomingShare } from '@/features/buddies/lib/state'
 import PlanDetailsBuddies from '@/features/plans/components/PlanDetailsBuddies'
-import PlanDetailsInvitation, {
+import InvitationAnswerSection, {
   type ShareAnswering,
-} from '@/features/plans/components/PlanDetailsInvitation'
+} from '@/features/buddies/components/InvitationAnswerSection'
 import PlanDetailsLayout from '@/features/plans/components/PlanDetailsLayout'
 import PlanDetailsSummary from '@/features/plans/components/PlanDetailsSummary'
 import {
@@ -54,25 +50,7 @@ export default function OwnPlanDetails({
 
   return (
     <PlanDetailsLayout
-      actions={
-        <>
-          <PointerTooltip label={i18n.t('edit')} effect='none'>
-            <IconButton
-              icon={PencilIcon}
-              size={20}
-              onPress={edit}
-              accessibilityLabel={i18n.t('edit')}
-            />
-          </PointerTooltip>
-          <PointerTooltip label={i18n.t('more')} effect='none'>
-            <PullDownMenu
-              actions={menu}
-              accessibilityLabel={i18n.t('more')}
-              triggerSize={20}
-            />
-          </PointerTooltip>
-        </>
-      }
+      actions={<DetailsHeaderActions onEdit={edit} menu={menu} />}
     >
       <PlanDetailsSummary
         title={plan.title}
@@ -92,7 +70,7 @@ export default function OwnPlanDetails({
         note={effective.note}
         lead={
           item.type === 'day' && item.plan.buddyShare ? (
-            <PlanDetailsInvitation
+            <InvitationAnswerSection
               from={item.plan.buddyShare.from}
               share={share}
               // The linked Plan is here, so it's "Going" (maybe said on another

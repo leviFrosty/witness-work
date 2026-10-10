@@ -240,6 +240,16 @@ const VisitFormScreen = ({
     initialNotifyMeOffset()
   )
 
+  // A new Follow-up's default date: the "Default Follow Up" preference.
+  const defaultFollowUpDate = () =>
+    moment()
+      .add(
+        returnVisitTimeOffset?.amount ??
+          DEFAULT_RETURN_VISIT_TIME_OFFSET.amount,
+        returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
+      )
+      .toDate()
+
   const getConversationDefaultValue = (): Visit => {
     if (conversationToUpdate) {
       return {
@@ -250,12 +260,16 @@ const VisitFormScreen = ({
         date: new Date(conversationToUpdate.date),
         isBibleStudy: conversationToUpdate.isBibleStudy,
         // Always seed a follow-up draft, even when the saved record has none,
-        // so flipping the switch on has sane defaults. `followUpEnabled`
-        // decides whether the draft is persisted.
+        // so flipping the switch on has the same defaults as a new visit.
+        // `followUpEnabled` decides whether the draft is persisted.
         followUp: {
           topic: conversationToUpdate.followUp?.topic,
-          date: new Date(conversationToUpdate.followUp?.date || new Date()),
-          notifyMe: conversationToUpdate.followUp?.notifyMe || false,
+          date: conversationToUpdate.followUp
+            ? new Date(conversationToUpdate.followUp.date)
+            : defaultFollowUpDate(),
+          notifyMe: conversationToUpdate.followUp
+            ? conversationToUpdate.followUp.notifyMe
+            : returnVisitAlwaysNotify,
           notifications: conversationToUpdate.followUp?.notifications,
           reminderOffsetMinutes:
             conversationToUpdate.followUp?.reminderOffsetMinutes,
@@ -281,13 +295,7 @@ const VisitFormScreen = ({
       date: new Date(),
       note: '',
       followUp: {
-        date: moment()
-          .add(
-            returnVisitTimeOffset?.amount ??
-              DEFAULT_RETURN_VISIT_TIME_OFFSET.amount,
-            returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
-          )
-          .toDate(),
+        date: defaultFollowUpDate(),
         topic: '',
         notifyMe: returnVisitAlwaysNotify,
       },
@@ -305,7 +313,9 @@ const VisitFormScreen = ({
   // off for Not at Home (no one answered, so there is rarely a time to plan)
   // and on for a real conversation; when editing, mirrors the saved record.
   const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(() =>
-    conversationToUpdate ? !!conversationToUpdate.followUp : !params.notAtHome
+    conversationToUpdate
+      ? !!conversationToUpdate.followUp || !!params.planFollowUp
+      : !params.notAtHome
   )
 
   const handleFollowUpEnabledChange = (enabled: boolean) => {
@@ -415,7 +425,11 @@ const VisitFormScreen = ({
       header: ({ navigation }) => (
         <Header
           title=''
+          noInsets={params.overSheet}
           buttonType={params.fromContactForm ? 'none' : 'exit'}
+          onPressLeftIcon={
+            params.overSheet ? () => navigation.goBack() : undefined
+          }
           leftElement={
             params.fromContactForm ? (
               <Button

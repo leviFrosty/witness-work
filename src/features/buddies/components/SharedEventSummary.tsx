@@ -2,8 +2,10 @@ import { View } from 'react-native'
 import moment from 'moment'
 import {
   Calendar as CalendarIcon,
+  ChevronRight as ChevronRightIcon,
   MessageSquare as MessageSquareIcon,
 } from 'lucide-react-native'
+import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -16,13 +18,18 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { ShareDetails } from '@/features/buddies/lib/schemas'
 
-/** The details of a buddy's shared Plan or Follow-up, read-only. */
+/**
+ * The details of a buddy's shared Plan or Follow-up, read-only. With `onOpen`,
+ * the title opens its page; the place stays its own link.
+ */
 export default function SharedEventSummary({
   details,
   isFollowUp,
+  onOpen,
 }: {
   details: ShareDetails
   isFollowUp: boolean
+  onOpen?: () => void
 }) {
   const theme = useTheme()
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
@@ -46,7 +53,22 @@ export default function SharedEventSummary({
 
   return (
     <View style={{ gap: 6 }}>
-      {title ? (
+      {title && onOpen ? (
+        <Button
+          onPress={onOpen}
+          accessibilityRole='button'
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+        >
+          <Text style={{ fontFamily: theme.fonts.semiBold, flexShrink: 1 }}>
+            {title}
+          </Text>
+          <LucideIcon
+            icon={ChevronRightIcon}
+            size={16}
+            color={theme.colors.textAlt}
+          />
+        </Button>
+      ) : title ? (
         <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
       ) : null}
       <XView style={{ gap: 8 }}>

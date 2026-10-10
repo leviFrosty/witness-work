@@ -1,25 +1,18 @@
-import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import RichNoteText from '@/components/RichNoteText'
-import { useLinkActions } from '@/components/RichLinkCard'
 import ContextMenu from '@/components/ui/ContextMenu'
-import { useCopyAction } from '@/components/ui/Copyeable'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import useTheme from '@/contexts/theme'
-
-import confirmDestructive from '@/lib/confirmDestructive'
-import { isAppointment } from '@/lib/conversations'
+import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
 import { noteTextAroundCards } from '@/lib/linkPreview'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
-import { RootStackNavigation } from '@/types/rootStack'
 import { Visit } from '@/types/visit'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
 import { visibleNote } from '@/features/contacts/lib/visitTimeline'
@@ -27,8 +20,9 @@ import { visibleNote } from '@/features/contacts/lib/visitTimeline'
 const NOTE_LINES = 3
 
 /**
- * One visit on the rail. Tap edits; swipe left deletes; long-press offers Edit,
- * Reschedule Follow-Up, Open Link, Copy Note / Topic, and Delete.
+ * One visit on the rail. Tap opens Visit Details; swipe left deletes;
+ * long-press offers the Visit's menu (Edit, Reschedule Follow-Up, Open Link,
+ * copy, Dismiss Follow-Up, Delete).
  */
 const VisitTimelineCard = ({
   visit,
@@ -38,18 +32,13 @@ const VisitTimelineCard = ({
   highlighted: boolean
 }) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
-  const { deleteConversation } = useConversations()
+  const { open, requestDelete, menu } = useVisitMenuActions(visit)
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
-  const copyAction = useCopyAction()
-  const { openLinksItem } = useLinkActions()
   const note = visibleNote(visit.note)
   // Links show as preview cards below the text, so only the text can clamp.
   const noteText = note ? noteTextAroundCards(note) : ''
   const canExpand = !!noteText && (truncates || expanded)
-  const topic = visit.followUp?.topic?.trim() ?? ''
   const dayLabel = visitDayLabel(visit.date)
   const fields = activeCustomFieldDefs(
     useConversations((state) => state.conversationFieldDefs)
@@ -57,27 +46,6 @@ const VisitTimelineCard = ({
     const value = visit.customFields?.[def.id]?.trim()
     return value ? [{ id: def.id, label: def.label, value }] : []
   })
-
-  const edit = () =>
-    navigation.navigate('Visit Form', {
-      contactId: visit.contact.id,
-      visitToEditId: visit.id,
-      notAtHome: visit.notAtHome,
-    })
-
-  const requestDelete = () =>
-    confirmDestructive({
-      title: i18n.t('deleteConversation'),
-      description: i18n.t('deleteConversation_description'),
-      onConfirm: () => {
-        deleteConversation(visit.id)
-
-        toast.show(i18n.t('success'), {
-          message: i18n.t('deleted'),
-          native: true,
-        })
-      },
-    })
 
   return (
     <Swipeable
@@ -91,50 +59,15 @@ const VisitTimelineCard = ({
       containerStyle={{ borderRadius: theme.numbers.borderRadiusLg }}
     >
       <ContextMenu
-        onPress={edit}
+        onPress={open}
         hoverRadius={theme.numbers.borderRadiusLg}
         accessibilityLabel={dayLabel}
         // Keep Show more / Show less reachable by screen readers.
         accessible={!canExpand}
-        actions={[
-          [
-            {
-              id: 'edit',
-              title: i18n.t('edit'),
-              systemImage: 'pencil',
-              onPress: edit,
-            },
-            isAppointment(visit) && {
-              id: 'reschedule_follow_up',
-              title: i18n.t('rescheduleFollowUp'),
-              systemImage: 'calendar.badge.clock',
-              onPress: () =>
-                navigation.navigate('RescheduleVisit', {
-                  contactId: visit.contact.id,
-                  visitId: visit.id,
-                }),
-            },
-            openLinksItem(note),
-            !!note &&
-              copyAction(note, { id: 'copy_note', title: i18n.t('copyNote') }),
-            !!topic &&
-              copyAction(topic, {
-                id: 'copy_topic',
-                title: i18n.t('copyTopic'),
-              }),
-          ],
-          [
-            {
-              id: 'delete',
-              title: i18n.t('delete'),
-              systemImage: 'trash',
-              destructive: true,
-              onPress: requestDelete,
-            },
-          ],
-        ]}
+        actions={menu}
       >
         <View
+          testID={`visit-card-${visit.id}`}
           style={{
             backgroundColor: theme.colors.card,
             borderRadius: theme.numbers.borderRadiusLg,

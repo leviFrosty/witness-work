@@ -11,6 +11,7 @@ Users keep the people they meet as contacts, log each conversation as a visit, m
 - `contacts-details` shows Contact Details: identity, address actions (Call, Text, Navigate) and Conversation History.
 - `visits-create` logs a conversation from Contact Details ("+ Add" in Conversation History) or Quick Action.
 - `visits-follow-up` sets a follow-up date, which shows on Home as approaching or overdue.
+- `visits-details` opens a visit read-only in a sheet ("Conversation" or "Not at Home"): the contact row (opens Contact Details; Call, Text, Navigate), then a rail with the visit as a past-tense sentence ("You talked with …", "You held a Bible study with …", "No one was home"), a TODAY marker, and the follow-up as the next stop ("You're going back …" with an IN 2 DAYS pill, topic, buddies, reminder, Log Visit on its day, Reschedule). The follow-up card is a dashed gray outline until a visit keeps it, even on its day. Overdue is a dashed amber outline ("You planned to go back …") with TODAY below it; kept fills in teal, says "You went back …", and opens the visit that kept it; dismissed is a dimmer outline that offers "Plan it again"; no follow-up links to the next visit or, on the latest one, offers "Plan the next visit" with no outline. Pencil edits over the sheet; ••• has Reschedule Follow-Up, Copy Note / Topic, Dismiss Follow-Up and Delete. With Buddies on, invited buddies, their answers as a sentence, and a dashed + to invite sit inside the follow-up (hidden in data protection mode).
 - `contacts-deep-link` opens `witnesswork://contact/<id>` and `witnesswork://contact/<id>/<visitId>` (highlighted visit).
 - `contacts-import` imports a shared contact from a share link or a `.witnesswork` file after an "Import Contact?" prompt. A contact that already exists offers Keep Existing or Replace. A malformed share shows "Invalid Link" or "Invalid File" and writes nothing.
 
@@ -22,6 +23,7 @@ Users keep the people they meet as contacts, log each conversation as a visit, m
 - The share link `https://ww-proxy.leviwilkerson.com/c#…` or `witnesswork://import-contact/<payload>` imports a shared contact.
 - A `.witnesswork` file opened from Files, Messages or AirDrop, or picked in Settings → More → Import Contact, imports one too.
 - Contact Details → More actions → "Share…" shares a contact; "Share as File" appears only when the contact is too large for a link.
+- Visit Details opens from a timeline card on Contact Details, the Up Next card's body, a person on Home's conversations card, a follow-up reminder (tray or system notification), a buddy's reply to a follow-up in the bell, and an outgoing follow-up on a buddy's page. `witnesswork://visit/<visitId>` opens it too.
 
 ## Driving it with ww-verify
 
@@ -52,10 +54,13 @@ Steps:
 - **Opened file on iOS.** Copy the file into the simulator's "On My iPhone" folder (the `group.com.apple.FileProvider.LocalStorage` app group's `File Provider Storage`) and open its URL-encoded `file://` path with `xcrun simctl openurl <udid> '<url>'`. The app receives it like a file tapped in Files.
 - **Files on Android.** `adb -s <serial> push` the file to `/sdcard/Download/`, press "Import Contact" in Settings → More, then drive the system picker with `adb -s <serial> shell input tap <x> <y>` from screenshots (menu → Downloads → the file). For the opened-file path, copy it into the app's cache with `adb shell run-as com.leviwilkerson.jwtimedev cp /data/local/tmp/<file> cache/` and send `adb shell am start -a android.intent.action.VIEW -t application/witnesswork+json -d file:///data/user/0/com.leviwilkerson.jwtimedev/cache/<file> com.leviwilkerson.jwtimedev`.
 - **File export.** Make a contact too large for a link (for example a 7,000-character random custom field value through `__WW_DEV__.stores.contacts.getState().updateContact`), then "Share…" → "Share as File". The app writes the file to its `Library/Caches` (find it under `xcrun simctl get_app_container <udid> com.leviwilkerson.jwtimedev data`) before the share sheet opens; inspect that file.
+- **Visit Details.** On Contact Details for `verify-contact-2` (Chen Wei, upcoming follow-up), scroll down and press the `visit-card-verify-visit-2-0` card. The route is `Visit Details`, and "Continue lesson 3" and the TODAY marker show. Press "Edit": the form opens over the sheet with `overSheet: true`; Save or X returns to `Visit Details`. "Reschedule" opens the reschedule sheet over it and returns there. Read back with `wwv eval` on `__WW_DEV__.stores.conversations`. For the buddies section, seed made-up buddies (see [buddies.md](./buddies.md) Gotchas) and `wwv flag buddies on`; press "Invite Buddies" (the dashed + inside the follow-up), pick a name, and read back `followUp.buddies`. For the other states, add visits through `__WW_DEV__.stores.conversations.getState().addConversation` (a past follow-up for overdue; a later visit for kept; `dismissed: true`; no follow-up on the latest visit) and `wwv nav "Visit Details" '{"visitId":"…"}'`.
 - **Proof.** Run `wwv shot contact-details` and `wwv errors`.
-- **Scripted.** Run `wwv flow e2e/maestro/add-contact.yaml`.
+- **Scripted.** Run `wwv flow e2e/maestro/add-contact.yaml` and `wwv flow e2e/maestro/visit-details.yaml`.
 
 ## Gotchas
+
+- Visit Details is a sheet, and the forms it opens stack over it, so `wwv ad snapshot -i` lists every layer (Contact Details' "Add", "Log visit" and so on). Labels that repeat across layers (like "Add" or "Reschedule") can hit the wrong one; use refs, ids, or screenshot coordinates.
 
 - "Navigate", "Call" and "Text" leave the app, opening Maps, the phone or Messages. Avoid them unless they're under test, then run `wwv up` to come back cleanly.
 - The iOS keyboard often has no dismiss key, so `keyboard dismiss` may refuse. Press the next control instead.

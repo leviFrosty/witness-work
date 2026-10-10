@@ -23,7 +23,7 @@ import DateTimePicker from '@/components/ui/DateTimePicker'
 import ContextMenu from '@/components/ui/ContextMenu'
 import ContactPreview from '@/components/ContactPreview'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
-import useDismissFollowUp from '@/features/visits/hooks/useDismissFollowUp'
+import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'

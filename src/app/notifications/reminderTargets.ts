@@ -7,11 +7,11 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 
 /**
- * Opens what a local reminder is about: the Follow-up's Contact (with the Visit
- * highlighted), the Plan, the returning Contact, Add Time for a planned day, or
- * where a streak about to end is kept. False when the record is gone (deleted
- * on this or another device), the day has time logged, or navigation isn't
- * ready.
+ * Opens what a local reminder is about: the Follow-up's Visit (its Contact when
+ * only the Visit is gone), the Plan, the returning Contact, Add Time for a
+ * planned day, or where a streak about to end is kept. False when the record is
+ * gone (deleted on this or another device), the day has time logged, or
+ * navigation isn't ready.
  */
 export function openReminderTarget(target: ReminderData): boolean {
   if (!navigationRef.isReady()) return false
@@ -23,10 +23,8 @@ export function openReminderTarget(target: ReminderData): boolean {
         .conversations.find((v) => v.id === target.id)
       const contactId = visit?.contact.id ?? target.contactId
       if (!contactId || !contacts.some((c) => c.id === contactId)) return false
-      navigationRef.navigate('Contact Details', {
-        id: contactId,
-        ...(visit ? { highlightedVisitId: visit.id } : {}),
-      })
+      if (visit) navigationRef.navigate('Visit Details', { visitId: visit.id })
+      else navigationRef.navigate('Contact Details', { id: contactId })
       return true
     }
     case 'plan': {

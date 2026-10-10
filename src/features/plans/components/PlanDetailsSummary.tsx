@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import PlanLocationLink from '@/components/PlanLocationLink'
 import RichNoteText from '@/components/RichNoteText'
+import DetailRow from '@/components/ui/inputs/DetailRow'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
@@ -37,38 +38,6 @@ export type PlanDetailsFields = {
 }
 
 type Row = { label: string; value: string; description?: string }
-
-function DetailRow({
-  label,
-  value,
-  description,
-  last,
-}: {
-  label: string
-  value: string
-  description?: string
-  last?: boolean
-}) {
-  const theme = useTheme()
-  return (
-    <InputRowContainer
-      label={label}
-      description={description}
-      lastInSection={last}
-      controlWidth='auto'
-      // A long value (a range past midnight) wraps rather than squeezing the
-      // label.
-      controlStyle={{ maxWidth: '70%' }}
-    >
-      <Text
-        style={{ color: theme.colors.textAlt, textAlign: 'right' }}
-        selectable
-      >
-        {value}
-      </Text>
-    </InputRowContainer>
-  )
-}
 
 /** A Plan's title, when, how long, Type, recurrence, place, and note. */
 export default function PlanDetailsSummary(props: PlanDetailsFields) {

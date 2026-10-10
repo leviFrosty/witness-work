@@ -11,10 +11,11 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
 
 /**
- * One buddy on Plan Details. Their photo, name, and status open their page; an
- * action (Invite, an info button) sits beside it as its own control.
+ * One buddy on a shared Plan or Follow-up (Plan Details, Visit Details). Their
+ * photo, name, and status open their page; an action (Invite, an info button)
+ * sits beside it as its own control.
  */
-export default function PlanDetailsBuddyRow({
+export default function ShareBuddyRow({
   buddy,
   badge,
   subtitle,

@@ -34,6 +34,7 @@ export const analyticsEventNames = [
   'timer_action_failed',
   'unlogged_day_reminders_changed',
   'visit_created',
+  'visit_details_action',
   // Import and backup outcomes.
   'backup_export_failed',
   'backup_export_started',

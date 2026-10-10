@@ -2,6 +2,7 @@ import {
   Calendar as CalendarIcon,
   Car as CarIcon,
   Clock as ClockIcon,
+  DoorOpen as DoorOpenIcon,
   IdCard as IdCardIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
@@ -24,7 +25,20 @@ interface Props {
   onAction: () => void
 }
 
-type QuickActionOption = 'addTime' | 'addContact' | 'addPlan' | 'logTrip'
+type QuickActionOption =
+  | 'logVisit'
+  | 'addTime'
+  | 'addContact'
+  | 'addPlan'
+  | 'logTrip'
+
+/** How many actions the menu shows, for sizing the compact sheet. */
+export function useQuickActionCount() {
+  const { showsTimer } = usePublisher()
+  const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
+  // Log Visit, Create Plan and Add Contact always show.
+  return 3 + (showsTimer ? 1 : 0) + (tracksMileage ? 1 : 0)
+}
 
 /** One action set for the compact sheet and the iPad anchored menu. */
 export default function QuickActionMenu({ navigation, onAction }: Props) {
@@ -34,6 +48,9 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
   const handleQuickAction = (action: QuickActionOption) => {
     onAction()
     switch (action) {
+      case 'logVisit':
+        navigation.navigate('Log Visit')
+        break
       case 'addTime':
         navigation.navigate('Add Time')
         break
@@ -57,6 +74,11 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
   }
   return (
     <View style={{ gap: 10 }}>
+      <ActionButton
+        text='logVisitAction'
+        icon={DoorOpenIcon}
+        onPress={() => handleQuickAction('logVisit')}
+      />
       {showsTimer && (
         <ActionButton
           text='addTime'

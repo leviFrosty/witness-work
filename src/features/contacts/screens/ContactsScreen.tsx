@@ -64,6 +64,15 @@ import { trackListScroll } from '@/features/contacts/lib/listHeaderCollapse'
 import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import SavedViewsBar from '@/features/contacts/components/SavedViewsBar'
+import useSuggestedContactsList from '@/features/contacts/hooks/useSuggestedContactsList'
+import {
+  ContactsListSectionHeader,
+  ContactsListSeparator,
+} from '@/features/contacts/components/ContactsListSection'
+import {
+  contactItemIndex,
+  ContactsListItem,
+} from '@/features/contacts/lib/suggestedContactsList'
 
 /**
  * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
@@ -154,7 +163,7 @@ const ContactsScreen = ({
     })
     return () => cancelAnimationFrame(frame)
   }, [focusSearch, isFocused, showsMap, onSearchFocused])
-  const listRef = useRef<FlashListRef<Contact>>(null)
+  const listRef = useRef<FlashListRef<ContactsListItem>>(null)
   const previousIsWide = useRef(isWide)
   const flashListDrawDistance = Math.ceil(windowHeight)
 
@@ -168,7 +177,18 @@ const ContactsScreen = ({
     sortedAndFilteredContacts,
     searchMatchesById,
     conversationIndex,
+    hasSearch,
   } = useContactsSorted()
+  // What the list draws: Suggested gets its sections, every other sort and any
+  // search the flat list. `listContacts` is the same Contacts in drawn order,
+  // once each, for Select mode and the iPad detail pane.
+  const contactsList = useSuggestedContactsList({
+    contacts: searchSortedAndFilteredContacts,
+    index: conversationIndex,
+    enabled: contactSort === 'suggested' && !hasSearch,
+    listVisible: !showsMap,
+  })
+  const listContacts = contactsList.contacts
   const savedViews = useSavedContactViews()
   const showsSavedViews = savedViews.views.length > 0 && !savedViews.locked
   // Over the map once there are pins to filter (not over its onboarding or
@@ -176,18 +196,14 @@ const ContactsScreen = ({
   const showsMapFilters =
     showsMap && hasCompletedMapOnboarding && mappedContacts.length > 0
 
-  const selection = useListSelection(
-    searchSortedAndFilteredContacts.map((contact) => contact.id)
-  )
-  const selectedContacts = searchSortedAndFilteredContacts.filter((contact) =>
+  const selection = useListSelection(listContacts.map((contact) => contact.id))
+  const selectedContacts = listContacts.filter((contact) =>
     selection.isSelected(contact.id)
   )
   const bottomChrome = insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT)
 
   const selectedContact =
-    searchSortedAndFilteredContacts.find(
-      (contact) => contact.id === selectedId
-    ) ?? searchSortedAndFilteredContacts[0]
+    listContacts.find((contact) => contact.id === selectedId) ?? listContacts[0]
 
   // Keep the list pinned to the top as the query, filters, or sort change —
   // otherwise FlashList preserves the prior contentOffset and the visible
@@ -202,14 +218,13 @@ const ContactsScreen = ({
     const collapsed = previousIsWide.current && !isWide
     previousIsWide.current = isWide
     if (!collapsed || !selectedContact) return
-    const index = searchSortedAndFilteredContacts.findIndex(
-      (contact) => contact.id === selectedContact.id
-    )
+    const index = contactItemIndex(contactsList.items, selectedContact.id)
+    if (index < 0) return
     const frame = requestAnimationFrame(() => {
       listRef.current?.scrollToIndex({ index, animated: false })
     })
     return () => cancelAnimationFrame(frame)
-  }, [isWide, selectedContact, searchSortedAndFilteredContacts])
+  }, [isWide, selectedContact, contactsList.items])
 
   const collapseList = (collapsed: boolean) => {
     if (collapsed === listCollapsed) return
@@ -311,7 +326,7 @@ const ContactsScreen = ({
         actions={[
           [
             !showsMap &&
-              searchSortedAndFilteredContacts.length > 0 && {
+              listContacts.length > 0 && {
                 id: 'select',
                 title: i18n.t('selectContacts'),
                 systemImage: 'checkmark.circle',
@@ -431,6 +446,8 @@ const ContactsScreen = ({
           }}
         >
           <View
+            // Any touch here pins the list's order until the next focus.
+            onTouchStart={contactsList.markInteracted}
             style={{
               flex: isWide ? undefined : 1,
               width: isWide ? 350 : undefined,
@@ -616,7 +633,7 @@ const ContactsScreen = ({
 
             <FlashList
               ref={listRef}
-              data={searchSortedAndFilteredContacts}
+              data={contactsList.items}
               // FlashList v2 enables maintainVisibleContentPosition by default — it's
               // meant for chat UIs and anchors the viewport to a content item when the
               // data changes. On a search/filter list that's wrong: clearing the query
@@ -626,32 +643,48 @@ const ContactsScreen = ({
               // pin to the top on data change (see the scrollToOffset effect above),
               // so disable it here.
               maintainVisibleContentPosition={{ disabled: true }}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.key}
+              getItemType={(item) => item.kind}
               // A new Set on every selection change, start, and finish — no need
               // to join every selected id into a string on each render.
               extraData={selection.selected}
-              renderItem={({ item }) => (
-                <ContactRow
-                  contact={item}
-                  index={conversationIndex}
-                  searchMatches={searchMatchesById.get(item.id)}
-                  selected={isWide && selectedContact?.id === item.id}
-                  showsDisclosure={!isWide}
-                  selectionMode={selection.selecting}
-                  checked={selection.isSelected(item.id)}
-                  onSelect={() => selection.start(item.id)}
-                  onPress={() => {
-                    if (selection.selecting) {
-                      selection.toggle(item.id)
-                      return
-                    }
-                    setSelectedId(item.id)
-                    if (!isWide)
-                      navigation.navigate('Contact Details', { id: item.id })
-                  }}
-                />
-              )}
-              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+              renderItem={({ item }) => {
+                if (item.kind === 'header') {
+                  return <ContactsListSectionHeader section={item.section} />
+                }
+                const { contact, section } = item
+                return (
+                  <ContactRow
+                    contact={contact}
+                    index={conversationIndex}
+                    searchMatches={searchMatchesById.get(contact.id)}
+                    detail={item.detail}
+                    selected={isWide && selectedContact?.id === contact.id}
+                    showsDisclosure={!isWide}
+                    selectionMode={selection.selecting}
+                    checked={selection.isSelected(contact.id)}
+                    onSelect={() => selection.start(contact.id)}
+                    onPress={() => {
+                      if (selection.selecting) {
+                        selection.toggle(contact.id)
+                        return
+                      }
+                      if (section) {
+                        analytics.capture('contacts_suggested_contact_opened', {
+                          variant: section,
+                          nearby_shown: contactsList.showsNearby,
+                        })
+                      }
+                      setSelectedId(contact.id)
+                      if (!isWide)
+                        navigation.navigate('Contact Details', {
+                          id: contact.id,
+                        })
+                    }}
+                  />
+                )
+              }}
+              ItemSeparatorComponent={ContactsListSeparator}
               ListEmptyComponent={renderEmpty()}
               // Down here so its late-arriving count can't shift the list.
               ListFooterComponent={

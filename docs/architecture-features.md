@@ -17,6 +17,7 @@ src/
     contacts/        screens/ components/ hooks/ lib/ stores/
     conversations/   screens/ components/ lib/
     home/            screens/                           (treated as app — pure orchestrator, no own UI/lib)
+    log-visit/       screens/ components/ lib/          (treated as app — picks a contact, then logs a visit)
     map/             screens/ components/ lib/ types/
     milestones/      screens/ components/ stores/
     onboarding/      components/                        (treated as app — uses app/sync infra)
@@ -56,7 +57,7 @@ Cool-ice's strict rule is `app ← shared + feature only`. The transitional `app
 
 ### Pattern matching order (first-match-wins)
 
-1. `app` — includes `src/app/**`, plus `features/{home,settings,updates,onboarding,plans,progress}/**` (page-level orchestrators), plus `src/__tests__/**` (tests need to reach features)
+1. `app` — includes `src/app/**`, plus `features/{home,settings,updates,onboarding,plans,progress,log-visit}/**` (page-level orchestrators), plus `src/__tests__/**` (tests need to reach features)
 2. `feature` — `src/features/*/**` (captures `featureName`)
 3. `shared` — `src/{components,lib,hooks,stores,types,constants,providers,contexts,assets,locales,shaders,vendor}/**`
 4. `neverImport` — `src/*` (top-level root files)
@@ -68,6 +69,7 @@ Cool-ice's strict rule is `app ← shared + feature only`. The transitional `app
 - HomeScreen composes timer (service-reports) + monthly summary + recent contacts + supporter banner + …
 - Settings displays preferences from every feature
 - ProgressScreen composes service reports + milestones
+- Log Visit (the + menu's contact picker) composes contacts' rows and search with visits' Not at Home
 - ScheduleScreen composes plans + service-report calendars
 - WhatsNew/UpdateScreen flow into Settings
 - Onboarding's iCloud restore step consumes `app/sync`

@@ -186,7 +186,9 @@ const ContactsSortAndFilterScreen = () => {
     key: string,
     label: string,
     selected: boolean,
-    onPress: () => void
+    onPress: () => void,
+    /** One short line under the label. */
+    description?: string
   ) => (
     <Button
       key={key}
@@ -206,16 +208,27 @@ const ContactsSortAndFilterScreen = () => {
         borderColor: selected ? theme.colors.accent : theme.colors.border,
       }}
     >
-      <Text
-        style={{
-          fontSize: theme.fontSize('md'),
-          fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-          color: selected ? theme.colors.accent : theme.colors.text,
-          flexShrink: 1,
-        }}
-      >
-        {label}
-      </Text>
+      <View style={{ flexShrink: 1, gap: 2 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('md'),
+            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
+            color: selected ? theme.colors.accent : theme.colors.text,
+          }}
+        >
+          {label}
+        </Text>
+        {description && (
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {description}
+          </Text>
+        )}
+      </View>
       {selected && (
         <LucideIcon
           icon={CheckIcon}
@@ -473,7 +486,10 @@ const ContactsSortAndFilterScreen = () => {
                   option.value,
                   option.label(),
                   contactSort === option.value,
-                  () => setContactSort(option.value)
+                  () => setContactSort(option.value),
+                  option.value === 'suggested'
+                    ? i18n.t('contacts_sortBySuggested_description')
+                    : undefined
                 )
               )}
 

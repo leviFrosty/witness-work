@@ -112,7 +112,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     contactToUpdate || {
       id: route.params.id,
       createdAt: new Date(),
-      name: '',
+      name: route.params.name ?? '',
       address: newContactAddress,
       coordinate: route.params.initialCoordinate,
       userDraggedCoordinate: route.params.initialCoordinate ? true : undefined,
@@ -565,6 +565,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     contactId: (params as { id: string }).id,
                     fromContactForm: true,
                     returnToContacts: route.params.returnToContacts,
+                    logVisit: route.params.logVisit,
                   })
                 }}
               >
@@ -589,6 +590,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     contact.customFields,
     editMode,
     route.params.returnToContacts,
+    route.params.logVisit,
     fetching,
     navigation,
     submit,

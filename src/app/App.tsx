@@ -55,6 +55,7 @@ import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
+import UndoToastLayer from '@/components/UndoToastLayer'
 
 initializeApp()
 
@@ -159,6 +160,7 @@ export default function App() {
                           <SilentForegroundAlerts />
                           <SystemMenu language={loadedLocale} />
                           <RootStackComponent />
+                          <UndoToastLayer />
                           <PointerTooltipLayer />
                         </SurveyProvider>
                       </AnimationViewProvider>

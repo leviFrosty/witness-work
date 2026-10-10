@@ -21,7 +21,12 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
 
-import { migratePreferencesPersistedState } from '@/stores/preferences'
+import {
+  migratePreferencesPersistedState,
+  migrateUnchosenContactSortToSuggested,
+} from '@/stores/preferences'
+import { mergePreferences } from '@/app/sync/preferencesMerge'
+import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
 
 describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → offDays/meetingDays)', () => {
   it('renames excludedWeekdays → offDays preserving the array', () => {
@@ -684,5 +689,114 @@ describe('preferences persist migrate v9 → v10 (remove onboarding intents)', (
   it('is idempotent on an already-v10 state', () => {
     const v10State = { role: 'publisher' }
     expect(migratePreferencesPersistedState(v10State, 10)).toBe(v10State)
+  })
+})
+
+describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort → Suggested)', () => {
+  it('moves a never-chosen recentConversation sort to suggested, descending', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        contactSort: 'recentConversation',
+        contactSortDirection: 'desc',
+        preferenceUpdatedAt: { role: 1700000002000 },
+      },
+      10
+    )
+
+    expect(migrated.contactSort).toBe('suggested')
+    expect(migrated.contactSortDirection).toBe('desc')
+  })
+
+  it('leaves the timestamps alone, so a real choice elsewhere still wins', () => {
+    const timestamps = { role: 1700000002000 }
+    const migrated = migratePreferencesPersistedState(
+      { contactSort: 'recentConversation', preferenceUpdatedAt: timestamps },
+      10
+    )
+
+    expect(migrated.preferenceUpdatedAt).toEqual({ role: 1700000002000 })
+  })
+
+  it('migrates a blob with no timestamp map at all', () => {
+    const migrated = migrateUnchosenContactSortToSuggested({
+      contactSort: 'recentConversation',
+      contactSortDirection: 'asc',
+    }) as Record<string, unknown>
+
+    expect(migrated.contactSort).toBe('suggested')
+    expect(migrated.contactSortDirection).toBe('desc')
+  })
+
+  it('keeps a recentConversation sort the User set (stamped)', () => {
+    const state = {
+      contactSort: 'recentConversation',
+      contactSortDirection: 'desc',
+      preferenceUpdatedAt: { contactSort: 1700000000000 },
+    }
+
+    expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+  })
+
+  it('keeps the sort when only its direction was set', () => {
+    const state = {
+      contactSort: 'recentConversation',
+      contactSortDirection: 'asc',
+      preferenceUpdatedAt: { contactSortDirection: 1700000000000 },
+    }
+
+    expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+  })
+
+  it('leaves every other sort alone', () => {
+    for (const contactSort of ['az', 'suggested', 'pinStaleness']) {
+      const state = { contactSort, contactSortDirection: 'asc' }
+      expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+    }
+  })
+
+  it('is idempotent on an already-v11 state', () => {
+    const v11State = { contactSort: 'recentConversation' }
+    expect(migratePreferencesPersistedState(v11State, 11)).toBe(v11State)
+  })
+
+  it("can't be undone by a sync from a device that hasn't migrated", () => {
+    const migrated = migrateUnchosenContactSortToSuggested({
+      contactSort: 'recentConversation',
+      contactSortDirection: 'desc',
+      preferenceUpdatedAt: {},
+    }) as Record<string, unknown>
+    const unmigrated = { contactSort: 'recentConversation' }
+
+    // Both directions of the merge settle on Suggested.
+    expect(
+      mergePreferences(
+        { contactSort: migrated.contactSort },
+        {},
+        unmigrated,
+        {},
+        NON_SYNCABLE_PREFERENCE_KEYS
+      ).values.contactSort
+    ).toBe('suggested')
+    expect(
+      mergePreferences(
+        unmigrated,
+        {},
+        { contactSort: migrated.contactSort },
+        {},
+        NON_SYNCABLE_PREFERENCE_KEYS
+      ).values.contactSort
+    ).toBe('suggested')
+  })
+
+  it('still lets a stamped Recent Visit choice from another device win', () => {
+    expect(
+      mergePreferences(
+        { contactSort: 'suggested' },
+        {},
+        { contactSort: 'recentConversation' },
+        { contactSort: 1700000000000 },
+        NON_SYNCABLE_PREFERENCE_KEYS
+      ).values.contactSort
+    ).toBe('recentConversation')
   })
 })

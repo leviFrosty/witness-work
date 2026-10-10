@@ -1195,6 +1195,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   iCloud LWW timestamps.
  * - V9 → v10: remove the retired onboarding intents and their iCloud LWW
  *   timestamp.
+ * - V10 → v11: Contacts sort `recentConversation` that was never chosen becomes
+ *   `suggested` (see {@link migrateUnchosenContactSortToSuggested}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1236,7 +1238,53 @@ export const migratePreferencesPersistedState = (
   if (version < 10) {
     next = migrateDropOnboardingIntents(next)
   }
+  if (version < 11) {
+    next = migrateUnchosenContactSortToSuggested(next)
+  }
   return next
+}
+
+/**
+ * V10 → v11: moves Users who never picked a Contacts sort onto the current
+ * default, Suggested. `recentConversation` was the default until April 2026
+ * (commit 9cca6421), so installs from before then stored it without anyone
+ * choosing it, and the default flip never reached them.
+ *
+ * "Never chosen" means `preferenceUpdatedAt` has no stamp for `contactSort` or
+ * `contactSortDirection`. The store's `set` wrapper stamps every syncable key
+ * it writes, so picking a sort or direction in Sort & Filter, Reset, saving a
+ * Saved View from the User's own query, and restoring a backup all leave one.
+ * Nothing stamps a key the User didn't write: iCloud and Google Drive merges
+ * only copy stamps that already exist on some device (`mergePreferences`), and
+ * `replaceLocalWithRemote` and the sync-schema backfill don't add any. So no
+ * stamp reliably means no device ever wrote the sort; a stamp may be a real
+ * choice, so it's kept. The map started with iCloud Sync on 2026-04-17, before
+ * the flip; an unstamped `recentConversation` from before that still sorted
+ * like today's Suggested (favorites and Bible studies first), so even a choice
+ * made then lands where the User had it.
+ *
+ * The migration deliberately leaves the stamps alone. Without a stamp on either
+ * side, a merge is a tie decided by the larger value, and `"suggested"` sorts
+ * after `"recentConversation"`, so a device still on an older version can't
+ * sync the old value back; both converge on Suggested. Stamping now would
+ * instead outrank a real choice of Recent Visit made earlier on another device
+ * that hasn't synced yet.
+ *
+ * Saved Views keep their own sorts: saving one is always a choice.
+ */
+export const migrateUnchosenContactSortToSuggested = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  if (record.contactSort !== 'recentConversation') return state
+  const timestamps =
+    record.preferenceUpdatedAt && typeof record.preferenceUpdatedAt === 'object'
+      ? (record.preferenceUpdatedAt as Record<string, unknown>)
+      : {}
+  if ('contactSort' in timestamps || 'contactSortDirection' in timestamps)
+    return state
+  return { ...record, contactSort: 'suggested', contactSortDirection: 'desc' }
 }
 
 /**
@@ -2031,7 +2079,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 10,
+      version: 11,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

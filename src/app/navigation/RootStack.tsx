@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import Header from '@/components/ui/layout/Header'
 import { usePreferences } from '@/stores/preferences'
@@ -102,6 +103,19 @@ const RootStackComponent = () => {
           getComponent={() =>
             require('@/features/contacts/screens/ContactsSortAndFilterScreen')
               .default
+          }
+        />
+        <RootStack.Screen
+          // A sheet on iPhone (full screen on Android); a form sheet on iPad, so
+          // it isn't a phone-height list stretched across the screen.
+          options={{
+            presentation:
+              Platform.OS === 'ios' && Platform.isPad ? 'formSheet' : 'modal',
+            headerShown: false,
+          }}
+          name='Log Visit'
+          getComponent={() =>
+            require('@/features/log-visit/screens/LogVisitScreen').default
           }
         />
         <RootStack.Screen

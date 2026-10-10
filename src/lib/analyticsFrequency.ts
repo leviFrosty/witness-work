@@ -17,6 +17,7 @@ const sessionEvents = new Set([
   'buddies_opened',
   'badges_opened',
   'contacts_staleness_chip_applied',
+  'contacts_suggested_contact_opened',
   'buddies_push_registration',
   'icloud_restore_probe_result',
   'saved_view_applied',

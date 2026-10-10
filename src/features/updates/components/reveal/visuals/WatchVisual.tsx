@@ -909,7 +909,14 @@ const Complication = ({
         },
       ]}
     >
-      {children}
+      {round ? (
+        // Sized to the outer edge, so the ring centers on the border too.
+        <View style={{ position: 'absolute', top: -1, left: -1 }}>
+          {children}
+        </View>
+      ) : (
+        children
+      )}
       <Animated.View
         pointerEvents='none'
         style={[

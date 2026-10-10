@@ -40,6 +40,8 @@ const QUIET_AFTER_JUMP_MS = 700
 const MIN_TICK_INTERVAL_MS = 120
 /** The longest a view waits, hidden, for its content to catch up. */
 const RELEASE_FALLBACK_MS = 500
+/** How long a jump gets to land and draw, as the list's own jumps wait. */
+const LANDING_MS = { animated: 300, instant: 200 }
 
 export type YearOpenSource = 'toggle' | 'pinch' | 'divider'
 
@@ -121,6 +123,8 @@ export default function useScheduleCalendar({
   const pendingJump = useRef<{
     month: CalendarMonth
     animated: boolean
+    /** Its weeks go in above the list's position. */
+    addedAbove: boolean
     landed: () => void
   } | null>(null)
   /** Counts holds on the Month view, so a stale release can't end a newer one. */
@@ -178,23 +182,59 @@ export default function useScheduleCalendar({
     updateTodayDirection()
   }
 
-  /** Scrolls so the row's top sits `top` points below the list's. */
+  /**
+   * Scrolls so the row's top sits `top` points below the list's.
+   *
+   * Straight to the row's offset: the list's `scrollToIndex` first renders five
+   * stops on the way to learn where unmeasured rows land, and with a native
+   * menu on every day those renders held the list still for a second before it
+   * moved. Each kind of row has one fixed height, so once the list has measured
+   * one of a kind, the offsets it gives rows it hasn't rendered are exact.
+   */
   const scrollToRow = (
     index: number,
     animated: boolean,
-    top = 0
+    top = 0,
+    /** Rows went in above the list's position in the last render. */
+    addedAbove = false
   ): Promise<void> => {
     quietUntil.current = Date.now() + QUIET_AFTER_JUMP_MS
-    const done =
-      listRef.current?.scrollToIndex({ index, animated, viewOffset: -top }) ??
-      Promise.resolve()
-    return done.then(updateTodayDirection)
+    const list = listRef.current
+    const layout = list?.getLayout(index)
+    if (!list || !layout) return Promise.resolve()
+    // The list then shifts its offset by their height to keep what's on screen
+    // in place, and on Android that shift lands after a direct jump and pushes
+    // it as far past the row. Its own jump holds the shift until it lands.
+    if (addedAbove)
+      return list
+        .scrollToIndex({ index, animated, viewOffset: -top })
+        .then(updateTodayDirection)
+    const offset = Math.max(0, layout.y - top)
+    // Every row scrolled past renders on the way, so from more than a screen
+    // off the list lands a third of a screen short at once and glides the rest.
+    const screen = list.getWindowSize().height
+    const distance = offset - scrollOffset()
+    if (animated && Math.abs(distance) > screen)
+      list.scrollToOffset({
+        offset: offset - (Math.sign(distance) * screen) / 3,
+        animated: false,
+      })
+    list.scrollToOffset({ offset, animated })
+    return new Promise<void>((landed) =>
+      setTimeout(landed, animated ? LANDING_MS.animated : LANDING_MS.instant)
+    ).then(updateTodayDirection)
   }
 
-  const scrollToMonth = (month: CalendarMonth, animated: boolean) => {
+  const scrollToMonth = (
+    month: CalendarMonth,
+    animated: boolean,
+    addedAbove = false
+  ) => {
     // The month's name lands at the top, its weeks under it.
     const rows = monthRows(schedule, month)
-    return rows ? scrollToRow(rows.header, animated) : Promise.resolve()
+    return rows
+      ? scrollToRow(rows.header, animated, 0, addedAbove)
+      : Promise.resolve()
   }
 
   /** The range with `serviceYear` and a Service Year either side of it. */
@@ -231,7 +271,12 @@ export default function useScheduleCalendar({
     // Always a new range, so a render follows to run the jump.
     setRange((current) => rangeAround(current, serviceYearOfMonth(month)))
     return new Promise((landed) => {
-      pendingJump.current = { month, animated, landed }
+      pendingJump.current = {
+        month,
+        animated,
+        addedAbove: next.first < range.first,
+        landed,
+      }
     })
   }
 
@@ -244,7 +289,7 @@ export default function useScheduleCalendar({
     const jump = pendingJump.current
     if (!jump || !monthRows(schedule, jump.month)) return
     pendingJump.current = null
-    scrollToMonth(jump.month, jump.animated).then(jump.landed)
+    scrollToMonth(jump.month, jump.animated, jump.addedAbove).then(jump.landed)
   })
 
   const jumpToToday = () => {

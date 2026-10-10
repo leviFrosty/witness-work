@@ -23,7 +23,7 @@ export function seedScenario(name: string) {
     tenureStartDate: scenario.tenureStartDate,
     // Keeps the full-screen rollover prompt from covering a fresh seed.
     lastRolloverYearMonth: moment().format('YYYY-MM'),
-    // Same for the Schedule intro; Schedule's header button still opens it.
+    // Same for the Schedule intro.
     scheduleIntroSeen: scenario.onboarded,
     submittedReportMonths: scenario.submittedReportMonths,
   })

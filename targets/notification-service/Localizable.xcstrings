@@ -6,13 +6,13 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Bronze"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Bronze"
           }
         },
@@ -24,92 +24,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Bronce"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Bronze"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Bronzo"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "ブロンズ"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "브론즈"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Brons"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Bronze"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Bronze"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Бронза"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Umuringa"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Shaba"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Бронза"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "Đồng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "铜级"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Bronze"
+            "state" : "translated",
+            "value" : "銅"
           }
         }
       }
@@ -119,14 +119,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Silivere"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Silber"
           }
         },
         "en" : {
@@ -137,92 +137,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Plata"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Argent"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Argento"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "シルバー"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "실버"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Zilver"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Prata"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Prata"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Серебро"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Ifeza"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Fedha"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Срібло"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "Bạc"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "银级"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Silver"
+            "state" : "translated",
+            "value" : "銀"
           }
         }
       }
@@ -232,13 +232,13 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Golidi"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Gold"
           }
         },
@@ -250,92 +250,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Oro"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Or"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Oro"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "ゴールド"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "골드"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Goud"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Ouro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Ouro"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Золото"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Zahabu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Dhahabu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Золото"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "Vàng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "金级"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Gold"
+            "state" : "translated",
+            "value" : "金"
           }
         }
       }
@@ -345,14 +345,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Perele"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Perle"
           }
         },
         "en" : {
@@ -363,92 +363,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Perla"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Perle"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Perla"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "パール"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "펄"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Parel"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Pérola"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Pérola"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Жемчуг"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Imaragarita"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Lulu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Перлина"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "Ngọc trai"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "珍珠级"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pearl"
+            "state" : "translated",
+            "value" : "珍珠"
           }
         }
       }
@@ -458,14 +458,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Amashiwi Yawama"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Freundliche Worte"
           }
         },
         "en" : {
@@ -476,92 +476,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Palabras amables"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Paroles bienveillantes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Parole gentili"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "親切な言葉"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "다정한 말"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Vriendelijke woorden"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Palavras Amáveis"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Palavras amáveis"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Добрые слова"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Amagambo meza"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Maneno Mazuri"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Добре слово"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "Lời tử tế"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "亲切交谈"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Kind Words"
+            "state" : "translated",
+            "value" : "親切的話語"
           }
         }
       }
@@ -571,14 +571,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Isambililo lya Baibolo lya Ntanshi"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Erstes Bibelstudium"
           }
         },
         "en" : {
@@ -589,92 +589,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Primer curso bíblico"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Première étude biblique"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Primo studio biblico"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "初めての聖書研究"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "첫 성서 연구"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Eerste bijbelstudie"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Primeiro Estudo Bíblico"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Primeiro estudo bíblico"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Первое библейское изучение"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Icyigisho cya mbere cya Bibiliya"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Funzo la Kwanza la Biblia"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Перше біблійне вивчення"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "Buổi học Kinh Thánh đầu tiên"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "首次圣经研读"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Bible Study"
+            "state" : "translated",
+            "value" : "第一個聖經研究"
           }
         }
       }
@@ -684,14 +684,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Munyina wa Ntanshi"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Erster Buddy"
           }
         },
         "en" : {
@@ -702,92 +702,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Primer compañero"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Premier compagnon"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Primo compagno"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "初めてのバディ"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "첫 버디"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Eerste buddy"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Primeiro Companheiro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Primeiro companheiro"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Первый напарник"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Mugenzi wa mbere"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Mwenzi wa Kwanza"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Перший напарник"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "Bạn đồng hành đầu tiên"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "第一位同伴"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "First Buddy"
+            "state" : "translated",
+            "value" : "第一位夥伴"
           }
         }
       }
@@ -797,14 +797,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Ukulatwalilila Ukulanshanya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "In Kontakt bleiben"
           }
         },
         "en" : {
@@ -815,92 +815,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Mantener el contacto"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Garder le contact"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Restare in contatto"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "連絡を取り続ける"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "꾸준한 연락"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "In contact blijven"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Mantendo Contato"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Manter o contacto"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Не теряя связи"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Kuguma mu itumanaho"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Kudumisha Mawasiliano"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "На зв'язку"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "Giữ liên lạc"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "保持联系"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Keeping in Touch"
+            "state" : "translated",
+            "value" : "保持聯繫"
           }
         }
       }
@@ -910,14 +910,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Ukushimikila Amakuku Yawama"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Die gute Botschaft weitergeben"
           }
         },
         "en" : {
@@ -928,92 +928,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Compartiendo las buenas noticias"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Annoncer la bonne nouvelle"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Condividere la buona notizia"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "良いたよりを伝える"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "좋은 소식 전하기"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Het goede nieuws delen"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Compartilhando as Boas Novas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "A partilhar as boas novas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Проповедь благой вести"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Gutangaza Ubutumwa Bwiza"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Kushiriki Habari Njema"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Ділимося Доброю новиною"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "Chia sẻ tin mừng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "传讲好消息"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sharing the Good News"
+            "state" : "translated",
+            "value" : "分享好消息"
           }
         }
       }
@@ -1023,14 +1023,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Inshita Ikonkapo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Fürs nächste Mal"
           }
         },
         "en" : {
@@ -1041,92 +1041,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "La próxima vez"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "La prochaine fois"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "La prossima volta"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "次回に向けて"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "다음에는"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Volgende keer"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Da Próxima Vez"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Da próxima vez"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "В следующий раз"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Ubutaha"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Wakati Ujao"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Наступного разу"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "Lần sau"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "下一次"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Next Time"
+            "state" : "translated",
+            "value" : "下一次"
           }
         }
       }
@@ -1136,14 +1136,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Mwaiteyanya Ukuya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Startklar"
           }
         },
         "en" : {
@@ -1154,92 +1154,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Listo para salir"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Prêt à partir"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Pronto a partire"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "準備万端"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "준비 완료"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Klaar om te gaan"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Pronto para Sair"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Pronto a partir"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Готовность к выходу"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Witeguye"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Tayari Kwenda"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Готові вийти"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "Sẵn sàng lên đường"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "准备就绪"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ready to Go"
+            "state" : "translated",
+            "value" : "準備就緒"
           }
         }
       }
@@ -1249,14 +1249,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Amalipoti Yatumwa"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Berichte gesendet"
           }
         },
         "en" : {
@@ -1267,92 +1267,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Informes enviados"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Rapports envoyés"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Rapporti inviati"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "報告の提出"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "보고 제출"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Verslagen verstuurd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Relatórios Enviados"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Relatórios enviados"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Отправленные отчёты"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Raporo zoherejwe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Ripoti Zilizotumwa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Надіслані звіти"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "Báo cáo đã gửi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "已发送报告"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Reports Sent"
+            "state" : "translated",
+            "value" : "已送出的報告"
           }
         }
       }
@@ -1362,14 +1362,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Ukubwekeshapo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Rückbesuche"
           }
         },
         "en" : {
@@ -1380,92 +1380,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Revisitas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Nouvelles visites"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Visite ulteriori"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "再訪問"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "재방문"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Terugbezoeken"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Revisitas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Revisitas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Повторные посещения"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Gusubira gusura"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Ziara za Kurudia"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Повторні візити"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "Thăm lại"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "重访"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Return Visits"
+            "state" : "translated",
+            "value" : "回訪"
           }
         }
       }
@@ -1475,14 +1475,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Babili Babili"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Zu zweit"
           }
         },
         "en" : {
@@ -1493,92 +1493,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "De dos en dos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Deux par deux"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Due a due"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "二人一組"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "둘씩 짝지어"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Twee aan twee"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Dois a Dois"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Dois a dois"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "По двое"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Babiri babiri"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Wawili Wawili"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Удвох"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "Từng đôi một"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "两人一组"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Two by Two"
+            "state" : "translated",
+            "value" : "兩人同行"
           }
         }
       }
@@ -1588,14 +1588,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Umwaka Onse"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Das ganze Jahr über"
           }
         },
         "en" : {
@@ -1606,92 +1606,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Todo el año"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Toute l’année"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Tutto l’anno"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "一年を通して"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "연중 내내"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Het hele jaar door"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "O Ano Todo"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "O ano todo"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Круглый год"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Umwaka wose"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Mwaka Mzima"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Увесь рік"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "Quanh năm"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "全年参与"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Year Round"
+            "state" : "translated",
+            "value" : "全年參與"
           }
         }
       }
@@ -1701,13 +1701,13 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
@@ -1719,92 +1719,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}}, {{level}}"
+            "state" : "translated",
+            "value" : "{{name}}、{{level}}"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "{{name}}, {{level}}"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}}, {{level}}"
+            "state" : "translated",
+            "value" : "{{name}}，{{level}}"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}}, {{level}}"
+            "state" : "translated",
+            "value" : "{{name}}，{{level}}"
           }
         }
       }
@@ -1814,14 +1814,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} apokelela baji"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} hat ein Abzeichen erworben"
           }
         },
         "en" : {
@@ -1832,92 +1832,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} consiguió una insignia"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} a obtenu un badge"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} ha ottenuto un badge"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}}さんがバッジを獲得しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} 님이 배지를 얻었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} heeft een badge verdiend"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} conquistou um emblema"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} conquistou um crachá"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}}: новый значок"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} yabonye ikimenyetso"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} amepata beji"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}}: новий значок"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} đã đạt một huy hiệu"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} 获得了一枚徽章"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned a badge"
+            "state" : "translated",
+            "value" : "{{name}} 獲得了一個徽章"
           }
         }
       }
@@ -1927,14 +1927,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} asuka {{emoji}} ku baji yenu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} hat mit {{emoji}} auf Ihr Abzeichen reagiert"
           }
         },
         "en" : {
@@ -1945,92 +1945,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} reaccionó {{emoji}} a tu insignia"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} a réagi {{emoji}} à votre badge"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} ha reagito con {{emoji}} al tuo badge"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}}さんがあなたのバッジに{{emoji}}でリアクションしました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} 님이 내 배지에 {{emoji}}(으)로 반응했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} reageerde {{emoji}} op je badge"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} reagiu {{emoji}} ao seu emblema"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} reagiu {{emoji}} ao seu crachá"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}}: реакция {{emoji}} на ваш значок"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} yasubije {{emoji}} ku kimenyetso cyawe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} ameitikia {{emoji}} kwa beji yako"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "Реакція {{emoji}} від {{name}} на ваш значок"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} đã phản ứng {{emoji}} với huy hiệu của bạn"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} 对你的徽章回应了 {{emoji}}"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} reacted {{emoji}} to your badge"
+            "state" : "translated",
+            "value" : "{{name}} 對你的徽章回應了 {{emoji}}"
           }
         }
       }
@@ -2040,14 +2040,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} apokelela amabaji apya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} hat neue Abzeichen erworben"
           }
         },
         "en" : {
@@ -2058,92 +2058,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} consiguió insignias nuevas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} a obtenu de nouveaux badges"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} ha ottenuto nuovi badge"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}}さんが新しいバッジを獲得しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} 님이 새 배지를 얻었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} heeft nieuwe badges verdiend"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} conquistou novos emblemas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} conquistou novos crachás"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}}: новые значки"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} yabonye ibimenyetso bishya"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} amepata beji mpya"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}}: нові значки"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} đã đạt các huy hiệu mới"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} 获得了新徽章"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} earned new badges"
+            "state" : "translated",
+            "value" : "{{name}} 獲得了新徽章"
           }
         }
       }
@@ -2153,14 +2153,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} asumina ukwita kwenu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} hat Ihre Einladung angenommen"
           }
         },
         "en" : {
@@ -2171,92 +2171,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} aceptó tu invitación"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} a accepté votre invitation"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} ha accettato il tuo invito"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}}さんが招待を承諾しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} 님이 초대를 수락했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} heeft je uitnodiging geaccepteerd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} aceitou seu convite"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} aceitou o seu convite"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "Приглашение принято: {{name}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} yemeye ubutumire bwawe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} amekubali mwaliko wako"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}}: запрошення прийнято"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} đã chấp nhận lời mời của bạn"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} 接受了你的邀请"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} accepted your invite"
+            "state" : "translated",
+            "value" : "{{name}} 接受了你的邀請"
           }
         }
       }
@@ -2266,14 +2266,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Ukukonkapo kwenu · {{when}}"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Ihr Folgebesuch · {{when}}"
           }
         },
         "en" : {
@@ -2284,92 +2284,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Tu seguimiento · {{when}}"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Votre suivi · {{when}}"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Il tuo follow-up · {{when}}"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "あなたのフォローアップ · {{when}}"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "내 다음 방문 · {{when}}"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Jouw vervolgbezoek · {{when}}"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Seu acompanhamento · {{when}}"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "O seu acompanhamento · {{when}}"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Ваше повторное посещение · {{when}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Gusubirayo kwawe · {{when}}"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Ufuatiliaji Wako · {{when}}"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Ваша повторна зустріч · {{when}}"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "Lần thăm lại của bạn · {{when}}"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "你的跟进 · {{when}}"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Follow-up · {{when}}"
+            "state" : "translated",
+            "value" : "你的後續探訪 · {{when}}"
           }
         }
       }
@@ -2379,14 +2379,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Ubupange bwenu · {{when}}"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Ihr Plan · {{when}}"
           }
         },
         "en" : {
@@ -2397,92 +2397,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Tu plan · {{when}}"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Votre plan · {{when}}"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Il tuo piano · {{when}}"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "あなたのプラン · {{when}}"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "내 계획 · {{when}}"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Jouw plan · {{when}}"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Seu plano · {{when}}"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "O seu plano · {{when}}"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Ваш план · {{when}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Gahunda yawe · {{when}}"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Mpango Wako · {{when}}"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Ваш план · {{when}}"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "Kế hoạch của bạn · {{when}}"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "你的计划 · {{when}}"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your Plan · {{when}}"
+            "state" : "translated",
+            "value" : "你的計畫 · {{when}}"
           }
         }
       }
@@ -2492,14 +2492,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} apokelela baji ipya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} hat ein neues Abzeichen"
           }
         },
         "en" : {
@@ -2510,92 +2510,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} tiene una insignia nueva"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} a un nouveau badge"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} ha un nuovo badge"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}}さんが新しいバッジを獲得しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} 님이 새 배지를 얻었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} heeft een nieuwe badge"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} tem um novo emblema"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} tem um novo crachá"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}}: новый значок"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} afite ikimenyetso gishya"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} amepata beji mpya"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}}: новий значок"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} có huy hiệu mới"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} 获得了新徽章"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} has a new badge"
+            "state" : "translated",
+            "value" : "{{name}} 獲得了新徽章"
           }
         }
       }
@@ -2605,14 +2605,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} aleka Ukukonkapo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} hat einen Folgebesuch abgesagt"
           }
         },
         "en" : {
@@ -2623,92 +2623,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} canceló un seguimiento"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} a annulé un suivi"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} ha annullato un follow-up"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}}さんがフォローアップを取り消しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 님이 다음 방문을 취소했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} heeft een vervolgbezoek geannuleerd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} cancelou um acompanhamento"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} cancelou um acompanhamento"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "Повторное посещение отменено: {{name}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} yahagaritse Gusubirayo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} ameghairi Ufuatiliaji"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}}: повторну зустріч скасовано"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} đã hủy một lần thăm lại"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 取消了一次跟进"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 取消了一次後續探訪"
           }
         }
       }
@@ -2718,14 +2718,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} amwita ku Kukonkapo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} hat Sie zu einem Folgebesuch eingeladen"
           }
         },
         "en" : {
@@ -2736,92 +2736,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} te invitó a un seguimiento"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} vous a invité à un suivi"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} ti ha invitato a un follow-up"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}}さんがフォローアップに招待しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 님이 다음 방문에 초대했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} heeft je uitgenodigd voor een vervolgbezoek"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} convidou você para um acompanhamento"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} enviou-lhe um convite para um acompanhamento"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} приглашает вас на повторное посещение"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} yagutumiye ku Gusubirayo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} amekualika kwenye Ufuatiliaji"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "Запрошення на повторну зустріч від {{name}}"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} đã mời bạn tham gia một lần thăm lại"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 邀请你参加一次跟进"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 邀請你參加一次後續探訪"
           }
         }
       }
@@ -2831,14 +2831,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} acinja Ukukonkapo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} hat einen Folgebesuch geändert"
           }
         },
         "en" : {
@@ -2849,92 +2849,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} modificó un seguimiento"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} a modifié un suivi"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} ha modificato un follow-up"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}}さんがフォローアップを変更しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 님이 다음 방문을 변경했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} heeft een vervolgbezoek gewijzigd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} alterou um acompanhamento"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} alterou um acompanhamento"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "Повторное посещение изменено: {{name}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} yahinduye Gusubirayo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} amebadilisha Ufuatiliaji"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}}: повторну зустріч змінено"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} đã thay đổi một lần thăm lại"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 更改了一次跟进"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Follow-up"
+            "state" : "translated",
+            "value" : "{{name}} 更改了一次後續探訪"
           }
         }
       }
@@ -2944,14 +2944,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} alefwaya ukuiba pamo na imwe"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} würde sich gern Ihnen anschließen"
           }
         },
         "en" : {
@@ -2962,92 +2962,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} quiere unirse a ti"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} aimerait se joindre à vous"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} vorrebbe unirsi a te"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}}さんがあなたへの同行を希望しています"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} 님이 함께하고 싶어 합니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} wil graag met je meegaan"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} gostaria de ir com você"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} gostaria de se juntar a si"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} хочет присоединиться к вам"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} yifuza kwifatanya nawe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} angependa kujiunga nawe"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} хоче приєднатися до вас"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} muốn tham gia cùng bạn"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} 想加入你"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} would like to join you"
+            "state" : "translated",
+            "value" : "{{name}} 想要加入你"
           }
         }
       }
@@ -3057,14 +3057,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Imwe na {{name}} nomba muli banyina"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Sie und {{name}} sind jetzt Buddies"
           }
         },
         "en" : {
@@ -3075,92 +3075,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "{{name}} y tú ya sois compañeros"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Vous et {{name}} êtes maintenant compagnons"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Tu e {{name}} siete compagni"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "あなたと{{name}}さんがバディになりました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "{{name}} 님과 이제 버디입니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Jij en {{name}} zijn nu buddy's"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Você e {{name}} agora são companheiros"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Você e {{name}} já são companheiros"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Вы и {{name}} теперь напарники"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Wowe na {{name}} ubu muri bagenzi"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Wewe na {{name}} sasa ni wenzi"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Ви та {{name}} тепер напарники"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "Bạn và {{name}} đã là bạn đồng hành"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "你和 {{name}} 现在是同伴了"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You and {{name}} are buddies now"
+            "state" : "translated",
+            "value" : "你和 {{name}} 現在是夥伴了"
           }
         }
       }
@@ -3170,14 +3170,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} aleka Ubupange"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} hat einen Plan abgesagt"
           }
         },
         "en" : {
@@ -3188,92 +3188,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} canceló un plan"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} a annulé un plan"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} ha annullato un piano"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}}さんがプランを取り消しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 님이 계획을 취소했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} heeft een plan geannuleerd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} cancelou um plano"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} cancelou um plano"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "План отменён: {{name}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} yahagaritse Gahunda"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} ameghairi Mpango"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}}: план скасовано"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} đã hủy một Kế hoạch"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 取消了一个计划"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} canceled a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 取消了一項計畫"
           }
         }
       }
@@ -3283,14 +3283,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} amwita ku Bupange"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} hat Sie zu einem Plan eingeladen"
           }
         },
         "en" : {
@@ -3301,92 +3301,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} te invitó a un plan"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} vous a invité à un plan"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} ti ha invitato a un piano"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}}さんがプランに招待しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 님이 계획에 초대했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} heeft je uitgenodigd voor een plan"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} convidou você para um plano"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} enviou-lhe um convite para um plano"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} приглашает вас к плану"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} yagutumiye muri Gahunda"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} amekualika kwenye Mpango"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "Запрошення на план від {{name}}"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} đã mời bạn tham gia một Kế hoạch"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 邀请你参加一个计划"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} invited you to a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 邀請你參加一項計畫"
           }
         }
       }
@@ -3396,14 +3396,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} acinja Ubupange"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} hat einen Plan geändert"
           }
         },
         "en" : {
@@ -3414,92 +3414,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} modificó un plan"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} a modifié un plan"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} ha modificato un piano"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}}さんがプランを変更しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 님이 계획을 변경했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} heeft een plan gewijzigd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} alterou um plano"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} alterou um plano"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "План изменён: {{name}}"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} yahinduye Gahunda"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} amebadilisha Mpango"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}}: план змінено"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} đã thay đổi một Kế hoạch"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 更改了一个计划"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} changed a Plan"
+            "state" : "translated",
+            "value" : "{{name}} 更改了一項計畫"
           }
         }
       }
@@ -3509,14 +3509,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} tangaya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} kann nicht"
           }
         },
         "en" : {
@@ -3527,92 +3527,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} no puede ir"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} n’est pas disponible"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} non può venire"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}}さんは参加できません"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} 님이 참석할 수 없습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} kan niet"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} não poderá ir"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} não pode ir"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} не сможет"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} ntashobora"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} hawezi kuja"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}}: не зможе"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} không thể đi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} 无法参加"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} can't make it"
+            "state" : "translated",
+            "value" : "{{name}} 無法參加"
           }
         }
       }
@@ -3622,14 +3622,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} aya"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} kommt mit"
           }
         },
         "en" : {
@@ -3640,92 +3640,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} va a ir"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} y va"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} partecipa"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}}さんが参加します"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} 님이 참석합니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} gaat mee"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} vai"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} vai"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} идёт"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} aragenda"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} anakuja"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}}: піде"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} sẽ đi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} 会参加"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} is going"
+            "state" : "translated",
+            "value" : "{{name}} 會參加"
           }
         }
       }
@@ -3735,14 +3735,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Isuleni Buddies pa kushininkisha munyina wenu wapya."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Öffnen Sie Buddies, um Ihren neuen Buddy zu bestätigen."
           }
         },
         "en" : {
@@ -3753,92 +3753,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Abre Compañeros para confirmar a tu nuevo compañero."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Ouvrez Compagnons pour confirmer votre nouveau compagnon."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Apri Compagni per confermare il tuo nuovo compagno."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "バディを開いて、新しいバディを承認してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "버디를 열어 새 버디를 확인하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Open Buddies om je nieuwe buddy te bevestigen."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Abra o Buddies para confirmar seu novo companheiro."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Abra os Companheiros para confirmar o seu novo companheiro."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Откройте Buddies, чтобы подтвердить нового напарника."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Fungura Buddies kugira ngo wemeze mugenzi wawe mushya."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Fungua Wenzi ili kuthibitisha mwenzi wako mpya."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Відкрийте «Напарники», щоб підтвердити нового напарника."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "Mở Bạn đồng hành để xác nhận bạn đồng hành mới của bạn."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "打开“同伴”来确认你的新同伴。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Buddies to confirm your new buddy."
+            "state" : "translated",
+            "value" : "開啟「夥伴」來確認你的新夥伴。"
           }
         }
       }
@@ -3848,14 +3848,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Nomba kuti mwamona inshiku shapangwa ishabo mu mulimo."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Sie sehen jetzt gegenseitig Ihre geplanten Diensttage."
           }
         },
         "en" : {
@@ -3866,92 +3866,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Ahora podéis ver los días de servicio planificados del otro."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Vous pouvez désormais voir vos jours de service planifiés l’un de l’autre."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Ora potete vedere i giorni di servizio pianificati l’uno dell’altro."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "お互いの奉仕の予定日が見えるようになりました。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "이제 서로 계획한 봉사 날짜를 볼 수 있습니다."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Jullie zien nu elkaars geplande dagen in de velddienst."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Agora vocês podem ver os dias de serviço planejados um do outro."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Agora podem ver os dias de serviço planeados um do outro."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Теперь вы видите запланированные дни служения друг друга."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Ubu mushobora kubona iminsi ya buri wese yateganyirijwe umurimo."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Sasa mnaweza kuona siku za huduma zilizopangwa za kila mmoja."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Тепер ви бачите заплановані дні служіння одне одного."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "Giờ đây bạn có thể thấy các ngày rao giảng đã lên kế hoạch của nhau."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "你们现在可以看到彼此计划的传道日。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "You can now see each other's planned service days."
+            "state" : "translated",
+            "value" : "你們現在可以看到彼此已安排的傳道日期。"
           }
         }
       }

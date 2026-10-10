@@ -16,12 +16,41 @@
   <string name="month" formatted="false">月</string>
   <string name="ok" formatted="false">わかりました</string>
   <string name="reportedToday" formatted="false">本日の報告</string>
+  <string name="requestFailedTryAgain" formatted="false">問題が発生しました。もう一度お試しください。</string>
   <string name="save" formatted="false">保存</string>
   <string name="sharedTheGoodNews" formatted="false">を共有しました\n良いニュース</string>
+  <string name="siriStopTimerShort" formatted="false">タイマーを停止</string>
+  <string name="siriTimerEmpty" formatted="false">タイマーが1分未満のため、時間は追加されませんでした。</string>
+  <string name="siriTimerPaused" formatted="false">タイマーを一時停止しました</string>
+  <string name="siriTimerSaved" formatted="false">タイマーを停止し、時間を追加しました</string>
+  <string name="siriTimerStarted" formatted="false">タイマーを開始しました</string>
+  <string name="siriTimerTooLong" formatted="false">タイマーが24時間以上になっており、1件の記録としては長すぎます。WitnessWorkで時間を確認してください。</string>
   <string name="standard" formatted="false">標準</string>
   <string name="timeAdded" formatted="false">追加された時間</string>
   <string name="timer" formatted="false">タイマー</string>
+  <string name="timerPauseAction" formatted="false">タイマーを一時停止</string>
+  <string name="timerSaveAction" formatted="false">時間を保存…</string>
+  <string name="timerStartAction" formatted="false">タイマーを開始</string>
   <string name="today" formatted="false">今日</string>
   <string name="tomorrow" formatted="false">明日</string>
   <string name="type" formatted="false">タイプ</string>
+  <string name="watchComplicationDescription" formatted="false">今月の奉仕をひと目で確認できます。</string>
+  <string name="watchComplicationName" formatted="false">今月の進捗</string>
+  <string name="watchDirectionsUnavailable" formatted="false">マップでこの場所が見つかりませんでした。</string>
+  <string name="watchHoursLoggingOff" formatted="false">時間を追加するには、スマートフォンのWitnessWorkで「自分の時間を記録する」をオンにしてください。</string>
+  <string name="watchNothingScheduled" formatted="false">予定はありません</string>
+  <string name="watchNow" formatted="false">今</string>
+  <string name="watchPhoneUnreachable" formatted="false">スマートフォンに接続できません。近くに置いて、もう一度お試しください。</string>
+  <string name="watchRangeComplicationDescription" formatted="false">今月の時間を、0から目標までのゲージで表示します。</string>
+  <string name="watchSetUp" formatted="false">スマートフォンでWitnessWorkを開いて、セットアップを完了してください。</string>
+  <string name="watchStale" formatted="false">スマートフォンでWitnessWorkを開いて、更新してください。</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">今月の時間を、目標に向かうゲージで表示します。</string>
+  <string name="watchSyncing" formatted="false">スマートフォンと同期中…</string>
+  <string name="watchThen" formatted="false">次</string>
+  <string name="watchTimerChanged" formatted="false">スマートフォンでタイマーが変更されました。時間を確認して、もう一度お試しください。</string>
+  <string name="watchUpNext" formatted="false">次の予定</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">次のフォローアップまたはプランです。</string>
+  <string name="watchUpNextComplicationName" formatted="false">次の予定</string>
+  <string name="wearRangeComplicationName" formatted="false">今月の進捗(0から目標)</string>
+  <string name="wearSymbolComplicationName" formatted="false">今月の進捗(時計付き)</string>
 </resources>

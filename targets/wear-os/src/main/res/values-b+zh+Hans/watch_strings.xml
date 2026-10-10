@@ -16,12 +16,41 @@
   <string name="month" formatted="false">月份</string>
   <string name="ok" formatted="false">确定</string>
   <string name="reportedToday" formatted="false">今天报告</string>
+  <string name="requestFailedTryAgain" formatted="false">出了点问题。请重试。</string>
   <string name="save" formatted="false">保存</string>
   <string name="sharedTheGoodNews" formatted="false">分享了\n好消息</string>
+  <string name="siriStopTimerShort" formatted="false">停止计时器</string>
+  <string name="siriTimerEmpty" formatted="false">计时器不足一分钟，因此没有添加时间。</string>
+  <string name="siriTimerPaused" formatted="false">计时器已暂停</string>
+  <string name="siriTimerSaved" formatted="false">计时器已停止，时间已添加</string>
+  <string name="siriTimerStarted" formatted="false">计时器已开始</string>
+  <string name="siriTimerTooLong" formatted="false">计时器已达 24 小时或更长，对于一条记录来说太长了。请在 WitnessWork 中检查时间。</string>
   <string name="standard" formatted="false">标准</string>
   <string name="timeAdded" formatted="false">已添加时间</string>
   <string name="timer" formatted="false">计时器</string>
+  <string name="timerPauseAction" formatted="false">暂停计时</string>
+  <string name="timerSaveAction" formatted="false">保存时间…</string>
+  <string name="timerStartAction" formatted="false">开始计时</string>
   <string name="today" formatted="false">今天</string>
   <string name="tomorrow" formatted="false">明天</string>
   <string name="type" formatted="false">类型</string>
+  <string name="watchComplicationDescription" formatted="false">本月传道一览。</string>
+  <string name="watchComplicationName" formatted="false">每月进度</string>
+  <string name="watchDirectionsUnavailable" formatted="false">地图找不到这个地点。</string>
+  <string name="watchHoursLoggingOff" formatted="false">请在手机上的 WitnessWork 中开启“记录我的时数”以添加时间。</string>
+  <string name="watchNothingScheduled" formatted="false">暂无安排</string>
+  <string name="watchNow" formatted="false">现在</string>
+  <string name="watchPhoneUnreachable" formatted="false">无法连接你的手机。请让它保持在附近，然后重试。</string>
+  <string name="watchRangeComplicationDescription" formatted="false">以从零到你的目标的仪表显示本月时数。</string>
+  <string name="watchSetUp" formatted="false">请在手机上打开 WitnessWork 以完成设置。</string>
+  <string name="watchStale" formatted="false">请在手机上打开 WitnessWork 以更新。</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">以朝向你目标的仪表显示本月时数。</string>
+  <string name="watchSyncing" formatted="false">正在与手机同步…</string>
+  <string name="watchThen" formatted="false">随后</string>
+  <string name="watchTimerChanged" formatted="false">计时器在你的手机上已更改。请检查时间并重试。</string>
+  <string name="watchUpNext" formatted="false">接下来</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">你的下一次跟进或计划。</string>
+  <string name="watchUpNextComplicationName" formatted="false">接下来</string>
+  <string name="wearRangeComplicationName" formatted="false">每月进度（0 至目标）</string>
+  <string name="wearSymbolComplicationName" formatted="false">每月进度与时钟</string>
 </resources>

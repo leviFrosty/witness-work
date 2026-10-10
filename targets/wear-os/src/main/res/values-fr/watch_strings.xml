@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Mois</string>
   <string name="ok" formatted="false">D\'ACCORD</string>
   <string name="reportedToday" formatted="false">Signalé aujourd\'hui</string>
+  <string name="requestFailedTryAgain" formatted="false">Un problème est survenu. Réessayez.</string>
   <string name="save" formatted="false">Sauvegarder</string>
   <string name="sharedTheGoodNews" formatted="false">Partagé le\nBonnes nouvelles</string>
+  <string name="siriStopTimerShort" formatted="false">Arrêter le minuteur</string>
+  <string name="siriTimerEmpty" formatted="false">Le minuteur affiche moins d’une minute, aucun temps n’a donc été ajouté.</string>
+  <string name="siriTimerPaused" formatted="false">Minuteur en pause</string>
+  <string name="siriTimerSaved" formatted="false">Minuteur arrêté et temps ajouté</string>
+  <string name="siriTimerStarted" formatted="false">Minuteur démarré</string>
+  <string name="siriTimerTooLong" formatted="false">Le minuteur affiche 24 heures ou plus, ce qui est trop long pour une seule entrée. Vérifiez le temps dans WitnessWork.</string>
   <string name="standard" formatted="false">Prédication</string>
   <string name="timeAdded" formatted="false">Temps ajouté</string>
   <string name="timer" formatted="false">Minuteur</string>
+  <string name="timerPauseAction" formatted="false">Mettre le minuteur en pause</string>
+  <string name="timerSaveAction" formatted="false">Enregistrer le temps…</string>
+  <string name="timerStartAction" formatted="false">Démarrer le minuteur</string>
   <string name="today" formatted="false">Aujourd\'hui</string>
   <string name="tomorrow" formatted="false">Demain</string>
   <string name="type" formatted="false">Taper</string>
+  <string name="watchComplicationDescription" formatted="false">Le service de ce mois en un coup d’œil.</string>
+  <string name="watchComplicationName" formatted="false">Progression mensuelle</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Plans n’a pas trouvé ce lieu.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Activez Enregistrer mes heures dans WitnessWork sur votre téléphone pour ajouter du temps.</string>
+  <string name="watchNothingScheduled" formatted="false">Rien de prévu</string>
+  <string name="watchNow" formatted="false">Maintenant</string>
+  <string name="watchPhoneUnreachable" formatted="false">Impossible de joindre votre téléphone. Gardez-le à proximité et réessayez.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Les heures de ce mois sur une jauge de zéro à votre objectif.</string>
+  <string name="watchSetUp" formatted="false">Ouvrez WitnessWork sur votre téléphone pour terminer la configuration.</string>
+  <string name="watchStale" formatted="false">Ouvrez WitnessWork sur votre téléphone pour mettre à jour.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Les heures de ce mois sur une jauge vers votre objectif.</string>
+  <string name="watchSyncing" formatted="false">Synchronisation avec le téléphone…</string>
+  <string name="watchThen" formatted="false">Ensuite</string>
+  <string name="watchTimerChanged" formatted="false">Le minuteur a changé sur votre téléphone. Vérifiez l’heure et réessayez.</string>
+  <string name="watchUpNext" formatted="false">À suivre</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Votre prochain suivi ou plan.</string>
+  <string name="watchUpNextComplicationName" formatted="false">À suivre</string>
+  <string name="wearRangeComplicationName" formatted="false">Progression mensuelle, de 0 à l’objectif</string>
+  <string name="wearSymbolComplicationName" formatted="false">Progression mensuelle avec horloge</string>
 </resources>

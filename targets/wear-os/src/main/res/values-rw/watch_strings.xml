@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Ukwezi</string>
   <string name="ok" formatted="false">OK</string>
   <string name="reportedToday" formatted="false">Yatangajwe uyu munsi</string>
+  <string name="requestFailedTryAgain" formatted="false">Hari ikitagenze neza. Ongera ugerageze.</string>
   <string name="save" formatted="false">Emeza</string>
   <string name="sharedTheGoodNews" formatted="false">Watangaje ubutumwa bwiza</string>
+  <string name="siriStopTimerShort" formatted="false">Hagarika igihe</string>
+  <string name="siriTimerEmpty" formatted="false">Igihe kibarwa kiri munsi y\'umunota umwe, bityo nta gihe cyongeweho.</string>
+  <string name="siriTimerPaused" formatted="false">Igihe kibarwa cyahagaze by\'agateganyo</string>
+  <string name="siriTimerSaved" formatted="false">Igihe kibarwa cyahagaritswe kandi igihe cyongeweho</string>
+  <string name="siriTimerStarted" formatted="false">Igihe kibarwa cyatangiye</string>
+  <string name="siriTimerTooLong" formatted="false">Igihe kibarwa kingana n\'amasaha 24 cyangwa kirenga, ibyo bikaba birebire cyane ku nyandiko imwe. Reba igihe muri WitnessWork.</string>
   <string name="standard" formatted="false">Umurimo wo kubwiriza</string>
   <string name="timeAdded" formatted="false">Igihe cyashyizwemo</string>
   <string name="timer" formatted="false">Kubara amasaha n\'iminota</string>
+  <string name="timerPauseAction" formatted="false">Hagarika igihe kibarwa by\'agateganyo</string>
+  <string name="timerSaveAction" formatted="false">Bika igihe…</string>
+  <string name="timerStartAction" formatted="false">Tangiza igihe kibarwa</string>
   <string name="today" formatted="false">Uyu munsi</string>
   <string name="tomorrow" formatted="false">Ejo</string>
   <string name="type" formatted="false">Aho yavuye</string>
+  <string name="watchComplicationDescription" formatted="false">Umurimo w\'uku kwezi ku maso.</string>
+  <string name="watchComplicationName" formatted="false">Iterambere ry\'ukwezi</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Maps ntiyabonye aha hantu.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Fungura Andika amasaha yanjye muri WitnessWork kuri telefoni yawe kugira ngo wongereho igihe.</string>
+  <string name="watchNothingScheduled" formatted="false">Nta kiteganyijwe</string>
+  <string name="watchNow" formatted="false">Ubu</string>
+  <string name="watchPhoneUnreachable" formatted="false">Ntibishoboka kugera kuri telefoni yawe. Yikomeze hafi hanyuma wongere ugerageze.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Amasaha y\'uku kwezi ku gipimo kuva kuri zeru kugera ku ntego yawe.</string>
+  <string name="watchSetUp" formatted="false">Fungura WitnessWork kuri telefoni yawe kugira ngo urangize gutegura.</string>
+  <string name="watchStale" formatted="false">Fungura WitnessWork kuri telefoni yawe kugira ngo ivugurure.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Amasaha y\'uku kwezi ku gipimo cyerekeza ku ntego yawe.</string>
+  <string name="watchSyncing" formatted="false">Guhuza na telefoni…</string>
+  <string name="watchThen" formatted="false">Hanyuma</string>
+  <string name="watchTimerChanged" formatted="false">Igihe kibarwa cyahindutse kuri telefoni yawe. Reba igihe hanyuma wongere ugerageze.</string>
+  <string name="watchUpNext" formatted="false">Ibikurikira</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Gusubirayo cyangwa gahunda ukurikira.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Ibikurikira</string>
+  <string name="wearRangeComplicationName" formatted="false">Iterambere ry\'ukwezi, kuva kuri 0 ukagera ku ntego</string>
+  <string name="wearSymbolComplicationName" formatted="false">Iterambere ry\'ukwezi hamwe n\'isaha</string>
 </resources>

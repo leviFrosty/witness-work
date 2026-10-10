@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Month</string>
   <string name="ok" formatted="false">OK</string>
   <string name="reportedToday" formatted="false">Capeelwa lipoti lelo</string>
+  <string name="requestFailedTryAgain" formatted="false">Pali ubwafya. Esheniko nakabili.</string>
   <string name="save" formatted="false">Save</string>
   <string name="sharedTheGoodNews" formatted="false">Shared the\nGood News</string>
+  <string name="siriStopTimerShort" formatted="false">Pwisha Icakupimako</string>
+  <string name="siriTimerEmpty" formatted="false">Icakupimako cikwata panono ukucila iminiti imo, ico tapali inshita yalundwako.</string>
+  <string name="siriTimerPaused" formatted="false">Icakupimako cayaleka</string>
+  <string name="siriTimerSaved" formatted="false">Icakupimako cayaleka kabili inshita yalundwako</string>
+  <string name="siriTimerStarted" formatted="false">Icakupimako cayatendeka</string>
+  <string name="siriTimerTooLong" formatted="false">Icakupimako cikwata amaawala 24 nelyo ukucilapo, ico cacila pa cintu cimo. Moneni inshita muli WitnessWork.</string>
   <string name="standard" formatted="false">Standard</string>
   <string name="timeAdded" formatted="false">Added Time</string>
   <string name="timer" formatted="false">Timer</string>
+  <string name="timerPauseAction" formatted="false">Leka Icakupimako Inshita</string>
+  <string name="timerSaveAction" formatted="false">Sunga Inshita…</string>
+  <string name="timerStartAction" formatted="false">Tendeka Icakupimako Inshita</string>
   <string name="today" formatted="false">Today</string>
   <string name="tomorrow" formatted="false">Mailo</string>
   <string name="type" formatted="false">Type</string>
+  <string name="watchComplicationDescription" formatted="false">Umulimo wa mweshi uno mu kumona kumo.</string>
+  <string name="watchComplicationName" formatted="false">Ukukula kwa Mweshi</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Maps tailasanga incende iyi.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Washeni Lemba amaawala yandi muli WitnessWork pa foni yenu pa kulundako inshita.</string>
+  <string name="watchNothingScheduled" formatted="false">Tapali icapangwa</string>
+  <string name="watchNow" formatted="false">Nomba</string>
+  <string name="watchPhoneUnreachable" formatted="false">Tatwafika ku foni yenu. Iikeni pafupi elyo mwesheko nakabili.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Amaawala ya mweshi uno pa cipimo ukufuma pa zero ukufika ku co mwapanga.</string>
+  <string name="watchSetUp" formatted="false">Isuleni WitnessWork pa foni yenu pa kupwisha ukupanga.</string>
+  <string name="watchStale" formatted="false">Isuleni WitnessWork pa foni yenu pa kukusha.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Amaawala ya mweshi uno pa cipimo ku co mwapanga.</string>
+  <string name="watchSyncing" formatted="false">Cilelunganikanya na foni…</string>
+  <string name="watchThen" formatted="false">Panuma</string>
+  <string name="watchTimerChanged" formatted="false">Icakupimako cacinja pa foni yenu. Moneni inshita elyo mwesheko nakabili.</string>
+  <string name="watchUpNext" formatted="false">Ukukonkapo</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Ukukonkapo kwenu ukwisa nelyo ubupange.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Ukukonkapo</string>
+  <string name="wearRangeComplicationName" formatted="false">Ukukula kwa Mweshi, 0 ukufika ku Co Mwapanga</string>
+  <string name="wearSymbolComplicationName" formatted="false">Ukukula kwa Mweshi na Wotchi</string>
 </resources>

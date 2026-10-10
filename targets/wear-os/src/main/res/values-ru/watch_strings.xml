@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Месяц</string>
   <string name="ok" formatted="false">ХОРОШО</string>
   <string name="reportedToday" formatted="false">Сообщили сегодня</string>
+  <string name="requestFailedTryAgain" formatted="false">Что-то пошло не так. Повторите попытку.</string>
   <string name="save" formatted="false">Сохранять</string>
   <string name="sharedTheGoodNews" formatted="false">Поделился\nХорошие новости</string>
+  <string name="siriStopTimerShort" formatted="false">Остановить таймер</string>
+  <string name="siriTimerEmpty" formatted="false">В таймере меньше минуты, поэтому время не добавлено.</string>
+  <string name="siriTimerPaused" formatted="false">Таймер приостановлен</string>
+  <string name="siriTimerSaved" formatted="false">Таймер остановлен, время добавлено</string>
+  <string name="siriTimerStarted" formatted="false">Таймер запущен</string>
+  <string name="siriTimerTooLong" formatted="false">В таймере 24 часа или больше — слишком много для одной записи. Проверьте время в WitnessWork.</string>
   <string name="standard" formatted="false">Стандартный</string>
   <string name="timeAdded" formatted="false">Добавлено время</string>
   <string name="timer" formatted="false">Таймер</string>
+  <string name="timerPauseAction" formatted="false">Приостановить таймер</string>
+  <string name="timerSaveAction" formatted="false">Сохранить время…</string>
+  <string name="timerStartAction" formatted="false">Запустить таймер</string>
   <string name="today" formatted="false">Сегодня</string>
   <string name="tomorrow" formatted="false">Завтра</string>
   <string name="type" formatted="false">Тип</string>
+  <string name="watchComplicationDescription" formatted="false">Служение этого месяца с первого взгляда.</string>
+  <string name="watchComplicationName" formatted="false">Прогресс за месяц</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Карты не смогли найти это место.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Включите «Записывать мои часы» в WitnessWork на телефоне, чтобы добавлять время.</string>
+  <string name="watchNothingScheduled" formatted="false">Ничего не запланировано</string>
+  <string name="watchNow" formatted="false">Сейчас</string>
+  <string name="watchPhoneUnreachable" formatted="false">Не удаётся связаться с телефоном. Держите его рядом и повторите попытку.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Часы этого месяца на шкале от нуля до вашей цели.</string>
+  <string name="watchSetUp" formatted="false">Откройте WitnessWork на телефоне, чтобы завершить настройку.</string>
+  <string name="watchStale" formatted="false">Откройте WitnessWork на телефоне, чтобы обновить данные.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Часы этого месяца на шкале до вашей цели.</string>
+  <string name="watchSyncing" formatted="false">Синхронизация с телефоном…</string>
+  <string name="watchThen" formatted="false">Затем</string>
+  <string name="watchTimerChanged" formatted="false">Таймер изменён на телефоне. Проверьте время и повторите попытку.</string>
+  <string name="watchUpNext" formatted="false">Далее</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Ваше следующее повторное посещение или план.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Далее</string>
+  <string name="wearRangeComplicationName" formatted="false">Прогресс за месяц, от 0 до цели</string>
+  <string name="wearSymbolComplicationName" formatted="false">Прогресс за месяц с часами</string>
 </resources>

@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Maand</string>
   <string name="ok" formatted="false">OK</string>
   <string name="reportedToday" formatted="false">Vandaag gemeld</string>
+  <string name="requestFailedTryAgain" formatted="false">Er ging iets mis. Probeer het opnieuw.</string>
   <string name="save" formatted="false">Opslaan</string>
   <string name="sharedTheGoodNews" formatted="false">Deelde de\nGoed nieuws</string>
+  <string name="siriStopTimerShort" formatted="false">Timer stoppen</string>
+  <string name="siriTimerEmpty" formatted="false">De timer staat op minder dan een minuut, dus er is geen tijd toegevoegd.</string>
+  <string name="siriTimerPaused" formatted="false">Timer gepauzeerd</string>
+  <string name="siriTimerSaved" formatted="false">Timer gestopt en tijd toegevoegd</string>
+  <string name="siriTimerStarted" formatted="false">Timer gestart</string>
+  <string name="siriTimerTooLong" formatted="false">De timer staat op 24 uur of meer, wat te lang is voor één registratie. Controleer de tijd in WitnessWork.</string>
   <string name="standard" formatted="false">Standaard</string>
   <string name="timeAdded" formatted="false">Tijd toegevoegd</string>
   <string name="timer" formatted="false">Timer</string>
+  <string name="timerPauseAction" formatted="false">Timer pauzeren</string>
+  <string name="timerSaveAction" formatted="false">Tijd opslaan…</string>
+  <string name="timerStartAction" formatted="false">Timer starten</string>
   <string name="today" formatted="false">Vandaag</string>
   <string name="tomorrow" formatted="false">Morgen</string>
   <string name="type" formatted="false">Type</string>
+  <string name="watchComplicationDescription" formatted="false">De dienst van deze maand in één oogopslag.</string>
+  <string name="watchComplicationName" formatted="false">Maandvoortgang</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Kaarten kon deze plek niet vinden.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Zet Mijn uren bijhouden aan in WitnessWork op je telefoon om tijd toe te voegen.</string>
+  <string name="watchNothingScheduled" formatted="false">Niets gepland</string>
+  <string name="watchNow" formatted="false">Nu</string>
+  <string name="watchPhoneUnreachable" formatted="false">Kan je telefoon niet bereiken. Houd hem in de buurt en probeer het opnieuw.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">De uren van deze maand op een meter van nul tot je doel.</string>
+  <string name="watchSetUp" formatted="false">Open WitnessWork op je telefoon om het instellen af te ronden.</string>
+  <string name="watchStale" formatted="false">Open WitnessWork op je telefoon om bij te werken.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">De uren van deze maand op een meter richting je doel.</string>
+  <string name="watchSyncing" formatted="false">Synchroniseren met telefoon…</string>
+  <string name="watchThen" formatted="false">Daarna</string>
+  <string name="watchTimerChanged" formatted="false">De timer is gewijzigd op je telefoon. Controleer de tijd en probeer het opnieuw.</string>
+  <string name="watchUpNext" formatted="false">Hierna</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Je volgende vervolgbezoek of plan.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Hierna</string>
+  <string name="wearRangeComplicationName" formatted="false">Maandvoortgang, 0 tot doel</string>
+  <string name="wearSymbolComplicationName" formatted="false">Maandvoortgang met klok</string>
 </resources>

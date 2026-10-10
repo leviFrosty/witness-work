@@ -16,12 +16,41 @@
   <string name="month" formatted="false">월</string>
   <string name="ok" formatted="false">좋아요</string>
   <string name="reportedToday" formatted="false">오늘 보고됨</string>
+  <string name="requestFailedTryAgain" formatted="false">문제가 발생했습니다. 다시 시도하세요.</string>
   <string name="save" formatted="false">저장</string>
   <string name="sharedTheGoodNews" formatted="false">공유된\n좋은 소식</string>
+  <string name="siriStopTimerShort" formatted="false">타이머 중지</string>
+  <string name="siriTimerEmpty" formatted="false">타이머가 1분 미만이어서 시간이 추가되지 않았습니다.</string>
+  <string name="siriTimerPaused" formatted="false">타이머가 일시 정지되었습니다</string>
+  <string name="siriTimerSaved" formatted="false">타이머가 중지되고 시간이 추가되었습니다</string>
+  <string name="siriTimerStarted" formatted="false">타이머가 시작되었습니다</string>
+  <string name="siriTimerTooLong" formatted="false">타이머가 24시간 이상이어서 하나의 기록으로는 너무 깁니다. WitnessWork에서 시간을 확인하세요.</string>
   <string name="standard" formatted="false">야외봉사</string>
   <string name="timeAdded" formatted="false">추가된 시간</string>
   <string name="timer" formatted="false">타이머</string>
+  <string name="timerPauseAction" formatted="false">타이머 일시 정지</string>
+  <string name="timerSaveAction" formatted="false">시간 저장…</string>
+  <string name="timerStartAction" formatted="false">타이머 시작</string>
   <string name="today" formatted="false">오늘</string>
   <string name="tomorrow" formatted="false">내일</string>
   <string name="type" formatted="false">유형</string>
+  <string name="watchComplicationDescription" formatted="false">이번 달 봉사를 한눈에 확인하세요.</string>
+  <string name="watchComplicationName" formatted="false">월간 진행</string>
+  <string name="watchDirectionsUnavailable" formatted="false">지도에서 이 장소를 찾을 수 없습니다.</string>
+  <string name="watchHoursLoggingOff" formatted="false">시간을 추가하려면 휴대폰의 WitnessWork에서 ‘내 시간 기록하기’를 켜세요.</string>
+  <string name="watchNothingScheduled" formatted="false">예정된 일정 없음</string>
+  <string name="watchNow" formatted="false">지금</string>
+  <string name="watchPhoneUnreachable" formatted="false">휴대폰에 연결할 수 없습니다. 가까이 두고 다시 시도하세요.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">0에서 목표까지의 게이지로 보는 이번 달 시간입니다.</string>
+  <string name="watchSetUp" formatted="false">설정을 마치려면 휴대폰에서 WitnessWork를 여세요.</string>
+  <string name="watchStale" formatted="false">업데이트하려면 휴대폰에서 WitnessWork를 여세요.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">목표를 향한 게이지로 보는 이번 달 시간입니다.</string>
+  <string name="watchSyncing" formatted="false">휴대폰과 동기화 중…</string>
+  <string name="watchThen" formatted="false">그다음</string>
+  <string name="watchTimerChanged" formatted="false">휴대폰에서 타이머가 변경되었습니다. 시간을 확인하고 다시 시도하세요.</string>
+  <string name="watchUpNext" formatted="false">다음 일정</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">다음 방문 또는 계획입니다.</string>
+  <string name="watchUpNextComplicationName" formatted="false">다음 일정</string>
+  <string name="wearRangeComplicationName" formatted="false">월간 진행, 0에서 목표까지</string>
+  <string name="wearSymbolComplicationName" formatted="false">시계가 있는 월간 진행</string>
 </resources>

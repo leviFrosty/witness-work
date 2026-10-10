@@ -1,6 +1,6 @@
 {
   "name": "witness-work",
-  "version": "1.43.0",
+  "version": "1.44.0",
   "main": "src/index.js",
   "scripts": {
     "dev:ios": "node scripts/with-local-env.mjs development ios -- expo start --ios",

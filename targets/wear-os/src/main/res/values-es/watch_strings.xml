@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Mes</string>
   <string name="ok" formatted="false">DE ACUERDO</string>
   <string name="reportedToday" formatted="false">Reportado hoy</string>
+  <string name="requestFailedTryAgain" formatted="false">Algo salió mal. Inténtalo de nuevo.</string>
   <string name="save" formatted="false">Guardar</string>
   <string name="sharedTheGoodNews" formatted="false">Compartió el\nBuenas noticias</string>
+  <string name="siriStopTimerShort" formatted="false">Detener cronómetro</string>
+  <string name="siriTimerEmpty" formatted="false">El cronómetro tiene menos de un minuto, así que no se agregó tiempo.</string>
+  <string name="siriTimerPaused" formatted="false">Cronómetro en pausa</string>
+  <string name="siriTimerSaved" formatted="false">Cronómetro detenido y tiempo agregado</string>
+  <string name="siriTimerStarted" formatted="false">Cronómetro iniciado</string>
+  <string name="siriTimerTooLong" formatted="false">El cronómetro tiene 24 horas o más, lo cual es demasiado para una sola entrada. Comprueba el tiempo en WitnessWork.</string>
   <string name="standard" formatted="false">Estándar</string>
   <string name="timeAdded" formatted="false">Tiempo agregado</string>
   <string name="timer" formatted="false">Cronómetro</string>
+  <string name="timerPauseAction" formatted="false">Pausar cronómetro</string>
+  <string name="timerSaveAction" formatted="false">Guardar tiempo…</string>
+  <string name="timerStartAction" formatted="false">Iniciar cronómetro</string>
   <string name="today" formatted="false">Hoy</string>
   <string name="tomorrow" formatted="false">Mañana</string>
   <string name="type" formatted="false">Tipo</string>
+  <string name="watchComplicationDescription" formatted="false">El servicio de este mes de un vistazo.</string>
+  <string name="watchComplicationName" formatted="false">Progreso mensual</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Mapas no pudo encontrar este lugar.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Activa Registrar mis horas en WitnessWork en tu teléfono para agregar tiempo.</string>
+  <string name="watchNothingScheduled" formatted="false">Nada programado</string>
+  <string name="watchNow" formatted="false">Ahora</string>
+  <string name="watchPhoneUnreachable" formatted="false">No se puede conectar con tu teléfono. Mantenlo cerca y vuelve a intentarlo.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Las horas de este mes en un indicador de cero a tu meta.</string>
+  <string name="watchSetUp" formatted="false">Abre WitnessWork en tu teléfono para terminar la configuración.</string>
+  <string name="watchStale" formatted="false">Abre WitnessWork en tu teléfono para actualizar.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Las horas de este mes en un indicador hacia tu meta.</string>
+  <string name="watchSyncing" formatted="false">Sincronizando con el teléfono…</string>
+  <string name="watchThen" formatted="false">Después</string>
+  <string name="watchTimerChanged" formatted="false">El cronómetro cambió en tu teléfono. Comprueba la hora y vuelve a intentarlo.</string>
+  <string name="watchUpNext" formatted="false">Próximamente</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Tu próximo seguimiento o plan.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Próximamente</string>
+  <string name="wearRangeComplicationName" formatted="false">Progreso mensual, de 0 a la meta</string>
+  <string name="wearSymbolComplicationName" formatted="false">Progreso mensual con reloj</string>
 </resources>

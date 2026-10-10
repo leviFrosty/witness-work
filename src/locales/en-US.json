@@ -1075,6 +1075,15 @@
       "c4": "The Year tab now shows your service-year total for every role, even without an annual goal.",
       "c5": "Follow-ups on visits are now optional, and you can turn off app sounds in Preferences.",
       "c6": "Fixed dates shifting for publishers in far-east time zones."
+    },
+    "1440": {
+      "c1": "Simpler navigation with four labeled tabs you can reorder. The map now lives at the top of Contacts, and Settings is under your profile picture.",
+      "c2": "Contacts are redesigned around what's next, with every visit on a timeline. Log a visit from the + menu with nearby suggestions, and add custom fields to conversations.",
+      "c3": "Schedule has a zoomable year and month calendar, and a plan can be just hours or a time span.",
+      "c4": "See your service year's pace month by month, and celebrate streaks and badges along the way.",
+      "c5": "Optional mileage tracking logs your trips and fuel costs.",
+      "c6": "Follow-ups can sync to a calendar just for WitnessWork, now on Android too, where you can also back up and sync with Google Drive.",
+      "c7": "Reminders wait in the notification bell instead of piling up on Home."
     }
   },
   "installed": "Installed",

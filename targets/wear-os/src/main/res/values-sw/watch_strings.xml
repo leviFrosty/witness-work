@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Mwezi</string>
   <string name="ok" formatted="false">sawa</string>
   <string name="reportedToday" formatted="false">Imeripotiwa leo</string>
+  <string name="requestFailedTryAgain" formatted="false">Hitilafu ilitokea. Jaribu tena.</string>
   <string name="save" formatted="false">Hifadhi</string>
   <string name="sharedTheGoodNews" formatted="false">Habari njema uliotangaza</string>
+  <string name="siriStopTimerShort" formatted="false">Komesha Kipima Muda</string>
+  <string name="siriTimerEmpty" formatted="false">Kipima muda kina chini ya dakika moja, kwa hivyo hakuna muda ulioongezwa.</string>
+  <string name="siriTimerPaused" formatted="false">Kipima muda kimesitishwa</string>
+  <string name="siriTimerSaved" formatted="false">Kipima muda kimekomeshwa na muda umeongezwa</string>
+  <string name="siriTimerStarted" formatted="false">Kipima muda kimeanza</string>
+  <string name="siriTimerTooLong" formatted="false">Kipima muda kina saa 24 au zaidi, ambayo ni muda mrefu mno kwa ingizo moja. Angalia muda katika WitnessWork.</string>
   <string name="standard" formatted="false">Kawaida</string>
   <string name="timeAdded" formatted="false">Muda ulioongezwa</string>
   <string name="timer" formatted="false">Kipima muda</string>
+  <string name="timerPauseAction" formatted="false">Sitisha Kipima Muda</string>
+  <string name="timerSaveAction" formatted="false">Hifadhi Muda…</string>
+  <string name="timerStartAction" formatted="false">Anzisha Kipima Muda</string>
   <string name="today" formatted="false">Leo</string>
   <string name="tomorrow" formatted="false">Kesho</string>
   <string name="type" formatted="false">Aina</string>
+  <string name="watchComplicationDescription" formatted="false">Huduma ya mwezi huu kwa muhtasari.</string>
+  <string name="watchComplicationName" formatted="false">Maendeleo ya Kila Mwezi</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Maps haikuweza kupata mahali hapa.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Washa Rekodi saa zangu katika WitnessWork kwenye simu yako ili kuongeza muda.</string>
+  <string name="watchNothingScheduled" formatted="false">Hakuna kilichopangwa</string>
+  <string name="watchNow" formatted="false">Sasa</string>
+  <string name="watchPhoneUnreachable" formatted="false">Haiwezi kufikia simu yako. Iweke karibu na ujaribu tena.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Saa za mwezi huu kwenye kipimo kuanzia sifuri hadi lengo lako.</string>
+  <string name="watchSetUp" formatted="false">Fungua WitnessWork kwenye simu yako ili kumaliza kusanidi.</string>
+  <string name="watchStale" formatted="false">Fungua WitnessWork kwenye simu yako ili kusasisha.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Saa za mwezi huu kwenye kipimo kuelekea lengo lako.</string>
+  <string name="watchSyncing" formatted="false">Inasawazisha na simu…</string>
+  <string name="watchThen" formatted="false">Kisha</string>
+  <string name="watchTimerChanged" formatted="false">Kipima muda kimebadilika kwenye simu yako. Angalia muda na ujaribu tena.</string>
+  <string name="watchUpNext" formatted="false">Up Next</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Ufuatiliaji au mpango wako unaofuata.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Up Next</string>
+  <string name="wearRangeComplicationName" formatted="false">Maendeleo ya Kila Mwezi, 0 hadi Lengo</string>
+  <string name="wearSymbolComplicationName" formatted="false">Maendeleo ya Kila Mwezi na Saa</string>
 </resources>

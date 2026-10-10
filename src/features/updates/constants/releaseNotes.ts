@@ -1,6 +1,7 @@
 import moment from 'moment'
 import type { TranslationKey } from '@/lib/locales'
 import type { ReleaseAnnounce } from '@/features/updates/lib/evaluateRevealOnLaunch'
+import { UPDATE_REVEAL_NAME } from '@/features/updates/constants/updateReveal'
 
 export type ReleaseNote = {
   /** Semantic version number in format `x.y.z` */
@@ -40,6 +41,12 @@ export type ReleaseNote = {
 }
 
 export const releaseNotes: ReleaseNote[] = [
+  {
+    version: '1.44.0',
+    date: moment('2026-10-10').toDate(),
+    name: UPDATE_REVEAL_NAME,
+    content: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'],
+  },
   {
     version: '1.43.0',
     date: moment('2026-09-24').toDate(),

@@ -119,14 +119,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Motoka"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Fahrzeug"
           }
         },
         "en" : {
@@ -137,92 +137,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Coche"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Voiture"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Auto"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "車"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "자동차"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Auto"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Carro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Carro"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Автомобиль"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Imodoka"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Gari"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Автомобіль"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "Xe"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "车辆"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Car"
+            "state" : "translated",
+            "value" : "車輛"
           }
         }
       }
@@ -232,14 +232,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Ukuya Kutali"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Entfernung"
           }
         },
         "en" : {
@@ -250,92 +250,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Distancia"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Distance"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Distanza"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "距離"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "거리"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Afstand"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Distância"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Distância"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Расстояние"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Intera"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Umbali"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Відстань"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "Khoảng cách"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "距离"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Distance"
+            "state" : "translated",
+            "value" : "距離"
           }
         }
       }
@@ -345,14 +345,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Lemba Ulwendo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Fahrt erfassen"
           }
         },
         "en" : {
@@ -363,92 +363,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Registrar viaje"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Enregistrer un trajet"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Registra un viaggio"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "移動を記録"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "이동 기록"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Rit registreren"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Registrar viagem"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Registar viagem"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Записать поездку"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Andika urugendo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Rekodi Safari"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Записати поїздку"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "Ghi chuyến đi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "记录行程"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Trip"
+            "state" : "translated",
+            "value" : "記錄行程"
           }
         }
       }
@@ -458,14 +458,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Pali ubwafya. Esheniko nakabili."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Etwas ist schiefgelaufen. Versuchen Sie es erneut."
           }
         },
         "en" : {
@@ -476,92 +476,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Algo salió mal. Inténtalo de nuevo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Un problème est survenu. Réessayez."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Qualcosa è andato storto. Riprova."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "問題が発生しました。もう一度お試しください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "문제가 발생했습니다. 다시 시도하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Er ging iets mis. Probeer het opnieuw."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Algo deu errado. Tente de novo."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Ocorreu um erro. Tente novamente."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Что-то пошло не так. Повторите попытку."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Hari ikitagenze neza. Ongera ugerageze."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Hitilafu ilitokea. Jaribu tena."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Щось пішло не так. Повторіть спробу."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "Đã xảy ra sự cố. Hãy thử lại."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "出了点问题。请重试。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Something went wrong. Try again."
+            "state" : "translated",
+            "value" : "發生問題。請再試一次。"
           }
         }
       }
@@ -571,14 +571,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Lundako Inshita ya Mulimo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Dienstzeit hinzufügen"
           }
         },
         "en" : {
@@ -589,92 +589,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Agregar tiempo de servicio"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Ajouter du temps de service"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Aggiungi tempo di servizio"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "奉仕時間を追加"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "봉사 시간 추가"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Diensttijd toevoegen"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Adicionar tempo de serviço"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Adicionar tempo de serviço"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Добавить время служения"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Ongeraho igihe cy'umurimo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Ongeza Muda wa Huduma"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Додати час служіння"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "Thêm giờ rao giảng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "添加传道时间"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add Service Time"
+            "state" : "translated",
+            "value" : "新增傳道時間"
           }
         }
       }
@@ -684,14 +684,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Ulwendo lwali amakilomita yashinga?"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Wie viele Kilometer war die Fahrt?"
           }
         },
         "en" : {
@@ -702,92 +702,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "¿Cuántos kilómetros fue el viaje?"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Combien de kilomètres faisait le trajet ?"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Quanti chilometri era il viaggio?"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "移動は何キロメートルでしたか?"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "이동 거리가 몇 킬로미터였나요?"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Hoeveel kilometer was de rit?"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Quantos quilômetros teve a viagem?"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Quantos quilómetros teve a viagem?"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Сколько километров составила поездка?"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Urugendo rwari rwa kilometero zingahe?"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Safari ilikuwa kilomita ngapi?"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Скільки кілометрів була поїздка?"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "Chuyến đi dài bao nhiêu kilômét?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "这次行程有多少公里？"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers was the trip?"
+            "state" : "translated",
+            "value" : "這趟行程有幾公里？"
           }
         }
       }
@@ -797,14 +797,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Ulwendo lwali amamile yashinga?"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Wie viele Meilen war die Fahrt?"
           }
         },
         "en" : {
@@ -815,92 +815,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "¿Cuántas millas fue el viaje?"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Combien de miles faisait le trajet ?"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Quante miglia era il viaggio?"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "移動は何マイルでしたか?"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "이동 거리가 몇 마일이었나요?"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Hoeveel mijl was de rit?"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Quantas milhas teve a viagem?"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Quantas milhas teve a viagem?"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Сколько миль составила поездка?"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Urugendo rwari rwa mayili zingahe?"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Safari ilikuwa maili ngapi?"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Скільки миль була поїздка?"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "Chuyến đi dài bao nhiêu dặm?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "这次行程有多少英里？"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles was the trip?"
+            "state" : "translated",
+            "value" : "這趟行程有幾英里？"
           }
         }
       }
@@ -910,14 +910,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Inshita Iyo Cimbila"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Dauer"
           }
         },
         "en" : {
@@ -928,92 +928,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Duración"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Durée"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Durata"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "長さ"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Duur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Duração"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Duração"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Длительность"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Igihe kimara"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Muda"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Тривалість"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "Thời lượng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "时长"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Duration"
+            "state" : "translated",
+            "value" : "時間長度"
           }
         }
       }
@@ -1023,14 +1023,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Washeni Lemba amaawala yandi muli WitnessWork pa kulundako inshita."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Schalten Sie in WitnessWork „Meine Stunden erfassen“ ein, um Zeit hinzuzufügen."
           }
         },
         "en" : {
@@ -1041,92 +1041,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Activa Registrar mis horas en WitnessWork para agregar tiempo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Activez Enregistrer mes heures dans WitnessWork pour ajouter du temps."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Attiva Registra le mie ore in WitnessWork per aggiungere tempo."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "時間を追加するには、WitnessWorkで「自分の時間を記録する」をオンにしてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "시간을 추가하려면 WitnessWork에서 ‘내 시간 기록하기’를 켜세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Zet Mijn uren bijhouden aan in WitnessWork om tijd toe te voegen."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Ative Registrar minhas horas no WitnessWork para adicionar tempo."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Ative Registar as minhas horas no WitnessWork para adicionar tempo."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Включите «Записывать мои часы» в WitnessWork, чтобы добавлять время."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Fungura Andika amasaha yanjye muri WitnessWork kugira ngo wongereho igihe."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Washa Rekodi saa zangu katika WitnessWork ili kuongeza muda."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Увімкніть «Записувати мої години» у WitnessWork, щоб додавати час."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "Hãy bật Ghi giờ của tôi trong WitnessWork để thêm giờ."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "请在 WitnessWork 中开启“记录我的时数”以添加时间。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Log my hours in WitnessWork to add time."
+            "state" : "translated",
+            "value" : "請在 WitnessWork 中開啟「記錄我的時數」，才能新增時間。"
           }
         }
       }
@@ -1136,14 +1136,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Saleni ukuya kutali ukucila pa 0."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Wählen Sie eine Entfernung größer als 0."
           }
         },
         "en" : {
@@ -1154,92 +1154,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Elige una distancia mayor que 0."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Choisissez une distance supérieure à 0."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Scegli una distanza maggiore di 0."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "0より大きい距離を選んでください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "0보다 큰 거리를 선택하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Kies een afstand groter dan 0."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Escolha uma distância maior que 0."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Escolha uma distância superior a 0."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Выберите расстояние больше 0."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Hitamo intera irenze 0."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Chagua umbali mkubwa kuliko 0."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Виберіть відстань, більшу за 0."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "Hãy chọn khoảng cách lớn hơn 0."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "请选择大于 0 的距离。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a distance greater than 0."
+            "state" : "translated",
+            "value" : "請選擇大於 0 的距離。"
           }
         }
       }
@@ -1249,14 +1249,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Saleni inshita ukufuma pa miniti imo ukufika pa maawala 24."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Wählen Sie eine Dauer zwischen 1 Minute und 24 Stunden."
           }
         },
         "en" : {
@@ -1267,92 +1267,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Elige una duración entre 1 minuto y 24 horas."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Choisissez une durée comprise entre 1 minute et 24 heures."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Scegli una durata tra 1 minuto e 24 ore."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "1分から24時間の間の長さを選んでください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "1분에서 24시간 사이의 시간을 선택하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Kies een duur tussen 1 minuut en 24 uur."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Escolha uma duração entre 1 minuto e 24 horas."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Escolha uma duração entre 1 minuto e 24 horas."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Выберите длительность от 1 минуты до 24 часов."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Hitamo igihe kiri hagati y'umunota 1 n'amasaha 24."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Chagua muda kati ya dakika 1 na saa 24."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Виберіть тривалість від 1 хвилини до 24 годин."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "Hãy chọn thời lượng từ 1 phút đến 24 giờ."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "请选择 1 分钟到 24 小时之间的时长。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a duration between 1 minute and 24 hours."
+            "state" : "translated",
+            "value" : "請選擇 1 分鐘到 24 小時之間的時間長度。"
           }
         }
       }
@@ -1362,14 +1362,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Lemba Ulwendo lwa Kuya no Kubwela"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Hin- und Rückfahrt erfassen"
           }
         },
         "en" : {
@@ -1380,92 +1380,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Registrar ida y vuelta"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Enregistrer un aller-retour"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Registra andata e ritorno"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "往復を記録"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "왕복 이동 기록"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Retourrit registreren"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Registrar ida e volta"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Registar viagem de ida e volta"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Записать поездку туда и обратно"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Andika kugenda no kugaruka"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Rekodi Safari ya Kwenda na Kurudi"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Записати поїздку туди й назад"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "Ghi chuyến đi khứ hồi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "记录往返行程"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Round Trip"
+            "state" : "translated",
+            "value" : "記錄來回行程"
           }
         }
       }
@@ -1475,14 +1475,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Lemba Ulwendo lwa Makilomita"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Fahrt erfassen"
           }
         },
         "en" : {
@@ -1493,92 +1493,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Registrar viaje de kilometraje"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Enregistrer un trajet de kilométrage"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Registra un viaggio chilometrico"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "走行距離の移動を記録"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "주행 거리 이동 기록"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Kilometerrit registreren"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Registrar viagem de quilometragem"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Registar viagem de quilometragem"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Записать поездку (пробег)"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Andika urugendo rw'ibirometero"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Rekodi Safari ya Umbali"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Записати поїздку пробігу"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "Ghi chuyến đi quãng đường"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "记录里程行程"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Log Mileage Trip"
+            "state" : "translated",
+            "value" : "記錄里程行程"
           }
         }
       }
@@ -1588,14 +1588,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Washeni Konkelela Amakilomita muli WitnessWork pa kulemba amalwendo."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Schalten Sie in WitnessWork „Fahrstrecke erfassen“ ein, um Fahrten zu erfassen."
           }
         },
         "en" : {
@@ -1606,92 +1606,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Activa Registrar kilometraje en WitnessWork para registrar viajes."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Activez Suivre le kilométrage dans WitnessWork pour enregistrer des trajets."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Attiva Registra il chilometraggio in WitnessWork per registrare i viaggi."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "移動を記録するには、WitnessWorkで「走行距離を記録」をオンにしてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "이동을 기록하려면 WitnessWork에서 ‘주행 거리 기록’을 켜세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Zet Kilometers bijhouden aan in WitnessWork om ritten te registreren."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Ative Registrar quilometragem no WitnessWork para registrar viagens."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Ative Acompanhar quilometragem no WitnessWork para registar viagens."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Включите «Вести учёт пробега» в WitnessWork, чтобы записывать поездки."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Fungura Kurikirana ibirometero muri WitnessWork kugira ngo wandike ingendo."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Washa Fuatilia Umbali katika WitnessWork ili kurekodi safari."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Увімкніть «Вести облік пробігу» у WitnessWork, щоб записувати поїздки."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "Hãy bật Theo dõi quãng đường trong WitnessWork để ghi chuyến đi."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "请在 WitnessWork 中开启“记录里程”以记录行程。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on Track Mileage in WitnessWork to log trips."
+            "state" : "translated",
+            "value" : "請在 WitnessWork 中開啟「追蹤里程」，才能記錄行程。"
           }
         }
       }
@@ -1701,14 +1701,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Lundeni motoka pa cipao ca Amakilomita ica WitnessWork pa kulemba amalwendo."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Fügen Sie auf dem Bildschirm „Fahrstrecke“ von WitnessWork ein Fahrzeug hinzu, um Fahrten zu erfassen."
           }
         },
         "en" : {
@@ -1719,92 +1719,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Añade un coche en la pantalla Kilometraje de WitnessWork para registrar viajes."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Ajoutez une voiture sur l’écran Kilométrage de WitnessWork pour enregistrer des trajets."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Aggiungi un’auto nella schermata Chilometraggio di WitnessWork per registrare i viaggi."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "移動を記録するには、WitnessWorkの「走行距離」画面で車を追加してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "이동을 기록하려면 WitnessWork의 주행 거리 화면에서 자동차를 추가하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Voeg een auto toe op het scherm Kilometers van WitnessWork om ritten te registreren."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Adicione um carro na tela Quilometragem do WitnessWork para registrar viagens."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Adicione um carro no ecrã Quilometragem do WitnessWork para registar viagens."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Добавьте автомобиль на экране «Пробег» в WitnessWork, чтобы записывать поездки."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Ongeraho imodoka ku ecran y'Ibirometero ya WitnessWork kugira ngo wandike ingendo."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Ongeza gari kwenye skrini ya Umbali ya WitnessWork ili kurekodi safari."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Додайте автомобіль на екрані «Пробіг» у WitnessWork, щоб записувати поїздки."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "Hãy thêm một chiếc xe trên màn hình Quãng đường của WitnessWork để ghi chuyến đi."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "请在 WitnessWork 的里程页面添加车辆，以记录行程。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Add a car on WitnessWork's Mileage screen to log trips."
+            "state" : "translated",
+            "value" : "請在 WitnessWork 的「里程」畫面中新增一輛車，才能記錄行程。"
           }
         }
       }
@@ -1814,14 +1814,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Ni amakilomita yashinga ukuya fye?"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Wie viele Kilometer sind es in eine Richtung?"
           }
         },
         "en" : {
@@ -1832,92 +1832,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "¿Cuántos kilómetros son de ida?"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Combien de kilomètres fait le trajet aller ?"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Quanti chilometri sono di sola andata?"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "片道は何キロメートルですか?"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "편도로 몇 킬로미터인가요?"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Hoeveel kilometer is het enkele reis?"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Quantos quilômetros são só de ida?"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Quantos quilómetros são de ida?"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Сколько километров в одну сторону?"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Ni kilometero zingahe mu nzira imwe?"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Ni kilomita ngapi kwa upande mmoja?"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Скільки кілометрів в один бік?"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "Một chiều dài bao nhiêu kilômét?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "单程有多少公里？"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many kilometers is it one way?"
+            "state" : "translated",
+            "value" : "單程有幾公里？"
           }
         }
       }
@@ -1927,14 +1927,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Ni amamile yashinga ukuya fye?"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Wie viele Meilen sind es in eine Richtung?"
           }
         },
         "en" : {
@@ -1945,92 +1945,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "¿Cuántas millas son de ida?"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Combien de miles fait le trajet aller ?"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Quante miglia sono di sola andata?"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "片道は何マイルですか?"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "편도로 몇 마일인가요?"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Hoeveel mijl is het enkele reis?"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Quantas milhas são só de ida?"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Quantas milhas são de ida?"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Сколько миль в одну сторону?"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Ni mayili zingahe mu nzira imwe?"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Ni maili ngapi kwa upande mmoja?"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Скільки миль в один бік?"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "Một chiều dài bao nhiêu dặm?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "单程有多少英里？"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "How many miles is it one way?"
+            "state" : "translated",
+            "value" : "單程有幾英里？"
           }
         }
       }
@@ -2040,14 +2040,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Leka Icakupimako ca Mulimo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Dienst-Timer pausieren"
           }
         },
         "en" : {
@@ -2058,92 +2058,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Pausar cronómetro de servicio"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Mettre en pause le minuteur de service"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Metti in pausa il timer del servizio"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "奉仕タイマーを一時停止"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "봉사 타이머 일시 정지"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Dienstimer pauzeren"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Pausar cronômetro de serviço"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Pausar temporizador de serviço"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Приостановить таймер служения"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Hagarika igihe cy'umurimo kibarwa by'agateganyo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Sitisha Kipima Muda cha Huduma"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Призупинити таймер служіння"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "Tạm dừng bộ đếm giờ rao giảng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "暂停传道计时器"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Service Timer"
+            "state" : "translated",
+            "value" : "暫停傳道計時器"
           }
         }
       }
@@ -2153,14 +2153,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Isuleni WitnessWork umuku umo pa kupwisha ukupanga, elyo mwesheko nakabili."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Öffnen Sie WitnessWork einmal, um die Einrichtung abzuschließen, und versuchen Sie es dann erneut."
           }
         },
         "en" : {
@@ -2171,92 +2171,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Abre WitnessWork una vez para terminar la configuración y vuelve a intentarlo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Ouvrez WitnessWork une fois pour terminer la configuration, puis réessayez."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Apri WitnessWork una volta per terminare la configurazione, poi riprova."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "WitnessWorkを一度開いてセットアップを完了してから、もう一度お試しください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "설정을 마치려면 WitnessWork를 한 번 연 다음 다시 시도하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Open WitnessWork eenmaal om het instellen af te ronden en probeer het dan opnieuw."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Abra o WitnessWork uma vez para concluir a configuração e tente de novo."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Abra o WitnessWork uma vez para concluir a configuração e tente novamente."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Один раз откройте WitnessWork, чтобы завершить настройку, затем повторите попытку."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Fungura WitnessWork rimwe kugira ngo urangize gutegura, hanyuma wongere ugerageze."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Fungua WitnessWork mara moja ili kumaliza kusanidi, kisha ujaribu tena."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Один раз відкрийте WitnessWork, щоб завершити налаштування, потім повторіть спробу."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "Hãy mở WitnessWork một lần để hoàn tất thiết lập, rồi thử lại."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "请先打开一次 WitnessWork 完成设置，然后再试一次。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open WitnessWork once to finish setting up, then try again."
+            "state" : "translated",
+            "value" : "請先開啟一次 WitnessWork 以完成設定，然後再試一次。"
           }
         }
       }
@@ -2266,14 +2266,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Tendeka Icakupimako ca Mulimo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Dienst-Timer starten"
           }
         },
         "en" : {
@@ -2284,92 +2284,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Iniciar cronómetro de servicio"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Démarrer le minuteur de service"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Avvia il timer del servizio"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "奉仕タイマーを開始"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "봉사 타이머 시작"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Dienstimer starten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Iniciar cronômetro de serviço"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Iniciar temporizador de serviço"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Запустить таймер служения"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Tangiza igihe cy'umurimo kibarwa"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Anzisha Kipima Muda cha Huduma"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Запустити таймер служіння"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "Bắt đầu bộ đếm giờ rao giảng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "开始传道计时器"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Service Timer"
+            "state" : "translated",
+            "value" : "開始傳道計時器"
           }
         }
       }
@@ -2379,14 +2379,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Pwisha no Kusunga Icakupimako ca Mulimo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Dienst-Timer stoppen und speichern"
           }
         },
         "en" : {
@@ -2397,92 +2397,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Detener y guardar cronómetro de servicio"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Arrêter et enregistrer le minuteur de service"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Ferma e salva il timer del servizio"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "奉仕タイマーを停止して保存"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "봉사 타이머 중지 및 저장"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Dienstimer stoppen en opslaan"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Parar e salvar cronômetro de serviço"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Parar e guardar temporizador de serviço"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Остановить и сохранить таймер служения"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Hagarika kandi ubike igihe cy'umurimo kibarwa"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Komesha na Hifadhi Kipima Muda cha Huduma"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Зупинити й зберегти таймер служіння"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "Dừng và lưu bộ đếm giờ rao giảng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "停止并保存传道计时器"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop and Save Service Timer"
+            "state" : "translated",
+            "value" : "停止並儲存傳道計時器"
           }
         }
       }
@@ -2492,14 +2492,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Pwisha Icakupimako"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Timer stoppen"
           }
         },
         "en" : {
@@ -2510,92 +2510,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Detener cronómetro"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Arrêter le minuteur"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Ferma il timer"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "タイマーを停止"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "타이머 중지"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Timer stoppen"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Parar Cronômetro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Parar temporizador"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Остановить таймер"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Hagarika igihe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Komesha Kipima Muda"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Зупинити таймер"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "Dừng bộ đếm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "停止计时器"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Stop Timer"
+            "state" : "translated",
+            "value" : "停止計時"
           }
         }
       }
@@ -2605,14 +2605,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Icakupimako cikwata panono ukucila iminiti imo, ico tapali inshita yalundwako."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Der Timer hat weniger als eine Minute, daher wurde keine Zeit hinzugefügt."
           }
         },
         "en" : {
@@ -2623,92 +2623,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "El cronómetro tiene menos de un minuto, así que no se agregó tiempo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Le minuteur affiche moins d’une minute, aucun temps n’a donc été ajouté."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Il timer ha meno di un minuto, quindi non è stato aggiunto alcun tempo."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "タイマーが1分未満のため、時間は追加されませんでした。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "타이머가 1분 미만이어서 시간이 추가되지 않았습니다."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "De timer staat op minder dan een minuut, dus er is geen tijd toegevoegd."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "O cronômetro tem menos de um minuto, então nenhum tempo foi adicionado."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "O temporizador tem menos de um minuto, por isso não foi adicionado tempo."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "В таймере меньше минуты, поэтому время не добавлено."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Igihe kibarwa kiri munsi y'umunota umwe, bityo nta gihe cyongeweho."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Kipima muda kina chini ya dakika moja, kwa hivyo hakuna muda ulioongezwa."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Таймер показує менше хвилини, тому час не додано."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "Bộ đếm giờ chưa đến một phút, nên không có giờ nào được thêm."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "计时器不足一分钟，因此没有添加时间。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has less than a minute, so no time was added."
+            "state" : "translated",
+            "value" : "計時器不到一分鐘，所以沒有新增時間。"
           }
         }
       }
@@ -2718,14 +2718,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Icakupimako cayaleka"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Timer pausiert"
           }
         },
         "en" : {
@@ -2736,92 +2736,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Cronómetro en pausa"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Minuteur en pause"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Timer in pausa"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "タイマーを一時停止しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "타이머가 일시 정지되었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Timer gepauzeerd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Cronômetro pausado"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Temporizador em pausa"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Таймер приостановлен"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Igihe kibarwa cyahagaze by'agateganyo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Kipima muda kimesitishwa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Таймер призупинено"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "Đã tạm dừng bộ đếm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "计时器已暂停"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer paused"
+            "state" : "translated",
+            "value" : "計時器已暫停"
           }
         }
       }
@@ -2831,14 +2831,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Icakupimako cayaleka kabili inshita yalundwako"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Timer gestoppt und Zeit hinzugefügt"
           }
         },
         "en" : {
@@ -2849,92 +2849,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Cronómetro detenido y tiempo agregado"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Minuteur arrêté et temps ajouté"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Timer fermato e tempo aggiunto"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "タイマーを停止し、時間を追加しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "타이머가 중지되고 시간이 추가되었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Timer gestopt en tijd toegevoegd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Cronômetro parado e tempo adicionado"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Temporizador parado e tempo adicionado"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Таймер остановлен, время добавлено"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Igihe kibarwa cyahagaritswe kandi igihe cyongeweho"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Kipima muda kimekomeshwa na muda umeongezwa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Таймер зупинено, час додано"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "Đã dừng bộ đếm giờ và thêm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "计时器已停止，时间已添加"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer stopped and time added"
+            "state" : "translated",
+            "value" : "計時器已停止，時間已新增"
           }
         }
       }
@@ -2944,14 +2944,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Icakupimako cayatendeka"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Timer gestartet"
           }
         },
         "en" : {
@@ -2962,92 +2962,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Cronómetro iniciado"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Minuteur démarré"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Timer avviato"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "タイマーを開始しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "타이머가 시작되었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Timer gestart"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Cronômetro iniciado"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Temporizador iniciado"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Таймер запущен"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Igihe kibarwa cyatangiye"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Kipima muda kimeanza"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Таймер запущено"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "Đã bắt đầu bộ đếm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "计时器已开始"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Timer started"
+            "state" : "translated",
+            "value" : "計時器已開始"
           }
         }
       }
@@ -3057,14 +3057,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Icakupimako cikwata amaawala 24 nelyo ukucilapo, ico cacila pa cintu cimo. Moneni inshita muli WitnessWork."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Der Timer hat 24 Stunden oder mehr, was für einen Eintrag zu lang ist. Prüfen Sie die Zeit in WitnessWork."
           }
         },
         "en" : {
@@ -3075,92 +3075,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "El cronómetro tiene 24 horas o más, lo cual es demasiado para una sola entrada. Comprueba el tiempo en WitnessWork."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Le minuteur affiche 24 heures ou plus, ce qui est trop long pour une seule entrée. Vérifiez le temps dans WitnessWork."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Il timer ha 24 ore o più, troppo per una sola voce. Controlla il tempo in WitnessWork."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "タイマーが24時間以上になっており、1件の記録としては長すぎます。WitnessWorkで時間を確認してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "타이머가 24시간 이상이어서 하나의 기록으로는 너무 깁니다. WitnessWork에서 시간을 확인하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "De timer staat op 24 uur of meer, wat te lang is voor één registratie. Controleer de tijd in WitnessWork."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "O cronômetro tem 24 horas ou mais, o que é longo demais para um registro. Confira o tempo no WitnessWork."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "O temporizador tem 24 horas ou mais, o que é demasiado para um só registo. Verifique o tempo no WitnessWork."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "В таймере 24 часа или больше — слишком много для одной записи. Проверьте время в WitnessWork."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Igihe kibarwa kingana n'amasaha 24 cyangwa kirenga, ibyo bikaba birebire cyane ku nyandiko imwe. Reba igihe muri WitnessWork."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Kipima muda kina saa 24 au zaidi, ambayo ni muda mrefu mno kwa ingizo moja. Angalia muda katika WitnessWork."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Таймер показує 24 години або більше, що забагато для одного запису. Перевірте час у WitnessWork."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "Bộ đếm giờ đã chạy từ 24 giờ trở lên, quá dài cho một mục. Hãy kiểm tra thời gian trong WitnessWork."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "计时器已达 24 小时或更长，对于一条记录来说太长了。请在 WitnessWork 中检查时间。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "The timer has 24 hours or more, which is too long for one entry. Check the time in WitnessWork."
+            "state" : "translated",
+            "value" : "計時器已達 24 小時或以上，對單筆紀錄來說太長。請在 WitnessWork 中檢查時間。"
           }
         }
       }
@@ -3170,14 +3170,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Ulwendo lwalembwa"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Fahrt erfasst"
           }
         },
         "en" : {
@@ -3188,92 +3188,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Viaje registrado"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Trajet enregistré"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Viaggio registrato"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "移動を記録しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "이동이 기록되었습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Rit geregistreerd"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Viagem registrada"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Viagem registada"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Поездка записана"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Urugendo rwanditswe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Safari imerekodiwa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Поїздку записано"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "Đã ghi chuyến đi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "行程已记录"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Trip logged"
+            "state" : "translated",
+            "value" : "行程已記錄"
           }
         }
       }
@@ -3396,14 +3396,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Leka Icakupimako Inshita"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Timer pausieren"
           }
         },
         "en" : {
@@ -3414,92 +3414,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Pausar cronómetro"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Mettre le minuteur en pause"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Metti in pausa il timer"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "タイマーを一時停止"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "타이머 일시 정지"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Timer pauzeren"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Pausar Cronômetro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Pausar temporizador"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Приостановить таймер"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Hagarika igihe kibarwa by'agateganyo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Sitisha Kipima Muda"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Призупинити таймер"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "Tạm dừng bộ đếm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "暂停计时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pause Timer"
+            "state" : "translated",
+            "value" : "暫停計時"
           }
         }
       }
@@ -3509,14 +3509,14 @@
       "localizations" : {
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Tendeka Icakupimako Inshita"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Timer starten"
           }
         },
         "en" : {
@@ -3527,92 +3527,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Iniciar cronómetro"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Démarrer le minuteur"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Avvia il timer"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "タイマーを開始"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "타이머 시작"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Timer starten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Iniciar Cronômetro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Iniciar temporizador"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Запустить таймер"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Tangiza igihe kibarwa"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Anzisha Kipima Muda"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Запустити таймер"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "Bắt đầu bộ đếm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "开始计时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start Timer"
+            "state" : "translated",
+            "value" : "開始計時"
           }
         }
       }

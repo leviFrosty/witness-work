@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Mês</string>
   <string name="ok" formatted="false">OK</string>
   <string name="reportedToday" formatted="false">Comunicado hoje</string>
+  <string name="requestFailedTryAgain" formatted="false">Ocorreu um erro. Tente novamente.</string>
   <string name="save" formatted="false">Guardar</string>
   <string name="sharedTheGoodNews" formatted="false">Transmitiu as\nBoas Novas</string>
+  <string name="siriStopTimerShort" formatted="false">Parar temporizador</string>
+  <string name="siriTimerEmpty" formatted="false">O temporizador tem menos de um minuto, por isso não foi adicionado tempo.</string>
+  <string name="siriTimerPaused" formatted="false">Temporizador em pausa</string>
+  <string name="siriTimerSaved" formatted="false">Temporizador parado e tempo adicionado</string>
+  <string name="siriTimerStarted" formatted="false">Temporizador iniciado</string>
+  <string name="siriTimerTooLong" formatted="false">O temporizador tem 24 horas ou mais, o que é demasiado para um só registo. Verifique o tempo no WitnessWork.</string>
   <string name="standard" formatted="false">Padrão</string>
   <string name="timeAdded" formatted="false">Tempo adicionado</string>
   <string name="timer" formatted="false">Temporizador</string>
+  <string name="timerPauseAction" formatted="false">Pausar temporizador</string>
+  <string name="timerSaveAction" formatted="false">Guardar tempo…</string>
+  <string name="timerStartAction" formatted="false">Iniciar temporizador</string>
   <string name="today" formatted="false">Hoje</string>
   <string name="tomorrow" formatted="false">Amanhã</string>
   <string name="type" formatted="false">Tipo</string>
+  <string name="watchComplicationDescription" formatted="false">O serviço deste mês num relance.</string>
+  <string name="watchComplicationName" formatted="false">Progresso Mensal</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Os Mapas não conseguiram encontrar este local.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Ative Registar as minhas horas no WitnessWork no telemóvel para adicionar tempo.</string>
+  <string name="watchNothingScheduled" formatted="false">Nada agendado</string>
+  <string name="watchNow" formatted="false">Agora</string>
+  <string name="watchPhoneUnreachable" formatted="false">Não é possível contactar o telemóvel. Mantenha-o por perto e tente novamente.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">As horas deste mês num indicador de zero ao seu objetivo.</string>
+  <string name="watchSetUp" formatted="false">Abra o WitnessWork no telemóvel para concluir a configuração.</string>
+  <string name="watchStale" formatted="false">Abra o WitnessWork no telemóvel para atualizar.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">As horas deste mês num indicador rumo ao seu objetivo.</string>
+  <string name="watchSyncing" formatted="false">A sincronizar com o telemóvel…</string>
+  <string name="watchThen" formatted="false">Depois</string>
+  <string name="watchTimerChanged" formatted="false">O temporizador mudou no telemóvel. Verifique o tempo e tente novamente.</string>
+  <string name="watchUpNext" formatted="false">A Seguir</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">O seu próximo acompanhamento ou plano.</string>
+  <string name="watchUpNextComplicationName" formatted="false">A Seguir</string>
+  <string name="wearRangeComplicationName" formatted="false">Progresso Mensal, de 0 ao Objetivo</string>
+  <string name="wearSymbolComplicationName" formatted="false">Progresso Mensal com Relógio</string>
 </resources>

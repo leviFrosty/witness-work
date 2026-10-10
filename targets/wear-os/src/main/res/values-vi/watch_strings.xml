@@ -16,12 +16,41 @@
   <string name="month" formatted="false">Tháng</string>
   <string name="ok" formatted="false">ĐƯỢC RỒI</string>
   <string name="reportedToday" formatted="false">Đã báo cáo hôm nay</string>
+  <string name="requestFailedTryAgain" formatted="false">Đã xảy ra sự cố. Hãy thử lại.</string>
   <string name="save" formatted="false">Lưu</string>
   <string name="sharedTheGoodNews" formatted="false">Đã chia sẻ\nTin mừng</string>
+  <string name="siriStopTimerShort" formatted="false">Dừng bộ đếm giờ</string>
+  <string name="siriTimerEmpty" formatted="false">Bộ đếm giờ chưa đến một phút, nên không có giờ nào được thêm.</string>
+  <string name="siriTimerPaused" formatted="false">Đã tạm dừng bộ đếm giờ</string>
+  <string name="siriTimerSaved" formatted="false">Đã dừng bộ đếm giờ và thêm giờ</string>
+  <string name="siriTimerStarted" formatted="false">Đã bắt đầu bộ đếm giờ</string>
+  <string name="siriTimerTooLong" formatted="false">Bộ đếm giờ đã chạy từ 24 giờ trở lên, quá dài cho một mục. Hãy kiểm tra thời gian trong WitnessWork.</string>
   <string name="standard" formatted="false">Thánh chức</string>
   <string name="timeAdded" formatted="false">Đã thêm thời gian</string>
   <string name="timer" formatted="false">Đếm giờ</string>
+  <string name="timerPauseAction" formatted="false">Tạm dừng bộ đếm giờ</string>
+  <string name="timerSaveAction" formatted="false">Lưu thời gian…</string>
+  <string name="timerStartAction" formatted="false">Bắt đầu bộ đếm giờ</string>
   <string name="today" formatted="false">Hôm nay</string>
   <string name="tomorrow" formatted="false">Ngày mai</string>
   <string name="type" formatted="false">Kiểu</string>
+  <string name="watchComplicationDescription" formatted="false">Tổng quan thánh chức tháng này.</string>
+  <string name="watchComplicationName" formatted="false">Tiến độ tháng</string>
+  <string name="watchDirectionsUnavailable" formatted="false">Bản đồ không tìm thấy địa điểm này.</string>
+  <string name="watchHoursLoggingOff" formatted="false">Hãy bật Ghi giờ của tôi trong WitnessWork trên điện thoại để thêm giờ.</string>
+  <string name="watchNothingScheduled" formatted="false">Chưa có lịch nào</string>
+  <string name="watchNow" formatted="false">Bây giờ</string>
+  <string name="watchPhoneUnreachable" formatted="false">Không kết nối được với điện thoại của bạn. Hãy để nó ở gần và thử lại.</string>
+  <string name="watchRangeComplicationDescription" formatted="false">Số giờ tháng này trên đồng hồ đo từ không đến mục tiêu của bạn.</string>
+  <string name="watchSetUp" formatted="false">Hãy mở WitnessWork trên điện thoại để hoàn tất thiết lập.</string>
+  <string name="watchStale" formatted="false">Hãy mở WitnessWork trên điện thoại để cập nhật.</string>
+  <string name="watchSymbolComplicationDescription" formatted="false">Số giờ tháng này trên đồng hồ đo hướng đến mục tiêu của bạn.</string>
+  <string name="watchSyncing" formatted="false">Đang đồng bộ với điện thoại…</string>
+  <string name="watchThen" formatted="false">Sau đó</string>
+  <string name="watchTimerChanged" formatted="false">Bộ đếm giờ đã thay đổi trên điện thoại của bạn. Hãy kiểm tra thời gian và thử lại.</string>
+  <string name="watchUpNext" formatted="false">Sắp tới</string>
+  <string name="watchUpNextComplicationDescription" formatted="false">Lần thăm lại hoặc kế hoạch tiếp theo của bạn.</string>
+  <string name="watchUpNextComplicationName" formatted="false">Sắp tới</string>
+  <string name="wearRangeComplicationName" formatted="false">Tiến độ tháng, từ 0 đến mục tiêu</string>
+  <string name="wearSymbolComplicationName" formatted="false">Tiến độ tháng kèm đồng hồ</string>
 </resources>

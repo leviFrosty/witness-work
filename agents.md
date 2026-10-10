@@ -24,6 +24,7 @@ Prove a change in the running app before calling it done; don't hand verificatio
 
 - **Match the check to the change.** UI → drive the changed flow and read the result back; data → read the store after the action; deep link → `wwv link`; bug → reproduce it first, then show it fixed on the same surface.
 - **Both platforms** for anything in the Platforms list above. "Not tested on Android" is a gap to close, not a footnote.
+- **Delegate the driving to a cheaper subagent.** Every tap, snapshot and screenshot re-reads your whole conversation, so driving the app from a long thread is our biggest token cost. Hand the device run to a subagent on the cheapest model your harness offers (for example Claude Haiku). You still decide what to prove and judge the evidence. The skill's [Delegate the drive](./.agents/skills/verify-witnesswork/SKILL.md#delegate-the-drive) says what to hand off, what to keep, and how to brief it.
 - **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits) and why.
 
 ## Pointer hover (iPad trackpad, mouse, Pencil)

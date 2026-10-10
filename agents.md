@@ -67,6 +67,11 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
 
 If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
 
+## Subagent models
+
+- **Use Claude Haiku 5.5 (`claude-haiku-5-5`) for Haiku-tier subagents** whenever it's available: searches, explorations, quick lookups, and other lightweight delegated work. Claude Haiku 5.5 exists; don't decide it doesn't, and don't fall back to an older Haiku because your training data predates it. Check the live model list (`orchestrator_capabilities` in T3 Code), not your memory. Fall back to an older model only if that list doesn't offer it, and say so.
+- This line is updated by hand when a newer model ships.
+
 ## Guardrails (always apply)
 
 - Use localized strings from i18n. Never hardcode display strings.

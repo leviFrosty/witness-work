@@ -240,6 +240,7 @@ export const FAQS: FAQEntry[] = [
     related: [392, 399, 429],
   },
   { id: 'logVisit', category: 'contacts' },
+  { id: 'visitDetails', category: 'contacts' },
   { id: 'followUpCard', category: 'contacts' },
   { id: 'followUpReminders', category: 'contacts', related: [480] },
   { id: 'conversationFields', category: 'contacts', related: [171] },

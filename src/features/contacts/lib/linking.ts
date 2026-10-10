@@ -65,6 +65,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       'Add Time': 'add-time/:date?',
       'Contact Details': 'contact/:id/:highlightedVisitId?',
       RescheduleVisit: 'reschedule/:contactId/:visitId',
+      'Visit Details': 'visit/:visitId',
       // "+" button on the Calendar widget lands here with no date to start
       // a fresh plan; the in-app schedule UI owns per-date plan editing.
       PlanDay: 'day',

@@ -23,6 +23,7 @@ import {
 import sendJoinRequestInvite from '@/features/buddies/lib/sendJoinRequestInvite'
 import {
   effectiveShareStatus,
+  isOpenFollowUpInvitation,
   isOpenPlanInvitation,
 } from '@/features/buddies/lib/linkedPlans'
 import { holdsBadge, sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
@@ -174,7 +175,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const { now } = useNow()
   if (!enabled || !started) return []
 
-  /** A reply opens the Plan or Contact it's about. */
+  /** A reply opens the Plan or Follow-up it's about. */
   const replyTarget = (shareId: string) => {
     const plan = dayPlans.find(
       (candidate) =>
@@ -189,8 +190,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
         buddiesEngine.shareIdForKey(followUpShareKey(candidate.id)) === shareId
     )
     if (visit)
-      return () =>
-        navigation.navigate('Contact Details', { id: visit.contact.id })
+      return () => navigation.navigate('Visit Details', { visitId: visit.id })
     return undefined
   }
 
@@ -204,13 +204,23 @@ export default function useBuddyNotifications(): NotificationItem[] {
             date: moment(d, 'YYYY-MM-DD').hour(12).toISOString(),
           })
 
-  /** A buddy's Plan invitation opens it, answered or not, while it's open. */
+  /**
+   * A buddy's Plan or Follow-up invitation opens it, answered or not, while
+   * it's open.
+   */
   const invitationTarget = (shareKey: string) => {
     const share = incomingShares[shareKey]
-    if (!isOpenPlanInvitation(share, now)) return undefined
-    const { from, shareId } = share
-    return () =>
-      navigation.navigate('Plan Details', { share: { from, shareId } })
+    if (isOpenPlanInvitation(share, now)) {
+      const { from, shareId } = share
+      return () =>
+        navigation.navigate('Plan Details', { share: { from, shareId } })
+    }
+    if (isOpenFollowUpInvitation(share, now)) {
+      const { from, shareId } = share
+      return () =>
+        navigation.navigate('Follow-Up Invitation', { from, shareId })
+    }
+    return undefined
   }
 
   /** A new pairing opens that buddy, while they're still a buddy. */

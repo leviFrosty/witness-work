@@ -16,6 +16,13 @@ export type RootStackParamList = {
     returnOnSave?: boolean
     /** Opened from Log Visit: added to `visit_created` (analytics). */
     logVisit?: LogVisitAttribution
+    /**
+     * Opened over Visit Details, so it shows as a sheet over that one, and
+     * closing it returns there.
+     */
+    overSheet?: boolean
+    /** Opens an edit with Follow Up on, e.g. Visit Details' Plan the next visit. */
+    planFollowUp?: boolean
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
   'Contact Form': {
@@ -83,6 +90,10 @@ export type RootStackParamList = {
   PreferencesCustomFields: undefined
   PreferencesConversationFields: undefined
   RescheduleVisit: { contactId: string; visitId: string }
+  /** One Visit and its Follow-up, read-only, with its buddies. */
+  'Visit Details': { visitId: string }
+  /** A buddy's Follow-up invitation, read-only, with the User's answer. */
+  'Follow-Up Invitation': BuddyShareRef
   /**
    * One Plan, read-only: a one-time Plan, one date of a Recurring Plan, or a
    * buddy's Plan invitation (shown even after the User says they can't make it,

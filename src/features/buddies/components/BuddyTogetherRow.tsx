@@ -78,18 +78,20 @@ export default function BuddyTogetherRow({
           )
 
   const { planId } = item
-  const contactId = item.direction === 'outgoing' ? item.contactId : undefined
-  // A buddy's Plan opens even after a "Can't make it", to change the answer.
+  const visitId = item.direction === 'outgoing' ? item.visitId : undefined
+  // A buddy's Plan or Follow-up opens even after a "Can't make it", to change
+  // the answer.
   const share =
-    item.direction === 'incoming' && !isFollowUp
-      ? shareRefFromKey(item.shareKey)
-      : undefined
+    item.direction === 'incoming' ? shareRefFromKey(item.shareKey) : undefined
   const open =
-    planId || share
-      ? () => navigation.navigate('Plan Details', { dayPlanId: planId, share })
-      : contactId
-        ? () => navigation.navigate('Contact Details', { id: contactId })
-        : undefined
+    share && isFollowUp
+      ? () => navigation.navigate('Follow-Up Invitation', share)
+      : planId || share
+        ? () =>
+            navigation.navigate('Plan Details', { dayPlanId: planId, share })
+        : visitId
+          ? () => navigation.navigate('Visit Details', { visitId })
+          : undefined
 
   const changeAnswer: ContextMenuEntries =
     item.direction === 'incoming'

@@ -1511,9 +1511,10 @@ async function cdpTargets(port) {
   }
 }
 
-// Each worktree's Metro serves at most one device per platform. Match by
-// platform: Android runtimes report "<model> - <release> - API <n>", and an
-// iOS runtime reports the simulator name, which can lag a rename until reboot.
+// Match by platform: Android runtimes report "<model> - <release> - API <n>",
+// and an iOS runtime reports the simulator name, which can lag a rename until
+// reboot. A warm device another worktree left behind can reconnect to this
+// port once its own Metro is gone, so prefer the leased simulator by name.
 async function cdpTarget(state, platform) {
   if (!state.devices?.[platform])
     fail(
@@ -1521,10 +1522,14 @@ async function cdpTarget(state, platform) {
     )
   const targets = await cdpTargets(state.metro.port)
   const isAndroid = (t) => / - API \d+$/.test(t.deviceName ?? '')
-  return targets.find(
+  const candidates = targets.filter(
     (t) =>
       t.title?.startsWith(BUNDLE_ID) &&
       isAndroid(t) === (platform === 'android')
+  )
+  const leased = state.devices[platform].name
+  return (
+    candidates.find((t) => leased && t.deviceName === leased) ?? candidates[0]
   )
 }
 

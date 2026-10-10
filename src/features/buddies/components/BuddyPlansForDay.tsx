@@ -22,7 +22,7 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 /**
  * Faded, read-only buddy Plans for one day — they never mix with the User's
  * own. Each can be asked to join; long-press a row to view the buddy or plan
- * the same time.
+ * the same time. A buddy's Follow-up the User is going on opens its page.
  */
 export default function BuddyPlansForDay({
   date,
@@ -154,39 +154,59 @@ export default function BuddyPlansForDay({
           </XView>
         )
       })}
-      {followUps.map(({ buddy, share }) => (
-        <ContextMenu
-          key={`${share.from}-${share.shareId}`}
-          actions={[viewBuddy(buddy.inboxId)]}
-        >
-          <XView style={{ gap: 10, opacity: 0.7 }}>
-            <BuddyAvatar
-              avatar={buddy.avatar}
-              name={buddyDisplayName(buddy)}
-              color={buddy}
-              size={22}
-            />
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {buddyDisplayName(buddy)}
-            </Text>
-            <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-              {[
-                // The householder's name stays hidden in data protection mode.
-                share.details.firstName && !dataProtectionMode
-                  ? i18n.t('buddies_followUpWith', {
-                      name: share.details.firstName,
-                    })
-                  : i18n.t('buddies_followUp'),
-                share.details.s === undefined
-                  ? undefined
-                  : formatStartTime(share.details.s),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
-          </XView>
-        </ContextMenu>
-      ))}
+      {followUps.map(({ buddy, share }) => {
+        const openFollowUp =
+          onNavigate &&
+          (() =>
+            onNavigate(() =>
+              navigation.navigate('Follow-Up Invitation', {
+                from: share.from,
+                shareId: share.shareId,
+              })
+            ))
+        return (
+          <ContextMenu
+            key={`${share.from}-${share.shareId}`}
+            onPress={openFollowUp || undefined}
+            actions={[
+              openFollowUp && {
+                id: 'open',
+                title: i18n.t('open'),
+                systemImage: 'arrow.up.forward.app',
+                onPress: openFollowUp,
+              },
+              viewBuddy(buddy.inboxId),
+            ]}
+          >
+            <XView style={{ gap: 10, opacity: 0.7 }}>
+              <BuddyAvatar
+                avatar={buddy.avatar}
+                name={buddyDisplayName(buddy)}
+                color={buddy}
+                size={22}
+              />
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {buddyDisplayName(buddy)}
+              </Text>
+              <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+                {[
+                  // The householder's name stays hidden in data protection mode.
+                  share.details.firstName && !dataProtectionMode
+                    ? i18n.t('buddies_followUpWith', {
+                        name: share.details.firstName,
+                      })
+                    : i18n.t('buddies_followUp'),
+                  share.details.s === undefined
+                    ? undefined
+                    : formatStartTime(share.details.s),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </XView>
+          </ContextMenu>
+        )
+      })}
     </View>
   )
 }

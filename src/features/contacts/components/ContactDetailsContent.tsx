@@ -256,6 +256,11 @@ const ContactDetailsContent = ({
             <UpNextCard
               upNext={upNext}
               overlap
+              onOpen={() =>
+                navigation.navigate('Visit Details', {
+                  visitId: upNext.visit.id,
+                })
+              }
               onLogVisit={logVisit}
               onReschedule={() =>
                 navigation.navigate('RescheduleVisit', {

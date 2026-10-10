@@ -1,8 +1,8 @@
 import moment from 'moment'
 import type { IncomingShare } from '@/features/buddies/lib/state'
-import PlanDetailsInvitation, {
+import InvitationAnswerSection, {
   type ShareAnswering,
-} from '@/features/plans/components/PlanDetailsInvitation'
+} from '@/features/buddies/components/InvitationAnswerSection'
 import PlanDetailsLayout from '@/features/plans/components/PlanDetailsLayout'
 import PlanDetailsSummary from '@/features/plans/components/PlanDetailsSummary'
 
@@ -29,7 +29,7 @@ export default function InvitationPlanDetails({
         location={details.location}
         note={details.note}
         lead={
-          <PlanDetailsInvitation
+          <InvitationAnswerSection
             from={share.from}
             share={share}
             status={share.status === 'cancelled' ? 'pending' : share.status}

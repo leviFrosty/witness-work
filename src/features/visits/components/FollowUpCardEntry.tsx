@@ -30,7 +30,7 @@ import { handleCall, handleMessage } from '@/lib/phone'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
-import useDismissFollowUp from '@/features/visits/hooks/useDismissFollowUp'
+import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 
 type Props = {
   item: FollowUpCardItem
@@ -68,6 +68,8 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
     ? `${formatCalendar(followUpDate)} · ${formatRelative(followUpDate)}`
     : formatCalendar(followUpDate)
 
+  const openVisit = () =>
+    navigation.navigate('Visit Details', { visitId: visit.id })
   const openContact = () =>
     navigation.navigate('Contact Details', {
       id: contact.id,
@@ -86,7 +88,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
     })
   }
 
-  // The tap action (the contact) isn't repeated in the menu.
+  // The tap action (the Follow-up's Visit) isn't repeated in the menu.
   const actions: ContextMenuEntries = [
     [
       phone && {
@@ -115,6 +117,12 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
       },
     ],
     [
+      {
+        id: 'open_contact',
+        title: i18n.t('openContact'),
+        systemImage: 'person.crop.circle',
+        onPress: openContact,
+      },
       !answeredBy && {
         id: 'dismiss_follow_up',
         title: i18n.t('dismissFollowUpAction'),
@@ -267,7 +275,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
         {/* The buttons stay outside so the long press has no rivals. */}
         <ContextMenu
           actions={actions}
-          onPress={openContact}
+          onPress={openVisit}
           accessibilityLabel={contact.name}
           hoverRadius={theme.numbers.borderRadiusMd}
           preview={<ContactPreview contact={contact} lastVisit={visit} />}

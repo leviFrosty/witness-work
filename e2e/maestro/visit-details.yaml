@@ -1,0 +1,20 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'Visit Form' && __WW_DEV__.state().route.params.visitToEditId === 'verify-visit-2-0' && __WW_DEV__.state().route.params.overSheet === true
+appId: com.leviwilkerson.jwtimedev
+name: Open a conversation's details from Contact Details, then edit it
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+- tapOn: Contacts
+- tapOn: Chen Wei
+- scrollUntilVisible:
+    element: Conversation History
+# Tapping a conversation opens its details in a sheet, not the form.
+- tapOn:
+    id: visit-card-verify-visit-2-0
+- assertVisible: Conversation
+- assertVisible: Continue lesson 3
+- assertVisible: Topic
+- tapOn: Edit
+- assertVisible: Edit Conversation

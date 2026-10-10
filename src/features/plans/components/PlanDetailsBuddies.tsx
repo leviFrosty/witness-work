@@ -29,7 +29,7 @@ import sendJoinRequestInvite from '@/features/buddies/lib/sendJoinRequestInvite'
 import { planEndsAt, planShareKey } from '@/features/buddies/lib/shares'
 import type { IncomingJoinRequest } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-import PlanDetailsBuddyRow from '@/features/plans/components/PlanDetailsBuddyRow'
+import ShareBuddyRow from '@/features/buddies/components/ShareBuddyRow'
 
 /**
  * Who's invited to the User's own Plan and how each answered, buddies asking to
@@ -117,7 +117,7 @@ export default function PlanDetailsBuddies({
       {invited.map((buddy, index) => {
         const reply = replies?.[buddy.inboxId]?.status
         return (
-          <PlanDetailsBuddyRow
+          <ShareBuddyRow
             key={buddy.inboxId}
             buddy={buddy}
             badge={<ShareReplyBadge status={reply} />}
@@ -139,7 +139,7 @@ export default function PlanDetailsBuddies({
         )
       })}
       {asking.map(({ buddy, request }, index) => (
-        <PlanDetailsBuddyRow
+        <ShareBuddyRow
           key={buddy.inboxId}
           buddy={buddy}
           status={

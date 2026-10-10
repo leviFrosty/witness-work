@@ -35,7 +35,8 @@ export type TogetherItem = {
       /** The buddy's answer; `invited` until they reply. */
       status: 'invited' | 'going' | 'declined'
       planId?: string
-      contactId?: string
+      /** The Visit whose Follow-up this is. */
+      visitId?: string
     }
 )
 
@@ -119,7 +120,7 @@ export function buildTogether(input: {
       details: followUpShareDetails(followUp, contacts.get(visit.contact.id)),
       direction: 'outgoing',
       status: input.replyFor(followUpShareKey(visit.id))?.status ?? 'invited',
-      contactId: visit.contact.id,
+      visitId: visit.id,
     })
   }
 

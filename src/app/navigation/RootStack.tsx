@@ -187,6 +187,21 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
+          // A sheet, so a Visit opens over wherever it's listed. Edit and the
+          // other forms stack over it and return here when saved.
+          options={{ presentation: 'modal', header: () => null }}
+          name='Visit Details'
+          getComponent={() => require('@/app/visits/VisitDetailsRoute').default}
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', header: () => null }}
+          name='Follow-Up Invitation'
+          getComponent={() =>
+            require('@/features/buddies/screens/FollowUpInvitationScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
           options={({ route }) => {
             const params = route.params as RootStackParamList['PlanDay']
             let title = i18n.t('createPlan')

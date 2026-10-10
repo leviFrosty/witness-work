@@ -14,20 +14,20 @@ import {
   type IncomingShareStatus,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-import PlanDetailsBuddyRow from '@/features/plans/components/PlanDetailsBuddyRow'
+import ShareBuddyRow from '@/features/buddies/components/ShareBuddyRow'
 
-/** Answering a buddy's invitation from Plan Details. */
+/** Answering a buddy's invitation from its page (Plan Details, a Follow-up's). */
 export type ShareAnswering = {
   busy: boolean
   answer: (share: BuddyShareRef, reply: ShareReply) => void
 }
 
 /**
- * A buddy's Plan invitation: who organized it, and (while it can still be
- * answered) the User's answer as two side-by-side choices, so switching back is
- * one tap either way.
+ * A buddy's Plan or Follow-up invitation: who organized it, and (while it can
+ * still be answered) the User's answer as two side-by-side choices, so
+ * switching back is one tap either way.
  */
-export default function PlanDetailsInvitation({
+export default function InvitationAnswerSection({
   from,
   share,
   status,
@@ -51,7 +51,7 @@ export default function PlanDetailsInvitation({
 
   return (
     <BuddiesSection title={i18n.t('buddies_title')}>
-      <PlanDetailsBuddyRow
+      <ShareBuddyRow
         buddy={buddy}
         subtitle={i18n.t('planDetails_organizer')}
         action={

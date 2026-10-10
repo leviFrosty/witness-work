@@ -20,16 +20,23 @@ type Props = {
   upNext: UpNext
   /** Pull the card up over the hero. */
   overlap: boolean
+  /** Opens the Follow-up's Visit. */
+  onOpen: () => void
   onLogVisit: () => void
   onReschedule: () => void
   /** Omitted when the contact has no address or coordinate. */
   onNavigate?: () => void
 }
 
-/** The soonest upcoming follow-up, promoted above everything else. */
+/**
+ * The soonest upcoming follow-up, promoted above everything else. Tapping it
+ * opens the Visit it belongs to; the buttons log a visit, navigate, or
+ * reschedule.
+ */
 const UpNextCard = ({
   upNext,
   overlap,
+  onOpen,
   onLogVisit,
   onReschedule,
   onNavigate,
@@ -53,7 +60,7 @@ const UpNextCard = ({
 
   return (
     <Button
-      onPress={onLogVisit}
+      onPress={onOpen}
       accessibilityRole='button'
       style={{
         marginTop: overlap ? -46 : 0,

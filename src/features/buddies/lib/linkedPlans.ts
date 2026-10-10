@@ -186,6 +186,18 @@ export const isOpenPlanInvitation = (
   share.expiresAt > now
 
 /**
+ * A buddy's Follow-up invitation that's still on this phone: not cancelled, and
+ * not yet wiped (a day after the visit).
+ */
+export const isOpenFollowUpInvitation = (
+  share: IncomingShare | undefined,
+  now: number
+): share is IncomingShare =>
+  share?.type === 'followUp' &&
+  share.status !== 'cancelled' &&
+  share.expiresAt > now
+
+/**
  * What to show for an invitation: a linked Plan synced from another of this
  * User's devices means they already said "Going".
  */

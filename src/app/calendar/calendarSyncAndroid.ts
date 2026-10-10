@@ -83,7 +83,7 @@ export async function quickConnectCalendar(): Promise<'connected'> {
 
 export async function disconnectCalendar(
   remove: boolean,
-  source: 'settings' | 'tray' | 'onboarding'
+  source: 'settings' | 'tray' | 'onboarding' | 'tools'
 ) {
   const { destination } = useCalendarSync.getState()
   if (remove && destination) {

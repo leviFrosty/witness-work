@@ -4,6 +4,7 @@ import {
   BellRing as BellRingIcon,
   Braces as BracesIcon,
   CalendarClock as CalendarClockIcon,
+  CalendarX as CalendarXIcon,
   Car as CarIcon,
   Cloud as CloudIcon,
   CloudOff as CloudOffIcon,
@@ -132,6 +133,13 @@ import {
 } from '@/app/dev-fixtures/mileage'
 import { toDateKey } from '@/lib/mileage/calc'
 import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
+import { calendarBridgeAvailable } from '../../../modules/calendar-bridge'
+import { useCalendarSync } from '@/stores/calendarSync'
+import {
+  removeAllCalendarEvents,
+  removeConnectedCalendarEvents,
+  stopCalendarSyncForMockData,
+} from '@/app/calendar/devCalendarTools'
 
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
@@ -889,7 +897,20 @@ export default function ToolsScreen() {
     showDone(label)
   }
 
-  const generateAllMockData = async () => {
+  // Mock data must never reach the real calendar: Calendar Sync goes off
+  // before anything is written.
+  const withMockData = (generate: () => unknown) => async () => {
+    const calendarWasOn = useCalendarSync.getState().enabled
+    await stopCalendarSyncForMockData()
+    await generate()
+    if (calendarWasOn)
+      toast.show('Calendar Sync turned off', {
+        message: 'Mock data stays out of your calendar',
+        native: true,
+      })
+  }
+
+  const generateAllMockData = withMockData(async () => {
     await generateContacts(mockContactCount)
     generateServiceReports()
     generateServicePlans()
@@ -898,12 +919,43 @@ export default function ToolsScreen() {
     generateMileage()
     applyBadgeHistoryFixture()
     generatedWithBadges()
+  })
+
+  /** The reset forgets the connection, so its events go first. */
+  const removeCalendarEventsBeforeReset = async () => {
+    try {
+      await removeConnectedCalendarEvents()
+    } catch (e) {
+      toast.show('Calendar events not removed', {
+        message: (e as Error).message,
+        native: true,
+      })
+    }
   }
 
   const resetAll = () =>
-    confirmDevAction('Reset all (fresh install)', () => {
+    confirmDevAction('Reset all (fresh install)', async () => {
+      await removeCalendarEventsBeforeReset()
       resetLocalData()
       showDone('All data cleared — restart the app')
+    })
+
+  const clearCalendarEvents = () =>
+    confirmDestructive({
+      title: 'Clear calendar events',
+      description:
+        'Removes every WitnessWork event from every calendar on this device, including ones left behind by earlier resets, and turns Calendar Sync off. Cannot be undone.',
+      onConfirm: async () => {
+        try {
+          const removed = await removeAllCalendarEvents()
+          showDone(`Removed ${removed} calendar events`)
+        } catch (e) {
+          toast.show('Clearing calendar failed', {
+            message: (e as Error).message,
+            native: true,
+          })
+        }
+      },
     })
 
   const resetAllAndWipeICloud = () =>
@@ -925,6 +977,7 @@ export default function ToolsScreen() {
                 native: true,
               })
             }
+            await removeCalendarEventsBeforeReset()
             resetLocalData()
             showDone('All data cleared (local + iCloud) — restart the app')
           },
@@ -1061,6 +1114,15 @@ export default function ToolsScreen() {
               tone='destructive'
               onPress={resetAllAndWipeICloud}
             />
+            {calendarBridgeAvailable && (
+              <QuickTile
+                icon={CalendarXIcon}
+                label='Clear calendar events'
+                caption='Every WitnessWork event'
+                tone='destructive'
+                onPress={clearCalendarEvents}
+              />
+            )}
             {__DEV__ && (
               <QuickTile
                 icon={HeartHandshakeIcon}
@@ -1128,78 +1190,78 @@ export default function ToolsScreen() {
             <ToolRow
               label={`${i18n.t('contacts')} (${mockContactCount})`}
               info='Pulls names and addresses from jsonplaceholder, scatters them across San Francisco, and spreads creation dates over ~3 years so every staleness band is represented.'
-              onPress={async () => {
+              onPress={withMockData(async () => {
                 await generateContacts(mockContactCount)
                 generatedWithBadges()
-              }}
+              })}
             />
             <ToolRow
               label={i18n.t('serviceReports')}
               info='~3 years of daily entries with seeded categories, LDC credit, and realistic gaps between days.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 generateServiceReports()
                 generatedWithBadges()
-              }}
+              })}
             />
             <ToolRow
               label={i18n.t('servicePlans')}
               info='3 weekly recurring plans plus day plans spread across the past two weeks and the coming weeks.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 generateServicePlans()
                 generatedWithBadges()
-              }}
+              })}
             />
             <ToolRow
               label='Overdue follow-ups'
               info='Four contacts whose follow-ups are 5h, 1d, 7d, and 20d overdue, mixing notify and topic combinations.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 generateOverdueFollowUps()
                 generatedWithBadges()
-              }}
+              })}
             />
             <ToolRow
               label="Today's route stops"
               info="11 located stops today around San Francisco (one past the route limit), 2 missing a map pin, plus a dismissed and an already-visited follow-up that stay hidden. Opens Plan today's route in the day view."
-              onPress={() => {
+              onPress={withMockData(() => {
                 generateTodayRoute()
                 showDone(i18n.t('generated'))
-              }}
+              })}
             />
             <ToolRow
               label='Unique contact (edge cases)'
               info='One contact whose visit history covers every Contact Details rendering case, then opens it.'
-              onPress={generateUniqueContact}
+              onPress={withMockData(generateUniqueContact)}
             />
             <ToolRow
               label='Badges'
               info='Replaces earned badges with a realistic mixed set: various collections at various levels, two earned just now so they show as new. Whatever your records reach is added quietly too.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 showDone(`${earnRandomBadges()} badges earned`)
-              }}
+              })}
             />
             <ToolRow
               label='Badge history'
               info='One contact visited monthly for 8 months (Bible studies, follow-up topics), a time entry every month since the previous service year began, a weekly plan since 3 months ago and 6 sent reports. Earns Bronze or Silver in most collections, Year Round and First Bible Study; two levels reached last month celebrate. Generate all includes it.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 applyBadgeHistoryFixture()
                 generatedWithBadges()
-              }}
+              })}
             />
             <ToolRow
               label='Mileage'
               info='Four cars (one archived, one without fuel), gasoline and electric fuels with a mid-history price change, and ~6 months of trips mixing distance, odometer, round-trip, and noted entries. Turns Mileage Tracking on.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 const { trips } = generateMileage()
                 showDone(`Generated ${trips.length} trips`)
-              }}
+              })}
             />
             <ToolRow
               label='Oversized share contact'
               info='One contact whose share link exceeds the 4 KB URL cap, to exercise the file-export fallback.'
-              onPress={() => {
+              onPress={withMockData(() => {
                 generateOversizedShareContact()
                 showDone('Generated oversized share contact')
-              }}
+              })}
             />
           </ToolList>
         </ToolSection>

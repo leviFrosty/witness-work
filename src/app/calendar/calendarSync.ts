@@ -338,7 +338,7 @@ export async function reconnectSharedCalendar() {
 /** Only the primary changes shared state; other devices just stop locally. */
 export async function disconnectCalendar(
   remove: boolean,
-  source: 'settings' | 'tray' | 'onboarding' = 'settings'
+  source: 'settings' | 'tray' | 'onboarding' | 'tools' = 'settings'
 ) {
   if (Platform.OS === 'android')
     return android.disconnectCalendar(remove, source)

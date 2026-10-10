@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Line as SkiaLine, vec } from '@shopify/react-native-skia'
-import { Bar, CartesianChart, StackedBar } from 'victory-native'
+import { CartesianChart } from 'victory-native'
 import useTheme from '@/contexts/theme'
 import ChartXLabels, {
   type ChartXLabel,
 } from '@/components/charts/ChartXLabels'
 import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import AnimatedStackedBars from '@/features/mileage/components/AnimatedStackedBars'
 import { withAlpha } from '@/lib/color'
 import { formatMonthDayCompact } from '@/lib/dates'
 import {
@@ -23,7 +24,6 @@ import type { Trip } from '@/types/mileage'
 const CHART_HEIGHT = 88
 const PLOT_TOP = 2
 const INNER_PADDING = 0.3
-const ANIMATION = { type: 'timing', duration: 300 } as const
 /** Month days that get an axis label — about one a week. */
 const LABELED_MONTH_DAYS = new Set([1, 8, 15, 22, 29])
 const READOUT_WIDTH = 150
@@ -66,19 +66,18 @@ const MileagePeriodChart = ({
   const maxMiles = Math.max(0, ...buckets.map((b) => b.distanceMiles))
   if (buckets.length === 0 || maxMiles <= 0) return null
 
+  // One series per car when more than one car has trips.
   const stacked = vehicleColors.length > 1
-  const yKeys = stacked ? vehicleColors.map((_, i) => `car${i}`) : ['total']
-  const data = buckets.map((bucket, i) => {
-    const row: Record<string, number> = { x: i }
-    if (stacked) {
-      vehicleColors.forEach(({ vehicleId }, j) => {
-        row[`car${j}`] = bucket.byVehicle[vehicleId] ?? 0
-      })
-    } else {
-      row.total = bucket.distanceMiles
-    }
-    return row
-  })
+  const colors = stacked
+    ? vehicleColors.map(({ color }) => color)
+    : [vehicleColors[0]?.color ?? theme.colors.accent]
+  const values = buckets.map((bucket) =>
+    stacked
+      ? vehicleColors.map(({ vehicleId }) => bucket.byVehicle[vehicleId] ?? 0)
+      : [bucket.distanceMiles]
+  )
+  // The chart only lays out the plot; the bars draw themselves.
+  const data = buckets.map((_, i) => ({ x: i, y: 0 }))
   const count = buckets.length
   const radius = count > 12 ? 2 : 4
   const yMax = maxMiles * 1.1
@@ -107,12 +106,12 @@ const MileagePeriodChart = ({
         <CartesianChart
           data={data}
           xKey='x'
-          yKeys={yKeys}
+          yKeys={['y']}
           domain={{ x: [-0.5, count - 0.5], y: [0, yMax] }}
           padding={{ top: PLOT_TOP, bottom: 0, left: 0, right: 0 }}
           yAxis={[{ lineWidth: 0 }]}
         >
-          {({ points, chartBounds }) => (
+          {({ chartBounds }) => (
             <>
               <SkiaLine
                 p1={vec(chartBounds.left, chartBounds.bottom)}
@@ -120,33 +119,14 @@ const MileagePeriodChart = ({
                 color={theme.colors.border}
                 strokeWidth={1}
               />
-              {stacked ? (
-                <StackedBar
-                  points={yKeys.map((key) => points[key])}
-                  chartBounds={chartBounds}
-                  barCount={count}
-                  innerPadding={INNER_PADDING}
-                  colors={vehicleColors.map(({ color }) => color)}
-                  barOptions={({ isTop }) =>
-                    isTop
-                      ? {
-                          roundedCorners: { topLeft: radius, topRight: radius },
-                        }
-                      : {}
-                  }
-                  animate={ANIMATION}
-                />
-              ) : (
-                <Bar
-                  points={points.total}
-                  chartBounds={chartBounds}
-                  barCount={count}
-                  innerPadding={INNER_PADDING}
-                  color={vehicleColors[0]?.color ?? theme.colors.accent}
-                  roundedCorners={{ topLeft: radius, topRight: radius }}
-                  animate={ANIMATION}
-                />
-              )}
+              <AnimatedStackedBars
+                values={values}
+                colors={colors}
+                chartBounds={chartBounds}
+                yMax={yMax}
+                innerPadding={INNER_PADDING}
+                radius={radius}
+              />
             </>
           )}
         </CartesianChart>

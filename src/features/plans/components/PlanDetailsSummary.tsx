@@ -1,20 +1,15 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
-import moment from 'moment'
 import PlanLocationLink from '@/components/PlanLocationLink'
 import RichNoteText from '@/components/RichNoteText'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import {
-  formatDate,
-  formatStartTime,
-  formatWeekdayMonthDayCompact,
-} from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import type { PlanLocation } from '@/types/timeEntry'
+import { formatPlanWhen } from '@/features/plans/lib/planWhen'
 
 /** What a Plan (or a buddy's Plan invitation) shows on Plan Details. */
 export type PlanDetailsFields = {
@@ -59,6 +54,9 @@ function DetailRow({
       description={description}
       lastInSection={last}
       controlWidth='auto'
+      // A long value (a range past midnight) wraps rather than squeezing the
+      // label.
+      controlStyle={{ maxWidth: '70%' }}
     >
       <Text
         style={{ color: theme.colors.textAlt, textAlign: 'right' }}
@@ -74,19 +72,9 @@ function DetailRow({
 export default function PlanDetailsSummary(props: PlanDetailsFields) {
   const theme = useTheme()
   const duration = useFormattedMinutes(props.minutes ?? 0)
-  const day = moment(props.date)
-  const dateLabel = day.isSame(moment(), 'year')
-    ? formatWeekdayMonthDayCompact(day)
-    : formatDate(day, { style: 'medium' })
 
   const rows = [
-    {
-      label: i18n.t('date'),
-      value:
-        props.startTimeInMinutes === undefined
-          ? dateLabel
-          : `${dateLabel} · ${formatStartTime(props.startTimeInMinutes)}`,
-    },
+    { label: i18n.t('date'), value: formatPlanWhen(props) },
     props.minutes !== undefined && {
       label: i18n.t('planDetails_duration'),
       value: duration.formatted,

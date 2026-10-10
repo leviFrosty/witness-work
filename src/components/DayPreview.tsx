@@ -10,6 +10,7 @@ import {
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   type RecurringPlan,
 } from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
@@ -71,22 +72,27 @@ export default function DayPreview({
   const planLines = [
     ...dayPlans.map((plan) => ({
       key: plan.id,
+      anytime: !!plan.anytime,
       start: getStartTimeInMinutes(plan),
       minutes: plan.minutes,
       detail: plan.title || plan.note,
     })),
     ...recurringPlans.map((plan) => ({
       key: plan.id,
+      anytime: isRecurringPlanAnytimeOnDate(plan, date),
       start: getEffectiveStartTimeInMinutesForRecurringPlan(plan, date),
       minutes: getEffectiveMinutesForRecurringPlan(plan, date),
       detail: plan.title || getEffectiveNoteForRecurringPlan(plan, date),
     })),
   ]
-    .sort((a, b) => a.start - b.start)
+    // Anytime Plans first, like all-day events.
+    .sort((a, b) => (a.anytime ? -1 : a.start) - (b.anytime ? -1 : b.start))
     .map(
       (plan): Line => ({
         key: plan.key,
-        primary: `${formatStartTime(plan.start)} · ${duration(plan.minutes)}`,
+        primary: `${
+          plan.anytime ? i18n.t('planAnytime') : formatStartTime(plan.start)
+        } · ${duration(plan.minutes)}`,
         secondary: plan.detail || undefined,
       })
     )

@@ -7,7 +7,6 @@ import { getLocales } from 'expo-localization'
 import moment from 'moment'
 import {
   Calendar as CalendarIcon,
-  Clock as ClockIcon,
   Timer as TimerIcon,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +14,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PickerSheet from '@/components/ui/PickerSheet'
+import SegmentedControl from '@/components/ui/SegmentedControl'
 import WheelPicker from '@/components/ui/WheelPicker'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
@@ -30,8 +30,20 @@ import { usePreferences } from '@/stores/preferences'
 type Props = {
   date: Date
   setDate: (date: Date) => void
-  /** Adds the Time pill, for records that start at a clock time. */
-  showTime?: boolean
+  /**
+   * Swaps the duration pill for How long?, whose sheet takes either just the
+   * hours or a start and end time: for records that may have no set time.
+   */
+  timeSpan?: {
+    /** Just hours, with no set time. */
+    anytime: boolean
+    /** Saves How long's sheet; a time span also moves the start. */
+    setWhen: (when: {
+      anytime: boolean
+      minutes: number
+      startTimeInMinutes?: number
+    }) => void
+  }
   hours: number
   minutes: number
   setDuration: (hours: number, minutes: number) => void
@@ -49,7 +61,7 @@ type Props = {
   testID: string
 }
 
-type PickerKind = 'date' | 'time' | 'duration'
+type PickerKind = 'date' | 'duration' | 'when'
 
 const wheelItems = (values: number[]) =>
   values.map((value) => ({ label: value.toString(), value }))
@@ -57,17 +69,10 @@ const wheelItems = (values: number[]) =>
 // Matches the fill of the native iOS date and time pills.
 const PILL_FILL = 'rgba(118,118,128,0.24)'
 
-const uses24HourClock = () =>
-  !/a/i.test(moment.localeData().longDateFormat('LT'))
-
-/** Copies the picked date's day or clock time onto the record's date. */
-const mergeDate = (base: Date, picked: Date, mode: 'date' | 'time') => {
+/** Copies the picked day onto the record's date, keeping its clock time. */
+const mergeDate = (base: Date, picked: Date) => {
   const next = new Date(base)
-  if (mode === 'date') {
-    next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate())
-  } else {
-    next.setHours(picked.getHours(), picked.getMinutes())
-  }
+  next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate())
   return next
 }
 
@@ -84,8 +89,11 @@ const dayLabel = (date: Date) => {
 const WhenPill = (props: {
   icon: AppIcon
   value: string
+  /** A second, smaller line under the value. */
+  caption?: string
   accessibilityLabel: string
   placeholder?: boolean
+  flex?: number
   testID: string
   onPress: () => void
 }) => {
@@ -96,10 +104,12 @@ const WhenPill = (props: {
       onPress={props.onPress}
       accessibilityRole='button'
       accessibilityLabel={props.accessibilityLabel}
-      accessibilityValue={{ text: props.value }}
+      accessibilityValue={{
+        text: [props.value, props.caption].filter(Boolean).join(', '),
+      }}
       testID={props.testID}
       style={{
-        flex: 1,
+        flex: props.flex ?? 1,
         minHeight: 56,
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: PILL_FILL,
@@ -122,14 +132,129 @@ const WhenPill = (props: {
       >
         {props.value}
       </Text>
+      {props.caption && (
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          style={{
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textAlt,
+          }}
+        >
+          {props.caption}
+        </Text>
+      )}
     </Button>
+  )
+}
+
+const DAY_MINUTES = 24 * 60
+const WHEEL_STEP = 5
+
+/** Every `WHEEL_STEP` from `from` to `to`, plus `keep` if it falls between. */
+const steps = (from: number, to: number, keep: number) => {
+  const values: number[] = []
+  for (let value = from; value <= to; value += WHEEL_STEP) values.push(value)
+  if (keep >= from && keep <= to && !values.includes(keep)) {
+    values.push(keep)
+    values.sort((a, b) => a - b)
+  }
+  return values
+}
+
+const clockLabel = (minutesOfDay: number) => {
+  const label = formatTime(
+    moment()
+      .startOf('day')
+      .add(minutesOfDay % DAY_MINUTES, 'minutes')
+  )
+  return minutesOfDay >= DAY_MINUTES
+    ? i18n.t('planForm_nextDayTime', { time: label })
+    : label
+}
+
+/** "9:00 AM – 2:00 PM" for a record starting at `date` and lasting `minutes`. */
+const timeRange = (date: Date, minutes: number) =>
+  i18n.t('planForm_timeRange', {
+    start: formatTime(date),
+    end: formatTime(new Date(date.getTime() + minutes * 60_000)),
+  })
+
+/**
+ * Start and End side by side, with the length they add up to. End's values are
+ * lengths, so moving Start keeps the length and an End past midnight still
+ * works.
+ */
+const SpanWheels = (props: {
+  start: number
+  minutes: number
+  onChange: (start: number, minutes: number) => void
+  testID: string
+}) => {
+  const theme = useTheme()
+  const { formatted: total } = useFormattedMinutes(props.minutes)
+  const startItems = steps(0, DAY_MINUTES - WHEEL_STEP, props.start).map(
+    (value) => ({ value, label: clockLabel(value) })
+  )
+  const endItems = steps(
+    WHEEL_STEP,
+    DAY_MINUTES - WHEEL_STEP,
+    props.minutes
+  ).map((value) => ({ value, label: clockLabel(props.start + value) }))
+  const label = (text: string) => (
+    <Text
+      style={{
+        textAlign: 'center',
+        color: theme.colors.textAlt,
+        fontFamily: theme.fonts.semiBold,
+        fontSize: theme.fontSize('sm'),
+      }}
+    >
+      {text}
+    </Text>
+  )
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 4 }}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          {label(i18n.t('planForm_start'))}
+          <WheelPicker
+            data={startItems}
+            value={props.start}
+            onValueChange={(start) => props.onChange(start, props.minutes)}
+            testID={`${props.testID}-span-start`}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          {label(i18n.t('planForm_end'))}
+          <WheelPicker
+            data={endItems}
+            value={props.minutes}
+            onValueChange={(minutes) => props.onChange(props.start, minutes)}
+            testID={`${props.testID}-span-end`}
+          />
+        </View>
+      </View>
+      <Text
+        style={{
+          textAlign: 'center',
+          paddingBottom: 8,
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.accent,
+        }}
+      >
+        {total}
+      </Text>
+    </View>
   )
 }
 
 /**
  * The quick half of a docked form (the Plan form, Add Time), pinned to the
- * bottom of the screen where the thumb already is: the Date, Time and Duration
- * pills, and Save. Each pill opens its picker from the bottom too.
+ * bottom of the screen where the thumb already is: the Date and Duration pills
+ * (or How long?, for `timeSpan`), and Save. Each pill opens its picker from the
+ * bottom too.
  */
 const WhenDock = (props: Props) => {
   const theme = useTheme()
@@ -139,6 +264,10 @@ const WhenDock = (props: Props) => {
   const [draftDate, setDraftDate] = useState(props.date)
   const [draftHours, setDraftHours] = useState(props.hours)
   const [draftMinutes, setDraftMinutes] = useState(props.minutes)
+  // How long's sheet keeps one length, and a start for a time span.
+  const [draftAnytime, setDraftAnytime] = useState(false)
+  const [draftStart, setDraftStart] = useState(0)
+  const [draftTotal, setDraftTotal] = useState(0)
   const totalMinutes = props.hours * 60 + props.minutes
   const { formatted: duration } = useFormattedMinutes(totalMinutes)
   const hourItems = wheelItems([...Array(props.maxHours + 1).keys()])
@@ -150,29 +279,76 @@ const WhenDock = (props: Props) => {
 
   const openPicker = (kind: PickerKind) => {
     Keyboard.dismiss()
-    if (kind !== 'duration' && Platform.OS === 'android') {
+    if (kind === 'date' && Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: props.date,
-        mode: kind,
-        is24Hour: uses24HourClock(),
+        mode: 'date',
         onValueChange: (_, picked) =>
-          props.setDate(mergeDate(props.date, picked, kind)),
+          props.setDate(mergeDate(props.date, picked)),
       })
       return
     }
     setDraftDate(props.date)
     setDraftHours(props.hours)
     setDraftMinutes(props.minutes)
+    if (props.timeSpan) {
+      setDraftAnytime(props.timeSpan.anytime)
+      setDraftStart(props.date.getHours() * 60 + props.date.getMinutes())
+      setDraftTotal(totalMinutes)
+    }
     setPicker(kind)
   }
 
+  const chooseMode = (anytime: boolean) => {
+    setDraftAnytime(anytime)
+    // A time span needs an end after its start.
+    if (!anytime && !draftTotal) setDraftTotal(60)
+  }
+
   const commitPicker = () => {
-    if (picker === 'date' || picker === 'time') {
-      props.setDate(mergeDate(props.date, draftDate, picker))
-    }
+    if (picker === 'date') props.setDate(mergeDate(props.date, draftDate))
     if (picker === 'duration') props.setDuration(draftHours, draftMinutes)
+    if (picker === 'when') {
+      props.timeSpan?.setWhen({
+        anytime: draftAnytime,
+        minutes: draftTotal,
+        startTimeInMinutes: draftAnytime ? undefined : draftStart,
+      })
+    }
     setPicker(null)
   }
+
+  const durationWheels = (
+    hours: number,
+    setHours: (hours: number) => void,
+    minutes: number,
+    setMinutes: (minutes: number) => void
+  ) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ flex: 1 }}>
+        <WheelPicker
+          data={hourItems}
+          value={hours}
+          onValueChange={setHours}
+          testID={`${props.testID}-duration-hours`}
+        />
+      </View>
+      <Text style={{ color: theme.colors.textAlt }}>
+        {i18n.t('hours_lowercase')}
+      </Text>
+      <View style={{ flex: 1 }}>
+        <WheelPicker
+          data={minuteItems}
+          value={minutes}
+          onValueChange={setMinutes}
+          testID={`${props.testID}-duration-minutes`}
+        />
+      </View>
+      <Text style={{ color: theme.colors.textAlt, paddingRight: 16 }}>
+        {i18n.t('minutes_lowercase')}
+      </Text>
+    </View>
+  )
 
   return (
     <View
@@ -205,23 +381,33 @@ const WhenDock = (props: Props) => {
             testID={`${props.testID}-date-pill`}
             onPress={() => openPicker('date')}
           />
-          {props.showTime && (
+          {props.timeSpan ? (
             <WhenPill
-              icon={ClockIcon}
-              value={formatTime(props.date)}
-              accessibilityLabel={i18n.t('time')}
-              testID={`${props.testID}-time-pill`}
-              onPress={() => openPicker('time')}
+              icon={TimerIcon}
+              flex={2}
+              value={totalMinutes ? duration : i18n.t('planForm_howLong')}
+              caption={
+                props.timeSpan.anytime
+                  ? i18n.t('planAnytime')
+                  : totalMinutes
+                    ? timeRange(props.date, totalMinutes)
+                    : formatTime(props.date)
+              }
+              placeholder={!totalMinutes}
+              accessibilityLabel={i18n.t('planForm_howLong')}
+              testID={`${props.testID}-duration-pill`}
+              onPress={() => openPicker('when')}
+            />
+          ) : (
+            <WhenPill
+              icon={TimerIcon}
+              value={totalMinutes ? duration : props.durationLabel}
+              placeholder={!totalMinutes}
+              accessibilityLabel={props.durationLabel}
+              testID={`${props.testID}-duration-pill`}
+              onPress={() => openPicker('duration')}
             />
           )}
-          <WhenPill
-            icon={TimerIcon}
-            value={totalMinutes ? duration : props.durationLabel}
-            placeholder={!totalMinutes}
-            accessibilityLabel={props.durationLabel}
-            testID={`${props.testID}-duration-pill`}
-            onPress={() => openPicker('duration')}
-          />
         </View>
         {props.saveButton}
       </View>
@@ -232,12 +418,12 @@ const WhenDock = (props: Props) => {
         onDone={commitPicker}
         doneTestID={`${props.testID}-picker-done`}
       >
-        {(picker === 'date' || picker === 'time') && (
+        {picker === 'date' && (
           <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
             <RNDateTimePicker
               value={draftDate}
-              mode={picker}
-              display={picker === 'date' ? 'inline' : 'spinner'}
+              mode='date'
+              display='inline'
               themeVariant={colorScheme || undefined}
               accentColor={theme.colors.accent}
               locale={getLocales()[0].languageCode || undefined}
@@ -245,31 +431,55 @@ const WhenDock = (props: Props) => {
             />
           </View>
         )}
-        {picker === 'duration' && (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <WheelPicker
-                data={hourItems}
-                value={draftHours}
-                onValueChange={setDraftHours}
-                testID={`${props.testID}-duration-hours`}
+        {picker === 'duration' &&
+          durationWheels(
+            draftHours,
+            setDraftHours,
+            draftMinutes,
+            setDraftMinutes
+          )}
+        {picker === 'when' && (
+          <>
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              <SegmentedControl
+                variant='pill'
+                size='sm'
+                options={[
+                  {
+                    key: 'hours',
+                    label: i18n.t('planForm_justHours'),
+                    testID: `${props.testID}-when-hours`,
+                  },
+                  {
+                    key: 'span',
+                    label: i18n.t('planForm_timeSpan'),
+                    testID: `${props.testID}-when-span`,
+                  },
+                ]}
+                value={draftAnytime ? 'hours' : 'span'}
+                onChange={(key) => chooseMode(key === 'hours')}
               />
             </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('hours_lowercase')}
-            </Text>
-            <View style={{ flex: 1 }}>
-              <WheelPicker
-                data={minuteItems}
-                value={draftMinutes}
-                onValueChange={setDraftMinutes}
-                testID={`${props.testID}-duration-minutes`}
+            {draftAnytime ? (
+              durationWheels(
+                Math.floor(draftTotal / 60),
+                (hours) => setDraftTotal(hours * 60 + (draftTotal % 60)),
+                draftTotal % 60,
+                (minutes) =>
+                  setDraftTotal(Math.floor(draftTotal / 60) * 60 + minutes)
+              )
+            ) : (
+              <SpanWheels
+                start={draftStart}
+                minutes={draftTotal}
+                onChange={(start, minutes) => {
+                  setDraftStart(start)
+                  setDraftTotal(minutes)
+                }}
+                testID={props.testID}
               />
-            </View>
-            <Text style={{ color: theme.colors.textAlt, paddingRight: 16 }}>
-              {i18n.t('minutes_lowercase')}
-            </Text>
-          </View>
+            )}
+          </>
         )}
       </PickerSheet>
     </View>

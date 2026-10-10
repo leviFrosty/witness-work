@@ -1,0 +1,41 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => p.anytime === true && p.minutes === 120 && p.startTimeInMinutes === 720)
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => !p.anytime && p.minutes === 60)
+# assert: __WW_DEV__.stores.preferences.getState().planTimeMode === 'span'
+appId: com.leviwilkerson.jwtimedev
+name: Plan just hours, then a time span, and the form remembers the last one
+---
+- extendedWaitUntil:
+    visible: Quick Action
+    timeout: 60000
+- tapOn: Quick Action
+- tapOn: Create Plan
+- assertVisible: Add One Time Plan
+- tapOn:
+    id: plan-duration-pill
+- tapOn:
+    id: plan-when-hours
+# Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.
+- tapOn: '2'
+- tapOn:
+    id: plan-picker-done
+- tapOn:
+    id: plan-save
+- assertNotVisible: Add One Time Plan
+# A Plan for today celebrates Ready to Go first (see badge-celebration.yaml).
+- extendedWaitUntil:
+    visible: See all badges
+    timeout: 20000
+- tapOn: Done
+# The next Plan opens in Just hours; a time span starts an hour long.
+- tapOn: Quick Action
+- tapOn: Create Plan
+- tapOn:
+    id: plan-duration-pill
+- tapOn:
+    id: plan-when-span
+- tapOn:
+    id: plan-picker-done
+- tapOn:
+    id: plan-save
+- assertNotVisible: Add One Time Plan

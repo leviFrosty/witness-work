@@ -151,6 +151,12 @@ export type DayPlan = {
    * undefined, treat as noon (720) via `getStartTimeInMinutes`.
    */
   startTimeInMinutes?: number
+  /**
+   * The Plan is hours for the day with no set time ("Just hours"). Its
+   * `startTimeInMinutes` stays at noon only so older app versions show it as a
+   * noon Plan; don't show or schedule from it while this is set.
+   */
+  anytime?: boolean
   /** Optional short name for the Plan, e.g. "Cart witnessing". */
   title?: string
   location?: PlanLocation
@@ -210,6 +216,8 @@ export type RecurringPlanOverride = {
    * instance. Undefined means inherit from the parent plan.
    */
   startTimeInMinutes?: number
+  /** Overrides the parent's `anytime` for this instance; undefined inherits. */
+  anytime?: boolean
   note?: string
 }
 
@@ -230,6 +238,8 @@ export type RecurringPlan = {
    * noon (720) via `getStartTimeInMinutes`.
    */
   startTimeInMinutes?: number
+  /** Every instance is hours with no set time. See `DayPlan.anytime`. */
+  anytime?: boolean
   /** Pattern-level, like `categoryId`: overrides can't change these. */
   title?: string
   location?: PlanLocation

@@ -17,6 +17,7 @@ import {
   getEffectiveMinutesForRecurringPlan,
   getPlansIntersectingDay,
   getSetStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   RecurringPlan,
 } from '@/lib/recurrence'
 import { Category } from '@/types/category'
@@ -192,13 +193,15 @@ function planItems(
           id: plan.id,
           plan,
           minutes: plan.minutes,
-          startTime: plan.startTimeInMinutes,
+          startTime: plan.anytime ? undefined : plan.startTimeInMinutes,
         })),
       ...getPlansIntersectingDay(dayDate, args.recurringPlans).map((plan) => ({
         id: `${plan.id}:${day.format('YYYY-MM-DD')}`,
         plan,
         minutes: getEffectiveMinutesForRecurringPlan(plan, dayDate),
-        startTime: getSetStartTimeInMinutesForRecurringPlan(plan, dayDate),
+        startTime: isRecurringPlanAnytimeOnDate(plan, dayDate)
+          ? undefined
+          : getSetStartTimeInMinutesForRecurringPlan(plan, dayDate),
       })),
     ]
 

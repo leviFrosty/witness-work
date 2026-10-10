@@ -78,6 +78,7 @@ export default function OwnPlanDetails({
         title={plan.title}
         date={item.date}
         startTimeInMinutes={effective.startTimeInMinutes}
+        anytime={effective.anytime}
         minutes={effective.minutes}
         typeLabel={planTypeLabel(plan, categories)}
         repeats={

@@ -191,6 +191,22 @@ describe('buildUpNext', () => {
     })
   })
 
+  it('shows an anytime Plan untimed, though it keeps noon for older apps', () => {
+    const [item] = buildUpNext(
+      args({
+        dayPlans: [
+          dayPlan('anytime', 6, { startTimeInMinutes: 720, anytime: true }),
+        ],
+      })
+    )
+
+    expect(item).toMatchObject({
+      timed: false,
+      start: new Date(2026, 9, 6).getTime(),
+      timeText: null,
+    })
+  })
+
   it('lists each Recurring Plan instance with its own start time', () => {
     const weekly: RecurringPlan = {
       id: 'weekly',

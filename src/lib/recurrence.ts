@@ -194,6 +194,15 @@ export const getSetStartTimeInMinutesForRecurringPlan = (
   findOverrideForDay(plan, date)?.startTimeInMinutes ?? plan.startTimeInMinutes
 
 /**
+ * Whether a recurring plan's instance on a specific date is hours with no set
+ * time, accounting for overrides.
+ */
+export const isRecurringPlanAnytimeOnDate = (
+  plan: RecurringPlan,
+  date: Date
+): boolean => findOverrideForDay(plan, date)?.anytime ?? !!plan.anytime
+
+/**
  * Gets the effective start time (minutes since midnight) for a recurring plan
  * on a specific date, accounting for overrides. Falls back to noon (720) when
  * neither the override nor the plan has a stored time.

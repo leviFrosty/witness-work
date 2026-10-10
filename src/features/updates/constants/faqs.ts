@@ -189,6 +189,7 @@ export const FAQS: FAQEntry[] = [
   },
   { id: 'scheduleViews', category: 'plans' },
   { id: 'planDetails', category: 'plans' },
+  { id: 'planJustHours', category: 'plans' },
   {
     id: 'editRecurringPlan',
     category: 'plans',

@@ -1,4 +1,7 @@
-import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import {
+  DEFAULT_START_TIME_IN_MINUTES,
+  normalizeDateForStorage,
+} from '@/lib/normalizeDate'
 import type { BuddyShareRef, DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import {
@@ -46,7 +49,9 @@ function mirroredFields(share: IncomingShare) {
   const { details } = share
   return {
     date: normalizeDateForStorage(`${details.d}T12:00:00`),
-    startTimeInMinutes: details.s,
+    // An invitation with no start time is for an anytime Plan.
+    startTimeInMinutes: details.s ?? DEFAULT_START_TIME_IN_MINUTES,
+    anytime: details.s === undefined ? true : undefined,
     minutes: details.m ?? DEFAULT_LINKED_MINUTES,
     title: details.title,
     location: details.location,
@@ -57,6 +62,7 @@ function mirroredFields(share: IncomingShare) {
 const differs = (plan: DayPlan, fields: ReturnType<typeof mirroredFields>) =>
   new Date(plan.date).getTime() !== fields.date.getTime() ||
   plan.startTimeInMinutes !== fields.startTimeInMinutes ||
+  !!plan.anytime !== !!fields.anytime ||
   plan.minutes !== fields.minutes ||
   plan.title !== fields.title ||
   plan.note !== fields.note ||

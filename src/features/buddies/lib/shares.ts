@@ -12,10 +12,15 @@ export const SHARE_RETENTION_MS = 24 * 60 * 60 * 1000
 export const planShareKey = (planId: string) => `plan:${planId}`
 export const followUpShareKey = (visitId: string) => `followUp:${visitId}`
 
-/** When a one-time Plan ends (epoch ms); a Plan with no start time is noon. */
+/**
+ * When a one-time Plan ends (epoch ms): an anytime Plan at the end of its day,
+ * and a Plan with no start time as if it started at noon.
+ */
 export const planEndsAt = (plan: DayPlan) =>
-  combineDateAndStartTime(plan.date, plan.startTimeInMinutes).getTime() +
-  plan.minutes * 60 * 1000
+  plan.anytime
+    ? combineDateAndStartTime(plan.date, 24 * 60).getTime()
+    : combineDateAndStartTime(plan.date, plan.startTimeInMinutes).getTime() +
+      plan.minutes * 60 * 1000
 
 const clip = (text: string | undefined, max: number) => {
   const trimmed = text?.trim()
@@ -47,7 +52,8 @@ export function planShareDetails(plan: DayPlan): ShareDetails {
   const note = clip(plan.note, 2000)
   return {
     d: storedDayKey(plan.date),
-    ...(plan.startTimeInMinutes === undefined
+    // No start time tells buddies (on any app version) it's anytime.
+    ...(plan.anytime || plan.startTimeInMinutes === undefined
       ? {}
       : { s: plan.startTimeInMinutes }),
     m: Math.min(Math.max(Math.round(plan.minutes), 1), 1440),

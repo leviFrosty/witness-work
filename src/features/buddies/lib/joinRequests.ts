@@ -6,6 +6,7 @@ import {
 } from '@/lib/normalizeDate'
 import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   resolvePlannedContributionsForDay,
   type PlannedDayContribution,
   type RecurringPlan,
@@ -140,10 +141,21 @@ function plansOnDay(
   )
 }
 
+function contributionAnytime(
+  contribution: PlannedDayContribution,
+  day: Date
+): boolean {
+  return contribution.source === 'day'
+    ? !!contribution.plan.anytime
+    : isRecurringPlanAnytimeOnDate(contribution.plan, day)
+}
+
+/** Undefined for an anytime Plan, which shares no start time. */
 function contributionStart(
   contribution: PlannedDayContribution,
   day: Date
 ): number | undefined {
+  if (contributionAnytime(contribution, day)) return undefined
   return contribution.source === 'day'
     ? contribution.plan.startTimeInMinutes
     : getEffectiveStartTimeInMinutesForRecurringPlan(contribution.plan, day)
@@ -191,14 +203,21 @@ export function joinRequestInvite(
   if (!match && plansOnDay(request.d, dayPlans, recurringPlans).length > 0)
     return { kind: 'changed' }
   const day = moment(request.d, 'YYYY-MM-DD')
+  // A request with no start time is for an anytime Plan.
+  const anytime = match
+    ? contributionAnytime(match, day.toDate())
+    : request.s === undefined
   return {
     kind: 'invite',
     ...(match ? { skipRecurringPlanId: match.plan.id } : {}),
     add: {
       date: day.toDate(),
-      startTimeInMinutes: match
-        ? contributionStart(match, day.toDate())
-        : request.s,
+      startTimeInMinutes: anytime
+        ? DEFAULT_START_TIME_IN_MINUTES
+        : match
+          ? contributionStart(match, day.toDate())
+          : request.s,
+      ...(anytime ? { anytime } : {}),
       minutes: match?.minutes ?? request.m ?? 60,
       title: match?.plan.title,
       location: match?.plan.location,
@@ -213,15 +232,16 @@ export function joinRequestInvite(
  * This User's own Plans that overlap a buddy's invitation in time, which
  * "Going" would count twice: one-time Plans and recurring instances that day.
  * One-time Plans that invite buddies themselves or follow another invitation
- * are left alone.
+ * are left alone. An anytime Plan, or an invitation with no start time,
+ * overlaps anything that day.
  */
 export function overlappingOwnPlans(
   details: Pick<ShareDetails, 'd' | 's' | 'm'>,
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
 ): PlannedDayContribution[] {
-  const start = details.s ?? DEFAULT_START_TIME_IN_MINUTES
-  const end = start + (details.m ?? 60)
+  const start = details.s
+  const end = (start ?? 0) + (details.m ?? 60)
   const day = moment(details.d, 'YYYY-MM-DD').toDate()
   return plansOnDay(details.d, dayPlans, recurringPlans).filter(
     (contribution) => {
@@ -230,6 +250,8 @@ export function overlappingOwnPlans(
         (contribution.plan.buddyShare || contribution.plan.buddies?.length)
       )
         return false
+      if (start === undefined || contributionAnytime(contribution, day))
+        return true
       const planStart =
         contribution.source === 'day'
           ? getStartTimeInMinutes(contribution.plan)

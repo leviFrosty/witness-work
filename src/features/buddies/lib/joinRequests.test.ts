@@ -315,3 +315,61 @@ describe('joinRequestUnsent', () => {
     })
   })
 })
+
+describe('anytime Plans and join requests', () => {
+  it('adds an anytime Plan for a request with no start time', () => {
+    const invite = joinRequestInvite(
+      { from: 'levi', d: thursday, m: 180 },
+      [],
+      []
+    )
+    expect(
+      invite.kind === 'invite' && 'add' in invite && invite.add
+    ).toMatchObject({ anytime: true, startTimeInMinutes: 720, minutes: 180 })
+  })
+
+  it("matches a request with no start time to the owner's anytime Plan", () => {
+    const anytime = dayPlan('anytime', {
+      anytime: true,
+      startTimeInMinutes: 720,
+    })
+    expect(
+      findJoinRequestPlan({ d: thursday }, [anytime, dayPlan('morning')], [])
+        ?.plan.id
+    ).toBe('anytime')
+  })
+
+  it('treats an anytime Plan or invitation as overlapping the whole day', () => {
+    const evening = dayPlan('evening', { startTimeInMinutes: 19 * 60 })
+    const anytime = dayPlan('anytime', {
+      anytime: true,
+      startTimeInMinutes: 720,
+    })
+    const ids = (
+      details: Parameters<typeof overlappingOwnPlans>[0],
+      plans: DayPlan[]
+    ) => overlappingOwnPlans(details, plans, []).map(({ plan }) => plan.id)
+    expect(ids({ d: thursday, m: 60 }, [evening])).toEqual(['evening'])
+    expect(ids({ d: thursday, ...nine }, [anytime])).toEqual(['anytime'])
+  })
+
+  it('treats an anytime recurring instance as overlapping the whole day', () => {
+    const weekly: RecurringPlan = {
+      id: 'weekly',
+      startDate: normalizeDateForStorage('2026-10-01T12:00:00'),
+      minutes: 120,
+      startTimeInMinutes: 720,
+      anytime: true,
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+    }
+    expect(
+      overlappingOwnPlans({ d: thursday, s: 19 * 60, m: 60 }, [], [weekly]).map(
+        ({ plan }) => plan.id
+      )
+    ).toEqual(['weekly'])
+  })
+})

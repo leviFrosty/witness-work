@@ -21,6 +21,7 @@ import {
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
 } from '@/lib/recurrence'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
@@ -42,7 +43,10 @@ const planEditParams = (item: PlanListItem): RootStackParamList['PlanDay'] =>
         recurringPlanDate: item.date.toISOString(),
       }
 
-/** A Plan's minutes, note, and start time on its date, overrides applied. */
+/**
+ * A Plan's minutes, note, and start time on its date, overrides applied.
+ * `anytime` Plans have no set time; their start time is only the noon default.
+ */
 const effectiveValues = (item: PlanListItem) =>
   item.type === 'recurring'
     ? {
@@ -52,12 +56,14 @@ const effectiveValues = (item: PlanListItem) =>
           item.plan,
           item.date
         ),
+        anytime: isRecurringPlanAnytimeOnDate(item.plan, item.date),
       }
     : {
         minutes: item.plan.minutes,
         note: item.plan.note,
         startTimeInMinutes:
           item.plan.startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES,
+        anytime: !!item.plan.anytime,
       }
 
 /**
@@ -128,11 +134,14 @@ export default function usePlanMenuActions(
       navigation.navigate('PlanDay', {
         date: date.toISOString(),
         prefill: {
-          startTime: dateMoment
-            .clone()
-            .startOf('day')
-            .add(effective.startTimeInMinutes, 'minutes')
-            .toISOString(),
+          startTime: effective.anytime
+            ? undefined
+            : dateMoment
+                .clone()
+                .startOf('day')
+                .add(effective.startTimeInMinutes, 'minutes')
+                .toISOString(),
+          ...(effective.anytime ? { anytime: true } : {}),
           minutes: effective.minutes,
           note: effective.note || undefined,
           title: plan.title,

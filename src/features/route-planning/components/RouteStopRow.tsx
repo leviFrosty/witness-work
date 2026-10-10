@@ -32,6 +32,9 @@ export default function RouteStopRow({
   dimmed?: boolean
 }) {
   const theme = useTheme()
+  const time = stop.anytime
+    ? i18n.t('planAnytime')
+    : formatStartTime(stop.startTimeInMinutes)
   return (
     <XView
       style={{
@@ -85,12 +88,7 @@ export default function RouteStopRow({
               fontSize: theme.fontSize('sm'),
             }}
           >
-            {badge
-              ? i18n.t('routePlan_timeWithBadge', {
-                  time: formatStartTime(stop.startTimeInMinutes),
-                  badge,
-                })
-              : formatStartTime(stop.startTimeInMinutes)}
+            {badge ? i18n.t('routePlan_timeWithBadge', { time, badge }) : time}
           </Text>
         </XView>
         {stop.subtitle ? (

@@ -17,6 +17,8 @@ export type PlanDetailsFields = {
   /** Local day. */
   date: Date
   startTimeInMinutes?: number
+  /** Just hours, with no set time. */
+  anytime?: boolean
   /** Unset for a buddy's invitation that gave no length. */
   minutes?: number
   /** Own Plans only: a buddy's invitation carries no Type. */

@@ -7,7 +7,10 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -37,7 +40,15 @@ type Props = {
   onLongPressTitle?: () => void
 }
 
-const Header = ({
+// The nested provider measures the header's own safe area, so a screen pushed
+// inside an iOS modal sheet gets no status-bar inset instead of the window's.
+const Header = (props: Props) => (
+  <SafeAreaProvider style={{ flex: 0 }}>
+    <HeaderContent {...props} />
+  </SafeAreaProvider>
+)
+
+const HeaderContent = ({
   title,
   buttonType,
   rightElement,
@@ -84,7 +95,10 @@ const Header = ({
     <View
       style={{
         backgroundColor: backgroundColor || theme.colors.background,
-        paddingTop: noInsets && Platform.OS === 'ios' ? 10 : insets.top,
+        paddingTop:
+          Platform.OS === 'ios' && (noInsets || insets.top === 0)
+            ? 10
+            : insets.top,
         borderBottomWidth: noBottomBorder ? 0 : 1,
         borderBottomColor: theme.colors.border,
       }}

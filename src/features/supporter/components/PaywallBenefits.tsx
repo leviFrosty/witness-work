@@ -185,7 +185,9 @@ export const SocialProofRow = () => {
 }
 
 const FREE_COL_WIDTH = 80
-const SUPPORTER_COL_WIDTH = 100
+// The Supporter column runs flush to the card's right edge, so its tint and
+// its centered cells share one width.
+const SUPPORTER_COL_WIDTH = 110
 const ROW_PADDING_HORIZONTAL = 18
 
 const CompareCell = ({
@@ -265,7 +267,14 @@ export const ComparisonChart = ({
     })
   }
   return (
-    <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
+    <Card
+      style={{
+        paddingHorizontal: 0,
+        paddingVertical: 0,
+        gap: 0,
+        overflow: 'hidden',
+      }}
+    >
       <View
         style={{
           paddingHorizontal: ROW_PADDING_HORIZONTAL,
@@ -291,14 +300,14 @@ export const ComparisonChart = ({
             top: 0,
             right: 0,
             bottom: 0,
-            width: SUPPORTER_COL_WIDTH + ROW_PADDING_HORIZONTAL,
+            width: SUPPORTER_COL_WIDTH,
             backgroundColor: theme.colors.supporterTranslucent,
           }}
         />
         <View
           style={{
             flexDirection: 'row',
-            paddingHorizontal: ROW_PADDING_HORIZONTAL,
+            paddingLeft: ROW_PADDING_HORIZONTAL,
             paddingVertical: 10,
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.border,
@@ -345,7 +354,7 @@ export const ComparisonChart = ({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              paddingHorizontal: ROW_PADDING_HORIZONTAL,
+              paddingLeft: ROW_PADDING_HORIZONTAL,
               paddingVertical: 12,
               borderBottomWidth: index === rows.length - 1 ? 0 : 1,
               borderBottomColor: theme.colors.border,

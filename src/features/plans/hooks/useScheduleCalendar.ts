@@ -108,6 +108,9 @@ export default function useScheduleCalendar({
   const [todayDirection, setTodayDirection] = useState<
     'visible' | 'up' | 'down'
   >('visible')
+  // A month zoomed into that the hidden list hasn't landed on yet. Until it
+  // shows, the list still holds the month before, so it takes no touches.
+  const [monthLanding, setMonthLanding] = useState(false)
 
   const schedule = useScheduleRows(range.first, range.last)
   const todayRow = schedule.dayRow.get(todayKey)
@@ -127,6 +130,8 @@ export default function useScheduleCalendar({
     addedAbove: boolean
     landed: () => void
   } | null>(null)
+  /** Where the fingers came down on the Year view's last pinch. */
+  const pinchStart = useRef({ x: 0, y: 0 })
   /** Counts holds on the Month view, so a stale release can't end a newer one. */
   const monthHold = useRef(0)
   const [initialRowIndex] = useState(
@@ -316,27 +321,6 @@ export default function useScheduleCalendar({
     }
   }
 
-  const zoomOut = (source: YearOpenSource, serviceYear?: number) => {
-    if (viewRef.current === 'year') return
-    const target =
-      serviceYear === undefined ||
-      serviceYear === serviceYearOfMonth(focusedRef.current)
-        ? focusedRef.current
-        : { year: serviceYear, month: 8 }
-    if (source !== 'toggle') Haptics.light()
-    // Every Service Year lays out the same grid, so the tile is measured even
-    // when the year changes with this render; the zoom starts before it.
-    yearRef.current?.reveal(target)
-    const tile = yearRef.current?.monthRect(target)
-    const month = monthRectInStage(target)
-    if (serviceYearOfMonth(target) !== yearServiceYear) zoom.hold('year')
-    zoom.zoomTo('year', tile && month ? { month, tile } : null)
-    setYearFocusedMonth(focusedRef.current)
-    setYearServiceYear(serviceYearOfMonth(target))
-    setView('year')
-    analytics.capture('schedule_year_view_opened', { source })
-  }
-
   /**
    * Where a month's weeks will sit once the list lands on it: under its name at
    * the top. Known before the list moves, so the zoom can start on the tap.
@@ -354,6 +338,47 @@ export default function useScheduleCalendar({
     }
   }
 
+  const zoomOut = (source: YearOpenSource, serviceYear?: number) => {
+    if (viewRef.current === 'year') return
+    const target =
+      serviceYear === undefined ||
+      serviceYear === serviceYearOfMonth(focusedRef.current)
+        ? focusedRef.current
+        : { year: serviceYear, month: 8 }
+    if (source !== 'toggle') Haptics.light()
+    // Every Service Year lays out the same grid, so the tile is measured even
+    // when the year changes with this render; the zoom starts before it.
+    yearRef.current?.reveal(target)
+    const tile = yearRef.current?.monthRect(target)
+    // Cut short before the list lands, the zoom goes back the way it came.
+    const month = monthLanding ? landingRect(target) : monthRectInStage(target)
+    if (serviceYearOfMonth(target) !== yearServiceYear) zoom.hold('year')
+    zoom.zoomTo('year', tile && month ? { month, tile } : null)
+    setYearFocusedMonth(focusedRef.current)
+    setYearServiceYear(serviceYearOfMonth(target))
+    setView('year')
+    analytics.capture('schedule_year_view_opened', { source })
+  }
+
+  /**
+   * Moves the hidden list onto a month zoomed into, then shows it. Called once
+   * the zoom has settled: a jump re-renders every week on screen, and their
+   * native menus take long enough to mount that the zoom stuttered whenever the
+   * jump landed mid-flight. Over a still frame, the wait doesn't show.
+   */
+  const land = (target: CalendarMonth, hold: number) => {
+    // A newer zoom in lands its own month.
+    if (monthHold.current !== hold) return
+    // Shown once the list has landed and drawn the month, or soon regardless.
+    const release = () => {
+      if (monthHold.current !== hold) return
+      zoom.release('month')
+      setMonthLanding(false)
+    }
+    setTimeout(release, RELEASE_FALLBACK_MS)
+    jumpToMonth(target, false).then(() => requestAnimationFrame(release))
+  }
+
   const zoomIn = (target: CalendarMonth) => {
     if (
       viewRef.current === 'month' &&
@@ -369,19 +394,19 @@ export default function useScheduleCalendar({
     const month = moves
       ? landingRect(target)
       : (monthRectInStage(target) ?? landingRect(target))
-    if (moves) zoom.hold('month')
-    zoom.zoomTo('month', tile && month ? { month, tile } : null)
+    if (moves) {
+      zoom.hold('month')
+      setMonthLanding(true)
+    }
+    const hold = moves ? ++monthHold.current : 0
+    zoom.zoomTo(
+      'month',
+      tile && month ? { month, tile } : null,
+      moves ? () => land(target, hold) : undefined
+    )
     focus(target, false)
     setYearFocusedMonth(target)
     setView('month')
-    if (!moves) return
-    // Shown once the list has landed and drawn the month, or soon regardless.
-    const hold = ++monthHold.current
-    const release = () => {
-      if (monthHold.current === hold) zoom.release('month')
-    }
-    setTimeout(release, RELEASE_FALLBACK_MS)
-    jumpToMonth(target, false).then(() => requestAnimationFrame(release))
   }
 
   /** The Year view's month for a toggle back to Month. */
@@ -424,6 +449,7 @@ export default function useScheduleCalendar({
 
   return {
     view,
+    monthLanding,
     focusedMonth,
     focusedOrdinal,
     yearFocusedMonth,
@@ -460,7 +486,13 @@ export default function useScheduleCalendar({
     changeView,
     zoomOut,
     zoomIn,
-    monthNear,
+    // A pinch zooms into the month where the fingers came down. By the end
+    // they've spread apart, and once one lifts the focal point is the other
+    // finger, often a row or two from the month aimed at.
+    pinchStarted: (x: number, y: number) => {
+      pinchStart.current = { x, y }
+    },
+    pinchedMonth: () => monthNear(pinchStart.current.x, pinchStart.current.y),
     jumpToToday,
     showMonth: (month: CalendarMonth) => {
       if (viewRef.current === 'year') zoomIn(month)

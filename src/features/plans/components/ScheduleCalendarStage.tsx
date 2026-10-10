@@ -46,6 +46,7 @@ export default function ScheduleCalendarStage({
   // stage, and closures over `calendar` itself would change with every scroll.
   const {
     view,
+    monthLanding,
     zoom,
     schedule,
     focusedMonth,
@@ -66,7 +67,8 @@ export default function ScheduleCalendarStage({
     onEndReached,
     zoomOut,
     zoomIn,
-    monthNear,
+    pinchStarted,
+    pinchedMonth,
     jumpToToday,
     changeServiceYear,
     showCurrentServiceYear,
@@ -75,10 +77,10 @@ export default function ScheduleCalendarStage({
 
   const pinch = Gesture.Pinch()
     .runOnJS(true)
+    .onStart((event) => pinchStarted(event.focalX, event.focalY))
     .onEnd((event) => {
       if (monthActive && event.scale < PINCH_OUT) zoomOut('pinch')
-      else if (!monthActive && event.scale > PINCH_IN)
-        zoomIn(monthNear(event.focalX, event.focalY))
+      else if (!monthActive && event.scale > PINCH_IN) zoomIn(pinchedMonth())
     })
 
   const layer = (active: boolean) =>
@@ -98,7 +100,7 @@ export default function ScheduleCalendarStage({
         style={{ flex: 1, overflow: 'hidden' }}
         onLayout={(e) => onStageLayout(e.nativeEvent.layout)}
       >
-        <View {...layer(monthActive)}>
+        <View {...layer(monthActive && !monthLanding)}>
           <ScheduleMonthView
             schedule={schedule}
             focusedMonth={focusedMonth}

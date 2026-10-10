@@ -6,6 +6,7 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import type { ScheduleView } from '@/features/plans/components/ScheduleViewToggle'
 import { type Rect, zoomTransform } from '@/features/plans/lib/scheduleZoom'
 
@@ -49,16 +50,24 @@ export default function useScheduleZoom(initial: ScheduleView) {
 
   const zoomTo = (
     view: ScheduleView,
-    rects?: { month: Rect; tile: Rect } | null
+    rects?: { month: Rect; tile: Rect } | null,
+    /** Called once the zoom stops, finished or cut short by another. */
+    onSettled?: () => void
   ) => {
     const zooms = !!rects && !reduceMotion
     monthRect.set(zooms ? rects.month : NO_RECT)
     tileRect.set(zooms ? rects.tile : NO_RECT)
     progress.set(
-      withTiming(view === 'year' ? 1 : 0, {
-        duration: zooms ? ZOOM_DURATION : FADE_DURATION,
-        easing: ZOOM_EASING,
-      })
+      withTiming(
+        view === 'year' ? 1 : 0,
+        {
+          duration: zooms ? ZOOM_DURATION : FADE_DURATION,
+          easing: ZOOM_EASING,
+        },
+        () => {
+          if (onSettled) scheduleOnRN(onSettled)
+        }
+      )
     )
   }
 

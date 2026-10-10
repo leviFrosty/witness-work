@@ -106,4 +106,10 @@ describe('formatPlanWhen', () => {
       'Wed, Oct 14 · 9:00 AM'
     )
   })
+
+  it('shows an anytime Plan as Anytime, not its noon start', () => {
+    expect(
+      when({ date, startTimeInMinutes: 720, anytime: true, minutes: 300 })
+    ).toBe('Wed, Oct 14 · Anytime')
+  })
 })

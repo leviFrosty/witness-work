@@ -4,7 +4,10 @@ import { analytics } from '@/lib/analytics'
 import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
-import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
+import {
+  getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
+} from '@/lib/recurrence'
 import { useServiceReport } from '@/stores/serviceReport'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
@@ -56,15 +59,27 @@ export default function offerReplaceOverlappingPlans(
     first.source === 'day'
       ? getStartTimeInMinutes(first.plan)
       : getEffectiveStartTimeInMinutesForRecurringPlan(first.plan, day.toDate())
+  // An anytime Plan has no time to name.
+  const firstAnytime =
+    first.source === 'day'
+      ? !!first.plan.anytime
+      : isRecurringPlanAnytimeOnDate(first.plan, day.toDate())
   Alert.alert(
     i18n.t('buddies_replacePlanTitle'),
     overlapping.length === 1
-      ? i18n.t(
-          hasRecurring
-            ? 'buddies_replaceRecurringPlanBody'
-            : 'buddies_replacePlanBody',
-          { time: formatStartTime(firstStart), date, name }
-        )
+      ? firstAnytime
+        ? i18n.t(
+            hasRecurring
+              ? 'buddies_replaceRecurringPlanBodyAnytime'
+              : 'buddies_replacePlanBodyAnytime',
+            { date, name }
+          )
+        : i18n.t(
+            hasRecurring
+              ? 'buddies_replaceRecurringPlanBody'
+              : 'buddies_replacePlanBody',
+            { time: formatStartTime(firstStart), date, name }
+          )
       : i18n.t(
           hasRecurring
             ? 'buddies_replaceRecurringPlansBody'

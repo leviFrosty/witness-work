@@ -4,6 +4,7 @@ import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
 import { tracksHours } from '@/lib/publisherCapabilities'
 import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   resolvePlannedContributionsForDay,
 } from '@/lib/recurrence'
 import { roleForMonth, type RoleHistory } from '@/lib/roleHistory'
@@ -123,13 +124,19 @@ function plannedDay(
   if (!planned.length) return null
   const end = Math.max(
     ...planned.map((contribution) => {
+      // An anytime Plan has no end of its own, so it doesn't push the
+      // reminder past that day's `remindAt`.
       const start =
         contribution.source === 'day'
-          ? getStartTimeInMinutes(contribution.plan)
-          : getEffectiveStartTimeInMinutesForRecurringPlan(
-              contribution.plan,
-              noon
-            )
+          ? contribution.plan.anytime
+            ? 0
+            : getStartTimeInMinutes(contribution.plan)
+          : isRecurringPlanAnytimeOnDate(contribution.plan, noon)
+            ? 0
+            : getEffectiveStartTimeInMinutesForRecurringPlan(
+                contribution.plan,
+                noon
+              )
       return new Date(
         day.year(),
         day.month(),

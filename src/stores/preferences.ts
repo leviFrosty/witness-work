@@ -110,6 +110,8 @@ const publisherHours: PublisherHours = {
   custom: 50,
 }
 
+export type PlanTimeMode = 'hours' | 'span'
+
 export type DefaultNavigationMapProvider = 'apple' | 'waze' | 'google' | null
 
 /**
@@ -394,6 +396,11 @@ export const PREFERENCE_DEFAULTS = {
    * touched when this preference changes.
    */
   planAlwaysNotify: false,
+  /**
+   * How the last Plan was timed: `hours` (Just hours, no set time) or `span` (a
+   * start and end time). New Plans open in this mode.
+   */
+  planTimeMode: 'hours' as PlanTimeMode,
   /**
    * Remind the User to log time for a planned day that has none, at
    * `unloggedDayReminderTime` after that day's Plans end. Off by default.

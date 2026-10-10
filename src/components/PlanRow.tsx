@@ -29,14 +29,20 @@ import {
 } from '@/lib/dates'
 import { useCardStyle } from '@/components/ui/Card'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
-import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
+import {
+  getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
+} from '@/lib/recurrence'
 
+/** For ordering a day's Plans; anytime Plans come first, like all-day events. */
 export const getPlanItemStartTime = (item: PlanListItem): number => {
   if (item.type === 'day') {
-    return getStartTimeInMinutes(item.plan)
+    return item.plan.anytime ? -1 : getStartTimeInMinutes(item.plan)
   }
 
-  return getEffectiveStartTimeInMinutesForRecurringPlan(item.plan, item.date)
+  return isRecurringPlanAnytimeOnDate(item.plan, item.date)
+    ? -1
+    : getEffectiveStartTimeInMinutesForRecurringPlan(item.plan, item.date)
 }
 
 const PlanKindIcon = (props: { recurring: boolean }) => {
@@ -164,7 +170,11 @@ const PlanRow = (props: {
         ? formatWeekdayDayCompact(dateMoment)
         : formatWeekdayMonthDayCompact(dateMoment)
       : formatDate(date)
-  const heading = `${dateLabel} · ${formatStartTime(effective.startTimeInMinutes)}`
+  const heading = `${dateLabel} · ${
+    effective.anytime
+      ? i18n.t('planAnytime')
+      : formatStartTime(effective.startTimeInMinutes)
+  }`
   const longNote = !!displayNote && isLongNote(displayNote)
 
   const handleSwipeOpen = (

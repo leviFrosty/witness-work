@@ -458,6 +458,7 @@ export const useServiceReport = create(
             note: override.note,
             startTimeInMinutes:
               override.startTimeInMinutes ?? plan.startTimeInMinutes,
+            anytime: override.anytime ?? plan.anytime,
             isOverride: true,
             originalMinutes: plan.minutes,
             originalNote: plan.note,

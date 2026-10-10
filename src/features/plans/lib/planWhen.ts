@@ -17,21 +17,26 @@ const formatPlanDay = (day: moment.Moment): string =>
 /**
  * When a Plan happens, on the user's clock, as Plan Details shows it: "Tue, Oct
  * 14 · 9:00 AM – 11:00 AM". One that runs past midnight names the day it ends
- * on too: "Tue, Oct 14 · 11:00 PM – Wed, Oct 15 · 1:00 AM". Without a start
- * time it's only the day, and without a length only the start.
+ * on too: "Tue, Oct 14 · 11:00 PM – Wed, Oct 15 · 1:00 AM". An anytime Plan is
+ * "Tue, Oct 14 · Anytime". Without a start time it's only the day, and without
+ * a length only the start.
  */
 export function formatPlanWhen({
   date,
   startTimeInMinutes,
+  anytime,
   minutes,
 }: {
   /** Local day. */
   date: Date
   startTimeInMinutes?: number
+  /** Just hours, with no set time. */
+  anytime?: boolean
   minutes?: number
 }): string {
   const day = moment(date)
   const dayLabel = formatPlanDay(day)
+  if (anytime) return `${dayLabel} · ${i18n.t('planAnytime')}`
   if (startTimeInMinutes === undefined) return dayLabel
 
   const start = `${dayLabel} · ${formatStartTime(startTimeInMinutes)}`

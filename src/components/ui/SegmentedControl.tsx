@@ -16,6 +16,7 @@ export interface SegmentedOption<T extends string = string> {
   subLabel?: { text: string; color?: string }
   /** Trailing element rendered after label/subLabel (icon, badge, etc.). */
   trailing?: ReactNode
+  testID?: string
 }
 
 export interface SegmentedControlProps<T extends string = string>
@@ -73,6 +74,9 @@ function SegmentedControl<T extends string = string>({
               key={opt.key}
               noTransform
               onPress={() => onChange(opt.key)}
+              accessibilityRole='button'
+              accessibilityState={{ selected: active }}
+              testID={opt.testID}
               style={[
                 {
                   flex: 1,
@@ -134,6 +138,9 @@ function SegmentedControl<T extends string = string>({
             <Button
               key={opt.key}
               onPress={() => onChange(opt.key)}
+              accessibilityRole='button'
+              accessibilityState={{ selected: active }}
+              testID={opt.testID}
               style={[
                 {
                   flex: 1,
@@ -189,6 +196,9 @@ function SegmentedControl<T extends string = string>({
             key={opt.key}
             noTransform
             onPress={() => onChange(opt.key)}
+            accessibilityRole='button'
+            accessibilityState={{ selected: active }}
+            testID={opt.testID}
             style={[
               {
                 flexDirection: 'row',

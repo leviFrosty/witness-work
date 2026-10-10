@@ -86,6 +86,13 @@ function reminderDate(
     : new Date(anchor.getTime() - minutes * 60_000)
 }
 
+/** An anytime Plan has no start to count back from: it reminds at 8:00 AM. */
+export const ANYTIME_PLAN_REMINDER_MINUTES = 8 * 60
+
+/** When an anytime Plan on stored day `date` reminds. */
+export const anytimePlanReminderDate = (date: Date | string) =>
+  combineDateAndStartTime(date, ANYTIME_PLAN_REMINDER_MINUTES)
+
 type ReminderSources = {
   contacts: Contact[]
   visits: Visit[]
@@ -129,10 +136,12 @@ export function reminderOccurrences(
   }
   for (const plan of args.plans) {
     if (!plan.notifyMe) continue
-    const date = combineDateAndStartTime(plan.date, plan.startTimeInMinutes)
+    const anytimeAt = plan.anytime ? anytimePlanReminderDate(plan.date) : null
+    const date =
+      anytimeAt ?? combineDateAndStartTime(plan.date, plan.startTimeInMinutes)
     reminders.push({
       id: reminderRequestId('plan', plan.id),
-      date: reminderDate(date, plan, args.planOffset),
+      date: anytimeAt ?? reminderDate(date, plan, args.planOffset),
       kind: 'plan',
       targetId: plan.id,
       anchor: date,

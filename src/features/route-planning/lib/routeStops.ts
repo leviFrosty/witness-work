@@ -16,6 +16,7 @@ import {
 } from '@/lib/normalizeDate'
 import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   getPlansIntersectingDay,
   type RecurringPlan,
 } from '@/lib/recurrence'
@@ -31,6 +32,8 @@ export type RouteStop = {
   subtitle?: string
   /** Local minutes since midnight. */
   startTimeInMinutes: number
+  /** A Plan with no set time; `startTimeInMinutes` only orders it. */
+  anytime?: boolean
   coordinate: Coordinate
   /**
    * What navigation apps receive: the address, as single-stop navigation does,
@@ -77,7 +80,8 @@ const followUpStop = (visit: Visit, contact: Contact): RouteStop | null => {
 
 const planStop = (
   plan: { id: string; title?: string; location?: PlanLocation },
-  startTimeInMinutes: number
+  startTimeInMinutes: number,
+  anytime: boolean
 ): RouteStop | null => {
   const location = plan.location
   if (!location || !isCoordinate(location)) return null
@@ -94,6 +98,7 @@ const planStop = (
     title: title || place.primary,
     subtitle: title ? place.primary : place.secondary,
     startTimeInMinutes,
+    ...(anytime ? { anytime } : {}),
     coordinate,
     destination: address || coordinateText(coordinate),
   }
@@ -149,14 +154,19 @@ export const dayRouteStops = ({
   const plans = [
     ...dayPlans
       .filter((plan) => isStoredDateOnLocalDay(plan.date, day))
-      .map((plan) => ({ plan, time: getStartTimeInMinutes(plan) })),
+      .map((plan) => ({
+        plan,
+        time: getStartTimeInMinutes(plan),
+        anytime: !!plan.anytime,
+      })),
     ...getPlansIntersectingDay(day, recurringPlans).map((plan) => ({
       plan,
       time: getEffectiveStartTimeInMinutesForRecurringPlan(plan, day),
+      anytime: isRecurringPlanAnytimeOnDate(plan, day),
     })),
   ]
-  for (const { plan, time } of plans) {
-    const stop = planStop(plan, time)
+  for (const { plan, time, anytime } of plans) {
+    const stop = planStop(plan, time, anytime)
     if (stop) stops.push(stop)
     // A Plan without a place isn't a stop the User forgot to locate.
     else if (plan.location) missingLocationCount++

@@ -152,6 +152,8 @@ _Avoid_: "view" alone near the Contacts List/Map switch — that's the Contacts 
 
 **Plan**:
 The umbrella term for a User's intent to do field-ministry work on a date. Two kinds: **Day Plan** (one specific date) and **Recurring Plan** (a pattern over time). Plans are forecast, not history — they are never "consumed" or "completed" by a Time Entry. Reality lives separately in Time Entries; the app reconciles them visually. Every Plan on a date adds up: each Day Plan and each Recurring Plan instance contributes its own minutes, and none hides another. (Before this rule, a Day Plan hid the date's Recurring Plan instances; installs that predate it had those instances skipped once so their forecasts didn't change.) A Plan may reference a **Category** (surfaced in the UI as the Plan's "Type", mirroring the Time Entry form); the Category alone determines whether the planned minutes are forecast as **Credit Time**. A Plan with no Category — or whose Category no longer exists — forecasts Standard time.
+
+A Plan is timed one of two ways: **Just hours** (an **Anytime** Plan: hours for the day with no set time, stored as `anytime: true`) or a **Time span** (a start time plus its length; the end is always derived, never stored).
 _Avoid_: "schedule" (that's the surface that displays Plans, not a synonym), "goal" (that's the hour target).
 
 **Day Plan**:
@@ -159,7 +161,7 @@ Intent for a single specific date. Carries the planned minutes, an optional loca
 _Avoid_: "scheduled day".
 
 **Recurring Plan**:
-A repeating Plan pattern (weekly, biweekly, monthly, or monthly-by-weekday) anchored to a start date with an optional end date. Each instance can be tweaked via a **Recurring Plan Override** (per-instance minutes / start-time / note) or skipped entirely via `deletedDates`.
+A repeating Plan pattern (weekly, biweekly, monthly, or monthly-by-weekday) anchored to a start date with an optional end date. Each instance can be tweaked via a **Recurring Plan Override** (per-instance minutes / start time or Anytime / note) or skipped entirely via `deletedDates`.
 _Avoid_: "repeat plan", "schedule rule".
 
 **Recurring Plan Override**:

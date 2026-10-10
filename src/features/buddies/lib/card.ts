@@ -5,6 +5,7 @@ import {
 } from '@/lib/normalizeDate'
 import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
+  isRecurringPlanAnytimeOnDate,
   resolvePlannedContributionsForDay,
   RecurringPlan,
 } from '@/lib/recurrence'
@@ -47,7 +48,9 @@ export function buildBuddyCardDays(
       .map((contribution) => {
         const startTime =
           contribution.source === 'day'
-            ? contribution.plan.startTimeInMinutes
+            ? contribution.plan.anytime
+              ? undefined
+              : contribution.plan.startTimeInMinutes
             : recurringStartTime(contribution.plan, date)
         return {
           ...(startTime === undefined ? {} : { s: startTime }),
@@ -59,11 +62,15 @@ export function buildBuddyCardDays(
   return days
 }
 
-/** Undefined when neither the plan nor its override carries a start time. */
+/**
+ * Undefined when the instance is anytime, or neither the plan nor its override
+ * carries a start time.
+ */
 function recurringStartTime(
   plan: RecurringPlan,
   date: Date
 ): number | undefined {
+  if (isRecurringPlanAnytimeOnDate(plan, date)) return undefined
   const effective = getEffectiveStartTimeInMinutesForRecurringPlan(plan, date)
   if (plan.startTimeInMinutes !== undefined) return effective
   return effective === DEFAULT_START_TIME_IN_MINUTES ? undefined : effective

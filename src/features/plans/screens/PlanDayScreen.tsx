@@ -1,4 +1,5 @@
 import { analytics } from '@/lib/analytics'
+import { formatTime } from '@/lib/dates'
 import {
   Calendar1 as Calendar1Icon,
   CornerDownRight as CornerDownRightIcon,
@@ -26,6 +27,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import {
   combineDateAndStartTime,
+  DEFAULT_START_TIME_IN_MINUTES,
   localDayFromUtcCursor,
   momentStoredDate,
   preserveOrNormalizeStoredDate,
@@ -37,6 +39,8 @@ import {
 } from '@/features/plans/lib/planDayDates'
 import { offsetFromMinutes, offsetToMinutes } from '@/lib/notificationOffset'
 import {
+  ANYTIME_PLAN_REMINDER_MINUTES,
+  anytimePlanReminderDate,
   reminderRequestId,
   savedReminderOffsetMinutes,
 } from '@/lib/reminderSchedule'
@@ -596,7 +600,21 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       : undefined
   )
 
-  const { planNotificationOffset, planAlwaysNotify } = usePreferences()
+  const {
+    planNotificationOffset,
+    planAlwaysNotify,
+    planTimeMode,
+    set: setPreferences,
+  } = usePreferences()
+
+  // New Plans open in whichever mode the User last picked.
+  const initialAnytime = existingDayPlan
+    ? !!existingDayPlan.anytime
+    : existingRecurringPlan
+      ? !!recurringPlanData?.anytime
+      : (prefill?.anytime ??
+        (prefill?.startTime ? false : planTimeMode === 'hours'))
+  const [anytime, setAnytime] = useState(initialAnytime)
   const { allowed: notificationsAllowed, turnOn: turnOnNotifications } =
     useNotifications()
 
@@ -629,9 +647,12 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   )
 
   const reminderMinutes = offsetToMinutes(notifyMeOffset)
-  const reminderPassed =
-    reminderMinutes !== null &&
-    date.getTime() - reminderMinutes * 60_000 <= Date.now()
+  const anytimeReminderAt = new Date(date)
+  anytimeReminderAt.setHours(0, ANYTIME_PLAN_REMINDER_MINUTES, 0, 0)
+  const reminderPassed = anytime
+    ? anytimeReminderAt.getTime() <= Date.now()
+    : reminderMinutes !== null &&
+      date.getTime() - reminderMinutes * 60_000 <= Date.now()
 
   const toast = useToastController()
   const theme = useTheme()
@@ -640,6 +661,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   useEffect(() => {
     setOneTime(initialOneTime)
+    setAnytime(initialAnytime)
     setDate(
       existingDayPlan
         ? combineDateAndStartTime(
@@ -717,6 +739,20 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     planDate: Date,
     startTimeInMinutes: number
   ): Pick<DayPlan, 'notifyMe' | 'reminderOffsetMinutes' | 'notifications'> => {
+    // An anytime Plan reminds the morning of; older app versions read the
+    // saved fire time.
+    if (notifyMe && anytime) {
+      return {
+        notifyMe,
+        reminderOffsetMinutes: undefined,
+        notifications: [
+          {
+            id: reminderRequestId('plan', planId),
+            date: anytimePlanReminderDate(planDate),
+          },
+        ],
+      }
+    }
     const minutes = notifyMe ? offsetToMinutes(notifyMeOffset) : null
     if (minutes === null)
       return { notifyMe, reminderOffsetMinutes: undefined, notifications: [] }
@@ -734,11 +770,26 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     }
   }
 
-  const buildRecurringPayload = () => {
+  /**
+   * The picked day and start time. An anytime Plan keeps the noon default, so
+   * older app versions show it as a noon Plan.
+   */
+  const splitPickedDate = () => {
     const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
+    return {
+      planDate,
+      startTimeInMinutes: anytime
+        ? DEFAULT_START_TIME_IN_MINUTES
+        : startTimeInMinutes,
+    }
+  }
+
+  const buildRecurringPayload = () => {
+    const { planDate, startTimeInMinutes } = splitPickedDate()
     return {
       startDate: planDate,
       startTimeInMinutes,
+      anytime: anytime || undefined,
       minutes: hours * 60 + minutes,
       categoryId: selectedCategoryId,
       recurrence: {
@@ -795,6 +846,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           id,
           date: payload.startDate,
           startTimeInMinutes: payload.startTimeInMinutes,
+          anytime: payload.anytime,
           minutes: payload.minutes,
           categoryId: payload.categoryId,
           title: payload.title,
@@ -811,6 +863,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         date: instanceDate,
         minutes: payload.minutes,
         startTimeInMinutes: payload.startTimeInMinutes,
+        anytime,
         note: payload.note,
       }
 
@@ -874,7 +927,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
   const savePlan = async (scope?: RecurringSaveScope) => {
     noteUserAction('plan')
-    const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
+    const { planDate, startTimeInMinutes } = splitPickedDate()
     const plannedMinutes = hours * 60 + minutes
     const plannedNote = note || undefined
     const plannedTitle = title.trim() || undefined
@@ -891,6 +944,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           id: existingDayPlan.id,
           date: planDate,
           startTimeInMinutes,
+          anytime: anytime || undefined,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,
           title: plannedTitle,
@@ -920,6 +974,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           id,
           date: planDate,
           startTimeInMinutes,
+          anytime: anytime || undefined,
           minutes: plannedMinutes,
           categoryId: selectedCategoryId,
           title: plannedTitle,
@@ -956,6 +1011,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         has_location: !!location,
         invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
         reminder_enabled: oneTime && notifyMe,
+        time_mode: anytime ? 'hours' : 'span',
         prefilled: !!prefill,
       })
     setSaveScopeModalOpen(false)
@@ -1063,12 +1119,25 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       }
       date={date}
       setDate={handleDateChange}
-      showTime
       hours={hours}
       minutes={minutes}
       setDuration={(nextHours, nextMinutes) => {
         setHours(nextHours)
         setMinutes(nextMinutes)
+      }}
+      timeSpan={{
+        anytime,
+        setWhen: (when) => {
+          setAnytime(when.anytime)
+          setHours(Math.floor(when.minutes / 60))
+          setMinutes(when.minutes % 60)
+          if (when.startTimeInMinutes !== undefined) {
+            const next = new Date(date)
+            next.setHours(0, when.startTimeInMinutes, 0, 0)
+            setDate(next)
+          }
+          setPreferences({ planTimeMode: when.anytime ? 'hours' : 'span' })
+        },
       }}
       durationLabel={i18n.t('planForm_duration')}
       maxHours={23}
@@ -1159,7 +1228,13 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                   description: notificationsAllowed
                     ? undefined
                     : i18n.t('notifyMe_description'),
-                  offset: (
+                  offset: anytime ? (
+                    <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                      {i18n.t('planForm_anytimeReminder', {
+                        time: formatTime(anytimeReminderAt),
+                      })}
+                    </Text>
+                  ) : (
                     <ReminderOffsetSelects
                       notifyMeOffset={notifyMeOffset}
                       setNotifyMeOffset={setNotifyMeOffset}

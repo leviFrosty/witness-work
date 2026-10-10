@@ -147,6 +147,7 @@ vi.mock('@/lib/recurrence', () => ({
   getEffectiveStartTimeInMinutesForRecurringPlan: (plan: {
     startTimeInMinutes?: number
   }) => plan.startTimeInMinutes ?? 12 * 60,
+  isRecurringPlanAnytimeOnDate: (plan: { anytime?: boolean }) => !!plan.anytime,
 }))
 
 import PlanRow from '@/components/PlanRow'

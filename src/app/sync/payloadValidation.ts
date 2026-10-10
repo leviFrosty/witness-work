@@ -110,6 +110,7 @@ const plan = record.extend({
   minutes: z.number().finite(),
   categoryId: id.optional(),
   startTimeInMinutes: z.number().finite().optional(),
+  anytime: z.boolean().optional(),
   notifyMe: z.boolean().optional(),
   title: z.string().optional(),
   note: z.string().optional(),
@@ -128,6 +129,7 @@ const recurring = record.extend({
   title: z.string().optional(),
   location: location.optional(),
   startTimeInMinutes: z.number().finite().optional(),
+  anytime: z.boolean().optional(),
   recurrence: z.object({
     frequency: z.number().int().min(0).max(3),
     interval: z.number().int().positive(),
@@ -148,6 +150,7 @@ const recurring = record.extend({
           minutes: z.number().finite(),
           note: z.string().optional(),
           startTimeInMinutes: z.number().finite().optional(),
+          anytime: z.boolean().optional(),
         })
         .passthrough()
     )

@@ -27,6 +27,8 @@ export default function usePlanSameTime(source: Source) {
           plan.s === undefined
             ? undefined
             : date.clone().startOf('day').add(plan.s, 'minutes').toISOString(),
+        // A buddy's Plan with no start time is anytime.
+        anytime: plan.s === undefined,
         minutes: plan.m,
       },
     })

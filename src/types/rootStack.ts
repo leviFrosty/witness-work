@@ -109,6 +109,8 @@ export type RootStackParamList = {
     prefill?: {
       /** ISO timestamp; only its time of day is used. */
       startTime?: string
+      /** Just hours, with no set time; `startTime` is ignored. */
+      anytime?: boolean
       minutes?: number
       note?: string
       title?: string

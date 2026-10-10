@@ -38,6 +38,7 @@ import {
 import { createLiveInbox } from '@/features/buddies/lib/liveInbox'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { shareRecipientsKey } from '@/features/buddies/lib/shares'
+import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { Buddy } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import {
@@ -73,6 +74,7 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
     report.dayPlans,
     Object.values(useBuddies.getState().incomingShares),
     {
+      now: Date.now(),
       deletedPlanIds: new Set(report.deletedDayPlans.map((plan) => plan.id)),
       answered,
     }
@@ -91,7 +93,10 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
  */
 function declineDeletedLinkedPlans(previous: DayPlan[], current: DayPlan[]) {
   for (const key of sharesLeftUnlinked(previous, current)) {
-    if (useBuddies.getState().incomingShares[key]?.status !== 'going') continue
+    const share = useBuddies.getState().incomingShares[key]
+    // Deleting a Plan that has happened is tidying history, not an answer.
+    if (share?.status !== 'going' || hasSharedEventEnded(share, Date.now()))
+      continue
     // Saved at once, so reconciling won't bring the Plan back; sent when online.
     void buddiesEngine.replyToShare(key, 'declined').catch(logFailure)
   }

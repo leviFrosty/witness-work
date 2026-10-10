@@ -163,6 +163,24 @@ const shareLocationSchema = z.object({
   longitude: z.number().min(-180).max(180).optional(),
 })
 
+/**
+ * A photo in a shared Plan's note: an encrypted blob the sender uploaded to the
+ * relay under their own inbox, and what's needed to read it. `id` is the
+ * photo's id in the shared `noteDoc`.
+ */
+export const sharedPhotoSchema = z.object({
+  id: z.string().regex(/^[A-Za-z0-9-]{8,64}$/),
+  /** `b64u(SHA-256(sealed bytes))`. */
+  blob: b64uKey,
+  token: b64uKey,
+  key: b64uKey,
+  w: z.number().int().min(1).max(20_000),
+  h: z.number().int().min(1).max(20_000),
+})
+export type SharedPhoto = z.infer<typeof sharedPhotoSchema>
+
+export const MAX_SHARED_PHOTOS = 10
+
 export const shareDetailsSchema = z.object({
   /** The sender's local calendar day. */
   d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -173,6 +191,14 @@ export const shareDetailsSchema = z.object({
   title: z.string().max(100).optional(),
   location: shareLocationSchema.optional(),
   note: z.string().max(2000).optional(),
+  /**
+   * Plans only: the note's formatting, a deflated Tiptap doc as base64url
+   * (`encodeSharedNoteDoc`). `note` stays the plain text, for alerts and
+   * anything that can't read it.
+   */
+  noteDoc: z.string().max(12_000).optional(),
+  /** Plans only: the photos `noteDoc` shows. */
+  photos: z.array(sharedPhotoSchema).max(MAX_SHARED_PHOTOS).optional(),
   /** Follow-ups only: the householder's first name or nickname. */
   firstName: z.string().max(40).optional(),
   /** Follow-ups only. */
@@ -187,8 +213,13 @@ export const shareInviteSchema = z.object({
   /** The sender's clock at send time; newer wins. */
   rev: z.number(),
   type: z.enum(SHARE_TYPES),
-  /** When both phones wipe it. */
+  /** A day after it happens: when builds that don't read `keepUntil` wipe it. */
   expiresAt: z.number(),
+  /**
+   * Plans: when both phones wipe it, a month after it ends, so buddies can look
+   * back at it. Missing means `expiresAt`.
+   */
+  keepUntil: z.number().optional(),
   details: shareDetailsSchema,
 })
 export type ShareInvite = z.infer<typeof shareInviteSchema>

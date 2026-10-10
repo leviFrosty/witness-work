@@ -1,4 +1,6 @@
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import { sharedNoteFields } from '@/features/buddies/lib/sharedNotes'
+import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import type { BuddyShareRef, DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import {
@@ -44,6 +46,7 @@ const byKeepOrder = (id: string) => (a: DayPlan, b: DayPlan) => {
 /** The Plan fields a linked Plan mirrors from the buddy's invitation. */
 function mirroredFields(share: IncomingShare) {
   const { details } = share
+  const { noteDoc } = sharedNoteFields(details)
   return {
     date: normalizeDateForStorage(`${details.d}T12:00:00`),
     startTimeInMinutes: details.s,
@@ -51,6 +54,8 @@ function mirroredFields(share: IncomingShare) {
     title: details.title,
     location: details.location,
     note: details.note,
+    // Photos point at their local copies, which download on their own.
+    noteDoc,
   }
 }
 
@@ -60,13 +65,15 @@ const differs = (plan: DayPlan, fields: ReturnType<typeof mirroredFields>) =>
   plan.minutes !== fields.minutes ||
   plan.title !== fields.title ||
   plan.note !== fields.note ||
+  JSON.stringify(plan.noteDoc) !== JSON.stringify(fields.noteDoc) ||
   JSON.stringify(plan.location) !== JSON.stringify(fields.location)
 
 /**
  * Keeps the Plans added by answering "Going" in step with buddies' Plans: adds
  * one for each accepted Plan invitation, applies the buddy's changes, and
- * removes it when they cancel or the User changes their answer. A share that
- * has lapsed leaves its Plan alone — it's history by then.
+ * removes it when they cancel or the User changes their answer. A Plan that has
+ * happened (or whose share has lapsed) is left alone — it's history by then,
+ * and may count toward the User's streak.
  *
  * A linked Plan whose id is in `deletedPlanIds` was deleted, here or on another
  * of this User's devices (which answered "Can't make it" there), so it's only
@@ -78,16 +85,18 @@ export function reconcileLinkedPlans(
   dayPlans: DayPlan[],
   shares: IncomingShare[],
   {
+    now,
     deletedPlanIds = new Set<string>(),
     answered = new Set<string>(),
   }: {
+    now: number
     deletedPlanIds?: ReadonlySet<string>
     answered?: ReadonlySet<string>
-  } = {}
+  }
 ): LinkedPlanChanges {
   const changes: LinkedPlanChanges = { add: [], update: [], remove: [] }
   for (const share of shares) {
-    if (share.type !== 'plan') continue
+    if (share.type !== 'plan' || hasSharedEventEnded(share, now)) continue
     const linked = dayPlans.filter((plan) => sameRef(plan.buddyShare, share))
     if (share.status === 'cancelled' || share.status === 'declined') {
       changes.remove.push(...linked.map((plan) => plan.id))
@@ -168,16 +177,26 @@ export function sharesJustAccepted(
 }
 
 /**
- * A buddy's Plan invitation that can still be answered: not cancelled, and not
- * yet past its expiry.
+ * A buddy's shared Plan this User can open: not cancelled, and kept until a
+ * month after it ends.
  */
-export const isOpenPlanInvitation = (
+export const isShownPlanShare = (
   share: IncomingShare | undefined,
   now: number
 ): share is IncomingShare =>
   share?.type === 'plan' &&
   share.status !== 'cancelled' &&
   share.expiresAt > now
+
+/**
+ * A buddy's Plan invitation that can still be answered: shown, and the Plan
+ * hasn't happened yet.
+ */
+export const isOpenPlanInvitation = (
+  share: IncomingShare | undefined,
+  now: number
+): share is IncomingShare =>
+  isShownPlanShare(share, now) && !hasSharedEventEnded(share, now)
 
 /**
  * What to show for an invitation: a linked Plan synced from another of this

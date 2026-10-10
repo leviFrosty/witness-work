@@ -169,6 +169,7 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
       key: 'plan:cart',
       type: 'plan',
       recipients,
+      endsAt: Date.now() + 2 * 86_400_000,
       expiresAt: Date.now() + 3 * 86_400_000,
       details: {
         d: '2026-09-26',

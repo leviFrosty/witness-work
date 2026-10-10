@@ -9,9 +9,9 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 - `buddies-invite` creates an invite link (`https://ww-proxy.leviwilkerson.com/b#1…`) or code and shares it.
 - `buddies-accept` claims an invite on the second device, which then appears on both rosters.
 - `buddies-plans` marks shared plans on the calendar, and lets the user ask to join.
-- `buddies-plan-details` shows a plan's invited buddies and replies, requests to join (Invite adds them in place), Invite Buddies, and for a plan from a buddy's invitation the organizer and a Going / Can't Make It switch. Can't Make It keeps the page open on the invitation so Going can bring the plan back.
+- `buddies-plan-details` shows a plan's invited buddies and replies, requests to join (Invite adds them in place), Invite Buddies, and for a plan from a buddy's invitation the organizer and a Going / Can't Make It switch. Can't Make It keeps the page open on the invitation so Going can bring the plan back. Once the plan has ended the page still opens for a month after it (note and photos included), with the organizer but no answer switch.
 - `buddies-settings` covers Buddies Settings and Feedback.
-- `buddies-bell` lists Buddies items in the Home bell. Invitations, replies, requests to join and pairings count toward its red number like any item. Buddies' news (a buddy's new badge, a reaction to yours) sits below them under "From your buddies", never counts (only a quiet dot), and offers Encourage inline. See `badges-bell-news` in [`badges.md`](badges.md).
+- `buddies-bell` lists Buddies items in the Home bell. Invitations, replies, requests to join and pairings count toward its red number like any item. An unanswered invitation is sticky only until its Plan or Follow-up has happened; after that it has no answer buttons and can be dismissed. Buddies' news (a buddy's new badge, a reaction to yours) sits below them under "From your buddies", never counts (only a quiet dot), and offers Encourage inline. See `badges-bell-news` in [`badges.md`](badges.md).
 
 ## How to get to it (user POV)
 

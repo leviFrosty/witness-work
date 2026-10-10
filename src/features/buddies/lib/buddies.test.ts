@@ -1355,6 +1355,7 @@ describe('shared Plans and Follow-ups', () => {
     type: 'plan',
     details,
     recipients,
+    endsAt: Date.parse('2026-09-27T00:00:00Z'),
     expiresAt: Date.parse('2026-09-28T00:00:00Z'),
   })
 
@@ -1941,7 +1942,7 @@ describe('buildOutgoingShares', () => {
     })
   })
 
-  it('skips past, dismissed, linked, and uninvited items', () => {
+  it('skips Plans over a month past, and dismissed, linked, and uninvited items', () => {
     const visit = (id: string, followUp: Partial<Visit['followUp']>): Visit =>
       ({
         id,
@@ -1959,7 +1960,8 @@ describe('buildOutgoingShares', () => {
       contacts: [contact],
       dayPlans: [
         { ...dayPlan('2026-09-26', 60), id: 'shared', buddies: ['b'] },
-        { ...dayPlan('2026-09-20', 60), id: 'past', buddies: ['b'] },
+        { ...dayPlan('2026-09-20', 60), id: 'lastWeek', buddies: ['b'] },
+        { ...dayPlan('2026-08-20', 60), id: 'past', buddies: ['b'] },
         { ...dayPlan('2026-09-26', 60), id: 'solo' },
         {
           ...dayPlan('2026-09-26', 60),
@@ -1976,12 +1978,15 @@ describe('buildOutgoingShares', () => {
     })
     expect(specs.map((spec) => spec.key)).toEqual([
       'plan:shared',
+      'plan:lastWeek',
       'followUp:v1',
     ])
   })
 })
 
 describe('reconcileLinkedPlans', () => {
+  // Before the shared Plan (Sep 26).
+  const now = Date.parse('2026-09-23T15:00:00Z')
   const share = (status: 'pending' | 'going' | 'declined' | 'cancelled') => ({
     from: 'levi',
     shareId: 'share-1',
@@ -1994,7 +1999,7 @@ describe('reconcileLinkedPlans', () => {
   })
 
   it('adds, follows, and removes the Plan a "Going" answer creates', () => {
-    const added = reconcileLinkedPlans([], [share('going')])
+    const added = reconcileLinkedPlans([], [share('going')], { now })
     expect(added.add).toEqual([
       expect.objectContaining({
         id: linkedPlanId({ from: 'levi', shareId: 'share-1' }),
@@ -2005,7 +2010,7 @@ describe('reconcileLinkedPlans', () => {
       }),
     ])
     const plan = added.add[0]
-    expect(reconcileLinkedPlans([plan], [share('going')])).toEqual({
+    expect(reconcileLinkedPlans([plan], [share('going')], { now })).toEqual({
       add: [],
       update: [],
       remove: [],
@@ -2014,25 +2019,30 @@ describe('reconcileLinkedPlans', () => {
       ...share('going'),
       details: { ...share('going').details, m: 120 },
     }
-    expect(reconcileLinkedPlans([plan], [moved]).update[0]).toMatchObject({
+    expect(
+      reconcileLinkedPlans([plan], [moved], { now }).update[0]
+    ).toMatchObject({
       id: plan.id,
       minutes: 120,
     })
-    expect(reconcileLinkedPlans([plan], [share('cancelled')]).remove).toEqual([
-      plan.id,
-    ])
-    expect(reconcileLinkedPlans([], [share('pending')]).add).toEqual([])
+    expect(
+      reconcileLinkedPlans([plan], [share('cancelled')], { now }).remove
+    ).toEqual([plan.id])
+    expect(reconcileLinkedPlans([], [share('pending')], { now }).add).toEqual(
+      []
+    )
     expect(effectiveShareStatus(share('pending'), [plan])).toBe('going')
   })
 
   it('gives the Plan the same id on every device that answers "Going"', () => {
-    const onPhone = reconcileLinkedPlans([], [share('going')]).add[0]
-    const onIpad = reconcileLinkedPlans([], [share('going')]).add[0]
+    const onPhone = reconcileLinkedPlans([], [share('going')], { now }).add[0]
+    const onIpad = reconcileLinkedPlans([], [share('going')], { now }).add[0]
 
     expect(onPhone.id).toBe(onIpad.id)
     expect(onPhone.id).not.toBe(
-      reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }])
-        .add[0].id
+      reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }], {
+        now,
+      }).add[0].id
     )
   })
 
@@ -2049,14 +2059,14 @@ describe('reconcileLinkedPlans', () => {
 
   it('keeps the same copy on every device when duplicates meet', () => {
     const linked = (id: string): DayPlan => ({
-      ...reconcileLinkedPlans([], [share('going')]).add[0],
+      ...reconcileLinkedPlans([], [share('going')], { now }).add[0],
       id,
     })
     // Older builds gave each device's copy a random id.
     const phoneCopy = linked('b-from-phone')
     const ipadCopy = linked('a-from-ipad')
     const removedFrom = (dayPlans: DayPlan[]) =>
-      reconcileLinkedPlans(dayPlans, [share('going')]).remove
+      reconcileLinkedPlans(dayPlans, [share('going')], { now }).remove
 
     expect(removedFrom([phoneCopy, ipadCopy])).toEqual(['b-from-phone'])
     expect(removedFrom([ipadCopy, phoneCopy])).toEqual(['b-from-phone'])
@@ -2101,11 +2111,12 @@ describe('reconcileLinkedPlans', () => {
 
     // This iPad still says "Going"; the phone deleted the Plan (and declined).
     expect(
-      reconcileLinkedPlans([], [share('going')], { deletedPlanIds }).add
+      reconcileLinkedPlans([], [share('going')], { now, deletedPlanIds }).add
     ).toEqual([])
     // Answering "Going" again here adds it back.
     expect(
       reconcileLinkedPlans([], [share('going')], {
+        now,
         deletedPlanIds,
         answered: new Set([key]),
       }).add.map((plan) => plan.id)
@@ -2113,6 +2124,7 @@ describe('reconcileLinkedPlans', () => {
     // Other shares are unaffected.
     expect(
       reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }], {
+        now,
         deletedPlanIds,
       }).add
     ).toHaveLength(1)
@@ -2376,6 +2388,7 @@ describe('asking to join', () => {
         type: 'plan',
         details: { d: saturday, ...nine },
         recipients: [levi.inboxId],
+        endsAt: startsAt + HOUR,
         expiresAt: startsAt + 3 * HOUR,
       },
     ])
@@ -3073,6 +3086,7 @@ describe('badges', () => {
         type: 'plan',
         details: { d: '2026-09-26', s: 600, m: 120 },
         recipients: [anna.inboxId],
+        endsAt: START + 4 * 24 * HOUR,
         expiresAt: START + 5 * 24 * HOUR,
       },
     ])

@@ -63,6 +63,11 @@ export function getNoteDoc(fields: NoteFields): RichTextDoc {
   return text ? docFromText(text) : EMPTY_DOC
 }
 
+/** The note's doc when it has formatting (or photos), else null. */
+export function getRichNoteDoc(fields: NoteFields): RichTextDoc | null {
+  return currentRichText(fields)?.doc ?? null
+}
+
 /** Whether the record has a note with words or photos in it. */
 export function hasNote(fields: NoteFields): boolean {
   const rich = currentRichText(fields)

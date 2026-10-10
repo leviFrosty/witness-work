@@ -290,6 +290,7 @@ describe('publishing', () => {
     type: 'plan',
     recipients,
     details: { d: '2026-09-26', s: 600, m: 60, title: 'Cart' },
+    endsAt: Date.parse('2026-09-26T11:00:00Z'),
     expiresAt: Date.parse('2026-09-27T00:00:00Z'),
   })
 
@@ -475,6 +476,7 @@ describe('push alerts', () => {
         type: 'plan',
         recipients: [anna.inboxId],
         details: { d: '2026-09-26', s: 600, m: 60 },
+        endsAt: Date.parse('2026-09-26T11:00:00Z'),
         expiresAt: Date.parse('2026-09-27T00:00:00Z'),
       },
     ])

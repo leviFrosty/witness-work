@@ -43,7 +43,7 @@ export type RequestOptions = {
   /** Sent as JSON with a JSON content type. */
   json?: unknown
   /** Sent as-is; set the content type yourself. */
-  body?: string
+  body?: string | Uint8Array
   /**
    * Required: fetch in React Native has no timeout of its own, and Android
    * waits forever on a stalled connection. Covers reading the body too.
@@ -57,8 +57,11 @@ export type RequestOptions = {
    */
   retry?: RetryPolicy
   idempotent?: boolean
-  /** `json` (default) parses the body; `text` returns it raw. */
-  responseType?: 'json' | 'text' | 'none'
+  /**
+   * `json` (default) parses the body; `text` returns it raw, `bytes` as a
+   * `Uint8Array`. Error bodies are always read as JSON.
+   */
+  responseType?: 'json' | 'text' | 'none' | 'bytes'
   /** Tests and native-backed transports. */
   fetchImpl?: typeof fetch
   /** Send even when the OS reports no connection (e.g. a local server). */
@@ -133,10 +136,21 @@ async function attemptRequest<T>(
     const response = await (options.fetchImpl ?? fetch)(options.url, {
       method,
       headers,
-      body,
+      // React Native's fetch sends a Uint8Array's bytes as-is.
+      body: body as BodyInit | undefined,
       signal: controller.signal,
     })
-    const text = options.responseType === 'none' ? '' : await response.text()
+    if (response.ok && options.responseType === 'bytes') {
+      return {
+        status: response.status,
+        headers: response.headers,
+        data: new Uint8Array(await response.arrayBuffer()) as T,
+      }
+    }
+    const text =
+      options.responseType === 'none' && response.ok
+        ? ''
+        : await response.text()
     if (!response.ok) {
       const errorBody = jsonOrNull(text)
       throw new HttpError(

@@ -104,6 +104,7 @@ export default tseslint.config(
             'src/features/onboarding/**/*',
             'src/features/plans/**/*',
             'src/features/progress/**/*',
+            'src/features/log-visit/**/*',
             'src/__tests__/**/*',
           ],
         },

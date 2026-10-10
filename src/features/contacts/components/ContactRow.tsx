@@ -29,6 +29,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import ContactPreview from '@/components/ContactPreview'
 import { stalenessToColor } from '@/lib/contactStaleness'
 import { ConversationIndex } from '@/lib/conversationIndex'
+import type { SuggestedRowDetail } from '@/lib/suggestedContacts'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import useContactMenuActions, {
   useContactRemovalActions,
@@ -58,6 +59,7 @@ const ContactRow = ({
   contact,
   onPress,
   searchMatches,
+  detail,
   index,
   selected = false,
   showsDisclosure = true,
@@ -89,6 +91,11 @@ const ContactRow = ({
    * conversation note, phone, email, or address).
    */
   searchMatches?: readonly FuseResultMatch[]
+  /**
+   * Replaces the row's "last visit · city" line, e.g. with why a suggested
+   * section lists the Contact. A search match preview still wins.
+   */
+  detail?: SuggestedRowDetail
   /**
    * Shared per-contact conversation index built once by the list. Staleness,
    * study flags, and the most-recent conversation are O(1) lookups against it —
@@ -230,6 +237,19 @@ const ContactRow = ({
                 />
               </View>
             </View>
+          ) : detail ? (
+            <Text
+              style={{
+                color:
+                  detail.tone === 'due'
+                    ? theme.colors.orange
+                    : theme.colors.textAlt,
+                fontSize: 10,
+              }}
+              numberOfLines={1}
+            >
+              {detail.text}
+            </Text>
           ) : (
             <Text
               style={{ color: theme.colors.textAlt, fontSize: 10 }}

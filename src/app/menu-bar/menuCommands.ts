@@ -10,6 +10,7 @@ import type { SystemMenuGroup } from '../../../modules/system-menu'
 
 export type MenuCommand =
   | 'preferences'
+  | 'log_visit'
   | 'add_time'
   | 'new_contact'
   | 'new_plan'
@@ -49,6 +50,7 @@ export function menuGroups({
       id: 'file',
       title: t('menuBarFile'),
       actions: [
+        action('log_visit', t('logVisitEllipsis')),
         ...(showsTimeEntry ? [action('add_time', t('addTime'))] : []),
         action('new_contact', t('addContact')),
         action('new_plan', t('newPlan')),
@@ -91,6 +93,9 @@ export async function runMenuCommand(
       } else {
         navigationRef.navigate('SettingsMenu')
       }
+      break
+    case 'log_visit':
+      navigationRef.navigate('Log Visit')
       break
     case 'add_time':
       navigationRef.navigate('Add Time')

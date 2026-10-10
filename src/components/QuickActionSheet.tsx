@@ -7,8 +7,11 @@ import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import IconButton from '@/components/ui/IconButton'
-import QuickActionMenu from '@/components/QuickActionMenu'
-import { usePreferences } from '@/stores/preferences'
+import { useEffect } from 'react'
+import QuickActionMenu, {
+  useQuickActionCount,
+} from '@/components/QuickActionMenu'
+import { refreshCurrentLocation } from '@/lib/currentLocation'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 
@@ -25,14 +28,20 @@ export default function QuickActionSheet({
 }: QuickActionSheetProps) {
   const theme = useTheme()
   const sheetBottomInset = useSheetBottomInset()
-  // Log Trip adds a fourth action when Mileage Tracking is on.
-  const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
+  // Add Time and Log Trip come and go with the role and Mileage Tracking.
+  const actionCount = useQuickActionCount()
+
+  // Starts reading the location as the menu opens, so Log Visit's Nearby is
+  // usually ready by the time it's picked. Never prompts.
+  useEffect(() => {
+    if (sheetOpen) void refreshCurrentLocation()
+  }, [sheetOpen])
 
   return (
     <Sheet
       open={sheetOpen}
       modal
-      snapPoints={[tracksMileage ? 38 : 30]}
+      snapPoints={[8 + 8 * actionCount]}
       onOpenChange={(o: boolean) => setSheetOpen(o)}
       dismissOnSnapToBottom
       transition='quick'

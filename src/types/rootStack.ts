@@ -14,6 +14,8 @@ export type RootStackParamList = {
     returnToContacts?: boolean
     /** Go back to the opener after saving, e.g. Home's Follow-up card. */
     returnOnSave?: boolean
+    /** Opened from Log Visit: added to `visit_created` (analytics). */
+    logVisit?: LogVisitAttribution
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
   'Contact Form': {
@@ -21,8 +23,13 @@ export type RootStackParamList = {
     edit?: boolean
     returnToContacts?: boolean
     initialCoordinate?: Coordinate
+    /** Prefills a new Contact's name, e.g. what was typed in a search. */
+    name?: string
+    /** Opened from Log Visit: passed on to the Visit Form it continues to. */
+    logVisit?: LogVisitAttribution
   }
-  'Contact Selector': undefined
+  /** Pick a Contact, then log a conversation or Not at Home. */
+  'Log Visit': undefined
   'Add Time':
     | {
         date?: string
@@ -201,6 +208,23 @@ export type BadgesSource =
   | 'welcome'
   | 'settings'
   | 'other'
+
+/** Which part of the Log Visit picker the Contact was picked from. */
+export type LogVisitPickedFrom =
+  | 'nearby'
+  | 'followUpsDue'
+  | 'recent'
+  | 'all'
+  | 'search'
+  | 'new_contact'
+
+/** How Log Visit reached a Visit, sent with `visit_created` (analytics). */
+export type LogVisitAttribution = {
+  source: 'quick_action'
+  picked_from: LogVisitPickedFrom
+  /** Whether the picker showed the Nearby section. */
+  nearby_shown: boolean
+}
 
 /** Where a Mileage flow started (analytics). */
 export type MileageSource =

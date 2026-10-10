@@ -35,6 +35,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
 import PointerTooltip from '@/components/ui/PointerTooltip'
+import { refreshCurrentLocation } from '@/lib/currentLocation'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -478,6 +479,8 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                       <Button
                         noTransform
                         onPress={() => {
+                          // Warms Log Visit's Nearby; never prompts.
+                          if (!expanded) void refreshCurrentLocation()
                           onPress()
                         }}
                         accessibilityLabel={i18n.t('quickAction')}

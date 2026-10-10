@@ -461,6 +461,7 @@ const VisitFormScreen = ({
                       custom_field_count: Object.keys(
                         conversation.customFields ?? {}
                       ).length,
+                      ...params.logVisit,
                     })
 
                   await maybeRequestStoreReview({

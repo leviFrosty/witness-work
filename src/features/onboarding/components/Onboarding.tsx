@@ -15,14 +15,13 @@ import StepThree from '@/features/onboarding/components/steps/Three'
 import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
-import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
 import DataProtection from '@/features/onboarding/components/steps/DataProtection'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
+import FeatureTour from '@/features/onboarding/components/steps/FeatureTour'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
-import Badges from '@/features/onboarding/components/steps/Badges'
 import Buddies from '@/features/onboarding/components/steps/Buddies'
 import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -43,25 +42,25 @@ import {
   OnboardingProgressContext,
 } from '@/features/onboarding/components/OnboardingProgressContext'
 import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
+import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
 
 type StepId =
   | 'hero'
-  | 'founderNote'
-  | 'privacyFirst'
-  | 'dataProtection'
+  | 'featureTour'
   | 'pickUpWhereLeftOff'
   | 'publisherType'
-  | 'profileSetup'
   | 'pioneerDate'
   | 'planMonth'
+  | 'dataProtection'
   | 'buddies'
-  | 'badges'
   | 'notifications'
   | 'calendarSync'
   | 'defaultNav'
   | 'defaultExportMethod'
   | 'onboardingBackfill'
+  | 'profileSetup'
+  | 'founderNote'
 
 interface StepProps {
   goBack: () => void
@@ -90,31 +89,29 @@ interface StepDef {
   id: StepId
   Component: ComponentType<StepProps>
   /**
-   * Whether this step contributes to the visible progress bar. Hero + founder
-   * screens opt out so the user sees a shorter "2 of 10" rather than "3 of
-   * 12".
+   * Whether this step contributes to the visible progress bar. The introduction
+   * (welcome, tour, restore) and the closing founder note opt out, so the bar
+   * covers personalizing only.
    */
   countsTowardProgress: boolean
   /** If present and returns false, the step is skipped entirely. */
   showIf?: (ctx: StepShowIfContext) => boolean
 }
 
+/**
+ * Introduce first, then personalize: the welcome and a tour of the app come
+ * before any question, the name, the most personal ask, comes last, and a note
+ * from the developer sees them into the app.
+ */
 const allSteps: StepDef[] = [
   { id: 'hero', Component: StepOne, countsTowardProgress: false },
-  { id: 'founderNote', Component: FounderNote, countsTowardProgress: false },
-  { id: 'privacyFirst', Component: PrivacyFirst, countsTowardProgress: true },
-  {
-    id: 'dataProtection',
-    Component: DataProtection,
-    countsTowardProgress: true,
-  },
+  { id: 'featureTour', Component: FeatureTour, countsTowardProgress: false },
   {
     id: 'pickUpWhereLeftOff',
     Component: PickUpWhereLeftOff,
-    countsTowardProgress: true,
+    countsTowardProgress: false,
   },
   { id: 'publisherType', Component: StepTwo, countsTowardProgress: true },
-  { id: 'profileSetup', Component: ProfileSetup, countsTowardProgress: true },
   {
     id: 'pioneerDate',
     Component: ProfileSetupPioneerDate,
@@ -130,14 +127,17 @@ const allSteps: StepDef[] = [
       tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
   {
+    id: 'dataProtection',
+    Component: DataProtection,
+    countsTowardProgress: true,
+  },
+  {
     id: 'buddies',
     Component: Buddies,
     countsTowardProgress: true,
     // Needs the Buddies key module and the rollout flag (iOS and Android).
     showIf: ({ buddiesAvailable }) => buddiesAvailable,
   },
-  // Before notifications, which also deliver badge alerts from buddies.
-  { id: 'badges', Component: Badges, countsTowardProgress: true },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   {
     id: 'calendarSync',
@@ -171,6 +171,9 @@ const allSteps: StepDef[] = [
       moment(installedOn).month() !== 8 &&
       !hasReportsInCatchUpWindow(serviceReports, installedOn),
   },
+  { id: 'profileSetup', Component: ProfileSetup, countsTowardProgress: true },
+  // A thank-you from the developer, the last thing before the app opens.
+  { id: 'founderNote', Component: FounderNote, countsTowardProgress: false },
 ]
 
 /** `current` (a persisted step id) is at or past `id`'s place in the flow. */
@@ -235,15 +238,25 @@ const OnBoarding = () => {
     if (onboardingStepId === 'supporter') return initialVisible.length - 1
     // The intent picker and plan preview were removed; resume on the step
     // that now sits where each one was.
+    // The privacy and badges screens moved into the tour; resume on the step
+    // that followed each one. The founder note moved from the start to the
+    // end: one saved before the name step was the old, early one.
     const hasPlanMonth = initialVisible.some((s) => s.id === 'planMonth')
+    const earlyFounderNote =
+      onboardingStepId === 'founderNote' &&
+      !useProfile.getState().hasCompletedProfileSetup
     const resumeId =
-      onboardingStepId === 'intentPicker'
-        ? 'profileSetup'
-        : onboardingStepId === 'yourPlanPreview'
-          ? hasPlanMonth
-            ? 'planMonth'
-            : 'notifications'
-          : onboardingStepId
+      onboardingStepId === 'privacyFirst' || earlyFounderNote
+        ? 'pickUpWhereLeftOff'
+        : onboardingStepId === 'intentPicker'
+          ? 'pioneerDate'
+          : onboardingStepId === 'yourPlanPreview'
+            ? hasPlanMonth
+              ? 'planMonth'
+              : 'notifications'
+            : onboardingStepId === 'badges'
+              ? 'notifications'
+              : onboardingStepId
     const idx = initialVisible.findIndex((s) => s.id === resumeId)
     if (idx >= 0) return idx
     // A conditional step that no longer shows (e.g. Buddies after its flag

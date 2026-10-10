@@ -3,7 +3,7 @@
 # from a screen other than onboarding (`wwv seed onboarded` first): seeding
 # `fresh` over onboarding that's already showing keeps its old step. The
 # leading underscore keeps it out of the default `wwv flow` run.
-# assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'badges'
+# assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'notifications'
 appId: com.leviwilkerson.jwtimedev
 name: Onboarding explains Buddies, and Continue moves on without inviting
 ---
@@ -11,13 +11,11 @@ name: Onboarding explains Buddies, and Continue moves on without inviting
     visible: Your field service assistant.
     timeout: 60000
 - tapOn: Get Started
-- tapOn: Continue
-- tapOn: Continue
-- tapOn: Continue
+# The feature tour.
+- tapOn: Skip
 - tapOn: Start fresh
 - tapOn: Continue as Kingdom Publisher
-# Closes the keyboard the name field may open.
-- tapOn: Add your name and a picture.
+# Data protection.
 - tapOn: Continue
 - extendedWaitUntil:
     visible: Plan together with Buddies

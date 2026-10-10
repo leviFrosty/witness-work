@@ -5,7 +5,7 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 ## Sub-features
 
 - `buddies-entry` shows the "Buddies" header button on the Schedule screen, once enabled.
-- `buddies-onboarding` is the setup step before Badges: an animated explainer with an optional **Invite a Buddy** (share sheet) and Continue. See [`onboarding.md`](onboarding.md).
+- `buddies-onboarding` is a page of the onboarding tour ("Go out with buddies") and, later, the setup step before notifications: an animated explainer with an optional **Invite a Buddy** (share sheet, asking for a name first if there isn't one) and Continue. See [`onboarding.md`](onboarding.md).
 - `buddies-invite` creates an invite link (`https://ww-proxy.leviwilkerson.com/b#1…`) or code and shares it.
 - `buddies-accept` claims an invite on the second device, which then appears on both rosters.
 - `buddies-plans` marks shared plans on the calendar, and lets the user ask to join.

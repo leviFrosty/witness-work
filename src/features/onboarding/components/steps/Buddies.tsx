@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, ScrollView, Share, View } from 'react-native'
+import { ActivityIndicator, Share, View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
   CircleCheck as CircleCheckIcon,
   Lock as LockIcon,
@@ -22,11 +23,13 @@ import Button from '@/components/ui/Button'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import MyTextInput from '@/components/ui/TextInput'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
+import { useProfile } from '@/stores/profile'
 
 interface Props {
   goBack: () => void
@@ -101,6 +104,15 @@ const Buddies = ({ goBack, goNext }: Props) => {
   // another of the five spots.
   const [unsentInviteId, setUnsentInviteId] = useState<string | null>(null)
   const mounted = useRef(true)
+  // An invite carries the inviter's name, which setup otherwise asks for last.
+  // It's asked for here only once someone sets out to invite.
+  const name = useProfile((state) => state.name)
+  const setProfile = useProfile((state) => state.set)
+  const [askName, setAskName] = useState(false)
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  // The field lands at the bottom of the step; keep it in view.
+  const revealNameField = () =>
+    requestAnimationFrame(() => scrollRef.current?.scrollToEnd(true))
 
   useEffect(() => {
     mounted.current = true
@@ -110,6 +122,11 @@ const Buddies = ({ goBack, goNext }: Props) => {
   }, [])
 
   const invite = async () => {
+    if (!useProfile.getState().name.trim()) {
+      setAskName(true)
+      revealNameField()
+      return
+    }
     setWorking(true)
     setError(null)
     try {
@@ -171,7 +188,9 @@ const Buddies = ({ goBack, goNext }: Props) => {
       }}
     >
       <OnboardingNav goBack={goBack} />
-      <ScrollView
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        enableOnAndroid
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
@@ -214,6 +233,32 @@ const Buddies = ({ goBack, goNext }: Props) => {
               text={i18n.t('onboardingBuddies_later')}
             />
           )}
+          {askName && (
+            <View style={{ gap: 8, marginTop: 6 }}>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('onboardingBuddies_nameHint')}
+              </Text>
+              <MyTextInput
+                value={name}
+                onChangeText={(value) => setProfile({ name: value })}
+                placeholder={i18n.t('firstNamePlaceholder')}
+                accessibilityLabel={i18n.t('firstNamePlaceholder')}
+                autoCapitalize='words'
+                autoCorrect={false}
+                autoFocus
+                maxLength={40}
+                enterKeyHint='done'
+                textAlign='left'
+                // Done closes the keyboard, bringing Invite back into view.
+                onBlur={revealNameField}
+              />
+            </View>
+          )}
           {!!error && (
             <Text
               accessibilityLiveRegion='polite'
@@ -226,7 +271,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
             </Text>
           )}
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
       {/* Inviting and moving on stay the same size and one tap away. Once an
           invite has gone out, Continue takes the lead. */}
       <View style={{ gap: 10 }}>

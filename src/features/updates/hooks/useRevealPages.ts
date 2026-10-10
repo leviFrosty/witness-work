@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { Platform } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -7,22 +8,29 @@ import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { siriPhrase } from '@/features/updates/lib/siriPhrase'
 import * as WatchBridge from '../../../../modules/watch-bridge'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import type { RevealVisualProps } from '@/features/updates/components/reveal/visuals/kit'
+import { REVEAL_VISUALS } from '@/features/updates/components/reveal/visuals/registry'
 import {
   REVEAL_CHIPS,
   REVEAL_MORE_ITEMS,
   REVEAL_PAGES,
   RevealChipSpec,
-  RevealPageId,
 } from '@/features/updates/constants/updateRevealPages'
 
+/** One page of a tour (the update's, or onboarding's). */
 export interface RevealPage {
-  id: RevealPageId
+  /** Stable; also the page's analytics value. */
+  id: string
   icon: AppIcon
   color: string
   title: string
   caption: string
   /** A Siri phrase to call out beneath the caption, quoted. */
   callout?: string
+  /** The page's illustration. */
+  Visual?: ComponentType<RevealVisualProps>
+  /** A grid of small feature tiles, drawn in place of `Visual`. */
+  tiles?: RevealMoreTile[]
 }
 
 export type RevealChip = Omit<RevealChipSpec, 'color'> & { color: string }
@@ -34,10 +42,12 @@ export interface RevealMoreTile {
   label: string
 }
 
-const onThisPlatform = (platform?: 'ios' | 'android') =>
+/** Whether something limited to `platform` shows on this device. */
+export const onThisPlatform = (platform?: 'ios' | 'android') =>
   !platform || platform === Platform.OS
 
-const meetsIos = (minIos?: number) =>
+/** Whether this device runs at least iOS `minIos`, when one is required. */
+export const meetsIos = (minIos?: number) =>
   !minIos ||
   (Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= minIos)
 
@@ -55,6 +65,18 @@ const useRevealPages = () => {
   const { isTablet } = useDevice()
   const buddiesEnabled = useBuddiesEnabled()
   const watchSupported = WatchBridge.getStatus().isSupported
+
+  const moreTiles: RevealMoreTile[] = REVEAL_MORE_ITEMS.filter(
+    (item) =>
+      onThisPlatform(item.platform) &&
+      (!item.tabletOnly || isTablet) &&
+      meetsIos(item.minIos)
+  ).map((item) => ({
+    id: item.id,
+    icon: item.icon,
+    color: theme.colors[item.color],
+    label: i18n.t(item.labelKey),
+  }))
 
   const pages: RevealPage[] = REVEAL_PAGES.filter(
     (page) =>
@@ -82,6 +104,9 @@ const useRevealPages = () => {
             phrase: siriPhrase(page.siriPhraseKey),
           })
         : undefined,
+      ...(page.id === 'more'
+        ? { tiles: moreTiles }
+        : { Visual: REVEAL_VISUALS[page.id] }),
     }
   })
 
@@ -90,19 +115,7 @@ const useRevealPages = () => {
     color: theme.colors[chip.color],
   }))
 
-  const moreTiles: RevealMoreTile[] = REVEAL_MORE_ITEMS.filter(
-    (item) =>
-      onThisPlatform(item.platform) &&
-      (!item.tabletOnly || isTablet) &&
-      meetsIos(item.minIos)
-  ).map((item) => ({
-    id: item.id,
-    icon: item.icon,
-    color: theme.colors[item.color],
-    label: i18n.t(item.labelKey),
-  }))
-
-  return { pages, chips, moreTiles }
+  return { pages, chips }
 }
 
 export default useRevealPages

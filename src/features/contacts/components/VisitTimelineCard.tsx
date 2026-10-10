@@ -3,6 +3,8 @@ import { useToastController } from '@tamagui/toast'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
+import RichNoteText from '@/components/RichNoteText'
+import { useLinkActions } from '@/components/RichLinkCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useCopyAction } from '@/components/ui/Copyeable'
 import Text from '@/components/ui/MyText'
@@ -13,6 +15,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import { isAppointment } from '@/lib/conversations'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
+import { noteTextAroundCards } from '@/lib/linkPreview'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
@@ -25,7 +28,7 @@ const NOTE_LINES = 3
 
 /**
  * One visit on the rail. Tap edits; swipe left deletes; long-press offers Edit,
- * Reschedule Follow-Up, Copy Note / Topic, and Delete.
+ * Reschedule Follow-Up, Open Link, Copy Note / Topic, and Delete.
  */
 const VisitTimelineCard = ({
   visit,
@@ -41,7 +44,11 @@ const VisitTimelineCard = ({
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
   const copyAction = useCopyAction()
+  const { openLinksItem } = useLinkActions()
   const note = visibleNote(visit.note)
+  // Links show as preview cards below the text, so only the text can clamp.
+  const noteText = note ? noteTextAroundCards(note) : ''
+  const canExpand = !!noteText && (truncates || expanded)
   const topic = visit.followUp?.topic?.trim() ?? ''
   const dayLabel = visitDayLabel(visit.date)
   const fields = activeCustomFieldDefs(
@@ -88,7 +95,7 @@ const VisitTimelineCard = ({
         hoverRadius={theme.numbers.borderRadiusLg}
         accessibilityLabel={dayLabel}
         // Keep Show more / Show less reachable by screen readers.
-        accessible={!(truncates || expanded)}
+        accessible={!canExpand}
         actions={[
           [
             {
@@ -107,6 +114,7 @@ const VisitTimelineCard = ({
                   visitId: visit.id,
                 }),
             },
+            openLinksItem(note),
             !!note &&
               copyAction(note, { id: 'copy_note', title: i18n.t('copyNote') }),
             !!topic &&
@@ -168,33 +176,35 @@ const VisitTimelineCard = ({
             <View style={{ gap: 4 }}>
               {/* Invisible unclamped copy: iOS only reports the visible lines
                 of a clamped Text, so measure the full note here instead. */}
-              <Text
-                aria-hidden
-                pointerEvents='none'
-                onTextLayout={(e) =>
-                  setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
-                }
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  opacity: 0,
-                  fontSize: theme.fontSize('sm') + 1,
-                  lineHeight: 19,
-                }}
-              >
-                {note}
-              </Text>
-              <Text
+              {noteText ? (
+                <Text
+                  aria-hidden
+                  pointerEvents='none'
+                  onTextLayout={(e) =>
+                    setTruncates(e.nativeEvent.lines.length > NOTE_LINES)
+                  }
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    opacity: 0,
+                    fontSize: theme.fontSize('sm') + 1,
+                    lineHeight: 19,
+                  }}
+                >
+                  {noteText}
+                </Text>
+              ) : null}
+              <RichNoteText
+                text={note}
                 numberOfLines={expanded ? undefined : NOTE_LINES}
+                interactive={false}
                 style={{
                   fontSize: theme.fontSize('sm') + 1,
                   lineHeight: 19,
                 }}
-              >
-                {note}
-              </Text>
-              {(truncates || expanded) && (
+              />
+              {canExpand && (
                 <Pressable
                   onPress={() => setExpanded((value) => !value)}
                   hitSlop={8}

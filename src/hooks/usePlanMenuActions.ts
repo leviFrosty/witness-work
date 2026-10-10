@@ -14,7 +14,6 @@ import confirmDeletePlan, {
   type RecurringDeleteScope,
 } from '@/lib/confirmDeletePlan'
 import { openURL } from '@/lib/links'
-import { findLinks, getHostname } from '@/lib/linkPreview'
 import i18n from '@/lib/locales'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import { appleMapsUrl } from '@/lib/placeSearch'
@@ -79,12 +78,11 @@ export default function usePlanMenuActions(
 ) {
   const navigation = useNavigation<RootStackNavigation>()
   const { showsTimeEntry } = usePublisher()
-  const { open: openLink, copyText } = useLinkActions()
+  const { copyText, openLinksItem } = useLinkActions()
   const { plan, date } = item
   const isRecurring = item.type === 'recurring'
   const effective = effectiveValues(item)
   const dateMoment = moment(date)
-  const noteLinks = effective.note ? findLinks(effective.note) : []
   const mapsUrl = plan.location ? appleMapsUrl(plan.location) : undefined
 
   const go = (navigate: () => void) =>
@@ -183,22 +181,7 @@ export default function usePlanMenuActions(
         systemImage: 'doc.on.doc',
         onPress: () => void copyText(planLocationText(plan.location!)),
       },
-      noteLinks.length === 1 && {
-        id: 'open_link',
-        title: i18n.t('openLink'),
-        systemImage: 'safari',
-        onPress: () => openLink(noteLinks[0]),
-      },
-      noteLinks.length > 1 && {
-        id: 'open_link',
-        title: i18n.t('openLink'),
-        systemImage: 'safari',
-        actions: noteLinks.map((url, index) => ({
-          id: `link_${index}`,
-          title: getHostname(url),
-          onPress: () => openLink(url),
-        })),
-      },
+      openLinksItem(effective.note),
       effective.note
         ? {
             id: 'copy_note',

@@ -16,8 +16,10 @@ import {
   getCachedLinkPreview,
   findLinks,
   getHostname,
+  noteTextAroundCards,
   parseOpenGraph,
   resolveUrl,
+  splitNoteForCards,
   splitTextWithLinks,
 } from '@/lib/linkPreview'
 
@@ -104,6 +106,44 @@ describe('splitTextWithLinks', () => {
       { type: 'text', text: ' ' },
       { type: 'link', url: 'https://a.com' },
     ])
+  })
+})
+
+describe('splitNoteForCards', () => {
+  it('keeps a note without links as one text part', () => {
+    expect(splitNoteForCards('Bring tracts')).toEqual({
+      cardUrls: [],
+      parts: [{ type: 'text', text: 'Bring tracts' }],
+    })
+  })
+
+  it('lifts the first three links into cards and keeps the rest inline', () => {
+    const { cardUrls, parts } = splitNoteForCards(
+      'Read https://a.com then https://b.com, https://c.com and https://d.com'
+    )
+    expect(cardUrls).toEqual([
+      'https://a.com',
+      'https://b.com',
+      'https://c.com',
+    ])
+    expect(parts).toEqual([
+      { type: 'text', text: 'Read then , and ' },
+      { type: 'link', url: 'https://d.com' },
+    ])
+  })
+})
+
+describe('noteTextAroundCards', () => {
+  it('returns the text shown above the cards', () => {
+    expect(
+      noteTextAroundCards(
+        'Meet at the cart.\nhttps://jw.org/en/\n\nBring tracts'
+      )
+    ).toBe('Meet at the cart.\n\nBring tracts')
+  })
+
+  it('is empty when the note is only links', () => {
+    expect(noteTextAroundCards(' https://jw.org/en/ ')).toBe('')
   })
 })
 

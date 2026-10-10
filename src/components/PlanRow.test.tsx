@@ -29,9 +29,18 @@ vi.mock('@/components/ui/ContextMenu', async () => {
       ReactModule.createElement('ContextMenu', props, children),
   }
 })
-vi.mock('@/components/RichLinkCard', () => ({
-  useLinkActions: () => ({ open: vi.fn(), copyText: vi.fn() }),
-}))
+vi.mock('@/components/RichLinkCard', async () => {
+  const { openLinksMenuItem } = await import('@/components/openLinksMenuItem')
+  const open = vi.fn()
+  return {
+    useLinkActions: () => ({
+      open,
+      copyText: vi.fn(),
+      openLinksItem: (text: string | null | undefined) =>
+        openLinksMenuItem(text, open),
+    }),
+  }
+})
 vi.mock('@/lib/placeSearch', () => ({
   appleMapsUrl: () => 'https://maps.apple.com/?q=Hall',
 }))

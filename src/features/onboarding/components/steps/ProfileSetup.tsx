@@ -15,6 +15,10 @@ interface Props {
   goNext: () => void
 }
 
+/**
+ * The last question: a name and a picture, both optional. It comes last because
+ * it's the most personal thing setup asks for.
+ */
 const ProfileSetup = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = useProfile()
@@ -44,7 +48,9 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>{i18n.t('profileSetupTitle')}</Text>
+          <Text style={styles.stepTitle}>
+            {i18n.t('profileSetupNameTitle')}
+          </Text>
           <Text
             style={{
               fontSize: 14,
@@ -53,7 +59,7 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('profileSetupDesc')}
+            {i18n.t('profileSetupNameDesc')}
           </Text>
           <ProfileCard hideBadges />
         </View>

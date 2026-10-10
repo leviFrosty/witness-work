@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutChangeEvent, View } from 'react-native'
+import { BackHandler, LayoutChangeEvent, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   SharedValue,
@@ -17,42 +17,52 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { shareApp } from '@/lib/shareApp'
 import { DISPLAY_FONT_SCALE_CAP } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import WelcomeCta from '@/features/onboarding/components/welcome/WelcomeCta'
-import {
-  RevealMoreTile,
-  RevealPage,
-} from '@/features/updates/hooks/useRevealPages'
+import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTourPage from '@/features/updates/components/reveal/RevealTourPage'
+
+interface TourAction {
+  label: string
+  onPress: () => void
+}
 
 interface Props {
   pages: RevealPage[]
-  moreTiles: RevealMoreTile[]
   palette: WelcomePalette
   time: SharedValue<number>
   reduceMotion: boolean
   /** A page came on screen. */
   onPageViewed: (id: string) => void
-  onDone: () => void
-  onClose: () => void
+  /** The last page's main action, in place of Next. */
+  finish: TourAction
+  /** A quieter link beneath it on the last page, like Done. */
+  finishLink?: TourAction
+  /** The way out, top right: a labelled link like Skip, or an X without one. */
+  exit: { label?: string; onPress: () => void }
+  /**
+   * Android's Back on the first page. On later pages Back turns back a page.
+   * Leave unset where the host handles Back itself.
+   */
+  onBackFromStart?: () => void
 }
 
 /**
- * The update's tour: a page per feature, swiped or stepped through with Next.
- * It ends on sharing the app with friends on Android, so that page's main
- * action is Share, with Done beneath it.
+ * A tour of features: a page each, swiped or stepped through with Next. The
+ * update reveal's ends on sharing the app with friends on Android, so its last
+ * action is Share with Done beneath it; onboarding's ends on setting up.
  */
 const RevealTour = ({
   pages,
-  moreTiles,
   palette,
   time,
   reduceMotion,
   onPageViewed,
-  onDone,
-  onClose,
+  finish,
+  finishLink,
+  exit,
+  onBackFromStart,
 }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -84,6 +94,24 @@ const RevealTour = ({
     if (last) return
     scrollRef.current?.scrollTo({ x: (index + 1) * width, animated: true })
   }
+
+  // Registered again on every render so it reads the current page.
+  useEffect(() => {
+    if (!onBackFromStart) return
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        if (index === 0) onBackFromStart()
+        else
+          scrollRef.current?.scrollTo({
+            x: (index - 1) * width,
+            animated: true,
+          })
+        return true
+      }
+    )
+    return () => subscription.remove()
+  })
 
   const linkStyle = useAnimatedStyle(() => ({
     opacity: withTiming(last ? 1 : 0, { duration: 250 }),
@@ -126,14 +154,15 @@ const RevealTour = ({
           ))}
         </View>
         <Button
-          onPress={onClose}
+          onPress={exit.onPress}
           accessibilityRole='button'
-          accessibilityLabel={i18n.t('close')}
+          accessibilityLabel={exit.label ?? i18n.t('close')}
           hitSlop={10}
           style={{
-            width: 34,
+            minWidth: 34,
             height: 34,
             borderRadius: 17,
+            paddingHorizontal: exit.label ? 14 : 0,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: palette.surface,
@@ -141,7 +170,20 @@ const RevealTour = ({
             borderColor: palette.surfaceBorder,
           }}
         >
-          <LucideIcon icon={XIcon} size={17} color={palette.text} />
+          {exit.label ? (
+            <Text
+              maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
+              style={{
+                fontSize: 14,
+                fontFamily: theme.fonts.semiBold,
+                color: palette.text,
+              }}
+            >
+              {exit.label}
+            </Text>
+          ) : (
+            <LucideIcon icon={XIcon} size={17} color={palette.text} />
+          )}
         </Button>
       </View>
 
@@ -171,7 +213,6 @@ const RevealTour = ({
                 scrollX={scrollX}
                 active={i === index}
                 palette={palette}
-                moreTiles={moreTiles}
                 reduceMotion={reduceMotion}
               />
             ))}
@@ -189,35 +230,37 @@ const RevealTour = ({
         }}
       >
         <WelcomeCta
-          label={i18n.t(last ? 'updateReveal_shareLink' : 'updateReveal_next')}
-          onPress={last ? () => shareApp('update_reveal') : next}
+          label={last ? finish.label : i18n.t('updateReveal_next')}
+          onPress={last ? finish.onPress : next}
           time={time}
           palette={palette}
           reduceMotion={reduceMotion}
         />
-        <Animated.View
-          style={[{ marginTop: 10, alignItems: 'center' }, linkStyle]}
-          pointerEvents={last ? 'auto' : 'none'}
-        >
-          <Button
-            onPress={onDone}
-            accessibilityRole='button'
-            accessibilityElementsHidden={!last}
-            importantForAccessibility={last ? 'auto' : 'no-hide-descendants'}
-            style={{ paddingVertical: 10, paddingHorizontal: 16 }}
+        {finishLink && (
+          <Animated.View
+            style={[{ marginTop: 10, alignItems: 'center' }, linkStyle]}
+            pointerEvents={last ? 'auto' : 'none'}
           >
-            <Text
-              maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
-              style={{
-                fontSize: 15,
-                fontFamily: theme.fonts.medium,
-                color: palette.textAlt,
-              }}
+            <Button
+              onPress={finishLink.onPress}
+              accessibilityRole='button'
+              accessibilityElementsHidden={!last}
+              importantForAccessibility={last ? 'auto' : 'no-hide-descendants'}
+              style={{ paddingVertical: 10, paddingHorizontal: 16 }}
             >
-              {i18n.t('done')}
-            </Text>
-          </Button>
-        </Animated.View>
+              <Text
+                maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
+                style={{
+                  fontSize: 15,
+                  fontFamily: theme.fonts.medium,
+                  color: palette.textAlt,
+                }}
+              >
+                {finishLink.label}
+              </Text>
+            </Button>
+          </Animated.View>
+        )}
       </View>
     </View>
   )

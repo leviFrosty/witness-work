@@ -9,13 +9,19 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { usePreferences } from '@/stores/preferences'
+import useTheme from '@/contexts/theme'
 
 interface Props {
   goBack: () => void
   goNext: () => void
 }
 
+/**
+ * The first question, once the tour has shown what the app does: it opens
+ * personalizing, so it carries that heading above the question.
+ */
 const StepTwo = ({ goBack, goNext }: Props) => {
+  const theme = useTheme()
   const { role } = usePreferences()
   // Reflect the user's just-made selection in the CTA. For 'custom' the role
   // label would be "Custom" which isn't meaningful as a subject — fall back
@@ -47,6 +53,18 @@ const StepTwo = ({ goBack, goNext }: Props) => {
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
+              <Text
+                accessibilityRole='header'
+                style={{
+                  fontSize: 13,
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.accent,
+                  letterSpacing: 0.4,
+                  marginBottom: 8,
+                }}
+              >
+                {i18n.t('profileSetupTitle')}
+              </Text>
               <View
                 style={{
                   flexDirection: 'row',

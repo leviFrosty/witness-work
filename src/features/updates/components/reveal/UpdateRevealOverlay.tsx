@@ -13,6 +13,8 @@ import Animated, {
 import { useIsFocused } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
+import i18n from '@/lib/locales'
+import { shareApp } from '@/lib/shareApp'
 import { usePreferences } from '@/stores/preferences'
 import { useTakeover } from '@/stores/takeover'
 import LaunchSplash, { splashMarkWidth } from '@/app/launch/LaunchSplash'
@@ -62,7 +64,7 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
   const window = useWindowDimensions()
   const reduceMotion = useReducedMotion()
   const { set } = usePreferences()
-  const { pages: livePages, chips, moreTiles } = useRevealPages()
+  const { pages: livePages, chips } = useRevealPages()
 
   // Developer Tools previews the launch version over the running app.
   const [entrance] = useState<RevealEntrance>(() =>
@@ -265,7 +267,6 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
         <Animated.View style={[{ flex: 1 }, tourStyle]}>
           <RevealTour
             pages={pages}
-            moreTiles={moreTiles}
             palette={palette}
             time={time}
             reduceMotion={reduceMotion}
@@ -273,8 +274,15 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
               viewed.current.add(id)
               lastPage.current = id
             }}
-            onDone={() => finish('done')}
-            onClose={() => finish('close')}
+            finish={{
+              label: i18n.t('updateReveal_shareLink'),
+              onPress: () => shareApp('update_reveal'),
+            }}
+            finishLink={{
+              label: i18n.t('done'),
+              onPress: () => finish('done'),
+            }}
+            exit={{ onPress: () => finish('close') }}
           />
         </Animated.View>
       )}

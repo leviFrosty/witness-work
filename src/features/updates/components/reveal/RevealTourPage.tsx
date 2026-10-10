@@ -18,28 +18,12 @@ import {
   EASE_OUT,
 } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
-import {
-  RevealMoreTile,
-  RevealPage,
-} from '@/features/updates/hooks/useRevealPages'
+import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import {
   IconTile,
   VISUAL,
 } from '@/features/updates/components/reveal/visuals/kit'
-import NavigationVisual from '@/features/updates/components/reveal/visuals/NavigationVisual'
-import MapVisual from '@/features/updates/components/reveal/visuals/MapVisual'
-import BuddiesVisual from '@/features/updates/components/reveal/visuals/BuddiesVisual'
-import BadgesVisual from '@/features/updates/components/reveal/visuals/BadgesVisual'
-import NotificationsVisual from '@/features/updates/components/reveal/visuals/NotificationsVisual'
-import HomeVisual from '@/features/updates/components/reveal/visuals/HomeVisual'
-import ContactsVisual from '@/features/updates/components/reveal/visuals/ContactsVisual'
-import YearPaceVisual from '@/features/updates/components/reveal/visuals/YearPaceVisual'
-import MileageVisual from '@/features/updates/components/reveal/visuals/MileageVisual'
-import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
 import MoreVisual from '@/features/updates/components/reveal/visuals/MoreVisual'
-import WatchVisual from '@/features/updates/components/reveal/visuals/WatchVisual'
-import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
-import AndroidShareVisual from '@/features/updates/components/reveal/visuals/AndroidShareVisual'
 
 /** How small or large an illustration may draw to fill its stage. */
 const VISUAL_SCALE = { min: 0.62, max: 1.5 }
@@ -55,7 +39,6 @@ interface Props {
   scrollX: SharedValue<number>
   active: boolean
   palette: WelcomePalette
-  moreTiles: RevealMoreTile[]
   reduceMotion: boolean
 }
 
@@ -72,7 +55,6 @@ const RevealTourPage = ({
   scrollX,
   active,
   palette,
-  moreTiles,
   reduceMotion,
 }: Props) => {
   const theme = useTheme()
@@ -163,24 +145,11 @@ const RevealTourPage = ({
               visualStyle,
             ]}
           >
-            {page.id === 'navigation' && <NavigationVisual {...visualProps} />}
-            {page.id === 'map' && <MapVisual {...visualProps} />}
-            {page.id === 'buddies' && <BuddiesVisual {...visualProps} />}
-            {page.id === 'badges' && <BadgesVisual {...visualProps} />}
-            {page.id === 'notifications' && (
-              <NotificationsVisual {...visualProps} />
+            {page.tiles ? (
+              <MoreVisual {...visualProps} tiles={page.tiles} />
+            ) : (
+              page.Visual && <page.Visual {...visualProps} />
             )}
-            {page.id === 'home' && <HomeVisual {...visualProps} />}
-            {page.id === 'contacts' && <ContactsVisual {...visualProps} />}
-            {page.id === 'year' && <YearPaceVisual {...visualProps} />}
-            {page.id === 'mileage' && <MileageVisual {...visualProps} />}
-            {page.id === 'calendar' && <CalendarVisual {...visualProps} />}
-            {page.id === 'watch' && <WatchVisual {...visualProps} />}
-            {page.id === 'siri' && <SiriVisual {...visualProps} />}
-            {page.id === 'more' && (
-              <MoreVisual {...visualProps} tiles={moreTiles} />
-            )}
-            {page.id === 'android' && <AndroidShareVisual {...visualProps} />}
           </Animated.View>
         )}
       </View>

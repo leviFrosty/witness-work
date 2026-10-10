@@ -159,13 +159,26 @@ Back/jump/button micro-interactions and hero-animation skipping are dropped.
 A skipped step can also complete: completion means advancing, not filling every
 optional field. `elapsed_ms` includes background time and time on other screens.
 
-Stable step IDs: `hero`, `founderNote`, `privacyFirst`, `dataProtection`,
-`pickUpWhereLeftOff`, `publisherType`, `profileSetup`, `pioneerDate`, `planMonth`,
-`buddies`, `badges`, `notifications`, `calendarSync`, `defaultNav`,
-`defaultExportMethod`, `onboardingBackfill`. `badges` (added in 1.44) only
-introduces badges and has nothing to choose, so it sends just the step events.
+Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
+`publisherType`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,
+`notifications`, `calendarSync`, `defaultNav`, `defaultExportMethod`,
+`onboardingBackfill`, `profileSetup`, `founderNote`. The flow introduces the app
+before it asks for anything, asks for the name last, and ends on the founder
+note.
 `intentPicker` and `yourPlanPreview` were retired in October 2026 when `planMonth`
-replaced them; compare funnels across that change by step, not position.
+replaced them. `privacyFirst` and `badges` were retired in October 2026 when
+their content moved into `featureTour`; `profileSetup` moved from after
+`publisherType` to the end, and `founderNote` from after `hero` to the very
+end. Compare funnels across these changes by step, not
+position.
+
+`featureTour` is a paged tour of the app, shown right after `hero`. Its question
+is whether showing the features first keeps people in setup, and how much of it
+they watch. Leaving it sends `onboarding_tour_closed` with `method` (`finished`
+from the last page, `skipped`, or `back` to the welcome), `pages_viewed`,
+`page_count`, `last_page` (a bounded page id such as `track`, `plan`, `siri` or
+`more`), and `elapsed_ms`. Skip also sends `onboarding_step_skipped`. Individual
+page views are not captured.
 
 `planMonth` only appears for publishers who log hours and have a monthly goal.
 Its question is whether hands-on planning lands: adding the plan sends
@@ -178,7 +191,9 @@ the step. Exclude `source: onboarding` when measuring the Schedule Assistant.
 
 `buddies` only appears where Buddies is available (iOS builds with the Keychain
 module and the `buddies` flag on). Its question is whether introducing Buddies
-during setup leads people to invite a buddy, and what gets in the way. Its
+during setup leads people to invite a buddy, and what gets in the way. The
+name comes at the end of setup, so a buddy invite without one first asks for it
+on the step and reports `name_required` only if the invite still fails. Its
 `onboarding_step_completed` carries `selected_option`: `invited` when the step
 created a Buddies Invite (the share sheet opened), else `skipped`; Continue
 without inviting also sends `onboarding_step_skipped`. Each invite attempt sends

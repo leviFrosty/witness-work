@@ -125,7 +125,11 @@ const useScene = (loop: DerivedValue<number>) => {
 const useTap = (scene: DerivedValue<number>, at: number) =>
   useDerivedValue(() => seg(scene.value, at, at + 0.07))
 
-const HoursWatch = ({ palette, active, reduceMotion }: RevealVisualProps) => {
+export const HoursWatch = ({
+  palette,
+  active,
+  reduceMotion,
+}: RevealVisualProps) => {
   const theme = useTheme()
   const accent = theme.colors.accent
   const { timeDisplayFormat } = usePreferences()

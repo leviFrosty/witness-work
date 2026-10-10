@@ -8,6 +8,7 @@ import Text from '@/components/ui/MyText'
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
+import { openLinksMenuItem } from '@/components/openLinksMenuItem'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
@@ -81,7 +82,11 @@ export function useLinkActions() {
     },
   ]
 
-  return { open, copy, copyText, share, menu }
+  /** Open Link for a note whose links render as plain content. */
+  const openLinksItem = (text: string | null | undefined) =>
+    openLinksMenuItem(text, open)
+
+  return { open, copy, copyText, share, menu, openLinksItem }
 }
 
 interface Props {
@@ -157,7 +162,7 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
           <LinkIcon size={18} color={theme.colors.textAlt} />
         )}
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 2 }}>
         <Text
           numberOfLines={2}
           style={{

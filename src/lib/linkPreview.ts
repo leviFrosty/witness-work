@@ -111,6 +111,73 @@ export function splitTextWithLinks(text: string): TextSegment[] {
   return segments
 }
 
+const MAX_NOTE_CARDS = 3
+
+/** Tidies the gaps left behind after links are lifted out into cards. */
+function collapseWhitespace(parts: TextSegment[]): TextSegment[] {
+  const tidied = parts
+    .map((part) =>
+      part.type === 'text'
+        ? {
+            ...part,
+            text: part.text
+              .replace(/[ \t]{2,}/g, ' ')
+              .replace(/[ \t]+\n/g, '\n')
+              .replace(/\n[ \t]+/g, '\n')
+              .replace(/\n{3,}/g, '\n\n'),
+          }
+        : part
+    )
+    .filter((part) => part.type === 'link' || part.text.length > 0)
+
+  const first = tidied[0]
+  if (first?.type === 'text') first.text = first.text.trimStart()
+  const last = tidied[tidied.length - 1]
+  if (last?.type === 'text') last.text = last.text.trimEnd()
+  return tidied.filter((part) => part.type === 'link' || part.text.length > 0)
+}
+
+/**
+ * Splits a note for `RichNoteText`: its first links become preview cards, and
+ * the rest of the note stays as text (with any further links inline).
+ */
+export function splitNoteForCards(text: string): {
+  cardUrls: string[]
+  parts: TextSegment[]
+} {
+  const cardUrls = findLinks(text).slice(0, MAX_NOTE_CARDS)
+  if (cardUrls.length === 0) {
+    return { cardUrls, parts: [{ type: 'text', text }] }
+  }
+
+  const cardSet = new Set(cardUrls)
+  const merged: TextSegment[] = []
+  for (const segment of splitTextWithLinks(text)) {
+    const part: TextSegment =
+      segment.type === 'link' && cardSet.has(segment.url)
+        ? { type: 'text', text: ' ' }
+        : segment
+    const previous = merged[merged.length - 1]
+    if (part.type === 'text' && previous?.type === 'text') {
+      previous.text += part.text
+    } else {
+      merged.push({ ...part })
+    }
+  }
+  return { cardUrls, parts: collapseWhitespace(merged) }
+}
+
+/**
+ * The text `RichNoteText` sets above its cards, for hosts that measure the note
+ * (e.g. to decide whether a clamp hides anything). Empty when the note is only
+ * links.
+ */
+export function noteTextAroundCards(text: string): string {
+  return splitNoteForCards(text)
+    .parts.map((part) => (part.type === 'text' ? part.text : part.url))
+    .join('')
+}
+
 export function isHttpUrl(url: string): boolean {
   return /^https?:\/\/[^\s/?#]+/i.test(url)
 }

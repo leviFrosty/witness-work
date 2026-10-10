@@ -66,7 +66,6 @@ export default function ScheduleCalendarStage({
     onEndReached,
     zoomOut,
     zoomIn,
-    showMonth,
     monthNear,
     jumpToToday,
     changeServiceYear,
@@ -119,9 +118,7 @@ export default function ScheduleCalendarStage({
             onPressServiceYear={(serviceYear) =>
               zoomOut('divider', serviceYear)
             }
-            onPressMeter={(month, focused) =>
-              focused ? onOpenOverview(month) : showMonth(month)
-            }
+            onPressMeter={onOpenOverview}
             editableGoal={editableGoal}
             onEditGoal={onEditGoal}
             onStartReached={onStartReached}

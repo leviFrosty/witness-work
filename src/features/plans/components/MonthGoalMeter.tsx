@@ -1,11 +1,13 @@
 import moment from 'moment'
 import { View } from 'react-native'
-import Animated from 'react-native-reanimated'
 import ContextMenu from '@/components/ui/ContextMenu'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
+import useScheduleStatus from '@/hooks/useScheduleStatus'
+import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact, useFormattedMinutes } from '@/lib/minutes'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
@@ -13,23 +15,19 @@ import type { CalendarMonth } from '@/lib/monthlyGoals'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
 
 type Props = CalendarMonth & {
-  /** The month the calendar is scrolled to. */
-  focused: boolean
   onPress: () => void
   /** Long-press shortcut; absent when the month's goal can't change. */
   onEditGoal?: () => void
 }
 
 /**
- * One month's goal at a glance above the Schedule's calendar: logged and
- * planned time against the Monthly Goal, and what's left to plan. Two sit side
- * by side, the focused month and the next one, since publishers plan both at
- * once.
+ * The focused month's goal at a glance above the Schedule's calendar: logged
+ * and planned time against the Monthly Goal, what's left to plan, and whether
+ * logged time keeps up with the Plans so far, which the day colors show too.
  */
 export default function MonthGoalMeter({
   year,
   month,
-  focused,
   onPress,
   onEditGoal,
 }: Props) {
@@ -49,6 +47,24 @@ export default function MonthGoalMeter({
   )
   const planned = useFormattedMinutes(projection.plannedMinutes)
   const logged = useFormattedMinutes(projection.loggedMinutes)
+  const schedule = useScheduleStatus({ month, year })
+  const { color: paceColor, icon: paceIcon } =
+    useScheduleStatusPresentation(schedule)
+  const paceDifference = useFormattedMinutes(
+    Math.abs(schedule.differenceMinutes)
+  )
+  const pace =
+    schedule.state === 'behind'
+      ? i18n.t('scheduleCalendar.behindPlan', {
+          value: paceDifference.formatted,
+        })
+      : schedule.state === 'ahead'
+        ? i18n.t('scheduleCalendar.aheadOfPlan', {
+            value: paceDifference.formatted,
+          })
+        : schedule.state === 'onTrack'
+          ? i18n.t('scheduleCalendar.onPlan')
+          : undefined
 
   const name = moment({ year, month, day: 1 }).format(
     year === today.getFullYear() ? 'MMMM' : 'MMM YYYY'
@@ -85,11 +101,13 @@ export default function MonthGoalMeter({
         },
       ]}
       onPress={onPress}
-      accessibilityLabel={`${name}. ${amount}. ${status}`}
+      accessibilityLabel={[name, amount, status, pace]
+        .filter(Boolean)
+        .join('. ')}
       hoverRadius={theme.numbers.borderRadiusLg}
       style={{ flex: 1 }}
     >
-      <Animated.View
+      <View
         style={{
           gap: 7,
           paddingHorizontal: 12,
@@ -97,11 +115,8 @@ export default function MonthGoalMeter({
           borderRadius: theme.numbers.borderRadiusLg,
           borderCurve: 'continuous',
           borderWidth: 1.5,
-          borderColor: focused ? theme.colors.accent : theme.colors.border,
+          borderColor: theme.colors.accent,
           backgroundColor: theme.colors.card,
-          opacity: focused ? 1 : 0.62,
-          transitionProperty: ['opacity', 'borderColor'],
-          transitionDuration: 220,
         }}
       >
         <View
@@ -143,17 +158,50 @@ export default function MonthGoalMeter({
           }
           height={6}
         />
-        <Text
-          numberOfLines={1}
+        <View
           style={{
-            fontSize: theme.fontSize('xs'),
-            fontFamily: theme.fonts.semiBold,
-            color: met ? theme.colors.accent : theme.colors.textAlt,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
           }}
         >
-          {status}
-        </Text>
-      </Animated.View>
+          <Text
+            numberOfLines={1}
+            style={{
+              flexShrink: 1,
+              fontSize: theme.fontSize('xs'),
+              fontFamily: theme.fonts.semiBold,
+              color: met ? theme.colors.accent : theme.colors.textAlt,
+            }}
+          >
+            {status}
+          </Text>
+          {pace && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                flexShrink: 1,
+              }}
+            >
+              <LucideIcon icon={paceIcon} color={paceColor} size={13} />
+              <Text
+                numberOfLines={1}
+                style={{
+                  flexShrink: 1,
+                  fontSize: theme.fontSize('xs'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: paceColor,
+                }}
+              >
+                {pace}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
     </ContextMenu>
   )
 }

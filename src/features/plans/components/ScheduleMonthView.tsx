@@ -11,7 +11,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
-import { addCalendarMonths } from '@/lib/roleHistory'
 import useServiceReport from '@/stores/serviceReport'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import MonthGoalMeter from '@/features/plans/components/MonthGoalMeter'
@@ -49,7 +48,7 @@ type Props = {
   onListLayout: (frame: LayoutRectangle) => void
   onPressDay: (date: Date) => void
   onPressServiceYear: (serviceYear: number) => void
-  onPressMeter: (month: CalendarMonth, focused: boolean) => void
+  onPressMeter: (month: CalendarMonth) => void
   editableGoal: (month: CalendarMonth) => boolean
   onEditGoal: (month: CalendarMonth) => void
   onStartReached: () => void
@@ -57,8 +56,8 @@ type Props = {
 }
 
 /**
- * The Schedule's Month view: this month's and next month's goals over one
- * continuous week grid that scrolls through months without paging.
+ * The Schedule's Month view: the focused month's goal over one continuous week
+ * grid that scrolls through months without paging.
  */
 export default function ScheduleMonthView({
   schedule,
@@ -90,32 +89,24 @@ export default function ScheduleMonthView({
   const weekdayLabels = weekdays.map(
     (_, column) => weekdays[(column + startOfWeek) % 7]
   )
-  const meterMonths = [focusedMonth, addCalendarMonths(focusedMonth, 1)]
 
   return (
     <View style={{ flex: 1 }}>
       <Animated.View
         style={[
-          {
-            flexDirection: 'row',
-            gap: 10,
-            paddingHorizontal: 15,
-            paddingBottom: 6,
-          },
+          { flexDirection: 'row', paddingHorizontal: 15, paddingBottom: 6 },
           chromeStyle,
         ]}
       >
-        {meterMonths.map((month, i) => (
-          <MonthGoalMeter
-            key={i}
-            {...month}
-            focused={i === 0}
-            onPress={() => onPressMeter(month, i === 0)}
-            onEditGoal={
-              editableGoal(month) ? () => onEditGoal(month) : undefined
-            }
-          />
-        ))}
+        <MonthGoalMeter
+          {...focusedMonth}
+          onPress={() => onPressMeter(focusedMonth)}
+          onEditGoal={
+            editableGoal(focusedMonth)
+              ? () => onEditGoal(focusedMonth)
+              : undefined
+          }
+        />
       </Animated.View>
       <Animated.View
         style={[{ flex: 1 }, zoomStyle]}

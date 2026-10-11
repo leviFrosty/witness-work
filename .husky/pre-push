@@ -1,3 +1,5 @@
+# A v* release tag needs the user's typed go-ahead (scripts/release-confirm.mjs).
+node ./scripts/release-confirm.mjs --pre-push
 pnpm run deps
 pnpm run lint
 pnpm run testFinal

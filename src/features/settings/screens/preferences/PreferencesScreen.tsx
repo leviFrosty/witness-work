@@ -2,6 +2,7 @@ import {
   Calendar1 as Calendar1Icon,
   ChevronRight as ChevronRightIcon,
   FileOutput as FileOutputIcon,
+  Flame as FlameIcon,
   Globe as GlobeIcon,
   House as HouseIcon,
   LayoutGrid as LayoutGridIcon,
@@ -107,6 +108,15 @@ const PreferencesScreen = () => {
                 leftIcon={Calendar1Icon}
                 label={i18n.t('milestoneSecondary_schedule_title')}
                 onPress={() => navigation.navigate('PreferencesScheduleScreen')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={FlameIcon}
+                label={i18n.t('streaksAndBadges')}
+                onPress={() =>
+                  navigation.navigate('PreferencesStreaksAndBadges')
+                }
               >
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>

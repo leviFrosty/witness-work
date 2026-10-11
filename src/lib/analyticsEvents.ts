@@ -25,6 +25,7 @@ export const analyticsEventNames = [
   'service_report_exported',
   'streak_milestone_reached',
   'streak_reminders_changed',
+  'streaks_setting_changed',
   'time_entry_created',
   'time_entry_deleted',
   'time_entry_updated',

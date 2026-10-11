@@ -8,6 +8,7 @@ import {
 import moment from 'moment'
 import { formatTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import { serviceStreakFor } from '@/lib/currentServiceStreak'
+import { streakRemindersOn } from '@/lib/serviceStreak'
 import i18n from '@/lib/locales'
 import { reminderContent } from '@/lib/reminderContent'
 import { formatMinutes } from '@/lib/minutes'
@@ -106,7 +107,7 @@ export default function useReminderNotifications(
   const role = usePreferences((s) => s.role)
   const roleHistory = usePreferences((s) => s.roleHistory)
   const logsHours = usePreferences((s) => s.logsHours)
-  const streakReminders = usePreferences((s) => s.streakReminders)
+  const streakReminders = usePreferences(streakRemindersOn)
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   const open = (reminder: LocalReminder) => () =>

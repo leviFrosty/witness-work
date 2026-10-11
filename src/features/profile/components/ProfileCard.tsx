@@ -93,15 +93,21 @@ interface Props {
  */
 const ProfileCard = ({ readOnly, hideBadges }: Props) => {
   const theme = useTheme()
-  const { installedOn, tenureStartDate, earnedBadges, showBadges } =
-    usePreferences(
-      useShallow((s) => ({
-        installedOn: s.installedOn,
-        tenureStartDate: s.tenureStartDate,
-        earnedBadges: s.earnedBadges,
-        showBadges: s.showBadges,
-      }))
-    )
+  const {
+    installedOn,
+    tenureStartDate,
+    earnedBadges,
+    showBadges,
+    showStreaks,
+  } = usePreferences(
+    useShallow((s) => ({
+      installedOn: s.installedOn,
+      tenureStartDate: s.tenureStartDate,
+      earnedBadges: s.earnedBadges,
+      showBadges: s.showBadges,
+      showStreaks: s.showStreaks,
+    }))
+  )
   const badges = showBadges && !hideBadges ? profileBadges(earnedBadges) : []
   // Profile-shaped fields live in the Profile store (wave-3 store split).
   // ProfileCard reads + writes both stores because the card is the editing
@@ -110,7 +116,8 @@ const ProfileCard = ({ readOnly, hideBadges }: Props) => {
   const { name: trimmedName } = useUser()
   const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
-  const streak = shownStreak(useServiceStreak())
+  const serviceStreak = shownStreak(useServiceStreak())
+  const streak = showStreaks ? serviceStreak : 0
 
   const tenure: Tenure = (() => {
     if (isInFullTimeService && tenureStartDate) {

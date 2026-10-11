@@ -16,6 +16,7 @@ import {
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
+import { usePreferences } from '@/stores/preferences'
 
 /**
  * A buddy on the same card as the User's own Profile. Under a nickname, their
@@ -25,7 +26,8 @@ import type { Buddy } from '@/features/buddies/lib/state'
 export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
   const name = buddyDisplayName(buddy)
-  const streak = buddyStreakCount(buddy.streak)
+  const showStreaks = usePreferences((state) => state.showStreaks)
+  const streak = showStreaks ? buddyStreakCount(buddy.streak) : 0
   const details: ProfileCardDetail[] = [
     buddy.tenure && {
       icon: StarIcon,

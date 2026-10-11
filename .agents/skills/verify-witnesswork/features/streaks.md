@@ -6,9 +6,10 @@ A flame and a count show how consistently the User keeps their plans: planned da
 
 - `streak-chip` shows the count in Home's header, and a countdown once it's about to end. Tapping it opens a short popover: when a day is due, one line naming it with Add Time; always How Streaks Work, which opens the Help Center's Streaks section.
 - `streak-celebration` is the milestone overlay, within 15 s of the User logging the day, as a takeover (one at a time; see badges.md).
-- `streak-reminder` is the "Your Streak Is About to End" reminder: a tray item, plus a local notification at 6 PM on the last day. Preferences → Plans → Streak Reminders turns it off.
+- `streak-reminder` is the "Your Streak Is About to End" reminder: a tray item, plus a local notification at 6 PM on the last day. Preferences → Streaks & Badges → Streak Reminders turns it off.
 - `streak-profile` is the badge on the Profile card and the overlay's Streak stat ("Plans kept" or "Months in a row").
 - `streak-buddies` covers the badge in the Buddies list and on the buddy's detail card, plus Buddies Settings → Streak.
+- `streak-setting`: the "Show streak" switch on Settings → Preferences → "Streaks & Badges" (`showStreaks`) hides the streak everywhere: the Home chip and the greeting's days in a row, the Profile card, buddies' streaks, celebrations, Streak Reminders (their row too) and the intro's streak pages. It stops sharing the streak in Buddy Cards and hides Buddies Settings → Streak.
 - `schedule-intro` is the 3-page intro (4 where Buddies shows) that ends on Plan a Day.
 
 ## How to get to it (user POV)
@@ -17,7 +18,7 @@ A flame and a count show how consistently the User keeps their plans: planned da
 - Account menu → Profile.
 - Schedule tab, first visit; afterwards, the "?" in Schedule's header.
 - Schedule → Buddies, and Buddies → ••• → Buddies Settings.
-- Settings → Preferences → Plans.
+- Settings → Preferences → Streaks & Badges (Show streak, Streak Reminders).
 
 ## Driving it with ww-verify
 

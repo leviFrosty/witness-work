@@ -24,12 +24,14 @@ const HomeGreeting = () => {
   const year = now.getFullYear()
   const { type: role, showsTimeEntry } = usePublisher({ month, year })
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
-    useShallow((s) => ({
-      overrideCreditLimit: s.overrideCreditLimit,
-      customCreditLimitHours: s.customCreditLimitHours,
-    }))
-  )
+  const { overrideCreditLimit, customCreditLimitHours, showStreaks } =
+    usePreferences(
+      useShallow((s) => ({
+        overrideCreditLimit: s.overrideCreditLimit,
+        customCreditLimitHours: s.customCreditLimitHours,
+        showStreaks: s.showStreaks,
+      }))
+    )
   const { serviceReports } = useServiceReport()
   const daily = useDailyMinutes()
 
@@ -56,7 +58,7 @@ const HomeGreeting = () => {
 
   const greeting = pickGreeting({
     now,
-    streakDays: consecutiveDaysStreak(daily, now),
+    streakDays: showStreaks ? consecutiveDaysStreak(daily, now) : 0,
     goalReached,
   })
 

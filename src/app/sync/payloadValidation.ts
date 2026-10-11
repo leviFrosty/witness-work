@@ -388,6 +388,7 @@ const preferenceShapes = z
       .optional(),
     badgeLedger: z.array(z.string()).optional(),
     showBadges: z.boolean().optional(),
+    showStreaks: z.boolean().optional(),
     mileageTrackingEnabled: z.boolean().optional(),
     distanceUnit: z.enum(['mi', 'km']).optional(),
     fuelEconomyUnit: z

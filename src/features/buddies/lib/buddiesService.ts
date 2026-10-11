@@ -28,11 +28,12 @@ import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 
 /**
  * The Service Streak buddies see, once it's long enough to show, with the last
- * day it lasts unless more service is logged.
+ * day it lasts unless more service is logged. None while streaks are hidden.
  */
 export function currentBuddyStreak(
   now: Date = new Date()
 ): BuddyStreak | undefined {
+  if (!usePreferences.getState().showStreaks) return undefined
   const streak = currentServiceStreak(now)
   const n = shownStreak(streak)
   return n > 0 ? { n, until: streakLastsThrough(streak, now) } : undefined

@@ -313,8 +313,8 @@ export default function BuddiesRuntime() {
         void refreshAvatar().then(schedulePublish)
     })
     // So do Tenure, the streak (counted by the role), and earned badges;
-    // Badges switched off withdraws them, and with them this device's badge
-    // alerts.
+    // streaks or badges switched off withdraws them, and badges off this
+    // device's badge alerts too.
     const preferences = usePreferences.subscribe((state, previous) => {
       if (
         state.role !== previous.role ||
@@ -322,6 +322,7 @@ export default function BuddiesRuntime() {
         state.tenureStartDate !== previous.tenureStartDate ||
         state.earnedBadges !== previous.earnedBadges ||
         state.showBadges !== previous.showBadges ||
+        state.showStreaks !== previous.showStreaks ||
         state.dataProtectionMode !== previous.dataProtectionMode
       )
         schedulePublish()

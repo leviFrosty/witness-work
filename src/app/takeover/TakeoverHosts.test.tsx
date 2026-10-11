@@ -64,6 +64,7 @@ vi.mock('@/stores/preferences', async () => {
   type Prefs = {
     badgesWelcome: 'pending' | 'done' | null
     showBadges: boolean
+    showStreaks: boolean
     badgeCardDismissed: string[]
     set: (patch: Partial<Prefs>) => void
     dismissBadgeCard: (keys: string[]) => void
@@ -71,6 +72,7 @@ vi.mock('@/stores/preferences', async () => {
   const usePreferences = create<Prefs>((set) => ({
     badgesWelcome: null,
     showBadges: true,
+    showStreaks: true,
     badgeCardDismissed: [],
     set: (patch) => set(patch),
     dismissBadgeCard: (keys) =>
@@ -202,6 +204,7 @@ beforeEach(() => {
   usePreferences.setState({
     badgesWelcome: null,
     showBadges: true,
+    showStreaks: true,
     badgeCardDismissed: [],
   })
 })
@@ -294,6 +297,26 @@ describe('takeover hosts (ADR 0021)', () => {
     expect(useBadgeSession.getState().celebrations).toEqual([])
     await act(async () => props('streak-celebration').onDone())
     await advance(5000)
+    expect(onScreen()).toBeNull()
+  })
+
+  it('marks growth seen without a celebration while streaks are hidden', async () => {
+    usePreferences.setState({ showStreaks: false })
+    await mount()
+    noteUserAction('time')
+    runtime.streak = { kind: 'plans', count: 5, latest: '2026-10-08' }
+    await rerender()
+    await advance(2000)
+    expect(onScreen()).toBeNull()
+    expect(useStreakCelebration.getState()).toMatchObject({
+      celebrating: null,
+      grewAt: 0,
+      seen: { kind: 'plans', latest: '2026-10-08' },
+    })
+    // Back on, the growth it already saw isn't celebrated late.
+    usePreferences.setState({ showStreaks: true })
+    await rerender()
+    await advance(2000)
     expect(onScreen()).toBeNull()
   })
 

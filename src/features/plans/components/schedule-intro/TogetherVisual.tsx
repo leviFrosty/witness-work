@@ -25,6 +25,7 @@ import {
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
 import { Face } from '@/features/plans/components/schedule-intro/introKit'
+import { usePreferences } from '@/stores/preferences'
 
 const CARD = { top: 150, height: 110 }
 const STACK = { x: 16, y: CARD.top + 62, size: 30, step: 22 }
@@ -39,7 +40,7 @@ const JOIN_ORDER = [1, 0, 2]
 
 /**
  * Together: you and two buddies, each with a streak, joining one Plan; then
- * every streak flares at once.
+ * every streak flares at once. Without streaks shown, just the three join.
  */
 const TogetherVisual = ({
   palette,
@@ -47,6 +48,7 @@ const TogetherVisual = ({
   reduceMotion,
 }: RevealVisualProps) => {
   const theme = useTheme()
+  const showStreaks = usePreferences((state) => state.showStreaks)
   const { intro, loop } = useVisualClock({
     active,
     reduceMotion,
@@ -125,6 +127,7 @@ const TogetherVisual = ({
           flare={flare}
           textColor={theme.colors.orange}
           pill={theme.colors.orangeTranslucent}
+          streak={showStreaks}
         />
       ))}
     </View>
@@ -167,8 +170,8 @@ function GoingLabel({
 }
 
 /**
- * A person with their streak. They pop in, then a copy of them travels into the
- * Plan's row of faces.
+ * A person with their streak, if shown. They pop in, then a copy of them
+ * travels into the Plan's row of faces.
  */
 function Person({
   index,
@@ -180,6 +183,7 @@ function Person({
   flare,
   textColor,
   pill,
+  streak,
 }: {
   index: number
   color: string
@@ -190,6 +194,7 @@ function Person({
   flare: DerivedValue<number>
   textColor: string
   pill: string
+  streak: boolean
 }) {
   const theme = useTheme()
   const person = PEOPLE[index]
@@ -243,46 +248,48 @@ function Person({
       >
         <Face color={color} size={person.size} border={border} />
       </Animated.View>
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            left: person.x - 30,
-            top: person.y + person.size / 2 + 6,
-            width: 60,
-            alignItems: 'center',
-          },
-          streakStyle,
-        ]}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 3,
-            paddingHorizontal: 7,
-            paddingVertical: 2,
-            borderRadius: 999,
-            backgroundColor: pill,
-          }}
+      {streak && (
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              left: person.x - 30,
+              top: person.y + person.size / 2 + 6,
+              width: 60,
+              alignItems: 'center',
+            },
+            streakStyle,
+          ]}
         >
-          <LucideIcon
-            icon={FlameIcon}
-            size={12}
-            color={textColor}
-            fill={textColor}
-          />
-          <VisualText
+          <View
             style={{
-              fontSize: 12,
-              fontFamily: theme.fonts.bold,
-              color: textColor,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 3,
+              paddingHorizontal: 7,
+              paddingVertical: 2,
+              borderRadius: 999,
+              backgroundColor: pill,
             }}
           >
-            {String(person.streak)}
-          </VisualText>
-        </View>
-      </Animated.View>
+            <LucideIcon
+              icon={FlameIcon}
+              size={12}
+              color={textColor}
+              fill={textColor}
+            />
+            <VisualText
+              style={{
+                fontSize: 12,
+                fontFamily: theme.fonts.bold,
+                color: textColor,
+              }}
+            >
+              {String(person.streak)}
+            </VisualText>
+          </View>
+        </Animated.View>
+      )}
       <Animated.View
         style={[
           {

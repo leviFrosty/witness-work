@@ -697,6 +697,7 @@
   "updateReveal_trayBody": "Коротко ознайомтеся з новинками.",
   "updateReveal_next": "Далі",
   "updateReveal_shareLink": "Поділитися посиланням",
+  "updateReveal_takeMeHome": "На головну",
   "updateReveal_pageOf": "Сторінка {{page}} з {{count}}",
   "updateReveal_tourCard": "Пройти ознайомлення",
   "updateReveal_navigation_title": "Простіша навігація",

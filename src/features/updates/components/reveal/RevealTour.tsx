@@ -50,8 +50,8 @@ interface Props {
 
 /**
  * A tour of features: a page each, swiped or stepped through with Next. The
- * update reveal's ends on sharing the app with friends on Android, so its last
- * action is Share with Done beneath it; onboarding's ends on setting up.
+ * update reveal's ends on sharing the app with friends, so its last action is
+ * Share with Done beneath it; onboarding's ends on setting up.
  */
 const RevealTour = ({
   pages,

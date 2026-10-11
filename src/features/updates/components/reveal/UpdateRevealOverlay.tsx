@@ -52,8 +52,8 @@ interface Props {
  * The update reveal: on the first launch after a big update, the splash
  * collapses into the app tile, its ring closes like an install finishing and
  * the new features burst out around it. "See what's new" opens a short tour — a
- * page per feature, mostly picture — that ends on sharing the app with friends
- * on Android.
+ * page per feature, mostly picture — that ends on sharing the app with
+ * friends.
  *
  * Mounted by `HomeTabStack` above the tabs, in the very first frame of a
  * launch, so it picks up exactly where the native splash leaves off.

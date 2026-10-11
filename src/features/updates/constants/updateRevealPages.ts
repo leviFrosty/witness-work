@@ -177,17 +177,6 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
     titleKey: 'updateReveal_more_title',
     captionKey: 'updateReveal_more_caption',
   },
-  {
-    id: 'android',
-    icon: SmartphoneIcon,
-    color: 'accent',
-    titleKey: 'updateReveal_android_title',
-    captionKey: 'updateReveal_android_caption',
-    android: {
-      titleKey: 'updateReveal_android_titleAndroid',
-      captionKey: 'updateReveal_android_captionAndroid',
-    },
-  },
 ]
 
 /** One tile on the "And so much more" page. */

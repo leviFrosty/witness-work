@@ -359,6 +359,31 @@ function isPayloadFilename(filename: string): boolean {
   return !isAccountFilename(filename)
 }
 
+/** Dropped payload fields that can own a cloud photo. */
+const PHOTO_OWNER_FIELD =
+  /^(contactStore\.(contacts|deletedContacts)|profileStore)\./
+
+/** Dropped-field lists already reported this launch, so each pull doesn't. */
+const reportedDroppedFields = new Set<string>()
+
+/**
+ * Reports the records and settings `parsePayload` dropped from a peer's file.
+ * Field names and codes only, never values.
+ */
+function reportDroppedFields(filename: string, fields: string[]): void {
+  const summary = fields.join(', ')
+  logger.warn(`${tag()} pullAndMerge: dropped unreadable entries`, {
+    filename,
+    fields: summary,
+  })
+  if (reportedDroppedFields.has(summary)) return
+  reportedDroppedFields.add(summary)
+  errorTracking.captureMessage('iCloudSync: dropped unreadable entries', {
+    level: 'warning',
+    fields: summary,
+  })
+}
+
 /**
  * Counts the flattened service reports across the year/month nesting. Used by
  * the diagnostic logs so we can spot size drift between local / remote / merged
@@ -1882,7 +1907,15 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   const unparsed: SyncDeviceFiles = {}
   for (const file of files) {
     if (file.filename === ownFilename) continue
-    const parsed = parsePayload(file.json)
+    let dropped: string[] = []
+    const parsed = parsePayload(file.json, (fields) => (dropped = fields))
+    if (dropped.length) {
+      reportDroppedFields(file.filename, dropped)
+      // GC judges photos by the contacts and profile it read; a dropped one
+      // could still own a photo.
+      if (dropped.some((field) => PHOTO_OWNER_FIELD.test(field)))
+        complete = false
+    }
     if (!parsed) {
       unparsed[file.filename] = unparsedDeviceFile(file, seenAt)
       complete = false

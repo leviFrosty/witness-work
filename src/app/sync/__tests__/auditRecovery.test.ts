@@ -7,7 +7,10 @@ import {
 import { reconcileSyncDefinitions } from '@/app/sync/definitionReconciliation'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
-import { payloadSchema, validSettingValues } from '@/app/sync/payloadValidation'
+import {
+  payloadSchema,
+  dropUnreadableSettings,
+} from '@/app/sync/payloadValidation'
 import { hasUnsafeKeys } from '@/lib/recordValidation'
 import { contactEditPatch, mayApplyGeocode } from '@/lib/contactEdits'
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
@@ -183,14 +186,17 @@ describe('clock and external payload boundaries', () => {
       hasUnsafeKeys(JSON.parse('{"values":{"__proto__":{"polluted":true}}}'))
     ).toBe(true)
     expect(
-      validSettingValues(
-        { roleHistory: { initial: 'publisher', changes: null } },
+      dropUnreadableSettings(
+        {
+          values: {
+            roleHistory: { initial: 'publisher', changes: null },
+            monthlyGoalOverrides: { '2026-09': 'bad' },
+          },
+          updatedAt: {},
+        },
         {}
       )
-    ).toBe(false)
-    expect(
-      validSettingValues({ monthlyGoalOverrides: { '2026-09': 'bad' } }, {})
-    ).toBe(false)
+    ).toEqual(['roleHistory', 'monthlyGoalOverrides'])
   })
   it('recognizes a profile-only photo restore', () => {
     const remote = payload()

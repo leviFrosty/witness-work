@@ -168,6 +168,38 @@ const customFieldDef = record.extend({
   archived: z.boolean().optional(),
   type: z.enum(['text', 'number', 'date', 'url']).optional(),
 })
+const category = record.extend({
+  name: z.string(),
+  isCredit: z.boolean(),
+  builtin: z.boolean().optional(),
+})
+const vehicle = record.extend({
+  name: z.string(),
+  archived: z.boolean().optional(),
+  createdAt: timestamp,
+})
+const fuel = record.extend({ name: z.string(), createdAt: timestamp })
+const fuelPrice = record.extend({
+  fuelId: id,
+  effectiveFrom: dateKey,
+  pricePerGallon: z.number().finite().nonnegative(),
+})
+const vehicleSetup = record.extend({
+  vehicleId: id,
+  effectiveFrom: dateKey,
+  fuelId: id.optional(),
+  milesPerGallon: z.number().finite().positive().optional(),
+})
+const trip = record.extend({
+  vehicleId: id,
+  date: dateKey,
+  distanceMiles: z.number().finite().nonnegative(),
+  roundTrip: z.boolean().optional(),
+  odometerStartMiles: z.number().finite().nonnegative().optional(),
+  odometerEndMiles: z.number().finite().nonnegative().optional(),
+  note: z.string().optional(),
+  createdAt: timestamp,
+})
 const values = z.object({
   values: z.record(z.unknown()),
   updatedAt: z.record(timestamp).optional().default({}),
@@ -213,59 +245,175 @@ export const payloadSchema = z.object({
   }),
   categoryStore: z
     .object({
-      categories: z.array(
-        record.extend({
-          name: z.string(),
-          isCredit: z.boolean(),
-          builtin: z.boolean().optional(),
-        })
-      ),
+      categories: z.array(category),
       deletedCategories: z.array(tombstone).optional(),
     })
     .optional(),
   mileageStore: z
     .object({
-      vehicles: z.array(
-        record.extend({
-          name: z.string(),
-          archived: z.boolean().optional(),
-          createdAt: timestamp,
-        })
-      ),
-      fuels: z.array(record.extend({ name: z.string(), createdAt: timestamp })),
-      fuelPrices: z.array(
-        record.extend({
-          fuelId: id,
-          effectiveFrom: dateKey,
-          pricePerGallon: z.number().finite().nonnegative(),
-        })
-      ),
-      vehicleSetups: z.array(
-        record.extend({
-          vehicleId: id,
-          effectiveFrom: dateKey,
-          fuelId: id.optional(),
-          milesPerGallon: z.number().finite().positive().optional(),
-        })
-      ),
-      trips: z.array(
-        record.extend({
-          vehicleId: id,
-          date: dateKey,
-          distanceMiles: z.number().finite().nonnegative(),
-          roundTrip: z.boolean().optional(),
-          odometerStartMiles: z.number().finite().nonnegative().optional(),
-          odometerEndMiles: z.number().finite().nonnegative().optional(),
-          note: z.string().optional(),
-          createdAt: timestamp,
-        })
-      ),
+      vehicles: z.array(vehicle),
+      fuels: z.array(fuel),
+      fuelPrices: z.array(fuelPrice),
+      vehicleSetups: z.array(vehicleSetup),
+      trips: z.array(trip),
       deletedMileageRecords: z.array(tombstone).optional(),
     })
     .optional(),
   preferencesStore: values,
   profileStore: values.optional(),
 })
+
+/** Every record list in a payload, by store, with the shape of one entry. */
+const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
+  contactStore: {
+    contacts: contact,
+    deletedContacts: contact,
+    customFieldDefs: customFieldDef,
+    deletedCustomFieldDefs: tombstone,
+  },
+  conversationStore: {
+    conversations: visit,
+    deletedConversations: tombstone,
+    conversationFieldDefs: customFieldDef,
+    deletedConversationFieldDefs: tombstone,
+  },
+  serviceReportStore: {
+    dayPlans: plan,
+    recurringPlans: recurring,
+    deletedServiceReports: tombstone,
+    deletedDayPlans: tombstone,
+    deletedRecurringPlans: tombstone,
+  },
+  categoryStore: { categories: category, deletedCategories: tombstone },
+  mileageStore: {
+    vehicles: vehicle,
+    fuels: fuel,
+    fuelPrices: fuelPrice,
+    vehicleSetups: vehicleSetup,
+    trips: trip,
+    deletedMileageRecords: tombstone,
+  },
+}
+
+const isMap = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
+/**
+ * Removes the `null` at `path` inside `root` when it sits in an object, which
+ * reads the same as an absent optional field.
+ */
+function removeNull(root: unknown, path: (string | number)[]): boolean {
+  let parent = root
+  for (const key of path.slice(0, -1)) {
+    if (!parent || typeof parent !== 'object') return false
+    parent = (parent as Record<string | number, unknown>)[key]
+  }
+  const key = path.at(-1)
+  if (!isMap(parent) || key === undefined || parent[key] !== null) return false
+  delete parent[key]
+  return true
+}
+
+/**
+ * Whether `entry` reads as `schema`, after dropping `null`s from optional
+ * fields. Returns the remaining problems as `path.field:code`, without values.
+ */
+function entryProblems(
+  entry: unknown,
+  schema: z.ZodTypeAny,
+  path: string
+): string[] {
+  for (;;) {
+    const result = schema.safeParse(entry)
+    if (result.success) return []
+    const { issues } = result.error
+    if (!issues.filter((issue) => removeNull(entry, issue.path)).length)
+      return issues.map((issue) => {
+        const fields = issue.path.filter((key) => typeof key === 'string')
+        return `${[path, ...fields].join('.')}:${issue.code}`
+      })
+  }
+}
+
+function readableEntries(
+  list: unknown[],
+  schema: z.ZodTypeAny,
+  path: string,
+  dropped: string[]
+): unknown[] {
+  return list.filter((entry) => {
+    const problems = entryProblems(entry, schema, path)
+    for (const problem of problems)
+      if (!dropped.includes(problem)) dropped.push(problem)
+    return problems.length === 0
+  })
+}
+
+/**
+ * Drops the records and setting stamps a payload carries that this build can't
+ * read, so one bad record can't hide the rest of a device's data. Merges are by
+ * id, so a dropped record only stays on the device that wrote it. Leaves
+ * anything that isn't a list for `payloadSchema` to reject. Returns each
+ * dropped field as `store.list.field:code`, without values.
+ */
+export function dropUnreadableRecords(payload: unknown): string[] {
+  const dropped: string[] = []
+  if (!isMap(payload)) return dropped
+  for (const [storeKey, lists] of Object.entries(recordLists)) {
+    const store = payload[storeKey]
+    if (!isMap(store)) continue
+    for (const [listKey, schema] of Object.entries(lists)) {
+      const list = store[listKey]
+      if (Array.isArray(list))
+        store[listKey] = readableEntries(
+          list,
+          schema,
+          `${storeKey}.${listKey}`,
+          dropped
+        )
+    }
+  }
+  for (const storeKey of ['preferencesStore', 'profileStore']) {
+    const store = payload[storeKey]
+    const stamps = isMap(store) ? store.updatedAt : undefined
+    if (!isMap(stamps)) continue
+    for (const [key, stamp] of Object.entries(stamps))
+      if (!timestamp.safeParse(stamp).success) {
+        delete stamps[key]
+        dropped.push(`${storeKey}.updatedAt.${key}`)
+      }
+  }
+  const reports = isMap(payload.serviceReportStore)
+    ? payload.serviceReportStore.serviceReports
+    : undefined
+  if (isMap(reports))
+    for (const months of Object.values(reports)) {
+      if (!isMap(months)) continue
+      for (const [month, list] of Object.entries(months))
+        if (Array.isArray(list))
+          months[month] = readableEntries(
+            list,
+            timeEntry,
+            'serviceReportStore.serviceReports',
+            dropped
+          )
+    }
+  return dropped
+}
+
+/**
+ * Deletes `key` from a synced values slice with its stamp and per-entry stamps,
+ * so the merge keeps the local value.
+ */
+function dropValue(
+  store: { values: Record<string, unknown>; updatedAt: Record<string, number> },
+  key: string
+): void {
+  delete store.values[key]
+  for (const stamp of Object.keys(store.updatedAt))
+    if (stamp === key || stamp.startsWith(entryTimestampKey(key, '')))
+      delete store.updatedAt[stamp]
+}
 
 const publisher = z.enum(publishers)
 const offset = z.object({
@@ -421,43 +569,64 @@ export function dropUnreadableSavedViews(store: {
   store.values.savedContactViews = readable
 }
 
-/** Reject bad types for every known setting; future unknown keys stay unused. */
-export function validSettingValues(
-  values: Record<string, unknown>,
-  defaults: Record<string, unknown>
-): boolean {
-  if (!preferenceShapes.safeParse(values).success) return false
-  return Object.entries(values).every(([key, value]) => {
-    if (
-      !Object.hasOwn(defaults, key) ||
-      defaults[key] === null ||
-      defaults[key] === undefined
-    )
-      return true
-    const expected = defaults[key]
-    if (expected instanceof Date)
-      return typeof value === 'string' && Number.isFinite(Date.parse(value))
-    if (key === 'userSpecifiedHasAnnualGoal')
-      return typeof value === 'boolean' || value === 'default'
-    if (Array.isArray(expected)) return Array.isArray(value)
-    if (typeof expected === 'number')
-      return typeof value === 'number' && Number.isFinite(value)
-    return (
-      typeof value === typeof expected &&
-      (typeof expected !== 'object' ||
-        (value !== null && !Array.isArray(value)))
-    )
-  })
+/** Whether `value` fits the type of the setting's default. */
+function fitsDefault(key: string, value: unknown, expected: unknown): boolean {
+  if (expected === null || expected === undefined) return true
+  if (expected instanceof Date)
+    return typeof value === 'string' && Number.isFinite(Date.parse(value))
+  if (key === 'userSpecifiedHasAnnualGoal')
+    return typeof value === 'boolean' || value === 'default'
+  if (Array.isArray(expected)) return Array.isArray(value)
+  if (typeof expected === 'number')
+    return typeof value === 'number' && Number.isFinite(value)
+  return (
+    typeof value === typeof expected &&
+    (typeof expected !== 'object' || (value !== null && !Array.isArray(value)))
+  )
 }
 
-export function validProfileValues(values: Record<string, unknown>): boolean {
-  return z
-    .object({
-      name: z.string().optional(),
-      avatar: avatar.optional(),
-      customAvatarBackground: z.string().nullable().optional(),
-      hasCompletedProfileSetup: z.boolean().optional(),
+/**
+ * Drops settings with a bad type, with their stamps, so the merge keeps the
+ * local value; future unknown keys stay unused. Returns the dropped keys.
+ */
+export function dropUnreadableSettings(
+  store: { values: Record<string, unknown>; updatedAt: Record<string, number> },
+  defaults: Record<string, unknown>
+): string[] {
+  const shapes: Record<string, z.ZodTypeAny> = preferenceShapes.shape
+  return Object.entries(store.values)
+    .filter(
+      ([key, value]) =>
+        (Object.hasOwn(shapes, key) && !shapes[key].safeParse(value).success) ||
+        (Object.hasOwn(defaults, key) &&
+          !fitsDefault(key, value, defaults[key]))
+    )
+    .map(([key]) => {
+      dropValue(store, key)
+      return key
     })
-    .passthrough()
-    .safeParse(values).success
+}
+
+const profileShapes: Record<string, z.ZodTypeAny> = {
+  name: z.string().optional(),
+  avatar: avatar.optional(),
+  customAvatarBackground: z.string().nullable().optional(),
+  hasCompletedProfileSetup: z.boolean().optional(),
+}
+
+/** Drops profile values with a bad shape, with their stamps. */
+export function dropUnreadableProfileValues(store: {
+  values: Record<string, unknown>
+  updatedAt: Record<string, number>
+}): string[] {
+  return Object.entries(store.values)
+    .filter(
+      ([key, value]) =>
+        Object.hasOwn(profileShapes, key) &&
+        !profileShapes[key].safeParse(value).success
+    )
+    .map(([key]) => {
+      dropValue(store, key)
+      return key
+    })
 }

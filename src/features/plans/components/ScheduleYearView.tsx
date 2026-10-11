@@ -1,3 +1,4 @@
+import moment from 'moment'
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -15,15 +16,17 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
+import { useServiceYearScheduleStatus } from '@/hooks/useScheduleStatus'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
-import { useFormattedMinutes } from '@/lib/minutes'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
+import { getPeriodTense } from '@/lib/projectedTotalCopy'
+import { plannedMinutesThroughDayForMonth } from '@/lib/recurrence'
 import { serviceYearFocusMonth, serviceYearMonths } from '@/lib/roleHistory'
 import useServiceReport from '@/stores/serviceReport'
 import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
-import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
+import GoalMeterCard from '@/features/plans/components/GoalMeterCard'
 import YearMonthTile from '@/features/plans/components/YearMonthTile'
 import {
   serviceYearDayStatuses,
@@ -59,8 +62,9 @@ const columnsFor = (width: number) => (width >= 900 ? 6 : width >= 560 ? 4 : 3)
 
 /**
  * The Schedule's Year view: the twelve months of a Service Year, each a
- * miniature calendar with its goal, under the year's own total. Months are
- * where the Month view zooms out to and back into.
+ * miniature calendar with its goal, under the year's goal card, which is the
+ * Month view's card with the year's numbers. Months are where the Month view
+ * zooms out to and back into.
  */
 export default function ScheduleYearView({
   ref,
@@ -76,9 +80,12 @@ export default function ScheduleYearView({
 }: Props) {
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
+  const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const { pace, monthGoalMinutes, today } = useServiceYearPace(serviceYear)
+  const { pace, projection, monthGoalMinutes, today } =
+    useServiceYearPace(serviceYear)
   const { hasAnnualGoal } = usePublisher(serviceYearFocusMonth(serviceYear))
+  const schedule = useServiceYearScheduleStatus(serviceYear)
   const [width, setWidth] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
   const scrollY = useRef(0)
@@ -88,6 +95,19 @@ export default function ScheduleYearView({
   const dayGridFrames = useRef(new Map<number, LayoutRectangle>())
 
   const months = serviceYearMonths(serviceYear)
+  // Like the Month view's card, every Plan in the year, past days included.
+  const plannedMinutes = months.reduce(
+    (total, { month, year }) =>
+      total +
+      plannedMinutesThroughDayForMonth(
+        month,
+        year,
+        moment({ year, month, day: 1 }).daysInMonth(),
+        dayPlans,
+        recurringPlans
+      ),
+    0
+  )
   const statuses = serviceYearDayStatuses({
     serviceYear,
     index,
@@ -158,6 +178,11 @@ export default function ScheduleYearView({
     start: serviceYear,
     end: serviceYear + 1,
   })
+  // The card under it names the Service Year, so the header shows its years.
+  const spanLabel = i18n.t('scheduleCalendar.serviceYearSpan', {
+    start: serviceYear,
+    end: serviceYear + 1,
+  })
 
   return (
     <Animated.View
@@ -202,6 +227,7 @@ export default function ScheduleYearView({
             />
             <Text
               accessibilityRole='header'
+              accessibilityLabel={rangeLabel}
               numberOfLines={1}
               style={{
                 flexShrink: 1,
@@ -209,7 +235,7 @@ export default function ScheduleYearView({
                 fontSize: theme.fontSize('lg'),
               }}
             >
-              {rangeLabel}
+              {spanLabel}
             </Text>
             <IconButton
               icon={ChevronRightIcon}
@@ -218,11 +244,19 @@ export default function ScheduleYearView({
               accessibilityLabel={i18n.t('scheduleCalendar.nextServiceYear')}
             />
           </View>
-          <ServiceYearTotals
-            loggedMinutes={pace.loggedMinutes}
-            plannedMinutes={pace.projectedMinutes - pace.loggedMinutes}
-            goalMinutes={hasAnnualGoal ? pace.goalMinutes : 0}
-          />
+          <View style={{ marginHorizontal: PADDING }}>
+            <GoalMeterCard
+              title={i18n.t('serviceYear')}
+              goalMinutes={hasAnnualGoal ? pace.goalMinutes : 0}
+              loggedMinutes={projection.loggedMinutes}
+              plannedMinutes={plannedMinutes}
+              tense={getPeriodTense(
+                { kind: 'serviceYear', serviceYear },
+                today
+              )}
+              schedule={schedule}
+            />
+          </View>
           <View
             onLayout={(e) => {
               gridFrame.current = e.nativeEvent.layout
@@ -262,74 +296,5 @@ export default function ScheduleYearView({
         </ScrollView>
       </SwipeMonthNavigator>
     </Animated.View>
-  )
-}
-
-function ServiceYearTotals({
-  loggedMinutes,
-  plannedMinutes,
-  goalMinutes,
-}: {
-  loggedMinutes: number
-  plannedMinutes: number
-  goalMinutes: number
-}) {
-  const theme = useTheme()
-  const logged = useFormattedMinutes(loggedMinutes)
-  const planned = useFormattedMinutes(Math.max(0, plannedMinutes))
-  const goal = useFormattedMinutes(goalMinutes)
-  return (
-    <View
-      style={{
-        marginHorizontal: PADDING,
-        padding: 14,
-        gap: 10,
-        borderRadius: theme.numbers.borderRadiusLg,
-        borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        backgroundColor: theme.colors.card,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          gap: 10,
-        }}
-      >
-        <Text
-          numberOfLines={2}
-          style={{
-            flexShrink: 1,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('scheduleCalendar.loggedAndPlanned', {
-            logged: logged.formatted,
-            planned: planned.formatted,
-          })}
-        </Text>
-        {goalMinutes > 0 ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t('scheduleCalendar.annualGoal', { value: goal.formatted })}
-          </Text>
-        ) : null}
-      </View>
-      <GoalSplitBar
-        goalMinutes={goalMinutes}
-        loggedMinutes={loggedMinutes}
-        plannedMinutes={plannedMinutes}
-        height={8}
-      />
-    </View>
   )
 }

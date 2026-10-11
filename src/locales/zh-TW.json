@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "已安排 {{value}} / {{goal}}",
     "ofGoalLogged": "已記錄 {{value}} / {{goal}}",
-    "annualGoal": "目標 {{value}}",
-    "loggedAndPlanned": "已記錄 {{logged}} · 已安排 {{planned}}",
     "previousServiceYear": "上一個服務年度",
     "nextServiceYear": "下一個服務年度",
     "showMonth": "顯示 {{month}}",

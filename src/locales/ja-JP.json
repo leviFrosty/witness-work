@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "計画 {{value}} / {{goal}}",
     "ofGoalLogged": "記録 {{value}} / {{goal}}",
-    "annualGoal": "目標 {{value}}",
-    "loggedAndPlanned": "{{logged}}を記録 · {{planned}}を計画",
     "previousServiceYear": "前の奉仕年度",
     "nextServiceYear": "次の奉仕年度",
     "showMonth": "{{month}}を表示",

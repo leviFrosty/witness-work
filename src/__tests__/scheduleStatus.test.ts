@@ -1,7 +1,10 @@
 import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
 
-import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
+import {
+  getScheduleStatusForMonth,
+  getScheduleStatusForServiceYear,
+} from '@/lib/scheduleStatus'
 import { RecurringPlanFrequencies } from '@/types/timeEntry'
 import type {
   DayPlan,
@@ -159,5 +162,73 @@ describe('getScheduleStatusForMonth', () => {
     expect(status.state).toBe('behind')
     expect(status.plannedMinutes).toBe(120)
     expect(status.actualMinutes).toBe(60)
+  })
+})
+
+describe('getScheduleStatusForServiceYear', () => {
+  const yearStatus = (args: {
+    today: string
+    entries?: TimeEntry[]
+    dayPlans?: DayPlan[]
+  }) =>
+    getScheduleStatusForServiceYear({
+      serviceYear: 2025,
+      today: moment(args.today).toDate(),
+      serviceReports: reportsByMonth(args.entries ?? []),
+      dayPlans: args.dayPlans ?? [],
+      recurringPlans: [],
+      publisherForMonth: () => 'regularPioneer',
+      creditLimit: { enabled: false, customLimitHours: 0 },
+    })
+
+  it('adds up its months through today', () => {
+    const status = yearStatus({
+      today: '2025-10-15',
+      entries: [
+        entry('sep-log', '2025-09-10', 120),
+        entry('oct-log', '2025-10-10', 60),
+      ],
+      dayPlans: [
+        dayPlan('sep-plan', '2025-09-10', 60),
+        dayPlan('oct-plan', '2025-10-10', 60),
+        // After today: not yet due.
+        dayPlan('oct-later', '2025-10-20', 120),
+        // A month still to come adds nothing.
+        dayPlan('nov-plan', '2025-11-05', 120),
+      ],
+    })
+
+    expect(status.state).toBe('ahead')
+    expect(status.actualMinutes).toBe(180)
+    expect(status.plannedMinutes).toBe(120)
+    expect(status.differenceMinutes).toBe(60)
+  })
+
+  it('falls behind when the Plans so far outrun logged time', () => {
+    const status = yearStatus({
+      today: '2026-03-02',
+      entries: [entry('jan-log', '2026-01-08', 60)],
+      dayPlans: [
+        dayPlan('jan-plan', '2026-01-08', 120),
+        dayPlan('mar-plan', '2026-03-01', 60),
+      ],
+    })
+
+    expect(status.state).toBe('behind')
+    expect(status.differenceMinutes).toBe(-120)
+  })
+
+  it('has no plan when nothing is planned or logged yet', () => {
+    expect(yearStatus({ today: '2025-12-01' }).state).toBe('noPlan')
+  })
+
+  it("hasn't started before its September", () => {
+    const status = yearStatus({
+      today: '2025-08-20',
+      dayPlans: [dayPlan('sep-plan', '2025-09-10', 60)],
+    })
+
+    expect(status.state).toBe('notStarted')
+    expect(status.differenceMinutes).toBe(0)
   })
 })

@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "Запланировано: {{value}} / {{goal}}",
     "ofGoalLogged": "Записано: {{value}} / {{goal}}",
-    "annualGoal": "Цель: {{value}}",
-    "loggedAndPlanned": "Записано: {{logged}} · Запланировано: {{planned}}",
     "previousServiceYear": "Предыдущий служебный год",
     "nextServiceYear": "Следующий служебный год",
     "showMonth": "Показать: {{month}}",

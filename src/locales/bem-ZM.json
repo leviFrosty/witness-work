@@ -2793,8 +2793,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "{{value}} / {{goal}} yapangwa",
     "ofGoalLogged": "{{value}} / {{goal}} yalembwa",
-    "annualGoal": "Ico mwapanga {{value}}",
-    "loggedAndPlanned": "{{logged}} yalembwa · {{planned}} yapangwa",
     "previousServiceYear": "Umwaka wa mulimo uwapita",
     "nextServiceYear": "Umwaka wa mulimo ukonkapo",
     "showMonth": "Langa {{month}}",

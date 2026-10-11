@@ -1,5 +1,9 @@
 import usePublisher from '@/hooks/usePublisher'
-import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
+import { roleForMonth } from '@/lib/roleHistory'
+import {
+  getScheduleStatusForMonth,
+  getScheduleStatusForServiceYear,
+} from '@/lib/scheduleStatus'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { useShallow } from 'zustand/react/shallow'
@@ -30,6 +34,34 @@ const useScheduleStatus = ({
     dayPlans,
     recurringPlans,
     publisher: role,
+    creditLimit: {
+      enabled: overrideCreditLimit,
+      customLimitHours: customCreditLimitHours,
+    },
+  })
+}
+
+/** A Service Year's schedule status, its months added up through today. */
+export const useServiceYearScheduleStatus = (serviceYear: number) => {
+  const serviceReports = useServiceReport((state) => state.serviceReports)
+  const dayPlans = useServiceReport((state) => state.dayPlans)
+  const recurringPlans = useServiceReport((state) => state.recurringPlans)
+  const { role, roleHistory, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences(
+      useShallow((s) => ({
+        role: s.role,
+        roleHistory: s.roleHistory,
+        overrideCreditLimit: s.overrideCreditLimit,
+        customCreditLimitHours: s.customCreditLimitHours,
+      }))
+    )
+
+  return getScheduleStatusForServiceYear({
+    serviceYear,
+    serviceReports,
+    dayPlans,
+    recurringPlans,
+    publisherForMonth: (month) => roleForMonth(roleHistory, role, month),
     creditLimit: {
       enabled: overrideCreditLimit,
       customLimitHours: customCreditLimitHours,

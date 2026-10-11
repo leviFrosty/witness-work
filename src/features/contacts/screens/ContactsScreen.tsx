@@ -55,6 +55,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import ContactDetailsContent from '@/features/contacts/components/ContactDetailsContent'
 import ContactsSelectionBar from '@/features/contacts/components/ContactsSelectionBar'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 import {
   SELECTION_BAR_HEIGHT,
   SelectionTextButton,
@@ -79,17 +80,17 @@ import {
  * is remembered, so people who come for the map return to it. Search lives
  * inline at the top of the list so it updates as the user types — search is the
  * dominant action there, and round-tripping through a sheet would hide the very
- * results being searched. Sort and filter are lower-frequency, so they're
- * tucked behind a single sliders icon that opens the modal
- * `ContactsSortAndFilterScreen`. Select mode (batch actions on the rows shown)
- * starts from the header's "…" menu, as in Notes and Files, or from a row's
- * long-press "Select". Filters and sort are shared: the Map pins the contacts
- * the List shows (it keeps its own search), and its header carries the same
- * Saved View and last-visit chips. On the Map the header floats translucent
- * over it so the map runs edge to edge, and compacts once the user starts
- * exploring. On the List, scrolling down tucks everything but the title and
- * search away; scrolling up, swiping down on the header, or tapping the title
- * restores it.
+ * results being searched. Sort and filter open the modal
+ * `ContactsSortAndFilterScreen` from the header's sliders button, which shows
+ * on both workspaces and badges the active filter count. Select mode (batch
+ * actions on the rows shown) starts from the header's "…" menu, as in Notes and
+ * Files, or from a row's long-press "Select". Filters and sort are shared: the
+ * Map pins the contacts the List shows (it keeps its own search), and its
+ * header carries the same Saved View and last-visit chips. On the Map the
+ * header floats translucent over it so the map runs edge to edge, and compacts
+ * once the user starts exploring. On the List, scrolling down tucks everything
+ * but the title and search away; scrolling up, swiping down on the header, or
+ * tapping the title restores it.
  */
 
 const ContactsScreen = ({
@@ -304,6 +305,33 @@ const ContactsScreen = ({
     )
   }
 
+  const moreActions: ContextMenuEntries = [
+    [
+      !showsMap &&
+        listContacts.length > 0 && {
+          id: 'select',
+          title: i18n.t('selectContacts'),
+          systemImage: 'checkmark.circle',
+          onPress: () => selection.start(),
+        },
+    ],
+    [
+      savedViews.hasAccess &&
+        savedViews.views.length > 0 && {
+          id: 'saved_views',
+          title: i18n.t('savedViews_menu_edit'),
+          systemImage: 'pencil',
+          onPress: () => navigation.navigate('Saved Contact Views'),
+        },
+      dismissedCount > 0 && {
+        id: 'dismissed_contacts',
+        title: i18n.t('dismissedContacts'),
+        systemImage: 'clock',
+        onPress: () => navigation.navigate('Dismissed Contacts'),
+      },
+    ],
+  ]
+
   const headerActions = selection.selecting ? (
     <>
       <SelectionTextButton
@@ -317,45 +345,63 @@ const ContactsScreen = ({
       />
     </>
   ) : (
-    <>
+    // Four controls in the width the header's 24pt spacing gives three, so the
+    // title keeps its size on a phone. Each gap fits its neighbours' slops
+    // (toggle 10, sliders 4, menu 6, add 10) so no tap lands on the wrong one.
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
       <ContactsViewToggle value={contactsView} onChange={changeView} />
-      <PullDownMenu
-        accessibilityLabel={i18n.t('moreActions')}
-        triggerColor={theme.colors.accent}
-        triggerSize={22}
-        actions={[
-          [
-            !showsMap &&
-              listContacts.length > 0 && {
-                id: 'select',
-                title: i18n.t('selectContacts'),
-                systemImage: 'checkmark.circle',
-                onPress: () => selection.start(),
-              },
-          ],
-          [
-            {
-              id: 'sort_and_filter',
-              title: i18n.t('sortAndFilterEllipsis'),
-              systemImage: 'line.3.horizontal.decrease.circle',
-              onPress: () => navigation.navigate('Contacts Sort And Filter'),
-            },
-            savedViews.hasAccess &&
-              savedViews.views.length > 0 && {
-                id: 'saved_views',
-                title: i18n.t('savedViews_menu_edit'),
-                systemImage: 'pencil',
-                onPress: () => navigation.navigate('Saved Contact Views'),
-              },
-            dismissedCount > 0 && {
-              id: 'dismissed_contacts',
-              title: i18n.t('dismissedContacts'),
-              systemImage: 'clock',
-              onPress: () => navigation.navigate('Dismissed Contacts'),
-            },
-          ],
-        ]}
-      />
+      {/* The menu hides itself when none of its actions apply. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <PointerTooltip
+          label={i18n.t('contacts_sortAndFilter_title')}
+          effect='none'
+        >
+          <View>
+            <IconButton
+              icon={SlidersHorizontalIcon}
+              size={22}
+              color={theme.colors.accent}
+              accessibilityLabel={i18n.t('contacts_sortAndFilter_title')}
+              onPress={() => navigation.navigate('Contacts Sort And Filter')}
+              hitSlop={4}
+            />
+            {hasActiveFilters && (
+              <View
+                pointerEvents='none'
+                style={{
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  minWidth: 16,
+                  height: 16,
+                  paddingHorizontal: 4,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('xs'),
+                  }}
+                >
+                  {contactsFilters.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </PointerTooltip>
+        <PullDownMenu
+          accessibilityLabel={i18n.t('moreActions')}
+          triggerColor={theme.colors.accent}
+          triggerSize={22}
+          actions={moreActions}
+          hitSlop={6}
+        />
+      </View>
       {/* Beside the open contact's own "+ Add", this one needs its name. */}
       <PointerTooltip label={i18n.t('addContact')} effect='none'>
         <IconButton
@@ -371,6 +417,7 @@ const ContactsScreen = ({
             borderRadius: 20,
             borderWidth: 1,
             borderColor: theme.colors.accent,
+            marginLeft: 2,
           }}
           color={theme.colors.accent}
           onPress={() => {
@@ -383,7 +430,7 @@ const ContactsScreen = ({
           }}
         />
       </PointerTooltip>
-    </>
+    </View>
   )
 
   return (
@@ -456,9 +503,7 @@ const ContactsScreen = ({
             {/* No side padding here: the staleness chips scroll edge to edge. */}
             <View style={{ paddingBottom: 12 }}>
               {/* Search row. Inline TextInput so results update live as the user
-              types; its placeholder carries the contact count. Trailing sliders
-              button opens the Sort & Filter sheet — a small badge shows the
-              active filter count when set. */}
+              types; its placeholder carries the contact count. */}
               <View
                 style={{
                   flexDirection: 'row',
@@ -515,63 +560,6 @@ const ContactsScreen = ({
                     }}
                   />
                 </View>
-                <Button
-                  onPress={() =>
-                    navigation.navigate('Contacts Sort And Filter')
-                  }
-                  accessibilityLabel={i18n.t('contacts_sortAndFilter_title')}
-                  noTransform
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: theme.numbers.borderRadiusMd,
-                    borderWidth: 1,
-                    borderColor: hasActiveFilters
-                      ? theme.colors.accent
-                      : theme.colors.border,
-                    backgroundColor: hasActiveFilters
-                      ? theme.colors.accentTranslucent
-                      : theme.colors.backgroundLighter,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <LucideIcon
-                    icon={SlidersHorizontalIcon}
-                    size={theme.fontSize('sm')}
-                    style={{
-                      color: hasActiveFilters
-                        ? theme.colors.accent
-                        : theme.colors.textAlt,
-                    }}
-                  />
-                  {hasActiveFilters && (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: -4,
-                        right: -4,
-                        minWidth: 16,
-                        height: 16,
-                        paddingHorizontal: 4,
-                        borderRadius: 8,
-                        backgroundColor: theme.colors.accent,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: theme.colors.textInverse,
-                          fontFamily: theme.fonts.semiBold,
-                          fontSize: theme.fontSize('xs'),
-                        }}
-                      >
-                        {contactsFilters.length}
-                      </Text>
-                    </View>
-                  )}
-                </Button>
               </View>
 
               {showsSavedViews && (

@@ -3682,7 +3682,6 @@
   "noDismissedContacts_description": "Para ocultar um contacto durante algum tempo, deslize-o para a direita em Contactos, ou toque sem soltar e escolha Ignorar durante.",
   "serviceHistoryOtherYearsUnsaved": "Também guarda as suas alterações em {{years}}.",
   "selectContacts": "Selecionar contactos",
-  "sortAndFilterEllipsis": "Ordenar e filtrar…",
   "contactAvailableReminder": "%{name} está novamente disponível.",
   "contactAvailableReminderPrivate": "Um contacto que ignorou está novamente disponível.",
   "visitReminderBody": "O seu acompanhamento com %{name} é daqui a %{lead}.",

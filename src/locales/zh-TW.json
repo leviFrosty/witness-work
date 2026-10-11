@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "若要暫時隱藏某位聯絡人，請在「聯絡人」中向右滑動，或按住該聯絡人並選擇「略過期間」。",
   "serviceHistoryOtherYearsUnsaved": "同時也會儲存你對 {{years}} 的更改。",
   "selectContacts": "選取聯絡人",
-  "sortAndFilterEllipsis": "排序與篩選…",
   "contactAvailableReminder": "%{name} 又可以聯絡了。",
   "contactAvailableReminderPrivate": "你略過的一位聯絡人又可以聯絡了。",
   "visitReminderBody": "你與 %{name} 的後續探訪將在 %{lead} 後開始。",

@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Kugira ngo uhishe umuntu by'igihe gito, mukururire iburyo muri Abantu, cyangwa umukande ukomeze maze uhitemo Hisha kugeza.",
   "serviceHistoryOtherYearsUnsaved": "Binabika impinduka zawe kuri {{years}}.",
   "selectContacts": "Hitamo abantu",
-  "sortAndFilterEllipsis": "Tondeka & Shungura…",
   "contactAvailableReminder": "%{name} yongeye kuboneka.",
   "contactAvailableReminderPrivate": "Umuntu wahishe yongeye kuboneka.",
   "visitReminderBody": "Gusubirayo kwawe kwa %{name} kuzaba nyuma ya %{lead}.",

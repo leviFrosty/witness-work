@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Para ocultar um contato por um tempo, deslize-o para a direita em Contatos ou mantenha-o pressionado e escolha Dispensar por.",
   "serviceHistoryOtherYearsUnsaved": "Também salva suas alterações em {{years}}.",
   "selectContacts": "Selecionar contatos",
-  "sortAndFilterEllipsis": "Classificar e filtrar…",
   "contactAvailableReminder": "%{name} está disponível novamente.",
   "contactAvailableReminderPrivate": "Um contato que você dispensou está disponível novamente.",
   "visitReminderBody": "Seu acompanhamento com %{name} é daqui a %{lead}.",

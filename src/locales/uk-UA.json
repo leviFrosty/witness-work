@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Щоб на деякий час сховати контакт, проведіть по ньому праворуч у «Контактах» або натисніть і утримуйте його та виберіть «Відхилити на».",
   "serviceHistoryOtherYearsUnsaved": "Також зберігає ваші зміни за: {{years}}.",
   "selectContacts": "Вибрати контакти",
-  "sortAndFilterEllipsis": "Сортування й фільтри…",
   "contactAvailableReminder": "%{name} знову доступний.",
   "contactAvailableReminderPrivate": "Контакт, який ви відхилили, знову доступний.",
   "visitReminderBody": "Ваша повторна зустріч з %{name} через %{lead}.",

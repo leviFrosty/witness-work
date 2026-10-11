@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Ili kuficha anwani kwa muda, telezesha kulia juu yake katika Anwani, au ibonyeze na kuishikilia kisha uchague Ondoa Kwa.",
   "serviceHistoryOtherYearsUnsaved": "Pia huhifadhi mabadiliko yako ya {{years}}.",
   "selectContacts": "Chagua Anwani",
-  "sortAndFilterEllipsis": "Panga na Chuja…",
   "contactAvailableReminder": "%{name} anapatikana tena.",
   "contactAvailableReminderPrivate": "Anwani uliyoiondoa inapatikana tena.",
   "visitReminderBody": "Ufuatiliaji wako na %{name} utakuwa baada ya %{lead}.",

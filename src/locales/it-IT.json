@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Per nascondere un contatto per un po’, scorri verso destra su di esso in Contatti, oppure tienilo premuto e scegli Ignora per.",
   "serviceHistoryOtherYearsUnsaved": "Salva anche le tue modifiche a {{years}}.",
   "selectContacts": "Seleziona contatti",
-  "sortAndFilterEllipsis": "Ordina e filtra…",
   "contactAvailableReminder": "%{name} è di nuovo disponibile.",
   "contactAvailableReminderPrivate": "Un contatto che hai ignorato è di nuovo disponibile.",
   "visitReminderBody": "Il tuo follow-up con %{name} è tra %{lead}.",

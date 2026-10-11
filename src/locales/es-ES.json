@@ -3638,7 +3638,6 @@
   "noDismissedContacts_description": "Para ocultar un contacto por un tiempo, desliza hacia la derecha sobre él en Contactos, o mantenlo pulsado y elige Descartar durante.",
   "serviceHistoryOtherYearsUnsaved": "También guarda tus cambios en {{years}}.",
   "selectContacts": "Seleccionar contactos",
-  "sortAndFilterEllipsis": "Ordenar & Filtrar…",
   "contactAvailableReminder": "%{name} vuelve a estar disponible.",
   "contactAvailableReminderPrivate": "Un contacto que descartaste vuelve a estar disponible.",
   "visitReminderBody": "Tu seguimiento con %{name} es en %{lead}.",

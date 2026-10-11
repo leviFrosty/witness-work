@@ -56,7 +56,7 @@ const ContactsViewToggle = ({
               accessibilityLabel={label()}
               accessibilityState={{ selected: active }}
               style={{
-                width: 44,
+                width: 38,
                 height: 36,
                 borderRadius: 999,
                 alignItems: 'center',

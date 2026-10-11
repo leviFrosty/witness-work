@@ -137,7 +137,7 @@ While the app is in the foreground it keeps a WebSocket open to its own inbox, s
 
 ### Shared photos
 
-Photos in a shared Plan's note travel as encrypted blobs the sender stores once under their own inbox (see [Shared note photos](#shared-note-photos)). `b64u` ids and tokens here are 32 bytes (43 characters).
+Photos in a shared Plan's note, and the Profile photo at full size, travel as encrypted blobs the sender stores once under their own inbox (see [Shared note photos](#shared-note-photos) and the card's [`avatar`](#buddy-card-plaintext)). `b64u` ids and tokens here are 32 bytes (43 characters).
 
 | Op            | Signed | Payload                                                                                                                                                                                                              | Response            | Notes                                                                                                                                                                                                                                                                   |
 | ------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -407,6 +407,11 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 {
   "v": 1,
   "name": "Levi",
+  "avatar": {
+    "t": "image",
+    "v": "<base64 JPEG>",
+    "full": { "blob": "…", "token": "…", "key": "…" }
+  },
   "streak": { "n": 12, "until": "2026-10-07" },
   "updatedAt": 0,
   "level": "daysTimes",
@@ -416,6 +421,8 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 ```
 
 `d` is the sender's local calendar day; `s` (start, minutes after midnight) is present only when the Plan has a start time; `m` is planned minutes. The window is today through +56 days. Day Plans and resolved Recurring Plan instances only — never Categories, notes (MVP), Time Entries, or goals.
+
+`avatar` is optional, and left out while `sharing.photo` is off: an emoji (`{ "t": "emoji", "v": "🙂" }`) or the Profile photo as a ~96 px JPEG thumbnail (`"t": "image"`, `v` base64, ≤ 10,000 characters). `full` (optional, added without bumping `v`) links the same photo at full size, at most 1,024 px on the long edge, as a [shared photo](#shared-photos) under the sender's inbox: `blob` is its `blobId`, `token` its read token, `key` its own 32-byte key, sealed like a note photo but with AAD `ww-buddies/v1/profile-photo`. The receiver fetches it with `blob/get` (the buddy's `inboxId`) only when the User opens the photo, checks `SHA-256(bytes) = blob`, opens it, and keeps it in its cache folder while a card links it. The sender uploads one copy for all buddies, expiring in 89 days; a new photo, or one with under 30 days left, is uploaded again and the old copy deleted, and so is a photo no longer shared. While the relay's photo switch is off or the upload fails, the card carries the thumbnail alone and a later publish links it. A `full` the receiver can't parse is dropped without the card; older apps ignore it.
 
 `streak` is optional: the sender's Service Streak (`n`, planned days kept or months in service, 1–10,000) once it's at least 3 and only while `sharing.streak` is on. `until` is the sender's last local day it lasts without more service: the day after the next planned day still waiting for time, or the end of the next month for months. With no Plan ahead it's the end of the Plan window. The receiver hides the streak once its own local date is past `until`, so a streak that lapsed while the sender's app was closed stops showing. Whether `n` counts Plans or months isn't sent. A receiver that can't parse `streak` drops just that field, not the card. The card's content hash includes `streak`, so a change republishes it.
 

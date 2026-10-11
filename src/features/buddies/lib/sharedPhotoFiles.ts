@@ -20,10 +20,10 @@ const SHARED_SIDE = 1600
 const MAX_SHARED_BYTES = 1024 * 1024 - 64
 const QUALITIES = [0.75, 0.6, 0.45]
 
-const base64ToBytes = (base64: string) =>
+export const base64ToBytes = (base64: string) =>
   fromB64u(base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''))
 
-function bytesToBase64(bytes: Uint8Array): string {
+export function bytesToBase64(bytes: Uint8Array): string {
   const text = toB64u(bytes).replace(/-/g, '+').replace(/_/g, '/')
   return text + '='.repeat((4 - (text.length % 4)) % 4)
 }

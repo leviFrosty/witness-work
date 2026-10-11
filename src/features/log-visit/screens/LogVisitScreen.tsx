@@ -173,7 +173,7 @@ export default function LogVisitScreen({ navigation }: Props) {
         />
       ) : actives.length === 0 ? (
         <Empty
-          style={{ flex: 1, margin: 16 }}
+          style={{ flex: 1 }}
           icon={
             <LucideIcon
               icon={UserPlusIcon}

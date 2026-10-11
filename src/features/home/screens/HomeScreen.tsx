@@ -1,7 +1,8 @@
 import { perf } from '@/lib/perf'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import { useEffect, useRef, useState } from 'react'
+import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
+import { useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -15,6 +16,7 @@ import useDevice from '@/hooks/useDevice'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import WeekStripTeaser from '@/features/service-reports/components/WeekStripTeaser'
+import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -44,8 +46,6 @@ import { useServiceReport } from '@/stores/serviceReport'
 import useLocalDay from '@/hooks/useLocalDay'
 import { useShallow } from 'zustand/react/shallow'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import { RootStackNavigation } from '@/types/rootStack'
-import type { TimeEntry } from '@/types/timeEntry'
 
 // Pull first so any remote-side changes land before we push ours — avoids a
 // fight between two devices that both just pulled to refresh.
@@ -81,7 +81,6 @@ export const HomeScreen = () => {
       open: false,
       date: new Date(),
     })
-  const pendingNavigation = useRef<(() => void) | null>(null)
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -96,7 +95,6 @@ export const HomeScreen = () => {
   const isDidYouKnowLast =
     effectiveOrder[effectiveOrder.length - 1] === 'didYouKnow'
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const rootNavigation = useNavigation<RootStackNavigation>()
   // Keyed on the day so the compiled screen moves on at midnight.
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const serviceYear = getServiceYearFromDate(today)
@@ -121,36 +119,6 @@ export const HomeScreen = () => {
       tab: 'year',
     })
 
-  const handleAddTime = () => {
-    const date = selectedDateSheet.date.toISOString()
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('Add Time', { date })
-    }
-  }
-
-  const handlePlanDay = () => {
-    const date = selectedDateSheet.date.toISOString()
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('PlanDay', { date })
-    }
-  }
-
-  const handleEditTimeReport = (report: TimeEntry) => {
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('Add Time', {
-        existingReport: JSON.stringify(report),
-      })
-    }
-  }
-
-  useEffect(() => {
-    if (!selectedDateSheet.open && pendingNavigation.current) {
-      const callback = pendingNavigation.current
-      pendingNavigation.current = null
-      setTimeout(callback, 125)
-    }
-  }, [selectedDateSheet.open])
-
   // Legacy upgrade flow is now subsumed by the boot-time tag → Category
   // migration (`src/lib/categories.ts`). Categories carry their own
   // `isCredit` invariant, so the user no longer needs to retroactively
@@ -158,11 +126,16 @@ export const HomeScreen = () => {
   // the sheet stays mounted-but-inert for one release window; removing the
   // component entirely is deferred to a follow-up.
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
+  const weekStrip = useRevealAboveSheet()
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
+        ref={weekStrip.scrollRef}
+        onScroll={weekStrip.onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + (hasSidebar ? 30 : 85),
+          paddingBottom:
+            insets.bottom + (hasSidebar ? 30 : 85) + weekStrip.bottomInset,
           paddingHorizontal: isWide ? 24 : 15,
           paddingTop: 15,
           width: '100%',
@@ -267,15 +240,21 @@ export const HomeScreen = () => {
                 case 'thisWeek':
                   if (!homeScreenElements.thisWeek) return null
                   return (
-                    <WeekStripTeaser
+                    // Measured to keep the week above the day's sheet.
+                    <View
                       key={key}
-                      month={currentMonth}
-                      year={currentYear}
-                      monthsReports={currentMonthsReports}
-                      onSelectDay={(date) =>
-                        setSelectedDateSheet({ open: true, date })
-                      }
-                    />
+                      ref={weekStrip.targetRef}
+                      collapsable={false}
+                    >
+                      <WeekStripTeaser
+                        month={currentMonth}
+                        year={currentYear}
+                        monthsReports={currentMonthsReports}
+                        onSelectDay={(date) =>
+                          setSelectedDateSheet({ open: true, date })
+                        }
+                      />
+                    </View>
                   )
                 case 'timer':
                   if (!showsTimer || !homeScreenElements.timer) return null
@@ -315,9 +294,8 @@ export const HomeScreen = () => {
         sheet={selectedDateSheet}
         setSheet={setSelectedDateSheet}
         thisMonthsReports={selectedDateReports}
-        onAddTime={handleAddTime}
-        onPlanDay={handlePlanDay}
-        onEditTimeReport={handleEditTimeReport}
+        onHeightChange={weekStrip.onSheetHeightChange}
+        renderPlanForm={renderDaySheetPlanForm}
         renderFooter={(date, onNavigate) => (
           <TodayRouteEntry
             date={date}

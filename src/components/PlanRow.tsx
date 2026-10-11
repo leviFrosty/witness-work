@@ -20,7 +20,9 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import Badge from '@/components/ui/Badge'
 import PlanLocationLink from '@/components/PlanLocationLink'
 import RichNote from '@/components/RichNote'
-import usePlanMenuActions from '@/hooks/usePlanMenuActions'
+import usePlanMenuActions, {
+  type LogTimePrefill,
+} from '@/hooks/usePlanMenuActions'
 import {
   formatDate,
   formatStartTime,
@@ -145,6 +147,8 @@ const PlanRow = (props: {
    * modal sheet pass one that closes the sheet first.
    */
   onNavigate?: (navigate: () => void) => void
+  /** Logs the Plan as time in place, instead of opening Add Time. */
+  onLogTime?: (prefill: LogTimePrefill) => void
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -155,7 +159,7 @@ const PlanRow = (props: {
   const date = props.item.date
   const { open, menu, requestDelete, effective } = usePlanMenuActions(
     props.item,
-    { go: props.onNavigate }
+    { go: props.onNavigate, logTime: props.onLogTime }
   )
   const displayNote = effective.note
   const showsNote = hasNote(displayNote)

@@ -34,6 +34,7 @@ type Props = {
   hitSlop?: number | Insets
   /** Swaps the icon for a spinner and blocks presses; see `Button`. */
   loading?: boolean
+  testID?: string
 }
 
 const IconButton = ({
@@ -49,6 +50,7 @@ const IconButton = ({
   accessibilityLabel,
   hitSlop,
   loading,
+  testID,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -70,6 +72,7 @@ const IconButton = ({
       accessibilityLabel={accessibilityLabel}
       loading={loading}
       loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
+      testID={testID}
     >
       <Icon
         color={iconColor}

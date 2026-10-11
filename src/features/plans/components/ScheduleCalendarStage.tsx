@@ -60,6 +60,7 @@ export default function ScheduleCalendarStage({
     onScroll,
     onZoomFrameLayout,
     onListLayout,
+    onListLoad,
     onStageLayout,
     onStartReached,
     onEndReached,
@@ -114,6 +115,7 @@ export default function ScheduleCalendarStage({
             onScroll={onScroll}
             onZoomFrameLayout={onZoomFrameLayout}
             onListLayout={onListLayout}
+            onListLoad={onListLoad}
             onPressDay={onPressDay}
             onPressServiceYear={(serviceYear) =>
               zoomOut('divider', serviceYear)

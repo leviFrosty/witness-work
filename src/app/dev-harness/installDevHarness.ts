@@ -42,6 +42,8 @@ import {
 } from '@/app/dev-harness/badges'
 import { useBadgeSession } from '@/stores/badgeSession'
 import { takeoverSnapshot, useTakeover } from '@/stores/takeover'
+import { useSplitSheetPreferences } from '@/stores/splitSheet'
+import { triggerDevRemount } from '@/lib/devRemount'
 import { noteUserAction, type UserActionKind } from '@/lib/userAction'
 import {
   devicePushToken,
@@ -268,6 +270,11 @@ export function installDevHarness() {
       simulateBuddyReaction: (badgeKey?: string, emoji?: string) =>
         simulateBuddyReaction(badgeKey, emoji),
     },
+    /** Every screen mounts fresh, as on a cold launch, on Home. */
+    remount: () => {
+      triggerDevRemount()
+      return true
+    },
     navigate: (name: string, params?: object) => {
       if (!navigationRef.isReady()) throw new Error('Navigation is not ready')
       navigationRef.dispatch(CommonActions.navigate({ name, params }))
@@ -294,6 +301,7 @@ export function installDevHarness() {
       takeover: useTakeover,
       // `open`, and `away` while a badge view opened from it is up.
       profileOverlay: useProfileOverlay,
+      splitSheet: useSplitSheetPreferences,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

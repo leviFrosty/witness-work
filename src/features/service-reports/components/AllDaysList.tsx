@@ -1,7 +1,6 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
-import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
+import { ReactNode, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 
@@ -19,11 +18,12 @@ import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
-import { RootStackNavigation } from '@/types/rootStack'
+import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
+import type { PlanFormSlot } from '@/features/service-reports/components/DayHistoryView'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -39,6 +39,10 @@ import { formatMonthDayCompact } from '@/lib/dates'
 interface AllDaysListProps {
   month: number
   year: number
+  /** Keeps the day picked in view above its sheet. */
+  dayReveal?: RevealAboveSheet
+  /** The Plan form, for planning a day in its sheet. */
+  renderPlanForm?: (slot: PlanFormSlot) => ReactNode
 }
 
 type DayRow = {
@@ -179,12 +183,16 @@ const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
  * - Multiple categories → show `i18n.t('multiple')`.
  * - Zero reports → em-dash for both category and hours.
  */
-const AllDaysList = ({ month, year }: AllDaysListProps) => {
+const AllDaysList = ({
+  month,
+  year,
+  dayReveal,
+  renderPlanForm,
+}: AllDaysListProps) => {
   const theme = useTheme()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
   const { timeDisplayFormat } = usePreferences()
-  const rootNavigation = useRootNavigation<RootStackNavigation>()
 
   const [sheet, setSheet] = useState<SelectedDateSheetState>({
     open: false,
@@ -203,43 +211,6 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
   }, [month, year])
 
   const hasFutureDays = isCurrentMonth && moment().date() < daysInMonth
-
-  const pendingNavigation = useRef<(() => void) | null>(null)
-
-  const handleAddTime = useCallback(() => {
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('Add Time', {
-        date: sheet.date.toISOString(),
-      })
-    }
-  }, [rootNavigation, sheet.date])
-
-  const handlePlanDay = useCallback(() => {
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('PlanDay', {
-        date: sheet.date.toISOString(),
-      })
-    }
-  }, [rootNavigation, sheet.date])
-
-  const handleEditTimeReport = useCallback(
-    (report: TimeEntry) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('Add Time', {
-          existingReport: JSON.stringify(report),
-        })
-      }
-    },
-    [rootNavigation]
-  )
-
-  useEffect(() => {
-    if (!sheet.open && pendingNavigation.current) {
-      const callback = pendingNavigation.current
-      pendingNavigation.current = null
-      setTimeout(callback, 125)
-    }
-  }, [sheet.open])
 
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -422,11 +393,20 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           <View style={{ width: 12 }} />
         </View>
         {rows.map((row) => (
-          <DayRowItem
+          <View
             key={row.date.toISOString()}
-            row={row}
-            onPress={() => setSheet({ open: true, date: row.date })}
-          />
+            ref={
+              row.date.getTime() === sheet.date.getTime()
+                ? dayReveal?.targetRef
+                : undefined
+            }
+            collapsable={false}
+          >
+            <DayRowItem
+              row={row}
+              onPress={() => setSheet({ open: true, date: row.date })}
+            />
+          </View>
         ))}
         {hasFutureDays && (
           <Button
@@ -455,9 +435,8 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
         sheet={sheet}
         setSheet={setSheet}
         thisMonthsReports={thisMonthsReports}
-        onAddTime={handleAddTime}
-        onPlanDay={handlePlanDay}
-        onEditTimeReport={handleEditTimeReport}
+        onHeightChange={dayReveal?.onSheetHeightChange}
+        renderPlanForm={renderPlanForm}
       />
     </View>
   )

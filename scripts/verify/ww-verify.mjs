@@ -2974,6 +2974,10 @@ const commands = {
           platform,
           `__WW_DEV__.seed(${JSON.stringify(seed)})`
         )
+      // `# setup: <js>` lines adjust the seeded state before the UI steps,
+      // e.g. clearing a day the scenario fills only on some weekdays.
+      for (const [, expression] of source.matchAll(/^# setup: (.+)$/gm))
+        await cdpEval(state, platform, expression)
       await cdpEval(state, platform, '__WW_DEV__.clearErrors()')
       const name = path.basename(flow, '.yaml')
       const { steps } = readFlow(source)

@@ -11,26 +11,33 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
-import { isCountableEntry } from '@/lib/serviceReport'
-import { formatDate } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
 import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { ReactNode, useMemo } from 'react'
+import { ReactNode, useMemo, useRef, useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
-import { useFormattedMinutes } from '@/lib/minutes'
 import {
   PlannedDayContribution,
   resolvePlannedContributionsForDay,
 } from '@/lib/recurrence'
 import PlanRow, { getPlanItemStartTime } from '@/components/PlanRow'
 import type { PlanListItem } from '@/types/timeEntry'
-import Circle from '@/components/ui/Circle'
-import { getDateStatusColor } from '@/components/CalendarDay'
+import type { LogTimePrefill } from '@/hooks/usePlanMenuActions'
+import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHeader'
+import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import CollapsibleCard from '@/components/ui/CollapsibleCard'
+
+/** What a day's Plan form is shown with, by the screen that provides it. */
+export type PlanFormSlot = {
+  date: Date
+  layout: 'docked' | 'inline'
+  /** Saved or deleted. */
+  onDone: () => void
+}
 
 interface DayHistoryViewProps {
   date: Date
@@ -38,6 +45,8 @@ interface DayHistoryViewProps {
   showHeader?: boolean
   onTimeReportPress?: (report: TimeEntry) => void
   onAddTime?: () => void
+  /** A Plan's Log as Time, for hosts that log time in place. */
+  onLogTime?: (prefill: LogTimePrefill) => void
   onPlanDay?: () => void
   /**
    * Runs a navigation from a row or its context menu. A host sheet passes one
@@ -46,6 +55,15 @@ interface DayHistoryViewProps {
   onNavigate?: (navigate: () => void) => void
   /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
   renderDayPlanFooter?: (plan: DayPlan) => ReactNode
+  /**
+   * A day with no time or no Plans yet keeps the time or Plan form in its list,
+   * folded under Add Time or Plan Day, instead of a button that opens it.
+   */
+  inlineForms?: boolean
+  /** The Plan form, for `inlineForms`, from the screen: it lives in Plans. */
+  renderPlanForm?: (slot: PlanFormSlot) => ReactNode
+  /** A folded form was opened, so its host can scroll it into view. */
+  onFormOpen?: (card: View) => void
 }
 
 const contributionToPlanListItem = (
@@ -59,7 +77,11 @@ const contributionToPlanListItem = (
   return { type: 'recurring', date, plan: contribution.plan }
 }
 
-const EmptyActionButton = (props: { label: string; onPress?: () => void }) => {
+const EmptyActionButton = (props: {
+  label: string
+  onPress?: () => void
+  testID?: string
+}) => {
   const theme = useTheme()
 
   if (!props.onPress) return null
@@ -69,6 +91,7 @@ const EmptyActionButton = (props: { label: string; onPress?: () => void }) => {
       noTransform
       variant='outline'
       onPress={props.onPress}
+      testID={props.testID}
       style={{
         paddingHorizontal: 14,
         paddingVertical: 9,
@@ -96,9 +119,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   showHeader = false,
   onTimeReportPress,
   onAddTime: onAddTimeProp,
+  onLogTime,
   onPlanDay,
   onNavigate,
   renderDayPlanFooter,
+  inlineForms,
+  renderPlanForm,
+  onFormOpen,
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
@@ -113,16 +140,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     [date, serviceReports]
   )
 
-  const actualMinutes = useMemo(() => {
-    if (!thisDaysReports) {
-      return 0
-    }
-    return thisDaysReports.reduce(
-      (acc, report) => acc + report.hours * 60 + report.minutes,
-      0
-    )
-  }, [thisDaysReports])
-
   const dayPlansForToday = useMemo(() => {
     return dayPlans.filter((dp) => isStoredDateOnLocalDay(dp.date, date))
   }, [dayPlans, date])
@@ -136,72 +153,26 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     .map((contribution) => contributionToPlanListItem(contribution, date))
     .sort((a, b) => getPlanItemStartTime(a) - getPlanItemStartTime(b))
 
-  const goalMinutes = contributions.length
-    ? contributions.reduce(
-        (total, contribution) => total + contribution.minutes,
-        0
-      )
-    : undefined
-
-  const actualDisplay = useFormattedMinutes(actualMinutes)
-  const goalDisplay = useFormattedMinutes(goalMinutes ?? 0)
-
   const hasTimeReports = !!thisDaysReports?.length
   const hasPlans = planItems.length > 0
-  const wentInService = !!thisDaysReports?.some(isCountableEntry)
-  const isToday = moment().isSame(date, 'day')
-  const dateInPast = moment(date).isSameOrBefore(moment(), 'day')
-  const hitGoal = actualMinutes >= (goalMinutes ?? 0)
-
-  const statusColor = getDateStatusColor(
-    theme,
-    wentInService,
-    isToday,
-    dateInPast,
-    hitGoal
-  )
+  const inlineTimeForm = inlineForms && !!onAddTime && !hasTimeReports
+  const inlinePlanForm = inlineForms && !!renderPlanForm && !hasPlans
+  const [timeFormOpen, setTimeFormOpen] = useState(false)
+  const [planFormOpen, setPlanFormOpen] = useState(false)
+  const timeCard = useRef<View>(null)
+  const planCard = useRef<View>(null)
+  const toggleForm =
+    (setOpen: (open: boolean) => void, card: React.RefObject<View | null>) =>
+    (open: boolean) => {
+      setOpen(open)
+      if (open && card.current) onFormOpen?.(card.current)
+    }
 
   return (
     <View style={{ gap: 20 }}>
       {showHeader && (
-        <View style={{ marginBottom: 10, gap: 5 }}>
-          <XView
-            style={{
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}
-          >
-            <Text
-              style={{
-                color: theme.colors.text,
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {formatDate(date)}
-            </Text>
-
-            <XView style={{ flexShrink: 1 }}>
-              {goalMinutes ? (
-                <>
-                  <Circle color={statusColor.bg} />
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('md'),
-                      flexShrink: 1,
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {`${actualDisplay.formatted} ${i18n.t('of')} ${goalDisplay.formatted} ${i18n.t(
-                      'plannedHours'
-                    )}`}
-                  </Text>
-                </>
-              ) : null}
-            </XView>
-          </XView>
+        <View style={{ marginBottom: 10 }}>
+          <DayHistoryHeader date={date} serviceReports={serviceReports} />
         </View>
       )}
 
@@ -223,6 +194,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               icon={PlusIcon}
               onPress={onAddTime}
               accessibilityLabel={i18n.t('addTime')}
+              testID='day-add-time'
               size={13}
               style={{
                 borderColor: theme.colors.border,
@@ -234,47 +206,66 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             />
           )}
         </XView>
-        <View style={{ flex: 1, minHeight: 10 }}>
-          <FlashList
-            scrollEnabled={false}
-            data={
-              thisDaysReports
-                ? thisDaysReports.sort((a, b) =>
-                    moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-                  )
-                : undefined
-            }
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            renderItem={({ item }) => (
-              <TimeReportRow
-                report={item}
-                onPress={() => onTimeReportPress?.(item)}
-                onNavigate={onNavigate}
-              />
-            )}
-            ListEmptyComponent={
-              <Empty
-                dashedOutline
-                icon={
-                  <LucideIcon
-                    icon={ClockIcon}
-                    size={24}
-                    color={theme.colors.text}
-                  />
-                }
-                title={i18n.t('noReportsThisDay')}
-                action={
-                  onAddTime ? (
-                    <EmptyActionButton
-                      label={i18n.t('addTime')}
-                      onPress={onAddTime}
+        {inlineTimeForm ? (
+          <CollapsibleCard
+            ref={timeCard}
+            label={i18n.t('addTime')}
+            open={timeFormOpen}
+            onOpenChange={toggleForm(setTimeFormOpen, timeCard)}
+            testID='day-time-form'
+          >
+            <TimeEntryForm
+              layout='inline'
+              date={date}
+              source='day_sheet'
+              // Once saved, the entry takes the card's place in the list.
+              onDone={() => setTimeFormOpen(false)}
+            />
+          </CollapsibleCard>
+        ) : (
+          <View style={{ flex: 1, minHeight: 10 }}>
+            <FlashList
+              scrollEnabled={false}
+              data={
+                thisDaysReports
+                  ? thisDaysReports.sort((a, b) =>
+                      moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
+                    )
+                  : undefined
+              }
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              renderItem={({ item }) => (
+                <TimeReportRow
+                  report={item}
+                  onPress={() => onTimeReportPress?.(item)}
+                  onNavigate={onNavigate}
+                />
+              )}
+              ListEmptyComponent={
+                <Empty
+                  dashedOutline
+                  icon={
+                    <LucideIcon
+                      icon={ClockIcon}
+                      size={24}
+                      color={theme.colors.text}
                     />
-                  ) : undefined
-                }
-              />
-            }
-          />
-        </View>
+                  }
+                  title={i18n.t('noReportsThisDay')}
+                  action={
+                    onAddTime ? (
+                      <EmptyActionButton
+                        label={i18n.t('addTime')}
+                        onPress={onAddTime}
+                        testID='day-add-time'
+                      />
+                    ) : undefined
+                  }
+                />
+              }
+            />
+          </View>
+        )}
       </View>
 
       <View style={{ gap: 8 }}>
@@ -306,45 +297,63 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             />
           )}
         </XView>
-        <View style={{ flex: 1, minHeight: 10 }}>
-          <FlashList
-            scrollEnabled={false}
-            data={planItems}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            renderItem={({ item }) => (
-              <PlanRow
-                item={item}
-                onNavigate={onNavigate}
-                footer={
-                  item.type === 'day'
-                    ? renderDayPlanFooter?.(item.plan)
-                    : undefined
-                }
-              />
-            )}
-            ListEmptyComponent={
-              <Empty
-                dashedOutline
-                icon={
-                  <LucideIcon
-                    icon={CalendarDaysIcon}
-                    size={24}
-                    color={theme.colors.text}
-                  />
-                }
-                title={i18n.t('noPlansThisDay')}
-                action={
-                  onPlanDay ? (
-                    <EmptyActionButton
-                      label={i18n.t('planDay')}
-                      onPress={onPlanDay}
+        {inlinePlanForm ? (
+          <CollapsibleCard
+            ref={planCard}
+            label={i18n.t('planDay')}
+            open={planFormOpen}
+            onOpenChange={toggleForm(setPlanFormOpen, planCard)}
+            testID='day-plan-form'
+          >
+            {renderPlanForm?.({
+              date,
+              layout: 'inline',
+              // Once saved, the Plan takes the card's place in the list.
+              onDone: () => setPlanFormOpen(false),
+            })}
+          </CollapsibleCard>
+        ) : (
+          <View style={{ flex: 1, minHeight: 10 }}>
+            <FlashList
+              scrollEnabled={false}
+              data={planItems}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              renderItem={({ item }) => (
+                <PlanRow
+                  item={item}
+                  onNavigate={onNavigate}
+                  onLogTime={onLogTime}
+                  footer={
+                    item.type === 'day'
+                      ? renderDayPlanFooter?.(item.plan)
+                      : undefined
+                  }
+                />
+              )}
+              ListEmptyComponent={
+                <Empty
+                  dashedOutline
+                  icon={
+                    <LucideIcon
+                      icon={CalendarDaysIcon}
+                      size={24}
+                      color={theme.colors.text}
                     />
-                  ) : undefined
-                }
-              />
-            }
-          />
-        </View>
+                  }
+                  title={i18n.t('noPlansThisDay')}
+                  action={
+                    onPlanDay ? (
+                      <EmptyActionButton
+                        label={i18n.t('planDay')}
+                        onPress={onPlanDay}
+                      />
+                    ) : undefined
+                  }
+                />
+              }
+            />
+          </View>
+        )}
       </View>
     </View>
   )

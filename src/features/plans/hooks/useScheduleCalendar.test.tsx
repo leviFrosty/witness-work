@@ -138,3 +138,40 @@ it('lets the list jump to a month whose weeks go in above it', async () => {
     })
   )
 })
+
+it('waits for the list to load before revealing a day above a sheet', () => {
+  // A link opens the day as the tab first mounts: the week is off screen.
+  offset = todayOffset() + 400
+  act(() => {
+    calendar().revealDay(new Date(2026, 9, 10), 300)
+  })
+  expect(list.scrollToOffset).not.toHaveBeenCalled()
+
+  // The list holds its first row in place for a moment after it loads.
+  act(() => {
+    calendar().onListLoad()
+    vi.advanceTimersByTime(150)
+  })
+  // Onto the focus line, which is clear of the sheet here.
+  expect(list.scrollToOffset.mock.calls).toEqual([
+    [{ offset: todayOffset(), animated: true }],
+  ])
+})
+
+it('keeps its focus line in the part a day’s sheet leaves in view', () => {
+  offset = todayOffset() + 400
+  act(() => {
+    calendar().onListLoad()
+    vi.advanceTimersByTime(150)
+  })
+  act(() => {
+    calendar().coverBottom(300)
+    calendar().revealDay(new Date(2026, 9, 10), 300)
+  })
+  // A third of the 300 points left in view, less half a week.
+  const row = calendar().schedule.dayRow.get('2026-10-10')!
+  expect(list.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: row * ROW - (100 - ROW / 2),
+    animated: true,
+  })
+})

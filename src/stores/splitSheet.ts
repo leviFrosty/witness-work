@@ -1,0 +1,40 @@
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { MmkvStorage } from '@/stores/mmkv'
+
+/**
+ * How much of the window a split sheet covers, as a share of its height: room
+ * for the sheet below, and for the screen it splits above. At its largest, an
+ * iPhone still shows a week of the Schedule above it.
+ */
+export const SPLIT_SHEET_MIN_RATIO = 0.3
+export const SPLIT_SHEET_MAX_RATIO = 0.65
+export const SPLIT_SHEET_DEFAULT_RATIO = 0.5
+/** While a keyboard is up, so a field in the sheet isn't squeezed. */
+export const SPLIT_SHEET_KEYBOARD_RATIO = 0.85
+
+export const clampSplitSheetRatio = (ratio: number) =>
+  Math.min(Math.max(ratio, SPLIT_SHEET_MIN_RATIO), SPLIT_SHEET_MAX_RATIO)
+
+type SplitSheetPreferences = {
+  ratio: number
+  setRatio: (ratio: number) => void
+}
+
+/**
+ * The split's size as the User last dragged it. Device-local; excluded from
+ * sync and ministry backups.
+ */
+export const useSplitSheetPreferences = create<SplitSheetPreferences>()(
+  persist(
+    (set) => ({
+      ratio: SPLIT_SHEET_DEFAULT_RATIO,
+      setRatio: (ratio) => set({ ratio: clampSplitSheetRatio(ratio) }),
+    }),
+    {
+      name: 'split-sheet-layout',
+      storage: createJSONStorage(() => MmkvStorage),
+      partialize: ({ ratio }) => ({ ratio }),
+    }
+  )
+)

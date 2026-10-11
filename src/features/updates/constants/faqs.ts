@@ -42,6 +42,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'menuBar', category: 'general' },
   { id: 'navigationShortcuts', category: 'general' },
   { id: 'pointerHover', category: 'general' },
+  { id: 'logTimeForDay', category: 'time' },
   {
     id: 'timeRollover',
     category: 'time',

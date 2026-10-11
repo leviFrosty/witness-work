@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "{{value}} / {{goal}} gepland",
     "ofGoalLogged": "{{value}} / {{goal}} geregistreerd",
-    "annualGoal": "Doel {{value}}",
-    "loggedAndPlanned": "{{logged}} geregistreerd · {{planned}} gepland",
     "previousServiceYear": "Vorig dienstjaar",
     "nextServiceYear": "Volgend dienstjaar",
     "showMonth": "{{month}} tonen",

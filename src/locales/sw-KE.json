@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "{{value}} / {{goal}} imepangwa",
     "ofGoalLogged": "{{value}} / {{goal}} imerekodiwa",
-    "annualGoal": "Lengo {{value}}",
-    "loggedAndPlanned": "{{logged}} imerekodiwa · {{planned}} imepangwa",
     "previousServiceYear": "Mwaka wa huduma uliopita",
     "nextServiceYear": "Mwaka wa huduma unaofuata",
     "showMonth": "Onyesha {{month}}",

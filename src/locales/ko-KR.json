@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "계획 {{value}} / {{goal}}",
     "ofGoalLogged": "기록 {{value}} / {{goal}}",
-    "annualGoal": "목표 {{value}}",
-    "loggedAndPlanned": "{{logged}} 기록됨 · {{planned}} 계획됨",
     "previousServiceYear": "이전 봉사 연도",
     "nextServiceYear": "다음 봉사 연도",
     "showMonth": "{{month}} 보기",

@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "{{value}} / {{goal}} planejadas",
     "ofGoalLogged": "{{value}} / {{goal}} registradas",
-    "annualGoal": "Alvo {{value}}",
-    "loggedAndPlanned": "{{logged}} registradas · {{planned}} planejadas",
     "previousServiceYear": "Ano de serviço anterior",
     "nextServiceYear": "Próximo ano de serviço",
     "showMonth": "Mostrar {{month}}",

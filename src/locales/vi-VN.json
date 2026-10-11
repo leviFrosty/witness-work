@@ -1899,8 +1899,6 @@
     "ofGoal": "{{value}} / {{goal}}",
     "ofGoalPlanned": "Đã lên kế hoạch {{value}} / {{goal}}",
     "ofGoalLogged": "Đã ghi {{value}} / {{goal}}",
-    "annualGoal": "Mục tiêu {{value}}",
-    "loggedAndPlanned": "Đã ghi {{logged}} · đã lên kế hoạch {{planned}}",
     "previousServiceYear": "Năm công tác trước",
     "nextServiceYear": "Năm công tác sau",
     "showMonth": "Hiện {{month}}",

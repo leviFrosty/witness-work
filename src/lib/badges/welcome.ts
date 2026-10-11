@@ -17,7 +17,10 @@ export const welcomeAfterEvaluation = ({
 }: {
   firstPass: boolean
   welcome: BadgesWelcomeState | null
-  /** Seeding test data: filed as history with nothing shown. */
+  /**
+   * Filed as history with nothing shown: seeding test data, or the pass right
+   * after onboarding.
+   */
   quiet: boolean
   showBadges: boolean
   /** Badges this pass filed as history. */

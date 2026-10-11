@@ -977,7 +977,8 @@ export const PREFERENCE_DEFAULTS = {
    * device's first badge evaluation: `pending` until it's closed, `done` once
    * it's shown or wasn't needed (no history, badges hidden). Null until that
    * first evaluation. Later history (imports, restores) gets the summary card
-   * instead. Non-syncable: each device welcomes once.
+   * instead, and the evaluation right after onboarding gets neither.
+   * Non-syncable: each device welcomes once.
    */
   badgesWelcome: null as BadgesWelcomeState | null,
   /**

@@ -20,8 +20,22 @@ const b64uKey = z.string().regex(/^[A-Za-z0-9_-]{43}$/)
 const displayName = z.string().trim().min(1).max(60)
 
 /**
+ * The Profile photo at full size: an encrypted blob the sender uploaded to the
+ * relay under their own inbox, and what's needed to read it.
+ */
+export const profilePhotoSchema = z.object({
+  /** `b64u(SHA-256(sealed bytes))`. */
+  blob: b64uKey,
+  token: b64uKey,
+  key: b64uKey,
+})
+export type ProfilePhoto = z.infer<typeof profilePhotoSchema>
+
+/**
  * How a buddy looks on the other phone: an emoji, or a small JPEG thumbnail
- * (base64) that only travels in Buddy Cards — invites are too small for it.
+ * (base64) that only travels in Buddy Cards — invites are too small for it. A
+ * card's thumbnail may link the photo at full size (`full`), opened when the
+ * buddy taps it.
  */
 export const buddyAvatarSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('emoji'), v: z.string().min(1).max(16) }),
@@ -31,6 +45,8 @@ export const buddyAvatarSchema = z.discriminatedUnion('t', [
       .string()
       .max(MAX_AVATAR_IMAGE_CHARS)
       .regex(/^[A-Za-z0-9+/=]+$/),
+    // One this build can't read leaves the thumbnail, not the whole card.
+    full: profilePhotoSchema.optional().catch(undefined),
   }),
 ])
 export type BuddyAvatar = z.infer<typeof buddyAvatarSchema>

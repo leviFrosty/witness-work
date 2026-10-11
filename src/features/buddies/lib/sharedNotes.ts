@@ -16,6 +16,8 @@ import type { SharedPhoto, ShareDetails } from '@/features/buddies/lib/schemas'
 
 /** Binds a photo's ciphertext to its use. */
 export const SHARED_PHOTO_AAD = 'ww-buddies/v1/photo'
+/** The same for a Profile photo at full size, linked from Buddy Cards. */
+export const PROFILE_PHOTO_AAD = 'ww-buddies/v1/profile-photo'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 /** The relay keeps a photo at most 90 days; a day less allows for clock skew. */
@@ -71,9 +73,10 @@ export type SealedPhoto = { sealed: Uint8Array; blobId: string }
 export function sealSharedPhoto(
   bytes: Uint8Array,
   key: Uint8Array,
-  nonce: Uint8Array
+  nonce: Uint8Array,
+  aad = SHARED_PHOTO_AAD
 ): SealedPhoto {
-  const sealed = sealBytes(key, bytes, SHARED_PHOTO_AAD, nonce)
+  const sealed = sealBytes(key, bytes, aad, nonce)
   return { sealed, blobId: toB64u(sha256(sealed)) }
 }
 
@@ -83,11 +86,12 @@ export function sealSharedPhoto(
  */
 export function openSharedPhoto(
   sealed: Uint8Array,
-  photo: Pick<SharedPhoto, 'blob' | 'key'>
+  photo: Pick<SharedPhoto, 'blob' | 'key'>,
+  aad = SHARED_PHOTO_AAD
 ): Uint8Array | null {
   if (toB64u(sha256(sealed)) !== photo.blob) return null
   try {
-    return openBytes(fromB64u(photo.key), sealed, SHARED_PHOTO_AAD)
+    return openBytes(fromB64u(photo.key), sealed, aad)
   } catch {
     return null
   }

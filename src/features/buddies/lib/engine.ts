@@ -44,6 +44,7 @@ import {
   pairConfirmedSchema,
   PairingCard,
   pairingCardSchema,
+  type ProfilePhoto,
   Roster,
   rosterSchema,
   shareCancelSchema,
@@ -104,6 +105,7 @@ import {
   pairingEnded,
   PendingRemoval,
   SentBadgeReaction,
+  type UploadedProfilePhoto,
   type UploadedSharedPhoto,
 } from '@/features/buddies/lib/state'
 import {
@@ -126,6 +128,9 @@ import {
   encodeSharedNoteDoc,
   localSharedPhotoId,
   openSharedPhoto,
+  PROFILE_PHOTO_AAD,
+  SHARED_PHOTO_MAX_LIFETIME_MS,
+  SHARED_PHOTO_REFRESH_MS,
   sealSharedPhoto,
   sharedPhotoCovers,
   sharedPhotoExpiry,
@@ -203,6 +208,16 @@ export type BuddiesEngineDeps = {
   saveSharedPhoto?: (localId: string, bytes: Uint8Array) => Promise<void>
   /** Buddies' shared photos were saved, so notes showing them can refresh. */
   onSharedPhotosSaved?: () => void
+  /**
+   * The Profile photo as JPEG bytes for buddies to open full size, or null when
+   * there is none. Without it, Buddy Cards carry only the thumbnail.
+   */
+  readProfilePhoto?: () => Promise<Uint8Array | null>
+  /**
+   * Buddies' full-size Profile photos (by blob id) their cards still link; any
+   * other copy this device downloaded can go.
+   */
+  keepBuddyPhotos?: (blobIds: string[]) => Promise<void>
 }
 
 /** See `sync`. */
@@ -1230,13 +1245,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   async function sendCards() {
-    const { name, avatar, tenure, badges: shared = [] } = profile()
+    const { name, avatar: shown, tenure, badges: shared = [] } = profile()
     const streak = store.getState().sharing.streak
       ? deps.getStreak?.()
       : undefined
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
     const me = await identity()
+    const avatar = await withFullPhoto(me, shown)
     const { dayPlans, recurringPlans } = deps.getPlans()
     const days = buildBuddyCardDays(
       dayPlans,
@@ -1284,6 +1300,139 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         forgetBuddy(buddy.inboxId)
       }
     }
+  }
+
+  /**
+   * The card's avatar, linking the Profile photo at full size when it's a
+   * photo: uploaded (encrypted with its own key) under this User's inbox once
+   * per photo, and again before the relay's copy runs out. One upload serves
+   * every buddy. While it can't be uploaded (offline, photos off on the relay)
+   * the card carries the thumbnail alone, and a later publish links it.
+   */
+  async function withFullPhoto(
+    me: BuddyIdentity,
+    avatar: BuddyAvatar | undefined
+  ): Promise<BuddyAvatar | undefined> {
+    const uploaded = store.getState().profilePhoto
+    if (avatar?.t !== 'image') {
+      // Removed, or no longer shared: buddies can't open it any more.
+      if (uploaded) await deleteProfilePhoto(me, uploaded)
+      return avatar
+    }
+    if (!deps.readProfilePhoto || !store.getState().photosAvailable)
+      return avatar
+    const now = deps.now()
+    const thumbnail = toB64u(sha256(utf8(avatar.v)))
+    const current = (photo: UploadedProfilePhoto | null) =>
+      photo?.thumbnail === thumbnail && photo.expiresAt > now ? photo : null
+    let photo = current(uploaded)
+    if (!photo || photo.expiresAt - now <= SHARED_PHOTO_REFRESH_MS) {
+      try {
+        photo = current(await uploadProfilePhoto(me, thumbnail)) ?? photo
+      } catch (error) {
+        if (isRelayError(error, 'photos_disabled'))
+          store.setState({ photosAvailable: false })
+        if (isRelayError(error, 'cancelled')) throw error
+      }
+    }
+    if (!photo) return avatar
+    const { blob, token, key } = photo
+    return { ...avatar, full: { blob, token, key } }
+  }
+
+  async function uploadProfilePhoto(
+    me: BuddyIdentity,
+    thumbnail: string
+  ): Promise<UploadedProfilePhoto | null> {
+    const bytes = await deps.readProfilePhoto?.()
+    if (!bytes) return null
+    const key = deps.randomBytes(32)
+    const token = deps.randomBytes(32)
+    const { sealed, blobId } = sealSharedPhoto(
+      bytes,
+      key,
+      deps.randomBytes(12),
+      PROFILE_PHOTO_AAD
+    )
+    const expiresAt = deps.now() + SHARED_PHOTO_MAX_LIFETIME_MS
+    await relay.putBlob(ownerAuth(me), {
+      blobId,
+      data: sealed,
+      expiresAt,
+      readTokenHash: toB64u(sha256(token)),
+    })
+    const previous = store.getState().profilePhoto
+    const uploaded: UploadedProfilePhoto = {
+      thumbnail,
+      blob: blobId,
+      key: toB64u(key),
+      token: toB64u(token),
+      expiresAt,
+    }
+    store.setState({ profilePhoto: uploaded })
+    if (
+      previous &&
+      previous.blob !== blobId &&
+      previous.expiresAt > deps.now()
+    ) {
+      await relay.deleteBlobs(ownerAuth(me), [previous.blob]).catch(() => {})
+    }
+    return uploaded
+  }
+
+  /**
+   * Kept to try again on the next publish while the relay can't be reached.
+   * With photos off there, the relay deletes it when it expires.
+   */
+  async function deleteProfilePhoto(
+    me: BuddyIdentity,
+    photo: UploadedProfilePhoto
+  ) {
+    if (photo.expiresAt > deps.now()) {
+      try {
+        await relay.deleteBlobs(ownerAuth(me), [photo.blob])
+      } catch (error) {
+        if (
+          !isRelayError(error, 'not_found') &&
+          !isRelayError(error, 'photos_disabled')
+        )
+          return
+      }
+    }
+    store.setState({ profilePhoto: null })
+  }
+
+  /**
+   * A buddy's Profile photo at full size as JPEG bytes, from the link in their
+   * card; null when the relay's copy is gone, or isn't the one linked.
+   */
+  async function fetchBuddyPhoto(
+    inboxId: string,
+    photo: ProfilePhoto,
+    call: RelayCallOptions = {}
+  ): Promise<Uint8Array | null> {
+    try {
+      const sealed = await relay.getBlob(
+        { inboxId, blobId: photo.blob, token: photo.token },
+        call
+      )
+      return openSharedPhoto(sealed, photo, PROFILE_PHOTO_AAD)
+    } catch (error) {
+      if (isRelayError(error, 'not_found')) return null
+      throw error
+    }
+  }
+
+  /** Lets go of buddies' full-size photos no card links any more. */
+  async function keepBuddyPhotos() {
+    const linked = store
+      .getState()
+      .buddies.flatMap((buddy) =>
+        buddy.avatar?.t === 'image' && buddy.avatar.full
+          ? [buddy.avatar.full.blob]
+          : []
+      )
+    await deps.keepBuddyPhotos?.(linked).catch(() => {})
   }
 
   function applyClaim(
@@ -3453,6 +3602,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishShares()
     cancelled(call)
     await downloadSharedPhotos(call)
+    await keepBuddyPhotos()
   }
 
   /**
@@ -3741,6 +3891,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       badgeNotifications,
       sharing,
     })
+    await keepBuddyPhotos()
   }
 
   return {
@@ -3758,6 +3909,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     setNickname,
     setSharing,
     publishCards,
+    fetchBuddyPhoto,
     publishShares,
     replyToShare,
     deliverReplies,

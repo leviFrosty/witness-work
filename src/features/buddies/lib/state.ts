@@ -231,6 +231,17 @@ export type UploadedSharedPhoto = {
   h: number
 }
 
+/** The Profile photo at full size, as this device uploaded it for buddies. */
+export type UploadedProfilePhoto = {
+  /** Hash of the Buddy Card thumbnail it goes with, so a new photo replaces it. */
+  thumbnail: string
+  blob: string
+  key: string
+  token: string
+  /** When the relay deletes it. */
+  expiresAt: number
+}
+
 /** What this device has sent for one share. */
 export type OutgoingShare = {
   shareId: string
@@ -534,6 +545,8 @@ export type BuddiesState = {
   sharedPhotos: Record<string, UploadedSharedPhoto>
   /** The relay takes shared photos (its last sync said so). */
   photosAvailable: boolean
+  /** This User's Profile photo uploaded at full size for Buddy Cards. */
+  profilePhoto: UploadedProfilePhoto | null
   /** Buddies' replies to this User's shares: shareId → inboxId → reply. */
   shareReplies: Record<string, Record<string, ReceivedReply>>
   /** Invitations from buddies, by `incomingShareKey`. */
@@ -614,6 +627,7 @@ export const initialBuddiesState: BuddiesState = {
   outgoingShares: {},
   sharedPhotos: {},
   photosAvailable: false,
+  profilePhoto: null,
   shareReplies: {},
   incomingShares: {},
   joinRequests: {},

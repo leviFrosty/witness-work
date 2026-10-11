@@ -23,6 +23,7 @@ export default function BuddyAvatar({
   background,
   size,
   focusable,
+  loadFullImage,
   children,
 }: {
   avatar?: SharedAvatar
@@ -33,6 +34,8 @@ export default function BuddyAvatar({
   background?: string
   size?: number
   focusable?: boolean
+  /** With `focusable`: the photo at full size, see `Avatar`. */
+  loadFullImage?: () => Promise<string | null>
   /** E.g. an `AvatarBadge`. */
   children?: ReactNode
 }) {
@@ -43,6 +46,7 @@ export default function BuddyAvatar({
       name={name}
       size={size}
       focusable={focusable}
+      loadFullImage={loadFullImage}
       background={
         background ??
         (color === undefined ? undefined : buddyColor(theme, color))

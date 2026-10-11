@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
 import {
   isRecordingBadges,
@@ -31,10 +31,26 @@ const hydrated = () =>
  * launch. Each evaluation carries the User's action behind its batch of
  * changes, if any, so only what they just did is celebrated full screen (ADR
  * 0021). Renders nothing; waits until onboarding is done so nothing is
- * celebrated mid-setup.
+ * celebrated mid-setup, then files what onboarding brought in quietly.
  */
 const BadgesRuntime = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
+  // Onboarding finished in this session, and no evaluation has run since.
+  const justOnboarded = useRef(false)
+
+  useEffect(
+    () =>
+      usePreferences.subscribe((state, previous) => {
+        // Not hydration, which turns it on for a User onboarded long ago.
+        if (
+          state.onboardingComplete &&
+          !previous.onboardingComplete &&
+          usePreferences.persist.hasHydrated()
+        )
+          justOnboarded.current = true
+      }),
+    []
+  )
 
   useEffect(() => {
     if (!onboardingComplete) return
@@ -51,9 +67,11 @@ const BadgesRuntime = () => {
       idle = requestIdleCallback(() => {
         idle = null
         changedAt = null
+        const afterOnboarding = justOnboarded.current
+        justOnboarded.current = false
         try {
           evaluatedDay = localDay()
-          runBadgeEvaluation({ action: actionBehind(batchAt) })
+          runBadgeEvaluation({ action: actionBehind(batchAt), afterOnboarding })
         } catch (error) {
           logger.error('[badges] evaluation failed', error)
         }

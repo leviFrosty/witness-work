@@ -48,26 +48,37 @@ import { useBadgeSession } from '@/stores/badgeSession'
 const NOW = new Date(2026, 9, 8, 12)
 const thisMonth = moment(NOW).format('YYYY-MM')
 
-/** A device past its first pass whose User sent this month's report. */
-function setUp({ showBadges = true } = {}) {
+/**
+ * A device whose User sent this month's report, past its first pass unless
+ * `firstPass`.
+ */
+function setUp({ showBadges = true, firstPass = false } = {}) {
   const prefs = {
     earnedBadges: {} as Record<string, EarnedBadge>,
     badgeLedger: [] as string[],
     submittedReportMonths: [thisMonth],
-    badgesBackfilledAt: NOW.getTime() - 86_400_000,
-    badgesWelcome: 'done',
+    badgesBackfilledAt: firstPass
+      ? (null as number | null)
+      : NOW.getTime() - 86_400_000,
+    badgesWelcome: firstPass ? (null as string | null) : 'done',
     badgesSeenAt: 0,
     badgeCardDismissed: [] as string[],
     showBadges,
     recordBadges: ({
       earned,
       ledger,
+      backfilledAt,
+      welcome,
     }: {
       earned: { key: string; record: EarnedBadge }[]
       ledger: string[]
+      backfilledAt?: number
+      welcome?: string
     }) => {
       for (const { key, record } of earned) prefs.earnedBadges[key] ??= record
       prefs.badgeLedger = [...prefs.badgeLedger, ...ledger]
+      if (backfilledAt) prefs.badgesBackfilledAt ??= backfilledAt
+      if (welcome) prefs.badgesWelcome = welcome
     },
     markBadgesSeen: vi.fn(),
   }
@@ -161,6 +172,42 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
     expect(useBadgeSession.getState().celebrations).toEqual([])
     expect(prefs.earnedBadges['reportSent.1'].history).toBe(true)
     expect(card(prefs)).toEqual([])
+  })
+})
+
+describe('runBadgeEvaluation: right after onboarding', () => {
+  it('welcomes a device whose first pass finds history', () => {
+    const prefs = setUp({ firstPass: true })
+    runBadgeEvaluation({ now: NOW })
+    expect(prefs.badgesWelcome).toBe('pending')
+  })
+
+  it('files what onboarding brought in with no welcome or summary', () => {
+    const prefs = setUp({ firstPass: true })
+    runBadgeEvaluation({ now: NOW, afterOnboarding: true })
+    expect(prefs.earnedBadges['reportSent.1'].history).toBe(true)
+    expect(prefs.badgesWelcome).toBe('done')
+    expect(useBadgeSession.getState().historyCount).toBe(0)
+    expect(card(prefs)).toEqual([])
+    // Still counted: how much history people bring.
+    expect(runtime.capture).toHaveBeenCalledWith('badges_history_found', {
+      count: 1,
+    })
+  })
+
+  it('takes over nothing on a device past its first pass', () => {
+    const prefs = setUp()
+    runBadgeEvaluation({
+      now: NOW,
+      afterOnboarding: true,
+      action: noteUserAction('report', NOW.getTime()),
+    })
+    const session = useBadgeSession.getState()
+    expect(session.celebrations).toEqual([])
+    expect(session.historyCount).toBe(0)
+    expect(prefs.earnedBadges['reportSent.1'].history).toBe(true)
+    expect(card(prefs)).toEqual([])
+    expect(runtime.announce).not.toHaveBeenCalled()
   })
 })
 

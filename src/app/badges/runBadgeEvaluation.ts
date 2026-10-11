@@ -46,13 +46,19 @@ export type BadgeEvaluationResult = {
  *
  * `quiet` files everything as history with no celebration or summary — for
  * seeding test data, where a flood of celebrations would only get in the way.
+ * `afterOnboarding` files the same way for the first evaluation after the User
+ * finishes onboarding: what they entered, imported or restored there is already
+ * theirs, so no welcome or summary covers their first look at Home.
  */
 export const runBadgeEvaluation = ({
   quiet = false,
+  afterOnboarding = false,
   now = new Date(),
   action = null,
 }: {
   quiet?: boolean
+  /** The first evaluation since the User finished onboarding. */
+  afterOnboarding?: boolean
   now?: Date
   /** The User's action behind this change; null when it came from elsewhere. */
   action?: UserAction | null
@@ -84,11 +90,13 @@ export const runBadgeEvaluation = ({
   session.setEvaluation(evaluation)
 
   const firstPass = prefs.badgesBackfilledAt === null
+  // Filed as history with nothing on screen.
+  const silent = quiet || afterOnboarding
   const newlyEarned = newlyEarnedBadges({
     evaluation,
     stored: prefs.earnedBadges,
     now,
-    backfill: quiet || firstPass,
+    backfill: silent || firstPass,
   })
   const live = newlyEarned
     .filter((badge) => badge.live)
@@ -98,7 +106,7 @@ export const runBadgeEvaluation = ({
   const welcome = welcomeAfterEvaluation({
     firstPass,
     welcome: prefs.badgesWelcome,
-    quiet,
+    quiet: silent,
     showBadges: prefs.showBadges,
     historyCount: history.length,
   })
@@ -138,7 +146,7 @@ export const runBadgeEvaluation = ({
     analytics.capture('badges_history_found', { count: history.length })
   }
 
-  if (prefs.showBadges && !quiet) {
+  if (prefs.showBadges && !silent) {
     // Without an action, live badges wait on the Home card (`homeCardBadges`).
     if (live.length && action) session.celebrate(live, celebrationClaim(action))
     if (history.length && welcome !== 'pending')

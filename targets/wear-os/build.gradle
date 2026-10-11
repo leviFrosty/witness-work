@@ -95,11 +95,14 @@ kotlin {
   jvmToolchain(17)
 }
 
-// EAS signs release builds by applying this script to the phone app; apply it here too so
-// both apps carry the same upload key.
-def easBuildGradle = rootProject.file('app/eas-build.gradle')
-if (easBuildGradle.exists()) {
-  apply from: easBuildGradle
+// EAS signs release builds by applying one of these scripts to the phone app; apply it here
+// too so both apps carry the same upload key. Current EAS writes the first, older EAS the second.
+def easSigningGradle = [
+  'app/eas-build-inject-android-credentials.gradle',
+  'app/eas-build.gradle',
+].collect { rootProject.file(it) }.find { it.exists() }
+if (easSigningGradle) {
+  apply from: easSigningGradle
 }
 
 // Pinned to exact patch versions (AGENTS.md). The newest releases that build with the

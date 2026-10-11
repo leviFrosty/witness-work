@@ -1,9 +1,10 @@
 import { View } from 'react-native'
+import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
 
 /**
- * Logged time (solid) then planned time (tinted) against a goal. Without a
- * goal, the bar splits the total between the two instead.
+ * Logged time (solid) then planned time (striped, like `GoalBar`) against a
+ * goal. Without a goal, the bar splits the total between the two instead.
  */
 export default function GoalSplitBar({
   goalMinutes,
@@ -39,12 +40,17 @@ export default function GoalSplitBar({
           backgroundColor: theme.colors.accent,
         }}
       />
-      <View
-        style={{
-          width: `${plannedShare * 100}%`,
-          backgroundColor: theme.colors.accentAlt,
-        }}
-      />
+      {plannedShare > 0 && (
+        <View style={{ width: `${plannedShare * 100}%`, height: '100%' }}>
+          <StripedFill
+            // The SVG keeps its first size when the fill grows; remount it.
+            key={plannedShare}
+            color={theme.colors.accent}
+            size={4}
+            strokeWidth={1.5}
+          />
+        </View>
+      )}
     </View>
   )
 }

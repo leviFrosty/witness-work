@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useId, useRef, useState } from 'react'
 import {
   AccessibilityInfo,
+  BackHandler,
   findNodeHandle,
   Keyboard,
   Modal,
@@ -20,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { Portal } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
@@ -59,6 +61,14 @@ interface Props {
    * popover horizontally inside the window.
    */
   contentWidth: number
+  /**
+   * `modal` (default) mounts the popover in an RN `Modal`, its own native
+   * window, so it shows over screens presented as a native modal or form sheet.
+   * `portal` mounts it in Tamagui's root portal instead, so a Tamagui `Sheet`
+   * opened from its content lands on top of it rather than behind the Modal.
+   * Use `portal` only on screens that aren't presented natively.
+   */
+  presentation?: 'modal' | 'portal'
   /** Optional initial VoiceOver focus; dismissal returns focus to the trigger. */
   accessibilityFocusRef?: React.RefObject<View | null>
   /**
@@ -131,9 +141,11 @@ const AnchoredPopover = ({
   contentWidth,
   resolvePosition = defaultResolvePosition,
   contentStyle,
+  presentation = 'modal',
   accessibilityFocusRef,
   children,
 }: Props) => {
+  const portal = presentation === 'portal'
   const theme = useTheme()
   const navigation = useNavigation()
   const viewportRef = useRef<View>(null)
@@ -333,11 +345,17 @@ const AnchoredPopover = ({
   }
 
   // RN only fires `onDismiss` on iOS. Android's Modal is gone as soon as it
-  // renders with `visible={false}`, so mirror `onDismiss` once it unmounts.
-  // Inlined so the exhaustive-deps lint doesn't need suppressing.
+  // renders with `visible={false}`, and a portal has no Modal at all, so mirror
+  // `onShow` / `onDismiss` as it mounts and unmounts. Inlined so the
+  // exhaustive-deps lint doesn't need suppressing.
   useEffect(() => {
-    if (Platform.OS !== 'android') return
+    if (Platform.OS !== 'android' && !portal) return
     if (mounted) {
+      if (!wasMounted.current && portal) {
+        const target = accessibilityFocusRef?.current
+        const handle = target && findNodeHandle(target)
+        if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
+      }
       wasMounted.current = true
       return
     }
@@ -349,7 +367,20 @@ const AnchoredPopover = ({
     if (!accessibilityFocusRef || !navigation.isFocused()) return
     const handle = anchorRef.current && findNodeHandle(anchorRef.current)
     if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
-  }, [mounted, accessibilityFocusRef, navigation])
+  }, [mounted, portal, accessibilityFocusRef, navigation])
+
+  // A Modal closes on Android's back button through `onRequestClose`.
+  useEffect(() => {
+    if (!portal || !open) return
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        setOpen(false)
+        return true
+      }
+    )
+    return () => subscription.remove()
+  }, [portal, open])
 
   const positionStyle: {
     top?: number
@@ -381,6 +412,80 @@ const AnchoredPopover = ({
     transform: [{ scale: 0.96 + 0.04 * progress.value }],
   }))
 
+  // A Modal is its own native root; gestures inside (including pointer hover on
+  // its buttons) need their own handler root.
+  const overlay = (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.2)',
+          },
+          backdropAnimatedStyle,
+        ]}
+      >
+        <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
+      </Animated.View>
+      <Animated.View
+        ref={viewportRef}
+        collapsable={false}
+        accessibilityViewIsModal
+        onAccessibilityEscape={close}
+        style={[
+          {
+            position: 'absolute',
+            width: contentWidth,
+            borderRadius: theme.numbers.borderRadiusMd,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.card,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 8,
+          },
+          // A capped popover clips its scroll content to the rounded corners;
+          // an uncapped one keeps padding on the box and renders children flat.
+          maxHeight != null
+            ? { overflow: 'hidden' }
+            : [{ padding: 12 }, contentStyle],
+          placement,
+          contentAnimatedStyle,
+        ]}
+      >
+        <VisibilityViewportContext value={viewportRef}>
+          {maxHeight != null ? (
+            <ScrollView
+              style={{ maxHeight }}
+              contentContainerStyle={[{ padding: 12 }, contentStyle]}
+              showsVerticalScrollIndicator
+            >
+              {content}
+            </ScrollView>
+          ) : (
+            content
+          )}
+        </VisibilityViewportContext>
+      </Animated.View>
+    </GestureHandlerRootView>
+  )
+
+  if (portal) {
+    return (
+      <>
+        {renderTrigger({ onPress: handlePress, anchorRef, expanded: open })}
+        {/* Under Tamagui's sheets, which stack from 100_000. */}
+        {mounted ? <Portal zIndex={90_000}>{overlay}</Portal> : null}
+      </>
+    )
+  }
+
   return (
     <>
       {renderTrigger({ onPress: handlePress, anchorRef, expanded: open })}
@@ -404,67 +509,7 @@ const AnchoredPopover = ({
           if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
         }}
       >
-        {/* A Modal is its own native root; gestures inside (including
-            pointer hover on its buttons) need their own handler root. */}
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.2)',
-              },
-              backdropAnimatedStyle,
-            ]}
-          >
-            <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
-          </Animated.View>
-          <Animated.View
-            ref={viewportRef}
-            collapsable={false}
-            accessibilityViewIsModal
-            onAccessibilityEscape={close}
-            style={[
-              {
-                position: 'absolute',
-                width: contentWidth,
-                borderRadius: theme.numbers.borderRadiusMd,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.card,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 12,
-                elevation: 8,
-              },
-              // A capped popover clips its scroll content to the rounded corners;
-              // an uncapped one keeps padding on the box and renders children flat.
-              maxHeight != null
-                ? { overflow: 'hidden' }
-                : [{ padding: 12 }, contentStyle],
-              placement,
-              contentAnimatedStyle,
-            ]}
-          >
-            <VisibilityViewportContext value={viewportRef}>
-              {maxHeight != null ? (
-                <ScrollView
-                  style={{ maxHeight }}
-                  contentContainerStyle={[{ padding: 12 }, contentStyle]}
-                  showsVerticalScrollIndicator
-                >
-                  {content}
-                </ScrollView>
-              ) : (
-                content
-              )}
-            </VisibilityViewportContext>
-          </Animated.View>
-        </GestureHandlerRootView>
+        {overlay}
         <StatusBar translucent />
       </Modal>
     </>

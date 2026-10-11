@@ -33,7 +33,11 @@ const {
   joinKinds: { current: ['join.request.aaaaaaaaaaaa'] },
   badgeKinds: { current: ['badge.new', 'badge.reaction'] },
   buddiesState: { registeredInboxId: 'inbox', notificationsEnabled: true },
-  app: { applicationId: 'com.leviwilkerson.jwtimebeta' as string | null },
+  app: {
+    applicationId: 'com.leviwilkerson.jwtimebeta' as string | null,
+    apsEnvironment: 'development' as string | null,
+    isDevice: true,
+  },
   capture: vi.fn(),
   platform: { OS: 'ios' as 'ios' | 'android' },
   setChannel: vi.fn(async () => null),
@@ -50,7 +54,12 @@ vi.mock('expo-application', () => ({
   get applicationId() {
     return app.applicationId
   },
-  getIosPushNotificationServiceEnvironmentAsync: async () => 'development',
+  getIosPushNotificationServiceEnvironmentAsync: async () => app.apsEnvironment,
+}))
+vi.mock('expo-device', () => ({
+  get isDevice() {
+    return app.isDevice
+  },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
@@ -73,6 +82,8 @@ describe('registerBuddiesPush', () => {
     joinKinds.current = ['join.request.aaaaaaaaaaaa']
     badgeKinds.current = [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND]
     app.applicationId = 'com.leviwilkerson.jwtimebeta'
+    app.apsEnvironment = 'development'
+    app.isDevice = true
     platform.OS = 'ios'
     setChannel.mockClear()
   })
@@ -99,6 +110,24 @@ describe('registerBuddiesPush', () => {
         title: expect.stringMatching(/^buddies_push/),
         body: expect.stringMatching(/^buddies_push/),
       })
+  })
+
+  it('uses production APNs for TestFlight and App Store builds', async () => {
+    // Their profile is stripped, so the aps-environment reads null.
+    app.apsEnvironment = null
+    await registerBuddiesPush()
+    expect(registerPush.mock.calls[0][0].apnsEnvironment).toBe('production')
+
+    app.apsEnvironment = 'production'
+    await registerBuddiesPush()
+    expect(registerPush.mock.calls[1][0].apnsEnvironment).toBe('production')
+  })
+
+  it('uses the APNs sandbox on a simulator', async () => {
+    app.apsEnvironment = null
+    app.isDevice = false
+    await registerBuddiesPush()
+    expect(registerPush.mock.calls[0][0].apnsEnvironment).toBe('sandbox')
   })
 
   it('adds one template per buddy whose requests to join may alert here', async () => {

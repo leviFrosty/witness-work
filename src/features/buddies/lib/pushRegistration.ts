@@ -1,5 +1,6 @@
 import { Platform } from 'react-native'
 import * as Application from 'expo-application'
+import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -112,8 +113,12 @@ async function pushAddress(): Promise<PushAddress> {
     await Application.getIosPushNotificationServiceEnvironmentAsync()
   return {
     apnsToken: String(token.data),
-    // Dev-client and simulator builds talk to the APNs sandbox.
-    apnsEnvironment: environment === 'production' ? 'production' : 'sandbox',
+    // Dev-client and simulator builds talk to the APNs sandbox. TestFlight and
+    // App Store builds carry no provisioning profile, so they read `null`.
+    apnsEnvironment:
+      environment === 'development' || !Device.isDevice
+        ? 'sandbox'
+        : 'production',
     // Beta and production are separate apps with their own APNs topic.
     ...(Application.applicationId
       ? { apnsTopic: Application.applicationId }

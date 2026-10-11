@@ -16,7 +16,7 @@ export default function BuddiesHeaderButton({
   compact = false,
 }: {
   /** Icon only, where the header has no room for the label. */
-  compact?: boolean
+  compact?: boolean | 'auto'
 } = {}) {
   const navigation = useNavigation<RootStackNavigation>()
   const availability = useBuddiesAvailability()

@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, View, type ViewStyle } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
+import { useRootHeaderTitleFit } from '@/components/RootHeader'
 import useTheme from '@/contexts/theme'
 
 type Props = {
@@ -19,13 +21,17 @@ type Props = {
   disabled?: boolean
   /**
    * Icon only, for a header without room for the label. The label still names
-   * it to VoiceOver and as a pointer tooltip.
+   * it to VoiceOver and as a pointer tooltip. `auto` shows the label only while
+   * the root header's title keeps room for it.
    */
-  compact?: boolean
+  compact?: boolean | 'auto'
 }
 
 /** ActivityIndicator's `small` size; scaled down to the icon's. */
 const SPINNER_SIZE = 20
+
+/** The icon-only pill's width and height. */
+const COMPACT_SIZE = 36
 
 /** A labeled root-header action, for places and tasks an icon can't name. */
 export default function HeaderPillButton({
@@ -40,13 +46,29 @@ export default function HeaderPillButton({
 }: Props) {
   const theme = useTheme()
   const iconSize = theme.fontSize('md')
-  const pill: ViewStyle = {
+  const titleFit = useRootHeaderTitleFit()
+  const room = titleFit?.room
+  const needs = titleFit?.needs
+  const [labeledWidth, setLabeledWidth] = useState<number>()
+  const [fits, setFits] = useState(false)
+  useEffect(() => {
+    if (room === undefined || needs === undefined) return
+    if (labeledWidth === undefined) return
+    // `room` was measured with the pill as it is now, so the room left beside
+    // the label comes out the same either way and the choice can't flip-flop.
+    setFits((labeled) =>
+      labeled ? room >= needs : room - (labeledWidth - COMPACT_SIZE) >= needs
+    )
+  }, [room, needs, labeledWidth])
+  const iconOnly = compact === 'auto' ? !fits : compact
+
+  const pillStyle = (small: boolean): ViewStyle => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 36,
-    ...(compact
-      ? { width: 36, justifyContent: 'center' }
+    minHeight: COMPACT_SIZE,
+    ...(small
+      ? { width: COMPACT_SIZE, justifyContent: 'center' }
       : { paddingHorizontal: 12 }),
     borderRadius: 18,
     borderWidth: 1,
@@ -54,7 +76,20 @@ export default function HeaderPillButton({
     backgroundColor: theme.colors.accentTranslucent,
     // Set only when dimmed, so it doesn't override the pressed state's.
     ...(disabled ? { opacity: 0.5 } : null),
-  }
+  })
+  const pill = pillStyle(iconOnly)
+  const labelText = (
+    <Text
+      numberOfLines={1}
+      style={{
+        color: theme.colors.accent,
+        fontFamily: theme.fonts.semiBold,
+        fontSize: theme.fontSize('sm'),
+      }}
+    >
+      {label}
+    </Text>
+  )
   const content = (
     <>
       {loading ? (
@@ -75,18 +110,7 @@ export default function HeaderPillButton({
       ) : (
         <LucideIcon icon={icon} size={iconSize} color={theme.colors.accent} />
       )}
-      {compact ? null : (
-        <Text
-          numberOfLines={1}
-          style={{
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {label}
-        </Text>
-      )}
+      {iconOnly ? null : labelText}
       {badge && (
         <View
           style={{
@@ -103,17 +127,43 @@ export default function HeaderPillButton({
     </>
   )
 
+  // The labeled pill's width, measured off-screen while the icon shows.
+  const measure = compact === 'auto' && (
+    <View
+      pointerEvents='none'
+      accessibilityElementsHidden
+      importantForAccessibility='no-hide-descendants'
+      style={{
+        position: 'absolute',
+        width: 9999,
+        flexDirection: 'row',
+        opacity: 0,
+      }}
+    >
+      <View
+        onLayout={(e) => setLabeledWidth(e.nativeEvent.layout.width)}
+        style={pillStyle(false)}
+      >
+        <View style={{ width: iconSize, height: iconSize }} />
+        {labelText}
+      </View>
+    </View>
+  )
+
   if (loading)
     return (
-      <View
-        accessible
-        accessibilityRole='button'
-        accessibilityLabel={accessibilityLabel ?? label}
-        accessibilityState={{ busy: true }}
-        style={pill}
-      >
-        {content}
-      </View>
+      <>
+        {measure}
+        <View
+          accessible
+          accessibilityRole='button'
+          accessibilityLabel={accessibilityLabel ?? label}
+          accessibilityState={{ busy: true }}
+          style={pill}
+        >
+          {content}
+        </View>
+      </>
     )
 
   const button = (
@@ -130,11 +180,16 @@ export default function HeaderPillButton({
       {content}
     </Button>
   )
-  return compact ? (
-    <PointerTooltip label={label} effect='none'>
-      {button}
-    </PointerTooltip>
-  ) : (
-    button
+  return (
+    <>
+      {measure}
+      {iconOnly ? (
+        <PointerTooltip label={label} effect='none'>
+          {button}
+        </PointerTooltip>
+      ) : (
+        button
+      )}
+    </>
   )
 }

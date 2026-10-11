@@ -473,13 +473,13 @@ release. `update_reveal_opened` fires when it appears, with `source` (`launch`,
 `tray`, `whats_new`, or `dev`), `entrance` (`intro` picks up from the splash,
 `calm` is the same under Reduce Motion, `replay` fades in over the app), and
 `reveal_version`. `update_reveal_closed` fires once when it closes, with
-`source`, `method` (`later`, `close`, `done`, or `back` for Android's back
-button), `stage` (`intro` if it closed before the tour, `tour` otherwise),
+`source`, `method` (`later`, `close`, `done` for the last page's Take me home,
+or `back` for Android's back button), `stage` (`intro` if it closed before the tour, `tour` otherwise),
 `pages_viewed` and `page_count` (pages shown for this platform, role, Buddies
 availability, and Apple Watch support, fixed when the tour opens; `watch` and
 `siri` show only on an iPhone, `siri` only for roles that log hours),
 `last_page` (a bounded page id such as `navigation`, `buddies`, `watch`, or
-`android`), and `elapsed_ms` (wall
+`more`), and `elapsed_ms` (wall
 clock, including time in the share sheet). Compare
 `stage: intro` with `method: later` to see who skips the tour, and
 `last_page`/`pages_viewed` to see where tours end. A tour closed by quitting the
@@ -507,8 +507,10 @@ months, dates, buddy ids, or names.
 
 ## Sharing the app
 
-`app_share_tapped` records a tap on Share Link, with `source` (`update_reveal`
-for the tour's last page, `settings` for Settings → Share WitnessWork).
+`app_share_tapped` records a tap on Share Link, with `source` (`settings` for
+Settings → Share WitnessWork; `update_reveal` came from the update reveal tour's
+last page in 1.44.0 and 1.44.1 before their OTA update replaced it with Take me
+home).
 `app_share_completed` follows with the same `source` and `outcome`: `dismissed`
 when iOS reports the share sheet was closed without sharing, otherwise
 `shared`. Android's share sheet doesn't report a choice, so every Android

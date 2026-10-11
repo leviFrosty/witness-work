@@ -697,6 +697,7 @@
   "updateReveal_trayBody": "新機能をさっと紹介します。",
   "updateReveal_next": "次へ",
   "updateReveal_shareLink": "リンクを共有",
+  "updateReveal_takeMeHome": "ホームへ",
   "updateReveal_pageOf": "{{page}} / {{count}}ページ",
   "updateReveal_tourCard": "ツアーを見る",
   "updateReveal_navigation_title": "シンプルになったナビゲーション",

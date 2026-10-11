@@ -329,6 +329,33 @@ describe('image cleanup on catch-up', () => {
     expect(bridge.deleteBinaryFile).not.toHaveBeenCalledWith(INCOMING_PHOTO)
   })
 
+  it('keeps photos while a peer has a contact this build can’t read', async () => {
+    const phone = JSON.parse(phonePayload().json)
+    phone.contactStore.contacts.push({
+      id: 'deleted-long-ago',
+      name: 42,
+      updatedAt: Date.now(),
+    })
+    runtime.files = [{ ...phonePayload(), json: JSON.stringify(phone) }]
+    const {
+      installiCloudSync,
+      useSupporter,
+      usePreferences,
+      useContacts,
+      bridge,
+    } = await load()
+    usePreferences.setState({ iCloudSyncIncludeImages: true })
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+
+    runtime.appStateListeners.forEach((listener) => listener('active'))
+
+    await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+    await settle()
+    await settle()
+    expect(bridge.deleteBinaryFile).not.toHaveBeenCalled()
+  })
+
   it('judges cleanup by the newest pull, not one it joined', async () => {
     runtime.files = []
     runtime.appState = 'background'
@@ -603,11 +630,7 @@ it('keeps healthy peers syncing while surfacing a malformed peer', async () => {
       modifiedAt: 1000,
       json: JSON.stringify({
         ...JSON.parse(phonePayload().json),
-        serviceReportStore: {
-          serviceReports: { 2026: { 8: [null] } },
-          dayPlans: [],
-          recurringPlans: [],
-        },
+        serviceReportStore: 'unreadable',
       }),
     },
   ]
@@ -617,6 +640,33 @@ it('keeps healthy peers syncing while surfacing a malformed peer', async () => {
   uninstall = installiCloudSync()
   await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
   expect(usePreferences.getState().iCloudSyncIssue).toBe('invalid-file')
+})
+
+it('syncs the rest of a peer file with one unreadable record', async () => {
+  const phone = JSON.parse(phonePayload().json)
+  phone.contactStore.contacts.push({ id: 'bad', name: 42, updatedAt: 1000 })
+  phone.serviceReportStore.serviceReports = { 2026: { 8: [null] } }
+  runtime.files = [{ ...phonePayload(), json: JSON.stringify(phone) }]
+  const {
+    installiCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    errorTracking,
+  } = await load()
+  useSupporter.getState().setSupporter(true)
+  uninstall = installiCloudSync()
+  await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+  expect(useContacts.getState().contacts.map((c) => c.id)).not.toContain('bad')
+  expect(usePreferences.getState().iCloudSyncIssue).toBeNull()
+  expect(errorTracking.captureMessage).toHaveBeenCalledWith(
+    'iCloudSync: dropped unreadable entries',
+    {
+      level: 'warning',
+      fields:
+        'contactStore.contacts.name:invalid_type, serviceReportStore.serviceReports:invalid_type',
+    }
+  )
 })
 
 it('surfaces newer payloads instead of reporting a complete sync', async () => {

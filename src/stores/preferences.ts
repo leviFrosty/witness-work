@@ -80,6 +80,9 @@ export type UpdateRevealState = {
   status: 'seen' | 'skipped'
 }
 
+/** A Schedule topic onboarding can introduce before Schedule's own intro. */
+export type OnboardingIntroducedTopic = 'plan' | 'buddies'
+
 /**
  * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
  * `customField:<defId>` template literal form on `ContactSortKey` and are
@@ -421,6 +424,11 @@ export const PREFERENCE_DEFAULTS = {
   streakReminders: true,
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
+  /**
+   * Schedule topics onboarding already showed (its tour pages or setup steps),
+   * so the Schedule intro skips its pages on them.
+   */
+  onboardingIntroduced: [] as OnboardingIntroducedTopic[],
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,

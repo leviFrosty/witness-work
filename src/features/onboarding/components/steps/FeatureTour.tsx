@@ -13,6 +13,10 @@ import i18n from '@/lib/locales'
 import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
+import {
+  introducedTopic,
+  markIntroduced,
+} from '@/features/onboarding/lib/introducedTopics'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
@@ -120,6 +124,8 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
             setHeldPages(pages)
           viewed.current.add(id)
           lastPage.current = id
+          const topic = introducedTopic(id)
+          if (topic) markIntroduced(topic)
         }}
         finish={{ label: i18n.t('continue'), onPress: () => close('finished') }}
         exit={{ label: i18n.t('skip'), onPress: () => close('skipped') }}

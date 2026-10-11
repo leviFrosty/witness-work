@@ -28,7 +28,10 @@ import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { StreakKind } from '@/lib/serviceStreak'
-import { usePreferences } from '@/stores/preferences'
+import {
+  type OnboardingIntroducedTopic,
+  usePreferences,
+} from '@/stores/preferences'
 import {
   useScheduleIntro,
   type ScheduleIntroSource,
@@ -51,22 +54,26 @@ type CloseMethod = 'plan' | 'done' | 'close' | 'back'
 
 /**
  * The intro's pages. Streak pages read by what the role's streak counts; the
- * Buddies page shows only where Buddies does.
+ * Buddies page shows only where Buddies does. Planning and Buddies pages are
+ * left out once onboarding has shown them.
  */
 function introPages(
   colors: ReturnType<typeof useTheme>['colors'],
   kind: StreakKind,
-  buddies: boolean
+  buddies: boolean,
+  introduced: OnboardingIntroducedTopic[]
 ): ScheduleIntroPageSpec[] {
   const months = kind === 'months'
-  const pages: ScheduleIntroPageSpec[] = [
-    {
+  const pages: ScheduleIntroPageSpec[] = []
+  if (!introduced.includes('plan'))
+    pages.push({
       id: 'plan',
       icon: CalendarDaysIcon,
       color: colors.accent,
       title: i18n.t('scheduleIntro_plan_title'),
       caption: i18n.t('scheduleIntro_plan_caption'),
-    },
+    })
+  pages.push(
     {
       id: 'streak',
       icon: FlameIcon,
@@ -88,9 +95,9 @@ function introPages(
           ? 'scheduleIntro_grace_captionMonths'
           : 'scheduleIntro_grace_caption'
       ),
-    },
-  ]
-  if (buddies)
+    }
+  )
+  if (buddies && !introduced.includes('buddies'))
     pages.push({
       id: 'together',
       icon: UsersIcon,
@@ -124,7 +131,14 @@ export default function ScheduleIntroOverlay({
   const set = usePreferences((state) => state.set)
   // Fixed as it opens: Buddies' flag loads over the network, and a page
   // appearing mid-tour would shift the ones being swiped.
-  const [pages] = useState(() => introPages(theme.colors, streakKind, buddies))
+  const [pages] = useState(() =>
+    introPages(
+      theme.colors,
+      streakKind,
+      buddies,
+      usePreferences.getState().onboardingIntroduced
+    )
+  )
 
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)

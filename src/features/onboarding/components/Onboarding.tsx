@@ -24,6 +24,10 @@ import FeatureTour from '@/features/onboarding/components/steps/FeatureTour'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
 import Buddies from '@/features/onboarding/components/steps/Buddies'
 import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
+import {
+  introducedTopic,
+  markIntroduced,
+} from '@/features/onboarding/lib/introducedTopics'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
@@ -313,6 +317,8 @@ const OnBoarding = () => {
     }
     lastViewedStep.current = step.id
     stepViewedAt.current = Date.now()
+    const topic = introducedTopic(step.id)
+    if (topic) markIntroduced(topic)
     analytics.capture('onboarding_step_viewed', {
       step_id: step.id,
       step_index: stepIndex + 1,

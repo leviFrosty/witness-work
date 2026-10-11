@@ -698,6 +698,11 @@ or dates are sent.
 
 ### Buddies pairing
 
+`buddies_opened` (`source: schedule_header | plan_form`, `has_requests`) counts
+the ways into Buddies. `plan_form` is Invite Buddies on a one-time Plan's form
+before any buddy is confirmed, so it shows whether wanting to invite someone
+brings people to set Buddies up.
+
 `buddy_paired` answers which platform pairings complete: iPhone with iPhone,
 iPhone with Android, Android with Android. Each side records it once, when the
 pairing completes: the inviter after confirming a request (`role: inviter`),

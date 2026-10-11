@@ -63,7 +63,7 @@ import BuddyPicker from '@/features/buddies/components/BuddyPicker'
 import LinkedPlanBanner from '@/features/buddies/components/LinkedPlanBanner'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { planShareKey } from '@/features/buddies/lib/shares'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { placeSearchProvider } from '@/lib/placeSearch'
@@ -1077,14 +1077,50 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     })
   }, [isEditMode, navigation])
 
-  const buddiesEnabled = useBuddiesEnabled()
+  const buddiesAvailability = useBuddiesAvailability()
   const activeBuddies = useBuddies((state) => state.buddies).filter(
     (buddy) => buddy.status === 'active'
   )
+  const buddyRequests = useBuddies((state) => state.incomingClaims.length)
   const invitedBuddyNames = activeBuddies
     .filter((buddy) => invitedBuddies.includes(buddy.inboxId))
     .map(buddyDisplayName)
     .join(', ')
+
+  const setUpBuddies = () => {
+    analytics.capture('buddies_opened', {
+      source: 'plan_form',
+      has_requests: buddyRequests > 0,
+    })
+    navigation.navigate('Buddies')
+  }
+
+  // Before any buddy is confirmed, the row opens Buddies to set it up; not
+  // while Buddies is turned off, which couldn't pair anyone.
+  const buddiesRow =
+    !oneTime || linkedShare
+      ? undefined
+      : activeBuddies.length && buddiesAvailability !== 'hidden'
+        ? {
+            summary: invitedBuddyNames || undefined,
+            picker: (
+              <View style={{ gap: 8 }}>
+                <BuddyPicker
+                  chipsOnly
+                  value={invitedBuddies}
+                  onChange={setInvitedBuddies}
+                  description={i18n.t('buddies_invitePlanDescription')}
+                  replies={shareReplies}
+                />
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('buddies_invitePlanDescription')}
+                </Text>
+              </View>
+            ),
+          }
+        : buddiesAvailability === 'enabled'
+          ? { setUp: setUpBuddies }
+          : undefined
 
   // Asking here, rather than leaving the switch disabled, matches Buddies.
   const handleNotifyMeChange = async (on: boolean) => {
@@ -1194,32 +1230,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           }
           note={note ?? ''}
           setNote={setNote}
-          buddies={
-            oneTime && !linkedShare && buddiesEnabled && activeBuddies.length
-              ? {
-                  summary: invitedBuddyNames || undefined,
-                  picker: (
-                    <View style={{ gap: 8 }}>
-                      <BuddyPicker
-                        chipsOnly
-                        value={invitedBuddies}
-                        onChange={setInvitedBuddies}
-                        description={i18n.t('buddies_invitePlanDescription')}
-                        replies={shareReplies}
-                      />
-                      <Text
-                        style={{
-                          color: theme.colors.textAlt,
-                          fontSize: 12,
-                        }}
-                      >
-                        {i18n.t('buddies_invitePlanDescription')}
-                      </Text>
-                    </View>
-                  ),
-                }
-              : undefined
-          }
+          buddies={buddiesRow}
           notifyMe={
             oneTime
               ? {

@@ -13,6 +13,7 @@ import {
 } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
+import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
@@ -91,6 +92,15 @@ const HeaderContent = ({
     return MenuIcon
   }
 
+  const buttonLabel = (): string | undefined => {
+    if (buttonType === 'exit') {
+      return i18n.t('close')
+    }
+    if (buttonType === 'back') {
+      return i18n.t('goBack')
+    }
+  }
+
   return (
     <View
       style={{
@@ -122,6 +132,7 @@ const HeaderContent = ({
               style={{ position: 'absolute', left: 0 }}
               onPress={handleButtonAction}
               icon={iconName()}
+              accessibilityLabel={buttonLabel()}
               hitSlop={24}
               iconStyle={{
                 color:

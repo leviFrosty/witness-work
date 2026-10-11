@@ -70,6 +70,8 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 
 - `--accept-stale-native` skips the build. Use it only when the diff has no native change (`modules/`, `patches/`, `plugins/`, `targets/`, native deps, `app.config.ts`), and report "native binary unverified".
 - `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`), an isolated ww-api, and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Use it whenever the change reads or writes backend data (Buddies, Notes Import, accounts) or when you need isolation. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` (see `wwv up`'s `api` output), shared with the user and every other worktree.
+- `--ipad` needs [AXe](https://github.com/cameroncooke/AXe) (`brew install cameroncooke/axe/axe`) to read the screen; see [iPad](#ipad). `doctor` checks for it.
+- `up` ends by checking a screenshot for the native splash. If it still covers the app after `hide()`, `up` relaunches once, then fails.
 
 ## Doctor
 
@@ -77,7 +79,7 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 wwv doctor            # exit 1 if anything is off
 ```
 
-Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, and the bundle calling the run's API (`api-base`). Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`.
+Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, the bundle calling the run's API (`api-base`), and on iOS AXe plus a screen the splash doesn't cover (`ios:screen`). A `warn` line doesn't fail doctor: the shared `.env` API being down is fine for UI-only checks, while `--api local` must be up. Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`.
 
 ## Drive
 
@@ -134,6 +136,19 @@ wwv flow e2e/maestro/add-contact.yaml --platform android
 - Add a flow for any user path you change that a later agent should re-prove.
 
 **Feature map.** [`features/README.md`](features/README.md) lists every mapped feature, with its entry points, drive recipe and proof. Read the matching file before verifying a feature. A proof that drives only one convenient entry point is incomplete when the map lists others.
+
+## iPad
+
+agent-device can't read the iPad layout: its XCTest capture times out on the sidebar shell and returns only the app node, so refs, selectors, `find` and `wait` find nothing. Coordinate input still works. So on iPad, `wwv ad` reads the screen with AXe and sends agent-device coordinates. The commands above work unchanged, and `wwv flow` and `wwv monkey` go the same way:
+
+- `snapshot` lists `@aN` refs from AXe, warning when the splash covers the app. `press`, `fill` and `find … click` resolve `@aN`, `label=`/`id=`/`role=` selectors or text, then tap the center.
+- A sheet leaves the screen under it in the tree, so a label can match twice. `wwv ad` hit-tests each match and taps the one in front.
+- `wait text|absent|stable` poll AXe, and `back` presses the screen's "Go Back" (or "Back", "Close") control.
+- `--settle` waits until nothing moves, including a dock riding the keyboard, then prints an AXe diff: `+` lines carry new refs, `-` lines what left the screen.
+- `type` fills the field the last tap landed in, replacing its text, because agent-device can't find the focused field.
+- `alert` and other XCTest queries can overrun and leave agent-device's runner busy for a few seconds. `wwv ad` waits and retries instead of failing the next tap.
+
+iPhone keeps agent-device and falls back to AXe only when its tree comes back sparse or a selector misses.
 
 ## Fuzz
 
@@ -231,7 +246,9 @@ wwv down --keep-device      # keep it warm even past WW_VERIFY_WARM
 Each of these was hit for real. Use the fix rather than working around it:
 
 - **The splash covers the app after a JS reload.** On Xcode 27 dev builds, any reload (Metro `r`, dev menu Reload, `ad metro reload`) leaves the native splash over a running app. Never reload. Run `wwv up` instead: it is idempotent, relaunches through the dev-client link, waits until the app stops reloading, and hides the splash. If a splash still covers a running app, `wwv eval 'globalThis.expo.modules.ExpoSplashScreen.hide()'` clears it. For JS edits, Fast Refresh is fine.
-- **The snapshot is empty or reports "circuit-disabled".** agent-device turned off its fast iOS accessibility reader for this app process, usually after a slow screen or another app came forward. Run `wwv up` to relaunch.
+- **Taps do nothing, but the route and the AXe tree look fine.** The splash can also come back over a running app without a reload. It swallows every tap while the JS and the accessibility tree carry on beneath it, so only a screenshot shows it. `doctor` (`ios:screen`) and an iPad snapshot check for it. Run `wwv up`.
+- **A "Refreshing..." banner covers the header.** Metro pushes a hot update whenever a file it watches changes, and until the banner clears it swallows taps along the top of the screen. `.verify/` is excluded, so the banner should only appear while files under `src/` change. Wait for it to clear, then tap again.
+- **The snapshot is empty or reports "circuit-disabled".** agent-device turned off its fast iOS accessibility reader for this app process, usually after a slow screen or another app came forward. Run `wwv up` to relaunch. On iPad this is expected, and `wwv ad snapshot` reads through AXe instead (see [iPad](#ipad)).
 - **Taps land on the wrong control after `seed`.** Take `wwv ad snapshot -i` first, because refs and geometry go stale when the layout changes.
 - **A LogBox banner or RedBox covers the tab bar.** `up` mutes LogBox (errors are still captured). Clear a leftover one with `wwv ad react-native dismiss-overlay`, then read it with `wwv errors`.
 - **`nav` crashes a screen.** That screen needs params, for example `wwv nav "Contact Form" '{"edit":false}'`. Check `src/types/rootStack.ts`, or reach it through the UI.

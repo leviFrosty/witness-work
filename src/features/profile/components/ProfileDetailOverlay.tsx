@@ -272,9 +272,15 @@ const ProfileDetailOverlay = () => {
                 <IconButton
                   icon={SquarePenIcon}
                   size='lg'
+                  accessibilityLabel={i18n.t('editProfile')}
                   onPress={handleEdit}
                 />
-                <IconButton icon={XIcon} size='xl' onPress={onClose} />
+                <IconButton
+                  icon={XIcon}
+                  size='xl'
+                  accessibilityLabel={i18n.t('close')}
+                  onPress={onClose}
+                />
               </View>
               <ProfileCard readOnly hideBadges />
               <ProfileBadgesSection

@@ -1,11 +1,17 @@
 // The backend for a profiling run. Release bundles bake their API URL in, so
-// the bundle always calls 127.0.0.1:WW_PERF_API_PORT and this relays it to an
-// isolated ww-api (ww-api's scripts/verify/dev.mjs, on whatever port it got).
-import fs from 'node:fs'
+// the bundle always calls 127.0.0.1:WW_PERF_API_PORT and this relays it to the
+// isolated ww-api that `wwv up` runs too (on whatever port it got).
 import net from 'node:net'
-import os from 'node:os'
 import path from 'node:path'
-import { fail, log, run } from '../verify/ww-verify.mjs'
+import { pidAlive } from '../verify/leases.mjs'
+import {
+  apiDir,
+  fail,
+  log,
+  readJson,
+  startLocalApi,
+  stopLocalApi,
+} from '../verify/ww-verify.mjs'
 
 async function healthy(url) {
   try {
@@ -18,32 +24,12 @@ async function healthy(url) {
   }
 }
 
-function devScript(apiDir) {
-  const script = path.join(apiDir, 'scripts/verify/dev.mjs')
-  if (!fs.existsSync(script))
-    fail(
-      `${script} not found; set WW_API_DIR (or --api-dir) to a ww-api checkout that has scripts/verify/dev.mjs, e.g. a worktree at origin/main`
-    )
-  return script
-}
-
 /** Starts (or reuses) the isolated ww-api; returns its URL. */
-async function localApi(apiDir) {
-  const script = devScript(apiDir)
-  const current = run('node', [script, 'url'], { cwd: apiDir, check: false })
-  const url = current.stdout.trim().split('\n').pop()
-  if (current.status === 0 && url && (await healthy(url)))
-    return { url, started: false }
-  log(`starting the isolated ww-api from ${apiDir}`)
-  run('node', [script, 'up'], {
-    cwd: apiDir,
-    stdio: ['ignore', 'ignore', 'inherit'],
-    timeout: 180_000,
-  })
-  return {
-    url: run('node', [script, 'url'], { cwd: apiDir }).stdout.trim(),
-    started: true,
-  }
+function localApi(dir) {
+  const before = readJson(path.join(dir, '.verify/state.json'), null)
+  const started = !pidAlive(before?.pid)
+  if (started) log(`starting the isolated ww-api from ${dir}`)
+  return { url: startLocalApi(dir).url, started }
 }
 
 function relay(port, target) {
@@ -79,12 +65,11 @@ function relay(port, target) {
  * The API for a run: `apiUrl` when given (an existing ww-api), else the
  * isolated one from `apiDir`. Returns what to record and a `stop()`.
  */
-export async function startApi({ port, apiUrl, apiDir }) {
-  const dir =
-    apiDir || process.env.WW_API_DIR || path.join(os.homedir(), 'dev/ww-api')
+export async function startApi({ port, apiUrl, apiDir: dirFlag }) {
+  const dir = dirFlag ? path.resolve(dirFlag) : apiDir()
   const api = apiUrl
     ? { url: apiUrl, started: false, mode: 'url' }
-    : { ...(await localApi(dir)), mode: 'local' }
+    : { ...localApi(dir), mode: 'local' }
   if (!(await healthy(api.url)))
     fail(`The API at ${api.url} does not answer /health`)
   const server = await relay(port, api.url)
@@ -95,8 +80,8 @@ export async function startApi({ port, apiUrl, apiDir }) {
     port,
     stop() {
       server.close()
-      if (api.started)
-        run('node', [devScript(dir), 'down'], { cwd: dir, check: false })
+      // Left running while a `wwv up` lease uses it.
+      if (api.started) stopLocalApi(null, { dir })
     },
   }
 }

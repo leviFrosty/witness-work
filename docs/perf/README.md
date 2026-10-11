@@ -8,7 +8,6 @@ Results land here as `<name>.json` (everything, machine-readable) and `<name>.md
 
 ```bash
 # Both platforms (10 cold launches, 5 foreground cycles, 3 iOS blips each), back to back
-export WW_API_DIR=~/dev/ww-api-worktrees/<a checkout of ww-api origin/main>
 node scripts/perf/run.mjs --ref <baseline sha> --name before
 node scripts/perf/run.mjs --ref <after sha> --name after
 
@@ -25,7 +24,7 @@ node scripts/perf/compare.mjs a.json b.json --all --out comparison.md   # every 
 ### Requirements
 
 - **The commit must contain this runner's app-side setup** (`src/app/dev-harness/perfSetup.ts`), so profile commits that include it. The runner refuses others.
-- **A ww-api checkout with `scripts/verify/dev.mjs`** (`WW_API_DIR` or `--api-dir`; default `~/dev/ww-api`). The runner starts that isolated worker, or reuses it when it's already up. `--api-url <url>` relays to an API that's already running instead. Nothing touches production or the user's data.
+- **A ww-api checkout with `scripts/verify/dev.mjs`** (`--api-dir` or `WW_API_DIR`). By default it's the one `wwv up` uses, `~/dev/ww-api-worktrees/ww-verify` at the latest `origin/main`. The runner starts that isolated worker, or reuses it when it's already up, and leaves it running while a `wwv` lease uses it. `--api-url <url>` relays to an API that's already running instead. Nothing touches production or the user's data.
 - Port `8780` free (`WW_PERF_API_PORT` changes it, and forces a rebuild).
 
 ## What it does

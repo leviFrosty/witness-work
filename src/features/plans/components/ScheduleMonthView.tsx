@@ -47,6 +47,8 @@ type Props = {
   onZoomFrameLayout: (frame: LayoutRectangle) => void
   /** The list's frame within the scaled part. */
   onListLayout: (frame: LayoutRectangle) => void
+  /** The list has drawn its first rows. */
+  onListLoad: () => void
   onPressDay: (date: Date) => void
   onPressServiceYear: (serviceYear: number) => void
   editableGoal: (month: CalendarMonth) => boolean
@@ -74,6 +76,7 @@ export default function ScheduleMonthView({
   onScroll,
   onZoomFrameLayout,
   onListLayout,
+  onListLoad,
   onPressDay,
   onPressServiceYear,
   editableGoal,
@@ -166,6 +169,7 @@ export default function ScheduleMonthView({
             keyExtractor={(row) => row.key}
             getItemType={(row) => row.kind}
             initialScrollIndex={initialRowIndex}
+            onLoad={onListLoad}
             // The focused month stays out of here: a new month would
             // re-render every week on screen mid-scroll.
             extraData={{ selectedKey, index, buddyMarkers }}

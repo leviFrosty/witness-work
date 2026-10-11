@@ -53,6 +53,13 @@ type Props = {
   /** A line just above the pills, e.g. a warning about the duration. */
   notice?: ReactNode
   saveButton: ReactNode
+  /**
+   * Inside a page rather than docked at the bottom of the screen: no dock
+   * chrome, and no room kept for the home indicator.
+   */
+  inline?: boolean
+  /** Leaves the Date pill out, for a record whose day is already set. */
+  hideDate?: boolean
   /** Prefixes the pills' and pickers' testIDs, e.g. `plan-date-pill`. */
   testID: string
 }
@@ -344,16 +351,20 @@ const WhenDock = (props: Props) => {
 
   return (
     <View
-      style={{
-        backgroundColor: theme.colors.backgroundLighter,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        borderTopWidth: 1,
-        borderColor: theme.colors.border,
-        paddingTop: 14,
-        paddingHorizontal: 16,
-        paddingBottom: Math.max(insets.bottom, 12),
-      }}
+      style={
+        props.inline
+          ? undefined
+          : {
+              backgroundColor: theme.colors.backgroundLighter,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderColor: theme.colors.border,
+              paddingTop: 14,
+              paddingHorizontal: 16,
+              paddingBottom: Math.max(insets.bottom, 12),
+            }
+      }
     >
       <View
         style={{
@@ -366,13 +377,15 @@ const WhenDock = (props: Props) => {
         {props.header}
         {props.notice}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <WhenPill
-            icon={CalendarIcon}
-            value={dayLabel(props.date)}
-            accessibilityLabel={i18n.t('date')}
-            testID={`${props.testID}-date-pill`}
-            onPress={() => openPicker('date')}
-          />
+          {!props.hideDate && (
+            <WhenPill
+              icon={CalendarIcon}
+              value={dayLabel(props.date)}
+              accessibilityLabel={i18n.t('date')}
+              testID={`${props.testID}-date-pill`}
+              onPress={() => openPicker('date')}
+            />
+          )}
           {props.timeSpan ? (
             <WhenPill
               icon={TimerIcon}

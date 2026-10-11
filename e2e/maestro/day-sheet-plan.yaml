@@ -1,0 +1,40 @@
+# seed: pioneer
+# setup: (() => { __WW_DEV__.stores.serviceReports.setState({ dayPlans: [], recurringPlans: [] }); __WW_DEV__.stores.preferences.setState({ planTimeMode: 'hours' }); return true })()
+# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.remount(); setTimeout(() => __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }), 2500); return true })()
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => p.title === 'Cart from the day' && p.minutes > 0 && p.anytime && new Date(p.date).toDateString() === new Date().toDateString())
+# assert: __WW_DEV__.state().route.name !== 'PlanDay'
+appId: com.leviwilkerson.jwtimedev
+name: Plan a day in its sheet without leaving the day
+---
+# Setup cleared every Plan and remounted every screen, so nothing is left from
+# the last flow, then opened today on Schedule: the Plan form is folded into the
+# day's Plans under Plan Day. Home offers Plan Day too with no Plans, so wait
+# for the day's sheet first.
+- extendedWaitUntil:
+    visible: TIME REPORTS
+    timeout: 60000
+# Android lists the sheet's rows only once it has slid into view.
+- waitForAnimationToEnd
+- tapOn:
+    id: day-plan-form
+# Android lists only what's on screen, and the Add button is below the fold.
+- assertVisible: How long?
+- tapOn:
+    id: plan-title-input
+- inputText: Cart from the day
+- hideKeyboard
+- tapOn:
+    id: plan-duration-pill
+# Setup left new Plans in Just hours, with no set time. The calendar behind
+# the picker shows small numbers too, so pick the hours row by its id.
+- tapOn:
+    id: plan-duration-hours-2
+- tapOn:
+    id: plan-picker-done
+# The form runs past the bottom of the half-height sheet.
+- scroll
+- tapOn:
+    id: plan-save
+# The Plan takes the card's place in the day's list. (Absence checks can't be
+# proved over the calendar's long accessibility tree, so look for the Plan.)
+- assertVisible: Cart from the day

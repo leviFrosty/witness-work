@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 
 type Props = {
   leading: ReactNode
@@ -12,6 +13,8 @@ type Props = {
   paddingBottom: number
   compactPaddingHorizontal?: number
   gap?: number
+  /** Keeps a view in `trailing` above a day's sheet; see `useRevealAboveSheet`. */
+  trailingReveal?: RevealAboveSheet
 }
 
 /** Keep reference content visible while browsing records in a wide window. */
@@ -24,12 +27,16 @@ export default function AdaptiveSplitScrollView({
   paddingBottom,
   compactPaddingHorizontal = 15,
   gap = 24,
+  trailingReveal,
 }: Props) {
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
 
   if (!isWide) {
     return (
       <KeyboardAwareScrollView
+        ref={trailingReveal?.scrollRef}
+        onScroll={trailingReveal?.onScroll}
+        scrollEventThrottle={trailingReveal ? 16 : undefined}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={{
@@ -37,7 +44,7 @@ export default function AdaptiveSplitScrollView({
           maxWidth: 720,
           alignSelf: 'center',
           paddingTop,
-          paddingBottom,
+          paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
           paddingHorizontal: compactPaddingHorizontal,
           gap,
         }}
@@ -71,8 +78,13 @@ export default function AdaptiveSplitScrollView({
           {leading}
         </KeyboardAwareScrollView>
         <KeyboardAwareScrollView
+          ref={trailingReveal?.scrollRef}
+          onScroll={trailingReveal?.onScroll}
+          scrollEventThrottle={trailingReveal ? 16 : undefined}
           style={{ flex: 1 - leadingFraction, minWidth: 0 }}
-          contentContainerStyle={{ paddingBottom }}
+          contentContainerStyle={{
+            paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
+          }}
           keyboardShouldPersistTaps='handled'
         >
           {trailing}

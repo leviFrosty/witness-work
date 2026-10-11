@@ -1,0 +1,101 @@
+import { ReactNode, Ref, useState } from 'react'
+import { AccessibilityInfo, Platform, View } from 'react-native'
+import { Collapsible, Host, RNHostView } from '@expo/ui'
+import { useCardStyle } from '@/components/ui/Card'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+
+// Compose's Collapsible pads its own header and content (16dp each side).
+const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
+// SwiftUI looks fonts up by PostScript name, not the expo-font alias.
+const LABEL_FONT = Platform.OS === 'ios' ? 'Inter-SemiBold' : undefined
+const CONTENT_INSET =
+  2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
+
+type Props = {
+  label: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  /** React Native content, laid out at the width left inside the card. */
+  children: ReactNode
+  testID?: string
+  ref?: Ref<View>
+}
+
+/**
+ * A card with a native disclosure header (SwiftUI's `DisclosureGroup`,
+ * Compose's expandable list item) that shows React Native content under it,
+ * e.g. a form kept out of the way until it's wanted. The content mounts the
+ * first time it opens and keeps its state while closed.
+ */
+export default function CollapsibleCard({
+  label,
+  open,
+  onOpenChange,
+  children,
+  testID,
+  ref,
+}: Props) {
+  const theme = useTheme()
+  const cardStyle = useCardStyle()
+  const colorScheme = usePreferences((s) => s.colorScheme)
+  const [width, setWidth] = useState<number>()
+  const contentWidth = width && width - CONTENT_INSET
+  const [opened, setOpened] = useState(open)
+  if (open && !opened) setOpened(true)
+
+  const toggle = (next: boolean) => {
+    onOpenChange(next)
+    // SwiftUI's DisclosureGroup announces its state; Compose's clickable
+    // header doesn't, so say it on Android.
+    if (Platform.OS === 'android') {
+      AccessibilityInfo.announceForAccessibility(
+        i18n.t(next ? 'a11y_expanded' : 'a11y_collapsed')
+      )
+    }
+  }
+
+  return (
+    <View
+      ref={ref}
+      testID={testID}
+      style={[cardStyle, { padding: CARD_PADDING }]}
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+    >
+      {/* Without ignoreSafeArea, SwiftUI insets cards laid out under the
+      header or home indicator, shifting the label and clipping the content. */}
+      <Host
+        matchContents={{ vertical: true }}
+        colorScheme={colorScheme}
+        seedColor={theme.colors.accent}
+        ignoreSafeArea='all'
+      >
+        <Collapsible
+          isOpen={open}
+          onOpenChange={toggle}
+          label={label}
+          labelStyle={{
+            fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+            color: theme.colors.text,
+            textAlign: 'left',
+          }}
+        >
+          {opened && contentWidth ? (
+            <RNHostView matchContents>
+              <View
+                style={{
+                  width: contentWidth,
+                  paddingTop: Platform.OS === 'ios' ? 12 : 0,
+                }}
+              >
+                {children}
+              </View>
+            </RNHostView>
+          ) : null}
+        </Collapsible>
+      </Host>
+    </View>
+  )
+}

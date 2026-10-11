@@ -1,409 +1,52 @@
-import { Alert } from 'react-native'
-import { noteUserAction } from '@/lib/userAction'
-import { richTextImages } from '@/lib/richText/inspect'
-import {
-  getNoteDoc,
-  hasNote,
-  noteFields,
-  type NoteUpdate,
-} from '@/lib/richText/notes'
-import { useEffect, useState } from 'react'
-import useTheme from '@/contexts/theme'
-import Text from '@/components/ui/MyText'
-import ActionButton from '@/components/ui/ActionButton'
-import useServiceReport from '@/stores/serviceReport'
-import * as Crypto from 'expo-crypto'
+import { useEffect } from 'react'
 import moment from 'moment'
-import {
-  normalizeDateForStorage,
-  storedDateToLocalDate,
-} from '@/lib/normalizeDate'
+import useServiceReport from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
-import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
-import NoteFormRow from '@/components/ui/inputs/NoteFormRow'
-import TypeFormRow from '@/components/TypeFormRow'
-import WhenDock from '@/components/WhenDock'
-import { usePreferences } from '@/stores/preferences'
-import useCategories from '@/stores/categories'
-import {
-  CUSTOM_TYPE_VALUE,
-  STANDARD_TYPE_VALUE,
-  type TypeSelection,
-} from '@/components/TypeSelectorRow'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
-import Button from '@/components/ui/Button'
-import {
-  adjustedMinutesForSpecificMonth,
-  getMonthsReports,
-  getReport,
-} from '@/lib/serviceReport'
-import useAnimation from '@/hooks/useAnimation'
+import { getReport } from '@/lib/serviceReport'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
-import Haptics from '@/lib/haptics'
-import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
-import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
-import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalCelebration'
-import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
-import { inputLayout } from '@/components/ui/inputs/InputLayout'
-import { analytics } from '@/lib/analytics'
-import { roleForMonth } from '@/lib/roleHistory'
+import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
 const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
-  const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const {
-    role: currentRole,
-    roleHistory,
-    publisherHours,
-    monthlyGoalOverrides,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
-  const { playConfetti } = useAnimation()
-  const { categories } = useCategories()
-
-  const {
-    addServiceReport,
-    serviceReports,
-    updateServiceReport,
-    deleteServiceReport,
-  } = useServiceReport()
-  const existingServiceReport = route.params?.existingReport
-    ? getReport(serviceReports, JSON.parse(route.params.existingReport))
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const existingReport: TimeEntry | undefined = route.params?.existingReport
+    ? JSON.parse(route.params.existingReport)
     : undefined
-
-  // A new entry seeded with a Type (e.g. logging a Plan as time) — only when
-  // that Category still exists.
-  const prefillCategory =
-    !existingServiceReport && route.params?.categoryId
-      ? categories.find((c) => c.id === route.params?.categoryId)
-      : undefined
-
-  // Initial picker value: the referenced Category id (post-migration), else
-  // fall back to legacy `tag` string for unmigrated entries, else Standard.
-  // LDC is no longer special-cased — entries that point at the LDC builtin
-  // Category id pick it up here like any other Category.
-  const initialPickerValue: string = (() => {
-    if (prefillCategory) return prefillCategory.id
-    if (existingServiceReport?.report.categoryId) {
-      return existingServiceReport.report.categoryId
-    }
-    if (existingServiceReport?.report.tag) {
-      // Try to resolve by name — entries that pre-date the migration but the
-      // user added a Category with the same name will collapse onto it.
-      const match = categories.find(
-        (c) => c.name === existingServiceReport.report.tag
-      )
-      if (match) return match.id
-      return existingServiceReport.report.tag
-    }
-    return STANDARD_TYPE_VALUE
-  })()
-
-  const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
-  const [serviceReport, setServiceReport] = useState<TimeEntry>({
-    id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
-    hours: existingServiceReport?.report.hours || route.params?.hours || 0,
-    minutes:
-      existingServiceReport?.report.minutes ?? (route.params?.minutes || 0),
-    date: existingServiceReport
-      ? storedDateToLocalDate(existingServiceReport.report.date)
-      : moment(route.params?.date).toDate(),
-    credit:
-      existingServiceReport?.report.credit ??
-      prefillCategory?.isCredit ??
-      false,
-    categoryId: existingServiceReport?.report.categoryId ?? prefillCategory?.id,
-    note: existingServiceReport?.report.note,
-    noteDoc: existingServiceReport?.report.noteDoc,
-  })
-  const toast = useToastController()
-
-  // Maps the Type row's report back onto the in-progress entry. The row owns
-  // the Category-store side (create/delete/credit-flip + global re-stamp);
-  // the entry only records the reference and the legacy `credit` stamp.
-  const handleTypeChange = ({ value, category }: TypeSelection) => {
-    setSelectedValue(value)
-    setServiceReport({
-      ...serviceReport,
-      categoryId: category?.id,
-      tag: undefined,
-      credit: category?.isCredit ?? false,
-    })
-  }
-
-  const setDate = (date: Date) => {
-    setServiceReport({
-      ...serviceReport,
-      date,
-    })
-  }
-
-  const setDuration = (hours: number, minutes: number) => {
-    setServiceReport({
-      ...serviceReport,
-      hours,
-      minutes,
-    })
-  }
-
-  // Functional: the note editor calls this after other fields may have moved.
-  const setNote = (note: NoteUpdate) =>
-    setServiceReport((current) => ({ ...current, ...note }))
-  /** The entry as it saves, with its note normalized. */
-  const savedEntry = (): TimeEntry => ({
-    ...serviceReport,
-    ...noteFields(getNoteDoc(serviceReport)),
-  })
-  const noteAnalytics = (entry: TimeEntry) => ({
-    has_note: hasNote(entry),
-    has_formatting: !!entry.noteDoc,
-    note_photos: entry.noteDoc ? richTextImages(entry.noteDoc.doc).length : 0,
-  })
-
-  const submit = () => {
-    playConfetti()
-    Haptics.heavy()
-    setTimeout(() => {
-      Haptics.success()
-    }, CONFETTI_DELAY_MS + 100)
-
-    // Multi-burst Skia fireworks on the Progress month tab are reserved for
-    // *crossing* the monthly goal — the moment the report's target month
-    // goes from below goal to at-or-above goal. Adding more time after the
-    // goal is already met (or adding time that doesn't reach goal) doesn't
-    // queue anything, so the fireworks don't fire on every submission. The
-    // queue is keyed by `(month, year)` so it only pops when the user is
-    // actually viewing the month they crossed.
-    const reportMoment = moment(serviceReport.date)
-    const reportMonth = reportMoment.month()
-    const reportYear = reportMoment.year()
-    const goalTarget = { month: reportMonth, year: reportYear }
-    // The entry's month is judged by the role that applied then.
-    const role = roleForMonth(roleHistory, currentRole, goalTarget)
-    const effectiveGoalHours = resolveMonthlyGoalHours(
-      publisherHours[role],
-      monthlyGoalOverrides,
-      goalTarget
-    )
-    if (effectiveGoalHours > 0) {
-      const creditOverride = {
-        enabled: overrideCreditLimit,
-        customLimitHours: customCreditLimitHours,
-      }
-      const beforeReports = getMonthsReports(
-        serviceReports,
-        reportMonth,
-        reportYear
-      )
-      const beforeMinutes = adjustedMinutesForSpecificMonth(
-        beforeReports,
-        reportMonth,
-        reportYear,
-        role,
-        creditOverride
-      ).value
-      // Month math reads stored anchors; the form holds a local day, which at
-      // UTC+12 (local midnight == noon UTC) would read as the prior day.
-      const afterMinutes = adjustedMinutesForSpecificMonth(
-        [
-          ...beforeReports,
-          {
-            ...serviceReport,
-            date: normalizeDateForStorage(serviceReport.date),
-          },
-        ],
-        reportMonth,
-        reportYear,
-        role,
-        creditOverride
-      ).value
-      const crossedGoal = didCrossMonthlyGoal({
-        beforeMinutes,
-        afterMinutes,
-        baseGoalHours: publisherHours[role],
-        monthlyGoalOverrides,
-        target: goalTarget,
-      })
-      if (crossedGoal) {
-        useCelebrationQueue.getState().queue(reportMonth, reportYear)
-      }
-    }
-
-    noteUserAction('time')
-    const entry = savedEntry()
-    addServiceReport(entry)
-    analytics.capture('time_entry_created', {
-      source: 'time_entry_form',
-      has_category: !!entry.categoryId,
-      ...noteAnalytics(entry),
-    })
-    toast.show(i18n.t('success'), {
-      message: i18n.t('timeAdded'),
-      native: true,
-    })
-    navigation.goBack()
-  }
-
-  const save = () => {
-    noteUserAction('time')
-    const entry = savedEntry()
-    updateServiceReport(entry)
-    analytics.capture('time_entry_updated', {
-      source: 'time_entry_form',
-      has_category: !!entry.categoryId,
-      ...noteAnalytics(entry),
-    })
-    toast.show(i18n.t('success'), {
-      message: i18n.t('updated'),
-      native: true,
-    })
-
-    navigation.goBack()
-  }
-
-  const handleRequestDelete = () => {
-    Alert.alert(i18n.t('deleteTime_title'), i18n.t('deleteTime_description'), [
-      {
-        text: i18n.t('cancel'),
-        style: 'cancel',
-      },
-      {
-        text: i18n.t('delete'),
-        style: 'destructive',
-        onPress: () => {
-          deleteServiceReport(serviceReport)
-          analytics.capture('time_entry_deleted')
-          toast.show(i18n.t('success'), {
-            message: i18n.t('deleted'),
-            native: true,
-          })
-          navigation.goBack()
-        },
-      },
-    ])
-  }
+  const editing = !!getReport(serviceReports, existingReport)
 
   useEffect(() => {
     navigation.setOptions({
       header: () => (
         <Header
           buttonType='back'
-          title={i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
+          title={i18n.t(editing ? 'updateTime' : 'addTime')}
         />
       ),
     })
-  }, [existingServiceReport, navigation])
-
-  const hasEnteredTime =
-    serviceReport.hours !== 0 || serviceReport.minutes !== 0
-  // Custom is a transient picker state — until the user names the Category,
-  // we don't have anything to attach the entry to.
-  const hasSelectedCategory = selectedValue !== CUSTOM_TYPE_VALUE
-  const submittable = hasEnteredTime && hasSelectedCategory
-  // A timer stopped before a minute passed hands over less than a minute.
-  const providedLessThanOneMinute =
-    !route.params?.hours &&
-    route.params?.minutes !== undefined &&
-    route.params.minutes < 1 &&
-    serviceReport.hours === 0 &&
-    serviceReport.minutes < 1
-
-  const dock = (
-    <WhenDock
-      testID='time-entry'
-      date={serviceReport.date}
-      setDate={setDate}
-      hours={serviceReport.hours}
-      minutes={serviceReport.minutes}
-      setDuration={setDuration}
-      durationLabel={i18n.t('time')}
-      maxHours={99}
-      minuteStep={1}
-      notice={
-        providedLessThanOneMinute && (
-          <Text style={{ color: theme.colors.warn }}>
-            {i18n.t('providedTimeIsLessThanOneMinute')}
-          </Text>
-        )
-      }
-      saveButton={
-        <ActionButton
-          disabled={!submittable}
-          onPress={existingServiceReport ? save : submit}
-          testID='time-entry-save'
-        >
-          {i18n.t(existingServiceReport ? 'save' : 'submit')}
-        </ActionButton>
-      }
-    />
-  )
+  }, [editing, navigation])
 
   return (
     // The dock applies the bottom safe area itself.
     <Wrapper insets='none' style={{ flex: 1 }}>
-      <DockedFormLayout
-        dock={dock}
-        contentContainerStyle={{
-          flexGrow: 1,
-          // The details sit just above the dock, near the thumb, rather
-          // than at the top of a tall screen.
-          justifyContent: 'flex-end',
-          gap: 12,
-          paddingTop: 10,
-          paddingBottom: 16,
-          paddingHorizontal: inputLayout.horizontalPadding,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-        }}
-      >
-        <FormDetailsSection>
-          <NoteFormRow
-            first
-            note={serviceReport}
-            onChange={setNote}
-            surface='time_entry'
-            maxLength={500}
-            testID='time-entry-note'
-          />
-          <TypeFormRow
-            value={selectedValue}
-            onChange={handleTypeChange}
-            hint={hasSelectedCategory ? undefined : i18n.t('categoryNeeded')}
-          />
-        </FormDetailsSection>
-        {existingServiceReport && (
-          <Button
-            noTransform
-            onPress={handleRequestDelete}
-            accessibilityRole='button'
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: theme.colors.error,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('md'),
-              }}
-            >
-              {i18n.t('deleteEllipsis')}
-            </Text>
-          </Button>
-        )}
-      </DockedFormLayout>
+      <TimeEntryForm
+        existingReport={existingReport}
+        // Moment reads a bare deep-link day (`2026-10-01`) as local, not UTC.
+        date={
+          route.params?.date ? moment(route.params.date).toDate() : undefined
+        }
+        hours={route.params?.hours}
+        minutes={route.params?.minutes}
+        categoryId={route.params?.categoryId}
+        source='time_entry_form'
+        onDone={() => navigation.goBack()}
+      />
     </Wrapper>
   )
 }

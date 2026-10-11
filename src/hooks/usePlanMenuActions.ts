@@ -68,6 +68,14 @@ const effectiveValues = (item: PlanListItem) =>
         anytime: !!item.plan.anytime,
       }
 
+/** A Plan's length and Type on its date, for logging it as time. */
+export type LogTimePrefill = {
+  date: Date
+  hours: number
+  minutes: number
+  categoryId?: string
+}
+
 /**
  * Opening a Plan, plus Edit, Log as Time, Duplicate, maps, copy, and Delete,
  * wherever it shows: a row (tap and long-press menu) and Plan Details' More
@@ -78,6 +86,8 @@ export default function usePlanMenuActions(
   options: {
     /** Runs a navigation; a host sheet passes one that closes it first. */
     go?: (navigate: () => void) => void
+    /** Logs the Plan as time in place, instead of opening Add Time. */
+    logTime?: (prefill: LogTimePrefill) => void
     /** Leaves Edit out, for hosts with their own Edit button. */
     withoutEdit?: boolean
     /** A delete was confirmed and done. */
@@ -123,15 +133,21 @@ export default function usePlanMenuActions(
   const requestDelete = () =>
     confirmDeletePlan({ recurring: isRecurring, onDelete: removePlan })
 
-  const logAsTime = () =>
+  const logAsTime = () => {
+    const prefill = {
+      date,
+      hours: Math.floor(effective.minutes / 60),
+      minutes: effective.minutes % 60,
+      categoryId: plan.categoryId,
+    }
+    if (options.logTime) return options.logTime(prefill)
     go(() =>
       navigation.navigate('Add Time', {
+        ...prefill,
         date: date.toISOString(),
-        hours: Math.floor(effective.minutes / 60),
-        minutes: effective.minutes % 60,
-        categoryId: plan.categoryId,
       })
     )
+  }
 
   const duplicate = () =>
     go(() =>

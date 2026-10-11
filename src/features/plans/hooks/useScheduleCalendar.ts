@@ -35,6 +35,8 @@ const FOCUS_LINE = 1 / 3
  * the next month would take the focus.
  */
 const MAX_FOCUS_LINE = MONTH_HEADER_HEIGHT + WEEK_ROW_HEIGHT * 2.5
+/** Room left between a revealed week and the sheet covering the list. */
+const REVEAL_MARGIN = 12
 /** Programmatic scrolls don't tick haptics while they settle. */
 const QUIET_AFTER_JUMP_MS = 700
 const MIN_TICK_INTERVAL_MS = 120
@@ -42,6 +44,11 @@ const MIN_TICK_INTERVAL_MS = 120
 const RELEASE_FALLBACK_MS = 500
 /** How long a jump gets to land and draw, as the list's own jumps wait. */
 const LANDING_MS = { animated: 300, instant: 200 }
+/**
+ * After the list loads, it keeps its first row in place for about 100ms,
+ * undoing scrolls in the meantime.
+ */
+const INITIAL_SCROLL_MS = 150
 
 export type YearOpenSource = 'toggle' | 'pinch' | 'divider'
 
@@ -130,6 +137,14 @@ export default function useScheduleCalendar({
     addedAbove: boolean
     landed: () => void
   } | null>(null)
+  /**
+   * A day to reveal once the list has loaded, e.g. one a link opens as the tab
+   * first mounts.
+   */
+  const pendingReveal = useRef<{ date: Date; covered: number } | null>(null)
+  const listLoaded = useRef(false)
+  /** How much of the list's bottom a day's sheet covers. */
+  const sheetCover = useRef(0)
   /** Where the fingers came down on the Year view's last pinch. */
   const pinchStart = useRef({ x: 0, y: 0 })
   /** Counts holds on the Month view, so a stale release can't end a newer one. */
@@ -140,8 +155,12 @@ export default function useScheduleCalendar({
 
   const zoom = useScheduleZoom('month')
 
+  // In the part of the list a day's sheet leaves in view.
   const focusLine = () =>
-    Math.min((listFrame.current?.height ?? 0) * FOCUS_LINE, MAX_FOCUS_LINE)
+    Math.min(
+      ((listFrame.current?.height ?? 0) - sheetCover.current) * FOCUS_LINE,
+      MAX_FOCUS_LINE
+    )
   const scrollOffset = () => listRef.current?.getAbsoluteLastScrollOffset() ?? 0
 
   /** The on-screen row covering a content offset. */
@@ -303,6 +322,35 @@ export default function useScheduleCalendar({
     // Today's week lands on the focus line, so its month stays in focus.
     scrollToRow(todayRow, true, Math.max(0, focusLine() - WEEK_ROW_HEIGHT / 2))
     focus({ year: thisYear, month: thisMonthIndex }, false)
+  }
+
+  /**
+   * Scrolls a day's week out from under a sheet covering the bottom `covered`
+   * points of the list, onto the focus line when there's room, so its month
+   * stays in focus. A week already in view stays put. Before the list has
+   * loaded, it waits for it. False when the day isn't in the list, e.g. a
+   * Service Year away.
+   */
+  const revealDay = (date: Date, covered: number) => {
+    const row = schedule.dayRow.get(moment(date).format('YYYY-MM-DD'))
+    if (row === undefined) return false
+    const layout = listRef.current?.getLayout(row)
+    const frame = listFrame.current
+    if (!listLoaded.current || !layout || !frame) {
+      pendingReveal.current = { date, covered }
+      return true
+    }
+    pendingReveal.current = null
+    // Clear of the sheet's rounded top edge and its shadow.
+    const visible = frame.height - covered - REVEAL_MARGIN
+    const top = layout.y - scrollOffset()
+    if (top >= 0 && top + layout.height <= visible) return true
+    const target = Math.min(
+      focusLine() - WEEK_ROW_HEIGHT / 2,
+      visible - layout.height
+    )
+    scrollToRow(row, true, Math.max(0, target))
+    return true
   }
 
   /** The month's weeks in the stage's coordinates, as scrolled now. */
@@ -471,6 +519,12 @@ export default function useScheduleCalendar({
       listFrame.current = frame
       updateTodayDirection()
     },
+    onListLoad: () =>
+      setTimeout(() => {
+        listLoaded.current = true
+        const pending = pendingReveal.current
+        if (pending) revealDay(pending.date, pending.covered)
+      }, INITIAL_SCROLL_MS),
     onStageLayout: (frame: LayoutRectangle) => {
       zoom.setYearFrame({
         x: 0,
@@ -494,6 +548,13 @@ export default function useScheduleCalendar({
     },
     pinchedMonth: () => monthNear(pinchStart.current.x, pinchStart.current.y),
     jumpToToday,
+    revealDay,
+    /** A day's sheet now covers the bottom `height` points of the list. */
+    coverBottom: (height: number) => {
+      sheetCover.current = height
+      const row = rowAt(scrollOffset() + focusLine())
+      if (row !== undefined) focus(schedule.rows[row].month, false)
+    },
     showMonth: (month: CalendarMonth) => {
       if (viewRef.current === 'year') zoomIn(month)
       else jumpToMonth(month, true)

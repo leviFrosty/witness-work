@@ -1,0 +1,51 @@
+# seed: pioneer
+# setup: (() => { const store = __WW_DEV__.stores.serviceReports.getState(); Object.values(store.serviceReports).flatMap((m) => Object.values(m).flat()).filter((e) => new Date(e.date).toDateString() === new Date().toDateString()).forEach((e) => store.deleteServiceReport(e)); return true })()
+# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.remount(); setTimeout(() => __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }), 2500); return true })()
+# assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).some((e) => e.hours * 60 + e.minutes > 0 && e.note === 'Logged from the day' && new Date(e.date).toDateString() === new Date().toDateString())
+# assert: __WW_DEV__.state().route.name !== 'Add Time'
+appId: com.leviwilkerson.jwtimedev
+name: Log time in a day's sheet without leaving the day
+---
+# Setup remounted every screen, so nothing is left from the last flow, then
+# opened today on Schedule as the Calendar widget's link does
+# (witnesswork://schedule/<today>). Today has no time yet (setup cleared it), so
+# the time form is folded into the day's Time Reports under Add Time. (Home has
+# an Add Time button too, so wait for the day's section.)
+- extendedWaitUntil:
+    visible: TIME REPORTS
+    timeout: 60000
+# Android lists the sheet's rows only once it has slid into view.
+- waitForAnimationToEnd
+- tapOn:
+    id: day-time-form
+- assertVisible: Submit
+# Note opens the full-screen note editor; the sheet steps aside for it and
+# comes back with the form as it was (the assert reads the saved note).
+- tapOn:
+    id: time-entry-note-row
+- inputText: Logged from the day
+- tapOn:
+    id: note-editor-done
+- assertVisible: Submit
+- tapOn:
+    id: time-entry-duration-pill
+# The calendar behind the picker shows small numbers too, so pick the hours
+# row by its id.
+# Android's wheel can settle a row short of the tapped value; the assert reads
+# the stored entry.
+- tapOn:
+    id: time-entry-duration-hours-2
+- tapOn:
+    id: time-entry-picker-done
+- tapOn:
+    id: time-entry-save
+# The entry takes the card's place in the list. (Absence checks can't be
+# proved over the calendar's long accessibility tree, so look for the entry.)
+- assertVisible: Logged from the day
+# With time logged, + beside Time Reports opens the form in the sheet; its back
+# arrow returns to the day.
+- tapOn:
+    id: day-add-time
+- assertVisible: Go Back
+- tapOn: Go Back
+- assertVisible: Logged from the day

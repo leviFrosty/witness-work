@@ -5,12 +5,14 @@ import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollV
 
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import { getMonthsReports } from '@/lib/serviceReport'
 import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
+import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 
 interface ProgressMonthTabProps {
@@ -36,6 +38,8 @@ const ProgressMonthTab = ({
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const serviceReports = useServiceReport((s) => s.serviceReports)
+  // The day picked from All Days stays in view above that day's sheet.
+  const dayReveal = useRevealAboveSheet()
 
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -58,6 +62,7 @@ const ProgressMonthTab = ({
       <AdaptiveSplitScrollView
         paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
         compactPaddingHorizontal={0}
+        trailingReveal={dayReveal}
         leading={
           <View
             style={{
@@ -77,7 +82,14 @@ const ProgressMonthTab = ({
             <ProjectedTotalCard scope={scope} />
           </View>
         }
-        trailing={<AllDaysList month={month} year={year} />}
+        trailing={
+          <AllDaysList
+            month={month}
+            year={year}
+            dayReveal={dayReveal}
+            renderPlanForm={renderDaySheetPlanForm}
+          />
+        }
       />
     </SwipeMonthNavigator>
   )

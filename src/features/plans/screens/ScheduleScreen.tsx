@@ -5,10 +5,7 @@ import {
   BottomTabScreenProps,
   useBottomTabBarHeight,
 } from '@react-navigation/bottom-tabs'
-import {
-  useIsFocused,
-  useNavigation as useRootNavigation,
-} from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
@@ -20,10 +17,9 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
 import { useTakeover } from '@/stores/takeover'
-import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
-import { TimeEntry } from '@/types/timeEntry'
 import RootHeader from '@/components/RootHeader'
+import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -50,7 +46,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
-  const rootNavigation = useRootNavigation<RootStackNavigation>()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   useSyncBuddiesOnFocus()
   const openIntro = useScheduleIntro((s) => s.open)
@@ -80,7 +75,14 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const calendar = useScheduleCalendar({ initial: routeMonth })
   // Taken out up front: `calendar` itself changes with each month scrolled
   // into focus, and whatever closes over it would re-render with it.
-  const { view, focusedMonth: focused, changeView, showMonth } = calendar
+  const {
+    view,
+    focusedMonth: focused,
+    changeView,
+    showMonth,
+    revealDay,
+    coverBottom,
+  } = calendar
 
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })
@@ -107,34 +109,28 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     showMonth(routeMonth)
   })
 
-  // The sheets are modal and this tab stays mounted, so they would cover
-  // whatever screen a widget or tab switch opens next.
+  // The goal editor is modal and this tab stays mounted, so it would cover
+  // whatever screen a widget or tab switch opens next. The day's sheet steps
+  // aside by itself and comes back with the tab.
   useEffect(
-    () =>
-      navigation.addListener('blur', () => {
-        setSelectedDateSheet((current) =>
-          current.open ? { ...current, open: false } : current
-        )
-        setGoalOpen(false)
-      }),
+    () => navigation.addListener('blur', () => setGoalOpen(false)),
     [navigation]
   )
 
-  // Android's back button closes an open sheet rather than leaving the tab
-  // with it.
-  const sheetOpen = selectedDateSheet.open || goalOpen
+  // Android's back button closes the goal editor rather than leaving the tab
+  // with it. The day's sheet handles its own: back from its time form returns
+  // to the day.
   useEffect(() => {
-    if (Platform.OS !== 'android' || !sheetOpen) return
+    if (Platform.OS !== 'android' || !goalOpen) return
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
-        setSelectedDateSheet((current) => ({ ...current, open: false }))
         setGoalOpen(false)
         return true
       }
     )
     return () => subscription.remove()
-  }, [sheetOpen])
+  }, [goalOpen])
 
   // A Calendar widget day (`witnesswork://schedule/:date`) opens that day the
   // same way tapping it here does: the sheet, or the inspector when wide.
@@ -144,9 +140,18 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     const date = moment(linkedDate, 'YYYY-MM-DD', true)
     navigation.setParams({ date: undefined })
     if (!date.isValid()) return
-    showMonth({ year: date.year(), month: date.month() })
+    // The sheet brings the day's week into view above it as it opens (or now,
+    // if it's open), which focuses its month. A scroll to the month would land
+    // after that and hide the week again, so it's only for the inspector, the
+    // Year view, and a day the list hasn't loaded.
+    if (
+      isWide ||
+      view === 'year' ||
+      !revealDay(date.toDate(), sheetHeight.current)
+    )
+      showMonth({ year: date.year(), month: date.month() })
     setSelectedDateSheet({ open: !isWide, date: date.toDate() })
-  }, [linkedDate, isWide, navigation, showMonth])
+  }, [linkedDate, isWide, view, navigation, showMonth, revealDay])
 
   const selectedDate = selectedDateSheet.date
   const selectedMonthReports =
@@ -156,32 +161,12 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       selectedDate.getFullYear()
     ) ?? []
 
-  // Navigation chosen in the day sheet waits for it to close, or the pushed
-  // screen would land underneath it.
-  const pendingNavigation = useRef<(() => void) | null>(null)
-  useEffect(() => {
-    if (!selectedDateSheet.open && pendingNavigation.current) {
-      const callback = pendingNavigation.current
-      pendingNavigation.current = null
-      setTimeout(callback, 125)
-    }
-  }, [selectedDateSheet.open])
-
-  const handleAddTime = () => {
-    pendingNavigation.current = () =>
-      rootNavigation.navigate('Add Time', {
-        date: selectedDate.toISOString(),
-      })
-  }
-  const handlePlanDay = () => {
-    pendingNavigation.current = () =>
-      rootNavigation.navigate('PlanDay', { date: selectedDate.toISOString() })
-  }
-  const handleEditTimeReport = (report: TimeEntry) => {
-    pendingNavigation.current = () =>
-      rootNavigation.navigate('Add Time', {
-        existingReport: JSON.stringify(report),
-      })
+  // The day's sheet covers the bottom of the calendar. The day picked stays
+  // in view above it, and stays marked while the sheet is open.
+  const sheetHeight = useRef(0)
+  const pressDay = (date: Date) => {
+    setSelectedDateSheet({ open: !isWide, date })
+    if (!isWide && sheetHeight.current) revealDay(date, sheetHeight.current)
   }
 
   const openGoalEditor = (month: CalendarMonth) => {
@@ -195,10 +180,12 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       index={index}
       buddyMarkers={buddyMarkers}
       selectedKey={
-        isWide ? moment(selectedDate).format('YYYY-MM-DD') : undefined
+        isWide || selectedDateSheet.open
+          ? moment(selectedDate).format('YYYY-MM-DD')
+          : undefined
       }
       bottomInset={bottomInset}
-      onPressDay={(date) => setSelectedDateSheet({ open: !isWide, date })}
+      onPressDay={pressDay}
       editableGoal={editableGoal}
       onEditGoal={openGoalEditor}
     />
@@ -268,9 +255,12 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
           sheet={selectedDateSheet}
           setSheet={setSelectedDateSheet}
           thisMonthsReports={selectedMonthReports}
-          onAddTime={handleAddTime}
-          onPlanDay={handlePlanDay}
-          onEditTimeReport={handleEditTimeReport}
+          onHeightChange={(height) => {
+            sheetHeight.current = height
+            coverBottom(height)
+            if (height) revealDay(selectedDate, height)
+          }}
+          renderPlanForm={renderDaySheetPlanForm}
           renderFooter={(date, onNavigate) => (
             <>
               <TodayRouteEntry

@@ -23,6 +23,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return resolve(context, moduleName, platform)
 }
 
+// `.verify/` holds the verification harness's state, screenshots and builds.
+// Watching it would make every write there push a hot update, whose
+// "Refreshing..." banner covers the header and swallows taps mid-drive.
+config.resolver.blockList = [
+  ...[config.resolver.blockList].flat().filter(Boolean),
+  /[\\/]\.verify[\\/].*/,
+]
+
 // Transformed files keep the rewritten icon paths in Metro's cache; a lucide
 // upgrade that renames icon files must invalidate them.
 const lucideVersion = require(

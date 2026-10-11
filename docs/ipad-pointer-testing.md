@@ -5,8 +5,8 @@ lives in the [`verify-witnesswork`](../.agents/skills/verify-witnesswork/SKILL.m
 skill. Hover is the one thing it can't automate.
 
 Hover needs a real pointer. Neither `xcrun simctl` nor XCTest can produce
-hover events on iOS; XCTest's `hover()` is macOS-only, and `idb ui tap` doesn't
-deliver touches to Xcode 27 simulators. To test hover:
+hover events on iOS; XCTest's `hover()` is macOS-only, and neither `idb ui tap` nor `axe tap`
+delivers touches to Xcode 27 simulators. To test hover:
 
 1. Run `wwv up --platform ios --ipad`, then open that `WW Verify iPad N`
    simulator in DeviceHub

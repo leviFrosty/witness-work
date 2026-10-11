@@ -9,6 +9,18 @@ import { createRequire } from 'node:module'
 import { spawn, spawnSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import {
+  best,
+  center,
+  diffSnapshots,
+  flatten,
+  formatElement,
+  formatSnapshot,
+  matchesSelector,
+  matchesText,
+  parseSelector,
+  snapshotJson,
+} from './ax.mjs'
 import { readFlow, runSteps } from './flows.mjs'
 import {
   CONFIG,
@@ -552,6 +564,473 @@ function agentDevice(args, options = {}) {
     timeout: 180_000,
     ...options,
   })
+}
+
+// An accessibility capture that overruns agent-device's iOS watchdog keeps its
+// runner busy for a few seconds, and every command in that window fails.
+const RUNNER_BUSY = /still finishing a previous command/
+
+/** Runs one session command, waiting out a runner still draining an earlier one. */
+function sessionCommand(platform, args) {
+  const command = [...args, '--session', sessionName(platform)]
+  let result = agentDevice(command)
+  for (let i = 0; i < 12 && RUNNER_BUSY.test(output(result)); i++) {
+    sleepSync(1500)
+    result = agentDevice(command)
+  }
+  // After a capture overruns, the next XCTest action can fail on the old
+  // session without acting; the retry gets a fresh one.
+  if (RUNNER_INVALIDATED.test(output(result))) {
+    sleepSync(1500)
+    result = agentDevice(command)
+  }
+  return result
+}
+
+const RUNNER_INVALIDATED = /runner session was invalidated/
+
+const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
+
+// ---------- AXe: accessibility reads agent-device can't do on iPad ----------
+
+// agent-device's snapshot reads only the app node on the iPad layout, and its
+// semantic commands (selectors, find, wait, back, --settle) need that tree, so
+// on iPad they read the screen with AXe (scripts/verify/ax.mjs) and send input
+// to agent-device as coordinates. iPhone keeps agent-device and falls back to
+// AXe when its tree comes back sparse.
+const SPARSE =
+  /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree/
+const NO_MATCH = /Selector did not match|No element matches|could not find/i
+const BACK_LABELS = ['Go Back', 'Back', 'Close']
+const AX_SETTLE_MS = 8000
+
+function axeBin() {
+  if (process.env.WW_VERIFY_AXE) return process.env.WW_VERIFY_AXE
+  const found = ['/opt/homebrew/bin/axe', '/usr/local/bin/axe'].find((p) =>
+    fs.existsSync(p)
+  )
+  if (found) return found
+  const which = spawnSync('which', ['axe'], { encoding: 'utf8' })
+  return which.status === 0 ? which.stdout.trim() : null
+}
+
+const AXE_MISSING =
+  'AXe is needed to read iPad screens: brew install cameroncooke/axe/axe'
+
+const axRefsFile = (platform) =>
+  path.join(STATE_DIR, `ax-refs-${platform}.json`)
+const axTapFile = (platform) =>
+  path.join(STATE_DIR, `ax-last-tap-${platform}.json`)
+
+/** Reads the screen with AXe and saves the elements so `@aN` refs resolve. */
+function axRead(state, platform) {
+  const bin = axeBin()
+  if (!bin) fail(AXE_MISSING)
+  const device = state.devices[platform]
+  const result = run(bin, ['describe-ui', '--udid', device.id], {
+    check: false,
+    timeout: 30_000,
+  })
+  if (result.status !== 0)
+    fail(`axe describe-ui failed: ${output(result).trim().slice(-400)}`)
+  const elements = flatten(JSON.parse(result.stdout))
+  writeJson(axRefsFile(platform), { device: device.id, elements })
+  return elements
+}
+
+function axRef(state, platform, ref) {
+  const saved = readJson(axRefsFile(platform), null)
+  const element = saved?.elements.find((e) => `@${e.ref}` === ref)
+  if (!element || saved.device !== state.devices[platform].id)
+    return { error: `${ref} isn't in the last snapshot; run snapshot again` }
+  return { element }
+}
+
+const done = (stdout, status = 0) => ({ status, stdout, stderr: '' })
+const failed = (message) => ({ status: 1, stdout: '', stderr: `${message}\n` })
+
+// Settling compares positions too: a sheet or a dock riding the keyboard moves
+// without changing a label, and a tap resolved mid-move lands on its old spot.
+const layoutKey = (elements) =>
+  elements
+    .map((e) => `${formatElement(e)} ${Math.round(e.x)},${Math.round(e.y)}`)
+    .join('\n')
+
+/** Polls AXe until two reads match, then lists what changed since `before`. */
+function axSettle(state, platform, before) {
+  const start = Date.now()
+  sleepSync(300)
+  let previous = null
+  let current = axRead(state, platform)
+  while (Date.now() - start < AX_SETTLE_MS) {
+    const key = layoutKey(current)
+    if (key === previous) break
+    previous = key
+    sleepSync(250)
+    current = axRead(state, platform)
+  }
+  const lines = diffSnapshots(before, current)
+  return `settled after ${Date.now() - start}ms (AXe)\n${lines.length ? lines.join('\n') : 'no change'}`
+}
+
+/** Runs an input command; with --settle, waits for the screen through AXe. */
+function axInput(state, platform, args, settle, before) {
+  const start = settle ? (before ?? axRead(state, platform)) : null
+  const result = sessionCommand(platform, args)
+  if (['press', 'click', 'fill'].includes(args[0]) && isNumber(args[1]))
+    writeJson(axTapFile(platform), { x: Number(args[1]), y: Number(args[2]) })
+  if (!settle || result.status !== 0) return result
+  return done(`${result.stdout.trim()}\n${axSettle(state, platform, start)}`)
+}
+
+/**
+ * Resolves `@aN`, an agent-device selector, or text into one on-screen element.
+ * Returns { element, elements } or { error }.
+ */
+function axTarget(
+  state,
+  platform,
+  target,
+  { text = false, first = false } = {}
+) {
+  if (/^@a\d+$/.test(target)) return axRef(state, platform, target)
+  const selector = text ? null : parseSelector(target)
+  if (!text && !selector) return { error: `can't resolve ${target} with AXe` }
+  const elements = axRead(state, platform)
+  const matches = elements.filter((e) =>
+    selector ? matchesSelector(e, selector) : matchesText(e, target)
+  )
+  if (!matches.length)
+    return {
+      error: `No element matches ${target} on screen (AXe read ${elements.length}). Run snapshot -i to see what's there.`,
+    }
+  const visible = matches.length > 1 ? onTop(state, platform, matches) : matches
+  const pool = visible.length ? visible : matches
+  return { element: first ? pool[0] : best(pool), elements }
+}
+
+/**
+ * The matches a tap at their center would reach. A sheet or picker leaves the
+ * screen under it in the accessibility tree, so the same label (a "5" on the
+ * week strip and on a picker wheel) can match twice; hit-testing each center
+ * with `axe describe-ui --point` tells which one is in front.
+ */
+function onTop(state, platform, matches) {
+  const device = state.devices[platform]
+  return matches.slice(0, 6).filter((element) => {
+    const { x, y } = center(element)
+    const result = run(
+      axeBin(),
+      ['describe-ui', '--udid', device.id, '--point', `${x},${y}`],
+      { check: false, timeout: 15_000 }
+    )
+    if (result.status !== 0) return true
+    let hit
+    try {
+      hit = JSON.parse(result.stdout)
+    } catch {
+      return true
+    }
+    const found = (node) =>
+      (element.label && node.AXLabel === element.label) ||
+      (element.id && node.AXUniqueId === element.id) ||
+      (element.value && node.AXValue === element.value) ||
+      (node.children ?? []).some(found)
+    return found(Array.isArray(hit) ? { children: hit } : hit)
+  })
+}
+
+/** Taps (or fills) the element a target resolves to. */
+function axAct(state, platform, verb, target, rest, settle, options) {
+  const found = axTarget(state, platform, target, options)
+  if (found.error) return failed(found.error)
+  const { x, y } = center(found.element)
+  const result = axInput(
+    state,
+    platform,
+    [verb === 'fill' ? 'fill' : 'press', String(x), String(y), ...rest],
+    settle,
+    found.elements
+  )
+  if (result.status !== 0) return result
+  return done(
+    `${formatElement(found.element)} at (${x}, ${y}): ${result.stdout.trim()}`
+  )
+}
+
+function axSnapshot(state, platform, json, note) {
+  const elements = axRead(state, platform)
+  if (json) return done(snapshotJson(elements))
+  const lines = [formatSnapshot(elements, note)]
+  if (splashCovers(state, platform))
+    lines.unshift(
+      'WARNING: the native splash covers the app, so taps land on it. Run ww-verify up.'
+    )
+  return done(lines.join('\n'))
+}
+
+/** Polls AXe for `wait text|absent|stable`. */
+function axWait(state, platform, kind, rest) {
+  const numbers = rest.filter((a) => /^\d+$/.test(a)).map(Number)
+  const subject = rest.find((a) => !/^\d+$/.test(a))
+  const timeout = numbers.at(-1) ?? 10_000
+  const deadline = Date.now() + timeout
+  if (kind === 'stable') {
+    const quiet = numbers.length > 1 ? numbers[0] : 500
+    let key = null
+    let since = Date.now()
+    while (Date.now() < deadline) {
+      const next = layoutKey(axRead(state, platform))
+      if (next !== key) [key, since] = [next, Date.now()]
+      else if (Date.now() - since >= quiet) return done('stable (AXe)')
+      sleepSync(250)
+    }
+    return failed(`screen didn't settle within ${timeout}ms (AXe)`)
+  }
+  const selector = kind === 'absent' ? parseSelector(subject) : null
+  if (kind === 'absent' && !selector)
+    return failed(`can't resolve ${subject} with AXe`)
+  while (true) {
+    const elements = axRead(state, platform)
+    const hit = elements.find((e) =>
+      selector ? matchesSelector(e, selector) : matchesText(e, subject)
+    )
+    if (kind === 'text' && hit) return done(`found ${formatElement(hit)}`)
+    if (kind === 'absent' && !hit) return done(`${subject} is gone`)
+    if (Date.now() >= deadline) break
+    sleepSync(400)
+  }
+  return failed(
+    kind === 'text'
+      ? `"${subject}" didn't appear within ${timeout}ms (AXe)`
+      : `${subject} is still on screen after ${timeout}ms (AXe)`
+  )
+}
+
+const isNumber = (value) => /^-?\d+(\.\d+)?$/.test(value ?? '')
+
+/**
+ * `type` on iPad: agent-device finds the focused field through the tree it
+ * can't read there, so this fills the field the last tap landed in, or the only
+ * field on screen. Fill replaces the field's text rather than appending.
+ */
+function axType(state, platform, text, settle) {
+  const fields = axRead(state, platform).filter((e) => e.editable)
+  const tap = readJson(axTapFile(platform), null)
+  const inside = (e) =>
+    tap &&
+    tap.x >= e.x &&
+    tap.x <= e.x + e.width &&
+    tap.y >= e.y &&
+    tap.y <= e.y + e.height
+  const field = fields.find(inside) ?? (fields.length === 1 ? fields[0] : null)
+  if (!field)
+    return failed(
+      fields.length
+        ? `No focused field: ${fields.length} on screen and the last tap wasn't in one. Use fill <@aN|selector> <text>.`
+        : 'No text field on screen (AXe)'
+    )
+  const { x, y } = center(field)
+  const result = axInput(
+    state,
+    platform,
+    ['fill', String(x), String(y), text],
+    settle
+  )
+  if (result.status !== 0) return result
+  return done(`${formatElement(field)}: ${result.stdout.trim()}`)
+}
+
+/**
+ * Runs one agent-device command for this run's session and returns a spawnSync
+ * result. `wwv ad`, `wwv flow` and `wwv monkey` all go through here, so the
+ * iPad handling applies to each.
+ */
+function drive(state, platform, args) {
+  const device = state.devices[platform]
+  if (platform !== 'ios' || !axeBin()) return sessionCommand(platform, args)
+  const ipad = device.kind === 'ipad'
+  const [command, ...rest] = args
+  const settle = rest.includes('--settle')
+  const plain = rest.filter((a) => a !== '--settle')
+  // iPhone: agent-device first, AXe only when it can't read the screen.
+  const tryAgentDevice = (retry) => {
+    if (ipad) return retry()
+    const result = sessionCommand(platform, args)
+    const text = output(result)
+    if (SPARSE.test(text) || (result.status !== 0 && NO_MATCH.test(text)))
+      return retry()
+    return result
+  }
+
+  switch (command) {
+    case 'snapshot':
+      return tryAgentDevice(() =>
+        axSnapshot(
+          state,
+          platform,
+          plain.includes('--json'),
+          ipad ? undefined : "agent-device couldn't read this screen"
+        )
+      )
+    case 'press':
+    case 'click':
+    case 'fill': {
+      const [target, ...more] = plain
+      if (isNumber(target) && isNumber(more[0]))
+        return ipad
+          ? axInput(state, platform, [command, ...plain], settle)
+          : sessionCommand(platform, args)
+      if (/^@e\d+$/.test(target) || !target)
+        return sessionCommand(platform, args)
+      if (/^@a\d+$/.test(target))
+        return axAct(state, platform, command, target, more, settle)
+      return tryAgentDevice(() =>
+        axAct(state, platform, command, target, more, settle)
+      )
+    }
+    case 'find': {
+      const [text, action, ...more] = plain.filter((a) => a !== '--first')
+      const first = plain.includes('--first')
+      if (action && !['click', 'press', 'fill'].includes(action))
+        return sessionCommand(platform, args)
+      return tryAgentDevice(() => {
+        if (action)
+          return axAct(state, platform, action, text, more, settle, {
+            text: true,
+            first,
+          })
+        const elements = axRead(state, platform).filter((e) =>
+          matchesText(e, text)
+        )
+        return elements.length
+          ? done(elements.map(formatElement).join('\n'))
+          : failed(`Nothing on screen contains "${text}" (AXe)`)
+      })
+    }
+    case 'wait': {
+      const [kind, ...more] = plain
+      if (!['text', 'absent', 'stable'].includes(kind))
+        return sessionCommand(platform, args)
+      return tryAgentDevice(() => axWait(state, platform, kind, more))
+    }
+    case 'type': {
+      if (!ipad) return sessionCommand(platform, args)
+      const before = settle ? axRead(state, platform) : null
+      const result = sessionCommand(platform, [command, ...plain])
+      if (!/TEXT_INPUT_NOT_FOCUSED/.test(output(result)))
+        return settle && result.status === 0
+          ? done(
+              `${result.stdout.trim()}\n${axSettle(state, platform, before)}`
+            )
+          : result
+      return axType(
+        state,
+        platform,
+        plain.filter((a) => !a.startsWith('--')).join(' '),
+        settle
+      )
+    }
+    case 'back':
+      if (!ipad) return sessionCommand(platform, args)
+      for (const label of BACK_LABELS) {
+        const result = axAct(
+          state,
+          platform,
+          'press',
+          `label="${label}"`,
+          [],
+          settle
+        )
+        if (result.status === 0) return result
+      }
+      return failed(
+        `No ${BACK_LABELS.join(' / ')} control on screen (AXe); press the screen's own control instead`
+      )
+    default:
+      // Scroll, swipe, type and the rest are input; only --settle reads.
+      return ipad && settle
+        ? axInput(state, platform, [command, ...plain], true)
+        : sessionCommand(platform, args)
+  }
+}
+
+// Commands `wwv ad` sends through drive() rather than straight to agent-device.
+const DRIVEN = new Set([
+  'snapshot',
+  'press',
+  'click',
+  'fill',
+  'find',
+  'wait',
+  'back',
+  'type',
+])
+
+// ---------- splash detection ----------
+
+// `#4BD27C`, the native splash's background (app.config.ts).
+const SPLASH_RGB = [0x4b, 0xd2, 0x7c]
+
+/**
+ * True when the native splash covers the screen. On Xcode 27 dev builds React
+ * Native can put the launch screen back over a running app, where it swallows
+ * every tap while the JS and the accessibility tree carry on beneath, so
+ * neither CDP nor AXe can tell. A screenshot that is almost all splash green
+ * can.
+ */
+function splashCovers(state, platform) {
+  if (platform !== 'ios') return false
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-verify-splash-'))
+  try {
+    const png = path.join(tmp, 'screen.png')
+    const bmp = path.join(tmp, 'screen.bmp')
+    const device = state.devices[platform]
+    run('xcrun', ['simctl', 'io', device.id, 'screenshot', png], {
+      check: false,
+    })
+    if (!fs.existsSync(png)) return false
+    // A 24 × 24 BMP is enough to measure, and Node reads BMP without a decoder.
+    run('sips', ['-s', 'format', 'bmp', '-z', '24', '24', png, '--out', bmp], {
+      check: false,
+    })
+    if (!fs.existsSync(bmp)) return false
+    const data = fs.readFileSync(bmp)
+    const offset = data.readUInt32LE(10)
+    const width = data.readInt32LE(18)
+    const height = Math.abs(data.readInt32LE(22))
+    const bytes = data.readUInt16LE(28) / 8
+    const row = Math.ceil((width * bytes) / 4) * 4
+    let green = 0
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < width; x++) {
+        const i = offset + y * row + x * bytes
+        const [b, g, r] = [data[i], data[i + 1], data[i + 2]]
+        if (
+          Math.abs(r - SPLASH_RGB[0]) < 24 &&
+          Math.abs(g - SPLASH_RGB[1]) < 24 &&
+          Math.abs(b - SPLASH_RGB[2]) < 24
+        )
+          green++
+      }
+    return green / (width * height) > 0.85
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true })
+  }
+}
+
+/** Hides a splash left over the running app; false if it stays. */
+async function clearSplash(state, platform) {
+  for (let i = 0; i < 4; i++) {
+    if (!splashCovers(state, platform)) return true
+    await cdpEval(
+      state,
+      platform,
+      'globalThis.expo?.modules?.ExpoSplashScreen?.hide?.() ?? null'
+    ).catch(() => null)
+    await sleep(1500)
+  }
+  return !splashCovers(state, platform)
 }
 
 // ---------- iOS ----------
@@ -1514,9 +1993,12 @@ async function cdpTargets(port) {
 // Match by platform: Android runtimes report "<model> - <release> - API <n>",
 // and an iOS runtime reports the simulator name, which can lag a rename until
 // reboot. A warm device another worktree left behind can reconnect to this
-// port once its own Metro is gone, so prefer the leased simulator by name.
+// port once its own Metro is gone, so prefer the leased simulator by name, and
+// never take an iOS runtime named for a different pool device: evaluating
+// there would seed or drive someone else's run.
 async function cdpTarget(state, platform) {
-  if (!state.devices?.[platform])
+  const device = state.devices?.[platform]
+  if (!device)
     fail(
       `No ${platform} device in .verify/state.json; run ww-verify up --platform ${platform}`
     )
@@ -1527,9 +2009,10 @@ async function cdpTarget(state, platform) {
       t.title?.startsWith(BUNDLE_ID) &&
       isAndroid(t) === (platform === 'android')
   )
-  const leased = state.devices[platform].name
+  if (platform === 'android') return candidates[0]
   return (
-    candidates.find((t) => leased && t.deviceName === leased) ?? candidates[0]
+    candidates.find((t) => t.deviceName === device.name) ??
+    candidates.find((t) => !/^WW Verify /.test(t.deviceName ?? ''))
   )
 }
 
@@ -1618,7 +2101,7 @@ function devClientUrl(port) {
   return `exp+jw-time://expo-development-client/?url=${encodeURIComponent(`http://127.0.0.1:${port}`)}`
 }
 
-async function launch(state, device) {
+async function launch(state, device, retry = true) {
   const port = state.metro.port
   const session = sessionName(device.platform)
   if (device.platform === 'ios') {
@@ -1738,10 +2221,17 @@ async function launch(state, device) {
   for (let i = 0; i < 10 && !(await cdpTarget(state, device.platform)); i++)
     await sleep(2000)
   if (device.platform === 'ios' && !(await cdpTarget(state, device.platform))) {
-    agentDevice(['alert', 'accept', '--session', session])
+    sessionCommand(device.platform, ['alert', 'accept'])
   }
   await waitForHarness(state, device.platform, 300_000)
   await settleAndHideSplash(state, device.platform)
+  if (await clearSplash(state, device.platform)) return
+  if (!retry)
+    fail(
+      'The native splash still covers the app after a relaunch, so taps would land on it. Run ww-verify up again; if it persists, ww-verify down and up.'
+    )
+  log('the native splash still covers the app; relaunching')
+  await launch(state, device, false)
 }
 
 /**
@@ -2074,7 +2564,9 @@ const commands = {
   async doctor({ flags }) {
     const state = readState()
     const checks = []
-    const check = (name, ok, detail) => checks.push({ name, ok, detail })
+    // A warning prints but doesn't fail doctor.
+    const check = (name, ok, detail, warn = false) =>
+      checks.push({ name, ok, detail, warn })
     const disk = freeDiskGb()
     check('disk', disk >= 8, `${disk} GB free`)
     check(
@@ -2096,10 +2588,14 @@ const commands = {
       const health = await httpText(
         new URL('/health', state.api.url).toString()
       )
+      // The shared `.env` API only matters to changes that touch the backend,
+      // which should run --api local anyway; a run's own API must be up.
+      const shared = state.api.mode !== 'local'
       check(
         'api',
         health.status === 200,
-        `${state.api.mode} ${state.api.url} -> ${health.status} ${health.text.slice(0, 120)}`
+        `${state.api.mode} ${state.api.url} -> ${health.status} ${health.text.slice(0, 120)}${health.status !== 200 && shared ? ' (fine for UI-only checks; use up --api local for backend data)' : ''}`,
+        shared
       )
     }
     const platforms = flags.platform
@@ -2129,6 +2625,25 @@ const commands = {
       check(`${platform}:booted`, booted, device.name)
       if (!booted) continue
       check(`${platform}:installed`, appInstalled(device), BUNDLE_ID)
+      if (platform === 'ios') {
+        const axe = axeBin()
+        check(
+          'ios:axe',
+          Boolean(axe),
+          axe
+            ? `${axe} (reads the screen where agent-device can't)`
+            : `missing; ${AXE_MISSING.split(': ')[1]}${device.kind === 'ipad' ? ' (needed to drive an iPad)' : ''}`,
+          device.kind !== 'ipad'
+        )
+        const covered = splashCovers(state, platform)
+        check(
+          'ios:screen',
+          !covered,
+          covered
+            ? 'the native splash covers the app and swallows taps; run ww-verify up'
+            : 'app visible, no splash over it'
+        )
+      }
       const record = readJson(INSTALLS, {})[device.lockKey]
       const installed = record?.fingerprint
       const current = await nativeFingerprint(platform)
@@ -2180,8 +2695,10 @@ const commands = {
       }
     }
     for (const c of checks)
-      console.log(`${c.ok ? 'ok  ' : 'FAIL'} ${c.name.padEnd(18)} ${c.detail}`)
-    if (checks.some((c) => !c.ok)) process.exitCode = 1
+      console.log(
+        `${c.ok ? 'ok  ' : c.warn ? 'warn' : 'FAIL'} ${c.name.padEnd(18)} ${c.detail}`
+      )
+    if (checks.some((c) => !c.ok && !c.warn)) process.exitCode = 1
   },
 
   async eval({ positional, flags }) {
@@ -2250,7 +2767,7 @@ const commands = {
     if (platform === 'ios') {
       run('xcrun', ['simctl', 'openurl', device.id, url])
       await sleep(1500)
-      agentDevice(['alert', 'accept', '--session', sessionName(platform)])
+      sessionCommand(platform, ['alert', 'accept'])
     } else {
       run('adb', [
         '-s',
@@ -2302,6 +2819,14 @@ const commands = {
     const state = requireUp()
     const platform = currentPlatform(state, { platform: platformFlag })
     if (!['open', 'close'].includes(args[0])) ensureSession(state, platform)
+    if (DRIVEN.has(args[0]) || args.includes('--settle')) {
+      const result = drive(state, platform, args)
+      if (result.stdout)
+        process.stdout.write(result.stdout.replace(/\n?$/, '\n'))
+      if (result.stderr) process.stderr.write(result.stderr)
+      process.exitCode = result.status ?? 1
+      return
+    }
     const recording = iosRecording(state, platform, args)
     const [bin, ...prefix] = agentDeviceBin()
     const result = spawnSync(
@@ -2349,9 +2874,7 @@ const commands = {
       await cdpEval(state, platform, '__WW_DEV__.clearErrors()')
       const name = path.basename(flow, '.yaml')
       const { steps } = readFlow(source)
-      const result = runSteps(steps, (args) =>
-        agentDevice([...args, '--session', sessionName(platform)])
-      )
+      const result = runSteps(steps, (args) => drive(state, platform, args))
       if (!result.ok) screenshot(state, platform, `flow-${name}-failed`)
       const jsErrors = await cdpEval(
         state,
@@ -2398,8 +2921,7 @@ const commands = {
       scenario: flags.scenario ?? 'pioneer',
       eval: (expression, timeout) =>
         cdpEval(state, platform, expression, timeout),
-      agentDevice: (args) =>
-        agentDevice([...args, '--session', sessionName(platform)]),
+      agentDevice: (args) => drive(state, platform, args),
       shot: (label) => screenshot(state, platform, label),
       relaunch: () => launch(state, state.devices[platform]),
       beforeForeground: () => ensureReverse(state, state.devices[platform]),

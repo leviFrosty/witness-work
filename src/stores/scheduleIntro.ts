@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 
+/** One page of the Schedule intro. Its id is also its analytics value. */
+export type ScheduleIntroPageId = 'plan' | 'streak' | 'grace' | 'together'
+
 /** What opened the Schedule intro. Bounded, safe as an analytics value. */
 export type ScheduleIntroSource = 'first_visit'
 

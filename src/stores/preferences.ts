@@ -66,6 +66,7 @@ import {
   standingRole,
   type RoleHistory,
 } from '@/lib/roleHistory'
+import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 
 export type { MarkerColors }
 
@@ -421,6 +422,11 @@ export const PREFERENCE_DEFAULTS = {
   streakReminders: true,
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
+  /**
+   * Schedule intro pages onboarding already showed (its tour, Plan Month or
+   * Buddies step). The intro leaves them out rather than repeat them.
+   */
+  scheduleIntroCoveredPages: [] as ScheduleIntroPageId[],
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
@@ -2055,6 +2061,17 @@ export const usePreferences = create(
             delete next[monthKey]
             return { reportCommentOverrides: next }
           }),
+        markScheduleIntroCovered: (page: ScheduleIntroPageId) =>
+          set(({ scheduleIntroCoveredPages }) =>
+            scheduleIntroCoveredPages.includes(page)
+              ? {}
+              : {
+                  scheduleIntroCoveredPages: [
+                    ...scheduleIntroCoveredPages,
+                    page,
+                  ],
+                }
+          ),
         markTipSeen: (tipId: string) =>
           set(({ seenTipIds }) =>
             seenTipIds.includes(tipId)

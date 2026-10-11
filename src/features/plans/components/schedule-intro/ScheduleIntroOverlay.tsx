@@ -31,6 +31,7 @@ import type { StreakKind } from '@/lib/serviceStreak'
 import { usePreferences } from '@/stores/preferences'
 import {
   useScheduleIntro,
+  type ScheduleIntroPageId,
   type ScheduleIntroSource,
 } from '@/stores/scheduleIntro'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -51,12 +52,14 @@ type CloseMethod = 'plan' | 'done' | 'close' | 'back'
 
 /**
  * The intro's pages. Streak pages read by what the role's streak counts; the
- * Buddies page shows only where Buddies does.
+ * Buddies page shows only where Buddies does. Pages onboarding already showed
+ * are left out.
  */
 function introPages(
   colors: ReturnType<typeof useTheme>['colors'],
   kind: StreakKind,
-  buddies: boolean
+  buddies: boolean,
+  covered: readonly ScheduleIntroPageId[]
 ): ScheduleIntroPageSpec[] {
   const months = kind === 'months'
   const pages: ScheduleIntroPageSpec[] = [
@@ -98,7 +101,7 @@ function introPages(
       title: i18n.t('scheduleIntro_together_title'),
       caption: i18n.t('scheduleIntro_together_caption'),
     })
-  return pages
+  return pages.filter((page) => !covered.includes(page.id))
 }
 
 /**
@@ -124,7 +127,14 @@ export default function ScheduleIntroOverlay({
   const set = usePreferences((state) => state.set)
   // Fixed as it opens: Buddies' flag loads over the network, and a page
   // appearing mid-tour would shift the ones being swiped.
-  const [pages] = useState(() => introPages(theme.colors, streakKind, buddies))
+  const [pages] = useState(() =>
+    introPages(
+      theme.colors,
+      streakKind,
+      buddies,
+      usePreferences.getState().scheduleIntroCoveredPages
+    )
+  )
 
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)

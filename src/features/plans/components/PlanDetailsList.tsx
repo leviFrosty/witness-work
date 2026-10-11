@@ -43,8 +43,11 @@ type Props = {
   }
   note: string
   setNote: (note: string) => void
-  /** Omitted when there's no confirmed buddy to invite. */
-  buddies?: { picker: ReactNode; summary?: string }
+  /**
+   * Opens a picker of confirmed buddies, or, before there are any, sends the
+   * User to set Buddies up. Omitted where Buddies doesn't apply.
+   */
+  buddies?: { picker: ReactNode; summary?: string } | { setUp: () => void }
   /** Omitted for recurring plans, which don't have reminders. */
   notifyMe?: {
     on: boolean
@@ -177,7 +180,19 @@ const LocationRow = (props: NonNullable<Props['location']>) => {
   )
 }
 
-const BuddiesRow = (props: NonNullable<Props['buddies']>) => {
+const BuddiesSetUpRow = (props: { setUp: () => void }) => (
+  <FormRow
+    icon={UsersIcon}
+    onPress={props.setUp}
+    accessibilityLabel={i18n.t('buddies_inviteBuddies')}
+    testID='plan-buddies-row'
+    trailing={<FormRowAddBadge />}
+  >
+    <FormRowLabel>{i18n.t('buddies_inviteBuddies')}</FormRowLabel>
+  </FormRow>
+)
+
+const BuddiesRow = (props: { picker: ReactNode; summary?: string }) => {
   const layout = useDockedFormLayout()
   const row = useRef<View>(null)
   const [open, setOpen] = useState(false)
@@ -290,7 +305,12 @@ const PlanDetailsList = (props: Props) => (
     <TitleRow title={props.title} setTitle={props.setTitle} />
     {props.location && <LocationRow {...props.location} />}
     <NoteFormRow note={props.note} setNote={props.setNote} testID='plan-note' />
-    {props.buddies && <BuddiesRow {...props.buddies} />}
+    {props.buddies &&
+      ('setUp' in props.buddies ? (
+        <BuddiesSetUpRow setUp={props.buddies.setUp} />
+      ) : (
+        <BuddiesRow {...props.buddies} />
+      ))}
     {props.notifyMe && <NotifyMeRow {...props.notifyMe} />}
     {props.end && <EndDateRow {...props.end} />}
     <TypeFormRow {...props.type} />

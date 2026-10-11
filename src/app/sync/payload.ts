@@ -3,9 +3,10 @@ import { syncNow, hasCalibratedSyncClock } from '@/lib/syncClock'
 import { expireDeletedContactDetails } from '@/lib/contactRetention'
 import {
   payloadSchema,
+  dropUnreadableRecords,
   dropUnreadableSavedViews,
-  validSettingValues,
-  validProfileValues,
+  dropUnreadableSettings,
+  dropUnreadableProfileValues,
 } from '@/app/sync/payloadValidation'
 import { hasUnsafeKeys } from '@/lib/recordValidation'
 import {
@@ -284,7 +285,9 @@ import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
 /**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
  * malformed or the shape is unrecognizable — the caller should treat that as
- * "leave local state alone, surface a sync error in settings."
+ * "leave local state alone, surface a sync error in settings." Records,
+ * settings and profile values this build can't read are dropped instead and
+ * named to `onDropped`.
  *
  * Also translates legacy preference field names from older app versions so the
  * merge step sees the canonical schema, strips placeholder follow-ups from
@@ -295,7 +298,10 @@ import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
  * table, `payloadFollowUps.ts` for the follow-up rule, and
  * `payloadAdditivePlans.ts` for the Plan rule.
  */
-export function parsePayload(json: string): SyncPayload | null {
+export function parsePayload(
+  json: string,
+  onDropped?: (fields: string[]) => void
+): SyncPayload | null {
   let data: unknown
   try {
     data = JSON.parse(json)
@@ -304,18 +310,29 @@ export function parsePayload(json: string): SyncPayload | null {
   }
   try {
     if (hasUnsafeKeys(data)) return null
-    const result = payloadSchema.safeParse(data)
+    // Unreadable records and settings drop one by one; only a file without
+    // the payload frame is unreadable as a whole.
+    const dropped: string[] = []
+    let result = payloadSchema.safeParse(data)
+    if (!result.success) {
+      dropped.push(...dropUnreadableRecords(data))
+      result = payloadSchema.safeParse(data)
+    }
     if (!result.success || result.data.version > PAYLOAD_VERSION) return null
     const d = result.data
     normalizeLegacyPayloadFieldNames(d)
     normalizeLegacyFollowUps(d)
     normalizeLegacyPlans(d)
     dropUnreadableSavedViews(d.preferencesStore)
-    if (
-      !validSettingValues(d.preferencesStore.values, PREFERENCE_DEFAULTS) ||
-      (d.profileStore && !validProfileValues(d.profileStore.values))
-    )
-      return null
+    for (const key of dropUnreadableSettings(
+      d.preferencesStore,
+      PREFERENCE_DEFAULTS
+    ))
+      dropped.push(`preferencesStore.${key}`)
+    if (d.profileStore)
+      for (const key of dropUnreadableProfileValues(d.profileStore))
+        dropped.push(`profileStore.${key}`)
+    if (dropped.length) onDropped?.(dropped)
     const knownPreferences = Object.fromEntries(
       Object.entries(d.preferencesStore.values).filter(([key]) =>
         Object.hasOwn(PREFERENCE_DEFAULTS, key)

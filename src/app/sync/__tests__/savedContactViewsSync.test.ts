@@ -164,10 +164,12 @@ describe('Saved View payloads and backups', () => {
     })
   })
 
-  it('rejects views that aren’t a map', () => {
+  it('drops views that aren’t a map', () => {
     const payload = buildPayload({ deviceId: 't' })
     payload.preferencesStore.values.savedContactViews = ['A']
-    expect(parsePayload(JSON.stringify(payload))).toBeNull()
+    expect(
+      parsePayload(JSON.stringify(payload))?.preferencesStore.values
+    ).not.toHaveProperty('savedContactViews')
   })
 
   it('restores views from a JSON backup and keeps the local active view', () => {

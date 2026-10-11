@@ -223,9 +223,9 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
               value={view}
               onChange={(next) => changeView(next, 'toggle')}
             />
-            {/* Phones have no room for the label beside the other actions
-            and the title. */}
-            <BuddiesHeaderButton compact={!isWide} />
+            {/* Phones show the label only where the title still fits beside
+            it; it's easy to miss as an icon. */}
+            <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
           </>
         }
         contentStyle={{ maxWidth: isWide ? 1200 : 720 }}

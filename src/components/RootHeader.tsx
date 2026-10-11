@@ -1,4 +1,11 @@
-import { ReactNode, useEffect, useRef } from 'react'
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   Platform,
   Pressable,
@@ -28,6 +35,20 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
+
+/** How far the title may shrink so an action can show its label. */
+const TITLE_MIN_FIT_SCALE = 0.9
+
+/**
+ * The width the title's slot has and the width the title should keep, so an
+ * action can show its label only while the title still fits.
+ */
+type TitleFit = { room: number; needs: number }
+
+const TitleFitContext = createContext<TitleFit | undefined>(undefined)
+
+/** Undefined outside a root header's actions, or until it's laid out. */
+export const useRootHeaderTitleFit = () => useContext(TitleFitContext)
 
 /** Applied to every spacing change when the header compacts or expands. */
 const FLOAT_TRANSITION = {
@@ -80,6 +101,16 @@ export default function RootHeader({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const isDark = theme.colors.background === '#121212'
+  const [titleRoom, setTitleRoom] = useState<number>()
+  const [titleWidth, setTitleWidth] = useState<number>()
+  const titleFit =
+    titleRoom === undefined || titleWidth === undefined
+      ? undefined
+      : { room: titleRoom, needs: titleWidth * TITLE_MIN_FIT_SCALE }
+  const titleStyle = {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.fontSize('2xl'),
+  }
 
   return (
     <View style={{ width: '100%' }}>
@@ -144,6 +175,7 @@ export default function RootHeader({
             onLongPress={onLongPressTitle}
             disabled={!onPressTitle && !onLongPressTitle}
             delayLongPress={800}
+            onLayout={(e) => setTitleRoom(e.nativeEvent.layout.width)}
             style={{ flex: 1 }}
           >
             {/* Scaled rather than resized so the title shrinks smoothly. */}
@@ -162,22 +194,43 @@ export default function RootHeader({
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.7}
-                style={{
-                  fontFamily: theme.fonts.bold,
-                  fontSize: theme.fontSize('2xl'),
-                }}
+                style={titleStyle}
               >
                 {title}
               </Text>
             </Animated.View>
           </Pressable>
           {actions && (
-            // Wide enough that 12pt slops on neighbouring buttons don't overlap
-            // and steal each other's taps.
+            <TitleFitContext value={titleFit}>
+              {/* Wide enough that 12pt slops on neighbouring buttons don't
+              overlap and steal each other's taps. */}
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}
+              >
+                {actions}
+              </View>
+            </TitleFitContext>
+          )}
+          {actions && (
+            // The title at full size, unconstrained, to tell whether it fits.
             <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}
+              pointerEvents='none'
+              accessibilityElementsHidden
+              importantForAccessibility='no-hide-descendants'
+              style={{
+                position: 'absolute',
+                width: 9999,
+                flexDirection: 'row',
+                opacity: 0,
+              }}
             >
-              {actions}
+              <Text
+                numberOfLines={1}
+                onLayout={(e) => setTitleWidth(e.nativeEvent.layout.width)}
+                style={titleStyle}
+              >
+                {title}
+              </Text>
             </View>
           )}
         </Animated.View>

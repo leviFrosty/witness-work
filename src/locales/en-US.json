@@ -702,6 +702,7 @@
   "updateReveal_trayBody": "Take a quick tour of what's new.",
   "updateReveal_next": "Next",
   "updateReveal_shareLink": "Share link",
+  "updateReveal_takeMeHome": "Take me home",
   "updateReveal_pageOf": "Page {{page}} of {{count}}",
   "updateReveal_tourCard": "Take the tour",
   "updateReveal_navigation_title": "Simpler navigation",

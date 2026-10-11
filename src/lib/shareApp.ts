@@ -5,7 +5,7 @@ import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 
 /** Where a share of the app started. Bounded, safe as an analytics value. */
-export type ShareAppSource = 'update_reveal' | 'settings'
+export type ShareAppSource = 'settings'
 
 /**
  * Opens the system share sheet with links to WitnessWork on both stores, so one

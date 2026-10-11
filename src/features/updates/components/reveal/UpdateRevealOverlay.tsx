@@ -14,7 +14,6 @@ import { useIsFocused } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { shareApp } from '@/lib/shareApp'
 import { usePreferences } from '@/stores/preferences'
 import { useTakeover } from '@/stores/takeover'
 import LaunchSplash, { splashMarkWidth } from '@/app/launch/LaunchSplash'
@@ -52,8 +51,7 @@ interface Props {
  * The update reveal: on the first launch after a big update, the splash
  * collapses into the app tile, its ring closes like an install finishing and
  * the new features burst out around it. "See what's new" opens a short tour — a
- * page per feature, mostly picture — that ends on sharing the app with
- * friends.
+ * page per feature, mostly picture — that ends on taking the user home.
  *
  * Mounted by `HomeTabStack` above the tabs, in the very first frame of a
  * launch, so it picks up exactly where the native splash leaves off.
@@ -275,11 +273,7 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
               lastPage.current = id
             }}
             finish={{
-              label: i18n.t('updateReveal_shareLink'),
-              onPress: () => shareApp('update_reveal'),
-            }}
-            finishLink={{
-              label: i18n.t('done'),
+              label: i18n.t('updateReveal_takeMeHome'),
               onPress: () => finish('done'),
             }}
             exit={{ onPress: () => finish('close') }}

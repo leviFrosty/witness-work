@@ -695,6 +695,7 @@
   "updateReveal_trayBody": "새로운 기능을 간단히 둘러보세요.",
   "updateReveal_next": "다음",
   "updateReveal_shareLink": "링크 공유",
+  "updateReveal_takeMeHome": "홈으로 이동",
   "updateReveal_pageOf": "{{page}}/{{count}} 페이지",
   "updateReveal_tourCard": "둘러보기",
   "updateReveal_navigation_title": "더 간단해진 내비게이션",

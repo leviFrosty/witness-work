@@ -695,6 +695,7 @@
   "updateReveal_trayBody": "Faites un tour rapide des nouveautés.",
   "updateReveal_next": "Suivant",
   "updateReveal_shareLink": "Partager le lien",
+  "updateReveal_takeMeHome": "Aller à l'accueil",
   "updateReveal_pageOf": "Page {{page}} sur {{count}}",
   "updateReveal_tourCard": "Faire la visite",
   "updateReveal_navigation_title": "Une navigation plus simple",

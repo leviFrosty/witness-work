@@ -695,6 +695,7 @@
   "updateReveal_trayBody": "Machen Sie eine kurze Tour durch die Neuerungen.",
   "updateReveal_next": "Weiter",
   "updateReveal_shareLink": "Link teilen",
+  "updateReveal_takeMeHome": "Zur Startseite",
   "updateReveal_pageOf": "Seite {{page}} von {{count}}",
   "updateReveal_tourCard": "Tour starten",
   "updateReveal_navigation_title": "Einfachere Navigation",

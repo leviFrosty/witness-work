@@ -695,6 +695,7 @@
   "updateReveal_trayBody": "快速瀏覽新功能。",
   "updateReveal_next": "下一步",
   "updateReveal_shareLink": "分享連結",
+  "updateReveal_takeMeHome": "返回主頁",
   "updateReveal_pageOf": "第 {{page}} 頁，共 {{count}} 頁",
   "updateReveal_tourCard": "開始導覽",
   "updateReveal_navigation_title": "更簡單的導覽",

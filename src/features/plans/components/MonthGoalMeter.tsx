@@ -11,6 +11,8 @@ import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation
 import i18n from '@/lib/locales'
 import { formatMinutesCompact, useFormattedMinutes } from '@/lib/minutes'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
+import { plannedMinutesThroughDayForMonth } from '@/lib/recurrence'
+import useServiceReport from '@/stores/serviceReport'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import StripedFill from '@/components/ui/StripedFill'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
@@ -23,8 +25,8 @@ type Props = CalendarMonth & {
 
 /**
  * The focused month's goal at a glance above the Schedule's calendar: logged
- * time and Plans against the Monthly Goal, and whether logged time keeps up
- * with the Plans so far, which the day colors show too.
+ * time and the month's Plans against the Monthly Goal, and whether logged time
+ * keeps up with the Plans so far, which the day colors show too.
  */
 export default function MonthGoalMeter({
   year,
@@ -67,8 +69,21 @@ export default function MonthGoalMeter({
   const name = moment({ year, month, day: 1 }).format(
     year === today.getFullYear() ? 'MMMM' : 'MMM YYYY'
   )
-  const total = formatMinutesCompact(projection.projectedMinutes) || '0'
-  // A past month has no Plans left, so its total is all logged time.
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  // Unlike the Projected Total elsewhere, Schedule shows every Plan in the
+  // month, including days already past.
+  const monthPlannedMinutes = plannedMinutesThroughDayForMonth(
+    month,
+    year,
+    moment({ year, month, day: 1 }).daysInMonth(),
+    dayPlans,
+    recurringPlans
+  )
+  // A past month shows what was logged instead.
+  const totalMinutes =
+    tense === 'past' ? projection.loggedMinutes : monthPlannedMinutes
+  const total = formatMinutesCompact(totalMinutes) || '0'
   const amount = hasGoal
     ? i18n.t(
         tense === 'past'
@@ -158,7 +173,9 @@ export default function MonthGoalMeter({
           goalMinutes={goalMinutes}
           loggedMinutes={projection.loggedMinutes}
           plannedMinutes={
-            projection.projectedMinutes - projection.loggedMinutes
+            tense === 'past'
+              ? 0
+              : monthPlannedMinutes - projection.loggedMinutes
           }
           height={6}
         />

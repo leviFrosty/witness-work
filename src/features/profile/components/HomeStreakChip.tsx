@@ -25,6 +25,7 @@ import i18n from '@/lib/locales'
 import { shownStreak, streakEndsSoon } from '@/lib/serviceStreak'
 import { logPlannedDayParams } from '@/lib/unloggedDayReminders'
 import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 
@@ -55,6 +56,7 @@ export default function HomeStreakChip() {
   const streak = useServiceStreak()
   const { now } = useNow()
   const grewAt = useStreakCelebration((state) => state.grewAt)
+  const showStreaks = usePreferences((state) => state.showStreaks)
   const flare = useSharedValue(1)
   const mountedAt = useRef(Date.now())
 
@@ -71,7 +73,7 @@ export default function HomeStreakChip() {
   }))
 
   const count = shownStreak(streak)
-  if (count === 0) return null
+  if (!showStreaks || count === 0) return null
   const ending = streakEndsSoon(streak, new Date(now)) ? streak.due : null
   const endsIn = ending ? timeLeft(ending.endsAt, now) : undefined
   const period = ending ? moment(ending.period, 'YYYY-MM-DD') : null

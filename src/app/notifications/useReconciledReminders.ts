@@ -18,6 +18,7 @@ import { reminderContent } from '@/lib/reminderContent'
 import { reminderData } from '@/lib/notificationData'
 import { unloggedDay, unloggedDaySources } from '@/lib/unloggedDayReminders'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
+import { streakRemindersOn } from '@/lib/serviceStreak'
 import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { contentHash } from '@/lib/contentHash'
@@ -47,7 +48,7 @@ async function retractErasedReminders() {
   const plans = new Set(records.dayPlans.map((p) => p.id))
   const prefs = usePreferences.getState()
   const unloggedDays = unloggedDaySources(records, prefs)
-  const streakDue = prefs.streakReminders
+  const streakDue = streakRemindersOn(prefs)
     ? currentServiceStreak().due?.period
     : undefined
   for (const notification of presented) {
@@ -200,7 +201,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
             visits: useConversations.getState().conversations,
             plans: records.dayPlans,
             unloggedDays: unloggedDaySources(records, prefs),
-            streak: prefs.streakReminders ? currentServiceStreak() : undefined,
+            streak: streakRemindersOn(prefs)
+              ? currentServiceStreak()
+              : undefined,
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -376,7 +379,8 @@ export function useReconciledReminders(ready: boolean | undefined) {
     const preferences = usePreferences.subscribe((state, previous) => {
       if (
         state.unloggedDayReminders !== previous.unloggedDayReminders ||
-        state.streakReminders !== previous.streakReminders
+        state.streakReminders !== previous.streakReminders ||
+        state.showStreaks !== previous.showStreaks
       )
         retract()
       if (
@@ -388,6 +392,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.unloggedDayRemindersEnabledAt !==
           previous.unloggedDayRemindersEnabledAt ||
         state.streakReminders !== previous.streakReminders ||
+        state.showStreaks !== previous.showStreaks ||
         state.role !== previous.role ||
         state.roleHistory !== previous.roleHistory ||
         state.logsHours !== previous.logsHours ||

@@ -7,6 +7,7 @@ import { isStreakMilestone, nextSeenStreak } from '@/lib/serviceStreak'
 import { actionBehind, celebrationClaim } from '@/lib/userAction'
 import StreakCelebrationOverlay from '@/features/profile/components/StreakCelebrationOverlay'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
+import { usePreferences } from '@/stores/preferences'
 
 /** Lets Add Time close before anything plays. */
 const AFTER_SAVE_MS = 900
@@ -23,11 +24,13 @@ const MAX_ON_SCREEN_MS = 15_000
  * the full celebration when the takeover arbiter gives it a turn (ADR 0021).
  * Any other growth, a milestone from elsewhere (Siri, the Watch, another
  * device), or one whose moment passed while it waited, flares the Home chip
- * instead. HomeTabStack mounts the single instance.
+ * instead. With streaks hidden, growth is only marked seen, so turning them
+ * back on doesn't celebrate the past. HomeTabStack mounts the single instance.
  */
 export default function StreakCelebration() {
   const { kind, count, latest } = useServiceStreak()
   const celebrating = useStreakCelebration((state) => state.celebrating)
+  const showStreaks = usePreferences((state) => state.showStreaks)
   const turn = useTakeoverTurn(
     'streak-celebration',
     celebrating !== null,
@@ -44,7 +47,7 @@ export default function StreakCelebration() {
   useEffect(() => {
     const { seen } = useStreakCelebration.getState()
     const next = nextSeenStreak(seen, { kind, count, latest }, new Date())
-    if (!next.grew) {
+    if (!next.grew || !usePreferences.getState().showStreaks) {
       if (next.seen !== seen) useStreakCelebration.setState({ seen: next.seen })
       return
     }
@@ -70,6 +73,10 @@ export default function StreakCelebration() {
     }, AFTER_SAVE_MS)
     return () => clearTimeout(timer)
   }, [kind, count, latest])
+
+  useEffect(() => {
+    if (!showStreaks) useStreakCelebration.setState({ celebrating: null })
+  }, [showStreaks])
 
   // Its moment passed while it waited (or another celebration of the same
   // action went first): the chip flares instead.

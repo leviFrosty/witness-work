@@ -26,7 +26,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  * How buddies see me: the Profile (edited on its own screen) and switches for
  * the parts I can withhold. Name and Plans are the point, so they always go.
  * The streak switch shows before there's a streak, so it can be off from the
- * start. Badges is offered only while badges are on at all.
+ * start. Streak and Badges are offered only while each shows at all.
  */
 export default function BuddiesSharingSection() {
   const theme = useTheme()
@@ -38,7 +38,17 @@ export default function BuddiesSharingSection() {
   const sharing = useBuddies((state) => state.sharing)
   const streak = shownStreak(useServiceStreak())
   const showBadges = usePreferences((state) => state.showBadges)
+  const showStreaks = usePreferences((state) => state.showStreaks)
   const hasPhoto = avatar.type !== 'none'
+  const last = showBadges
+    ? 'badges'
+    : showStreaks
+      ? 'streak'
+      : tenure
+        ? 'tenure'
+        : hasPhoto
+          ? 'photo'
+          : 'profile'
 
   // Saved at once; a failed republish is retried by the next sync.
   const share = (change: Partial<Omit<BuddySharing, 'updatedAt'>>) =>
@@ -49,7 +59,7 @@ export default function BuddiesSharingSection() {
   return (
     <BuddiesSection title={i18n.t('buddies_onboardingProfileTitle')}>
       <BuddyListRow
-        last={false}
+        last={last === 'profile'}
         leading={
           <Avatar
             avatar={avatar}
@@ -73,6 +83,7 @@ export default function BuddiesSharingSection() {
           label={i18n.t('buddies_sharePhoto')}
           value={sharing.photo}
           onValueChange={(photo) => share({ photo })}
+          lastInSection={last === 'photo'}
         />
       )}
       {tenure && (
@@ -81,19 +92,22 @@ export default function BuddiesSharingSection() {
           description={buddyTenureLabel(tenure)}
           value={sharing.tenure}
           onValueChange={(value) => share({ tenure: value })}
+          lastInSection={last === 'tenure'}
         />
       )}
-      <InputRowSwitch
-        label={i18n.t('buddies_shareStreak')}
-        description={
-          streak > 0
-            ? i18n.t('buddies_shareStreakCount', { count: streak })
-            : undefined
-        }
-        value={sharing.streak}
-        onValueChange={(value) => share({ streak: value })}
-        lastInSection={!showBadges}
-      />
+      {showStreaks && (
+        <InputRowSwitch
+          label={i18n.t('buddies_shareStreak')}
+          description={
+            streak > 0
+              ? i18n.t('buddies_shareStreakCount', { count: streak })
+              : undefined
+          }
+          value={sharing.streak}
+          onValueChange={(value) => share({ streak: value })}
+          lastInSection={last === 'streak'}
+        />
+      )}
       {showBadges && (
         <InputRowSwitch
           label={i18n.t('buddies_shareBadges')}

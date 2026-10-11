@@ -420,6 +420,12 @@ export const PREFERENCE_DEFAULTS = {
    * default; only a streak long enough to show has one.
    */
   streakReminders: true,
+  /**
+   * Whether the Service Streak shows anywhere — Home, profile, Buddy Cards (the
+   * User's and buddies'), celebrations, reminders. Off hides it and stops
+   * sharing it; the streak itself is derived, so nothing is lost. Syncable.
+   */
+  showStreaks: true,
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
   /**

@@ -51,13 +51,13 @@ import ScheduleIntroPage, {
 type CloseMethod = 'plan' | 'done' | 'close' | 'back'
 
 /**
- * The intro's pages. Streak pages read by what the role's streak counts; the
- * Buddies page shows only where Buddies does. Pages onboarding already showed
- * are left out.
+ * The intro's pages. Streak pages read by what the role's streak counts, and
+ * show only while streaks do; the Buddies page shows only where Buddies does.
+ * Pages onboarding already showed are left out.
  */
 function introPages(
   colors: ReturnType<typeof useTheme>['colors'],
-  kind: StreakKind,
+  kind: StreakKind | null,
   buddies: boolean,
   covered: readonly ScheduleIntroPageId[]
 ): ScheduleIntroPageSpec[] {
@@ -70,36 +70,43 @@ function introPages(
       title: i18n.t('scheduleIntro_plan_title'),
       caption: i18n.t('scheduleIntro_plan_caption'),
     },
-    {
-      id: 'streak',
-      icon: FlameIcon,
-      color: colors.orange,
-      title: i18n.t('scheduleIntro_streak_title'),
-      caption: i18n.t(
-        months
-          ? 'scheduleIntro_streak_captionMonths'
-          : 'scheduleIntro_streak_caption'
-      ),
-    },
-    {
-      id: 'grace',
-      icon: HourglassIcon,
-      color: colors.warn,
-      title: i18n.t('scheduleIntro_grace_title'),
-      caption: i18n.t(
-        months
-          ? 'scheduleIntro_grace_captionMonths'
-          : 'scheduleIntro_grace_caption'
-      ),
-    },
   ]
+  if (kind)
+    pages.push(
+      {
+        id: 'streak',
+        icon: FlameIcon,
+        color: colors.orange,
+        title: i18n.t('scheduleIntro_streak_title'),
+        caption: i18n.t(
+          months
+            ? 'scheduleIntro_streak_captionMonths'
+            : 'scheduleIntro_streak_caption'
+        ),
+      },
+      {
+        id: 'grace',
+        icon: HourglassIcon,
+        color: colors.warn,
+        title: i18n.t('scheduleIntro_grace_title'),
+        caption: i18n.t(
+          months
+            ? 'scheduleIntro_grace_captionMonths'
+            : 'scheduleIntro_grace_caption'
+        ),
+      }
+    )
   if (buddies)
     pages.push({
       id: 'together',
       icon: UsersIcon,
       color: colors.info,
       title: i18n.t('scheduleIntro_together_title'),
-      caption: i18n.t('scheduleIntro_together_caption'),
+      caption: i18n.t(
+        kind
+          ? 'scheduleIntro_together_caption'
+          : 'scheduleIntro_together_captionNoStreak'
+      ),
     })
   return pages.filter((page) => !covered.includes(page.id))
 }
@@ -127,10 +134,11 @@ export default function ScheduleIntroOverlay({
   const set = usePreferences((state) => state.set)
   // Fixed as it opens: Buddies' flag loads over the network, and a page
   // appearing mid-tour would shift the ones being swiped.
+  const showStreaks = usePreferences((state) => state.showStreaks)
   const [pages] = useState(() =>
     introPages(
       theme.colors,
-      streakKind,
+      showStreaks ? streakKind : null,
       buddies,
       usePreferences.getState().scheduleIntroCoveredPages
     )

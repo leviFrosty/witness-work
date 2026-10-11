@@ -73,6 +73,7 @@ export type RootStackParamList = {
   PreferencesConversation: undefined
   PreferencesCalendar: undefined
   PreferencesPlans: undefined
+  PreferencesStreaksAndBadges: undefined
   PreferencesNavigation: undefined
   PreferencesAudioAndHaptics: undefined
   PreferencesTabOrder: undefined

@@ -206,6 +206,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'streaks', category: 'streaks' },
   { id: 'streakEnds', category: 'streaks' },
   { id: 'streakBuddies', category: 'streaks' },
+  { id: 'streaksHide', category: 'streaks' },
   { id: 'routePlanning', category: 'plans' },
   { id: 'routePlanningNavigation', category: 'plans' },
   { id: 'routePlanningPrivacy', category: 'plans' },

@@ -87,6 +87,13 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('plans'),
   },
   {
+    name: 'PreferencesStreaksAndBadges',
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesStreaksAndBadgesScreen')
+        .default,
+    title: () => i18n.t('streaksAndBadges'),
+  },
+  {
     name: 'PreferencesCustomFields',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen')

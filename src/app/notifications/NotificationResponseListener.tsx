@@ -26,6 +26,7 @@ import {
 import { reminderOccurrences } from '@/lib/reminderSchedule'
 import { unloggedDaySources } from '@/lib/unloggedDayReminders'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
+import { streakRemindersOn } from '@/lib/serviceStreak'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import {
@@ -118,7 +119,7 @@ function markReminderSeen(target: ReminderData) {
     visits: useConversations.getState().conversations,
     plans: records.dayPlans,
     unloggedDays: unloggedDaySources(records, prefs),
-    streak: prefs.streakReminders ? currentServiceStreak() : undefined,
+    streak: streakRemindersOn(prefs) ? currentServiceStreak() : undefined,
     visitOffset: {
       ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
       ...prefs.returnVisitNotificationOffset,

@@ -21,6 +21,7 @@ import {
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
+import { usePreferences } from '@/stores/preferences'
 
 /**
  * An active buddy opens their detail screen; long-press for its calendar toggle
@@ -37,7 +38,8 @@ export default function BuddyRow({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const awaiting = buddy.status === 'awaitingConfirm'
-  const streak = buddyStreakCount(buddy.streak)
+  const showStreaks = usePreferences((state) => state.showStreaks)
+  const streak = showStreaks ? buddyStreakCount(buddy.streak) : 0
   const open = () => navigation.navigate('Buddy', { inboxId: buddy.inboxId })
 
   const withdraw: ContextMenuEntries = [

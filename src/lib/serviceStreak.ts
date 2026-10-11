@@ -194,6 +194,12 @@ export function serviceStreak(
 export const shownStreak = (streak: ServiceStreak): number =>
   streak.count >= STREAK_MIN ? streak.count : 0
 
+/** Streak Reminders go out only while the streak shows at all. */
+export const streakRemindersOn = (prefs: {
+  streakReminders: boolean
+  showStreaks: boolean
+}): boolean => prefs.streakReminders && prefs.showStreaks
+
 /**
  * Whether a shown streak ends soon without more service: within a day for Plans
  * (yesterday's still needs time), a week for months.

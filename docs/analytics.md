@@ -734,7 +734,7 @@ clears them. The User's platform is the event's `$os`.
 
 ### Buddies Alpha feedback
 
-The Buddies screen's Alpha badge, its feedback card, and Buddies Settings open the
+The Buddies screen's Alpha badge, its More menu, and Buddies Settings open the
 Buddies Feedback screen, which explains Alpha and then opens the API survey
 [WitnessWork Buddies feedback (Alpha)](https://us.posthog.com/project/492895/surveys/01a0f037-23cd-0000-e818-63a4821064d8)
 (`schedule: always`, so testers can send feedback repeatedly). Its ID lives in

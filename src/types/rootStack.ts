@@ -167,7 +167,7 @@ export type RootStackParamList = {
   /** What buddies see, Buddies notifications, and delete-all. */
   'Buddies Settings': undefined
   /** Alpha explainer, opt-in diagnostics, and the Buddies feedback survey. */
-  'Buddies Feedback': { source: 'badge' | 'card' | 'settings' } | undefined
+  'Buddies Feedback': { source: 'badge' | 'menu' | 'settings' } | undefined
   /** Mileage trip history and report. */
   Mileage: undefined
   /** Log or edit a trip. `duplicateOf` seeds a new trip dated today. */

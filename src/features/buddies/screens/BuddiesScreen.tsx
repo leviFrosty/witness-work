@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from 'react'
+import { ReactNode, useCallback, useLayoutEffect, useState } from 'react'
 import {
   ActivityIndicator,
   RefreshControl,
@@ -7,16 +7,21 @@ import {
 } from 'react-native'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ellipsis as EllipsisIcon, Plus as PlusIcon } from 'lucide-react-native'
+import {
+  Ellipsis as EllipsisIcon,
+  Plus as PlusIcon,
+  QrCode as QrCodeIcon,
+} from 'lucide-react-native'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { RootStackNavigation } from '@/types/rootStack'
 import BuddiesAlphaBadge from '@/features/buddies/components/BuddiesAlphaBadge'
-import BuddiesFeedbackCard from '@/features/buddies/components/BuddiesFeedbackCard'
 import BuddiesList from '@/features/buddies/components/BuddiesList'
 import BuddiesNotificationsCard from '@/features/buddies/components/BuddiesNotificationsCard'
 import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
@@ -33,7 +38,8 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Buddies, opened from Schedule's header: first-visit onboarding, then the
- * buddies list. The stack header carries the title and Back.
+ * buddies list. The stack header carries the title, Back, and, once onboarded,
+ * the buddies code.
  */
 export default function BuddiesScreen({
   profileEditor,
@@ -66,6 +72,36 @@ export default function BuddiesScreen({
       setRefreshing(false)
     }
   }
+
+  useLayoutEffect(() => {
+    const label = i18n.t('buddies_showCode')
+    navigation.setOptions({
+      header: () => (
+        <Header
+          buttonType='back'
+          title={i18n.t('buddies_title')}
+          rightElement={
+            !needsOnboarding && (
+              <View style={{ position: 'absolute', right: 0 }}>
+                <PointerTooltip label={label} effect='none'>
+                  <IconButton
+                    icon={QrCodeIcon}
+                    size='xl'
+                    color={theme.colors.text}
+                    hitSlop={16}
+                    accessibilityLabel={label}
+                    onPress={() =>
+                      navigation.navigate('Buddy Code', { mode: 'code' })
+                    }
+                  />
+                </PointerTooltip>
+              </View>
+            )
+          }
+        />
+      ),
+    })
+  }, [navigation, needsOnboarding, theme.colors.text])
 
   useFocusEffect(
     useCallback(() => {
@@ -132,21 +168,14 @@ export default function BuddiesScreen({
               actions={[
                 [
                   {
-                    id: 'show_code',
-                    title: i18n.t('buddies_showCode'),
-                    systemImage: 'qrcode',
+                    id: 'feedback',
+                    title: i18n.t('buddies_sendFeedback'),
+                    systemImage: 'bubble.left.and.bubble.right',
                     onPress: () =>
-                      navigation.navigate('Buddy Code', { mode: 'code' }),
+                      navigation.navigate('Buddies Feedback', {
+                        source: 'menu',
+                      }),
                   },
-                  {
-                    id: 'scan_code',
-                    title: i18n.t('buddies_scanCode'),
-                    systemImage: 'qrcode.viewfinder',
-                    onPress: () =>
-                      navigation.navigate('Buddy Code', { mode: 'scan' }),
-                  },
-                ],
-                [
                   {
                     id: 'settings',
                     title: i18n.t('buddies_settingsTitle'),
@@ -195,7 +224,6 @@ export default function BuddiesScreen({
           loading={syncStatus.firstLoad}
         />
         {hasInbox && <BuddiesNotificationsCard />}
-        <BuddiesFeedbackCard />
       </ScrollView>
     </View>
   )

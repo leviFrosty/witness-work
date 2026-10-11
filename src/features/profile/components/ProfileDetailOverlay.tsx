@@ -53,6 +53,8 @@ import { useFormattedMinutes } from '@/lib/minutes'
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
 /** Fading away for a badge view, which grows out of the tapped medallion. */
 const VANISH_MS = 160
+/** Fading back in as the badge view fades out, to keep browsing badges. */
+const RETURN_MS = 220
 const SHEET_RADIUS = 15
 const EXPANDED_MARGIN = 12
 
@@ -109,7 +111,14 @@ const Stat = ({
  * account menu; HomeTabStack mounts the single instance.
  */
 const ProfileDetailOverlay = () => {
-  const { origin, open, close: onClose } = useProfileOverlay()
+  const {
+    origin,
+    open,
+    away,
+    close: onClose,
+    stepAway,
+    hide,
+  } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -151,19 +160,24 @@ const ProfileDetailOverlay = () => {
   const targetH = winH - insets.top - insets.bottom - EXPANDED_MARGIN * 2
 
   useEffect(() => {
-    if (!origin) return
+    // Away, it stays full size and unseen until the badge view closes.
+    if (!origin || away) return
+    if (open && vanish.value < 1)
+      vanish.value = withTiming(1, { duration: RETURN_MS })
     progress.value = withSpring(open ? 1 : 0, SPRING, (finished) => {
-      // Visible again for the next open once a badge's fade-out is done. Not
-      // on open: Android's Modal remounts the content and misses that write.
+      // Visible again for the next open if it closed while faded out. Not on
+      // open: Android's Modal remounts the content and misses that write.
       if (finished && !open) vanish.value = 1
     })
-  }, [open, origin, progress, vanish])
+  }, [open, away, origin, progress, vanish])
 
-  // Leaves the medallion's spot to the badge view instead of shrinking past it.
-  const closeForBadge = () => {
-    vanish.value = withTiming(0, { duration: VANISH_MS }, () =>
-      scheduleOnRN(onClose)
-    )
+  // Leaves the medallion's spot to the badge view instead of shrinking past it,
+  // and comes back when that closes.
+  const stepAwayForBadge = () => {
+    stepAway()
+    vanish.value = withTiming(0, { duration: VANISH_MS }, (finished) => {
+      if (finished) scheduleOnRN(hide)
+    })
   }
 
   const containerStyle = useAnimatedStyle(() => {
@@ -203,7 +217,7 @@ const ProfileDetailOverlay = () => {
       {open && <StatusBar barStyle='light-content' animated />}
       <Animated.View
         style={[{ flex: 1 }, vanishStyle]}
-        pointerEvents={open ? 'auto' : 'none'}
+        pointerEvents={open && !away ? 'auto' : 'none'}
         accessibilityElementsHidden={!open}
         importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
       >
@@ -285,7 +299,7 @@ const ProfileDetailOverlay = () => {
               <ProfileCard readOnly hideBadges />
               <ProfileBadgesSection
                 onBeforeNavigate={onClose}
-                onBeforeOpenBadge={closeForBadge}
+                onBeforeOpenBadge={stepAwayForBadge}
               />
 
               <View style={{ flexDirection: 'row', gap: 10 }}>

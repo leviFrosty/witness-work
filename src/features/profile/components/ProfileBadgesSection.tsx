@@ -38,7 +38,10 @@ export default function ProfileBadgesSection({
 }: {
   /** Closes the overlay first so the destination isn't covered. */
   onBeforeNavigate: () => void
-  /** Fades the overlay away so the medallion seems to lift out of it. */
+  /**
+   * Fades the overlay away so the medallion seems to lift out of it, until the
+   * badge view closes.
+   */
   onBeforeOpenBadge: () => void
 }) {
   const theme = useTheme()
@@ -64,7 +67,7 @@ export default function ProfileBadgesSection({
     navigation.navigate('BadgeView', {
       badgeKey: badgeKey(art, level),
       owner: 'me',
-      // The overlay is gone by the time the view closes.
+      // The overlay fades back in over it as the view closes.
       origin: origin && { ...origin, returns: false },
     })
   }

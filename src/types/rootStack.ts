@@ -208,8 +208,8 @@ export type BadgeViewOrigin = {
   y: number
   size: number
   /**
-   * False when the coin is gone by the time the view closes (the profile
-   * overlay closes behind it), so the view fades instead of flying back.
+   * False when the coin can't be flown back to (the profile overlay fades back
+   * in over it), so the view fades instead.
    */
   returns?: boolean
 }

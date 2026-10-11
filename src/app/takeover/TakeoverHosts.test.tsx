@@ -200,7 +200,7 @@ beforeEach(() => {
   useStreakCelebration.setState({ seen: null, celebrating: null, grewAt: 0 })
   useScheduleIntro.setState({ source: null })
   useUpdateRevealStore.setState({ source: null })
-  useProfileOverlay.setState({ open: false, origin: null })
+  useProfileOverlay.setState({ open: false, away: false, origin: null })
   usePreferences.setState({
     badgesWelcome: null,
     showBadges: true,

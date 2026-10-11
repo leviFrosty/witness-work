@@ -8,6 +8,7 @@ import useMileage from '@/stores/mileage'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
+import { useProfileOverlay } from '@/stores/profileOverlay'
 import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -281,6 +282,8 @@ export function installDevHarness() {
       calendarPublishing: useCalendarPublishing,
       badgeSession: useBadgeSession,
       takeover: useTakeover,
+      // `open`, and `away` while a badge view opened from it is up.
+      profileOverlay: useProfileOverlay,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

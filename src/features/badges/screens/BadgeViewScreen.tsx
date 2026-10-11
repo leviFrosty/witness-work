@@ -42,6 +42,7 @@ import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { useBadgeSession } from '@/stores/badgeSession'
 import { usePreferences } from '@/stores/preferences'
+import { useProfileOverlay } from '@/stores/profileOverlay'
 import { BADGE_LEVELS, type BadgeArtId, type BadgeLevel } from '@/types/badges'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
@@ -214,6 +215,8 @@ function BadgeViewContent({
   const close = (then?: () => void) => {
     if (closing.current) return
     closing.current = true
+    // Opened from the profile overlay, which fades back in to keep browsing.
+    useProfileOverlay.getState().comeBack()
     const finish = () => {
       allowRemove.current = true
       if (then) then()

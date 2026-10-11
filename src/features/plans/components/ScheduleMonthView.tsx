@@ -14,6 +14,7 @@ import type { CalendarMonth } from '@/lib/monthlyGoals'
 import useServiceReport from '@/stores/serviceReport'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import MonthGoalMeter from '@/features/plans/components/MonthGoalMeter'
+import MonthOverviewPopover from '@/features/plans/components/MonthOverviewPopover'
 import ScheduleMonthHeader from '@/features/plans/components/ScheduleMonthHeader'
 import ScheduleWeekRow from '@/features/plans/components/ScheduleWeekRow'
 import ServiceYearDivider from '@/features/plans/components/ServiceYearDivider'
@@ -48,7 +49,6 @@ type Props = {
   onListLayout: (frame: LayoutRectangle) => void
   onPressDay: (date: Date) => void
   onPressServiceYear: (serviceYear: number) => void
-  onPressMeter: (month: CalendarMonth) => void
   editableGoal: (month: CalendarMonth) => boolean
   onEditGoal: (month: CalendarMonth) => void
   onStartReached: () => void
@@ -76,7 +76,6 @@ export default function ScheduleMonthView({
   onListLayout,
   onPressDay,
   onPressServiceYear,
-  onPressMeter,
   editableGoal,
   onEditGoal,
   onStartReached,
@@ -98,14 +97,32 @@ export default function ScheduleMonthView({
           chromeStyle,
         ]}
       >
-        <MonthGoalMeter
-          {...focusedMonth}
-          onPress={() => onPressMeter(focusedMonth)}
+        <MonthOverviewPopover
+          month={focusedMonth}
           onEditGoal={
             editableGoal(focusedMonth)
               ? () => onEditGoal(focusedMonth)
               : undefined
           }
+          renderTrigger={({ onPress, anchorRef }) => (
+            // A row, so the meter's `flex: 1` widens it instead of
+            // collapsing its height.
+            <View
+              ref={anchorRef}
+              collapsable={false}
+              style={{ flex: 1, flexDirection: 'row' }}
+            >
+              <MonthGoalMeter
+                {...focusedMonth}
+                onPress={onPress}
+                onEditGoal={
+                  editableGoal(focusedMonth)
+                    ? () => onEditGoal(focusedMonth)
+                    : undefined
+                }
+              />
+            </View>
+          )}
         />
       </Animated.View>
       <Animated.View

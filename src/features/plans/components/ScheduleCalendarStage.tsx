@@ -20,7 +20,6 @@ type Props = {
   /** Room under the content for the floating tab bar. */
   bottomInset: number
   onPressDay: (date: Date) => void
-  onOpenOverview: (month: CalendarMonth) => void
   editableGoal: (month: CalendarMonth) => boolean
   onEditGoal: (month: CalendarMonth) => void
 }
@@ -37,7 +36,6 @@ export default function ScheduleCalendarStage({
   selectedKey,
   bottomInset,
   onPressDay,
-  onOpenOverview,
   editableGoal,
   onEditGoal,
 }: Props) {
@@ -120,7 +118,6 @@ export default function ScheduleCalendarStage({
             onPressServiceYear={(serviceYear) =>
               zoomOut('divider', serviceYear)
             }
-            onPressMeter={onOpenOverview}
             editableGoal={editableGoal}
             onEditGoal={onEditGoal}
             onStartReached={onStartReached}

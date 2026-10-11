@@ -34,7 +34,6 @@ import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMa
 import useSyncBuddiesOnFocus from '@/features/buddies/hooks/useSyncBuddiesOnFocus'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MonthGoalEditor from '@/features/plans/components/MonthGoalEditor'
-import MonthOverviewSheet from '@/features/plans/components/MonthOverviewSheet'
 import ScheduleCalendarStage from '@/features/plans/components/ScheduleCalendarStage'
 import ScheduleDayInspector from '@/features/plans/components/ScheduleDayInspector'
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
@@ -85,8 +84,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })
-  const [overviewMonth, setOverviewMonth] = useState<CalendarMonth | null>(null)
-  const [overviewOpen, setOverviewOpen] = useState(false)
 
   // A wide window shows the day in the inspector; a sheet left open would pop
   // back up once the window narrows again.
@@ -118,7 +115,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         setSelectedDateSheet((current) =>
           current.open ? { ...current, open: false } : current
         )
-        setOverviewOpen(false)
         setGoalOpen(false)
       }),
     [navigation]
@@ -126,14 +122,13 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   // Android's back button closes an open sheet rather than leaving the tab
   // with it.
-  const sheetOpen = selectedDateSheet.open || overviewOpen || goalOpen
+  const sheetOpen = selectedDateSheet.open || goalOpen
   useEffect(() => {
     if (Platform.OS !== 'android' || !sheetOpen) return
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
         setSelectedDateSheet((current) => ({ ...current, open: false }))
-        setOverviewOpen(false)
         setGoalOpen(false)
         return true
       }
@@ -204,10 +199,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       }
       bottomInset={bottomInset}
       onPressDay={(date) => setSelectedDateSheet({ open: !isWide, date })}
-      onOpenOverview={(month) => {
-        setOverviewMonth(month)
-        setOverviewOpen(true)
-      }}
       editableGoal={editableGoal}
       onEditGoal={openGoalEditor}
     />
@@ -293,18 +284,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
           renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
         />
       )}
-      {overviewMonth ? (
-        <MonthOverviewSheet
-          month={overviewMonth}
-          open={overviewOpen}
-          onOpenChange={setOverviewOpen}
-          onEditGoal={
-            editableGoal(overviewMonth)
-              ? () => openGoalEditor(overviewMonth)
-              : undefined
-          }
-        />
-      ) : null}
       {goalMonth ? (
         <MonthGoalEditor
           target={goalMonth}

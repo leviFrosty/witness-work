@@ -697,6 +697,7 @@
   "updateReveal_trayBody": "Короткий обзор новинок.",
   "updateReveal_next": "Далее",
   "updateReveal_shareLink": "Поделиться ссылкой",
+  "updateReveal_takeMeHome": "На главную",
   "updateReveal_pageOf": "Страница {{page}} из {{count}}",
   "updateReveal_tourCard": "Пройти обзор",
   "updateReveal_navigation_title": "Проще навигация",

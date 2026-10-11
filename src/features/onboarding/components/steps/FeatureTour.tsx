@@ -10,6 +10,8 @@ import Animated, {
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
@@ -17,6 +19,12 @@ import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
+
+/** Tour pages that show what a Schedule intro page would, so it can skip them. */
+const SCHEDULE_INTRO_PAGES: Partial<Record<string, ScheduleIntroPageId>> = {
+  plan: 'plan',
+  buddies: 'together',
+}
 
 /** How the tour was left. Bounded, safe as an analytics value. */
 type CloseMethod = 'finished' | 'skipped' | 'back'
@@ -38,6 +46,9 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const palette = getWelcomePalette(theme)
   const reduceMotion = useReducedMotion()
   const isFocused = useIsFocused()
+  const markScheduleIntroCovered = usePreferences(
+    (state) => state.markScheduleIntroCovered
+  )
   const { time, tilt } = useWelcomeMotion(isFocused && !reduceMotion)
   const [size, setSize] = useState<{ width: number; height: number } | null>(
     null
@@ -120,6 +131,8 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
             setHeldPages(pages)
           viewed.current.add(id)
           lastPage.current = id
+          const introPage = SCHEDULE_INTRO_PAGES[id]
+          if (introPage) markScheduleIntroCovered(introPage)
         }}
         finish={{ label: i18n.t('continue'), onPress: () => close('finished') }}
         exit={{ label: i18n.t('skip'), onPress: () => close('skipped') }}

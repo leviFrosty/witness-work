@@ -29,6 +29,7 @@ import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
+import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 
 interface Props {
@@ -120,6 +121,15 @@ const Buddies = ({ goBack, goNext }: Props) => {
       mounted.current = false
     }
   }, [])
+
+  // Schedule's intro won't introduce Buddies again.
+  const markScheduleIntroCovered = usePreferences(
+    (state) => state.markScheduleIntroCovered
+  )
+  useEffect(
+    () => markScheduleIntroCovered('together'),
+    [markScheduleIntroCovered]
+  )
 
   const invite = async () => {
     if (!useProfile.getState().name.trim()) {

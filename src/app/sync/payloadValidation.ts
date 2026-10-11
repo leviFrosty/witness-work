@@ -375,6 +375,7 @@ const preferenceShapes = z
     customAccentColor: z.string().nullable().optional(),
     customAvatarBackground: z.string().nullable().optional(),
     seenTipIds: z.array(z.string()).optional(),
+    scheduleIntroCoveredPages: z.array(z.string()).optional(),
     submittedReportMonths: z.array(z.string()).optional(),
     earnedBadges: z
       .record(

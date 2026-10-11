@@ -11,6 +11,7 @@ import Animated, {
 import Text from '@/components/ui/MyText'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
+import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 import {
   DISPLAY_FONT_SCALE_CAP,
   EASE_OUT,
@@ -24,9 +25,6 @@ import PlanVisual from '@/features/plans/components/schedule-intro/PlanVisual'
 import StreakVisual from '@/features/plans/components/schedule-intro/StreakVisual'
 import GraceVisual from '@/features/plans/components/schedule-intro/GraceVisual'
 import TogetherVisual from '@/features/plans/components/schedule-intro/TogetherVisual'
-
-/** One page of the intro. Its id is also its analytics value. */
-export type ScheduleIntroPageId = 'plan' | 'streak' | 'grace' | 'together'
 
 export type ScheduleIntroPageSpec = {
   id: ScheduleIntroPageId

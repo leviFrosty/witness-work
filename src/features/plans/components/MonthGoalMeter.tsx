@@ -12,6 +12,7 @@ import i18n from '@/lib/locales'
 import { formatMinutesCompact, useFormattedMinutes } from '@/lib/minutes'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
+import StripedFill from '@/components/ui/StripedFill'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
 
 type Props = CalendarMonth & {
@@ -22,8 +23,8 @@ type Props = CalendarMonth & {
 
 /**
  * The focused month's goal at a glance above the Schedule's calendar: logged
- * and planned time against the Monthly Goal, what's left to plan, and whether
- * logged time keeps up with the Plans so far, which the day colors show too.
+ * time and Plans against the Monthly Goal, and whether logged time keeps up
+ * with the Plans so far, which the day colors show too.
  */
 export default function MonthGoalMeter({
   year,
@@ -40,13 +41,10 @@ export default function MonthGoalMeter({
   )
   const tense = getPeriodTense({ kind: 'month', month, year }, today)
   const hasGoal = goalMinutes > 0
-  const left = useFormattedMinutes(
-    tense === 'past'
-      ? Math.max(0, goalMinutes - projection.loggedMinutes)
-      : projection.standardGapMinutes
-  )
-  const planned = useFormattedMinutes(projection.plannedMinutes)
   const logged = useFormattedMinutes(projection.loggedMinutes)
+  const loggedLabel = i18n.t('scheduleCalendar.logged', {
+    value: logged.formatted,
+  })
   const schedule = useScheduleStatus({ month, year })
   const { color: paceColor, icon: paceIcon } =
     useScheduleStatusPresentation(schedule)
@@ -70,25 +68,20 @@ export default function MonthGoalMeter({
     year === today.getFullYear() ? 'MMMM' : 'MMM YYYY'
   )
   const total = formatMinutesCompact(projection.projectedMinutes) || '0'
+  // A past month has no Plans left, so its total is all logged time.
   const amount = hasGoal
-    ? i18n.t('scheduleCalendar.ofGoal', {
-        value: total,
-        goal: formatMinutesCompact(goalMinutes),
-      })
-    : total
-
-  const met = hasGoal && left.decimalHours === 0
-  const status = !hasGoal
-    ? tense === 'past'
-      ? i18n.t('scheduleCalendar.logged', { value: logged.formatted })
-      : i18n.t('scheduleCalendar.planned', { value: planned.formatted })
-    : tense === 'past'
-      ? met
-        ? i18n.t('scheduleCalendar.goalMet')
-        : i18n.t('scheduleCalendar.short', { value: left.formatted })
-      : met
-        ? i18n.t('scheduleCalendar.goalCovered')
-        : i18n.t('scheduleCalendar.leftToPlan', { value: left.formatted })
+    ? i18n.t(
+        tense === 'past'
+          ? 'scheduleCalendar.ofGoalLogged'
+          : 'scheduleCalendar.ofGoalPlanned',
+        { value: total, goal: formatMinutesCompact(goalMinutes) }
+      )
+    : i18n.t(
+        tense === 'past'
+          ? 'scheduleCalendar.logged'
+          : 'scheduleCalendar.planned',
+        { value: total }
+      )
 
   return (
     <ContextMenu
@@ -101,7 +94,7 @@ export default function MonthGoalMeter({
         },
       ]}
       onPress={onPress}
-      accessibilityLabel={[name, amount, status, pace]
+      accessibilityLabel={[name, amount, loggedLabel, pace]
         .filter(Boolean)
         .join('. ')}
       hoverRadius={theme.numbers.borderRadiusLg}
@@ -139,16 +132,27 @@ export default function MonthGoalMeter({
           >
             {name}
           </Text>
-          <Text
-            numberOfLines={1}
+          <View
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              flexShrink: 1,
             }}
           >
-            {amount}
-          </Text>
+            <Swatch striped={tense !== 'past'} />
+            <Text
+              numberOfLines={1}
+              style={{
+                flexShrink: 1,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {amount}
+            </Text>
+          </View>
         </View>
         <GoalSplitBar
           goalMinutes={goalMinutes}
@@ -166,17 +170,27 @@ export default function MonthGoalMeter({
             gap: 10,
           }}
         >
-          <Text
-            numberOfLines={1}
+          <View
             style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
               flexShrink: 1,
-              fontSize: theme.fontSize('xs'),
-              fontFamily: theme.fonts.semiBold,
-              color: met ? theme.colors.accent : theme.colors.textAlt,
             }}
           >
-            {status}
-          </Text>
+            <Swatch />
+            <Text
+              numberOfLines={1}
+              style={{
+                flexShrink: 1,
+                fontSize: theme.fontSize('xs'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {loggedLabel}
+            </Text>
+          </View>
           {pace && (
             <View
               style={{
@@ -203,5 +217,27 @@ export default function MonthGoalMeter({
         </View>
       </View>
     </ContextMenu>
+  )
+}
+
+/** Keys a label to the bar: solid for logged time, striped for planned. */
+function Swatch({ striped = false }: { striped?: boolean }) {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        width: 12,
+        height: 6,
+        borderRadius: 3,
+        overflow: 'hidden',
+        backgroundColor: striped
+          ? theme.colors.background
+          : theme.colors.accent,
+      }}
+    >
+      {striped && (
+        <StripedFill color={theme.colors.accent} size={4} strokeWidth={1.5} />
+      )}
+    </View>
   )
 }

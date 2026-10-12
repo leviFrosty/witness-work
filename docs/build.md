@@ -411,14 +411,15 @@ For the complete iOS + Android release workflow, invoke `/cut-release` (see `.ag
 **We intentionally do not use EAS Build cloud services for production.** Every production build runs on our own hardware via `eas build --local` so we never pay for build credits. The EAS CLI is still used as the local build orchestrator and for `autoIncrement` (fetching the next build number from EAS — free; only cloud builder minutes cost money).
 
 ```bash
-pnpm run build:prod-auto-submit
+WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm run build:prod-auto-submit
 ```
 
 This runs `scripts/build-prod-auto-submit.sh`, which:
 
-1. Sources `.env.production` into the shell (see [Environment files](#environment-files)).
-2. Builds locally: `eas build -p ios --profile production --local --output ./build-production.ipa` — always the same single artifact path (gitignored), so repeat runs are idempotent.
-3. Uploads the IPA to App Store Connect with `asc builds upload` — also fully local, no EAS Submit involved.
+1. Refuses to run unless `WW_RELEASE_CONFIRM` is `SHIP-PROD-<package.json version>` (`scripts/release-confirm.mjs`). Agents set it only after the user types that keyword; see `/cut-release`.
+2. Sources `.env.production` into the shell (see [Environment files](#environment-files)).
+3. Builds locally: `eas build -p ios --profile production --local --output ./build-production.ipa` — always the same single artifact path (gitignored), so repeat runs are idempotent.
+4. Uploads the IPA to App Store Connect with `asc builds upload` — also fully local, no EAS Submit involved.
 
 App Store review submission (version, "What's New", submit) is a separate step — see the `app-store-release` skill. The script above only builds/uploads iOS; `/cut-release` owns the Android build and [Play submission](#submit-for-review-and-automatic-production-rollout), shared store notes and the gate on both preflights.
 

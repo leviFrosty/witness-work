@@ -31,6 +31,10 @@ format_size() {
 IPA=./build-production.ipa
 APP_ID=$(node -p "require('./eas.json').submit.production.ios.ascAppId")
 
+# Uploads a production build, so it needs the user's typed go-ahead for this
+# version: WW_RELEASE_CONFIRM=SHIP-PROD-<version> (see scripts/release-confirm.mjs).
+node scripts/release-confirm.mjs "$(node -p "require('./package.json').version")"
+
 # Production env comes from .env.production (.env holds development values).
 # Local builds don't receive EAS secret env vars, so export the PostHog upload
 # credentials and app configuration into the shell for the local build job.

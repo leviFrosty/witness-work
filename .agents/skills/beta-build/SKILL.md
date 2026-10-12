@@ -9,6 +9,8 @@ WitnessWork Beta (`com.leviwilkerson.jwtimebeta`, orange icon) is an internal-Te
 
 Optional argument: `ota` or `native` forces the path; default `auto`. `scripts/build-beta.sh --dry-run` reports the path without shipping.
 
+**Production is out of scope.** If the arguments or a follow-up mention production, prod, the App Store, Google Play or a release, ship Beta only. Don't start a production release or read `/cut-release`'s files. "Prod" usually means ww-api, which this skill already releases. Dictation and autocorrect turn "api" into "app", so "release prod app" once shipped an unwanted production release. In the report, say that a production app release needs the user to run `/cut-release` and type its go-ahead keyword.
+
 ## 1. Commit the work
 
 `scripts/build-beta.sh` ships committed code only (the in-app version row shows the commit hash, which is how the user confirms what they're running). If this thread has uncommitted work, commit it following `../comitting-and-branching/SKILL.md` (amend onto the branch's existing commit). Never commit to `main` here; if the tree is dirty on `main`, ask. Don't push unless asked.

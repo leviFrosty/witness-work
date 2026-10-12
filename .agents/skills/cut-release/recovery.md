@@ -19,6 +19,8 @@ Record as known:
 
 A journal is a checkpoint, not evidence of remote success. On resume inspect Git, artifacts, processes, ASC and Google Play before repeating effects. Retain the selected version and immutable published tag. Incomplete generated files belong to the recorded release: do not treat them as unrelated user work and bump again. Older iOS-only journals do not satisfy the shared gate: reconcile any existing ASC submission and establish Android state before further release actions.
 
+A journal never carries the user's go-ahead. Record when the user typed the keyword, but when resuming in another conversation, ask for `SHIP-PROD-X.Y.Z` again before any remaining production step.
+
 ## Failure rules
 
 - Compilation/signing failures and explicit ASC upload/processing/validation failures: stop, retain evidence, and surface the actionable error. Never hide these by cutting another version.

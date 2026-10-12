@@ -10,6 +10,8 @@ The `asc` CLI (from Rork) is installed and authenticated for WitnessWork (defaul
 - **App ID** `6469723047`
 - **Bundle** `com.leviwilkerson.jwtime`
 
+**Production go-ahead.** Anything that reaches production users needs the user to type `SHIP-PROD-X.Y.Z` for that version first, as described in `../cut-release/SKILL.md#go-ahead-keyword`. That includes submitting for review (`asc review submit`, `asc review submissions-submit`, `asc publish … --submit`), releasing a version that's waiting for developer release, and uploading a production build. Read-only commands, staging, metadata and TestFlight don't need it.
+
 When called by `/cut-release`, use this skill to stage metadata and run ASC
 preflight, then return to that workflow for submission. Its Android build/upload
 and Play preflight must also pass before either store submission; do not execute

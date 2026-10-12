@@ -26,7 +26,7 @@ EAS preview builds don't run automatically (they're expensive) — kick one off 
 
 ## Cutting a release
 
-Use `/cut-release` for the complete main → local iOS build → local Android build → App Store and Google Play review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`. Android builds immediately after the iOS build/upload from the same tagged commit and marketing version. Both stores must finish upload/processing and pass metadata/preflight checks before either review submission; a failure on either platform blocks both. The workflow reuses the exact localized ASC store notes for Play and configures automatic release after approval on both stores.
+Use `/cut-release` for the complete main → local iOS build → local Android build → App Store and Google Play review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`. Production steps also need the user to type the go-ahead keyword `SHIP-PROD-X.Y.Z` for the exact version. `.husky/pre-push` refuses a `v*` tag push, and `build:prod-auto-submit` refuses to build, unless `WW_RELEASE_CONFIRM` holds that keyword (`scripts/release-confirm.mjs`). Android builds immediately after the iOS build/upload from the same tagged commit and marketing version. Both stores must finish upload/processing and pass metadata/preflight checks before either review submission; a failure on either platform blocks both. The workflow reuses the exact localized ASC store notes for Play and configures automatic release after approval on both stores.
 
 `scripts/bump-version.js` is a deterministic preparation tool. The invoking agent writes notes and translations; the script does not call a model or Azure.
 
@@ -45,6 +45,7 @@ Feature PRs change only `en-US.json`; the release translates every other locale 
 Push main and the specific release tag atomically:
 
 ```bash
+export WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z # typed by the user
 git push --atomic origin main refs/tags/vX.Y.Z
 pnpm run build:prod-auto-submit
 ```

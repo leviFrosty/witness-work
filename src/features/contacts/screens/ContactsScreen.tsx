@@ -23,9 +23,9 @@ import {
   useFocusEffect,
   useIsFocused,
   useNavigation,
+  useScrollToTop,
 } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import {
@@ -47,11 +47,11 @@ import Text from '@/components/ui/MyText'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsStalenessChips from '@/features/contacts/components/ContactsStalenessChips'
 import ContactsViewToggle from '@/features/contacts/components/ContactsViewToggle'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
 import { Contact } from '@/types/contact'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import ContactDetailsContent from '@/features/contacts/components/ContactDetailsContent'
 import ContactsSelectionBar from '@/features/contacts/components/ContactsSelectionBar'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -114,7 +114,7 @@ const ContactsScreen = ({
   const theme = useTheme()
   const { isWide, hasSidebar } = useAdaptiveLayout()
   const [selectedId, setSelectedId] = useState<string>()
-  const insets = useSafeAreaInsets()
+  const { bottom: bottomChrome } = useTabBarInsets()
   const { height: windowHeight } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
   const contactsView = usePreferences((s) => s.contactsView)
@@ -165,6 +165,8 @@ const ContactsScreen = ({
     return () => cancelAnimationFrame(frame)
   }, [focusSearch, isFocused, showsMap, onSearchFocused])
   const listRef = useRef<FlashListRef<ContactsListItem>>(null)
+  // Tapping the open Contacts tab again returns to the top of the list.
+  useScrollToTop(listRef)
   const previousIsWide = useRef(isWide)
   const flashListDrawDistance = Math.ceil(windowHeight)
 
@@ -201,7 +203,6 @@ const ContactsScreen = ({
   const selectedContacts = listContacts.filter((contact) =>
     selection.isSelected(contact.id)
   )
-  const bottomChrome = insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT)
 
   const selectedContact =
     listContacts.find((contact) => contact.id === selectedId) ?? listContacts[0]
@@ -742,7 +743,7 @@ const ContactsScreen = ({
                 borderLeftWidth: 1,
                 borderLeftColor: theme.colors.border,
                 marginRight: 16,
-                marginBottom: hasSidebar ? 0 : TAB_BAR_HEIGHT,
+                marginBottom: bottomChrome,
                 overflow: 'hidden',
                 borderRadius: theme.numbers.borderRadiusLg,
               }}

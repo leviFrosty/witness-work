@@ -7,13 +7,13 @@ import {
 } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 
 import Header from '@/components/ui/layout/Header'
 import SettingsContents from '@/features/settings/components/SettingsContents'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
-import SidebarToggle from '@/components/ui/SidebarToggle'
 
 const SettingsDetailStack = createNativeStackNavigator<RootStackParamList>()
 
@@ -31,6 +31,7 @@ const SettingsSplitLayout = ({
 }: LayoutProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const tabBarInsets = useTabBarInsets()
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -38,16 +39,13 @@ const SettingsSplitLayout = ({
         style={{
           flex: 1,
           flexDirection: 'row',
-          paddingTop: insets.top + 8,
+          paddingTop: tabBarInsets.top + 8,
           width: '100%',
           maxWidth: 1200,
           alignSelf: 'center',
         }}
       >
         <View style={{ width: 350 }}>
-          <View style={{ paddingHorizontal: 12 }}>
-            <SidebarToggle mode='show' />
-          </View>
           <SettingsContents
             onNavigate={onNavigate}
             selectedDestination={selectedDestination}

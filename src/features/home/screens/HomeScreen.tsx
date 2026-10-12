@@ -1,6 +1,7 @@
 import { perf } from '@/lib/perf'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import { useEffect, useRef, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { RefreshControl, View } from 'react-native'
@@ -22,7 +23,7 @@ import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useScrollToTop } from '@react-navigation/native'
 import usePublisher from '@/hooks/usePublisher'
 import {
   getEffectiveHomeScreenOrder,
@@ -58,7 +59,8 @@ export const HomeScreen = () => {
   perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
+  const tabBarInsets = useTabBarInsets()
+  const { isWide, contentMaxWidth } = useAdaptiveLayout()
   const {
     homeChecklistDismissed,
     iCloudSyncEnabled,
@@ -158,11 +160,17 @@ export const HomeScreen = () => {
   // the sheet stays mounted-but-inert for one release window; removing the
   // component entirely is deferred to a follow-up.
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
+  // Tapping the open Home tab again returns to the top.
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  useScrollToTop(
+    useRef({ scrollToTop: () => scrollRef.current?.scrollToPosition(0, 0) })
+  )
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + (hasSidebar ? 30 : 85),
+          paddingBottom: tabBarInsets.bottom + 30,
           paddingHorizontal: isWide ? 24 : 15,
           paddingTop: 15,
           width: '100%',
@@ -174,10 +182,7 @@ export const HomeScreen = () => {
           flexGrow: 1,
         }}
         automaticallyAdjustKeyboardInsets
-        style={{
-          flex: 1,
-          paddingBottom: hasSidebar ? 0 : insets.bottom + 50,
-        }}
+        style={{ flex: 1 }}
         refreshControl={
           iCloudSyncEnabled ? (
             <RefreshControl

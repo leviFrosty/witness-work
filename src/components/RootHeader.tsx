@@ -17,9 +17,9 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { BlurView } from 'expo-blur'
 import Animated from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import useUser from '@/hooks/useUser'
 
 import i18n from '@/lib/locales'
@@ -32,7 +32,6 @@ import PullDownMenu from '@/components/ui/PullDownMenu'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import SidebarToggle from '@/components/ui/SidebarToggle'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
@@ -99,7 +98,8 @@ export default function RootHeader({
   compact = false,
 }: Props) {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
+  // Below iPad's top tab bar too.
+  const insets = useTabBarInsets()
   const isDark = theme.colors.background === '#121212'
   const [titleRoom, setTitleRoom] = useState<number>()
   const [titleWidth, setTitleWidth] = useState<number>()
@@ -168,7 +168,6 @@ export default function RootHeader({
             ...FLOAT_TRANSITION,
           }}
         >
-          <SidebarToggle mode='show' />
           <AccountMenu />
           <Pressable
             onPress={onPressTitle}
@@ -248,6 +247,7 @@ function AccountMenu() {
   const theme = useTheme()
   const { name, avatar } = useUser()
   const hideDonateHeart = usePreferences((s) => s.hideDonateHeart)
+  const developerTools = usePreferences((s) => s.developerTools)
   const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
   const setOverlayOrigin = useProfileOverlay((s) => s.setOrigin)
   const showOverlay = useProfileOverlay((s) => s.show)
@@ -303,6 +303,14 @@ function AccountMenu() {
                 hasSidebar
                   ? navigation.navigate('Settings')
                   : navigation.navigate('SettingsMenu'),
+            },
+            // Debugging Tools; here rather than a tab, which would crowd out
+            // Quick Action (the native tab bar holds five).
+            developerTools && {
+              id: 'tools',
+              title: i18n.t('Tools'),
+              systemImage: 'wrench.and.screwdriver',
+              onPress: () => navigation.navigate('Tools'),
             },
           ],
           [

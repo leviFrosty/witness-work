@@ -27,7 +27,6 @@ import AnimatedLottieView from 'lottie-react-native'
 import { usePreferences } from '@/stores/preferences'
 import useContacts from '@/stores/contactsStore'
 import useTheme from '@/contexts/theme'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useNavigation } from '@react-navigation/native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Contact } from '@/types/contact'
@@ -43,6 +42,7 @@ import { analytics } from '@/lib/analytics'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import { isDeviceOffline, isKnownOffline } from '@/lib/http/online'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -92,7 +92,7 @@ export default function MapOnboarding() {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const abortController = useRef<AbortController | null>(null)
-  const tabBarHeight = useBottomTabBarHeight()
+  const tabBarInsets = useTabBarInsets()
   const { isWide } = useAdaptiveLayout()
   const [fetching, setFetching] = useState(false)
   const [locationPermissions, setLocationPermissions] = useState<boolean>()
@@ -370,7 +370,7 @@ export default function MapOnboarding() {
         maxWidth: 600,
         alignSelf: 'center',
         paddingTop: 24,
-        paddingBottom: tabBarHeight + 20,
+        paddingBottom: tabBarInsets.bottom + 20,
       }}
     >
       {step === 0 && (

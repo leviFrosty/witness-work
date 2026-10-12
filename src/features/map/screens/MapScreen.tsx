@@ -47,9 +47,8 @@ import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
 import MapEmptyState from '@/features/map/components/MapEmptyState'
 import i18n from '@/lib/locales'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapOnboarding from '@/features/map/components/MapOnboarding'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import useDevice from '@/hooks/useDevice'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
@@ -138,23 +137,21 @@ const FullMapView = ({
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
-  const { isWide, hasSidebar, contentWidth: width } = useAdaptiveLayout()
+  const { isWide, contentWidth: width } = useAdaptiveLayout()
   // Map runs under the floating Contacts header (`topInset`), so size overlays
   // to its own frame.
   const [height, setHeight] = useState(windowHeight)
-  const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const { colorScheme, mapLayer, set: setPreferences } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
-  const insets = useSafeAreaInsets()
+  // The map runs under iOS's tab bar; Android's ends above it.
+  const { bottom: tabBarBottom } = useTabBarInsets()
   // Google Maps' logo sits above its padding; keep cards clear of that strip.
   const bottomOverlayInset =
-    insets.bottom +
-    bottomBarHeight +
-    (Platform.OS === 'android' ? LEGAL_LABEL_HEIGHT : 0)
+    tabBarBottom + (Platform.OS === 'android' ? LEGAL_LABEL_HEIGHT : 0)
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
@@ -832,11 +829,7 @@ const FullMapView = ({
                           ? inspectorWidth + 32
                           : 0,
                       left: 0,
-                      bottom:
-                        insets.bottom +
-                        (Platform.OS === 'android'
-                          ? bottomBarHeight
-                          : bottomBarHeight / 4),
+                      bottom: tabBarBottom,
                     }
               }
               style={{ height: '100%', width: '100%' }}

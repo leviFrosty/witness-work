@@ -1,47 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import {
-  clampSidebarWidth,
-  getAdaptiveLayout,
-  SIDEBAR_DEFAULT_WIDTH,
-  SIDEBAR_MAX_WIDTH,
-  SIDEBAR_MIN_WIDTH,
-} from '@/lib/sidebarLayout'
+import { getAdaptiveLayout } from '@/lib/sidebarLayout'
 
-describe('adaptive sidebar layout', () => {
-  it('uses the saved width and gives the remaining space to content', () => {
-    expect(getAdaptiveLayout(1194, 1, 300, false)).toMatchObject({
+describe('adaptive layout', () => {
+  it('shows the native sidebar on wide iPad windows and gives content the rest', () => {
+    expect(getAdaptiveLayout(1194, 1, true, 874)).toMatchObject({
       hasSidebar: true,
-      sidebarVisible: true,
-      sidebarCompact: false,
-      sidebarWidth: 300,
-      contentWidth: 894,
+      contentWidth: 874,
       isWide: true,
     })
   })
 
-  it('keeps tablet routes eligible when hidden and restores the same width', () => {
-    expect(getAdaptiveLayout(1194, 1, 112, true)).toMatchObject({
-      hasSidebar: true,
-      sidebarVisible: false,
-      sidebarWidth: 0,
-      contentWidth: 1194,
+  it('keeps Android tablets on the bottom tab bar', () => {
+    expect(getAdaptiveLayout(1280, 1, false, 1280)).toMatchObject({
+      hasSidebar: false,
+      contentWidth: 1280,
+      isWide: true,
     })
-    expect(getAdaptiveLayout(1194, 1, 112, false)).toMatchObject({
-      sidebarVisible: true,
-      sidebarCompact: true,
-      sidebarWidth: 112,
-    })
-  })
-
-  it.each([
-    [88, true],
-    [219, true],
-    [220, false],
-    [360, false],
-  ])('shows compact navigation at width %s: %s', (width, compact) => {
-    expect(getAdaptiveLayout(1194, 1, width, false).sidebarCompact).toBe(
-      compact
-    )
   })
 
   it.each([
@@ -49,31 +23,22 @@ describe('adaptive sidebar layout', () => {
     [834, 1],
     [1194, 1.31],
   ])(
-    'returns to phone navigation at window %s and font scale %s',
+    'returns to the tab bar at window %s and font scale %s',
     (width, fontScale) => {
-      expect(getAdaptiveLayout(width, fontScale, 300, false)).toMatchObject({
-        hasSidebar: false,
-        sidebarVisible: false,
-        sidebarWidth: 0,
-        contentWidth: width,
-      })
+      expect(getAdaptiveLayout(width, fontScale, true).hasSidebar).toBe(false)
     }
   )
 
-  it('preserves a usable content width at the smallest supported tablet window', () => {
-    expect(
-      getAdaptiveLayout(1000, 1, SIDEBAR_DEFAULT_WIDTH, false).isWide
-    ).toBe(true)
-    expect(getAdaptiveLayout(1000, 1, 2000, false).contentWidth).toBe(640)
+  it('uses the window until a tab is measured, and never more than it', () => {
+    expect(getAdaptiveLayout(1194, 1, true).contentWidth).toBe(1194)
+    // A width measured before the window shrank (e.g. a rotation).
+    expect(getAdaptiveLayout(834, 1, true, 1194).contentWidth).toBe(834)
   })
 
-  it.each([
-    [-200, SIDEBAR_MIN_WIDTH],
-    [2000, SIDEBAR_MAX_WIDTH],
-    [NaN, SIDEBAR_DEFAULT_WIDTH],
-    [Infinity, SIDEBAR_DEFAULT_WIDTH],
-    [241.6, 242],
-  ])('bounds the width %s to %s', (width, expected) => {
-    expect(clampSidebarWidth(width)).toBe(expected)
+  it('lays content out compactly when the sidebar leaves too little room', () => {
+    expect(getAdaptiveLayout(1032, 1, true, 712)).toMatchObject({
+      hasSidebar: true,
+      isWide: false,
+    })
   })
 })

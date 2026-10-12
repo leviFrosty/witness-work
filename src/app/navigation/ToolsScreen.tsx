@@ -23,13 +23,11 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import SidebarToggle from '@/components/ui/SidebarToggle'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import TextInput from '@/components/ui/TextInput'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
@@ -171,7 +169,6 @@ const confirmDevAction = (title: string, onConfirm: () => void) =>
 
 export default function ToolsScreen() {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const toast = useToastController()
 
   const {
@@ -1052,14 +1049,12 @@ export default function ToolsScreen() {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-        paddingTop: insets.top,
         paddingHorizontal: 10,
       }}
     >
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 10, paddingTop: 30, paddingBottom: 300 }}
       >
-        <SidebarToggle mode='show' />
         <View style={{ gap: 2, marginBottom: 6 }}>
           <Text
             style={{

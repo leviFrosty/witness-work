@@ -205,7 +205,6 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
   default: () => ({
     isWide: mocks.isWide,
     hasSidebar: mocks.isWide,
-    sidebarWidth: mocks.isWide ? 200 : 0,
     contentWidth: mocks.isWide ? 1000 : 390,
   }),
 }))
@@ -230,7 +229,9 @@ vi.mock('@/components/ui/PointerTooltip', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
 }))
 vi.mock('@/components/ui/Popover', () => ({ default: 'Popover' }))
-vi.mock('@/components/ui/TabBar', () => ({ TAB_BAR_HEIGHT: 60 }))
+vi.mock('@/hooks/useTabBarInsets', () => ({
+  default: () => ({ top: 0, bottom: 60, windowBottom: 60, width: 390 }),
+}))
 vi.mock(
   '@/features/map/components/MapCarouselCard',
   appearanceProbe('carouselCard')

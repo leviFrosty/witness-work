@@ -9,6 +9,7 @@ import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useProfileOverlay } from '@/stores/profileOverlay'
+import { useTabBarInsetsStore } from '@/stores/tabBarInsets'
 import type { JsonType } from '@posthog/core'
 import {
   FeatureFlag,
@@ -294,6 +295,8 @@ export function installDevHarness() {
       takeover: useTakeover,
       // `open`, and `away` while a badge view opened from it is up.
       profileOverlay: useProfileOverlay,
+      // The room the native tab bar leaves, as the focused tab measured it.
+      tabBarInsets: useTabBarInsetsStore,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import { getMonthsReports } from '@/lib/serviceReport'
 import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 
@@ -33,8 +33,8 @@ const ProgressMonthTab = ({
   onSwipeForward,
   onSwipeBack,
 }: ProgressMonthTabProps) => {
-  const insets = useSafeAreaInsets()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
+  const insets = useTabBarInsets()
+  const { isWide } = useAdaptiveLayout()
   const serviceReports = useServiceReport((s) => s.serviceReports)
 
   const thisMonthsReports = useMemo(
@@ -56,7 +56,7 @@ const ProgressMonthTab = ({
       style={{ flex: 1 }}
     >
       <AdaptiveSplitScrollView
-        paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+        paddingBottom={insets.bottom + 30}
         compactPaddingHorizontal={0}
         leading={
           <View

@@ -5,7 +5,7 @@ Users who log hours record service time for a day, from the Home service report 
 ## Sub-features
 
 - `time-home-card` opens Add Time from Home's service report card.
-- `time-quick-action` opens Add Time from the center "Quick Action" menu.
+- `time-quick-action` opens Add Time from the Quick Action menu (the trailing Add tab).
 - `time-deep-link` opens `witnesswork://add-time` (empty) and `witnesswork://add-time/<YYYY-MM-DD>` (date pre-filled).
 - `time-validation` keeps Submit disabled until hours or minutes are set (the Time pill reads "Time" until then), and while the Type is an unnamed Custom category (a hint under the Type row says why). Time from a timer stopped under a minute shows "Provided time is less than one minute." above the pills.
 - `time-category` selects a Type (Standard, or a credit Category such as LDC).
@@ -14,7 +14,7 @@ Users who log hours record service time for a day, from the Home service report 
 ## How to get to it (user POV)
 
 - Home → "Add Time" on the service report card.
-- The center "+" ("Quick Action") → "Add Time".
+- The Add tab ("Quick Action") → "Add Time".
 - `witnesswork://add-time/<date>`, which pre-fills the date.
 
 ## Driving it with ww-verify

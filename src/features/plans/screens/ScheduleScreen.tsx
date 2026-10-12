@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BackHandler, Platform, ScrollView, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  BottomTabScreenProps,
-  useBottomTabBarHeight,
-} from '@react-navigation/bottom-tabs'
+import type { NativeBottomTabScreenProps } from '@react-navigation/bottom-tabs/unstable'
 import {
   useIsFocused,
   useNavigation as useRootNavigation,
@@ -13,6 +9,7 @@ import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import i18n from '@/lib/locales'
 import { getMonthsReports } from '@/lib/serviceReport'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
@@ -43,13 +40,12 @@ import useEditableMonthGoal from '@/features/plans/hooks/useEditableMonthGoal'
 import useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar'
 import useScheduleDayIndex from '@/features/plans/hooks/useScheduleDayIndex'
 
-type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
+type Props = NativeBottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
 const ScheduleScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
-  const insets = useSafeAreaInsets()
-  const tabBarHeight = useBottomTabBarHeight()
+  const { isWide } = useAdaptiveLayout()
+  const tabBarInsets = useTabBarInsets()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   useSyncBuddiesOnFocus()
@@ -71,7 +67,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const buddyMarkers = useBuddyCalendarMarkers()
   const index = useScheduleDayIndex()
   const editableGoal = useEditableMonthGoal()
-  const bottomInset = (hasSidebar ? insets.bottom : tabBarHeight) + 40
+  const bottomInset = tabBarInsets.bottom + 40
 
   const routeMonth =
     route.params?.year !== undefined && route.params.month !== undefined

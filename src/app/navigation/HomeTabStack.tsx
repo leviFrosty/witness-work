@@ -1,15 +1,30 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import NavigationTabBar from '@/app/navigation/NavigationTabBar'
+import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable'
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+  useNavigation,
+} from '@react-navigation/native'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
+import TabScreenLayout from '@/app/navigation/TabScreenLayout'
+import TabShortcuts from '@/app/navigation/TabShortcuts'
+import { tabIcon, tabTitle } from '@/app/navigation/tabItems'
+import QuickActionSheet from '@/components/QuickActionSheet'
+import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'
-import { useEffect, useRef, useState } from 'react'
-import { HomeTabStackParamList } from '@/types/homeStack'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  HomeTabStackNavigation,
+  HomeTabStackParamList,
+} from '@/types/homeStack'
+import { RootStackNavigation } from '@/types/rootStack'
+import i18n, { _i18n } from '@/lib/locales'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
@@ -70,7 +85,14 @@ const decideLaunch = (): LaunchDecision => {
   }
 }
 
-const Tab = createBottomTabNavigator<HomeTabStackParamList>()
+const Tab = createNativeBottomTabNavigator<HomeTabStackParamList>()
+
+/** Tabs that act instead of opening a destination. */
+const ACTION_TABS: readonly string[] = ['QuickAction']
+
+// Tab titles are drawn natively, so they're set again when the language changes.
+const subscribeToLanguage = (onChange: () => void) => _i18n.onChange(onChange)
+const getLanguage = () => _i18n.locale
 
 // Called inline, not rendered as a component: the navigator only reads
 // `Tab.Screen` elements among its direct children.
@@ -112,8 +134,11 @@ const renderTabScreen = (name: TabOrderKey) => {
 }
 
 const HomeTabStack = () => {
+  const theme = useTheme()
+  const navigation = useNavigation<
+    RootStackNavigation & HomeTabStackNavigation
+  >()
   const { hasSidebar } = useAdaptiveLayout()
-  const developerTools = usePreferences((s) => s.developerTools)
   const storedTabOrder = usePreferences((s) => s.tabOrder)
   const set = usePreferences((s) => s.set)
   const { showsYearTabs } = usePublisher()
@@ -124,6 +149,22 @@ const HomeTabStack = () => {
   // reveal has to be on screen in the very first frame to pick up from the
   // splash.
   const [launch] = useState(decideLaunch)
+  const [quickActionOpen, setQuickActionOpen] = useState(false)
+  const language = useSyncExternalStore(subscribeToLanguage, getLanguage)
+  const isDark = theme.colors.background === '#121212'
+  // The native tab bar takes its light or dark look and its colors from here.
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      primary: theme.colors.accent,
+      background: theme.colors.background,
+      card: theme.colors.card,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      notification: theme.colors.error,
+    },
+  }
 
   // Record the launch's version transition once.
   useEffect(() => {
@@ -171,33 +212,82 @@ const HomeTabStack = () => {
   return (
     <View style={{ flexGrow: 1 }}>
       <TakeoverEnvironment />
-      <Tab.Navigator
-        initialRouteName='Home'
-        tabBar={(props) => <NavigationTabBar {...props} />}
-        screenOptions={{
-          header: () => null,
-          tabBarPosition: hasSidebar ? 'left' : 'bottom',
-        }}
-      >
-        {/* At most four destinations, in the user's order (Preferences →
-            Tab Order). Features join an existing destination (Map in
-            Contacts, Buddies in Schedule) rather than adding tabs. */}
-        {tabOrder.map(renderTabScreen)}
-        {developerTools && (
+      <ThemeProvider value={navigationTheme}>
+        <Tab.Navigator
+          initialRouteName='Home'
+          layout={({ state, navigation: tabNavigation, children }) => (
+            <>
+              {children}
+              <TabShortcuts
+                state={state}
+                navigation={tabNavigation}
+                actions={ACTION_TABS}
+              />
+            </>
+          )}
+          screenLayout={({ children }) => (
+            <TabScreenLayout>{children}</TabScreenLayout>
+          )}
+          screenOptions={({ route }) => ({
+            title: tabTitle(route.name, language),
+            tabBarIcon: tabIcon(route.name),
+            // Each tab renders on first visit, as before.
+            lazy: true,
+            // A sidebar on iPad, which hides into the top tab bar; iPhone and
+            // narrower iPad windows keep the tab bar.
+            tabBarControllerMode: hasSidebar ? 'tabSidebar' : 'tabBar',
+            // Every tab stays one tap away while scrolling.
+            tabBarMinimizeBehavior: 'none',
+            tabBarLabelVisibilityMode: 'labeled',
+            tabBarInactiveTintColor: Platform.select({
+              android: theme.colors.textAlt,
+            }),
+            // Screens lay out their own scroll insets (`useTabBarInsets`).
+            overrideScrollViewContentInsetAdjustmentBehavior: false,
+          })}
+        >
+          {/* At most four destinations, in the user's order (Preferences →
+              Tab Order). Features join an existing destination (Map in
+              Contacts, Buddies in Schedule) rather than adding tabs: Android
+              allows five items, and iPhone moves a sixth into More. */}
+          {tabOrder.map(renderTabScreen)}
+          {/* An action, not a destination: it opens the menu and never shows
+              as selected. On iOS, the react-native-screens patch takes its
+              taps before the tab bar or sidebar starts selecting it. */}
           <Tab.Screen
-            name='Tools'
-            getComponent={() => require('@/app/navigation/ToolsScreen').default}
+            name='QuickAction'
+            component={EmptyTab}
+            options={{
+              // On iOS 26 the search role sets it apart from the tabs, as the
+              // old Add button was. Builds with the iOS 27 SDK keep it in the
+              // bar until react-native-screens supports iOS 27's prominent
+              // tab. It keeps its own icon and, through the label, its title.
+              tabBarSystemItem: 'search',
+              tabBarLabel: tabTitle('QuickAction', language),
+              tabBarAccessibilityLabel: i18n.t('quickAction', {
+                locale: language,
+              }),
+              tabBarSelectionEnabled: false,
+            }}
+            listeners={{ tabPress: () => setQuickActionOpen(true) }}
           />
-        )}
-        {hasSidebar && (
-          <Tab.Screen
-            name='Settings'
-            getComponent={() =>
-              require('@/app/navigation/SettingsSplitScreen').default
-            }
-          />
-        )}
-      </Tab.Navigator>
+          {/* After Quick Action, so it's Settings that the iPad's top tab bar
+              tucks behind its next-page button when space runs out. */}
+          {hasSidebar && (
+            <Tab.Screen
+              name='Settings'
+              getComponent={() =>
+                require('@/app/navigation/SettingsSplitScreen').default
+              }
+            />
+          )}
+        </Tab.Navigator>
+      </ThemeProvider>
+      <QuickActionSheet
+        navigation={navigation}
+        sheetOpen={quickActionOpen}
+        setSheetOpen={setQuickActionOpen}
+      />
       {/* One instance for every root header's account menu. */}
       <ProfileDetailOverlay />
       {/* One takeover at a time, through the takeover arbiter (ADR 0021). */}
@@ -210,5 +300,8 @@ const HomeTabStack = () => {
     </View>
   )
 }
+
+/** Quick Action's tab never opens, so it has nothing to show. */
+const EmptyTab = () => null
 
 export default HomeTabStack

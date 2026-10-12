@@ -1,14 +1,12 @@
 import { useEffect } from 'react'
 import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
-import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
-import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import { hideUndoToast, useUndoToast, type UndoToast } from '@/stores/undoToast'
 
 /** How long Undo stays available, like the Follow-up card's. */
@@ -31,8 +29,7 @@ export default function UndoToastLayer() {
 
 function PlacedToast({ toast }: { toast: UndoToast }) {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  const { hasSidebar } = useAdaptiveLayout()
+  const { windowBottom } = useTabBarInsets()
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(toast.message)
@@ -47,8 +44,8 @@ function PlacedToast({ toast }: { toast: UndoToast }) {
         StyleSheet.absoluteFill,
         styles.placement,
         {
-          // Above the floating tab bar, when there is one.
-          paddingBottom: insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT) + 16,
+          // Above the tab bar, when it's at the bottom.
+          paddingBottom: windowBottom + 16,
         },
       ]}
     >

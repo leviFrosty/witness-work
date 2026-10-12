@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import { Clock as ClockIcon } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import { getLifetimeHours } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
@@ -33,8 +33,8 @@ interface ProgressAllTimeTabProps {
 
 const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
+  const insets = useTabBarInsets()
+  const { isWide } = useAdaptiveLayout()
   const { serviceReports } = useServiceReport()
 
   const flat = useMemo<TimeEntry[]>(() => {
@@ -80,7 +80,7 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   return (
     <AdaptiveSplitScrollView
       leadingFraction={0.42}
-      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      paddingBottom={insets.bottom + 30}
       compactPaddingHorizontal={0}
       leading={
         <View style={{ paddingHorizontal: isWide ? 0 : 15 }}>

@@ -104,9 +104,7 @@ export default function useDevNotificationItems(
           id: 'open_tools',
           label: 'Open Tools',
           onPress: () =>
-            navigationRef.navigate('Root', { screen: 'Tools' } as never, {
-              pop: true,
-            }),
+            navigationRef.navigate('Tools', undefined, { pop: true }),
         },
         {
           id: 'bump',

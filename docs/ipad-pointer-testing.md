@@ -16,8 +16,8 @@ delivers touches to Xcode 27 simulators. To test hover:
    pointer. In Simulator.app this was I/O → Input → Send Pointer to Device;
    DeviceHub should have the equivalent.
 3. Check the behaviour described in the `agents.md` pointer section: effects
-   on buttons and rows, tooltips on icon-only controls, chart readouts, map pin
-   names, and the resize arrows on the sidebar grip.
+   on buttons and rows, tooltips on icon-only controls, chart readouts, and
+   map pin names.
 
 Driving DeviceHub's window from a script needs macOS Screen Recording and
 Accessibility permission for the calling app. Without them, `screencapture`

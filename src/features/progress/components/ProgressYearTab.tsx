@@ -2,13 +2,12 @@ import { CalendarCheck as TodayIcon } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
-import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
@@ -349,8 +348,7 @@ const ProgressYearTab = ({
   onMonthPress,
 }: ProgressYearTabProps) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  const { hasSidebar } = useAdaptiveLayout()
+  const insets = useTabBarInsets()
 
   // One pair of status/goal sheets for every row; `target` null = closed.
   const [editing, setEditing] = useState<{
@@ -386,7 +384,7 @@ const ProgressYearTab = ({
   return (
     <AdaptiveSplitScrollView
       paddingTop={0}
-      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      paddingBottom={insets.bottom + 30}
       leading={
         <View style={{ gap: 24 }}>
           {/* Roles without an Annual Goal get a raw service-year total instead

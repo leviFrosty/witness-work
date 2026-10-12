@@ -1,5 +1,6 @@
-import { ReactNode } from 'react'
+import { ReactNode, useRef } from 'react'
 import { View } from 'react-native'
+import { useScrollToTop } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
@@ -26,10 +27,16 @@ export default function AdaptiveSplitScrollView({
   gap = 24,
 }: Props) {
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
+  // Tapping the open tab again returns the records to the top.
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  useScrollToTop(
+    useRef({ scrollToTop: () => scrollRef.current?.scrollToPosition(0, 0) })
+  )
 
   if (!isWide) {
     return (
       <KeyboardAwareScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={{
@@ -71,6 +78,7 @@ export default function AdaptiveSplitScrollView({
           {leading}
         </KeyboardAwareScrollView>
         <KeyboardAwareScrollView
+          ref={scrollRef}
           style={{ flex: 1 - leadingFraction, minWidth: 0 }}
           contentContainerStyle={{ paddingBottom }}
           keyboardShouldPersistTaps='handled'

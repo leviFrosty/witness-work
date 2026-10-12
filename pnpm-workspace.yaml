@@ -46,7 +46,9 @@ overrides:
   'ws@8': '^8.21.3'
 patchedDependencies:
   '@expo/dom-webview@57.0.1': patches/@expo__dom-webview@57.0.1.patch
+  '@react-navigation/bottom-tabs@7.18.8': patches/@react-navigation__bottom-tabs@7.18.8.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
   expo@57.0.26: patches/expo@57.0.26.patch
   react-native-gesture-handler@2.32.0: patches/react-native-gesture-handler@2.32.0.patch
+  react-native-screens@4.26.0: patches/react-native-screens@4.26.0.patch
 enableGlobalVirtualStore: true

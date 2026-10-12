@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
+import type { NativeBottomTabScreenProps } from '@react-navigation/bottom-tabs/unstable'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import MapScreen from '@/features/map/screens/MapScreen'
@@ -7,7 +7,7 @@ import MapScreen from '@/features/map/screens/MapScreen'
 import { usePreferences } from '@/stores/preferences'
 import { HomeTabStackParamList } from '@/types/homeStack'
 
-type Props = BottomTabScreenProps<HomeTabStackParamList, 'Contacts'>
+type Props = NativeBottomTabScreenProps<HomeTabStackParamList, 'Contacts'>
 
 /** Composes the Map into Contacts without coupling the two feature tiers. */
 export default function ContactsTabScreen({ route, navigation }: Props) {

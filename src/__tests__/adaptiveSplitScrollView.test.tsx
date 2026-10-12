@@ -11,6 +11,7 @@ vi.mock('react-native', () => ({
   View: ({ children }: { children: ReactNode }) =>
     createElement('div', null, children),
 }))
+vi.mock('@react-navigation/native', () => ({ useScrollToTop: () => {} }))
 vi.mock('react-native-keyboard-aware-scroll-view', () => ({
   KeyboardAwareScrollView: ({
     children,

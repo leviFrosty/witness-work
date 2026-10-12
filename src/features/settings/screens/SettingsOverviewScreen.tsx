@@ -1,12 +1,12 @@
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
+import useTabBarInsets from '@/hooks/useTabBarInsets'
 import SettingsContents from '@/features/settings/components/SettingsContents'
-import SidebarToggle from '@/components/ui/SidebarToggle'
 
 export default function SettingsOverviewScreen() {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
+  // Below iPad's top tab bar too.
+  const insets = useTabBarInsets()
 
   return (
     <View
@@ -16,16 +16,6 @@ export default function SettingsOverviewScreen() {
         backgroundColor: theme.colors.background,
       }}
     >
-      <View
-        style={{
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-          paddingHorizontal: 24,
-        }}
-      >
-        <SidebarToggle mode='show' />
-      </View>
       <SettingsContents />
     </View>
   )

@@ -329,6 +329,13 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
+            header: () => <Header buttonType='back' noBottomBorder />,
+          }}
+          name='Tools'
+          getComponent={() => require('@/app/navigation/ToolsScreen').default}
+        />
+        <RootStack.Screen
+          options={{
             header: () => (
               <Header buttonType='back' title={i18n.t('buddies_title')} />
             ),

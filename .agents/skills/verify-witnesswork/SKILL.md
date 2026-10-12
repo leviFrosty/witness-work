@@ -121,7 +121,7 @@ wwv ad react-native dismiss-overlay      # if a LogBox/RedBox overlay covers the
 ```
 
 - Prefer refs, then `label=`/`id=` selectors. Use coordinates only when the snapshot has no target.
-- Labels are en-US i18n strings (`src/locales/en-US.json`). Tabs are "Home", "Schedule", "Contacts", "Progress". The center "+" is "Quick Action".
+- Labels are en-US i18n strings (`src/locales/en-US.json`). Tabs are "Home", "Schedule", "Contacts", "Progress". The trailing Add tab, which opens the Quick Action menu, is "Quick Action".
 - `wwv ad help workflow` has the full reference.
 
 **Scripted flows.** Maestro-style YAML in `e2e/maestro/` runs on both platforms:

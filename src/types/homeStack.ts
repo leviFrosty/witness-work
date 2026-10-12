@@ -1,4 +1,4 @@
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
+import type { NativeBottomTabNavigationProp } from '@react-navigation/bottom-tabs/unstable'
 
 /** The Contacts tab's two workspaces. */
 export type ContactsView = 'list' | 'map'
@@ -7,7 +7,6 @@ export type HomeTabStackParamList = {
   Home: undefined
   /** `view` opens a workspace and remembers it, e.g. the Map from Home. */
   Contacts: { view?: ContactsView; focusSearch?: boolean } | undefined
-  Tools: undefined
   Progress:
     | {
         month?: number
@@ -23,8 +22,11 @@ export type HomeTabStackParamList = {
         date?: string
       }
     | undefined
+  /** Only beside the iPad sidebar. */
   Settings: undefined
+  /** Not a destination: opens the Quick Action menu instead. */
+  QuickAction: undefined
 }
 
 export type HomeTabStackNavigation =
-  BottomTabNavigationProp<HomeTabStackParamList>
+  NativeBottomTabNavigationProp<HomeTabStackParamList>

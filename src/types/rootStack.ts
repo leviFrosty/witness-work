@@ -161,6 +161,8 @@ export type RootStackParamList = {
     | undefined
   /** Settings on compact layouts, opened from the account menu. */
   SettingsMenu: undefined
+  /** Debugging Tools, opened from the account menu while they're on. */
+  Tools: undefined
   /** Roster, requests, and invites. Opened from Schedule's header. */
   Buddies: undefined
   /** One buddy: what's planned together, their next two weeks, and settings. */

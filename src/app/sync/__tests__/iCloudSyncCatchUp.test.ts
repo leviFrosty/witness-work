@@ -634,12 +634,38 @@ it('keeps healthy peers syncing while surfacing a malformed peer', async () => {
       }),
     },
   ]
-  const { installiCloudSync, useSupporter, usePreferences, useContacts } =
-    await load()
+  const {
+    installiCloudSync,
+    iCloudSync,
+    useSupporter,
+    usePreferences,
+    useContacts,
+    errorTracking,
+  } = await load()
   useSupporter.getState().setSupporter(true)
   uninstall = installiCloudSync()
   await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
   expect(usePreferences.getState().iCloudSyncIssue).toBe('invalid-file')
+  const invalid = () =>
+    vi
+      .mocked(errorTracking.captureMessage)
+      .mock.calls.filter(
+        ([message]) => message === 'iCloudSync: invalid remote payload'
+      )
+  expect(invalid()).toEqual([
+    [
+      'iCloudSync: invalid remote payload',
+      {
+        level: 'warning',
+        reason: 'invalid-frame',
+        issues: 'serviceReportStore:invalid_type',
+        bytes: new TextEncoder().encode(runtime.files[1].json).length,
+      },
+    ],
+  ])
+  // Once per launch, however often the same file is pulled.
+  await iCloudSync.pullAndMerge('remote-change')
+  expect(invalid()).toHaveLength(1)
 })
 
 it('syncs the rest of a peer file with one unreadable record', async () => {

@@ -78,6 +78,7 @@ import {
   buildPayload,
   isNewerPayloadVersion,
   parsePayload,
+  PayloadRejection,
   SyncPayload,
 } from '@/app/sync/payload'
 import { mergePayload } from '@/app/sync/merge'
@@ -398,6 +399,41 @@ function reportDroppedFields(filename: string, fields: string[]): void {
   errorTracking.captureMessage('iCloudSync: dropped unreadable entries', {
     level: 'warning',
     fields: summary,
+  })
+}
+
+/** Rejections already reported this launch, so each pull doesn't. */
+const reportedRejections = new Set<string>()
+
+/**
+ * Reports why `parsePayload` rejected a peer's file. Reasons, field paths,
+ * codes and error names only, never values.
+ */
+function reportInvalidPayload(
+  reason: string,
+  file: SyncFile,
+  rejection: PayloadRejection | undefined
+): void {
+  const details = {
+    reason: rejection?.reason ?? 'unknown',
+    ...(rejection?.issues && { issues: rejection.issues.join(', ') }),
+    ...(rejection?.step && { step: rejection.step }),
+    ...(rejection?.error && { error: rejection.error }),
+  }
+  const bytes = new TextEncoder().encode(file.json).length
+  logger.warn(`${tag()} pullAndMerge: skipping invalid file`, {
+    pull: reason,
+    filename: file.filename,
+    bytes,
+    ...details,
+  })
+  const key = JSON.stringify(details)
+  if (reportedRejections.has(key)) return
+  reportedRejections.add(key)
+  errorTracking.captureMessage('iCloudSync: invalid remote payload', {
+    level: 'warning',
+    ...details,
+    bytes,
   })
 }
 
@@ -2017,7 +2053,12 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   for (const file of files) {
     if (file.filename === ownFilename) continue
     let dropped: string[] = []
-    const parsed = parsePayload(file.json, (fields) => (dropped = fields))
+    let rejection: PayloadRejection | undefined
+    const parsed = parsePayload(
+      file.json,
+      (fields) => (dropped = fields),
+      (rejected) => (rejection = rejected)
+    )
     if (dropped.length) {
       reportDroppedFields(file.filename, dropped)
       // GC judges photos by the contacts and profile it read; a dropped one
@@ -2046,14 +2087,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
         })
         continue
       }
-      logger.warn(`${tag()} pullAndMerge: skipping invalid file`, {
-        reason,
-        filename: file.filename,
-        bytes: file.json.length,
-      })
-      errorTracking.captureMessage('iCloudSync: invalid remote payload', {
-        level: 'warning',
-      })
+      reportInvalidPayload(reason, file, rejection)
       continue
     }
     remotePayloads.push({

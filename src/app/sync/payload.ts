@@ -1,3 +1,4 @@
+import type { z } from 'zod'
 import { translateSyncTimestamps } from '@/app/sync/clockSkew'
 import { syncNow, hasCalibratedSyncClock } from '@/lib/syncClock'
 import { expireDeletedContactDetails } from '@/lib/contactRetention'
@@ -284,11 +285,52 @@ import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
 import { sanitizeNoteDocs } from '@/app/sync/payloadNotes'
 
 /**
+ * Why `parsePayload` rejected a file, for diagnostics. Field paths, codes and
+ * error names only, never values.
+ */
+export type PayloadRejection = {
+  reason:
+    | 'invalid-json'
+    | 'unsafe-keys'
+    | 'newer-version'
+    | 'invalid-frame'
+    | 'threw'
+  /** Frame problems as `path.field:code`, de-duplicated and capped. */
+  issues?: string[]
+  /** The parse step that threw. */
+  step?: string
+  /** The thrown error's name, without its message. */
+  error?: string
+}
+
+const MAX_REJECTION_ISSUES = 5
+
+/**
+ * Frame problems as `path.field:code`. Record keys that aren't field names,
+ * such as years, months and ids, read as `*`.
+ */
+function frameIssues(issues: z.ZodIssue[]): string[] {
+  const problems = new Set<string>()
+  for (const issue of issues) {
+    const fields = issue.path
+      .filter((key) => typeof key === 'string')
+      .map((key) => (/^[A-Za-z_$][\w$]*$/.test(key) ? key : '*'))
+    problems.add(`${fields.join('.')}:${issue.code}`)
+  }
+  return [...problems].slice(0, MAX_REJECTION_ISSUES)
+}
+
+function hasNewerVersion(data: unknown): boolean {
+  const version: unknown = (data as { version?: unknown } | null)?.version
+  return typeof version === 'number' && version > PAYLOAD_VERSION
+}
+
+/**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
  * malformed or the shape is unrecognizable — the caller should treat that as
- * "leave local state alone, surface a sync error in settings." Records,
- * settings and profile values this build can't read are dropped instead and
- * named to `onDropped`.
+ * "leave local state alone, surface a sync error in settings" — and names why
+ * to `onRejected`. Records, settings and profile values this build can't read
+ * are dropped instead and named to `onDropped`.
  *
  * Also translates legacy preference field names from older app versions so the
  * merge step sees the canonical schema, strips placeholder follow-ups from
@@ -301,40 +343,66 @@ import { sanitizeNoteDocs } from '@/app/sync/payloadNotes'
  */
 export function parsePayload(
   json: string,
-  onDropped?: (fields: string[]) => void
+  onDropped?: (fields: string[]) => void,
+  onRejected?: (rejection: PayloadRejection) => void
 ): SyncPayload | null {
   let data: unknown
   try {
     data = JSON.parse(json)
   } catch {
+    onRejected?.({ reason: 'invalid-json' })
     return null
   }
+  let step = 'unsafe-keys'
   try {
-    if (hasUnsafeKeys(data)) return null
+    if (hasUnsafeKeys(data)) {
+      onRejected?.({ reason: 'unsafe-keys' })
+      return null
+    }
+    if (hasNewerVersion(data)) {
+      onRejected?.({ reason: 'newer-version' })
+      return null
+    }
     // Unreadable records and settings drop one by one; only a file without
     // the payload frame is unreadable as a whole.
+    step = 'schema'
     const dropped: string[] = []
     let result = payloadSchema.safeParse(data)
     if (!result.success) {
+      step = 'salvage'
       dropped.push(...dropUnreadableRecords(data))
       result = payloadSchema.safeParse(data)
     }
-    if (!result.success || result.data.version > PAYLOAD_VERSION) return null
+    if (!result.success) {
+      if (dropped.length) onDropped?.(dropped)
+      onRejected?.({
+        reason: 'invalid-frame',
+        issues: frameIssues(result.error.issues),
+      })
+      return null
+    }
     const d = result.data
+    step = 'field-names'
     normalizeLegacyPayloadFieldNames(d)
+    step = 'follow-ups'
     normalizeLegacyFollowUps(d)
+    step = 'plans'
     normalizeLegacyPlans(d)
+    step = 'notes'
     sanitizeNoteDocs(d as unknown as Record<string, unknown>)
+    step = 'settings'
     dropUnreadableSavedViews(d.preferencesStore)
     for (const key of dropUnreadableSettings(
       d.preferencesStore,
       PREFERENCE_DEFAULTS
     ))
       dropped.push(`preferencesStore.${key}`)
+    step = 'profile'
     if (d.profileStore)
       for (const key of dropUnreadableProfileValues(d.profileStore))
         dropped.push(`profileStore.${key}`)
     if (dropped.length) onDropped?.(dropped)
+    step = 'syncable'
     const knownPreferences = Object.fromEntries(
       Object.entries(d.preferencesStore.values).filter(([key]) =>
         Object.hasOwn(PREFERENCE_DEFAULTS, key)
@@ -351,7 +419,12 @@ export function parsePayload(
         PROFILE_EXCLUDED
       )
     return d as SyncPayload
-  } catch {
+  } catch (error) {
+    onRejected?.({
+      reason: 'threw',
+      step,
+      error: error instanceof Error ? error.name : typeof error,
+    })
     return null
   }
 }
@@ -363,9 +436,7 @@ export function parsePayload(
  */
 export function isNewerPayloadVersion(json: string): boolean {
   try {
-    const version: unknown = (JSON.parse(json) as { version?: unknown })
-      ?.version
-    return typeof version === 'number' && version > PAYLOAD_VERSION
+    return hasNewerVersion(JSON.parse(json))
   } catch {
     return false
   }

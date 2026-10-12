@@ -68,8 +68,9 @@ type Geometry = { target: Point; origin: (Point & { size: number }) | null }
  * medallion that was tapped and settles large with a sweep of light, over what
  * it stands for, whose it is, and the app's name. The User's own badges also
  * show how their collection is growing; a level not reached yet says "Not yet"
- * and how to grow it. Opened from a buddy's unseen news, whose it is says "New"
- * too. Reduce Motion crossfades instead. Closes with the X, a swipe down, or
+ * and how to grow it, as does a level a buddy hasn't reached, opened from their
+ * collection. Opened from a buddy's unseen news, whose it is says "New" too.
+ * Reduce Motion crossfades instead. Closes with the X, a swipe down, or
  * Android's back, flying back into its medallion when that's still on screen.
  *
  * The app tier passes the buddy (for a buddy's badge) and `footer`, where
@@ -140,7 +141,7 @@ function BadgeViewContent({
         )
       : 0
   )
-  const locked = mine && !record
+  const locked = mine ? !record : !!params.locked
   const state = locked ? 'locked' : 'earned'
   const currentLevel = Math.max(storedLevel, live?.level ?? 0) as BadgeLevel | 0
 

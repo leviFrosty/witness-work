@@ -1,48 +1,40 @@
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import BadgeButton from '@/components/badges/BadgeButton'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import BadgeProgress from '@/features/badges/components/BadgeProgress'
-import { nextLevel } from '@/features/badges/lib/badgeText'
 import {
-  BadgeShelfEntry,
   badgeDescription,
-  badgeHowTo,
   badgeLevelName,
   badgeName,
-  isNewBadge,
 } from '@/lib/badges/display'
-import i18n from '@/lib/locales'
-import { BADGE_LEVELS, BadgeLevel } from '@/types/badges'
+import { BADGE_LEVELS, BadgeCollectionId, BadgeLevel } from '@/types/badges'
 import type { BadgeViewOrigin } from '@/types/rootStack'
 
 const MEDALLION_SIZE = 56
 
 /**
- * One Badge Collection on the User's shelf: its four levels (earned in metal,
- * the rest as outlines), what the current level stands for, and progress toward
- * the next one.
+ * One Badge Collection: its four levels (earned in metal, the rest as outlines)
+ * and what the current level stands for. The User's own shelf adds progress
+ * toward the next level as `footer`; a buddy's shows none.
  */
 export default function BadgeCollectionCard({
-  entry,
-  seenAt,
-  showProgress,
+  art,
+  level,
+  isNew,
+  footer,
   onOpen,
 }: {
-  entry: Extract<BadgeShelfEntry, { kind: 'collection' }>
-  seenAt: number
-  /** False until the first evaluation has counted the User's records. */
-  showProgress: boolean
+  art: BadgeCollectionId
+  /** The highest level reached; 0 for none yet. */
+  level: BadgeLevel | 0
+  /** Earned since the User last looked; the User's own badges only. */
+  isNew?: (level: BadgeLevel) => boolean
+  footer?: ReactNode
   onOpen: (level: BadgeLevel, origin: BadgeViewOrigin | undefined) => void
 }) {
   const theme = useTheme()
-  const { art, progress } = entry
-  const level = progress.level
-  const next = nextLevel(level)
-  const recordFor = (step: BadgeLevel) =>
-    entry.earned.find((earned) => earned.level === step)?.record
-
   return (
     <Card style={{ paddingVertical: 16, paddingHorizontal: 16, gap: 14 }}>
       <View style={{ gap: 2 }}>
@@ -87,7 +79,6 @@ export default function BadgeCollectionCard({
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {BADGE_LEVELS.map((step) => {
           const earned = step <= level
-          const record = recordFor(step)
           return (
             <View
               key={step}
@@ -98,7 +89,7 @@ export default function BadgeCollectionCard({
                 level={step}
                 size={MEDALLION_SIZE}
                 state={earned ? 'earned' : 'locked'}
-                isNew={!!record && isNewBadge(record, seenAt)}
+                isNew={isNew?.(step) ?? false}
                 onPress={(origin) => onOpen(step, origin)}
               />
               <Text
@@ -117,18 +108,7 @@ export default function BadgeCollectionCard({
         })}
       </View>
 
-      {next && showProgress ? (
-        <BadgeProgress
-          art={art}
-          count={progress.count}
-          level={next}
-          heading={i18n.t('badges_nextLevel', { level: badgeLevelName(next) })}
-        />
-      ) : (
-        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-          {next ? badgeHowTo(art) : i18n.t('badges_allLevels')}
-        </Text>
-      )}
+      {footer}
     </Card>
   )
 }

@@ -16,6 +16,7 @@ const sessionEvents = new Set([
   'timer_action_completed',
   'buddies_opened',
   'badges_opened',
+  'buddy_badges_opened',
   'contacts_staleness_chip_applied',
   'contacts_suggested_contact_opened',
   'buddies_push_registration',

@@ -10,26 +10,25 @@ import { useCardStyle } from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { earnedLabel } from '@/features/badges/lib/badgeText'
-import {
-  BadgeShelfEntry,
-  badgeDescription,
-  badgeName,
-  isNewBadge,
-} from '@/lib/badges/display'
+import { badgeDescription, badgeName, isNewBadge } from '@/lib/badges/display'
 import i18n from '@/lib/locales'
 import type { EarnedBadge, OneTimeBadgeId } from '@/types/badges'
 import type { BadgeViewOrigin } from '@/types/rootStack'
 
 const MEDALLION_SIZE = 48
 
-/** Earned One-time Badges: single moments, each a row that opens its detail. */
+/**
+ * Earned One-time Badges: single moments, each a row that opens its detail. A
+ * buddy's carry no record, so no date or "new" dot.
+ */
 export default function BadgeMomentsSection({
   entries,
-  seenAt,
+  seenAt = Infinity,
   onOpen,
 }: {
-  entries: Extract<BadgeShelfEntry, { kind: 'oneTime' }>[]
-  seenAt: number
+  entries: readonly { art: OneTimeBadgeId; record?: EarnedBadge }[]
+  /** When the User last looked; their own badges only. */
+  seenAt?: number
   onOpen: (art: OneTimeBadgeId, origin: BadgeViewOrigin | undefined) => void
 }) {
   const theme = useTheme()
@@ -54,7 +53,7 @@ export default function BadgeMomentsSection({
           key={art}
           art={art}
           record={record}
-          isNew={isNewBadge(record, seenAt)}
+          isNew={!!record && isNewBadge(record, seenAt)}
           onOpen={(origin) => onOpen(art, origin)}
         />
       ))}
@@ -69,19 +68,25 @@ function MomentRow({
   onOpen,
 }: {
   art: OneTimeBadgeId
-  record: EarnedBadge
+  record?: EarnedBadge
   isNew: boolean
   onOpen: (origin: BadgeViewOrigin | undefined) => void
 }) {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const coin = useRef<View>(null)
-  const when = earnedLabel(record)
+  const when = record ? earnedLabel(record) : null
   return (
     <Button
       onPress={() => measureBadgeOrigin(coin.current, onOpen)}
       accessibilityRole='button'
-      accessibilityLabel={`${badgeAccessibilityLabel(art, null, { isNew })}, ${badgeDescription(art, null)}, ${when}`}
+      accessibilityLabel={[
+        badgeAccessibilityLabel(art, null, { isNew }),
+        badgeDescription(art, null),
+        when,
+      ]
+        .filter(Boolean)
+        .join(', ')}
       style={{
         ...cardStyle,
         flexDirection: 'row',
@@ -119,9 +124,11 @@ function MomentRow({
         <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
           {badgeDescription(art, null)}
         </Text>
-        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-          {when}
-        </Text>
+        {when ? (
+          <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+            {when}
+          </Text>
+        ) : null}
       </View>
     </Button>
   )

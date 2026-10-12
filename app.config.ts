@@ -225,7 +225,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       './plugins/with-android-build-memory',
-      './plugins/with-android-menu-icons',
       './plugins/with-force-load-local-modules',
       [
         './plugins/with-icloud-container',

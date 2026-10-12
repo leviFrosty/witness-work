@@ -485,7 +485,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
  * A Button with nothing to do: same surface, but a plain View, so it doesn't
  * dim, shift, take the touch, or read as tappable. Covers containers styled
  * like buttons (e.g. empty-state blocks) and triggers whose press is handled
- * natively by a wrapper (e.g. a `MenuView`).
+ * natively by a wrapper (e.g. a `PullDownMenu`).
  */
 const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   children,
@@ -510,7 +510,7 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
 
   return (
     <View
-      // Labelled triggers (e.g. a MenuView's button) stay one accessible
+      // Labelled triggers (e.g. a PullDownMenu's button) stay one accessible
       // element; plain containers let their content be read as-is.
       accessible={
         props.accessibilityLabel != null || props.accessibilityRole != null

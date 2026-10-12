@@ -181,14 +181,6 @@ emulator -avd WW_Wear_OS_6 -no-window -no-audio -no-boot-anim
   `pnpm-lock.yaml` in pnpm's own style. Run `npx prettier --write pnpm-lock.yaml`
   so the diff stays small.
 
-Android `PullDownMenu` icons are packaged by `plugins/with-android-menu-icons.js`.
-The SF Symbol mapping and vector drawables live in
-`src/assets/android-menu-icons/`; changing these assets requires prebuild and a
-native rebuild. The plugin also preserves these dynamically named resources
-when release resource shrinking is enabled.
-The pinned `@react-native-menu/menu` patch uses AndroidX `PopupMenu` so icon
-visibility also works below Android 10.
-
 Development uses `com.leviwilkerson.jwtimedev`; production uses
 `com.leviwilkerson.jwtime`. Configure these values in the appropriate environment:
 

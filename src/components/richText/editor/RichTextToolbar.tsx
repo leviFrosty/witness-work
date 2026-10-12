@@ -229,7 +229,7 @@ const RichTextToolbar = (props: {
   const photoButton = onAddPhoto && (
     <PullDownMenu
       accessibilityLabel={i18n.t('richText_addPhoto')}
-      hitSlop={0}
+      testID='note-editor-photo'
       actions={[
         {
           id: 'camera',
@@ -246,7 +246,6 @@ const RichTextToolbar = (props: {
       ]}
     >
       <View
-        testID='note-editor-photo'
         style={{
           width: BUTTON_SIZE,
           height: BUTTON_SIZE,

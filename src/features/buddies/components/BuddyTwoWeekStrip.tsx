@@ -143,9 +143,8 @@ export default function BuddyTwoWeekStrip({
     return (
       <PullDownMenu
         key={key}
+        fill
         style={{ flex: 1 }}
-        // Neighbouring days would steal each other's edges.
-        hitSlop={0}
         accessibilityLabel={label}
         actions={[
           ...(plans ?? []).map((plan, index): ContextMenuEntries[number] => [

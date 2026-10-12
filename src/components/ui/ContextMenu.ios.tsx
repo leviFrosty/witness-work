@@ -1,24 +1,15 @@
 import {
-  Button,
   ContextMenu as SwiftContextMenu,
-  Divider,
   Host,
-  Menu,
   RNHostView,
 } from '@expo/ui/swift-ui'
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
-import {
-  isSubmenu,
-  menuAccessibilityProps,
-  menuGroups,
-} from '@/components/ui/menuEntries'
-import type {
-  ContextMenuAction,
-  ContextMenuProps,
-} from '@/components/ui/ContextMenu.types'
+import MenuItems from '@/components/ui/MenuItems.ios'
+import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
+import type { ContextMenuProps } from '@/components/ui/ContextMenu.types'
 
 /** Native SwiftUI context menu: long-press lifts the preview above the menu. */
 export default function ContextMenu({
@@ -88,39 +79,10 @@ export default function ContextMenu({
     return hosted ? <RNHostView matchContents>{content}</RNHostView> : content
   }
 
-  const button = (action: ContextMenuAction, key: string) => (
-    <Button
-      key={key}
-      label={action.title}
-      systemImage={action.systemImage}
-      role={action.destructive ? 'destructive' : undefined}
-      onPress={() => action.onPress()}
-    />
-  )
-
   const menu = (
     <SwiftContextMenu>
       <SwiftContextMenu.Items>
-        {groups.map((group, index) => (
-          <Fragment key={index}>
-            {index > 0 ? <Divider /> : null}
-            {group.map((item) =>
-              isSubmenu(item) ? (
-                <Menu
-                  key={item.id}
-                  label={item.title}
-                  systemImage={item.systemImage}
-                >
-                  {item.actions.map((action) =>
-                    button(action, `${item.id}.${action.id}`)
-                  )}
-                </Menu>
-              ) : (
-                button(item, item.id)
-              )
-            )}
-          </Fragment>
-        ))}
+        <MenuItems groups={groups} />
       </SwiftContextMenu.Items>
       <SwiftContextMenu.Trigger>
         <RNHostView matchContents>

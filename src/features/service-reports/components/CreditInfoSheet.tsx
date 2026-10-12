@@ -6,7 +6,6 @@ import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 
@@ -16,7 +15,6 @@ type Props = {
 
 const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const [open, setOpen] = useState(false)
   const overageDisplay = useFormattedMinutes(creditOverageMinutes)
 
@@ -29,55 +27,39 @@ const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
         tone='warn'
         onPress={() => setOpen(true)}
       />
-      <Sheet
-        open={open}
-        onOpenChange={setOpen}
-        dismissOnSnapToBottom
-        modal
-        snapPoints={[45]}
-      >
-        <Sheet.Handle />
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame paddingBottom={sheetBottomInset}>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <View style={{ padding: 25, gap: 15 }}>
           <View
             style={{
-              padding: 25,
-              gap: 15,
-              flex: 1,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('aboutCreditCap')}
-              </Text>
-              <IconButton
-                noTransform
-                icon={XIcon}
-                onPress={() => setOpen(false)}
-              />
-            </View>
             <Text
               style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('md'),
-                lineHeight: 22,
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
               }}
             >
-              {i18n.t('aboutCreditCap_description')}
+              {i18n.t('aboutCreditCap')}
             </Text>
+            <IconButton
+              noTransform
+              icon={XIcon}
+              onPress={() => setOpen(false)}
+            />
           </View>
-        </Sheet.Frame>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('md'),
+              lineHeight: 22,
+            }}
+          >
+            {i18n.t('aboutCreditCap_description')}
+          </Text>
+        </View>
       </Sheet>
     </>
   )

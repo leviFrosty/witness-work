@@ -66,83 +66,72 @@ const FirstEnableSheet: React.FC<Props> = ({
   }
 
   return (
-    <Sheet
-      open={open}
-      modal
-      snapPoints={[85]}
-      onOpenChange={setOpen}
-      dismissOnSnapToBottom
-      transition='quick'
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              color: theme.colors.text,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t(syncKey('iCloudFirstEnableTitle'))}
-          </Text>
-          <IconButton
-            noTransform
-            onPress={() => setOpen(false)}
-            size={20}
-            icon={XIcon}
-            color={theme.colors.text}
-          />
-        </XStack>
-
-        <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              lineHeight: 20,
-            }}
-          >
-            {remoteSummary
-              ? `${i18n.t(syncKey('iCloudFirstEnableDescription'))} ${remoteSummary}`
-              : i18n.t(syncKey('iCloudFirstEnableDescription'))}
-          </Text>
-        </View>
-
-        <Sheet.ScrollView
-          contentContainerStyle={{ paddingTop: 10, paddingBottom: 60 }}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xl'),
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+          }}
         >
-          <View style={{ gap: 12, paddingHorizontal: 20 }}>
-            <ChoiceCard
-              icon={CloudUploadIcon}
-              iconColor={theme.colors.accent}
-              title={i18n.t(syncKey('iCloudChoiceKeepLocalTitle'))}
-              description={i18n.t(syncKey('iCloudChoiceKeepLocalDesc'))}
-              onPress={() => {
-                onChoose('keepLocal')
-              }}
-            />
-            <ChoiceCard
-              icon={CloudDownloadIcon}
-              iconColor={theme.colors.error}
-              title={i18n.t(syncKey('iCloudChoiceUseRemoteTitle'))}
-              description={i18n.t(syncKey('iCloudChoiceUseRemoteDesc'))}
-              destructive
-              onPress={confirmUseRemote}
-            />
-            <ChoiceCard
-              icon={ShuffleIcon}
-              iconColor={theme.colors.textAlt}
-              title={i18n.t(syncKey('iCloudChoiceMergeTitle'))}
-              description={i18n.t(syncKey('iCloudChoiceMergeDesc'))}
-              onPress={() => {
-                onChoose('merge')
-              }}
-            />
-          </View>
-        </Sheet.ScrollView>
-      </Sheet.Frame>
+          {i18n.t(syncKey('iCloudFirstEnableTitle'))}
+        </Text>
+        <IconButton
+          noTransform
+          onPress={() => setOpen(false)}
+          size={20}
+          icon={XIcon}
+          color={theme.colors.text}
+        />
+      </XStack>
+
+      <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+            lineHeight: 20,
+          }}
+        >
+          {remoteSummary
+            ? `${i18n.t(syncKey('iCloudFirstEnableDescription'))} ${remoteSummary}`
+            : i18n.t(syncKey('iCloudFirstEnableDescription'))}
+        </Text>
+      </View>
+
+      <Sheet.ScrollView
+        contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}
+      >
+        <View style={{ gap: 12, paddingHorizontal: 20 }}>
+          <ChoiceCard
+            icon={CloudUploadIcon}
+            iconColor={theme.colors.accent}
+            title={i18n.t(syncKey('iCloudChoiceKeepLocalTitle'))}
+            description={i18n.t(syncKey('iCloudChoiceKeepLocalDesc'))}
+            onPress={() => {
+              onChoose('keepLocal')
+            }}
+          />
+          <ChoiceCard
+            icon={CloudDownloadIcon}
+            iconColor={theme.colors.error}
+            title={i18n.t(syncKey('iCloudChoiceUseRemoteTitle'))}
+            description={i18n.t(syncKey('iCloudChoiceUseRemoteDesc'))}
+            destructive
+            onPress={confirmUseRemote}
+          />
+          <ChoiceCard
+            icon={ShuffleIcon}
+            iconColor={theme.colors.textAlt}
+            title={i18n.t(syncKey('iCloudChoiceMergeTitle'))}
+            description={i18n.t(syncKey('iCloudChoiceMergeDesc'))}
+            onPress={() => {
+              onChoose('merge')
+            }}
+          />
+        </View>
+      </Sheet.ScrollView>
     </Sheet>
   )
 }

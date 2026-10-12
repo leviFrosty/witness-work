@@ -6,19 +6,12 @@ import { Contact } from '@/types/contact'
 vi.mock('react-native', () => ({ View: 'View' }))
 vi.mock('lucide-react-native', () => ({ X: 'X' }))
 vi.mock('react-native-maps', () => ({ default: 'MapView', Marker: 'Marker' }))
-vi.mock('tamagui', () => ({
-  Spinner: 'Spinner',
-  Sheet: Object.assign(
-    ({ open, children }: React.PropsWithChildren<{ open: boolean }>) =>
-      open ? React.createElement('Sheet', null, children) : null,
-    { Overlay: 'SheetOverlay', Frame: 'SheetFrame' }
-  ),
+vi.mock('@/components/ui/Sheet', () => ({
+  default: ({ open, children }: React.PropsWithChildren<{ open: boolean }>) =>
+    open ? React.createElement('Sheet', null, children) : null,
 }))
 vi.mock('@tamagui/toast', () => ({
   useToastController: () => ({ show: vi.fn() }),
-}))
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ bottom: 0 }),
 }))
 vi.mock('expo-location', () => ({
   getForegroundPermissionsAsync: async () => ({ granted: false }),

@@ -9,7 +9,6 @@ import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import { ReactNode } from 'react'
 import { PurchasesPackage } from 'react-native-purchases'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -256,49 +255,35 @@ export const AllOptionsSheet = ({
   children: ReactNode
 }) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   return (
     <Sheet
       open={visible}
-      onOpenChange={(o: boolean) => {
+      onOpenChange={(o) => {
         if (!o) onClose()
       }}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[70]}
-      snapPointsMode='percent'
+      backgroundColor={theme.colors.backgroundLighter}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.backgroundLighter}>
-        <Sheet.ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: insets.bottom + 24,
+      <Sheet.ScrollView contentContainerStyle={{ padding: 24 }}>
+        <View
+          style={{
+            gap: 16,
+            width: '100%',
+            maxWidth: 680,
+            alignSelf: 'center',
           }}
         >
-          <View
+          <Text
             style={{
-              gap: 16,
-              width: '100%',
-              maxWidth: 680,
-              alignSelf: 'center',
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
             }}
           >
-            <Text
-              style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t('paywallAllOptionsTitle')}
-            </Text>
-            <View style={{ gap: 6 }}>{children}</View>
-          </View>
-        </Sheet.ScrollView>
-      </Sheet.Frame>
+            {i18n.t('paywallAllOptionsTitle')}
+          </Text>
+          <View style={{ gap: 6 }}>{children}</View>
+        </View>
+      </Sheet.ScrollView>
     </Sheet>
   )
 }

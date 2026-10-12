@@ -11,7 +11,6 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import type { SelectData } from '@/components/ui/Select'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import type { Publisher } from '@/types/publisher'
@@ -50,7 +49,6 @@ const RoleStartSheet = ({
   onSave,
 }: RoleStartSheetProps) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const [startKey, setStartKey] = useState<string>(ALL_MONTHS)
   const [resetFutureGoals, setResetFutureGoals] = useState(false)
 
@@ -92,82 +90,73 @@ const RoleStartSheet = ({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[hasFutureGoalOverrides ? 58 : 48]}
+      backgroundColor={theme.colors.background}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame
-        backgroundColor={theme.colors.background}
-        paddingBottom={sheetBottomInset}
+      <View
+        style={{
+          paddingHorizontal: inputLayout.horizontalPadding,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+          paddingTop: 22,
+          paddingBottom: 32,
+          gap: 20,
+        }}
       >
         <View
-          style={{
-            paddingHorizontal: inputLayout.horizontalPadding,
-            width: '100%',
-            maxWidth: inputLayout.contentMaxWidth,
-            alignSelf: 'center',
-            paddingTop: 22,
-            paddingBottom: 32,
-            gap: 20,
-          }}
+          style={{ gap: 6, paddingHorizontal: inputLayout.horizontalPadding }}
         >
-          <View
-            style={{ gap: 6, paddingHorizontal: inputLayout.horizontalPadding }}
+          <Text
+            accessibilityRole='header'
+            style={{
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xl'),
+            }}
           >
-            <Text
-              accessibilityRole='header'
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('roleStart.title', { role: roleLabel })}
-            </Text>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {description}
-            </Text>
-          </View>
-
-          <Section>
-            {months.length > 0 && (
-              <InputRowSelect
-                label={i18n.t('roleStart.startingMonth')}
-                lastInSection={!hasFutureGoalOverrides}
-                selectProps={{
-                  data: items,
-                  value: startKey,
-                  onChange: ({ value }) => setStartKey(value),
-                }}
-              />
-            )}
-            {hasFutureGoalOverrides && (
-              <InputRowSwitch
-                label={i18n.t('monthGoalEditor.resetFutureGoals')}
-                info={i18n.t('monthGoalEditor.roleChangeDescription')}
-                value={resetFutureGoals}
-                onValueChange={setResetFutureGoals}
-                lastInSection
-              />
-            )}
-          </Section>
-
-          <ActionButton
-            noTransform
-            accessibilityRole='button'
-            onPress={handleSave}
+            {i18n.t('roleStart.title', { role: roleLabel })}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
           >
-            {i18n.t('save')}
-          </ActionButton>
+            {description}
+          </Text>
         </View>
-      </Sheet.Frame>
+
+        <Section>
+          {months.length > 0 && (
+            <InputRowSelect
+              label={i18n.t('roleStart.startingMonth')}
+              lastInSection={!hasFutureGoalOverrides}
+              selectProps={{
+                data: items,
+                value: startKey,
+                onChange: ({ value }) => setStartKey(value),
+              }}
+            />
+          )}
+          {hasFutureGoalOverrides && (
+            <InputRowSwitch
+              label={i18n.t('monthGoalEditor.resetFutureGoals')}
+              info={i18n.t('monthGoalEditor.roleChangeDescription')}
+              value={resetFutureGoals}
+              onValueChange={setResetFutureGoals}
+              lastInSection
+            />
+          )}
+        </Section>
+
+        <ActionButton
+          noTransform
+          accessibilityRole='button'
+          onPress={handleSave}
+        >
+          {i18n.t('save')}
+        </ActionButton>
+      </View>
     </Sheet>
   )
 }

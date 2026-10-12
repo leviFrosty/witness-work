@@ -80,9 +80,12 @@ const RichTextEditor = (props: {
   const [format, setFormat] = useState<EditorFormatState>(EMPTY_FORMAT_STATE)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [linkSheet, setLinkSheet] = useState<{
+    open: boolean
     href: string | null
     selection: string
-  } | null>(null)
+  }>({ open: false, href: null, selection: '' })
+  const closeLinkSheet = () =>
+    setLinkSheet((sheet) => ({ ...sheet, open: false }))
   const pendingFlush = useRef<(() => void) | null>(null)
   // The screen reaches the window's bottom edge, so the keyboard's height is
   // exactly how far the toolbar rises. Without a keyboard it clears the home
@@ -306,31 +309,34 @@ const RichTextEditor = (props: {
           keyboardVisible={keyboardVisible}
           onDismissKeyboard={() => run({ type: 'blur' })}
           onLink={() =>
-            setLinkSheet({ href: format.link, selection: format.selection })
+            setLinkSheet({
+              open: true,
+              href: format.link,
+              selection: format.selection,
+            })
           }
           onAddPhoto={
             props.allowImages ? (source) => void addPhoto(source) : undefined
           }
         />
       </Animated.View>
-      {linkSheet && (
-        <LinkSheet
-          currentHref={linkSheet.href}
-          selection={linkSheet.selection}
-          onClose={() => {
-            setLinkSheet(null)
-            run({ type: 'focus' })
-          }}
-          onSave={(href, text) => {
-            setLinkSheet(null)
-            run({ type: 'setLink', href, text })
-          }}
-          onRemove={() => {
-            setLinkSheet(null)
-            run({ type: 'unsetLink' })
-          }}
-        />
-      )}
+      <LinkSheet
+        open={linkSheet.open}
+        currentHref={linkSheet.href}
+        selection={linkSheet.selection}
+        onClose={() => {
+          closeLinkSheet()
+          run({ type: 'focus' })
+        }}
+        onSave={(href, text) => {
+          closeLinkSheet()
+          run({ type: 'setLink', href, text })
+        }}
+        onRemove={() => {
+          closeLinkSheet()
+          run({ type: 'unsetLink' })
+        }}
+      />
     </View>
   )
 }

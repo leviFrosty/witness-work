@@ -7,7 +7,6 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useMemo } from 'react'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import moment from 'moment'
@@ -166,7 +165,6 @@ export const WhatsNewContent = ({
  */
 const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
 
   const handleSeeAll = () => {
@@ -177,61 +175,45 @@ const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
   return (
     <Sheet
       open={show}
-      modal
-      onOpenChange={(o: boolean) => {
+      onOpenChange={(o) => {
         if (!o) onClose()
       }}
-      dismissOnSnapToBottom
-      transition='quick'
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <XStack ai='center' jc='space-between' px={20} pt={30} pb={20}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('3xl'),
-              color: theme.colors.text,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('whatsNew')}
-          </Text>
-
-          <IconButton
-            noTransform
-            onPress={onClose}
-            size={20}
-            icon={XIcon}
-            color={theme.colors.text}
-          />
-        </XStack>
-        <Sheet.ScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom }}
+      <XStack ai='center' jc='space-between' px={20} pt={30} pb={20}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('3xl'),
+            color: theme.colors.text,
+            fontFamily: theme.fonts.bold,
+          }}
         >
-          <View
-            style={{
-              paddingHorizontal: 20,
-              flexGrow: 1,
-              paddingBottom: insets.bottom + 10,
-              gap: 20,
-            }}
-          >
-            {/* Prevents rendering unneeded components at the home screen to save performance. */}
-            {show && <WhatsNewContent lastVersion={sinceVersion} onlyNew />}
-            <Button onPress={handleSeeAll} style={{ alignSelf: 'center' }}>
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('whatsNew_seeAll')}
-              </Text>
-            </Button>
-          </View>
-        </Sheet.ScrollView>
-      </Sheet.Frame>
+          {i18n.t('whatsNew')}
+        </Text>
+
+        <IconButton
+          noTransform
+          onPress={onClose}
+          size={20}
+          icon={XIcon}
+          color={theme.colors.text}
+        />
+      </XStack>
+      <Sheet.ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <View style={{ paddingHorizontal: 20, gap: 20 }}>
+          {/* Prevents rendering unneeded components at the home screen to save performance. */}
+          {show && <WhatsNewContent lastVersion={sinceVersion} onlyNew />}
+          <Button onPress={handleSeeAll} style={{ alignSelf: 'center' }}>
+            <Text
+              style={{
+                color: theme.colors.accent,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('whatsNew_seeAll')}
+            </Text>
+          </Button>
+        </View>
+      </Sheet.ScrollView>
     </Sheet>
   )
 }

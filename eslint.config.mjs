@@ -26,12 +26,22 @@ const hapticImports = {
   message: 'Play haptics through @/lib/haptics.',
 }
 
-const sheetImports = {
-  group: ['tamagui'],
-  importNames: ['Sheet'],
-  message:
-    'Use Sheet from @/components/ui/Sheet, which holds takeovers while open (ADR 0021).',
-}
+const sheetMessage =
+  'Use Sheet from @/components/ui/Sheet, which holds takeovers while open (ADR 0021).'
+const sheetImports = [
+  { group: ['tamagui'], importNames: ['Sheet'], message: sheetMessage },
+  {
+    group: ['@expo/ui', '@expo/ui/swift-ui'],
+    importNames: ['BottomSheet'],
+    message: sheetMessage,
+  },
+  {
+    group: ['@expo/ui/jetpack-compose'],
+    importNames: ['ModalBottomSheet'],
+    message: sheetMessage,
+  },
+  { group: ['@expo/ui/community/bottom-sheet'], message: sheetMessage },
+]
 
 export default tseslint.config(
   {
@@ -198,11 +208,14 @@ export default tseslint.config(
   // `@/components/ui/Sheet` so they hold takeovers. Flat config replaces
   // (rather than merges) a rule's options, so each file gets one combined list.
   ...[
-    { file: undefined, patterns: [soundImports, hapticImports, sheetImports] },
-    { file: 'src/lib/audio.ts', patterns: [hapticImports, sheetImports] },
-    { file: 'src/lib/haptics.ts', patterns: [soundImports, sheetImports] },
     {
-      file: 'src/components/ui/Sheet.tsx',
+      file: undefined,
+      patterns: [soundImports, hapticImports, ...sheetImports],
+    },
+    { file: 'src/lib/audio.ts', patterns: [hapticImports, ...sheetImports] },
+    { file: 'src/lib/haptics.ts', patterns: [soundImports, ...sheetImports] },
+    {
+      file: 'src/components/ui/NativeSheet*.tsx',
       patterns: [soundImports, hapticImports],
     },
   ].map(({ file, patterns }) => ({
@@ -212,7 +225,7 @@ export default tseslint.config(
       : [
           'src/lib/audio.ts',
           'src/lib/haptics.ts',
-          'src/components/ui/Sheet.tsx',
+          'src/components/ui/NativeSheet*.tsx',
           'src/__tests__/**',
         ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },

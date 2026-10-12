@@ -1,0 +1,25 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => !p.id.startsWith('verify-') && p.minutes > 0)
+appId: com.leviwilkerson.jwtimedev
+name: Create a Plan through the Quick Action and picker sheets
+---
+- extendedWaitUntil:
+    visible: Quick Action
+    timeout: 60000
+# The Plan screen opens from the Quick Action sheet once the sheet has gone.
+- tapOn: Quick Action
+- assertVisible: Log Visit
+- tapOn: Create Plan
+- assertVisible: Add One Time Plan
+- assertNotVisible: Log Visit
+# The picker sheet presents over the Plan screen and hands its value back.
+- tapOn:
+    id: plan-duration-pill
+- tapOn:
+    text: '2'
+    index: 0
+- tapOn:
+    id: plan-picker-done
+- tapOn:
+    id: plan-save
+- assertNotVisible: Add One Time Plan

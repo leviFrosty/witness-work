@@ -1,11 +1,10 @@
 import { analytics } from '@/lib/analytics'
 import { X as XIcon } from 'lucide-react-native'
 import Sheet from '@/components/ui/Sheet'
-import { Modal, ScrollView, View } from 'react-native'
-import { useEffect, useRef, useState } from 'react'
+import { View } from 'react-native'
+import { useEffect, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
@@ -35,13 +34,11 @@ const SupporterInfoSheet = ({
   attribution,
 }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const navigation = useNavigation<RootStackNavigation>()
   const { priceString } = useCheapestSupporterPrice()
-  // Keep the native Modal mounted through the Sheet's dismiss animation so it
-  // can slide down instead of disappearing instantly when `open` flips false.
-  const [mounted, setMounted] = useState(open)
   const interactionHandled = useRef(false)
+  // Set by the support button: the Paywall opens once the sheet has closed.
+  const openPaywall = useRef(false)
 
   useEffect(() => {
     if (open) {
@@ -64,15 +61,6 @@ const SupporterInfoSheet = ({
     setOpen(false)
   }
 
-  useEffect(() => {
-    if (open) {
-      setMounted(true)
-      return
-    }
-    const t = setTimeout(() => setMounted(false), 300)
-    return () => clearTimeout(t)
-  }, [open])
-
   const title = featureKey
     ? i18n.t('supporterGateSheetTitle')
     : i18n.t('supporterSheetTitle')
@@ -82,144 +70,120 @@ const SupporterInfoSheet = ({
 
   const handleDonatePress = () => {
     if (!open || interactionHandled.current) return
-    // Close synchronously and skip the 300ms linger. When this sheet is
-    // hosted inside another RN Modal (e.g. the AvatarPickerPopover that
-    // surfaces the contact-form avatar gate), iOS refuses to unwind the
-    // parent UIWindow while a child Modal is still presented — leaving
-    // the Paywall covered by a touch-blocking overlay. Defer the push
-    // by one frame so RN commits `visible={false}` and dispatches the
-    // native dismiss before the new screen lands on top.
     interactionHandled.current = true
     analytics.capture('supporter_gate_clicked', {
       feature: featureKey ?? 'general',
       ...attribution,
     })
-
+    openPaywall.current = true
     setOpen(false)
-    setMounted(false)
-    requestAnimationFrame(() =>
-      navigation.navigate('Paywall', {
-        source: 'feature_gate',
-        feature: featureKey,
-        gateAttribution: attribution,
-      })
-    )
   }
 
-  // Wrap the tamagui Sheet in a RN Modal so the sheet is hosted in a new
-  // UIWindow. Without this, the Sheet's portal mounts behind any parent
-  // native modal / form sheet presentation and the gate is invisible when
-  // `IsSupporter` is used inside a deeply nested/modal screen (e.g. the
-  // AvatarPicker popover).
   return (
-    <Modal
-      visible={mounted}
-      transparent
-      statusBarTranslucent
-      animationType='none'
-      onRequestClose={() => dismiss('system')}
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) dismiss('gesture_or_overlay')
+      }}
+      // The Paywall is a pushed screen; opened while the sheet is still on its
+      // way out, it would land underneath it.
+      onClosed={() => {
+        if (!openPaywall.current) return
+        openPaywall.current = false
+        navigation.navigate('Paywall', {
+          source: 'feature_gate',
+          feature: featureKey,
+          gateAttribution: attribution,
+        })
+      }}
     >
-      <Sheet
-        open={open}
-        onOpenChange={(nextOpen: boolean) => {
-          if (!nextOpen) dismiss('gesture_or_overlay')
-        }}
-        dismissOnSnapToBottom
-        modal={false}
-        snapPoints={[90]}
+      <Sheet.ScrollView
+        contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 18 }}
       >
-        <Sheet.Handle />
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame paddingBottom={sheetBottomInset}>
-          <ScrollView
-            contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 18 }}
-          >
-            <View
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 12,
+          }}
+        >
+          <View style={{ flex: 1, gap: 8 }}>
+            <SupporterBadge size='md' style={{ alignSelf: 'flex-start' }} />
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 12,
+                fontSize: theme.fontSize('2xl'),
+                fontFamily: theme.fonts.bold,
+                color: theme.colors.text,
               }}
             >
-              <View style={{ flex: 1, gap: 8 }}>
-                <SupporterBadge size='md' style={{ alignSelf: 'flex-start' }} />
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('2xl'),
-                    fontFamily: theme.fonts.bold,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {title}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: theme.colors.textAlt,
-                    lineHeight: 20,
-                  }}
-                >
-                  {subtitle}
-                </Text>
-              </View>
-              <IconButton
-                noTransform
-                icon={XIcon}
-                size='xl'
-                onPress={() => dismiss('close_button')}
-              />
-            </View>
+              {title}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: theme.colors.textAlt,
+                lineHeight: 20,
+              }}
+            >
+              {subtitle}
+            </Text>
+          </View>
+          <IconButton
+            noTransform
+            icon={XIcon}
+            size='xl'
+            onPress={() => dismiss('close_button')}
+          />
+        </View>
 
-            <SupporterBenefits />
+        <SupporterBenefits />
 
-            <View style={{ gap: 10, marginTop: 6 }}>
-              <Button
-                noTransform
-                style={{
-                  backgroundColor: theme.colors.supporter,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                  paddingVertical: 12,
-                  paddingHorizontal: 24,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                onPress={handleDonatePress}
-              >
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('lg'),
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {priceString
-                    ? i18n.t('supporterSheetSupportFrom', {
-                        price: priceString,
-                      })
-                    : i18n.t('supporterSheetLearnMore')}
-                </Text>
-              </Button>
-              <Button
-                noTransform
-                style={{ alignSelf: 'center', paddingVertical: 8 }}
-                onPress={() => dismiss('not_now')}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    textDecorationLine: 'underline',
-                  }}
-                >
-                  {i18n.t('supporterSheetDismiss')}
-                </Text>
-              </Button>
-            </View>
-          </ScrollView>
-        </Sheet.Frame>
-      </Sheet>
-    </Modal>
+        <View style={{ gap: 10, marginTop: 6 }}>
+          <Button
+            noTransform
+            style={{
+              backgroundColor: theme.colors.supporter,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={handleDonatePress}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {priceString
+                ? i18n.t('supporterSheetSupportFrom', {
+                    price: priceString,
+                  })
+                : i18n.t('supporterSheetLearnMore')}
+            </Text>
+          </Button>
+          <Button
+            noTransform
+            style={{ alignSelf: 'center', paddingVertical: 8 }}
+            onPress={() => dismiss('not_now')}
+          >
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('supporterSheetDismiss')}
+            </Text>
+          </Button>
+        </View>
+      </Sheet.ScrollView>
+    </Sheet>
   )
 }
 

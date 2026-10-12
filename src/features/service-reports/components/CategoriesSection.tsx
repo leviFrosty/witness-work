@@ -14,7 +14,6 @@ import CategorySegmentBar, {
   CategorySegment,
 } from '@/features/service-reports/components/CategorySegmentBar'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 
 import { formatMinutes } from '@/lib/minutes'
@@ -37,7 +36,6 @@ const CategoriesSection = ({
   trigger = 'header',
 }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const { timeDisplayFormat } = usePreferences()
   const [open, setOpen] = useState(false)
   const visible = segments.filter((s) => s.minutes > 0)
@@ -124,55 +122,39 @@ const CategoriesSection = ({
         )}
       </Button>
 
-      <Sheet
-        open={open}
-        onOpenChange={setOpen}
-        dismissOnSnapToBottom
-        modal
-        snapPoints={[70]}
-      >
-        <Sheet.Handle />
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame paddingBottom={sheetBottomInset}>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet.ScrollView contentContainerStyle={{ padding: 25, gap: 20 }}>
           <View
             style={{
-              padding: 25,
-              gap: 20,
-              flex: 1,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('categoryBreakdown')}
-              </Text>
-              <IconButton
-                noTransform
-                icon={XIcon}
-                onPress={() => setOpen(false)}
-              />
-            </View>
             <Text
               style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
               }}
             >
-              {description}
+              {i18n.t('categoryBreakdown')}
             </Text>
-            <CategorySegmentBar segments={segments} />
+            <IconButton
+              noTransform
+              icon={XIcon}
+              onPress={() => setOpen(false)}
+            />
           </View>
-        </Sheet.Frame>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {description}
+          </Text>
+          <CategorySegmentBar segments={segments} />
+        </Sheet.ScrollView>
       </Sheet>
     </>
   )

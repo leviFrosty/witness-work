@@ -17,6 +17,9 @@ export const lightModeColors = {
   border: '#dbdbdb',
   backgroundLighter: '#F8F8F8',
   card: '#FFFFFF',
+  // Bottom sheets: white here, near-black in dark mode, so cards and rows on a
+  // sheet read as raised.
+  sheet: '#FFFFFF',
   accent2: '#F19389',
   accent2Alt: '#FFF3F2',
   accent3: '#003D46',
@@ -72,6 +75,7 @@ const darkModeColors: Colors = {
   border: '#333333',
   backgroundLighter: '#1E1E1E',
   card: '#242424',
+  sheet: '#050505',
   accent2: '#F19389',
   accent2Alt: '#FFF3F2',
   accent3: '#159fb0',

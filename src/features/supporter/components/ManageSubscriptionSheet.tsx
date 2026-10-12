@@ -1,11 +1,9 @@
 import { X as XIcon } from 'lucide-react-native'
-import { useEffect, useRef, useState } from 'react'
-import { Modal, Platform, View } from 'react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useRef } from 'react'
+import { View } from 'react-native'
 import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
@@ -41,7 +39,6 @@ const isAndroid = storePlatform === 'android'
  */
 const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const {
     state,
     productLoaded,
@@ -51,36 +48,10 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
     pause,
     openStore,
   } = useManageSubscription(open, source)
-  // Keep the native Modal mounted through the Sheet's dismiss animation.
-  const [mounted, setMounted] = useState(open)
-  const afterDismiss = useRef<(() => void) | null>(null)
-  const wasMounted = useRef(false)
-  const pausing = pausingMonths !== null
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true)
-      return
-    }
-    const t = setTimeout(() => setMounted(false), 300)
-    return () => clearTimeout(t)
-  }, [open])
-
   // The store's management sheet presents on the topmost view controller, so
-  // open it only once this Modal is gone. RN fires `onDismiss` on iOS only;
-  // on Android, run it once the Modal unmounts.
-  useEffect(() => {
-    if (Platform.OS !== 'android') return
-    if (mounted) {
-      wasMounted.current = true
-      return
-    }
-    if (!wasMounted.current) return
-    wasMounted.current = false
-    const then = afterDismiss.current
-    afterDismiss.current = null
-    then?.()
-  }, [mounted])
+  // open it only once this sheet is gone.
+  const afterDismiss = useRef<(() => void) | null>(null)
+  const pausing = pausingMonths !== null
 
   const close = () => {
     if (pausing) return
@@ -91,7 +62,6 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
     if (pausing) return
     afterDismiss.current = () => void openStore(intent)
     setOpen(false)
-    setMounted(false)
   }
 
   const storeButtonLabel =
@@ -104,134 +74,117 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
       : i18n.t('manageSupport_cancelOrChange')
 
   return (
-    <Modal
-      visible={mounted}
-      transparent
-      statusBarTranslucent
-      animationType='none'
-      onRequestClose={close}
-      onDismiss={() => {
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close()
+      }}
+      onClosed={() => {
         const then = afterDismiss.current
         afterDismiss.current = null
         then?.()
       }}
+      // A pause in flight finishes before the sheet can go.
+      dismissible={!pausing}
     >
-      {/* A Modal is its own native root; pointer hover on its buttons needs
-          its own gesture handler root. */}
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Sheet
-          open={open}
-          onOpenChange={(next: boolean) => {
-            if (!next) close()
+      <View
+        style={{
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+          padding: 24,
+          paddingBottom: 32,
+          gap: 20,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 12,
           }}
-          dismissOnSnapToBottom
-          modal={false}
-          snapPointsMode='fit'
         >
-          <Sheet.Handle />
-          <Sheet.Overlay zIndex={100_000 - 1} />
-          <Sheet.Frame paddingBottom={sheetBottomInset}>
-            <View
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text
               style={{
-                width: '100%',
-                maxWidth: inputLayout.contentMaxWidth,
-                alignSelf: 'center',
-                padding: 24,
-                paddingBottom: 32,
-                gap: 20,
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.bold,
+                color: theme.colors.text,
               }}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  gap: 12,
-                }}
-              >
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xl'),
-                      fontFamily: theme.fonts.bold,
-                      color: theme.colors.text,
-                    }}
-                  >
-                    {i18n.t('manageSupport_title')}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                      lineHeight: 20,
-                    }}
-                  >
-                    {i18n.t('manageSupport_thanks')}
-                  </Text>
-                </View>
-                <IconButton
-                  noTransform
-                  icon={XIcon}
-                  size='xl'
-                  onPress={close}
-                  accessibilityLabel={i18n.t('close')}
-                />
-              </View>
+              {i18n.t('manageSupport_title')}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+                lineHeight: 20,
+              }}
+            >
+              {i18n.t('manageSupport_thanks')}
+            </Text>
+          </View>
+          <IconButton
+            noTransform
+            icon={XIcon}
+            size='xl'
+            onPress={close}
+            accessibilityLabel={i18n.t('close')}
+          />
+        </View>
 
-              <ManageSubscriptionBody
-                state={state}
-                productLoaded={productLoaded}
-                productError={productError}
-                onRetryProduct={retryProduct}
-                pausingMonths={pausingMonths}
-                onPause={(offer) => void pause(offer)}
-                onPlayPause={() => closeThenOpenStore('pause')}
-              />
+        <ManageSubscriptionBody
+          state={state}
+          productLoaded={productLoaded}
+          productError={productError}
+          onRetryProduct={retryProduct}
+          pausingMonths={pausingMonths}
+          onPause={(offer) => void pause(offer)}
+          onPlayPause={() => closeThenOpenStore('pause')}
+        />
 
-              <View style={{ gap: 8 }}>
-                <Button
-                  noTransform
-                  variant='outline'
-                  disabled={pausing}
-                  onPress={() => closeThenOpenStore('cancel')}
-                  style={{
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: pausing ? 0.5 : 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('md'),
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.text,
-                    }}
-                  >
-                    {storeButtonLabel}
-                  </Text>
-                </Button>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                    textAlign: 'center',
-                  }}
-                >
-                  {i18n.t(
-                    isAndroid
-                      ? 'manageSupport_storeHintAndroid'
-                      : 'manageSupport_storeHint'
-                  )}
-                </Text>
-              </View>
-            </View>
-          </Sheet.Frame>
-        </Sheet>
-      </GestureHandlerRootView>
-    </Modal>
+        <View style={{ gap: 8 }}>
+          <Button
+            noTransform
+            variant='outline'
+            disabled={pausing}
+            onPress={() => closeThenOpenStore('cancel')}
+            style={{
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              borderRadius: theme.numbers.borderRadiusSm,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pausing ? 0.5 : 1,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {storeButtonLabel}
+            </Text>
+          </Button>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t(
+              isAndroid
+                ? 'manageSupport_storeHintAndroid'
+                : 'manageSupport_storeHint'
+            )}
+          </Text>
+        </View>
+      </View>
+    </Sheet>
   )
 }
 

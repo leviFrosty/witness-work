@@ -7,15 +7,13 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation } from '@react-navigation/native'
 import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -78,7 +76,8 @@ const currentServiceYearEnd = (): number => {
 
 const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
+  // Set by the no-goal shortcut: Settings opens once the sheet has closed.
+  const openSettings = useRef(false)
   const navigation = useNavigation<RootStackNavigation>()
   const {
     milestoneOverrides,
@@ -279,13 +278,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   }
 
   const handleNavigateToSettings = () => {
+    openSettings.current = true
     onClose()
-    // Defer navigation so the sheet has a chance to dismiss cleanly before the
-    // new screen pushes — avoids the sheet hanging half-open behind a
-    // Settings screen push.
-    setTimeout(() => {
-      navigation.navigate('PreferencesPublisher')
-    }, 150)
   }
 
   const renderSubtitle = () => {
@@ -314,291 +308,228 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   return (
     <Sheet
       open={visible}
-      onOpenChange={(o: boolean) => {
+      onOpenChange={(o) => {
         if (!o) handleClose()
       }}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[85]}
+      // Settings is a pushed screen; opened while the sheet is still on its way
+      // out, it would land underneath it.
+      onClosed={() => {
+        if (!openSettings.current) return
+        openSettings.current = false
+        navigation.navigate('PreferencesPublisher')
+      }}
+      backgroundColor={theme.colors.backgroundLighter}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame paddingBottom={sheetBottomInset}>
+      <View
+        style={{
+          flexShrink: 1,
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 24,
+          gap: 18,
+        }}
+      >
+        {/* Header */}
         <View
           style={{
-            flex: 1,
-            paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: 24,
-            gap: 18,
-            backgroundColor: theme.colors.backgroundLighter,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {/* Header */}
-          <View
+          <Text
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
             }}
           >
+            {i18n.t('milestones')}
+          </Text>
+          {noGoalSet ? (
+            <IconButton
+              noTransform
+              icon={XIcon}
+              size='xl'
+              onPress={handleClose}
+            />
+          ) : (
+            <Button noTransform onPress={handleDone} hitSlop={10}>
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('done')}
+              </Text>
+            </Button>
+          )}
+        </View>
+
+        {noGoalSet ? (
+          <View style={{ gap: 12 }}>
             <Text
               style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('md'),
+                lineHeight: 22,
               }}
             >
-              {i18n.t('milestones')}
+              {i18n.t('yearGoalSetInSettings')}
             </Text>
-            {noGoalSet ? (
-              <IconButton
-                noTransform
-                icon={XIcon}
-                size='xl'
-                onPress={handleClose}
-              />
-            ) : (
-              <Button noTransform onPress={handleDone} hitSlop={10}>
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    fontSize: theme.fontSize('md'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('done')}
-                </Text>
-              </Button>
-            )}
-          </View>
-
-          {noGoalSet ? (
-            <View style={{ gap: 12 }}>
+            <ActionButton noTransform onPress={handleNavigateToSettings}>
               <Text
                 style={{
-                  color: theme.colors.textAlt,
+                  color: theme.colors.textInverse,
                   fontSize: theme.fontSize('md'),
-                  lineHeight: 22,
+                  fontFamily: theme.fonts.semiBold,
                 }}
               >
-                {i18n.t('yearGoalSetInSettings')}
+                {i18n.t('adjustMilestones')}
               </Text>
-              <ActionButton noTransform onPress={handleNavigateToSettings}>
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontSize: theme.fontSize('md'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('adjustMilestones')}
-                </Text>
-              </ActionButton>
-            </View>
-          ) : (
-            <KeyboardAwareScrollView
-              keyboardShouldPersistTaps='handled'
-              contentContainerStyle={{ gap: 18, paddingBottom: 40 }}
-              showsVerticalScrollIndicator={false}
+            </ActionButton>
+          </View>
+        ) : (
+          <Sheet.ScrollView
+            contentContainerStyle={{ gap: 18, paddingBottom: 16 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Intro copy */}
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+                lineHeight: 20,
+              }}
             >
-              {/* Intro copy */}
+              {i18n.t('milestonesOrderHint')}
+            </Text>
+
+            {/* Preview bar + subtitle */}
+            <View style={{ gap: 8 }}>
+              <MilestoneProgressBarPreview
+                milestones={milestonesWithGoal}
+                hoursCompleted={hoursCompleted}
+                annualGoalHours={annualGoalHours}
+              />
               <Text
                 style={{
                   color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                  lineHeight: 20,
+                  fontSize: theme.fontSize('xs'),
                 }}
               >
-                {i18n.t('milestonesOrderHint')}
+                {renderSubtitle()}
               </Text>
+            </View>
 
-              {/* Preview bar + subtitle */}
-              <View style={{ gap: 8 }}>
-                <MilestoneProgressBarPreview
-                  milestones={milestonesWithGoal}
-                  hoursCompleted={hoursCompleted}
-                  annualGoalHours={annualGoalHours}
-                />
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                  }}
-                >
-                  {renderSubtitle()}
-                </Text>
-              </View>
+            {/* Editable rows */}
+            <View style={{ gap: 10 }}>
+              {draft.map((value) => {
+                const isHit = hitState.hit.includes(value)
+                const isNext = hitState.next === value
+                const buffer = inputBuffers[value]
+                const displayValue =
+                  buffer !== undefined ? buffer : String(value)
 
-              {/* Editable rows */}
-              <View style={{ gap: 10 }}>
-                {draft.map((value) => {
-                  const isHit = hitState.hit.includes(value)
-                  const isNext = hitState.next === value
-                  const buffer = inputBuffers[value]
-                  const displayValue =
-                    buffer !== undefined ? buffer : String(value)
-
-                  return (
-                    <View
-                      key={`milestone-${value}`}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 10,
-                        paddingHorizontal: 12,
-                        paddingVertical: 10,
-                        borderRadius: theme.numbers.borderRadiusMd,
-                        backgroundColor: theme.colors.background,
-                      }}
-                    >
-                      {/* Hit indicator */}
-                      <HitIndicator
-                        state={isHit ? 'hit' : isNext ? 'next' : 'future'}
-                      />
-
-                      {/* Stepper */}
-                      <PointerHover effect='lift'>
-                        <Pressable
-                          onPress={() => handleStep(value, -1)}
-                          hitSlop={8}
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: theme.numbers.borderRadiusSm,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: theme.colors.card,
-                          }}
-                        >
-                          <LucideIcon
-                            icon={MinusIcon}
-                            size={theme.fontSize('xs')}
-                            style={{ color: theme.colors.textAlt }}
-                          />
-                        </Pressable>
-                      </PointerHover>
-
-                      {/* Numeric input */}
-                      <View
-                        style={{
-                          minWidth: 56,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <TextInput
-                          value={displayValue}
-                          inputMode='numeric'
-                          textAlign='center'
-                          onChangeText={(text) =>
-                            setInputBuffers((prev) => ({
-                              ...prev,
-                              [value]: text.replace(/[^0-9]/g, ''),
-                            }))
-                          }
-                          onBlur={() => commitInput(value, displayValue)}
-                          onSubmitEditing={() =>
-                            commitInput(value, displayValue)
-                          }
-                          style={{
-                            color: theme.colors.text,
-                            fontSize: theme.fontSize('md'),
-                            fontFamily: theme.fonts.semiBold,
-                            paddingHorizontal: 8,
-                            paddingVertical: 6,
-                            minWidth: 56,
-                            minHeight: 44,
-                            borderWidth: 1,
-                            borderColor: theme.colors.border,
-                            borderRadius: theme.numbers.borderRadiusSm,
-                            backgroundColor: theme.colors.backgroundLighter,
-                          }}
-                        />
-                      </View>
-
-                      <PointerHover effect='lift'>
-                        <Pressable
-                          onPress={() => handleStep(value, 1)}
-                          hitSlop={8}
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: theme.numbers.borderRadiusSm,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: theme.colors.card,
-                          }}
-                        >
-                          <LucideIcon
-                            icon={PlusIcon}
-                            size={theme.fontSize('xs')}
-                            style={{ color: theme.colors.textAlt }}
-                          />
-                        </Pressable>
-                      </PointerHover>
-
-                      <Text
-                        style={{
-                          color: theme.colors.textAlt,
-                          fontSize: theme.fontSize('sm'),
-                        }}
-                      >
-                        {i18n.t('hours_lowercase')}
-                      </Text>
-
-                      {/* Remove */}
-                      <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                        <IconButton
-                          noTransform
-                          icon={XIcon}
-                          size='sm'
-                          onPress={() => confirmRemoveMilestone(value)}
-                        />
-                      </View>
-                    </View>
-                  )
-                })}
-
-                {/* Locked annual-goal row */}
-                <PointerHover onHoverChange={setLockedRowHovered}>
-                  <Pressable
-                    onPress={handleNavigateToSettings}
+                return (
+                  <View
+                    key={`milestone-${value}`}
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 10,
                       paddingHorizontal: 12,
-                      paddingVertical: 12,
+                      paddingVertical: 10,
                       borderRadius: theme.numbers.borderRadiusMd,
-                      backgroundColor: theme.colors.card,
+                      backgroundColor: theme.colors.background,
                     }}
                   >
+                    {/* Hit indicator */}
+                    <HitIndicator
+                      state={isHit ? 'hit' : isNext ? 'next' : 'future'}
+                    />
+
+                    {/* Stepper */}
+                    <PointerHover effect='lift'>
+                      <Pressable
+                        onPress={() => handleStep(value, -1)}
+                        hitSlop={8}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: theme.numbers.borderRadiusSm,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: theme.colors.card,
+                        }}
+                      >
+                        <LucideIcon
+                          icon={MinusIcon}
+                          size={theme.fontSize('xs')}
+                          style={{ color: theme.colors.textAlt }}
+                        />
+                      </Pressable>
+                    </PointerHover>
+
+                    {/* Numeric input */}
                     <View
                       style={{
-                        width: 22,
-                        height: 22,
+                        minWidth: 56,
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <LucideIcon
-                        icon={LockIcon}
-                        size={theme.fontSize('sm')}
-                        style={{ color: theme.colors.textAlt }}
+                      <TextInput
+                        value={displayValue}
+                        inputMode='numeric'
+                        textAlign='center'
+                        onChangeText={(text) =>
+                          setInputBuffers((prev) => ({
+                            ...prev,
+                            [value]: text.replace(/[^0-9]/g, ''),
+                          }))
+                        }
+                        onBlur={() => commitInput(value, displayValue)}
+                        onSubmitEditing={() => commitInput(value, displayValue)}
+                        style={{
+                          color: theme.colors.text,
+                          fontSize: theme.fontSize('md'),
+                          fontFamily: theme.fonts.semiBold,
+                          paddingHorizontal: 8,
+                          paddingVertical: 6,
+                          minWidth: 56,
+                          minHeight: 44,
+                          borderWidth: 1,
+                          borderColor: theme.colors.border,
+                          borderRadius: theme.numbers.borderRadiusSm,
+                          backgroundColor: theme.colors.backgroundLighter,
+                        }}
                       />
                     </View>
-                    <Text
-                      style={{
-                        color: theme.colors.text,
-                        fontSize: theme.fontSize('md'),
-                        fontFamily: theme.fonts.semiBold,
-                        minWidth: 56,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {annualGoalHours}
-                    </Text>
+
+                    <PointerHover effect='lift'>
+                      <Pressable
+                        onPress={() => handleStep(value, 1)}
+                        hitSlop={8}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: theme.numbers.borderRadiusSm,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: theme.colors.card,
+                        }}
+                      >
+                        <LucideIcon
+                          icon={PlusIcon}
+                          size={theme.fontSize('xs')}
+                          style={{ color: theme.colors.textAlt }}
+                        />
+                      </Pressable>
+                    </PointerHover>
+
                     <Text
                       style={{
                         color: theme.colors.textAlt,
@@ -607,69 +538,129 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                     >
                       {i18n.t('hours_lowercase')}
                     </Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Text
-                        style={{
-                          color: theme.colors.textAlt,
-                          fontSize: theme.fontSize('xs'),
-                          fontFamily: theme.fonts.semiBold,
-                          letterSpacing: 0.5,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {i18n.t('yearGoalSetInSettings')}
-                      </Text>
-                    </View>
-                    <HoverTint
-                      visible={lockedRowHovered}
-                      borderRadius={theme.numbers.borderRadiusMd}
-                    />
-                  </Pressable>
-                </PointerHover>
-              </View>
 
-              {/* Footer actions */}
-              <View style={{ gap: 10 }}>
-                <Button
-                  noTransform
-                  onPress={handleAdd}
-                  variant='outline'
+                    {/* Remove */}
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <IconButton
+                        noTransform
+                        icon={XIcon}
+                        size='sm'
+                        onPress={() => confirmRemoveMilestone(value)}
+                      />
+                    </View>
+                  </View>
+                )
+              })}
+
+              {/* Locked annual-goal row */}
+              <PointerHover onHoverChange={setLockedRowHovered}>
+                <Pressable
+                  onPress={handleNavigateToSettings}
                   style={{
-                    paddingVertical: 12,
-                    paddingHorizontal: 14,
+                    flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    gap: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 12,
                     borderRadius: theme.numbers.borderRadiusMd,
-                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.card,
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      color: theme.colors.accent,
-                      fontSize: theme.fontSize('md'),
-                      fontFamily: theme.fonts.semiBold,
+                      width: 22,
+                      height: 22,
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    {i18n.t('addMilestone')}
+                    <LucideIcon
+                      icon={LockIcon}
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.textAlt }}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      color: theme.colors.text,
+                      fontSize: theme.fontSize('md'),
+                      fontFamily: theme.fonts.semiBold,
+                      minWidth: 56,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {annualGoalHours}
                   </Text>
-                </Button>
-                <Button noTransform onPress={handleReset} hitSlop={10}>
                   <Text
                     style={{
                       color: theme.colors.textAlt,
                       fontSize: theme.fontSize('sm'),
-                      textAlign: 'center',
-                      textDecorationLine: 'underline',
                     }}
                   >
-                    {i18n.t('resetToDefaults')}
+                    {i18n.t('hours_lowercase')}
                   </Text>
-                </Button>
-              </View>
-            </KeyboardAwareScrollView>
-          )}
-        </View>
-      </Sheet.Frame>
+                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('xs'),
+                        fontFamily: theme.fonts.semiBold,
+                        letterSpacing: 0.5,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {i18n.t('yearGoalSetInSettings')}
+                    </Text>
+                  </View>
+                  <HoverTint
+                    visible={lockedRowHovered}
+                    borderRadius={theme.numbers.borderRadiusMd}
+                  />
+                </Pressable>
+              </PointerHover>
+            </View>
+
+            {/* Footer actions */}
+            <View style={{ gap: 10 }}>
+              <Button
+                noTransform
+                onPress={handleAdd}
+                variant='outline'
+                style={{
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: theme.numbers.borderRadiusMd,
+                  borderColor: theme.colors.border,
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.accent,
+                    fontSize: theme.fontSize('md'),
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('addMilestone')}
+                </Text>
+              </Button>
+              <Button noTransform onPress={handleReset} hitSlop={10}>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                    textAlign: 'center',
+                    textDecorationLine: 'underline',
+                  }}
+                >
+                  {i18n.t('resetToDefaults')}
+                </Text>
+              </Button>
+            </View>
+          </Sheet.ScrollView>
+        )}
+      </View>
     </Sheet>
   )
 }

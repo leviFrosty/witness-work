@@ -9,34 +9,17 @@ const runtime = vi.hoisted(() => {
     hook: {} as Record<string, unknown>,
     pause: vi.fn(),
     openStore: vi.fn(),
+    setOpen: vi.fn(),
   }
 })
-vi.mock('react-native', () => ({
-  Modal: ({ children }: { children: React.ReactNode }) => children,
-  Platform: {
-    get OS() {
-      return runtime.platform
-    },
-  },
-  View: 'View',
-}))
-vi.mock('react-native-gesture-handler', () => ({
-  GestureHandlerRootView: 'GestureHandlerRootView',
-}))
-vi.mock('tamagui', () => {
-  const Sheet = ({ children }: { children: React.ReactNode }) => children
-  Sheet.Handle = 'SheetHandle'
-  Sheet.Overlay = 'SheetOverlay'
-  Sheet.Frame = 'SheetFrame'
-  return { Sheet }
-})
+vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('@/components/ui/Sheet', () => ({ default: 'Sheet' }))
 vi.mock('@/components/ui/Spinner', () => ({ default: 'Spinner' }))
 vi.mock('@/components/ui/InlineNotice', () => ({ default: 'InlineNotice' }))
 vi.mock('lucide-react-native', () => ({ X: 'X' }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, numbers: {}, fontSize: () => 14 }),
 }))
-vi.mock('@/hooks/useSheetBottomInset', () => ({ default: () => 0 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/IconButton', () => ({ default: 'IconButton' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
@@ -81,7 +64,11 @@ const render = async () => {
   )
   await act(async () => {
     tree = create(
-      <ManageSubscriptionSheet open setOpen={() => {}} source='settings' />
+      <ManageSubscriptionSheet
+        open
+        setOpen={runtime.setOpen}
+        source='settings'
+      />
     )
   })
 }
@@ -96,6 +83,7 @@ const footer = () =>
     (node) =>
       (node.type as unknown) === 'Button' && node.props.variant === 'outline'
   )
+const sheet = () => tree.root.findByType('Sheet' as never)
 
 describe('ManageSubscriptionSheet', () => {
   beforeEach(() => {
@@ -238,5 +226,27 @@ describe('ManageSubscriptionSheet', () => {
     }
     await render()
     expect(footer().props.disabled).toBe(true)
+    expect(sheet().props.dismissible).toBe(false)
+    sheet().props.onOpenChange(false)
+    expect(runtime.setOpen).not.toHaveBeenCalled()
+  })
+
+  it("opens the store's own sheet only once this one has closed", async () => {
+    runtime.hook = { state: { kind: 'none' } }
+    await render()
+    expect(sheet().props.dismissible).toBe(true)
+
+    await act(async () => footer().props.onPress())
+    expect(runtime.setOpen).toHaveBeenCalledWith(false)
+    expect(runtime.openStore).not.toHaveBeenCalled()
+
+    await act(async () => sheet().props.onClosed())
+    expect(runtime.openStore).toHaveBeenCalledWith('cancel')
+
+    // A plain close, by swipe or tap outside, opens nothing.
+    runtime.openStore.mockClear()
+    sheet().props.onOpenChange(false)
+    await act(async () => sheet().props.onClosed())
+    expect(runtime.openStore).not.toHaveBeenCalled()
   })
 })

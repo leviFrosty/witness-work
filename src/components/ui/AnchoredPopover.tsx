@@ -25,6 +25,7 @@ import { Portal } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
+import { useToWindow } from '@/components/ui/sheetWindowFrame'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
@@ -151,6 +152,8 @@ const AnchoredPopover = ({
   const viewportRef = useRef<View>(null)
   const dims = useWindowDimensions()
   const anchorRef = useRef<View>(null)
+  // Inside a native sheet the anchor measures from the sheet, not the window.
+  const toWindow = useToWindow()
   const keyboardRaised = useRef(Keyboard.isVisible())
   const keyboardDidHideSubscription = useRef<ReturnType<
     typeof Keyboard.addListener
@@ -277,7 +280,7 @@ const AnchoredPopover = ({
           return
         }
 
-        setAnchor({ x, y, width, height })
+        setAnchor(toWindow({ x, y, width, height }))
         // Give a keyboardWillShow that raced the native measurement one final
         // frame to invalidate the open before the Modal becomes visible.
         openFrame.current = requestAnimationFrame(() => {

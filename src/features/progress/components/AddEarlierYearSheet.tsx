@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Modal, Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import WheelPicker from '@/components/ui/WheelPicker'
 
@@ -29,17 +29,6 @@ const AddEarlierYearSheet = ({
   onClose,
 }: AddEarlierYearSheetProps) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-
-  const [mounted, setMounted] = useState(open)
-  useEffect(() => {
-    if (open) {
-      setMounted(true)
-      return
-    }
-    const t = setTimeout(() => setMounted(false), 300)
-    return () => clearTimeout(t)
-  }, [open])
 
   const initialValue = availableEndYears[0]
   const [draftValue, setDraftValue] = useState<number | undefined>(initialValue)
@@ -55,70 +44,53 @@ const AddEarlierYearSheet = ({
   }
 
   return (
-    <Modal
-      visible={mounted}
-      transparent
-      statusBarTranslucent
-      animationType='none'
-      onRequestClose={onClose}
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      backgroundColor={theme.colors.background}
     >
-      <Sheet
-        open={open}
-        modal={false}
-        snapPointsMode='fit'
-        onOpenChange={(next: boolean) => {
-          if (!next) onClose()
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
         }}
-        transition='quick'
-        disableDrag
       >
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame
-          backgroundColor={theme.colors.background}
-          padding={0}
-          paddingBottom={insets.bottom}
+        <Text
+          accessibilityRole='header'
+          style={{ fontSize: 16, fontFamily: theme.fonts.semiBold }}
         >
-          <View
+          {i18n.t('addEarlierYear')}
+        </Text>
+        <Button noTransform onPress={handleConfirm} hitSlop={8}>
+          <Text
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderBottomWidth: 1,
-              borderBottomColor: theme.colors.border,
+              color: theme.colors.accent,
+              fontSize: 16,
+              fontFamily: theme.fonts.semiBold,
             }}
           >
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Text style={{ color: theme.colors.accent, fontSize: 16 }}>
-                {i18n.t('cancel')}
-              </Text>
-            </Pressable>
-            <Pressable onPress={handleConfirm} hitSlop={8}>
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontSize: 16,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('add')}
-              </Text>
-            </Pressable>
-          </View>
-          {open && draftValue !== undefined ? (
-            <WheelPicker
-              data={availableEndYears.map((endYear) => ({
-                label: formatPickerLabel(endYear),
-                value: endYear,
-              }))}
-              value={draftValue}
-              onValueChange={setDraftValue}
-            />
-          ) : null}
-        </Sheet.Frame>
-      </Sheet>
-    </Modal>
+            {i18n.t('add')}
+          </Text>
+        </Button>
+      </View>
+      {draftValue !== undefined ? (
+        <WheelPicker
+          data={availableEndYears.map((endYear) => ({
+            label: formatPickerLabel(endYear),
+            value: endYear,
+          }))}
+          value={draftValue}
+          onValueChange={setDraftValue}
+        />
+      ) : null}
+    </Sheet>
   )
 }
 

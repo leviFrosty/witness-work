@@ -3,6 +3,7 @@ import type { Address, Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { CustomFieldDefinition } from '@/types/customField'
 import {
+  bibleStudyFlagSchema,
   dateStringSchema,
   hasUnsafeKeys,
   recordIdSchema,
@@ -221,7 +222,7 @@ const VISIT_FIELDS: FieldRules<Visit> = {
   // Always rewritten to the contact being imported.
   contact: always(z.object({ id })),
   date: always(date),
-  isBibleStudy: always(z.boolean()),
+  isBibleStudy: always(bibleStudyFlagSchema),
   note: optional(text),
   noteDoc: optional(richNote),
   followUp: optional(schemaFor(FOLLOW_UP_FIELDS)),

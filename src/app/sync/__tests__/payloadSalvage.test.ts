@@ -82,9 +82,36 @@ describe('parsePayload salvage', () => {
     expect(dropped).toEqual([
       'contactStore.contacts.name:invalid_type',
       'conversationStore.conversations.date:custom',
-      'conversationStore.conversations.isBibleStudy:invalid_type',
       'serviceReportStore.deletedDayPlans.deletedAt:too_small',
       'serviceReportStore.serviceReports.hours:invalid_type',
+    ])
+  })
+
+  it('reads a visit without isBibleStudy as not a study, like 1.43', () => {
+    const visit = (id: string, extra: Record<string, unknown> = {}) => ({
+      id,
+      contact: { id: 'a' },
+      date: '2025-03-04T12:00:00.000Z',
+      updatedAt: 100,
+      ...extra,
+    })
+    const json = payloadWith((p) => {
+      p.conversationStore.conversations = [
+        visit('missing'),
+        visit('null', { isBibleStudy: null }),
+        visit('study', { isBibleStudy: true }),
+        visit('text', { isBibleStudy: 'yes' }),
+      ]
+    })
+    const dropped: string[] = []
+    const parsed = parsePayload(json, (paths) => dropped.push(...paths))
+    expect(parsed?.conversationStore.conversations).toEqual([
+      visit('missing', { isBibleStudy: false }),
+      visit('null', { isBibleStudy: false }),
+      visit('study', { isBibleStudy: true }),
+    ])
+    expect(dropped).toEqual([
+      'conversationStore.conversations.isBibleStudy:invalid_type',
     ])
   })
 

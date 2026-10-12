@@ -319,6 +319,22 @@ describe('malformed contacts are refused', () => {
     }
   })
 
+  it('reads a visit without isBibleStudy as not a study', () => {
+    const visit = (id: string, extra: Record<string, unknown> = {}) => ({
+      id,
+      contact: { id: 'shared-1' },
+      date: '2026-01-01T00:00:00.000Z',
+      ...extra,
+    })
+    const result = validateContactImport(
+      share(validContact, [visit('v1'), visit('v2', { isBibleStudy: null })])
+    )
+    expect(result.data?.conversations).toEqual([
+      visit('v1', { isBibleStudy: false }),
+      visit('v2', { isBibleStudy: false }),
+    ])
+  })
+
   it('refuses a share with many malformed fields as a whole', () => {
     const payload = `{"version":"1.0","type":"witnesswork-contact","exportedAt":"x",
       "contact":{"id":{"evil":1},"name":{"first":"x"},"createdAt":1,"__proto__":{"polluted":"yes"},

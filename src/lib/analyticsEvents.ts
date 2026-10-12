@@ -76,6 +76,7 @@ export const analyticsEventNames = [
   'buddies_opened',
   'buddies_push_registration',
   'buddies_tray_sync_failed',
+  'buddy_badges_opened',
   'buddy_customized',
   'buddy_invitation_answered',
   'buddy_invite_overlap_resolved',

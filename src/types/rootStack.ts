@@ -186,6 +186,11 @@ export type RootStackParamList = {
   /** The User's badge collection, with progress toward each next level. */
   Badges: { source?: BadgesSource } | undefined
   /**
+   * A buddy's collection: every collection at their highest shared level and
+   * their One-time Badges, with no progress or dates.
+   */
+  BuddyBadges: { inboxId: string }
+  /**
    * One badge, full screen: the coin flips out of `origin` and settles large.
    * `badgeKey` is a `BadgeKey` (`yearRound.3`, `firstBibleStudy`). A buddy's
    * badge shows only that it's theirs: no dates or progress.
@@ -196,6 +201,8 @@ export type RootStackParamList = {
     origin?: BadgeViewOrigin
     /** Opened from news the User hadn't seen yet: shows a "New" pill. */
     isNew?: boolean
+    /** A level a buddy hasn't reached, from their collection: "Not yet". */
+    locked?: boolean
   }
 }
 

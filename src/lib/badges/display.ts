@@ -167,6 +167,24 @@ export const badgeShelf = ({
   return entries
 }
 
+/**
+ * A buddy's collection, from what they share: every collection at its highest
+ * shared level (0 for none yet) and their One-time Badges. Shared badges carry
+ * no progress or dates, so neither does this.
+ */
+export const buddyBadgeShelf = (badges: readonly SharedBadge[] | undefined) => {
+  const known = knownSharedBadges(badges)
+  return {
+    collections: BADGE_COLLECTIONS.map((spec) => ({
+      art: spec.id,
+      level: (known.find(({ c }) => c === spec.id)?.l ?? 0) as BadgeLevel | 0,
+    })),
+    oneTime: ONE_TIME_BADGES.filter((badge) =>
+      known.some(({ c }) => c === badge.id)
+    ).map((badge) => ({ art: badge.id })),
+  }
+}
+
 /** How many badges (every level counts) the User has earned. */
 export const earnedBadgeCount = (
   earned: Readonly<Record<string, EarnedBadge>>

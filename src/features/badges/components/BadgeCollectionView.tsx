@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import BadgeCollectionCard from '@/features/badges/components/BadgeCollectionCard'
+import BadgeCollectionNext from '@/features/badges/components/BadgeCollectionNext'
 import BadgeMomentsSection from '@/features/badges/components/BadgeMomentsSection'
 import BadgesHero from '@/features/badges/components/BadgesHero'
 import { badgeKey } from '@/lib/badges/catalog'
@@ -76,9 +77,21 @@ export default function BadgeCollectionView({
           entry.kind === 'collection' ? (
             <BadgeCollectionCard
               key={entry.art}
-              entry={entry}
-              seenAt={seenAt}
-              showProgress={evaluation !== null}
+              art={entry.art}
+              level={entry.progress.level}
+              isNew={(level) => {
+                const record = entry.earned.find(
+                  (earned) => earned.level === level
+                )?.record
+                return !!record && isNewBadge(record, seenAt)
+              }}
+              footer={
+                <BadgeCollectionNext
+                  art={entry.art}
+                  level={entry.progress.level}
+                  count={evaluation ? entry.progress.count : null}
+                />
+              }
               onOpen={(level, origin) => open(entry.art, level, origin)}
             />
           ) : null

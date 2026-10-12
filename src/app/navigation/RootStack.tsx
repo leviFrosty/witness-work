@@ -495,6 +495,12 @@ const RootStackComponent = () => {
           getComponent={() => require('@/app/badges/BadgesRouteScreen').default}
         />
         <RootStack.Screen
+          name='BuddyBadges'
+          getComponent={() =>
+            require('@/app/badges/BuddyBadgesRouteScreen').default
+          }
+        />
+        <RootStack.Screen
           // Over everything, transparent, and unanimated: the screen grows
           // the coin out of the tapped medallion and plays its own close.
           options={{

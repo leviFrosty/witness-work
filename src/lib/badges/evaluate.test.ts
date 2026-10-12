@@ -5,8 +5,13 @@ import {
   newlyEarnedBadges,
   sharedMonths,
 } from '@/lib/badges/evaluate'
-import { ALL_BADGE_KEYS, parseBadgeKey } from '@/lib/badges/catalog'
 import {
+  ALL_BADGE_KEYS,
+  BADGE_COLLECTIONS,
+  parseBadgeKey,
+} from '@/lib/badges/catalog'
+import {
+  buddyBadgeShelf,
   buddyCardBadges,
   knownSharedBadges,
   profileBadges,
@@ -504,5 +509,22 @@ describe('Buddy Card badges', () => {
         { c: 'yearRound', l: 7 },
       ])
     ).toEqual([{ c: 'monthsShared', l: 3 }])
+  })
+
+  it("lays out a buddy's collection from what they share", () => {
+    const shelf = buddyBadgeShelf([
+      { c: 'yearRound', l: 2 },
+      { c: 'firstBuddy' },
+    ])
+    expect(shelf.collections.map(({ art }) => art)).toEqual(
+      BADGE_COLLECTIONS.map(({ id }) => id)
+    )
+    expect(
+      shelf.collections.find(({ art }) => art === 'yearRound')?.level
+    ).toBe(2)
+    expect(
+      shelf.collections.find(({ art }) => art === 'monthsShared')?.level
+    ).toBe(0)
+    expect(shelf.oneTime).toEqual([{ art: 'firstBuddy' }])
   })
 })

@@ -47,6 +47,7 @@ import {
   type ProfilePhoto,
   Roster,
   rosterSchema,
+  ShareCancel,
   shareCancelSchema,
   ShareInvite,
   shareInviteSchema,
@@ -218,6 +219,8 @@ export type BuddiesEngineDeps = {
    * other copy this device downloaded can go.
    */
   keepBuddyPhotos?: (blobIds: string[]) => Promise<void>
+  /** Takes back this device's system alerts for these inbox seqs. */
+  dismissAlerts?: (seqs: number[]) => void
 }
 
 /** See `sync`. */
@@ -361,6 +364,8 @@ const SHARE_KIND_PREFIX: Record<ShareType, string> = {
  */
 const JOIN_REQUEST_KIND_PREFIX = 'join.request.'
 const JOIN_CANCEL_KIND = 'join.cancel'
+/** Alert seqs kept per incoming share; older alerts have long been seen. */
+const MAX_ALERT_SEQS = 10
 export type JoinRequestPushKind = `${typeof JOIN_REQUEST_KIND_PREFIX}${string}`
 
 const toHex = (bytes: Uint8Array) =>
@@ -2014,8 +2019,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         if (recipients.has(inboxId)) continue
         const kind = `${prefix}.cancel`
         const rev = revs.take(inboxId, kind)
-        const cancel = { v: 1, id: shareId, rev }
-        if (await deliver(inboxId, kind, cancel, !ended)) {
+        const cancel = { v: 1, id: shareId, rev, removed: true }
+        // Taking someone off who hadn't said they're going is no news to them.
+        const going =
+          store.getState().shareReplies[shareId]?.[inboxId]?.status === 'going'
+        if (await deliver(inboxId, kind, cancel, going && !ended)) {
           delete sent[inboxId]
           delete sentTiming[inboxId]
         } else revs.leave(inboxId, kind, rev)
@@ -2101,7 +2109,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         applyReply(buddy, source, shareReplySchema.parse(body))
       } else if (action === 'cancel') {
         const cancel = shareCancelSchema.parse(body)
-        applyCancel(buddy, source, cancel.id, cancel.rev)
+        applyCancel(buddy, source, cancel)
       } else if (action === 'invite' || action === 'update') {
         const invite = shareInviteSchema.parse(body)
         if (invite.type !== shareTypeOfKind(event.kind)) return
@@ -2132,6 +2140,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       receivedAt: deps.now(),
       status: reopened ? 'pending' : existing.status,
       unsentReplyRev: reopened ? undefined : existing.unsentReplyRev,
+      alertSeqs: [...(existing?.alertSeqs ?? []), source.seq].slice(
+        -MAX_ALERT_SEQS
+      ),
     }
     store.setState((state) => ({
       incomingShares: { ...state.incomingShares, [key]: share },
@@ -2173,8 +2184,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function applyCancel(
     buddy: Buddy,
     source: EventSource,
-    shareId: string,
-    rev: number
+    { id: shareId, rev, removed }: ShareCancel
   ) {
     const key = incomingShareKey(buddy.inboxId, shareId)
     const existing = store.getState().incomingShares[key]
@@ -2188,6 +2198,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
+    // Taken off an invitation they hadn't accepted: it just goes away, along
+    // with any alert still showing for it.
+    if (removed && existing.status !== 'going') {
+      if (existing.alertSeqs?.length) deps.dismissAlerts?.(existing.alertSeqs)
+      return
+    }
     if (hasSharedEventEnded(existing, deps.now())) return
     notify({
       ...source,

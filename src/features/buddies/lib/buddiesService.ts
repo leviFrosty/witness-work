@@ -12,6 +12,7 @@ import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { currentBuddyProfile } from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
+import { dismissBuddyAlerts } from '@/features/buddies/lib/dismissBuddyAlerts'
 import {
   type BuddiesSyncOptions,
   createBuddiesEngine,
@@ -101,6 +102,7 @@ const engine = createBuddiesEngine({
   onSharedPhotosSaved: noteImagesArrived,
   readProfilePhoto,
   keepBuddyPhotos,
+  dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
 })
 
 /**

@@ -807,3 +807,16 @@ addresses, notes, credentials, file contents, or share links.
 PostHog is the current implementation. Provider configuration, automatic capture,
 and source-map/native-symbol uploads belong to the shared implementation and
 build setup, so changing providers does not require changing feature call sites.
+
+### Sync payload reports
+
+When a peer's sync file can't be fully read, `pullAndMerge` reports why. Each
+distinct report goes out once per launch, however often the file is pulled.
+Properties are field paths, codes and error names only: never values, note or
+contact text, filenames or device ids. In `issues`, record keys that aren't
+field names (years, months, ids) read as `*`.
+
+| Message                                  | Properties                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `iCloudSync: dropped unreadable entries` | `fields`: the dropped records and settings as `store.list.field:code`. Also sent when the file is then rejected.                                                                                                                                                                                                                                           |
+| `iCloudSync: invalid remote payload`     | `reason`: `invalid-json` (malformed or partial file), `unsafe-keys`, `invalid-frame` or `threw`. `issues` (`invalid-frame`): up to 5 distinct `path.field:code`. `step` and `error` (`threw`): the parse step that threw and the error's name, never its message. `bytes`: the file's UTF-8 length. Newer payload versions are a breadcrumb, not a report. |

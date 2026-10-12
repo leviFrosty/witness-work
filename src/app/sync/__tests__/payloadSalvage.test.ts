@@ -1,4 +1,9 @@
-import { buildPayload, parsePayload } from '@/app/sync/payload'
+import {
+  buildPayload,
+  parsePayload,
+  type PayloadRejection,
+} from '@/app/sync/payload'
+import { sanitizeNoteDocs } from '@/app/sync/payloadNotes'
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
 }))
@@ -17,6 +22,11 @@ vi.mock('@/lib/errorTracking', () => ({
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new' }))
 vi.mock('react-native', () => ({ Alert: { alert: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/app/sync/payloadNotes', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/app/sync/payloadNotes')>()
+  return { sanitizeNoteDocs: vi.fn(actual.sanitizeNoteDocs) }
+})
 
 // One unreadable record, setting or profile value used to make the whole file
 // unreadable, so a second device never synced (1.44.0).
@@ -160,5 +170,121 @@ describe('parsePayload salvage', () => {
     expect(
       parsePayload(payloadWith((p) => (p.contactStore.contacts = 'none')))
     ).toBeNull()
+  })
+})
+
+// A rejected file used to report no reason, so a frame check failing on some
+// devices couldn't be told apart from a partial download (1.44.1).
+describe('parsePayload rejection reasons', () => {
+  function reject(json: string) {
+    const rejections: PayloadRejection[] = []
+    const dropped: string[] = []
+    const parsed = parsePayload(
+      json,
+      (fields) => dropped.push(...fields),
+      (rejection) => rejections.push(rejection)
+    )
+    expect(parsed).toBeNull()
+    expect(rejections).toHaveLength(1)
+    return { rejection: rejections[0], dropped }
+  }
+
+  it('reports JSON that does not parse', () => {
+    const json = payloadWith(() => {})
+    expect(reject(json.slice(0, json.length / 2)).rejection).toEqual({
+      reason: 'invalid-json',
+    })
+    expect(reject('').rejection).toEqual({ reason: 'invalid-json' })
+  })
+
+  it('reports unsafe keys', () => {
+    const json = payloadWith(() => {}).replace(
+      '"contacts":[',
+      '"__proto__":{},"contacts":['
+    )
+    expect(reject(json).rejection).toEqual({ reason: 'unsafe-keys' })
+  })
+
+  it('reports a newer version without its dropped entries', () => {
+    const { rejection, dropped } = reject(
+      payloadWith((p) => {
+        p.version = 99
+        p.contactStore.contacts = [contact('b', { name: 42 })]
+      })
+    )
+    expect(rejection).toEqual({ reason: 'newer-version' })
+    expect(dropped).toEqual([])
+  })
+
+  it('reports frame issues as path and code', () => {
+    const { rejection } = reject(
+      payloadWith((p) => {
+        p.contactStore.customFieldDefs = null
+        p.serviceReportStore.serviceReports = { 2025: [entry('t1')] }
+      })
+    )
+    expect(rejection).toEqual({
+      reason: 'invalid-frame',
+      issues: [
+        'contactStore.customFieldDefs:invalid_type',
+        'serviceReportStore.serviceReports.*:invalid_type',
+      ],
+    })
+  })
+
+  it('de-duplicates and caps frame issues', () => {
+    const { rejection } = reject(
+      payloadWith((p) => {
+        delete p.deviceId
+        delete p.writtenAt
+        p.contactStore = 'none'
+        p.conversationStore = 'none'
+        p.preferencesStore = 'none'
+        p.serviceReportStore.serviceReports = { 2024: [], 2025: [] }
+      })
+    )
+    expect(rejection.issues).toHaveLength(5)
+    expect(new Set(rejection.issues).size).toBe(5)
+  })
+
+  it('reports dropped entries when the frame still fails', () => {
+    const { rejection, dropped } = reject(
+      payloadWith((p) => {
+        p.contactStore.contacts = [contact('a'), contact('b', { name: 42 })]
+        p.serviceReportStore = 'unreadable'
+      })
+    )
+    expect(dropped).toEqual(['contactStore.contacts.name:invalid_type'])
+    expect(rejection).toEqual({
+      reason: 'invalid-frame',
+      issues: ['serviceReportStore:invalid_type'],
+    })
+  })
+
+  it('reports the step and error name when normalizing throws', () => {
+    vi.mocked(sanitizeNoteDocs).mockImplementationOnce(() => {
+      throw new TypeError('Secret Name')
+    })
+    expect(reject(payloadWith(() => {})).rejection).toEqual({
+      reason: 'threw',
+      step: 'notes',
+      error: 'TypeError',
+    })
+  })
+
+  it('never reports values or user-written keys', () => {
+    const secret = 'Secret Name'
+    const { rejection } = reject(
+      payloadWith((p) => {
+        p.deviceId = secret
+        p.deviceName = 7
+        p.contactStore.contacts = [contact('a', { name: { secret } })]
+        p.serviceReportStore.serviceReports = { [secret]: secret }
+        p.preferencesStore.updatedAt = secret
+      })
+    )
+    expect(rejection.reason).toBe('invalid-frame')
+    expect(JSON.stringify(rejection)).not.toContain('Secret')
+    expect(JSON.stringify(rejection)).not.toContain('peer')
   })
 })

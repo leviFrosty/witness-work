@@ -134,6 +134,43 @@ test('a mutex left by a dead process is broken', async () => {
   assert.ok(Date.now() - started < 5000)
 })
 
+test('a named lock serializes holders and is broken only when its holder died', async () => {
+  const box = sandbox()
+  const counter = path.join(box.home, 'counter')
+  fs.writeFileSync(counter, '0')
+  await Promise.all(
+    Array.from({ length: 4 }, () =>
+      child(
+        box,
+        `for (let i = 0; i < 20; i++) L.withLock('api', () => {
+          const n = Number(fs.readFileSync(${JSON.stringify(counter)}, 'utf8'))
+          fs.writeFileSync(${JSON.stringify(counter)}, String(n + 1))
+        })`
+      )
+    )
+  )
+  assert.equal(fs.readFileSync(counter, 'utf8'), '80')
+  // Older than the mutex's limit but within the named lock's: still held.
+  const lock = path.join(box.home, 'api.lock')
+  fs.mkdirSync(lock)
+  fs.writeFileSync(
+    path.join(lock, 'owner'),
+    `${process.pid} ${Date.now() - 5 * 60_000} x`
+  )
+  const waiting = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `import * as L from ${JSON.stringify(LEASES)}; L.withLock('api', () => {})`,
+    ],
+    { env: box.env, timeout: 1500 }
+  )
+  assert.equal(waiting.signal, 'SIGTERM')
+  fs.writeFileSync(path.join(lock, 'owner'), `999999 ${Date.now()} x`)
+  assert.equal(await child(box, `return L.withLock('api', () => 'ok')`), 'ok')
+})
+
 test('8 concurrent claimers for 2 slots: exactly 2 win and 2 devices exist', async () => {
   const box = sandbox()
   const results = await Promise.all(

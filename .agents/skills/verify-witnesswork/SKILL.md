@@ -5,7 +5,7 @@ description: Drive the real WitnessWork app on an iOS simulator or Android emula
 
 # Verify WitnessWork
 
-`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. It never touches the user's own simulators, emulators or Metro on 8081. The app does talk to the user's API, though: without `--api local` it uses `.env`'s `EXPO_PUBLIC_API_BASE_URL`, which on a dev machine is usually their ww-api on 8787, so its reads and writes land in their local dev data.
+`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. It never touches the user's own simulators, emulators or Metro on 8081. Every run also gets a local backend: `up` starts an isolated ww-api and points the bundle at it, so Buddies, Notes Import and other backend features work without the user's own ww-api running.
 
 Alias it: `alias wwv="node scripts/verify/ww-verify.mjs"`. All commands run from the worktree root and print JSON or `ok`/`FAIL` lines.
 
@@ -33,7 +33,7 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 
 1. The worktree path, and "read `.agents/skills/verify-witnesswork/SKILL.md` and the matching `features/` file first".
 2. What changed, in a sentence or two, with the files.
-3. The platforms and the exact `wwv up` line. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`. When only the `api` check fails (the shared ww-api isn't running), relaunch with `--api local`.
+3. The platforms and the exact `wwv up` line. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`.
 4. Setup (`seed`, `flag`, `nav`), then the user path to drive, with labels or testIDs and the expected result of each step.
 5. The exact `wwv eval` read-backs and the values you expect.
 6. The screens to capture, with `wwv shot <name>`, plus dark mode or iPad where needed.
@@ -52,7 +52,6 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 ```bash
 wwv up --platform ios --seed pioneer         # iPhone; add --ipad for an iPad
 wwv up --platform android --seed pioneer     # headless emulator, same Metro
-wwv up --platform ios --api local            # also start an isolated ww-api
 ```
 
 What `up` does, in order:
@@ -60,7 +59,7 @@ What `up` does, in order:
 1. Reaps expired leases and orphaned builds.
 2. Resolves the native app before it leases anything. It computes the native fingerprint (`@expo/fingerprint`) and uses the matching build in `~/.ww-verify/builds`. Otherwise it waits for a build slot, then builds the dev client without a device: a clean dev prebuild, then `xcodebuild` (newest installed Xcode, DerivedData in `.verify/DerivedData`) or `gradlew :app:assembleDebug`. It caches the result and deletes `.verify/DerivedData` or `android/app/build` (`--keep-build-dirs` keeps them). A worktree waiting to build holds no device: if it held one, `up` hands it back first and leases again after the build.
 3. Leases a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device, queueing if the pool is full (see [Concurrency and resources](#concurrency-and-resources)). It takes a warm device first (already booted, so no boot), preferring one that already runs this build (so no install).
-4. Starts Metro on the port reserved with the lease, from 8090 to 8129.
+4. Starts (or reuses) the local ww-api (see **The backend** below), then Metro on the port reserved with the lease, from 8090 to 8129.
 5. Boots the device unless it's warm, then installs the cached build unless the device already runs exactly that binary.
 6. Launches the app against this Metro and waits until `__WW_DEV__` answers.
 
@@ -69,7 +68,10 @@ If `up` fails or is interrupted, it hands back the lease it took and stops the M
 It's ready when `up` prints its JSON summary. A first build for a new native fingerprint takes about 3 to 5 minutes on its own, longer when it queues for a build slot or memory, so run it in the background and keep working. JS-only changes reuse the cached binary and need only Metro; with a warm device that already runs it, `up` takes well under a minute. The fingerprint covers native inputs only (`fingerprint.config.js`): `modules/`, `patches/`, `plugins/`, `targets/`, native deps, and the resolved `app.config.ts`. New or changed strings in `en-US.json` don't count, except the permission strings `app.config.ts` copies into the native config.
 
 - `--accept-stale-native` skips the build. Use it only when the diff has no native change (`modules/`, `patches/`, `plugins/`, `targets/`, native deps, `app.config.ts`), and report "native binary unverified".
-- `--api local` runs `scripts/verify/dev.mjs up` from `$WW_API_DIR` (default `~/dev/ww-api`), an isolated ww-api, and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Use it whenever the change reads or writes backend data (Buddies, Notes Import, accounts) or when you need isolation. Without it, the app uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` (see `wwv up`'s `api` output), shared with the user and every other worktree.
+- **The backend.** Before Metro, `up` runs ww-api's `scripts/verify/dev.mjs up`, an isolated `wrangler dev` on 8790-8799 with its own storage (never the user's 8787), and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Its `api` output shows the URL and the ww-api commit. All worktrees share that one worker; it stops when the last lease using it is released or reaped.
+  - By default it runs from `~/dev/ww-api-worktrees/ww-verify`, a detached worktree the harness owns. Whenever no worker is running from it, `up` moves it to the latest `origin/main` and reinstalls dependencies when the lockfile changed, so it never depends on the user's checkout. Don't edit files there. `WW_API_REPO` overrides the repo (default `~/dev/ww-api`).
+  - When the app change needs an unmerged backend branch, set `WW_API_DIR=<that ww-api worktree>` on `up`. The harness runs that checkout as is.
+  - `--api env` uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` instead (the user's ww-api on 8787, or a deployed one), shared with the user and every other worktree. Use it only when the task is about that API.
 - `--ipad` needs [AXe](https://github.com/cameroncooke/AXe) (`brew install cameroncooke/axe/axe`) to read the screen; see [iPad](#ipad). `doctor` checks for it.
 - `up` ends by checking a screenshot for the native splash. If it still covers the app after `hide()`, `up` relaunches once, then fails.
 
@@ -79,7 +81,7 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 wwv doctor            # exit 1 if anything is off
 ```
 
-Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, the bundle calling the run's API (`api-base`), and on iOS AXe plus a screen the splash doesn't cover (`ios:screen`). A `warn` line doesn't fail doctor: the shared `.env` API being down is fine for UI-only checks, while `--api local` must be up. Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`.
+Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, the bundle calling the run's API (`api-base`), and on iOS AXe plus a screen the splash doesn't cover (`ios:screen`). A `warn` line doesn't fail doctor: with `--api env`, the shared API being down is fine for UI-only checks. Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`. A failing `api` check is a harness problem to fix, not a limit to report: rerun `wwv up` (it restarts an unhealthy worker), and read the worker's log at `<ww-api checkout>/.verify/wrangler.log`.
 
 ## Drive
 
@@ -227,7 +229,7 @@ Defaults depend on the machine's RAM; env vars always win, and `wwv status` prin
 
 The estimates are measured memory footprints on a 16 GB Mac Mini: a simulator about 3.4 GB and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. A footprint counts compressed memory at full size, though. Once it settles, an idle simulator running the app costs only about 1 GB of real memory, about 6 points of `kern.memorystatus_level`; booting and launching costs about 12 points for a minute. So a 16 GB machine budgets all 16 GB. That fits two iPhones and two emulators (about 15.6 GB with four Metros), or two devices plus a build, and the live check stops new boots and builds when real memory runs short. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
 
-The budget covers only the harness. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. The live check adapts to that load. If boots still push the machine into swap, raise `WW_VERIFY_MIN_FREE_PCT` rather than lowering the caps.
+The budget covers only devices, Metros and builds. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, the shared local ww-api about 0.45 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. The live check adapts to that load. If boots still push the machine into swap, raise `WW_VERIFY_MIN_FREE_PCT` rather than lowering the caps.
 
 **Spotlight.** Spotlight skips hidden folders and folders ending in `.noindex`, so `.verify/` and `~/.ww-verify` are never indexed, and neither is DerivedData; a `.metadata_never_index` file does not stop it on current macOS. Keep worktrees under a hidden folder (such as `~/.t3/worktrees`), or add the worktrees folder in System Settings > Spotlight > Search Privacy, or `mds` indexes every new checkout.
 

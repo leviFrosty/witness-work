@@ -45,6 +45,7 @@ import {
   shutdownWarm,
   snapshot,
   updateLeases,
+  withLock,
   withMutex,
 } from './leases.mjs'
 
@@ -405,20 +406,23 @@ function shutdownDevice(device, { keepDevice = false } = {}) {
 const worktreeState = (worktree) =>
   readJson(path.join(worktree, '.verify/state.json'), null)
 
-function localApiInUse(except) {
-  return readLeases().some(
-    (l) =>
-      !l.expired &&
-      l.worktree !== except &&
-      worktreeState(l.worktree)?.api?.mode === 'local'
-  )
+function localApiInUse(dir, except) {
+  return readLeases().some((l) => {
+    if (l.expired || l.worktree === except) return false
+    const api = worktreeState(l.worktree)?.api
+    return api?.mode === 'local' && api.dir === dir
+  })
 }
 
-function stopLocalApi(worktree) {
-  if (localApiInUse(worktree)) return
-  run('node', [path.join(apiDir(), 'scripts/verify/dev.mjs'), 'down'], {
-    cwd: apiDir(),
-    check: false,
+/** Stops the worktree's local API unless another live lease still uses it. */
+function stopLocalApi(worktree, api) {
+  if (!api?.dir) return
+  withLock('api', () => {
+    if (localApiInUse(api.dir, worktree)) return
+    run('node', [path.join(api.dir, 'scripts/verify/dev.mjs'), 'down'], {
+      cwd: api.dir,
+      check: false,
+    })
   })
 }
 
@@ -440,7 +444,7 @@ function stopWorktreeServices(worktree, reason) {
     stopProcessGroup(metro.pid)
     log(`stopped Metro ${metro.port} of ${path.basename(worktree)}`)
   }
-  if (state.api?.mode === 'local') stopLocalApi(worktree)
+  if (state.api?.mode === 'local') stopLocalApi(worktree, state.api)
   delete state.metro
   state.devices = {}
   state.reapedAt = Date.now()
@@ -1942,26 +1946,111 @@ function stopProcessGroup(pid) {
 
 // ---------- backend ----------
 
-function apiDir() {
-  return process.env.WW_API_DIR || path.join(os.homedir(), 'dev/ww-api')
+// Every run gets an isolated ww-api (ww-api's scripts/verify/dev.mjs).
+// WW_API_DIR runs a given checkout, such as a backend branch; otherwise it runs
+// from a worktree the harness owns at the ww-api repo's origin/main, so it
+// never depends on what the user's own checkout has checked out.
+function apiRepo() {
+  return path.resolve(
+    process.env.WW_API_REPO || path.join(os.homedir(), 'dev/ww-api')
+  )
 }
 
-function startLocalApi() {
-  const script = path.join(apiDir(), 'scripts/verify/dev.mjs')
-  if (!fs.existsSync(script))
+const managedApiDir = () => path.join(`${apiRepo()}-worktrees`, 'ww-verify')
+
+function apiDir() {
+  return process.env.WW_API_DIR
+    ? path.resolve(process.env.WW_API_DIR)
+    : managedApiDir()
+}
+
+const quiet = { stdio: ['ignore', 2, 2] }
+
+/**
+ * Moves the harness's ww-api worktree to the latest origin/main and installs
+ * its dependencies. Skipped while a worker runs from it, so a worktree that
+ * shares that worker never has its backend change underneath it.
+ */
+function updateApiCheckout(dir) {
+  const worker = readJson(path.join(dir, '.verify/state.json'), null)
+  if (pidAlive(worker?.pid)) return
+  const repo = apiRepo()
+  if (!fs.existsSync(path.join(repo, '.git')))
     fail(
-      `${script} not found; set WW_API_DIR to a ww-api checkout that has the verify-ww-api loop`
+      `No ww-api repo at ${repo}; clone it there, or set WW_API_REPO (or WW_API_DIR to a checkout)`
     )
-  run('node', [script, 'up'], {
-    cwd: apiDir(),
-    stdio: ['ignore', 'inherit', 'inherit'],
-    timeout: 180_000,
+  const fetched = run('git', ['fetch', '--quiet', 'origin', 'main'], {
+    cwd: repo,
+    check: false,
   })
-  const url = run('node', [script, 'url'], { cwd: apiDir() }).stdout.trim()
-  // The isolated worker mints its own dev-bypass token; the bundle must send it.
-  const devBypass = readJson(path.join(apiDir(), '.verify/state.json'), {})
-    .tokens?.devBypass
-  return { url, devBypass }
+  if (fetched.status !== 0)
+    log(`git fetch of ww-api failed; using the last fetched origin/main`)
+  if (!fs.existsSync(path.join(dir, '.git'))) {
+    log(`creating the ww-api checkout ${dir} at origin/main`)
+    run('git', ['worktree', 'add', '--force', '--detach', dir, 'origin/main'], {
+      cwd: repo,
+      ...quiet,
+    })
+  } else {
+    const head = (ref) =>
+      run('git', ['rev-parse', ref], { cwd: dir }).stdout.trim()
+    if (head('HEAD') !== head('origin/main')) {
+      const moved = run(
+        'git',
+        ['checkout', '--quiet', '--detach', 'origin/main'],
+        {
+          cwd: dir,
+          check: false,
+        }
+      )
+      if (moved.status !== 0)
+        log(
+          `${dir} has local edits, so it stays at ${head('HEAD').slice(0, 7)}: ${moved.stderr.trim()}`
+        )
+    }
+  }
+  const stamp = path.join(dir, '.verify/installed')
+  const inputs = ['package.json', 'pnpm-lock.yaml']
+    .map((f) => fs.readFileSync(path.join(dir, f), 'utf8'))
+    .join('\0')
+  const hash = crypto.createHash('sha256').update(inputs).digest('hex')
+  if (
+    readJson(stamp, null)?.hash === hash &&
+    fs.existsSync(path.join(dir, 'node_modules/wrangler/bin/wrangler.js'))
+  )
+    return
+  log(`installing ww-api dependencies in ${dir}`)
+  run('pnpm', ['install', '--frozen-lockfile'], {
+    cwd: dir,
+    timeout: 600_000,
+    env: { CI: 'true' }, // no interactive prompts
+    ...quiet,
+  })
+  writeJson(stamp, { hash })
+}
+
+/** Starts (or reuses) the isolated ww-api; returns what the run records. */
+function startLocalApi(dir = apiDir()) {
+  return withLock('api', () => {
+    if (dir === managedApiDir()) updateApiCheckout(dir)
+    const script = path.join(dir, 'scripts/verify/dev.mjs')
+    if (!fs.existsSync(script))
+      fail(
+        `${script} not found; ${dir} must be a ww-api checkout that has the verify-ww-api loop`
+      )
+    run('node', [script, 'up'], { cwd: dir, timeout: 180_000, ...quiet })
+    const worker = readJson(path.join(dir, '.verify/state.json'), {})
+    return {
+      mode: 'local',
+      url: worker.url,
+      port: worker.port,
+      // The isolated worker mints its own dev-bypass token; the bundle must
+      // send it.
+      devBypass: worker.tokens?.devBypass,
+      dir,
+      sha: worker.gitSha?.slice(0, 12) ?? null,
+    }
+  })
 }
 
 function envApiUrl() {
@@ -2412,6 +2501,8 @@ const commands = {
     const platform = flags.platform || 'ios'
     if (!['ios', 'android'].includes(platform))
       fail('--platform must be ios or android')
+    if (flags.api && !['local', 'env'].includes(flags.api))
+      fail('--api must be local or env')
     const disk = freeDiskGb()
     if (disk < 8)
       fail(
@@ -2456,6 +2547,11 @@ const commands = {
         stopOwnMetro(state)
         undone.push('stopped the Metro it started')
       }
+      if (
+        state.api?.mode === 'local' &&
+        !readLeases().some((l) => l.worktree === ROOT)
+      )
+        stopLocalApi(ROOT, state.api)
       writeState(state)
       return undone
     }
@@ -2479,20 +2575,27 @@ const commands = {
       device = leaseDevice(claim.lease)
       state.devices = { ...state.devices, [platform]: device }
       writeState(state)
-      if (flags.api === 'local') {
-        const { url, devBypass } = startLocalApi()
-        state.api = {
-          mode: 'local',
-          url,
-          port: Number(new URL(url).port),
-          devBypass,
-        }
-      } else if (!state.api) {
+      // A second platform keeps the API the first one runs against.
+      const shared = readLeases().some(
+        (l) => l.worktree === ROOT && l.platform !== platform && !l.expired
+      )
+      const previous = state.api
+      const apiMode = flags.api || (shared && previous?.mode) || 'local'
+      if (apiMode === 'local') {
+        // Recorded first, so a worktree that is stopping the shared worker
+        // sees this one still needs it.
+        state.api = { mode: 'local', dir: apiDir() }
+        writeState(state)
+        state.api = startLocalApi(state.api.dir)
+      } else if (!shared || previous?.mode !== 'env') {
         state.api = { mode: 'env', url: envApiUrl(), port: null }
         const parsed = new URL(state.api.url)
         if (['localhost', '127.0.0.1'].includes(parsed.hostname))
           state.api.port = Number(parsed.port || 80)
       }
+      writeState(state)
+      if (previous?.mode === 'local' && previous.dir !== state.api.dir)
+        stopLocalApi(ROOT, previous)
       const before = state.metro?.pid
       state.metro = await ensureMetro(
         state,
@@ -2588,13 +2691,13 @@ const commands = {
       const health = await httpText(
         new URL('/health', state.api.url).toString()
       )
-      // The shared `.env` API only matters to changes that touch the backend,
-      // which should run --api local anyway; a run's own API must be up.
+      // The shared `.env` API (--api env) only matters to changes that touch
+      // the backend, which run against the local one; a run's own API must be up.
       const shared = state.api.mode !== 'local'
       check(
         'api',
         health.status === 200,
-        `${state.api.mode} ${state.api.url} -> ${health.status} ${health.text.slice(0, 120)}${health.status !== 200 && shared ? ' (fine for UI-only checks; use up --api local for backend data)' : ''}`,
+        `${state.api.mode} ${state.api.url}${state.api.sha ? ` (ww-api ${state.api.sha.slice(0, 7)})` : ''} -> ${health.status} ${health.text.slice(0, 120)}${health.status !== 200 && shared ? ' (fine for UI-only checks; drop --api env for backend data)' : ''}`,
         shared
       )
     }
@@ -2951,7 +3054,7 @@ const commands = {
     }
     if (state.metro?.pid && pidAlive(state.metro.pid))
       stopProcessGroup(state.metro.pid)
-    if (state.api?.mode === 'local') stopLocalApi(ROOT)
+    if (state.api?.mode === 'local') stopLocalApi(ROOT, state.api)
     const evidence = state.runId
       ? path.relative(ROOT, path.join(STATE_DIR, 'artifacts', state.runId))
       : null
@@ -3107,9 +3210,10 @@ const commands = {
   async help() {
     console.log(`ww-verify <command> [--platform ios|android]
 
-  up [--platform ios|android] [--ipad] [--api local] [--seed <scenario>]
+  up [--platform ios|android] [--ipad] [--api local|env] [--seed <scenario>]
      [--rebuild] [--accept-stale-native] [--wait 30] [--keep-build-dirs]
-                                           lease a device, start Metro, install, launch
+                                           lease a device, start the local API and
+                                           Metro, install, launch
   doctor                                   read-only health check (exit 1 on failure)
   seed <fresh|onboarded|publisher|pioneer|busy|badges>
   eval '<js expression>'                   run JS in the app, print JSON
@@ -3138,6 +3242,7 @@ export {
   INSTALLS,
   ROOT,
   agentDevice,
+  apiDir,
   artifactHash,
   bootAndroid,
   bootIos,
@@ -3156,6 +3261,8 @@ export {
   simctlDevices,
   sleep,
   startHeartbeat,
+  startLocalApi,
+  stopLocalApi,
   takeLease,
   toolEnv,
   updateInstalls,

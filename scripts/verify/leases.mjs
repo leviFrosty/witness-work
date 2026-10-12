@@ -72,6 +72,8 @@ export const CONFIG = {
 
 const LEGACY_STALE_MS = 24 * 60 * 60 * 1000
 const MUTEX_STALE_MS = 2 * 60 * 1000
+// A named lock covers a dependency install and a server start.
+const NAMED_LOCK_STALE_MS = 15 * 60 * 1000
 const REAPER_STALE_MS = 10 * 60 * 1000
 // A build refreshes `seenAt` every minute, so a reused pid can't hold a slot.
 const BUILD_STALE_MS = 5 * 60 * 1000
@@ -111,29 +113,29 @@ const round = (gb) => Math.round(gb * 10) / 10
 
 let mutexDepth = 0
 
-function breakStaleMutex() {
+function breakStaleLock(dir, staleMs) {
   let stat
   try {
-    stat = fs.statSync(MUTEX)
+    stat = fs.statSync(dir)
   } catch {
     return
   }
-  const owner = readText(path.join(MUTEX, 'owner'))
+  const owner = readText(path.join(dir, 'owner'))
   const [pid, at] = owner ? owner.split(' ').map(Number) : [0, stat.mtimeMs]
   const age = Date.now() - at
-  const stale = owner ? !pidAlive(pid) || age > MUTEX_STALE_MS : age > 5000
+  const stale = owner ? !pidAlive(pid) || age > staleMs : age > 5000
   if (!stale) return
-  const grave = `${MUTEX}.stale-${process.pid}-${Date.now()}`
+  const grave = `${dir}.stale-${process.pid}-${Date.now()}`
   try {
-    fs.renameSync(MUTEX, grave)
+    fs.renameSync(dir, grave)
   } catch {
     return
   }
   // Another process may have broken and retaken it between our read and the
-  // rename; if we moved a live mutex, hand it back.
+  // rename; if we moved a live lock, hand it back.
   if (readText(path.join(grave, 'owner')) !== owner) {
     try {
-      fs.renameSync(grave, MUTEX)
+      fs.renameSync(grave, dir)
     } catch {
       // someone holds a newer one; theirs wins
     }
@@ -150,35 +152,52 @@ function readText(file) {
   }
 }
 
-/** Runs `fn` (synchronous, short) while holding the machine-wide mutex. */
-export function withMutex(fn) {
-  if (mutexDepth) return fn()
-  fs.mkdirSync(HOME, { recursive: true })
+function holdLock(dir, staleMs, fn) {
+  fs.mkdirSync(path.dirname(dir), { recursive: true })
   const token = `${process.pid} ${Date.now()} ${Math.random().toString(36).slice(2)}`
-  const deadline = Date.now() + 2 * MUTEX_STALE_MS
+  const deadline = Date.now() + 2 * staleMs
   for (;;) {
     try {
-      fs.mkdirSync(MUTEX)
+      fs.mkdirSync(dir)
       break
     } catch (error) {
       if (error.code !== 'EEXIST') throw error
     }
-    breakStaleMutex()
+    breakStaleLock(dir, staleMs)
     if (Date.now() > deadline)
       throw new Error(
-        `${MUTEX} is stuck; remove it if no ww-verify process is running`
+        `${dir} is stuck; remove it if no ww-verify process is running`
       )
     sleepSync(20 + Math.random() * 60)
   }
-  fs.writeFileSync(path.join(MUTEX, 'owner'), token)
-  mutexDepth++
+  fs.writeFileSync(path.join(dir, 'owner'), token)
   try {
     return fn()
   } finally {
-    mutexDepth--
-    if (readText(path.join(MUTEX, 'owner')) === token)
-      fs.rmSync(MUTEX, { recursive: true, force: true })
+    if (readText(path.join(dir, 'owner')) === token)
+      fs.rmSync(dir, { recursive: true, force: true })
   }
+}
+
+/** Runs `fn` (synchronous, short) while holding the machine-wide mutex. */
+export function withMutex(fn) {
+  if (mutexDepth) return fn()
+  return holdLock(MUTEX, MUTEX_STALE_MS, () => {
+    mutexDepth++
+    try {
+      return fn()
+    } finally {
+      mutexDepth--
+    }
+  })
+}
+
+/**
+ * Runs `fn` (synchronous, may take minutes) while holding the lock `name`.
+ * Never take the mutex inside it, or call it while holding the mutex.
+ */
+export function withLock(name, fn) {
+  return holdLock(path.join(HOME, `${name}.lock`), NAMED_LOCK_STALE_MS, fn)
 }
 
 // ---------- leases ----------

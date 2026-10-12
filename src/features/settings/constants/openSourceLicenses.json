@@ -1020,12 +1020,6 @@
     "author": "Krzysztof Borowy"
   },
   {
-    "name": "@react-native-menu/menu",
-    "version": "2.0.0",
-    "license": "MIT",
-    "author": "Jesse Katsumata"
-  },
-  {
     "name": "@react-native/assets-registry",
     "version": "0.86.3",
     "license": "MIT"

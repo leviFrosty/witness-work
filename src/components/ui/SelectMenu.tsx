@@ -1,7 +1,5 @@
-import { type ReactNode, useState } from 'react'
-import { View } from 'react-native'
-import { MenuView } from '@react-native-menu/menu'
-import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import type { ReactElement } from 'react'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 
 export interface SelectMenuProps {
   items: { id: string; label: string; selected: boolean }[]
@@ -10,9 +8,10 @@ export interface SelectMenuProps {
   accessibilityValue: string
   /** Corner radius of the trigger, for its iPad hover tint. */
   hoverRadius?: number
-  children: ReactNode
+  children: ReactElement
 }
 
+/** A form control's native single-choice menu, checking the current choice. */
 export default function SelectMenu({
   items,
   onSelect,
@@ -21,27 +20,21 @@ export default function SelectMenu({
   hoverRadius,
   children,
 }: SelectMenuProps) {
-  const [hovered, setHovered] = useState(false)
   return (
-    <MenuView
+    <PullDownMenu
+      fill
       actions={items.map((item) => ({
         id: item.id,
         title: item.label,
-        state: item.selected ? 'on' : 'off',
+        checked: item.selected,
+        onPress: () => onSelect(item.id),
       }))}
-      onPressAction={({ nativeEvent }) => onSelect(nativeEvent.event)}
+      accessibilityLabel={accessibilityLabel ?? accessibilityValue}
+      accessibilityValue={accessibilityValue}
+      pointerEffect='tint'
+      hoverRadius={hoverRadius}
     >
-      <PointerHover onHoverChange={setHovered}>
-        <View
-          accessible
-          accessibilityRole='button'
-          accessibilityLabel={accessibilityLabel}
-          accessibilityValue={{ text: accessibilityValue }}
-        >
-          {children}
-          <HoverTint visible={hovered} borderRadius={hoverRadius} />
-        </View>
-      </PointerHover>
-    </MenuView>
+      {children}
+    </PullDownMenu>
   )
 }

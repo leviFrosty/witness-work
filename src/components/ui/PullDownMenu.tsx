@@ -1,173 +1,54 @@
-import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import { Ellipsis as EllipsisIcon } from 'lucide-react-native'
-import type { ReactElement } from 'react'
-import { Platform, View, type StyleProp, type ViewStyle } from 'react-native'
-
+import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
-import PointerHover, { type PointerEffect } from '@/components/ui/PointerHover'
-import { flattenMenu, isSubmenu, menuGroups } from '@/components/ui/menuEntries'
-import type {
-  ContextMenuEntries,
-  ContextMenuItem,
-} from '@/components/ui/ContextMenu.types'
-import { usePreferences } from '@/stores/preferences'
-import androidMenuSymbols from '@/assets/android-menu-icons/symbols.json'
+import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
-type PullDownMenuProps = {
-  /** Same entries as `ContextMenu`: falsy items hidden, arrays are groups. */
-  actions: ContextMenuEntries
-  /** Announced on the trigger. */
-  accessibilityLabel: string
-  /** Custom trigger. Defaults to a plain ellipsis "More" button. */
-  children?: ReactElement
-  /** Default trigger's icon size. */
-  triggerSize?: number
-  /** Default trigger's icon color. Defaults to `theme.colors.textAlt`. */
-  triggerColor?: string
-  /** IPad pointer effect on the trigger; `lift` suits opaque ones. */
-  pointerEffect?: PointerEffect
-  style?: StyleProp<ViewStyle>
-  /** Extra touch area around the trigger. Use 0 for adjacent triggers. */
-  hitSlop?: number
-}
+export type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
 /**
- * Maps menu groups to `MenuView` actions.
+ * A native menu that opens on tap: a SwiftUI `Menu` on iOS
+ * (`PullDownMenu.ios.tsx`) and a Material dropdown menu on Android
+ * (`PullDownMenu.android.tsx`). Other platforms render the trigger without a
+ * menu.
  *
- * Two quirks of @react-native-menu/menu 2.0.0 on iOS (new architecture) shape
- * this:
- *
- * - Actions nest only one level: the Fabric bridge copies a top-level action's
- *   `subactions` but drops theirs. Groups are drawn as inline (`displayInline`)
- *   menus, so a submenu inside one would lose its items. A group holding a
- *   submenu is therefore laid out at the top level instead — UIKit still
- *   separates it from the inline groups around it.
- * - Every action reaches UIKit with an `imageColor`, defaulting to 0 (clear),
- *   which tints the SF Symbol invisible. Always pass a real color.
- *
- * Android's popup menu has no separators, so its groups are concatenated;
- * submenus open as nested popups. Icons use packaged Android vector drawables
- * mapped from the same SF Symbol names used on iOS.
+ * Use it for a visible "More" button in headers, for selection menus (give
+ * actions `checked`), and for rows whose content can't host a long-press
+ * `ContextMenu` (e.g. rows with text inputs). Everything else should put
+ * secondary actions in a `ContextMenu`.
  */
-export function nativeMenuActions(
-  groups: ContextMenuItem[][],
-  {
-    ios,
-    color,
-    destructiveColor,
-  }: { ios: boolean; color: string; destructiveColor: string }
-): MenuAction[] {
-  const icon = (
-    systemImage: ContextMenuItem['systemImage'],
-    destructive?: boolean
-  ) => {
-    if (!systemImage) return {}
-    const image = ios
-      ? systemImage
-      : (androidMenuSymbols as Partial<Record<string, string>>)[systemImage]
-    return image
-      ? { image, imageColor: destructive ? destructiveColor : color }
-      : {}
-  }
-
-  const item = (entry: ContextMenuItem): MenuAction =>
-    isSubmenu(entry)
-      ? {
-          id: entry.id,
-          title: entry.title,
-          ...icon(entry.systemImage),
-          subactions: entry.actions.map((action) => ({
-            id: `${entry.id}.${action.id}`,
-            title: action.title,
-            ...icon(action.systemImage, action.destructive),
-            titleColor: action.destructive ? destructiveColor : undefined,
-            attributes: action.destructive ? { destructive: true } : undefined,
-          })),
-        }
-      : {
-          id: entry.id,
-          title: entry.title,
-          ...icon(entry.systemImage, entry.destructive),
-          titleColor: entry.destructive ? destructiveColor : undefined,
-          attributes: entry.destructive ? { destructive: true } : undefined,
-        }
-
-  const native = groups.map((group) => group.map(item))
-  if (!ios || groups.length < 2) return native.flat()
-
-  return native.flatMap((group, index) =>
-    groups[index].some(isSubmenu)
-      ? group
-      : [
-          {
-            id: `group-${index}`,
-            title: '',
-            displayInline: true,
-            subactions: group,
-          },
-        ]
-  )
-}
-
-/**
- * A native menu that opens on tap — the UIMenu pull-down on iOS, a popup menu
- * on Android. Use it for a visible "More" button in headers, and for rows whose
- * content can't host a long-press `ContextMenu` (e.g. rows with text inputs).
- * Everything else should put secondary actions in a `ContextMenu`.
- */
-const PullDownMenu = ({
-  actions,
+export default function PullDownMenu({
   accessibilityLabel,
+  accessibilityHint,
+  accessibilityValue,
   children,
   triggerSize = 20,
   triggerColor,
-  pointerEffect = 'highlight',
   style,
-  hitSlop = 10,
-}: PullDownMenuProps) => {
+  testID,
+}: PullDownMenuProps) {
   const theme = useTheme()
-  const colorScheme = usePreferences((s) => s.colorScheme)
-  const groups = menuGroups(actions)
-  if (!groups.length) return null
-
-  const leaves = flattenMenu(groups)
-  const menuActions = nativeMenuActions(groups, {
-    ios: Platform.OS === 'ios',
-    color: theme.colors.text,
-    destructiveColor: theme.colors.error,
-  })
-
   return (
-    <MenuView
+    <View
       style={style}
-      actions={menuActions}
-      themeVariant={colorScheme ?? undefined}
-      onPressAction={({ nativeEvent }) => {
-        const chosen = leaves.find(({ key }) => key === nativeEvent.event)
-        if (chosen) chosen.action.onPress()
-      }}
+      testID={testID}
+      accessible
+      accessibilityRole='button'
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityValue={
+        accessibilityValue === undefined
+          ? undefined
+          : { text: accessibilityValue }
+      }
     >
-      {/* MenuView's UIButton leaves pointer interaction off. */}
-      <PointerHover effect={pointerEffect}>
-        <View
-          accessible
-          accessibilityRole='button'
-          accessibilityLabel={accessibilityLabel}
-          hitSlop={hitSlop}
-          collapsable={false}
-        >
-          {children ?? (
-            <LucideIcon
-              icon={EllipsisIcon}
-              color={triggerColor ?? theme.colors.textAlt}
-              size={triggerSize}
-            />
-          )}
-        </View>
-      </PointerHover>
-    </MenuView>
+      {children ?? (
+        <LucideIcon
+          icon={EllipsisIcon}
+          color={triggerColor ?? theme.colors.textAlt}
+          size={triggerSize}
+        />
+      )}
+    </View>
   )
 }
-
-export default PullDownMenu

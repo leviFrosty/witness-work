@@ -135,7 +135,6 @@ vi.mock('react-native-gesture-handler', () => {
   }
 })
 vi.mock('tamagui', () => ({ Input: 'Input' }))
-vi.mock('@react-native-menu/menu', () => ({ MenuView: 'MenuView' }))
 vi.mock('expo-blur', () => ({ BlurView: 'BlurView' }))
 vi.mock('expo-glass-effect', () => ({
   GlassView: 'GlassView',

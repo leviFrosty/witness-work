@@ -1,8 +1,8 @@
-import { MenuView } from '@react-native-menu/menu'
 import { Layers } from 'lucide-react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import type { ViewStyle } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { mapLayers, type MapLayer } from '@/types/map'
@@ -14,35 +14,32 @@ export default function MapLayerMenu({
 }: {
   value: MapLayer
   onChange: (value: MapLayer) => void
-  style: StyleProp<ViewStyle>
+  style: ViewStyle
 }) {
   const theme = useTheme()
+  // The menu's trigger takes the pointer effect, shaped like the button.
+  const { borderRadius } = style
 
   return (
-    <MenuView
+    <PullDownMenu
       actions={mapLayers.map((layer) => ({
         id: layer,
         title: i18n.t(`map_layer_${layer}`),
-        state: layer === value ? 'on' : 'off',
+        checked: layer === value,
+        onPress: () => onChange(layer),
       }))}
-      onPressAction={({ nativeEvent }) => {
-        const layer = mapLayers.find((layer) => layer === nativeEvent.event)
-        if (layer) onChange(layer)
-      }}
+      accessibilityLabel={i18n.t('map_chooseLayer')}
+      accessibilityValue={i18n.t(`map_layer_${value}`)}
+      pointerEffect='lift'
+      hoverRadius={typeof borderRadius === 'number' ? borderRadius : undefined}
     >
-      <Button
-        accessibilityRole='button'
-        accessibilityLabel={i18n.t('map_chooseLayer')}
-        accessibilityValue={{ text: i18n.t(`map_layer_${value}`) }}
-        variant='glass'
-        style={style}
-      >
+      <Button variant='glass' style={style}>
         <LucideIcon
           icon={Layers}
           size={theme.fontSize('sm')}
           style={{ color: theme.colors.text }}
         />
       </Button>
-    </MenuView>
+    </PullDownMenu>
   )
 }

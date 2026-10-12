@@ -399,7 +399,6 @@ const ContactsScreen = ({
           triggerColor={theme.colors.accent}
           triggerSize={22}
           actions={moreActions}
-          hitSlop={6}
         />
       </View>
       {/* Beside the open contact's own "+ Add", this one needs its name. */}

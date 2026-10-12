@@ -11,19 +11,47 @@ const { slot } = vi.hoisted(() => ({
 vi.mock('react-native', () => ({ Pressable: 'Pressable', View: 'View' }))
 vi.mock('lucide-react-native', () => ({ ChevronDown: 'ChevronDown' }))
 vi.mock('@/assets/icons/check.xml', () => ({ default: 1 }))
-vi.mock('@react-native-menu/menu', () => ({ MenuView: 'MenuView' }))
+vi.mock('@expo/ui', () => ({ Host: 'Host' }))
+vi.mock('@expo/ui/swift-ui', () => ({
+  Button: 'Button',
+  Divider: 'Divider',
+  // Renders a custom label (the trigger) into a slot of its own.
+  Menu: ({
+    label,
+    children,
+    ...props
+  }: { label: React.ReactNode } & React.PropsWithChildren) =>
+    typeof label === 'string'
+      ? React.createElement('Menu', { label, ...props }, children)
+      : React.createElement(
+          'Menu',
+          props,
+          React.createElement('MenuLabel', null, label),
+          children
+        ),
+  RNHostView: 'RNHostView',
+  Toggle: 'Toggle',
+}))
+vi.mock('@expo/ui/swift-ui/modifiers', () => ({
+  accessibilityHint: (hint: string) => ({ accessibilityHint: hint }),
+  accessibilityIdentifier: (id: string) => ({ accessibilityIdentifier: id }),
+  accessibilityLabel: (label: string) => ({ accessibilityLabel: label }),
+  accessibilityValue: (value: string) => ({ accessibilityValue: value }),
+}))
 vi.mock('@expo/ui/jetpack-compose', () => ({
-  Host: 'ComposeHost',
   RNHostView: 'RNHostView',
   Text: 'ComposeText',
   Icon: 'ComposeIcon',
   Column: 'Column',
+  HorizontalDivider: 'HorizontalDivider',
+  Spacer: 'Spacer',
   DropdownMenu: Object.assign(slot('DropdownMenu'), {
     Trigger: slot('Trigger'),
     Items: slot('Items'),
   }),
   DropdownMenuItem: Object.assign(slot('DropdownMenuItem'), {
     Text: slot('ItemText'),
+    LeadingIcon: slot('LeadingIcon'),
     TrailingIcon: slot('TrailingIcon'),
   }),
 }))
@@ -34,10 +62,18 @@ vi.mock('@expo/ui/jetpack-compose/modifiers', () => ({
     role,
   }),
   selectableGroup: () => ({ selectableGroup: true }),
+  size: (width: number, height: number) => ({ size: [width, height] }),
 }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
-    colors: { background: '#fff', card: '#fff', border: '#ddd', text: '#111' },
+    colors: {
+      background: '#fff',
+      card: '#fff',
+      border: '#ddd',
+      text: '#111',
+      textAlt: '#666',
+      error: '#f00',
+    },
     numbers: { borderRadiusMd: 8 },
     fontSize: () => 16,
   }),
@@ -53,11 +89,11 @@ vi.mock('@/components/ui/PointerHover', () => ({
 }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 // Exercise the shared control with each implementation Metro selects natively.
-vi.mock('@/components/ui/SelectMenu', async (importOriginal) => {
-  const ios = await importOriginal<typeof import('./SelectMenu')>()
-  const android = await import('./SelectMenu.android')
+vi.mock('@/components/ui/PullDownMenu', async () => {
+  const ios = await import('./PullDownMenu.ios')
+  const android = await import('./PullDownMenu.android')
   return {
-    default: (props: import('./SelectMenu').SelectMenuProps) =>
+    default: (props: import('./PullDownMenu').PullDownMenuProps) =>
       React.createElement(
         platform.android ? android.default : ios.default,
         props
@@ -167,17 +203,21 @@ describe('iOS Select', () => {
     platform.android = false
   })
 
-  it('retains the native menu selection and original-item callback', async () => {
+  it('checks the current choice in the native menu and returns the original item', async () => {
     await render()
-    const menu = root.root.findByType('MenuView' as never)
-    expect(menu.props.actions).toEqual([
-      { id: '1', title: 'First', state: 'off' },
-      { id: '2', title: 'Second', state: 'on' },
-      { id: '3', title: 'Third', state: 'off' },
+    const toggles = root.root.findAllByType('Toggle' as never)
+    expect(toggles.map(({ props }) => [props.label, props.isOn])).toEqual([
+      ['First', false],
+      ['Second', true],
+      ['Third', false],
     ])
-    await act(async () => {
-      menu.props.onPressAction({ nativeEvent: { event: '1' } })
-    })
+    expect(root.root.findByType('Menu' as never).props.modifiers).toEqual(
+      expect.arrayContaining([
+        { accessibilityLabel: 'Choice' },
+        { accessibilityValue: 'Second' },
+      ])
+    )
+    await act(async () => toggles[0].props.onIsOnChange(true))
     expect(onChange).toHaveBeenCalledExactlyOnceWith(data[0])
     expect(onChange.mock.calls[0][0]).toBe(data[0])
   })

@@ -1,21 +1,11 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, View } from 'react-native'
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  Host,
-  HorizontalDivider,
-  RNHostView,
-  Text,
-} from '@expo/ui/jetpack-compose'
+import { DropdownMenu, Host, RNHostView } from '@expo/ui/jetpack-compose'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import { usePreferences } from '@/stores/preferences'
-import {
-  isSubmenu,
-  menuAccessibilityProps,
-  menuGroups,
-} from '@/components/ui/menuEntries'
+import MenuItems from '@/components/ui/MenuItems.android'
+import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import type {
   ContextMenuAction,
@@ -25,8 +15,7 @@ import type {
 
 /**
  * Material dropdown menu anchored to the content, opened by long press. Android
- * has no lifted preview, so `preview` is ignored. A submenu replaces the menu's
- * items in place, led by an item that goes back.
+ * has no lifted preview, so `preview` is ignored.
  */
 export default function ContextMenu({
   actions,
@@ -96,25 +85,6 @@ export default function ContextMenu({
       ? menuAccessibilityProps(groups)
       : { accessible: false }
 
-  const item = (
-    key: string,
-    title: string,
-    onClick: () => void,
-    destructive?: boolean
-  ) => (
-    <DropdownMenuItem
-      key={key}
-      elementColors={{
-        textColor: destructive ? theme.colors.error : theme.colors.text,
-      }}
-      onClick={onClick}
-    >
-      <DropdownMenuItem.Text>
-        <Text>{title}</Text>
-      </DropdownMenuItem.Text>
-    </DropdownMenuItem>
-  )
-
   const menu = (
     <DropdownMenu
       expanded={expanded}
@@ -144,38 +114,12 @@ export default function ContextMenu({
         </RNHostView>
       </DropdownMenu.Trigger>
       <DropdownMenu.Items>
-        {submenu ? (
-          <>
-            {item('back', `‹  ${submenu.title}`, () => setSubmenu(null))}
-            <HorizontalDivider color={theme.colors.border} />
-            {submenu.actions.map((action) =>
-              item(
-                action.id,
-                action.title,
-                () => select(action),
-                action.destructive
-              )
-            )}
-          </>
-        ) : (
-          groups.map((group, index) => (
-            <Fragment key={index}>
-              {index > 0 ? (
-                <HorizontalDivider color={theme.colors.border} />
-              ) : null}
-              {group.map((entry) =>
-                isSubmenu(entry)
-                  ? item(entry.id, `${entry.title}  ›`, () => setSubmenu(entry))
-                  : item(
-                      entry.id,
-                      entry.title,
-                      () => select(entry),
-                      entry.destructive
-                    )
-              )}
-            </Fragment>
-          ))
-        )}
+        <MenuItems
+          groups={groups}
+          submenu={submenu}
+          onSubmenuChange={setSubmenu}
+          onSelect={select}
+        />
       </DropdownMenu.Items>
     </DropdownMenu>
   )

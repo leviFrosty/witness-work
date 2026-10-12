@@ -32,7 +32,7 @@ import Svg, {
 import IconButton from '@/components/ui/IconButton'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import ActionButton from '@/components/ui/ActionButton'
-import { MenuView } from '@react-native-menu/menu'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
@@ -49,7 +49,6 @@ import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMeth
 import {
   buildReportMonthMenu,
   getEarliestReportMonth,
-  parseReportMonthId,
 } from '@/features/service-reports/lib/reportMonthMenu'
 import useServiceReport from '@/stores/serviceReport'
 import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
@@ -169,14 +168,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     now: new Date(),
     earliest: getEarliestReportMonth(serviceReports),
     selected: { month, year },
+    onSelect: (next) => navigation.setParams(next),
   })
-  const handleSelectMonth = (id: string) => {
-    // Year submenus are containers, not months.
-    if (id.startsWith('year-')) return
-    const next = parseReportMonthId(id)
-
-    navigation.setParams(next)
-  }
 
   const { regular: handwritingFont, bold: handwritingFontBold } =
     useHandwritingFonts(_i18n.locale)
@@ -337,18 +330,14 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <MenuView
+        <PullDownMenu
           actions={monthMenuActions}
-          onOpenMenu={handleMenuOpen}
-          onPressAction={({ nativeEvent }) =>
-            handleSelectMonth(nativeEvent.event)
-          }
+          accessibilityLabel={monthYearLabel}
+          accessibilityHint={i18n.t('selectMonth')}
+          onOpen={handleMenuOpen}
+          hoverRadius={theme.numbers.borderRadiusLg}
         >
           <View
-            accessible
-            accessibilityRole='button'
-            accessibilityLabel={monthYearLabel}
-            accessibilityHint={i18n.t('selectMonth')}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -376,7 +365,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
               color={theme.colors.textAlt}
             />
           </View>
-        </MenuView>
+        </PullDownMenu>
         {/* Spacer mirroring the close button so the title stays centered */}
         <View style={{ width: 18 }} />
       </View>

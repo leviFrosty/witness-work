@@ -1,5 +1,8 @@
 import moment from 'moment'
-import type { MenuAction } from '@react-native-menu/menu'
+import type {
+  ContextMenuAction,
+  ContextMenuSubmenu,
+} from '@/components/ui/ContextMenu.types'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
 /** Months listed flat at the top of the menu, newest first. */
@@ -41,29 +44,32 @@ export const getEarliestReportMonth = (
  * Native menu for jumping the report screen to any month. The last 12 months
  * are listed flat (the common case); anything older, back to the earliest month
  * with Time Entries or the selected month, nests under a submenu per year so
- * the menu stays short.
+ * the menu stays short. Returns those two groups.
  */
 export const buildReportMonthMenu = ({
   now,
   earliest,
   selected,
+  onSelect,
 }: {
   now: Date
   earliest: ReportMonth | null
   selected: ReportMonth
-}): MenuAction[] => {
+  onSelect: (month: ReportMonth) => void
+}): [ContextMenuAction[], ContextMenuSubmenu[]] => {
   const selectedId = reportMonthId(selected)
-  const action = (m: moment.Moment, format: string): MenuAction => {
+  const action = (m: moment.Moment, format: string): ContextMenuAction => {
     const id = m.format('YYYY-MM')
     return {
       id,
       title: m.format(format),
-      state: id === selectedId ? 'on' : 'off',
+      checked: id === selectedId,
+      onPress: () => onSelect(parseReportMonthId(id)),
     }
   }
 
   const current = moment(now).startOf('month')
-  const recent: MenuAction[] = []
+  const recent: ContextMenuAction[] = []
   for (let i = 0; i < RECENT_MONTH_COUNT; i++) {
     recent.push(action(moment(current).subtract(i, 'months'), 'MMMM YYYY'))
   }
@@ -77,7 +83,7 @@ export const buildReportMonthMenu = ({
     .map((m) => moment({ year: m.year, month: m.month }))
     .reduce((a, b) => (a.isBefore(b) ? a : b), oldestRecent)
 
-  const olderByYear = new Map<number, MenuAction[]>()
+  const olderByYear = new Map<number, ContextMenuAction[]>()
   for (
     const m = moment(oldestRecent).subtract(1, 'month');
     !m.isBefore(floor);
@@ -88,17 +94,13 @@ export const buildReportMonthMenu = ({
     olderByYear.set(m.year(), months)
   }
 
-  const older: MenuAction[] = [...olderByYear].map(([year, subactions]) => ({
-    id: `year-${year}`,
-    title: String(year),
-    state: subactions.some((a) => a.state === 'on') ? 'on' : 'off',
-    subactions,
-  }))
+  const older = [...olderByYear].map(
+    ([year, actions]): ContextMenuSubmenu => ({
+      id: `year-${year}`,
+      title: String(year),
+      actions,
+    })
+  )
 
-  return older.length
-    ? [
-        ...recent,
-        { id: 'older', title: '', displayInline: true, subactions: older },
-      ]
-    : recent
+  return [recent, older]
 }

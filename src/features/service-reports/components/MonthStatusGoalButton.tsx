@@ -83,6 +83,7 @@ const MonthStatusGoalButton = ({
     return (
       <PullDownMenu
         accessibilityLabel={accessibilityLabel}
+        fill
         style={{ flexShrink: 1 }}
         actions={[
           {

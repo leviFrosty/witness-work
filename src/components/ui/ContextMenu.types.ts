@@ -9,8 +9,13 @@ export type ContextMenuAction = {
   onPress: () => void
   /** Red, and listed last in its menu — pair with `confirmDestructive`. */
   destructive?: boolean
-  /** SF Symbol on iOS; PullDownMenu maps supported names to Android drawables. */
+  /** SF Symbol on iOS; `androidMenuIcons` maps supported names for Android. */
   systemImage?: ButtonProps['systemImage']
+  /**
+   * Shows whether this is the current choice, with a checkmark, in a
+   * `PullDownMenu` selection menu. Leave it unset for plain actions.
+   */
+  checked?: boolean
 }
 
 /** One level of nested actions, e.g. Delete ▸ This plan / All plans. */

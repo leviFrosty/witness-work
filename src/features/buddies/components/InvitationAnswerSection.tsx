@@ -1,4 +1,3 @@
-import { View } from 'react-native'
 import InfoPopover from '@/components/ui/InfoPopover'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import SegmentedControl from '@/components/ui/SegmentedControl'
@@ -69,19 +68,17 @@ export default function InvitationAnswerSection({
           controlWidth='full'
           lastInSection
         >
-          <View pointerEvents={answering.busy ? 'none' : 'auto'}>
-            <SegmentedControl<ShareReply>
-              variant='pill'
-              options={[
-                { key: 'going', label: i18n.t('buddies_going') },
-                { key: 'declined', label: i18n.t('buddies_cantMakeIt') },
-              ]}
-              value={status === 'pending' ? null : status}
-              onChange={(reply) => {
-                if (reply !== status) answering.answer(share, reply)
-              }}
-            />
-          </View>
+          <SegmentedControl<ShareReply>
+            options={[
+              { key: 'going', label: i18n.t('buddies_going') },
+              { key: 'declined', label: i18n.t('buddies_cantMakeIt') },
+            ]}
+            value={status === 'pending' ? null : status}
+            onChange={(reply) => {
+              if (reply !== status) answering.answer(share, reply)
+            }}
+            disabled={answering.busy}
+          />
         </InputRowContainer>
       ) : null}
     </BuddiesSection>

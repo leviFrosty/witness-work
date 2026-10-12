@@ -13,8 +13,8 @@ name: Plan just hours, then a time span, and the form remembers the last one
 - assertVisible: Add One Time Plan
 - tapOn:
     id: plan-duration-pill
-- tapOn:
-    id: plan-when-hours
+# iOS's native segmented control has no per-segment ids, so tap the labels.
+- tapOn: Just hours
 # Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.
 - tapOn: '2'
 - tapOn:
@@ -32,8 +32,7 @@ name: Plan just hours, then a time span, and the form remembers the last one
 - tapOn: Create Plan
 - tapOn:
     id: plan-duration-pill
-- tapOn:
-    id: plan-when-span
+- tapOn: Time span
 - tapOn:
     id: plan-picker-done
 - tapOn:

@@ -442,8 +442,6 @@ const WhenDock = (props: Props) => {
           <>
             <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
               <SegmentedControl
-                variant='pill'
-                size='sm'
                 options={[
                   {
                     key: 'hours',

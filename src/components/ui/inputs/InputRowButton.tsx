@@ -1,8 +1,6 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import React, { PropsWithChildren, ReactNode, useState } from 'react'
 import { Pressable, StyleProp, ViewStyle, View } from 'react-native'
-import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -14,8 +12,7 @@ import {
   useInputLayout,
 } from '@/components/ui/inputs/InputLayout'
 import Haptics from '@/lib/haptics'
-import i18n from '@/lib/locales'
-import { shareUrl } from '@/lib/share'
+import useLinkMenuActions from '@/hooks/useLinkMenuActions'
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
@@ -72,44 +69,11 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
 }: Props) => {
   const theme = useTheme()
   const layout = useInputLayout()
-  const toast = useToastController()
   const [hovered, setHovered] = useState(false)
-
-  const copyLink = async (link: string) => {
-    try {
-      await Clipboard.setStringAsync(link)
-      Haptics.success()
-      toast.show(i18n.t('linkCopied'), { native: true, duration: 2000 })
-    } catch {
-      Haptics.error()
-    }
-  }
+  const linkActions = useLinkMenuActions({ url, label, onOpen: onPress })
 
   const menuActions: ContextMenuEntries = [
-    ...(url
-      ? [
-          [
-            onPress && {
-              id: 'open',
-              title: i18n.t('open'),
-              systemImage: 'safari' as const,
-              onPress,
-            },
-            {
-              id: 'copy_link',
-              title: i18n.t('copyLink'),
-              systemImage: 'link' as const,
-              onPress: () => void copyLink(url),
-            },
-            {
-              id: 'share',
-              title: i18n.t('shareEllipsis'),
-              systemImage: 'square.and.arrow.up' as const,
-              onPress: () => void shareUrl(url, label).catch(() => {}),
-            },
-          ],
-        ]
-      : []),
+    ...linkActions,
     ...(contextActions ?? []),
   ]
   const hasMenu = !disabled && menuActions.length > 0

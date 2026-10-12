@@ -1,13 +1,9 @@
-import { View } from 'react-native'
-import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import {
+  GroupedListPickerRow,
+  GroupedListSection,
+} from '@/components/ui/GroupedList'
 import i18n, { TranslationKey } from '@/lib/locales'
-import Select from '@/components/ui/Select'
 import { usePreferences } from '@/stores/preferences'
-import Text from '@/components/ui/MyText'
-import { useContext } from 'react'
-import { ThemeContext } from '@/contexts/theme'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import moment from 'moment'
 import {
@@ -29,6 +25,20 @@ const DATE_ORDER_PATTERNS: Record<DateOrder, string> = {
   ymd: 'YYYY/MM/DD',
 }
 
+/** The pickers' value for following the Region (or the device). */
+const AUTO = 'auto'
+
+/** Picker options carry strings; `Auto` stands for no saved value. */
+const toOptions = <T extends string | number>(
+  options: { label: string; value: T | undefined }[]
+) =>
+  options.map(({ label, value }) => ({
+    label,
+    value: value === undefined ? AUTO : String(value),
+  }))
+
+const fromOption = (value: string) => (value === AUTO ? undefined : value)
+
 const AppearancePreferencesSection = () => {
   const {
     set,
@@ -38,7 +48,6 @@ const AppearancePreferencesSection = () => {
     timeFormat,
     dateOrder,
   } = usePreferences()
-  const theme = useContext(ThemeContext)
   // What each Auto row currently resolves to (Region → device), so the Auto
   // option can show its effective value.
   const autoStartOfWeek = resolveStartOfWeek({ region: formatRegion })
@@ -110,87 +119,56 @@ const AppearancePreferencesSection = () => {
   ]
 
   return (
-    <View style={{ gap: 20 }}>
-      <Section>
-        <InputRowContainer
+    <>
+      <GroupedListSection>
+        <GroupedListPickerRow
           label={i18n.t('durationFormat')}
-          lastInSection
-          style={{ justifyContent: 'space-between' }}
-        >
-          <View style={{ flex: 1 }}>
-            <Select
-              data={timeDisplayOptions}
-              value={timeDisplayFormat}
-              onChange={({ value }) => set({ timeDisplayFormat: value })}
-            />
-          </View>
-        </InputRowContainer>
-      </Section>
-      <View style={{ gap: 5 }}>
-        <SectionTitle text={i18n.t('dateAndTime')} />
-        <Section>
-          <InputRowContainer
-            label={i18n.t('formatRegion')}
-            style={{ justifyContent: 'space-between' }}
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={regionOptions}
-                value={formatRegion}
-                onChange={({ value }) => set({ formatRegion: value })}
-              />
-            </View>
-          </InputRowContainer>
-          <InputRowContainer
-            label={i18n.t('startOfWeek')}
-            style={{ justifyContent: 'space-between' }}
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={startOfWeekOptions}
-                value={startOfWeek}
-                onChange={({ value }) => set({ startOfWeek: value })}
-              />
-            </View>
-          </InputRowContainer>
-          <InputRowContainer
-            label={i18n.t('clockFormat')}
-            style={{ justifyContent: 'space-between' }}
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={timeFormatOptions}
-                value={timeFormat}
-                onChange={({ value }) => set({ timeFormat: value })}
-              />
-            </View>
-          </InputRowContainer>
-          <InputRowContainer
-            label={i18n.t('dateOrder')}
-            style={{ justifyContent: 'space-between' }}
-            lastInSection
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={dateOrderOptions}
-                value={dateOrder}
-                onChange={({ value }) => set({ dateOrder: value })}
-              />
-            </View>
-          </InputRowContainer>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              paddingHorizontal: 12,
-              paddingBottom: 16,
-            }}
-          >
-            {i18n.t('formatRegion_description')}
-          </Text>
-        </Section>
-      </View>
-    </View>
+          options={timeDisplayOptions}
+          value={timeDisplayFormat}
+          onChange={(value) =>
+            set({ timeDisplayFormat: value as MinuteDisplayFormat })
+          }
+        />
+      </GroupedListSection>
+      <GroupedListSection
+        title={i18n.t('dateAndTime')}
+        footer={i18n.t('formatRegion_description')}
+      >
+        <GroupedListPickerRow
+          label={i18n.t('formatRegion')}
+          options={toOptions(regionOptions)}
+          value={formatRegion ?? AUTO}
+          onChange={(value) =>
+            set({ formatRegion: fromOption(value) as FormatRegion | undefined })
+          }
+        />
+        <GroupedListPickerRow
+          label={i18n.t('startOfWeek')}
+          options={toOptions(startOfWeekOptions)}
+          value={startOfWeek === undefined ? AUTO : String(startOfWeek)}
+          onChange={(value) => {
+            const day = fromOption(value)
+            set({ startOfWeek: day === undefined ? undefined : Number(day) })
+          }}
+        />
+        <GroupedListPickerRow
+          label={i18n.t('clockFormat')}
+          options={toOptions(timeFormatOptions)}
+          value={timeFormat ?? AUTO}
+          onChange={(value) =>
+            set({ timeFormat: fromOption(value) as TimeFormat | undefined })
+          }
+        />
+        <GroupedListPickerRow
+          label={i18n.t('dateOrder')}
+          options={toOptions(dateOrderOptions)}
+          value={dateOrder ?? AUTO}
+          onChange={(value) =>
+            set({ dateOrder: fromOption(value) as DateOrder | undefined })
+          }
+        />
+      </GroupedListSection>
+    </>
   )
 }
 

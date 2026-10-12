@@ -1,5 +1,4 @@
 import {
-  ChevronRight as ChevronRightIcon,
   Clock as ClockIcon,
   Download as DownloadIcon,
   FileInput as FileInputIcon,
@@ -8,11 +7,11 @@ import {
 } from 'lucide-react-native'
 import { Alert } from 'react-native'
 import { useState } from 'react'
-import Wrapper from '@/components/ui/layout/Wrapper'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
-import IconButton from '@/components/ui/IconButton'
+import {
+  GroupedList,
+  GroupedListRow,
+  GroupedListSection,
+} from '@/components/ui/GroupedList'
 import Spinner from '@/components/ui/Spinner'
 import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
@@ -29,7 +28,6 @@ import useConversations from '@/stores/conversationStore'
 import { useToastController } from '@tamagui/toast'
 import { logger } from '@/lib/logger'
 import AppPreferencesSection from '@/features/settings/components/preferences-sections/AppPreferencesSection'
-import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const MoreScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -103,59 +101,44 @@ const MoreScreen = () => {
   }
 
   return (
-    <SettingsInputLayout>
-      <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
-          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-        >
-          <AppPreferencesSection />
-          <Section>
-            <InputRowButton
-              leftIcon={Undo2Icon}
-              label={i18n.t('recoverContacts')}
-              onPress={() => pushScreen('Recover Contacts')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={ClockIcon}
-              label={i18n.t('dismissedContacts')}
-              onPress={() => pushScreen('Dismissed Contacts')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={FileInputIcon}
-              label={i18n.t('importContact')}
-              onPress={handleImportContact}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={DownloadIcon}
-              label={i18n.t('checkForUpdate')}
-              onPress={checkForUpdate}
-            >
-              {checkingUpdate ? (
-                <Spinner size='small' label={i18n.t('update_checking')} />
-              ) : (
-                <IconButton icon={ChevronRightIcon} />
-              )}
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={SproutIcon}
-              label={i18n.t('restartOnboarding')}
-              onPress={() =>
-                set({ onboardingComplete: false, onboardingStepId: null })
-              }
-              lastInSection
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-          </Section>
-        </KeyboardAwareScrollView>
-      </Wrapper>
-    </SettingsInputLayout>
+    <GroupedList>
+      <AppPreferencesSection />
+      <GroupedListSection>
+        <GroupedListRow
+          icon={Undo2Icon}
+          label={i18n.t('recoverContacts')}
+          onPress={() => pushScreen('Recover Contacts')}
+        />
+        <GroupedListRow
+          icon={ClockIcon}
+          label={i18n.t('dismissedContacts')}
+          onPress={() => pushScreen('Dismissed Contacts')}
+        />
+        <GroupedListRow
+          icon={FileInputIcon}
+          label={i18n.t('importContact')}
+          onPress={handleImportContact}
+        />
+        <GroupedListRow
+          icon={DownloadIcon}
+          label={i18n.t('checkForUpdate')}
+          onPress={checkForUpdate}
+          accessory={checkingUpdate ? 'none' : 'chevron'}
+          trailing={
+            checkingUpdate ? (
+              <Spinner size='small' label={i18n.t('update_checking')} />
+            ) : undefined
+          }
+        />
+        <GroupedListRow
+          icon={SproutIcon}
+          label={i18n.t('restartOnboarding')}
+          onPress={() =>
+            set({ onboardingComplete: false, onboardingStepId: null })
+          }
+        />
+      </GroupedListSection>
+    </GroupedList>
   )
 }
 

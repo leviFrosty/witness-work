@@ -1,57 +1,43 @@
 import {
-  ChevronRight as ChevronRightIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
 } from 'lucide-react-native'
-import { View } from 'react-native'
-import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
-import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
-import { useInputLayout } from '@/components/ui/inputs/InputLayout'
 
 const PreferencesSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
-  const layout = useInputLayout()
   return (
-    <View style={{ gap: 3 }}>
-      <Section>
+    <>
+      <GroupedListSection>
         <LanguageSelector />
-      </Section>
-      <View style={{ height: layout === 'drawer' ? 4 : 12 }} />
-      <Section>
-        <InputRowButton
-          leftIcon={UserIcon}
+      </GroupedListSection>
+      <GroupedListSection>
+        <GroupedListRow
+          icon={UserIcon}
           label={i18n.t('profile')}
           onPress={() => handleNavigate('PreferencesPublisher')}
           selected={selectedDestination === 'PreferencesPublisher'}
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-        <InputRowButton
-          leftIcon={PaletteIcon}
+        />
+        <GroupedListRow
+          icon={PaletteIcon}
           label={i18n.t('personalization')}
           onPress={() => handleNavigate('PreferencesPersonalization')}
           selected={selectedDestination === 'PreferencesPersonalization'}
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-        <InputRowButton
-          leftIcon={SettingsIcon}
+        />
+        <GroupedListRow
+          icon={SettingsIcon}
           label={i18n.t('preferences')}
           onPress={() => handleNavigate('Preferences')}
           selected={selectedDestination === 'Preferences'}
-          lastInSection
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-      </Section>
-    </View>
+        />
+      </GroupedListSection>
+    </>
   )
 }
 export default PreferencesSection

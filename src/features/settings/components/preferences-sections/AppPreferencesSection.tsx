@@ -1,17 +1,14 @@
 import {
   Bell as BellIcon,
   BellOff as BellOffIcon,
-  ChevronRight as ChevronRightIcon,
   LocateFixed as LocateFixedIcon,
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
-import { Alert, View } from 'react-native'
+import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
 import i18n from '@/lib/locales'
-import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import { requestLocationPermission } from '@/lib/address'
-import IconButton from '@/components/ui/IconButton'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import useNotifications from '@/hooks/notifications'
@@ -51,45 +48,39 @@ const AppPreferencesSection = () => {
   }
 
   return (
-    <View style={{ gap: 3 }}>
-      <Section>
-        <InputRowButton
-          leftIcon={notifications.allowed ? BellIcon : BellOffIcon}
-          label={
-            notifications.allowed
-              ? i18n.t('pushNotificationsEnabled')
-              : i18n.t('pushNotificationsDisabled')
-          }
-          onPress={
-            notifications.allowed
-              ? undefined
-              : notifications.canAskAgain
-                ? () => void notifications.register()
-                : askToTakeToSettings
-          }
-        >
-          {!notifications.allowed && <IconButton icon={ChevronRightIcon} />}
-        </InputRowButton>
-        <InputRowButton
-          lastInSection
-          leftIcon={locationEnabled ? NavigationIcon : LocateFixedIcon}
-          label={
-            locationEnabled
-              ? i18n.t('locationEnabled')
-              : i18n.t('locationDisabled')
-          }
-          onPress={() =>
-            locationEnabled
-              ? undefined
-              : requestLocationPermission((status) =>
+    <GroupedListSection>
+      <GroupedListRow
+        icon={notifications.allowed ? BellIcon : BellOffIcon}
+        label={
+          notifications.allowed
+            ? i18n.t('pushNotificationsEnabled')
+            : i18n.t('pushNotificationsDisabled')
+        }
+        onPress={
+          notifications.allowed
+            ? undefined
+            : notifications.canAskAgain
+              ? () => void notifications.register()
+              : askToTakeToSettings
+        }
+      />
+      <GroupedListRow
+        icon={locationEnabled ? NavigationIcon : LocateFixedIcon}
+        label={
+          locationEnabled
+            ? i18n.t('locationEnabled')
+            : i18n.t('locationDisabled')
+        }
+        onPress={
+          locationEnabled
+            ? undefined
+            : () =>
+                requestLocationPermission((status) =>
                   setLocationEnabled(status)
                 )
-          }
-        >
-          {!locationEnabled && <IconButton icon={ChevronRightIcon} />}
-        </InputRowButton>
-      </Section>
-    </View>
+        }
+      />
+    </GroupedListSection>
   )
 }
 export default AppPreferencesSection

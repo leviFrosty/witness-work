@@ -1,20 +1,15 @@
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import {
-  ChevronRight as ChevronRightIcon,
   Cloud as CloudIcon,
   Ellipsis as EllipsisIcon,
   FileInput as FileInputIcon,
   FileOutput as FileOutputIcon,
   FileText as FileTextIcon,
 } from 'lucide-react-native'
-import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import { syncKey } from '@/lib/syncCopy'
 import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
-import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
-import IconButton from '@/components/ui/IconButton'
-import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
@@ -32,71 +27,57 @@ const AppSection = ({
     unviewedReadyImportCount(s.entries)
   )
   return (
-    <View style={{ gap: 3 }}>
-      <SectionTitle alignWithIcons text={i18n.t('app')} />
-      <Section>
-        <InputRowButton
-          leftIcon={FileOutputIcon}
-          label={i18n.t('backupAndRestore')}
-          onPress={() => handleNavigate('Import and Export')}
-          selected={selectedDestination === 'Import and Export'}
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-        <InputRowButton
-          leftIcon={FileInputIcon}
-          label={i18n.t('mytimeImport')}
-          onPress={() => handleNavigate('MytimeImport')}
-          selected={selectedDestination === 'MytimeImport'}
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-        {notesImportEnabled && (
-          <InputRowButton
-            leftIcon={FileTextIcon}
-            label={i18n.t('notesImport_settingsLabel')}
-            // Only a real answer closes it. While checking, offline or after a
-            // failed check, the composer explains and offers Try Again.
-            disabled={notesImport.status === 'unavailable'}
-            sublabel={
-              notesImport.status !== 'unavailable'
-                ? undefined
-                : notesImport.updateRequired
-                  ? i18n.t('notesImport_updateRequired')
-                  : i18n.t('notesImport_unavailable')
-            }
-            onPress={() => handleNavigate('NotesImportComposer')}
-            selected={selectedDestination === 'NotesImportComposer'}
-          >
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-            >
-              <NotesImportReadyDot visible={notesImportReadyCount > 0} />
-              <IconButton icon={ChevronRightIcon} />
-            </View>
-          </InputRowButton>
-        )}
-        {cloudSyncSupported && (
-          <InputRowButton
-            leftIcon={CloudIcon}
-            label={i18n.t(syncKey('iCloudSync'))}
-            onPress={() => handleNavigate('PreferencesiCloud')}
-            selected={selectedDestination === 'PreferencesiCloud'}
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-        )}
-        <InputRowButton
-          leftIcon={EllipsisIcon}
-          label={i18n.t('more')}
-          onPress={() => handleNavigate('More')}
-          selected={selectedDestination === 'More'}
-          lastInSection
-        >
-          <IconButton icon={ChevronRightIcon} />
-        </InputRowButton>
-      </Section>
-    </View>
+    <GroupedListSection title={i18n.t('app')}>
+      <GroupedListRow
+        icon={FileOutputIcon}
+        label={i18n.t('backupAndRestore')}
+        onPress={() => handleNavigate('Import and Export')}
+        selected={selectedDestination === 'Import and Export'}
+      />
+      <GroupedListRow
+        icon={FileInputIcon}
+        label={i18n.t('mytimeImport')}
+        onPress={() => handleNavigate('MytimeImport')}
+        selected={selectedDestination === 'MytimeImport'}
+      />
+      {notesImportEnabled && (
+        <GroupedListRow
+          icon={FileTextIcon}
+          label={i18n.t('notesImport_settingsLabel')}
+          // Only a real answer closes it. While checking, offline or after a
+          // failed check, the composer explains and offers Try Again.
+          disabled={notesImport.status === 'unavailable'}
+          sublabel={
+            notesImport.status !== 'unavailable'
+              ? undefined
+              : notesImport.updateRequired
+                ? i18n.t('notesImport_updateRequired')
+                : i18n.t('notesImport_unavailable')
+          }
+          onPress={() => handleNavigate('NotesImportComposer')}
+          selected={selectedDestination === 'NotesImportComposer'}
+          trailing={
+            notesImportReadyCount > 0 ? (
+              <NotesImportReadyDot visible />
+            ) : undefined
+          }
+        />
+      )}
+      {cloudSyncSupported && (
+        <GroupedListRow
+          icon={CloudIcon}
+          label={i18n.t(syncKey('iCloudSync'))}
+          onPress={() => handleNavigate('PreferencesiCloud')}
+          selected={selectedDestination === 'PreferencesiCloud'}
+        />
+      )}
+      <GroupedListRow
+        icon={EllipsisIcon}
+        label={i18n.t('more')}
+        onPress={() => handleNavigate('More')}
+        selected={selectedDestination === 'More'}
+      />
+    </GroupedListSection>
   )
 }
 

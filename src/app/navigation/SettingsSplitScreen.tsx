@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import {
   SafeAreaInsetsContext,
@@ -9,7 +9,6 @@ import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
 import Header from '@/components/ui/layout/Header'
-import { InputLayoutProvider } from '@/components/ui/inputs/InputLayout'
 import SettingsContents from '@/features/settings/components/SettingsContents'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
@@ -45,22 +44,15 @@ const SettingsSplitLayout = ({
           alignSelf: 'center',
         }}
       >
-        <InputLayoutProvider value='drawer'>
-          <ScrollView
-            style={{ width: 350, flexGrow: 0 }}
-            contentContainerStyle={{
-              paddingTop: 16,
-              paddingBottom: insets.bottom + 24,
-              paddingHorizontal: 12,
-            }}
-          >
+        <View style={{ width: 350 }}>
+          <View style={{ paddingHorizontal: 12 }}>
             <SidebarToggle mode='show' />
-            <SettingsContents
-              onNavigate={onNavigate}
-              selectedDestination={selectedDestination}
-            />
-          </ScrollView>
-        </InputLayoutProvider>
+          </View>
+          <SettingsContents
+            onNavigate={onNavigate}
+            selectedDestination={selectedDestination}
+          />
+        </View>
         <View
           style={{
             flex: 1,

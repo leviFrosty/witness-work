@@ -1,6 +1,5 @@
 import {
   Calendar1 as Calendar1Icon,
-  ChevronRight as ChevronRightIcon,
   FileOutput as FileOutputIcon,
   Flame as FlameIcon,
   Globe as GlobeIcon,
@@ -13,151 +12,104 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
   Volume2 as Volume2Icon,
 } from 'lucide-react-native'
-import Wrapper from '@/components/ui/layout/Wrapper'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
-import IconButton from '@/components/ui/IconButton'
-import { View } from 'react-native'
 import { RootStackNavigation } from '@/types/rootStack'
-import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+import {
+  GroupedList,
+  GroupedListRow,
+  GroupedListSection,
+} from '@/components/ui/GroupedList'
 import { calendarSyncSupported } from '../../../../../modules/calendar-bridge'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   return (
-    <SettingsInputLayout>
-      <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
-          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-        >
-          <View style={{ gap: 5 }}>
-            <Section>
-              <InputRowButton
-                leftIcon={GlobeIcon}
-                label={i18n.t('regionAndFormats')}
-                onPress={() => navigation.navigate('PreferencesAppearance')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={MessagesSquareIcon}
-                label={i18n.t('conversations')}
-                onPress={() => navigation.navigate('PreferencesConversation')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={Calendar1Icon}
-                label={i18n.t('plans')}
-                onPress={() => navigation.navigate('PreferencesPlans')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              {calendarSyncSupported && (
-                <InputRowButton
-                  leftIcon={Calendar1Icon}
-                  label={i18n.t('calendarSync')}
-                  onPress={() => navigation.navigate('PreferencesCalendar')}
-                >
-                  <IconButton icon={ChevronRightIcon} />
-                </InputRowButton>
-              )}
-              <InputRowButton
-                leftIcon={RouteIcon}
-                label={i18n.t('navigation')}
-                onPress={() => navigation.navigate('PreferencesNavigation')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={SlidersHorizontalIcon}
-                label={i18n.t('contactFields')}
-                onPress={() => navigation.navigate('PreferencesCustomFields')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={SlidersHorizontalIcon}
-                label={i18n.t('conversationFields')}
-                onPress={() =>
-                  navigation.navigate('PreferencesConversationFields')
-                }
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={PanelBottomIcon}
-                label={i18n.t('tabOrder')}
-                onPress={() => navigation.navigate('PreferencesTabOrder')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={HouseIcon}
-                label={i18n.t('homeScreen')}
-                onPress={() => navigation.navigate('PreferencesHomeScreen')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={Calendar1Icon}
-                label={i18n.t('milestoneSecondary_schedule_title')}
-                onPress={() => navigation.navigate('PreferencesScheduleScreen')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={FlameIcon}
-                label={i18n.t('streaksAndBadges')}
-                onPress={() =>
-                  navigation.navigate('PreferencesStreaksAndBadges')
-                }
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={Volume2Icon}
-                label={i18n.t('audioAndHaptics')}
-                onPress={() =>
-                  navigation.navigate('PreferencesAudioAndHaptics')
-                }
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              {Platform.OS === 'ios' && (
-                <InputRowButton
-                  leftIcon={LayoutGridIcon}
-                  label={i18n.t('widgets')}
-                  onPress={() => navigation.navigate('PreferencesWidgets')}
-                >
-                  <IconButton icon={ChevronRightIcon} />
-                </InputRowButton>
-              )}
-              <InputRowButton
-                leftIcon={ShieldCheckIcon}
-                label={i18n.t('privacy')}
-                onPress={() => navigation.navigate('PreferencesPrivacy')}
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-              <InputRowButton
-                leftIcon={FileOutputIcon}
-                label={i18n.t('backups')}
-                onPress={() => navigation.navigate('PreferencesBackups')}
-                lastInSection
-              >
-                <IconButton icon={ChevronRightIcon} />
-              </InputRowButton>
-            </Section>
-          </View>
-        </KeyboardAwareScrollView>
-      </Wrapper>
-    </SettingsInputLayout>
+    <GroupedList>
+      <GroupedListSection>
+        <GroupedListRow
+          icon={GlobeIcon}
+          label={i18n.t('regionAndFormats')}
+          onPress={() => navigation.navigate('PreferencesAppearance')}
+        />
+        <GroupedListRow
+          icon={MessagesSquareIcon}
+          label={i18n.t('conversations')}
+          onPress={() => navigation.navigate('PreferencesConversation')}
+        />
+        <GroupedListRow
+          icon={Calendar1Icon}
+          label={i18n.t('plans')}
+          onPress={() => navigation.navigate('PreferencesPlans')}
+        />
+        {calendarSyncSupported && (
+          <GroupedListRow
+            icon={Calendar1Icon}
+            label={i18n.t('calendarSync')}
+            onPress={() => navigation.navigate('PreferencesCalendar')}
+          />
+        )}
+        <GroupedListRow
+          icon={RouteIcon}
+          label={i18n.t('navigation')}
+          onPress={() => navigation.navigate('PreferencesNavigation')}
+        />
+        <GroupedListRow
+          icon={SlidersHorizontalIcon}
+          label={i18n.t('contactFields')}
+          onPress={() => navigation.navigate('PreferencesCustomFields')}
+        />
+        <GroupedListRow
+          icon={SlidersHorizontalIcon}
+          label={i18n.t('conversationFields')}
+          onPress={() => navigation.navigate('PreferencesConversationFields')}
+        />
+        <GroupedListRow
+          icon={PanelBottomIcon}
+          label={i18n.t('tabOrder')}
+          onPress={() => navigation.navigate('PreferencesTabOrder')}
+        />
+        <GroupedListRow
+          icon={HouseIcon}
+          label={i18n.t('homeScreen')}
+          onPress={() => navigation.navigate('PreferencesHomeScreen')}
+        />
+        <GroupedListRow
+          icon={Calendar1Icon}
+          label={i18n.t('milestoneSecondary_schedule_title')}
+          onPress={() => navigation.navigate('PreferencesScheduleScreen')}
+        />
+        <GroupedListRow
+          icon={FlameIcon}
+          label={i18n.t('streaksAndBadges')}
+          onPress={() => navigation.navigate('PreferencesStreaksAndBadges')}
+        />
+        <GroupedListRow
+          icon={Volume2Icon}
+          label={i18n.t('audioAndHaptics')}
+          onPress={() => navigation.navigate('PreferencesAudioAndHaptics')}
+        />
+        {Platform.OS === 'ios' && (
+          <GroupedListRow
+            icon={LayoutGridIcon}
+            label={i18n.t('widgets')}
+            onPress={() => navigation.navigate('PreferencesWidgets')}
+          />
+        )}
+        <GroupedListRow
+          icon={ShieldCheckIcon}
+          label={i18n.t('privacy')}
+          onPress={() => navigation.navigate('PreferencesPrivacy')}
+        />
+        <GroupedListRow
+          icon={FileOutputIcon}
+          label={i18n.t('backups')}
+          onPress={() => navigation.navigate('PreferencesBackups')}
+        />
+      </GroupedListSection>
+    </GroupedList>
   )
 }
 

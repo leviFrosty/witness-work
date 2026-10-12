@@ -3,6 +3,7 @@ import { useSyncResetNotification } from '@/app/sync/useSyncResetNotification'
 import useCalendarSyncNotification from '@/app/calendar/useCalendarSyncNotification'
 import useCalendarSyncPausedNotification from '@/app/calendar/useCalendarSyncPausedNotification'
 import type { NotificationItem } from '@/types/notifications'
+import useAnnouncementNotification from '@/app/notifications/useAnnouncementNotification'
 import useDevNotificationItems from '@/app/notifications/devNotifications'
 import useReminderNotifications from '@/app/notifications/useReminderNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
@@ -32,6 +33,7 @@ export default function NotificationsBell() {
   const buddiesEnabled = useBuddiesEnabled()
   const buddiesSync = useBuddyTraySyncStatus()
   const items: (NotificationItem | null)[] = [
+    useAnnouncementNotification(),
     // Ahead of last month's report on the same day: decide the rollover first.
     useRolloverNotification(),
     usePreviousReportNotification(now),

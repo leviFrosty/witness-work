@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   readFlag: vi.fn(),
   listeners: new Set<() => void>(),
   cached: {} as Record<string, boolean | string>,
+  payloads: {} as Record<string, unknown>,
   distinctId: 'installation-one',
   failure: undefined as 'request' | 'quota' | 'partial' | undefined,
   exposures: [] as {
@@ -53,6 +54,7 @@ vi.mock('@/lib/posthogClient', () => ({
     reloadFeatureFlagsAsync: mocks.reload,
     getFeatureFlag: mocks.readFlag,
     getFeatureFlags: () => mocks.cached,
+    getFeatureFlagPayloads: () => mocks.payloads,
     getDistinctId: () => mocks.distinctId,
     getPersistedProperty: () => ({
       flags: {},
@@ -91,6 +93,7 @@ beforeEach(async () => {
   vi.clearAllMocks()
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   mocks.cached = {}
+  mocks.payloads = {}
   mocks.distinctId = 'installation-one'
   mocks.failure = undefined
   mocks.exposures = []
@@ -176,6 +179,32 @@ it('records a loaded flag at its reader, preserving multivariate values and bool
     },
     { flag: 'buddies', value: false, distinctId: 'installation-one' },
   ])
+})
+
+it('reads a flag payload for the current identity without recording exposure', async () => {
+  const payload = { id: 'notice', title: 'Hello' }
+  mocks.reload.mockImplementation(async () => {
+    mocks.payloads = { announcement: payload }
+    publish({ announcement: true })
+    return mocks.cached
+  })
+  const { useInitializeFeatureFlags, useFeatureFlagPayload } = await import(
+    './featureFlags'
+  )
+  function Reader() {
+    useInitializeFeatureFlags()
+    const value = useFeatureFlagPayload('announcement')
+    return <output data-value={value} />
+  }
+  await act(async () => {
+    root = create(<Reader />)
+  })
+  expect(shownValue()).toEqual(payload)
+  expect(mocks.exposures).toEqual([])
+
+  mocks.distinctId = 'installation-two'
+  await act(async () => root!.update(<Reader />))
+  expect(shownValue()).toBeUndefined()
 })
 
 it('waits for a successful load instead of reporting an undefined exposure', async () => {

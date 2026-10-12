@@ -78,6 +78,7 @@ export function setup() {
       | 'readProfilePhoto'
       | 'keepBuddyPhotos'
       | 'withdrawnAt'
+      | 'account'
     > = {}
   ) {
     const store = memoryStore({})

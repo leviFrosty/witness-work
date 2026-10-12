@@ -15,6 +15,11 @@ import {
 } from '@/features/buddies/lib/state'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { SharedBadge } from '@/types/badges'
+import { registerAccount } from '@/lib/serverAccount/client'
+import {
+  type CachedServerAccount,
+  createServerAccount,
+} from '@/lib/serverAccount/serverAccount'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -26,7 +31,32 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
-function user(name: string, badges?: SharedBadge[]) {
+/** A server account (ADR 0024) on the same worker, remembered in memory. */
+function serverAccount() {
+  let cached: CachedServerAccount | null = null
+  return createServerAccount({
+    register: (key) =>
+      registerAccount({
+        baseUrl: relayUrl!,
+        key,
+        now: Date.now,
+        randomBytes: random,
+      }),
+    storage: {
+      get: () => cached,
+      set: (value) => {
+        cached = value
+      },
+    },
+    now: Date.now,
+  })
+}
+
+function user(
+  name: string,
+  badges?: SharedBadge[],
+  account?: ReturnType<typeof serverAccount>
+) {
   const seed = random(32)
   let shares: OutgoingShareSpec[] = []
   let streak: BuddyStreak | undefined
@@ -55,6 +85,7 @@ function user(name: string, badges?: SharedBadge[]) {
     randomBytes: random,
     now: () => Date.now() + ahead,
     getRootSeed: async () => seed,
+    account,
     getProfile: () => ({ name, badges }),
     getShares: () => shares,
     getStreak: () => streak,
@@ -111,6 +142,14 @@ async function pair(inviter: ReturnType<typeof user>, invitee: typeof inviter) {
 }
 
 describe.skipIf(!relayUrl)('buddies relay interop', () => {
+  it('links the inbox to a server account the worker registered', async () => {
+    const account = serverAccount()
+    const ann = user('Ann', undefined, account)
+    await ann.engine.sync()
+    expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
+    await ann.engine.deleteEverything()
+  })
+
   it('pairs, exchanges cards, and ends the connection', async () => {
     const mom = user('Mom')
     const anna = user('Anna')

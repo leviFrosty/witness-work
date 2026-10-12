@@ -109,6 +109,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesMissingPlans', category: 'buddies' },
   { id: 'buddiesNotSent', category: 'buddies' },
   { id: 'buddiesRemove', category: 'buddies' },
+  { id: 'buddiesSuspended', category: 'buddies' },
   { id: 'badgesOverview', category: 'badges' },
   { id: 'badgesView', category: 'badges' },
   { id: 'badgesMonths', category: 'badges' },

@@ -18,6 +18,8 @@ const RELAY_ERROR_CODES = [
   'too_large',
   'photos_disabled',
   'no_buddies',
+  'suspended',
+  'unknown_account',
 ] as const
 
 /**
@@ -68,6 +70,9 @@ export function isRelayError(
     error instanceof RelayError && (code === undefined || error.code === code)
   )
 }
+
+/** The server account's claim on an inbox, for `inbox/register`. */
+export type InboxAccountProof = { accountId: string; signature: string }
 
 /** Signs owner ops for one inbox. */
 export type OwnerAuth = {
@@ -326,11 +331,23 @@ export function createRelayClient(deps: RelayDeps) {
   })
 
   return {
-    registerInbox: (auth: OwnerAuth, call?: RelayCallOptions) =>
-      signed(
+    /**
+     * `account` links the inbox to the User's server account (ADR 0024); the
+     * answer's `accountId` says which account the inbox belongs to, if any.
+     */
+    registerInbox: (
+      auth: OwnerAuth,
+      call?: RelayCallOptions,
+      account?: InboxAccountProof
+    ) =>
+      signed<{ ok: true; accountId?: string }>(
         'inbox/register',
         auth.ownerSeed,
-        { ...owner(auth), ownerPub: auth.ownerPub },
+        {
+          ...owner(auth),
+          ownerPub: auth.ownerPub,
+          ...(account ? { account } : {}),
+        },
         call
       ),
     /**

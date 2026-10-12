@@ -669,6 +669,11 @@ export type BuddiesState = {
   deviceId: string | null
   /** The inbox this device has registered with the relay. */
   registeredInboxId: string | null
+  /**
+   * The inbox the relay says belongs to this User's server account (ADR 0024).
+   * Until it's `registeredInboxId`, syncs try to link it.
+   */
+  accountLinkedInboxId: string | null
   syncSeq: number
   lastSyncAt: number
   buddies: Buddy[]
@@ -777,6 +782,7 @@ export const initialBuddiesState: BuddiesState = {
   onboardingComplete: false,
   deviceId: null,
   registeredInboxId: null,
+  accountLinkedInboxId: null,
   syncSeq: 0,
   lastSyncAt: 0,
   buddies: [],

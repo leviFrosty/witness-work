@@ -3,6 +3,7 @@ import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
+import { serverAccount } from '@/lib/serverAccount'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
@@ -74,6 +75,7 @@ const engine = createBuddiesEngine({
   getRootSeed: async () =>
     fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
   deleteRootSeed: () => BuddiesKeychain.deleteRootSeed(),
+  account: serverAccount,
   getPlans: () => {
     const { dayPlans, recurringPlans } = useServiceReport.getState()
     return { dayPlans, recurringPlans }

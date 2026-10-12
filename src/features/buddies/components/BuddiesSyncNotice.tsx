@@ -1,5 +1,6 @@
 import { ActivityIndicator } from 'react-native'
 import {
+  Ban as BanIcon,
   CircleAlert as CircleAlertIcon,
   CloudOff as CloudOffIcon,
   WifiOff as WifiOffIcon,
@@ -15,12 +16,14 @@ import type { BuddiesSyncNotice as Notice } from '@/features/buddies/lib/syncSta
 const ICONS = {
   offline: WifiOffIcon,
   disabled: CloudOffIcon,
+  suspended: BanIcon,
   error: CircleAlertIcon,
 }
 
 const MESSAGES = {
   offline: 'buddies_syncOffline',
   disabled: 'buddies_syncUnavailable',
+  suspended: 'buddies_errorSuspended',
   error: 'buddies_syncFailed',
 } as const
 

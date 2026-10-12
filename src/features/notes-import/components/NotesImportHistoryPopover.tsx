@@ -7,7 +7,7 @@ import {
   TriangleAlert as TriangleAlertIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import type { ReactNode, RefObject } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { Alert, ScrollView, useWindowDimensions, View } from 'react-native'
 import { Spinner } from 'tamagui'
 import {
@@ -17,9 +17,7 @@ import {
 } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
-import AnchoredPopover, {
-  type ResolveAnchorPosition,
-} from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
@@ -253,18 +251,11 @@ const HistoryRow = ({
 }
 
 interface Props {
-  /**
-   * Renders the press target. Receives the same `{ onPress, anchorRef }` as
-   * AnchoredPopover — attach the ref to a `collapsable={false}` View.
-   */
+  /** Renders the press target; call `onPress` to open the popover. */
   renderTrigger: (props: {
     onPress: () => void
-    anchorRef: RefObject<View | null>
-  }) => ReactNode
-  /** Open downward (header, default) or upward (a low chat callout). */
-  openDirection?: 'down' | 'up'
-  /** Horizontal alignment of the content under/over the trigger. */
-  align?: 'left' | 'right'
+    expanded: boolean
+  }) => ReactElement
 }
 
 /**
@@ -274,14 +265,9 @@ interface Props {
  * merge (`setParams`) — never a screen navigation — so swapping imports never
  * grows the back stack.
  *
- * Extracted so both the header clock button and the composer's bottom callout
- * open the same popover; each supplies its own trigger and open direction.
+ * The composer's bottom callout supplies the trigger.
  */
-const NotesImportHistoryPopover = ({
-  renderTrigger,
-  openDirection = 'down',
-  align = 'right',
-}: Props) => {
+const NotesImportHistoryPopover = ({ renderTrigger }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const activeHash =
@@ -297,26 +283,6 @@ const NotesImportHistoryPopover = ({
   const popoverWidth = Math.min(width - 24, 380)
 
   const open = (hash: string) => navigation.setParams({ hash })
-
-  const resolvePosition: ResolveAnchorPosition = ({
-    anchor,
-    windowWidth,
-    windowHeight,
-    contentWidth,
-  }) => {
-    const margin = 12
-    const preferredLeft =
-      align === 'right' ? anchor.x + anchor.width - contentWidth : anchor.x
-    const left = Math.min(
-      Math.max(margin, preferredLeft),
-      windowWidth - contentWidth - margin
-    )
-    if (openDirection === 'up') {
-      // Pin the popover's bottom just above the trigger so it grows upward.
-      return { bottom: windowHeight - anchor.y + 6, left }
-    }
-    return { top: anchor.y + anchor.height + 6, left }
-  }
 
   const confirmDelete = (hash: string) => {
     Alert.alert(
@@ -376,10 +342,10 @@ const NotesImportHistoryPopover = ({
   )
 
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={popoverWidth}
-      contentStyle={{ padding: 8, backgroundColor: theme.colors.background }}
-      resolvePosition={resolvePosition}
+      contentStyle={{ padding: 8 }}
+      backgroundColor={theme.colors.background}
       renderTrigger={renderTrigger}
     >
       {({ close }) => (
@@ -434,7 +400,7 @@ const NotesImportHistoryPopover = ({
           )}
         </View>
       )}
-    </AnchoredPopover>
+    </Popover>
   )
 }
 

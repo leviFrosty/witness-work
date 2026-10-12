@@ -4,11 +4,6 @@ import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { usePreferences } from '@/stores/preferences'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import ReorderControls from '@/components/ui/ReorderControls'
-import {
-  Archive as ArchiveIcon,
-  RotateCcw as RotateCcwIcon,
-  Trash2 as TrashIcon,
-} from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
@@ -19,7 +14,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import ActionButton from '@/components/ui/ActionButton'
 import MyTextInput from '@/components/ui/TextInput'
 import Text from '@/components/ui/MyText'
-import RowActionsMenu from '@/components/RowActionsMenu'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import confirmDestructive from '@/lib/confirmDestructive'
@@ -245,15 +240,16 @@ const PreferencesCustomFieldsScreen = () => {
                         textAlign='left'
                         style={{ flex: 1 }}
                       />
-                      <RowActionsMenu
+                      <PullDownMenu
+                        triggerSize={16}
                         accessibilityLabel={i18n.t('moreActionsFor', {
                           name: def.label,
                         })}
                         actions={[
                           {
                             id: 'archive-field',
-                            label: i18n.t('archiveField'),
-                            icon: ArchiveIcon,
+                            title: i18n.t('archiveField'),
+                            systemImage: 'archivebox',
                             destructive: true,
                             onPress: () => confirmArchive(def.id, def.label),
                           },
@@ -281,23 +277,24 @@ const PreferencesCustomFieldsScreen = () => {
                     label={def.label}
                     controlWidth='auto'
                   >
-                    <RowActionsMenu
+                    <PullDownMenu
+                      triggerSize={16}
                       accessibilityLabel={i18n.t('moreActionsFor', {
                         name: def.label,
                       })}
                       actions={[
                         {
                           id: 'restore-field',
-                          label: i18n.t('restore'),
-                          icon: RotateCcwIcon,
+                          title: i18n.t('restore'),
+                          systemImage: 'arrow.uturn.backward',
                           onPress: () => {
                             restoreCustomFieldDef(def.id)
                           },
                         },
                         {
                           id: 'delete-field',
-                          label: i18n.t('delete'),
-                          icon: TrashIcon,
+                          title: i18n.t('delete'),
+                          systemImage: 'trash',
                           destructive: true,
                           onPress: () =>
                             confirmPermanentDelete(def.id, def.label),

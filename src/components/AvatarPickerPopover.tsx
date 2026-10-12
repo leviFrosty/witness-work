@@ -7,7 +7,7 @@ import Avatar from '@/components/ui/Avatar'
 import AvatarPickerContent, {
   AvatarMetaCapture,
 } from '@/components/AvatarPickerContent'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import i18n from '@/lib/locales'
 
 interface Props {
@@ -47,12 +47,9 @@ const CONTENT_WIDTH = 8 * 36 + 7 * 2 + 24
 const EDIT_BADGE_SIZE = 24
 const EDIT_BADGE_BORDER_WIDTH = 2
 const EDIT_ICON_SIZE = 12
+const EDIT_BADGE_OVERHANG = 3
 
-/**
- * Tappable avatar that opens an inline picker above the avatar. Delegates the
- * popover shell (RN Modal, anchor measurement, safe Reanimated mount lifecycle)
- * to `AnchoredPopover` — see that component for the why behind the lifecycle.
- */
+/** Tappable avatar that opens the avatar picker in a popover beside it. */
 const AvatarPickerPopover = ({
   value,
   onChange,
@@ -69,47 +66,48 @@ const AvatarPickerPopover = ({
   const theme = useTheme()
 
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={CONTENT_WIDTH}
-      renderTrigger={({ onPress, anchorRef }) => (
-        <View ref={anchorRef} collapsable={false}>
-          <Pressable
-            accessibilityLabel={accessibilityLabel ?? i18n.t('profilePicture')}
-            accessibilityRole='button'
-            onPress={onPress}
-            hitSlop={8}
-          >
-            <View>
-              <Avatar
-                avatar={value}
-                name={(name ?? '').trim()}
-                size={size}
-                background={background}
+      // Room for the edit badge, which hangs off the avatar's corner.
+      style={{ margin: -EDIT_BADGE_OVERHANG }}
+      renderTrigger={({ onPress }) => (
+        <Pressable
+          accessibilityLabel={accessibilityLabel ?? i18n.t('profilePicture')}
+          accessibilityRole='button'
+          onPress={onPress}
+          hitSlop={8}
+          style={{ padding: EDIT_BADGE_OVERHANG }}
+        >
+          <View>
+            <Avatar
+              avatar={value}
+              name={(name ?? '').trim()}
+              size={size}
+              background={background}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                right: EDIT_BADGE_OVERHANG - 3,
+                bottom: EDIT_BADGE_OVERHANG - 3,
+                width: EDIT_BADGE_SIZE,
+                height: EDIT_BADGE_SIZE,
+                borderRadius: EDIT_BADGE_SIZE / 2,
+                backgroundColor: theme.colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: EDIT_BADGE_BORDER_WIDTH,
+                borderColor: theme.colors.card,
+              }}
+            >
+              <LucideIcon
+                icon={PencilIcon}
+                size={EDIT_ICON_SIZE}
+                color={theme.colors.textInverse}
               />
-              <View
-                style={{
-                  position: 'absolute',
-                  right: -3,
-                  bottom: -3,
-                  width: EDIT_BADGE_SIZE,
-                  height: EDIT_BADGE_SIZE,
-                  borderRadius: EDIT_BADGE_SIZE / 2,
-                  backgroundColor: theme.colors.accent,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: EDIT_BADGE_BORDER_WIDTH,
-                  borderColor: theme.colors.card,
-                }}
-              >
-                <LucideIcon
-                  icon={PencilIcon}
-                  size={EDIT_ICON_SIZE}
-                  color={theme.colors.textInverse}
-                />
-              </View>
             </View>
-          </Pressable>
-        </View>
+          </View>
+        </Pressable>
       )}
     >
       {({ close }) => (
@@ -126,7 +124,7 @@ const AvatarPickerPopover = ({
           onImageMeta={onImageMeta}
         />
       )}
-    </AnchoredPopover>
+    </Popover>
   )
 }
 

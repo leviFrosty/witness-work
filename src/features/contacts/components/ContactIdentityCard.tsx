@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import {
   BackgroundSwatches,
@@ -64,53 +64,52 @@ const BackgroundEditButton = ({
   }
 
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={popoverWidth}
       contentStyle={{ padding: popoverPadding }}
-      renderTrigger={({ onPress, expanded, anchorRef }) => (
-        <View ref={anchorRef} collapsable={false}>
-          <Pressable
-            onPress={onPress}
-            accessibilityRole='button'
-            accessibilityLabel={i18n.t('contactHeroBackgroundColor')}
-            accessibilityState={{ expanded }}
-            style={triggerStyle}
+      style={{ alignSelf: 'center' }}
+      renderTrigger={({ onPress, expanded }) => (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('contactHeroBackgroundColor')}
+          accessibilityState={{ expanded }}
+          style={triggerStyle}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              minHeight: 30,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 15,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+            }}
           >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                minHeight: 30,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 15,
-                borderWidth: 1,
+                width: 14,
+                height: 14,
+                borderRadius: 7,
+                backgroundColor: swatchColor,
+                borderWidth: StyleSheet.hairlineWidth,
                 borderColor: theme.colors.border,
               }}
+            />
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+                fontFamily: theme.fonts.medium,
+              }}
             >
-              <View
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 7,
-                  backgroundColor: swatchColor,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: theme.colors.border,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xs'),
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.medium,
-                }}
-              >
-                {i18n.t('contactHeroBackgroundColor')}
-              </Text>
-            </View>
-          </Pressable>
-        </View>
+              {i18n.t('contactHeroBackgroundColor')}
+            </Text>
+          </View>
+        </Pressable>
       )}
     >
       <IsSupporter
@@ -120,7 +119,7 @@ const BackgroundEditButton = ({
       >
         <BackgroundSwatches value={value} onChange={onChange} />
       </IsSupporter>
-    </AnchoredPopover>
+    </Popover>
   )
 }
 

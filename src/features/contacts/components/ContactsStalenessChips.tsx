@@ -17,7 +17,7 @@ import { Contact } from '@/types/contact'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import SortableChipRow from '@/components/ui/SortableChipRow'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import StalenessColorKey from '@/components/StalenessColorKey'
 
@@ -90,35 +90,33 @@ const ContactsStalenessChips = ({
   }
 
   const colorKey = (
-    <AnchoredPopover
+    <Popover
       contentWidth={280}
-      renderTrigger={({ onPress, anchorRef }) => (
-        <View ref={anchorRef} collapsable={false}>
-          <PointerTooltip label={i18n.t('contacts_stalenessInfo_title')}>
-            <Button
-              onPress={onPress}
-              accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
-              accessibilityRole='button'
-              hitSlop={6}
-              style={{
-                width: 32,
-                height: 32,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <LucideIcon
-                icon={InfoIcon}
-                size={theme.fontSize('md')}
-                style={{ color: theme.colors.textAlt }}
-              />
-            </Button>
-          </PointerTooltip>
-        </View>
+      renderTrigger={({ onPress }) => (
+        <PointerTooltip label={i18n.t('contacts_stalenessInfo_title')}>
+          <Button
+            onPress={onPress}
+            accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
+            accessibilityRole='button'
+            hitSlop={6}
+            style={{
+              width: 32,
+              height: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LucideIcon
+              icon={InfoIcon}
+              size={theme.fontSize('md')}
+              style={{ color: theme.colors.textAlt }}
+            />
+          </Button>
+        </PointerTooltip>
       )}
     >
-      {({ close }) => <StalenessColorKey onBeforeNavigate={close} />}
-    </AnchoredPopover>
+      <StalenessColorKey />
+    </Popover>
   )
 
   return (

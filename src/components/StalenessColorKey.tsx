@@ -13,16 +13,11 @@ import { usePreferences } from '@/stores/preferences'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import { RootStackNavigation } from '@/types/rootStack'
+import { useAfterPopover } from '@/components/ui/popoverContext'
 
 type Props = {
   /** Hide the title/subtitle header — useful when the host already shows one. */
   showHeader?: boolean
-  /**
-   * Called right before navigating to the Color Key settings screen — hosts
-   * that render this inside a popover/sheet close it here so it isn't still
-   * open when the user navigates back.
-   */
-  onBeforeNavigate?: () => void
 }
 
 /**
@@ -30,19 +25,17 @@ type Props = {
  * thresholds) lives on the Color Key settings screen — the pencil in the header
  * is the way there.
  */
-export default function StalenessColorKey({
-  showHeader = true,
-  onBeforeNavigate,
-}: Props) {
+export default function StalenessColorKey({ showHeader = true }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const colors = useMarkerColors()
   const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
 
-  const goToSettings = () => {
-    onBeforeNavigate?.()
-    navigation.navigate('PreferencesColorKey')
-  }
+  // Inside a popover (the chips', the map legend's), close it first.
+  const afterPopover = useAfterPopover()
+
+  const goToSettings = () =>
+    afterPopover(() => navigation.navigate('PreferencesColorKey'))
 
   return (
     <View style={{ gap: 10, paddingHorizontal: 10 }}>

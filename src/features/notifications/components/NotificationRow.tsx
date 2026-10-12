@@ -22,6 +22,11 @@ function toneColors(theme: Theme, tone: NotificationTone = 'accent') {
         color: theme.colors.warnText,
         background: theme.colors.warnTranslucent,
       }
+    case 'error':
+      return {
+        color: theme.colors.error,
+        background: theme.colors.errorTranslucent,
+      }
     case 'supporter':
       return {
         color: theme.colors.supporter,

@@ -8,7 +8,12 @@ import useMileage from '@/stores/mileage'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
-import { FeatureFlag, setDevFlagOverride } from '@/lib/featureFlags'
+import type { JsonType } from '@posthog/core'
+import {
+  FeatureFlag,
+  setDevFlagOverride,
+  setDevFlagPayloadOverride,
+} from '@/lib/featureFlags'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
@@ -177,6 +182,11 @@ export function installDevHarness() {
     setFlag: (flag: FeatureFlag, value: boolean | string | undefined) => {
       setDevFlagOverride(flag, value)
       return value
+    },
+    /** A flag's JSON payload, as PostHog would send it; undefined to clear. */
+    setFlagPayload: (flag: FeatureFlag, payload: JsonType | undefined) => {
+      setDevFlagPayloadOverride(flag, payload)
+      return payload
     },
     /**
      * Starts the Buddies relay check; read the report afterwards from

@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "要暂时隐藏某位联系人，请在“联系人”中向右滑动他，或长按他并选择“忽略一段时间”。",
   "serviceHistoryOtherYearsUnsaved": "同时会将你的更改保存到 {{years}}。",
   "selectContacts": "选择联系人",
-  "sortAndFilterEllipsis": "排序和筛选…",
   "contactAvailableReminder": "%{name} 又可以联系了。",
   "contactAvailableReminderPrivate": "你忽略的一位联系人又可以联系了。",
   "visitReminderBody": "你与 %{name} 的跟进将在 %{lead}后开始。",

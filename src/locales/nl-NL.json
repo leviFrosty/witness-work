@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "Om een contact een tijdje te verbergen, veeg je er in Contacten naar rechts over, of houd je het ingedrukt en kies je Negeren voor.",
   "serviceHistoryOtherYearsUnsaved": "Slaat ook je wijzigingen op in {{years}}.",
   "selectContacts": "Contacten selecteren",
-  "sortAndFilterEllipsis": "Sorteren & filteren…",
   "contactAvailableReminder": "%{name} is weer beschikbaar.",
   "contactAvailableReminderPrivate": "Een contact dat je hebt genegeerd, is weer beschikbaar.",
   "visitReminderBody": "Je vervolgbezoek bij %{name} is over %{lead}.",

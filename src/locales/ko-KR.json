@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "연락처를 한동안 숨기려면 연락처에서 오른쪽으로 스와이프하거나, 길게 누르고 ‘숨길 기간’을 선택하세요.",
   "serviceHistoryOtherYearsUnsaved": "{{years}}의 변경 사항도 함께 저장됩니다.",
   "selectContacts": "연락처 선택",
-  "sortAndFilterEllipsis": "정렬 및 필터…",
   "contactAvailableReminder": "%{name} 님이 다시 표시됩니다.",
   "contactAvailableReminderPrivate": "숨긴 연락처가 다시 표시됩니다.",
   "visitReminderBody": "%{name} 님과의 다음 방문이 %{lead} 후입니다.",

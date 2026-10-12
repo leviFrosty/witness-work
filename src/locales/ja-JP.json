@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "連絡先をしばらく隠すには、「連絡先」でその連絡先を右にスワイプするか、長押しして「非表示にする期間」を選んでください。",
   "serviceHistoryOtherYearsUnsaved": "{{years}}への変更も保存されます。",
   "selectContacts": "連絡先を選択",
-  "sortAndFilterEllipsis": "並べ替え＆絞り込み…",
   "contactAvailableReminder": "%{name}さんが再び表示されるようになりました。",
   "contactAvailableReminderPrivate": "非表示にした連絡先が再び表示されるようになりました。",
   "visitReminderBody": "%{name}さんとのフォローアップは%{lead}後です。",

@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "Um einen Kontakt für eine Weile auszublenden, wischen Sie in den Kontakten nach rechts darüber oder berühren und halten Sie ihn und wählen Sie „Zurückstellen für“.",
   "serviceHistoryOtherYearsUnsaved": "Speichert Ihre Änderungen auch für {{years}}.",
   "selectContacts": "Kontakte auswählen",
-  "sortAndFilterEllipsis": "Sortieren & Filtern…",
   "contactAvailableReminder": "%{name} ist wieder verfügbar.",
   "contactAvailableReminderPrivate": "Ein von Ihnen zurückgestellter Kontakt ist wieder verfügbar.",
   "visitReminderBody": "Ihr Folgebesuch bei %{name} ist in %{lead}.",

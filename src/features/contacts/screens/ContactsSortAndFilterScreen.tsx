@@ -319,8 +319,8 @@ const ContactsSortAndFilterScreen = () => {
       </View>
 
       {/* ScrollView fills the remaining space. Bottom padding leaves room for
-          the absolute footer so the last sort row + direction toggles aren't
-          ever obscured by it — same pattern as ContactsFilterSheet. */}
+          the absolute footer so the last sort row is never obscured by it —
+          same pattern as ContactsFilterSheet. */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -479,6 +479,18 @@ const ContactsSortAndFilterScreen = () => {
             <Text style={sectionTitleStyle}>
               {i18n.t('contacts_sortAndFilter_sortSection')}
             </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {renderDirectionButton(
+                'asc',
+                i18n.t('contacts_sortAscending'),
+                ArrowUpIcon
+              )}
+              {renderDirectionButton(
+                'desc',
+                i18n.t('contacts_sortDescending'),
+                ArrowDownIcon
+              )}
+            </View>
 
             <View style={{ gap: 8 }}>
               {builtInContactSortOptions.map((option) =>
@@ -516,19 +528,6 @@ const ContactsSortAndFilterScreen = () => {
                     )
                   })}
                 </>
-              )}
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              {renderDirectionButton(
-                'asc',
-                i18n.t('contacts_sortAscending'),
-                ArrowUpIcon
-              )}
-              {renderDirectionButton(
-                'desc',
-                i18n.t('contacts_sortDescending'),
-                ArrowDownIcon
               )}
             </View>
           </View>

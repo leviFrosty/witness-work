@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "Чтобы скрыть контакт на время, смахните его вправо в «Контактах» либо нажмите и удерживайте его и выберите «Скрыть на срок».",
   "serviceHistoryOtherYearsUnsaved": "Также сохранит ваши изменения за {{years}}.",
   "selectContacts": "Выбрать контакты",
-  "sortAndFilterEllipsis": "Сортировка и фильтр…",
   "contactAvailableReminder": "Контакт %{name} снова доступен.",
   "contactAvailableReminderPrivate": "Скрытый вами контакт снова доступен.",
   "visitReminderBody": "Повторное посещение: %{name} через %{lead}.",

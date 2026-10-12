@@ -3719,7 +3719,6 @@
   "noDismissedContacts_description": "Pa kufisa umuntu wa kulanshanya inshita, kokoleni ku kuso pali wene mu Abantu ba Kulanshanya, nelyo mutinike no kukakatila no kusala Fumyapo Pa.",
   "serviceHistoryOtherYearsUnsaved": "Isunga na fyo mwacinja ku {{years}}.",
   "selectContacts": "Sala Abantu ba Kulanshanya",
-  "sortAndFilterEllipsis": "Sala & Sefya…",
   "contactAvailableReminder": "%{name} alipo nakabili.",
   "contactAvailableReminderPrivate": "Umuntu wa kulanshanya uo mwafumyapo alipo nakabili.",
   "visitReminderBody": "Ukukonkapo kwenu na %{name} kuli mu %{lead}.",

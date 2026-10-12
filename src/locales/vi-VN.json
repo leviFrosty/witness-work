@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "Để ẩn một liên hệ trong một thời gian, hãy vuốt phải vào liên hệ đó trong Liên hệ, hoặc nhấn giữ rồi chọn Bỏ qua trong.",
   "serviceHistoryOtherYearsUnsaved": "Cũng lưu các thay đổi của bạn cho {{years}}.",
   "selectContacts": "Chọn liên hệ",
-  "sortAndFilterEllipsis": "Sắp xếp & Lọc…",
   "contactAvailableReminder": "%{name} đã khả dụng trở lại.",
   "contactAvailableReminderPrivate": "Một liên hệ bạn đã bỏ qua đã khả dụng trở lại.",
   "visitReminderBody": "Lần thăm lại với %{name} của bạn sẽ diễn ra sau %{lead}.",

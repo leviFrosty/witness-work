@@ -3645,7 +3645,6 @@
   "noDismissedContacts_description": "Pour masquer un contact un moment, balayez-le vers la droite dans Contacts, ou appuyez longuement dessus et choisissez Écarter pour.",
   "serviceHistoryOtherYearsUnsaved": "Enregistre aussi vos modifications pour {{years}}.",
   "selectContacts": "Sélectionner des contacts",
-  "sortAndFilterEllipsis": "Trier et filtrer…",
   "contactAvailableReminder": "%{name} est de nouveau disponible.",
   "contactAvailableReminderPrivate": "Un contact que vous aviez écarté est de nouveau disponible.",
   "visitReminderBody": "Votre suivi avec %{name} est dans %{lead}.",

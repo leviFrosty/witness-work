@@ -1,6 +1,6 @@
 import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import {
   addBackgroundListener,
@@ -9,6 +9,7 @@ import {
 
 import { useBuddiesAlertContext } from '@/app/buddies/buddiesAlertContext'
 import { reportAlertOutcomes } from '@/app/buddies/buddiesAlertOutcomes'
+import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import {
   postBuddiesAlert,
   remoteMessageData,
@@ -20,6 +21,7 @@ import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import useServiceReport from '@/stores/serviceReport'
+import { useSupporter } from '@/stores/supporterStatus'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { syncBuddyNotifications } from '@/features/buddies/hooks/useBuddyNotifications'
 
@@ -37,7 +39,7 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import { createLiveInbox } from '@/features/buddies/lib/liveInbox'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
-import { shareRecipientsKey } from '@/features/buddies/lib/shares'
+import { shareRecipientsKey, sharedKeys } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { Buddy } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -52,6 +54,7 @@ import {
   useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 import type { DayPlan } from '@/types/timeEntry'
+import type { Visit } from '@/types/visit'
 
 /**
  * Push registration is checked at most this often; the engine only re-sends an
@@ -62,6 +65,9 @@ const PUBLISH_DEBOUNCE_MS = 30 * 1000
 
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
+
+/** `syncLinkedPlans` is changing Plans: following buddies, not the User's edit. */
+let reconcilingLinkedPlans = false
 
 /**
  * Adds, updates, and removes the Plans that follow buddies' invitations.
@@ -79,9 +85,32 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
       answered,
     }
   )
-  for (const plan of add) report.addDayPlan(plan)
-  for (const plan of update) report.updateDayPlan(plan)
-  for (const id of remove) report.deleteDayPlan(id)
+  reconcilingLinkedPlans = true
+  try {
+    for (const plan of add) report.addDayPlan(plan)
+    for (const plan of update) report.updateDayPlan(plan)
+    for (const id of remove) report.deleteDayPlan(id)
+  } finally {
+    reconcilingLinkedPlans = false
+  }
+}
+
+/** A store change the User made here, not one from another device or Buddies. */
+const isLocalEdit = () => !isApplyingRemoteData() && !reconcilingLinkedPlans
+
+/**
+ * Shared Plans and Follow-ups that just arrived from another device: that
+ * device sent them, so this one takes them as sent (`adoptShares`).
+ */
+function adoptArrivedShares(
+  previous: { dayPlans: DayPlan[]; visits: Visit[] },
+  current: { dayPlans: DayPlan[]; visits: Visit[] }
+) {
+  const before = sharedKeys(previous.dayPlans, previous.visits)
+  const arrived = [...sharedKeys(current.dayPlans, current.visits)].filter(
+    (key) => !before.has(key)
+  )
+  buddiesEngine.adoptShares(arrived)
 }
 
 /**
@@ -157,6 +186,35 @@ export default function BuddiesRuntime() {
   const running = enabled && started
   useBuddiesAlertContext()
 
+  // Buddies started on another of this User's devices starts here too, once
+  // iCloud Sync has brought this device's Plans in (see `joinBuddiesHere`):
+  // at launch, when sync turns on, first pulls, or Supporter access returns,
+  // and, on iOS, where iCloud Keychain can bring the seed in while the app
+  // runs, on returning to it.
+  useEffect(() => {
+    if (!enabled || started) return
+    const join = () => void joinBuddiesHere().catch(logFailure)
+    join()
+    const foreground =
+      Platform.OS === 'ios' ? addForegroundListener(join) : null
+    const sync = usePreferences.subscribe((state, previous) => {
+      if (
+        (state.iCloudSyncEnabled && !previous.iCloudSyncEnabled) ||
+        (state.lastiCloudPulledAt !== null &&
+          previous.lastiCloudPulledAt === null)
+      )
+        join()
+    })
+    const supporter = useSupporter.subscribe((state, previous) => {
+      if (state.isSupporter && !previous.isSupporter) join()
+    })
+    return () => {
+      foreground?.remove()
+      sync()
+      supporter()
+    }
+  }, [enabled, started])
+
   // What the engine checks before making or sending badge news.
   useEffect(() => {
     useBuddiesSession.setState({ running })
@@ -170,11 +228,17 @@ export default function BuddiesRuntime() {
     let stopTrayPoll: (() => void) | null = null
     let lastPushCheck = 0
     let recipients = currentRecipients()
+    /** A change behind the Buddy Card was made here (see `publishCards`). */
+    let edited = false
+    const noteEdit = () => {
+      if (isLocalEdit()) edited = true
+    }
 
     const publishNow = () => {
       if (publishTimer) clearTimeout(publishTimer)
       publishTimer = null
-      void buddiesEngine.publishCards().catch(logFailure)
+      void buddiesEngine.publishCards({ edited }).catch(logFailure)
+      edited = false
       void buddiesEngine.publishShares().catch(logFailure)
       void buddiesEngine.deliverReplies().catch(logFailure)
     }
@@ -298,8 +362,14 @@ export default function BuddiesRuntime() {
         state.recurringPlans === previous.recurringPlans
       )
         return
-      if (!isApplyingRemoteData())
-        declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
+      if (isApplyingRemoteData()) {
+        const visits = useConversations.getState().conversations
+        adoptArrivedShares(
+          { dayPlans: previous.dayPlans, visits },
+          { dayPlans: state.dayPlans, visits }
+        )
+      } else declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
+      noteEdit()
       publishSharesChange()
     })
     // The streak travels in Buddy Cards too; time logged can move it.
@@ -309,10 +379,13 @@ export default function BuddiesRuntime() {
       const next = JSON.stringify(currentBuddyStreak() ?? null)
       if (next === streak) return
       streak = next
+      noteEdit()
       schedulePublish()
     })
     // Name, photo, and Tenure travel in Buddy Cards too.
     const profile = useProfile.subscribe((state, previous) => {
+      if (state.name !== previous.name || state.avatar !== previous.avatar)
+        noteEdit()
       if (state.name !== previous.name) schedulePublish()
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)
@@ -329,8 +402,10 @@ export default function BuddiesRuntime() {
         state.showBadges !== previous.showBadges ||
         state.showStreaks !== previous.showStreaks ||
         state.dataProtectionMode !== previous.dataProtectionMode
-      )
+      ) {
+        noteEdit()
         schedulePublish()
+      }
       if (state.showBadges !== previous.showBadges)
         void registerBuddiesPush().catch(logFailure)
       // Badges off: news not yet sent stays home, even if they come back on.
@@ -340,7 +415,15 @@ export default function BuddiesRuntime() {
     // Follow-up invitations carry the Visit's date and topic and the
     // Contact's first name and address.
     const visits = useConversations.subscribe((state, previous) => {
-      if (state.conversations !== previous.conversations) publishSharesChange()
+      if (state.conversations === previous.conversations) return
+      if (isApplyingRemoteData()) {
+        const { dayPlans } = useServiceReport.getState()
+        adoptArrivedShares(
+          { dayPlans, visits: previous.conversations },
+          { dayPlans, visits: state.conversations }
+        )
+      }
+      publishSharesChange()
     })
     const contacts = useContacts.subscribe((state, previous) => {
       if (state.contacts !== previous.contacts) schedulePublish()
@@ -364,12 +447,15 @@ export default function BuddiesRuntime() {
       // buddy's template is dropped; so is the badge one with alerts off.
       if (pushAlerts(state) !== pushAlerts(previous))
         void registerBuddiesPush().catch(logFailure)
-      // Entries that arrive already read (alerts off for them here) don't
-      // count toward the bell.
+      // Entries that arrive already read (alerts off for them here), or that
+      // were read on another of this User's devices, don't count toward the
+      // bell.
       if (state.notifications !== previous.notifications) {
-        const known = new Set(previous.notifications.map((n) => n.id))
+        const wasRead = new Map(
+          previous.notifications.map((n) => [n.id, n.read])
+        )
         const quiet = state.notifications
-          .filter((n) => n.read && !known.has(n.id))
+          .filter((n) => n.read && !wasRead.get(n.id))
           .map((n) => n.id)
         if (quiet.length > 0) markSeen(quiet)
       }

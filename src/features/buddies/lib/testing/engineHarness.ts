@@ -77,6 +77,7 @@ export function setup() {
       | 'onSharedPhotosSaved'
       | 'readProfilePhoto'
       | 'keepBuddyPhotos'
+      | 'withdrawnAt'
     > = {}
   ) {
     const store = memoryStore({})

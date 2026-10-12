@@ -302,6 +302,35 @@ export const badgeReactionSchema = z.object({
 export type BadgeReactionEvent = z.infer<typeof badgeReactionSchema>
 
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
+/** An invitation from a buddy: `incomingShareKey`. */
+const shareKey = z.string().regex(/^[A-Za-z0-9_-]{22}\|[A-Za-z0-9_-]{22}$/)
+/** A queue entry: its event's id, or `pending|` and a `shareKey`. */
+const notificationId = z
+  .string()
+  .regex(/^(pending\|[A-Za-z0-9_-]{22}\|)?[A-Za-z0-9_-]{22}$/)
+
+/**
+ * A record keeping only the entries `key` and `value` accept, so an entry a
+ * newer build writes differently is dropped instead of costing the whole
+ * roster. Absent reads as empty.
+ */
+function lenientRecord<V extends z.ZodTypeAny>(key: z.ZodString, value: V) {
+  return z
+    .record(z.string(), z.unknown())
+    .default({})
+    .catch({})
+    .transform(
+      (entries) =>
+        Object.fromEntries(
+          Object.entries(entries).flatMap(([id, entry]) => {
+            const parsed = value.safeParse(entry)
+            return key.safeParse(id).success && parsed.success
+              ? [[id, parsed.data]]
+              : []
+          })
+        ) as Record<string, z.infer<V>>
+    )
+}
 
 /**
  * The encrypted multi-device roster: everything needed to rebuild pairings.
@@ -334,6 +363,12 @@ export const rosterSchema = z.object({
           .optional(),
         showOnCalendar: z.boolean(),
         expiresAt: z.number().optional(),
+        /**
+         * When the nickname, color, or `showOnCalendar` last changed; the later
+         * one wins. Absent from older builds' rosters, which then never
+         * override a device's own choices.
+         */
+        prefsAt: z.number().optional(),
       })
     )
     .max(5),
@@ -381,5 +416,22 @@ export const rosterSchema = z.object({
       badgesUpdatedAt: z.number().optional(),
     })
     .default({ photo: true, tenure: true, streak: true, updatedAt: 0 }),
+  /**
+   * This User's answers to invitations, by `from|shareId` (see `AnswerMark`),
+   * so every device shows the same one. Absent from older builds' rosters.
+   */
+  answers: lenientRecord(
+    shareKey,
+    z.object({
+      s: z.enum([...SHARE_REPLIES, 'none']),
+      v: z.number(),
+      r: z.number(),
+      x: z.number(),
+    })
+  ),
+  /** Queue entries read on any device: entry id → when the mark lapses. */
+  read: lenientRecord(notificationId, z.number()),
+  /** Queue entries dismissed on any device, the same way. */
+  dismissed: lenientRecord(notificationId, z.number()),
 })
 export type Roster = z.infer<typeof rosterSchema>

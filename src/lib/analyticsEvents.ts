@@ -73,6 +73,7 @@ export const analyticsEventNames = [
   'badges_setting_changed',
   'badges_welcome_closed',
   'buddies_alerts_shown',
+  'buddies_device_joined',
   'buddies_feedback_attachment_failed',
   'buddies_feedback_submitted',
   'buddies_feedback_unavailable',

@@ -28,6 +28,11 @@ export type BuddyProfile = {
   tenure?: BuddyTenure
   /** Earned badges for the Buddy Card; empty with Badges turned off. */
   badges?: SharedBadge[]
+  /**
+   * The Profile photo is set but its file isn't on this device (another device
+   * holds it, and iCloud Sync isn't moving photos), so `avatar` leaves it out.
+   */
+  photoUnavailable?: boolean
 }
 
 /**
@@ -112,6 +117,12 @@ export type Buddy = {
   /** A hex this User picked (Supporter), shown in place of the slot's color. */
   color?: string
   showOnCalendar: boolean
+  /**
+   * When the nickname, color, or `showOnCalendar` last changed, on any of this
+   * User's devices; the later change wins (`mergeRoster`). Absent until one
+   * does.
+   */
+  prefsAt?: number
   /** Only for `awaitingConfirm`: when the unconfirmed request lapses. */
   expiresAt?: number
   /**
@@ -214,6 +225,12 @@ export type OutgoingShareSpec = {
   endsAt: number
   /** When both phones wipe it. */
   expiresAt: number
+  /**
+   * When the Plan or Follow-up behind it last changed (its sync `updatedAt`),
+   * the same on every device of this User. Sends that alert use it as their
+   * `rev`, so two devices sending the same change send one event.
+   */
+  version?: number
 }
 
 /**
@@ -265,7 +282,16 @@ export type OutgoingShare = {
    * its answer was lost is kept, and alerts, once.
    */
   pending?: { hash: string; revs: Record<string, number> }
+  /**
+   * Taken as sent on this device's first sync, without sending: another of this
+   * User's devices sent it (`adoptShares`). The spec's hash then; a change
+   * since is sent as usual.
+   */
+  adopted?: string
 }
+
+/** `OutgoingShare.sent` for a recipient another device sent the share to. */
+export const ADOPTED_SHARE_HASH = 'adopted'
 
 export type IncomingShareStatus = 'pending' | ShareReply | 'cancelled'
 
@@ -295,7 +321,134 @@ export type IncomingShare = {
    * their system alerts can be taken back when the invitation is withdrawn.
    */
   alertSeqs?: number[]
+  /**
+   * The `rev` of the buddy's latest cancel, kept if they invite again. An
+   * answer given before it was for the canceled invitation (`answerApplies`).
+   */
+  cancelledRev?: number
 }
+
+/**
+ * This User's answer to a buddy's invitation, shared by all their devices
+ * through the roster. `s` is the answer, or `none` once the buddy canceled the
+ * invitation it answered. `v` is the invitation's `rev` when answered (for
+ * `none`, the cancel's), `r` this User's clock when they answered (0 for
+ * `none`), and `x` when the invitation lapses.
+ */
+export type AnswerMark = {
+  s: ShareReply | 'none'
+  v: number
+  r: number
+  x: number
+}
+
+/**
+ * Whether `mark` is newer than `other`: the later invitation `rev` wins, a
+ * cancel wins a tie, and between answers to the same `rev` the later one wins.
+ */
+export function newerAnswer(
+  mark: AnswerMark,
+  other: AnswerMark | undefined
+): boolean {
+  if (!other) return true
+  if (mark.v !== other.v) return mark.v > other.v
+  if ((mark.s === 'none') !== (other.s === 'none')) return mark.s === 'none'
+  return mark.r > other.r
+}
+
+/**
+ * Whether another device's answer belongs on this invitation: an answer (not a
+ * cancel's mark) to the invitation as it stands, given after any cancel this
+ * device saw.
+ */
+export function answerApplies(
+  share: Pick<IncomingShare, 'status' | 'cancelledRev'>,
+  mark: AnswerMark
+): mark is AnswerMark & { s: ShareReply } {
+  return (
+    mark.s !== 'none' &&
+    share.status !== 'cancelled' &&
+    mark.v > (share.cancelledRev ?? -1)
+  )
+}
+
+/** Answers the roster carries, newest first (about 120 bytes each). */
+export const MAX_ANSWER_MARKS = 50
+/**
+ * Read and dismissed queue entries the roster carries, newest first (40 to 70
+ * bytes each). The queue holds `MAX_NOTIFICATIONS`.
+ */
+export const MAX_NOTIFICATION_MARKS = 100
+
+/** Both sets of answers, the newer per invitation, minus lapsed ones, capped. */
+export function mergeAnswerMarks(
+  local: Record<string, AnswerMark>,
+  remote: Record<string, AnswerMark>,
+  now: number
+): Record<string, AnswerMark> {
+  const merged = { ...local }
+  for (const [key, mark] of Object.entries(remote))
+    if (newerAnswer(mark, merged[key])) merged[key] = mark
+  return Object.fromEntries(
+    Object.entries(merged)
+      .filter(([, mark]) => mark.x > now)
+      .sort(([a, x], [b, y]) => y.r - x.r || y.v - x.v || a.localeCompare(b))
+      .slice(0, MAX_ANSWER_MARKS)
+  )
+}
+
+/**
+ * Read or dismissed queue entries on any device (entry id → when the mark
+ * lapses, a month after it was made, by when the relay has dropped the event
+ * behind it). Dismissed implies read, so an id is in one map at most.
+ */
+export type NotificationMarks = {
+  read: Record<string, number>
+  dismissed: Record<string, number>
+}
+
+/** Both devices' marks, the later lapse per entry, minus lapsed ones, capped. */
+export function mergeNotificationMarks(
+  local: NotificationMarks,
+  remote: NotificationMarks,
+  now: number
+): NotificationMarks {
+  const later = (
+    a: Record<string, number>,
+    b: Record<string, number>
+  ): Record<string, number> => {
+    const merged = { ...a }
+    for (const [id, x] of Object.entries(b))
+      merged[id] = Math.max(merged[id] ?? x, x)
+    return merged
+  }
+  const dismissed = later(local.dismissed, remote.dismissed)
+  const read = Object.fromEntries(
+    Object.entries(later(local.read, remote.read)).filter(
+      ([id]) => !(id in dismissed)
+    )
+  )
+  const kept = new Set(
+    [
+      ...Object.entries(dismissed).map(([id, x]) => ({ id, x, dismissed: 1 })),
+      ...Object.entries(read).map(([id, x]) => ({ id, x, dismissed: 0 })),
+    ]
+      .filter((mark) => mark.x > now)
+      // Dismissals outrank reads when the cap bites: they remove entries.
+      .sort(
+        (a, b) =>
+          b.x - a.x || b.dismissed - a.dismissed || a.id.localeCompare(b.id)
+      )
+      .slice(0, MAX_NOTIFICATION_MARKS)
+      .map((mark) => mark.id)
+  )
+  const keep = (marks: Record<string, number>) =>
+    Object.fromEntries(Object.entries(marks).filter(([id]) => kept.has(id)))
+  return { read: keep(read), dismissed: keep(dismissed) }
+}
+
+/** How long a read or dismissed mark is kept: as long as the relay keeps events. */
+export const NOTIFICATION_MARK_TTL_MS = 31 * 24 * 60 * 60 * 1000
 
 /** How long a Can't Make It answer waits before it's sent. */
 export const REPLY_HOLD_MS = 15 * 1000
@@ -565,6 +718,13 @@ export type BuddiesState = {
   askedToJoin: Record<string, OutgoingJoinRequest>
   /** Newest first. */
   notifications: BuddyNotification[]
+  /**
+   * This User's answers to invitations, from every device: the roster carries
+   * them, so each device shows the same answer (by `incomingShareKey`).
+   */
+  answerMarks: Record<string, AnswerMark>
+  /** Queue entries read or dismissed on any of this User's devices. */
+  notificationMarks: NotificationMarks
   /** Hash of the last successful push registration. */
   pushRegistrationKey: string | null
   /** When the relay last accepted this device's push registration. */
@@ -638,6 +798,8 @@ export const initialBuddiesState: BuddiesState = {
   joinRequests: {},
   askedToJoin: {},
   notifications: [],
+  answerMarks: {},
+  notificationMarks: { read: {}, dismissed: {} },
   pushRegistrationKey: null,
   pushRegisteredAt: 0,
   sharing: {

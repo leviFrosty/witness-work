@@ -74,6 +74,9 @@ export function currentBuddyProfile(): BuddyProfile {
     badges: showBadges
       ? buddyCardBadges(earnedBadges, { dataProtectionMode })
       : [],
+    ...(avatar.type === 'image' && !isLocalImage(avatar.value)
+      ? { photoUnavailable: true }
+      : {}),
   }
 }
 

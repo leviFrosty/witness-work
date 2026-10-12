@@ -42,8 +42,12 @@ import {
   listedNotifications,
   mergeSharing,
   INVITE_TTL_MS,
+  MAX_ANSWER_MARKS,
+  MAX_NOTIFICATION_MARKS,
   MAX_NOTIFICATIONS,
   MAX_REMOVED_BUDDIES,
+  mergeAnswerMarks,
+  mergeNotificationMarks,
   mergeRemovedBuddies,
   notificationIdForSeq,
   OutgoingShareSpec,
@@ -1330,6 +1334,9 @@ describe('removed buddies stay removed', () => {
       ),
       removedBuddies: kept,
       sharing: { photo: true, tenure: true, streak: true, updatedAt: at },
+      answers: {},
+      read: {},
+      dismissed: {},
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
     // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
@@ -3757,5 +3764,455 @@ describe('badges', () => {
       ])
       expect(badgeReactionsFrom(undefined, buddies)).toEqual([])
     })
+  })
+})
+
+describe('a User’s devices stay in step', () => {
+  const saturday = { d: '2026-09-26', s: 600, m: 120 }
+  const planSpec = (
+    recipients: string[],
+    version?: number,
+    details: OutgoingShareSpec['details'] = saturday
+  ): OutgoingShareSpec => ({
+    key: planShareKey('sat'),
+    type: 'plan',
+    details,
+    recipients,
+    endsAt: Date.parse('2026-09-27T00:00:00Z'),
+    expiresAt: Date.parse('2026-09-28T00:00:00Z'),
+    ...(version === undefined ? {} : { version }),
+  })
+
+  /** Runs the roster write a device queued for a burst of marks. */
+  async function flushRoster(device: User) {
+    for (const timer of device.timers.splice(0)) timer.run()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+
+  /** Mom on her phone and her iPad, invited to Levi's Saturday Plan. */
+  async function invitedOnTwoDevices() {
+    const env = setup()
+    const levi = env.user('Levi')
+    const mom = env.user('Mom')
+    await pair(levi, mom)
+    const momsIpad = env.user('Mom', undefined, mom.seed)
+    await momsIpad.engine.sync()
+    levi.setShares([planSpec([mom.inboxId])])
+    await levi.engine.publishShares()
+    await mom.engine.sync()
+    await momsIpad.engine.sync()
+    const key = Object.keys(mom.store.getState().incomingShares)[0]
+    const replies = () =>
+      env.fake.inboxes
+        .get(levi.inboxId)!
+        .events.filter((event) => event.kind === 'share.reply')
+    return { ...env, levi, mom, momsIpad, key, replies }
+  }
+
+  it('shows an answer on every device, and only the one that answered sends it', async () => {
+    const { advance, levi, mom, momsIpad, key, replies } =
+      await invitedOnTwoDevices()
+    expect(momsIpad.store.getState().incomingShares[key].status).toBe('pending')
+
+    await mom.engine.replyToShare(key, 'going')
+    await flushRoster(mom)
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().incomingShares[key]).toMatchObject({
+      status: 'going',
+      unsentReplyRev: undefined,
+    })
+    expect(
+      momsIpad.store.getState().notifications.find((n) => n.shareKey === key)
+        ?.read
+    ).toBe(true)
+    expect(replies()).toHaveLength(1)
+
+    // Changed on the iPad, the phone follows and Levi hears it once.
+    advance(1000)
+    await momsIpad.engine.replyToShare(key, 'declined')
+    await flushRoster(momsIpad)
+    await mom.engine.sync()
+    expect(mom.store.getState().incomingShares[key].status).toBe('declined')
+    expect(replies()).toHaveLength(2)
+    await levi.engine.sync()
+    expect(Object.values(levi.store.getState().shareReplies)[0]).toMatchObject({
+      [mom.inboxId]: { status: 'declined' },
+    })
+  })
+
+  it('drops an answer waiting to be sent when another device answered later', async () => {
+    const { advance, mom, momsIpad, key, offlineOps, replies } =
+      await invitedOnTwoDevices()
+    offlineOps.add('event/put')
+    await mom.engine.replyToShare(key, 'going')
+    offlineOps.delete('event/put')
+    expect(
+      mom.store.getState().incomingShares[key].unsentReplyRev
+    ).toBeDefined()
+
+    advance(1000)
+    await momsIpad.engine.replyToShare(key, 'declined')
+    await flushRoster(momsIpad)
+    await mom.engine.sync()
+    expect(mom.store.getState().incomingShares[key]).toMatchObject({
+      status: 'declined',
+      unsentReplyRev: undefined,
+    })
+    expect(replies()).toHaveLength(1)
+  })
+
+  it("restores answers and the bell's read and dismissed entries on a new device", async () => {
+    const { user, mom, key } = await invitedOnTwoDevices()
+    await mom.engine.replyToShare(key, 'declined')
+    const paired = mom.store
+      .getState()
+      .notifications.find((n) => n.kind === 'paired')!
+    mom.engine.markNotificationRead(paired.id)
+    mom.engine.dismissNotification(paired.id)
+    await flushRoster(mom)
+
+    const momsMac = user('Mom', undefined, mom.seed)
+    await momsMac.engine.sync()
+    expect(momsMac.store.getState().incomingShares[key].status).toBe('declined')
+    const notifications = momsMac.store.getState().notifications
+    expect(notifications.map((n) => n.id)).not.toContain(paired.id)
+    expect(notifications.length).toBeGreaterThan(0)
+    expect(notifications.every((n) => n.read)).toBe(true)
+  })
+
+  it('marks entries read on the other devices when the bell is read on one', async () => {
+    const { mom, momsIpad } = await invitedOnTwoDevices()
+    const unread = momsIpad.store
+      .getState()
+      .notifications.filter((n) => !n.read)
+    expect(unread.length).toBeGreaterThan(0)
+    for (const entry of mom.store.getState().notifications)
+      mom.engine.markNotificationRead(entry.id)
+    // One roster write for the burst.
+    expect(mom.timers).toHaveLength(1)
+    await flushRoster(mom)
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().notifications.every((n) => n.read)).toBe(
+      true
+    )
+  })
+
+  it("doesn't carry an answer over to an invitation sent again after a cancel", async () => {
+    const { advance, user, levi, mom, momsIpad, key } =
+      await invitedOnTwoDevices()
+    await mom.engine.replyToShare(key, 'going')
+    await flushRoster(mom)
+    await momsIpad.engine.sync()
+
+    advance(1000)
+    levi.setShares([])
+    await levi.engine.publishShares()
+    await mom.engine.sync()
+    await momsIpad.engine.sync()
+    advance(1000)
+    levi.setShares([planSpec([mom.inboxId])])
+    await levi.engine.publishShares()
+    await mom.engine.sync()
+    await momsIpad.engine.sync()
+    for (const device of [mom, momsIpad])
+      expect(device.store.getState().incomingShares[key].status).toBe('pending')
+
+    // A device that only now starts reads the cancel's mark, not the answer.
+    await flushRoster(mom)
+    const momsMac = user('Mom', undefined, mom.seed)
+    await momsMac.engine.sync()
+    expect(momsMac.store.getState().incomingShares[key].status).toBe('pending')
+    expect(mom.store.getState().answerMarks[key]).toMatchObject({ s: 'none' })
+  })
+
+  it('passes over a request to join on every device after Not Now on one', async () => {
+    const { user } = setup()
+    const levi = user('Levi')
+    const anna = user('Anna')
+    await pair(levi, anna)
+    const annasIpad = user('Anna', undefined, anna.seed)
+    await annasIpad.engine.sync()
+    await levi.engine.askToJoin(
+      anna.inboxId,
+      '2026-09-26',
+      { s: 540, m: 120 },
+      new Date('2026-09-26T09:00:00').getTime()
+    )
+    await anna.engine.sync()
+    await annasIpad.engine.sync()
+    const entry = anna.store
+      .getState()
+      .notifications.find((n) => n.kind === 'joinRequest')!
+    anna.engine.dismissNotification(entry.id)
+    await flushRoster(anna)
+    await annasIpad.engine.sync()
+    expect(
+      annasIpad.store
+        .getState()
+        .notifications.some((n) => n.kind === 'joinRequest')
+    ).toBe(false)
+    expect(
+      Object.values(annasIpad.store.getState().joinRequests)
+    ).toMatchObject([{ dismissed: true }])
+  })
+
+  it('carries a nickname, color, and calendar choice to devices that already know the buddy', async () => {
+    const { advance, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const momsIpad = user('Mom', undefined, mom.seed)
+    await momsIpad.engine.sync()
+
+    advance(1000)
+    await mom.engine.setNickname(anna.inboxId, 'Annie')
+    await mom.engine.setColor(anna.inboxId, '#A855F7')
+    mom.engine.setShowOnCalendar(anna.inboxId, false)
+    await flushRoster(mom)
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().buddies[0]).toMatchObject({
+      nickname: 'Annie',
+      color: '#A855F7',
+      showOnCalendar: false,
+    })
+
+    // The later change wins, wherever it was made.
+    advance(1000)
+    await momsIpad.engine.setNickname(anna.inboxId, 'Anna B')
+    await mom.engine.sync()
+    expect(mom.store.getState().buddies[0].nickname).toBe('Anna B')
+    expect(mom.store.getState().buddies[0].showOnCalendar).toBe(false)
+  })
+
+  it('sends a shared Plan from one device only, and a change to it as one alert', async () => {
+    const { fake, user, advance, now } = setup()
+    let withdrawn: number | undefined = undefined
+    const deps = { withdrawnAt: () => withdrawn }
+    const levi = user('Levi', undefined, undefined, deps)
+    const anna = user('Anna')
+    await pair(levi, anna)
+    const created = now()
+    levi.setShares([planSpec([anna.inboxId], created)])
+    await levi.engine.publishShares()
+    const planEvents = () =>
+      fake.inboxes
+        .get(anna.inboxId)!
+        .events.filter((event) => event.kind.startsWith('plan.'))
+    expect(planEvents()).toHaveLength(1)
+
+    // Levi's iPad starts Buddies with the same Plans: it takes the share as
+    // sent, so Anna isn't invited twice.
+    const levisIpad = user('Levi', undefined, levi.seed, deps)
+    levisIpad.setShares([planSpec([anna.inboxId], created)])
+    await levisIpad.engine.sync()
+    await levisIpad.engine.publishShares()
+    expect(planEvents()).toHaveLength(1)
+
+    // A new time reaches both devices: one event and one alert.
+    advance(60_000)
+    const moved = planSpec([anna.inboxId], now(), { ...saturday, s: 660 })
+    levi.setShares([moved])
+    levisIpad.setShares([moved])
+    const pushes = fake.pushes.length
+    await levi.engine.publishShares()
+    advance(30_000)
+    await levisIpad.engine.publishShares()
+    expect(planEvents()).toHaveLength(2)
+    expect(fake.pushes).toHaveLength(pushes + 1)
+    await anna.engine.sync()
+    expect(
+      Object.values(anna.store.getState().incomingShares)[0].details.s
+    ).toBe(660)
+
+    // So does deleting it.
+    advance(60_000)
+    withdrawn = now()
+    levi.setShares([])
+    levisIpad.setShares([])
+    await levi.engine.publishShares()
+    advance(30_000)
+    await levisIpad.engine.publishShares()
+    expect(planEvents().map((event) => event.kind)).toEqual([
+      'plan.invite',
+      'plan.update',
+      'plan.cancel',
+    ])
+    expect(fake.pushes).toHaveLength(pushes + 2)
+  })
+
+  it('takes a shared Plan that arrived from another device as sent', async () => {
+    const { fake, user, now } = setup()
+    const levi = user('Levi')
+    const anna = user('Anna')
+    await pair(levi, anna)
+    const levisIpad = user('Levi', undefined, levi.seed)
+    await levisIpad.engine.sync()
+    const spec = planSpec([anna.inboxId], now())
+    levi.setShares([spec])
+    await levi.engine.publishShares()
+
+    levisIpad.setShares([spec])
+    levisIpad.engine.adoptShares([spec.key])
+    await levisIpad.engine.publishShares()
+    expect(
+      fake.inboxes
+        .get(anna.inboxId)!
+        .events.filter((event) => event.kind.startsWith('plan.'))
+    ).toHaveLength(1)
+  })
+
+  it("leaves Buddy Cards to the device with the Profile photo, except changes made where it's missing", async () => {
+    const { user } = setup()
+    const plans: Plans = { dayPlans: [], recurringPlans: [] }
+    const levi = user('Levi', plans)
+    const anna = user('Anna')
+    const photo = { t: 'image', v: 'AAAA' } as const
+    levi.profile.avatar = photo
+    await pair(levi, anna)
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].avatar).toEqual(photo)
+
+    const levisIpad = user('Levi', plans, levi.seed)
+    levisIpad.profile.photoUnavailable = true
+    await levisIpad.engine.sync()
+    // A change that arrived from another device, or with time.
+    plans.dayPlans = [dayPlan('2026-09-28', 60)]
+    await levisIpad.engine.publishCards()
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].avatar).toEqual(photo)
+    expect(anna.store.getState().cards[levi.inboxId].days).toEqual([])
+
+    // A change made on the iPad still reaches Anna, without the photo.
+    await levisIpad.engine.publishCards({ edited: true })
+    await anna.engine.sync()
+    expect(anna.store.getState().cards[levi.inboxId].days).toHaveLength(1)
+    expect(anna.store.getState().buddies[0].avatar).toBeUndefined()
+  })
+
+  it('keeps the newest marks, and a full roster with them fits the relay cap', () => {
+    const id = () => toB64u(random(16))
+    const at = 1_790_000_000_000
+    const answers = Object.fromEntries(
+      Array.from({ length: MAX_ANSWER_MARKS + 10 }, (_, index) => [
+        `${id()}|${id()}`,
+        { s: 'declined', v: at, r: at + index, x: at + 1 } as const,
+      ])
+    )
+    const kept = mergeAnswerMarks({}, answers, at)
+    expect(Object.keys(kept)).toHaveLength(MAX_ANSWER_MARKS)
+    expect(Math.min(...Object.values(kept).map((mark) => mark.r))).toBe(at + 10)
+    const marks = mergeNotificationMarks(
+      { read: {}, dismissed: {} },
+      {
+        read: Object.fromEntries(
+          Array.from({ length: MAX_NOTIFICATION_MARKS }, (_, index) => [
+            id(),
+            at + index,
+          ])
+        ),
+        dismissed: Object.fromEntries(
+          Array.from({ length: 10 }, () => [
+            `pending|${id()}|${id()}`,
+            at + 1000,
+          ])
+        ),
+      },
+      at
+    )
+    expect(
+      Object.keys(marks.read).length + Object.keys(marks.dismissed).length
+    ).toBe(MAX_NOTIFICATION_MARKS)
+    expect(Object.keys(marks.dismissed)).toHaveLength(10)
+
+    const name = 'N'.repeat(60)
+    const avatar = { t: 'emoji', v: '🧑🏽‍🦱' } as const
+    const tenure = { kind: 'regularAuxiliary', since: '2019-09' } as const
+    const dhPub = () => toB64u(random(32))
+    const roster: Roster = {
+      v: 1,
+      version: 1_000_000,
+      buddies: Array.from({ length: 5 }, (_, colorIndex) => ({
+        inboxId: id(),
+        name,
+        nickname: name,
+        avatar,
+        tenure,
+        dhPub: dhPub(),
+        inviteSecret: id(),
+        status: 'active',
+        pairedAt: at,
+        colorIndex,
+        color: '#A855F7FF',
+        showOnCalendar: true,
+        prefsAt: at,
+      })),
+      outgoingInvites: Array.from({ length: 5 }, () => ({
+        inviteId: id(),
+        secret: id(),
+        createdAt: at,
+        expiresAt: at,
+      })),
+      incomingClaims: Array.from({ length: 5 }, () => ({
+        inviteId: id(),
+        secret: id(),
+        name,
+        avatar,
+        tenure,
+        dhPub: dhPub(),
+        inboxId: id(),
+        receivedAt: at,
+        expiresAt: at,
+      })),
+      closedInviteIds: Object.fromEntries(
+        Array.from({ length: 140 }, () => [id(), at])
+      ),
+      removedBuddies: Object.fromEntries(
+        Array.from({ length: MAX_REMOVED_BUDDIES }, () => [id(), at])
+      ),
+      sharing: { photo: true, tenure: true, streak: true, updatedAt: at },
+      answers: kept,
+      // Every mark as long as the longest id.
+      read: {},
+      dismissed: Object.fromEntries(
+        Array.from({ length: MAX_NOTIFICATION_MARKS }, () => [
+          `pending|${id()}|${id()}`,
+          at,
+        ])
+      ),
+    }
+    const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
+    // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
+    expect(plaintext.length).toBeLessThan(32 * 1024 - 29)
+  })
+
+  it('reads a roster with marks it doesn’t understand, keeping the rest', () => {
+    const id = () => toB64u(random(16))
+    const key = `${id()}|${id()}`
+    const good = { s: 'going', v: 1, r: 2, x: 3 }
+    const parsed = rosterSchema.parse({
+      v: 1,
+      buddies: [],
+      outgoingInvites: [],
+      incomingClaims: [],
+      answers: {
+        [key]: good,
+        [`${id()}|${id()}`]: { s: 'maybe', v: 1, r: 2, x: 3 },
+        'not-a-key': good,
+      },
+      read: { [id()]: 1, 'not an id': 2 },
+      dismissed: 'garbled',
+    })
+    expect(parsed.answers).toEqual({ [key]: good })
+    expect(Object.keys(parsed.read)).toHaveLength(1)
+    expect(parsed.dismissed).toEqual({})
+    // Older rosters have none.
+    expect(
+      rosterSchema.parse({
+        v: 1,
+        buddies: [],
+        outgoingInvites: [],
+        incomingClaims: [],
+      })
+    ).toMatchObject({ answers: {}, read: {}, dismissed: {} })
   })
 })

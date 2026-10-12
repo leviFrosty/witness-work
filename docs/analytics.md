@@ -733,6 +733,17 @@ The buddy's platform travels inside the end-to-end encrypted invite card, claim,
 and `pair.confirmed` (see `docs/buddies-protocol.md`); the relay never sees it,
 and the app never shows it.
 
+### Buddies on another device
+
+`buddies_device_joined` answers whether Buddies follows people to their other
+devices: how many Users with iCloud Sync get Buddies started on a second device
+without setting it up, and whether it arrives with their buddies. It's sent
+once per device, when Buddies starts there from the key the User already has.
+
+| Event                   | When                                                                  | Properties                                                                    |
+| ----------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `buddies_device_joined` | Buddies started by itself on a device with iCloud Sync (or Drive) on. | `buddies`: how many buddies it restored (0–5). No names, relay ids, or dates. |
+
 ### Buddies alerts
 
 `buddies_alerts_shown` answers whether named Buddies alerts work in the field,

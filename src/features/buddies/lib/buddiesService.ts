@@ -21,7 +21,10 @@ import type { BuddyStreak, ProfilePhoto } from '@/features/buddies/lib/schemas'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
-import { buildOutgoingShares } from '@/features/buddies/lib/shares'
+import {
+  buildOutgoingShares,
+  shareWithdrawnAt,
+} from '@/features/buddies/lib/shares'
 import {
   hasSharedPhoto,
   readSharedPhoto,
@@ -84,6 +87,16 @@ const engine = createBuddiesEngine({
       contacts: useContacts.getState().contacts,
       now: Date.now(),
     }),
+  withdrawnAt: (key) => {
+    const { dayPlans, deletedDayPlans } = useServiceReport.getState()
+    const { conversations, deletedConversations } = useConversations.getState()
+    return shareWithdrawnAt(key, {
+      dayPlans,
+      deletedDayPlans,
+      visits: conversations,
+      deletedVisits: deletedConversations,
+    })
+  },
   platform: Platform.OS === 'android' ? 'android' : 'ios',
   // One per completed pairing on each side; `role: inviter` counts pairings.
   onPaired: ({ role, buddyPlatform }) =>

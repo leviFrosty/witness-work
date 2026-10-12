@@ -1,14 +1,6 @@
 import { X as XIcon } from 'lucide-react-native'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable, StyleSheet, TextInput, View } from 'react-native'
 import { InputProps } from 'tamagui'
 
 import useTheme from '@/contexts/theme'
@@ -24,6 +16,7 @@ import { ContactStaleness } from '@/lib/contactStaleness'
 import { CustomFieldDefinition } from '@/types/customField'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import Sheet from '@/components/ui/Sheet'
 import Text from '@/components/ui/MyText'
 import ChoiceChips, { ChoiceChip } from '@/components/ui/ChoiceChips'
 import MyTextInput from '@/components/ui/TextInput'
@@ -189,7 +182,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   onSave,
 }) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
 
   const [field, setField] = useState<FieldKey>(null)
   const [op, setOp] = useState<TextOperator | ComparableOperator | null>(null)
@@ -400,205 +392,154 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     valueInputProps.placeholder = 'YYYY-MM-DD'
   }
 
-  if (!open) return null
-
   return (
-    // Absolutely-positioned overlay rendered inside the parent screen rather
-    // than a Tamagui Sheet. The parent (ContactsSortAndFilterScreen) is itself
-    // an iOS native form-sheet modal, and a Tamagui Sheet's portal/RN-Modal
-    // attaches to the React root which sits *behind* the form-sheet — opening
-    // it from within would render the sheet but never make it visible. Staying
-    // inline within the parent's view tree keeps everything visible.
-    <View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 50,
-        backgroundColor: theme.colors.background,
-      }}
+    // A native sheet presents above the Sort & Filter screen, which is itself
+    // a native modal (a form sheet on iPad).
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      backgroundColor={theme.colors.background}
     >
-      <View style={{ flex: 1 }}>
-        <View
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 10,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: theme.colors.border,
+        }}
+      >
+        <Text
           style={{
-            flexDirection: 'row',
+            fontSize: theme.fontSize('xl'),
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('contacts_filters')}
+        </Text>
+        <IconButton
+          onPress={handleCancel}
+          size={20}
+          icon={XIcon}
+          color={theme.colors.text}
+        />
+      </View>
+
+      <Sheet.ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 16,
+        }}
+      >
+        <View style={{ gap: 22 }}>
+          {/* Top sections (field/operator/value) share a 14px rhythm. */}
+          <View style={{ gap: 14 }}>
+            <View style={{ gap: 8 }}>
+              <Text style={sectionTitleStyle}>
+                {i18n.t('contacts_filterField')}
+              </Text>
+              <ChoiceChips<Exclude<FieldKey, null>>
+                                value={field}
+                onChange={setField}
+                options={fieldOptions}
+              />
+            </View>
+
+            {showOperatorRow && (
+              <View style={{ gap: 8 }}>
+                <Text style={sectionTitleStyle}>
+                  {i18n.t('contacts_filterOperator')}
+                </Text>
+                <ChoiceChips<TextOperator | ComparableOperator>
+                                    value={op}
+                  onChange={setOp}
+                  options={operatorOptions}
+                />
+              </View>
+            )}
+
+            {field === 'pinStaleness' && (
+              <View style={{ gap: 8 }}>
+                <Text style={sectionTitleStyle}>
+                  {i18n.t('contacts_filterValue')}
+                </Text>
+                <ChoiceChips<ContactStaleness>
+                                    value={value as ContactStaleness}
+                  onChange={(v) => setValue(v)}
+                  options={pinStalenessOptions}
+                />
+              </View>
+            )}
+
+            {showValueRow && field !== 'pinStaleness' && (
+              <View style={{ gap: 8 }}>
+                <Pressable
+                  onPress={() => valueInput.current?.focus()}
+                  hitSlop={{ top: 8, bottom: 8 }}
+                  accessibilityRole='button'
+                  accessibilityLabel={i18n.t('contacts_filterValue')}
+                >
+                  <Text style={sectionTitleStyle}>
+                    {i18n.t('contacts_filterValue')}
+                  </Text>
+                </Pressable>
+                <MyTextInput
+                  ref={valueInput}
+                  value={value}
+                  onChangeText={setValue}
+                  placeholder={valueInputProps.placeholder}
+                  inputMode={valueInputProps.inputMode}
+                  placeholderTextColor={
+                    theme.colors.textAlt as InputProps['placeholderTextColor']
+                  }
+                  textAlign='left'
+                />
+              </View>
+            )}
+          </View>
+        </View>
+      </Sheet.ScrollView>
+
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+        }}
+      >
+        <Button
+          onPress={handleApply}
+          disabled={!isValid}
+          noTransform
+          style={{
+            paddingVertical: 14,
             alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 20,
-            paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
-            paddingBottom: 10,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: theme.colors.border,
+            justifyContent: 'center',
+            borderRadius: theme.numbers.borderRadiusMd,
+            backgroundColor: isValid
+              ? theme.colors.accent
+              : theme.colors.accentAlt,
+            opacity: isValid ? 1 : 0.6,
           }}
         >
           <Text
             style={{
-              fontSize: theme.fontSize('xl'),
-              color: theme.colors.text,
+              fontSize: theme.fontSize('md'),
+              color: theme.colors.textInverse,
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {i18n.t('contacts_filters')}
+            {i18n.t('contacts_filter_apply')}
           </Text>
-          <IconButton
-            onPress={handleCancel}
-            size={20}
-            icon={XIcon}
-            color={theme.colors.text}
-          />
-        </View>
-
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: 120 + insets.bottom,
-          }}
-          keyboardShouldPersistTaps='handled'
-        >
-          <View style={{ gap: 22 }}>
-            {/* Top sections (field/operator/value) share a 14px rhythm. */}
-            <View style={{ gap: 14 }}>
-              <View style={{ gap: 8 }}>
-                <Text style={sectionTitleStyle}>
-                  {i18n.t('contacts_filterField')}
-                </Text>
-                <ChoiceChips<Exclude<FieldKey, null>>
-                  value={field}
-                  onChange={setField}
-                  options={fieldOptions}
-                />
-              </View>
-
-              {showOperatorRow && (
-                <View style={{ gap: 8 }}>
-                  <Text style={sectionTitleStyle}>
-                    {i18n.t('contacts_filterOperator')}
-                  </Text>
-                  <ChoiceChips<TextOperator | ComparableOperator>
-                    value={op}
-                    onChange={setOp}
-                    options={operatorOptions}
-                  />
-                </View>
-              )}
-
-              {field === 'pinStaleness' && (
-                <View style={{ gap: 8 }}>
-                  <Text style={sectionTitleStyle}>
-                    {i18n.t('contacts_filterValue')}
-                  </Text>
-                  <ChoiceChips<ContactStaleness>
-                    value={value as ContactStaleness}
-                    onChange={(v) => setValue(v)}
-                    options={pinStalenessOptions}
-                  />
-                </View>
-              )}
-
-              {showValueRow && field !== 'pinStaleness' && (
-                <View style={{ gap: 8 }}>
-                  <Pressable
-                    onPress={() => valueInput.current?.focus()}
-                    hitSlop={{ top: 8, bottom: 8 }}
-                    accessibilityRole='button'
-                    accessibilityLabel={i18n.t('contacts_filterValue')}
-                  >
-                    <Text style={sectionTitleStyle}>
-                      {i18n.t('contacts_filterValue')}
-                    </Text>
-                  </Pressable>
-                  <MyTextInput
-                    ref={valueInput}
-                    value={value}
-                    onChangeText={setValue}
-                    placeholder={valueInputProps.placeholder}
-                    inputMode={valueInputProps.inputMode}
-                    placeholderTextColor={
-                      theme.colors.textAlt as InputProps['placeholderTextColor']
-                    }
-                    textAlign='left'
-                  />
-                </View>
-              )}
-            </View>
-          </View>
-        </ScrollView>
-
-        {/* Sticky bottom action row — sits over the ScrollView's bottom
-            padding so neither button is ever hidden behind the home indicator. */}
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: Math.max(28, insets.bottom + 12),
-            backgroundColor: theme.colors.background,
-            borderTopWidth: 1,
-            borderTopColor: theme.colors.border,
-            flexDirection: 'row',
-            gap: 10,
-          }}
-        >
-          <Button
-            onPress={handleCancel}
-            noTransform
-            style={{
-              flex: 1,
-              paddingVertical: 14,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: theme.numbers.borderRadiusMd,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.backgroundLighter,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('md'),
-                color: theme.colors.text,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('cancel')}
-            </Text>
-          </Button>
-          <Button
-            onPress={handleApply}
-            disabled={!isValid}
-            noTransform
-            style={{
-              flex: 2,
-              paddingVertical: 14,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: theme.numbers.borderRadiusMd,
-              backgroundColor: isValid
-                ? theme.colors.accent
-                : theme.colors.accentAlt,
-              opacity: isValid ? 1 : 0.6,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('md'),
-                color: theme.colors.textInverse,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('contacts_filter_apply')}
-            </Text>
-          </Button>
-        </View>
+        </Button>
       </View>
-    </View>
+    </Sheet>
   )
 }
 

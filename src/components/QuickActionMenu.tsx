@@ -32,14 +32,6 @@ type QuickActionOption =
   | 'addPlan'
   | 'logTrip'
 
-/** How many actions the menu shows, for sizing the compact sheet. */
-export function useQuickActionCount() {
-  const { showsTimer } = usePublisher()
-  const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
-  // Log Visit, Create Plan and Add Contact always show.
-  return 3 + (showsTimer ? 1 : 0) + (tracksMileage ? 1 : 0)
-}
-
 /** One action set for the compact sheet and the iPad anchored menu. */
 export default function QuickActionMenu({ navigation, onAction }: Props) {
   const { showsTimer } = usePublisher()

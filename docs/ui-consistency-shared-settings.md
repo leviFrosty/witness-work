@@ -34,10 +34,8 @@ in native rows need the native popovers.
   drawer groups.
 - `components/ui/Select.tsx`, `TextInput.tsx`, and `InfoPopover.tsx`:
   outlined controls, accessibility labels, and inline info-button alignment.
-- `components/ui/SelectWheel.tsx`, `DateTimePicker.tsx`, and
-  `WheelPicker.tsx`: picker surfaces keep their platform-specific interaction,
-  while the wheel trigger uses the shared 44pt select geometry and exposes its
-  selected value and expanded state to VoiceOver.
+- `components/ui/DateTimePicker.tsx` and `WheelPicker.tsx`: picker surfaces
+  keep their platform-specific interaction.
 - `components/AssistantPreviewSheet.tsx` and `components/TypeSelectorRow.tsx`:
   compound controls preserve their selection semantics while TypeSelectorRow
   uses a compact type select and separate full-width custom-category controls.

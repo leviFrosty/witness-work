@@ -10,7 +10,6 @@ import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import type { SelectData } from '@/components/ui/Select'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import {
   monthStatusLabel,
@@ -44,7 +43,6 @@ const MonthStatusSheet = ({
   onSave,
 }: MonthStatusSheetProps) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const { publisherHours } = usePreferences()
   const [draftStatus, setDraftStatus] = useState<MonthStatus>(status)
   const [scope, setScope] = useState<MonthStatusScope>('month')
@@ -81,79 +79,70 @@ const MonthStatusSheet = ({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[50]}
+      backgroundColor={theme.colors.background}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame
-        backgroundColor={theme.colors.background}
-        paddingBottom={sheetBottomInset}
+      <View
+        style={{
+          paddingHorizontal: inputLayout.horizontalPadding,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+          paddingTop: 22,
+          paddingBottom: 32,
+          gap: 20,
+        }}
       >
         <View
-          style={{
-            paddingHorizontal: inputLayout.horizontalPadding,
-            width: '100%',
-            maxWidth: inputLayout.contentMaxWidth,
-            alignSelf: 'center',
-            paddingTop: 22,
-            paddingBottom: 32,
-            gap: 20,
-          }}
+          style={{ gap: 6, paddingHorizontal: inputLayout.horizontalPadding }}
         >
-          <View
-            style={{ gap: 6, paddingHorizontal: inputLayout.horizontalPadding }}
+          <Text
+            accessibilityRole='header'
+            style={{
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xl'),
+            }}
           >
-            <Text
-              accessibilityRole='header'
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('monthStatus.title', { month: monthLabel })}
-            </Text>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {i18n.t('monthStatus.description')}
-            </Text>
-          </View>
-
-          <Section>
-            <InputRowSelect
-              label={i18n.t('status')}
-              selectProps={{
-                data: statusItems,
-                value: draftStatus,
-                onChange: ({ value }) => setDraftStatus(value),
-              }}
-            />
-            <InputRowSelect
-              label={i18n.t('monthStatus.appliesTo')}
-              lastInSection
-              selectProps={{
-                data: scopeItems,
-                value: scope,
-                onChange: ({ value }) => setScope(value),
-              }}
-            />
-          </Section>
-
-          <ActionButton
-            noTransform
-            accessibilityRole='button'
-            onPress={handleSave}
+            {i18n.t('monthStatus.title', { month: monthLabel })}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
           >
-            {i18n.t('save')}
-          </ActionButton>
+            {i18n.t('monthStatus.description')}
+          </Text>
         </View>
-      </Sheet.Frame>
+
+        <Section>
+          <InputRowSelect
+            label={i18n.t('status')}
+            selectProps={{
+              data: statusItems,
+              value: draftStatus,
+              onChange: ({ value }) => setDraftStatus(value),
+            }}
+          />
+          <InputRowSelect
+            label={i18n.t('monthStatus.appliesTo')}
+            lastInSection
+            selectProps={{
+              data: scopeItems,
+              value: scope,
+              onChange: ({ value }) => setScope(value),
+            }}
+          />
+        </Section>
+
+        <ActionButton
+          noTransform
+          accessibilityRole='button'
+          onPress={handleSave}
+        >
+          {i18n.t('save')}
+        </ActionButton>
+      </View>
     </Sheet>
   )
 }

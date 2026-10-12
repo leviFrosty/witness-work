@@ -64,7 +64,6 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
-vi.mock('@/hooks/useSheetBottomInset', () => ({ default: () => 0 }))
 vi.mock('@/hooks/useCheapestSupporterPrice', () => ({
   default: () => ({ priceString: '$1' }),
 }))
@@ -76,17 +75,11 @@ vi.mock('@/components/SupporterBenefits', () => ({
   default: 'SupporterBenefits',
 }))
 vi.mock('lucide-react-native', () => ({ X: 'X' }))
-vi.mock('tamagui', async () => {
+vi.mock('@/components/ui/Sheet', async () => {
   const { createElement } = await import('react')
   const Sheet = ({ children, ...props }: { children?: React.ReactNode }) =>
     createElement('Sheet', props, children)
-  return {
-    Sheet: Object.assign(Sheet, {
-      Handle: 'SheetHandle',
-      Overlay: 'SheetOverlay',
-      Frame: 'SheetFrame',
-    }),
-  }
+  return { default: Object.assign(Sheet, { ScrollView: 'SheetScrollView' }) }
 })
 
 import IsSupporter from '@/components/IsSupporter'
@@ -184,6 +177,9 @@ describe.each(['ios', 'android'])('supporter gate on %s', (platform) => {
     })
     expect(events('supporter_gate_clicked')).toHaveLength(1)
     expect(events('paywall_opened')).toEqual([])
+    // The Paywall waits for the sheet to finish closing.
+    expect(runtime.navigate).not.toHaveBeenCalled()
+    act(() => renderer!.root.findByType('Sheet' as never).props.onClosed())
     expect(runtime.navigate).toHaveBeenCalledExactlyOnceWith('Paywall', {
       source: 'feature_gate',
       feature: 'customAccentColor',

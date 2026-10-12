@@ -5,7 +5,6 @@ import { XStack } from 'tamagui'
 import Sheet from '@/components/ui/Sheet'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -36,7 +35,6 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   contact,
 }) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const developerTools = usePreferences((s) => s.developerTools)
   const dismiss = useDismissContact()
 
@@ -47,161 +45,150 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   }
 
   return (
-    <Sheet
-      open={open}
-      modal
-      snapPoints={[80]}
-      onOpenChange={setOpen}
-      dismissOnSnapToBottom
-      transition='quick'
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame paddingBottom={sheetBottomInset}>
-        <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              color: theme.colors.text,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('dismissForLater')}
-          </Text>
-          <IconButton
-            noTransform
-            onPress={() => setOpen(false)}
-            size={20}
-            icon={XIcon}
-            color={theme.colors.text}
-          />
-        </XStack>
-
-        <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              lineHeight: 20,
-            }}
-          >
-            {contact && i18n.t('dismissContactHelp', { name: contact.name })}
-          </Text>
-        </View>
-
-        <Sheet.ScrollView
-          contentContainerStyle={{ paddingTop: 10, paddingBottom: 75 }}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xl'),
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+          }}
         >
-          <View style={{ gap: 10, paddingHorizontal: 20, paddingBottom: 30 }}>
-            {developerTools && (
-              <>
-                <View style={{ marginBottom: 10 }}>
+          {i18n.t('dismissForLater')}
+        </Text>
+        <IconButton
+          noTransform
+          onPress={() => setOpen(false)}
+          size={20}
+          icon={XIcon}
+          color={theme.colors.text}
+        />
+      </XStack>
+
+      <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+            lineHeight: 20,
+          }}
+        >
+          {contact && i18n.t('dismissContactHelp', { name: contact.name })}
+        </Text>
+      </View>
+
+      <Sheet.ScrollView
+        contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}
+      >
+        <View style={{ gap: 10, paddingHorizontal: 20 }}>
+          {developerTools && (
+            <>
+              <View style={{ marginBottom: 10 }}>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                    textAlign: 'center',
+                  }}
+                >
+                  🧪 Developer Test Options
+                </Text>
+              </View>
+              {testDismissOptions.map((option) => {
+                const exampleDate = moment()
+                  .add(option.duration, option.unit)
+                  .format('LTS')
+
+                return (
+                  <Button
+                    noTransform
+                    key={option.key}
+                    onPress={() => handleDismiss(option)}
+                    style={{
+                      paddingVertical: 16,
+                      paddingHorizontal: 20,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      borderColor: theme.colors.accent,
+                      borderWidth: 2,
+                      backgroundColor: theme.colors.accentTranslucent,
+                    }}
+                  >
+                    <View style={{ gap: 4 }}>
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('md'),
+                          fontFamily: theme.fonts.semiBold,
+                          color: theme.colors.accent,
+                        }}
+                      >
+                        {option.label}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('xs'),
+                          color: theme.colors.textAlt,
+                        }}
+                      >
+                        {option.example.replace('{date}', exampleDate)}
+                      </Text>
+                    </View>
+                  </Button>
+                )
+              })}
+              <View style={{ height: 20 }} />
+            </>
+          )}
+          {dismissOptions.map((option) => {
+            const exampleDate = formatDate(
+              moment().add(option.duration, option.unit),
+              { style: 'medium' }
+            )
+
+            return (
+              <Button
+                noTransform
+                key={option.key}
+                onPress={() => handleDismiss(option)}
+                style={{
+                  paddingVertical: 16,
+                  paddingHorizontal: 20,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1,
+                  backgroundColor: theme.colors.backgroundLighter,
+                }}
+              >
+                <View style={{ gap: 4 }}>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('md'),
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.text,
+                    }}
+                  >
+                    {option.isTestOption
+                      ? option.label
+                      : i18n.t(option.label as 'dismissFor1Week')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: theme.fontSize('xs'),
-                      fontFamily: theme.fonts.semiBold,
                       color: theme.colors.textAlt,
-                      textAlign: 'center',
                     }}
                   >
-                    🧪 Developer Test Options
+                    {option.isTestOption
+                      ? option.example.replace('{date}', exampleDate)
+                      : i18n.t(option.example as 'dismissExample', {
+                          date: exampleDate,
+                        })}
                   </Text>
                 </View>
-                {testDismissOptions.map((option) => {
-                  const exampleDate = moment()
-                    .add(option.duration, option.unit)
-                    .format('LTS')
-
-                  return (
-                    <Button
-                      noTransform
-                      key={option.key}
-                      onPress={() => handleDismiss(option)}
-                      style={{
-                        paddingVertical: 16,
-                        paddingHorizontal: 20,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                        borderColor: theme.colors.accent,
-                        borderWidth: 2,
-                        backgroundColor: theme.colors.accentTranslucent,
-                      }}
-                    >
-                      <View style={{ gap: 4 }}>
-                        <Text
-                          style={{
-                            fontSize: theme.fontSize('md'),
-                            fontFamily: theme.fonts.semiBold,
-                            color: theme.colors.accent,
-                          }}
-                        >
-                          {option.label}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: theme.fontSize('xs'),
-                            color: theme.colors.textAlt,
-                          }}
-                        >
-                          {option.example.replace('{date}', exampleDate)}
-                        </Text>
-                      </View>
-                    </Button>
-                  )
-                })}
-                <View style={{ height: 20 }} />
-              </>
-            )}
-            {dismissOptions.map((option) => {
-              const exampleDate = formatDate(
-                moment().add(option.duration, option.unit),
-                { style: 'medium' }
-              )
-
-              return (
-                <Button
-                  noTransform
-                  key={option.key}
-                  onPress={() => handleDismiss(option)}
-                  style={{
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    borderColor: theme.colors.border,
-                    borderWidth: 1,
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <View style={{ gap: 4 }}>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('md'),
-                        fontFamily: theme.fonts.semiBold,
-                        color: theme.colors.text,
-                      }}
-                    >
-                      {option.isTestOption
-                        ? option.label
-                        : i18n.t(option.label as 'dismissFor1Week')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {option.isTestOption
-                        ? option.example.replace('{date}', exampleDate)
-                        : i18n.t(option.example as 'dismissExample', {
-                            date: exampleDate,
-                          })}
-                    </Text>
-                  </View>
-                </Button>
-              )
-            })}
-          </View>
-        </Sheet.ScrollView>
-      </Sheet.Frame>
+              </Button>
+            )
+          })}
+        </View>
+      </Sheet.ScrollView>
     </Sheet>
   )
 }

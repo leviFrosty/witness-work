@@ -319,8 +319,7 @@ const ContactsSortAndFilterScreen = () => {
       </View>
 
       {/* ScrollView fills the remaining space. Bottom padding leaves room for
-          the absolute footer so the last sort row is never obscured by it —
-          same pattern as ContactsFilterSheet. */}
+          the absolute footer so the last sort row is never obscured by it. */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -539,11 +538,11 @@ const ContactsSortAndFilterScreen = () => {
           edits); Done dismisses the sheet
           because every change above is already live in store state.
 
-          Absolutely positioned (matching ContactsFilterSheet's pattern) so the
-          ScrollView above can claim the full sheet height — when this footer
-          was a flex sibling, the form-sheet presentation didn't always
-          distribute remaining space to the ScrollView and the first scroll
-          row could collide with the header above. */}
+          Absolutely positioned so the ScrollView above can claim the full
+          sheet height — when this footer was a flex sibling, the form-sheet
+          presentation didn't always distribute remaining space to the
+          ScrollView and the first scroll row could collide with the header
+          above. */}
       <View
         style={{
           position: 'absolute',

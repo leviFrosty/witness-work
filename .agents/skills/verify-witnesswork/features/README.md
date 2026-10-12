@@ -13,6 +13,7 @@ This folder is the maintained source for verifying WitnessWork's user-facing beh
 ## Driving conventions
 
 - UI actions go through `wwv ad …`, using agent-device with this run's session. Prefer `label="…"` selectors, and add `role="button"` when a text label and a control share a name (e.g. "Hours").
+- Bottom sheets are native (`@/components/ui/Sheet`) and present above everything, native modals included. Close one by tapping the dimmed area above it, swiping it down from its grabber, or Android's Back. The screen behind stays in the tree, so when a label is in both (e.g. "Add Time"), tap the sheet's by coordinates. `e2e/maestro/plan-through-sheets.yaml` re-proves the Quick Action and picker sheets.
 - State setup goes through `wwv seed`, `wwv flag`, `wwv nav` and `wwv eval`. Setup is never the proof.
 - A flow worth re-running belongs in `e2e/maestro/` as a supported Maestro subset (`scripts/verify/flows.mjs`). Add `# seed:` and `# assert:` headers.
 

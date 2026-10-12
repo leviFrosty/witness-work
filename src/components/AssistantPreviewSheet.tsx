@@ -6,7 +6,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { View, ScrollView } from 'react-native'
+import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import Sheet from '@/components/ui/Sheet'
 import { useToastController } from '@tamagui/toast'
@@ -16,7 +16,6 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 
 import i18n from '@/lib/locales'
 import {
@@ -72,7 +71,6 @@ const AssistantPreviewSheet = ({
   onUndo,
 }: Props) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const toast = useToastController()
   const { addDayPlan, deleteDayPlan } = useServiceReport()
   const { planAlwaysNotify, timeDisplayFormat } = usePreferences()
@@ -198,203 +196,163 @@ const AssistantPreviewSheet = ({
 
   return (
     <>
-      <Sheet
-        open={open}
-        onOpenChange={onOpenChange}
-        dismissOnSnapToBottom
-        modal
-        snapPoints={[70]}
-      >
-        <Sheet.Handle />
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame paddingBottom={sheetBottomInset}>
-          <View style={{ padding: 20, flex: 1, gap: 15 }}>
-            <View
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <View style={{ flexShrink: 1, padding: 20, gap: 15 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
               }}
             >
-              <Text
+              {i18n.t('assistant.label')}
+            </Text>
+            <IconButton
+              noTransform
+              icon={XIcon}
+              onPress={() => onOpenChange(false)}
+            />
+          </View>
+
+          <Sheet.ScrollView contentContainerStyle={{ gap: 8 }}>
+            {rows.map((row) => (
+              <View
+                key={row.rowId}
                 style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  backgroundColor: theme.colors.backgroundLighter,
+                  opacity: row.dropped ? 0.4 : 1,
+                  gap: 10,
                 }}
               >
-                {i18n.t('assistant.label')}
-              </Text>
-              <IconButton
-                noTransform
-                icon={XIcon}
-                onPress={() => onOpenChange(false)}
-              />
-            </View>
-
-            <ScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={{ gap: 8 }}
-              keyboardShouldPersistTaps='handled'
-            >
-              {rows.map((row) => (
-                <View
-                  key={row.rowId}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                    paddingHorizontal: 12,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    backgroundColor: theme.colors.backgroundLighter,
-                    opacity: row.dropped ? 0.4 : 1,
-                    gap: 10,
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontFamily: theme.fonts.semiBold,
-                        fontSize: theme.fontSize('sm'),
-                      }}
-                    >
-                      {formatWeekdayMonthDayCompact(moment(row.date))}
-                    </Text>
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('xs'),
-                      }}
-                    >
-                      {formatMinutes(row.minutes, timeDisplayFormat).formatted}
-                    </Text>
-                  </View>
-                  <IconButton
-                    icon={MinusIcon}
-                    onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
-                    size={12}
-                    color={theme.colors.textAlt}
-                  />
-                  <IconButton
-                    icon={PlusIcon}
-                    onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
-                    size={12}
-                    color={theme.colors.textAlt}
-                  />
-                  <IconButton
-                    icon={Trash2Icon}
-                    onPress={() => toggleDropped(row.rowId)}
-                    size={12}
-                    color={
-                      row.dropped ? theme.colors.warn : theme.colors.textAlt
-                    }
-                  />
-                </View>
-              ))}
-            </ScrollView>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: 8,
-                borderTopWidth: 1,
-                borderTopColor: theme.colors.border,
-              }}
-            >
-              <Text style={{ fontSize: theme.fontSize('sm') }}>
-                {footerSegments.map((s, i) => (
-                  <Fragment key={i}>
-                    <Text
-                      style={
-                        s.bold
-                          ? {
-                              fontFamily: theme.fonts.bold,
-                              fontSize: theme.fontSize('sm'),
-                            }
-                          : { fontSize: theme.fontSize('sm') }
-                      }
-                    >
-                      {s.text}
-                    </Text>
-                  </Fragment>
-                ))}
-                {reachesGoal ? (
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
                       fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.accent,
                       fontSize: theme.fontSize('sm'),
                     }}
                   >
-                    {`  · ${i18n.t('assistant.preview.goalReached')} ✓`}
+                    {formatWeekdayMonthDayCompact(moment(row.date))}
                   </Text>
-                ) : null}
-              </Text>
-            </View>
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                    }}
+                  >
+                    {formatMinutes(row.minutes, timeDisplayFormat).formatted}
+                  </Text>
+                </View>
+                <IconButton
+                  icon={MinusIcon}
+                  onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
+                  size={12}
+                  color={theme.colors.textAlt}
+                />
+                <IconButton
+                  icon={PlusIcon}
+                  onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
+                  size={12}
+                  color={theme.colors.textAlt}
+                />
+                <IconButton
+                  icon={Trash2Icon}
+                  onPress={() => toggleDropped(row.rowId)}
+                  size={12}
+                  color={row.dropped ? theme.colors.warn : theme.colors.textAlt}
+                />
+              </View>
+            ))}
+          </Sheet.ScrollView>
 
-            <View
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: theme.colors.border,
+            }}
+          >
+            <Text style={{ fontSize: theme.fontSize('sm') }}>
+              {footerSegments.map((s, i) => (
+                <Fragment key={i}>
+                  <Text
+                    style={
+                      s.bold
+                        ? {
+                            fontFamily: theme.fonts.bold,
+                            fontSize: theme.fontSize('sm'),
+                          }
+                        : { fontSize: theme.fontSize('sm') }
+                    }
+                  >
+                    {s.text}
+                  </Text>
+                </Fragment>
+              ))}
+              {reachesGoal ? (
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.accent,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {`  · ${i18n.t('assistant.preview.goalReached')} ✓`}
+                </Text>
+              ) : null}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
               }}
             >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t('assistant.preview.notifyMe')}
-              </Text>
-              <Switch value={notifyMe} onValueChange={setNotifyMe} />
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button
-                onPress={() => onOpenChange(false)}
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  borderColor: theme.colors.border,
-                  borderWidth: 1,
-                  paddingVertical: 12,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                }}
-                noTransform
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('assistant.button.cancel')}
-                </Text>
-              </Button>
-              <Button
-                onPress={handleAddToSchedule}
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  backgroundColor: theme.colors.accent,
-                  paddingVertical: 12,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('assistant.button.addToSchedule')}
-                </Text>
-              </Button>
-            </View>
+              {i18n.t('assistant.preview.notifyMe')}
+            </Text>
+            <Switch value={notifyMe} onValueChange={setNotifyMe} />
           </View>
-        </Sheet.Frame>
+
+          <Button
+            onPress={handleAddToSchedule}
+            style={{
+              alignItems: 'center',
+              backgroundColor: theme.colors.accent,
+              paddingVertical: 12,
+              borderRadius: theme.numbers.borderRadiusSm,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('assistant.button.addToSchedule')}
+            </Text>
+          </Button>
+        </View>
       </Sheet>
 
       {pendingUndoIds !== null && (

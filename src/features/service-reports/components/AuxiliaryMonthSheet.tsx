@@ -9,7 +9,6 @@ import Text from '@/components/ui/MyText'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
-import useSheetBottomInset from '@/hooks/useSheetBottomInset'
 import i18n from '@/lib/locales'
 import { AUXILIARY_REDUCED_GOAL_HOURS } from '@/lib/monthStatus'
 import { usePreferences } from '@/stores/preferences'
@@ -37,7 +36,6 @@ const AuxiliaryMonthSheet = ({
   source,
 }: AuxiliaryMonthSheetProps) => {
   const theme = useTheme()
-  const sheetBottomInset = useSheetBottomInset()
   const publisherHours = usePreferences((s) => s.publisherHours)
   const { months, setAuxiliary } = useAuxiliaryMonths()
   const [thisMonth, nextMonth] = months
@@ -77,112 +75,103 @@ const AuxiliaryMonthSheet = ({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[selected.isAuxiliary ? 56 : 48]}
+      backgroundColor={theme.colors.background}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame
-        backgroundColor={theme.colors.background}
-        paddingBottom={sheetBottomInset}
+      <View
+        style={{
+          paddingHorizontal: inputLayout.horizontalPadding * 2,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+          paddingTop: 22,
+          paddingBottom: 32,
+          gap: 20,
+        }}
       >
-        <View
-          style={{
-            paddingHorizontal: inputLayout.horizontalPadding * 2,
-            width: '100%',
-            maxWidth: inputLayout.contentMaxWidth,
-            alignSelf: 'center',
-            paddingTop: 22,
-            paddingBottom: 32,
-            gap: 20,
-          }}
+        <View style={{ gap: 6 }}>
+          <Text
+            accessibilityRole='header'
+            style={{
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xl'),
+            }}
+          >
+            {i18n.t('auxiliaryMonth.title')}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t('auxiliaryMonth.description')}
+          </Text>
+        </View>
+
+        <SegmentedControl<MonthKey>
+          value={monthKey}
+          onChange={setMonthKey}
+          options={[
+            {
+              key: 'this',
+              label: moment(thisMonth.target).format('MMMM'),
+            },
+            {
+              key: 'next',
+              label: moment(nextMonth.target).format('MMMM'),
+            },
+          ]}
+        />
+
+        <SegmentedControl<AuxiliaryGoal>
+          value={goal}
+          onChange={setGoal}
+          options={[
+            {
+              key: 'regularAuxiliary',
+              label: i18n.t('auxiliaryMonth.goalHours', {
+                count: publisherHours.regularAuxiliary,
+              }),
+            },
+            {
+              key: 'regularAuxiliaryReduced',
+              label: i18n.t('auxiliaryMonth.goalHours', {
+                count: AUXILIARY_REDUCED_GOAL_HOURS,
+              }),
+            },
+          ]}
+        />
+
+        <ActionButton
+          noTransform
+          accessibilityRole='button'
+          onPress={handleSave}
         >
-          <View style={{ gap: 6 }}>
-            <Text
-              accessibilityRole='header'
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('auxiliaryMonth.title')}
-            </Text>
+          {selected.isAuxiliary
+            ? i18n.t('save')
+            : i18n.t('auxiliaryMonth.start', { month: monthName })}
+        </ActionButton>
+
+        {selected.isAuxiliary ? (
+          <Button
+            noTransform
+            accessibilityRole='button'
+            onPress={handleEnd}
+            style={{ alignSelf: 'center', paddingVertical: 4 }}
+          >
             <Text
               style={{
                 color: theme.colors.textAlt,
+                fontFamily: theme.fonts.semiBold,
                 fontSize: theme.fontSize('sm'),
               }}
             >
-              {i18n.t('auxiliaryMonth.description')}
+              {i18n.t('auxiliaryMonth.end', { month: monthName })}
             </Text>
-          </View>
-
-          <SegmentedControl<MonthKey>
-            value={monthKey}
-            onChange={setMonthKey}
-            options={[
-              {
-                key: 'this',
-                label: moment(thisMonth.target).format('MMMM'),
-              },
-              {
-                key: 'next',
-                label: moment(nextMonth.target).format('MMMM'),
-              },
-            ]}
-          />
-
-          <SegmentedControl<AuxiliaryGoal>
-            value={goal}
-            onChange={setGoal}
-            options={[
-              {
-                key: 'regularAuxiliary',
-                label: i18n.t('auxiliaryMonth.goalHours', {
-                  count: publisherHours.regularAuxiliary,
-                }),
-              },
-              {
-                key: 'regularAuxiliaryReduced',
-                label: i18n.t('auxiliaryMonth.goalHours', {
-                  count: AUXILIARY_REDUCED_GOAL_HOURS,
-                }),
-              },
-            ]}
-          />
-
-          <ActionButton
-            noTransform
-            accessibilityRole='button'
-            onPress={handleSave}
-          >
-            {selected.isAuxiliary
-              ? i18n.t('save')
-              : i18n.t('auxiliaryMonth.start', { month: monthName })}
-          </ActionButton>
-
-          {selected.isAuxiliary ? (
-            <Button
-              noTransform
-              accessibilityRole='button'
-              onPress={handleEnd}
-              style={{ alignSelf: 'center', paddingVertical: 4 }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('auxiliaryMonth.end', { month: monthName })}
-              </Text>
-            </Button>
-          ) : null}
-        </View>
-      </Sheet.Frame>
+          </Button>
+        ) : null}
+      </View>
     </Sheet>
   )
 }

@@ -59,7 +59,7 @@ Buddies' social news (`badge.new`, `badge.reaction`) arrives as ordinary alerts:
    - **One at a time:** a takeover that's showing is never interrupted, and there's a short gap between two.
    - **Holds:** while the profile overlay, the bell, a sheet, or a pushed screen is open, or the app is in the background, nothing new takes over.
    - **Push taps and links** wait for onboarding and for any takeover on screen, then run. Leaving the app for another screen never cuts a takeover short.
-   - **Sheets** hold through `@/components/ui/Sheet`; a lint rule stops a direct `Sheet` import from Tamagui.
+   - **Sheets** hold through `@/components/ui/Sheet`; a lint rule stops importing a sheet directly from Tamagui or `@expo/ui`.
 
    A new takeover must go through the arbiter. Pair-by-pair handshakes are removed.
 

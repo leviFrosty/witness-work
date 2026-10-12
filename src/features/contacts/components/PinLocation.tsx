@@ -4,7 +4,6 @@ import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import MapView, { Marker, Region } from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapWarningLocationSharingDisabled from '@/features/contacts/components/MapWarningLocationSharingDisabled'
 import * as Location from 'expo-location'
 import { Contact, Coordinate } from '@/types/contact'
@@ -43,7 +42,6 @@ export default function PinLocation(props: {
   const [coordinate, setCoordinate] = useState<Coordinate | undefined>(
     contact.coordinate
   )
-  const insets = useSafeAreaInsets()
   const theme = useTheme()
   const toast = useToastController()
 
@@ -184,165 +182,154 @@ export default function PinLocation(props: {
           </View>
         </XView>
       </View>
-      <Sheet
-        open={open}
-        modal
-        disableDrag
-        onOpenChange={setOpen}
-        dismissOnSnapToBottom
-        transition='quick'
-        snapPoints={[92]}
-      >
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
-          <XView
-            style={{
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              paddingVertical: 15,
-              paddingHorizontal: 20,
-              gap: 10,
-            }}
-          >
-            <Text style={{ fontSize: theme.fontSize('md'), flex: 1 }}>
-              {i18n.t('pinLocationHelp')}
-            </Text>
-            <IconButton
-              noTransform
-              icon={XIcon}
-              color={theme.colors.text}
-              onPress={() => setOpen(false)}
-              size={'lg'}
-            />
-          </XView>
-          <View
-            style={{
-              position: 'relative',
-              flex: 1,
-            }}
-          >
-            {userLocation === undefined ? (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <Spinner />
-              </View>
-            ) : (
-              <MapView
-                userInterfaceStyle={colorScheme ? colorScheme : undefined}
-                ref={mapRef}
-                showsUserLocation={hasLocationPermission}
-                style={{ height: '100%', width: '100%' }}
-                onPress={(e) => {
-                  setCoordinate({
-                    latitude: e.nativeEvent.coordinate.latitude,
-                    longitude: e.nativeEvent.coordinate.longitude,
-                  })
-                }}
-                onLongPress={(e) => {
-                  setCoordinate({
-                    latitude: e.nativeEvent.coordinate.latitude,
-                    longitude: e.nativeEvent.coordinate.longitude,
-                  })
-                }}
-                initialRegion={
-                  initialRegion
-                    ? initialRegion
-                    : userLocation
-                      ? userLocation
-                      : undefined
-                }
-                onRegionChange={(newRegion) => setRegion(newRegion)}
-              >
-                {coordinate && (
-                  <Marker
-                    draggable
-                    identifier={contact.id}
-                    pinColor={theme.colors.accent}
-                    onDragEnd={(e) =>
-                      setCoordinate({
-                        latitude: e.nativeEvent.coordinate.latitude,
-                        longitude: e.nativeEvent.coordinate.longitude,
-                      })
-                    }
-                    coordinate={{
-                      latitude: coordinate.latitude,
-                      longitude: coordinate.longitude,
-                    }}
-                    key={coordinate.latitude % 1337}
-                  />
-                )}
-                {otherContacts.map((c) => (
-                  <Marker
-                    identifier={c.id}
-                    key={c.id}
-                    coordinate={c.coordinate!}
-                    pinColor={theme.colors.textAlt}
-                  />
-                ))}
-              </MapView>
-            )}
-
-            <MapWarningLocationSharingDisabled
-              hasLocationPermission={hasLocationPermission}
-            />
+      <Sheet open={open} onOpenChange={setOpen} snapPoints={['full']}>
+        <XView
+          style={{
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            paddingVertical: 15,
+            paddingHorizontal: 20,
+            gap: 10,
+          }}
+        >
+          <Text style={{ fontSize: theme.fontSize('md'), flex: 1 }}>
+            {i18n.t('pinLocationHelp')}
+          </Text>
+          <IconButton
+            noTransform
+            icon={XIcon}
+            color={theme.colors.text}
+            onPress={() => setOpen(false)}
+            size={'lg'}
+          />
+        </XView>
+        <View
+          style={{
+            position: 'relative',
+            flex: 1,
+          }}
+        >
+          {userLocation === undefined ? (
             <View
               style={{
-                position: 'absolute',
-                bottom: insets.bottom,
-                width: '100%',
-                padding: 5,
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
-              <Card
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  borderRadius: theme.numbers.borderRadiusMd,
-                  paddingVertical: 10,
-                  paddingHorizontal: 10,
-                }}
-              >
-                <Button
-                  noTransform
-                  variant='outline'
-                  style={{
-                    justifyContent: 'center',
-                    flex: 1,
-                    paddingVertical: 10,
-                  }}
-                  onPress={handleAddOrRemove}
-                >
-                  <Text>{i18n.t(coordinate ? 'remove' : 'add')}</Text>
-                </Button>
-                <Button
-                  noTransform
-                  variant='solid'
-                  style={{
-                    justifyContent: 'center',
-                    flex: 1,
-                    backgroundColor: theme.colors.accent,
-                    paddingVertical: 10,
-                  }}
-                  onPress={handleSave}
-                >
-                  <Text
-                    style={{
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.textInverse,
-                    }}
-                  >
-                    {i18n.t('save')}
-                  </Text>
-                </Button>
-              </Card>
+              <Spinner />
             </View>
+          ) : (
+            <MapView
+              userInterfaceStyle={colorScheme ? colorScheme : undefined}
+              ref={mapRef}
+              showsUserLocation={hasLocationPermission}
+              style={{ height: '100%', width: '100%' }}
+              onPress={(e) => {
+                setCoordinate({
+                  latitude: e.nativeEvent.coordinate.latitude,
+                  longitude: e.nativeEvent.coordinate.longitude,
+                })
+              }}
+              onLongPress={(e) => {
+                setCoordinate({
+                  latitude: e.nativeEvent.coordinate.latitude,
+                  longitude: e.nativeEvent.coordinate.longitude,
+                })
+              }}
+              initialRegion={
+                initialRegion
+                  ? initialRegion
+                  : userLocation
+                    ? userLocation
+                    : undefined
+              }
+              onRegionChange={(newRegion) => setRegion(newRegion)}
+            >
+              {coordinate && (
+                <Marker
+                  draggable
+                  identifier={contact.id}
+                  pinColor={theme.colors.accent}
+                  onDragEnd={(e) =>
+                    setCoordinate({
+                      latitude: e.nativeEvent.coordinate.latitude,
+                      longitude: e.nativeEvent.coordinate.longitude,
+                    })
+                  }
+                  coordinate={{
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude,
+                  }}
+                  key={coordinate.latitude % 1337}
+                />
+              )}
+              {otherContacts.map((c) => (
+                <Marker
+                  identifier={c.id}
+                  key={c.id}
+                  coordinate={c.coordinate!}
+                  pinColor={theme.colors.textAlt}
+                />
+              ))}
+            </MapView>
+          )}
+
+          <MapWarningLocationSharingDisabled
+            hasLocationPermission={hasLocationPermission}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
+              padding: 5,
+            }}
+          >
+            <Card
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                borderRadius: theme.numbers.borderRadiusMd,
+                paddingVertical: 10,
+                paddingHorizontal: 10,
+              }}
+            >
+              <Button
+                noTransform
+                variant='outline'
+                style={{
+                  justifyContent: 'center',
+                  flex: 1,
+                  paddingVertical: 10,
+                }}
+                onPress={handleAddOrRemove}
+              >
+                <Text>{i18n.t(coordinate ? 'remove' : 'add')}</Text>
+              </Button>
+              <Button
+                noTransform
+                variant='solid'
+                style={{
+                  justifyContent: 'center',
+                  flex: 1,
+                  backgroundColor: theme.colors.accent,
+                  paddingVertical: 10,
+                }}
+                onPress={handleSave}
+              >
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textInverse,
+                  }}
+                >
+                  {i18n.t('save')}
+                </Text>
+              </Button>
+            </Card>
           </View>
-        </Sheet.Frame>
+        </View>
       </Sheet>
     </>
   )

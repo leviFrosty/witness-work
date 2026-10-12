@@ -186,7 +186,6 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
           >
             <DateTimePicker
               value={date}
-              maximumDate={new Date()}
               onChange={(_e, picked) => picked && setDate(picked)}
             />
           </InputRowContainer>

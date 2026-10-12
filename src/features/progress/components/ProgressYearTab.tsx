@@ -223,16 +223,15 @@ const MonthRow = ({
             onPress: () =>
               navigation.navigate('ServiceReportView', { month, year }),
           },
-          !isFuture &&
-            showsTimeEntry && {
-              id: 'add_time',
-              title: i18n.t('addTime'),
-              systemImage: 'plus',
-              onPress: () =>
-                navigation.navigate('Add Time', {
-                  date: moment().month(month).year(year).toISOString(),
-                }),
-            },
+          showsTimeEntry && {
+            id: 'add_time',
+            title: i18n.t('addTime'),
+            systemImage: 'plus',
+            onPress: () =>
+              navigation.navigate('Add Time', {
+                date: moment().month(month).year(year).toISOString(),
+              }),
+          },
         ],
         !isFuture && reportMenuItems(month, year),
         [

@@ -1,5 +1,4 @@
 import { useNavigation } from '@react-navigation/native'
-import moment from 'moment'
 
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import usePublisher from '@/hooks/usePublisher'
@@ -21,15 +20,13 @@ export default function useDayMenuActions(
 
   const routeDate = date.toISOString()
   return [
-    // No logging time for days that haven't happened yet; Regular Publishers
-    // who don't log hours never see Add Time.
-    showsTimeEntry &&
-      !moment(date).isAfter(moment(), 'day') && {
-        id: 'add_time',
-        title: i18n.t('addTime'),
-        systemImage: 'clock',
-        onPress: () => navigation.navigate('Add Time', { date: routeDate }),
-      },
+    // Regular Publishers who don't log hours never see Add Time.
+    showsTimeEntry && {
+      id: 'add_time',
+      title: i18n.t('addTime'),
+      systemImage: 'clock',
+      onPress: () => navigation.navigate('Add Time', { date: routeDate }),
+    },
     {
       id: 'plan_day',
       title: i18n.t('planThisDay'),

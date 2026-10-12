@@ -294,12 +294,12 @@ describe('PlanRow', () => {
     expect(!isSubmenu(remove) && remove.destructive).toBe(true)
   })
 
-  it('hides Log as Time for future plans and for publishers not logging hours', () => {
+  it('offers Log as Time for future plans but not for publishers not logging hours', () => {
     expect(
       ids(
         renderMenu({ type: 'day', date: future, plan: dayPlan('p1') }).groups
       )[0]
-    ).toEqual(['edit', 'duplicate'])
+    ).toEqual(['edit', 'log_as_time', 'duplicate'])
 
     publisher.showsTimeEntry = false
     expect(

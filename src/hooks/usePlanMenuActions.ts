@@ -164,15 +164,13 @@ export default function usePlanMenuActions(
         systemImage: 'pencil',
         onPress: edit,
       },
-      // Logging time for a day that hasn't happened yet makes no sense, and
-      // publishers who don't log hours never see Add Time.
-      showsTimeEntry &&
-        !dateMoment.isAfter(moment(), 'day') && {
-          id: 'log_as_time',
-          title: i18n.t('logAsTime'),
-          systemImage: 'clock',
-          onPress: logAsTime,
-        },
+      // Publishers who don't log hours never see Add Time.
+      showsTimeEntry && {
+        id: 'log_as_time',
+        title: i18n.t('logAsTime'),
+        systemImage: 'clock',
+        onPress: logAsTime,
+      },
       {
         id: 'duplicate',
         title: i18n.t('duplicateEllipsis'),

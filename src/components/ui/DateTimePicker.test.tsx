@@ -1,143 +1,227 @@
-import { createElement } from 'react'
-import type { ReactNode } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+// Material's date dialog works in UTC days; a zone behind UTC shows whether a
+// picked day lands on the local day.
+const originalTZ = process.env.TZ
+process.env.TZ = 'America/Chicago'
 
-const native = vi.hoisted(() => ({
-  platform: 'android',
-  open: vi.fn(),
-  picker: vi.fn(() => null),
-  presses: [] as Array<() => void>,
+import React from 'react'
+import { act, create, type ReactTestRenderer } from 'react-test-renderer'
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
+
+const prefs = vi.hoisted(() => ({
+  colorScheme: 'dark' as 'dark' | 'light' | undefined,
+  timeFormat: '24' as '12' | '24' | undefined,
+  formatRegion: undefined as string | undefined,
 }))
-vi.mock('react-native', () => ({
-  Platform: {
-    get OS() {
-      return native.platform
-    },
-  },
-  View: ({ children }: { children: ReactNode }) =>
-    createElement('div', null, children),
-}))
-vi.mock('@react-native-community/datetimepicker', () => ({
-  default: native.picker,
-  DateTimePickerAndroid: { open: native.open },
-}))
+const app = vi.hoisted(() => ({ locale: 'es-es' }))
+
+vi.mock('react-native', () => ({ View: 'View' }))
 vi.mock('expo-localization', () => ({
-  getLocales: () => [{ languageCode: 'en' }],
+  getLocales: () => [{ languageTag: 'en-US', regionCode: 'US' }],
+  getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
 }))
-vi.mock('@/stores/preferences', () => ({
-  usePreferences: () => ({ colorScheme: 'dark', timeFormat: '24' }),
+vi.mock('@expo/ui', () => ({ Host: 'Host' }))
+vi.mock('@expo/ui/swift-ui', () => ({ DatePicker: 'DatePicker' }))
+vi.mock('@expo/ui/swift-ui/modifiers', () => ({
+  datePickerStyle: (style: string) => ({ datePickerStyle: style }),
+  tint: (color: string) => ({ tint: color }),
+  environment: (key: string, value: string) => ({ [key]: value }),
 }))
+vi.mock('@expo/ui/jetpack-compose', () => ({
+  DatePickerDialog: 'DatePickerDialog',
+  TimePickerDialog: 'TimePickerDialog',
+}))
+vi.mock('@/stores/preferences', () => ({ usePreferences: () => prefs }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
-    colors: { card: '#222', text: '#fff' },
+    colors: { accent: '#accent', card: '#card' },
     numbers: { borderRadiusSm: 8 },
   }),
 }))
-vi.mock('@/components/ui/Button', () => ({
-  default: ({
-    children,
-    onPress,
-  }: {
-    children: ReactNode
-    onPress: () => void
-  }) => {
-    native.presses.push(onPress)
-    return createElement('button', null, children)
-  },
+vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
+vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/lib/locales', () => ({
+  default: { t: (key: string) => key },
+  _i18n: app,
 }))
-vi.mock('@/components/ui/MyText', () => ({
-  default: ({ children }: { children: ReactNode }) =>
-    createElement('span', null, children),
-}))
-vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 
-import DateTimePicker from '@/components/ui/DateTimePicker'
+import AndroidPicker from '@/components/ui/DateTimePicker.android'
+import IOSPicker from '@/components/ui/DateTimePicker.ios'
+import type { DateTimePickerProps } from '@/components/ui/DateTimePicker.types'
 
 const value = new Date(2026, 8, 23, 14, 35)
-const mount = (props: Partial<Parameters<typeof DateTimePicker>[0]> = {}) => {
+let tree: ReactTestRenderer
+
+const mount = (
+  Picker: typeof AndroidPicker,
+  props: Partial<DateTimePickerProps> = {}
+) => {
   const onChange = vi.fn()
-  renderToStaticMarkup(
-    createElement(DateTimePicker, { value, onChange, ...props })
-  )
+  act(() => {
+    tree = create(<Picker value={value} onChange={onChange} {...props} />)
+  })
   return onChange
 }
+const buttons = () => tree.root.findAllByType('Button' as never)
+const press = (index: number) => act(() => buttons()[index].props.onPress())
+const dialog = (type: string) => tree.root.findByType(type as never).props
+const dialogs = () => [
+  ...tree.root.findAllByType('DatePickerDialog' as never),
+  ...tree.root.findAllByType('TimePickerDialog' as never),
+]
 
-describe('platform date/time controls', () => {
-  beforeEach(() => {
-    native.platform = 'android'
-    native.presses = []
-    vi.clearAllMocks()
+beforeEach(() => {
+  prefs.colorScheme = 'dark'
+  prefs.timeFormat = '24'
+  prefs.formatRegion = undefined
+  app.locale = 'es-es'
+})
+afterEach(() => act(() => tree.unmount()))
+afterAll(() => {
+  if (originalTZ === undefined) delete process.env.TZ
+  else process.env.TZ = originalTZ
+})
+
+describe('Android', () => {
+  it('shows a button per part and opens no dialog until one is pressed', () => {
+    mount(AndroidPicker, { iOSMode: 'datetime' })
+    expect(buttons().map((b) => b.props.accessibilityLabel)).toEqual([
+      'date',
+      'time',
+    ])
+    expect(dialogs()).toHaveLength(0)
+
+    press(0)
+    expect(dialog('DatePickerDialog')).toMatchObject({
+      // The local day, as the UTC midnight Material's date dialog expects.
+      initialDate: '2026-09-23T00:00:00.000Z',
+      color: '#accent',
+    })
+    expect(tree.root.findByType('Host' as never).props).toMatchObject({
+      colorScheme: 'dark',
+      seedColor: '#accent',
+    })
   })
 
-  it('does not open a dialog on mount and lets datetime users reopen either part', () => {
-    mount({ iOSMode: 'datetime' })
-    expect(native.picker).not.toHaveBeenCalled()
-    expect(native.open).not.toHaveBeenCalled()
-    expect(native.presses).toHaveLength(2)
-    native.presses[0]()
-    expect(native.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mode: 'date', value })
+  it('lands a picked day on the local day and keeps the time', () => {
+    const onChange = mount(AndroidPicker, { iOSMode: 'datetime' })
+    press(0)
+    // Material hands back UTC midnight, the evening before in Chicago.
+    act(() =>
+      dialog('DatePickerDialog').onDateSelected(new Date(Date.UTC(2026, 9, 2)))
     )
-    native.presses[1]()
-    expect(native.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mode: 'time', is24Hour: true })
-    )
-  })
-
-  it('keeps the time when changing the date and ignores dismissal', () => {
-    const onChange = mount({ iOSMode: 'datetime' })
-    native.presses[0]()
-    const options = native.open.mock.calls[0][0]
-    options.onChange({ type: 'dismissed' }, value)
-    expect(onChange).not.toHaveBeenCalled()
-    options.onChange({ type: 'set' }, new Date(2026, 9, 2))
     expect(onChange).toHaveBeenCalledWith(
-      expect.anything(),
+      expect.objectContaining({ type: 'set' }),
       new Date(2026, 9, 2, 14, 35)
     )
+    expect(dialogs()).toHaveLength(0)
   })
 
-  it('keeps the date when changing the time', () => {
-    const onChange = mount({ iOSMode: 'datetime' })
-    native.presses[1]()
-    native.open.mock.calls[0][0].onChange(
-      { type: 'set' },
-      new Date(2000, 0, 1, 9, 15)
+  it('keeps the day when picking a time, in the 12/24-hour preference', () => {
+    const onChange = mount(AndroidPicker, { iOSMode: 'datetime' })
+    press(1)
+    expect(dialog('TimePickerDialog')).toMatchObject({
+      initialDate: value.toISOString(),
+      is24Hour: true,
+    })
+    act(() =>
+      dialog('TimePickerDialog').onDateSelected(new Date(2026, 8, 23, 9, 15))
     )
     expect(onChange).toHaveBeenCalledWith(
       expect.anything(),
       new Date(2026, 8, 23, 9, 15)
     )
+
+    prefs.timeFormat = '12'
+    press(1)
+    expect(dialog('TimePickerDialog').is24Hour).toBe(false)
   })
 
-  it('passes date limits and clamps time changes to datetime limits', () => {
+  it('greys out days past the limits and clamps times to them', () => {
     const maximumDate = new Date(2026, 8, 23, 15)
     const minimumDate = new Date(2026, 8, 22)
-    const onChange = mount({ iOSMode: 'datetime', minimumDate, maximumDate })
-    native.presses[0]()
-    expect(native.open).toHaveBeenLastCalledWith(
-      expect.objectContaining({ minimumDate, maximumDate })
-    )
-    native.presses[1]()
-    native.open.mock.calls[1][0].onChange(
-      { type: 'set' },
-      new Date(2026, 8, 23, 16)
+    const onChange = mount(AndroidPicker, {
+      iOSMode: 'datetime',
+      minimumDate,
+      maximumDate,
+    })
+    press(0)
+    expect(dialog('DatePickerDialog').selectableDates).toEqual({
+      start: minimumDate,
+      end: maximumDate,
+    })
+    act(() => dialog('DatePickerDialog').onDismissRequest())
+    expect(dialogs()).toHaveLength(0)
+    expect(onChange).not.toHaveBeenCalled()
+
+    press(1)
+    act(() =>
+      dialog('TimePickerDialog').onDateSelected(new Date(2026, 8, 23, 16))
     )
     expect(onChange).toHaveBeenCalledWith(expect.anything(), maximumDate)
   })
 
-  it('retains the native iOS picker', () => {
-    native.platform = 'ios'
-    mount({ iOSMode: 'datetime' })
-    expect(native.presses).toHaveLength(0)
-    expect(native.picker).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mode: 'datetime',
-        value,
-        themeVariant: 'dark',
-      }),
-      undefined
+  it('shows one button for a single part', () => {
+    mount(AndroidPicker, { iOSMode: 'time', testID: 'reminder' })
+    expect(buttons().map((b) => b.props.testID)).toEqual(['reminder-time'])
+  })
+})
+
+describe('iOS', () => {
+  it('renders SwiftUI in the app language and theme', () => {
+    const maximumDate = new Date(2026, 8, 30)
+    mount(IOSPicker, { iOSMode: 'datetime', maximumDate })
+    expect(tree.root.findByType('Host' as never).props.colorScheme).toBe('dark')
+    expect(tree.root.findByType('DatePicker' as never).props).toMatchObject({
+      selection: value,
+      range: { start: undefined, end: maximumDate },
+      displayedComponents: ['date', 'hourAndMinute'],
+      modifiers: [
+        { datePickerStyle: 'compact' },
+        { tint: '#accent' },
+        { locale: 'es_ES' },
+      ],
+    })
+  })
+
+  it("keeps the device's locale when the app language matches it", () => {
+    app.locale = 'en-us'
+    mount(IOSPicker)
+    expect(tree.root.findByType('DatePicker' as never).props.modifiers).toEqual(
+      [{ datePickerStyle: 'compact' }, { tint: '#accent' }]
+    )
+  })
+
+  it('follows the Format Region and shows the calendar inline', () => {
+    prefs.formatRegion = 'es-us'
+    mount(IOSPicker, { display: 'inline' })
+    expect(tree.root.findByType('DatePicker' as never).props.modifiers).toEqual(
+      [
+        { datePickerStyle: 'graphical' },
+        { tint: '#accent' },
+        { locale: 'es_US' },
+      ]
+    )
+  })
+
+  it('keeps picks within the limits', () => {
+    const minimumDate = new Date(2026, 8, 20)
+    const onChange = mount(IOSPicker, { minimumDate })
+    act(() =>
+      tree.root
+        .findByType('DatePicker' as never)
+        .props.onDateChange(new Date(2026, 8, 1))
+    )
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'set' }),
+      minimumDate
     )
   })
 })

@@ -238,7 +238,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // The Wear OS app (targets/wear-os) as the `:wear` Gradle module.
       './plugins/with-wear-os',
       './plugins/with-posthog-symbols-last',
-      '@react-native-community/datetimepicker',
       [
         'react-native-maps',
         {

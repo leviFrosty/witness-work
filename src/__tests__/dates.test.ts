@@ -25,6 +25,7 @@ import 'moment/locale/en-gb'
 import 'moment/locale/es'
 import 'moment/locale/ja'
 import {
+  appleLocaleIdentifier,
   applyFormatRegion,
   formatCalendar,
   formatDate,
@@ -206,6 +207,28 @@ describe('resolvers', () => {
     expect(resolveDateOrder({ region: 'ja' })).toBe('ymd')
     device.languageTag = 'en-AU'
     expect(resolveDateOrder({})).toBe('dmy')
+  })
+})
+
+describe('appleLocaleIdentifier', () => {
+  const id = (language: string, region?: string) =>
+    appleLocaleIdentifier({ language, region })
+
+  it("uses the Format Region when it's in the Language", () => {
+    expect(id('en-us', 'en-au')).toBe('en_AU')
+    expect(id('de-de', 'de-ch')).toBe('de_CH')
+    expect(id('zh-hant-tw', 'zh-tw')).toBe('zh_Hant_TW')
+  })
+
+  it("falls back to the Language's own locale across languages", () => {
+    expect(id('es-es', 'en-au')).toBe('es_ES')
+    expect(id('zh-hans-cn', 'en-gb')).toBe('zh_Hans_CN')
+  })
+
+  it("keeps the device's locale at Auto when the Language matches it", () => {
+    device.languageTag = 'en-GB'
+    expect(id('en-us')).toBeUndefined()
+    expect(id('de-de')).toBe('de_DE')
   })
 })
 

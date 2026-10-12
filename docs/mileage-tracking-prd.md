@@ -97,7 +97,7 @@ first, then the trip form.
 
 ### Trip form (modal)
 
-Date (no future dates) · Car (hidden with one active car; defaults to the most
+Date · Car (hidden with one active car; defaults to the most
 recently used) · **Distance | Odometer** mode (remembered):
 
 - Distance: distance + Round Trip toggle (doubles it).

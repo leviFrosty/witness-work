@@ -26,6 +26,15 @@ export const recordIdSchema = z
       !value.includes('/') && !value.includes('\\') && !value.includes('..')
   )
 
+/**
+ * A visit's `isBibleStudy`. Visits saved before the flag existed have none, and
+ * every reader treats that as not a study, so absent or `null` reads `false`.
+ */
+export const bibleStudyFlagSchema = z
+  .boolean()
+  .nullish()
+  .transform((value) => value ?? false)
+
 /** Reject unsafe dictionary keys before legacy transforms or store writes. */
 export function hasUnsafeKeys(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false

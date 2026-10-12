@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { publishers } from '@/constants/publisher'
 import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
 import {
+  bibleStudyFlagSchema,
   dateStringSchema as date,
   recordIdSchema as id,
   timestampSchema as timestamp,
@@ -70,7 +71,7 @@ const notification = z.object({ id: z.string(), date })
 const visit = record.extend({
   contact: z.object({ id }),
   date,
-  isBibleStudy: z.boolean(),
+  isBibleStudy: bibleStudyFlagSchema,
   note: z.string().optional(),
   notAtHome: z.boolean().optional(),
   customFields: z.record(z.string()).optional(),

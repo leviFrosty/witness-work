@@ -32,6 +32,7 @@ export default function ContextMenu({
   pointerEffect = 'tint',
   hoverRadius,
   fitContent = false,
+  hosted = false,
   style,
 }: ContextMenuProps) {
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -73,7 +74,7 @@ export default function ContextMenu({
     onPress && pointerEffect !== 'tint' ? pointerEffect : 'none'
 
   if (!allGroups.length) {
-    return (
+    const content = (
       <PointerHover
         effect={triggerEffect}
         onHoverChange={tint ? setHovered : undefined}
@@ -84,6 +85,7 @@ export default function ContextMenu({
         </View>
       </PointerHover>
     )
+    return hosted ? <RNHostView matchContents>{content}</RNHostView> : content
   }
 
   const button = (action: ContextMenuAction, key: string) => (
@@ -96,6 +98,66 @@ export default function ContextMenu({
     />
   )
 
+  const menu = (
+    <SwiftContextMenu>
+      <SwiftContextMenu.Items>
+        {groups.map((group, index) => (
+          <Fragment key={index}>
+            {index > 0 ? <Divider /> : null}
+            {group.map((item) =>
+              isSubmenu(item) ? (
+                <Menu
+                  key={item.id}
+                  label={item.title}
+                  systemImage={item.systemImage}
+                >
+                  {item.actions.map((action) =>
+                    button(action, `${item.id}.${action.id}`)
+                  )}
+                </Menu>
+              ) : (
+                button(item, item.id)
+              )
+            )}
+          </Fragment>
+        ))}
+      </SwiftContextMenu.Items>
+      <SwiftContextMenu.Trigger>
+        <RNHostView matchContents>
+          <PointerHover
+            effect={triggerEffect}
+            onHoverChange={(next) => {
+              // A secondary click never reaches onTouchStart, so a
+              // hovering pointer arms the preview ahead of it.
+              if (next && preview && !armed) setArmed(true)
+              if (tint) setHovered(next)
+            }}
+          >
+            <View
+              style={{ width, borderRadius: hoverRadius }}
+              onTouchStart={
+                preview && !armed ? () => setArmed(true) : undefined
+              }
+            >
+              {trigger}
+              <HoverTint
+                visible={!!tint && hovered}
+                borderRadius={hoverRadius}
+              />
+            </View>
+          </PointerHover>
+        </RNHostView>
+      </SwiftContextMenu.Trigger>
+      {preview && !disabled ? (
+        <SwiftContextMenu.Preview>
+          <RNHostView matchContents>{armed ? preview : <View />}</RNHostView>
+        </SwiftContextMenu.Preview>
+      ) : null}
+    </SwiftContextMenu>
+  )
+
+  if (hosted) return menu
+
   return (
     <View
       style={style}
@@ -107,63 +169,7 @@ export default function ContextMenu({
     >
       {/* Without this, rows first laid out under the home indicator measure short. */}
       <Host matchContents colorScheme={colorScheme} ignoreSafeArea='all'>
-        <SwiftContextMenu>
-          <SwiftContextMenu.Items>
-            {groups.map((group, index) => (
-              <Fragment key={index}>
-                {index > 0 ? <Divider /> : null}
-                {group.map((item) =>
-                  isSubmenu(item) ? (
-                    <Menu
-                      key={item.id}
-                      label={item.title}
-                      systemImage={item.systemImage}
-                    >
-                      {item.actions.map((action) =>
-                        button(action, `${item.id}.${action.id}`)
-                      )}
-                    </Menu>
-                  ) : (
-                    button(item, item.id)
-                  )
-                )}
-              </Fragment>
-            ))}
-          </SwiftContextMenu.Items>
-          <SwiftContextMenu.Trigger>
-            <RNHostView matchContents>
-              <PointerHover
-                effect={triggerEffect}
-                onHoverChange={(next) => {
-                  // A secondary click never reaches onTouchStart, so a
-                  // hovering pointer arms the preview ahead of it.
-                  if (next && preview && !armed) setArmed(true)
-                  if (tint) setHovered(next)
-                }}
-              >
-                <View
-                  style={{ width, borderRadius: hoverRadius }}
-                  onTouchStart={
-                    preview && !armed ? () => setArmed(true) : undefined
-                  }
-                >
-                  {trigger}
-                  <HoverTint
-                    visible={!!tint && hovered}
-                    borderRadius={hoverRadius}
-                  />
-                </View>
-              </PointerHover>
-            </RNHostView>
-          </SwiftContextMenu.Trigger>
-          {preview && !disabled ? (
-            <SwiftContextMenu.Preview>
-              <RNHostView matchContents>
-                {armed ? preview : <View />}
-              </RNHostView>
-            </SwiftContextMenu.Preview>
-          ) : null}
-        </SwiftContextMenu>
+        {menu}
       </Host>
     </View>
   )

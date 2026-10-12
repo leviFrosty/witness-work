@@ -38,6 +38,7 @@ export default function ContextMenu({
   pointerEffect = 'tint',
   hoverRadius,
   fitContent = false,
+  hosted = false,
   style,
 }: ContextMenuProps) {
   const theme = useTheme()
@@ -72,7 +73,7 @@ export default function ContextMenu({
   }
 
   if (!groups.length) {
-    return onPress ? (
+    const content = onPress ? (
       <PointerHover onHoverChange={onHoverChange}>
         <Pressable
           style={({ pressed }) => [style, pressed && { opacity: 0.7 }]}
@@ -87,6 +88,7 @@ export default function ContextMenu({
     ) : (
       <View style={style}>{children}</View>
     )
+    return hosted ? <RNHostView matchContents>{content}</RNHostView> : content
   }
 
   const a11y =
@@ -113,6 +115,73 @@ export default function ContextMenu({
     </DropdownMenuItem>
   )
 
+  const menu = (
+    <DropdownMenu
+      expanded={expanded}
+      onDismissRequest={close}
+      color={theme.colors.card}
+    >
+      <DropdownMenu.Trigger>
+        <RNHostView matchContents>
+          {/* Compose click modifiers never see touches on hosted RN
+            views, so the RN side owns both gestures. */}
+          <PointerHover onHoverChange={onHoverChange}>
+            <Pressable
+              style={({ pressed }) => [
+                { width },
+                pressed && onPress ? { opacity: 0.7 } : null,
+              ]}
+              onPress={onPress}
+              onLongPress={disabled ? undefined : open}
+              accessibilityRole={onPress ? 'button' : undefined}
+              accessibilityLabel={accessibilityLabel}
+              {...a11y}
+            >
+              {children}
+              {tint}
+            </Pressable>
+          </PointerHover>
+        </RNHostView>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Items>
+        {submenu ? (
+          <>
+            {item('back', `‹  ${submenu.title}`, () => setSubmenu(null))}
+            <HorizontalDivider color={theme.colors.border} />
+            {submenu.actions.map((action) =>
+              item(
+                action.id,
+                action.title,
+                () => select(action),
+                action.destructive
+              )
+            )}
+          </>
+        ) : (
+          groups.map((group, index) => (
+            <Fragment key={index}>
+              {index > 0 ? (
+                <HorizontalDivider color={theme.colors.border} />
+              ) : null}
+              {group.map((entry) =>
+                isSubmenu(entry)
+                  ? item(entry.id, `${entry.title}  ›`, () => setSubmenu(entry))
+                  : item(
+                      entry.id,
+                      entry.title,
+                      () => select(entry),
+                      entry.destructive
+                    )
+              )}
+            </Fragment>
+          ))
+        )}
+      </DropdownMenu.Items>
+    </DropdownMenu>
+  )
+
+  if (hosted) return menu
+
   return (
     <View
       style={style}
@@ -123,70 +192,7 @@ export default function ContextMenu({
       }
     >
       <Host matchContents colorScheme={colorScheme}>
-        <DropdownMenu
-          expanded={expanded}
-          onDismissRequest={close}
-          color={theme.colors.card}
-        >
-          <DropdownMenu.Trigger>
-            <RNHostView matchContents>
-              {/* Compose click modifiers never see touches on hosted RN
-                  views, so the RN side owns both gestures. */}
-              <PointerHover onHoverChange={onHoverChange}>
-                <Pressable
-                  style={({ pressed }) => [
-                    { width },
-                    pressed && onPress ? { opacity: 0.7 } : null,
-                  ]}
-                  onPress={onPress}
-                  onLongPress={disabled ? undefined : open}
-                  accessibilityRole={onPress ? 'button' : undefined}
-                  accessibilityLabel={accessibilityLabel}
-                  {...a11y}
-                >
-                  {children}
-                  {tint}
-                </Pressable>
-              </PointerHover>
-            </RNHostView>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Items>
-            {submenu ? (
-              <>
-                {item('back', `‹  ${submenu.title}`, () => setSubmenu(null))}
-                <HorizontalDivider color={theme.colors.border} />
-                {submenu.actions.map((action) =>
-                  item(
-                    action.id,
-                    action.title,
-                    () => select(action),
-                    action.destructive
-                  )
-                )}
-              </>
-            ) : (
-              groups.map((group, index) => (
-                <Fragment key={index}>
-                  {index > 0 ? (
-                    <HorizontalDivider color={theme.colors.border} />
-                  ) : null}
-                  {group.map((entry) =>
-                    isSubmenu(entry)
-                      ? item(entry.id, `${entry.title}  ›`, () =>
-                          setSubmenu(entry)
-                        )
-                      : item(
-                          entry.id,
-                          entry.title,
-                          () => select(entry),
-                          entry.destructive
-                        )
-                  )}
-                </Fragment>
-              ))
-            )}
-          </DropdownMenu.Items>
-        </DropdownMenu>
+        {menu}
       </Host>
     </View>
   )

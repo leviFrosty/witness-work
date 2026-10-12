@@ -1486,7 +1486,7 @@
   "planForm_duration": "Muda",
   "planForm_howLong": "Kwa muda gani?",
   "planForm_justHours": "Saa tu",
-  "planForm_timeSpan": "Muda wa kuanzia hadi kumalizia",
+  "planForm_timeSpan": "Mwanzo hadi mwisho",
   "planForm_start": "Kuanza",
   "planForm_end": "Kuisha",
   "planForm_timeRange": "{{start}} – {{end}}",

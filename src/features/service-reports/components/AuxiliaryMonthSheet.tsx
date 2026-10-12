@@ -120,7 +120,6 @@ const AuxiliaryMonthSheet = ({
           </View>
 
           <SegmentedControl<MonthKey>
-            variant='pill'
             value={monthKey}
             onChange={setMonthKey}
             options={[
@@ -136,7 +135,6 @@ const AuxiliaryMonthSheet = ({
           />
 
           <SegmentedControl<AuxiliaryGoal>
-            variant='pill'
             value={goal}
             onChange={setGoal}
             options={[

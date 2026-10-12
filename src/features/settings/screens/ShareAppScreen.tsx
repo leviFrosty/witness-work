@@ -36,7 +36,6 @@ const ShareAppScreen = () => {
         }}
       >
         <SegmentedControl
-          variant='pill'
           style={{ alignSelf: 'stretch' }}
           options={[
             { key: 'android', label: i18n.t('shareApp_android') },

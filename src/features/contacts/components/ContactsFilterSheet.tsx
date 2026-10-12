@@ -25,9 +25,7 @@ import { CustomFieldDefinition } from '@/types/customField'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
-import SegmentedControl, {
-  SegmentedOption,
-} from '@/components/ui/SegmentedControl'
+import ChoiceChips, { ChoiceChip } from '@/components/ui/ChoiceChips'
 import MyTextInput from '@/components/ui/TextInput'
 
 export type ContactsFilterSheetProps = {
@@ -371,19 +369,19 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     letterSpacing: 0.5,
   }
 
-  const fieldOptions: SegmentedOption<Exclude<FieldKey, null>>[] =
+  const fieldOptions: ChoiceChip<Exclude<FieldKey, null>>[] =
     availableFields.map((key) => ({
       key,
       label: fieldLabel(key, customFieldDefs),
     }))
 
-  const operatorOptions: SegmentedOption<TextOperator | ComparableOperator>[] =
+  const operatorOptions: ChoiceChip<TextOperator | ComparableOperator>[] =
     validOperators.map((candidate) => ({
       key: candidate,
       label: operatorLabel(candidate),
     }))
 
-  const pinStalenessOptions: SegmentedOption<ContactStaleness>[] =
+  const pinStalenessOptions: ChoiceChip<ContactStaleness>[] =
     PIN_STALENESS_VALUES.map((candidate) => ({
       key: candidate,
       label: i18n.t(`contacts_pinStaleness_${candidate}` as const),
@@ -468,9 +466,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                 <Text style={sectionTitleStyle}>
                   {i18n.t('contacts_filterField')}
                 </Text>
-                <SegmentedControl<Exclude<FieldKey, null>>
-                  variant='bordered'
-                  wrap
+                <ChoiceChips<Exclude<FieldKey, null>>
                   value={field}
                   onChange={setField}
                   options={fieldOptions}
@@ -482,9 +478,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   <Text style={sectionTitleStyle}>
                     {i18n.t('contacts_filterOperator')}
                   </Text>
-                  <SegmentedControl<TextOperator | ComparableOperator>
-                    variant='bordered'
-                    wrap
+                  <ChoiceChips<TextOperator | ComparableOperator>
                     value={op}
                     onChange={setOp}
                     options={operatorOptions}
@@ -497,9 +491,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   <Text style={sectionTitleStyle}>
                     {i18n.t('contacts_filterValue')}
                   </Text>
-                  <SegmentedControl<ContactStaleness>
-                    variant='bordered'
-                    wrap
+                  <ChoiceChips<ContactStaleness>
                     value={value as ContactStaleness}
                     onChange={(v) => setValue(v)}
                     options={pinStalenessOptions}

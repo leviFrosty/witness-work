@@ -29,7 +29,6 @@ export default function HistoryChangeRow({
   return (
     <View style={{ gap: 10 }}>
       <SegmentedControl<HistoryChangeMode>
-        variant='pill'
         value={mode}
         onChange={onChangeMode}
         options={[

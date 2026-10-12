@@ -2,8 +2,8 @@ import moment from 'moment'
 import { combineDateAndStartTime, storedDayKey } from '@/lib/normalizeDate'
 import { getRichNoteDoc } from '@/lib/richText/notes'
 import type { Contact } from '@/types/contact'
-import type { DayPlan, PlanLocation } from '@/types/timeEntry'
-import type { Visit } from '@/types/visit'
+import type { DayPlan, PlanLocation, PlanTombstone } from '@/types/timeEntry'
+import type { Visit, VisitTombstone } from '@/types/visit'
 import type { ShareDetails } from '@/features/buddies/lib/schemas'
 import type { OutgoingShareSpec } from '@/features/buddies/lib/state'
 
@@ -160,6 +160,7 @@ export function buildOutgoingShares(input: {
       recipients: plan.buddies,
       endsAt,
       expiresAt,
+      ...(plan.updatedAt ? { version: plan.updatedAt } : {}),
     })
   }
   const contacts = new Map(input.contacts.map((c) => [c.id, c]))
@@ -171,6 +172,8 @@ export function buildOutgoingShares(input: {
     const endsAt = new Date(followUp.date).getTime()
     const expiresAt = endsAt + FOLLOW_UP_SHARE_RETENTION_MS
     if (expiresAt <= input.now) continue
+    // The householder's first name and address come from the Contact.
+    const version = Math.max(visit.updatedAt ?? 0, contact.updatedAt ?? 0)
     specs.push({
       key: followUpShareKey(visit.id),
       type: 'followUp',
@@ -178,9 +181,53 @@ export function buildOutgoingShares(input: {
       recipients: followUp.buddies,
       endsAt,
       expiresAt,
+      ...(version ? { version } : {}),
     })
   }
   return specs
+}
+
+/**
+ * When the Plan or Follow-up behind a share key (`plan:<id>`,
+ * `followUp:<visitId>`) stopped being shared: its deletion, or the change that
+ * took its buddies off. Both sync, so every device of this User reads the
+ * same.
+ */
+export function shareWithdrawnAt(
+  key: string,
+  data: {
+    dayPlans: DayPlan[]
+    deletedDayPlans: PlanTombstone[]
+    visits: Visit[]
+    deletedVisits: VisitTombstone[]
+  }
+): number | undefined {
+  const separator = key.indexOf(':')
+  const kind = key.slice(0, separator)
+  const id = key.slice(separator + 1)
+  const [records, tombstones] =
+    kind === 'plan'
+      ? [data.dayPlans, data.deletedDayPlans]
+      : kind === 'followUp'
+        ? [data.visits, data.deletedVisits]
+        : [[], []]
+  const stamps = [
+    records.find((record) => record.id === id)?.updatedAt,
+    tombstones.find((tombstone) => tombstone.id === id)?.deletedAt,
+  ].filter((stamp): stamp is number => stamp !== undefined)
+  return stamps.length > 0 ? Math.max(...stamps) : undefined
+}
+
+/** The share keys of this User's Plans and Follow-ups that invite buddies. */
+export function sharedKeys(dayPlans: DayPlan[], visits: Visit[]): Set<string> {
+  const keys = new Set<string>()
+  for (const plan of dayPlans)
+    if (plan.buddies?.length && !plan.buddyShare)
+      keys.add(planShareKey(plan.id))
+  for (const visit of visits)
+    if (visit.followUp?.buddies?.length && !visit.followUp.dismissed)
+      keys.add(followUpShareKey(visit.id))
+  return keys
 }
 
 /**

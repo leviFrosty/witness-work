@@ -76,6 +76,9 @@ import {
   withNewBadges,
 } from '@/features/buddies/lib/sharedBadges'
 import {
+  ADOPTED_SHARE_HASH,
+  type AnswerMark,
+  answerApplies,
   awaitsAnswer,
   BADGE_ALERT_INTERVAL_MS,
   BADGE_ANNOUNCEMENT_TTL_MS,
@@ -97,8 +100,11 @@ import {
   initialBuddiesState,
   INVITE_TTL_MS,
   MAX_BUDDIES,
+  mergeAnswerMarks,
+  mergeNotificationMarks,
   mergeRemovedBuddies,
   mergeSharing,
+  NOTIFICATION_MARK_TTL_MS,
   withoutExpired,
   withPendingInvitesQueued,
   occupiedBuddySpots,
@@ -175,6 +181,12 @@ export type BuddiesEngineDeps = {
   getStreak?: () => BuddyStreak | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
+  /**
+   * When a share that's left `getShares` stopped being one (by its spec key):
+   * the Plan or Follow-up's deletion, or the change that took its buddies off.
+   * The same on every device, so their cancels are one event and one alert.
+   */
+  withdrawnAt?: (key: string) => number | undefined
   /** This device's platform, told to new buddies for pairing analytics. */
   platform?: BuddyPlatform
   /**
@@ -353,6 +365,15 @@ const RELAY_ALERT_SPACING_MS = 65 * 1000
 /** The relay keeps events 30 days; handled badge events are kept a bit longer. */
 const SEEN_BADGE_EVENT_TTL_MS = 31 * DAY_MS
 
+/** Marks wait this long for more before the roster is written. */
+const ROSTER_SAVE_DELAY_MS = 2000
+
+/**
+ * A share `version` below this is a legacy record's backfilled stamp (1), not a
+ * time, so it can't order sends.
+ */
+const MIN_SHARE_VERSION = Date.UTC(2020, 0, 1)
+
 const SHARE_KIND_PREFIX: Record<ShareType, string> = {
   plan: 'plan',
   followUp: 'followup',
@@ -398,22 +419,17 @@ function unionBy<T>(local: T[], remote: T[], key: (item: T) => string) {
   return [...local, ...remote.filter((item) => !seen.has(key(item)))]
 }
 
-/** What decides whether two rosters hold the same relationships and choices. */
-function rosterSignature(
-  roster: Pick<
-    Roster,
-    | 'buddies'
-    | 'outgoingInvites'
-    | 'incomingClaims'
-    | 'closedInviteIds'
-    | 'removedBuddies'
-    | 'sharing'
-  >
-) {
+/**
+ * What decides whether two rosters hold the same relationships, choices, and
+ * marks.
+ */
+function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
   const { photo, tenure, streak, updatedAt, badges, badgesUpdatedAt } =
     roster.sharing
   return JSON.stringify([
-    roster.buddies.map((b) => `${b.inboxId}:${b.status}`).sort(),
+    roster.buddies
+      .map((b) => `${b.inboxId}:${b.status}:${b.prefsAt ?? 0}`)
+      .sort(),
     roster.outgoingInvites.map((i) => i.inviteId).sort(),
     roster.incomingClaims.map((c) => c.inviteId).sort(),
     Object.keys(roster.closedInviteIds).sort(),
@@ -425,7 +441,45 @@ function rosterSignature(
     // differs only from a choice this device actually made, which is then
     // written back once for devices restoring from the roster.
     [badges ?? true, badgesUpdatedAt ?? 0],
+    Object.entries(roster.answers)
+      .map(([key, { s, v, r }]) => `${key}:${s}:${v}:${r}`)
+      .sort(),
+    Object.keys(roster.read).sort(),
+    Object.keys(roster.dismissed).sort(),
   ])
+}
+
+/** When and where a share is: a change to these alerts (see `sendShares`). */
+function shareTiming(details: OutgoingShareSpec['details']) {
+  const { d, s, m, location } = details
+  return toB64u(sha256(utf8(JSON.stringify({ d, s, m, location }))))
+}
+
+/**
+ * A share as another device sent it: its spec and the confirmed buddies it goes
+ * to. Any change since, a buddy confirmed since included, is sent.
+ */
+function adoptionHash(
+  spec: OutgoingShareSpec,
+  isActive: (inboxId: string) => unknown
+) {
+  const { key, type, details, noteDoc, endsAt, expiresAt } = spec
+  const recipients = spec.recipients.filter((id) => isActive(id)).sort()
+  return toB64u(
+    sha256(
+      utf8(
+        JSON.stringify({
+          key,
+          type,
+          details,
+          noteDoc,
+          endsAt,
+          expiresAt,
+          recipients,
+        })
+      )
+    )
+  )
 }
 
 /**
@@ -595,6 +649,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       avatar: sharing.photo ? current.avatar : undefined,
       tenure: sharing.tenure ? current.tenure : undefined,
       badges: sharesBadges() ? (current.badges ?? []) : [],
+      ...(sharing.photo && current.photoUnavailable
+        ? { photoUnavailable: true }
+        : {}),
     }
   }
 
@@ -686,13 +743,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     slotsAddedDuringSync.add(keys.slotId)
   }
 
-  /** Best effort: the next change or sync rewrites it. */
-  async function saveRoster(me: BuddyIdentity) {
-    const state = store.getState()
-    const version = state.rosterVersion + 1
-    const roster: Roster = {
-      v: 1,
-      version,
+  /** What this device's roster holds, lapsed marks left out. */
+  function rosterContent(state: BuddiesState): Omit<Roster, 'v' | 'version'> {
+    const now = deps.now()
+    const marks = mergeNotificationMarks(
+      state.notificationMarks,
+      { read: {}, dismissed: {} },
+      now
+    )
+    return {
       // Photos would overflow the roster cap; each device gets them, and
       // streaks, from cards.
       buddies: state.buddies.map(({ streak, ...buddy }) =>
@@ -703,7 +762,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       closedInviteIds: state.closedInviteIds,
       removedBuddies: state.removedBuddies,
       sharing: state.sharing,
+      answers: mergeAnswerMarks(state.answerMarks, {}, now),
+      read: marks.read,
+      dismissed: marks.dismissed,
     }
+  }
+
+  /** Best effort: the next change or sync rewrites it. */
+  async function saveRoster(me: BuddyIdentity) {
+    const state = store.getState()
+    const version = state.rosterVersion + 1
+    const roster: Roster = { v: 1, version, ...rosterContent(state) }
     try {
       await relay.putRoster(
         ownerAuth(me),
@@ -718,6 +787,26 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       // Offline or relay hiccup — the next sync that sees a different roster
       // on the relay writes the merged one back.
     }
+  }
+
+  let rosterSaveQueued = false
+  /**
+   * Writes the roster shortly, once for a burst of marks (the tray marks every
+   * entry it shows as read), so this User's other devices catch up within
+   * seconds. Without `later`, the next sync writes it.
+   */
+  function saveRosterSoon() {
+    if (rosterSaveQueued || !deps.later) return
+    if (store.getState().registeredInboxId === null) return
+    rosterSaveQueued = true
+    deps.later(() => {
+      rosterSaveQueued = false
+      void ensureInbox()
+        .then(saveRoster)
+        .catch(() => {
+          // The next sync writes it.
+        })
+    }, ROSTER_SAVE_DELAY_MS)
   }
 
   /**
@@ -1085,6 +1174,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     deps.onPaired?.({ role: 'inviter', buddyPlatform: claim.platform })
     await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
     await saveRoster(me)
+    addCardEdits(new Set([buddy.inboxId]))
     await publishCards().catch(() => {})
   }
 
@@ -1180,39 +1270,40 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (isPendingRemoval(inboxId)) throw new BuddyRemovalPendingError('buddy')
   }
 
-  function setShowOnCalendar(inboxId: string, showOnCalendar: boolean) {
+  /**
+   * Changes how this User sees a buddy (nickname, color, calendar). Saved to
+   * the roster, stamped, so every one of their devices takes the latest.
+   */
+  function setBuddyPrefs(
+    inboxId: string,
+    prefs: Partial<Pick<Buddy, 'nickname' | 'color' | 'showOnCalendar'>>
+  ) {
+    const prefsAt = deps.now()
     store.setState((state) => ({
       buddies: state.buddies.map((b) =>
-        b.inboxId === inboxId ? { ...b, showOnCalendar } : b
+        b.inboxId === inboxId ? { ...b, ...prefs, prefsAt } : b
       ),
     }))
   }
 
+  function setShowOnCalendar(inboxId: string, showOnCalendar: boolean) {
+    setBuddyPrefs(inboxId, { showOnCalendar })
+    saveRosterSoon()
+  }
+
   /**
-   * Saved to the roster so a restored device keeps it. Two buddies may share a
-   * color; it's this User's choice. `null` goes back to the assigned slot
-   * color.
+   * Two buddies may share a color; it's this User's choice. `null` goes back to
+   * the assigned slot color.
    */
   async function setColor(inboxId: string, color: string | null) {
-    store.setState((state) => ({
-      buddies: state.buddies.map((b) =>
-        b.inboxId === inboxId ? { ...b, color: color ?? undefined } : b
-      ),
-    }))
+    setBuddyPrefs(inboxId, { color: color ?? undefined })
     await saveRoster(await ensureInbox())
   }
 
-  /**
-   * Saved to the roster so a restored device keeps it. A blank nickname goes
-   * back to the buddy's own name.
-   */
+  /** A blank nickname goes back to the buddy's own name. */
   async function setNickname(inboxId: string, nickname: string) {
     const trimmed = nickname.trim().slice(0, 60) || undefined
-    store.setState((state) => ({
-      buddies: state.buddies.map((b) =>
-        b.inboxId === inboxId ? { ...b, nickname: trimmed } : b
-      ),
-    }))
+    setBuddyPrefs(inboxId, { nickname: trimmed })
     await saveRoster(await ensureInbox())
   }
 
@@ -1241,21 +1332,79 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (store.getState().registeredInboxId === null) return
     const me = await ensureInbox()
     await saveRoster(me)
-    await publishCards()
+    await publishCards({ edited: true })
   }
 
-  /** Publishes one Buddy Card per active buddy, skipping unchanged content. */
-  function publishCards(): Promise<void> {
+  /**
+   * Cards that changes made on this device still have to publish: every buddy's
+   * (`all`), or those of buddies paired here. A device without the Profile
+   * photo publishes only these (see `sendCards`).
+   */
+  let cardEdits: 'all' | Set<string> = new Set()
+
+  function addCardEdits(edits: 'all' | Set<string>) {
+    cardEdits =
+      edits === 'all' || cardEdits === 'all'
+        ? 'all'
+        : new Set([...cardEdits, ...edits])
+  }
+
+  /**
+   * Publishes one Buddy Card per active buddy, skipping unchanged content.
+   * `edited`: for a change made on this device, not one that arrived from
+   * another device or with time.
+   */
+  function publishCards({ edited = false } = {}): Promise<void> {
+    if (edited) addCardEdits('all')
     return outbox('cards', sendCards)
   }
 
   async function sendCards() {
-    const { name, avatar: shown, tenure, badges: shared = [] } = profile()
+    const {
+      name,
+      avatar: shown,
+      tenure,
+      badges: shared = [],
+      photoUnavailable,
+    } = profile()
     const streak = store.getState().sharing.streak
       ? deps.getStreak?.()
       : undefined
+    const edits = cardEdits
+    cardEdits = new Set()
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
+    // Without the Profile photo, this device's card would take it off buddies'
+    // screens, so cards are left to the device that has it, except for changes
+    // made here (and a buddy paired here, who has no card yet).
+    const targets = photoUnavailable
+      ? active.filter((b) => edits === 'all' || edits.has(b.inboxId))
+      : active
+    if (targets.length === 0) return
+    try {
+      await sendCardsTo(targets, { name, shown, tenure, shared, streak })
+    } catch (error) {
+      addCardEdits(edits)
+      throw error
+    }
+  }
+
+  async function sendCardsTo(
+    targets: Buddy[],
+    {
+      name,
+      shown,
+      tenure,
+      shared,
+      streak,
+    }: {
+      name: string
+      shown: BuddyAvatar | undefined
+      tenure: BuddyProfile['tenure']
+      shared: SharedBadge[]
+      streak: BuddyStreak | undefined
+    }
+  ) {
     const me = await identity()
     const avatar = await withFullPhoto(me, shown)
     const { dayPlans, recurringPlans } = deps.getPlans()
@@ -1269,7 +1418,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const contentHash = toB64u(
       sha256(json({ name, avatar, tenure, streak, days, badges }))
     )
-    for (const buddy of active) {
+    for (const buddy of targets) {
       if (store.getState().publishedCardHashes[buddy.inboxId] === contentHash)
         continue
       const { outgoing } = pairKeys(me, buddy)
@@ -1538,6 +1687,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         seq: event.seq,
       })
       deps.onPaired?.({ role: 'invitee', buddyPlatform: body.platform })
+      // Their first card from this User; the sync publishes it.
+      addCardEdits(new Set([buddy.inboxId]))
       return true
     } catch {
       return false
@@ -1875,16 +2026,25 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function shareRevs(
     previous: OutgoingShare | undefined,
     hash: string,
-    now: number
+    now: number,
+    version?: number
   ) {
     const kept = previous?.pending?.hash === hash ? previous.pending.revs : {}
-    const fresh = Math.max(now, (previous?.lastRev ?? 0) + 1)
+    const floor = (previous?.lastRev ?? 0) + 1
+    const fresh = Math.max(now, floor)
+    // Every device of this User reaches the same rev for the same change, so
+    // a send that alerts is one event, and one alert, however many send it.
+    const settled =
+      version !== undefined && version >= MIN_SHARE_VERSION
+        ? Math.max(version, floor)
+        : fresh
     let lastRev = previous?.lastRev ?? 0
     const undone: Record<string, number> = {}
     return {
       fresh,
-      take(inboxId: string, kind: string) {
-        const rev = kept[`${inboxId}|${kind}`] ?? fresh
+      /** `alerts`: the send pushes, so it takes the rev every device shares. */
+      take(inboxId: string, kind: string, alerts = false) {
+        const rev = kept[`${inboxId}|${kind}`] ?? (alerts ? settled : fresh)
         lastRev = Math.max(lastRev, rev)
         return rev
       },
@@ -1900,6 +2060,47 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         }
       },
     }
+  }
+
+  /**
+   * Takes shares this device has never sent as sent, without sending: they came
+   * from another of this User's devices, which sent them (they were in the data
+   * at this device's first sync, or `keys` just arrived through iCloud Sync). A
+   * change after that is sent as usual, as an update.
+   */
+  function adoptShares(keys?: readonly string[]) {
+    const inboxId = knownInboxId()
+    if (!inboxId || !deps.getShares || keys?.length === 0) return
+    const now = deps.now()
+    const state = store.getState()
+    const isActive = (id: string) =>
+      state.buddies.some((b) => b.inboxId === id && b.status === 'active')
+    const adopted: Record<string, OutgoingShare> = {}
+    for (const spec of deps.getShares()) {
+      if (keys && !keys.includes(spec.key)) continue
+      if (spec.expiresAt <= now || state.outgoingShares[spec.key]) continue
+      const recipients = spec.recipients.filter(isActive)
+      if (recipients.length === 0) continue
+      const timing = shareTiming(spec.details)
+      adopted[spec.key] = {
+        shareId: shareIdFor(inboxId, spec.key),
+        type: spec.type,
+        endsAt: spec.endsAt,
+        expiresAt: spec.expiresAt,
+        sent: Object.fromEntries(
+          recipients.map((id) => [id, ADOPTED_SHARE_HASH])
+        ),
+        sentTiming: Object.fromEntries(recipients.map((id) => [id, timing])),
+        ...(spec.version !== undefined && spec.version >= MIN_SHARE_VERSION
+          ? { lastRev: spec.version }
+          : {}),
+        adopted: adoptionHash(spec, isActive),
+      }
+    }
+    if (Object.keys(adopted).length === 0) return
+    store.setState((current) => ({
+      outgoingShares: { ...current.outgoingShares, ...adopted },
+    }))
   }
 
   /**
@@ -1971,6 +2172,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
     for (const spec of specs) {
       const previous = store.getState().outgoingShares[spec.key]
+      // Another device sent it, and nothing changed since (`adoptShares`).
+      if (
+        previous?.adopted !== undefined &&
+        previous.adopted === adoptionHash(spec, activeBuddy)
+      )
+        continue
       // Once it has happened, a share is history: it goes on, quietly, only to
       // buddies who already have it, never to anyone new.
       const ended = spec.endsAt <= now
@@ -1987,11 +2194,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           })
         )
       )
-      const revs = shareRevs(previous, hash, now)
+      const revs = shareRevs(previous, hash, now, spec.version)
       // Only a change to when or where pushes; a new title or note arrives
       // quietly, sparing the relay's daily push budget for what matters.
-      const { d, s, m, location } = details
-      const timing = toB64u(sha256(json({ d, s, m, location })))
+      const timing = shareTiming(details)
       const recipients = new Set(spec.recipients.filter(activeBuddy))
       const sent = { ...previous?.sent }
       const sentTiming = { ...previous?.sentTiming }
@@ -2009,7 +2215,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         if (ended && !update) continue
         const kind = `${prefix}.${update ? 'update' : 'invite'}`
         const push = !ended && (!update || sentTiming[inboxId] !== timing)
-        const rev = revs.take(inboxId, kind)
+        const rev = revs.take(inboxId, kind, push)
         if (await deliver(inboxId, kind, { ...body, rev }, push)) {
           sent[inboxId] = hash
           sentTiming[inboxId] = timing
@@ -2018,7 +2224,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       for (const inboxId of Object.keys(sent)) {
         if (recipients.has(inboxId)) continue
         const kind = `${prefix}.cancel`
-        const rev = revs.take(inboxId, kind)
+        const rev = revs.take(inboxId, kind, !ended)
         const cancel = { v: 1, id: shareId, rev, removed: true }
         // Taking someone off who hadn't said they're going is no news to them.
         const going =
@@ -2045,14 +2251,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )) {
       if (wanted.has(key)) continue
       const sent = { ...share.sent }
-      const revs = shareRevs(share, 'deleted', now)
+      const revs = shareRevs(share, 'deleted', now, deps.withdrawnAt?.(key))
       if (share.expiresAt > now) {
         const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
         // Deleting one that has happened goes quietly.
         const ended =
           (share.endsAt ?? share.expiresAt - LEGACY_SHARE_RETENTION_MS) <= now
         for (const inboxId of Object.keys(sent)) {
-          const rev = revs.take(inboxId, kind)
+          const rev = revs.take(inboxId, kind, !ended)
           const cancel = { v: 1, id: share.shareId, rev }
           if (await deliver(inboxId, kind, cancel, !ended)) delete sent[inboxId]
           else revs.leave(inboxId, kind, rev)
@@ -2194,10 +2400,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     store.setState((state) => ({
       incomingShares: {
         ...state.incomingShares,
-        [key]: { ...existing, rev, status: 'cancelled' },
+        [key]: { ...existing, rev, status: 'cancelled', cancelledRev: rev },
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
+    // An answer given before doesn't carry over if they invite again, on any
+    // of this User's devices.
+    if (store.getState().answerMarks[key])
+      markAnswer(key, { s: 'none', v: rev, r: 0, x: existing.expiresAt })
     // Taken off an invitation they hadn't accepted: it just goes away, along
     // with any alert still showing for it.
     if (removed && existing.status !== 'going') {
@@ -2287,6 +2497,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         n.shareKey === key ? { ...n, read: true } : n
       ),
     }))
+    // This User's other devices show it too; this one sends it.
+    markAnswer(key, { s: status, v: share.rev, r: now, x: share.expiresAt })
+    markNotifications(
+      store
+        .getState()
+        .notifications.filter((n) => n.shareKey === key)
+        .map((n) => n.id),
+      'read'
+    )
     if (holdMs > 0) return
     await deliverReplies().catch(() => {
       // Saved; retried on the next sync.
@@ -2678,6 +2897,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function dismissJoinRequest(key: string) {
     const request = store.getState().joinRequests[key]
     if (!request) return
+    const entries = store
+      .getState()
+      .notifications.filter((n) => n.shareKey === key)
+      .map((n) => n.id)
     store.setState((state) => ({
       joinRequests: {
         ...state.joinRequests,
@@ -2685,6 +2908,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
+    markNotifications(entries, 'dismissed')
   }
 
   /** A request is answered once this User invites the buddy to a Plan that day. */
@@ -3273,17 +3497,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   function markNotificationsRead() {
-    if (store.getState().notifications.every((n) => n.read)) return
+    const unread = store
+      .getState()
+      .notifications.filter((n) => !n.read)
+      .map((n) => n.id)
+    if (unread.length === 0) return
     store.setState((state) => ({
       notifications: state.notifications.map((n) =>
         n.read ? n : { ...n, read: true }
       ),
     }))
+    markNotifications(unread, 'read')
   }
 
   /**
-   * Seen in the tray. A later change to a seen invitation then reads as a
-   * change rather than a new invitation.
+   * Seen in the tray, here and on this User's other devices. A later change to
+   * a seen invitation then reads as a change rather than a new invitation.
    */
   function markNotificationRead(id: string) {
     const entry = store.getState().notifications.find((n) => n.id === id)
@@ -3293,11 +3522,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         n.id === id ? { ...n, read: true } : n
       ),
     }))
+    markNotifications([id], 'read')
   }
 
   /**
-   * Removes a queue entry, except a request still waiting on an answer: the
-   * tray is where it's answered, and answering is what clears it.
+   * Removes a queue entry, here and on this User's other devices, except a
+   * request still waiting on an answer: the tray is where it's answered, and
+   * answering is what clears it.
    */
   function dismissNotification(id: string) {
     const state = store.getState()
@@ -3310,6 +3541,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     store.setState((current) => ({
       notifications: current.notifications.filter((n) => n.id !== id),
     }))
+    markNotifications([id], 'dismissed')
   }
 
   /**
@@ -3388,17 +3620,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         .map((local): Buddy => {
           const theirs = remote.buddies.find((b) => b.inboxId === local.inboxId)
           // Another device already applied this pairing's confirmation.
-          return local.status === 'awaitingConfirm' &&
+          const confirmed =
+            local.status === 'awaitingConfirm' &&
             theirs?.status === 'active' &&
             theirs.inviteSecret === local.inviteSecret
+              ? {
+                  ...local,
+                  name: theirs.name,
+                  tenure: theirs.tenure,
+                  status: 'active' as const,
+                  expiresAt: undefined,
+                }
+              : local
+          // A nickname, color, or calendar choice made later on another device.
+          return theirs?.prefsAt !== undefined &&
+            theirs.prefsAt > (local.prefsAt ?? 0)
             ? {
-                ...local,
-                name: theirs.name,
-                tenure: theirs.tenure,
-                status: 'active',
-                expiresAt: undefined,
+                ...confirmed,
+                nickname: theirs.nickname,
+                color: theirs.color,
+                showOnCalendar: theirs.showOnCalendar,
+                prefsAt: theirs.prefsAt,
               }
-            : local
+            : confirmed
         }),
       ...added,
     ]
@@ -3433,10 +3677,123 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
       sharing: mergeSharing(state.sharing, remote.sharing),
+      answerMarks: mergeAnswerMarks(state.answerMarks, remote.answers, now),
+      notificationMarks: mergeNotificationMarks(
+        state.notificationMarks,
+        { read: remote.read, dismissed: remote.dismissed },
+        now
+      ),
     })
+    applyMarks()
     // Withdraw their slots from here too, in case that device can't finish.
     if (endedHere.length > 0) queueRemoval(endedHere)
     return added.map((b) => b.inboxId)
+  }
+
+  /**
+   * Brings this device in line with what this User did on any of their devices:
+   * answers to invitations, and queue entries read or dismissed. A mark can
+   * arrive before what it's about, so this runs again after events. Another
+   * device's answer is sent by that device; one waiting to be sent here is
+   * dropped when the other is newer.
+   */
+  function applyMarks() {
+    const state = store.getState()
+    const { answerMarks, notificationMarks } = state
+    let incomingShares = state.incomingShares
+    const answered = new Set<string>()
+    for (const [key, mark] of Object.entries(answerMarks)) {
+      const share = incomingShares[key]
+      if (!share || !answerApplies(share, mark)) continue
+      const superseded =
+        share.unsentReplyRev !== undefined && mark.r > share.unsentReplyRev
+      if (share.status === mark.s && !superseded) continue
+      answered.add(key)
+      incomingShares = {
+        ...incomingShares,
+        [key]: {
+          ...share,
+          status: mark.s,
+          ...(share.unsentReplyRev === undefined || superseded
+            ? { unsentReplyRev: undefined, replySendAt: undefined }
+            : {}),
+        },
+      }
+    }
+    const { read, dismissed } = notificationMarks
+    const answerState = { incomingClaims: state.incomingClaims, incomingShares }
+    const now = deps.now()
+    // Not Now on another device: the request stays quiet here too.
+    const passedOver = new Set(
+      state.notifications
+        .filter(
+          (n) => n.id in dismissed && n.kind === 'joinRequest' && !!n.shareKey
+        )
+        .map((n) => n.shareKey!)
+    )
+    const notifications = state.notifications
+      .filter(
+        (n) =>
+          !(n.id in dismissed) ||
+          // Answering is what clears a request still waiting on an answer.
+          awaitsAnswer(n, answerState, now)
+      )
+      .filter((n) => !n.shareKey || !passedOver.has(n.shareKey))
+      .map((n) =>
+        !n.read &&
+        (n.id in read ||
+          n.id in dismissed ||
+          (n.shareKey !== undefined &&
+            n.kind !== 'shareReply' &&
+            answered.has(n.shareKey)))
+          ? { ...n, read: true }
+          : n
+      )
+    let joinRequests = state.joinRequests
+    for (const key of passedOver) {
+      const request = joinRequests[key]
+      if (request && !request.dismissed)
+        joinRequests = {
+          ...joinRequests,
+          [key]: { ...request, dismissed: true },
+        }
+    }
+    const changed =
+      incomingShares !== state.incomingShares ||
+      joinRequests !== state.joinRequests ||
+      notifications.length !== state.notifications.length ||
+      notifications.some((n, index) => n !== state.notifications[index])
+    if (changed) store.setState({ incomingShares, notifications, joinRequests })
+  }
+
+  /**
+   * Records answers, reads, and dismissals for this User's other devices.
+   * Lapsed marks go, and only as many as the roster carries are kept.
+   */
+  function markAnswer(key: string, mark: AnswerMark) {
+    const now = deps.now()
+    store.setState((state) => ({
+      answerMarks: mergeAnswerMarks(state.answerMarks, { [key]: mark }, now),
+    }))
+    saveRosterSoon()
+  }
+
+  function markNotifications(ids: string[], how: 'read' | 'dismissed') {
+    if (ids.length === 0) return
+    const now = deps.now()
+    const stamps = Object.fromEntries(
+      ids.map((id) => [id, now + NOTIFICATION_MARK_TTL_MS])
+    )
+    store.setState((state) => ({
+      notificationMarks: mergeNotificationMarks(
+        state.notificationMarks,
+        how === 'read'
+          ? { read: stamps, dismissed: {} }
+          : { read: {}, dismissed: stamps },
+        now
+      ),
+    }))
+    saveRosterSoon()
   }
 
   /**
@@ -3572,6 +3929,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }
     }
     for (const card of response.cards) applyCard(me, card)
+    // Answers, reads, and dismissals for what the events just brought.
+    applyMarks()
 
     // A buddy who ended the connection (or a removal on another of this
     // User's devices) has withdrawn their slot from my inbox.
@@ -3585,6 +3944,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
 
     rosterChanged = expireStale() || rosterChanged
+    // Shares already in this User's data were sent by the device that made
+    // them, before this one started.
+    if (firstSync) adoptShares()
     // Read and applied: kept even if the sends below are cut short.
     store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
     onRead()
@@ -3608,7 +3970,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     // something, which also heals a concurrent last-writer-wins overwrite.
     if (
       remoteRoster &&
-      rosterSignature(remoteRoster) !== rosterSignature(store.getState())
+      rosterSignature(remoteRoster) !==
+        rosterSignature(rosterContent(store.getState()))
     )
       rosterChanged = true
     if (rosterChanged) await saveRoster(me)
@@ -3927,6 +4290,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     publishCards,
     fetchBuddyPhoto,
     publishShares,
+    adoptShares,
     replyToShare,
     deliverReplies,
     sendHeldReplies,

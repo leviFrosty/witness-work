@@ -353,7 +353,8 @@ Roster plaintext (JSON):
       "status": "active",
       "pairedAt": 0,
       "colorIndex": 0,
-      "showOnCalendar": true
+      "showOnCalendar": true,
+      "prefsAt": 0
     }
   ],
   "outgoingInvites": [
@@ -372,11 +373,17 @@ Roster plaintext (JSON):
   ],
   "closedInviteIds": { "<inviteId>": 0 },
   "removedBuddies": { "<inboxId>": 0 },
-  "sharing": { "photo": true, "tenure": true, "streak": true, "updatedAt": 0 }
+  "sharing": { "photo": true, "tenure": true, "streak": true, "updatedAt": 0 },
+  "answers": {
+    "<from>|<shareId>": { "s": "going", "v": 0, "r": 0, "x": 0 }
+  },
+  "read": { "<entry id>": 0 },
+  "dismissed": { "<entry id>": 0 }
 }
 ```
 
-- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos, and streaks, from Buddy Cards.
+- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos, and streaks, from Buddy Cards. `prefsAt` is when the nickname, color, or `showOnCalendar` last changed; a buddy's later `prefsAt` replaces all three on a device that already has that buddy. Rosters without it never replace them.
+- `answers`, `read`, and `dismissed` keep the User's devices showing the same thing (see [Another of the User's devices](#another-of-the-users-devices)). Each is optional: a roster without them reads as empty, and an entry a reader can't parse is dropped on its own, not the roster.
 - `version` counts roster writes across the User's devices: each write is the newest version the device has read or written, plus one, and only a write the relay accepted counts. Rosters from builds before it have none.
 - `closedInviteIds`: invites cancelled, rejected, or confirmed (`inviteId → expiresAt`), pruned once they expire. A rejected claim goes with its invite: the claim expires at the same moment.
 - `removedBuddies`: ended pairings (`inboxId → removedAt`). A pairing with that buddy whose `pairedAt ≤ removedAt` is over. A removal the User makes records the time. When the relay shows the buddy left (their slot is gone, or a write returns `gone`) or an unconfirmed request lapses, the device records that pairing's own `pairedAt` instead, so a device that missed a newer pairing made on another device can't end it. Pairing again on purpose (accepting an invite, or confirming a claim) drops the local entry and starts the new pairing after any `removedAt` this device knows. Entries never expire. Past 200, the smallest `removedAt` is dropped first; only the User's own pairings add entries, so one is dropped only after 200 later removals. 200 entries take about 8 KB of the 32 KB roster cap.
@@ -385,7 +392,7 @@ Roster plaintext (JSON):
 `roster/put` is last-writer-wins, so clients merge rather than replace. On every sync that returns a roster:
 
 1. **Older rosters are ignored.** A roster whose `version` is below the newest this device has read or written is a replay or a stale write. The client ignores it and writes its own roster back. A device that wrote without having synced recovers its change on its next sync: it merges the newer roster and writes the union. A roster with no `version` comes from an older build and is merged, but local tombstones still win over it.
-2. **Otherwise the client merges.** Buddies, invites, and claims union with local state, and so do `closedInviteIds` and `removedBuddies` (the later `removedAt` per buddy wins). Then:
+2. **Otherwise the client merges.** Buddies, invites, and claims union with local state, and so do `closedInviteIds` and `removedBuddies` (the later `removedAt` per buddy wins), `read` and `dismissed` (the later lapse per entry), and `answers` (the newer per invitation). Then:
    - a pairing that has ended is never added, whichever roster lists it; a local buddy whose pairing another device ended is dropped, and its slots are withdrawn as in [Ending](#ending);
    - closed or expired invites and claims are dropped;
    - a local `awaitingConfirm` buddy turns `active` only when the roster shows the same pairing (same `inviteSecret`) active;
@@ -400,6 +407,21 @@ A removed buddy's slot is gone from the inbox too, so the next sync drops them o
 The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, streak, updatedAt, badges?, badgesUpdatedAt? }`), merged last-writer-wins so every device publishes the same Buddy Card: photo, Tenure, and the streak on `updatedAt`, badges on their own `badgesUpdatedAt`. A roster written before streaks existed reads `streak` as `true`. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. The streak only ever travels in cards, and the roster never stores a buddy's streak. Withheld badges are left out of cards and not announced. The badges fields came later, so they're optional: a roster without them (written before badges, or by an older app, which drops them when it rewrites the roster) parses, keeps the device's own badges choice and stamp, and counts as different from the device's copy only when that device made a choice (stamp > 0), which it then writes back once. On equal `badgesUpdatedAt`, withholding wins, so devices can't disagree forever. A choice never made defaults to on with stamp 0. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
 
 If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers the inbox, re-adds every buddy's slot, and writes its roster. A local flag makes a failure part-way retry instead of looking like every buddy left.
+
+### Another of the User's devices
+
+Every device on the Apple Account derives the same inbox from the root seed, so each one reads the same events, registers for its own pushes, and gets every alert. The roster carries what the User did on one device so the others show it too:
+
+- **Answers** (`answers`, keyed by `incomingShareKey`): `s` is `going` or `declined`, or `none` once the buddy canceled the invitation that was answered; `v` is the invitation's `rev` when answered (for `none`, the cancel's `rev`); `r` is the answering device's clock (0 for `none`); `x` is when the invitation lapses. The higher `v` wins, `none` wins a tie, then the higher `r`. A device shows an answer on an invitation it has, unless the invitation is canceled or `v` isn't above the `rev` of the last cancel it saw, so an answer never carries over to an invitation sent again. Only the device that answered sends the `share.reply`; one waiting to send on another device is dropped when a newer answer arrives. At most 50, newest `r` first; lapsed ones go.
+- **Bell entries read or dismissed** (`read`, `dismissed`: entry id → when the mark lapses, 31 days after it's made, by when the relay has dropped the event): an entry another device read arrives read; one it dismissed is removed, unless it's still waiting on an answer here. Dismissing a request to join passes it over on every device. Entry ids are event ids (or `pending|` plus an `incomingShareKey`), the same on every device. At most 100, dismissals first on a tie.
+- **When:** a device writes its roster a couple of seconds after a burst of marks, so the others catch up on their next sync (the live signal starts one at once).
+
+A device whose seed came from another device starts Buddies by itself only while iCloud Sync (Google Drive on Android) is on there and has pulled once, since its Buddy Card and shares come from its own Plans. It registers the inbox (idempotent for the same key), restores the roster, skips the first-visit intro, and registers for pushes. Without iCloud Sync it waits until the User opens Buddies there.
+
+Sending stays idempotent across devices:
+
+- **Cards:** every device publishes the same card from the same data. A device without the Profile photo file (photo transfer off) publishes cards only for changes made on it, and to a buddy paired there, so its card doesn't take the photo off buddies' screens after every change another device makes.
+- **Shares:** a device takes the shares already in its data at its first sync, and shares that arrive later through iCloud Sync, as sent by the device that made them, without sending. A send that alerts, and every cancel, uses as its `rev` the Plan's or Follow-up's sync `updatedAt` (for a deleted one, its deletion; or one more than the share's last `rev`, if higher), so every device reaches the same event id for the same change and the relay keeps one event and one alert. Quiet updates keep the device's clock.
 
 ### Buddy Card plaintext
 
@@ -437,7 +459,7 @@ If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers t
 
 ### Shared Plans and Follow-ups
 
-A User can invite buddies to a one-time Plan or a Follow-up. Each is a **share**. Its `id` (22-char `b64u`) is `SHA-256("ww-buddies/v1/share|" + senderInboxId + "|" + key)[0..16]`, where `key` is `plan:<dayPlanId>` or `followUp:<visitId>`, so every device of the sender uses the same id. The client works declaratively: on each publish it compares the shares its data implies with what it last sent to each recipient (content hash per recipient). It then invites new recipients, updates changed shares, and cancels removed recipients and deleted shares. `rev` is the sender's clock at send time. Recipients ignore anything older than what they have, and a cancel wins a tie.
+A User can invite buddies to a one-time Plan or a Follow-up. Each is a **share**. Its `id` (22-char `b64u`) is `SHA-256("ww-buddies/v1/share|" + senderInboxId + "|" + key)[0..16]`, where `key` is `plan:<dayPlanId>` or `followUp:<visitId>`, so every device of the sender uses the same id. The client works declaratively: on each publish it compares the shares its data implies with what it last sent to each recipient (content hash per recipient). It then invites new recipients, updates changed shares, and cancels removed recipients and deleted shares. `rev` is a time: for a send that alerts and for a cancel, when the Plan or Follow-up last changed (so the sender's devices agree, see [Another of the User's devices](#another-of-the-users-devices)); otherwise the sender's clock at send time; always above the share's last `rev`. Recipients ignore anything older than what they have, and a cancel wins a tie.
 
 | Kind                                  | Written by | Plaintext                                                                       | Push      |
 | ------------------------------------- | ---------- | ------------------------------------------------------------------------------- | --------- |
@@ -449,7 +471,7 @@ A User can invite buddies to a one-time Plan or a Follow-up. Each is a **share**
 `details`: `d` (sender's local day, `YYYY-MM-DD`), `s?` (start, minutes after midnight), `m?` (Plan minutes), `title?` (≤ 100), `location?` (`{ name?, address?, latitude?, longitude? }`), `note?` (≤ 2000, Plans only), `noteDoc?` and `photos?` (Plans only, see [Shared note photos](#shared-note-photos)), `firstName?` (≤ 40) and `topic?` (≤ 80), Follow-ups only.
 
 - **Follow-ups carry minimal householder data:** date and time, the Contact's first name, a one-line address and coordinate, and the topic. Never the surname, phone, email, notes, history, or Bible Study flag. In data protection mode the sender's picker is hidden, and the recipient sees only the date and time.
-- **Multi-device senders:** what was sent is tracked per device. Another of the sender's devices without that record re-sends under the same `id`; recipients see identical details and add no queue entry, though the push may still arrive once.
+- **Multi-device senders:** what was sent is tracked per device. Another of the sender's devices takes shares it didn't make as sent, and its alerting sends reach the same event id as the device that made the change, so the relay stores and alerts once. A device that made neither (an older build, or a change that raced past `rev`) may still send once more under the same `id`; recipients see identical details and add no queue entry.
 - **Expiry:** a Plan share is kept 30 days after the Plan ends, so buddies can look back at it (and its photos); a Follow-up 24 h after its time, since it carries a householder's details. `expiresAt` stays 24 h after it happens, which builds from before Plans were kept a month read alone; `keepUntil` (Plans only) carries the month, and a recipient keeps a share until the later of the two. Both phones drop it then, locally and without needing the network: on launch, on foreground, and on every sync. The relay deletes events after 30 days, so a share can outlive its event: a device that joins later doesn't get it.
 - **After it happens:** a Plan or Follow-up whose time has passed is history. It can still be opened, but not answered: the answer buttons are gone and `share.reply` isn't sent. The sender sends its changes and its cancel only to buddies who already have it, always with `push: false`, and never invites anyone new to it (so updating to a build that keeps Plans a month doesn't re-send Plans that already ended). A recipient's linked Plan stops following it: a later change, cancel, or "declined" leaves the Plan as it was, and deleting it doesn't answer "declined". It adds no queue entry and stops holding the bell.
 - **Going:** answering "Going" to a Plan adds a linked Day Plan (`buddyShare: { from, shareId }`) that mirrors the sender's changes and is removed when they cancel or the User changes their answer, until the Plan happens. Deleting that Plan before then answers "declined". An answer is saved before it's sent and retried on every sync until the relay accepts it, so it holds offline. Accepted Follow-ups appear read-only on the schedule day.

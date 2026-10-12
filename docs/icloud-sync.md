@@ -29,6 +29,14 @@ and photo metadata do not. Device identity, onboarding progress, sync controls,
 address prefill, data protection mode, and analytics consent remain local.
 `syncPreferencePolicy.ts` is the incoming/outgoing exclusion policy.
 
+Buddies isn't in the payload: its key is in iCloud Keychain, and buddies,
+answers, and the bell's read and dismissed entries travel in the end-to-end
+encrypted roster on the relay. Sync matters to it in one way: a device with
+sync on, that has pulled once, starts Buddies by itself when the Keychain
+already holds the User's Buddies key, because its Plans (and so its Buddy Card)
+match the User's other devices. See "Another of the User's devices" in
+[buddies-protocol.md](./buddies-protocol.md).
+
 JSON backups additionally include categories, mileage, and profile. Restoring a backup
 preserves installation identity and local consent/settings, including backups
 created by older versions that included them. Missing optional stores are kept.

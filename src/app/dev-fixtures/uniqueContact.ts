@@ -359,8 +359,7 @@ export function buildUniqueContactFixture({
       date: today.clone().subtract(5, 'years').startOf('year').toDate(),
       note: 'First contact at the door',
     }),
-    // Future-dated visit (imports only — the form can't create one) with a
-    // future follow-up.
+    // Future-dated visit with a future follow-up.
     visit('future-imported-visit', {
       date: at(1, 'days', 14),
       note: 'Imported from notes: scheduled visit',

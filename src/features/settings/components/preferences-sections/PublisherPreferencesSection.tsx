@@ -136,7 +136,6 @@ const PublisherPreferencesSection = () => {
                 onChange={(_e, date) => {
                   if (date) set({ tenureStartDate: date })
                 }}
-                maximumDate={new Date()}
                 iOSMode='date'
               />
             </View>

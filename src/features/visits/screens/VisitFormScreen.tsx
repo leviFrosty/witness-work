@@ -616,7 +616,6 @@ const VisitFormScreen = ({
             controlWidth='auto'
           >
             <DateTimePicker
-              maximumDate={moment().toDate()}
               value={conversation.date}
               onChange={handleDateChange}
               iOSMode='datetime'

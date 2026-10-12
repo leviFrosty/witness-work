@@ -2,6 +2,7 @@ import { ReactNode, RefObject } from 'react'
 import { View } from 'react-native'
 import {
   ChevronDown as ChevronDownIcon,
+  ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
@@ -175,6 +176,18 @@ export const FormRowChevron = (props: { open: boolean }) => {
   return (
     <LucideIcon
       icon={props.open ? ChevronUpIcon : ChevronDownIcon}
+      size={16}
+      color={theme.colors.textAlt}
+    />
+  )
+}
+
+/** Trailing chevron for a filled row that opens its own screen. */
+export const FormRowDisclosure = () => {
+  const theme = useTheme()
+  return (
+    <LucideIcon
+      icon={ChevronRightIcon}
       size={16}
       color={theme.colors.textAlt}
     />

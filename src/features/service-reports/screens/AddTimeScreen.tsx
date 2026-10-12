@@ -1,5 +1,12 @@
 import { Alert } from 'react-native'
 import { noteUserAction } from '@/lib/userAction'
+import { richTextImages } from '@/lib/richText/inspect'
+import {
+  getNoteDoc,
+  hasNote,
+  noteFields,
+  type NoteUpdate,
+} from '@/lib/richText/notes'
 import { useEffect, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -115,7 +122,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       prefillCategory?.isCredit ??
       false,
     categoryId: existingServiceReport?.report.categoryId ?? prefillCategory?.id,
-    note: existingServiceReport?.report.note ?? '',
+    note: existingServiceReport?.report.note,
+    noteDoc: existingServiceReport?.report.noteDoc,
   })
   const toast = useToastController()
 
@@ -147,12 +155,19 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   }
 
-  const setNote = (note: string) => {
-    setServiceReport({
-      ...serviceReport,
-      note,
-    })
-  }
+  // Functional: the note editor calls this after other fields may have moved.
+  const setNote = (note: NoteUpdate) =>
+    setServiceReport((current) => ({ ...current, ...note }))
+  /** The entry as it saves, with its note normalized. */
+  const savedEntry = (): TimeEntry => ({
+    ...serviceReport,
+    ...noteFields(getNoteDoc(serviceReport)),
+  })
+  const noteAnalytics = (entry: TimeEntry) => ({
+    has_note: hasNote(entry),
+    has_formatting: !!entry.noteDoc,
+    note_photos: entry.noteDoc ? richTextImages(entry.noteDoc.doc).length : 0,
+  })
 
   const submit = () => {
     playConfetti()
@@ -224,11 +239,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     }
 
     noteUserAction('time')
-    addServiceReport(serviceReport)
+    const entry = savedEntry()
+    addServiceReport(entry)
     analytics.capture('time_entry_created', {
       source: 'time_entry_form',
-      has_category: !!serviceReport.categoryId,
-      has_note: !!serviceReport.note,
+      has_category: !!entry.categoryId,
+      ...noteAnalytics(entry),
     })
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),
@@ -239,11 +255,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const save = () => {
     noteUserAction('time')
-    updateServiceReport(serviceReport)
+    const entry = savedEntry()
+    updateServiceReport(entry)
     analytics.capture('time_entry_updated', {
       source: 'time_entry_form',
-      has_category: !!serviceReport.categoryId,
-      has_note: !!serviceReport.note,
+      has_category: !!entry.categoryId,
+      ...noteAnalytics(entry),
     })
     toast.show(i18n.t('success'), {
       message: i18n.t('updated'),
@@ -352,8 +369,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         <FormDetailsSection>
           <NoteFormRow
             first
-            note={serviceReport.note ?? ''}
-            setNote={setNote}
+            note={serviceReport}
+            onChange={setNote}
+            surface='time_entry'
             maxLength={500}
             testID='time-entry-note'
           />

@@ -22,6 +22,10 @@ public class ICloudBridgeModule: Module {
   /// only `*.json` and must not fire remote-change events for binary writes.
   /// Phase 2 of iCloud image sync, see docs/icloud-image-sync-plan.md.
   private static let imageFilePrefix = "witness-work-img-"
+  /// Photos in notes. Their own prefix, so builds from before note photos
+  /// (which accept only `witness-work-img-`) never list, adopt, or clean them
+  /// up as orphaned avatars.
+  private static let noteImageFilePrefix = "witness-work-note-"
   private static let imageFileExtension = "jpg"
 
   private var metadataQuery: NSMetadataQuery?
@@ -585,7 +589,8 @@ public class ICloudBridgeModule: Module {
       }
     }
 
-    /// Enumerates every `witness-work-img-*.jpg` in the ubiquity container.
+    /// Enumerates every photo (`witness-work-img-*.jpg`, `witness-work-note-*.jpg`)
+    /// in the ubiquity container.
     /// Returns `[{ filename, modifiedAt }]` so the JS layer can diff by mtime
     /// without a per-file round-trip. Does NOT trigger downloads for
     /// placeholders — the caller drives downloads explicitly via `readBinary`.
@@ -673,8 +678,8 @@ public class ICloudBridgeModule: Module {
       }
     }
 
-    /// Wipes every `witness-work-img-*.jpg` in the container. Used by the
-    /// image-sync disable path to scrub all uploaded avatars in one pass.
+    /// Wipes every photo in the container (avatars and note photos). Used by
+    /// the image-sync disable path to scrub everything uploaded in one pass.
     AsyncFunction("deleteAllBinaries") { (promise: Promise) in
       guard let documentsURL = self.documentsURL() else {
         promise.reject(ICloudBridgeError.unavailable)
@@ -949,16 +954,24 @@ public class ICloudBridgeModule: Module {
     return true
   }
 
-  /// Mirror of `src/lib/sync/imageNames.ts :: isValidImageFilename` — keep in
-  /// sync. Rejects anything outside the `witness-work-img-*.jpg` namespace,
-  /// any path separators / relative components, and empty-middle filenames
-  /// like `witness-work-img-.jpg`.
+  /// Mirror of `src/app/sync/imageNames.ts :: isValidImageFilename` — keep in
+  /// sync. Rejects anything outside the `witness-work-img-*.jpg` (avatars) and
+  /// `witness-work-note-*.jpg` (note photos) namespaces, any path separators /
+  /// relative components, and empty-middle filenames like
+  /// `witness-work-img-.jpg`.
   private func isValidImageFilename(_ name: String) -> Bool {
-    guard name.hasPrefix(ICloudBridgeModule.imageFilePrefix) else { return false }
+    let prefix: String
+    if name.hasPrefix(ICloudBridgeModule.imageFilePrefix) {
+      prefix = ICloudBridgeModule.imageFilePrefix
+    } else if name.hasPrefix(ICloudBridgeModule.noteImageFilePrefix) {
+      prefix = ICloudBridgeModule.noteImageFilePrefix
+    } else {
+      return false
+    }
     guard name.hasSuffix(".\(ICloudBridgeModule.imageFileExtension)") else { return false }
     if name.contains("/") || name.contains("..") { return false }
     let middle = String(
-      name.dropFirst(ICloudBridgeModule.imageFilePrefix.count)
+      name.dropFirst(prefix.count)
         .dropLast(ICloudBridgeModule.imageFileExtension.count + 1) // include the '.'
     )
     if middle.isEmpty { return false }

@@ -1,3 +1,5 @@
+import type { RichText } from '@/types/richText'
+
 /**
  * Mileage Tracking — cars, fuels, and trips. See
  * `docs/mileage-tracking-prd.md`.
@@ -63,6 +65,8 @@ export type Trip = {
   odometerStartMiles?: number
   odometerEndMiles?: number
   note?: string
+  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+  noteDoc?: RichText
   /** Epoch ms. */
   createdAt: number
   updatedAt?: number

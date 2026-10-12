@@ -18,6 +18,7 @@ import {
 } from '@/features/buddies/lib/calendarMarkers'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { hasNote as noteExists } from '@/lib/richText/notes'
 
 /** A buddy drawn on the calendar, mirroring the in-app `BuddyAvatar`. */
 export type WidgetCalendarBuddy = {
@@ -245,12 +246,12 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
     )
     const hasPlan = dayPlansForDay.length > 0 || recurringPlansForDay.length > 0
 
-    const recurringHasNote = recurringPlansForDay.some(
-      (plan) => !!getEffectiveNoteForRecurringPlan(plan, dDate)
+    const recurringHasNote = recurringPlansForDay.some((plan) =>
+      noteExists(getEffectiveNoteForRecurringPlan(plan, dDate))
     )
     const hasNote =
-      dayPlansForDay.some((p) => !!p.note) ||
-      reportsForDay.some((r) => !!r.note) ||
+      dayPlansForDay.some(noteExists) ||
+      reportsForDay.some(noteExists) ||
       recurringHasNote
 
     const hitGoal = wentInService && hasPlan && workedMinutes >= plannedMinutes

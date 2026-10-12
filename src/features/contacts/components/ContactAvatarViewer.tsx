@@ -35,6 +35,7 @@ import { formatDateTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
+import FloatingGlassButton from '@/components/ui/FloatingGlassButton'
 import i18n from '@/lib/locales'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
@@ -43,66 +44,6 @@ interface Props {
   visible: boolean
   contact: Contact
   onClose: () => void
-}
-
-const HEADER_BUTTON_SIZE = 40
-
-/**
- * Round glass header button. Floats over imagery so we layer a `BlurView`
- * underneath the `GlassView` per AGENTS.md guidance ("free-floating elements
- * that would visually disappear without the material") — on iOS 26 the
- * `GlassView` paints over the blur fallback; on older systems the blur stays
- * visible so the icon doesn't disappear into the photo behind it.
- */
-const HeaderButton = ({
-  icon,
-  onPress,
-  label,
-}: {
-  icon: typeof XIcon
-  onPress: () => void
-  label: string
-}) => {
-  const shape = {
-    width: HEADER_BUTTON_SIZE,
-    height: HEADER_BUTTON_SIZE,
-    borderRadius: HEADER_BUTTON_SIZE / 2,
-    overflow: 'hidden' as const,
-  }
-  return (
-    <PointerHover effect='highlight'>
-      <Pressable
-        onPress={onPress}
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        hitSlop={10}
-        style={{ borderRadius: shape.borderRadius }}
-      >
-        <View style={shape}>
-          <BlurView
-            tint='systemThickMaterialDark'
-            intensity={50}
-            style={StyleSheet.absoluteFill}
-          />
-          <GlassView
-            glassEffectStyle='regular'
-            colorScheme='dark'
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={{
-              ...shape,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'transparent',
-            }}
-          >
-            <LucideIcon icon={icon} size={16} color='#fff' />
-          </View>
-        </View>
-      </Pressable>
-    </PointerHover>
-  )
 }
 
 const ToolbarButton = ({
@@ -299,12 +240,12 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
             zIndex: 10,
           }}
         >
-          <HeaderButton
+          <FloatingGlassButton
             icon={XIcon}
             onPress={onClose}
             label={i18n.t('cancel')}
           />
-          <HeaderButton
+          <FloatingGlassButton
             icon={InfoIcon}
             onPress={() => setInfoOpen((v) => !v)}
             label={i18n.t('photoInfo')}

@@ -67,7 +67,17 @@ export function setup() {
     name: string,
     plans: Plans = { dayPlans: [], recurringPlans: [] },
     seed: Uint8Array = random(32),
-    extra: Pick<BuddiesEngineDeps, 'platform' | 'onPaired'> = {}
+    extra: Pick<
+      BuddiesEngineDeps,
+      | 'platform'
+      | 'onPaired'
+      | 'readSharedPhoto'
+      | 'hasSharedPhoto'
+      | 'saveSharedPhoto'
+      | 'onSharedPhotosSaved'
+      | 'readProfilePhoto'
+      | 'keepBuddyPhotos'
+    > = {}
   ) {
     const store = memoryStore({})
     const profile: BuddyProfile = { name }
@@ -128,6 +138,7 @@ export function setup() {
       afterOp = hook
     },
     user,
+    now,
     advance: (ms: number) => {
       clock += ms
     },

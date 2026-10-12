@@ -16,11 +16,25 @@ import {
   type BuddiesSyncOptions,
   createBuddiesEngine,
 } from '@/features/buddies/lib/engine'
-import type { BuddyStreak } from '@/features/buddies/lib/schemas'
+import type { BuddyStreak, ProfilePhoto } from '@/features/buddies/lib/schemas'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
 import { buildOutgoingShares } from '@/features/buddies/lib/shares'
+import {
+  hasSharedPhoto,
+  readSharedPhoto,
+  saveSharedPhoto,
+} from '@/features/buddies/lib/sharedPhotoFiles'
+import {
+  buddyPhotoFile,
+  keepBuddyPhotos,
+  readProfilePhoto,
+  saveBuddyPhoto,
+} from '@/features/buddies/lib/buddyPhotoFiles'
+import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
+import { addNoteImageReferences } from '@/stores/noteImages'
+import { localSharedPhotoId } from '@/features/buddies/lib/sharedNotes'
 import { trackSync } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
@@ -81,6 +95,39 @@ const engine = createBuddiesEngine({
   later: (run, ms) => {
     setTimeout(run, ms)
   },
+  readSharedPhoto,
+  hasSharedPhoto,
+  saveSharedPhoto,
+  onSharedPhotosSaved: noteImagesArrived,
+  readProfilePhoto,
+  keepBuddyPhotos,
+})
+
+/**
+ * A buddy's Profile photo at full size, as the file it's kept in: downloaded
+ * the first time it's opened. Null when the relay no longer has it.
+ */
+export async function loadBuddyPhoto(
+  inboxId: string,
+  photo: ProfilePhoto
+): Promise<string | null> {
+  const saved = await buddyPhotoFile(photo.blob)
+  if (saved) return saved
+  const bytes = await engine.fetchBuddyPhoto(inboxId, photo)
+  return bytes ? saveBuddyPhoto(photo.blob, bytes) : null
+}
+
+// A buddy's photos download with their invitation, before any Plan of this
+// User's refers to them; keep them until the invitation lapses.
+addNoteImageReferences(() => {
+  const now = Date.now()
+  return Object.values(useBuddies.getState().incomingShares)
+    .filter((share) => share.expiresAt > now)
+    .flatMap((share) =>
+      (share.details.photos ?? []).map((photo) =>
+        localSharedPhotoId(photo.blob)
+      )
+    )
 })
 
 /** Counts a send while its first try is on its way. */

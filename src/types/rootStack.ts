@@ -1,10 +1,13 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Coordinate } from '@/types/contact'
 import type { BuddyShareRef, PlanLocation } from '@/types/timeEntry'
+import type { RichText } from '@/types/richText'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
 export type RootStackParamList = {
   Root: undefined
+  /** The full-screen note editor; `sessionId` is from `startNoteEditorSession`. */
+  NoteEditor: { sessionId: string }
   'Visit Form': {
     contactId?: string
     visitToEditId?: string
@@ -125,6 +128,7 @@ export type RootStackParamList = {
       anytime?: boolean
       minutes?: number
       note?: string
+      noteDoc?: RichText
       title?: string
       location?: PlanLocation
       categoryId?: string

@@ -48,7 +48,7 @@ import { usePreferences } from '@/stores/preferences'
 
 const JSON_PREFIX = 'witness-work'
 const JSON_EXT = '.json'
-const IMAGE_PREFIX = 'witness-work-img-'
+const IMAGE_PREFIXES = ['witness-work-img-', 'witness-work-note-']
 const IMAGE_EXT = '.jpg'
 
 export const isSyncJsonName = (name: string): boolean =>
@@ -57,8 +57,9 @@ export const isSyncJsonName = (name: string): boolean =>
   !name.includes('/') &&
   !name.includes('..')
 
+/** Avatars (`witness-work-img-`) and note photos (`witness-work-note-`). */
 export const isSyncImageName = (name: string): boolean =>
-  name.startsWith(IMAGE_PREFIX) &&
+  IMAGE_PREFIXES.some((prefix) => name.startsWith(prefix)) &&
   name.endsWith(IMAGE_EXT) &&
   !name.includes('/') &&
   !name.includes('..')

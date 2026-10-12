@@ -156,6 +156,19 @@ devices can upload them again, so the confirmation asks the user to pause photo
 sync on those devices first. Rebuild removes obsolete binaries before uploading
 the current photos when enabled.
 
+### Note photos
+
+Photos in notes (ADR 0022) sync behind the same setting under their own names,
+`witness-work-note-<id>.jpg`, which builds from before note photos ignore, so
+their cleanup can't delete them. A note stores only the photo's id and size; the
+file is `Documents/note-images/<id>.jpg` on every device. Photos never change
+once saved, so each one uploads once, after the JSON that refers to it, and
+downloads only when a note refers to it and this device doesn't have it. Cloud
+cleanup deletes a note photo no note refers to once it's a day old, after a
+complete pull; local cleanup does the same on the device. Erasing householder
+data deletes those visits' photo files at once. Reset cleanup keeps photos that
+notes refer to, and “Remove iCloud photos” removes note photos too.
+
 Native writes replace atomically. Binary reads stop at a ten-second deadline,
 cancel waiting file coordinators, and forbid a timed-out read from writing late.
 Metadata-query starts/stops are serialized on the main queue; timed-out initial

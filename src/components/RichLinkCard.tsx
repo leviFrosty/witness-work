@@ -83,8 +83,7 @@ export function useLinkActions() {
   ]
 
   /** Open Link for a note whose links render as plain content. */
-  const openLinksItem = (text: string | null | undefined) =>
-    openLinksMenuItem(text, open)
+  const openLinksItem = (links: string[]) => openLinksMenuItem(links, open)
 
   return { open, copy, copyText, share, menu, openLinksItem }
 }

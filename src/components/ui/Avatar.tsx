@@ -64,6 +64,13 @@ interface Props {
    * back) dismisses with the reverse animation.
    */
   focusable?: boolean
+  /**
+   * With `focusable`: a sharper copy of the image (a local URI, or null when
+   * there's none), shown over it once it opens. E.g. a buddy's photo at full
+   * size, where `avatar` is its thumbnail. Called on every open; must not
+   * reject.
+   */
+  loadFullImage?: () => Promise<string | null>
   /** Overlays drawn on the avatar, e.g. an `AvatarBadge`. */
   children?: ReactNode
 }
@@ -77,6 +84,7 @@ const Avatar = ({
   size: sizeProp,
   background,
   focusable,
+  loadFullImage,
   children,
 }: Props) => {
   const theme = useTheme()
@@ -94,6 +102,13 @@ const Avatar = ({
   useEffect(() => {
     setImageFailed(false)
   }, [avatar.type, avatar.value])
+  // The sharper copy, for the image it was loaded for.
+  const [fullImage, setFullImage] = useState<{
+    for: string
+    uri: string
+  } | null>(null)
+  const fullUri =
+    loadFullImage && fullImage?.for === avatar.value ? fullImage.uri : null
   const progress = useSharedValue(0)
   const dims = useWindowDimensions()
 
@@ -112,6 +127,12 @@ const Avatar = ({
       setAnchor({ x, y, size: w })
       setOpen(true)
     })
+    if (loadFullImage && avatar.type === 'image') {
+      const loadedFor = avatar.value
+      void loadFullImage().then((uri) =>
+        setFullImage(uri ? { for: loadedFor, uri } : null)
+      )
+    }
   }
 
   // Target presentation: centered, sized to fit comfortably within the screen
@@ -289,6 +310,22 @@ const Avatar = ({
             ]}
           >
             {inner}
+            {fullUri ? (
+              <Image
+                source={{ uri: fullUri }}
+                style={{
+                  position: 'absolute',
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                }}
+                contentFit='cover'
+                // Drawn at the avatar's size and scaled up with the overlay,
+                // so keep every pixel instead of fitting it to the small size.
+                allowDownscaling={false}
+                transition={200}
+              />
+            ) : null}
           </Animated.View>
         )}
         <StatusBar translucent />

@@ -1,103 +1,33 @@
-import { Info } from 'lucide-react-native'
-import { useRef } from 'react'
-import { Pressable, useWindowDimensions, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
-import LucideIcon from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import { View } from 'react-native'
+import InfoPopoverTrigger, {
+  infoPopoverHostStyle,
+  type InfoPopoverProps,
+} from '@/components/ui/InfoPopoverTrigger'
 
 /**
- * Optional help directly after a label, with no gap on the parent row. The icon
- * starts 6pt from the label; the rest of its 44pt tap target extends rightward.
- * Beside a control rather than a label, `centered` centers the icon in its
- * target so it doesn't leave a wide gutter after it. Keep values, essential
- * instructions, and help inside existing detail popovers inline; don't nest an
- * InfoPopover inside another popover.
+ * Optional help directly after a label, with no gap on the parent row: a
+ * SwiftUI popover on iOS (`InfoPopover.ios.tsx`), a Material rich tooltip on
+ * Android (`InfoPopover.android.tsx`). The icon starts 6pt from the label; the
+ * rest of its 44pt tap target extends rightward. Beside a control rather than a
+ * label, `centered` centers the icon in its target so it doesn't leave a wide
+ * gutter after it. Keep values, essential instructions, and help inside
+ * existing detail popovers inline; don't nest an InfoPopover inside another
+ * popover.
  */
-const InfoPopover = ({
+export default function InfoPopover({
   title,
-  description,
-  inline = false,
-  centered = false,
+  inline,
+  centered,
   color,
-}: {
-  title: string
-  description: string
-  /** Keep the 44pt target without making a text line 44pt tall. */
-  inline?: boolean
-  /** Center the icon in its tap target, e.g. at the end of an input row. */
-  centered?: boolean
-  /** Icon color override, e.g. on a tinted hero. Defaults to `textAlt`. */
-  color?: string
-}) => {
-  const theme = useTheme()
-  const { width } = useWindowDimensions()
-  const insets = useSafeAreaInsets()
-  const headingRef = useRef<View>(null)
-
+}: InfoPopoverProps) {
   return (
-    <AnchoredPopover
-      contentWidth={Math.min(300, width - insets.left - insets.right - 24)}
-      accessibilityFocusRef={headingRef}
-      resolvePosition={({
-        anchor,
-        windowWidth,
-        windowHeight,
-        contentWidth,
-      }) => {
-        const topEdge = insets.top + 12
-        const bottomEdge = windowHeight - insets.bottom - 12
-        const below = Math.max(0, bottomEdge - anchor.y - anchor.height - 8)
-        const above = Math.max(0, anchor.y - 8 - topEdge)
-        const left = Math.max(
-          insets.left + 12,
-          Math.min(anchor.x, windowWidth - insets.right - contentWidth - 12)
-        )
-        return below >= above
-          ? { left, top: anchor.y + anchor.height + 8, maxHeight: below }
-          : { left, bottom: windowHeight - anchor.y + 8, maxHeight: above }
-      }}
-      contentStyle={{ gap: 8 }}
-      renderTrigger={({ onPress, anchorRef, expanded }) => (
-        <Pressable
-          ref={anchorRef}
-          collapsable={false}
-          onPress={onPress}
-          accessibilityRole='button'
-          accessibilityLabel={i18n.t('infoPopoverLabel', { title })}
-          accessibilityState={{ expanded }}
-          style={({ pressed }) => ({
-            width: 44,
-            height: 44,
-            marginVertical: inline ? -12 : 0,
-            flexShrink: 0,
-            alignItems: centered ? 'center' : 'flex-start',
-            paddingLeft: centered ? 0 : 6,
-            justifyContent: 'center',
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <LucideIcon
-            icon={Info}
-            size={theme.fontSize('md')}
-            color={color ?? theme.colors.textAlt}
-          />
-        </Pressable>
-      )}
-    >
-      <View
-        ref={headingRef}
-        accessible
-        accessibilityRole='header'
-        accessibilityLabel={title}
-      >
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
-      </View>
-      <Text style={{ fontSize: theme.fontSize('sm') }}>{description}</Text>
-    </AnchoredPopover>
+    <View style={infoPopoverHostStyle(inline)}>
+      <InfoPopoverTrigger
+        title={title}
+        centered={centered}
+        color={color}
+        onPress={() => {}}
+      />
+    </View>
   )
 }
-
-export default InfoPopover

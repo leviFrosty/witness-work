@@ -1259,54 +1259,49 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   // "View imports" callout sits at the LEFT of the control row — the in-chat
   // entry point to the history list (the header no longer has a clock). Shown
-  // whenever any import is saved; opens upward so it clears the keyboard. Its
-  // dot lights only when another import is in-flight or ready to review.
+  // whenever any import is saved. Its dot lights only when another import is in-flight or ready to review.
   const historyCallout =
     entries.length > 0 ? (
       <NotesImportHistoryPopover
-        openDirection='up'
-        align='left'
-        renderTrigger={({ onPress, anchorRef }) => (
-          <View ref={anchorRef} collapsable={false} style={{ flexShrink: 1 }}>
-            <Button
-              onPress={onPress}
-              accessibilityRole='button'
-              accessibilityLabel={i18n.t('notesImport_viewHistory')}
-              noTransform
+        renderTrigger={({ onPress }) => (
+          <Button
+            onPress={onPress}
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t('notesImport_viewHistory')}
+            noTransform
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 7,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: theme.numbers.borderRadiusXl,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.card,
+            }}
+          >
+            <NotesImportReadyDot
+              visible={actionableOther.length > 0}
+              color={calloutInProgress ? theme.colors.warn : undefined}
+            />
+            <Text
+              numberOfLines={1}
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 7,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                borderRadius: theme.numbers.borderRadiusXl,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.card,
+                flexShrink: 1,
+                color: theme.colors.textAlt,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
               }}
             >
-              <NotesImportReadyDot
-                visible={actionableOther.length > 0}
-                color={calloutInProgress ? theme.colors.warn : undefined}
-              />
-              <Text
-                numberOfLines={1}
-                style={{
-                  flexShrink: 1,
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('notesImport_viewHistory')}
-              </Text>
-              <LucideIcon
-                icon={HistoryIcon}
-                size={12}
-                color={theme.colors.textAlt}
-              />
-            </Button>
-          </View>
+              {i18n.t('notesImport_viewHistory')}
+            </Text>
+            <LucideIcon
+              icon={HistoryIcon}
+              size={12}
+              color={theme.colors.textAlt}
+            />
+          </Button>
         )}
       />
     ) : null

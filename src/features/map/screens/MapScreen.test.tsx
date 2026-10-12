@@ -229,9 +229,7 @@ vi.mock('@/components/ui/layout/Wrapper', () => ({ default: 'Wrapper' }))
 vi.mock('@/components/ui/PointerTooltip', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
 }))
-vi.mock('@/components/ui/AnchoredPopover', () => ({
-  default: 'AnchoredPopover',
-}))
+vi.mock('@/components/ui/Popover', () => ({ default: 'Popover' }))
 vi.mock('@/components/ui/TabBar', () => ({ TAB_BAR_HEIGHT: 60 }))
 vi.mock(
   '@/features/map/components/MapCarouselCard',

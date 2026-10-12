@@ -127,13 +127,16 @@ const defaultResolvePosition: ResolveAnchorPosition = ({
 }
 
 /**
- * Anchored popover positioned relative to its trigger. Built on RN `Modal` (new
- * UIWindow) rather than tamagui `Popover` so the popover stays visible when the
- * host screen is presented as a native modal / form-sheet — tamagui's Portal
- * mounts behind those presentations and the content is never seen.
+ * Hand-built popover positioned relative to its trigger. **Use the native
+ * `Popover` instead.** This one remains for content that opens a Tamagui
+ * `Sheet` of its own (the month overview's Assistant): a native popover would
+ * cover that sheet, while `presentation='portal'` mounts under it. The iPad
+ * sidebar's quick actions still use it until the tab bar goes native.
  *
- * **Always reach for this component instead of building a fresh
- * Modal+Reanimated popover.** It owns the safe Modal mount lifecycle that keeps
+ * Built on RN `Modal` (new UIWindow) rather than tamagui `Popover` so the
+ * popover stays visible when the host screen is presented as a native modal /
+ * form-sheet — tamagui's Portal mounts behind those presentations and the
+ * content is never seen. It owns the safe Modal mount lifecycle that keeps
  * Reanimated worklet commits from racing shadow-tree teardown — see
  * `UNMOUNT_DELAY_MS` for the why.
  */

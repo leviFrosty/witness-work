@@ -55,7 +55,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
 import { Contact } from '@/types/contact'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
@@ -1275,50 +1275,30 @@ const FullMapView = ({
                 style={mapControlStyle}
               />
             </PointerTooltip>
-            <AnchoredPopover
+            <Popover
               contentWidth={280}
-              // Legend opens to the right of the control column, top-aligned to the
-              // info button, clamped on-screen — matches the old 'right-start'.
-              resolvePosition={({
-                anchor,
-                windowWidth,
-                windowHeight,
-                contentWidth,
-              }) => {
-                const margin = 12
-                const left = Math.min(
-                  anchor.x + anchor.width + 8,
-                  windowWidth - contentWidth - margin
-                )
-                return {
-                  top: Math.min(anchor.y, windowHeight - margin),
-                  left,
-                }
-              }}
-              renderTrigger={({ onPress, anchorRef }) => (
-                <View ref={anchorRef} collapsable={false}>
-                  <PointerTooltip
-                    label={i18n.t('map_showLegend')}
-                    {...controlTooltipProps}
+              renderTrigger={({ onPress }) => (
+                <PointerTooltip
+                  label={i18n.t('map_showLegend')}
+                  {...controlTooltipProps}
+                >
+                  <Button
+                    accessibilityLabel={i18n.t('map_showLegend')}
+                    variant='glass'
+                    onPress={onPress}
+                    style={mapControlStyle}
                   >
-                    <Button
-                      accessibilityLabel={i18n.t('map_showLegend')}
-                      variant='glass'
-                      onPress={onPress}
-                      style={mapControlStyle}
-                    >
-                      <LucideIcon
-                        icon={InfoIcon}
-                        size={theme.fontSize('sm')}
-                        style={{ color: theme.colors.text }}
-                      />
-                    </Button>
-                  </PointerTooltip>
-                </View>
+                    <LucideIcon
+                      icon={InfoIcon}
+                      size={theme.fontSize('sm')}
+                      style={{ color: theme.colors.text }}
+                    />
+                  </Button>
+                </PointerTooltip>
               )}
             >
               <MapKey />
-            </AnchoredPopover>
+            </Popover>
           </View>
           <Animated.View
             style={{

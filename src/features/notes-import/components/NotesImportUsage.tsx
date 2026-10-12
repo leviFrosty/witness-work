@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react'
 import { useWindowDimensions, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AnchoredPopover, {
-  type ResolveAnchorPosition,
-} from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -81,7 +78,6 @@ const NotesImportUsage = ({
   renderSupporterCta,
 }: Props) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(300, windowWidth - 24)
   const importsUnlimited =
@@ -107,72 +103,45 @@ const NotesImportUsage = ({
       })
     : undefined
 
-  const resolvePosition: ResolveAnchorPosition = ({
-    anchor,
-    windowWidth: width,
-    windowHeight,
-    contentWidth: popoverWidth,
-  }) => {
-    const margin = 12
-    const gap = 8
-    // The trigger sits low in the composer, so pin the popover's BOTTOM just
-    // above it and let it grow upward — capped to the room down from the top
-    // safe inset so it can never run off the top, with any overflow scrolling.
-    const topSafe = insets.top + margin
-    const maxHeight = Math.max(160, anchor.y - gap - topSafe)
-    const left = Math.min(
-      Math.max(margin, anchor.x + anchor.width - popoverWidth),
-      width - popoverWidth - margin
-    )
-    return {
-      bottom: windowHeight - anchor.y + gap,
-      left,
-      maxHeight,
-    }
-  }
-
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={contentWidth}
-      resolvePosition={resolvePosition}
       contentStyle={{ padding: 14, gap: 12 }}
-      renderTrigger={({ onPress, anchorRef }) => (
-        <View ref={anchorRef} collapsable={false}>
-          <Button
-            noTransform
-            onPress={onPress}
-            accessibilityRole='button'
-            accessibilityLabel={i18n.t(
-              'notesImport_importUsageAccessibilityLabel',
-              { imports: importBalance }
-            )}
-            accessibilityHint={i18n.t('notesImport_usageHint')}
-            hitSlop={8}
+      renderTrigger={({ onPress }) => (
+        <Button
+          noTransform
+          onPress={onPress}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t(
+            'notesImport_importUsageAccessibilityLabel',
+            { imports: importBalance }
+          )}
+          accessibilityHint={i18n.t('notesImport_usageHint')}
+          hitSlop={8}
+          style={{
+            minWidth: 50,
+            height: 32,
+            paddingHorizontal: 10,
+            borderRadius: theme.numbers.borderRadiusXl,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.accentTranslucent,
+          }}
+        >
+          <Text
+            numberOfLines={1}
             style={{
-              minWidth: 50,
-              height: 32,
-              paddingHorizontal: 10,
-              borderRadius: theme.numbers.borderRadiusXl,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: theme.colors.accentTranslucent,
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xs'),
             }}
           >
-            <Text
-              numberOfLines={1}
-              style={{
-                color: theme.colors.accent,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xs'),
-              }}
-            >
-              {triggerLabel}
-            </Text>
-          </Button>
-        </View>
+            {triggerLabel}
+          </Text>
+        </Button>
       )}
     >
-      {({ close }) => (
+      {({ closeThen }) => (
         <>
           <View style={{ gap: 8 }}>
             <View
@@ -243,16 +212,13 @@ const NotesImportUsage = ({
                 }}
               >
                 {renderSupporterCta({
-                  onPress: () => {
-                    close()
-                    onRequestUpgrade()
-                  },
+                  onPress: () => closeThen(onRequestUpgrade),
                 })}
               </View>
             )}
         </>
       )}
-    </AnchoredPopover>
+    </Popover>
   )
 }
 

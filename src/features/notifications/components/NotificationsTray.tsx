@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { AppState, useWindowDimensions, View } from 'react-native'
 import { Bell as BellIcon } from 'lucide-react-native'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -25,6 +25,9 @@ import {
 } from '@/features/notifications/stores/notificationsTray'
 
 const POPOVER_WIDTH = 380
+// Room inside the popover's host for the badge, which hangs off the bell's
+// corner, and for most of the bell's hit slop.
+const TRIGGER_PADDING = 8
 
 /**
  * Opens the popover when something (a tapped push) asked for it, once nothing
@@ -58,12 +61,10 @@ function useAppIconBadge(unread: number) {
 
 function BellTrigger({
   onPress,
-  anchorRef,
   unread,
   news,
 }: {
   onPress: () => void
-  anchorRef: React.RefObject<View | null>
   unread: number
   /** Unread buddies' news, which shows a quiet dot instead of a number. */
   news: boolean
@@ -72,7 +73,7 @@ function BellTrigger({
   useOpenOnRequest(onPress)
 
   return (
-    <View ref={anchorRef} collapsable={false} style={{ position: 'relative' }}>
+    <View style={{ padding: TRIGGER_PADDING }}>
       <PointerTooltip label={i18n.t('notifications_a11y')} effect='none'>
         <IconButton
           icon={BellIcon}
@@ -94,8 +95,8 @@ function BellTrigger({
           pointerEvents='none'
           style={{
             position: 'absolute',
-            top: -5,
-            right: -7,
+            top: TRIGGER_PADDING - 5,
+            right: TRIGGER_PADDING - 7,
             minWidth: 16,
             height: 16,
             borderRadius: 8,
@@ -121,8 +122,8 @@ function BellTrigger({
           pointerEvents='none'
           style={{
             position: 'absolute',
-            top: -1,
-            right: -1,
+            top: TRIGGER_PADDING - 1,
+            right: TRIGGER_PADDING - 1,
             width: 10,
             height: 10,
             borderRadius: 5,
@@ -170,16 +171,12 @@ export default function NotificationsTray({
   }, [ids])
 
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={Math.min(POPOVER_WIDTH, width - 24)}
       contentStyle={{ padding: 0 }}
-      renderTrigger={({ onPress, anchorRef }) => (
-        <BellTrigger
-          onPress={onPress}
-          anchorRef={anchorRef}
-          unread={unread}
-          news={news}
-        />
+      style={{ margin: -TRIGGER_PADDING }}
+      renderTrigger={({ onPress }) => (
+        <BellTrigger onPress={onPress} unread={unread} news={news} />
       )}
     >
       {({ closeThen }) => (
@@ -191,6 +188,6 @@ export default function NotificationsTray({
           onRetrySync={onRetrySync}
         />
       )}
-    </AnchoredPopover>
+    </Popover>
   )
 }

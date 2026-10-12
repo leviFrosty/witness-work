@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import StreakBadge from '@/components/StreakBadge'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import Popover from '@/components/ui/Popover'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -52,7 +52,6 @@ export default function HomeStreakChip() {
   const navigation = useNavigation<RootStackNavigation>()
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
-  const focusRef = useRef<View>(null)
   const streak = useServiceStreak()
   const { now } = useNow()
   const grewAt = useStreakCelebration((state) => state.grewAt)
@@ -109,18 +108,15 @@ export default function HomeStreakChip() {
       : null
 
   return (
-    <AnchoredPopover
+    <Popover
       contentWidth={Math.min(
         helper ? 280 : 200,
         width - insets.left - insets.right - 24
       )}
-      accessibilityFocusRef={focusRef}
       contentStyle={{ gap: 12 }}
-      renderTrigger={({ onPress, anchorRef, expanded }) => (
+      renderTrigger={({ onPress, expanded }) => (
         <PointerTooltip label={i18n.t('streak_title')}>
           <Pressable
-            ref={anchorRef}
-            collapsable={false}
             onPress={onPress}
             hitSlop={10}
             accessibilityRole='button'
@@ -137,7 +133,7 @@ export default function HomeStreakChip() {
       {({ closeThen }) => (
         <>
           {helper && (
-            <View ref={focusRef} accessible>
+            <View accessible>
               <Text
                 style={{
                   fontSize: theme.fontSize('sm'),
@@ -149,7 +145,6 @@ export default function HomeStreakChip() {
             </View>
           )}
           <View
-            ref={helper ? undefined : focusRef}
             style={{
               flexDirection: 'row',
               flexWrap: 'wrap',
@@ -207,6 +202,6 @@ export default function HomeStreakChip() {
           </View>
         </>
       )}
-    </AnchoredPopover>
+    </Popover>
   )
 }

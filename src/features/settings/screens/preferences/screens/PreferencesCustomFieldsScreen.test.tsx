@@ -40,7 +40,7 @@ vi.mock('@/components/ui/inputs/Section', () => ({ default: 'Section' }))
 vi.mock('@/components/ui/inputs/InputRowContainer', () => ({
   default: 'InputRowContainer',
 }))
-vi.mock('@/components/RowActionsMenu', () => ({ default: 'RowActionsMenu' }))
+vi.mock('@/components/ui/PullDownMenu', () => ({ default: 'PullDownMenu' }))
 vi.mock('@/features/settings/components/shared/SettingsInputLayout', () => ({
   default: 'SettingsInputLayout',
 }))

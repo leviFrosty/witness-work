@@ -22,8 +22,8 @@ function useAppStateStatus() {
  * the app out of the foreground. Going to the background also drops
  * celebrations still waiting; `inactive` (iOS system prompts such as a review
  * request or a permission alert, Notification Center) only holds. Sheets and
- * popovers on the tabs hold for themselves (`Sheet`, `AnchoredPopover`).
- * Mounted once, in HomeTabStack.
+ * popovers on the tabs hold for themselves (`Sheet`, `Popover`). Mounted once,
+ * in HomeTabStack.
  */
 export default function TakeoverEnvironment() {
   // The root stack's top screen, not this screen's focus, so a second `Root`

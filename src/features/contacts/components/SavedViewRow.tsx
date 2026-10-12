@@ -1,4 +1,3 @@
-import { Trash2 as TrashIcon } from 'lucide-react-native'
 import { Ref, useState } from 'react'
 import { View } from 'react-native'
 import type { InputRef } from 'tamagui'
@@ -9,7 +8,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import MyTextInput from '@/components/ui/TextInput'
 import Text from '@/components/ui/MyText'
 import ReorderControls from '@/components/ui/ReorderControls'
-import RowActionsMenu from '@/components/RowActionsMenu'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
 import {
@@ -90,13 +89,14 @@ const SavedViewRow = ({
             })}
           </Text>
         </View>
-        <RowActionsMenu
+        <PullDownMenu
+          triggerSize={16}
           accessibilityLabel={i18n.t('moreActionsFor', { name: view.name })}
           actions={[
             {
               id: 'delete-view',
-              label: i18n.t('delete'),
-              icon: TrashIcon,
+              title: i18n.t('delete'),
+              systemImage: 'trash',
               destructive: true,
               onPress: onDelete,
             },

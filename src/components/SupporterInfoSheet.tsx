@@ -13,6 +13,7 @@ import SupporterBenefits from '@/components/SupporterBenefits'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import useCheapestSupporterPrice from '@/hooks/useCheapestSupporterPrice'
+import { useAfterPopover } from '@/components/ui/popoverContext'
 import type { FeatureKey } from '@/lib/featureAccess'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
@@ -36,6 +37,7 @@ const SupporterInfoSheet = ({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { priceString } = useCheapestSupporterPrice()
+  const afterPopover = useAfterPopover()
   const interactionHandled = useRef(false)
   // Set by the support button: the Paywall opens once the sheet has closed.
   const openPaywall = useRef(false)
@@ -86,15 +88,19 @@ const SupporterInfoSheet = ({
         if (!nextOpen) dismiss('gesture_or_overlay')
       }}
       // The Paywall is a pushed screen; opened while the sheet is still on its
-      // way out, it would land underneath it.
+      // way out, it would land underneath it. Inside a popover (e.g. the
+      // AvatarPickerPopover's avatar gate), iOS presents the sheet on the
+      // popover, so close the popover too and push once it's gone.
       onClosed={() => {
         if (!openPaywall.current) return
         openPaywall.current = false
-        navigation.navigate('Paywall', {
-          source: 'feature_gate',
-          feature: featureKey,
-          gateAttribution: attribution,
-        })
+        afterPopover(() =>
+          navigation.navigate('Paywall', {
+            source: 'feature_gate',
+            feature: featureKey,
+            gateAttribution: attribution,
+          })
+        )
       }}
     >
       <Sheet.ScrollView

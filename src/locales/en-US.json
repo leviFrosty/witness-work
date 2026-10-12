@@ -427,6 +427,11 @@
   "recoverContacts": "Recover Contacts",
   "permanentlyDelete": "Permanently Delete?",
   "permanentlyDeleteContact_warning": "This permanently deletes the contact and every conversation logged with them. This cannot be undone.",
+  "permanentlyDeleteContact_question": "Permanently Delete {{name}}?",
+  "deleteContactOrArchive_warning": "This erases the contact and every conversation logged with them, on this device and your synced devices. It can't be undone or recovered.\n\nTo hide the contact but keep their history, archive it instead.",
+  "deleteContactsOrArchive_warning": "This erases these contacts and every conversation logged with them, on this device and your synced devices. It can't be undone or recovered.\n\nTo hide them but keep their history, archive them instead.",
+  "archiveInstead": "Archive Instead",
+  "deletePermanently": "Delete Permanently",
   "settings": "Settings",
   "restartOnboarding": "Restart Onboarding",
   "basedOnContacts": "Based on contacts",
@@ -513,7 +518,7 @@
   "archive": "Archive",
   "archiveContact": "Archive Contact",
   "archiveContact_question": "Archive Contact?",
-  "archiveContact_description": "Archiving this contact will delete it. You can recover it from the settings.",
+  "archiveContact_description": "Archiving hides this contact and keeps their conversations. You can restore it from Settings → More → Recover Contacts for 90 days.",
   "tapToAddAConversation": "Tap here to add a conversation, or press the + button above.",
   "todaysConversations": "Today's Conversations",
   "upcomingConversations": "Upcoming Conversations",
@@ -3022,6 +3027,8 @@
   "faq_profilePic_a": "Yes. Open a contact, tap the avatar, and pick a photo from your library or take a new one. This is especially handy when contacts share names or when a photo helps you spot the right door.",
   "faq_dismissContact_q": "How do I hide a contact without deleting them?",
   "faq_dismissContact_a": "Open the contact and tap \"Dismiss.\" You'll pick how long to dismiss them for (1 week, 1 month, 3 months, 6 months, or 1 year). The contact disappears from your active lists for that period and then comes back automatically when the time is up. If notifications are enabled, you'll also get a reminder when they reappear, so dismissed contacts won't quietly slip through the cracks. You can find or restore dismissed contacts at any time from the link at the bottom of your Contacts list, the ••• menu in Contacts, or Settings → Dismissed Contacts.",
+  "faq_deleteContact_q": "What's the difference between archiving and deleting a contact?",
+  "faq_deleteContact_a": "Touch and hold a contact in Contacts or on the map, or open it and tap More (•••), then choose Archive or Delete Permanently…. In Select mode, use Archive or Delete at the bottom. Swiping a contact from the right archives it. Archiving hides the contact and keeps it and every conversation logged with them. Restore it within 90 days from Settings → More → Recover Contacts; after that its details are removed. Deleting permanently erases the contact, every conversation logged with them, and their photos, on this device and on devices that sync with it through iCloud Sync or Google Drive Sync. It can't be undone, so WitnessWork asks first and offers Archive Instead. To delete a contact you already archived, touch and hold it in Recover Contacts and choose Delete Permanently…. With data protection mode on there's no Archive: removing a contact always deletes it. To hide a contact only for a while, use Dismiss For instead. Backup files you saved earlier still contain deleted contacts. If you deleted one by mistake, it can only come back by restoring a backup made before the delete, which replaces your current data, so create a fresh backup first. For anything else, contact support from the Help Center and leave out names, addresses, and notes.",
   "faq_contactStalenessFilter_q": "How do I see which contacts are due for a visit?",
   "faq_contactStalenessFilter_a": "Below the search field in Contacts, tap a chip to show only contacts in that group: Stale, This month, This week, or Never contacted. Each chip shows how many active contacts it holds, and its color matches the contact's pin on the map. Swipe the chips sideways to see them all. Tap the chip again, or tap All, to show everyone. The same chips sit at the top of the map, where they count only contacts with a location and filter the pins; they tuck away while you move the map, so tap the Contacts title to bring them back. To change their order, touch a chip, pause briefly, then drag it along the row; All stays first. The order is a preference, so it's included in backups and syncs with iCloud Sync on iOS. Groups are based on your most recent visit, and \"Not at homes\" count as visits. To change when a contact moves between groups, or the colors, tap the info button at the end of the chips (on the map, the legend button) and then the pencil. A chip adds a filter you can also see and remove in Sort & Filter, and it applies to the list and the map alike. Dismissed contacts aren't counted. Nothing is shared; the groups are worked out on your device.",
   "faq_reportBug_q": "How do I report a bug or request a feature?",
@@ -3630,7 +3637,7 @@
     "one": "Archive 1 Contact?",
     "other": "Archive {{count}} Contacts?"
   },
-  "archiveContacts_description": "Archiving these contacts removes them from your list. You can recover them from the settings.",
+  "archiveContacts_description": "Archiving hides these contacts and keeps their conversations. You can restore them from Settings → More → Recover Contacts for 90 days.",
   "deleteContacts_question": {
     "one": "Permanently Delete 1 Contact?",
     "other": "Permanently Delete {{count}} Contacts?"

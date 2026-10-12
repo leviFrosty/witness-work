@@ -38,6 +38,7 @@ import useConversations from '@/stores/conversationStore'
 import {
   deleteAllHouseholderData,
   deleteHouseholderContact,
+  permanentlyDeleteHouseholderContacts,
 } from '@/stores/householderData'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
 import type { Contact } from '@/types/contact'
@@ -148,6 +149,26 @@ describe('deleteHouseholderContact with the mode off', () => {
         .contacts.map((c) => c.id)
         .sort()
     ).toEqual(['a', 'b'])
+  })
+})
+
+describe('permanentlyDeleteHouseholderContacts with the mode off', () => {
+  beforeEach(() => reset(false))
+
+  it('hard-deletes the contact and its visits, leaving nothing to recover', () => {
+    permanentlyDeleteHouseholderContacts(['a'])
+    const { contacts, deletedContacts } = useContacts.getState()
+
+    expect(contacts.map((c) => c.id)).toEqual(['b'])
+    expect(deletedContacts).toHaveLength(1)
+    expect(isRedactedContactTombstone(deletedContacts[0])).toBe(true)
+    expect(JSON.stringify(deletedContacts)).not.toContain('Oak St')
+    expect(useConversations.getState().conversations.map((c) => c.id)).toEqual([
+      'v3',
+    ])
+
+    useContacts.getState().recoverContact('a')
+    expect(useContacts.getState().contacts.map((c) => c.id)).toEqual(['b'])
   })
 })
 

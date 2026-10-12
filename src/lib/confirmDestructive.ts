@@ -11,6 +11,11 @@ interface ConfirmDestructiveOptions {
   confirmLabel?: string
   /** Runs only when the user taps the destructive button. */
   onConfirm: () => void
+  /**
+   * A gentler choice offered between Cancel and the destructive button, e.g.
+   * "Archive Instead" for a permanent delete.
+   */
+  alternative?: { label: string; onPress: () => void }
 }
 
 /**
@@ -24,9 +29,13 @@ const confirmDestructive = ({
   description,
   confirmLabel,
   onConfirm,
+  alternative,
 }: ConfirmDestructiveOptions) => {
   Alert.alert(title, description, [
     { text: i18n.t('cancel'), style: 'cancel' },
+    ...(alternative
+      ? [{ text: alternative.label, onPress: alternative.onPress }]
+      : []),
     {
       text: confirmLabel ?? i18n.t('delete'),
       style: 'destructive',

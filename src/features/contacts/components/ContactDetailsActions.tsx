@@ -117,9 +117,9 @@ export function AddVisitMenu({
 }
 
 /**
- * Contact Details' toolbar: More (Share…, Edit | Dismiss For ▸, Archive), the
- * favorite star, and "+ Add" as the primary action. Used by the pushed screen's
- * header and the iPad detail pane.
+ * Contact Details' toolbar: More (Share…, Edit | Dismiss For ▸, Archive, Delete
+ * Permanently…), the favorite star, and "+ Add" as the primary action. Used by
+ * the pushed screen's header and the iPad detail pane.
  */
 export default function ContactDetailsActions({
   contact,
@@ -136,11 +136,11 @@ export default function ContactDetailsActions({
   const share = useShareContact(contact)
   // The pushed screen leaves once its contact is hidden; the iPad pane just
   // moves on to the next contact in the list.
-  const { dismiss, archive } = useContactRemovalActions(contact, {
+  const { dismiss, archive, remove } = useContactRemovalActions(contact, {
     onDismissed: () => {
       if (!embedded) navigation.goBack()
     },
-    onArchived: () => {
+    onRemoved: () => {
       if (!embedded) navigation.popToTop()
     },
   })
@@ -173,7 +173,7 @@ export default function ContactDetailsActions({
               onPress: edit,
             },
           ],
-          [!isContactDismissed(contact) && dismiss, archive],
+          [!isContactDismissed(contact) && dismiss, archive, remove],
         ]}
       />
       <IconButton

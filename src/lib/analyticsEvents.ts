@@ -8,6 +8,7 @@ export const analyticsEventNames = [
   'assistant_recommendation_dismissed',
   'assistant_recommendation_undone',
   'contact_created',
+  'contact_deleted',
   'follow_up_card_completed',
   'follow_up_dismissed',
   'follow_up_rescheduled',

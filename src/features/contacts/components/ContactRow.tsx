@@ -116,7 +116,10 @@ const ContactRow = ({
     onShare: share,
     onSelect,
   })
-  const { archive } = useContactRemovalActions(contact)
+  // Swiping archives; data protection mode, which keeps nothing to archive,
+  // deletes instead.
+  const { archive, remove } = useContactRemovalActions(contact)
+  const swipeRemoval = archive ?? remove
 
   const nameMatch = findNameMatch(searchMatches)
   const previewMatch = pickPreviewMatch(searchMatches)
@@ -140,7 +143,7 @@ const ContactRow = ({
       setDismissSheetMounted(true)
       setDismissSheetOpen(true)
     } else {
-      archive?.onPress()
+      swipeRemoval?.onPress()
     }
   }
 

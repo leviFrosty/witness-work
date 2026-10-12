@@ -5,7 +5,6 @@ import {
   StarOff as StarOffIcon,
   Trash2 as TrashIcon,
 } from 'lucide-react-native'
-import { useToastController } from '@tamagui/toast'
 
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import {
@@ -13,11 +12,9 @@ import {
   useDismissContacts,
   useDismissDurations,
 } from '@/hooks/useDismissContact'
-import confirmDestructive from '@/lib/confirmDestructive'
+import useRemoveContacts from '@/hooks/useRemoveContacts'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
-import { deleteHouseholderContacts } from '@/stores/householderData'
-import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 import {
   SelectionBar,
@@ -28,8 +25,8 @@ import type { ListSelection } from '@/features/contacts/hooks/useListSelection'
 
 /**
  * Batch actions for the Contacts list in Select mode: favorite, dismiss for a
- * duration, and archive (delete in data protection mode). Each ends Select mode
- * once it runs.
+ * duration, archive (not in data protection mode), and a red Delete. Each ends
+ * Select mode once it runs.
  */
 export default function ContactsSelectionBar({
   contacts,
@@ -41,11 +38,10 @@ export default function ContactsSelectionBar({
   selection: ListSelection
   bottom: number
 }) {
-  const toast = useToastController()
   const setContactsFavorite = useContacts((s) => s.setContactsFavorite)
-  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const dismissContacts = useDismissContacts()
   const durations = useDismissDurations()
+  const { canArchive, archive, remove } = useRemoveContacts()
   const count = contacts.length
   const none = count === 0
   const allFavorite = !none && contacts.every((c) => c.isFavorite)
@@ -57,29 +53,6 @@ export default function ContactsSelectionBar({
     )
     selection.finish()
   }
-
-  const archive = () =>
-    confirmDestructive({
-      title: dataProtectionMode
-        ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('deleteContacts_question', { count })
-        : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('archiveContacts_question', { count }),
-      description: i18n.t(
-        dataProtectionMode
-          ? 'permanentlyDeleteContacts_warning'
-          : 'archiveContacts_description'
-      ),
-      confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      onConfirm: () => {
-        deleteHouseholderContacts(contacts.map((c) => c.id))
-        toast.show(i18n.t('success'), {
-          message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
-          native: true,
-        })
-        selection.finish()
-      },
-    })
 
   const dismissItem = (
     <SelectionBarItem
@@ -114,12 +87,20 @@ export default function ContactsSelectionBar({
           {dismissItem}
         </PullDownMenu>
       )}
+      {canArchive && (
+        <SelectionBarButton
+          icon={ArchiveIcon}
+          label={i18n.t('archive')}
+          disabled={none}
+          onPress={() => archive(contacts, selection.finish)}
+        />
+      )}
       <SelectionBarButton
-        icon={dataProtectionMode ? TrashIcon : ArchiveIcon}
-        label={i18n.t(dataProtectionMode ? 'delete' : 'archive')}
+        icon={TrashIcon}
+        label={i18n.t('delete')}
         destructive
         disabled={none}
-        onPress={archive}
+        onPress={() => remove(contacts, selection.finish)}
       />
     </SelectionBar>
   )

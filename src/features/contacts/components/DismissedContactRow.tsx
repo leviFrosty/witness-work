@@ -42,9 +42,8 @@ function DismissedContactPreview({ contact }: { contact: Contact }) {
 /**
  * A Dismissed Contacts row, styled like the Contacts list's `ContactRow` but
  * with "Dismissed until {date}" as its secondary line. Tap opens the contact;
- * long press offers Undismiss and Archive (Delete in data protection mode). The
- * trailing button undismisses in one tap. In Select mode taps toggle the
- * check.
+ * long press offers Undismiss, Archive, and Delete Permanently…. The trailing
+ * button undismisses in one tap. In Select mode taps toggle the check.
  */
 export default function DismissedContactRow({
   contact,
@@ -59,7 +58,7 @@ export default function DismissedContactRow({
 }) {
   const theme = useTheme()
   const undismiss = useUndismissContacts()
-  const { archive } = useContactRemovalActions(contact)
+  const { archive, remove } = useContactRemovalActions(contact)
   const [hovered, setHovered] = useState(false)
 
   const cardStyle = {
@@ -167,7 +166,7 @@ export default function DismissedContactRow({
               onPress: undismissContact,
             },
           ],
-          [archive],
+          [archive, remove],
         ]}
       >
         <View style={{ paddingVertical: 16, paddingLeft: 18, paddingRight: 8 }}>

@@ -466,6 +466,15 @@ work. It is sent the first time a pointer hovers a control, capped to once per
 UTC day, with `input` (`pointer` or `stylus`). Individual hovers, tooltips, and
 chart readouts are not captured.
 
+## Announcements
+
+Remote announcements in the notifications tray (the `announcement` flag; see
+[`feature-flags.md`](./feature-flags.md#announcements)) answer whether people
+read a notice or wave it away. `announcement_dismissed` is sent when the User
+dismisses one (including Clear All) and `announcement_link_opened` when they tap
+its link, each with `announcement_id`, the payload's `id` that we set. Reach
+comes from the flag's `$feature_flag_called`. Never the text or the link.
+
 ## Update reveal
 
 Returning installs that update across `UPDATE_REVEAL_VERSION` see the update

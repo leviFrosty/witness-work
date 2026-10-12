@@ -23,10 +23,12 @@ export type NotificationKind =
    * that stopped for someone who turned it on.
    */
   | 'calendar_sync'
+  /** A remote notice set through the `announcement` feature flag. */
+  | 'announcement'
   /** Test items from the Tools screen. */
   | 'dev_test'
 
-export type NotificationTone = 'accent' | 'warn' | 'supporter'
+export type NotificationTone = 'accent' | 'warn' | 'error' | 'supporter'
 
 export type NotificationAction = {
   /** Bounded analytics name, e.g. `submit`. */

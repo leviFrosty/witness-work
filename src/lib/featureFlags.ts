@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import {
   PostHogPersistedProperty,
   QuotaLimitedFeature,
+  type JsonType,
   type PostHogFlagsStorageFormat,
 } from '@posthog/core'
 import { posthogClient } from '@/lib/posthogClient'
@@ -15,8 +16,13 @@ import { addForegroundListener } from '@/lib/appLifecycle'
 import { getOnline, useOnline } from '@/lib/http/online'
 
 // Add future flag keys to this union so call sites stay type-checked.
-export type FeatureFlag = 'notes-import' | 'notes-import-android' | 'buddies'
+export type FeatureFlag =
+  | 'notes-import'
+  | 'notes-import-android'
+  | 'buddies'
+  | 'announcement'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
+type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 
 /**
  * Where flag values stand: `loading` until a load settles (including while the
@@ -38,14 +44,19 @@ const overridesAllowed = () =>
 
 const useFlags = create<{
   values: FlagValues
+  /** JSON set on each flag's matched variant in PostHog. */
+  payloads: FlagPayloads
   distinctId?: string
   status: FeatureFlagsStatus
   /** Dev and profiling builds only (harnesses); survive remote refreshes. */
   devOverrides: FlagValues
+  devPayloadOverrides: FlagPayloads
 }>(() => ({
   values: {},
+  payloads: {},
   status: 'idle',
   devOverrides: {},
+  devPayloadOverrides: {},
 }))
 
 /** Dev and profiling builds only: force a flag on/off, or undefined to clear. */
@@ -59,11 +70,27 @@ export function setDevFlagOverride(
   }))
 }
 
+/** Dev and profiling builds only: a flag's payload, or undefined to clear. */
+export function setDevFlagPayloadOverride(
+  flag: FeatureFlag,
+  payload: JsonType | undefined
+): void {
+  if (!overridesAllowed()) return
+  useFlags.setState(({ devPayloadOverrides }) => ({
+    devPayloadOverrides: { ...devPayloadOverrides, [flag]: payload },
+  }))
+}
+
 /** A return to the app reloads flags at most this often. */
 export const FLAG_RELOAD_INTERVAL_MS = 10 * 60_000
 
 const clearFlags = (status: FeatureFlagsStatus) =>
-  useFlags.setState({ values: {}, distinctId: undefined, status })
+  useFlags.setState({
+    values: {},
+    payloads: {},
+    distinctId: undefined,
+    status,
+  })
 
 /** Values loaded for the identity the SDK has now. */
 function hasCurrentValues(): boolean {
@@ -123,6 +150,7 @@ function publishLoadedFlags(): void {
   loadedAt = Date.now()
   useFlags.setState({
     values: posthogClient?.getFeatureFlags() ?? {},
+    payloads: posthogClient?.getFeatureFlagPayloads() ?? {},
     distinctId: posthogClient?.getDistinctId(),
     status: 'loaded',
   })
@@ -259,6 +287,21 @@ export function useFeatureFlagsStatus(): FeatureFlagsStatus {
   if (status === 'loaded' && distinctId !== posthogClient?.getDistinctId())
     return 'loading'
   return status
+}
+
+/**
+ * The JSON payload on the flag's matched variant, for the current identity.
+ * Reading it records no exposure; pair it with `useFeatureFlagValue`.
+ */
+export function useFeatureFlagPayload(flag: FeatureFlag): JsonType | undefined {
+  const payload = useFlags((state) => state.payloads[flag])
+  const distinctId = useFlags((state) => state.distinctId)
+  const devOverride = useFlags((state) => state.devPayloadOverrides[flag])
+  if (devOverride !== undefined && overridesAllowed()) return devOverride
+  return distinctId !== undefined &&
+    distinctId === posthogClient?.getDistinctId()
+    ? payload
+    : undefined
 }
 
 /** UI visibility only; access control belongs on the server. */

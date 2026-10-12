@@ -112,8 +112,10 @@ generated Android project as the `:wear` Gradle module, so every
 disposable `android/`. Gradle builds it in place, with outputs under
 `android/build/wear`. This keeps one Gradle build: the module reads the phone
 app's application id, version name, version code and debug keystore from
-`:app` (`evaluationDependsOn(':app')`), and applies EAS's
-`app/eas-build.gradle` when present, so both apps share the upload key. The
+`:app` (`evaluationDependsOn(':app')`), and applies EAS's signing script
+(`app/eas-build-inject-android-credentials.gradle`, or the legacy
+`app/eas-build.gradle`) when present, so both apps share the upload key. Check
+the Wear bundle's certificate against the phone bundle's before uploading it. The
 Wearable Data Layer only connects apps with the same application id and
 signing key, and Google Play lists the watch app under the phone app. The
 phone app's APK doesn't contain the watch app.

@@ -81,5 +81,12 @@ export type ContextMenuProps = {
    * which cuts the label off ("Favorit…").
    */
   fitContent?: boolean
+  /**
+   * Already inside an `@expo/ui` `Host` (e.g. a `Collapsible`'s content):
+   * render the native menu into that host rather than nesting another one,
+   * whose touch handling swallows the long press on Android. The content keeps
+   * its own width, as with `fitContent`, and `style` is ignored.
+   */
+  hosted?: boolean
   style?: StyleProp<ViewStyle>
 }

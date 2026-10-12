@@ -5,18 +5,20 @@ import {
   Search as SearchIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Image, Share, View } from 'react-native'
+import { useState } from 'react'
+import { AccessibilityInfo, Image, Platform, Share, View } from 'react-native'
+import { Collapsible, Host, RNHostView } from '@expo/ui'
 import * as Clipboard from 'expo-clipboard'
 import { useToastController } from '@tamagui/toast'
 import { Input, InputProps } from 'tamagui'
 import Text from '@/components/ui/MyText'
-import Accordion from '@/components/ui/Accordion'
-import Card from '@/components/ui/Card'
+import Card, { useCardStyle } from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { errorTracking } from '@/lib/errorTracking'
 import useTheme from '@/contexts/theme'
+import { usePreferences } from '@/stores/preferences'
 import i18n, { TranslationKey } from '@/lib/locales'
 import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
@@ -69,11 +71,23 @@ const ReportLinks = () => {
   )
 }
 
+// Compose's Collapsible pads its own header and content (16dp each side).
+const CARD_PADDING = Platform.OS === 'android' ? 4 : 20
+// SwiftUI looks fonts up by PostScript name, not the expo-font alias.
+const LABEL_FONT = Platform.OS === 'ios' ? 'Inter-SemiBold' : undefined
+const CONTENT_INSET =
+  2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
+
 export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
   const theme = useTheme()
   const question = i18n.t(`faq_${entry.id}_q` as TranslationKey)
   const answer = i18n.t(`faq_${entry.id}_a` as TranslationKey)
   const toast = useToastController()
+  const cardStyle = useCardStyle()
+  const colorScheme = usePreferences((s) => s.colorScheme)
+  const [expanded, setExpanded] = useState(false)
+  const [width, setWidth] = useState<number>()
+  const contentWidth = width && width - CONTENT_INSET
 
   const copyAnswer = async () => {
     try {
@@ -84,46 +98,85 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
     }
   }
 
+  const toggle = (open: boolean) => {
+    setExpanded(open)
+    // SwiftUI's DisclosureGroup announces its state; Compose's clickable
+    // header doesn't, so say it on Android.
+    if (Platform.OS === 'android') {
+      AccessibilityInfo.announceForAccessibility(
+        i18n.t(open ? 'a11y_expanded' : 'a11y_collapsed')
+      )
+    }
+  }
+
   return (
-    <Accordion
-      style={{ flexShrink: 1 }}
-      header={
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            flex: 1,
-            paddingRight: 10,
+    <View
+      style={[cardStyle, { flexShrink: 1, padding: CARD_PADDING }]}
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+    >
+      {/* Without ignoreSafeArea, SwiftUI insets cards laid out under the
+      header or home indicator, shifting the label and clipping the answer. */}
+      <Host
+        matchContents={{ vertical: true }}
+        colorScheme={colorScheme}
+        seedColor={theme.colors.accent}
+        ignoreSafeArea='all'
+      >
+        <Collapsible
+          isOpen={expanded}
+          onOpenChange={toggle}
+          label={question}
+          labelStyle={{
+            fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+            color: theme.colors.text,
+            textAlign: 'left',
           }}
         >
-          {question}
-        </Text>
-      }
-    >
-      <View style={{ gap: 12 }}>
-        <ContextMenu
-          actions={[
-            {
-              id: 'copy_answer',
-              title: i18n.t('copyAnswer'),
-              systemImage: 'doc.on.doc',
-              onPress: () => void copyAnswer(),
-            },
-            {
-              id: 'share',
-              title: i18n.t('shareEllipsis'),
-              systemImage: 'square.and.arrow.up',
-              onPress: () =>
-                void Share.share({ message: `${question}\n\n${answer}` }).catch(
-                  () => {}
-                ),
-            },
-          ]}
-        >
-          <Text style={{ lineHeight: 22 }}>{answer}</Text>
-        </ContextMenu>
-        {entry.id === 'reportBug' && <ReportLinks />}
-      </View>
-    </Accordion>
+          {/* Straight into the Collapsible's host: a nested host would
+          swallow the long press on Android. */}
+          <ContextMenu
+            hosted
+            actions={[
+              {
+                id: 'copy_answer',
+                title: i18n.t('copyAnswer'),
+                systemImage: 'doc.on.doc',
+                onPress: () => void copyAnswer(),
+              },
+              {
+                id: 'share',
+                title: i18n.t('shareEllipsis'),
+                systemImage: 'square.and.arrow.up',
+                onPress: () =>
+                  void Share.share({
+                    message: `${question}\n\n${answer}`,
+                  }).catch(() => {}),
+              },
+            ]}
+          >
+            {/* Hosted RN content sizes to itself, so give it the width left
+            inside the card. */}
+            <Text
+              style={{
+                width: contentWidth,
+                lineHeight: 22,
+                paddingTop: Platform.OS === 'ios' ? 12 : 0,
+              }}
+            >
+              {answer}
+            </Text>
+          </ContextMenu>
+          {entry.id === 'reportBug' && (
+            <RNHostView matchContents>
+              <View style={{ width: contentWidth, paddingTop: 12 }}>
+                <ReportLinks />
+              </View>
+            </RNHostView>
+          )}
+        </Collapsible>
+      </Host>
+    </View>
   )
 }
 

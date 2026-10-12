@@ -3458,6 +3458,8 @@
   "editEllipsis": "Edit…",
   "copyLink": "Copy Link",
   "copyAnswer": "Copy Answer",
+  "a11y_expanded": "Expanded",
+  "a11y_collapsed": "Collapsed",
   "copyReport": "Copy Report",
   "shareReport": "Share Report…",
   "openInMaps": "Open in Maps",

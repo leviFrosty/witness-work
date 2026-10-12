@@ -367,3 +367,42 @@ describe('iOS context menu', () => {
 function PreviewContent() {
   return null
 }
+
+describe('hosted context menu', () => {
+  const tree = () => root.toJSON() as { type: string } | null
+
+  it('renders the Android menu into the surrounding host', async () => {
+    await render(
+      <AndroidContextMenu hosted actions={actions()}>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(tree()?.type).toBe('DropdownMenu')
+    expect(root.root.findAllByType('ComposeHost' as never)).toHaveLength(0)
+
+    const trigger = root.root.findByType('Pressable' as never)
+    await act(async () => trigger.props.onLongPress())
+    expect(root.root.findByType('DropdownMenu' as never).props.expanded).toBe(
+      true
+    )
+  })
+
+  it('renders the iOS menu into the surrounding host', async () => {
+    await render(
+      <IOSContextMenu hosted actions={actions()}>
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    expect(tree()?.type).toBe('ContextMenu')
+    expect(root.root.findAllByType('SwiftHost' as never)).toHaveLength(0)
+  })
+
+  it('hosts plain content when there are no actions', async () => {
+    await render(
+      <AndroidContextMenu hosted actions={[]}>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(tree()?.type).toBe('RNHostView')
+  })
+})

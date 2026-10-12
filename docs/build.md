@@ -66,7 +66,10 @@ Phrases come from the `siriShortcut*` strings and must match
 language without translated phrases has no voice phrases, though the actions
 still appear in the Shortcuts app. Each translated phrase needs
 `${applicationName}` exactly once, no numbers, and wording no other phrase in
-that language uses; the sync fails otherwise. To try an action, run it from the
+that language uses; the sync fails otherwise. A phrase can't hold a free number,
+so "Log two hours in WitnessWork" names a `SpokenDuration` case through
+`${spokenDuration}` (`\(\.$spokenDuration)` in Swift), whose titles and
+synonyms are the `siriSpokenDuration*` strings. To try an action, run it from the
 Shortcuts app on the simulator, or say a phrase on a device. New phrases can
 take a minute to reach Siri after installing.
 

@@ -257,16 +257,27 @@ export function stringCatalog(locales, keys) {
 }
 
 const APP_NAME = '${applicationName}'
-const SWIFT_APP_NAME = '\\(.applicationName)'
+const PLACEHOLDER = /\$\{(\w+)\}/g
+const SWIFT_PLACEHOLDER = /\\\((?:\.applicationName|\\\.\$(\w+))\)/g
+
+/** A phrase as written in Swift: `\(.applicationName)`, `\(\.$parameter)`. */
+const swiftPhrase = (phrase) =>
+  phrase.replace(PLACEHOLDER, (placeholder, name) =>
+    placeholder === APP_NAME ? '\\(.applicationName)' : `\\(\\.$${name})`
+  )
+const placeholders = (phrase) =>
+  [...phrase.matchAll(PLACEHOLDER)].map(([placeholder]) => placeholder)
 
 /**
- * Siri phrases, keyed by the English phrase as written in `shortcutsSwift`. A
- * language without a translation has no phrases: Siri listens in one language,
- * so English phrases wouldn't help there, and the actions still appear in the
- * Shortcuts app.
+ * Siri phrases, keyed by the English phrase as Apple writes it, with
+ * `${applicationName}` and `${parameter}` for Swift's `\(.applicationName)` and
+ * `\(\.$parameter)`. A language without a translation has no phrases: Siri
+ * listens in one language, so English phrases wouldn't help there, and the
+ * actions still appear in the Shortcuts app.
  *
  * Returns the catalog and what's wrong with any phrase. Apple requires the app
- * name in each phrase, phrases can't take numbers, and two can't be the same.
+ * name in each phrase, phrases can't take numbers (a parameter can, from its
+ * `AppEnum`), and two can't be the same.
  */
 export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
   const problems = []
@@ -275,7 +286,7 @@ export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
   for (const key of phraseKeys) {
     const phrase = english(locales, key)
     englishPhrases.add(phrase)
-    const swiftLiteral = `"${phrase.replace(APP_NAME, SWIFT_APP_NAME)}"`
+    const swiftLiteral = `"${swiftPhrase(phrase)}"`
     if (!shortcutsSwift.includes(swiftLiteral)) {
       problems.push(
         `targets/intents/ServiceShortcuts.swift has no phrase ${swiftLiteral} (from en-US "${key}")`
@@ -293,12 +304,14 @@ export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
     strings[phrase] = { extractionState: 'manual', localizations }
   }
 
-  for (const [, swiftPhrase] of shortcutsSwift.matchAll(/"([^"\n]*)"/g)) {
-    if (!swiftPhrase.includes(SWIFT_APP_NAME)) continue
-    const phrase = swiftPhrase.replace(SWIFT_APP_NAME, APP_NAME)
+  for (const [, literal] of shortcutsSwift.matchAll(/"([^"\n]*)"/g)) {
+    if (!literal.includes('\\(.applicationName)')) continue
+    const phrase = literal.replace(SWIFT_PLACEHOLDER, (_, name) =>
+      name ? `\${${name}}` : APP_NAME
+    )
     if (!englishPhrases.has(phrase)) {
       problems.push(
-        `targets/intents/ServiceShortcuts.swift phrase "${swiftPhrase}" needs a siriShortcut* string in src/locales/en-US.json, listed under shortcutPhrases in src/app/watch/watchStringKeys.json`
+        `targets/intents/ServiceShortcuts.swift phrase "${literal}" needs a siriShortcut* string in src/locales/en-US.json, listed under shortcutPhrases in src/app/watch/watchStringKeys.json`
       )
     }
   }
@@ -310,11 +323,18 @@ export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
       if (!value) continue
       const problem = (text) =>
         problems.push(`src/locales/${file}.json "${key}" ${text}: "${value}"`)
-      if (value.split(APP_NAME).length !== 2) {
-        problem(`needs ${APP_NAME} exactly once`)
+      const expected = new Set([
+        APP_NAME,
+        ...placeholders(english(locales, key)),
+      ])
+      const used = placeholders(value)
+      for (const placeholder of expected) {
+        if (used.filter((p) => p === placeholder).length !== 1) {
+          problem(`needs ${placeholder} exactly once`)
+        }
       }
-      if (/\$\{(?!applicationName\})|%\{/.test(value)) {
-        problem(`can only use the ${APP_NAME} placeholder`)
+      if (used.some((p) => !expected.has(p)) || /%\{/.test(value)) {
+        problem('can only use the placeholders of its English phrase')
       }
       if (/\p{Nd}/u.test(value)) problem("can't contain a number")
       const normalized = value.toLocaleLowerCase().replace(/\s+/g, ' ').trim()

@@ -1,6 +1,39 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Add ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add ${spokenDuration} to ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add ${spokenDuration} to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add hours in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add hours in ${applicationName}"
+          }
+        }
+      }
+    },
     "Add time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -110,6 +143,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 ${applicationName} 中新增時間"
+          }
+        }
+      }
+    },
+    "Create ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Create a time entry in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a time entry in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Enter ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Enter time in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter time in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Log ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log ${spokenDuration} in ${applicationName}"
           }
         }
       }
@@ -340,6 +428,17 @@
         }
       }
     },
+    "Log hours in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log hours in ${applicationName}"
+          }
+        }
+      }
+    },
     "Log time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -566,6 +665,28 @@
         }
       }
     },
+    "Record ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Record time in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record time in ${applicationName}"
+          }
+        }
+      }
+    },
     "Start my timer in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -788,6 +909,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 ${applicationName} 中停止我的計時器"
+          }
+        }
+      }
+    },
+    "Submit ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Submit time in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit time in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Track ${spokenDuration} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track ${spokenDuration} in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Track time in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track time in ${applicationName}"
           }
         }
       }

@@ -112,7 +112,11 @@ struct AddServiceTimeIntent: AppIntent {
   static let title: LocalizedStringResource = "siriAddServiceTime"
 
   @Parameter(title: "siriDuration", defaultUnit: .minutes, supportsNegativeNumbers: false)
-  var duration: Measurement<UnitDuration>
+  var duration: Measurement<UnitDuration>?
+
+  /// Named in a phrase, like "Log two hours in WitnessWork".
+  @Parameter(title: "siriSpokenDuration")
+  var spokenDuration: SpokenDuration?
 
   @Parameter(title: "type")
   var category: ServiceCategoryEntity?
@@ -120,7 +124,15 @@ struct AddServiceTimeIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     try await ServiceActions.run(.addTime) {
-      let total = Int(duration.converted(to: .minutes).value.rounded())
+      let total: Int
+      if let duration {
+        total = Int(duration.converted(to: .minutes).value.rounded())
+      } else if let spokenDuration {
+        total = spokenDuration.rawValue
+      } else {
+        let answer = try await $duration.requestValue()
+        total = Int(answer.converted(to: .minutes).value.rounded())
+      }
       guard WatchEntryDraft.minutesRange.contains(total) else {
         throw ServiceActionError.invalidDuration
       }
@@ -256,6 +268,77 @@ extension ServiceActions {
 }
 
 // MARK: Entities
+
+/// Durations Siri hears in a phrase, in minutes. A phrase can only name an
+/// `AppEnum` or entity, not any number.
+enum SpokenDuration: Int, AppEnum {
+  case minutes15 = 15
+  case minutes30 = 30
+  case minutes45 = 45
+  case hours1 = 60
+  case hours1Half = 90
+  case hours2 = 120
+  case hours2Half = 150
+  case hours3 = 180
+  case hours3Half = 210
+  case hours4 = 240
+  case hours4Half = 270
+  case hours5 = 300
+  case hours6 = 360
+  case hours7 = 420
+  case hours8 = 480
+  case hours9 = 540
+  case hours10 = 600
+  case hours11 = 660
+  case hours12 = 720
+
+  static let typeDisplayRepresentation: TypeDisplayRepresentation = "siriSpokenDuration"
+
+  // Literal keys: Siri reads these when the app is built, not at run time.
+  static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
+    .minutes15: DisplayRepresentation(
+      title: "siriSpokenDuration15", synonyms: ["siriSpokenDuration15Words"]),
+    .minutes30: DisplayRepresentation(
+      title: "siriSpokenDuration30",
+      synonyms: ["siriSpokenDuration30Words", "siriSpokenDuration30Alt"]),
+    .minutes45: DisplayRepresentation(
+      title: "siriSpokenDuration45", synonyms: ["siriSpokenDuration45Words"]),
+    .hours1: DisplayRepresentation(
+      title: "siriSpokenDuration60",
+      synonyms: ["siriSpokenDuration60Words", "siriSpokenDuration60Alt"]),
+    .hours1Half: DisplayRepresentation(
+      title: "siriSpokenDuration90",
+      synonyms: ["siriSpokenDuration90Words", "siriSpokenDuration90Alt"]),
+    .hours2: DisplayRepresentation(
+      title: "siriSpokenDuration120", synonyms: ["siriSpokenDuration120Words"]),
+    .hours2Half: DisplayRepresentation(
+      title: "siriSpokenDuration150", synonyms: ["siriSpokenDuration150Words"]),
+    .hours3: DisplayRepresentation(
+      title: "siriSpokenDuration180", synonyms: ["siriSpokenDuration180Words"]),
+    .hours3Half: DisplayRepresentation(
+      title: "siriSpokenDuration210", synonyms: ["siriSpokenDuration210Words"]),
+    .hours4: DisplayRepresentation(
+      title: "siriSpokenDuration240", synonyms: ["siriSpokenDuration240Words"]),
+    .hours4Half: DisplayRepresentation(
+      title: "siriSpokenDuration270", synonyms: ["siriSpokenDuration270Words"]),
+    .hours5: DisplayRepresentation(
+      title: "siriSpokenDuration300", synonyms: ["siriSpokenDuration300Words"]),
+    .hours6: DisplayRepresentation(
+      title: "siriSpokenDuration360", synonyms: ["siriSpokenDuration360Words"]),
+    .hours7: DisplayRepresentation(
+      title: "siriSpokenDuration420", synonyms: ["siriSpokenDuration420Words"]),
+    .hours8: DisplayRepresentation(
+      title: "siriSpokenDuration480", synonyms: ["siriSpokenDuration480Words"]),
+    .hours9: DisplayRepresentation(
+      title: "siriSpokenDuration540", synonyms: ["siriSpokenDuration540Words"]),
+    .hours10: DisplayRepresentation(
+      title: "siriSpokenDuration600", synonyms: ["siriSpokenDuration600Words"]),
+    .hours11: DisplayRepresentation(
+      title: "siriSpokenDuration660", synonyms: ["siriSpokenDuration660Words"]),
+    .hours12: DisplayRepresentation(
+      title: "siriSpokenDuration720", synonyms: ["siriSpokenDuration720Words"]),
+  ]
+}
 
 /// A Category, called a Type in the app.
 struct ServiceCategoryEntity: AppEntity {

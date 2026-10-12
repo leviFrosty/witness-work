@@ -32,6 +32,7 @@ const swift = `
     phrases: [
       "Add time in \\(.applicationName)",
       "Log time in \\(.applicationName)",
+      "Log \\(\\.$spokenDuration) in \\(.applicationName)",
     ],
     shortTitle: "addTime",
     systemImageName: "plus.circle")
@@ -39,6 +40,7 @@ const swift = `
 const english = {
   siriShortcutAddTime: 'Add time in ${applicationName}',
   siriShortcutLogTime: 'Log time in ${applicationName}',
+  siriShortcutLogDuration: 'Log ${spokenDuration} in ${applicationName}',
 }
 const phraseKeys = Object.keys(english)
 const problems = (translations: Record<string, string>) =>
@@ -133,7 +135,11 @@ describe('shortcutCatalog', () => {
     const { catalog, problems } = shortcutCatalog(
       {
         'en-US': english,
-        'es-ES': { siriShortcutAddTime: 'Agrega tiempo en ${applicationName}' },
+        'es-ES': {
+          siriShortcutAddTime: 'Agrega tiempo en ${applicationName}',
+          siriShortcutLogDuration:
+            'Registra ${spokenDuration} en ${applicationName}',
+        },
         'ja-JP': {},
       },
       phraseKeys,
@@ -170,6 +176,23 @@ describe('shortcutCatalog', () => {
           },
         },
       },
+      'Log ${spokenDuration} in ${applicationName}': {
+        extractionState: 'manual',
+        localizations: {
+          en: {
+            stringUnit: {
+              state: 'translated',
+              value: english.siriShortcutLogDuration,
+            },
+          },
+          es: {
+            stringUnit: {
+              state: 'translated',
+              value: 'Registra ${spokenDuration} en ${applicationName}',
+            },
+          },
+        },
+      },
     })
   })
 
@@ -186,7 +209,19 @@ describe('shortcutCatalog', () => {
     ).toContain('needs ${applicationName} exactly once')
     expect(
       problems({ siriShortcutAddTime: 'Agrega %{n} en ${applicationName}' })[0]
-    ).toContain('can only use the ${applicationName} placeholder')
+    ).toContain('can only use the placeholders of its English phrase')
+    expect(
+      problems({
+        siriShortcutAddTime: 'Agrega ${duration} en ${applicationName}',
+      })[0]
+    ).toContain('can only use the placeholders of its English phrase')
+    expect(
+      problems({
+        siriShortcutLogDuration: 'Registra tiempo en ${applicationName}',
+      })
+    ).toEqual([
+      'src/locales/es-ES.json "siriShortcutLogDuration" needs ${spokenDuration} exactly once: "Registra tiempo en ${applicationName}"',
+    ])
     expect(
       problems({ siriShortcutAddTime: '${applicationName}で１時間追加' })[0]
     ).toContain("can't contain a number")
@@ -218,6 +253,7 @@ describe('shortcutCatalog', () => {
     ).toEqual([
       'targets/intents/ServiceShortcuts.swift has no phrase "Start in \\(.applicationName)" (from en-US "siriShortcutStart")',
       'targets/intents/ServiceShortcuts.swift phrase "Log time in \\(.applicationName)" needs a siriShortcut* string in src/locales/en-US.json, listed under shortcutPhrases in src/app/watch/watchStringKeys.json',
+      'targets/intents/ServiceShortcuts.swift phrase "Log \\(\\.$spokenDuration) in \\(.applicationName)" needs a siriShortcut* string in src/locales/en-US.json, listed under shortcutPhrases in src/app/watch/watchStringKeys.json',
     ])
   })
 })

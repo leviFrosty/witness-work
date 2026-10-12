@@ -709,12 +709,13 @@
       "id": "shortcut.add-time",
       "area": "Shortcuts",
       "title": "Add time by voice or shortcut",
-      "description": "Siri and Shortcuts on the watch: \"Add time in WitnessWork\" with a duration and optional Type adds an entry for today.",
+      "description": "Siri and Shortcuts on the watch: \"Add time in WitnessWork\" (or log, enter, record, track or submit time) with a duration and optional Type adds an entry for today. A phrase can name a common duration, like \"Log two hours in WitnessWork\" (SpokenDuration).",
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/Shared/ServiceIntents.swift#struct AddServiceTimeIntent",
           "targets/watch/Shared/ServiceShortcuts.swift#AddServiceTimeIntent",
+          "targets/watch/Shared/ServiceIntents.swift#enum SpokenDuration",
           "targets/watch/WatchServiceActions.swift#static func addEntry"
         ]
       },

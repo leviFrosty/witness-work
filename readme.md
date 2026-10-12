@@ -35,6 +35,207 @@ WitnessWork is available in 18 languages, translated with AI. If a translation l
 
 Development setup (iOS and Android) and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
 
+## Architecture
+
+How the app, its backend [ww-api](https://github.com/leviFrosty/ww-api) (a Cloudflare Worker), and the services they call connect. Arrows point from the caller to what it calls or reads, and dashed arrows are pushes and background work. "A / B" boxes name the iOS / Android pair that does the same job, such as App Attest / Play Integrity.
+
+```mermaid
+flowchart LR
+  %% WitnessWork architecture, high level.
+  %% Arrows point from the caller to what it calls or reads. Dashed arrows are pushes and background work.
+  %% "A / B" boxes are the iOS / Android pair for the same job.
+
+  subgraph DEVICE["Other surfaces on the device"]
+    C_WIDGETS["`**iOS widgets, Live Activity**
+read a snapshot, App Group`"]
+    C_SIRI["`**Siri + Shortcuts (iOS)**
+queue drafts, App Group`"]
+    C_WATCH["`**Apple Watch app**
+via WatchConnectivity`"]
+    C_WEAR["`**Wear OS app**
+via Wearable Data Layer`"]
+    C_NSE["`**iOS notification extension**
+names Buddies alerts`"]
+  end
+
+  subgraph APP["WitnessWork app"]
+    A_LOCAL[("`**On-device data**
+Zustand stores in MMKV + files`")]
+    A_CORE["`**Field service core, local only**
+time, reports, plans, Assistant
+progress, badges, mileage`"]
+    A_BUDDIES["`**Buddies**
+end-to-end encrypted sharing`"]
+    A_SYNC["`**Sync + backups**
+sync, restore, JSON backups`"]
+    A_NOTES["`**Notes Import (Scribe AI)**
+on-device voice + photo text`"]
+    A_ROUTE["`**Route planning**
+Supporter only`"]
+    A_CONTACTS["`**Contacts, visits + map**
+addresses and pins`"]
+    A_LINKS["`**Share links**
+contacts, Buddies invites`"]
+    A_SUPPORTER["`**Supporter + paywall**
+purchases and entitlements`"]
+    A_SHELL["`**App shell**
+analytics, flags, surveys, OTA`"]
+  end
+
+  subgraph PLATFORM["Apple / Google platform services"]
+    P_CAL["`**Device calendar**
+EventKit / CalendarContract`"]
+    P_SEED["`**iCloud Keychain / Block Store**
+Buddies root seed`"]
+    P_SYNC["`**iCloud Drive / Google Drive**
+sync files + photos`"]
+    P_ATTEST["`**App Attest / Play Integrity**
+proves a genuine app`"]
+    P_MAPS["`**MapKit / Google Maps SDK**
+maps and place search`"]
+  end
+
+  P_PUSH["`**APNs / FCM**
+push delivery`"]
+  S_EAS["`**Expo EAS Update**
+over-the-air JS updates`"]
+
+  subgraph CF["Cloudflare"]
+    subgraph WORKER["ww-api Worker"]
+      R_BUD["`**/buddies/v1/...**
+signed ops, live WebSocket, photos`"]
+      R_NOTES["`**/notes-import/...**
+status, kickoff, SSE, result`"]
+      R_ROUTE["`**POST /route-planning/optimize**
+coordinates only`"]
+      R_PLACES["`**GET /geocode, /autocomplete**
+HERE proxy, key stays server-side`"]
+      R_LINKS["`**GET /c, /b, /.well-known**
+link pages, Universal + App Links`"]
+      R_RATINGS["`**GET /app-store/ratings**
+paywall social proof`"]
+      CRON["`**Hourly cron**
+App Store ratings sweep`"]
+    end
+    subgraph BUD_STATE["Buddies relay state"]
+      DO_REGQ[("`**BuddyRegistrationQuota DO**
+registrations per caller`")]
+      DO_INV[("`**BuddyInvite DO**
+one per invite, 7-day expiry`")]
+      DO_INBOX[("`**BuddyInbox DO**
+one per inbox, sealed data`")]
+      R2[("`**R2: ww-buddy-blobs**
+sealed photos, 90 days max`")]
+    end
+    subgraph NI_STATE["Notes Import state"]
+      DO_AA[("`**AppAttestIdentity DO**
+attested key per iOS install`")]
+      DO_PI[("`**PlayIntegrityChallenges DO**
+one-time Android challenges`")]
+      DO_IDX[("`**NotesImportIndex DO**
+credits per account`")]
+      DO_RUN[("`**NotesImportRun DO**
+one per import, about 1 hour`")]
+    end
+    DO_RPQ[("`**RoutePlanningQuota DO**
+10 routes a day per account`")]
+    KV[("`**Workers KV: NOTES_KV**
+switches, limits, tokens, ratings`")]
+  end
+
+  subgraph EXTERNAL["External services"]
+    S_GPI["`**Play Integrity API (Google)**
+decodes Android verdicts`"]
+    S_OR["`**OpenRouter**
+LLM gateway`"]
+    S_LLM["`**Fireworks / DigitalOcean**
+zero data retention hosts`"]
+    S_HERE["`**HERE location APIs**
+geocode, autocomplete, sequence`"]
+    P_STORE["`**App Store / Google Play**
+purchases, App Store ratings`"]
+    S_SENTRY["`**Sentry**
+Worker errors + traces`"]
+    S_RC["`**RevenueCat**
+Supporter entitlements`"]
+    S_PH["`**PostHog**
+analytics, flags, surveys, errors`"]
+  end
+
+  C_WIDGETS --> A_LOCAL
+  C_SIRI --> A_LOCAL
+  C_WATCH <--> A_LOCAL
+  C_WEAR <--> A_LOCAL
+  C_NSE -->|"inbox/sync"| R_BUD
+
+  A_CORE -->|"Follow-ups as events"| P_CAL
+  A_BUDDIES -->|"root seed"| P_SEED
+  A_SYNC -->|"sync files + photos"| P_SYNC
+  A_NOTES -->|"attest device"| P_ATTEST
+  A_CONTACTS -->|"maps, place search"| P_MAPS
+  A_SHELL -->|"OTA updates"| S_EAS
+
+  A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
+  A_NOTES -->|"notes text, SSE stream"| R_NOTES
+  A_ROUTE -->|"today's stops"| R_ROUTE
+  A_CONTACTS -->|"address lookup"| R_PLACES
+  A_LINKS -->|"/c and /b links"| R_LINKS
+  A_SUPPORTER -->|"paywall ratings"| R_RATINGS
+  A_SUPPORTER -->|"purchases, RevenueCat SDK"| S_RC
+  A_SHELL -->|"events, flags, surveys, errors"| S_PH
+
+  R_BUD -->|"register"| DO_REGQ
+  R_BUD -->|"invite claims"| DO_INV
+  R_BUD -->|"RPC + WebSocket"| DO_INBOX
+  R_BUD -->|"photo reads"| R2
+  DO_INBOX <-->|"invites"| DO_INV
+  DO_INBOX -->|"photo writes"| R2
+  R_NOTES -->|"iOS attest"| DO_AA
+  R_NOTES -->|"Android challenge"| DO_PI
+  R_NOTES -->|"credits"| DO_IDX
+  R_NOTES -->|"run, SSE"| DO_RUN
+  R_ROUTE -->|"daily quota"| DO_RPQ
+  R_RATINGS -->|"cached ratings"| KV
+  CRON -->|"writes ratings"| KV
+  WORKER -.->|"flags, limits, tokens"| KV
+
+  R_BUD -.->|"push"| P_PUSH
+  P_PUSH -.->|"iOS alert"| C_NSE
+  P_PUSH -.->|"Android data push"| A_BUDDIES
+  R_NOTES -->|"Android verdict"| S_GPI
+  DO_RUN -->|"streamed output"| S_OR
+  S_OR --> S_LLM
+  R_ROUTE -->|"waypoint sequence"| S_HERE
+  R_PLACES -->|"geocode, autocomplete"| S_HERE
+  CRON -->|"ratings lookup"| P_STORE
+  S_RC -->|"store receipts"| P_STORE
+  WORKER -->|"Supporter checks"| S_RC
+  WORKER -->|"usage events"| S_PH
+  WORKER -->|"errors + traces"| S_SENTRY
+
+  classDef device fill:#99e9f2,stroke:#0c8599,color:#1e1e1e
+  classDef app fill:#b2f2bb,stroke:#2f9e44,color:#1e1e1e
+  classDef local fill:#ffec99,stroke:#f08c00,color:#1e1e1e
+  classDef platform fill:#e9ecef,stroke:#495057,color:#1e1e1e
+  classDef worker fill:#ffe8cc,stroke:#e8590c,color:#1e1e1e
+  classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
+  classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
+  class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
+  class A_CORE,A_BUDDIES,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
+  class A_LOCAL local
+  class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
+  class R_BUD,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
+  class DO_REGQ,DO_INV,DO_INBOX,R2,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
+  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
+```
+
+- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 bucket.
+- Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
+- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)).
+- Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
+
+When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.
+
 ## License
 
 WitnessWork © 2023-2026 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

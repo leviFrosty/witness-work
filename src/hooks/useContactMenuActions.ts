@@ -1,5 +1,4 @@
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 
@@ -12,13 +11,12 @@ import useDismissContact, {
   dismissOptionLabel,
   useDismissDurations,
 } from '@/hooks/useDismissContact'
+import useRemoveContacts from '@/hooks/useRemoveContacts'
 import { addressToString, navigateTo } from '@/lib/address'
-import confirmDestructive from '@/lib/confirmDestructive'
 import { isContactDismissed } from '@/lib/dismissedContacts'
 import i18n from '@/lib/locales'
 import { handleCall, handleMessage } from '@/lib/phone'
 import useContacts from '@/stores/contactsStore'
-import { deleteHouseholderContact } from '@/stores/householderData'
 import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -32,57 +30,44 @@ export type ContactMenuOptions = {
   onEdit?: () => void
   /** Overrides the default visit-form navigation. */
   onAddVisit?: (notAtHome: boolean) => void
-  /** Runs after the contact is dismissed or archived (e.g. leave its screen). */
+  /**
+   * Runs after the contact is dismissed, archived, or deleted (e.g. leave its
+   * screen).
+   */
   onRemoved?: () => void
   /** Adds "Select", starting the list's Select mode with this contact checked. */
   onSelect?: () => void
 }
 
 /**
- * The removal half of a Contact's menu: Dismiss For ▸ durations, and Archive
- * (Delete in data protection mode, which keeps nothing to recover). Shared by
- * the contact menu and Contact Details' More menu. Dismissing an already
- * dismissed Contact changes its duration.
+ * The removal half of a Contact's menu: Dismiss For ▸ durations, Archive, and a
+ * red Delete Permanently…. Archive keeps the Contact to restore later, so it
+ * isn't styled destructive; Delete is, and confirms first (see
+ * `useRemoveContacts`). Data protection mode has no Archive. Shared by the
+ * contact menu and Contact Details' More menu. Dismissing an already dismissed
+ * Contact changes its duration.
  */
 export function useContactRemovalActions(
   contact: Contact | undefined,
   {
     onDismissed,
-    onArchived,
+    onRemoved,
   }: {
     /** Runs after the contact is dismissed. */
     onDismissed?: () => void
-    /** Runs after the archive/delete is confirmed. */
-    onArchived?: () => void
+    /** Runs after an archive or delete is confirmed. */
+    onRemoved?: () => void
   } = {}
-): { dismiss: ContextMenuSubmenu | null; archive: ContextMenuAction | null } {
-  const toast = useToastController()
+): {
+  dismiss: ContextMenuSubmenu | null
+  archive: ContextMenuAction | null
+  remove: ContextMenuAction | null
+} {
   const dismiss = useDismissContact()
   const durations = useDismissDurations()
-  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  const { canArchive, archive, remove } = useRemoveContacts()
 
-  if (!contact) return { dismiss: null, archive: null }
-
-  const archive = () =>
-    confirmDestructive({
-      title: i18n.t(
-        dataProtectionMode ? 'permanentlyDelete' : 'archiveContact_question'
-      ),
-      description: i18n.t(
-        dataProtectionMode
-          ? 'permanentlyDeleteContact_warning'
-          : 'archiveContact_description'
-      ),
-      confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      onConfirm: () => {
-        deleteHouseholderContact(contact.id)
-        toast.show(i18n.t('success'), {
-          message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
-          native: true,
-        })
-        onArchived?.()
-      },
-    })
+  if (!contact) return { dismiss: null, archive: null, remove: null }
 
   return {
     dismiss: {
@@ -97,12 +82,20 @@ export function useContactRemovalActions(
         },
       })),
     },
-    archive: {
-      id: dataProtectionMode ? 'delete' : 'archive',
-      title: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      systemImage: dataProtectionMode ? 'trash' : 'archivebox',
+    archive: canArchive
+      ? {
+          id: 'archive',
+          title: i18n.t('archive'),
+          systemImage: 'archivebox',
+          onPress: () => archive([contact], onRemoved),
+        }
+      : null,
+    remove: {
+      id: 'delete',
+      title: i18n.t('deletePermanentlyEllipsis'),
+      systemImage: 'trash',
       destructive: true,
-      onPress: archive,
+      onPress: () => remove([contact], onRemoved),
     },
   }
 }
@@ -126,7 +119,7 @@ export default function useContactMenuActions(
   const { showOpen, onShare, onEdit, onAddVisit, onRemoved, onSelect } = options
   const removal = useContactRemovalActions(contact, {
     onDismissed: onRemoved,
-    onArchived: onRemoved,
+    onRemoved,
   })
 
   if (!contact) return []
@@ -219,6 +212,10 @@ export default function useContactMenuActions(
         onPress: onSelect,
       },
     ],
-    [!isContactDismissed(contact) && removal.dismiss, removal.archive],
+    [
+      !isContactDismissed(contact) && removal.dismiss,
+      removal.archive,
+      removal.remove,
+    ],
   ]
 }

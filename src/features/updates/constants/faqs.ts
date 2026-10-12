@@ -276,6 +276,7 @@ export const FAQS: FAQEntry[] = [
     category: 'contacts',
     related: [150, 43],
   },
+  { id: 'deleteContact', category: 'contacts' },
   { id: 'contactStalenessFilter', category: 'contacts' },
   {
     id: 'findNavigation',

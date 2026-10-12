@@ -21,46 +21,53 @@ import type { Contact } from '@/types/contact'
  */
 
 /**
- * Deletes one contact on the user's behalf.
- *
- * With data protection mode off this is the historical behaviour: the contact
- * moves to the Recover Contacts list intact and its visits stay put.
- *
- * With the mode on it is a hard delete — the tombstone keeps only the id and
- * timestamp iCloud's last-writer-wins merge needs, the contact's visits go too
- * (each leaving the id + deletedAt tombstone the Visit store already writes),
- * and the avatar image is evicted from disk. An indefinitely-retained record
- * naming someone who never agreed to it is exactly what the mode exists to
- * prevent — see `docs/gdpr-mode-research.md` §9.4.
+ * The hard delete: each contact's visits go (each leaving the id + deletedAt
+ * tombstone the Visit store already writes), its avatar and note photos are
+ * evicted from disk, and its tombstone keeps only the id and timestamp iCloud's
+ * last-writer-wins merge needs, so the delete reaches other devices.
  */
-export const deleteHouseholderContact = (contactId: string) => {
-  const redact = usePreferences.getState().dataProtectionMode === true
-  if (redact) {
-    const { conversations, deleteConversation } = useConversations.getState()
-    const visits = conversations.filter((v) => v.contact.id === contactId)
-    for (const visit of visits) deleteConversation(visit.id)
-    void deleteAvatarFiles(contactId)
-    void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
-  }
-  useContacts.getState().deleteContact(contactId, { redact })
+const hardDeleteContacts = (contactIds: string[]) => {
+  const targets = new Set(contactIds)
+  const { conversations, deleteConversation } = useConversations.getState()
+  const visits = conversations.filter((v) => targets.has(v.contact.id))
+  for (const visit of visits) deleteConversation(visit.id)
+  contactIds.forEach((id) => void deleteAvatarFiles(id))
+  void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
+  useContacts.getState().deleteContacts(contactIds, { redact: true })
 }
+
+/**
+ * Removes one contact on the user's behalf.
+ *
+ * With data protection mode off this archives: the contact moves to the Recover
+ * Contacts list intact and its visits stay put.
+ *
+ * With the mode on it is a hard delete (`hardDeleteContacts`). An
+ * indefinitely-retained record naming someone who never agreed to it is exactly
+ * what the mode exists to prevent — see `docs/gdpr-mode-research.md` §9.4.
+ */
+export const deleteHouseholderContact = (contactId: string) =>
+  deleteHouseholderContacts([contactId])
 
 /**
  * `deleteHouseholderContact` for many contacts at once (Select mode), with the
  * same data-protection policy but a single contacts-store update.
  */
 export const deleteHouseholderContacts = (contactIds: string[]) => {
-  const redact = usePreferences.getState().dataProtectionMode === true
-  if (redact) {
-    const targets = new Set(contactIds)
-    const { conversations, deleteConversation } = useConversations.getState()
-    const visits = conversations.filter((v) => targets.has(v.contact.id))
-    for (const visit of visits) deleteConversation(visit.id)
-    contactIds.forEach((id) => void deleteAvatarFiles(id))
-    void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
+  if (usePreferences.getState().dataProtectionMode === true) {
+    hardDeleteContacts(contactIds)
+    return
   }
-  useContacts.getState().deleteContacts(contactIds, { redact })
+  useContacts.getState().deleteContacts(contactIds)
 }
+
+/**
+ * Permanently deletes contacts, their visits, and their photos whatever the
+ * data protection mode — the contact menu's Delete, beside Archive. Nothing is
+ * left to recover. Callers must confirm destructively before invoking it.
+ */
+export const permanentlyDeleteHouseholderContacts = (contactIds: string[]) =>
+  hardDeleteContacts(contactIds)
 
 export type DeleteAllHouseholderDataResult = {
   /** Contacts removed from the active list. */

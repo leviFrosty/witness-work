@@ -3,13 +3,10 @@ import {
   Trash2 as TrashIcon,
   Undo2 as Undo2Icon,
 } from 'lucide-react-native'
-import { useToastController } from '@tamagui/toast'
 
 import { useUndismissContacts } from '@/hooks/useDismissContact'
-import confirmDestructive from '@/lib/confirmDestructive'
+import useRemoveContacts from '@/hooks/useRemoveContacts'
 import i18n from '@/lib/locales'
-import { deleteHouseholderContacts } from '@/stores/householderData'
-import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 import {
   SelectionBar,
@@ -18,9 +15,9 @@ import {
 import type { ListSelection } from '@/features/contacts/hooks/useListSelection'
 
 /**
- * Batch actions for Dismissed Contacts in Select mode: undismiss, and archive
- * (delete in data protection mode) with the same confirmation and toast as the
- * Contacts list. Each ends Select mode once it runs.
+ * Batch actions for Dismissed Contacts in Select mode: undismiss, archive (not
+ * in data protection mode), and a red Delete, with the same confirmations as
+ * the Contacts list. Each ends Select mode once it runs.
  */
 export default function DismissedContactsSelectionBar({
   contacts,
@@ -32,9 +29,8 @@ export default function DismissedContactsSelectionBar({
   selection: ListSelection
   bottom: number
 }) {
-  const toast = useToastController()
-  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const undismiss = useUndismissContacts()
+  const { canArchive, archive, remove } = useRemoveContacts()
   const count = contacts.length
   const none = count === 0
 
@@ -42,29 +38,6 @@ export default function DismissedContactsSelectionBar({
     selection.finish()
     void undismiss(contacts)
   }
-
-  const archive = () =>
-    confirmDestructive({
-      title: dataProtectionMode
-        ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('deleteContacts_question', { count })
-        : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('archiveContacts_question', { count }),
-      description: i18n.t(
-        dataProtectionMode
-          ? 'permanentlyDeleteContacts_warning'
-          : 'archiveContacts_description'
-      ),
-      confirmLabel: i18n.t(dataProtectionMode ? 'delete' : 'archive'),
-      onConfirm: () => {
-        deleteHouseholderContacts(contacts.map((c) => c.id))
-        toast.show(i18n.t('success'), {
-          message: i18n.t(dataProtectionMode ? 'deleted' : 'archived'),
-          native: true,
-        })
-        selection.finish()
-      },
-    })
 
   return (
     <SelectionBar bottom={bottom}>
@@ -74,12 +47,20 @@ export default function DismissedContactsSelectionBar({
         disabled={none}
         onPress={undismissSelected}
       />
+      {canArchive && (
+        <SelectionBarButton
+          icon={ArchiveIcon}
+          label={i18n.t('archive')}
+          disabled={none}
+          onPress={() => archive(contacts, selection.finish)}
+        />
+      )}
       <SelectionBarButton
-        icon={dataProtectionMode ? TrashIcon : ArchiveIcon}
-        label={i18n.t(dataProtectionMode ? 'delete' : 'archive')}
+        icon={TrashIcon}
+        label={i18n.t('delete')}
         destructive
         disabled={none}
-        onPress={archive}
+        onPress={() => remove(contacts, selection.finish)}
       />
     </SelectionBar>
   )

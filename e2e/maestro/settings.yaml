@@ -1,0 +1,16 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'PreferencesStreaksAndBadges'
+appId: com.leviwilkerson.jwtimedev
+name: Open Settings from the account menu and reach a Preferences page through the native lists
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Settings
+- assertVisible: Language
+- assertVisible: Personalization
+- tapOn: Preferences
+- assertVisible: Region & Formats
+- tapOn: Streaks & Badges
+- assertVisible: Show badges

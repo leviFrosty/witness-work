@@ -1,12 +1,6 @@
-import { View } from 'react-native'
+import { useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import Text from '@/components/ui/MyText'
-import {
-  drawerLayout,
-  inputLayout,
-  useInputLayout,
-} from '@/components/ui/inputs/InputLayout'
-import useTheme from '@/contexts/theme'
+import { GroupedList } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import PreferencesSection from '@/features/settings/components/sections/Preferences'
 import AppSection from '@/features/settings/components/sections/App'
@@ -14,6 +8,7 @@ import ContactSection from '@/features/settings/components/sections/Contact'
 import AboutSection from '@/features/settings/components/sections/About'
 import AdvancedSection from '@/features/settings/components/sections/Advanced'
 import SupportSection from '@/features/settings/components/sections/Support'
+import ManageSubscriptionSheet from '@/features/supporter/components/ManageSubscriptionSheet'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 type Props = {
@@ -22,14 +17,14 @@ type Props = {
   selectedDestination?: keyof RootStackParamList
 }
 
-/** The same settings destinations in the compact drawer and wide workspace. */
+/** The same settings destinations in the compact screen and wide workspace. */
 export default function SettingsContents({
   onNavigate,
   selectedDestination,
 }: Props) {
-  const theme = useTheme()
-  const layout = useInputLayout()
   const navigation = useNavigation<RootStackNavigation>()
+  // The sheet is React Native content, so it renders beside the native list.
+  const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false)
   const handleNavigate = (destination: keyof RootStackParamList) => {
     if (onNavigate) return onNavigate(destination)
     // These sections supply settings destinations that take no required params.
@@ -41,32 +36,22 @@ export default function SettingsContents({
 
   return (
     <>
-      <Text
-        accessibilityRole='header'
-        style={{
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('xl'),
-          paddingStart:
-            layout === 'drawer'
-              ? drawerLayout.horizontalPadding
-              : inputLayout.horizontalPadding +
-                inputLayout.iconSize +
-                inputLayout.labelGap +
-                inputLayout.sectionBorderWidth,
-          paddingEnd: inputLayout.horizontalPadding,
-          marginBottom: 12,
-        }}
-      >
-        {i18n.t('settings')}
-      </Text>
-      <View style={{ gap: drawerLayout.sectionGap }}>
+      <GroupedList title={i18n.t('settings')}>
         <PreferencesSection {...sectionProps} />
         <AppSection {...sectionProps} />
-        <SupportSection {...sectionProps} />
+        <SupportSection
+          {...sectionProps}
+          onManageSubscription={() => setManageSubscriptionOpen(true)}
+        />
         <ContactSection {...sectionProps} />
         <AboutSection {...sectionProps} />
         <AdvancedSection />
-      </View>
+      </GroupedList>
+      <ManageSubscriptionSheet
+        open={manageSubscriptionOpen}
+        setOpen={setManageSubscriptionOpen}
+        source='settings'
+      />
     </>
   )
 }

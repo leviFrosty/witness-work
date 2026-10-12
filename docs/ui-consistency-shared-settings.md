@@ -2,8 +2,24 @@
 
 This pass applies the shared form treatment by default through the input-layout
 primitives. Settings pages use `SettingsInputLayout` for the shared 12pt
-horizontal inset and 680pt maximum content width; the drawer continues to use
-the explicit `drawer` variant in `SettingsScreen`.
+horizontal inset and 680pt maximum content width.
+
+## Native grouped lists
+
+The Settings list (compact screen and the wide split's list), Preferences, More
+and Region & Formats render through `components/ui/GroupedList`: a SwiftUI inset
+grouped `List` on iOS and a Material 3 grouped list on Android, in the app's
+colors and fonts. The list owns the scroll, so a screen is one `GroupedList` of
+`GroupedListSection`s holding navigation, switch and picker rows. Nothing uses
+the `drawer` input layout any more.
+
+Use it for short, fixed groups of settings rows. It isn't virtualized, so keep
+long or unknown-length data in FlashList, and keep docked forms, reorderable
+rows and text inputs on the shared React Native rows. React Native content
+hosted in a SwiftUI `List` row measures itself at its unscrolled position, so
+anything positioned from a measurement (the React Native `InfoPopover` and
+`AnchoredPopover`) opens in the wrong place once the list scrolls; info buttons
+in native rows need the native popovers.
 
 ## Shared primitives reviewed
 

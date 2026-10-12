@@ -410,6 +410,52 @@ export const activeDateConventions = (): {
   clock24: !/h/.test(moment.localeData().longDateFormat('LT')),
 })
 
+/** `es-es` → `es_ES`, `zh-tw` → `zh_Hant_TW`: Apple's form of a locale tag. */
+const appleLocaleTag = (tag: string): string => {
+  const parts = tag.toLowerCase().split('-')
+  const language = parts[0]
+  const country =
+    parts.length > 1 && parts[parts.length - 1].length === 2
+      ? parts[parts.length - 1].toUpperCase()
+      : undefined
+  if (language === 'zh') {
+    const traditional =
+      parts.includes('hant') || ['TW', 'HK', 'MO'].includes(country ?? '')
+    return ['zh', traditional ? 'Hant' : 'Hans', country]
+      .filter(Boolean)
+      .join('_')
+  }
+  return [language, country].filter(Boolean).join('_')
+}
+
+const baseLanguage = (tag: string) => tag.toLowerCase().split('-')[0]
+
+/**
+ * The Apple locale identifier for native pickers that format dates themselves
+ * (SwiftUI's `DatePicker`), or `undefined` to keep the device's own locale.
+ * `@expo/ui` drops any identifier iOS doesn't list as a whole locale, so this
+ * can't mix a Language with another language's Region, nor carry the Time
+ * Format. It picks the Format Region when it's in the Language (`en_AU`), else
+ * the Language's own locale (`de_DE`). At Auto, a Language that matches the
+ * device's keeps the device locale, with its region and 24-Hour Time setting.
+ */
+export const appleLocaleIdentifier = (config: {
+  /** The app's Language, e.g. `es-es` or `zh-hant-tw`. */
+  language: string
+  /** Format Region moment locale key. `undefined` = Auto (device). */
+  region?: string
+}): string | undefined => {
+  const language = baseLanguage(config.language)
+  if (config.region) {
+    return baseLanguage(config.region) === language
+      ? appleLocaleTag(config.region)
+      : appleLocaleTag(config.language)
+  }
+  const device = getLocales()[0]?.languageTag
+  if (device && baseLanguage(device) === language) return undefined
+  return appleLocaleTag(config.language)
+}
+
 /* ────────────────────────────────────────────────────────────────────────
  * Read-time display intents (ADR-0006)
  *

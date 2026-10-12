@@ -1020,12 +1020,6 @@
     "author": "Krzysztof Borowy"
   },
   {
-    "name": "@react-native-community/datetimepicker",
-    "version": "9.1.0",
-    "license": "MIT",
-    "author": "Martijn Swaagman"
-  },
-  {
     "name": "@react-native-menu/menu",
     "version": "2.0.0",
     "license": "MIT",

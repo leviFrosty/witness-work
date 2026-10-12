@@ -1,120 +1,29 @@
-import { Platform, View } from 'react-native'
-import RNDateTimePicker, {
-  DateTimePickerAndroid,
+import type {
+  DateTimeDialogProps,
+  DateTimePickerProps,
+} from '@/components/ui/DateTimePicker.types'
+
+export type {
+  DateTimeDialogProps,
   DateTimePickerEvent,
-} from '@react-native-community/datetimepicker'
-import { getLocales } from 'expo-localization'
-import { usePreferences } from '@/stores/preferences'
-import moment from 'moment'
-import Button from '@/components/ui/Button'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
-import { useShallow } from 'zustand/react/shallow'
+  DateTimePickerProps,
+} from '@/components/ui/DateTimePicker.types'
 
-type IOSMode = 'date' | 'time' | 'datetime'
-
-type Props = {
-  value: Date
-  onChange: (event: DateTimePickerEvent, date?: Date | undefined) => void
-  maximumDate?: Date | undefined
-  minimumDate?: Date | undefined
-  iOSMode?: IOSMode
+/**
+ * Picks a date, a time, or both, in the app's Language, Format Region and Time
+ * Format, kept within `minimumDate` and `maximumDate`. SwiftUI's `DatePicker`
+ * on iOS (`DateTimePicker.ios.tsx`); on Android (`DateTimePicker.android.tsx`)
+ * a button per part opening Material's dialog. Other platforms render nothing.
+ */
+export default function DateTimePicker(_props: DateTimePickerProps) {
+  return null
 }
 
-const DateTimePicker = ({
-  value,
-  onChange,
-  maximumDate,
-  minimumDate,
-  iOSMode = 'date',
-}: Props) => {
-  const { colorScheme, timeFormat } = usePreferences(
-    useShallow((s) => ({
-      colorScheme: s.colorScheme,
-      timeFormat: s.timeFormat,
-    }))
-  )
-  const theme = useTheme()
-
-  if (Platform.OS === 'android') {
-    const modes: Array<'date' | 'time'> =
-      iOSMode === 'datetime' ? ['date', 'time'] : [iOSMode]
-    const open = (mode: 'date' | 'time') => {
-      DateTimePickerAndroid.open({
-        value,
-        mode,
-        minimumDate: mode === 'date' ? minimumDate : undefined,
-        maximumDate: mode === 'date' ? maximumDate : undefined,
-        is24Hour: timeFormat
-          ? timeFormat === '24'
-          : !/a/i.test(moment.localeData().longDateFormat('LT')),
-        onChange: (event, selected) => {
-          if (event.type !== 'set' || !selected) return
-          const next = new Date(value)
-          if (mode === 'date') {
-            next.setFullYear(
-              selected.getFullYear(),
-              selected.getMonth(),
-              selected.getDate()
-            )
-          } else {
-            next.setHours(selected.getHours(), selected.getMinutes())
-          }
-          const bounded = new Date(
-            Math.max(
-              minimumDate?.getTime() ?? -Infinity,
-              Math.min(maximumDate?.getTime() ?? Infinity, next.getTime())
-            )
-          )
-          onChange(event, bounded)
-        },
-      })
-    }
-
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: 8,
-          justifyContent: 'flex-end',
-        }}
-      >
-        {modes.map((mode) => (
-          <Button
-            key={mode}
-            noTransform
-            accessibilityRole='button'
-            accessibilityLabel={i18n.t(mode)}
-            onPress={() => open(mode)}
-            style={{
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.numbers.borderRadiusSm,
-            }}
-          >
-            <Text>{moment(value).format(mode === 'date' ? 'll' : 'LT')}</Text>
-          </Button>
-        ))}
-      </View>
-    )
-  }
-
-  return (
-    <View>
-      <RNDateTimePicker
-        themeVariant={colorScheme || undefined}
-        locale={getLocales()[0].languageCode || undefined}
-        maximumDate={maximumDate}
-        minimumDate={minimumDate}
-        value={value}
-        onChange={onChange}
-        mode={iOSMode}
-      />
-    </View>
-  )
+/**
+ * Android's date or time dialog on its own, for controls that show the value
+ * themselves (`WhenDock`'s Date pill). Unmount it on `onPick` or `onDismiss`.
+ * iOS pickers sit inline, so this renders nothing there.
+ */
+export function DateTimeDialog(_props: DateTimeDialogProps) {
+  return null
 }
-
-export default DateTimePicker

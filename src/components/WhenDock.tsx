@@ -1,9 +1,5 @@
 import { ReactNode, useState } from 'react'
 import { Keyboard, Platform, View } from 'react-native'
-import RNDateTimePicker, {
-  DateTimePickerAndroid,
-} from '@react-native-community/datetimepicker'
-import { getLocales } from 'expo-localization'
 import moment from 'moment'
 import {
   Calendar as CalendarIcon,
@@ -11,6 +7,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Button from '@/components/ui/Button'
+import DateTimePicker, { DateTimeDialog } from '@/components/ui/DateTimePicker'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PickerSheet from '@/components/ui/PickerSheet'
@@ -25,7 +22,6 @@ import {
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
-import { usePreferences } from '@/stores/preferences'
 
 type Props = {
   date: Date
@@ -259,8 +255,9 @@ const SpanWheels = (props: {
 const WhenDock = (props: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { colorScheme } = usePreferences()
   const [picker, setPicker] = useState<PickerKind | null>(null)
+  // Android picks the date in Material's dialog instead of the sheet.
+  const [dateDialog, setDateDialog] = useState(false)
   const [draftDate, setDraftDate] = useState(props.date)
   const [draftHours, setDraftHours] = useState(props.hours)
   const [draftMinutes, setDraftMinutes] = useState(props.minutes)
@@ -280,12 +277,7 @@ const WhenDock = (props: Props) => {
   const openPicker = (kind: PickerKind) => {
     Keyboard.dismiss()
     if (kind === 'date' && Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: props.date,
-        mode: 'date',
-        onValueChange: (_, picked) =>
-          props.setDate(mergeDate(props.date, picked)),
-      })
+      setDateDialog(true)
       return
     }
     setDraftDate(props.date)
@@ -420,14 +412,10 @@ const WhenDock = (props: Props) => {
       >
         {picker === 'date' && (
           <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
-            <RNDateTimePicker
+            <DateTimePicker
               value={draftDate}
-              mode='date'
               display='inline'
-              themeVariant={colorScheme || undefined}
-              accentColor={theme.colors.accent}
-              locale={getLocales()[0].languageCode || undefined}
-              onValueChange={(_, picked) => setDraftDate(picked)}
+              onChange={(_, picked) => picked && setDraftDate(picked)}
             />
           </View>
         )}
@@ -480,6 +468,17 @@ const WhenDock = (props: Props) => {
           </>
         )}
       </PickerSheet>
+      {dateDialog && (
+        <DateTimeDialog
+          part='date'
+          value={props.date}
+          onPick={(picked) => {
+            setDateDialog(false)
+            props.setDate(picked)
+          }}
+          onDismiss={() => setDateDialog(false)}
+        />
+      )}
     </View>
   )
 }

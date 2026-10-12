@@ -245,7 +245,13 @@ export const shareCancelSchema = z.object({
   v: z.literal(1),
   id: relayId,
   rev: z.number(),
+  /**
+   * The buddy was taken off a share that still goes ahead, rather than the
+   * share being deleted. Quiet unless they had said they're going.
+   */
+  removed: z.literal(true).optional(),
 })
+export type ShareCancel = z.infer<typeof shareCancelSchema>
 
 export const SHARE_REPLIES = ['going', 'declined'] as const
 export type ShareReply = (typeof SHARE_REPLIES)[number]

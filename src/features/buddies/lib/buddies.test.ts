@@ -1496,14 +1496,59 @@ describe('shared Plans and Follow-ups', () => {
     expect(entries.map((n) => n.kind)).toEqual(['shareUpdate'])
   })
 
-  it('cancels for dropped buddies and deleted Plans', async () => {
+  it('quietly drops a buddy who had not said they were going', async () => {
+    const { fake, levi, mom, advance } = await trio()
+    levi.setShares([planSpec([mom.inboxId])])
+    await levi.engine.publishShares()
+    await mom.engine.sync()
+    expect(mom.store.getState().notifications.map((n) => n.kind)).toEqual([
+      'shareInvite',
+      'paired',
+    ])
+    const inviteSeq = mom.store.getState().notifications[0].seq
+
+    advance(60_000)
+    const pushesBefore = fake.pushes.length
+    levi.setShares([planSpec([])])
+    await levi.engine.publishShares()
+    expect(fake.pushes.length).toBe(pushesBefore)
+    await mom.engine.sync()
+    const [momShare] = Object.values(mom.store.getState().incomingShares)
+    expect(momShare.status).toBe('cancelled')
+    expect(mom.store.getState().notifications.map((n) => n.kind)).toEqual([
+      'paired',
+    ])
+    // The invitation's alert comes off Notification Center too.
+    expect(mom.dismissed).toEqual([[inviteSeq]])
+  })
+
+  it('tells a dropped buddy who was going, and everyone when a Plan is deleted', async () => {
     const { fake, levi, anna, mom, advance } = await trio()
     levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
     await levi.engine.publishShares()
+    await anna.engine.sync()
+    const annaKey = Object.keys(anna.store.getState().incomingShares)[0]
+    await anna.engine.replyToShare(annaKey, 'going')
+    await levi.engine.sync()
 
     advance(60_000)
-    levi.setShares([planSpec([anna.inboxId])])
+    levi.setShares([planSpec([mom.inboxId])])
     await levi.engine.publishShares()
+    expect(fake.pushes.at(-1)).toEqual({
+      inboxId: anna.inboxId,
+      kind: 'plan.cancel',
+    })
+    await anna.engine.sync()
+    expect(anna.store.getState().incomingShares[annaKey].status).toBe(
+      'cancelled'
+    )
+    expect(anna.store.getState().notifications[0].kind).toBe('shareCancel')
+    expect(anna.dismissed).toEqual([])
+
+    advance(60_000)
+    levi.setShares([])
+    await levi.engine.publishShares()
+    expect(levi.store.getState().outgoingShares).toEqual({})
     expect(fake.pushes.at(-1)).toEqual({
       inboxId: mom.inboxId,
       kind: 'plan.cancel',
@@ -1515,14 +1560,6 @@ describe('shared Plans and Follow-ups', () => {
       'shareCancel',
       'paired',
     ])
-
-    advance(60_000)
-    levi.setShares([])
-    await levi.engine.publishShares()
-    expect(levi.store.getState().outgoingShares).toEqual({})
-    await anna.engine.sync()
-    const [annaShare] = Object.values(anna.store.getState().incomingShares)
-    expect(annaShare.status).toBe('cancelled')
   })
 
   it('wipes invitations once they lapse and when the buddy is removed', async () => {

@@ -88,6 +88,8 @@ export function setup() {
     let enabled = true
     /** Work the engine scheduled for later (`later`), run by the test. */
     const timers: { run: () => void; ms: number }[] = []
+    /** Seqs whose system alerts the engine took back, per call. */
+    const dismissed: number[][] = []
     const engine = createBuddiesEngine({
       relay,
       store,
@@ -105,6 +107,9 @@ export function setup() {
       isEnabled: () => enabled,
       later: (run, ms) => {
         timers.push({ run, ms })
+      },
+      dismissAlerts: (seqs) => {
+        dismissed.push(seqs)
       },
       ...extra,
     })
@@ -127,6 +132,7 @@ export function setup() {
         enabled = next
       },
       timers,
+      dismissed,
     }
   }
 

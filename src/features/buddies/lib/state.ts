@@ -290,6 +290,11 @@ export type IncomingShare = {
    * (`replyHoldMs`).
    */
   replySendAt?: number
+  /**
+   * The inbox seqs of the invites and changes received for it, newest last, so
+   * their system alerts can be taken back when the invitation is withdrawn.
+   */
+  alertSeqs?: number[]
 }
 
 /** How long a Can't Make It answer waits before it's sent. */

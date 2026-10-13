@@ -13,6 +13,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { syncKey } from '@/lib/syncCopy'
+import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { isDataProtectionRegion } from '@/lib/dataProtection'
 import { usePreferences } from '@/stores/preferences'
 
@@ -65,7 +66,23 @@ const DataProtection = ({ goBack, goNext }: Props) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('dataProtectionDesc')}
+            {segmentBoldMarkup(i18n.t('dataProtectionDesc')).map(
+              (segment, index) => (
+                <Text
+                  key={index}
+                  style={
+                    segment.bold
+                      ? {
+                          fontFamily: theme.fonts.semiBold,
+                          color: theme.colors.text,
+                        }
+                      : undefined
+                  }
+                >
+                  {segment.text}
+                </Text>
+              )
+            )}
           </Text>
           <Card
             flexDirection='row'

@@ -225,7 +225,7 @@ preview edits, prompt toggles, and warning openings are dropped.
 | Flow                   | Outcomes                                                                                                                                             |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Notes Import           | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`. |
-| Notes Import capture   | `notes_import_capture_finished` once per voice log or photo attempt.                                                                                 |
+| Notes Import capture   | `notes_import_capture_finished` once per voice log, photo, or paper attempt.                                                                         |
 | MyTime / cloud restore | `import_completed` with the import type (`icloud` on iOS, `google_drive` on Android).                                                                |
 | JSON restore           | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`.                                                                         |
 | JSON export            | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                   |
@@ -251,7 +251,7 @@ the availability check couldn't run, with `state`: `offline` (no connection) or
 
 Notes previews retain `empty`/warning counts and the ledger's original source
 across background work, relaunches, and refinements. `input_method` (`text`,
-`voice`, `photo`, `mixed`) records how the submitted notes were produced and is
+`voice`, `photo`, `paper`, `mixed`) records how the submitted notes were produced and is
 kept on the ledger row, so acceptance stays attributed after a relaunch. Each
 processing attempt can start, so start counts are attempts, not unique
 documents.
@@ -263,6 +263,16 @@ per attempt with `method` (`voice` or `photo`) and `outcome` (`inserted`,
 `library`) and `page_count`; failures add a stable `error_code`. Transcripts,
 images, and languages are never sent. `inserted` means text reached the draft,
 not that it was imported: follow `input_method` on submitted/accepted for that.
+
+Import from Paper (ADR 0025) sends one `notes_import_capture_finished` per batch
+with `method: paper`, `paper_source` (`onboarding` or `composer`), `page_count`,
+and `outcome`: `inserted`, `partial` (some pages read, with `failed_pages`),
+`empty`, `cancelled`, `failed`, or `limit_reached` (no Import Credits left, so
+no page was read). A stopped batch adds `error_code` (for example
+`transcribe_limit`, `network`, `attestation_failed`). The onboarding chooser's
+`import_type_selected` uses `import_type: paper`, and
+`onboarding_import_options_viewed` adds `paper_available`. Page images and their
+text are never sent.
 
 Export/restore retains
 bounded `entry_point` (`settings` or `backup_reminder`), failure stage/error code,

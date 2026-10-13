@@ -22,6 +22,7 @@ interface Props {
   schedule: NotesImportPublicSchedule | null
   voiceAvailable?: boolean
   photoAvailable?: boolean
+  paperAvailable?: boolean
 }
 
 const STEP_KEYS: TranslationKey[] = [
@@ -50,6 +51,7 @@ const NotesImportHelpSheet = ({
   schedule,
   voiceAvailable = false,
   photoAvailable = false,
+  paperAvailable = false,
 }: Props) => {
   const theme = useTheme()
   const scheduleCopy = schedule ? notesImportScheduleCopy(schedule) : null
@@ -173,6 +175,7 @@ const NotesImportHelpSheet = ({
           <NotesImportCaptureHelp
             voiceAvailable={voiceAvailable}
             photoAvailable={photoAvailable}
+            paperAvailable={paperAvailable}
           />
 
           {/* What's helpful to include — bullet list. */}

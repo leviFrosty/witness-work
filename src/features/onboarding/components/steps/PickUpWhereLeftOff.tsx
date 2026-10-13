@@ -8,6 +8,7 @@ import {
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
+  NotebookPen as NotebookPenIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
@@ -26,6 +27,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
+import { pickPaperPages } from '@/features/notes-import/hooks/useNotesImportPaperImport'
 import { useBackupImport } from '@/hooks/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
@@ -102,16 +104,18 @@ const OptionCard = ({
 /**
  * Onboarding "Pick up where you left off" chooser — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
- * iCloud / a backup file (decision 9). MyTime + iCloud reuse their existing
- * step components inline; iCloud is grayed when the device has no iCloud. The
- * Notes option navigates to the shared NotesImportComposer screen — the same
- * surface as Settings, not a one-off — whose import persists and resumes, so
- * the user can leave and come back; backing out returns here to keep going.
- * MyTime returns to the flow (`goNext`); iCloud restore completes onboarding on
- * its own. A backup file restores in place via the same flow as Settings →
- * Backup and, like iCloud, completes onboarding — the backup carries the
- * profile and preferences the remaining steps would set. "Start fresh" is the
- * primary action: most users have nothing to bring over.
+ * iCloud / a backup file (decision 9), plus Paper (ADR 0025), which picks page
+ * photos first and opens the composer to read them into its draft. MyTime +
+ * iCloud reuse their existing step components inline; iCloud is grayed when the
+ * device has no iCloud. The Notes option navigates to the shared
+ * NotesImportComposer screen — the same surface as Settings, not a one-off —
+ * whose import persists and resumes, so the user can leave and come back;
+ * backing out returns here to keep going. MyTime returns to the flow
+ * (`goNext`); iCloud restore completes onboarding on its own. A backup file
+ * restores in place via the same flow as Settings → Backup and, like iCloud,
+ * completes onboarding — the backup carries the profile and preferences the
+ * remaining steps would set. "Start fresh" is the primary action: most users
+ * have nothing to bring over.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
@@ -136,8 +140,15 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     analytics.capture('onboarding_import_options_viewed', {
       icloud_available: icloudAvailable,
       notes_available: notesImport.available,
+      paper_available: notesImport.paperMaxPages != null,
     })
-  }, [icloudAvailable, notesImport.available, isFocused, mode])
+  }, [
+    icloudAvailable,
+    notesImport.available,
+    notesImport.paperMaxPages,
+    isFocused,
+    mode,
+  ])
   const restoreBackup = async () => {
     if (!(await importBackup())) return
     analytics.capture('onboarding_completed', {
@@ -152,8 +163,17 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     })
     useProfile.getState().set({ hasCompletedProfileSetup: true })
   }
+  const fromPaper = async () => {
+    if (!notesImport.paperMaxPages) return
+    const paperPages = await pickPaperPages(notesImport.paperMaxPages)
+    if (!paperPages) return
+    navigation.navigate('NotesImportComposer', {
+      fromOnboarding: true,
+      paperPages,
+    })
+  }
   const selectImport = (
-    importType: 'notes' | 'mytime' | 'icloud' | 'backup_json'
+    importType: 'notes' | 'paper' | 'mytime' | 'icloud' | 'backup_json'
   ) => {
     analytics.capture('import_type_selected', {
       import_type:
@@ -164,6 +184,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     })
     if (importType === 'notes')
       navigation.navigate('NotesImportComposer', { fromOnboarding: true })
+    else if (importType === 'paper') void fromPaper()
     else if (importType === 'backup_json') void restoreBackup()
     else setMode(importType)
   }
@@ -218,6 +239,15 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               disabled={notesImport.status === 'unavailable'}
               disabledNoteKey='notesImport_unavailable'
               onPress={() => selectImport('notes')}
+            />
+          )}
+          {notesImportEnabled && notesImport.paperMaxPages != null && (
+            <OptionCard
+              icon={NotebookPenIcon}
+              color={theme.colors.orange}
+              titleKey='onboardingPickUp_paper'
+              descKey='onboardingPickUp_paperDesc'
+              onPress={() => selectImport('paper')}
             />
           )}
           <OptionCard

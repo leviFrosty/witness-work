@@ -242,7 +242,31 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     draft,
     setDraft,
     onInserted: () => requestAnimationFrame(() => inputRef.current?.focus()),
+    paperMaxPages: availability.paperMaxPages,
+    onPaperLimitReached: () =>
+      Alert.alert(
+        i18n.t('notesImport_limitTitle'),
+        i18n.t('notesImport_paperLimitReachedBody'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          {
+            text: i18n.t('notesImport_limitCta'),
+            onPress: () =>
+              navigation.navigate('Paywall', { source: 'notes_import_limit' }),
+          },
+        ]
+      ),
   })
+
+  // Import from Paper in onboarding picks the pages first, then opens this
+  // screen to read them; clear the param so a re-render can't read them twice.
+  const paperPages = route.params?.paperPages
+  const readPaper = capture.paper.read
+  useEffect(() => {
+    if (!paperPages?.length) return
+    navigation.setParams({ paperPages: undefined })
+    void readPaper(paperPages, 'onboarding')
+  }, [paperPages, navigation, readPaper])
   const autoScrollRef = useRef(false)
   // Land at the newest message on first layout (and whenever a different import
   // loads), so the screen opens at the bottom of the conversation, not the intro.
@@ -1465,17 +1489,26 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                   downloadProgress={capture.voice.downloadProgress}
                   level={capture.voice.level}
                   readingPhoto={capture.photo.reading}
+                  paperProgress={capture.paper.progress}
                   onCancelVoice={capture.voice.cancel}
+                  onCancelPaper={capture.paper.cancel}
                 />
               ) : (
                 <>
-                  {canCapture && capture.photo.supported && (
-                    <NotesImportPhotoButton
-                      scanSupported={capture.photo.scanSupported}
-                      onScan={capturePhoto(capture.photo.scan)}
-                      onChoose={capturePhoto(capture.photo.choose)}
-                    />
-                  )}
+                  {canCapture &&
+                    (capture.photo.supported || capture.paper.supported) && (
+                      <NotesImportPhotoButton
+                        scanSupported={capture.photo.scanSupported}
+                        onScan={capturePhoto(capture.photo.scan)}
+                        // ww-api reads chosen photos where it can (ADR 0025);
+                        // otherwise they're read on the device.
+                        onChoose={capturePhoto(
+                          capture.paper.supported
+                            ? capture.paper.choose
+                            : capture.photo.choose
+                        )}
+                      />
+                    )}
                   {historyCallout}
                 </>
               )
@@ -1537,6 +1570,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           schedule={availability.schedule}
           voiceAvailable={capture.voice.available}
           photoAvailable={capture.photo.supported}
+          paperAvailable={capture.paper.supported}
         />
       </Animated.View>
     </Wrapper>

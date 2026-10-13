@@ -45,7 +45,10 @@ export const tokenRetryDelayMs = (
   return Math.round(base * (1 + TOKEN_RETRY_JITTER * random()))
 }
 
-type PlayPurpose = 'notes-import-kickoff' | 'notes-import-verify'
+type PlayPurpose =
+  | 'notes-import-kickoff'
+  | 'notes-import-verify'
+  | 'notes-import-transcribe'
 
 /** Mirrors `modules/play-integrity`'s taxonomy without importing native code. */
 export type PlayIntegrityNativeFailureCode =
@@ -397,7 +400,7 @@ export const createNotesImportPlayIntegrity = (
   }
 
   const protectedPost = async <T>(input: {
-    endpoint: 'kickoff' | 'verify'
+    endpoint: 'kickoff' | 'verify' | 'transcribe'
     purpose: PlayPurpose
     payload: Record<string, unknown>
     contentHash: string
@@ -478,7 +481,7 @@ export const createNotesImportPlayIntegrity = (
   }
 
   const devBypassPost = <T>(
-    endpoint: 'kickoff' | 'verify',
+    endpoint: 'kickoff' | 'verify' | 'transcribe',
     body: Record<string, unknown>,
     signal?: AbortSignal
   ): Promise<T> => {
@@ -568,20 +571,26 @@ export const createNotesImportPlayIntegrity = (
       signal,
     }: NotesImportProtectedPost): Promise<T> {
       throwIfAborted(signal)
-      // Android only ever uses the streaming kickoff; ww-api refuses Play
-      // Integrity on the legacy synchronous endpoint.
-      if (endpoint !== 'kickoff') {
+      // Android only ever uses the streaming kickoff (and page transcription);
+      // ww-api refuses Play Integrity on the legacy synchronous endpoint.
+      if (endpoint === 'legacy') {
         throw new NotesImportAppAttestError('protocolUnavailable')
       }
-      const requestHash = await hashHex(canonicalProtectedRequest(payload))
+      const purpose =
+        endpoint === 'transcribe'
+          ? 'notes-import-transcribe'
+          : 'notes-import-kickoff'
+      const requestHash = await hashHex(
+        canonicalProtectedRequest(payload, contentHash)
+      )
       if (dependencies.devBypass.enabled) {
         return devBypassPost<T>(
-          'kickoff',
+          endpoint,
           {
             ...payload,
             protocolVersion: 2,
             operation: 'assert',
-            purpose: 'notes-import-kickoff',
+            purpose,
             operationId: dependencies.crypto.randomUuid(),
             requestHash,
             contentHash,
@@ -592,8 +601,8 @@ export const createNotesImportPlayIntegrity = (
       if (!supported()) throw new NotesImportAppAttestError('unsupported')
       const project = await waitForSignal(cloudProjectNumber(), signal)
       return protectedPost<T>({
-        endpoint: 'kickoff',
-        purpose: 'notes-import-kickoff',
+        endpoint,
+        purpose,
         payload,
         contentHash,
         requestHash,

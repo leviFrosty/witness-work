@@ -20,6 +20,8 @@ export default {
   notesImportVerify: `${BASE_URL}/notes-import/verify`,
   // Streaming import: attested kickoff → SSE progress stream → result snapshot.
   notesImportKickoff: `${BASE_URL}/notes-import/kickoff`,
+  // Import from Paper: attested, reads one page photo into text.
+  notesImportTranscribe: `${BASE_URL}/notes-import/transcribe`,
   notesImportEvents: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/events`,
   notesImportResult: (importId: string) =>

@@ -4,8 +4,11 @@
  * reviews and edits it before the normal text pipeline sends anything.
  */
 
-/** How a capture fed the composer. */
-export type NotesImportCaptureMethod = 'voice' | 'photo'
+/**
+ * How a capture fed the composer: on-device `voice` or `photo` recognition, or
+ * `paper` pages read by ww-api (Import from Paper, ADR 0025).
+ */
+export type NotesImportCaptureMethod = 'voice' | 'photo' | 'paper'
 
 /**
  * How the submitted notes were produced, for analytics only: typed/pasted
@@ -17,6 +20,7 @@ export const NOTES_IMPORT_INPUT_METHODS: readonly NotesImportInputMethod[] = [
   'text',
   'voice',
   'photo',
+  'paper',
   'mixed',
 ]
 

@@ -71,7 +71,14 @@ export type RootStackParamList = {
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': { source: 'backup_reminder' } | undefined
   MytimeImport: undefined
-  NotesImportComposer: { hash?: string; fromOnboarding?: boolean } | undefined
+  NotesImportComposer:
+    | {
+        hash?: string
+        fromOnboarding?: boolean
+        /** Import from Paper: page photos picked in onboarding, read on open. */
+        paperPages?: { uri: string; width: number; height: number }[]
+      }
+    | undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
   PreferencesCalendar: undefined

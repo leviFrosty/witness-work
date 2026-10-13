@@ -4,8 +4,9 @@ export type NotesImportAppAttestEndpoint =
   | 'kickoff'
   | 'legacy'
   | 'verify'
+  | 'transcribe'
 
-export type NotesImportProtectedEndpoint = 'kickoff' | 'legacy'
+export type NotesImportProtectedEndpoint = 'kickoff' | 'legacy' | 'transcribe'
 
 export type AppAttestNativeFailureCode =
   | 'unsupported'
@@ -340,7 +341,10 @@ class FifoLane {
 
 type ProtocolVersion = 1 | 2
 type ChallengeOperation = 'bind' | 'enroll' | 'assert'
-type ProtectedPurpose = 'notes-import-kickoff' | 'notes-import-verify'
+type ProtectedPurpose =
+  | 'notes-import-kickoff'
+  | 'notes-import-verify'
+  | 'notes-import-transcribe'
 
 type BootstrapJournal = {
   v: typeof JOURNAL_VERSION
@@ -450,9 +454,24 @@ const stableCanonicalJson = (value: unknown): string => {
   }
 }
 
+/**
+ * The exact JSON a protected request hash covers. A page transcription's
+ * content hash already covers its image, so its request hash binds only the
+ * image hash and type (ww-api `computeNotesImportTranscribeRequestHash`).
+ */
 export const canonicalProtectedRequest = (
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  contentHash: string
 ): string => {
+  if (typeof payload.image === 'string') {
+    if (typeof payload.mimeType !== 'string') {
+      throw new NotesImportAppAttestError('invalidInput')
+    }
+    return stableCanonicalJson({
+      imageHash: contentHash,
+      mimeType: payload.mimeType,
+    })
+  }
   if (typeof payload.notesText !== 'string' || !isRecord(payload.context)) {
     throw new NotesImportAppAttestError('invalidInput')
   }
@@ -614,8 +633,9 @@ const protocolVersionFromStatus = (status: unknown): ProtocolVersion => {
 }
 
 const purposeForEndpoint = (
-  _endpoint: NotesImportProtectedEndpoint
-): ProtectedPurpose => 'notes-import-kickoff'
+  endpoint: NotesImportProtectedEndpoint
+): ProtectedPurpose =>
+  endpoint === 'transcribe' ? 'notes-import-transcribe' : 'notes-import-kickoff'
 
 const buildBindClientData = (input: {
   operationId: string
@@ -1007,9 +1027,10 @@ export const createNotesImportAppAttest = (
   }
 
   const hashProtectedRequest = async (
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
+    contentHash: string
   ): Promise<string> => {
-    const canonicalJson = canonicalProtectedRequest(payload)
+    const canonicalJson = canonicalProtectedRequest(payload, contentHash)
     try {
       const hash = await dependencies.crypto.sha256Hex(canonicalJson)
       if (!/^[a-f0-9]{64}$/.test(hash)) {
@@ -2482,13 +2503,13 @@ export const createNotesImportAppAttest = (
       const operationId = dependencies.crypto.randomUuid()
       let requestHashPromise: Promise<string> | null = null
       const getRequestHash = (): Promise<string> =>
-        (requestHashPromise ??= hashProtectedRequest(payload))
+        (requestHashPromise ??= hashProtectedRequest(payload, contentHash))
 
       if (dependencies.devBypass.enabled) {
         const uuid = storage(() => dependencies.identity.getOrCreateUuid())
         const accountId = storage(() => dependencies.identity.getAccountId())
-        const requestHash =
-          endpoint === 'kickoff' ? await getRequestHash() : undefined
+        const assertsV2 = endpoint === 'kickoff' || endpoint === 'transcribe'
+        const requestHash = assertsV2 ? await getRequestHash() : undefined
         return authorizationLane.run(
           'dev-bypass',
           () =>
@@ -2496,7 +2517,7 @@ export const createNotesImportAppAttest = (
               endpoint,
               {
                 ...payload,
-                ...(endpoint === 'kickoff'
+                ...(assertsV2
                   ? {
                       protocolVersion: 2,
                       operation: 'assert',
@@ -2531,6 +2552,11 @@ export const createNotesImportAppAttest = (
       }
       const negotiatedProtocol = await waitForSignal(protocolVersion(), signal)
       const ready = await ensureReady(negotiatedProtocol, signal)
+      // ww-api reads pages only under v2, where the assertion signs the
+      // request hash that binds the image type.
+      if (endpoint === 'transcribe' && negotiatedProtocol !== 2) {
+        throw new NotesImportAppAttestError('protocolUnavailable')
+      }
       const protectedProtocol = endpoint === 'legacy' ? 1 : negotiatedProtocol
       const requestHash =
         protectedProtocol === 2 ? await getRequestHash() : undefined

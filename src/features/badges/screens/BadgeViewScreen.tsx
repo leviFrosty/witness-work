@@ -307,18 +307,13 @@ function BadgeViewContent({
     if (!from) {
       return {
         opacity: Math.min(1, p * 2) * f,
-        transform: [
-          { perspective: 900 },
-          { scale: (0.6 + 0.4 * p) * settle },
-          { rotateY: `${turn.value * 360}deg` },
-        ],
+        transform: [{ scale: (0.6 + 0.4 * p) * settle }],
       }
     }
     const startScale = from.size / coinSize
     return {
       opacity: f,
       transform: [
-        { perspective: 900 },
         {
           translateX:
             (from.x + from.size / 2 - (geometry.target.x + coinSize / 2)) *
@@ -330,10 +325,22 @@ function BadgeViewContent({
             (1 - p),
         },
         { scale: (startScale + (1 - startScale) * p) * settle },
-        { rotateY: `${turn.value * 360}deg` },
       ],
     }
   })
+  // The turn lives on an inner view so the flat outer one flattens it: tilted
+  // straight onto the screen's plane, iOS would sink half of the coin behind
+  // the halo while the spring settles.
+  const spinStyle = useAnimatedStyle(() =>
+    reduceMotion
+      ? {}
+      : {
+          transform: [
+            { perspective: 900 },
+            { rotateY: `${turn.value * 360}deg` },
+          ],
+        }
+  )
 
   const haloSize = coinSize * 1.9
   return (
@@ -533,23 +540,25 @@ function BadgeViewContent({
                   coinStyle,
                 ]}
               >
-                <PointerHover effect='lift'>
-                  <Pressable
-                    onPress={spin}
-                    accessible={false}
-                    importantForAccessibility='no'
-                    style={{ borderRadius: coinSize / 2 }}
-                  >
-                    <BadgeViewCoin
-                      art={art}
-                      level={level}
-                      size={coinSize}
-                      state={state}
-                      turn={turn}
-                      shine={reduceMotion ? null : shine}
-                    />
-                  </Pressable>
-                </PointerHover>
+                <Animated.View collapsable={false} style={spinStyle}>
+                  <PointerHover effect='lift'>
+                    <Pressable
+                      onPress={spin}
+                      accessible={false}
+                      importantForAccessibility='no'
+                      style={{ borderRadius: coinSize / 2 }}
+                    >
+                      <BadgeViewCoin
+                        art={art}
+                        level={level}
+                        size={coinSize}
+                        state={state}
+                        turn={turn}
+                        shine={reduceMotion ? null : shine}
+                      />
+                    </Pressable>
+                  </PointerHover>
+                </Animated.View>
               </Animated.View>
             ) : null}
           </Animated.View>

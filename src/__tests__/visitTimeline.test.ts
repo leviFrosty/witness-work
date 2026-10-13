@@ -127,6 +127,7 @@ describe('getJourney', () => {
       notAtHome: 1,
     })
     expect(journey.first).toEqual(at('2025-01-17'))
+    expect(journey.windowStart).toEqual(at('2025-12-12T12:00'))
     expect(journey.olderCount).toBe(1)
     expect(journey.dots.map((d) => d.id)).toEqual([
       'window-start',
@@ -156,6 +157,51 @@ describe('getJourney', () => {
     expect(journey.dots.find((d) => d.id === 'future')?.position).toBeCloseTo(
       0.9
     )
+  })
+
+  it.each([undefined, at('2026-06-22T12:00')])(
+    'uses a three-day history across the past segment (follow-up: %s)',
+    (next) => {
+      const journey = getJourney(
+        [
+          visit('recent', '2026-06-11T12:00'),
+          visit('first', '2026-06-09T12:00'),
+          visit('today', '2026-06-12T12:00'),
+        ],
+        now,
+        next
+      )!
+      expect(journey.windowStart).toEqual(at('2026-06-09T12:00'))
+      expect(journey.olderCount).toBe(0)
+      expect(journey.dots.map((d) => d.position)).toEqual([
+        0,
+        (journey.todayPosition * 2) / 3,
+        journey.todayPosition,
+      ])
+    }
+  )
+
+  it.each([undefined, at('2026-06-22T12:00')])(
+    'places a history starting exactly now at today (follow-up: %s)',
+    (next) => {
+      const journey = getJourney(
+        [visit('today', '2026-06-12T12:00')],
+        now,
+        next
+      )!
+      expect(journey.windowStart).toEqual(now)
+      expect(journey.dots[0].position).toBe(journey.todayPosition)
+    }
+  )
+
+  it('keeps future-only visits on a finite axis starting at today', () => {
+    const journey = getJourney(
+      [visit('future', '2026-06-17T12:00')],
+      now,
+      at('2026-06-22T12:00')
+    )!
+    expect(journey.windowStart).toEqual(now)
+    expect(journey.dots[0].position).toBeCloseTo(0.9)
   })
 
   it('returns null for an empty history', () => {

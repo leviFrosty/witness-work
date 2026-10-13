@@ -95,7 +95,7 @@ export type Journey = {
   outcomeCounts: Record<VisitOutcome, number>
   /** The very first visit, for the "since" caption. */
   first: Date
-  /** Start of the rail window (`now` minus the window). */
+  /** First visit or six months ago, whichever is later (at most `now`). */
   windowStart: Date
   /** Visits before the window; they only count toward the totals. */
   olderCount: number
@@ -106,9 +106,9 @@ export type Journey = {
 }
 
 /**
- * A recent-activity rail: the last six months up to today, then (when there is
- * one) a short future segment ending at the next follow-up. Totals still cover
- * the whole history.
+ * A recent-activity rail: from the first visit up to today, capped at six
+ * months, then (when there is one) a short future segment ending at the next
+ * follow-up. Totals still cover the whole history.
  */
 export const getJourney = (
   contactVisits: Visit[],
@@ -118,14 +118,20 @@ export const getJourney = (
   if (contactVisits.length === 0) return null
   const sorted = [...contactVisits].sort((a, b) => ms(a.date) - ms(b.date))
   const nowMs = now.getTime()
-  const windowStart = moment(now).subtract(JOURNEY_WINDOW_MONTHS, 'months')
-  const startMs = windowStart.valueOf()
+  const startMs = Math.max(
+    moment(now).subtract(JOURNEY_WINDOW_MONTHS, 'months').valueOf(),
+    Math.min(ms(sorted[0].date), nowMs)
+  )
+  const pastSpan = nowMs - startMs
   const hasFuture = !!nextFollowUp && nextFollowUp.getTime() > nowMs
   const todayPosition = hasFuture ? JOURNEY_PAST_SHARE : 1
   const futureSpan = hasFuture ? nextFollowUp!.getTime() - nowMs : 0
 
   const position = (t: number) => {
-    if (t <= nowMs) return (todayPosition * (t - startMs)) / (nowMs - startMs)
+    if (t <= nowMs)
+      return pastSpan === 0
+        ? todayPosition
+        : (todayPosition * (t - startMs)) / pastSpan
     if (!hasFuture) return 1
     return Math.min(
       1,
@@ -140,7 +146,7 @@ export const getJourney = (
     visitCount: sorted.length,
     outcomeCounts,
     first: new Date(sorted[0].date),
-    windowStart: windowStart.toDate(),
+    windowStart: new Date(startMs),
     olderCount: sorted.length - inWindow.length,
     todayPosition,
     dots: inWindow.map((v) => ({

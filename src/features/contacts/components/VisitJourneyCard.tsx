@@ -31,9 +31,9 @@ const COUNT_KEY = {
 } as const
 
 /**
- * The last six months at a glance: a dot per visit, a "Today" marker, and a
- * dashed run to the next follow-up. Underneath, whole-history totals per
- * outcome double as the rail's key.
+ * Up to six months at a glance: a dot per visit, a "Today" marker, and a dashed
+ * run to the next follow-up. Underneath, whole-history totals per outcome
+ * double as the rail's key.
  */
 const VisitJourneyCard = ({
   journey,

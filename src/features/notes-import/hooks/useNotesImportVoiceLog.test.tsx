@@ -101,7 +101,9 @@ it('records, streams the live transcript, and hands over the final text', async 
   await emit('onTranscript', { text: 'Talked with Maria' })
   expect(hook.transcript).toBe('Talked with Maria')
 
-  await act(() => hook.finish())
+  await act(async () => {
+    await hook.finish()
+  })
   expect(onTranscript).toHaveBeenCalledWith('Talked with Maria about Psalm 37')
   expect(hook.phase).toBe('idle')
   expect(hook.transcript).toBe('')
@@ -145,7 +147,9 @@ it('asks for access once, then points to Settings when it is denied', async () =
 it('tells the user when nothing was heard and keeps the draft untouched', async () => {
   await mount()
   await act(() => hook.start())
-  await act(() => hook.finish())
+  await act(async () => {
+    await hook.finish()
+  })
   expect(onTranscript).not.toHaveBeenCalled()
   expect(mocks.alert).toHaveBeenCalledWith(
     'notesImport_voiceEmptyTitle',

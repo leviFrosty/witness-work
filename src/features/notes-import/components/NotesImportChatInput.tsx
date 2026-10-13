@@ -22,6 +22,11 @@ export interface NotesImportChatInputProps {
   /** Disables typing and the send button (e.g. while a run is in flight). */
   editable?: boolean
   /**
+   * Overrides `editable` for the send button alone, e.g. to send while a voice
+   * log locks the field.
+   */
+  canSubmit?: boolean
+  /**
    * When provided, the trailing button becomes a Stop button that calls this —
    * used while an interruptible run streams.
    */
@@ -37,10 +42,9 @@ export interface NotesImportChatInputProps {
    * Import Credit balance lives here instead of in a pinned banner.
    */
   accessory?: ReactNode
-  /**
-   * Replaces the trailing Send/Stop action, e.g. the voice-log mic while the
-   * draft is empty, or its finish button while recording.
-   */
+  /** Control rendered just left of the trailing action, e.g. the voice-log mic. */
+  secondaryAction?: ReactNode
+  /** Replaces the trailing Send/Stop action, e.g. a spinner while loading. */
   trailingAction?: ReactNode
 }
 
@@ -66,10 +70,12 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       accessibilityHint,
       submitAccessibilityLabel,
       editable = true,
+      canSubmit = editable,
       onStop,
       stopAccessibilityLabel,
       leading,
       accessory,
+      secondaryAction,
       trailingAction,
     },
     ref
@@ -80,7 +86,7 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       'notes_import_prompt'
     )
     const submit = () => {
-      if (editable && validation.validate()) onSubmit()
+      if (canSubmit && validation.validate()) onSubmit()
     }
 
     const trailing = trailingAction ? (
@@ -107,7 +113,7 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       </Button>
     ) : (
       <Button
-        disabled={!editable}
+        disabled={!canSubmit}
         onPress={submit}
         accessibilityRole='button'
         accessibilityLabel={submitAccessibilityLabel}
@@ -117,7 +123,7 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: editable
+          backgroundColor: canSubmit
             ? theme.colors.accent
             : theme.colors.accentAlt,
         }}
@@ -177,13 +183,22 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
             paddingBottom: 2,
           }}
         />
-        {/* Control row beneath the field: an optional leading control on the
-            left, then a spacer that pushes the balance and Send to the trailing
+        {/* Control row beneath the field: the leading control fills the left,
+            pushing the balance, the secondary action, and Send to the trailing
             edge. */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {leading}
-          <View style={{ flex: 1 }} />
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            {leading}
+          </View>
           {accessory}
+          {secondaryAction}
           {trailing}
         </View>
       </View>

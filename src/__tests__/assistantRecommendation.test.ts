@@ -433,4 +433,72 @@ describe('generateRecommendation', () => {
       }
     })
   })
+
+  describe('spreadEvenly', () => {
+    const minutes = (rec: ReturnType<typeof generateRecommendation>) =>
+      rec!.plans.map((p) => p.minutes)
+
+    it('spreads the gap across every picked day instead of front-loading 6h days', () => {
+      // Oct 13, 2026 (Tue), out Sun/Tue/Thu/Sat → 11 days left. Without the
+      // flag this was 8×6h and a 2h last day, skipping two picked days.
+      const rec = generateRecommendation({
+        ...baseInput,
+        year: 2026,
+        month: 9,
+        today: normalizeDateForStorage('2026-10-13'),
+        standardGapMinutes: 50 * 60,
+        offDays: [1, 3, 5],
+        spreadEvenly: true,
+      })
+
+      expect(rec!.shape).toBe('distributed')
+      expect(rec!.plans).toHaveLength(11)
+      expect(minutes(rec).every((m) => m === 4 * 60 || m === 5 * 60)).toBe(true)
+      expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(50 * 60)
+    })
+
+    it('uses every picked day early in the month instead of a recurring subset', () => {
+      const rec = generateRecommendation({
+        ...baseInput,
+        year: 2026,
+        month: 9,
+        today: normalizeDateForStorage('2026-10-01'),
+        standardGapMinutes: 50 * 60,
+        offDays: [1, 3, 5],
+        spreadEvenly: true,
+      })
+
+      // Oct 1–31 has 18 Sun/Tue/Thu/Sat days.
+      expect(rec!.plans).toHaveLength(18)
+      expect(minutes(rec).every((m) => m === 2 * 60 || m === 3 * 60)).toBe(true)
+      expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(50 * 60)
+    })
+
+    it('uses fewer days for a small gap so no session drops under 2h', () => {
+      const rec = generateRecommendation({
+        ...baseInput,
+        today: normalizeDateForStorage('2026-05-14'),
+        standardGapMinutes: 5 * 60 + 30,
+        spreadEvenly: true,
+      })
+
+      expect(rec!.plans).toHaveLength(2)
+      expect(minutes(rec).every((m) => m >= 2 * 60)).toBe(true)
+      expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(5 * 60 + 30)
+    })
+
+    it('keeps sessions off meeting days', () => {
+      const rec = generateRecommendation({
+        ...baseInput,
+        today: normalizeDateForStorage('2026-05-14'),
+        standardGapMinutes: 30 * 60,
+        meetingDays: [2, 6],
+        spreadEvenly: true,
+      })
+
+      for (const p of rec!.plans) {
+        expect([2, 6]).not.toContain(momentStoredDate(p.date).day())
+      }
+    })
+  })
 })

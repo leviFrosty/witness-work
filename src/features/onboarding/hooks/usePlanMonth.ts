@@ -37,8 +37,8 @@ export type PlanMonth = {
 
 /**
  * The Assistant's recommendation for `target` when the publisher goes out only
- * on `serviceDays` — the same engine and projection as the Schedule screen, so
- * the onboarding preview matches what they'll see there afterwards.
+ * on `serviceDays` — the same engine and projection as the Schedule screen,
+ * spread evenly across the picked days.
  */
 const usePlanMonth = (
   target: CalendarMonth,
@@ -70,6 +70,9 @@ const usePlanMonth = (
           offDays: otherWeekdays(serviceDays),
           meetingDays,
           assistantHistory,
+          // The publisher just picked these days, so give each a similar
+          // session instead of filling the fewest days at the stretch cap.
+          spreadEvenly: true,
         })
 
   const minutesByDay = new Map<number, number>()

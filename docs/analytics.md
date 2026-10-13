@@ -287,7 +287,8 @@ the early heavy-use path (see `docs/supporter-nudge-plan.md`). Compare the two
 paths' click-through and purchase rates before changing either threshold.
 
 Quiet Supporter notes after a moment of value open the paywall with `source`
-`onboarding_checklist` (completed Home "Get started" checklist) or
+`onboarding_checklist` (notifications tray item listed once the Home "Get started"
+checklist is completed) or
 `onboarding_mytime_import` (MyTime import success during setup). They have no
 impression event; measure them from `paywall_viewed` and purchases by source.
 

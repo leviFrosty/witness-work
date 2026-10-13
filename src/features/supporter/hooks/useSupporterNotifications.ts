@@ -23,7 +23,8 @@ import {
 /**
  * The feedback survey invitation (found by `SupporterSurveyHost`) or, when
  * there's none, the long-tenure "thank you" nudge. Both interactions with the
- * nudge start its ~365-day cooldown.
+ * nudge start its ~365-day cooldown. Plus the Supporter note listed once the
+ * Home checklist is done.
  */
 export default function useSupporterNotifications(
   now: number
@@ -43,6 +44,7 @@ export default function useSupporterNotifications(
     supporterNudgeDismissedAt,
     supporterNudgeAvailableSince,
     devSupporterNudgeForceShow,
+    homeChecklistCompletedAt,
     set,
   } = usePreferences()
 
@@ -56,8 +58,34 @@ export default function useSupporterNotifications(
     }
   }, [supporterNudgeAvailableSince, set])
 
+  // A one-time thank-you once the Home checklist is done.
+  const checklistNote: NotificationItem[] =
+    homeChecklistCompletedAt === null || isSupporter || hideDonateHeart
+      ? []
+      : [
+          {
+            id: 'supporter_note:onboarding_checklist',
+            kind: 'supporter_note',
+            at: homeChecklistCompletedAt,
+            icon: HeartIcon,
+            tone: 'supporter',
+            title: i18n.t('supporterNote_body'),
+            actions: [
+              {
+                id: 'learn_more',
+                label: i18n.t('learnMore'),
+                onPress: () =>
+                  navigation.navigate('Paywall', {
+                    source: 'onboarding_checklist',
+                  }),
+              },
+            ],
+          },
+        ]
+
   if (invite) {
     return [
+      ...checklistNote,
       {
         id: `supporter_survey:${invite.survey.id}`,
         kind: 'supporter_survey',
@@ -92,10 +120,11 @@ export default function useSupporterNotifications(
     isDev: __DEV__,
     now: new Date(now),
   })
-  if (!path) return []
+  if (!path) return checklistNote
 
   const stampDismissal = () => set({ supporterNudgeDismissedAt: Date.now() })
   return [
+    ...checklistNote,
     {
       // Each cooldown ends in a new ask.
       id: `supporter_nudge:${supporterNudgeDismissedAt ?? 0}`,

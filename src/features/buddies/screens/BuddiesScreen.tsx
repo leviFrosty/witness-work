@@ -45,7 +45,7 @@ export default function BuddiesScreen({
   profileEditor,
 }: {
   /** The Profile editor for onboarding, composed in by the app tier. */
-  profileEditor: ReactNode
+  profileEditor: (nameInvalid: boolean) => ReactNode
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()

@@ -50,6 +50,7 @@ export default function BuddyInviteScreen({ route }: Props) {
   const hasName = useProfile((state) => state.name.trim().length > 0)
   const [preview, setPreview] = useState<Preview>({ state: 'loading' })
   const [accepting, setAccepting] = useState(false)
+  const [nameInvalid, setNameInvalid] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const { link } = route.params
 
@@ -79,6 +80,11 @@ export default function BuddyInviteScreen({ route }: Props) {
   }
 
   const accept = async () => {
+    if (accepting) return
+    if (!hasName) {
+      setNameInvalid(true)
+      return
+    }
     setAccepting(true)
     try {
       const { name } = await buddiesEngine.acceptInvite(link)
@@ -144,7 +150,13 @@ export default function BuddyInviteScreen({ route }: Props) {
         </View>
         <InviteShareSummary />
         {!hasName && (
-          <Card style={{ gap: 12 }}>
+          <Card
+            style={{
+              gap: 12,
+              borderWidth: 1,
+              borderColor: nameInvalid ? theme.colors.error : 'transparent',
+            }}
+          >
             <Text>{i18n.t('buddies_nameRequired')}</Text>
             <ActionButton
               onPress={() => navigation.navigate('PreferencesPublisher')}
@@ -154,7 +166,7 @@ export default function BuddyInviteScreen({ route }: Props) {
           </Card>
         )}
         <View style={{ gap: 10 }}>
-          <ActionButton disabled={accepting || !hasName} onPress={accept}>
+          <ActionButton disabled={accepting} onPress={accept}>
             {i18n.t('buddies_accept')}
           </ActionButton>
           <Text

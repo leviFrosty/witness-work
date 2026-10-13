@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { useState } from 'react'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -66,10 +67,10 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const priceValue = parseDecimal(price)
   const priceChanged = price !== toInput(current?.pricePerGallon)
   const askHowToApply = !!current && priceChanged && priceValue !== undefined
-  const submittable = name.trim().length > 0
+  const validation = useFormValidation({ name: !name.trim() }, 'mileage_fuel')
 
   const save = () => {
-    if (!submittable) return
+    if (!validation.validate()) return
     const fuelId = existing?.id ?? Crypto.randomUUID()
     saveFuel({
       id: fuelId,
@@ -134,6 +135,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
             label={i18n.t('name')}
             required
             textInputProps={{
+              invalid: validation.invalid('name'),
               value: name,
               onChangeText: setName,
               placeholder: i18n.t('mileage.fuelNamePlaceholder'),
@@ -176,9 +178,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
         />
 
         <View style={{ gap: 8 }}>
-          <ActionButton disabled={!submittable} onPress={save}>
-            {i18n.t('save')}
-          </ActionButton>
+          <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
           {existing && (
             <Button
               noTransform

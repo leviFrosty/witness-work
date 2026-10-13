@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { Alert, View } from 'react-native'
 import { noteUserAction } from '@/lib/userAction'
 import { richTextImages } from '@/lib/richText/inspect'
@@ -147,6 +148,13 @@ const TimeEntryForm = (props: Props) => {
     note: existingServiceReport?.report.note,
     noteDoc: existingServiceReport?.report.noteDoc,
   })
+  const validation = useFormValidation(
+    {
+      duration: serviceReport.hours * 60 + serviceReport.minutes <= 0,
+      category: selectedValue === CUSTOM_TYPE_VALUE,
+    },
+    'time_entry'
+  )
   const toast = useToastController()
 
   // Maps the Type row's report back onto the in-progress entry. The row owns
@@ -192,6 +200,7 @@ const TimeEntryForm = (props: Props) => {
   })
 
   const submit = () => {
+    if (!validation.validate()) return
     playConfetti()
     Haptics.heavy()
     setTimeout(() => {
@@ -276,6 +285,7 @@ const TimeEntryForm = (props: Props) => {
   }
 
   const save = () => {
+    if (!validation.validate()) return
     noteUserAction('time')
     const entry = savedEntry()
     updateServiceReport(entry)
@@ -314,12 +324,9 @@ const TimeEntryForm = (props: Props) => {
     ])
   }
 
-  const hasEnteredTime =
-    serviceReport.hours !== 0 || serviceReport.minutes !== 0
   // Custom is a transient picker state — until the user names the Category,
   // we don't have anything to attach the entry to.
   const hasSelectedCategory = selectedValue !== CUSTOM_TYPE_VALUE
-  const submittable = hasEnteredTime && hasSelectedCategory
   // A timer stopped before a minute passed hands over less than a minute.
   const providedLessThanOneMinute =
     !props.hours &&
@@ -330,7 +337,6 @@ const TimeEntryForm = (props: Props) => {
 
   const saveButton = (
     <ActionButton
-      disabled={!submittable}
       onPress={existingServiceReport ? save : submit}
       testID='time-entry-save'
     >
@@ -342,6 +348,7 @@ const TimeEntryForm = (props: Props) => {
 
   const dock = (
     <WhenDock
+      durationInvalid={validation.invalid('duration')}
       testID='time-entry'
       date={serviceReport.date}
       setDate={setDate}
@@ -376,6 +383,7 @@ const TimeEntryForm = (props: Props) => {
       testID='time-entry-note'
     />,
     <TypeFormRow
+      invalid={validation.invalid('category')}
       key='type'
       value={selectedValue}
       onChange={handleTypeChange}

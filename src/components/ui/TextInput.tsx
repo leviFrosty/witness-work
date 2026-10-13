@@ -14,6 +14,7 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export interface TextInputProps
   extends Omit<InputProps, 'placeholderTextColor' | 'selectionColor'> {
+  invalid?: boolean
   error?: string
   errors?: Errors
   setErrors?: React.Dispatch<React.SetStateAction<Errors>>
@@ -57,6 +58,7 @@ const PLACEHOLDER_ALIGN_VERTICAL = {
 const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   const {
     error,
+    invalid,
     setErrors,
     errors,
     style,
@@ -79,7 +81,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       borderWidth: 1,
       borderStyle: 'solid',
       borderRadius: theme.numbers.borderRadiusMd,
-      borderColor: error ? theme.colors.error : theme.colors.border,
+      borderColor: error || invalid ? theme.colors.error : theme.colors.border,
       backgroundColor: theme.colors.background,
       paddingHorizontal: 12,
       paddingVertical: 10,
@@ -112,9 +114,10 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     borderWidth?: number
     borderStyle?: 'solid' | 'dotted' | 'dashed'
   }
-  const borderWidth = error
-    ? 1
-    : (callerProps.borderWidth ?? resolvedStyle.borderWidth ?? 1)
+  const borderWidth =
+    error || invalid
+      ? 1
+      : (callerProps.borderWidth ?? resolvedStyle.borderWidth ?? 1)
 
   // TalkBack names an EditText by its text, and Android reports the hint as
   // the text of an empty field, so a native placeholder hides the
@@ -175,11 +178,12 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
         borderWidth,
         borderStyle:
           callerProps.borderStyle ?? resolvedStyle.borderStyle ?? 'solid',
-        borderColor: error
-          ? theme.colors.error
-          : (callerProps.borderColor ??
-            resolvedStyle.borderColor ??
-            theme.colors.border),
+        borderColor:
+          error || invalid
+            ? theme.colors.error
+            : (callerProps.borderColor ??
+              resolvedStyle.borderColor ??
+              theme.colors.border),
         borderRadius:
           callerProps.borderRadius ??
           resolvedStyle.borderRadius ??

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/inputs/InputLayout'
 
 export interface InputRowContainerProps {
+  invalid?: boolean
   children?: ReactNode
   leftIcon?: AppIcon
   lastInSection?: boolean
@@ -40,6 +41,7 @@ const InputRowContainer: React.FC<
   PropsWithChildren<InputRowContainerProps>
 > = ({
   children,
+  invalid,
   leftIcon,
   lastInSection,
   noHorizontalPadding,
@@ -221,6 +223,11 @@ const InputRowContainer: React.FC<
             flexShrink: 1,
           },
           controlStyle,
+          invalid && {
+            borderWidth: 1,
+            borderColor: theme.colors.error,
+            borderRadius: theme.numbers.borderRadiusMd,
+          },
         ]}
       >
         {children}

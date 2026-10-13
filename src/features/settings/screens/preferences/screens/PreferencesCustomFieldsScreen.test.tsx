@@ -78,7 +78,7 @@ it('warns while typing and still adds the sensitive field', async () => {
     root.root.findAllByType(MyTextInput)[0].props.onChangeText('Ethnicity')
   )
   expect(warnings()).toHaveLength(1)
-  expect(root.root.findByType(ActionButton).props.disabled).toBe(false)
+  expect(root.root.findByType(ActionButton).props.disabled).toBeFalsy()
   await act(async () => root.root.findByType(ActionButton).props.onPress())
   expect(mocks.addCustomFieldDef).toHaveBeenCalledWith('Ethnicity')
   expect(warnings()).toHaveLength(0)

@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import {
   ArrowUp as ArrowUpIcon,
   Square as SquareIcon,
@@ -74,7 +75,13 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
     ref
   ) => {
     const theme = useTheme()
-    const canSubmit = !!value.trim() && editable
+    const validation = useFormValidation(
+      { text: !value.trim() },
+      'notes_import_prompt'
+    )
+    const submit = () => {
+      if (editable && validation.validate()) onSubmit()
+    }
 
     const trailing = trailingAction ? (
       trailingAction
@@ -100,8 +107,8 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       </Button>
     ) : (
       <Button
-        disabled={!canSubmit}
-        onPress={onSubmit}
+        disabled={!editable}
+        onPress={submit}
         accessibilityRole='button'
         accessibilityLabel={submitAccessibilityLabel}
         style={{
@@ -110,7 +117,7 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: canSubmit
+          backgroundColor: editable
             ? theme.colors.accent
             : theme.colors.accentAlt,
         }}
@@ -129,7 +136,9 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           gap: 8,
           borderRadius: 24,
           borderWidth: 1,
-          borderColor: theme.colors.border,
+          borderColor: validation.invalid('text')
+            ? theme.colors.error
+            : theme.colors.border,
           backgroundColor: theme.colors.card,
           paddingHorizontal: 16,
           paddingTop: 12,

@@ -20,7 +20,8 @@ import useTheme from '@/contexts/theme'
 const TypeFormRow = (props: {
   value: string
   onChange: (selection: TypeSelection) => void
-  /** Shown under the row, e.g. why Save is disabled. */
+  /** Shown under the row, e.g. which field needs completing. */
+  invalid?: boolean
   hint?: string
 }) => {
   const theme = useTheme()
@@ -32,6 +33,7 @@ const TypeFormRow = (props: {
       style={{ borderTopWidth: 1, borderTopColor: theme.colors.border }}
     >
       <TypeSelectorRow
+        invalid={props.invalid}
         value={props.value}
         onChange={(selection) => {
           // Custom adds a name field under the row.

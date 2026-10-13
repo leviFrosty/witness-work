@@ -1,0 +1,23 @@
+# seed: pioneer
+# assert: (() => { const entries = Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).filter((e) => !e.id.startsWith('verify-')); return entries.length === 1 && entries.every((e) => e.hours * 60 + e.minutes > 0) && __WW_DEV__.state().route.name !== 'Add Time' })()
+appId: com.leviwilkerson.jwtimedev
+name: Reject empty time and save after correction
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- tapOn: Add Time
+- assertVisible: Submit
+# Submit remains tappable. An invalid attempt stays on the form.
+- tapOn:
+    id: time-entry-save
+- assertVisible: Submit
+- tapOn:
+    id: time-entry-duration-pill
+- tapOn:
+    id: time-entry-duration-hours-2
+- tapOn:
+    id: time-entry-picker-done
+- tapOn:
+    id: time-entry-save
+- assertVisible: Add Time

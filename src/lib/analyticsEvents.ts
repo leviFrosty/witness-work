@@ -28,6 +28,7 @@ export const analyticsEventNames = [
   'streak_reminders_changed',
   'streaks_setting_changed',
   'time_entry_created',
+  'form_validation_failed',
   'time_entry_deleted',
   'time_entry_updated',
   'time_rollover_apply_requested',

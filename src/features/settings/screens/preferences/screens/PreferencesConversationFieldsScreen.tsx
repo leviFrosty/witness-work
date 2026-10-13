@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
@@ -37,6 +38,10 @@ const PreferencesConversationFieldsScreen = () => {
   } = useConversations()
 
   const [newFieldName, setNewFieldName] = useState('')
+  const validation = useFormValidation(
+    { name: !newFieldName.trim() },
+    'conversation_field'
+  )
 
   // Local rename state per def — keyed by id, holds the in-progress edit value
   // until the user commits via blur.
@@ -48,7 +53,7 @@ const PreferencesConversationFieldsScreen = () => {
     .sort((a, b) => a.order - b.order)
 
   const handleAdd = () => {
-    if (!newFieldName.trim()) return
+    if (!validation.validate()) return
     addConversationFieldDef(newFieldName)
     analytics.capture('custom_field_created', { scope: 'conversation' })
     setNewFieldName('')
@@ -118,6 +123,7 @@ const PreferencesConversationFieldsScreen = () => {
               >
                 <MyTextInput
                   placeholder={i18n.t('conversationField_placeholder')}
+                  invalid={validation.invalid('name')}
                   value={newFieldName}
                   onChangeText={setNewFieldName}
                   autoCapitalize='words'
@@ -125,10 +131,7 @@ const PreferencesConversationFieldsScreen = () => {
                   textAlign='left'
                   style={{ flex: 1 }}
                 />
-                <ActionButton
-                  disabled={!newFieldName.trim().length}
-                  onPress={handleAdd}
-                >
+                <ActionButton onPress={handleAdd}>
                   <Text style={{ color: theme.colors.textInverse }}>
                     {i18n.t('add')}
                   </Text>

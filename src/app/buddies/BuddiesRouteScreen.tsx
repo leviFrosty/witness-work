@@ -3,5 +3,9 @@ import BuddiesScreen from '@/features/buddies/screens/BuddiesScreen'
 
 /** Composes the Profile editor into Buddies onboarding across feature tiers. */
 export default function BuddiesRouteScreen() {
-  return <BuddiesScreen profileEditor={<ProfileCard />} />
+  return (
+    <BuddiesScreen
+      profileEditor={(nameInvalid) => <ProfileCard nameInvalid={nameInvalid} />}
+    />
+  )
 }

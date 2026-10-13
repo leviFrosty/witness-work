@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { X as XIcon } from 'lucide-react-native'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, TextInput, View } from 'react-native'
@@ -311,6 +312,16 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     return value.trim().length > 0
   }, [field, op, value])
 
+  const validation = useFormValidation(
+    {
+      field: field === null,
+      operator: showOperatorRow && op === null,
+      value: field !== null && !isValid && (!showOperatorRow || op !== null),
+    },
+    'contact_filter',
+    open
+  )
+
   const buildFilter = (): ActiveFilter | null => {
     if (field === null) return null
     if (field === 'isFavorite') return { kind: 'isFavorite' }
@@ -343,6 +354,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   }
 
   const handleApply = () => {
+    if (!validation.validate()) return
     const built = buildFilter()
     if (!built) return
     onSave(built, initialIndex ?? null)
@@ -439,24 +451,42 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
         <View style={{ gap: 22 }}>
           {/* Top sections (field/operator/value) share a 14px rhythm. */}
           <View style={{ gap: 14 }}>
-            <View style={{ gap: 8 }}>
+            <View
+              style={{
+                gap: 8,
+                borderWidth: 1,
+                borderColor: validation.invalid('field')
+                  ? theme.colors.error
+                  : 'transparent',
+                borderRadius: theme.numbers.borderRadiusMd,
+              }}
+            >
               <Text style={sectionTitleStyle}>
                 {i18n.t('contacts_filterField')}
               </Text>
               <ChoiceChips<Exclude<FieldKey, null>>
-                                value={field}
+                value={field}
                 onChange={setField}
                 options={fieldOptions}
               />
             </View>
 
             {showOperatorRow && (
-              <View style={{ gap: 8 }}>
+              <View
+                style={{
+                  gap: 8,
+                  borderWidth: 1,
+                  borderColor: validation.invalid('operator')
+                    ? theme.colors.error
+                    : 'transparent',
+                  borderRadius: theme.numbers.borderRadiusMd,
+                }}
+              >
                 <Text style={sectionTitleStyle}>
                   {i18n.t('contacts_filterOperator')}
                 </Text>
                 <ChoiceChips<TextOperator | ComparableOperator>
-                                    value={op}
+                  value={op}
                   onChange={setOp}
                   options={operatorOptions}
                 />
@@ -464,12 +494,21 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
             )}
 
             {field === 'pinStaleness' && (
-              <View style={{ gap: 8 }}>
+              <View
+                style={{
+                  gap: 8,
+                  borderWidth: 1,
+                  borderColor: validation.invalid('value')
+                    ? theme.colors.error
+                    : 'transparent',
+                  borderRadius: theme.numbers.borderRadiusMd,
+                }}
+              >
                 <Text style={sectionTitleStyle}>
                   {i18n.t('contacts_filterValue')}
                 </Text>
                 <ChoiceChips<ContactStaleness>
-                                    value={value as ContactStaleness}
+                  value={value as ContactStaleness}
                   onChange={(v) => setValue(v)}
                   options={pinStalenessOptions}
                 />
@@ -489,6 +528,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   </Text>
                 </Pressable>
                 <MyTextInput
+                  invalid={validation.invalid('value')}
                   ref={valueInput}
                   value={value}
                   onChangeText={setValue}
@@ -515,17 +555,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
       >
         <Button
           onPress={handleApply}
-          disabled={!isValid}
           noTransform
           style={{
             paddingVertical: 14,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: theme.numbers.borderRadiusMd,
-            backgroundColor: isValid
-              ? theme.colors.accent
-              : theme.colors.accentAlt,
-            opacity: isValid ? 1 : 0.6,
+            backgroundColor: theme.colors.accent,
           }}
         >
           <Text

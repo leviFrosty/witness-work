@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
@@ -34,6 +35,10 @@ const PreferencesCustomFieldsScreen = () => {
   } = useContacts()
 
   const [newFieldName, setNewFieldName] = useState('')
+  const validation = useFormValidation(
+    { name: !newFieldName.trim() },
+    'custom_field'
+  )
 
   // Local rename state per def — keyed by id, holds the in-progress edit value
   // until the user commits via blur. Falls back to the stored label when
@@ -55,7 +60,7 @@ const PreferencesCustomFieldsScreen = () => {
   )
 
   const handleAdd = () => {
-    if (!newFieldName.trim()) return
+    if (!validation.validate()) return
     addCustomFieldDef(newFieldName)
     analytics.capture('custom_field_created', { scope: 'contact' })
     setNewFieldName('')
@@ -130,6 +135,7 @@ const PreferencesCustomFieldsScreen = () => {
               >
                 <MyTextInput
                   placeholder={i18n.t('customField_placeholder')}
+                  invalid={validation.invalid('name')}
                   value={newFieldName}
                   onChangeText={setNewFieldName}
                   autoCapitalize='words'
@@ -137,10 +143,7 @@ const PreferencesCustomFieldsScreen = () => {
                   textAlign='left'
                   style={{ flex: 1 }}
                 />
-                <ActionButton
-                  disabled={!newFieldName.trim().length}
-                  onPress={handleAdd}
-                >
+                <ActionButton onPress={handleAdd}>
                   <Text style={{ color: theme.colors.textInverse }}>
                     {i18n.t('add')}
                   </Text>

@@ -24,6 +24,7 @@ import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 
 type Props = {
+  durationInvalid?: boolean
   date: Date
   setDate: (date: Date) => void
   /**
@@ -95,6 +96,7 @@ const WhenPill = (props: {
   /** A second, smaller line under the value. */
   caption?: string
   accessibilityLabel: string
+  invalid?: boolean
   placeholder?: boolean
   flex?: number
   testID: string
@@ -116,6 +118,8 @@ const WhenPill = (props: {
         minHeight: 56,
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: PILL_FILL,
+        borderWidth: 1,
+        borderColor: props.invalid ? theme.colors.error : 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 2,
@@ -388,6 +392,7 @@ const WhenDock = (props: Props) => {
           )}
           {props.timeSpan ? (
             <WhenPill
+              invalid={props.durationInvalid}
               icon={TimerIcon}
               flex={2}
               value={totalMinutes ? duration : i18n.t('planForm_howLong')}
@@ -405,6 +410,7 @@ const WhenDock = (props: Props) => {
             />
           ) : (
             <WhenPill
+              invalid={props.durationInvalid}
               icon={TimerIcon}
               value={totalMinutes ? duration : props.durationLabel}
               placeholder={!totalMinutes}

@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { ReactNode, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -61,12 +62,13 @@ export default function BuddiesOnboarding({
 }: {
   onDone: () => void
   /** The Profile editor, composed in by the app tier. */
-  profileEditor: ReactNode
+  profileEditor: (nameInvalid: boolean) => ReactNode
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const hasName = useProfile((state) => state.name.trim().length > 0)
   const [step, setStep] = useState(0)
+  const validation = useFormValidation({ name: !hasName }, 'buddies_profile')
   const current = STEPS[step]
   const next = () => setStep((index) => index + 1)
 
@@ -176,7 +178,7 @@ export default function BuddiesOnboarding({
                 description={i18n.t('buddies_onboardingProfileInfo')}
               />
             </View>
-            {profileEditor}
+            {profileEditor(validation.invalid('name'))}
           </>
         )}
       </ScrollView>
@@ -196,8 +198,10 @@ export default function BuddiesOnboarding({
           </Text>
         )}
         <ActionButton
-          disabled={current === 'profile' && !hasName}
-          onPress={step === STEPS.length - 1 ? onDone : next}
+          onPress={() => {
+            if (step !== STEPS.length - 1) next()
+            else if (validation.validate()) onDone()
+          }}
         >
           {step === STEPS.length - 1
             ? i18n.t('getStarted')

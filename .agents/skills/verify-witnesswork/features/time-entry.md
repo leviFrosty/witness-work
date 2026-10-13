@@ -7,7 +7,7 @@ Users who log hours record service time for a day, from the Home service report 
 - `time-home-card` opens Add Time from Home's service report card.
 - `time-quick-action` opens Add Time from the center "Quick Action" menu.
 - `time-deep-link` opens `witnesswork://add-time` (empty) and `witnesswork://add-time/<YYYY-MM-DD>` (date pre-filled).
-- `time-validation` keeps Submit disabled until hours or minutes are set (the Time pill reads "Time" until then), and while the Type is an unnamed Custom category (a hint under the Type row says why). Time from a timer stopped under a minute shows "Provided time is less than one minute." above the pills.
+- `time-validation` keeps Submit active; tapping it without hours or minutes blocks saving and outlines Time in red (the Time pill reads "Time" until then). An unnamed Custom category also blocks saving and outlines its name field in red (a hint under the Type row says why). Time from a timer stopped under a minute shows "Provided time is less than one minute." above the pills.
 - `time-category` selects a Type (Standard, or a credit Category such as LDC).
 - `time-edit-delete` edits or deletes an existing entry from the month report.
 - `time-day-sheet` logs, edits or deletes time inside a day's sheet without leaving the day. A day on Schedule, Home's This Week, or Progress' All Days opens a split sheet over the bottom half of the screen. A day with no time yet folds the form into Time Reports under a native collapsible "Add Time" card (`day-time-form`; SwiftUI's DisclosureGroup, Compose's expandable list item). Tapping it unfolds the Time pill, Note and Type, and Submit (no Date pill), and the saved entry takes the card's place. Otherwise + beside Time Reports (`day-add-time`), a tapped entry, or a Plan's Log as Time swaps the day for the full form, and saving returns to the day. Note opens the full-screen note editor; the sheet slides out of view while it's up and comes back with the form as it was. The sheet's grabber ("Resize") drags it between 30% and 65% of the window (kept on the device), and dragging it well below that, or Close, closes it.
@@ -27,15 +27,15 @@ Preconditions:
 
 Steps:
 
-- **Open.** Run `wwv ad press 'label="Add Time"' --settle`. The form has the Plan form's layout: a Details list (Note, Type) above a bottom dock with the Date and Time pills and Submit, which is disabled. The dock's controls have testIDs: `time-entry-date-pill`, `time-entry-duration-pill`, `time-entry-picker-done` (the pickers' Done) and `time-entry-save`. The Note row is `time-entry-note-row`; it opens the full-screen note editor (see [Rich notes](./rich-notes.md)), closed by `note-editor-done`.
-- **Pick hours.** Run `wwv ad press 'id="time-entry-duration-pill"' --settle`, tap a row of the hours wheel (see Gotchas), then `wwv ad press 'id="time-entry-picker-done"' --settle`. The pill shows the duration and Submit is enabled.
+- **Open.** Run `wwv ad press 'label="Add Time"' --settle`. The form has the Plan form's layout: a Details list (Note, Type) above a bottom dock with the Date and Time pills and Submit, which is enabled. Press Submit with zero duration: the form stays open and Time is outlined red; the store must be unchanged. The dock's controls have testIDs: `time-entry-date-pill`, `time-entry-duration-pill`, `time-entry-picker-done` (the pickers' Done) and `time-entry-save`. The Note row is `time-entry-note-row`; it opens the full-screen note editor (see [Rich notes](./rich-notes.md)), closed by `note-editor-done`.
+- **Pick hours.** Run `wwv ad press 'id="time-entry-duration-pill"' --settle`, tap a row of the hours wheel (see Gotchas), then `wwv ad press 'id="time-entry-picker-done"' --settle`. The pill shows the duration and its red outline clears.
 - **Submit.** Run `wwv ad press 'id="time-entry-save"' --settle`. The app returns to Home.
 - **Read back.** Run `wwv eval 'Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap(m => Object.values(m).flat()).filter(e => !e.id.startsWith("verify-") && new Date(e.date).toDateString() === new Date().toDateString())'`. One entry with `hours: 2`.
 - **Second view.** Run `wwv ad press 'label="Progress"' --settle`. The month cell's logged hours went up by 2.
 - **Deep link.** Run `wwv link 'witnesswork://add-time/2026-10-01'`. The route is `Add Time` and the Date pill shows that day.
 - **Quick Action.** Run `wwv ad press 'label="Quick Action"' --settle`, then `wwv ad press 'label="Add Time"' --settle`.
 - **Proof.** Run `wwv shot time-entry-saved` and `wwv errors`.
-- **Scripted.** Run `wwv flow e2e/maestro/add-time.yaml`.
+- **Scripted.** Run `wwv flow e2e/maestro/time-validation.yaml` for empty-submit rejection and correction, and `wwv flow e2e/maestro/add-time.yaml` for logging with a note.
 - **Day sheet.** Run `wwv flow e2e/maestro/day-sheet-add-time.yaml`: its setup clears today's entries and opens today on Schedule (as the Calendar widget's link does); it unfolds `day-time-form`, logs 2 hours with a note (through the note editor), the entry replaces the card, then `day-add-time` opens the full form and Go Back returns to the day. Resize with `wwv ad gesture pan <x> <y> 0 <dy>` from the grabber's center (the "Resize" node) and screenshot; read the kept size (a share of the window) with `wwv eval '__WW_DEV__.stores.splitSheet.getState().ratio'`.
 
 ## Gotchas

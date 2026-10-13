@@ -34,7 +34,6 @@ import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import PointerHover from '@/components/ui/PointerHover'
-import SupporterNote from '@/features/supporter/components/SupporterNote'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import { useShallow } from 'zustand/react/shallow'
@@ -241,7 +240,10 @@ const HomeChecklist = () => {
       withTiming(1, { duration: 220 })
     )
     fireworks.fire({ count: 22, velocity: 220 })
-    setPref({ homeChecklistAllDoneCelebrated: true })
+    setPref({
+      homeChecklistAllDoneCelebrated: true,
+      homeChecklistCompletedAt: Date.now(),
+    })
   }, [
     isFocused,
     allDone,
@@ -427,9 +429,6 @@ const HomeChecklist = () => {
           >
             {i18n.t('homeChecklistFooter')}
           </Text>
-          <View style={{ alignSelf: 'stretch' }}>
-            <SupporterNote source='onboarding_checklist' />
-          </View>
           <Button
             onPress={handleDismiss}
             style={{

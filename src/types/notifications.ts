@@ -16,6 +16,8 @@ export type NotificationKind =
   | 'notes_import'
   | 'supporter_nudge'
   | 'supporter_survey'
+  /** The Supporter note after finishing the Home checklist. */
+  | 'supporter_note'
   | 'data_protection_retention'
   | 'buddies'
   /**

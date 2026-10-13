@@ -904,6 +904,12 @@ export const PREFERENCE_DEFAULTS = {
    */
   homeChecklistAllDoneCelebrated: false,
   /**
+   * Epoch ms the Home checklist was first completed on this device. Lists the
+   * one-time Supporter note in the notifications tray; `null` for anyone who
+   * finished it before the note moved there. Per-device, like the celebration.
+   */
+  homeChecklistCompletedAt: null as number | null,
+  /**
    * Stable id of the onboarding step the user was last on, so a mid-flow app
    * reload resumes where they left off instead of throwing them back to the
    * hero. Stored as an id (not an index) because publisher-conditional steps

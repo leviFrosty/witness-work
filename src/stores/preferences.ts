@@ -1074,7 +1074,7 @@ export const PREFERENCE_DEFAULTS = {
    * Preferences → Publisher or the report view screen. Drives the one-tap
    * submit CTA on `ServiceReportViewScreen`. Syncable — it's user intent.
    */
-  defaultExportMethod: 'copy' as ReportExportMethod,
+  defaultExportMethod: 'nwpublisher' as ReportExportMethod,
   /**
    * `YYYY-MM` keys of months whose report the user has sent onward via any
    * export method (copy, share, Hourglass, NW Publisher). Drives the

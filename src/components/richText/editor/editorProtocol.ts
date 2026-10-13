@@ -83,7 +83,7 @@ export type EditorFonts = {
 export type EditorSetup = {
   /** The note as a Tiptap JSON doc. */
   doc: Record<string, unknown>
-  /** Image id → loadable URL (file:// in release builds, data: in dev). */
+  /** Image id → inline data: URL the page can show. */
   imageSources: Record<string, string>
   theme: EditorTheme
   fonts: EditorFonts

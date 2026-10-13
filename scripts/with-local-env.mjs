@@ -78,16 +78,23 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   return { env, files }
 }
 
-export function validateLocalEnv(env, platform) {
+export function validateLocalEnv(
+  env,
+  platform,
+  { allowUnavailablePurchases = false } = {}
+) {
   if (!['ios', 'android'].includes(platform))
     throw new Error('Expected ios or android')
   const key =
     platform === 'android'
       ? 'EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY'
       : 'EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY'
-  if (!env[key]?.trim())
+  if (
+    !env[key]?.trim() &&
+    !(platform === 'android' && allowUnavailablePurchases)
+  )
     throw new Error(`${key} is missing in the selected environment`)
-  if (env.APP_VARIANT !== 'development' && env[key].startsWith('test_')) {
+  if (env.APP_VARIANT !== 'development' && env[key]?.startsWith('test_')) {
     throw new Error(`${key} must use a store SDK key outside development`)
   }
   if (
@@ -107,14 +114,30 @@ export function validateLocalEnv(env, platform) {
   return api
 }
 
+/** `expo run` building the Release app instead of the dev client. */
+export function isReleaseRun(command, args) {
+  const flag = { 'run:ios': '--configuration', 'run:android': '--variant' }[
+    args[0]
+  ]
+  const value = flag && args[args.indexOf(flag) + 1]
+  return command === 'expo' && args.includes(flag) && /^release$/i.test(value)
+}
+
 /**
- * Profiling builds are Release builds, and RevenueCat refuses a Test Store key
- * in a non-debuggable Android app (a dialog that closes the app). Without a
- * key, Android takes its existing purchases-unavailable path instead.
+ * Release builds of the development app (profiling, and `pnpm ios:ota` /
+ * `android:ota` for testing `dev` OTA updates) keep its RevenueCat Test Store
+ * key, which RevenueCat answers with an alert and a crash. iOS compiles
+ * RevenueCat with its opt-out flag. Android can't opt out (the check is that
+ * the app isn't debuggable), so it gets no key and takes the app's existing
+ * purchases-unavailable path, as `update:dev` Android bundles do.
  */
-export function applyPerfProbe(env, platform) {
-  if (env.EXPO_PUBLIC_PERF_PROBE === '1' && platform === 'android')
-    env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY = ''
+export function applyDevRelease(env, platform, release = false) {
+  if (env.EXPO_PUBLIC_PERF_PROBE !== '1' && !release) return env
+  if (platform === 'android') env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY = ''
+  else
+    env.XCODE_XCCONFIG_FILE = fileURLToPath(
+      new URL('../config/dev-release.xcconfig', import.meta.url)
+    )
   return env
 }
 
@@ -153,17 +176,24 @@ function main() {
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files } = loadLocalEnv(root, variant)
   const api = validateLocalEnv(env, platform)
-  applyPerfProbe(env, platform)
   if (separator !== '--check' && (separator !== '--' || !command)) {
     throw new Error(
       'Usage: node scripts/with-local-env.mjs <variant> <ios|android> <--check|-- command ...>'
     )
   }
+  const release = variant === 'development' && isReleaseRun(command, args)
+  // The Release app checks the `dev` channel on launch and stops at startup
+  // without its client key; fail here instead of after a long native build.
+  if (release && !env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
+    throw new Error(
+      'EXPO_PUBLIC_HOT_UPDATER_API_KEY is missing; a development Release build needs the dev update key (docs/ota-updates.md)'
+    )
+  applyDevRelease(env, platform, release)
   console.log(
     `[env] ${variant}/${platform}: ${files.map((file) => path.relative(root, file)).join(', ')}`
   )
   console.log(
-    `[env] RevenueCat configured${platform === 'android' ? '; Maps key configured (native rebuild required after changes)' : ''}; API: ${api.origin}`
+    `[env] RevenueCat ${platform === 'android' && !env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY ? 'off for this Release build' : 'configured'}${platform === 'android' ? '; Maps key configured (native rebuild required after changes)' : ''}; API: ${api.origin}`
   )
   if (['localhost', '127.0.0.1', '[::1]'].includes(api.hostname)) {
     console.warn(
@@ -186,6 +216,9 @@ function main() {
   if (command === 'expo' && args[0] === 'run:android') {
     run('expo', ['prebuild', '--platform', 'android', '--no-install'])
   }
+  // Prebuild embeds the update channel and native fingerprint, so a Release
+  // build from a stale ios/ would never match the `dev` OTA catalog.
+  if (release && platform === 'ios') run('pnpm', ['run', 'prebuild'])
   if (
     platform === 'android' &&
     command === 'expo' &&

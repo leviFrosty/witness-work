@@ -3261,6 +3261,7 @@ export {
   releasePlatform,
   run,
   sessionName,
+  screenshot,
   shutdownWarmDevice,
   simctlDevices,
   sleep,

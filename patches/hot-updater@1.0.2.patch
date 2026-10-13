@@ -1,0 +1,15 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 4ae210261020f01ff70a9ad8c58135d2142edca1..e173b63d9be59b38d53aab22ce98984613a95899 100755
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -26992,7 +26992,9 @@ async function validateSigningConfig(config, options = {}) {
+ 		paths: []
+ 	})]);
+ 	const usesExternalNativeConfig = Object.hasOwn(options, "nativePublicKey");
+-	if (!iosExists && !androidExists && usesExternalNativeConfig) {
++	// Expo CNG selects its trust anchor from app config; generated native files
++	// can belong to a different app variant from an earlier local build.
++	if (usesExternalNativeConfig) {
+ 		const externalResult = {
+ 			value: options.nativePublicKey ?? null,
+ 			paths: ["Expo app config"]

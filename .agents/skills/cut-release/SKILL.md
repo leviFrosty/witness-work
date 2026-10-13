@@ -20,7 +20,7 @@ A production release starts only after the user types `SHIP-PROD-X.Y.Z` with the
 
 At the end of step 2, when the target version is known, ask once in a short message. Give the version, the headline changes, and the exact keyword to type. You may run step 3 while you wait, since it's local. Don't start step 4, including the ww-api release, until the keyword arrives. If the target version changes later, ask again for the new keyword.
 
-Pass the keyword as `WW_RELEASE_CONFIRM` to the commands that check it: the release tag push (`.husky/pre-push`) and `pnpm run build:prod-auto-submit` (both via `scripts/release-confirm.mjs`). Store uploads and review submissions have no check, so confirm the keyword yourself before each one. If a check refuses, ask the user. Never bypass it with `--no-verify`, `HUSKY=0`, or by running the script's steps by hand.
+Pass the keyword as `WW_RELEASE_CONFIRM` to the commands that check it: the release tag push (`.husky/pre-push`), `pnpm run build:prod-auto-submit`, and a production OTA through `pnpm update:production` (all via `scripts/release-confirm.mjs`). Store uploads and review submissions have no check, so confirm the keyword yourself before each one. If a check refuses, ask the user. Never bypass it with `--no-verify`, `HUSKY=0`, or by running the script's steps by hand.
 
 Read `CONTEXT.md`, `../release-process/SKILL.md`, `../app-store-release/SKILL.md`, and `docs/build.md`. The release-process skill owns Git conventions; app-store-release owns ASC commands and metadata. Use installed CLI help for current flags. Execute these steps; record evidence before advancing.
 

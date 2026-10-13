@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import * as Updates from 'expo-updates'
+import { reloadApp } from '@/lib/hotUpdater'
 import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
@@ -24,7 +24,7 @@ export function useAppMigrations() {
           // Legacy data was copied: reload so hydrated stores re-read MMKV.
           // Fresh installs skip this; reloading mid-launch strands dev clients
           // on the splash screen ("app context has been lost").
-          if (await migrateFromAsyncStorage()) await Updates.reloadAsync()
+          if (await migrateFromAsyncStorage()) await reloadApp()
         } catch {
           // Falls back to async storage
         }

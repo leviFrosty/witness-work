@@ -1,6 +1,6 @@
 ---
 name: beta-build
-description: Ship the current branch to the WitnessWork Beta app on the user's phone — an EAS Update when native code is unchanged, otherwise a local build uploaded to internal TestFlight. Use when the user runs /beta-build or asks to push, send or ship work to Beta, TestFlight or their phone to test it.
+description: Ship the current branch to the WitnessWork Beta app on the user's phone — a Hot Updater bundle when native code is unchanged, otherwise a local build uploaded to internal TestFlight. Use when the user runs /beta-build or asks to push, send or ship work to Beta, TestFlight or their phone to test it.
 ---
 
 # Beta build
@@ -23,10 +23,10 @@ Run in the background and log to a file:
 mkdir -p .asc && scripts/build-beta.sh --mode auto > .asc/beta-build.log 2>&1
 ```
 
-The script takes a per-machine lock, syncs widget sources, loads `.env.beta` (falls back to the main checkout's copy), then compares HEAD's native fingerprint (`fingerprint.config.js`) with the `Runtime:` line of the latest TestFlight build's What to Test notes:
+The script takes a per-machine lock, syncs widget sources, loads `.env.beta` (falls back to the main checkout's copy), then compares HEAD's native fingerprint (`hot-updater.config.ts`) with the `Hot Updater runtime:` line of the latest TestFlight build's What to Test notes:
 
-- **Match → OTA**: `eas update --channel beta` (about 1–2 min) plus PostHog source maps.
-- **Differs → native**: `eas build --profile beta --local` then `asc builds upload --wait` with What to Test = branch, commit, subject, runtime (about 15–30 min).
+- **Match → OTA**: `node scripts/ota.mjs beta ios` (about 1–2 min) plus PostHog source maps.
+- **Differs → native**: `eas build --profile beta --local` then `asc builds upload --wait` with What to Test = branch, commit, subject, Hot Updater runtime (about 15–30 min).
 
 Before either path ships, `scripts/release-api.sh --branch <branch>` puts the backend out first (see `../release-process/SKILL.md`). It stops if ww-api's branch with this branch's name has commits that aren't on ww-api `main`. If ww-api `main` has commits since its latest `v*` tag, it tags and deploys the next ww-api version (about 1 min). Its `API_RESULT` line says `released` or `current`.
 
@@ -36,7 +36,7 @@ Tell the user which path it took. Watch the log to completion; relay only milest
 
 Send a short summary the user can act on from their phone:
 
-- **OTA:** commit and update group. "Swipe WitnessWork Beta away and reopen it." Launch waits up to 10 s for the update. Settings → version row shows the new commit hash.
+- **OTA:** commit and update channel. "Swipe WitnessWork Beta away and reopen it." Let the background download finish, then swipe it away and reopen it again. Settings → version row shows the new commit hash.
 - **Native:** version (build), commit. "Update WitnessWork Beta in TestFlight." Processing is already complete when the script exits.
 - **ww-api:** the tag, when `API_RESULT status=released`.
 

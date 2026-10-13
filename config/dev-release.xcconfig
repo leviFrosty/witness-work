@@ -1,0 +1,4 @@
+// Applied through XCODE_XCCONFIG_FILE to Release builds of the development app
+// (scripts/with-local-env.mjs). Its RevenueCat Test Store key otherwise makes
+// RevenueCat show an alert and crash. Never used for Beta or production.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) BYPASS_SIMULATED_STORE_RELEASE_CHECK

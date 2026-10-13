@@ -1,0 +1,20 @@
+{
+  "development": {
+    "channel": "dev",
+    "baseURL": "https://ww-updates-dev.levi-wilkerson.workers.dev",
+    "databaseId": "5ff7125f-f92b-40ef-b829-c2c408b742b7",
+    "bucketName": "ww-updates-dev"
+  },
+  "beta": {
+    "channel": "beta",
+    "baseURL": "https://ww-updates-beta.levi-wilkerson.workers.dev",
+    "databaseId": "684a53de-2b48-46b7-8bb9-e9f8a12a4ba6",
+    "bucketName": "ww-updates-beta"
+  },
+  "production": {
+    "channel": "production",
+    "baseURL": "https://ww-updates-prod.levi-wilkerson.workers.dev",
+    "databaseId": "eaf373cf-3bf5-4301-b4f5-f321f025e880",
+    "bucketName": "ww-updates-prod"
+  }
+}

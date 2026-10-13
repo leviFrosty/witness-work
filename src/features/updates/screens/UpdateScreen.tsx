@@ -4,7 +4,10 @@ import Text from '@/components/ui/MyText'
 import { useEffect, useRef, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import * as Updates from 'expo-updates'
+import {
+  downloadSelectedUpdate,
+  hotUpdater,
+} from '@/features/updates/lib/updates'
 import { errorTracking } from '@/lib/errorTracking'
 import { isConnectivityError } from '@/lib/http/networkError'
 import ActionButton from '@/components/ui/ActionButton'
@@ -34,10 +37,10 @@ const UpdateScreen = () => {
     let active = true
     const update = async () => {
       try {
-        const result = await Updates.fetchUpdateAsync()
+        const downloaded = await downloadSelectedUpdate()
         if (!active) return
-        if (result.isNew || result.isRollBackToEmbedded) {
-          await Updates.reloadAsync()
+        if (downloaded) {
+          await hotUpdater.reload()
         } else {
           navigation.replace('Root')
         }

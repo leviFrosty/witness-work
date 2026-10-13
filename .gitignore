@@ -87,3 +87,10 @@ credentials/ios
 # agent verification state and evidence (scripts/verify)
 .verify/
 .agent-device/
+
+# Hot Updater provider and signing credentials / generated artifacts
+.env.hotupdater*
+fingerprint.json
+.hot-updater/
+.hot-updater/output
+.hot-updater/log

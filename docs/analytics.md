@@ -847,3 +847,17 @@ field names (years, months, ids) read as `*`.
 ### Form validation
 
 `form_validation_failed` records the first invalid submission per mounted form, with `form` (a fixed form identifier) and `fields` (comma-separated field identifiers). This answers which forms and required inputs prevent completion. It never includes input values, custom field labels, names, notes, or other private data; successful completion uses the existing create/update events. Repeated invalid taps do not send additional events.
+
+### Update delivery diagnostics
+
+Hot Updater Insights sends operational launch, downloaded-bundle, rollback and
+failure reports to the matching self-hosted Cloudflare update Worker. Reports
+use the SDK's random installation ID and update/platform/channel compatibility
+metadata; no account identity is assigned and no contact names, notes, addresses
+or service records are sent. Development clients and performance probes do not
+run the Insights plugin. These reports diagnose delivery and native rollback;
+they are separate from PostHog product events and do not add a per-tap event.
+
+Error context now uses `updateChannel` and `updateBundleId`, replacing
+`expoChannel` and `expoUpdateVersion`. The bundle identifier follows Hot
+Updater's public selected-update identity.

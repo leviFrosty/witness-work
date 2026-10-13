@@ -8,6 +8,7 @@ const runtime = vi.hoisted(() => ({
   capture: vi.fn(),
   captureException: vi.fn(),
   knownOffline: false,
+  prepared: false,
 }))
 vi.mock('react-native', () => ({
   Alert: { alert: runtime.alert },
@@ -17,11 +18,13 @@ vi.mock('react-native', () => ({
     },
   },
 }))
-vi.mock('expo-updates', () => ({
-  get isEnabled() {
-    return runtime.enabled
+vi.mock('@/lib/hotUpdater', () => ({
+  get otaEnabled() {
+    return runtime.enabled && !__DEV__
   },
-  checkForUpdateAsync: runtime.check,
+  checkHotUpdate: runtime.check,
+  hasPreparedUpdate: async () => runtime.prepared,
+  hotUpdater: { reload: vi.fn() },
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
@@ -40,11 +43,12 @@ beforeEach(() => {
   runtime.enabled = true
   runtime.platform = 'ios'
   runtime.knownOffline = false
-  runtime.check.mockResolvedValue({ isAvailable: false })
+  runtime.prepared = false
+  runtime.check.mockResolvedValue(null)
 })
 
-it('checks Expo and enters the existing Update screen only for an available update', async () => {
-  runtime.check.mockResolvedValue({ isAvailable: true })
+it('checks Hot Updater and enters the existing Update screen only for an available update', async () => {
+  runtime.check.mockResolvedValue({ id: 'test-update', updateBundle: vi.fn() })
   const navigate = vi.fn()
   expect(await fetchUpdate(navigate)).toBe('available')
   expect(runtime.check).toHaveBeenCalledOnce()
@@ -71,7 +75,7 @@ it.each(['development', 'disabled'])(
 )
 
 it('prevents simultaneous checks from Settings and the menu bar', async () => {
-  let finish: (value: { isAvailable: boolean }) => void = () => {}
+  let finish: (value: null) => void = () => {}
   runtime.check.mockReturnValue(
     new Promise((resolve) => {
       finish = resolve
@@ -80,7 +84,7 @@ it('prevents simultaneous checks from Settings and the menu bar', async () => {
   const pending = fetchUpdate(vi.fn())
   expect(await fetchUpdate(vi.fn())).toBe('busy')
   expect(runtime.check).toHaveBeenCalledOnce()
-  finish({ isAvailable: false })
+  finish(null)
   await pending
   expect(await fetchUpdate(vi.fn())).toBe('up_to_date')
 })
@@ -117,4 +121,24 @@ it('skips the check when the OS already reports no connection', async () => {
   runtime.knownOffline = true
   expect(await fetchUpdate(vi.fn())).toBe('offline')
   expect(runtime.check).not.toHaveBeenCalled()
+})
+
+it('restarts into an already staged startup update instead of saying up to date', async () => {
+  runtime.prepared = true
+  const navigate = vi.fn()
+  expect(await fetchUpdate(navigate)).toBe('available')
+  expect(navigate).toHaveBeenCalledWith('Update')
+  expect(runtime.alert).not.toHaveBeenCalled()
+})
+
+it('adopts metadata for the running artifact without requesting a restart', async () => {
+  const updateBundle = vi.fn().mockResolvedValue(true)
+  runtime.check.mockResolvedValue({
+    transitionKind: 'ADOPT_RELEASE',
+    updateBundle,
+  })
+  const navigate = vi.fn()
+  expect(await fetchUpdate(navigate)).toBe('up_to_date')
+  expect(updateBundle).toHaveBeenCalledOnce()
+  expect(navigate).not.toHaveBeenCalled()
 })

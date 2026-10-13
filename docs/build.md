@@ -518,9 +518,11 @@ after widget and framework embedding using CocoaPods' `post_integrate` hook.
 The upload consumes the app dSYM; placing it before widget embedding creates
 an Xcode archive dependency cycle through the app's Info.plist.
 
-OTA updates do not run Xcode upload hooks. After each `eas update`, run
-`pnpm upload:posthog-sourcemaps` against its unchanged `dist` output before
-removing the artifacts. Do not rebuild between publishing and uploading maps.
+OTA updates do not run Xcode upload hooks. `scripts/ota.mjs` pairs the composed
+Hermes maps in `dist/hot-updater-build` with the shipped bytecode, then uploads
+them after publishing. A failed upload is reported separately; preserve that
+build output and commit hash for recovery. Native uploads use the separate
+`pnpm upload:posthog-sourcemaps` command.
 
 Verify the next release in PostHog Error Tracking: check that Symbol sets were
 uploaded, then capture a test exception from that release and confirm its stack
@@ -535,8 +537,14 @@ and [source map uploads](https://posthog.com/docs/error-tracking/upload-source-m
 
 Invoke `/beta-build` (see `.agents/skills/beta-build/SKILL.md`) to put any branch on your phone. It runs `scripts/build-beta.sh` (`pnpm run build:beta`), which ships the committed HEAD to **WitnessWork Beta**. That's a separate App Store Connect app (`com.leviwilkerson.jwtimebeta`, orange icon, never submitted for review) with its own App Group, iCloud container and data. WIP builds never replace the App Store app or touch real records, and Beta can reuse the current marketing version indefinitely.
 
-- **Native build + TestFlight** when native code changed: `eas build --profile beta --local`, then `asc builds upload --wait`. The upload sets What to Test to the branch, commit and `Runtime: <fingerprint>`.
-- **EAS Update** to the `beta` channel when it didn't. Beta uses the `fingerprint` runtime policy (`fingerprint.config.js`), and the script compares HEAD's fingerprint with the latest TestFlight build's `Runtime:` line. Beta launches wait up to 10 s for a new update, so a relaunch picks it up.
+- **Native build + TestFlight** when native code changed: `eas build --profile beta --local`, then `asc builds upload --wait`. The upload sets What to Test to the branch, commit and `Hot Updater runtime: <fingerprint>`.
+- **Hot Updater** to the isolated Cloudflare `beta` service when it didn't. The
+  script compares Hot Updater's fingerprint with the latest TestFlight build's
+  `Hot Updater runtime:` line. A build made with Expo Updates has no matching
+  marker, so the first Beta shipment must be native. Updates download in the
+  background and apply on the next cold launch; Settings → Check for Update can
+  download and restart immediately. See [OTA updates](./ota-updates.md).
+
 - **Backend first:** Beta calls the production API, so before either path `scripts/release-api.sh` releases ww-api `main` if it has unreleased commits. It stops if ww-api has an unmerged branch with this branch's name. See the `release-process` skill.
 
 Prerequisites are the same as production builds, plus:

@@ -485,6 +485,12 @@
     "author": "The Babel Team"
   },
   {
+    "name": "@babel/runtime",
+    "version": "8.0.7",
+    "license": "MIT",
+    "author": "The Babel Team"
+  },
+  {
     "name": "@babel/template",
     "version": "7.29.7",
     "license": "MIT",
@@ -551,7 +557,7 @@
   },
   {
     "name": "@expo/cli",
-    "version": "57.0.25",
+    "version": "57.0.27",
     "license": "MIT",
     "author": "Expo"
   },
@@ -691,7 +697,7 @@
   },
   {
     "name": "@expo/router-server",
-    "version": "57.0.10",
+    "version": "57.0.11",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -720,7 +726,7 @@
   },
   {
     "name": "@expo/ui",
-    "version": "57.0.19",
+    "version": "57.0.21",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -742,8 +748,20 @@
     "author": "atomiks"
   },
   {
+    "name": "@floating-ui/core",
+    "version": "1.8.0",
+    "license": "MIT",
+    "author": "atomiks"
+  },
+  {
     "name": "@floating-ui/dom",
     "version": "1.7.4",
+    "license": "MIT",
+    "author": "atomiks"
+  },
+  {
+    "name": "@floating-ui/dom",
+    "version": "1.8.0",
     "license": "MIT",
     "author": "atomiks"
   },
@@ -764,6 +782,42 @@
     "version": "0.2.10",
     "license": "MIT",
     "author": "atomiks"
+  },
+  {
+    "name": "@floating-ui/utils",
+    "version": "0.2.12",
+    "license": "MIT",
+    "author": "atomiks"
+  },
+  {
+    "name": "@hot-updater/plugin-core",
+    "version": "1.0.2",
+    "license": "MIT",
+    "author": "gronxb"
+  },
+  {
+    "name": "@hot-updater/plugin-insights",
+    "version": "1.0.2",
+    "license": "MIT",
+    "author": "gronxb"
+  },
+  {
+    "name": "@hot-updater/plugin-remote-config",
+    "version": "1.0.2",
+    "license": "MIT",
+    "author": "gronxb"
+  },
+  {
+    "name": "@hot-updater/protocol",
+    "version": "1.0.2",
+    "license": "MIT",
+    "author": "gronxb"
+  },
+  {
+    "name": "@hot-updater/react-native",
+    "version": "1.0.2",
+    "license": "MIT",
+    "author": "gronxb"
   },
   {
     "name": "@isaacs/ttlcache",
@@ -2244,12 +2298,6 @@
   },
   {
     "name": "arg",
-    "version": "4.1.0",
-    "license": "MIT",
-    "author": "Josh Junon"
-  },
-  {
-    "name": "arg",
     "version": "5.0.2",
     "license": "MIT",
     "author": "Josh Junon"
@@ -2375,7 +2423,7 @@
   },
   {
     "name": "babel-preset-expo",
-    "version": "57.0.12",
+    "version": "57.0.13",
     "license": "MIT",
     "author": "Expo"
   },
@@ -3228,6 +3276,11 @@
     "author": "Jordan Harband"
   },
   {
+    "name": "es-toolkit",
+    "version": "1.52.0",
+    "license": "MIT"
+  },
+  {
     "name": "escalade",
     "version": "3.2.0",
     "license": "MIT",
@@ -3319,7 +3372,7 @@
   },
   {
     "name": "expo",
-    "version": "57.0.23",
+    "version": "57.0.26",
     "license": "MIT",
     "author": "Expo"
   },
@@ -3337,7 +3390,7 @@
   },
   {
     "name": "expo-asset",
-    "version": "57.0.17",
+    "version": "57.0.18",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3349,7 +3402,7 @@
   },
   {
     "name": "expo-background-task",
-    "version": "57.0.18",
+    "version": "57.0.21",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3367,13 +3420,13 @@
   },
   {
     "name": "expo-build-properties",
-    "version": "57.0.20",
+    "version": "57.0.22",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
   {
     "name": "expo-camera",
-    "version": "57.0.5",
+    "version": "57.0.6",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3391,7 +3444,7 @@
   },
   {
     "name": "expo-constants",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3433,7 +3486,7 @@
   },
   {
     "name": "expo-document-picker",
-    "version": "57.0.2",
+    "version": "57.0.3",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3457,7 +3510,7 @@
   },
   {
     "name": "expo-glass-effect",
-    "version": "57.0.3",
+    "version": "57.0.4",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3481,19 +3534,19 @@
   },
   {
     "name": "expo-image-manipulator",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
   {
     "name": "expo-image-picker",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
   {
     "name": "expo-insights",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3511,7 +3564,7 @@
   },
   {
     "name": "expo-linking",
-    "version": "57.0.10",
+    "version": "57.0.11",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3523,7 +3576,7 @@
   },
   {
     "name": "expo-location",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3547,13 +3600,13 @@
   },
   {
     "name": "expo-modules-core",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
   {
     "name": "expo-modules-jsi",
-    "version": "57.1.0",
+    "version": "57.1.1",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3565,7 +3618,7 @@
   },
   {
     "name": "expo-notifications",
-    "version": "57.0.19",
+    "version": "57.0.21",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3576,7 +3629,7 @@
   },
   {
     "name": "expo-sharing",
-    "version": "57.0.20",
+    "version": "57.0.22",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -3605,12 +3658,6 @@
     "author": "650 Industries, Inc."
   },
   {
-    "name": "expo-structured-headers",
-    "version": "57.0.1",
-    "license": "MIT",
-    "author": "650 Industries, Inc."
-  },
-  {
     "name": "expo-system-ui",
     "version": "57.0.4",
     "license": "MIT",
@@ -3618,13 +3665,7 @@
   },
   {
     "name": "expo-task-manager",
-    "version": "57.0.18",
-    "license": "MIT",
-    "author": "650 Industries, Inc."
-  },
-  {
-    "name": "expo-updates",
-    "version": "57.0.22",
+    "version": "57.0.21",
     "license": "MIT",
     "author": "650 Industries, Inc."
   },
@@ -4016,6 +4057,12 @@
     "version": "5.3.2",
     "license": "MIT",
     "author": "kael"
+  },
+  {
+    "name": "immer",
+    "version": "11.1.21",
+    "license": "MIT",
+    "author": "Michel Weststrate"
   },
   {
     "name": "import-local",
@@ -4680,6 +4727,12 @@
   {
     "name": "mime",
     "version": "1.6.0",
+    "license": "MIT",
+    "author": "Robert Kieffer"
+  },
+  {
+    "name": "mime",
+    "version": "4.1.1",
     "license": "MIT",
     "author": "Robert Kieffer"
   },
@@ -6357,6 +6410,11 @@
     "license": "MIT"
   },
   {
+    "name": "use-sync-external-store",
+    "version": "1.7.0",
+    "license": "MIT"
+  },
+  {
     "name": "util-deprecate",
     "version": "1.0.2",
     "license": "MIT",
@@ -6401,6 +6459,12 @@
     "version": "1.1.2",
     "license": "MIT",
     "author": "Emil Kowalski"
+  },
+  {
+    "name": "verkit",
+    "version": "0.4.0",
+    "license": "MIT",
+    "author": "Kevin Deng"
   },
   {
     "name": "victory-native",

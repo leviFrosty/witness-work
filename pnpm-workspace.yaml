@@ -24,6 +24,8 @@ overrides:
   '@expo/metro': 56.0.2
   '@grpc/grpc-js': 1.14.4
   glob: '>=11.1.0'
+  # Fix both critical Handlebars injection advisories in eslint-plugin-boundaries.
+  handlebars: 4.7.10
   '@xmldom/xmldom': 0.8.15
   '@tootallnate/once': '>=3.0.1'
   postcss: '^8.5.26'

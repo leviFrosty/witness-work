@@ -37,5 +37,8 @@ jobs:
       - name: Run tests
         run: pnpm run testFinal
 
+      - name: Check OTA and local environment tools
+        run: pnpm run test:ota && pnpm run test:local-env
+
       - name: Check for circular dependencies
         run: pnpm run deps

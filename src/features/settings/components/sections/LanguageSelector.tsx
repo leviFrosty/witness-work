@@ -8,8 +8,7 @@ import i18n, {
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { getLocales } from 'expo-localization'
-import * as Updates from 'expo-updates'
-import { DevSettings } from 'react-native'
+import { reloadApp } from '@/lib/hotUpdater'
 
 /** The picker's value for following the device's language. */
 const DEVICE_DEFAULT = 'device'
@@ -31,11 +30,7 @@ export default function LanguageSelector() {
       locale:
         value === DEVICE_DEFAULT ? undefined : (value as TranslatedLocale),
     })
-    if (__DEV__) {
-      DevSettings.reload()
-    } else {
-      Updates.reloadAsync()
-    }
+    void reloadApp()
   }
 
   return (

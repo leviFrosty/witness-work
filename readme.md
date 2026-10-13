@@ -97,10 +97,16 @@ maps and place search`"]
 
   P_PUSH["`**APNs / FCM**
 push delivery`"]
-  S_EAS["`**Expo EAS Update**
-over-the-air JS updates`"]
 
   subgraph CF["Cloudflare"]
+    S_OTA["`**Hot Updater Workers**
+separate dev / beta / prod`"]
+    D_OTA[("`**D1 databases**
+release catalogs + operational reports`")]
+    B_OTA[("`**Private R2 buckets**
+signed JavaScript + assets`")]
+    S_OTA --> D_OTA
+    S_OTA -->|"signed downloads"| B_OTA
     subgraph WORKER["ww-api Worker"]
       R_BUD["`**/buddies/v1/...**
 signed ops, live WebSocket, photos`"]
@@ -173,7 +179,7 @@ analytics, flags, surveys, errors`"]
   A_SYNC -->|"sync files + photos"| P_SYNC
   A_NOTES -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
-  A_SHELL -->|"OTA updates"| S_EAS
+  A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_NOTES -->|"notes text, SSE stream"| R_NOTES

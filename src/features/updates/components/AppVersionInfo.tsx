@@ -21,7 +21,7 @@ export default function AppVersionInfo() {
         }}
       >
         {Constants.expoConfig?.version
-          ? `v${Constants.expoConfig.version} (${Constants.expoConfig.extra?.commitHash ?? '?'})`
+          ? `v${Constants.expoConfig.version} (${process.env.EXPO_PUBLIC_COMMIT_HASH ?? Constants.expoConfig.extra?.commitHash ?? '?'})`
           : i18n.t('versionUnknown')}
       </Text>
       {developerTools && (

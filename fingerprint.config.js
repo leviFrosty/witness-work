@@ -1,7 +1,6 @@
 /**
- * Native fingerprint used as the beta runtime version (`app.config.ts`).
- * `/beta-build` publishes an OTA update when HEAD's fingerprint matches the
- * latest TestFlight beta build, and builds natively otherwise.
+ * Native build cache fingerprint for verify-witnesswork. Hot Updater's OTA
+ * compatibility fingerprint is configured in hot-updater.config.ts.
  *
  * Skip inputs that change without touching native code, so JS-only commits stay
  * OTA-compatible: `extra` carries the commit hash, versions change on every
@@ -22,6 +21,7 @@ module.exports = {
     SourceSkips.PackageJsonScriptsAll |
     SourceSkips.GitIgnore,
   extraSources: [
+    { type: 'dir', filePath: 'config/ota-keys', reasons: ['otaSigningKeys'] },
     { type: 'dir', filePath: 'targets', reasons: ['appleTargets'] },
     { type: 'dir', filePath: 'src/assets/icons', reasons: ['alternateIcons'] },
   ],

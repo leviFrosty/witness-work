@@ -1,4 +1,5 @@
 import enUS from './src/locales/en-US.json'
+import otaEnvironments from './config/ota-environments.json'
 import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
 /**
@@ -17,6 +18,11 @@ const APP_VARIANT: AppVariant =
     : 'production'
 const IS_DEV = APP_VARIANT === 'development'
 const IS_BETA = APP_VARIANT === 'beta'
+// Inlined into JS for both native and OTA builds. Expo Constants continues to
+// describe the native binary after an update, so it cannot identify OTA code.
+process.env.EXPO_PUBLIC_COMMIT_HASH = execSync('git rev-parse --short HEAD')
+  .toString()
+  .trim()
 // scripts/perf profiles a Release build of the development app: no OTA update
 // may replace the bundle under test, and Android must reach the local API over
 // plain HTTP. Without the probe the resolved config is unchanged.
@@ -43,6 +49,11 @@ const CAMERA_PERMISSION = enUS.cameraPermissionPurpose
 const MICROPHONE_PERMISSION = enUS.microphonePermissionPurpose
 
 export default ({ config }: ConfigContext): ExpoConfig => {
+  if (!IS_DEV && !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
+    throw new Error(
+      'EXPO_PUBLIC_HOT_UPDATER_API_KEY is required for this build'
+    )
+
   const expoConfig: ExpoConfig = {
     ...config,
     name: APP_NAME,
@@ -193,28 +204,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       commitHash: execSync('git rev-parse --short HEAD').toString().trim(),
       posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
+      hotUpdater: {
+        baseURL: otaEnvironments[APP_VARIANT].baseURL,
+        apiKey: process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY,
+      },
       eas: {
         projectId: 'a67257dc-2fb8-4942-97f2-e9364b80d318',
       },
     },
-    updates: {
-      url: 'https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318',
-      // Beta OTA updates should land on the next cold launch instead of the
-      // one after, so wait briefly for a newer update before using the cache.
-      ...(IS_BETA && { fallbackToCacheTimeout: 10000 }),
-      ...(PERF_PROBE && { enabled: false }),
-    },
-    // MUST stay top-level. `@expo/config-plugins` reads this key to write
-    // EXUpdatesRuntimeVersion into Expo.plist at prebuild; the expo-updates
-    // plugin accepts no props, so moving it into the plugin entry silently
-    // drops the key and expo-updates disables itself at launch (no OTA,
-    // "checkForUpdatesAsync() is not supported" in Settings > Updates).
-    // That regression shipped in every 1.38.2 store build (Apr–May 2026).
-    //
-    // Beta builds keep the same marketing version across native changes, so
-    // they use the native fingerprint instead; an OTA update only reaches beta
-    // builds with identical native code. See `fingerprint.config.js`.
-    runtimeVersion: { policy: IS_BETA ? 'fingerprint' : 'appVersion' },
     plugins: [
       // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
       [
@@ -317,8 +314,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-status-bar',
       'expo-sharing',
-      // No props: the plugin ignores them (see runtimeVersion note above).
-      'expo-updates',
+      [
+        '@hot-updater/expo',
+        {
+          channel: otaEnvironments[APP_VARIANT].channel,
+          publicKeyPath: `./config/ota-keys/${otaEnvironments[APP_VARIANT].channel}.pub`,
+        },
+      ],
       [
         'expo-location',
         {

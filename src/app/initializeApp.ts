@@ -2,7 +2,8 @@ import { perf } from '@/lib/perf'
 import { installPerfProbe } from '@/lib/perfProbe'
 import * as Notifications from 'expo-notifications'
 import { errorTracking } from '@/lib/errorTracking'
-import * as Updates from 'expo-updates'
+import { hotUpdater } from '@/lib/hotUpdater'
+import { downloadUpdateOnLaunch } from '@/features/updates/lib/updates'
 import Constants from 'expo-constants'
 import { LogBox, Platform } from 'react-native'
 import { isAudioEnabled } from '@/lib/audio'
@@ -37,9 +38,11 @@ export function initializeApp() {
     ...(Constants.appOwnership === 'expo' && Constants.expoVersion
       ? { expoAppVersion: Constants.expoVersion }
       : {}),
-    expoChannel: Updates.channel,
-    expoUpdateVersion: Updates.updateId,
+    updateChannel: hotUpdater.getChannel(),
+    updateBundleId: hotUpdater.getBundleId(),
   })
+
+  void downloadUpdateOnLaunch()
 
   // Verification hooks (scripts/verify). The require keeps them out of release
   // bundles because Metro drops the dead branch before resolving it.

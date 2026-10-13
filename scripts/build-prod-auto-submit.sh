@@ -45,6 +45,7 @@ fi
 set -a
 # shellcheck disable=SC1091
 source .env.production
+if [ -f .env.production.local ]; then source .env.production.local; fi
 # SDK 57's @expo/env no longer defaults NODE_ENV and warns ("Proceeding
 # without mode-specific .env") during the build's config read. The .env files
 # are gitignored so they never reach the build archive anyway — the exports
@@ -78,6 +79,11 @@ unzip -o -q "$IPA" 'Payload/*.app/Info.plist' -d "$PLIST_TMP"
 INFO_PLIST=$(find "$PLIST_TMP/Payload" -maxdepth 2 -name Info.plist | head -n 1)
 VERSION=$(plutil -extract CFBundleShortVersionString raw "$INFO_PLIST")
 BUILD=$(plutil -extract CFBundleVersion raw "$INFO_PLIST")
+UPDATE_CHANNEL=$(plutil -extract HOT_UPDATER_CHANNEL raw "$INFO_PLIST")
+if [ "$UPDATE_CHANNEL" != production ]; then
+  echo "error: production build has update channel $UPDATE_CHANNEL; refusing upload" >&2
+  exit 1
+fi
 
 IPA_BYTES=$(stat -f%z "$IPA")
 

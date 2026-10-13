@@ -28,10 +28,12 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "environment": "preview",
+      "env": {
+        "APP_VARIANT": "beta"
+      }
     },
     "production": {
-      "channel": "production",
       "autoIncrement": true,
       "node": "24.15.0",
       "environment": "production",
@@ -43,7 +45,6 @@
       }
     },
     "beta": {
-      "channel": "beta",
       "environment": "preview",
       "autoIncrement": true,
       "node": "24.15.0",
@@ -55,7 +56,6 @@
       }
     },
     "production-local": {
-      "channel": "production",
       "autoIncrement": true,
       "node": "24.15.0",
       "environment": "production",
@@ -83,7 +83,6 @@
     },
     "production-simulator": {
       "distribution": "internal",
-      "channel": "production",
       "ios": {
         "simulator": true,
         "image": "latest"

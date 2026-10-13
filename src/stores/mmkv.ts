@@ -57,8 +57,8 @@ async function copyAsyncStorageKeysToMmkv(
  *
  * Resolves `true` when legacy data was copied and the JS bundle must reload so
  * already-hydrated stores re-read from MMKV. Fresh installs have nothing to
- * copy, so they skip the reload — `Updates.reloadAsync()` during first launch
- * strands dev clients on the splash screen ("app context has been lost").
+ * copy, so they skip the reload — `reloadApp()` during first launch strands dev
+ * clients on the splash screen ("app context has been lost").
  */
 export async function migrateFromAsyncStorage(): Promise<boolean> {
   let asyncStorageKeys: readonly string[]

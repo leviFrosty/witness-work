@@ -50,6 +50,8 @@ export default tseslint.config(
       '.cache/**',
       '.claude/**',
       '.expo/**',
+      '.hot-updater/**',
+      '.verify/**',
       '.tamagui/**',
       'ios/**',
       'android/**',

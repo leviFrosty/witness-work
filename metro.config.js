@@ -29,6 +29,9 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 config.resolver.blockList = [
   ...[config.resolver.blockList].flat().filter(Boolean),
   /[\\/]\.verify[\\/].*/,
+  // Expo DOM's project-wide context must never resolve environment files or
+  // the OTA provider/signing credentials, even when they are gitignored.
+  /[\\/]\.env[^\\/]*(?:[\\/].*)?$/,
 ]
 
 // Transformed files keep the rewritten icon paths in Metro's cache; a lucide
@@ -37,5 +40,8 @@ const lucideVersion = require(
   path.join(lucidePackageDir(__dirname), 'package.json')
 ).version
 config.cacheVersion = `${config.cacheVersion ?? ''}+lucide-${lucideVersion}`
+// Release builds inline this value; a warm transform cache must not keep the
+// commit label from an earlier native build.
+config.cacheVersion += `+commit-${process.env.EXPO_PUBLIC_COMMIT_HASH ?? ''}`
 
 module.exports = config

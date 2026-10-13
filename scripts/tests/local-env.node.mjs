@@ -5,7 +5,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import {
-  applyPerfProbe,
+  applyDevRelease,
+  isReleaseRun,
   forwardAndroidBackend,
   loadLocalEnv,
   validateLocalEnv,
@@ -226,23 +227,88 @@ test('a profiling build turns the probe on in development only, and never inheri
   assert.equal(production.EXPO_PUBLIC_PERF_PROBE, undefined)
 })
 
-test('a profiling build leaves RevenueCat unconfigured on Android only', () => {
-  const env = () => ({
-    EXPO_PUBLIC_PERF_PROBE: '1',
+test('a development Release build opts out of the RevenueCat Test Store check', () => {
+  const env = (extra) => ({
     EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'test_google',
     EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'test_apple',
+    ...extra,
   })
+  const probe = { EXPO_PUBLIC_PERF_PROBE: '1' }
+  for (const [extra, release] of [
+    [probe, false],
+    [{}, true],
+  ]) {
+    assert.equal(
+      applyDevRelease(env(extra), 'android', release)
+        .EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY,
+      ''
+    )
+    const ios = applyDevRelease(env(extra), 'ios', release)
+    assert.equal(ios.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY, 'test_apple')
+    assert.match(
+      fs.readFileSync(ios.XCODE_XCCONFIG_FILE, 'utf8'),
+      /^SWIFT_ACTIVE_COMPILATION_CONDITIONS = \$\(inherited\) BYPASS_SIMULATED_STORE_RELEASE_CHECK$/m
+    )
+  }
+  const debug = applyDevRelease(env(), 'android')
+  assert.equal(debug.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY, 'test_google')
+  assert.equal(applyDevRelease(env(), 'ios').XCODE_XCCONFIG_FILE, undefined)
+})
+
+test('only an expo run of the Release configuration counts as a Release build', () => {
   assert.equal(
-    applyPerfProbe(env(), 'android').EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY,
-    ''
+    isReleaseRun('expo', ['run:ios', '--configuration', 'Release']),
+    true
   )
   assert.equal(
-    applyPerfProbe(env(), 'ios').EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY,
-    'test_apple'
+    isReleaseRun('expo', ['run:android', '--variant', 'release']),
+    true
   )
-  const normal = { EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'test_google' }
+  assert.equal(isReleaseRun('expo', ['run:ios']), false)
   assert.equal(
-    applyPerfProbe(normal, 'android').EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY,
-    'test_google'
+    isReleaseRun('expo', ['run:ios', '--configuration', 'Debug']),
+    false
+  )
+  assert.equal(
+    isReleaseRun('expo', ['run:android', '--configuration', 'Release']),
+    false
+  )
+  assert.equal(isReleaseRun('expo', ['start', '--no-dev']), false)
+  assert.equal(
+    isReleaseRun('eas', ['run:ios', '--configuration', 'Release']),
+    false
+  )
+})
+
+test('OTA validation permits unavailable Android purchases while retaining Maps and store-key checks', () => {
+  const env = {
+    APP_VARIANT: 'beta',
+    GOOGLE_MAPS_ANDROID_API_KEY: 'android_maps',
+  }
+  assert.throws(() => validateLocalEnv(env, 'android'), /REVENUECAT_GOOGLE/)
+  assert.equal(
+    validateLocalEnv(env, 'android', { allowUnavailablePurchases: true })
+      .hostname,
+    'ww-proxy.leviwilkerson.com'
+  )
+  assert.throws(
+    () =>
+      validateLocalEnv({ ...env, GOOGLE_MAPS_ANDROID_API_KEY: '' }, 'android', {
+        allowUnavailablePurchases: true,
+      }),
+    /GOOGLE_MAPS_ANDROID/
+  )
+  assert.throws(
+    () =>
+      validateLocalEnv(
+        { ...env, EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'test_store' },
+        'android',
+        { allowUnavailablePurchases: true }
+      ),
+    /store SDK key/
+  )
+  assert.throws(
+    () => validateLocalEnv(env, 'ios', { allowUnavailablePurchases: true }),
+    /REVENUECAT_APPLE/
   )
 })

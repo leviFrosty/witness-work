@@ -7,6 +7,7 @@ import {
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import {
   Empty,
   EmptyContent,
@@ -431,11 +432,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // an error/limit/paused block (those carry their own retry/resume CTAs), during
   // the brief submit handoff, or while the proxy reports the feature down (the
   // probe is optimistic, so this never blocks the input mid-status-check).
-  const composerDisabled =
-    submitting ||
-    !availability.available ||
-    (isWorking && !isCancellable) ||
-    capture.busy
+  const composerLocked =
+    submitting || !availability.available || (isWorking && !isCancellable)
+  const composerDisabled = composerLocked || capture.busy
   const selectedCount = committedIds.size
   const confirmLabel =
     selectedCount > 0
@@ -1276,6 +1275,20 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     void capture.voice.start()
   }
 
+  // Send while recording finishes the voice log, then sends the draft once
+  // the transcript has landed in it (the next render).
+  const [sendAfterVoice, setSendAfterVoice] = useState(false)
+  const finishVoiceAndSend = async () => {
+    if (await capture.voice.finish()) setSendAfterVoice(true)
+  }
+  const onSubmitRef = useRef(onSubmit)
+  onSubmitRef.current = onSubmit
+  useEffect(() => {
+    if (!sendAfterVoice) return
+    setSendAfterVoice(false)
+    void onSubmitRef.current()
+  }, [sendAfterVoice])
+
   const capturePhoto = (action: () => Promise<void>) => () => {
     Keyboard.dismiss()
     void action()
@@ -1284,48 +1297,61 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // "View imports" callout sits at the LEFT of the control row — the in-chat
   // entry point to the history list (the header no longer has a clock). Shown
   // whenever any import is saved. Its dot lights only when another import is in-flight or ready to review.
+  // Beside the camera, the balance, the mic and Send there's no room for its
+  // label, so it shrinks to its icon while the mic shows.
+  const compactHistory = canCapture && capture.voice.available
   const historyCallout =
     entries.length > 0 ? (
       <NotesImportHistoryPopover
         renderTrigger={({ onPress }) => (
-          <Button
-            onPress={onPress}
-            accessibilityRole='button'
-            accessibilityLabel={i18n.t('notesImport_viewHistory')}
-            noTransform
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 7,
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              borderRadius: theme.numbers.borderRadiusXl,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.card,
-            }}
+          <PointerTooltip
+            label={i18n.t('notesImport_viewHistory')}
+            effect='none'
+            placement='top'
+            enabled={compactHistory}
           >
-            <NotesImportReadyDot
-              visible={actionableOther.length > 0}
-              color={calloutInProgress ? theme.colors.warn : undefined}
-            />
-            <Text
-              numberOfLines={1}
+            <Button
+              onPress={onPress}
+              accessibilityRole='button'
+              accessibilityLabel={i18n.t('notesImport_viewHistory')}
+              noTransform
               style={{
-                flexShrink: 1,
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('sm'),
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                minHeight: 32,
+                paddingVertical: 6,
+                paddingHorizontal: compactHistory ? 9 : 12,
+                borderRadius: theme.numbers.borderRadiusXl,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
               }}
             >
-              {i18n.t('notesImport_viewHistory')}
-            </Text>
-            <LucideIcon
-              icon={HistoryIcon}
-              size={12}
-              color={theme.colors.textAlt}
-            />
-          </Button>
+              <NotesImportReadyDot
+                visible={actionableOther.length > 0}
+                color={calloutInProgress ? theme.colors.warn : undefined}
+              />
+              {!compactHistory && (
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    flexShrink: 1,
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {i18n.t('notesImport_viewHistory')}
+                </Text>
+              )}
+              <LucideIcon
+                icon={HistoryIcon}
+                size={compactHistory ? 14 : 12}
+                color={theme.colors.textAlt}
+              />
+            </Button>
+          </PointerTooltip>
         )}
       />
     ) : null
@@ -1440,8 +1466,15 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             ref={inputRef}
             value={composerValue}
             onChangeText={setComposerValue}
-            onSubmit={onComposerSubmit}
+            onSubmit={
+              voicePhase === 'recording'
+                ? () => void finishVoiceAndSend()
+                : onComposerSubmit
+            }
             editable={!composerDisabled}
+            canSubmit={
+              voicePhase === 'recording' ? !composerLocked : !composerDisabled
+            }
             placeholder={
               voicePhase === 'recording'
                 ? i18n.t('notesImport_voiceListening')
@@ -1485,7 +1518,6 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               capture.busy ? (
                 <NotesImportCaptureStatus
                   voicePhase={voicePhase}
-                  startedAt={capture.voice.startedAt}
                   downloadProgress={capture.voice.downloadProgress}
                   level={capture.voice.level}
                   readingPhoto={capture.photo.reading}
@@ -1535,15 +1567,18 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                     color={theme.colors.textAlt}
                   />
                 </View>
-              ) : voicePhase !== 'idle' ? (
+              ) : undefined
+            }
+            // The mic keeps its place left of Send, empty draft or not, and
+            // turns into a stop while recording.
+            secondaryAction={
+              voicePhase !== 'idle' ? (
                 <NotesImportVoiceButton
                   recording
                   disabled={voicePhase !== 'recording'}
                   onPress={() => void capture.voice.finish()}
                 />
-              ) : canCapture &&
-                capture.voice.available &&
-                !composerValue.trim() ? (
+              ) : canCapture && capture.voice.available ? (
                 <NotesImportVoiceButton
                   recording={false}
                   onPress={startVoiceLog}

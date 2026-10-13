@@ -1,4 +1,4 @@
-import { Check as CheckIcon, Mic as MicIcon } from 'lucide-react-native'
+import { Mic as MicIcon, Square as SquareIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Button from '@/components/ui/Button'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -13,8 +13,8 @@ interface Props {
 }
 
 /**
- * The composer's trailing voice-log action, in Send's place while the draft is
- * empty: a mic that starts recording, then a check that finishes it.
+ * The composer's voice-log action, always just left of Send: a mic that starts
+ * recording, then a stop that ends it and leaves the transcript to edit.
  */
 const NotesImportVoiceButton = ({ recording, disabled, onPress }: Props) => {
   const theme = useTheme()
@@ -35,16 +35,22 @@ const NotesImportVoiceButton = ({ recording, disabled, onPress }: Props) => {
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: disabled
-            ? theme.colors.accentAlt
-            : theme.colors.accent,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.card,
+          opacity: disabled ? 0.5 : 1,
         }}
       >
-        <LucideIcon
-          icon={recording ? CheckIcon : MicIcon}
-          size={recording ? 18 : 16}
-          color={theme.colors.textInverse}
-        />
+        {recording ? (
+          <LucideIcon
+            icon={SquareIcon}
+            size={12}
+            color={theme.colors.text}
+            fill={theme.colors.text}
+          />
+        ) : (
+          <LucideIcon icon={MicIcon} size={16} color={theme.colors.text} />
+        )}
       </Button>
     </PointerTooltip>
   )

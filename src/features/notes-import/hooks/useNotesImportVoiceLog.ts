@@ -82,7 +82,6 @@ export function useNotesImportVoiceLog({
   const [available, setAvailable] = useState(false)
   const [phase, setPhase] = useState<VoiceLogPhase>('idle')
   const [transcript, setTranscript] = useState('')
-  const [startedAt, setStartedAt] = useState<number | null>(null)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   // Drives the recording indicator on the UI thread; no re-render per sample.
   const level = useSharedValue(0)
@@ -132,12 +131,12 @@ export function useNotesImportVoiceLog({
     level.value = 0
     startedAtRef.current = null
     engineRef.current = null
-    setStartedAt(null)
     setDownloadProgress(null)
     setTranscript('')
     moveTo('idle')
   }
 
+  /** Hands over the transcript; false when nothing was heard. */
   const complete = (text: string) => {
     const final = text.trim()
     if (final) {
@@ -152,6 +151,7 @@ export function useNotesImportVoiceLog({
       )
     }
     teardown()
+    return !!final
   }
 
   const start = async () => {
@@ -201,9 +201,7 @@ export function useNotesImportVoiceLog({
         return
       }
       engineRef.current = engine
-      const now = Date.now()
-      startedAtRef.current = now
-      setStartedAt(now)
+      startedAtRef.current = Date.now()
       moveTo('recording')
       void Haptics.light()
     } catch (error) {
@@ -221,8 +219,9 @@ export function useNotesImportVoiceLog({
     }
   }
 
+  /** Resolves true once the transcript has landed in the draft. */
   const finish = async () => {
-    if (phaseRef.current !== 'recording') return
+    if (phaseRef.current !== 'recording') return false
     moveTo('finishing')
     let text = ''
     try {
@@ -230,7 +229,7 @@ export function useNotesImportVoiceLog({
     } catch (error) {
       logger.warn('Voice log failed to stop', Speech.speechErrorCode(error))
     }
-    complete(text)
+    return complete(text)
   }
 
   const cancel = () => {
@@ -268,7 +267,6 @@ export function useNotesImportVoiceLog({
     phase,
     /** Live transcript while recording; finalized text arrives via the callback. */
     transcript,
-    startedAt,
     downloadProgress,
     level,
     start,

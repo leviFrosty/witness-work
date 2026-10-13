@@ -195,6 +195,30 @@ describe('normalizeNotesImportStatus', () => {
     }
   })
 
+  it('surfaces Import from Paper only for a well-formed capability', () => {
+    const withTranscribe = (transcribe: unknown) => ({
+      available: true,
+      limits,
+      capabilities: { appAttest: { protocolVersions: [1, 2] }, transcribe },
+    })
+    expect(
+      normalizeNotesImportStatus(
+        withTranscribe({ maxPages: 10, maxBytes: 4_194_304 })
+      )
+    ).toEqual({ available: true, limits, transcribe: { maxPages: 10 } })
+    for (const malformed of [
+      undefined,
+      { maxPages: 0 },
+      { maxPages: 2.5 },
+      'yes',
+    ]) {
+      expect(normalizeNotesImportStatus(withTranscribe(malformed))).toEqual({
+        available: true,
+        limits,
+      })
+    }
+  })
+
   it('accepts positive fractional window days', () => {
     expect(
       normalizeNotesImportStatus({

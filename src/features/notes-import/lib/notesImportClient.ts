@@ -89,6 +89,8 @@ export type NotesImportErrorCode =
   | 'model_error'
   | 'bad_request'
   | 'active_cap'
+  /** Import from Paper: this identity read its page allowance for today. */
+  | 'transcribe_limit'
   | 'unavailable'
   | 'network'
   | 'cancelled'
@@ -192,6 +194,7 @@ const NOTES_IMPORT_ERROR_CODES = new Set<NotesImportErrorCode>([
   'model_error',
   'bad_request',
   'active_cap',
+  'transcribe_limit',
   'unavailable',
   'network',
   'cancelled',
@@ -304,7 +307,7 @@ const toClientError = (e: unknown): NotesImportClientError => {
  * key lifecycle transition.
  */
 const postAttested = <T>(
-  endpoint: 'kickoff' | 'legacy',
+  endpoint: 'kickoff' | 'legacy' | 'transcribe',
   payload: Record<string, unknown>,
   contentHash: string,
   signal?: AbortSignal
@@ -338,6 +341,55 @@ export const requestNotesImport = async ({
   } catch (e) {
     throw toClientError(e)
   }
+}
+
+// --- Import from Paper (page transcription) ----------------------------
+
+export interface TranscribeNotesPageArgs {
+  /** Base64 page image (JPEG), already resized and stripped of metadata. */
+  image: string
+  mimeType: 'image/jpeg'
+  signal?: AbortSignal
+}
+
+export interface TranscribedNotesPage {
+  text: string
+  /** The model ran out of room before the end of the page. */
+  truncated: boolean
+}
+
+/**
+ * Reads one page photo into plain text (ADR 0025). Attested like kickoff; the
+ * content hash is the SHA-256 of the base64 string the server receives. No
+ * credit is spent here: the text goes into the composer for review and is
+ * imported through the normal kickoff. Throws {@link NotesImportClientError}.
+ */
+export const transcribeNotesPage = async ({
+  image,
+  mimeType,
+  signal,
+}: TranscribeNotesPageArgs): Promise<TranscribedNotesPage> => {
+  const contentHash = await notesContentHash(image)
+  let response: unknown
+  try {
+    response = await postAttested<unknown>(
+      'transcribe',
+      { image, mimeType },
+      contentHash,
+      signal
+    )
+  } catch (e) {
+    throw toClientError(e)
+  }
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    typeof (response as { text?: unknown }).text !== 'string'
+  ) {
+    throw new NotesImportClientError('unknown', 'Malformed transcription')
+  }
+  const { text, truncated } = response as { text: string; truncated?: unknown }
+  return { text, truncated: truncated === true }
 }
 
 // --- Streaming import (kickoff → SSE) ----------------------------------

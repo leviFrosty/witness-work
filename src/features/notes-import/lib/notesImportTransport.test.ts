@@ -41,12 +41,13 @@ afterEach(() => {
 })
 
 describe('Notes Import transport timeouts', () => {
-  it('gives only the legacy blocking POST the long budget', () => {
+  it('gives only the posts that wait for a model the longer budgets', () => {
     expect(ENDPOINT_TIMEOUT_MS).toEqual({
       challenge: 15_000,
       registration: 15_000,
       verify: 15_000,
       kickoff: 15_000,
+      transcribe: 60_000,
       legacy: 90_000,
     })
     expect(STATUS_TIMEOUT_MS).toBe(8_000)

@@ -27,6 +27,8 @@ export const ENDPOINT_TIMEOUT_MS: Record<NotesImportAppAttestEndpoint, number> =
     registration: 15_000,
     verify: 15_000,
     kickoff: 15_000,
+    // Waits for the vision model to read one page.
+    transcribe: 60_000,
     legacy: 90_000,
   }
 
@@ -46,6 +48,8 @@ const endpointUrl = (endpoint: NotesImportAppAttestEndpoint): string => {
       return apis.notesImportAttest
     case 'kickoff':
       return apis.notesImportKickoff
+    case 'transcribe':
+      return apis.notesImportTranscribe
     case 'legacy':
       return apis.notesImport
     case 'verify':

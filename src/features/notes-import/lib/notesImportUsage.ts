@@ -48,6 +48,12 @@ interface NotesImportStatusVersionFloor {
    * Integrity is configured server-side, which keeps Android closed.
    */
   playIntegrity?: true
+  /**
+   * Import from Paper: the worker can read page photos (`POST
+   * /notes-import/transcribe`), at most `maxPages` per batch. Absent on workers
+   * without the endpoint, which keeps the option hidden.
+   */
+  transcribe?: { maxPages: number }
 }
 
 export type NotesImportStatus = NotesImportStatusVersionFloor &
@@ -73,6 +79,7 @@ const statusVersionFloor = (
   ...(supportsPlayIntegrity(value.capabilities)
     ? { playIntegrity: true as const }
     : {}),
+  ...transcribeCapability(value.capabilities),
 })
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -86,6 +93,20 @@ const supportsPlayIntegrity = (capabilities: unknown): boolean => {
     play.protocolVersions.includes(1) &&
     typeof play.cloudProjectNumber === 'string'
   )
+}
+
+const transcribeCapability = (
+  capabilities: unknown
+): Pick<NotesImportStatusVersionFloor, 'transcribe'> => {
+  const transcribe = isRecord(capabilities)
+    ? capabilities.transcribe
+    : undefined
+  const maxPages = isRecord(transcribe) ? transcribe.maxPages : undefined
+  return typeof maxPages === 'number' &&
+    Number.isInteger(maxPages) &&
+    maxPages > 0
+    ? { transcribe: { maxPages } }
+    : {}
 }
 
 const isAllowanceValue = (value: unknown): value is number | null =>

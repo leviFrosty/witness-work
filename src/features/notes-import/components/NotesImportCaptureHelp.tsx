@@ -12,21 +12,38 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 interface Props {
   voiceAvailable: boolean
   photoAvailable: boolean
+  /** Ww-api reads chosen photos (Import from Paper, ADR 0025). */
+  paperAvailable: boolean
 }
 
 /** Help Sheet section for the on-device capture inputs (ADR 0018). */
-const NotesImportCaptureHelp = ({ voiceAvailable, photoAvailable }: Props) => {
+const NotesImportCaptureHelp = ({
+  voiceAvailable,
+  photoAvailable,
+  paperAvailable,
+}: Props) => {
   const theme = useTheme()
-  if (!voiceAvailable && !photoAvailable) return null
+  if (!voiceAvailable && !photoAvailable && !paperAvailable) return null
+
+  const cameraKey: TranslationKey | null = photoAvailable
+    ? paperAvailable
+      ? 'notesImport_helpCapturePhotoPaper'
+      : 'notesImport_helpCapturePhoto'
+    : paperAvailable
+      ? 'notesImport_helpCapturePaper'
+      : null
 
   const rows: { icon: AppIcon; key: TranslationKey }[] = [
     ...(voiceAvailable
       ? [{ icon: MicIcon, key: 'notesImport_helpCaptureVoice' as const }]
       : []),
-    ...(photoAvailable
-      ? [{ icon: CameraIcon, key: 'notesImport_helpCapturePhoto' as const }]
-      : []),
-    { icon: SquarePenIcon, key: 'notesImport_helpCaptureReview' },
+    ...(cameraKey ? [{ icon: CameraIcon, key: cameraKey }] : []),
+    {
+      icon: SquarePenIcon,
+      key: paperAvailable
+        ? 'notesImport_helpCaptureReviewPaper'
+        : 'notesImport_helpCaptureReview',
+    },
   ]
 
   return (

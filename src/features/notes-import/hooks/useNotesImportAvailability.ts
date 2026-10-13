@@ -43,6 +43,11 @@ export interface NotesImportAvailability {
    * `available` is false and `reason` is `'version_below_min'` in that case.
    */
   updateRequired: NotesImportUpdateRequired | null
+  /**
+   * Pages per Import from Paper batch when the server can read page photos;
+   * null hides the option.
+   */
+  paperMaxPages: number | null
   /** The first check is running and nothing is known yet (`checking`). */
   loading: boolean
   /** Any check is in flight, including a refresh that keeps the last answer. */
@@ -56,6 +61,7 @@ type ProbeResult = {
   reason: string | null
   schedule: NotesImportPublicSchedule | null
   updateRequired: NotesImportUpdateRequired | null
+  paperMaxPages: number | null
 }
 
 interface AvailabilityStore {
@@ -94,7 +100,7 @@ const failureStatus = (error: unknown): 'offline' | 'failed' => {
 }
 
 const fromStatus = async (): Promise<ProbeResult> => {
-  const closed = { schedule: null, updateRequired: null }
+  const closed = { schedule: null, updateRequired: null, paperMaxPages: null }
   let status
   try {
     status = await fetchNotesImportStatus()
@@ -114,6 +120,7 @@ const fromStatus = async (): Promise<ProbeResult> => {
       reason: 'version_below_min',
       schedule: null,
       updateRequired,
+      paperMaxPages: null,
     }
   }
   // Android needs a worker that can verify Play Integrity tokens.
@@ -128,6 +135,7 @@ const fromStatus = async (): Promise<ProbeResult> => {
     reason: null,
     schedule: status.limits,
     updateRequired: null,
+    paperMaxPages: status.transcribe?.maxPages ?? null,
   }
 }
 
@@ -208,6 +216,7 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
       reason: null,
       schedule: null,
       updateRequired: null,
+      paperMaxPages: null,
       loading: enabled,
       refreshing: enabled && refreshing,
       retry,
@@ -219,6 +228,7 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
     reason: result.reason,
     schedule: result.schedule,
     updateRequired: result.updateRequired,
+    paperMaxPages: result.paperMaxPages,
     loading: false,
     refreshing,
     retry,

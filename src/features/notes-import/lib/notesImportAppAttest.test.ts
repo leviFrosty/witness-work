@@ -372,6 +372,45 @@ describe('Notes Import App Attest', () => {
     })
   })
 
+  it('signs a page transcription for its own purpose over the image hash', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+      post: ({ endpoint }) =>
+        endpoint === 'challenge'
+          ? { challenge: 'challenge-value' }
+          : { ok: true, text: '' },
+    })
+    const imageHash =
+      '6e7eb94d97c303b438c9c78f339ba53ab979dcbc288e2b1d4068e871588c5f40'
+    // Pinned in ww-api src/notesImport/transcribe.test.ts.
+    const requestHash =
+      '0cf27737695fe2c115efcdc525293fae76c46c6424c9a53c452b4b9b073db34d'
+
+    await harness.module.post({
+      endpoint: 'transcribe',
+      payload: { image: '/9j/4AAQ', mimeType: 'image/jpeg' },
+      contentHash: imageHash,
+    })
+
+    expect(harness.hashedRequestData).toEqual([
+      `{"imageHash":"${imageHash}","mimeType":"image/jpeg"}`,
+    ])
+    expect(harness.hashedClientData).toEqual([
+      `witnesswork.app-attest|2|assert|notes-import-transcribe|operation-1|challenge-value|install-uuid|account-id|${imageHash}|${requestHash}`,
+    ])
+    expect(harness.posts[1]).toMatchObject({
+      endpoint: 'transcribe',
+      body: {
+        image: '/9j/4AAQ',
+        mimeType: 'image/jpeg',
+        purpose: 'notes-import-transcribe',
+        contentHash: imageHash,
+        requestHash,
+      },
+    })
+  })
+
   it('matches the shared backend canonical JSON and SHA-256 golden vector', async () => {
     const harness = createHarness({
       activeKeyId: 'active-key',

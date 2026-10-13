@@ -23,6 +23,8 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
       return 'notesImport_attestationUnavailable'
     case 'active_cap':
       return 'notesImport_activeCapError'
+    case 'transcribe_limit':
+      return 'notesImport_paperLimit'
     case 'device_ineligible':
       return 'notesImport_deviceIneligibleAndroid'
     case 'play_services_required':

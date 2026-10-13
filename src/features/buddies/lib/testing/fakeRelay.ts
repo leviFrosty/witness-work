@@ -66,6 +66,21 @@ export function createFakeRelay(now: () => number) {
   >()
   /** What `inbox/sync` says the relay offers. */
   const capabilities = { photos: true }
+  /**
+   * Server accounts the relay knows (accountId → public key and status), and
+   * which account owns each inbox: ADR 0024's Option A.
+   */
+  const accounts = new Map<
+    string,
+    { accountPub: string; status: 'active' | 'suspended' }
+  >()
+  const inboxAccounts = new Map<string, string>()
+  const suspended = (inboxId: string) => {
+    const accountId = inboxAccounts.get(inboxId)
+    return (
+      accountId !== undefined && accounts.get(accountId)?.status === 'suspended'
+    )
+  }
 
   function withinWriteLimit(inboxId: string, slotId: string) {
     const key = `${inboxId}|${slotId}`
@@ -217,9 +232,32 @@ export function createFakeRelay(now: () => number) {
 
     if (op === 'inbox/register') {
       if (!signedBy(payload.ownerPub)) return fail(401, 'bad_signature')
+      if (suspended(payload.inboxId)) return fail(403, 'suspended')
+      const proof = payload.account as
+        | { accountId: string; signature: string }
+        | undefined
+      let claim: string | null = null
+      if (proof) {
+        const account = accounts.get(proof.accountId)
+        if (!account) return fail(404, 'unknown_account')
+        const linkSigned = ed25519Verify(
+          fromB64u(proof.signature),
+          utf8(
+            `ww-account/v1\ninbox/link\n${proof.accountId}\n${payload.inboxId}\n${payload.ownerPub}`
+          ),
+          fromB64u(account.accountPub)
+        )
+        if (!linkSigned) return fail(401, 'bad_signature')
+        const linked = inboxAccounts.get(payload.inboxId)
+        if (linked && linked !== proof.accountId) return fail(409, 'conflict')
+        if (account.status === 'suspended') return fail(403, 'suspended')
+        claim = proof.accountId
+      }
       const existing = inboxes.get(payload.inboxId)
       if (existing && existing.ownerPub !== payload.ownerPub)
         return fail(409, 'conflict')
+      if (claim) inboxAccounts.set(payload.inboxId, claim)
+      const accountId = inboxAccounts.get(payload.inboxId)
       if (!existing)
         inboxes.set(payload.inboxId, {
           ownerPub: payload.ownerPub,
@@ -231,7 +269,7 @@ export function createFakeRelay(now: () => number) {
           roster: null,
           openInvites: new Set(),
         })
-      return ok()
+      return ok(accountId ? { accountId } : {})
     }
 
     const inbox = inboxes.get(payload.inboxId)
@@ -298,6 +336,12 @@ export function createFakeRelay(now: () => number) {
     }
 
     if (!signedBy(inbox.ownerPub)) return fail(401, 'bad_signature')
+    if (
+      suspended(payload.inboxId) &&
+      op !== 'inbox/delete' &&
+      op !== 'slot/remove'
+    )
+      return fail(403, 'suspended')
     switch (op) {
       case 'inbox/sync': {
         const since = payload.since as number
@@ -382,5 +426,7 @@ export function createFakeRelay(now: () => number) {
     alerts,
     blobs,
     capabilities,
+    accounts,
+    inboxAccounts,
   }
 }

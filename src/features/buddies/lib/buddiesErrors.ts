@@ -33,6 +33,7 @@ export function buddiesErrorMessage(error: unknown): string {
   if (isRelayError(error, 'network')) return i18n.t('buddies_errorOffline')
   if (isRelayError(error, 'timeout')) return i18n.t('buddies_errorTimeout')
   if (isRelayError(error, 'disabled')) return i18n.t('buddies_errorDisabled')
+  if (isRelayError(error, 'suspended')) return i18n.t('buddies_errorSuspended')
   if (isRelayError(error, 'rate_limited'))
     return i18n.t('buddies_errorRateLimited')
   if (isRelayError(error, 'limit'))
@@ -50,6 +51,7 @@ export function isRetryableBuddiesError(error: unknown): boolean {
   if (error instanceof BuddyRemovalPendingError) return false
   return !(
     isRelayError(error, 'disabled') ||
+    isRelayError(error, 'suspended') ||
     isRelayError(error, 'not_found') ||
     isRelayError(error, 'gone') ||
     isRelayError(error, 'conflict') ||
@@ -60,11 +62,12 @@ export function isRetryableBuddiesError(error: unknown): boolean {
 /** A bounded analytics value for a Buddies failure; never its message. */
 export function buddiesFailureReason(
   error: unknown
-): 'offline' | 'disabled' | 'rate_limited' | 'error' {
+): 'offline' | 'disabled' | 'suspended' | 'rate_limited' | 'error' {
   // A request that got no answer in time is a connection problem too.
   if (isRelayError(error, 'network') || isRelayError(error, 'timeout'))
     return 'offline'
   if (isRelayError(error, 'disabled')) return 'disabled'
+  if (isRelayError(error, 'suspended')) return 'suspended'
   if (isRelayError(error, 'rate_limited')) return 'rate_limited'
   return 'error'
 }

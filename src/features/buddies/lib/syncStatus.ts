@@ -2,6 +2,7 @@
 export type BuddySyncFailureReason =
   | 'offline'
   | 'disabled'
+  | 'suspended'
   | 'rate_limited'
   | 'error'
 
@@ -91,7 +92,12 @@ export async function trackSync<Outcome>(
  * What the Buddies screen says about syncing: nothing while the latest sync
  * worked, else why it didn't. Rate limits read as a plain failure.
  */
-export type BuddiesSyncNotice = 'offline' | 'disabled' | 'error' | null
+export type BuddiesSyncNotice =
+  | 'offline'
+  | 'disabled'
+  | 'suspended'
+  | 'error'
+  | null
 
 export function buddiesSyncNotice(
   status: Pick<BuddySyncStatus, 'failure' | 'relayDisabled'>,
@@ -100,7 +106,11 @@ export function buddiesSyncNotice(
   if (status.relayDisabled) return 'disabled'
   const { failure } = status
   if (!failure || failure.at <= lastSyncAt) return null
-  if (failure.reason === 'offline' || failure.reason === 'disabled')
+  if (
+    failure.reason === 'offline' ||
+    failure.reason === 'disabled' ||
+    failure.reason === 'suspended'
+  )
     return failure.reason
   return 'error'
 }

@@ -202,7 +202,7 @@ created a Buddies Invite (the share sheet opened), else `skipped`; Continue
 without inviting also sends `onboarding_step_skipped`. Each invite attempt sends
 `onboarding_buddies_invite_result` with `status`: `shared` (the share sheet
 completed), `dismissed`, or `error` with a bounded `reason` (`name_required`,
-`limit`, `offline`, `disabled`, `rate_limited`, or `error`). No links, invite
+`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, or `error`). No links, invite
 ids, or names are sent.
 
 Notification permission request/result, import availability/skip, and backfill

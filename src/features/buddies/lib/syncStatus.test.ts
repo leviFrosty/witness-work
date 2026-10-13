@@ -139,6 +139,7 @@ describe('buddiesSyncNotice', () => {
   it('says why the latest sync failed', () => {
     expect(buddiesSyncNotice(failed('offline'), 10)).toBe('offline')
     expect(buddiesSyncNotice(failed('disabled'), 10)).toBe('disabled')
+    expect(buddiesSyncNotice(failed('suspended'), 10)).toBe('suspended')
     expect(buddiesSyncNotice(failed('rate_limited'), 10)).toBe('error')
     expect(buddiesSyncNotice(failed('error'), 10)).toBe('error')
   })

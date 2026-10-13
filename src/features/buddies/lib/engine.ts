@@ -16,6 +16,7 @@ import {
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
 import {
+  InboxAccountProof,
   isRelayConnectivityError,
   isRelayError,
   OwnerAuth,
@@ -129,6 +130,7 @@ import {
   type SharedBadge,
 } from '@/types/badges'
 import type { DayPlan } from '@/types/timeEntry'
+import type { ServerAccountSession } from '@/lib/serverAccount/serverAccount'
 import type { RichTextImageAttrs } from '@/types/richText'
 import { mapRichTextImages, richTextImages } from '@/lib/richText/inspect'
 import {
@@ -171,6 +173,17 @@ export type BuddiesEngineDeps = {
    */
   getRootSeed: () => Promise<Uint8Array>
   deleteRootSeed: () => Promise<void>
+  /**
+   * The User's server account (ADR 0024), from the account key: the root seed.
+   * Inbox registrations carry its claim, so the relay knows which account owns
+   * the inbox and can suspend it. Without it, or while it's unavailable,
+   * Buddies works unlinked, as before accounts.
+   */
+  account?: {
+    ensure: (accountKey: Uint8Array) => Promise<ServerAccountSession | null>
+    /** The relay doesn't know the account: register it again next time. */
+    forget: () => void
+  }
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
   /** Name, avatar, and Tenure as buddies should see them. */
   getProfile: () => BuddyProfile
@@ -543,6 +556,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   } | null = null
   /** Automatic syncs wait until then: the relay asked to back off. */
   let coolDownUntil = 0
+  /** This launch already tried to link the inbox to the server account. */
+  let accountLinkTried = false
   /** Removals that failed: how often in a row, and when to try again. */
   const removalRetries = new Map<string, { failures: number; at: number }>()
   /** Events recent syncs read, by seq, for `describePush`. */
@@ -686,12 +701,78 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return 0
   }
 
+  /** The server account's claim on this User's inbox; null without one. */
+  async function accountProof(
+    me: BuddyIdentity
+  ): Promise<InboxAccountProof | null> {
+    if (!deps.account || !cachedIdentity) return null
+    try {
+      const account = await deps.account.ensure(fromB64u(cachedIdentity.seed))
+      return account
+        ? {
+            accountId: account.accountId,
+            signature: account.signInboxLink(me.inboxId, me.ownerPub),
+          }
+        : null
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * `inbox/register`, with the server account's claim when there is one. If the
+   * relay doesn't know the account (its database was reset, say), the inbox
+   * registers unlinked and the account registers again next time.
+   */
+  async function registerInbox(me: BuddyIdentity, call?: RelayCallOptions) {
+    const account = await accountProof(me)
+    let response: { accountId?: string }
+    try {
+      response = await relay.registerInbox(
+        ownerAuth(me),
+        call,
+        account ?? undefined
+      )
+    } catch (error) {
+      if (!account || !isRelayError(error, 'unknown_account')) throw error
+      deps.account?.forget()
+      response = await relay.registerInbox(ownerAuth(me), call)
+    }
+    if (account && response.accountId === account.accountId)
+      store.setState({ accountLinkedInboxId: me.inboxId })
+  }
+
+  /**
+   * Links an inbox registered before accounts (or while they were off) to the
+   * server account: once per launch, and only with an account to link. Only a
+   * suspension stops the sync; anything else is tried again next launch.
+   */
+  async function linkAccount(me: BuddyIdentity, call?: RelayCallOptions) {
+    const state = store.getState()
+    if (
+      accountLinkTried ||
+      state.registeredInboxId !== me.inboxId ||
+      state.accountLinkedInboxId === me.inboxId
+    )
+      return
+    accountLinkTried = true
+    const account = await accountProof(me)
+    if (!account) return
+    try {
+      const response = await relay.registerInbox(ownerAuth(me), call, account)
+      if (response.accountId === account.accountId)
+        store.setState({ accountLinkedInboxId: me.inboxId })
+    } catch (error) {
+      if (isRelayError(error, 'suspended')) throw error
+      if (isRelayError(error, 'unknown_account')) deps.account?.forget()
+    }
+  }
+
   /** Registers this User's inbox on first use; callers share one attempt. */
   async function ensureInbox(call?: RelayCallOptions): Promise<BuddyIdentity> {
     const me = await identity()
     if (store.getState().registeredInboxId === me.inboxId) return me
-    registering ??= relay
-      .registerInbox(ownerAuth(me), call)
+    registering ??= registerInbox(me, call)
       .then(() => {
         store.setState({
           registeredInboxId: me.inboxId,
@@ -3835,7 +3916,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     store.setState({ slotsNeedRestore: true })
     // A new inbox counts seq from the start again.
     recentEvents.clear()
-    await relay.registerInbox(ownerAuth(me), call)
+    await registerInbox(me, call)
     store.setState({ syncSeq: 0, pushRegistrationKey: null })
     for (const buddy of store.getState().buddies)
       await addSlot(me, pairKeys(me, buddy).incoming)
@@ -3888,6 +3969,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     // Read again each sync: another device's seed may have synced in.
     await identity({ fresh: true })
     const me = await ensureInbox(call)
+    await linkAccount(me, call)
     slotsAddedDuringSync.clear()
     if (store.getState().slotsNeedRestore) await restoreInbox(me, call)
     const since = store.getState().syncSeq
@@ -3991,7 +4073,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function noteBackPressure(error: unknown) {
     if (!(error instanceof RelayError)) return
     const wait =
-      error.code === 'disabled'
+      error.code === 'disabled' || error.code === 'suspended'
         ? Math.max(error.retryAfterMs ?? 0, DISABLED_COOL_DOWN_MS)
         : error.code === 'rate_limited'
           ? (error.retryAfterMs ?? RATE_LIMIT_COOL_DOWN_MS)

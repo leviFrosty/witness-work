@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import InfoPopover from '@/components/ui/InfoPopover'
 import type { InputRef } from 'tamagui'
 import { useRef, useState } from 'react'
@@ -58,6 +59,7 @@ type Props = {
    * custom Category, deleting the current one, or flipping its Credit switch.
    */
   onChange: (selection: TypeSelection) => void
+  invalid?: boolean
   lastInSection?: boolean
   /** Icon and row style for the Type row, e.g. the Plan form's compact list. */
   leftIcon?: AppIcon
@@ -77,6 +79,7 @@ type Props = {
 const TypeSelectorRow = ({
   value,
   onChange,
+  invalid,
   lastInSection,
   leftIcon,
   style,
@@ -88,6 +91,11 @@ const TypeSelectorRow = ({
   const setServiceReportStore = useServiceReport((s) => s.set)
 
   const [customCategoryName, setCustomCategoryName] = useState<string>('')
+  const validation = useFormValidation(
+    { name: !customCategoryName.trim() },
+    'category',
+    value === CUSTOM_TYPE_VALUE
+  )
   const customNameInput = useRef<InputRef>(null)
   // Set while Add waits for the name field to blur.
   const addOnBlur = useRef(false)
@@ -138,7 +146,7 @@ const TypeSelectorRow = ({
 
   const addCustomCategory = () => {
     const trimmed = customCategoryName.trim()
-    if (!trimmed) return
+    if (!validation.validate()) return
     // Reuse an existing Category if the name matches (case-sensitive, mirrors
     // the rest of the app); otherwise create a new record.
     let target = categories.find((c) => c.name === trimmed)
@@ -156,6 +164,7 @@ const TypeSelectorRow = ({
   }
 
   const handleAddCustomCategory = () => {
+    if (!validation.validate()) return
     // The ref is typed for web; on native it's a React Native TextInput.
     const input = customNameInput.current as unknown as NativeTextInput | null
     // Adding removes the name field, and on Android removing a focused field
@@ -233,6 +242,7 @@ const TypeSelectorRow = ({
         >
           <View style={{ flex: 1, flexGrow: 1 }}>
             <TextInput
+              invalid={invalid || validation.invalid('name')}
               maxLength={20}
               style={{
                 borderColor: theme.colors.border,
@@ -256,16 +266,12 @@ const TypeSelectorRow = ({
           </View>
           <Button
             style={{
-              backgroundColor:
-                customCategoryName.trim().length === 0
-                  ? theme.colors.accentAlt
-                  : theme.colors.accent,
+              backgroundColor: theme.colors.accent,
               borderRadius: theme.numbers.borderRadiusSm,
               paddingVertical: 15,
             }}
             variant='outline'
             onPress={handleAddCustomCategory}
-            disabled={customCategoryName.trim().length === 0}
           >
             <Text
               style={{

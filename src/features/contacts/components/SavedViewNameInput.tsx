@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import type { InputRef } from 'tamagui'
@@ -13,19 +14,14 @@ import {
 } from '@/features/contacts/lib/savedViews'
 
 /**
- * Inline name field for a new Saved View. Leaving it empty (blur) dismisses it,
- * so there's no Cancel button — the sheet itself can be dismissed too.
+ * Inline name field for a new Saved View. Invalid saves leave the field open
+ * for correction; the containing sheet can be dismissed to cancel.
  */
-const SavedViewNameInput = ({
-  onSave,
-  onDismiss,
-}: {
-  onSave: (name: string) => void
-  onDismiss: () => void
-}) => {
+const SavedViewNameInput = ({ onSave }: { onSave: (name: string) => void }) => {
   const theme = useTheme()
   const [name, setName] = useState('')
   const canSave = normalizeSavedViewName(name).length > 0
+  const validation = useFormValidation({ name: !canSave }, 'saved_view')
   const inputRef = useRef<InputRef>(null)
 
   // `autoFocus` doesn't take inside the native form sheet; focus once mounted.
@@ -35,7 +31,7 @@ const SavedViewNameInput = ({
   }, [])
 
   const save = () => {
-    if (canSave) onSave(name)
+    if (validation.validate()) onSave(name)
   }
 
   return (
@@ -43,12 +39,10 @@ const SavedViewNameInput = ({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <MyTextInput
           ref={inputRef}
+          invalid={validation.invalid('name')}
           value={name}
           onChangeText={setName}
           onSubmitEditing={save}
-          onBlur={() => {
-            if (!canSave) onDismiss()
-          }}
           placeholder={i18n.t('savedViews_namePlaceholder')}
           maxLength={SAVED_VIEW_NAME_MAX_LENGTH}
           autoCapitalize='sentences'
@@ -56,7 +50,7 @@ const SavedViewNameInput = ({
           textAlign='left'
           style={{ flex: 1 }}
         />
-        <ActionButton disabled={!canSave} onPress={save}>
+        <ActionButton onPress={save}>
           <Text
             style={{
               color: theme.colors.textInverse,

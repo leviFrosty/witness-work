@@ -69,7 +69,8 @@ type Props = {
   type: {
     value: string
     onChange: (selection: TypeSelection) => void
-    /** Shown under the Type row, e.g. why Save is disabled. */
+    /** Shown under the Type row, e.g. which field needs completing. */
+    invalid?: boolean
     hint?: string
   }
 }

@@ -111,3 +111,26 @@ describe('TextInput placeholder on Android', () => {
     expect(overlay()).toHaveLength(0)
   })
 })
+
+describe('TextInput validation outline', () => {
+  it.each(['ios', 'android'])(
+    'outlines a borderless invalid field on %s and clears when corrected',
+    async (os) => {
+      platform.OS = os
+      const props = {
+        accessibilityLabel: 'Name',
+        placeholder: 'Enter name',
+        style: { borderWidth: 0, borderColor: 'transparent' },
+      }
+      await render({ ...props, invalid: true })
+      expect(input().props.borderColor).toBe('red')
+      expect(input().props.borderWidth).toBe(1)
+      expect(input().props.invalid).toBeUndefined()
+      await act(async () =>
+        root.update(<TextInput {...props} invalid={false} />)
+      )
+      expect(input().props.borderColor).toBe('transparent')
+      expect(input().props.borderWidth).toBe(0)
+    }
+  )
+})

@@ -254,6 +254,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
                 {i18n.t('onboardingBuddies_nameHint')}
               </Text>
               <MyTextInput
+                invalid={!name.trim()}
                 value={name}
                 onChangeText={(value) => setProfile({ name: value })}
                 placeholder={i18n.t('firstNamePlaceholder')}

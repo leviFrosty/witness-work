@@ -37,6 +37,7 @@ const ContactConsentSection = ({
         </Text>
         <Section>
           <InputRowContainer
+            invalid={!!error}
             lastInSection
             label={i18n.t('dataProtectionConsentLabel')}
             info={i18n.t('dataProtectionConsentInfoDesc')}

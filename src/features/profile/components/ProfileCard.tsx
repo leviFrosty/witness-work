@@ -79,6 +79,7 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
 }
 
 interface Props {
+  nameInvalid?: boolean
   /** Shows the profile without editing; used by the profile overlay. */
   readOnly?: boolean
   /** Leaves out the badge row, e.g. where badges have their own section. */
@@ -91,7 +92,7 @@ interface Props {
  * `readOnly` renders the same card as a plain display. Earned badges show
  * underneath unless the User turned badges off.
  */
-const ProfileCard = ({ readOnly, hideBadges }: Props) => {
+const ProfileCard = ({ readOnly, hideBadges, nameInvalid }: Props) => {
   const theme = useTheme()
   const {
     installedOn,
@@ -187,6 +188,7 @@ const ProfileCard = ({ readOnly, hideBadges }: Props) => {
           trimmedName || i18n.t('profileGreetingNoName')
         ) : (
           <MyTextInput
+            invalid={nameInvalid}
             value={name}
             onChangeText={(val) => setProfile({ name: val })}
             placeholder={i18n.t('firstNamePlaceholder')}

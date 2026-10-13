@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { analytics } from '@/lib/analytics'
 import { formatTime } from '@/lib/dates'
 import {
@@ -270,6 +271,11 @@ const RecurringSaveScopeModal = (props: {
 }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const scopeValidation = useFormValidation(
+    { scope: !props.selectedScope },
+    'plan_save_scope',
+    props.open
+  )
   const scopeOptions: ScopeOptionConfig[] = [
     {
       scope: 'instance',
@@ -358,7 +364,16 @@ const RecurringSaveScopeModal = (props: {
             </Button>
           </View>
 
-          <View style={{ gap: 10 }}>
+          <View
+            style={{
+              gap: 10,
+              borderWidth: 1,
+              borderRadius: theme.numbers.borderRadiusMd,
+              borderColor: scopeValidation.invalid('scope')
+                ? theme.colors.error
+                : 'transparent',
+            }}
+          >
             {scopeOptions.map((option) => (
               <ScopeOption
                 key={option.scope}
@@ -372,8 +387,9 @@ const RecurringSaveScopeModal = (props: {
           <View style={{ gap: 10, marginTop: 2 }}>
             <ActionButton
               noTransform
-              disabled={!props.selectedScope}
-              onPress={props.onConfirm}
+              onPress={() => {
+                if (scopeValidation.validate()) props.onConfirm()
+              }}
             >
               <Text
                 style={{
@@ -958,7 +974,16 @@ const PlanDayForm = ({
     return editedDate
   }
 
+  const validation = useFormValidation(
+    {
+      duration: hours * 60 + minutes <= 0,
+      category: typeValue === CUSTOM_TYPE_VALUE,
+    },
+    'plan'
+  )
+
   const savePlan = async (scope?: RecurringSaveScope) => {
+    if (!validation.validate()) return
     noteUserAction('plan')
     const { planDate, startTimeInMinutes } = splitPickedDate()
     const plannedMinutes = hours * 60 + minutes
@@ -1055,10 +1080,8 @@ const PlanDayForm = ({
     onSaved(detailsTarget)
   }
 
-  const saveDisabled =
-    (hours === 0 && minutes === 0) || typeValue === CUSTOM_TYPE_VALUE
-
   const handlePrimarySave = () => {
+    if (!validation.validate()) return
     if (existingRecurringPlan) {
       setSelectedSaveScope(null)
       setSaveScopeModalOpen(true)
@@ -1156,11 +1179,7 @@ const PlanDayForm = ({
   }
 
   const saveButton = (
-    <ActionButton
-      onPress={handlePrimarySave}
-      disabled={saveDisabled}
-      testID='plan-save'
-    >
+    <ActionButton onPress={handlePrimarySave} testID='plan-save'>
       <Text
         style={{
           color: theme.colors.textInverse,
@@ -1179,6 +1198,7 @@ const PlanDayForm = ({
 
   const dock = (
     <WhenDock
+      durationInvalid={validation.invalid('duration')}
       testID='plan'
       header={
         <>
@@ -1279,6 +1299,7 @@ const PlanDayForm = ({
             }
       }
       type={{
+        invalid: validation.invalid('category'),
         value: typeValue,
         onChange: handleTypeChange,
         hint:

@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { useState } from 'react'
 import { Alert, type AlertButton, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -90,8 +91,13 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
     fuel !== currentFuel || economy !== toEconomyInput(current?.milesPerGallon)
   const askHowToApply = !!current && setupChanged
   const creatingFuel = fuel === NEW_FUEL && newFuelName.trim().length > 0
-  const submittable =
-    name.trim().length > 0 && (economyValue === undefined || economyValue > 0)
+  const validation = useFormValidation(
+    {
+      name: !name.trim(),
+      economy: economyValue !== undefined && economyValue <= 0,
+    },
+    'mileage_vehicle'
+  )
 
   const fuelOptions = [
     { label: i18n.t('none'), value: NO_FUEL },
@@ -100,7 +106,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
   ]
 
   const save = () => {
-    if (!submittable) return
+    if (!validation.validate()) return
     const vehicleId = existing?.id ?? Crypto.randomUUID()
     saveVehicle({
       id: vehicleId,
@@ -236,6 +242,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
             required
             lastInSection
             textInputProps={{
+              invalid: validation.invalid('name'),
               value: name,
               onChangeText: setName,
               placeholder: i18n.t('mileage.carNamePlaceholder'),
@@ -292,6 +299,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
               info={i18n.t('mileage.fuelEconomy_info')}
               lastInSection
               textInputProps={{
+                invalid: validation.invalid('economy'),
                 value: economy,
                 onChangeText: setEconomy,
                 inputMode: 'decimal',
@@ -327,7 +335,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
         />
 
         <View style={{ gap: 8 }}>
-          <ActionButton disabled={!submittable} onPress={save}>
+          <ActionButton onPress={save}>
             {i18n.t(route.params?.thenLogTrip ? 'mileage.next' : 'save')}
           </ActionButton>
           {existing?.archived && (

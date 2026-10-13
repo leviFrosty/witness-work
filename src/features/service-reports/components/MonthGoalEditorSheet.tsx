@@ -151,7 +151,6 @@ const MonthGoalEditorSheet = ({
                 value={draftGoal}
                 onChangeText={(value) => {
                   setDraftGoal(normalizeDecimalInput(value))
-                  setShowValidationError(false)
                 }}
                 onSubmitEditing={() => inputRef.current?.blur()}
                 keyboardType='decimal-pad'
@@ -159,7 +158,7 @@ const MonthGoalEditorSheet = ({
                 selectTextOnFocus
                 maxLength={7}
                 error={
-                  showValidationError
+                  showValidationError && !hasValidGoal
                     ? i18n.t('monthGoalEditor.invalidGoal')
                     : undefined
                 }
@@ -175,7 +174,7 @@ const MonthGoalEditorSheet = ({
                 {i18n.t('hours_lowercase')}
               </Text>
             </View>
-            {showValidationError && (
+            {showValidationError && !hasValidGoal && (
               <Text
                 accessibilityRole='alert'
                 style={{
@@ -218,7 +217,6 @@ const MonthGoalEditorSheet = ({
         <ActionButton
           noTransform
           accessibilityRole='button'
-          disabled={!hasValidGoal}
           onPress={handleSave}
         >
           {i18n.t('save')}

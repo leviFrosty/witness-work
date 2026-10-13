@@ -1,3 +1,4 @@
+import useFormValidation from '@/hooks/useFormValidation'
 import { useState } from 'react'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -125,10 +126,19 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
       : startValue !== undefined && endValue !== undefined && !odometerError
         ? distanceToMiles(endValue, unit) - distanceToMiles(startValue, unit)
         : undefined
-  const submittable = !!vehicleId && !!distanceMiles
+  const validation = useFormValidation(
+    {
+      vehicle: !vehicleId,
+      distance: mode === 'distance' && !distanceMiles,
+      odometerStart: mode === 'odometer' && startValue === undefined,
+      odometerEnd:
+        mode === 'odometer' && (endValue === undefined || odometerError),
+    },
+    'mileage_trip'
+  )
 
   const save = () => {
-    if (!vehicleId || !distanceMiles) return
+    if (!validation.validate() || !vehicleId || !distanceMiles) return
     const odometer = mode === 'odometer'
     const trip: Trip = {
       id: existing?.id ?? Crypto.randomUUID(),
@@ -182,15 +192,16 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
           <InputRowContainer
             label={i18n.t('date')}
             controlStyle={{ alignItems: 'flex-end' }}
-            lastInSection={carOptions.length < 2}
+            lastInSection={carOptions.length < 2 && !!vehicleId}
           >
             <DateTimePicker
               value={date}
               onChange={(_e, picked) => picked && setDate(picked)}
             />
           </InputRowContainer>
-          {carOptions.length > 1 && (
+          {(carOptions.length > 1 || !vehicleId) && (
             <InputRowSelect
+              invalid={validation.invalid('vehicle')}
               label={i18n.t('mileage.car')}
               lastInSection
               selectProps={{
@@ -221,6 +232,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
                 <TextInputRow
                   label={`${i18n.t('mileage.distance')} (${format.distanceSuffix})`}
                   textInputProps={{
+                    invalid: validation.invalid('distance'),
                     value: distance,
                     onChangeText: setDistance,
                     inputMode: 'decimal',
@@ -243,6 +255,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
                   label={`${i18n.t('mileage.odometerStart')} (${format.distanceSuffix})`}
                   info={i18n.t('mileage.odometerStart_info')}
                   textInputProps={{
+                    invalid: validation.invalid('odometerStart'),
                     value: startText,
                     onChangeText: setOdometerStart,
                     inputMode: 'decimal',
@@ -254,6 +267,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
                   label={`${i18n.t('mileage.odometerEnd')} (${format.distanceSuffix})`}
                   lastInSection
                   textInputProps={{
+                    invalid: validation.invalid('odometerEnd'),
                     value: odometerEnd,
                     onChangeText: setOdometerEnd,
                     inputMode: 'decimal',
@@ -280,9 +294,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
         <TripNoteRow note={note} onChange={setNote} />
 
         <View style={{ gap: 8 }}>
-          <ActionButton disabled={!submittable} onPress={save}>
-            {i18n.t('save')}
-          </ActionButton>
+          <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
           {existing && (
             <Button
               noTransform

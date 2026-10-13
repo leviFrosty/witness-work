@@ -8,6 +8,10 @@ name: Log time from the Home service report card
     timeout: 60000
 - tapOn: Add Time
 - assertVisible: Submit
+# An empty Submit must stay on the form and outline Time, rather than saving.
+- tapOn:
+    id: time-entry-save
+- assertVisible: Submit
 # Note opens the full-screen note editor with the cursor already in it.
 - tapOn:
     id: time-entry-note-row

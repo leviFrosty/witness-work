@@ -78,9 +78,7 @@ const SavedViewSection = () => {
 
   const renderContent = () => {
     if (naming) {
-      return (
-        <SavedViewNameInput onSave={save} onDismiss={() => setNaming(false)} />
-      )
+      return <SavedViewNameInput onSave={save} />
     }
     if (!activeView) {
       return (

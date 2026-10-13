@@ -78,6 +78,11 @@ export type EngineParams = {
    * paths the engine will not propose more than this on a meeting day.
    */
   meetingDayAbsoluteMaxHoursPerDay: number
+  /**
+   * Shortest session `spreadEvenly` proposes. It uses fewer days rather than
+   * filling every eligible day with short sessions.
+   */
+  evenSpreadMinSessionHours: number
 }
 
 export const DEFAULT_ENGINE_PARAMS: EngineParams = {
@@ -92,6 +97,7 @@ export const DEFAULT_ENGINE_PARAMS: EngineParams = {
   recurringMinHorizonDays: 14,
   meetingDaySoftMaxHoursPerDay: 2,
   meetingDayAbsoluteMaxHoursPerDay: 3,
+  evenSpreadMinSessionHours: 2,
 }
 
 export type EngineInput = {
@@ -135,6 +141,12 @@ export type EngineInput = {
    * `rest_recommended_then_resume` rationale.
    */
   minutesLoggedInPriorDays?: number
+  /**
+   * Spread the gap evenly across every eligible day instead of the fewest days
+   * at the stretch cap. For when the publisher just picked the days they go out
+   * (onboarding), so each of them gets a similar session.
+   */
+  spreadEvenly?: boolean
   params?: Partial<EngineParams>
 }
 
@@ -443,6 +455,49 @@ const distributeAcrossNonMeetingPool = (
   }
 }
 
+/**
+ * Every eligible non-meeting day, or as many as keep each session at least
+ * `evenSpreadMinSessionHours`, spaced evenly and given near-equal whole-hour
+ * sessions that total the gap exactly. Falls back to `buildDistributed` when
+ * those days can't hold the gap at the stretch cap.
+ */
+const buildEvenSpread = (ctx: BuildContext): Recommendation | null => {
+  const { gapMinutes, eligible, params } = ctx
+  const pool = eligible.filter((d) => !d.isMeetingDay)
+  if (pool.length * params.stretchMaxHoursPerDay * 60 < gapMinutes) {
+    return buildDistributed(ctx)
+  }
+  const nSlots = Math.min(
+    pool.length,
+    Math.max(
+      1,
+      Math.floor(gapMinutes / (params.evenSpreadMinSessionHours * 60))
+    )
+  )
+  const chosen = pickEvenlySpacedDays(pool, nSlots, true)
+  // Round each running total to the hour so the longer sessions interleave
+  // instead of bunching up, and the last one closes the gap exactly.
+  const runningTotal = (i: number) =>
+    i === nSlots ? gapMinutes : Math.round((gapMinutes * i) / nSlots / 60) * 60
+  const plans: ProposedDayPlan[] = chosen.map((d, i) => ({
+    date: d.m.toDate(),
+    minutes: runningTotal(i + 1) - runningTotal(i),
+  }))
+  const hours = Math.max(1, Math.round(gapMinutes / nSlots / 60))
+  return {
+    shape: 'distributed',
+    plans,
+    headline: {
+      code: 'shape.distributed',
+      values: { hours, days: nSlots },
+    },
+    rationale: {
+      code: 'spread_to_sustainable_pace',
+      values: { hours, days: nSlots },
+    },
+  }
+}
+
 const buildRecurring = (ctx: BuildContext): Recommendation | null => {
   const { gapMinutes, eligible, params } = ctx
   const stretchCapMinutes = params.stretchMaxHoursPerDay * 60
@@ -592,6 +647,8 @@ export const generateRecommendation = (
       (input.minutesLoggedInPriorDays ?? 0) >=
       params.tirednessThresholdHours * 60,
   }
+
+  if (input.spreadEvenly) return buildEvenSpread(ctx)
 
   const builders: Record<
     RecommendationShape,

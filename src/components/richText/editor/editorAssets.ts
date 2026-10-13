@@ -6,20 +6,22 @@ import type { EditorFonts } from '@/components/richText/editor/editorProtocol'
 import { noteImagePath } from '@/lib/richText/noteImages'
 
 /*
- * Files the editor's web page loads. A release build loads the page from a
- * file, so it can read photos and fonts from disk directly. In development the
- * page comes from Metro over http, which can't load file:// URLs: photos are
- * sent inline (scaled down) and the editor falls back to system fonts.
+ * Files the editor's web page loads. Photos are always sent inline (scaled
+ * down): in development the page comes from Metro over http, which can't load
+ * file:// URLs, and on an iPhone the web view's sandbox can't read the app's
+ * Documents folder even when the page itself loads from a file. Fonts live in
+ * the app bundle beside the page, so release builds read those from disk; in
+ * development the editor falls back to system fonts.
  */
 
-const DEV_IMAGE_SIDE = 1024
+const IMAGE_SIDE = 1200
 
 async function inlineImage(id: string): Promise<string> {
   const scaled = await ImageManipulator.manipulateAsync(
     noteImagePath(id),
-    [{ resize: { width: DEV_IMAGE_SIDE } }],
+    [{ resize: { width: IMAGE_SIDE } }],
     {
-      compress: 0.6,
+      compress: 0.7,
       format: ImageManipulator.SaveFormat.JPEG,
       base64: true,
     }
@@ -31,7 +33,7 @@ async function inlineImage(id: string): Promise<string> {
 /** A URL the editor's page can show the photo from; '' when it's missing. */
 export async function editorImageSource(id: string): Promise<string> {
   try {
-    return __DEV__ ? await inlineImage(id) : noteImagePath(id)
+    return await inlineImage(id)
   } catch {
     return ''
   }

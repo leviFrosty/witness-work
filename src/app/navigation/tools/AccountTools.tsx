@@ -30,6 +30,7 @@ import {
 import type { ServerAccountInfo } from '@/lib/serverAccount/client'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import HandoffTools from '@/app/navigation/tools/HandoffTools'
+import BackupTools from '@/app/navigation/tools/BackupTools'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -63,7 +64,7 @@ type KeyFacts = {
 /**
  * The account key and server account (ADR 0024, 0026): what this device holds,
  * what the server says, and the real flows to change them, then Set Up Another
- * Device's handoff. Later subsections (backup) go below Handoff.
+ * Device's handoff, then the backup.
  */
 export default function AccountTools() {
   const toast = useToastController()
@@ -379,6 +380,7 @@ export default function AccountTools() {
       </ToolList>
 
       <HandoffTools />
+      <BackupTools />
     </ToolSection>
   )
 }

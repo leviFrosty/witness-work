@@ -9,6 +9,8 @@ import {
   accountKeyAvailable,
   replaceAccountKey,
 } from '@/app/account/accountKey'
+import { backUpNow } from '@/app/account/backup'
+import { offerRestore, type RestoreOutcome } from '@/app/account/backupRestore'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import {
   type AccountKeyLoss,
@@ -17,6 +19,7 @@ import {
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { serverAccount } from '@/lib/serverAccount'
+import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { registerAccount } from '@/lib/serverAccount/client'
 import type { HandoffHello, HandoffOffer } from '@/lib/serverAccount/handoff'
 import {
@@ -181,6 +184,10 @@ export async function startOfferHandoff(
   )
   track(session, entry, { quiet })
   void session.open()
+  // The new phone offers the backup as soon as it has the key, so bring it up
+  // to date while the User scans and compares codes.
+  if (useBackupState.getState().enabled)
+    void backUpNow('handoff').catch(() => undefined)
   return { ok: true, session }
 }
 
@@ -214,7 +221,12 @@ export function startClaimHandoff(
 }
 
 export type ClaimCompletion =
-  | { outcome: 'done'; buddiesStarted: boolean }
+  | {
+      outcome: 'done'
+      buddiesStarted: boolean
+      /** What came of offering the account's backup. */
+      restore: RestoreOutcome
+    }
   /** The User declined the replacement warning; the channel is cancelled. */
   | { outcome: 'declined' }
   | {
@@ -306,13 +318,20 @@ export async function completeClaimHandoff(
         return false
       })
     : false
-  await offerRestoreAfterHandoff()
-  return { outcome: 'done', buddiesStarted }
+  const restore = await offerRestoreAfterHandoff()
+  return { outcome: 'done', buddiesStarted, restore }
 }
 
 /**
- * Where the account's backup will be offered once it ships (ADR 0026 §4): a
- * device that just received the account key restores the account's data from
- * here. Nothing to do yet.
+ * The account's backup, offered on the phone that just received the account key
+ * (ADR 0026 §4): Restore or Not Now, or Replace, Combine or Not Now when this
+ * phone already has records. Never fails the handoff.
  */
-export async function offerRestoreAfterHandoff(): Promise<void> {}
+export async function offerRestoreAfterHandoff(): Promise<RestoreOutcome> {
+  try {
+    return await offerRestore('handoff')
+  } catch (error) {
+    logger.warn('[handoff] offering the backup failed', error)
+    return { outcome: 'failed', reason: 'server' }
+  }
+}

@@ -16,6 +16,11 @@ export type BackupReminderInput = {
    * pull mutes the reminder, as before upload confirmation existed.
    */
   uploadConfirmationSupported: boolean
+  /**
+   * The account backup's last upload while it's on (ADR 0026 §4), or null: that
+   * copy is off-device too.
+   */
+  accountBackupAt?: number | null
   now: number
 }
 
@@ -34,9 +39,17 @@ export function backupReminderDueAt({
   lastiCloudPulledAt,
   lastiCloudUploadedAt,
   uploadConfirmationSupported,
+  accountBackupAt = null,
   now,
 }: BackupReminderInput): number | null {
   if (!remindMeAboutBackups) return null
+
+  // The account backup uploaded this device's data within the window.
+  if (
+    accountBackupAt &&
+    moment(accountBackupAt).add(frequencyDays, 'days').isAfter(now)
+  )
+    return null
 
   // If iCloud sync is on and iCloud confirmed uploading this device's data
   // within the backup-freshness window, it's already off-device. Skip the

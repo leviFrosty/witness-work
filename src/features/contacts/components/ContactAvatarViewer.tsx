@@ -37,6 +37,7 @@ import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import FloatingGlassButton from '@/components/ui/FloatingGlassButton'
 import i18n from '@/lib/locales'
+import { formatBytes } from '@/lib/formatBytes'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 
@@ -492,16 +493,6 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => {
       </Text>
     </View>
   )
-}
-
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined || bytes === null) return '—'
-  if (bytes < 1024) return i18n.t('fileSize_bytes', { value: bytes })
-  if (bytes < 1024 * 1024)
-    return i18n.t('fileSize_kilobytes', { value: (bytes / 1024).toFixed(1) })
-  return i18n.t('fileSize_megabytes', {
-    value: (bytes / (1024 * 1024)).toFixed(2),
-  })
 }
 
 export default ContactAvatarViewer

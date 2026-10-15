@@ -11,6 +11,7 @@ const dailyEvents = new Set([
   'supporter_nudge_viewed',
   'backup_reminder_viewed',
   'pointer_hover_detected',
+  'account_backup_failed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',

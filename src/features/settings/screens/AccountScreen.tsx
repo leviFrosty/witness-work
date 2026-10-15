@@ -2,16 +2,25 @@ import { ScrollView } from 'react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import AccountStatusSection from '@/features/settings/components/account/AccountStatusSection'
+import BackupSection from '@/features/settings/components/account/BackupSection'
+import BackupSlotsSection from '@/features/settings/components/account/BackupSlotsSection'
 import RecoveryKeySection from '@/features/settings/components/account/RecoveryKeySection'
 import HandoffSection from '@/features/settings/components/account/HandoffSection'
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
+import useBackupSlots from '@/features/settings/hooks/useBackupSlots'
 
 /**
- * Settings → Account: the anonymous server account (ADR 0024), moving it to
- * another phone, and its recovery key (ADR 0026).
+ * Settings → Account: the anonymous server account (ADR 0024), its end-to-end
+ * encrypted backup, moving it to another phone, and its recovery key (ADR
+ * 0026).
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
+  const backups = useBackupSlots()
+  const changed = () => {
+    void refresh()
+    void backups.refresh()
+  }
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
@@ -19,8 +28,14 @@ const AccountScreen = () => {
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <AccountStatusSection overview={overview} />
+          <BackupSection onChanged={changed} />
+          <BackupSlotsSection
+            slots={backups.slots}
+            mySlotId={backups.mySlotId}
+            onChanged={changed}
+          />
           <HandoffSection />
-          <RecoveryKeySection onAccountChanged={() => void refresh()} />
+          <RecoveryKeySection onAccountChanged={changed} />
         </ScrollView>
       </Wrapper>
     </SettingsInputLayout>

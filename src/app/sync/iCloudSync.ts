@@ -9,8 +9,12 @@
 import { perf } from '@/lib/perf'
 import { lastForegroundAt } from '@/lib/appLifecycle'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
-import type { MergeResult } from '@/app/sync/merge'
-type LocalMergeState = Omit<MergeResult, 'changed'>
+import { subscribeToLocalDataChanges } from '@/app/sync/localChanges'
+import {
+  applyMergedState,
+  localMergeState,
+  mergePayloadsInto,
+} from '@/app/sync/mergeIntoLocal'
 import { syncNow, setSyncClockOffset, refreshSyncClock } from '@/lib/syncClock'
 import { reconcileSyncDefinitions } from '@/app/sync/definitionReconciliation'
 import { expireDeletedContactDetails } from '@/lib/contactRetention'
@@ -64,12 +68,10 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
-import useMileage from '@/stores/mileage'
 import { mileageFromPayload } from '@/app/sync/mileagePayload'
 import {
   applyMileageSnapshot,
   hasMileageData,
-  localMileageSnapshot,
 } from '@/app/sync/mileageStoreSync'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -81,7 +83,6 @@ import {
   PayloadRejection,
   SyncPayload,
 } from '@/app/sync/payload'
-import { mergePayload } from '@/app/sync/merge'
 import { classifyUploadStatus, UploadVerdict } from '@/app/sync/uploadStatus'
 import { isAccountFilename } from '@/lib/accountFile'
 import { reclaimAccountFile } from '@/lib/account'
@@ -2183,74 +2184,26 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
 
   if (!canApplyPull(reason)) return { changed: false, complete: false, ownFile }
   // Snapshot local state once; fold each remote payload into the accumulator.
-  const contactsState = useContacts.getState()
-  const conversationsState = useConversations.getState()
-  const serviceReportState = useServiceReport.getState()
-  const categoriesState = useCategories.getState()
-  const preferencesState = usePreferences.getState()
-  const profileState = useProfile.getState()
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const localPrefValues: Record<string, any> = {}
-  for (const [key, value] of Object.entries(preferencesState)) {
-    if (typeof value === 'function') continue
-    localPrefValues[key] = value
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const localProfileValues: Record<string, any> = {}
-  for (const [key, value] of Object.entries(profileState)) {
-    if (typeof value === 'function') continue
-    localProfileValues[key] = value
-  }
+  const local = localMergeState()
 
   logger.log(`${tag()} pullAndMerge: local snapshot`, {
     reason,
-    contacts: contactsState.contacts.length,
-    deletedContacts: contactsState.deletedContacts.length,
-    conversations: conversationsState.conversations.length,
-    deletedConversations: conversationsState.deletedConversations.length,
-    serviceReports: countReports(serviceReportState.serviceReports),
-    dayPlans: serviceReportState.dayPlans.length,
-    recurringPlans: serviceReportState.recurringPlans.length,
-    deletedDayPlans: serviceReportState.deletedDayPlans.length,
-    deletedRecurringPlans: serviceReportState.deletedRecurringPlans.length,
-    preferenceUpdatedAtKeys: Object.keys(
-      preferencesState.preferenceUpdatedAt ?? {}
-    ).length,
+    contacts: local.contacts.length,
+    deletedContacts: local.deletedContacts.length,
+    conversations: local.conversations.length,
+    deletedConversations: local.deletedConversations.length,
+    serviceReports: countReports(local.serviceReports),
+    dayPlans: local.dayPlans.length,
+    recurringPlans: local.recurringPlans.length,
+    deletedDayPlans: local.deletedDayPlans.length,
+    deletedRecurringPlans: local.deletedRecurringPlans.length,
+    preferenceUpdatedAtKeys: Object.keys(local.preferenceUpdatedAt).length,
   })
 
-  let acc: LocalMergeState = {
-    contacts: contactsState.contacts,
-    deletedContacts: contactsState.deletedContacts,
-    customFieldDefs: contactsState.customFieldDefs,
-    deletedCustomFieldDefs: contactsState.deletedCustomFieldDefs,
-    conversations: conversationsState.conversations,
-    deletedConversations: conversationsState.deletedConversations,
-    conversationFieldDefs: conversationsState.conversationFieldDefs,
-    deletedConversationFieldDefs:
-      conversationsState.deletedConversationFieldDefs,
-    serviceReports: serviceReportState.serviceReports,
-    dayPlans: serviceReportState.dayPlans,
-    recurringPlans: serviceReportState.recurringPlans,
-    deletedServiceReports: serviceReportState.deletedServiceReports,
-    deletedDayPlans: serviceReportState.deletedDayPlans,
-    deletedRecurringPlans: serviceReportState.deletedRecurringPlans,
-    categories: categoriesState.categories,
-    deletedCategories: categoriesState.deletedCategories,
-    ...localMileageSnapshot(),
-    preferencesValues: localPrefValues,
-    preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
-    profileValues: localProfileValues,
-    profileUpdatedAt: profileState.profileUpdatedAt ?? {},
-  }
-
-  let anyChanged = false
-  for (const r of remotePayloads) {
-    const result = mergePayload(acc, r.payload)
-    if (result.changed) anyChanged = true
-    const { changed: _changed, ...next } = result
-    acc = next
-  }
+  const { changed: anyChanged, merged: acc } = mergePayloadsInto(
+    local,
+    remotePayloads.map((r) => r.payload)
+  )
 
   logger.log(`${tag()} pullAndMerge: merge result`, {
     reason,
@@ -2283,54 +2236,10 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     return { changed: false, complete, ownFile }
   }
 
-  contactsState.set({
-    contacts: acc.contacts,
-    deletedContacts: acc.deletedContacts,
-    customFieldDefs: acc.customFieldDefs,
-    deletedCustomFieldDefs: acc.deletedCustomFieldDefs,
-  })
-  conversationsState.set({
-    conversations: acc.conversations,
-    deletedConversations: acc.deletedConversations,
-    conversationFieldDefs: acc.conversationFieldDefs,
-    deletedConversationFieldDefs: acc.deletedConversationFieldDefs,
-  })
-  // Same rationale as `replaceLocalWithRemote`: a peer device could have
-  // written un-normalized dates. Re-anchor before applying. A Plan another
-  // device deleted leaves here as a remote mutation: that device already
-  // answered any buddy's invitation, and the reminder hook drops its reminder.
-  const normalizedAcc = migrateNormalizeDates({
-    serviceReports: acc.serviceReports,
-    dayPlans: acc.dayPlans,
-    recurringPlans: acc.recurringPlans,
-  })
-  withRemoteDataMutation(() =>
-    serviceReportState.set({
-      serviceReports: normalizedAcc.serviceReports,
-      dayPlans: normalizedAcc.dayPlans,
-      recurringPlans: normalizedAcc.recurringPlans,
-      deletedServiceReports: acc.deletedServiceReports,
-      deletedDayPlans: acc.deletedDayPlans,
-      deletedRecurringPlans: acc.deletedRecurringPlans,
-    })
-  )
-  categoriesState.set({
-    categories: acc.categories,
-    deletedCategories: acc.deletedCategories,
-  })
-  applyMileageSnapshot(acc)
-
+  applyMergedState(acc)
   usePreferences.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(acc.preferencesValues as any),
-    preferenceUpdatedAt: acc.preferenceUpdatedAt,
     lastiCloudSyncAt: Date.now(),
     lastiCloudPulledAt: Date.now(),
-  })
-  useProfile.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(acc.profileValues as any),
-    profileUpdatedAt: acc.profileUpdatedAt,
   })
 
   logger.log(`${tag()} pullAndMerge: applied merge to stores`, {
@@ -2704,31 +2613,12 @@ export function installiCloudSync(): () => void {
   )
   backfillUpdatedAtIfNeeded()
 
-  const unsubContacts = useContacts.subscribe(() => {
-    if (!materializingImages) schedulePush()
-  })
-  const unsubConversations = useConversations.subscribe(() => schedulePush())
-  const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
-  const unsubCategories = useCategories.subscribe(() => schedulePush())
-  const unsubMileage = useMileage.subscribe(() => schedulePush())
-  // Only schedule a push when a *syncable* preference key changed. The
-  // stamping wrapper in `usePreferences` re-allocates `preferenceUpdatedAt`
-  // iff a non-bookkeeping key was written, so a reference check on that map
-  // is a cheap and accurate filter. Without this, every `pullAndMerge` wrote
-  // `lastiCloudPulledAt` and armed a 5s debounced push, looping pulls back
-  // into no-op pushes.
-  const unsubPreferences = usePreferences.subscribe((state, prev) => {
-    if (state.preferenceUpdatedAt !== prev.preferenceUpdatedAt) {
-      schedulePush()
-    }
-  })
-  // Profile store mirrors the same per-key stamping pattern, so the same
-  // reference check on `profileUpdatedAt` is an accurate filter for
-  // "actual syncable change happened."
-  const unsubProfile = useProfile.subscribe((state, prev) => {
-    if (state.profileUpdatedAt !== prev.profileUpdatedAt) {
-      schedulePush()
-    }
+  // Pull merges re-write the stores too; `iCloudSyncPendingPush` and the
+  // final-state comparisons keep those from looping. Materialized photo paths
+  // aren't edits.
+  const unsubLocalData = subscribeToLocalDataChanges((store) => {
+    if (store === 'contacts' && materializingImages) return
+    schedulePush()
   })
 
   // A real return from the background, not an iOS `inactive` blip (Control
@@ -2848,13 +2738,7 @@ export function installiCloudSync(): () => void {
   catchUpIfActive('launch')
 
   return () => {
-    unsubContacts()
-    unsubConversations()
-    unsubServiceReports()
-    unsubCategories()
-    unsubMileage()
-    unsubPreferences()
-    unsubProfile()
+    unsubLocalData()
     unsubSupporter()
     appStateSub.remove()
     foregroundSub.remove()

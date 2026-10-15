@@ -6,7 +6,7 @@ import InputRowContainer, {
 interface Props
   extends Pick<
     InputRowContainerProps,
-    'label' | 'description' | 'info' | 'lastInSection'
+    'label' | 'description' | 'info' | 'lastInSection' | 'leftIcon'
   > {
   value: boolean
   onValueChange: (value: boolean) => void

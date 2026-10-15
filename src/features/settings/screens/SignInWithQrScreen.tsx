@@ -23,6 +23,7 @@ import HandoffStatus, {
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
 import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 
 const LINK_PROBLEM = {
   notHandoff: 'handoff_scanNotHandoff',
@@ -59,22 +60,36 @@ const SignInWithQrScreen = () => {
 
   const content = () => {
     if (completion !== 'idle' && completion !== 'running') {
-      if (completion.outcome === 'done')
+      if (completion.outcome === 'done') {
+        const restored = completion.restore.outcome === 'restored'
         return (
           <HandoffStatus
             icon={CircleCheckIcon}
             tone='success'
             title={i18n.t('handoff_newDoneTitle')}
             body={i18n.t('handoff_newDoneBody')}
-            detail={i18n.t('handoff_newDoneData')}
+            detail={i18n.t(
+              restored
+                ? 'handoff_newDoneRestored'
+                : completion.restore.outcome === 'none'
+                  ? 'handoff_newDoneData'
+                  : 'handoff_newDoneRestoreLater'
+            )}
             primary={{
               label: i18n.t(entry === 'onboarding' ? 'continue' : 'done'),
-              onPress: () => navigation.goBack(),
+              onPress: () => {
+                // The restored records replace what the remaining steps
+                // would set up, as a backup file's restore does.
+                if (restored && entry === 'onboarding')
+                  completeOnboardingFromRestore()
+                navigation.goBack()
+              },
               testID: 'handoff-done',
             }}
             testID='handoff-new-done'
           />
         )
+      }
       if (completion.outcome === 'declined')
         return (
           <HandoffStatus
@@ -198,6 +213,9 @@ const SignInWithQrScreen = () => {
         open={recovering}
         onClose={() => setRecovering(false)}
         onDone={() => navigation.goBack()}
+        onRestored={() => {
+          if (entry === 'onboarding') completeOnboardingFromRestore()
+        }}
       />
     </Wrapper>
   )

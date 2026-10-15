@@ -149,10 +149,23 @@ All self-signed envelopes like `account/register`, payloads with `accountPub`, `
 | `backup/get`    | `slotId`                        | The blob, `application/octet-stream`; `not_found` without one |
 | `backup/delete` | `slotId`, or none for all slots | `{ ok }`                                                      |
 
-- `backup/put` sends the envelope in headers (`x-ww-p`, `x-ww-s`) and the blob as the raw body; `sha256` is b64u of the body's SHA-256 and `size` its length. Every other op sends the envelope as the JSON body.
-- Limits: 20 MiB a blob (`too_large`, 413), 8 slots an account (`limit`), one `backup/put` a slot a minute (`rate_limited`), and the read edge tier for the rest.
+- `backup/put` sends the envelope in headers (`x-ww-p`, `x-ww-s`) and the blob as the raw body (`application/octet-stream`); `sha256` is b64u of the body's SHA-256 and `size` its length. A body that doesn't match them is `bad_request`. Every other op sends the envelope as the JSON body.
+- `backup/get` answers with the bytes exactly as put, `Cache-Control: no-store`.
+- `backup/delete` is idempotent: a missing slot is `ok`.
+- Limits: 20 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read), 8 slots an account (`limit`, 429, for a new slot only), and one `backup/put` a slot a minute (`rate_limited`, 429, with `Retry-After` for the rest of the minute). `backup/put` counts against the Buddies photo-upload edge tier, the rest against the read tier.
+- An unregistered `accountPub` is `unknown_account` (404). A suspended account can still back up.
 - R2's lifecycle rule deletes a slot 400 days after its last upload.
 - `disabled` (503) when the worker has no backup bucket or accounts database.
+
+### The app
+
+- **Opt-in.** Settings → Account → Backup → Back Up to WitnessWork, off by default. Turning it on creates the account key when there's none and registers the account first; it stays off when that can't happen (offline, or accounts off).
+- **Slot.** One random slot id per install, in the `server-account` MMKV, bound to the install id (on Android the `ANDROID_ID`-derived one), so a phone restored from another's Auto Backup gets its own slot.
+- **What's in it.** `buildPayload`, the sync payload, without `resetEpoch`: a reset generation belongs to one cloud's sync history. Photos aren't included. The plaintext's `deviceName` is the device model.
+- **When it uploads** (`src/lib/serverAccount/backupScheduler.ts`): 30 seconds after the data stops changing (the sync engine's own change trigger, `subscribeToLocalDataChanges`), or 5 minutes after the first of a steady stream of changes; at once when the app leaves the foreground with changes pending; and at least daily. A plaintext whose hash (without its timestamps) matches the last upload isn't uploaded again within the day. Never twice within the server's minute. Failures back off by reason: `rate_limited` by `Retry-After`, `disabled` and `limit` a day, `too_large` 6 hours, offline 15 minutes or when the connection returns, anything else 1, 5, 15 and then 60 minutes. Coming back to the app retries offline, server and rate-limit failures sooner. Back Up Now skips the debounce and the backoff. The phone opening Set Up Another Device uploads first when backup is on.
+- **Restore** (`src/app/account/backupRestore.ts`) is offered after a handoff, after a recovery key, from Settings → Account → Restore from Backup, and once per account on a launch after onboarding when the account key is already on the device, backup is off here, and the device has no records (`hasMeaningfulLocalData`). It lists the slots, asks (Restore or Not Now without records here; Replace, Combine or Not Now with them), downloads every slot, decrypts it, and validates its payload with `parsePayload`. A slot from a newer app version, or one that doesn't open or validate, is left out and the User is told; if none is left, nothing changes. Replace folds the slots with `foldRemotePayloads` and applies them with `replaceLocalWithRemote`; Combine merges them into the device's records with the sync merge. Either keeps the device's own sync bookkeeping (`iCloudResetEpoch`, last pull, last remote device), so iCloud or Google Drive sync on the device merges the restored records with its cloud like any edit, rather than adopting or ignoring a reset. Then it offers to turn backup on here.
+- **Delete.** Settings → Account lists the account's slots as "This phone" or "Another device" with their date and size (names are inside the ciphertext). Deleting one, or Delete Backup for all, deletes from R2 at once; either also turns backup off on this device. Turning backup off asks whether to delete this device's slot.
+- **Delete Buddies** deletes the account key, so it first deletes every slot of the account, signed with that key. If that fails, nothing else happens and the User is told. With backup on, the next upload creates the new key's account, and the app says the recovery key changed. Replacing the key with another (a handoff or a recovery key) leaves the old account's slots to expire.
 
 ## Recovery key
 

@@ -68,7 +68,7 @@ progress, badges, mileage`"]
 end-to-end encrypted sharing`"]
     A_ACCOUNT["`**Account**
 anonymous account, recovery key,
-Set Up Another Device`"]
+Set Up Another Device, backup`"]
     A_SYNC["`**Sync + backups**
 sync, restore, JSON backups`"]
     A_NOTES["`**Notes Import (Scribe AI)**
@@ -120,7 +120,8 @@ coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
       R_ACC["`**/accounts/v1/...**
-signed account ops, handoff relay`"]
+signed account ops, handoff relay,
+encrypted backups`"]
       R_LINKS["`**GET /c, /b, /h, /.well-known**
 link pages, Universal + App Links`"]
       R_RATINGS["`**GET /app-store/ratings**
@@ -153,6 +154,8 @@ one per import, about 1 hour`")]
 account ids, public keys, inbox links`")]
       DO_HANDOFF[("`**AccountHandoff DO**
 one per handoff, 10 minutes`")]
+      R2_BACKUP[("`**R2: ww-account-backups**
+sealed slot per device, 400 days idle`")]
     end
     DO_RPQ[("`**RoutePlanningQuota DO**
 10 routes a day per account`")]
@@ -194,7 +197,7 @@ analytics, flags, surveys, errors`"]
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
-  A_ACCOUNT -->|"register, sealed handoff"| R_ACC
+  A_ACCOUNT -->|"register, sealed handoff, sealed backup"| R_ACC
   A_NOTES -->|"notes text, SSE stream"| R_NOTES
   A_ROUTE -->|"today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
@@ -210,6 +213,7 @@ analytics, flags, surveys, errors`"]
   R_BUD -->|"inbox links"| D_ACC
   R_ACC -->|"accounts"| D_ACC
   R_ACC -->|"handoff channel"| DO_HANDOFF
+  R_ACC -->|"backup slots"| R2_BACKUP
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
   R_NOTES -->|"iOS attest"| DO_AA
@@ -243,16 +247,17 @@ analytics, flags, surveys, errors`"]
   classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
   classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
   class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
-  class A_CORE,A_BUDDIES,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
+  class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
+  class R_BUD,R_ACC,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
+  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
 ```
 
-- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 bucket.
+- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
+- Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
 - Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)).
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 

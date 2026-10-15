@@ -7,12 +7,13 @@ import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import ContactPreview from '@/components/ContactPreview'
-import Avatar from '@/components/ui/Avatar'
-import Card from '@/components/ui/Card'
+import ContactCard, {
+  ContactCardBody,
+  ContactCardSubtitle,
+} from '@/components/ContactCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import { useContactRemovalActions } from '@/hooks/useContactMenuActions'
@@ -22,7 +23,6 @@ import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
 import type { Contact } from '@/types/contact'
-import GenderIcon from '@/features/contacts/components/GenderIcon'
 import { SelectionCheck } from '@/features/contacts/components/ListSelection'
 
 /** The long-press preview; mounted lazily, so it can read the store. */
@@ -61,60 +61,40 @@ export default function DismissedContactRow({
   const { archive, remove } = useContactRemovalActions(contact)
   const [hovered, setHovered] = useState(false)
 
-  const cardStyle = {
-    borderRadius: theme.numbers.borderRadiusSm,
-    backgroundColor:
-      selectionMode && checked
-        ? theme.colors.accentTranslucent
-        : theme.colors.backgroundLighter,
-  }
-
   const details = (
-    <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
-      {selectionMode && <SelectionCheck checked={checked} />}
-      <Avatar
-        avatar={contact.avatar ?? { type: 'none', value: '' }}
-        name={contact.name}
-        size={36}
-        background={contact.avatarBackground ?? undefined}
-      />
-      <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 18, flexShrink: 1 }} numberOfLines={1}>
-            {contact.name}
-          </Text>
-          {contact.gender && (
-            <GenderIcon gender={contact.gender} size={10} opacity={0.6} />
-          )}
-        </View>
-        {contact.dismissedUntil && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <LucideIcon
-              icon={ClockIcon}
-              size={9}
-              style={{ color: theme.colors.textAlt }}
-            />
-            <Text
-              style={{ color: theme.colors.textAlt, fontSize: 11, flex: 1 }}
-              numberOfLines={1}
-            >
-              {i18n.t('dismissedUntil', {
-                date: formatDate(contact.dismissedUntil, { style: 'medium' }),
-              })}
-            </Text>
-          </View>
-        )}
-      </View>
-      {contact.isFavorite && (
-        <IconButton
-          icon={StarIcon}
-          iconStyle={{ color: theme.colors.warn }}
-          fill={theme.colors.warn}
-          size='sm'
-        />
-      )}
-    </View>
+    <ContactCardBody
+      contact={contact}
+      leading={selectionMode && <SelectionCheck checked={checked} />}
+      subtitle={
+        contact.dismissedUntil && (
+          <ContactCardSubtitle
+            icon={
+              <LucideIcon
+                icon={ClockIcon}
+                size={9}
+                style={{ color: theme.colors.textAlt }}
+              />
+            }
+          >
+            {i18n.t('dismissedUntil', {
+              date: formatDate(contact.dismissedUntil, { style: 'medium' }),
+            })}
+          </ContactCardSubtitle>
+        )
+      }
+      trailing={
+        contact.isFavorite && (
+          <IconButton
+            icon={StarIcon}
+            iconStyle={{ color: theme.colors.warn }}
+            fill={theme.colors.warn}
+            size='sm'
+          />
+        )
+      }
+    />
   )
+  const radius = theme.numbers.borderRadiusSm
 
   if (selectionMode) {
     return (
@@ -125,12 +105,8 @@ export default function DismissedContactRow({
           accessibilityState={{ checked }}
           accessibilityLabel={contact.name}
         >
-          <Card
-            style={{ ...cardStyle, paddingHorizontal: 18, paddingVertical: 16 }}
-          >
-            {details}
-          </Card>
-          <HoverTint visible={hovered} borderRadius={cardStyle.borderRadius} />
+          <ContactCard selected={checked}>{details}</ContactCard>
+          <HoverTint visible={hovered} borderRadius={radius} />
         </Pressable>
       </PointerHover>
     )
@@ -139,9 +115,8 @@ export default function DismissedContactRow({
   const undismissContact = () => void undismiss([contact])
 
   return (
-    <Card
+    <ContactCard
       style={{
-        ...cardStyle,
         paddingVertical: 0,
         paddingHorizontal: 0,
         gap: 0,
@@ -155,7 +130,7 @@ export default function DismissedContactRow({
         style={{ flex: 1 }}
         onPress={onPress}
         accessibilityLabel={contact.name}
-        hoverRadius={cardStyle.borderRadius}
+        hoverRadius={radius}
         preview={<DismissedContactPreview contact={contact} />}
         actions={[
           [
@@ -192,6 +167,6 @@ export default function DismissedContactRow({
           backgroundColor: theme.colors.accentTranslucent,
         }}
       />
-    </Card>
+    </ContactCard>
   )
 }

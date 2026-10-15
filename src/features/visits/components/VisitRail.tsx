@@ -31,7 +31,7 @@ export type RailNode =
 export type RailStop = {
   key: string
   node: RailNode
-  /** Later than today, so the rail runs dashed into it. */
+  /** Later than today, so the rail runs dashed from it. */
   ahead?: boolean
   /** Beside the node; the Today marker brings its own. */
   content?: ReactNode
@@ -92,13 +92,13 @@ function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
 }
 
 /**
- * The line from one stop down to the next, dashed into one that's ahead, in the
- * color of the stop it leads to: teal into a planned visit, gray into an empty
- * or dismissed one.
+ * The line from one stop down to the earlier one below it, dashed out of one
+ * that's ahead, in the color of the later stop: teal from a planned visit, gray
+ * from an empty or dismissed one.
  */
-function Line({ to }: { to: RailStop }) {
+function Line({ from }: { from: RailStop }) {
   const theme = useTheme()
-  if (to.ahead)
+  if (from.ahead)
     // A zero-width box with a dashed border draws a dashed line.
     return (
       <View
@@ -110,7 +110,7 @@ function Line({ to }: { to: RailStop }) {
           borderWidth: 1,
           borderStyle: 'dashed',
           borderColor:
-            to.node === 'ahead' || to.node === 'kept'
+            from.node === 'ahead' || from.node === 'kept'
               ? theme.colors.accent3
               : theme.colors.textAlt,
         }}
@@ -125,7 +125,7 @@ function Line({ to }: { to: RailStop }) {
         minHeight: 14,
         borderRadius: 1,
         backgroundColor:
-          to.node === 'overdue'
+          from.node === 'overdue'
             ? withAlpha(theme.colors.warn, 0x80)
             : theme.colors.border,
       }}
@@ -162,10 +162,11 @@ function TodayMarker() {
 }
 
 /**
- * A Visit's story down one rail, like Contact Details' timeline: what happened,
- * today, and its Follow-up. Where the Today marker falls says whether the
- * Follow-up is ahead or behind before any date is read; the rail runs dashed
- * into a stop that's still ahead and amber into one that was missed.
+ * A Visit's story down one rail, newest first like Contact Details' timeline:
+ * its Follow-up, today, and what happened. Where the Today marker falls says
+ * whether the Follow-up is ahead or behind before any date is read; the rail
+ * runs dashed from a stop that's still ahead and amber from one that was
+ * missed.
  */
 export default function VisitRail({ stops }: { stops: RailStop[] }) {
   const theme = useTheme()
@@ -189,7 +190,7 @@ export default function VisitRail({ stops }: { stops: RailStop[] }) {
               ) : (
                 <Node node={stop.node} />
               )}
-              {next ? <Line to={next} /> : null}
+              {next ? <Line from={stop} /> : null}
             </View>
             <View
               style={{

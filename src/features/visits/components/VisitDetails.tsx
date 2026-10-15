@@ -40,8 +40,8 @@ const outcomeNode = (visit: Visit): RailNode =>
 
 /**
  * A Visit with Edit and More in the header: who it was with, then its story
- * down a rail, with what happened, today, and its Follow-up (with the buddies
- * going), each told in the right tense.
+ * down a rail, newest first like Contact Details: its Follow-up (with the
+ * buddies going), today, and what happened, each told in the right tense.
  */
 export default function VisitDetails({
   visit,
@@ -173,6 +173,8 @@ export default function VisitDetails({
     }
     stops.push(...(later ? [after, today] : [today, after]))
   }
+  // Newest first, like Contact Details' timeline.
+  stops.reverse()
 
   return (
     <DetailsLayout

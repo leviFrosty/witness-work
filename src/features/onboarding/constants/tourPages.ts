@@ -170,7 +170,6 @@ export const TOUR_PAGES: TourPageSpec[] = [
     color: 'purple',
     titleKey: 'privacyFirstTitle',
     captionKey: 'privacyFirstDesc',
-    androidCaptionKey: 'privacyFirstDescAndroid',
     Visual: PrivacyVisual,
   },
   {

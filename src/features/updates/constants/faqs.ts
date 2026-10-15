@@ -324,6 +324,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'notificationsTray', category: 'general' },
   { id: 'shareApp', category: 'general' },
   { id: 'android', category: 'general' },
+  { id: 'dataPrivacy', category: 'general' },
 ]
 
 export const FAQ_CATEGORIES: FAQCategory[] = [

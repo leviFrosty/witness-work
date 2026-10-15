@@ -30,6 +30,16 @@ Every feature derives its own keys from the account key with its own HKDF label 
 - Counts against the Buddies register edge limit and a per-caller daily quota.
 - `disabled` (503) when the worker has no accounts database. The app then asks again about once a day.
 
+### `account/info`
+
+| Payload                     | Response                                                                    |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `accountPub`, `ts`, `nonce` | `{ ok, accountId, accountPub, status, createdAt, inboxIds, statusChanges }` |
+
+- Self-signed like `account/register`, under op `account/info`, so only the account key's holder reads the account. Read-only: it never creates one, and an unregistered key is `unknown_account` (404).
+- `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
+- For the app's developer Tools screen (Server account). Counts against the Buddies read edge limit.
+
 ## Linking a Buddies inbox
 
 `inbox/register` ([Buddies protocol](./buddies-protocol.md)) takes `account: { accountId, signature }`, where `signature` is the account signing key's Ed25519 signature over:

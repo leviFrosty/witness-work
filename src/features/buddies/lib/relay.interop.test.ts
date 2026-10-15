@@ -15,7 +15,8 @@ import {
 } from '@/features/buddies/lib/state'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { SharedBadge } from '@/types/badges'
-import { registerAccount } from '@/lib/serverAccount/client'
+import { fetchAccountInfo, registerAccount } from '@/lib/serverAccount/client'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   type CachedServerAccount,
   createServerAccount,
@@ -105,6 +106,7 @@ function user(
   return {
     engine,
     store,
+    seed,
     inboxId: deriveIdentity(seed).inboxId,
     setShares: (next: OutgoingShareSpec[]) => {
       shares = next
@@ -147,6 +149,13 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
     const ann = user('Ann', undefined, account)
     await ann.engine.sync()
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
+    const info = await fetchAccountInfo({
+      baseUrl: relayUrl!,
+      key: deriveAccountSigningKey(ann.seed),
+      now: Date.now,
+      randomBytes: random,
+    })
+    expect(info).toMatchObject({ status: 'active', inboxIds: [ann.inboxId] })
     await ann.engine.deleteEverything()
   })
 

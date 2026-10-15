@@ -19,6 +19,7 @@ import {
 import type { Buddy } from '@/features/buddies/lib/state'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { hasNote as noteExists } from '@/lib/richText/notes'
+import { formatDisplay } from '@/lib/dates'
 
 /** A buddy drawn on the calendar, mirroring the in-app `BuddyAvatar`. */
 export type WidgetCalendarBuddy = {
@@ -192,7 +193,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       year,
       startOfWeek: args.startOfWeek,
       weekdayLabels,
-      monthTitle: monthStart.format('MMMM YYYY'),
+      monthTitle: formatDisplay(monthStart, 'MMMM YYYY'),
       days: [],
       currentWeekStart: 0,
       buddies: [],
@@ -296,7 +297,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
     year,
     startOfWeek: args.startOfWeek,
     weekdayLabels,
-    monthTitle: monthStart.format('MMMM YYYY'),
+    monthTitle: formatDisplay(monthStart, 'MMMM YYYY'),
     days,
     currentWeekStart,
     buddies: [...buddies.values()],

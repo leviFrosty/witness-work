@@ -39,6 +39,7 @@ import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelecto
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import Haptics from '@/lib/haptics'
 import useMonthReportData, {
   type MonthReportData,
@@ -55,6 +56,7 @@ import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingF
 import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 
@@ -161,7 +163,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   )
 
   const monthYearLabel = useMemo(
-    () => moment().month(month).year(year).format('MMMM YYYY'),
+    () => formatDisplay(moment().month(month).year(year), 'MMMM YYYY'),
     [month, year]
   )
   const serviceReports = useServiceReport((state) => state.serviceReports)
@@ -855,7 +857,9 @@ const HandwrittenValue = ({
   fontFamily: string
   seed: number
 }) => {
-  const chars = String(value).split('')
+  const chars = (
+    typeof value === 'number' ? formatPlainNumber(value) : value
+  ).split('')
   return (
     <View
       style={{

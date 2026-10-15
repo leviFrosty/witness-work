@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { foldArabicForSearch } from '@/lib/searchNormalize'
 import { FAQEntry, FAQS } from '@/features/updates/constants/faqs'
 
 type FAQSearchEntry = {
@@ -15,10 +16,16 @@ let cachedIndex: { locale: string; fuse: Fuse<FAQSearchEntry> } | undefined
 const getFAQIndex = (locale: string): Fuse<FAQSearchEntry> => {
   if (cachedIndex?.locale === locale) return cachedIndex.fuse
 
+  // Indexed folded, like the query, so Arabic matches with or without
+  // harakat and across alef/ta marbuta spellings.
   const entries = FAQS.map((entry) => ({
     entry,
-    question: i18n.t(`faq_${entry.id}_q` as TranslationKey, { locale }),
-    answer: i18n.t(`faq_${entry.id}_a` as TranslationKey, { locale }),
+    question: foldArabicForSearch(
+      i18n.t(`faq_${entry.id}_q` as TranslationKey, { locale })
+    ),
+    answer: foldArabicForSearch(
+      i18n.t(`faq_${entry.id}_a` as TranslationKey, { locale })
+    ),
   }))
   const fuse = new Fuse(entries, {
     keys: [
@@ -39,6 +46,6 @@ export const searchFAQsFuzzy = (query: string, locale: string): FAQEntry[] => {
   const trimmed = query.trim()
   if (!trimmed) return FAQS
   return getFAQIndex(locale)
-    .search(trimmed)
+    .search(foldArabicForSearch(trimmed))
     .map((result) => result.item.entry)
 }

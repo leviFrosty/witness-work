@@ -438,7 +438,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const selectedCount = committedIds.size
   const confirmLabel =
     selectedCount > 0
-      ? i18n.t('notesImport_confirmCount', { count: selectedCount })
+      ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        i18n.t('notesImport_confirmCount', { count: selectedCount })
       : i18n.t('notesImport_confirm')
 
   // Auto-stick to the newest output only while the model streams; once a result
@@ -577,12 +578,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     if (flagged > 0) {
       Alert.alert(
         i18n.t('notesImport_flaggedConfirmTitle'),
-        i18n.t(
-          flagged === 1
-            ? 'notesImport_flaggedConfirmBody'
-            : 'notesImport_flaggedConfirmBody_plural',
-          { count: flagged }
-        ),
+        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        i18n.t('notesImport_flaggedConfirmBody', { count: flagged }),
         [
           { text: i18n.t('cancel'), style: 'cancel' },
           {

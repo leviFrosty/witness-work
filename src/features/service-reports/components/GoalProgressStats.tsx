@@ -8,6 +8,7 @@ import useTheme from '@/contexts/theme'
 import { AchievementTier, tierColor } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { formatPlainNumber } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 import { tierIcon } from '@/features/service-reports/lib/achievementTierIcon'
 
@@ -110,7 +111,7 @@ const GoalProgressStats = ({
   const showsGoalInHero = hasGoal && periodState !== 'future'
   const heroSource = periodState === 'future' ? goalDisplay : completedDisplay
   const heroBig = isDecimal
-    ? String(heroSource.decimalHours)
+    ? formatPlainNumber(heroSource.decimalHours)
     : heroSource.formatted
   // Goal hours are user-entered, so they render verbatim (as the year card's
   // Annual Goal does) rather than through the minutes formatter.
@@ -118,7 +119,8 @@ const GoalProgressStats = ({
     ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       i18n.t('goalHoursSuffix', { count: goalHours })
     : isDecimal
-      ? i18n.t('hours_lowercase')
+      ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        i18n.t('hoursUnitLabel', { count: heroSource.decimalHours })
       : ''
 
   // Meta line under the bar: the actionable figure (left/short) leads in the

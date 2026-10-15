@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { parseIntegerInput } from '@/lib/digits'
+import { formatPlainNumber } from '@/lib/numbers'
 import {
   ContactStaleness,
   STALENESS_DISPLAY_ORDER,
@@ -108,7 +110,7 @@ const ColorKeyPreferencesSection = () => {
   // enforced mid-keystroke so intermediate values don't fight the keyboard;
   // it's applied when editing ends, and the classifiers normalize anyway.
   const setBreakpoint = (key: keyof StalenessBreakpoints, raw: string) => {
-    const days = parseInt(raw, 10) || 0
+    const days = parseIntegerInput(raw) ?? 0
     if (days >= MIN_STALENESS_DAYS) {
       set({ stalenessBreakpoints: { ...stalenessBreakpoints, [key]: days } })
     }
@@ -224,11 +226,13 @@ const ColorKeyPreferencesSection = () => {
             label: i18n.t('contacts_pinStaleness_recent'),
           })}
           textInputProps={{
-            value: stalenessBreakpoints.weekDays.toString(),
+            value: formatPlainNumber(stalenessBreakpoints.weekDays),
             onChangeText: (value) => setBreakpoint('weekDays', value),
             onEndEditing: commitBreakpoints,
             type: 'number',
-            placeholder: DEFAULT_STALENESS_BREAKPOINTS.weekDays.toString(),
+            placeholder: formatPlainNumber(
+              DEFAULT_STALENESS_BREAKPOINTS.weekDays
+            ),
           }}
         />
         <TextInputRow
@@ -237,11 +241,13 @@ const ColorKeyPreferencesSection = () => {
             label: i18n.t('contacts_pinStaleness_month'),
           })}
           textInputProps={{
-            value: stalenessBreakpoints.monthDays.toString(),
+            value: formatPlainNumber(stalenessBreakpoints.monthDays),
             onChangeText: (value) => setBreakpoint('monthDays', value),
             onEndEditing: commitBreakpoints,
             type: 'number',
-            placeholder: DEFAULT_STALENESS_BREAKPOINTS.monthDays.toString(),
+            placeholder: formatPlainNumber(
+              DEFAULT_STALENESS_BREAKPOINTS.monthDays
+            ),
           }}
           lastInSection
         />

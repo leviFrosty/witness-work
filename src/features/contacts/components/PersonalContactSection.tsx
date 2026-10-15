@@ -225,7 +225,7 @@ export default function PersonalContactSection({
                         }}
                       >
                         {i18n.t(phoneIssueKeys[formatted.possibility], {
-                          number: formatted.number?.input,
+                          number: formatted.number?.input ?? '',
                         })}
                       </Text>
                     )}

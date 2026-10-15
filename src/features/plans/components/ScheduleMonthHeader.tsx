@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import type { ScheduleMonthRow } from '@/features/plans/lib/scheduleRows'
+import { formatDisplay } from '@/lib/dates'
 
 export const MONTH_HEADER_HEIGHT = 48
 
@@ -41,7 +42,7 @@ export default function ScheduleMonthHeader({
           }}
         >
           {/* January carries its year, the one landmark when a year turns. */}
-          {date.format(row.month.month === 0 ? 'MMM YYYY' : 'MMM')}
+          {formatDisplay(date, row.month.month === 0 ? 'MMM YYYY' : 'MMM')}
         </Text>
       </View>
       <View

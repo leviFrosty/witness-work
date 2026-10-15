@@ -41,6 +41,7 @@ import MonthlyRoutine from '@/features/profile/components/MonthlyRoutine'
 import SinceBadge from '@/features/profile/components/SinceBadge'
 import ProfileBadgesSection from '@/features/profile/components/ProfileBadgesSection'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { getStartDateLabels } from '@/constants/publisher'
 import {
   busiestWeekday,
@@ -51,6 +52,7 @@ import {
 import { useFormattedMinutes } from '@/lib/minutes'
 import { tracking } from '@/lib/tracking'
 import { leftForPhysicalX } from '@/lib/direction'
+import { formatDisplay } from '@/lib/dates'
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
 /** Fading away for a badge view, which grows out of the tapped medallion. */
@@ -319,13 +321,13 @@ const ProfileDetailOverlay = () => {
                 {entryMode === 'hours' ? (
                   <Stat
                     label={i18n.t('profileStatDays')}
-                    value={String(stats.days)}
+                    value={formatPlainNumber(stats.days)}
                     sub={i18n.t('profileStatDaysSub')}
                   />
                 ) : (
                   <Stat
                     label={i18n.t('profileStatConversations')}
-                    value={String(conversations.length)}
+                    value={formatPlainNumber(conversations.length)}
                     sub={i18n.t('profileStatConversationsSub')}
                   />
                 )}
@@ -351,7 +353,7 @@ const ProfileDetailOverlay = () => {
                     <SinceBadge
                       icon={StarIcon}
                       label={i18n.t(getStartDateLabels(publisher).badge)}
-                      value={moment(tenureStartDate).format('MMMM YYYY')}
+                      value={formatDisplay(tenureStartDate, 'MMMM YYYY')}
                       tint={theme.colors.indigo}
                       tintBg={theme.colors.indigoTranslucent}
                     />
@@ -364,7 +366,7 @@ const ProfileDetailOverlay = () => {
                           ? 'profileStatFoundingSupporter'
                           : 'profileStatSupporter'
                       )}
-                      value={moment(supporterSince).format('MMMM YYYY')}
+                      value={formatDisplay(supporterSince, 'MMMM YYYY')}
                       tint={theme.colors.supporter}
                       tintBg={theme.colors.supporterTranslucent}
                       iconFill={theme.colors.supporter}

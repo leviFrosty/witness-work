@@ -13,7 +13,7 @@ const alertInvalidPhone = (
   Alert.alert(
     i18n.t('invalidPhone'),
     i18n.t('invalidPhone_message', {
-      number: formatted.number?.input,
+      number: formatted.number?.input ?? '',
       region: formatted.regionCode,
     }),
     [

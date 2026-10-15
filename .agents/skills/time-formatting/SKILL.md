@@ -27,3 +27,9 @@ Goal counts the user explicitly entered **in hours** can stay as `${goalHours} $
 
 Calendar squares, contribution-graph tooltips, and widgets use the compact variants instead:
 `formatMinutesCompact` / `useCompactFormattedMinutes` / `formatHoursCompact`.
+
+## Digits and other numbers
+
+The helpers above print the app Language's digits (Arabic-Indic in Arabic). Numbers that aren't durations go through `src/lib/numbers.ts`: `formatNumber` (grouped, Format Region separators), `formatPlainNumber` (years and typed values, no grouping). Numbers passed to `i18n.t` placeholders are localized for you. Never `toLocaleString()` without a locale, which follows the device instead of the app. Parse typed numbers with `parseDecimalInput`/`parseIntegerInput` from `src/lib/digits.ts`, which accept ٠-٩ as well as 0-9.
+
+Dates follow one rule: `moment.format` always writes ASCII digits, so use it as is for keys, ids and payloads (`YYYY-MM-DD`, `YYYY-MM`). Anything a user reads goes through `src/lib/dates.ts`, which adds the app Language's digits: `formatDate`/`formatTime`/`formatDateTime`/`formatRelative`/`formatCalendar` and the compact helpers, `formatDisplay(m, 'MMMM YYYY')` for other patterns, and `localizeDisplayDate(text)` for a `fromNow()`, `humanize()` or other string moment built. Never run a display helper's output back into a key or a parser.

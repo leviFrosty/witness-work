@@ -1,4 +1,9 @@
 import type { DistanceUnit, FuelEconomyUnit } from '@/types/mileage'
+import { parseDecimalInput } from '@/lib/digits'
+import {
+  formatNumber as formatAppNumber,
+  formatPlainNumber,
+} from '@/lib/numbers'
 
 /**
  * Mileage is stored in canonical units — miles, US mpg, price per US gallon —
@@ -127,57 +132,68 @@ export const displayToPricePerGallon = (
 ) => (fuelVolumeUnit(unit) === 'gallon' ? price : price * LITRES_PER_US_GALLON)
 
 /**
- * Parses a user-typed decimal, accepting either `.` or `,` as the separator.
+ * Parses a user-typed decimal in any digit system (`12.5`, `12,5`, `١٢٫٥`).
  * Returns `undefined` for blank or invalid input.
  */
-export function parseDecimal(text: string): number | undefined {
-  const normalized = text.trim().replace(/\s/g, '').replace(',', '.')
-  if (!normalized) return undefined
-  if (!/^\d*\.?\d*$/.test(normalized) || normalized === '.') return undefined
-  const value = Number(normalized)
-  return Number.isFinite(value) ? value : undefined
-}
+export const parseDecimal = parseDecimalInput
 
-/** Rounds for display and strips trailing zeros: 12.50 → "12.5". */
+/**
+ * Rounds for display, in the app Language's digits and separators, and strips
+ * trailing zeros: 12.50 → "12.5".
+ */
 export function formatNumber(value: number, maxDecimals = 1): string {
   const factor = 10 ** maxDecimals
   const rounded = Math.round(value * factor) / factor
-  try {
-    return rounded.toLocaleString(undefined, {
-      maximumFractionDigits: maxDecimals,
-    })
-  } catch {
-    return String(rounded)
-  }
+  return formatAppNumber(rounded, { maximumFractionDigits: maxDecimals })
 }
 
-/** Plain value for an input field: no grouping separators. */
+/**
+ * Plain ASCII value with no grouping separators, for files other apps read (the
+ * CSV export).
+ */
 export function formatInputNumber(value: number, maxDecimals = 1): string {
   const factor = 10 ** maxDecimals
   return String(Math.round(value * factor) / factor)
 }
 
+/**
+ * A value to prefill an input field with: no grouping, in the app Language's
+ * digits so it matches what the keyboard types. `parseDecimal` reads it back.
+ */
+export function formatEditableNumber(value: number, maxDecimals = 1): string {
+  const factor = 10 ** maxDecimals
+  return formatPlainNumber(Math.round(value * factor) / factor)
+}
+
+const currencyCode = (currency?: string | null) => currency || 'USD'
+
 export function formatCurrency(amount: number, currency?: string | null) {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return formatAppNumber(amount, {
       style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount)
+      currency: currencyCode(currency),
+    })
   } catch {
-    return amount.toFixed(2)
+    return formatAppNumber(amount, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   }
 }
 
 /** Currency with up to three decimals, for per-unit fuel prices ($3.499). */
 export function formatFuelPrice(amount: number, currency?: string | null) {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return formatAppNumber(amount, {
       style: 'currency',
-      currency: currency || 'USD',
+      currency: currencyCode(currency),
       minimumFractionDigits: 2,
       maximumFractionDigits: 3,
-    }).format(amount)
+    })
   } catch {
-    return amount.toFixed(3)
+    return formatAppNumber(amount, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 3,
+    })
   }
 }

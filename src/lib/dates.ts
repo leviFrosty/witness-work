@@ -2,6 +2,8 @@ import moment from 'moment'
 import { getCalendars, getLocales } from 'expo-localization'
 import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 import { loadMomentLocale } from '@/lib/momentLocales'
+import { RLM } from '@/lib/digits'
+import { localizeAppDateText, setNumberConventions } from '@/lib/numbers'
 
 /**
  * Format Region seam — see
@@ -59,6 +61,9 @@ export const FORMAT_REGIONS = [
   'vi',
   'zh-cn',
   'zh-tw',
+  // moment's generic Arabic: Saturday-first weeks, as in Egypt, Iraq, Jordan,
+  // Syria and the Gulf. Countries that differ get theirs from the device.
+  'ar',
 ] as const
 export type FormatRegion = (typeof FORMAT_REGIONS)[number]
 
@@ -166,6 +171,18 @@ export const reorderNumericPattern = (
   )
 }
 
+/**
+ * Puts a right-to-left mark after each separator of a numeric date pattern, the
+ * way moment's `ar` writes its own (`D/<RLM>M/<RLM>YYYY`), so an Arabic date
+ * keeps reading right to left in whatever order the Region puts its parts.
+ */
+export const withRtlDateMarks = (pattern: string): string =>
+  pattern.replace(new RegExp(`([/.\\-])(?!${RLM})`, 'g'), `$1${RLM}`)
+
+/** Strips the marks {@link withRtlDateMarks} adds. */
+export const withoutRtlDateMarks = (pattern: string): string =>
+  pattern.split(RLM).join('')
+
 const timeFormatFromPattern = (lt: string): TimeFormat =>
   /[aA]/.test(lt) ? '12' : '24'
 
@@ -192,6 +209,14 @@ const deviceLocaleData = (): moment.Locale | null => {
   const language = tag.split('-')[0]
   if (loaded.includes(language)) return safeLocaleData(language)
   return null
+}
+
+const deviceRegionCode = (): string | null => {
+  try {
+    return getLocales()[0]?.regionCode ?? null
+  } catch {
+    return null
+  }
 }
 
 const deviceFirstDayOfWeek = (): number | null => {
@@ -270,6 +295,17 @@ let patchedKey: string | null = null
 let patchedKeyPristine: LongDateFormatMap | null = null
 
 /**
+ * A numeric date pattern (any Region's `L`) as the active Language writes it. A
+ * right-to-left Language that marks its own numeric dates (Arabic) keeps
+ * marking them in another Region's order; a left-to-right one drops the Arabic
+ * Region's marks, which would scramble its dates.
+ */
+export const numericPatternForLanguage = (pattern: string): string =>
+  patchedKeyPristine?.L.includes(RLM)
+    ? withRtlDateMarks(pattern)
+    : withoutRtlDateMarks(pattern)
+
+/**
  * Pristine `longDateFormat` pattern for a locale key — routes around the Region
  * overlay when `key` is the currently-patched language locale.
  */
@@ -304,6 +340,13 @@ export const applyFormatRegion = (
   // — that dynamic require is an uncatchable fatal under Metro. The resolved
   // key is the one we patch.
   const activeKey = safeMomentLocale(config.language)
+
+  // Numbers follow the same Language and Region (`src/lib/numbers.ts`).
+  setNumberConventions({
+    language: config.language,
+    region: config.region,
+    deviceRegion: deviceRegionCode(),
+  })
 
   // Reset the previous overlay so every localeData read below is pristine —
   // including the case where the chosen Region IS the active language key.
@@ -344,6 +387,7 @@ export const applyFormatRegion = (
   const longDateFormat: LongDateFormatMap = { ...base }
   // Numeric forms follow the resolved Date Order (override included).
   longDateFormat.L = reorderNumericPattern(base.L, resolved.dateOrder)
+  longDateFormat.L = numericPatternForLanguage(longDateFormat.L)
   // Clock follows the resolved Time Format.
   const lt = LT_PATTERNS[resolved.timeFormat]
   const previousLT = base.LT
@@ -387,15 +431,15 @@ const activeDayFirst = (): boolean =>
  * by Region — `11 Jun` in day-first regions, `Jun 11` elsewhere.
  */
 export const formatMonthDayCompact = (m: moment.Moment): string =>
-  activeDayFirst() ? m.format('D MMM') : m.format('MMM D')
+  formatDisplay(m, activeDayFirst() ? 'D MMM' : 'MMM D')
 
 /** Tight weekday + day-of-month variant for month-scoped lists — `Thu 11`. */
 export const formatWeekdayDayCompact = (m: moment.Moment): string =>
-  m.format('ddd D')
+  formatDisplay(m, 'ddd D')
 
 /** Compact weekday + month/day variant — `Thu, 11 Jun` vs `Thu, Jun 11`. */
 export const formatWeekdayMonthDayCompact = (m: moment.Moment): string =>
-  activeDayFirst() ? m.format('ddd, D MMM') : m.format('ddd, MMM D')
+  formatDisplay(m, activeDayFirst() ? 'ddd, D MMM' : 'ddd, MMM D')
 
 /**
  * The active Region's date order and clock, for native code that formats dates
@@ -465,6 +509,13 @@ export const appleLocaleIdentifier = (config: {
  * the patch and are bugs. ISO storage keys (`YYYY-MM-DD`) are NOT display and
  * stay hardcoded — do not route them through here.
  *
+ * Digits: `moment.format` always writes ASCII digits, in every Language
+ * (`src/lib/momentLocales.ts` drops moment's digit-rewriting `postformat`), so
+ * keys, ids and payloads built with it can't be corrupted. These helpers add
+ * the app Language's digits (Arabic-Indic in Arabic) on top. A display string
+ * built with a bare `.format()` shows Latin digits in Arabic: route it through
+ * `formatDisplay` (a pattern) or `localizeDisplayDate` (a built string).
+ *
  * Pick the helper by INTENT, not by token:
  *   - a clock time            → `formatTime`     (honors Clock Format)
  *   - a calendar date         → `formatDate`     (honors Format Region)
@@ -472,7 +523,27 @@ export const appleLocaleIdentifier = (config: {
  *   - "3 days ago"            → `formatRelative`
  *   - "Today at 9:00 AM"      → `formatCalendar`
  *   - a tight year-less date  → `formatMonthDayCompact` / `formatWeekdayMonthDayCompact`
+ *   - a month title, other    → `formatDisplay(m, 'MMMM YYYY')`
  * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Localizes the digits of a date or time already built with `moment.format` for
+ * the app Language (`١٤ تشرين الأول (أكتوبر) ٢٠٢٦` in Arabic). A no-op in
+ * Latin-digit Languages. Display only: never on keys, ids or payloads.
+ */
+export const localizeDisplayDate = (text: string): string =>
+  localizeAppDateText(text)
+
+/**
+ * A display date in an explicit moment `pattern` (`MMMM YYYY`, `dddd, LL`), in
+ * the app Language's digits. Prefer an intent helper below when one fits; use
+ * this for month titles and other patterns they don't cover. Never for keys:
+ * those use `moment.format` directly and stay ASCII.
+ */
+export const formatDisplay = (
+  input: moment.MomentInput,
+  pattern: string
+): string => localizeDisplayDate(moment(input).format(pattern))
 
 /**
  * `long` → written-out month (`LL`/`LLL`): "June 11, 2026". `medium` →
@@ -488,7 +559,7 @@ export type DateStyle = 'long' | 'medium'
 export const formatTime = (
   input: moment.MomentInput,
   options?: { withSeconds?: boolean }
-): string => moment(input).format(options?.withSeconds ? 'LTS' : 'LT')
+): string => formatDisplay(input, options?.withSeconds ? 'LTS' : 'LT')
 
 /**
  * Full calendar date honoring the user's Format Region (date order) and
@@ -497,7 +568,7 @@ export const formatTime = (
 export const formatDate = (
   input: moment.MomentInput,
   options?: { style?: DateStyle }
-): string => moment(input).format(options?.style === 'medium' ? 'll' : 'LL')
+): string => formatDisplay(input, options?.style === 'medium' ? 'll' : 'LL')
 
 /**
  * Date + time honoring both Format Region and Clock Format. Uses `LLL`/`lll`;
@@ -508,10 +579,10 @@ export const formatDateTime = (
   input: moment.MomentInput,
   options?: { style?: DateStyle; withSeconds?: boolean }
 ): string => {
-  const m = moment(input)
-  const date = m.format(options?.style === 'medium' ? 'll' : 'LL')
-  if (options?.withSeconds) return `${date} ${m.format('LTS')}`
-  return m.format(options?.style === 'medium' ? 'lll' : 'LLL')
+  const medium = options?.style === 'medium'
+  if (options?.withSeconds)
+    return formatDisplay(input, medium ? 'll LTS' : 'LL LTS')
+  return formatDisplay(input, medium ? 'lll' : 'LLL')
 }
 
 /**
@@ -521,7 +592,7 @@ export const formatDateTime = (
 export const formatRelative = (
   input: moment.MomentInput,
   options?: { withoutSuffix?: boolean }
-): string => moment(input).fromNow(options?.withoutSuffix)
+): string => localizeDisplayDate(moment(input).fromNow(options?.withoutSuffix))
 
 /**
  * Calendar-relative time ("Today at 9:00 AM", "Yesterday", "06/11/2026")
@@ -534,7 +605,10 @@ export const formatCalendar = (
     referenceTime?: moment.MomentInput
     formats?: moment.CalendarSpec
   }
-): string => moment(input).calendar(options?.referenceTime, options?.formats)
+): string =>
+  localizeDisplayDate(
+    moment(input).calendar(options?.referenceTime, options?.formats)
+  )
 
 /**
  * A plan's start time rendered via the active locale's `LT` token ("9:00 AM"

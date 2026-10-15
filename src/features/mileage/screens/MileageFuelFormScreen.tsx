@@ -25,7 +25,7 @@ import {
 } from '@/lib/mileage/calc'
 import {
   displayToPricePerGallon,
-  formatInputNumber,
+  formatEditableNumber,
   fuelVolumeUnit,
   parseDecimal,
   pricePerGallonToDisplay,
@@ -54,7 +54,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const toInput = (pricePerGallon?: number) =>
     pricePerGallon === undefined
       ? ''
-      : formatInputNumber(
+      : formatEditableNumber(
           pricePerGallonToDisplay(pricePerGallon, format.economyUnit),
           3
         )

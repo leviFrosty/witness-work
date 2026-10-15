@@ -136,7 +136,7 @@ const ContactDetailsContent = ({
     return (
       <Wrapper style={{ flexGrow: 1, padding: 10 }}>
         <Text style={{ fontSize: 18, marginTop: 15 }}>
-          {i18n.t('contactNotFoundForProvidedId')} {id}
+          {i18n.t('contactNotFoundWithId', { id })}
         </Text>
       </Wrapper>
     )
@@ -364,7 +364,7 @@ const ContactDetailsContent = ({
               paddingTop: 8,
             }}
           >
-            {i18n.t('created')} {formatDate(contact.createdAt)}
+            {i18n.t('createdDate', { date: formatDate(contact.createdAt) })}
           </Text>
         </View>
       </ScrollView>

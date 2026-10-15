@@ -2,6 +2,7 @@ import type { FuseResultMatch } from 'fuse.js'
 import type { Contact } from '@/types/contact'
 import type { LogVisitPickedFrom } from '@/types/rootStack'
 import i18n from '@/lib/locales'
+import { compareText } from '@/lib/collation'
 import {
   suggestedRowDetail,
   suggestedSectionTitleKey,
@@ -32,10 +33,7 @@ export type LogVisitListItem =
 /** Contacts A–Z by name, ignoring case and accents. */
 export const sortContactsByName = (contacts: Contact[]): Contact[] =>
   [...contacts].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, {
-      sensitivity: 'base',
-      numeric: true,
-    })
+    compareText(a.name, b.name, { sensitivity: 'base', numeric: true })
   )
 
 /**

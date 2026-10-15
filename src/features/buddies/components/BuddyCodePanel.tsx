@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import moment from 'moment'
 import { Copy as CopyIcon, Share as ShareIcon } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
@@ -26,6 +25,7 @@ import { isRelayConnectivityError } from '@/features/buddies/lib/relay'
 import { startFallbackPoll } from '@/features/buddies/lib/autoSync'
 import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { formatRelative } from '@/lib/dates'
 
 const QR_SIZE = 240
 const APP_ICON = require('@/assets/icon.png')
@@ -243,7 +243,7 @@ export default function BuddyCodePanel({
               }}
             >
               {i18n.t('buddies_codeExpires', {
-                time: moment(invite.expiresAt).fromNow(),
+                time: formatRelative(invite.expiresAt),
               })}
             </Text>
           )}

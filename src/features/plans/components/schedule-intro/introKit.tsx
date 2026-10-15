@@ -12,6 +12,8 @@ import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { VisualText } from '@/features/updates/components/reveal/visuals/kit'
 import type { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import { formatPlainNumber } from '@/lib/numbers'
+import { formatDisplay } from '@/lib/dates'
 
 /** The intro's week strip: a week's days inside a card, `WEEK.pad` in. */
 export const WEEK = { days: 7, pad: 14, width: 320 }
@@ -62,7 +64,7 @@ export function WeekStrip({
           >
             {renderDate?.(i)}
             <VisualText style={{ fontSize: 13, color: palette.text }}>
-              {day.format('D')}
+              {formatDisplay(day, 'D')}
             </VisualText>
           </View>
         </View>
@@ -150,7 +152,7 @@ function RollingDigit({
           color: theme.colors.orange,
         }}
       >
-        {String(n)}
+        {formatPlainNumber(n)}
       </VisualText>
     </Animated.View>
   )

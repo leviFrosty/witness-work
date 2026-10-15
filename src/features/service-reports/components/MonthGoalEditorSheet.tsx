@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
 import { TextInput as RNTextInput, View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
@@ -11,9 +10,12 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { parseDecimalInput } from '@/lib/digits'
+import { formatPlainNumber } from '@/lib/numbers'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { alignText } from '@/lib/direction'
+import { formatDisplay } from '@/lib/dates'
 
 export interface MonthGoalEditorSheetProps {
   open: boolean
@@ -50,7 +52,9 @@ const MonthGoalEditorSheet = ({
 }: MonthGoalEditorSheetProps) => {
   const theme = useTheme()
   const inputRef = useRef<RNTextInput>(null)
-  const [draftGoal, setDraftGoal] = useState(String(effectiveGoalHours))
+  const [draftGoal, setDraftGoal] = useState(
+    formatPlainNumber(effectiveGoalHours)
+  )
   const [showValidationError, setShowValidationError] = useState(false)
 
   const regularGoalDisplay = useFormattedMinutes(
@@ -58,15 +62,15 @@ const MonthGoalEditorSheet = ({
   )
   useEffect(() => {
     if (!open) return
-    setDraftGoal(String(effectiveGoalHours))
+    setDraftGoal(formatPlainNumber(effectiveGoalHours))
     setShowValidationError(false)
   }, [effectiveGoalHours, open])
 
-  const parsedGoal = Number.parseFloat(draftGoal)
-  const hasValidGoal = Number.isFinite(parsedGoal) && parsedGoal >= 0
+  const parsedGoal = parseDecimalInput(draftGoal)
+  const hasValidGoal = parsedGoal !== undefined
   const hasOverride =
     Math.abs(effectiveGoalHours - regularGoalHours) > Number.EPSILON
-  const monthLabel = moment({ year, month }).format('MMMM YYYY')
+  const monthLabel = formatDisplay({ year, month }, 'MMMM YYYY')
 
   const handleSave = () => {
     if (!hasValidGoal) {

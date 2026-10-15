@@ -21,6 +21,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import { STREAK_MIN, type StreakKind } from '@/lib/serviceStreak'
 
 /** The beats of the celebration, in ms from opening. */
@@ -104,7 +105,8 @@ export default function StreakCelebrationOverlay({
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(
-      `${headline} ${i18n.t('streakAccessibilityLabel', { count })}`
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      i18n.t('streakCelebrationAnnouncement', { headline, count })
     )
     // In, then out on its own unless a tap sends it off sooner.
     backdrop.value = withSequence(
@@ -296,11 +298,11 @@ function Odometer({
     <View style={styles.odometer}>
       {from > 0 && (
         <Animated.View style={[styles.digit, outStyle]}>
-          <Text style={number}>{from.toLocaleString()}</Text>
+          <Text style={number}>{formatNumber(from)}</Text>
         </Animated.View>
       )}
       <Animated.View style={[styles.digit, inStyle]}>
-        <Text style={number}>{to.toLocaleString()}</Text>
+        <Text style={number}>{formatNumber(to)}</Text>
       </Animated.View>
     </View>
   )

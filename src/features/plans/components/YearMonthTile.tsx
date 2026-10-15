@@ -10,6 +10,7 @@ import type { Theme } from '@/types/theme'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
 import type { DayStatus } from '@/features/plans/lib/dayStatus'
 import { dayKeyOf } from '@/features/plans/lib/scheduleRows'
+import { formatDisplay } from '@/lib/dates'
 
 const CELL_GAP = 2
 /** Space between the tile's name, day grid, bar, and amount. */
@@ -105,7 +106,7 @@ export default function YearMonthTile({
         },
       ]}
       onPress={() => onPress({ year, month })}
-      accessibilityLabel={`${first.format('MMMM YYYY')}. ${amount}`}
+      accessibilityLabel={`${formatDisplay(first, 'MMMM YYYY')}. ${amount}`}
       hoverRadius={theme.numbers.borderRadiusMd}
       style={{ width }}
     >

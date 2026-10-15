@@ -77,7 +77,9 @@ export default function BadgeReactionBar({
         noTransform
         onPress={() => setOpen(true)}
         accessibilityRole='button'
-        accessibilityLabel={`${label}. ${i18n.t('badges_reactionChange')}`}
+        accessibilityLabel={i18n.t('badges_reactionSentChangeA11y', {
+          reaction: label,
+        })}
         style={{
           alignSelf: 'flex-start',
           flexDirection: 'row',

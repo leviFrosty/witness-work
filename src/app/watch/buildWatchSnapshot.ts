@@ -136,7 +136,7 @@ function paceText(report: ReportFields): string | null {
     const perDay = formatMinutesCompact(
       Math.round(report.hoursPerDayNeeded * 60)
     )
-    return `${perDay} ${i18n.t('hoursPerDayToGoal')}`
+    return i18n.t('hoursPerDayToGoalValue', { value: perDay })
   }
   return null
 }

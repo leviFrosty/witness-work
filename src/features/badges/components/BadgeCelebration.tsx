@@ -89,7 +89,10 @@ export default function BadgeCelebration({
         })
   const big = !lead || lead.level === null || lead.level >= 3
   const announcement = lead
-    ? `${title}. ${badgeTitle(lead.art, lead.level)}. ${i18n.t('badges_addedToCollection')}`
+    ? i18n.t('badges_celebrationAnnouncement', {
+        title,
+        badge: badgeTitle(lead.art, lead.level),
+      })
     : title
 
   // Plays once: every dependency is a primitive fixed for this content.

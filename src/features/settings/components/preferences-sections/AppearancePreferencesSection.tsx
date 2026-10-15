@@ -3,6 +3,7 @@ import {
   GroupedListSection,
 } from '@/components/ui/GroupedList'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { compareText } from '@/lib/collation'
 import { usePreferences } from '@/stores/preferences'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import moment from 'moment'
@@ -12,9 +13,11 @@ import {
   FormatRegion,
   TimeFormat,
   getPristineLongDateFormat,
+  numericPatternForLanguage,
   resolveDateOrder,
   resolveStartOfWeek,
   resolveTimeFormat,
+  localizeDisplayDate,
 } from '@/lib/dates'
 
 // Canonical numeric patterns for the Date Order samples — the row is about
@@ -63,15 +66,17 @@ const AppearancePreferencesSection = () => {
     const datePattern = getPristineLongDateFormat(key, 'L')
     const timePattern = getPristineLongDateFormat(key, 'LT')
     if (!datePattern || !timePattern) return ''
-    return `${now.format(datePattern)} ${now.format(timePattern)}`
+    return localizeDisplayDate(
+      `${now.format(numericPatternForLanguage(datePattern))} ${now.format(timePattern)}`
+    )
   }
 
   const regionOptions: { label: string; value: FormatRegion | undefined }[] = [
-    { label: `${i18n.t('auto')} (${i18n.t('device')})`, value: undefined },
+    { label: i18n.t('autoDevice'), value: undefined },
     ...FORMAT_REGIONS.map((key) => ({
       label: `${i18n.t(`formatRegions.${key}` as TranslationKey)} · ${regionSample(key)}`,
       value: key,
-    })).sort((a, b) => a.label.localeCompare(b.label)),
+    })).sort((a, b) => compareText(a.label, b.label)),
   ]
 
   // moment.weekdays() is locale-translated but always Sunday-first indexed,
@@ -79,22 +84,24 @@ const AppearancePreferencesSection = () => {
   const weekdayNames = moment.weekdays()
   const startOfWeekOptions: { label: string; value: number | undefined }[] = [
     {
-      label: `${i18n.t('auto')} (${weekdayNames[autoStartOfWeek]})`,
+      label: i18n.t('autoWithValue', { value: weekdayNames[autoStartOfWeek] }),
       value: undefined,
     },
     ...weekdayNames.map((label, value) => ({ label, value })),
   ]
 
   const timeSample = (format: TimeFormat) =>
-    now
-      .clone()
-      .hour(13)
-      .minute(30)
-      .format(format === '12' ? 'h:mm A' : 'HH:mm')
+    localizeDisplayDate(
+      now
+        .clone()
+        .hour(13)
+        .minute(30)
+        .format(format === '12' ? 'h:mm A' : 'HH:mm')
+    )
   const timeFormatOptions: { label: string; value: TimeFormat | undefined }[] =
     [
       {
-        label: `${i18n.t('auto')} (${timeSample(autoTimeFormat)})`,
+        label: i18n.t('autoWithValue', { value: timeSample(autoTimeFormat) }),
         value: undefined,
       },
       { label: timeSample('12'), value: '12' },
@@ -102,10 +109,10 @@ const AppearancePreferencesSection = () => {
     ]
 
   const orderSample = (order: DateOrder) =>
-    now.format(DATE_ORDER_PATTERNS[order])
+    localizeDisplayDate(now.format(DATE_ORDER_PATTERNS[order]))
   const dateOrderOptions: { label: string; value: DateOrder | undefined }[] = [
     {
-      label: `${i18n.t('auto')} (${orderSample(autoDateOrder)})`,
+      label: i18n.t('autoWithValue', { value: orderSample(autoDateOrder) }),
       value: undefined,
     },
     { label: orderSample('mdy'), value: 'mdy' },

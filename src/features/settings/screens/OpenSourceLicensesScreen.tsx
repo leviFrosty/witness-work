@@ -15,6 +15,7 @@ import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import { openURL } from '@/lib/links'
 import openSourceLicenses from '@/features/settings/constants/openSourceLicenses.json'
 
@@ -59,7 +60,7 @@ const OpenSourceLicensesScreen = () => {
         <View style={{ gap: 16, paddingTop: 24, paddingBottom: 16 }}>
           <Text style={{ color: theme.colors.textAlt, lineHeight: 22 }}>
             {i18n.t('openSourceLicenses_description', {
-              packages: packages.length.toLocaleString(),
+              packages: formatNumber(packages.length),
             })}
           </Text>
           <View

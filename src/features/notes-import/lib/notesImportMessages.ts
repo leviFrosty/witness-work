@@ -1,4 +1,4 @@
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
@@ -62,22 +62,15 @@ export const unavailableDetail = (
 
 type CountKind = 'contact' | 'visit' | 'timeEntry'
 
-const COUNT_KEYS: Record<CountKind, readonly [string, string]> = {
-  contact: ['notesImport_contactCount', 'notesImport_contactCount_plural'],
-  visit: ['notesImport_visitCount', 'notesImport_visitCount_plural'],
-  timeEntry: [
-    'notesImport_timeEntryCount',
-    'notesImport_timeEntryCount_plural',
-  ],
+const COUNT_KEYS: Record<CountKind, string> = {
+  contact: 'notesImport_contactCount',
+  visit: 'notesImport_visitCount',
+  timeEntry: 'notesImport_timeEntryCount',
 }
 
-/**
- * "N contact(s)/visit(s)/time entr(y/ies)" via the locale's singular OR plural
- * key.
- */
+/** "N contacts/visits/time entries", in the Language's plural form for N. */
 const countLabel = (kind: CountKind, count: number): string => {
-  const [singular, plural] = COUNT_KEYS[kind]
-  return i18n.t((count === 1 ? singular : plural) as 'notesImport_visitCount', {
+  return i18n.t(COUNT_KEYS[kind] as TranslationKey, {
     count,
   })
 }

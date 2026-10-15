@@ -97,9 +97,7 @@ describe('notesImportCountsLine', () => {
       notesImportCountsLine(
         result({ contacts: rows(3) as never, timeEntries: rows(2) as never })
       )
-    ).toBe(
-      'notesImport_contactCount_plural:3 · notesImport_timeEntryCount_plural:2'
-    )
+    ).toBe('notesImport_contactCount:3 · notesImport_timeEntryCount:2')
   })
 
   it('uses singular keys for a count of one', () => {
@@ -116,8 +114,8 @@ describe('notesImportCountsLine', () => {
 })
 
 describe('visitCountLabel', () => {
-  it('uses the singular key for one and plural otherwise', () => {
+  it('passes the count to one plural key', () => {
     expect(visitCountLabel(1)).toBe('notesImport_visitCount:1')
-    expect(visitCountLabel(2)).toBe('notesImport_visitCount_plural:2')
+    expect(visitCountLabel(2)).toBe('notesImport_visitCount:2')
   })
 })

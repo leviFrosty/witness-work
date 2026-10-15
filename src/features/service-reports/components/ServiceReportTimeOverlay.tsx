@@ -19,6 +19,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 const InsightStat = ({
   label,
@@ -157,7 +158,7 @@ const TimeInsightContent = ({ onClose }: { onClose: () => void }) => {
                 fontSize: theme.fontSize('md'),
               }}
             >
-              {now.format('MMMM YYYY')}
+              {formatDisplay(now, 'MMMM YYYY')}
             </Text>
             <Text
               numberOfLines={1}

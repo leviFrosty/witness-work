@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatDisplay, formatTime } from '@/lib/dates'
 
 const HOURS = [9, 10, 11]
 const ROW_HEIGHT = 44
@@ -15,7 +16,7 @@ const LINE_OFFSET = 8
  */
 const CalendarPreview = () => {
   const theme = useTheme()
-  const at = (hour: number) => moment().hour(hour).minute(0).format('LT')
+  const at = (hour: number) => formatTime(moment().hour(hour).minute(0))
   const block = {
     position: 'absolute' as const,
     left: 64,
@@ -49,7 +50,7 @@ const CalendarPreview = () => {
           color: theme.colors.textAlt,
         }}
       >
-        {moment().format('dddd, LL')}
+        {formatDisplay(moment(), 'dddd, LL')}
       </Text>
       <View
         style={{ height: ROW_HEIGHT * (HOURS.length - 1) + LINE_OFFSET * 2 }}

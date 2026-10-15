@@ -6,7 +6,12 @@ import {
   isAppointment,
   visitsByContact,
 } from '@/lib/conversations'
-import { formatCalendar, formatMonthDayCompact, formatTime } from '@/lib/dates'
+import {
+  formatCalendar,
+  formatMonthDayCompact,
+  formatTime,
+  formatDisplay,
+} from '@/lib/dates'
 
 export type WidgetAppointment = {
   /** Visit ID — used to deep-link with `highlightedVisitId`. */
@@ -77,7 +82,7 @@ function formatAppointmentTime(
       referenceTime: now,
       formats: { sameElse: 'LT' },
     })
-  if (isThisWeek) return date.format('ddd LT')
+  if (isThisWeek) return formatDisplay(date, 'ddd LT')
   return formatMonthDayCompact(date)
 }
 

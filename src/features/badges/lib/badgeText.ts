@@ -1,7 +1,9 @@
 import moment from 'moment'
 import { collectionSpec } from '@/lib/badges/catalog'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import type { BadgeCollectionId, BadgeLevel, EarnedBadge } from '@/types/badges'
+import { formatDisplay } from '@/lib/dates'
 
 /**
  * What a collection counts, as a plural "{{done}} of {{count}} …" string:
@@ -47,12 +49,13 @@ export const progressLabel = (
 ) =>
   i18n.t(progressUnitKey(art) as TranslationKey, {
     count: total,
-    done: done.toLocaleString(),
+    done: formatNumber(done),
   })
 
 /** `YYYY-MM` (or epoch ms) as "March 2026" in the app's locale. */
 const monthYear = (record: EarnedBadge) =>
-  (record.month ? moment(record.month, 'YYYY-MM') : moment(record.at)).format(
+  formatDisplay(
+    record.month ? moment(record.month, 'YYYY-MM') : moment(record.at),
     'MMMM YYYY'
   )
 

@@ -4,12 +4,11 @@ import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/note
 const importAllowance = (value: number | null, windowDays: number): string => {
   if (value === null) return i18n.t('notesImport_scheduleImportsUnlimited')
   if (value === 0) return i18n.t('notesImport_scheduleImportsNone')
-  return i18n.t(
-    value === 1
-      ? 'notesImport_scheduleImportsFinite'
-      : 'notesImport_scheduleImportsFinite_plural',
-    { count: value, days: windowDays }
-  )
+  // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+  return i18n.t('notesImport_scheduleImportsFinite', {
+    count: value,
+    days: windowDays,
+  })
 }
 
 export interface NotesImportScheduleCopy {

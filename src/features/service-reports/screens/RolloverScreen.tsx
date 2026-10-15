@@ -15,6 +15,7 @@ import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 const RolloverScreen = () => {
   const theme = useTheme()
@@ -116,10 +117,10 @@ const RolloverScreen = () => {
             }}
           >
             {pending.map((p) => {
-              const sourceLabel = moment({
-                year: p.sourceYear,
-                month: p.sourceMonth,
-              }).format('MMMM YYYY')
+              const sourceLabel = formatDisplay(
+                { year: p.sourceYear, month: p.sourceMonth },
+                'MMMM YYYY'
+              )
               return (
                 <Text
                   key={`${p.sourceYear}-${p.sourceMonth}`}

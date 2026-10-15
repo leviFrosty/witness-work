@@ -5,6 +5,7 @@ import { applyFormatRegion, type DateOrder, type TimeFormat } from '@/lib/dates'
 import { readBootPreferences } from '@/stores/bootPreferences'
 import * as cardinals from 'make-plural/cardinals'
 import { createPluralizer, type CardinalRule } from '@/lib/plurals'
+import { digitSystemFor, localizeNumeral } from '@/lib/digits'
 
 type Translations = typeof enUS
 
@@ -88,6 +89,25 @@ _i18n.enableFallback = true
 _i18n.defaultLocale = DEFAULT_LOCALE
 for (const locale of translatedLocales)
   _i18n.pluralization.register(locale, createPluralizer(pluralRules[locale]))
+
+// Numbers passed to `i18n.t` (`count`, `year`, …) print in the digits of the
+// Language being translated into (`options.locale`, else the app's): `{{count}}
+// ساعة` reads `٣ ساعة` in Arabic, and so does a string that falls back to
+// English (`digitsLocale`, set by `i18n.t` below). Strings pass through as
+// given, so names and pre-formatted values aren't touched. i18n-js
+// interpolates array translations without this hook; none of ours are arrays.
+const interpolate = _i18n.interpolate
+_i18n.interpolate = (i18n, message, options) => {
+  const requested = options.digitsLocale ?? options.locale
+  const locale = typeof requested === 'string' ? requested : i18n.locale
+  if (digitSystemFor(locale) === 'latn')
+    return interpolate(i18n, message, options)
+  const localized: typeof options = {}
+  for (const [name, value] of Object.entries(options))
+    localized[name] =
+      typeof value === 'number' ? localizeNumeral(String(value), locale) : value
+  return interpolate(i18n, message, localized)
+}
 
 const loadedLocales = new Set<TranslatedLocale>([DEFAULT_LOCALE])
 
@@ -236,7 +256,12 @@ const i18n = {
       _i18n.locale !== DEFAULT_LOCALE &&
       !hasOwnTranslation(_i18n.locale, key)
     )
-      return _i18n.t(key, { ...options, locale: DEFAULT_LOCALE })
+      return _i18n.t(key, {
+        ...options,
+        locale: DEFAULT_LOCALE,
+        // English words, but the app Language's digits.
+        digitsLocale: _i18n.locale,
+      })
     return _i18n.t(key, options)
   },
 }

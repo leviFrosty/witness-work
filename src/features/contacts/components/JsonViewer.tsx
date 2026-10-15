@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import Haptics from '@/lib/haptics'
 import { Theme } from '@/types/theme'
 
@@ -112,7 +113,7 @@ const JsonViewer = ({
                   fontFamily: theme.fonts.medium,
                 }}
               >
-                {count.toLocaleString()}
+                {formatNumber(count)}
               </Text>
             </View>
           )}

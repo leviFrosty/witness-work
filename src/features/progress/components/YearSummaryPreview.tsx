@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import useRoleForMonth from '@/hooks/useRoleForMonth'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { serviceYearFocusMonth } from '@/lib/roleHistory'
@@ -67,7 +68,10 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
           letterSpacing: tracking(0.5),
         }}
       >
-        {`${serviceYear}–${serviceYear + 1}`}
+        {i18n.t('scheduleCalendar.serviceYearSpan', {
+          start: formatPlainNumber(serviceYear),
+          end: formatPlainNumber(serviceYear + 1),
+        })}
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
         <Text
@@ -86,7 +90,8 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
               color: theme.colors.textAlt,
             }}
           >
-            / {annualGoalHours} {i18n.t('hours_lowercase')}
+            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {i18n.t('goalHoursSuffix', { count: annualGoalHours })}
           </Text>
         ) : null}
       </View>

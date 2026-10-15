@@ -4,6 +4,7 @@ import type {
   ContextMenuSubmenu,
 } from '@/components/ui/ContextMenu.types'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
+import { formatDisplay } from '@/lib/dates'
 
 /** Months listed flat at the top of the menu, newest first. */
 const RECENT_MONTH_COUNT = 12
@@ -62,7 +63,7 @@ export const buildReportMonthMenu = ({
     const id = m.format('YYYY-MM')
     return {
       id,
-      title: m.format(format),
+      title: formatDisplay(m, format),
       checked: id === selectedId,
       onPress: () => onSelect(parseReportMonthId(id)),
     }

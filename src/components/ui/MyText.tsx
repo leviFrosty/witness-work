@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useContext } from 'react'
+import { createContext, PropsWithChildren, ReactNode, useContext } from 'react'
 import useTheme from '@/contexts/theme'
 import {
   Platform,
@@ -10,6 +10,21 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import { alignText, isRtlLayout } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
+import { appDigitSystem, formatPlainNumber } from '@/lib/numbers'
+
+/**
+ * Bare numbers rendered as text (`<Text>{count}</Text>`) take the app
+ * Language's digits, Arabic-Indic in Arabic. Strings stay as they are: they may
+ * be names, addresses or phone numbers.
+ */
+const localizeNumberChildren = (children: ReactNode): ReactNode => {
+  if (typeof children === 'number') return formatPlainNumber(children)
+  if (Array.isArray(children))
+    return children.map((child: ReactNode) =>
+      typeof child === 'number' ? formatPlainNumber(child) : child
+    )
+  return children
+}
 
 interface Props extends TextProps {}
 
@@ -37,6 +52,8 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   }
   if (flatStyle.letterSpacing)
     modifiedStyle.letterSpacing = tracking(flatStyle.letterSpacing)
+  const content =
+    appDigitSystem() === 'latn' ? children : localizeNumberChildren(children)
 
   return (
     <ReactNativeText
@@ -51,9 +68,9 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
       ]}
     >
       {alignStart ? (
-        <NestedText.Provider value>{children}</NestedText.Provider>
+        <NestedText.Provider value>{content}</NestedText.Provider>
       ) : (
-        children
+        content
       )}
     </ReactNativeText>
   )

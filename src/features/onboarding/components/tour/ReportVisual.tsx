@@ -27,6 +27,7 @@ import {
   useRiseStyle,
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
+import { formatDisplay } from '@/lib/dates'
 
 const CARD = { top: 6, side: 18, height: 236 }
 /** Share is tapped, the report flies off, comes back confirmed, then resets. */
@@ -119,7 +120,7 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
                   {i18n.t('fieldServiceReport')}
                 </VisualText>
                 <VisualText style={{ fontSize: 11, color: palette.textAlt }}>
-                  {moment().subtract(1, 'month').format('MMMM YYYY')}
+                  {formatDisplay(moment().subtract(1, 'month'), 'MMMM YYYY')}
                 </VisualText>
               </View>
             </View>

@@ -11,7 +11,7 @@ import {
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { formatStartTime } from '@/lib/dates'
+import { formatStartTime, formatDisplay } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { withAlpha } from '@/lib/color'
@@ -223,7 +223,7 @@ const BuddiesVisual = ({
                       color: i === 0 ? theme.colors.textInverse : palette.text,
                     }}
                   >
-                    {day.format('D')}
+                    {formatDisplay(day, 'D')}
                   </VisualText>
                 </View>
               </View>

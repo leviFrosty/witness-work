@@ -10,9 +10,9 @@ const AnnualGoalSelector = () => {
 
   const items: SelectData<boolean | 'default'> = [
     {
-      label: `${i18n.t('default')} (${i18n.t(
-        hasAnnualGoalByDefault ? 'yes' : 'no'
-      )})`,
+      label: i18n.t('defaultWithValue', {
+        value: i18n.t(hasAnnualGoalByDefault ? 'yes' : 'no'),
+      }),
       value: 'default',
     },
     {

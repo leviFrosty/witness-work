@@ -14,11 +14,13 @@ import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
+import { formatNumber } from '@/lib/numbers'
 
 import GlassCard from '@/components/ui/GlassCard'
 import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 /**
  * Flattens the store's `TimeEntriesByYear` shape into a single `TimeEntry[]`.
@@ -64,6 +66,12 @@ const LifetimeHoursCard = () => {
 
   const isDecimal = timeDisplayFormat === 'decimal'
 
+  // The decimal hero's number, which the unit after it agrees with.
+  const heroHours =
+    lifetimeHours >= 100
+      ? Math.floor(lifetimeHours)
+      : Math.round(lifetimeHours * 10) / 10
+
   const formattedLifetime = useMemo(() => {
     if (!isDecimal) {
       // Short format owns its own unit and includes minutes, so render the full
@@ -74,15 +82,14 @@ const LifetimeHoursCard = () => {
     // sub-decimal noise once we cross 3 digits) and let the unit suffix
     // render alongside.
     if (lifetimeHours >= 100) {
-      return Math.floor(lifetimeHours).toLocaleString()
+      return formatNumber(heroHours)
     }
-    const rounded = Math.round(lifetimeHours * 10) / 10
-    const hasFraction = Math.abs(rounded - Math.round(rounded)) > 0
-    return rounded.toLocaleString(undefined, {
+    const hasFraction = Math.abs(heroHours - Math.round(heroHours)) > 0
+    return formatNumber(heroHours, {
       minimumFractionDigits: hasFraction ? 1 : 0,
       maximumFractionDigits: 1,
     })
-  }, [lifetimeMinutes, lifetimeHours, isDecimal, timeDisplayFormat])
+  }, [lifetimeMinutes, lifetimeHours, heroHours, isDecimal, timeDisplayFormat])
 
   // Decimal hero renders a bare number; pair it with the long-form unit
   // (compact "h" at 100k+ to keep the row from wrapping). Short hero output
@@ -91,12 +98,13 @@ const LifetimeHoursCard = () => {
     ? ''
     : lifetimeHours >= 100000
       ? i18n.t('hoursCompact')
-      : i18n.t('hours_lowercase')
+      : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        i18n.t('hoursUnitLabel', { count: heroHours })
 
   const subtitle = useMemo(() => {
     if (!earliestDate) return null
     return i18n.t('sinceDateServiceYears', {
-      date: momentStoredDate(earliestDate).format('MMM YYYY'),
+      date: formatDisplay(momentStoredDate(earliestDate), 'MMM YYYY'),
       count: endYears.length,
     })
   }, [earliestDate, endYears.length])

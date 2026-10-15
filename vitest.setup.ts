@@ -16,6 +16,18 @@ vi.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
 
+// Stub expo-localization globally: the date and number helpers in
+// `src/lib/dates.ts` read the device's locale through it, and the real module
+// needs React Native. A US-English device; tests that care mock it themselves.
+vi.mock('expo-localization', () => ({
+  getLocales: () => [
+    { languageTag: 'en-US', languageCode: 'en', regionCode: 'US' },
+  ],
+  getCalendars: () => [
+    { uses24hourClock: false, firstWeekday: 1, timeZone: 'UTC' },
+  ],
+}))
+
 // Stub expo-network globally: sync, onboarding and other shared modules read
 // connectivity through `@/lib/http/online`, and the real module needs expo's
 // native runtime. Tests that care mock it themselves.

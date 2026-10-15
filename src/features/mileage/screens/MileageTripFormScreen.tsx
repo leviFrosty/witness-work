@@ -7,6 +7,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import { usePreferences } from '@/stores/preferences'
@@ -31,7 +32,7 @@ import {
 } from '@/lib/mileage/calc'
 import {
   distanceToMiles,
-  formatInputNumber,
+  formatEditableNumber,
   milesToDistance,
   parseDecimal,
 } from '@/lib/mileage/units'
@@ -61,7 +62,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const toInput = (miles?: number) =>
     miles === undefined
       ? ''
-      : formatInputNumber(milesToDistance(miles, unit), 1)
+      : formatEditableNumber(milesToDistance(miles, unit), 1)
 
   const [date, setDate] = useState(() =>
     existing ? fromDateKey(existing.date).toDate() : new Date()
@@ -230,13 +231,15 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
             {mode === 'distance' ? (
               <>
                 <TextInputRow
-                  label={`${i18n.t('mileage.distance')} (${format.distanceSuffix})`}
+                  label={i18n.t('mileage.distanceWithUnit', {
+                    unit: format.distanceSuffix,
+                  })}
                   textInputProps={{
                     invalid: validation.invalid('distance'),
                     value: distance,
                     onChangeText: setDistance,
                     inputMode: 'decimal',
-                    placeholder: '0',
+                    placeholder: formatPlainNumber(0),
                     autoFocus: !existing && !template,
                     maxLength: 8,
                   }}
@@ -252,26 +255,30 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
             ) : (
               <>
                 <TextInputRow
-                  label={`${i18n.t('mileage.odometerStart')} (${format.distanceSuffix})`}
+                  label={i18n.t('mileage.odometerStartWithUnit', {
+                    unit: format.distanceSuffix,
+                  })}
                   info={i18n.t('mileage.odometerStart_info')}
                   textInputProps={{
                     invalid: validation.invalid('odometerStart'),
                     value: startText,
                     onChangeText: setOdometerStart,
                     inputMode: 'decimal',
-                    placeholder: '0',
+                    placeholder: formatPlainNumber(0),
                     maxLength: 10,
                   }}
                 />
                 <TextInputRow
-                  label={`${i18n.t('mileage.odometerEnd')} (${format.distanceSuffix})`}
+                  label={i18n.t('mileage.odometerEndWithUnit', {
+                    unit: format.distanceSuffix,
+                  })}
                   lastInSection
                   textInputProps={{
                     invalid: validation.invalid('odometerEnd'),
                     value: odometerEnd,
                     onChangeText: setOdometerEnd,
                     inputMode: 'decimal',
-                    placeholder: '0',
+                    placeholder: formatPlainNumber(0),
                     maxLength: 10,
                   }}
                 />

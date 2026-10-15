@@ -38,6 +38,7 @@ import PointerHover from '@/components/ui/PointerHover'
 import FloatingGlassButton from '@/components/ui/FloatingGlassButton'
 import i18n from '@/lib/locales'
 import { formatBytes } from '@/lib/formatBytes'
+import { formatPlainNumber } from '@/lib/numbers'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 import { alignText } from '@/lib/direction'
@@ -404,7 +405,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
                   label={i18n.t('resolution')}
                   value={
                     contact.avatarMeta
-                      ? `${contact.avatarMeta.width} × ${contact.avatarMeta.height}`
+                      ? `${formatPlainNumber(contact.avatarMeta.width)} × ${formatPlainNumber(contact.avatarMeta.height)}`
                       : '—'
                   }
                 />

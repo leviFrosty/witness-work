@@ -191,7 +191,8 @@ export function useNotesImportPaperImport({
         Alert.alert(
           i18n.t('notesImport_paperPartialTitle'),
           failed
-            ? i18n.t('notesImport_paperPartialBody', {
+            ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+              i18n.t('notesImport_paperPartialBody', {
                 count: failed,
                 total: pages.length,
               })

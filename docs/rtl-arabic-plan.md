@@ -85,6 +85,12 @@ Each step is one PR on `main`. Steps 1-4 change nothing visible for existing lan
    - moment `ar` with JW month names; Arabic Format Region (Saturday week start, from moment `ar`).
    - Rewrite glued sentences as single interpolated strings.
    - Arabic search normalization; `localeCompare` with the app language.
+   - As built:
+     - `src/lib/digits.ts` holds the pure digit and parsing helpers. `src/lib/numbers.ts` formats in the app Language: Arabic-Indic digits with `٫`/`٬` for Arabic, swapped in by hand rather than through Hermes' `numberingSystem`. Latin-digit separators follow the Format Region; at Auto they follow the app Language with the device's region (`en-DE`). `applyFormatRegion` sets both. Numbers passed to `i18n.t` placeholders and bare numbers rendered by `MyText` are localized automatically; strings are never touched, so names and phone numbers keep their digits.
+     - The Format Region list gains `ar` (moment's generic Arabic: Saturday-first, `D/M/YYYY`, 24-hour). At Auto, Arabic follows the device like every other Language. An Arabic numeric date keeps right-to-left marks after its separators under any Region's order; a left-to-right Language drops them.
+     - JW month names are written into moment's `ar` itself (not `updateLocale`, which `applyFormatRegion` resets).
+     - **Keys stay ASCII; digits are localized on display.** `moment.format` writes ASCII digits in every Language: `src/lib/momentLocales.ts` drops the `postformat` of every moment locale it loads (moment's `ar` would turn `YYYY-MM-DD` into `٢٠٢٦-١٠-١٤` and corrupt store keys, notification ids, buddy payloads and widget dates), keeping `preparse` so parsing accepts both digit sets. Display goes through `src/lib/dates.ts`: the intent helpers (`formatDate`, `formatTime`, `formatRelative`, …), `formatDisplay(m, pattern)` for other patterns such as `MMMM YYYY`, and `localizeDisplayDate(text)` for a string already built with `format`. A missed display site shows Latin digits in Arabic; it can't break data. `src/__tests__/arabicDateKeys.test.ts` checks every loadable moment locale and the main keys.
+     - The glued sentences, and the remaining `1 day`/`N days` and `_plural` key pairs, are single plural keys, translated into every shipped Language.
 4. **Native**
    - `ar` in `sync-widget-shared.mjs`; `supportedLocales` through the expo-localization plugin (no RTL flags).
    - Mirror the watch and Wear OS pace bars; localize the hard-coded widget and Live Activity strings; locale-aware number formatting in Swift.

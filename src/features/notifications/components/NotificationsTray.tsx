@@ -82,9 +82,10 @@ function BellTrigger({
           color={theme.colors.text}
           accessibilityLabel={
             unread > 0
-              ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_unreadCount', { count: unread })}.`
+              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                i18n.t('notifications_a11yUnread', { count: unread })
               : news
-                ? `${i18n.t('notifications_a11y')}. ${i18n.t('notifications_newsUnread')}.`
+                ? i18n.t('notifications_a11yNews')
                 : i18n.t('notifications_a11y')
           }
           onPress={onPress}

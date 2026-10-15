@@ -83,7 +83,9 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
     {
       label: i18n.t('mileage.distance'),
       value: trip.roundTrip
-        ? `${format.distance(trip.distanceMiles)} (${i18n.t('mileage.roundTrip')})`
+        ? i18n.t('mileage.distanceRoundTrip', {
+            value: format.distance(trip.distanceMiles),
+          })
         : format.distance(trip.distanceMiles),
     },
     odometer &&

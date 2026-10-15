@@ -32,6 +32,7 @@ import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
 import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
 import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
+import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -188,7 +189,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                   </View>
                 </Button>
                 <TodayTitleStack
-                  title={selectedMonth.format('MMMM YYYY')}
+                  title={formatDisplay(selectedMonth, 'MMMM YYYY')}
                   showTodayBadge={!isCurrentMonth}
                   onPressToday={jumpToToday}
                 />

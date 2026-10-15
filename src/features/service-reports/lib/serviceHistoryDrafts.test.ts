@@ -10,6 +10,7 @@ import {
   dirtyServiceYears,
   discardDraft,
   draftRowsFor,
+  parseHours,
   rowHasChanges,
   saveServiceHistoryDrafts,
   updateDraft,
@@ -184,5 +185,21 @@ describe('saveServiceHistoryDrafts', () => {
     expect(saveServiceHistoryDrafts({}, w)).toEqual([])
     expect(w.setMonthStatus).not.toHaveBeenCalled()
     expect(w.addServiceReport).not.toHaveBeenCalled()
+  })
+})
+
+describe('parseHours', () => {
+  it('reads hours typed in any digit system', () => {
+    expect(parseHours('12')).toBe(12)
+    expect(parseHours('١٢')).toBe(12)
+    expect(parseHours('٢٫٥')).toBe(2.5)
+    expect(parseHours('2,5')).toBe(2.5)
+    expect(parseHours('۳')).toBe(3)
+  })
+
+  it('reads blank, negative and invalid hours as 0', () => {
+    expect(parseHours('')).toBe(0)
+    expect(parseHours('-3')).toBe(0)
+    expect(parseHours('abc')).toBe(0)
   })
 })

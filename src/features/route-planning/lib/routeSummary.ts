@@ -25,6 +25,8 @@ export const formatRouteSummary = (
       Math.max(1, Math.round(summary.durationSeconds / 60)),
       prefs.timeDisplayFormat
     ).formatted,
-    distance: `${formatNumber(milesToDistance(miles, unit))} ${i18n.t(`mileage.units.${unit}`)}`,
+    distance: i18n.t(`mileage.unitValues.${unit}`, {
+      value: formatNumber(milesToDistance(miles, unit)),
+    }),
   })
 }

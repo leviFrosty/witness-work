@@ -67,6 +67,14 @@ describe('parseRecoveryKey', () => {
     }
   })
 
+  it('reads Arabic-Indic digits as 0-9', () => {
+    const key = random()
+    const arabic = encodeRecoveryKey(key).replace(/[0-9]/g, (d) =>
+      String.fromCharCode(0x0660 + Number(d))
+    )
+    expect(keyOf(arabic)).toEqual(key)
+  })
+
   it('ignores case, spaces, dashes and the prefix', () => {
     const key = random()
     const recoveryKey = encodeRecoveryKey(key)

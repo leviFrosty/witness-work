@@ -62,7 +62,7 @@ import {
 } from '@/providers/AnimationViewProvider'
 import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
-import { formatMonthDayCompact } from '@/lib/dates'
+import { formatMonthDayCompact, formatDisplay } from '@/lib/dates'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
 import useScheduleStatus from '@/hooks/useScheduleStatus'
@@ -513,10 +513,10 @@ const MonthReport = ({
                   ),
                 }}
               >
-                {`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
-                  aheadBehindMinutes > 0 ? 'aheadOfPlan' : 'behindPlan',
+                {i18n.t(
+                  aheadBehindMinutes > 0 ? 'aheadOfPlanUp' : 'behindPlanDown',
                   { value: aheadBehindDisplay }
-                )}`}
+                )}
               </Text>
             )}
             {showMomDelta && (
@@ -537,7 +537,10 @@ const MonthReport = ({
                   ),
                 }}
               >
-                {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${i18n.t('vsLastMonthValue', { value: momDeltaDisplay })}`}
+                {i18n.t(
+                  momDeltaMinutes > 0 ? 'vsLastMonthUp' : 'vsLastMonthDown',
+                  { value: momDeltaDisplay }
+                )}
               </Text>
             )}
           </View>
@@ -635,7 +638,8 @@ const MonthReport = ({
                   fontSize: theme.fontSize('xl'),
                 }}
               >
-                {title ?? moment().month(month).year(year).format('MMMM YYYY')}
+                {title ??
+                  formatDisplay(moment().month(month).year(year), 'MMMM YYYY')}
               </Text>
               {showReportButton && (
                 <ViewReportButton month={month} year={year} />

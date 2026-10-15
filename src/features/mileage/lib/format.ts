@@ -1,6 +1,6 @@
 import { getLocales } from 'expo-localization'
 import i18n from '@/lib/locales'
-import { formatDate, formatMonthDayCompact } from '@/lib/dates'
+import { formatDate, formatMonthDayCompact, formatDisplay } from '@/lib/dates'
 import {
   autoDistanceUnit,
   autoFuelEconomyUnit,
@@ -48,15 +48,21 @@ export function createMileageFormatter(units: MileageUnits) {
     economySuffix,
     priceSuffix,
     distance: (miles: number) =>
-      `${formatNumber(milesToDistance(miles, units.distanceUnit))} ${distanceSuffix}`,
+      i18n.t(`mileage.unitValues.${units.distanceUnit}`, {
+        value: formatNumber(milesToDistance(miles, units.distanceUnit)),
+      }),
     economy: (mpg: number) =>
-      `${formatNumber(mpgToEconomy(mpg, units.economyUnit))} ${economySuffix}`,
+      i18n.t(`mileage.unitValues.${units.economyUnit}`, {
+        value: formatNumber(mpgToEconomy(mpg, units.economyUnit)),
+      }),
     cost: (amount: number) => formatCurrency(amount, units.currency),
     price: (pricePerGallon: number) =>
-      `${formatFuelPrice(
-        pricePerGallonToDisplay(pricePerGallon, units.economyUnit),
-        units.currency
-      )}${priceSuffix}`,
+      i18n.t(`mileage.unitValues.per_${fuelVolumeUnit(units.economyUnit)}`, {
+        value: formatFuelPrice(
+          pricePerGallonToDisplay(pricePerGallon, units.economyUnit),
+          units.currency
+        ),
+      }),
   }
 }
 
@@ -69,7 +75,7 @@ export function formatPeriodLabel(period: MileagePeriod): string {
     case 'week':
       return `${formatMonthDayCompact(period.start)} – ${formatMonthDayCompact(period.end)}`
     case 'month':
-      return period.start.format('MMMM YYYY')
+      return formatDisplay(period.start, 'MMMM YYYY')
     case 'year':
       return i18n.t('mileage.serviceYearRange', {
         start: period.start.year(),

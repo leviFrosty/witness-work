@@ -10,6 +10,7 @@ import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 
 import Card from '@/components/ui/Card'
 import InfoPopover from '@/components/ui/InfoPopover'
@@ -95,7 +96,10 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               letterSpacing: tracking(0.5),
             }}
           >
-            {`${serviceYear}–${serviceYear + 1}`}
+            {i18n.t('scheduleCalendar.serviceYearSpan', {
+              start: formatPlainNumber(serviceYear),
+              end: formatPlainNumber(serviceYear + 1),
+            })}
           </Text>
           <InfoPopover
             inline
@@ -134,7 +138,9 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
             color: theme.colors.text,
           }}
         >
-          {isDecimal ? totalDisplay.decimalHours : totalDisplay.formatted}
+          {isDecimal
+            ? formatPlainNumber(totalDisplay.decimalHours)
+            : totalDisplay.formatted}
         </Text>
         {isDecimal ? (
           <Text
@@ -144,7 +150,8 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('hours_lowercase')}
+            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {i18n.t('hoursUnitLabel', { count: totalDisplay.decimalHours })}
           </Text>
         ) : null}
       </View>

@@ -6,7 +6,11 @@ import {
   isAppointment,
   visitsByContact,
 } from '@/lib/conversations'
-import { formatMonthDayCompact, formatTime } from '@/lib/dates'
+import {
+  formatMonthDayCompact,
+  formatTime,
+  localizeDisplayDate,
+} from '@/lib/dates'
 import { formatMinutesCompact } from '@/lib/minutes'
 import {
   combineDateAndStartTime,
@@ -95,9 +99,10 @@ function timing(start: moment.Moment, timed: boolean) {
     timed,
     timeText: timed ? formatTime(start) : null,
     clockText: timed
-      ? start.format(lt.replace(/\s*[aA]\s*/g, ' ').trim())
+      ? localizeDisplayDate(start.format(lt.replace(/\s*[aA]\s*/g, ' ').trim()))
       : null,
-    periodText: timed && /[aA]/.test(lt) ? start.format('A') : null,
+    periodText:
+      timed && /[aA]/.test(lt) ? localizeDisplayDate(start.format('A')) : null,
     weekdayText: start.format('ddd'),
     dateText: formatMonthDayCompact(start),
   }

@@ -19,7 +19,8 @@ import ProfileCardLayout from '@/components/ProfileCardLayout'
 import StreakBadge from '@/components/StreakBadge'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import Avatar from '@/components/ui/Avatar'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import MyTextInput from '@/components/ui/TextInput'
 import { profileBadges } from '@/lib/badges/display'
 import ProfileCardBadges from '@/features/profile/components/ProfileCardBadges'
@@ -44,39 +45,22 @@ type Tenure = {
   text: string
 }
 
-const buildTenureText = (tone: TenureTone, days: number): string => {
-  const formatted = days.toLocaleString()
-  switch (tone) {
-    case 'supporter':
-      return days === 1
-        ? i18n.t('profileSupporterForDay')
-        : i18n.t('profileSupporterForDays', { days: formatted })
-    case 'foundingSupporter':
-      return days === 1
-        ? i18n.t('profileFoundingSupporterForDay')
-        : i18n.t('profileFoundingSupporterForDays', { days: formatted })
-    case 'pioneer':
-      return days === 1
-        ? i18n.t('profilePioneeringForDay')
-        : i18n.t('profilePioneeringForDays', { days: formatted })
-    case 'specialPioneer':
-      return days === 1
-        ? i18n.t('profileSpecialPioneeringForDay')
-        : i18n.t('profileSpecialPioneeringForDays', { days: formatted })
-    case 'circuitOverseer':
-      return days === 1
-        ? i18n.t('profileCircuitOverseeingForDay')
-        : i18n.t('profileCircuitOverseeingForDays', { days: formatted })
-    case 'regularAuxiliary':
-      return days === 1
-        ? i18n.t('profileRegularAuxiliaryForDay')
-        : i18n.t('profileRegularAuxiliaryForDays', { days: formatted })
-    case 'installed':
-      return days === 1
-        ? i18n.t('profileUsingForDay')
-        : i18n.t('profileUsingForDays', { days: formatted })
-  }
+// One plural key per tone, so each Language words "for N days" its own way.
+const TENURE_KEYS: Record<TenureTone, string> = {
+  supporter: 'profileSupporterFor',
+  foundingSupporter: 'profileFoundingSupporterFor',
+  pioneer: 'profilePioneeringFor',
+  specialPioneer: 'profileSpecialPioneeringFor',
+  circuitOverseer: 'profileCircuitOverseeingFor',
+  regularAuxiliary: 'profileRegularAuxiliaryFor',
+  installed: 'profileUsingFor',
 }
+
+const buildTenureText = (tone: TenureTone, days: number): string =>
+  i18n.t(TENURE_KEYS[tone] as TranslationKey, {
+    count: days,
+    days: formatNumber(days),
+  })
 
 interface Props {
   nameInvalid?: boolean

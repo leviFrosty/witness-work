@@ -16,6 +16,7 @@ import {
 } from '@/features/buddies/lib/schemas'
 import type { BuddyProfile } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { formatDisplay } from '@/lib/dates'
 
 const MAX_NAME_LENGTH = 60
 const THUMBNAIL_SIZE = 96
@@ -123,12 +124,18 @@ export function buddyStreakCount(
   return moment(now).format('YYYY-MM-DD') <= streak.until ? streak.n : 0
 }
 
+const BUDDY_TENURE_LABELS: Record<BuddyTenureKind, TranslationKey> = {
+  pioneer: 'buddyTenure_pioneer',
+  specialPioneer: 'buddyTenure_specialPioneer',
+  circuitOverseer: 'buddyTenure_circuitOverseer',
+  regularAuxiliary: 'buddyTenure_regularAuxiliary',
+}
+
 /** "Regular pioneer since September 2019" for a buddy's shared Tenure. */
 export function buddyTenureLabel(tenure: BuddyTenure): string {
-  return `${i18n.t(BUDDY_TENURE_BADGES[tenure.kind])} ${moment(
-    tenure.since,
-    'YYYY-MM'
-  ).format('MMMM YYYY')}`
+  return i18n.t(BUDDY_TENURE_LABELS[tenure.kind], {
+    date: formatDisplay(moment(tenure.since, 'YYYY-MM'), 'MMMM YYYY'),
+  })
 }
 
 /** The User's private nickname for a buddy, else the buddy's own name. */

@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import { BookOpenCheck as StudyIcon, X as XIcon } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
+import { compareText } from '@/lib/collation'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { type StyleProp, View, type ViewStyle } from 'react-native'
@@ -33,6 +34,7 @@ import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 const PAGE_SIZE = 5
 
@@ -107,7 +109,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
     month: now.toDate(),
   })
   const sortedContacts = [...studyContacts].sort((a, b) =>
-    a.name.localeCompare(b.name)
+    compareText(a.name, b.name)
   )
   const pageCount = Math.max(1, Math.ceil(sortedContacts.length / PAGE_SIZE))
   const [requestedPage, setRequestedPage] = useState(1)
@@ -170,7 +172,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
             fontSize: theme.fontSize('sm'),
           }}
         >
-          {now.format('MMMM YYYY')}
+          {formatDisplay(now, 'MMMM YYYY')}
         </Text>
         <Text
           style={{

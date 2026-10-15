@@ -673,7 +673,9 @@ const PaywallScreen = ({
       tier === 'supporter' &&
       supporterBilling === 'annual' &&
       pkg.product.pricePerMonthString
-        ? `≈ ${pkg.product.pricePerMonthString} ${i18n.t('eachMonth')}`
+        ? i18n.t('approxPricePerMonth', {
+            price: pkg.product.pricePerMonthString,
+          })
         : undefined
     return (
       <PriceOption

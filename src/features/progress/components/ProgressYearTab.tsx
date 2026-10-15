@@ -43,6 +43,7 @@ import GoalBar, { GoalBarKey } from '@/components/GoalBar'
 import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
 import { alignText } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -197,7 +198,10 @@ const MonthRow = ({
         ? theme.colors.accent
         : theme.colors.warn
 
-  const monthYearLabel = moment().month(month).year(year).format('MMMM, YYYY')
+  const monthYearLabel = formatDisplay(
+    moment().month(month).year(year),
+    'MMMM, YYYY'
+  )
   const editable = monthEditTargets({ month, year, baseGoalHours })
 
   return (

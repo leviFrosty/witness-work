@@ -32,6 +32,7 @@ import {
   useTimeCache,
 } from '@/stores/timeCache'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { logger } from '@/lib/logger'
 import Haptics from '@/lib/haptics'
 import useFireworks from '@/hooks/useFireworks'
@@ -290,7 +291,10 @@ const YearMilestoneCard = ({
     fireworks,
   ])
 
-  const titleText = `${serviceYear}–${serviceYear + 1}`
+  const titleText = i18n.t('scheduleCalendar.serviceYearSpan', {
+    start: formatPlainNumber(serviceYear),
+    end: formatPlainNumber(serviceYear + 1),
+  })
 
   const minutesToGoal = useMemo(
     () =>
@@ -546,7 +550,7 @@ const YearMilestoneCard = ({
             }}
           >
             {isDecimal
-              ? completedHeroDisplay.decimalHours
+              ? formatPlainNumber(completedHeroDisplay.decimalHours)
               : completedHeroDisplay.formatted}
           </Text>
           <Text
@@ -555,7 +559,8 @@ const YearMilestoneCard = ({
               color: theme.colors.textAlt,
             }}
           >
-            / {annualGoalHours} {i18n.t('hours_lowercase')}
+            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {i18n.t('goalHoursSuffix', { count: annualGoalHours })}
           </Text>
         </View>
 

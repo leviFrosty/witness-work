@@ -57,10 +57,8 @@ const groupWarningCount = (group: ContactGroup): number =>
   group.visits.reduce((sum, v) => sum + v.warnings.length, 0)
 
 const flagCountLabel = (count: number) =>
-  i18n.t(
-    count === 1 ? 'notesImport_flagCount' : 'notesImport_flagCount_plural',
-    { count }
-  )
+  // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+  i18n.t('notesImport_flagCount', { count })
 
 /**
  * A single contact row in the preview: name, visit count, a warning badge, and

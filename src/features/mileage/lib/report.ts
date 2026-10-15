@@ -48,16 +48,18 @@ export function buildReportText({
     i18n.t('mileage.reportTitle'),
     formatPeriodLabel(period),
     '',
-    `${i18n.t('mileage.distance')}: ${format.distance(summary.distanceMiles)}`,
-    `${i18n.t('mileage.trips')}: ${summary.tripCount}`,
+    i18n.t('mileage.distanceLine', {
+      value: format.distance(summary.distanceMiles),
+    }),
+    i18n.t('mileage.tripsLine', { value: summary.tripCount }),
   ]
   if (summary.cost !== undefined)
     lines.push(
-      `${i18n.t('mileage.estimatedCost')}: ${format.cost(summary.cost)}`
+      i18n.t('mileage.estimatedCostLine', { value: format.cost(summary.cost) })
     )
   const multipleCars = summary.byVehicle.length > 1
   if (multipleCars) {
-    lines.push('', `${i18n.t('mileage.byCar')}:`)
+    lines.push('', i18n.t('mileage.byCarHeading'))
     for (const car of summary.byVehicle) {
       const parts = [
         format.distance(car.distanceMiles),
@@ -65,12 +67,15 @@ export function buildReportText({
         car.cost !== undefined && format.cost(car.cost),
       ].filter(Boolean)
       lines.push(
-        `${vehicleName(vehicles, car.vehicleId)}: ${parts.join(' · ')}`
+        i18n.t('mileage.carLine', {
+          car: vehicleName(vehicles, car.vehicleId),
+          value: parts.join(' · '),
+        })
       )
     }
   }
   if (period.kind !== 'year' && trips.length > 0) {
-    lines.push('', `${i18n.t('mileage.trips')}:`)
+    lines.push('', i18n.t('mileage.tripsHeading'))
     for (const trip of [...trips].reverse()) {
       const parts = [
         formatMonthDayCompact(fromDateKey(trip.date)),
@@ -94,11 +99,14 @@ export function buildTripText(
   const estimate = estimateTrip(trip, index)
   return [
     `${formatMonthDayCompact(fromDateKey(trip.date))} · ${vehicleName(vehicles, trip.vehicleId)}`,
-    `${i18n.t('mileage.distance')}: ${format.distance(trip.distanceMiles)}${
-      trip.roundTrip ? ` (${i18n.t('mileage.roundTrip')})` : ''
-    }`,
+    i18n.t(
+      trip.roundTrip ? 'mileage.distanceRoundTripLine' : 'mileage.distanceLine',
+      { value: format.distance(trip.distanceMiles) }
+    ),
     estimate.cost !== undefined &&
-      `${i18n.t('mileage.estimatedCost')}: ${format.cost(estimate.cost)}`,
+      i18n.t('mileage.estimatedCostLine', {
+        value: format.cost(estimate.cost),
+      }),
     trip.note,
   ]
     .filter(Boolean)
@@ -130,8 +138,8 @@ export function buildReportCsv({
     i18n.t('mileage.roundTrip'),
     i18n.t('note'),
     i18n.t('mileage.fuel'),
-    `${i18n.t('mileage.fuelEconomy')} (${format.economySuffix})`,
-    `${i18n.t('mileage.fuelPrice')} (${format.priceSuffix})`,
+    i18n.t('mileage.fuelEconomyWithUnit', { unit: format.economySuffix }),
+    i18n.t('mileage.fuelPriceWithUnit', { unit: format.priceSuffix }),
     i18n.t('mileage.estimatedCost'),
   ]
   const distance = (miles: number | undefined) =>

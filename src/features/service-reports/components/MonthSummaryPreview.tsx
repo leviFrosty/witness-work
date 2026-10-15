@@ -11,6 +11,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
+import { formatDisplay } from '@/lib/dates'
 
 export const MONTH_PREVIEW_WIDTH = 300
 
@@ -67,7 +68,7 @@ const MonthSummaryPreview = ({
             color: theme.colors.text,
           }}
         >
-          {moment({ year, month }).format('MMMM YYYY')}
+          {formatDisplay({ year, month }, 'MMMM YYYY')}
         </Text>
         <Text
           numberOfLines={1}
@@ -112,7 +113,9 @@ const MonthSummaryPreview = ({
             color: theme.colors.text,
           }}
         >
-          {`${i18n.t('sharedInMinistry')}: ${i18n.t(sharedInMinistry ? 'yes' : 'no')}`}
+          {i18n.t(
+            sharedInMinistry ? 'sharedInMinistryYes' : 'sharedInMinistryNo'
+          )}
         </Text>
       )}
 
@@ -125,7 +128,8 @@ const MonthSummaryPreview = ({
             fontSize: theme.fontSize('sm'),
           }}
         >
-          {`${studies} ${i18n.t('studies')}`}
+          {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+          {i18n.t('studiesCount', { count: studies })}
         </Text>
       </View>
     </View>

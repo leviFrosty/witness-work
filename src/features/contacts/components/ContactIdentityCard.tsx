@@ -151,7 +151,7 @@ const ContactIdentityCard = ({
           marginHorizontal: 12,
         }}
       >
-        {editMode ? i18n.t('edit') : i18n.t('add')} {i18n.t('contact')}
+        {i18n.t(editMode ? 'editContact' : 'addContact')}
       </Text>
       <Card style={{ paddingVertical: 14, paddingHorizontal: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>

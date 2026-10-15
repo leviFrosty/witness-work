@@ -3,6 +3,7 @@ import {
   formatDate,
   formatTime,
   formatWeekdayMonthDayCompact,
+  localizeDisplayDate,
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 
@@ -41,5 +42,7 @@ export const whenPhrase = (date: Date, now: number): string =>
 export function distancePhrase(date: Date, now: number): string {
   const day = moment(date).startOf('day')
   const today = moment(now).startOf('day')
-  return day.isSame(today) ? moment(date).from(moment(now)) : day.from(today)
+  return localizeDisplayDate(
+    day.isSame(today) ? moment(date).from(moment(now)) : day.from(today)
+  )
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import type { MileageSummary as Summary } from '@/lib/mileage/calc'
@@ -77,7 +78,7 @@ export default function MileageSummary({
         />
         <Stat
           label={i18n.t('mileage.trips')}
-          value={summary.tripCount.toLocaleString()}
+          value={formatNumber(summary.tripCount)}
         />
         {summary.cost !== undefined && (
           <Stat

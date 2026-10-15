@@ -1,5 +1,5 @@
 import { ComponentType } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, {
   DerivedValue,
   useAnimatedStyle,
@@ -39,8 +39,8 @@ interface Promise {
 
 /**
  * Privacy, by design: the four promises from the privacy sketches — works
- * offline, stays on the device, shares by link, exports anytime — popping in as
- * tiles, each acting out its promise.
+ * offline, encrypted or anonymous, shares by link, exports anytime — popping in
+ * as tiles, each acting out its promise.
  */
 const PrivacyVisual = ({
   palette,
@@ -65,10 +65,7 @@ const PrivacyVisual = ({
     {
       id: 'on-device',
       Illustration: OnDeviceIllustration,
-      titleKey:
-        Platform.OS === 'android'
-          ? 'privacyOnDeviceTitleAndroid'
-          : 'privacyOnDeviceTitle',
+      titleKey: 'privacyOnDeviceTitle',
       color: theme.colors.indigo,
     },
     {

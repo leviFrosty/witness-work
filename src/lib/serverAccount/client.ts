@@ -24,13 +24,14 @@ export type RegisterAccountOptions = {
 }
 
 /**
- * The account for this signing key, created on first use; the same key always
- * gets the same account. A `stale` answer carries the server's clock, and the
- * request is signed again once with it. Failures throw `HttpError`.
+ * Sends a self-signed account op (`accountPub`, `ts`, `nonce`). A `stale`
+ * answer carries the server's clock, and the request is signed again once with
+ * it. Failures throw `HttpError`.
  */
-export async function registerAccount(
+async function sendKeySigned<T>(
+  op: 'account/register' | 'account/info',
   options: RegisterAccountOptions
-): Promise<RegisteredAccount> {
+) {
   const send = async (ts: number) => {
     const payload = utf8(
       JSON.stringify({
@@ -39,34 +40,103 @@ export async function registerAccount(
         nonce: toB64u(options.randomBytes(16)),
       })
     )
-    return request<{ ok?: boolean; accountId?: unknown; status?: unknown }>({
-      url: `${options.baseUrl}/accounts/v1/account/register`,
+    return request<T>({
+      url: `${options.baseUrl}/accounts/v1/${op}`,
       json: {
         p: toB64u(payload),
-        s: signAccountRequest('account/register', payload, options.key),
+        s: signAccountRequest(op, payload, options.key),
       },
       timeoutMs: TIMEOUT_MS,
       signal: options.signal,
       fetchImpl: options.fetchImpl,
     })
   }
-  let response
   try {
-    response = await send(options.now())
+    return await send(options.now())
   } catch (error) {
     const serverTime = staleServerTime(error)
     if (serverTime === null) throw error
-    response = await send(serverTime)
+    return send(serverTime)
   }
+}
+
+const isStatus = (value: unknown): value is AccountStatus =>
+  value === 'active' || value === 'suspended'
+
+/**
+ * The account for this signing key, created on first use; the same key always
+ * gets the same account. Failures throw `HttpError`.
+ */
+export async function registerAccount(
+  options: RegisterAccountOptions
+): Promise<RegisteredAccount> {
+  const response = await sendKeySigned<{
+    ok?: boolean
+    accountId?: unknown
+    status?: unknown
+  }>('account/register', options)
   const { accountId, status } = response.data ?? {}
   if (
     response.data?.ok !== true ||
     typeof accountId !== 'string' ||
     !RELAY_ID_PATTERN.test(accountId) ||
-    (status !== 'active' && status !== 'suspended')
+    !isStatus(status)
   )
     throw new HttpError('server', response.status, 'unexpected_response')
   return { accountId, status }
+}
+
+/** What the server holds for this device's own account (`account/info`). */
+export type ServerAccountInfo = RegisteredAccount & {
+  accountPub: string
+  createdAt: number
+  inboxIds: string[]
+  statusChanges: { status: AccountStatus; createdAt: number }[]
+}
+
+/**
+ * Reads this signing key's account, for the developer tools. Never creates one:
+ * an unregistered key throws `HttpError` with `unknown_account`.
+ */
+export async function fetchAccountInfo(
+  options: RegisterAccountOptions
+): Promise<ServerAccountInfo> {
+  const response = await sendKeySigned<Record<string, unknown>>(
+    'account/info',
+    options
+  )
+  const data = response.data ?? {}
+  const { accountId, accountPub, status, createdAt, inboxIds, statusChanges } =
+    data
+  if (
+    data.ok !== true ||
+    typeof accountId !== 'string' ||
+    !RELAY_ID_PATTERN.test(accountId) ||
+    typeof accountPub !== 'string' ||
+    !isStatus(status) ||
+    typeof createdAt !== 'number' ||
+    !Array.isArray(inboxIds) ||
+    !inboxIds.every((id) => typeof id === 'string') ||
+    !Array.isArray(statusChanges) ||
+    !statusChanges.every(
+      (change) =>
+        isStatus(change?.status) && typeof change?.createdAt === 'number'
+    )
+  )
+    throw new HttpError('server', response.status, 'unexpected_response')
+  return {
+    accountId,
+    accountPub,
+    status,
+    createdAt,
+    inboxIds,
+    statusChanges: statusChanges.map(
+      (change: { status: AccountStatus; createdAt: number }) => ({
+        status: change.status,
+        createdAt: change.createdAt,
+      })
+    ),
+  }
 }
 
 function staleServerTime(error: unknown): number | null {

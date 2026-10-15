@@ -100,6 +100,7 @@ import {
 } from '@/features/notes-import/lib/notesImportAuthRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
+import AccountTools from '@/app/navigation/tools/AccountTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import {
@@ -1383,6 +1384,8 @@ export default function ToolsScreen() {
         </ToolSection>
 
         <BuddiesTools />
+
+        <AccountTools />
 
         {__DEV__ && (
           <ToolSection

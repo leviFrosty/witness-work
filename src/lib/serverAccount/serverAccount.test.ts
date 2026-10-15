@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { concatBytes, fromB64u, fromUtf8, utf8 } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
-import { registerAccount } from '@/lib/serverAccount/client'
+import { fetchAccountInfo, registerAccount } from '@/lib/serverAccount/client'
 import {
   deriveAccountSigningKey,
   signInboxLink,
@@ -48,6 +48,66 @@ describe('account keys', () => {
         fromB64u(key.publicKey)
       )
     ).toBe(true)
+  })
+})
+
+describe('fetchAccountInfo', () => {
+  const key = deriveAccountSigningKey(random(32))
+  const options = (fetchImpl: unknown) => ({
+    baseUrl: 'https://api.test',
+    key,
+    now: () => 1_000,
+    randomBytes: random,
+    fetchImpl: fetchImpl as typeof fetch,
+  })
+  const record = {
+    ok: true,
+    accountId: ACCOUNT_ID,
+    accountPub: key.publicKey,
+    status: 'suspended',
+    createdAt: 500,
+    inboxIds: ['inbox'],
+    statusChanges: [{ status: 'suspended', createdAt: 900 }],
+  }
+
+  it('signs account/info under the account context and returns the record', async () => {
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      const { p, s } = JSON.parse(String(init?.body))
+      const payload = fromB64u(p)
+      expect(
+        ed25519.verify(
+          fromB64u(s),
+          concatBytes(utf8('ww-account/v1\naccount/info\n'), payload),
+          fromB64u(key.publicKey)
+        )
+      ).toBe(true)
+      return Response.json(record)
+    })
+    const { ok: _ok, ...expected } = record
+    await expect(fetchAccountInfo(options(fetchImpl))).resolves.toEqual(
+      expected
+    )
+    expect(fetchImpl.mock.calls[0][0]).toBe(
+      'https://api.test/accounts/v1/account/info'
+    )
+  })
+
+  it('throws unknown_account for an unregistered key, and on a bad shape', async () => {
+    const unknown = vi.fn(async () =>
+      Response.json(
+        { ok: false, error: 'unknown_account', code: 'unknown_account' },
+        { status: 404 }
+      )
+    )
+    await expect(fetchAccountInfo(options(unknown))).rejects.toMatchObject({
+      serverCode: 'unknown_account',
+    })
+    const malformed = vi.fn(async () =>
+      Response.json({ ...record, statusChanges: [{ status: 'gone' }] })
+    )
+    await expect(fetchAccountInfo(options(malformed))).rejects.toBeInstanceOf(
+      HttpError
+    )
   })
 })
 

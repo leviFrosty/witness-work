@@ -24,7 +24,7 @@ import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import { FAQEntry } from '@/features/updates/constants/faqs'
-import { alignText } from '@/lib/direction'
+import { alignInput, alignText } from '@/lib/direction'
 
 const ReportLinks = () => {
   const theme = useTheme()
@@ -269,6 +269,9 @@ export const FAQSearch = ({
             color: theme.colors.text,
             fontFamily: theme.fonts.regular,
             fontSize: theme.fontSize('md'),
+            // Explicit: an unaligned field follows the app bundle's language on
+            // iOS, which can be Arabic while the app runs in English.
+            textAlign: alignInput('start'),
           }}
         />
       </View>

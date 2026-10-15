@@ -28,9 +28,9 @@ describe('handleLangFallback', () => {
   it('matches a tag without a region on its whole language subtag', () => {
     // `ar` used to slice to `a` and match `ja-jp`.
     expect(handleLangFallback('ar')).toEqual({
-      locale: 'en-us',
-      languageFound: false,
-      fallback: true,
+      locale: 'ar',
+      languageFound: true,
+      fallback: false,
     })
     expect(handleLangFallback('en')).toEqual({
       locale: 'en-us',
@@ -41,8 +41,17 @@ describe('handleLangFallback', () => {
     expect(handleLangFallback('uk').locale).toBe('uk-ua')
   })
 
+  it('gives every Arabic-speaking country the one Arabic', () => {
+    for (const tag of ['ar-sa', 'ar-EG', 'ar_MA', 'ar-Arab-AE'])
+      expect(handleLangFallback(tag)).toEqual({
+        locale: 'ar',
+        languageFound: true,
+        fallback: false,
+      })
+  })
+
   it('falls back to English for a language we don’t translate', () => {
-    expect(handleLangFallback('ar-eg')).toEqual({
+    expect(handleLangFallback('fa-ir')).toEqual({
       locale: 'en-us',
       languageFound: false,
       fallback: true,
@@ -78,6 +87,6 @@ describe('resolveAppLocale', () => {
   })
 
   it('follows the device language otherwise', () => {
-    expect(resolveAppLocale(undefined)).toBe('en-us')
+    expect(resolveAppLocale(undefined)).toBe('ar')
   })
 })

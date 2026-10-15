@@ -4,6 +4,12 @@
     "appointments" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المواعيد"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
     "calendar" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقويم"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -230,6 +242,12 @@
     "contacts" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جهات الاتصال"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -343,6 +361,12 @@
     "serviceReport" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقرير الخدمة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +480,12 @@
     "timer" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المؤقّت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +599,12 @@
     "widgetAppointmentsDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المتابعات القادمة. يفتح النقر على أي متابعة متأخرة نافذة لإعادة جدولتها."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -682,6 +718,12 @@
     "widgetCalendarDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شهرك في لمحة — الساعات والخطط والملاحظات لكل يوم."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -795,6 +837,12 @@
     "widgetContactsDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصول سريع إلى جهات الاتصال. اضبط الترتيب والإجراء والمفضلة من الإعدادات."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -908,6 +956,12 @@
     "widgetReportDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعات هذا الشهر نحو هدفك."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -1021,6 +1075,12 @@
     "widgetReportLabel" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقرير"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",

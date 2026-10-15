@@ -359,7 +359,7 @@ _Avoid_: "modal", "popup", "interstitial" (say which Takeover), "celebration" fo
 ### Localization
 
 **Language**:
-The User's chosen translation locale — which set of strings (English, Español, 日本語, …) the app renders. One of the supported `TranslatedLocale` values. Controls the _words_ the User reads, including month and weekday **names**. Defaults to the device language when the User has made no choice.
+The User's chosen translation locale — which set of strings (English, Español, 日本語, …) the app renders. One of the supported `TranslatedLocale` values. Controls the _words_ the User reads, including month and weekday **names**. Defaults to the device language when the User has made no choice. Nineteen ship; Arabic is the one right-to-left Language, so it also mirrors the layout and writes numbers in Arabic-Indic digits (ADR 0026).
 _Avoid_: "locale" alone (ambiguous — it historically meant both Language and formatting; the two are now distinct concerns), "region" (region governs format, not words).
 
 **Format Region**:

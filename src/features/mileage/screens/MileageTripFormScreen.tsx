@@ -1,5 +1,6 @@
 import useFormValidation from '@/hooks/useFormValidation'
 import { useState } from 'react'
+import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -177,150 +178,150 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{
-          paddingTop: 20,
-          paddingBottom: insets.bottom + 30,
-          paddingHorizontal: inputLayout.horizontalPadding,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-          gap: 20,
-        }}
-      >
-        <Section>
-          <InputRowContainer
-            label={i18n.t('date')}
-            controlStyle={{ alignItems: 'flex-end' }}
-            lastInSection={carOptions.length < 2 && !!vehicleId}
-          >
-            <DateTimePicker
-              value={date}
-              onChange={(_e, picked) => picked && setDate(picked)}
-            />
-          </InputRowContainer>
-          {(carOptions.length > 1 || !vehicleId) && (
-            <InputRowSelect
-              invalid={validation.invalid('vehicle')}
-              label={i18n.t('mileage.car')}
-              lastInSection
-              selectProps={{
-                data: carOptions,
-                value: vehicleId,
-                onChange: (item) => {
-                  setVehicleId(item.value)
-                  setOdometerStart(null)
-                },
-                accessibilityLabel: i18n.t('mileage.car'),
-              }}
-            />
-          )}
-        </Section>
-
-        <View style={{ gap: 10 }}>
-          <SegmentedControl<MileageEntryMode>
-            value={mode}
-            onChange={setMode}
-            options={[
-              { key: 'distance', label: i18n.t('mileage.distance') },
-              { key: 'odometer', label: i18n.t('mileage.odometer') },
-            ]}
-          />
+      <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
+        <ContentColumn
+          style={{
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 30,
+            paddingHorizontal: inputLayout.horizontalPadding,
+            gap: 20,
+          }}
+        >
           <Section>
-            {mode === 'distance' ? (
-              <>
-                <TextInputRow
-                  label={i18n.t('mileage.distanceWithUnit', {
-                    unit: format.distanceSuffix,
-                  })}
-                  textInputProps={{
-                    invalid: validation.invalid('distance'),
-                    value: distance,
-                    onChangeText: setDistance,
-                    inputMode: 'decimal',
-                    placeholder: formatPlainNumber(0),
-                    autoFocus: !existing && !template,
-                    maxLength: 8,
-                  }}
-                />
-                <InputRowSwitch
-                  label={i18n.t('mileage.roundTrip')}
-                  info={i18n.t('mileage.roundTrip_info')}
-                  value={roundTrip}
-                  onValueChange={setRoundTrip}
-                  lastInSection
-                />
-              </>
-            ) : (
-              <>
-                <TextInputRow
-                  label={i18n.t('mileage.odometerStartWithUnit', {
-                    unit: format.distanceSuffix,
-                  })}
-                  info={i18n.t('mileage.odometerStart_info')}
-                  textInputProps={{
-                    invalid: validation.invalid('odometerStart'),
-                    value: startText,
-                    onChangeText: setOdometerStart,
-                    inputMode: 'decimal',
-                    placeholder: formatPlainNumber(0),
-                    maxLength: 10,
-                  }}
-                />
-                <TextInputRow
-                  label={i18n.t('mileage.odometerEndWithUnit', {
-                    unit: format.distanceSuffix,
-                  })}
-                  lastInSection
-                  textInputProps={{
-                    invalid: validation.invalid('odometerEnd'),
-                    value: odometerEnd,
-                    onChangeText: setOdometerEnd,
-                    inputMode: 'decimal',
-                    placeholder: formatPlainNumber(0),
-                    maxLength: 10,
-                  }}
-                />
-              </>
+            <InputRowContainer
+              label={i18n.t('date')}
+              controlStyle={{ alignItems: 'flex-end' }}
+              lastInSection={carOptions.length < 2 && !!vehicleId}
+            >
+              <DateTimePicker
+                value={date}
+                onChange={(_e, picked) => picked && setDate(picked)}
+              />
+            </InputRowContainer>
+            {(carOptions.length > 1 || !vehicleId) && (
+              <InputRowSelect
+                invalid={validation.invalid('vehicle')}
+                label={i18n.t('mileage.car')}
+                lastInSection
+                selectProps={{
+                  data: carOptions,
+                  value: vehicleId,
+                  onChange: (item) => {
+                    setVehicleId(item.value)
+                    setOdometerStart(null)
+                  },
+                  accessibilityLabel: i18n.t('mileage.car'),
+                }}
+              />
             )}
           </Section>
-          {odometerError ? (
-            <Text style={{ color: theme.colors.error, fontSize: 12 }}>
-              {i18n.t('mileage.odometerError')}
-            </Text>
-          ) : mode === 'odometer' && distanceMiles ? (
-            <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-              {i18n.t('mileage.odometerDistance', {
-                distance: format.distance(distanceMiles),
-              })}
-            </Text>
-          ) : null}
-        </View>
 
-        <TripNoteRow note={note} onChange={setNote} />
-
-        <View style={{ gap: 8 }}>
-          <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
-          {existing && (
-            <Button
-              noTransform
-              accessibilityRole='button'
-              onPress={() => requestDelete(existing, () => navigation.goBack())}
-              style={{ alignItems: 'center', paddingVertical: 12 }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.error,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('md'),
-                }}
-              >
-                {i18n.t('deleteEllipsis')}
+          <View style={{ gap: 10 }}>
+            <SegmentedControl<MileageEntryMode>
+              value={mode}
+              onChange={setMode}
+              options={[
+                { key: 'distance', label: i18n.t('mileage.distance') },
+                { key: 'odometer', label: i18n.t('mileage.odometer') },
+              ]}
+            />
+            <Section>
+              {mode === 'distance' ? (
+                <>
+                  <TextInputRow
+                    label={i18n.t('mileage.distanceWithUnit', {
+                      unit: format.distanceSuffix,
+                    })}
+                    textInputProps={{
+                      invalid: validation.invalid('distance'),
+                      value: distance,
+                      onChangeText: setDistance,
+                      inputMode: 'decimal',
+                      placeholder: formatPlainNumber(0),
+                      autoFocus: !existing && !template,
+                      maxLength: 8,
+                    }}
+                  />
+                  <InputRowSwitch
+                    label={i18n.t('mileage.roundTrip')}
+                    info={i18n.t('mileage.roundTrip_info')}
+                    value={roundTrip}
+                    onValueChange={setRoundTrip}
+                    lastInSection
+                  />
+                </>
+              ) : (
+                <>
+                  <TextInputRow
+                    label={i18n.t('mileage.odometerStartWithUnit', {
+                      unit: format.distanceSuffix,
+                    })}
+                    info={i18n.t('mileage.odometerStart_info')}
+                    textInputProps={{
+                      invalid: validation.invalid('odometerStart'),
+                      value: startText,
+                      onChangeText: setOdometerStart,
+                      inputMode: 'decimal',
+                      placeholder: formatPlainNumber(0),
+                      maxLength: 10,
+                    }}
+                  />
+                  <TextInputRow
+                    label={i18n.t('mileage.odometerEndWithUnit', {
+                      unit: format.distanceSuffix,
+                    })}
+                    lastInSection
+                    textInputProps={{
+                      invalid: validation.invalid('odometerEnd'),
+                      value: odometerEnd,
+                      onChangeText: setOdometerEnd,
+                      inputMode: 'decimal',
+                      placeholder: formatPlainNumber(0),
+                      maxLength: 10,
+                    }}
+                  />
+                </>
+              )}
+            </Section>
+            {odometerError ? (
+              <Text style={{ color: theme.colors.error, fontSize: 12 }}>
+                {i18n.t('mileage.odometerError')}
               </Text>
-            </Button>
-          )}
-        </View>
+            ) : mode === 'odometer' && distanceMiles ? (
+              <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                {i18n.t('mileage.odometerDistance', {
+                  distance: format.distance(distanceMiles),
+                })}
+              </Text>
+            ) : null}
+          </View>
+
+          <TripNoteRow note={note} onChange={setNote} />
+
+          <View style={{ gap: 8 }}>
+            <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
+            {existing && (
+              <Button
+                noTransform
+                accessibilityRole='button'
+                onPress={() =>
+                  requestDelete(existing, () => navigation.goBack())
+                }
+                style={{ alignItems: 'center', paddingVertical: 12 }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.error,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('md'),
+                  }}
+                >
+                  {i18n.t('deleteEllipsis')}
+                </Text>
+              </Button>
+            )}
+          </View>
+        </ContentColumn>
       </KeyboardAwareScrollView>
     </Wrapper>
   )

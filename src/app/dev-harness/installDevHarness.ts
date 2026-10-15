@@ -34,7 +34,7 @@ import {
   backupHarness,
   handoffHarness,
 } from '@/app/dev-harness/account'
-import { _i18n } from '@/lib/locales'
+import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
 import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
@@ -309,8 +309,18 @@ export function installDevHarness() {
         syncLayoutDirection(_i18n.locale)
         return { rtl: I18nManager.isRTL, forceRtl: isDevForceRtl() }
       },
-      state: () => ({ rtl: I18nManager.isRTL, forceRtl: isDevForceRtl() }),
+      state: () => ({
+        rtl: I18nManager.isRTL,
+        forceRtl: isDevForceRtl(),
+        locale: _i18n.locale,
+      }),
     },
+    /**
+     * A string in the app Language, as the app renders it (`t('hoursShort', {
+     * count: 2 })`).
+     */
+    t: (key: string, options?: Record<string, unknown>) =>
+      i18n.t(key as TranslationKey, options),
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()

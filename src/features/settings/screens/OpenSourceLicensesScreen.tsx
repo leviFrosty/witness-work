@@ -18,6 +18,7 @@ import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import { openURL } from '@/lib/links'
 import openSourceLicenses from '@/features/settings/constants/openSourceLicenses.json'
+import { alignInput } from '@/lib/direction'
 
 type OpenSourcePackage = {
   name: string
@@ -98,6 +99,9 @@ const OpenSourceLicensesScreen = () => {
                 color: theme.colors.text,
                 fontFamily: theme.fonts.regular,
                 fontSize: theme.fontSize('md'),
+                // Explicit: an unaligned field follows the app bundle's language on
+                // iOS, which can be Arabic while the app runs in English.
+                textAlign: alignInput('start'),
               }}
             />
           </View>

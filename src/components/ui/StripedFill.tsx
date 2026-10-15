@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { StyleSheet, View } from 'react-native'
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg'
 
 interface StripedFillProps {
@@ -7,40 +9,68 @@ interface StripedFillProps {
   opacity?: number
 }
 
+/**
+ * Diagonal stripes filling the parent. The SVG gets the parent's measured size:
+ * a percentage-sized SVG keeps its first size when the parent resizes, and in a
+ * right-to-left layout it stays pinned to the physical left, so a fill that
+ * grew drew short and off its start edge.
+ */
 const StripedFill = ({
   color,
   size = 7,
   strokeWidth = 2,
   opacity = 0.6,
-}: StripedFillProps) => (
-  <Svg
-    width='100%'
-    height='100%'
-    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-    opacity={opacity}
-  >
-    <Defs>
-      <Pattern
-        id='striped-fill'
-        width={size}
-        height={size}
-        patternUnits='userSpaceOnUse'
-      >
-        <Path
-          d={`M0,${size} L${size},0`}
-          stroke={color}
-          strokeWidth={strokeWidth}
-        />
-        <Path d='M-1,1 L1,-1' stroke={color} strokeWidth={strokeWidth} />
-        <Path
-          d={`M${size - 1},${size + 1} L${size + 1},${size - 1}`}
-          stroke={color}
-          strokeWidth={strokeWidth}
-        />
-      </Pattern>
-    </Defs>
-    <Rect width='100%' height='100%' fill='url(#striped-fill)' />
-  </Svg>
-)
+}: StripedFillProps) => {
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null)
+  return (
+    <View
+      pointerEvents='none'
+      style={StyleSheet.absoluteFill}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout
+        setBox((current) =>
+          current?.width === width && current.height === height
+            ? current
+            : { width, height }
+        )
+      }}
+    >
+      {box && (
+        <Svg
+          width={box.width}
+          height={box.height}
+          opacity={opacity}
+          style={{ position: 'absolute', top: 0, left: 0 }}
+        >
+          <Defs>
+            <Pattern
+              id='striped-fill'
+              width={size}
+              height={size}
+              patternUnits='userSpaceOnUse'
+            >
+              <Path
+                d={`M0,${size} L${size},0`}
+                stroke={color}
+                strokeWidth={strokeWidth}
+              />
+              <Path d='M-1,1 L1,-1' stroke={color} strokeWidth={strokeWidth} />
+              <Path
+                d={`M${size - 1},${size + 1} L${size + 1},${size - 1}`}
+                stroke={color}
+                strokeWidth={strokeWidth}
+              />
+            </Pattern>
+          </Defs>
+          <Rect
+            width={box.width}
+            height={box.height}
+            fill='url(#striped-fill)'
+          />
+        </Svg>
+      )}
+    </View>
+  )
+}
 
 export default StripedFill

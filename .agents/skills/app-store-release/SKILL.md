@@ -53,7 +53,7 @@ EAS/Xcode has already pushed the build.
 
 ## Gotchas (learned the hard way)
 
-- **ASC release-note locales ≠ app i18n codes.** The 13 ASC locales: `en-US fr-FR de-DE nl-NL it pt-BR es-MX ru vi ja ko zh-Hans zh-Hant`. Do NOT use the app's `it-IT/ko-KR/ja-JP/ru-RU/vi-VN/zh-CN/zh-TW/es-ES`. `asc localizations supported-locales --version <ID>` if unsure.
+- **ASC release-note locales ≠ app i18n codes.** The 14 ASC locales: `en-US fr-FR de-DE nl-NL it pt-BR es-MX ru vi ja ko zh-Hans zh-Hant ar-SA`. Do NOT use the app's `it-IT/ko-KR/ja-JP/ru-RU/vi-VN/zh-CN/zh-TW/es-ES/ar`. `asc localizations supported-locales --version <ID>` if unsure.
 - **`releaseNotes.ts` / `src/locales/*` are the in-app "What's New" — unrelated** to ASC store release notes. Don't confuse them.
 - **Screenshots auto-carry** from the previous version; **text metadata does not** (hence `--copy-metadata-from`; copyable fields: `description,keywords,marketingUrl,promotionalText,supportUrl,whatsNew`).
 - **A failed `release stage` step leaves a stale checkpoint** under `.asc/release/checkpoints/stage_<app>_<version>_<build>_<platform>.json`. Re-running with corrected args then errors `checkpoint does not match current run arguments`. The version itself is already created (the `ensure_version` step ran) — just `rm` the checkpoint file and re-run `stage`; it reuses the existing version and resumes.
@@ -64,7 +64,7 @@ EAS/Xcode has already pushed the build.
 - **Always-present benign warnings** (non-blocking, ignore): `subscriptions.images.recommended` (~31, optional promo image per subscription price point) and `privacy.publish_state.unverified` (API can't read App Privacy state; it's published).
 - **`asc review doctor` may time out** fetching IAPs — retry with `ASC_TIMEOUT=120s`.
 
-## Reusable "Bug fixes and performance improvements" set (all 13 ASC locales)
+## Reusable "Bug fixes and performance improvements" set (all 14 ASC locales)
 
 ```
 en-US  Bug fixes and performance improvements.
@@ -80,4 +80,5 @@ ja     バグ修正とパフォーマンスの改善。
 ko     버그 수정 및 성능 개선.
 zh-Hans 错误修复和性能改进。
 zh-Hant 錯誤修復與效能改進。
+ar-SA  إصلاحات للأخطاء وتحسينات في الأداء.
 ```

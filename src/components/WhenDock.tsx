@@ -22,6 +22,7 @@ import {
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { formatPlainNumber } from '@/lib/numbers'
 
 type Props = {
   durationInvalid?: boolean
@@ -68,7 +69,7 @@ type Props = {
 type PickerKind = 'date' | 'duration' | 'when'
 
 const wheelItems = (values: number[]) =>
-  values.map((value) => ({ label: value.toString(), value }))
+  values.map((value) => ({ label: formatPlainNumber(value), value }))
 
 // Matches the fill of the native iOS date and time pills.
 const PILL_FILL = 'rgba(118,118,128,0.24)'

@@ -4,6 +4,12 @@
     "badgeLevel_1" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برونزي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
     "badgeLevel_2" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فضي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -230,6 +242,12 @@
     "badgeLevel_3" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذهبي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -343,6 +361,12 @@
     "badgeLevel_4" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لؤلؤي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +480,12 @@
     "badge_conversations_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلام طيّب"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +599,12 @@
     "badge_firstBibleStudy_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أول درس في الكتاب المقدس"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -682,6 +718,12 @@
     "badge_firstBuddy_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أول رفيق"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -795,6 +837,12 @@
     "badge_keepingInTouch_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "على تواصل"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -908,6 +956,12 @@
     "badge_monthsShared_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نشر البشارة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1021,6 +1075,12 @@
     "badge_nextTime_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في المرة القادمة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1134,6 +1194,12 @@
     "badge_prepared_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مستعد للانطلاق"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1247,6 +1313,12 @@
     "badge_reportSent_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقارير مُرسلة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1360,6 +1432,12 @@
     "badge_returnVisits_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زيارات مكررة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1473,6 +1551,12 @@
     "badge_together_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اثنين اثنين"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1586,6 +1670,12 @@
     "badge_yearRound_name" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طوال السنة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1699,6 +1789,12 @@
     "badges_titleWithLevel" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{{name}}، {{level}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1812,6 +1908,12 @@
     "buddies_alertBadgeEarned" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شارة جديدة لـ{{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2027,12 @@
     "buddies_alertBadgeReaction" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تفاعل من {{name}} بـ {{emoji}} مع شارتك"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2038,6 +2146,12 @@
     "buddies_alertBadgesEarned" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شارات جديدة لـ{{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2151,6 +2265,12 @@
     "buddies_alertClaimed" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم قبول دعوتك من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2264,6 +2384,12 @@
     "buddies_alertYourFollowUp" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعتك · {{when}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2377,6 +2503,12 @@
     "buddies_alertYourPlan" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطتك · {{when}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2490,6 +2622,12 @@
     "buddies_notifBadge" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لدى {{name}} شارة جديدة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2603,6 +2741,12 @@
     "buddies_notifFollowUpCancel" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء متابعة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2716,6 +2860,12 @@
     "buddies_notifFollowUpInvite" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دعوة إلى متابعة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2829,6 +2979,12 @@
     "buddies_notifFollowUpUpdate" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير في متابعة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2942,6 +3098,12 @@
     "buddies_notifJoinRequest" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلب انضمام من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3055,6 +3217,12 @@
     "buddies_notifPaired" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصبحت أنت و{{name}} رفيقين الآن"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3168,6 +3336,12 @@
     "buddies_notifPlanCancel" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء خطة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3281,6 +3455,12 @@
     "buddies_notifPlanInvite" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دعوة إلى خطة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3394,6 +3574,12 @@
     "buddies_notifPlanUpdate" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير في خطة من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3507,6 +3693,12 @@
     "buddies_notifReplyDeclined" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اعتذار عن الحضور من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3620,6 +3812,12 @@
     "buddies_notifReplyGoing" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تأكيد حضور من {{name}}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3733,6 +3931,12 @@
     "buddies_pushInviteClaimedBody" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح الرفاق لتأكيد رفيقك الجديد."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3846,6 +4050,12 @@
     "buddies_pushPairConfirmedBody" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنكما الآن رؤية أيام الخدمة المخطط لها لدى بعضكما."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",

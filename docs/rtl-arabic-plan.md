@@ -100,3 +100,10 @@ Each step is one PR on `main`. Steps 1-4 change nothing visible for existing lan
    - `src/locales/ar.json` via `translate-locales`, including plurals and Siri phrases.
    - Register in `locales.ts` (`العربية`), App Store (`ar-SA`) and Play listings, Help Center FAQ on languages, readme language count, translate-locales skill counts.
    - Verify on iOS and Android with screenshots: home, report, contacts, plans, map, progress charts, onboarding, widgets and watch.
+   - As built:
+     - `ar` is the only region-less key in `translationLoaders`. `handleLangFallback` matches every Arabic tag (`ar-SA`, `ar-EG`) to it and doesn't count that as a fallback, so the Language row shows no "fallen back" note on Arabic phones.
+     - Arabic writes 1 and 2 with the singular and dual noun in prose («ساعة واحدة», «قبل يومين»), without the numeral. The `translate-locales` lint allows Arabic `one` and `two` to leave the count's placeholder out. Compact labels where the digit matters (`hoursShort`, counters, progress like `{{done}} من {{count}}`) keep the number, with the singular after it.
+     - The printed-style Service Report view downloads Aref Ruqaa, a Ruqʿah handwriting face (about 0.1 MB), for Arabic, the way it already does for Chinese, Japanese and Korean.
+     - The Help Center's languages answer lists all 19 languages and the system per-app language settings. A new `arabic` entry covers right-to-left layout, digits, month names and typing either digit set.
+     - Declaring `ar` gives iOS an Arabic app bundle on an Arabic phone, and iOS aligns unaligned text and fields by the bundle's language: English picked in the app sat on the right, and Arabic picked on an English phone left its search fields on the left. `MyText` now hugs the reading start on iOS in both directions, and the raw search fields set `alignInput('start')`.
+     - ww-api's shared-contact page has Arabic, rendered with `dir="rtl"` (ww-api PR #40).

@@ -203,14 +203,17 @@ const ServiceYearPaceChart = ({
   })
 
   // Each label sits on its month's end — the point that carries its total.
-  const monthLabels = pace.months
-    .map((m, i) => ({
-      key: `${m.year}-${m.month}`,
-      label: moment({ year: m.year, month: m.month }).format('MMM'),
-      position: (i + 1) / 12,
-    }))
-    // Every other month keeps longer month names from colliding.
-    .filter((_, i) => i % 2 === 0)
+  const allMonthLabels = pace.months.map((m, i) => ({
+    key: `${m.year}-${m.month}`,
+    label: moment({ year: m.year, month: m.month }).format('MMM'),
+    position: (i + 1) / 12,
+  }))
+  // Every other month keeps longer month names from colliding; every third
+  // for names with no short form, like Arabic's «تشرين الثاني».
+  const wideLabels = allMonthLabels.some(({ label }) => label.length > 6)
+  const monthLabels = allMonthLabels.filter(
+    (_, i) => i % (wideLabels ? 3 : 2) === 0
+  )
 
   return (
     <View style={{ gap: 4 }}>
@@ -393,6 +396,7 @@ const ServiceYearPaceChart = ({
         labels={monthLabels}
         insetLeft={PADDING.left}
         insetRight={PADDING.right}
+        labelWidth={wideLabels ? 80 : undefined}
       />
     </View>
   )

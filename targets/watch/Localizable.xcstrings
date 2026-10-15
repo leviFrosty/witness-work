@@ -4,6 +4,12 @@
     "addTime" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة وقت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
     "aheadOfSchedule" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متقدّم على الجدول!"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -230,6 +242,12 @@
     "behindSchedule" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متأخر عن الجدول"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -343,6 +361,12 @@
     "directions" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاتجاهات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +480,12 @@
     "followUp" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +599,12 @@
     "goal" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الهدف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -682,6 +718,12 @@
     "goalReached" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقّق الهدف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -795,6 +837,12 @@
     "hours" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -908,6 +956,12 @@
     "hoursCompact" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "س"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1021,6 +1075,12 @@
     "hoursPerDayToGoal" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوميًا لبلوغ الهدف!"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1134,6 +1194,12 @@
     "mileage.car" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السيارة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1247,6 +1313,12 @@
     "mileage.distance" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المسافة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1360,6 +1432,12 @@
     "mileage.logTrip" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل رحلة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1473,6 +1551,12 @@
     "minutes" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الدقائق"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1586,6 +1670,12 @@
     "minutesCompact" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "د"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1699,6 +1789,12 @@
     "month" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشهر"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1812,6 +1908,12 @@
     "ok" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حسنًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2027,12 @@
     "reportedToday" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإبلاغ اليوم"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2038,6 +2146,12 @@
     "requestFailedTryAgain" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدث خطأ ما. حاول مرة أخرى."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2151,6 +2265,12 @@
     "save" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2264,6 +2384,12 @@
     "sharedTheGoodNews" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نشرت\nالبشارة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2377,6 +2503,12 @@
     "siriAddServiceTime" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة وقت الخدمة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2490,6 +2622,12 @@
     "siriDistancePromptKm" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كم كيلومترًا كانت الرحلة؟"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2603,6 +2741,12 @@
     "siriDistancePromptMi" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كم ميلًا كانت الرحلة؟"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2716,6 +2860,12 @@
     "siriDuration" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المدة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2829,6 +2979,12 @@
     "siriHoursLoggingOff" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعّل «تسجيل الساعات» في WitnessWork لإضافة الوقت."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2942,6 +3098,12 @@
     "siriInvalidDistance" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر مسافة أكبر من ٠."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3055,6 +3217,12 @@
     "siriInvalidDuration" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر مدة بين دقيقة واحدة و٢٤ ساعة."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3168,6 +3336,12 @@
     "siriLogRoundTripShort" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل رحلة ذهاب وإياب"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3281,6 +3455,12 @@
     "siriLogTrip" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل رحلة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3394,6 +3574,12 @@
     "siriMileageOff" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فعّل «تتبّع المسافة المقطوعة» في WitnessWork لتسجيل الرحلات."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3507,6 +3693,12 @@
     "siriNoCar" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف سيارة في شاشة «المسافة المقطوعة» في WitnessWork لتسجيل الرحلات."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3620,6 +3812,12 @@
     "siriOneWayPromptKm" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كم كيلومترًا في الاتجاه الواحد؟"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3733,6 +3931,12 @@
     "siriOneWayPromptMi" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كم ميلًا في الاتجاه الواحد؟"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3846,6 +4050,12 @@
     "siriPauseServiceTimer" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مؤقّت الخدمة مؤقتًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3959,6 +4169,12 @@
     "siriSetUp" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح WitnessWork مرة واحدة لإكمال الإعداد، ثم حاول مرة أخرى."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4072,6 +4288,12 @@
     "siriSpokenDuration" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مدة محددة مسبقًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4185,6 +4407,12 @@
     "siriSpokenDuration120" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعتان"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4298,6 +4526,12 @@
     "siriSpokenDuration120Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعتين"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4411,6 +4645,12 @@
     "siriSpokenDuration15" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "١٥ دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4524,6 +4764,12 @@
     "siriSpokenDuration150" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٢٫٥ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4637,6 +4883,12 @@
     "siriSpokenDuration150Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعتين ونصف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4750,6 +5002,12 @@
     "siriSpokenDuration15Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خمس عشرة دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4863,6 +5121,12 @@
     "siriSpokenDuration180" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٣ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -4976,6 +5240,12 @@
     "siriSpokenDuration180Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثلاث ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5089,6 +5359,12 @@
     "siriSpokenDuration210" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٣٫٥ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5202,6 +5478,12 @@
     "siriSpokenDuration210Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثلاث ساعات ونصف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5315,6 +5597,12 @@
     "siriSpokenDuration240" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٤ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5428,6 +5716,12 @@
     "siriSpokenDuration240Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أربع ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5541,6 +5835,12 @@
     "siriSpokenDuration270" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٤٫٥ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5654,6 +5954,12 @@
     "siriSpokenDuration270Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أربع ساعات ونصف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5767,6 +6073,12 @@
     "siriSpokenDuration30" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٣٠ دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5880,6 +6192,12 @@
     "siriSpokenDuration300" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٥ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -5993,6 +6311,12 @@
     "siriSpokenDuration300Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خمس ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6106,6 +6430,12 @@
     "siriSpokenDuration30Alt" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نصف ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6219,6 +6549,12 @@
     "siriSpokenDuration30Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثلاثين دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6332,6 +6668,12 @@
     "siriSpokenDuration360" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٦ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6445,6 +6787,12 @@
     "siriSpokenDuration360Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ست ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6558,6 +6906,12 @@
     "siriSpokenDuration420" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٧ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6671,6 +7025,12 @@
     "siriSpokenDuration420Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سبع ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6784,6 +7144,12 @@
     "siriSpokenDuration45" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٤٥ دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -6897,6 +7263,12 @@
     "siriSpokenDuration45Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خمس وأربعين دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7010,6 +7382,12 @@
     "siriSpokenDuration480" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٨ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7123,6 +7501,12 @@
     "siriSpokenDuration480Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثماني ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7236,6 +7620,12 @@
     "siriSpokenDuration540" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٩ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7349,6 +7739,12 @@
     "siriSpokenDuration540Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسع ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7462,6 +7858,12 @@
     "siriSpokenDuration60" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعة واحدة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7575,6 +7977,12 @@
     "siriSpokenDuration600" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "١٠ ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7688,6 +8096,12 @@
     "siriSpokenDuration600Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عشر ساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7801,6 +8215,12 @@
     "siriSpokenDuration60Alt" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -7914,6 +8334,12 @@
     "siriSpokenDuration60Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستين دقيقة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8027,6 +8453,12 @@
     "siriSpokenDuration660" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "١١ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8140,6 +8572,12 @@
     "siriSpokenDuration660Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إحدى عشرة ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8253,6 +8691,12 @@
     "siriSpokenDuration720" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "١٢ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8366,6 +8810,12 @@
     "siriSpokenDuration720Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اثنتي عشرة ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8479,6 +8929,12 @@
     "siriSpokenDuration90" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "١٫٥ ساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8592,6 +9048,12 @@
     "siriSpokenDuration90Alt" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعة ونصف الساعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8705,6 +9167,12 @@
     "siriSpokenDuration90Words" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعة ونصف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "needs_review",
@@ -8818,6 +9286,12 @@
     "siriStartServiceTimer" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدء مؤقّت الخدمة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8931,6 +9405,12 @@
     "siriStopServiceTimer" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مؤقّت الخدمة وحفظه"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9044,6 +9524,12 @@
     "siriStopTimerShort" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المؤقّت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9157,6 +9643,12 @@
     "siriTimerEmpty" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المؤقّت أقل من دقيقة، لذلك لم يُضَف أي وقت."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9270,6 +9762,12 @@
     "siriTimerPaused" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقّف المؤقّت مؤقتًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9383,6 +9881,12 @@
     "siriTimerSaved" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقّف المؤقّت وأُضيف الوقت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9496,6 +10000,12 @@
     "siriTimerStarted" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدأ المؤقّت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9609,6 +10119,12 @@
     "siriTimerTooLong" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المؤقّت ٢٤ ساعة أو أكثر، وهذا أطول من أن يكون إدخالًا واحدًا. تحقّق من الوقت في WitnessWork."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9722,6 +10238,12 @@
     "siriTripLogged" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تسجيل الرحلة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9835,6 +10357,12 @@
     "standard" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كرازة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9948,6 +10476,12 @@
     "timeAdded" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمت إضافة الوقت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10061,6 +10595,12 @@
     "timer" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المؤقّت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10174,6 +10714,12 @@
     "timerPauseAction" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المؤقّت مؤقتًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10287,6 +10833,12 @@
     "timerSaveAction" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ الوقت…"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10400,6 +10952,12 @@
     "timerStartAction" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدء المؤقّت"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10513,6 +11071,12 @@
     "today" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10626,6 +11190,12 @@
     "tomorrow" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غدًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10739,6 +11309,12 @@
     "type" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النوع"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10852,6 +11428,12 @@
     "watchComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خدمتك هذا الشهر بنظرة سريعة."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10965,6 +11547,12 @@
     "watchComplicationName" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقدّم الشهري"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11078,6 +11666,12 @@
     "watchDirectionsUnavailable" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تعثر الخرائط على هذا المكان."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11191,6 +11785,12 @@
     "watchHoursLoggingOff" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شغّل «تسجيل الساعات» في WitnessWork على iPhone لإضافة الوقت."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11304,6 +11904,12 @@
     "watchNothingScheduled" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء مجدول"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11417,6 +12023,12 @@
     "watchNow" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآن"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11530,6 +12142,12 @@
     "watchPhoneUnreachable" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الوصول إلى iPhone. أبقِه قريبًا وحاول مرة أخرى."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11643,6 +12261,12 @@
     "watchRangeComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعات هذا الشهر على مقياس من الصفر إلى هدفك."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11756,6 +12380,12 @@
     "watchSetUp" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح WitnessWork على iPhone لإكمال الإعداد."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11869,6 +12499,12 @@
     "watchStale" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح WitnessWork على iPhone للتحديث."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11982,6 +12618,12 @@
     "watchSymbolComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعات هذا الشهر على مقياس نحو هدفك."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12095,6 +12737,12 @@
     "watchSyncing" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ المزامنة مع iPhone…"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12208,6 +12856,12 @@
     "watchThen" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد ذلك"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12321,6 +12975,12 @@
     "watchTimerChanged" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر المؤقّت على iPhone. تحقّق من الوقت وحاول مرة أخرى."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12434,6 +13094,12 @@
     "watchUpNext" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التالي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12547,6 +13213,12 @@
     "watchUpNextComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعتك أو خطتك التالية."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12660,6 +13332,12 @@
     "watchUpNextComplicationName" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التالي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",

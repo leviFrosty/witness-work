@@ -1,16 +1,20 @@
 import { analytics } from '@/lib/analytics'
+import { localizeAppDigits } from '@/lib/numbers'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as Stopwatch from '../../../../modules/stopwatch-bridge'
 
 const padStart = (num: number) => num.toString().padStart(2, '0')
 
+/** `01:02:03` for display, in the app Language's digits. */
 export const formatMs = (ms: number) => {
   let seconds = Math.floor(ms / 1000)
   let minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
   seconds = seconds % 60
   minutes = minutes % 60
-  return `${padStart(hours)}:${padStart(minutes)}:${padStart(seconds)}`
+  return localizeAppDigits(
+    `${padStart(hours)}:${padStart(minutes)}:${padStart(seconds)}`
+  )
 }
 
 /**

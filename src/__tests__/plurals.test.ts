@@ -69,6 +69,9 @@ describe('registered plural rules', () => {
     expect(forLocale('fr-fr', 0)).toEqual(['zero', 'one', 'other'])
     expect(forLocale('pt-pt', 0)).toEqual(['zero', 'other'])
     expect(forLocale('rw-rw', 1)).toEqual(['one', 'other'])
+    expect(forLocale('ar', 0)).toEqual(['zero', 'other'])
+    expect(forLocale('ar', 2)).toEqual(['two', 'other'])
+    expect(forLocale('ar', 11)).toEqual(['many', 'other'])
   })
 
   it('renders Russian one, few and many', () => {

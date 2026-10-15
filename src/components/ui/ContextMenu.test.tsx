@@ -53,6 +53,7 @@ vi.mock('@/contexts/theme', () => ({
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ colorScheme: 'dark' }),
 }))
+vi.mock('@/lib/direction', () => ({ isRtlLayout: () => false }))
 
 import AndroidContextMenu from '@/components/ui/ContextMenu.android'
 import IOSContextMenu from '@/components/ui/ContextMenu.ios'

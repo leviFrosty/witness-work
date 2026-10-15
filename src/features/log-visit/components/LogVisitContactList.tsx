@@ -17,6 +17,7 @@ import ContactRow from '@/features/contacts/components/ContactRow'
 import LogVisitNearbyHint from '@/features/log-visit/components/LogVisitNearbyHint'
 import LogVisitSectionHeader from '@/features/log-visit/components/LogVisitSectionHeader'
 import type { LogVisitListItem } from '@/features/log-visit/lib/logVisitList'
+import { alignInput } from '@/lib/direction'
 
 /**
  * The picker step: search (not focused, so the suggestions stay in view), the
@@ -90,6 +91,9 @@ export default function LogVisitContactList({
               color: theme.colors.text,
               fontFamily: theme.fonts.regular,
               fontSize: theme.fontSize('md'),
+              // Explicit: an unaligned field follows the app bundle's language on
+              // iOS, which can be Arabic while the app runs in English.
+              textAlign: alignInput('start'),
             }}
           />
         </View>

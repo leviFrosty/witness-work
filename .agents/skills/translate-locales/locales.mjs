@@ -58,8 +58,16 @@ const isPluralNode = (node) =>
  *   `other`. Rarer ones (French `many` for millions) fall back to `other`.
  * - `oneIsOne`: whether `one` means exactly 1. In French it also covers 0 and
  *   1.5, in Russian 21 and 31, so there `one` must show the count.
+ * - `countOptional`: forms that may leave out the count's placeholder because the
+ *   noun says the number itself (`NOUN_CARRIES_COUNT`).
  */
 const pluralRules = new Map()
+
+// Languages whose noun forms carry the number on their own. Arabic's `one` is
+// only 1 and `two` only 2, and Arabic writes them with the singular and dual
+// noun rather than a numeral: «ساعة واحدة» (one hour), «ساعتان» (two hours).
+const NOUN_CARRIES_COUNT = { ar: ['one', 'two'] }
+
 function plurals(name) {
   if (pluralRules.has(name)) return pluralRules.get(name)
   const language = name.split('-')[0]
@@ -78,6 +86,7 @@ function plurals(name) {
     required,
     examples,
     oneIsOne: (examples.one ?? []).every((n) => Number(n) === 1),
+    countOptional: new Set(NOUN_CARRIES_COUNT[language] ?? []),
   }
   pluralRules.set(name, info)
   return info
@@ -170,6 +179,11 @@ function shortcutPhraseKeys() {
 const tokens = (text) => (text.match(TOKEN) ?? []).sort().join(' ')
 const braces = (text) => text.replace(TOKEN, '').replace(/[^{}]/g, '').length
 const boldMarkers = (text) => text.split('**').length - 1
+/** `tokens` output with any one placeholder left out (the count's). */
+const withoutOne = (list) => {
+  const all = list ? list.split(' ') : []
+  return all.map((_, i) => all.filter((__, j) => j !== i).join(' '))
+}
 
 /**
  * Problems per dotted key in locale `name`'s `strings`, checked against
@@ -193,6 +207,7 @@ function lintStrings(en, strings, name) {
       // A form may write its number out ("1 match") or show the count.
       if (form === 'one' && !rules.oneIsOne) expected = [other]
       else if (form !== 'zero') expected.push(other)
+      if (rules.countOptional.has(form)) expected.push(...withoutOne(other))
     }
     if (!expected.includes(tokens(text)))
       add(
@@ -237,10 +252,14 @@ function lintStrings(en, strings, name) {
           )
         else if (!filled(text)) add(`${key}.${form}`, 'empty plural form')
         else {
-          if (tokens(text) !== tokens(enNode.other))
+          const other = tokens(enNode.other)
+          const allowed = rules.countOptional.has(form)
+            ? [other, ...withoutOne(other)]
+            : [other]
+          if (!allowed.includes(tokens(text)))
             add(
               `${key}.${form}`,
-              `placeholders must be exactly: ${tokens(enNode.other) || '(none)'}`
+              `placeholders must be exactly: ${other || '(none)'}${allowed.length > 1 ? ' (or without the count)' : ''}`
             )
           if (braces(enNode.other) !== braces(text))
             add(`${key}.${form}`, 'stray { or } outside placeholders')

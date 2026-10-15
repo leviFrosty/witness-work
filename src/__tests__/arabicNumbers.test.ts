@@ -25,48 +25,27 @@ vi.mock('expo-device', () => ({
   osName: 'iOS',
 }))
 
-import * as cardinals from 'make-plural/cardinals'
-import i18n, { _i18n } from '@/lib/locales'
+import i18n, { _i18n, setI18nLocale } from '@/lib/locales'
 import { applyFormatRegion } from '@/lib/dates'
-import { createPluralizer } from '@/lib/plurals'
 import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 
-// A stand-in for the Arabic translation, which ships separately: just the
-// duration strings, in all six of Arabic's plural forms.
-const ar = {
-  hoursShort: {
-    zero: '{{count}} ساعة',
-    one: 'ساعة واحدة',
-    two: 'ساعتان',
-    few: '{{count}} ساعات',
-    many: '{{count}} ساعة',
-    other: '{{count}} ساعة',
-  },
-  minutesShort: {
-    zero: '{{count}} دقيقة',
-    one: 'دقيقة واحدة',
-    two: 'دقيقتان',
-    few: '{{count}} دقائق',
-    many: '{{count}} دقيقة',
-    other: '{{count}} دقيقة',
-  },
-  hoursAndMinutesShort: '{{hours}} و{{minutes}}',
-  hoursCompact: 'س',
-  minutesCompact: 'د',
-  goalLine: 'هدفك {{count}} ساعة لسنة {{year}}، اسمك {{name}}',
-}
-
+// The shipped Arabic translation (`src/locales/ar.json`), loaded the way the app
+// loads it, plus one stand-in string for interpolation that isn't plural.
 beforeAll(() => {
-  _i18n.store({ ar })
-  _i18n.pluralization.register('ar', createPluralizer(cardinals.ar))
-  _i18n.locale = 'ar'
+  setI18nLocale('ar')
+  _i18n.store({
+    ar: { goalLine: 'هدفك {{count}} ساعة لسنة {{year}}، اسمك {{name}}' },
+  })
   applyFormatRegion({ language: 'ar' })
 })
 
 afterAll(() => {
-  _i18n.locale = 'en-us'
+  setI18nLocale('en-us')
   applyFormatRegion({ language: 'en-us' })
 })
+
+// @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+const t = (key: string, count: number) => i18n.t(key, { count })
 
 describe('i18n numbers in Arabic', () => {
   it('prints interpolated numbers in Arabic-Indic digits', () => {
@@ -76,13 +55,24 @@ describe('i18n numbers in Arabic', () => {
     ).toBe('هدفك ٦٠٠ ساعة لسنة ٢٠٢٦، اسمك Ada 2')
   })
 
-  it('picks each of the six plural forms', () => {
-    const hours = (count: number) =>
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      i18n.t('hoursShort', { count })
+  it('writes 1 and 2 with the singular and dual noun in sentences', () => {
+    const remind = (count: number) => t('visitDetails_remindHours', count)
+    expect(remind(0)).toBe('سنذكّرك قبل ٠ ساعة.')
+    expect(remind(1)).toBe('سنذكّرك قبل ساعة واحدة.')
+    expect(remind(2)).toBe('سنذكّرك قبل ساعتين.')
+    expect(remind(3)).toBe('سنذكّرك قبل ٣ ساعات.')
+    expect(remind(11)).toBe('سنذكّرك قبل ١١ ساعة.')
+    expect(remind(100)).toBe('سنذكّرك قبل ١٠٠ ساعة.')
+    expect(t('daysLeftCount', 1)).toBe('بقي يوم واحد')
+    expect(t('daysLeftCount', 2)).toBe('بقي يومان')
+    expect(t('daysLeftCount', 7)).toBe('بقي ٧ أيام')
+  })
+
+  it('keeps the number in compact unit labels', () => {
+    const hours = (count: number) => t('hoursShort', count)
     expect(hours(0)).toBe('٠ ساعة')
-    expect(hours(1)).toBe('ساعة واحدة')
-    expect(hours(2)).toBe('ساعتان')
+    expect(hours(1)).toBe('١ ساعة')
+    expect(hours(2)).toBe('٢ ساعة')
     expect(hours(3)).toBe('٣ ساعات')
     expect(hours(11)).toBe('١١ ساعة')
     expect(hours(100)).toBe('١٠٠ ساعة')
@@ -120,10 +110,15 @@ describe('a translation into another Language', () => {
 
 describe('untranslated strings in Arabic', () => {
   it('keep Arabic-Indic digits when they fall back to English', () => {
-    // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-    expect(i18n.t('daysLeftCount', { count: 3 })).toBe('٣ days left')
-    // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-    expect(i18n.t('daysLeftCount', { count: 1 })).toBe('١ day left')
+    const arabic = _i18n.translations.ar as Record<string, unknown>
+    const translated = arabic.daysLeftCount
+    delete arabic.daysLeftCount
+    try {
+      expect(t('daysLeftCount', 3)).toBe('٣ days left')
+      expect(t('daysLeftCount', 1)).toBe('١ day left')
+    } finally {
+      arabic.daysLeftCount = translated
+    }
   })
 })
 
@@ -134,8 +129,8 @@ describe('Duration Format in Arabic', () => {
   })
 
   it('joins hours and minutes through one translatable string', () => {
-    expect(formatMinutes(150, 'short').formatted).toBe('ساعتان و٣٠ دقيقة')
-    expect(formatMinutes(61, 'short').formatted).toBe('ساعة واحدة ودقيقة واحدة')
+    expect(formatMinutes(150, 'short').formatted).toBe('٢ ساعة و٣٠ دقيقة')
+    expect(formatMinutes(61, 'short').formatted).toBe('١ ساعة و١ دقيقة')
   })
 
   it('localizes the compact forms', () => {

@@ -1,5 +1,6 @@
 import useFormValidation from '@/hooks/useFormValidation'
 import { useState } from 'react'
+import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -118,86 +119,84 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{
-          paddingTop: 20,
-          paddingBottom: insets.bottom + 30,
-          paddingHorizontal: inputLayout.horizontalPadding,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-          gap: 20,
-        }}
-      >
-        <Section>
-          <TextInputRow
-            label={i18n.t('name')}
-            required
-            textInputProps={{
-              invalid: validation.invalid('name'),
-              value: name,
-              onChangeText: setName,
-              placeholder: i18n.t('mileage.fuelNamePlaceholder'),
-              autoFocus: !existing,
-              maxLength: 60,
-            }}
-          />
-          <TextInputRow
-            label={i18n.t(
-              `mileage.pricePer_${fuelVolumeUnit(format.economyUnit)}`
-            )}
-            info={i18n.t('mileage.fuelPrice_info')}
-            lastInSection
-            textInputProps={{
-              value: price,
-              onChangeText: setPrice,
-              inputMode: 'decimal',
-              placeholder: i18n.t('mileage.optional'),
-              maxLength: 8,
-            }}
-          />
-        </Section>
+      <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
+        <ContentColumn
+          style={{
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 30,
+            paddingHorizontal: inputLayout.horizontalPadding,
+            gap: 20,
+          }}
+        >
+          <Section>
+            <TextInputRow
+              label={i18n.t('name')}
+              required
+              textInputProps={{
+                invalid: validation.invalid('name'),
+                value: name,
+                onChangeText: setName,
+                placeholder: i18n.t('mileage.fuelNamePlaceholder'),
+                autoFocus: !existing,
+                maxLength: 60,
+              }}
+            />
+            <TextInputRow
+              label={i18n.t(
+                `mileage.pricePer_${fuelVolumeUnit(format.economyUnit)}`
+              )}
+              info={i18n.t('mileage.fuelPrice_info')}
+              lastInSection
+              textInputProps={{
+                value: price,
+                onChangeText: setPrice,
+                inputMode: 'decimal',
+                placeholder: i18n.t('mileage.optional'),
+                maxLength: 8,
+              }}
+            />
+          </Section>
 
-        {askHowToApply && (
-          <HistoryChangeRow
-            mode={changeMode}
-            onChangeMode={setChangeMode}
-            date={changeDate}
-            onChangeDate={setChangeDate}
-          />
-        )}
-
-        <HistoryList
-          entries={history.map((entry) => ({
-            id: entry.id,
-            effectiveFrom: entry.effectiveFrom,
-            value: format.price(entry.pricePerGallon),
-          }))}
-          onDelete={deleteFuelPrice}
-        />
-
-        <View style={{ gap: 8 }}>
-          <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
-          {existing && (
-            <Button
-              noTransform
-              accessibilityRole='button'
-              onPress={requestDelete}
-              style={{ alignItems: 'center', paddingVertical: 12 }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.error,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('md'),
-                }}
-              >
-                {i18n.t('deleteEllipsis')}
-              </Text>
-            </Button>
+          {askHowToApply && (
+            <HistoryChangeRow
+              mode={changeMode}
+              onChangeMode={setChangeMode}
+              date={changeDate}
+              onChangeDate={setChangeDate}
+            />
           )}
-        </View>
+
+          <HistoryList
+            entries={history.map((entry) => ({
+              id: entry.id,
+              effectiveFrom: entry.effectiveFrom,
+              value: format.price(entry.pricePerGallon),
+            }))}
+            onDelete={deleteFuelPrice}
+          />
+
+          <View style={{ gap: 8 }}>
+            <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
+            {existing && (
+              <Button
+                noTransform
+                accessibilityRole='button'
+                onPress={requestDelete}
+                style={{ alignItems: 'center', paddingVertical: 12 }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.error,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('md'),
+                  }}
+                >
+                  {i18n.t('deleteEllipsis')}
+                </Text>
+              </Button>
+            )}
+          </View>
+        </ContentColumn>
       </KeyboardAwareScrollView>
     </Wrapper>
   )

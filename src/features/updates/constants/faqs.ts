@@ -302,6 +302,7 @@ export const FAQS: FAQEntry[] = [
     category: 'general',
   },
   { id: 'translations', category: 'general' },
+  { id: 'arabic', category: 'general' },
   { id: 'about', category: 'general' },
   { id: 'debugTools', category: 'general' },
   {

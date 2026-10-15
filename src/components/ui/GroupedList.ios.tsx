@@ -359,7 +359,9 @@ export function GroupedListRow({
       {accessory !== 'none' ? (
         <Image
           systemName={
-            accessory === 'external' ? 'arrow.up.right.square' : 'chevron.right'
+            accessory === 'external'
+              ? 'arrow.up.right.square'
+              : 'chevron.forward'
           }
           modifiers={[
             font({

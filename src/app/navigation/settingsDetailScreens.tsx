@@ -163,6 +163,18 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('account_title'),
   },
   {
+    name: 'Set Up Another Device',
+    getComponent: () =>
+      require('@/features/settings/screens/SetUpAnotherDeviceScreen').default,
+    title: () => i18n.t('handoff_setUp'),
+  },
+  {
+    name: 'Sign In With QR Code',
+    getComponent: () =>
+      require('@/features/settings/screens/SignInWithQrScreen').default,
+    title: () => i18n.t('handoff_signIn'),
+  },
+  {
     name: 'PreferencesPersonalization',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen')

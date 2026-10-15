@@ -28,7 +28,7 @@ import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { mmkvStorage } from '@/stores/mmkv'
-import { accountHarness } from '@/app/dev-harness/account'
+import { accountHarness, handoffHarness } from '@/app/dev-harness/account'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
   badgeHarnessState,
@@ -277,6 +277,12 @@ export function installDevHarness() {
      * `account.last`; `account.randomRecoveryKey()` for a valid key to enter.
      */
     account: accountHarness,
+    /**
+     * Set Up Another Device: `handoff.state()` (role, step, status, code, the
+     * request log), `handoff.link()` (the QR link while one shows), and
+     * `handoff.selfTest()` then `handoff.selfTestResult`.
+     */
+    handoff: handoffHarness,
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()

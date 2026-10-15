@@ -9,6 +9,7 @@ import {
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
   NotebookPen as NotebookPenIcon,
+  ScanQrCode as ScanQrCodeIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
@@ -34,6 +35,7 @@ import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
 import { hasSyncTransport } from '@/lib/syncTransport/platform'
 import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
 import { syncKey } from '@/lib/syncCopy'
+import { accountKeyReplaceable } from '@/app/account/accountKey'
 
 interface StepProps {
   goBack: () => void
@@ -114,8 +116,10 @@ const OptionCard = ({
  * (`goNext`); iCloud restore completes onboarding on its own. A backup file
  * restores in place via the same flow as Settings → Backup and, like iCloud,
  * completes onboarding — the backup carries the profile and preferences the
- * remaining steps would set. "Start fresh" is the primary action: most users
- * have nothing to bring over.
+ * remaining steps would set. "From your other phone" opens Sign In with QR Code
+ * (ADR 0026), which brings the account and buddies, then returns here so the
+ * data can come over too. "Start fresh" is the primary action: most users have
+ * nothing to bring over.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
@@ -173,7 +177,13 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     })
   }
   const selectImport = (
-    importType: 'notes' | 'paper' | 'mytime' | 'icloud' | 'backup_json'
+    importType:
+      | 'notes'
+      | 'paper'
+      | 'mytime'
+      | 'icloud'
+      | 'backup_json'
+      | 'other_phone'
   ) => {
     analytics.capture('import_type_selected', {
       import_type:
@@ -182,7 +192,9 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
           : importType,
       source: 'onboarding',
     })
-    if (importType === 'notes')
+    if (importType === 'other_phone')
+      navigation.navigate('Sign In With QR Code', { entry: 'onboarding' })
+    else if (importType === 'notes')
       navigation.navigate('NotesImportComposer', { fromOnboarding: true })
     else if (importType === 'paper') void fromPaper()
     else if (importType === 'backup_json') void restoreBackup()
@@ -230,6 +242,15 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             {i18n.t('onboardingPickUp_description')}
           </Text>
 
+          {accountKeyReplaceable() && (
+            <OptionCard
+              icon={ScanQrCodeIcon}
+              color={theme.colors.accent}
+              titleKey='onboardingPickUp_otherPhone'
+              descKey='onboardingPickUp_otherPhoneDesc'
+              onPress={() => selectImport('other_phone')}
+            />
+          )}
           {notesImportEnabled && (
             <OptionCard
               icon={FileTextIcon}

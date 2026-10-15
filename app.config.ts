@@ -114,6 +114,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
               host: 'ww-proxy.leviwilkerson.com',
               path: '/b',
             },
+            // Set Up Another Device (`/h#1<channel, key, secret>`), likewise.
+            {
+              scheme: 'https',
+              host: 'ww-proxy.leviwilkerson.com',
+              path: '/h',
+            },
           ],
         },
         {

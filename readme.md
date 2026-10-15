@@ -66,6 +66,9 @@ time, reports, plans, Assistant
 progress, badges, mileage`"]
     A_BUDDIES["`**Buddies**
 end-to-end encrypted sharing`"]
+    A_ACCOUNT["`**Account**
+anonymous account, recovery key,
+Set Up Another Device`"]
     A_SYNC["`**Sync + backups**
 sync, restore, JSON backups`"]
     A_NOTES["`**Notes Import (Scribe AI)**
@@ -86,7 +89,7 @@ analytics, flags, surveys, OTA`"]
     P_CAL["`**Device calendar**
 EventKit / CalendarContract`"]
     P_SEED["`**iCloud Keychain / Block Store**
-Buddies root seed`"]
+account key (Buddies root seed)`"]
     P_SYNC["`**iCloud Drive / Google Drive**
 sync files + photos`"]
     P_ATTEST["`**App Attest / Play Integrity**
@@ -116,7 +119,9 @@ status, kickoff, SSE, result`"]
 coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
-      R_LINKS["`**GET /c, /b, /.well-known**
+      R_ACC["`**/accounts/v1/...**
+signed account ops, handoff relay`"]
+      R_LINKS["`**GET /c, /b, /h, /.well-known**
 link pages, Universal + App Links`"]
       R_RATINGS["`**GET /app-store/ratings**
 paywall social proof`"]
@@ -142,6 +147,12 @@ one-time Android challenges`")]
 credits per account`")]
       DO_RUN[("`**NotesImportRun DO**
 one per import, about 1 hour`")]
+    end
+    subgraph ACC_STATE["Account state"]
+      D_ACC[("`**D1: accounts**
+account ids, public keys, inbox links`")]
+      DO_HANDOFF[("`**AccountHandoff DO**
+one per handoff, 10 minutes`")]
     end
     DO_RPQ[("`**RoutePlanningQuota DO**
 10 routes a day per account`")]
@@ -182,10 +193,12 @@ analytics, flags, surveys, errors`"]
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
+  A_ACCOUNT -->|"account key"| P_SEED
+  A_ACCOUNT -->|"register, sealed handoff"| R_ACC
   A_NOTES -->|"notes text, SSE stream"| R_NOTES
   A_ROUTE -->|"today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
-  A_LINKS -->|"/c and /b links"| R_LINKS
+  A_LINKS -->|"/c, /b and /h links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
   A_SUPPORTER -->|"purchases, RevenueCat SDK"| S_RC
   A_SHELL -->|"events, flags, surveys, errors"| S_PH
@@ -194,6 +207,9 @@ analytics, flags, surveys, errors`"]
   R_BUD -->|"invite claims"| DO_INV
   R_BUD -->|"RPC + WebSocket"| DO_INBOX
   R_BUD -->|"photo reads"| R2
+  R_BUD -->|"inbox links"| D_ACC
+  R_ACC -->|"accounts"| D_ACC
+  R_ACC -->|"handoff channel"| DO_HANDOFF
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
   R_NOTES -->|"iOS attest"| DO_AA

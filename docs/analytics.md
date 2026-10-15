@@ -219,7 +219,7 @@ observation window that allows resumption.
 
 ## Imports and backups
 
-Filter by `import_type` (`notes`, `mytime`, `icloud`, `google_drive`, `backup_json`) and `source`.
+Filter by `import_type` (`notes`, `paper`, `mytime`, `icloud`, `google_drive`, `backup_json`, `other_phone`) and `source`. `other_phone` is onboarding's From your other phone, which opens Sign In with QR Code; the handoff events below follow it.
 Retain type selection, start, preview readiness, completion, failure, cancellation,
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
@@ -751,11 +751,12 @@ and the app never shows it.
 `buddies_device_joined` answers whether Buddies follows people to their other
 devices: how many Users with iCloud Sync get Buddies started on a second device
 without setting it up, and whether it arrives with their buddies. It's sent
-once per device, when Buddies starts there from the key the User already has.
+once per device, when Buddies starts there from the key the User already has,
+or from the key a handoff just brought (`via: handoff`).
 
-| Event                   | When                                                                  | Properties                                                                    |
-| ----------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `buddies_device_joined` | Buddies started by itself on a device with iCloud Sync (or Drive) on. | `buddies`: how many buddies it restored (0–5). No names, relay ids, or dates. |
+| Event                   | When                                                                                                                                 | Properties                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `buddies_device_joined` | Buddies started by itself on a device with iCloud Sync (or Drive) on, or right after Set Up Another Device brought the account here. | `buddies`: how many buddies it restored (0–5); `via: sync \| handoff`. No names, relay ids, or dates. |
 
 ### Buddies alerts
 
@@ -811,15 +812,32 @@ recovery keys bring accounts to new phones, and how often using one costs
 someone their Buddies data. They're rare by nature: once a session at most for
 viewing, and once per action otherwise.
 
-| Event                   | When                                                                               | Properties                                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                      | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).              |
-| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                    | `method: copy \| share`.                                                                                                                             |
-| `recovery_key_used`     | Use a Recovery Key finished.                                                       | `outcome: replaced \| unchanged \| declined \| failed` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning). |
-| `account_key_replaced`  | This device's account key was replaced, from a recovery key or (dev builds) Tools. | `source: recovery_key \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account registered right away).                       |
+| Event                   | When                                                                                           | Properties                                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                                  | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).              |
+| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                                | `method: copy \| share`.                                                                                                                             |
+| `recovery_key_used`     | Use a Recovery Key finished.                                                                   | `outcome: replaced \| unchanged \| declined \| failed` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning). |
+| `account_key_replaced`  | This device's account key was replaced, from a recovery key, a handoff, or (dev builds) Tools. | `source: recovery_key \| handoff \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account registered right away).            |
 
 Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
 Mistyped keys send nothing: the form refuses them before they can be used.
+
+### Set Up Another Device
+
+These answer whether people use the QR handoff to move phones (ADR 0026), from
+where, how far they get, and why it fails. One attempt sends a handful of events
+at most; polling sends none.
+
+| Event               | When                                                                                                                | Properties                                                                                                                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handoff_started`   | The old phone opened a code (each new code counts), or the new phone started claiming a scanned or opened one.      | `role: old \| new`, `entry: settings \| onboarding \| link \| tools`.                                                                                                                                                                          |
+| `handoff_claimed`   | A phone claimed the code: on the old phone when "Allow … to sign in?" shows, on the new one when it shows the code. | `role`.                                                                                                                                                                                                                                        |
+| `handoff_answered`  | The User on the old phone tapped Allow or Don't Allow.                                                              | `answer: allow \| decline`.                                                                                                                                                                                                                    |
+| `handoff_completed` | The old phone saw `done`, or the new phone stored the key and told the server.                                      | `role`.                                                                                                                                                                                                                                        |
+| `handoff_failed`    | The attempt stopped without completing.                                                                             | `role`, `reason`: the protocol's (`offline`, `unavailable`, `expired`, `used`, `conflict`, `cancelled`, `badToken`, `tampered`, `noAccount`, `rateLimited`, `server`) or the app's (`left`, `new_code`, `replace_declined`, `replace_failed`). |
+
+Never the channel id, either public key, the code, the device's name or model,
+the account key, or the account id. The Tools self-test sends nothing.
 
 ## Error tracking
 

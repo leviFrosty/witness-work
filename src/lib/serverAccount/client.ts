@@ -7,7 +7,7 @@ import {
 
 /** Client for `/accounts/v1/*` (docs/accounts-protocol.md). */
 
-const TIMEOUT_MS = 15 * 1000
+export const ACCOUNT_TIMEOUT_MS = 15 * 1000
 
 export type AccountStatus = 'active' | 'suspended'
 
@@ -23,18 +23,29 @@ export type RegisterAccountOptions = {
   signal?: AbortSignal
 }
 
+/** Ops signed by the account key (docs/accounts-protocol.md). */
+export type SignedAccountOp =
+  | 'account/register'
+  | 'account/info'
+  | 'handoff/open'
+  | 'handoff/status'
+  | 'handoff/send'
+  | 'handoff/cancel'
+
 /**
- * Sends a self-signed account op (`accountPub`, `ts`, `nonce`). A `stale`
- * answer carries the server's clock, and the request is signed again once with
- * it. Failures throw `HttpError`.
+ * Sends a self-signed account op: `accountPub`, `ts`, `nonce`, and the op's own
+ * `fields`. A `stale` answer carries the server's clock, and the request is
+ * signed again once with it. Failures throw `HttpError`.
  */
-async function sendKeySigned<T>(
-  op: 'account/register' | 'account/info',
+export async function sendSignedAccountOp<T>(
+  op: SignedAccountOp,
+  fields: Record<string, unknown>,
   options: RegisterAccountOptions
 ) {
   const send = async (ts: number) => {
     const payload = utf8(
       JSON.stringify({
+        ...fields,
         accountPub: options.key.publicKey,
         ts,
         nonce: toB64u(options.randomBytes(16)),
@@ -46,7 +57,7 @@ async function sendKeySigned<T>(
         p: toB64u(payload),
         s: signAccountRequest(op, payload, options.key),
       },
-      timeoutMs: TIMEOUT_MS,
+      timeoutMs: ACCOUNT_TIMEOUT_MS,
       signal: options.signal,
       fetchImpl: options.fetchImpl,
     })
@@ -70,11 +81,11 @@ const isStatus = (value: unknown): value is AccountStatus =>
 export async function registerAccount(
   options: RegisterAccountOptions
 ): Promise<RegisteredAccount> {
-  const response = await sendKeySigned<{
+  const response = await sendSignedAccountOp<{
     ok?: boolean
     accountId?: unknown
     status?: unknown
-  }>('account/register', options)
+  }>('account/register', {}, options)
   const { accountId, status } = response.data ?? {}
   if (
     response.data?.ok !== true ||
@@ -101,8 +112,9 @@ export type ServerAccountInfo = RegisteredAccount & {
 export async function fetchAccountInfo(
   options: RegisterAccountOptions
 ): Promise<ServerAccountInfo> {
-  const response = await sendKeySigned<Record<string, unknown>>(
+  const response = await sendSignedAccountOp<Record<string, unknown>>(
     'account/info',
+    {},
     options
   )
   const data = response.data ?? {}

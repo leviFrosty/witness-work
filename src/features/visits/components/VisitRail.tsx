@@ -39,6 +39,8 @@ export type RailStop = {
 
 const RAIL = 24
 const NODE = 22
+/** How far the Today tick sits below its row's top, level with its marker. */
+const TODAY_TICK_OFFSET = 10
 
 function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
   const theme = useTheme()
@@ -94,19 +96,19 @@ function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
 /**
  * The line from one stop down to the earlier one below it, dashed out of one
  * that's ahead, in the color of the later stop: teal from a planned visit, gray
- * from an empty or dismissed one.
+ * from an empty or dismissed one. `height` draws a fixed stub instead of
+ * filling the row.
  */
-function Line({ from }: { from: RailStop }) {
+function Line({ from, height }: { from: RailStop; height?: number }) {
   const theme = useTheme()
+  const size = height ? { height } : { flex: 1, minHeight: 14 }
   if (from.ahead)
     // A zero-width box with a dashed border draws a dashed line.
     return (
       <View
         style={{
-          flex: 1,
+          ...size,
           width: 0,
-          marginTop: 4,
-          minHeight: 14,
           borderWidth: 1,
           borderStyle: 'dashed',
           borderColor:
@@ -119,11 +121,8 @@ function Line({ from }: { from: RailStop }) {
   return (
     <View
       style={{
-        flex: 1,
+        ...size,
         width: 2,
-        marginTop: 4,
-        minHeight: 14,
-        borderRadius: 1,
         backgroundColor:
           from.node === 'overdue'
             ? withAlpha(theme.colors.warn, 0x80)
@@ -173,20 +172,28 @@ export default function VisitRail({ stops }: { stops: RailStop[] }) {
   return (
     <View>
       {stops.map((stop, index) => {
+        const prev = stops[index - 1]
         const next = stops[index + 1]
         return (
           <View key={stop.key} style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ width: RAIL, alignItems: 'center' }}>
               {stop.node === 'today' ? (
-                <View
-                  style={{
-                    width: 16,
-                    height: 2,
-                    marginTop: 10,
-                    borderRadius: 1,
-                    backgroundColor: theme.colors.text,
-                  }}
-                />
+                <>
+                  {/* Carries the line above down to the tick. */}
+                  {prev ? (
+                    <Line from={prev} height={TODAY_TICK_OFFSET} />
+                  ) : (
+                    <View style={{ height: TODAY_TICK_OFFSET }} />
+                  )}
+                  <View
+                    style={{
+                      width: 16,
+                      height: 2,
+                      borderRadius: 1,
+                      backgroundColor: theme.colors.text,
+                    }}
+                  />
+                </>
               ) : (
                 <Node node={stop.node} />
               )}

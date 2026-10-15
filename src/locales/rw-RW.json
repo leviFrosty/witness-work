@@ -307,7 +307,6 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "amasaha abura",
   "goalBasedOnPublisherType": "Intego zishingiye ku mubwiriza uri we",
   "goalAdjustedForMonth": "Intego yihariye y'uku kwezi",
   "addTime": "Shyiramo igihe",
@@ -518,7 +517,6 @@
   "custom": "Shyiramo icyo ushaka",
   "pleaseDescribeYourIssue": "Turakwiginze, sobanura ikibazo cyawe neza",
   "invalidPhone": "Nimero ntiyemewe",
-  "invalidPhone_description": "ntiyemewe kuri kode y'igihugu:",
   "appleAppStoreReviewErrorTitle": "Ikibazo cya App Store",
   "appleAppStoreReviewErrorMessage": "Turakwiginze, huza n'igihe porogaramu ya Umurimo w'Umuhamya niba bikunda. Wongere mukanya.",
   "notAtHome": "Abatari mu rugo",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Hitamo byose",
   "deselectAll": "Deselect All",
-  "contactsMissingCoordinates": "{{count}} contacts are missing coordinates.",
-  "contactsMissingCoordinates_one": "{{count}} contact is missing coordinates.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} contact is missing coordinates.",
+    "other": "{{count}} contacts are missing coordinates."
+  },
   "skipFetchInProgress_title": "Skip while fetching?",
   "skipFetchInProgress_description": "Ibikorwa by'ubukangurambaga biracyakomeje. Niba usimbutse ubu, contacts zisigaye ntizizavugururwa mu buryo bwikora. You can fetch coordinates for each contact later from their details.",
   "viewMap": "Reba ikarita",
@@ -1104,7 +1104,6 @@
   "categories": "Ibyiciro",
   "tag": "Tagi",
   "showOtherCategories": "Erekana ibindi byiciro",
-  "of": "mu",
   "hoursToGoal": "ku masaha y'intego",
   "removeCategory": "Vanaho ikiciro",
   "noReportsThisMonthYet": "Nta raporo y'uku kwezi kugeza ubu.",
@@ -1872,7 +1871,6 @@
   "failed": "Ibyananiwe",
   "complete_description": "Nuhuza n'intego z'umunsi, birabarwa nk'ibyakozwe.",
   "partial": "Ibituzuye",
-  "plannedHours": "Intego y'amasaha",
   "projectedHoursTitle": "Amasaha yateganijwe",
   "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Intego yawe ni ukugera ku ntego yawe 100%.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "per day",
   "short": "short",
   "average": "avg",
-  "daysLeft": "days left",
   "toPlan": "to plan",
   "onPace": "Uri ku murongo",
   "hrsPerDayToGoal": "{{count}} h/munsi bikenewe",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Intego: {{value}} h",
   "daysTotal": "Iminsi {{count}} yose",
   "monthsLeft": "Amezi {{count}} asigaye",
-  "vsLastMonth": "Ugereranyije n'ukwezi gushize",
   "hrsAhead": "{{count}} h imbere",
   "hrsBehind": "{{count}} h inyuma",
   "aheadShort": "{{value}} imbere",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Urutonde",
   "contacts_searchHint": "Shaka amazina, icyitonderwa, imyanya yihariye…",
   "contacts_total": "Aderesi zose",
-  "contacts_dismissed_one": "1 yashyinguwe",
-  "contacts_dismissed_other": "{{count}} zashyinguwe",
   "contacts_pinStaleness_never": "Ntiwigeze ubasura",
   "contacts_pinStaleness_recent": "Vuba aha",
   "contacts_pinStaleness_week": "Iyi week",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Buri aderesi n'uruzinduko rwose bizasibwa burundu kuri iki gikoresho no muri iCloud Sync. Igihe, raporo na gahunda byawe ntibizakorwaho. Ibi ntibishobora gusubizwa inyuma.",
   "dataProtectionDeleteAllDescAndroid": "Buri muntu na buri gusura bizasibwa burundu kuri iki gikoresho no kuri Google Drive Sync. Igihe cyawe, raporo na gahunda ntibikorwaho. Ibi ntibishobora gusubirwamo.",
   "dataProtectionDeleteAllDoneTitle": "Byasibwe",
-  "dataProtectionDeleteAllDoneDesc": "Hasibwe aderesi {{contacts}} n'inzinduko {{visits}}.",
   "audioAndHaptics": "Amajwi n'Ibinyeganyega",
   "streaksAndBadges": "Inkurikirane n'Ibimenyetso",
   "playSounds": "Vuza amajwi",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Nta nzira y'imodoka ihuza aho uhagarara hose. Kuraho aho uhagarara hadashobora kugerwaho n'imodoka, hanyuma wongere ugerageze.",
   "routePlan_error_dailyLimit": "Ushobora gutegura inzira zigera ku {{max}} ku munsi. Ongera ugerageze nyuma.",
   "routePlan_error_rateLimited": "Wagerageje inshuro nyinshi zikurikiranye. Tegereza umunota, hanyuma wongere ugerageze.",
-  "routePlan_error_rateLimitedSeconds": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'amasegonda {{count}}.",
-  "routePlan_error_rateLimitedSeconds_one": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'isegonda {{count}}.",
-  "routePlan_error_rateLimitedMinutes": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'iminota {{count}}.",
-  "routePlan_error_rateLimitedMinutes_one": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'umunota {{count}}.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'isegonda {{count}}.",
+    "other": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'amasegonda {{count}}."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'umunota {{count}}.",
+    "other": "Wagerageje inshuro nyinshi zikurikiranye. Ongera ugerageze nyuma y'iminota {{count}}."
+  },
   "routePlan_error_supporter": "Uburyo bwawe bw'umuterankunga ntibwashoboye kwemezwa. Garura ibyo waguze uhereye kuri ecran y'Umuterankunga, hanyuma wongere ugerageze.",
   "routePlan_error_unavailable": "Gutegura inzira ntibiboneka by'igihe gito. Ongera ugerageze nyuma.",
   "routePlan_error_failed": "Ntibyashobotse gutegura inzira ubu. Ongera ugerageze mu kanya.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Ibindi bikorwa",
   "moreActionsFor": "Ibindi bikorwa kuri {{name}}",
-  "avatarGroup_moreCount_one": "undi muntu {{count}}",
-  "avatarGroup_moreCount_other": "abandi bantu {{count}}",
   "removeCategory_title": "Gukuraho \"{{name}}\"?",
   "removeCategory_description": "Iki cyiciro kizakurwaho mu mahitamo kandi iki cyanditswe gisubire kuba Igihe Gisanzwe. Ibyanditswe by'igihe byakibitswe na cyo bizakomeza kukigenderaho. Ibi ntibishobora gusubirwaho.",
   "notesImport_updateRequired": "Vugurura WitnessWork kugira ngo ukoreshe Kwinjiza amakuru avuye mu Nyandiko.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Amasaha ntarengwa y’indi mirimo buri kwezi",
   "monthlyMaximumCreditHours_description": "Amasaha y’indi mirimo abarwa kugeza igihe igiteranyo cy’ukwezi kigera kuri uyu mubare ntarengwa. Igihe gisanzwe cyo kubwiriza cyo kibarwa buri gihe.",
   "maximumHours": "Amasaha ntarengwa",
-  "categoryBreakdown_serviceYear_description": "Igihe cyanditswe kuri buri cyiciro, mbere yo gushyiraho imbibi z’amasaha y’indi mirimo."
+  "categoryBreakdown_serviceYear_description": "Igihe cyanditswe kuri buri cyiciro, mbere yo gushyiraho imbibi z’amasaha y’indi mirimo.",
+  "avatarGroup_moreCount": {
+    "one": "undi muntu {{count}}",
+    "other": "abandi bantu {{count}}"
+  }
 }

@@ -400,9 +400,12 @@ export default function MapOnboarding() {
             </View>
             {!hasFetched && (
               <Text style={{ color: theme.colors.textAlt }}>
-                {i18n.t('contactsMissingCoordinates', {
-                  count: oldContactsWithAddressWithoutCoordinates.length,
-                })}
+                {
+                  // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                  i18n.t('contactsMissingCoordinates', {
+                    count: oldContactsWithAddressWithoutCoordinates.length,
+                  })
+                }
               </Text>
             )}
           </View>

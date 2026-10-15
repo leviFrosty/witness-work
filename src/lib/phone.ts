@@ -12,9 +12,10 @@ const alertInvalidPhone = (
 ) => {
   Alert.alert(
     i18n.t('invalidPhone'),
-    `"${formatted.number?.input}" ${i18n.t('invalidPhone_description')} ${
-      formatted.regionCode
-    }.`,
+    i18n.t('invalidPhone_message', {
+      number: formatted.number?.input,
+      region: formatted.regionCode,
+    }),
     [
       { style: 'cancel', text: i18n.t('cancel') },
       {

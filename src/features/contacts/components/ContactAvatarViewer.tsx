@@ -496,9 +496,12 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => {
 
 function formatBytes(bytes?: number): string {
   if (bytes === undefined || bytes === null) return '—'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  if (bytes < 1024) return i18n.t('fileSize_bytes', { value: bytes })
+  if (bytes < 1024 * 1024)
+    return i18n.t('fileSize_kilobytes', { value: (bytes / 1024).toFixed(1) })
+  return i18n.t('fileSize_megabytes', {
+    value: (bytes / (1024 * 1024)).toFixed(2),
+  })
 }
 
 export default ContactAvatarViewer

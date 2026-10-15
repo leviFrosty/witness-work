@@ -307,7 +307,6 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "giờ còn lại",
   "goalBasedOnPublisherType": "Số giờ dựa trên đặc ân mà bạn đảm nhận",
   "goalAdjustedForMonth": "Mục tiêu tùy chỉnh cho tháng này",
   "addTime": "Thêm thời gian",
@@ -518,7 +517,6 @@
   "custom": "Tùy chỉnh",
   "pleaseDescribeYourIssue": "Vui lòng mô tả chi tiết vấn đề của bạn",
   "invalidPhone": "Số điện thoại không hợp lệ",
-  "invalidPhone_description": "không phải là số hợp lệ cho mã vùng:",
   "appleAppStoreReviewErrorTitle": "Lỗi Appstore",
   "appleAppStoreReviewErrorMessage": "Vui lòng cập nhật ứng dụng WitnessWork của bạn lên phiên bản mới nhất nếu có và thử lại.",
   "notAtHome": "Không có ở nhà",
@@ -596,8 +594,10 @@
   "fetchSelected": "Tìm nạp {{count}} Đã chọn",
   "selectAll": "Chọn tất cả",
   "deselectAll": "Bỏ chọn tất cả",
-  "contactsMissingCoordinates": "{{count}} liên hệ bị thiếu tọa độ.",
-  "contactsMissingCoordinates_one": "{{count}} liên lạc bị thiếu tọa độ.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} liên lạc bị thiếu tọa độ.",
+    "other": "{{count}} liên hệ bị thiếu tọa độ."
+  },
   "skipFetchInProgress_title": "Bỏ qua trong khi tìm nạp?",
   "skipFetchInProgress_description": "Tọa độ vẫn đang được tìm nạp. Nếu bạn bỏ qua ngay bây giờ, các liên hệ còn lại sẽ không được cập nhật tự động. Bạn có thể tìm nạp tọa độ cho từng liên hệ sau từ thông tin chi tiết của họ.",
   "viewMap": "Xem bản đồ",
@@ -1104,7 +1104,6 @@
   "categories": "Thể loại",
   "tag": "Nhãn",
   "showOtherCategories": "Hiển thị các danh mục khác",
-  "of": "của",
   "hoursToGoal": "giờ để đạt được mục tiêu",
   "removeCategory": "Xóa danh mục",
   "noReportsThisMonthYet": "Chưa có báo cáo nào trong tháng này.",
@@ -1872,7 +1871,6 @@
   "failed": "Thất bại",
   "complete_description": "Nếu bạn đáp ứng được thời gian dự định trong một ngày, nó sẽ được đánh dấu là hoàn thành.",
   "partial": "Không đủ chỉ tiêu",
-  "plannedHours": "Số giờ đã lên kế hoạch",
   "projectedHoursTitle": "Số giờ dự kiến",
   "projectedHoursDescription": "Kết hợp số giờ bạn đã ghi với số giờ bạn đã lên kế hoạch. Đặt mục tiêu đạt được 100% mục tiêu của bạn.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "per day",
   "short": "short",
   "average": "avg",
-  "daysLeft": "days left",
   "toPlan": "to plan",
   "onPace": "Đúng tiến độ",
   "hrsPerDayToGoal": "Cần {{count}} giờ/ngày",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Mục tiêu: {{value}} giờ",
   "daysTotal": "Tổng cộng {{count}} ngày",
   "monthsLeft": "Còn {{count}} tháng",
-  "vsLastMonth": "so với tháng trước",
   "hrsAhead": "Vượt {{count}} giờ",
   "hrsBehind": "Chậm {{count}} giờ",
   "aheadShort": "{{value}} phía trước",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Danh sách",
   "contacts_searchHint": "Tìm tên, ghi chú, trường tùy chỉnh…",
   "contacts_total": "Liên hệ",
-  "contacts_dismissed_one": "1 đã lưu trữ",
-  "contacts_dismissed_other": "{{count}} đã lưu trữ",
   "contacts_pinStaleness_never": "Chưa từng liên hệ",
   "contacts_pinStaleness_recent": "Tuần này",
   "contacts_pinStaleness_week": "Tháng này",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Mọi người liên hệ và lần thăm sẽ bị xóa vĩnh viễn khỏi thiết bị này và khỏi đồng bộ iCloud. Thời gian, báo cáo và kế hoạch của bạn không bị ảnh hưởng. Không thể hoàn tác thao tác này.",
   "dataProtectionDeleteAllDescAndroid": "Mọi liên hệ và lần thăm sẽ bị xóa vĩnh viễn khỏi thiết bị này và khỏi đồng bộ Google Drive. Giờ, báo cáo và kế hoạch của bạn không bị ảnh hưởng. Không thể hoàn tác.",
   "dataProtectionDeleteAllDoneTitle": "Đã xóa",
-  "dataProtectionDeleteAllDoneDesc": "Đã xóa {{contacts}} người liên hệ và {{visits}} lần thăm.",
   "audioAndHaptics": "Âm thanh & cảm ứng",
   "streaksAndBadges": "Chuỗi và huy hiệu",
   "playSounds": "Phát âm thanh",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Không có lộ trình lái xe nào nối tất cả các điểm dừng này. Hãy xóa các điểm dừng không thể đến bằng ô tô, rồi thử lại.",
   "routePlan_error_dailyLimit": "Bạn có thể lập tối đa {{max}} lộ trình mỗi ngày. Hãy thử lại sau.",
   "routePlan_error_rateLimited": "Quá nhiều lần thử liên tiếp. Hãy đợi một phút, rồi thử lại.",
-  "routePlan_error_rateLimitedSeconds": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} giây.",
-  "routePlan_error_rateLimitedSeconds_one": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} giây.",
-  "routePlan_error_rateLimitedMinutes": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} phút.",
-  "routePlan_error_rateLimitedMinutes_one": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} phút.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} giây.",
+    "other": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} giây."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} phút.",
+    "other": "Quá nhiều lần thử liên tiếp. Hãy thử lại sau {{count}} phút."
+  },
   "routePlan_error_supporter": "Không thể xác nhận trạng thái Người ủng hộ của bạn. Hãy dùng Khôi phục mua hàng trên màn hình Người ủng hộ, rồi thử lại.",
   "routePlan_error_unavailable": "Tính năng lập lộ trình tạm thời không khả dụng. Hãy thử lại sau.",
   "routePlan_error_failed": "Hiện không thể lập lộ trình. Hãy thử lại sau giây lát.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Thêm thao tác",
   "moreActionsFor": "Thêm thao tác cho {{name}}",
-  "avatarGroup_moreCount_one": "thêm {{count}} người",
-  "avatarGroup_moreCount_other": "thêm {{count}} người",
   "removeCategory_title": "Xóa “{{name}}”?",
   "removeCategory_description": "Danh mục này sẽ bị xóa khỏi bộ chọn và mục ghi này chuyển về Tiêu chuẩn. Những mục ghi thời gian đã lưu với danh mục này vẫn tiếp tục tham chiếu đến nó. Bạn không thể hoàn tác thao tác này.",
   "notesImport_updateRequired": "Cập nhật WitnessWork để sử dụng tính năng Nhập ghi chú.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Giới hạn giờ được tính thêm mỗi tháng",
   "monthlyMaximumCreditHours_description": "Giờ được tính thêm được cộng cho đến khi tổng thời gian trong tháng đạt giới hạn này. Thời gian rao giảng thông thường luôn được tính.",
   "maximumHours": "Số giờ tối đa",
-  "categoryBreakdown_serviceYear_description": "Thời gian đã ghi theo danh mục, trước khi áp dụng giới hạn giờ được tính thêm."
+  "categoryBreakdown_serviceYear_description": "Thời gian đã ghi theo danh mục, trước khi áp dụng giới hạn giờ được tính thêm.",
+  "avatarGroup_moreCount": {
+    "one": "thêm {{count}} người",
+    "other": "thêm {{count}} người"
+  }
 }

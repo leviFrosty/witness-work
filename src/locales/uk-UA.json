@@ -307,7 +307,6 @@
     "keepGoingStrong": "Так тримати!",
     "onARoll": "В ударі!"
   },
-  "hoursLeft": "годин залишилося",
   "goalBasedOnPublisherType": "Ціль залежить від типу видавця",
   "goalAdjustedForMonth": "Особлива мета на цей місяць",
   "addTime": "Додати час",
@@ -518,7 +517,6 @@
   "custom": "Власний варіант",
   "pleaseDescribeYourIssue": "Детально опишіть свою проблему",
   "invalidPhone": "Недійсний номер телефону",
-  "invalidPhone_description": "не є дійсним числом для коду регіону:",
   "appleAppStoreReviewErrorTitle": "Помилка App Store",
   "appleAppStoreReviewErrorMessage": "Оновіть програму WitnessWork до останньої версії, якщо вона доступна, і повторіть спробу.",
   "notAtHome": "Не вдома",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Вибрано",
   "selectAll": "Виберіть усі",
   "deselectAll": "Зняти вибір усіх",
-  "contactsMissingCoordinates": "{{count}} контакти відсутні координати.",
-  "contactsMissingCoordinates_one": "{{count}} Контакт відсутній координати.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} Контакт відсутній координати.",
+    "other": "{{count}} контакти відсутні координати."
+  },
   "skipFetchInProgress_title": "Пропускати під час прибирання?",
   "skipFetchInProgress_description": "Координати ще отримують. Якщо пропустити зараз, решта контактів не оновлюватимуться автоматично. Координати для кожного контакту можна отримати пізніше з їхніх даних.",
   "viewMap": "Переглянути карту",
@@ -1104,7 +1104,6 @@
   "categories": "Категорії",
   "tag": "Тег",
   "showOtherCategories": "Показати інші категорії",
-  "of": "з",
   "hoursToGoal": "годин до мети",
   "removeCategory": "Видалити категорію",
   "noReportsThisMonthYet": "Цього місяця ще немає звітів.",
@@ -1872,7 +1871,6 @@
   "failed": "Не вдалося",
   "complete_description": "Якщо ви виконуєте запланований час на день, він позначається як виконаний.",
   "partial": "Частковий",
-  "plannedHours": "Заплановані години",
   "projectedHoursTitle": "Прогнозовані години роботи",
   "projectedHoursDescription": "Поєднує вже відбуті години з запланованими годинами. Прагніть досягти 100% своєї мети.",
   "scheduleStatus": {
@@ -2140,7 +2138,7 @@
   },
   "minutesShort": {
     "zero": "{{count}} хв",
-    "one": "{{count}} Мін",
+    "one": "{{count}} хв",
     "other": "{{count}} хв"
   },
   "hoursCompact": "h",
@@ -2253,7 +2251,6 @@
   "perDay": "на день",
   "short": "короткий",
   "average": "в середньому",
-  "daysLeft": "днів залишилося",
   "toPlan": "щоб спланувати",
   "onPace": "В темпі",
   "hrsPerDayToGoal": "{{count}} годин на день потрібно",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Мета: {{value}} годин",
   "daysTotal": "{{count}} днів всього",
   "monthsLeft": "{{count}} місяців залишилося",
-  "vsLastMonth": "порівняно з минулим місяцем",
   "hrsAhead": "{{count}} години вперед",
   "hrsBehind": "{{count}} годинами пізніше",
   "aheadShort": "{{value}} вперед",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Список",
   "contacts_searchHint": "Пошук імен, нотаток, користувацьких полів..",
   "contacts_total": "Контакти",
-  "contacts_dismissed_one": "1 заархівовано",
-  "contacts_dismissed_other": "{{count}} заархівовано",
   "contacts_pinStaleness_never": "Ніколи не виходив на зв'язок",
   "contacts_pinStaleness_recent": "Цього тижня",
   "contacts_pinStaleness_week": "Цього місяця",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Усі контакти й відвідування буде остаточно видалено з цього пристрою та із синхронізації iCloud. Ваш час, звіти й плани не зміняться. Цю дію не можна скасувати.",
   "dataProtectionDeleteAllDescAndroid": "Кожен контакт і візит буде остаточно видалено з цього пристрою та із синхронізації Google Drive. Ваш час, звіти й плани це не стосується. Цю дію неможливо скасувати.",
   "dataProtectionDeleteAllDoneTitle": "Видалено",
-  "dataProtectionDeleteAllDoneDesc": "Видалено контактів: {{contacts}}, відвідувань: {{visits}}.",
   "audioAndHaptics": "Звук і тактильні відчуття",
   "streaksAndBadges": "Серії та значки",
   "playSounds": "Відтворювати звуки",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Жоден автомобільний маршрут не з'єднує всі ці зупинки. Видаліть будь-яку зупинку, до якої не дістатися автомобілем, і повторіть спробу.",
   "routePlan_error_dailyLimit": "Можна планувати до {{max}} маршрутів на день. Повторіть спробу пізніше.",
   "routePlan_error_rateLimited": "Забагато спроб поспіль. Зачекайте хвилину й повторіть спробу.",
-  "routePlan_error_rateLimitedSeconds": "Забагато спроб поспіль. Повторіть спробу через {{count}} с.",
-  "routePlan_error_rateLimitedSeconds_one": "Забагато спроб поспіль. Повторіть спробу через {{count}} секунду.",
-  "routePlan_error_rateLimitedMinutes": "Забагато спроб поспіль. Повторіть спробу через {{count}} хв.",
-  "routePlan_error_rateLimitedMinutes_one": "Забагато спроб поспіль. Повторіть спробу через {{count}} хвилину.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Забагато спроб поспіль. Повторіть спробу через {{count}} секунду.",
+    "other": "Забагато спроб поспіль. Повторіть спробу через {{count}} с."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Забагато спроб поспіль. Повторіть спробу через {{count}} хвилину.",
+    "other": "Забагато спроб поспіль. Повторіть спробу через {{count}} хв."
+  },
   "routePlan_error_supporter": "Не вдалося підтвердити ваш статус прихильника. Відновіть покупку на екрані прихильника, потім повторіть спробу.",
   "routePlan_error_unavailable": "Планування маршруту тимчасово недоступне. Повторіть спробу пізніше.",
   "routePlan_error_failed": "Зараз не вдалося спланувати маршрут. Повторіть спробу за мить.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Грейс",
   "moreActions": "Інші дії",
   "moreActionsFor": "Інші дії для {{name}}",
-  "avatarGroup_moreCount_one": "ще {{count}} особа",
-  "avatarGroup_moreCount_other": "ще осіб: {{count}}",
   "removeCategory_title": "Видалити «{{name}}»?",
   "removeCategory_description": "Цю категорію буде видалено зі списку вибору, а запис знову стане стандартним. Уже збережені з нею записи часу й далі посилатимуться на неї. Цю дію неможливо скасувати.",
   "notesImport_updateRequired": "Оновіть WitnessWork, щоб використовувати імпорт нотаток.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Місячний ліміт зарахованих годин",
   "monthlyMaximumCreditHours_description": "Години зараховуються, доки загальний місячний підсумок не досягне цього ліміту. Звичайний час проповідування враховується завжди.",
   "maximumHours": "Максимум годин",
-  "categoryBreakdown_serviceYear_description": "Записаний час за категоріями до застосування лімітів зарахованих годин."
+  "categoryBreakdown_serviceYear_description": "Записаний час за категоріями до застосування лімітів зарахованих годин.",
+  "avatarGroup_moreCount": {
+    "one": "ще {{count}} особа",
+    "other": "ще осіб: {{count}}"
+  }
 }

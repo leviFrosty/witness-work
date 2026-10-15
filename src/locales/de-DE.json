@@ -307,7 +307,6 @@
     "keepGoingStrong": "Weiter so!",
     "onARoll": "Weiter so!"
   },
-  "hoursLeft": "Stunden übrig",
   "goalBasedOnPublisherType": "Das Ziel basiert auf Ihrem Verkündiger-Typ",
   "goalAdjustedForMonth": "Individuelles Ziel für diesen Monat",
   "addTime": "Zeit hinzufügen",
@@ -518,7 +517,6 @@
   "custom": "Benutzerdefiniert",
   "pleaseDescribeYourIssue": "Bitte beschreiben Sie Ihr Problem ausführlich",
   "invalidPhone": "Ungültige Telefonnummer",
-  "invalidPhone_description": "ist keine gültige Nummer für den Regionalcode:",
   "appleAppStoreReviewErrorTitle": "App Store-Fehler",
   "appleAppStoreReviewErrorMessage": "Bitte aktualisieren Sie Ihre WitnessWork-App auf die neueste Version, falls verfügbar, und versuchen Sie es erneut.",
   "notAtHome": "Nicht zu Hause",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Alle auswählen",
   "deselectAll": "Alle dewählen",
-  "contactsMissingCoordinates": "{{count}} Kontakte fehlen Koordinaten.",
-  "contactsMissingCoordinates_one": "{{count}} Kontakt fehlen Koordinaten.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} Kontakt fehlen Koordinaten.",
+    "other": "{{count}} Kontakte fehlen Koordinaten."
+  },
   "skipFetchInProgress_title": "Springen beim Apportieren?",
   "skipFetchInProgress_description": "Koordinaten werden noch geholt. Wenn du jetzt überspringst, werden die verbleibenden Kontakte nicht automatisch aktualisiert. Du kannst später die Koordinaten jedes Kontakts aus deren Daten abrufen.",
   "viewMap": "Zeige Karte",
@@ -1104,7 +1104,6 @@
   "categories": "Kategorien",
   "tag": "Etikett",
   "showOtherCategories": "Andere Kategorien anzeigen",
-  "of": "von",
   "hoursToGoal": "Stunden bis zum Ziel",
   "removeCategory": "Kategorie entfernen",
   "noReportsThisMonthYet": "Diesen Monat gibt es noch keine Zeiteinträge",
@@ -1872,7 +1871,6 @@
   "failed": "Fehlgeschlagen",
   "complete_description": "Wenn Sie Ihre geplante Zeit für einen Tag einhalten, wird dieser als abgeschlossen markiert.",
   "partial": "Teilweise",
-  "plannedHours": "Geplante Stunden",
   "projectedHoursTitle": "Prognostizierte Stunden",
   "projectedHoursDescription": "Es kombiniert bereits gemeldete Stunden mit geplanten Stunden. Strebe an, 100 % deines Ziels zu erreichen.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "pro Tag",
   "short": "kurz",
   "average": "durchschnittlich",
-  "daysLeft": "verbleibende Tage",
   "toPlan": "zu planen",
   "onPace": "Im Takt",
   "hrsPerDayToGoal": "{{count}} Std./Tag benötigt",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Ziel: {{value}} Std",
   "daysTotal": "{{count}} Tage insgesamt",
   "monthsLeft": "{{count}} Monate übrig",
-  "vsLastMonth": "gegenüber letztem Monat",
   "hrsAhead": "{{count}} Std. voraus",
   "hrsBehind": "{{count}} Std. Rückstand",
   "aheadShort": "{{value}} voraus",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Liste",
   "contacts_searchHint": "Suche nach Namen, Notizen, benutzerdefinierten Feldern..",
   "contacts_total": "Kontakte",
-  "contacts_dismissed_one": "1 archiviert",
-  "contacts_dismissed_other": "{{count}} archiviert",
   "contacts_pinStaleness_never": "Nie kontaktiert",
   "contacts_pinStaleness_recent": "Diese Woche",
   "contacts_pinStaleness_week": "In diesem Monat",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Alle Kontakte und Besuche werden dauerhaft von diesem Gerät und aus der iCloud-Synchronisation gelöscht. Deine Zeit, Berichte und Pläne sind nicht betroffen. Dies kann nicht rückgängig gemacht werden.",
   "dataProtectionDeleteAllDescAndroid": "Jeder Kontakt und jeder Besuch wird dauerhaft von diesem Gerät und aus der Google-Drive-Synchronisierung gelöscht. Ihre Zeit, Berichte und Pläne sind davon nicht betroffen. Das kann nicht rückgängig gemacht werden.",
   "dataProtectionDeleteAllDoneTitle": "Gelöscht",
-  "dataProtectionDeleteAllDoneDesc": "{{contacts}} Kontakte und {{visits}} Besuche entfernt.",
   "audioAndHaptics": "Audio & Haptik",
   "streaksAndBadges": "Serien & Abzeichen",
   "playSounds": "Töne abspielen",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Keine Fahrtroute verbindet alle diese Stationen. Entfernen Sie jede Station, die nicht mit dem Auto erreichbar ist, und versuchen Sie es dann erneut.",
   "routePlan_error_dailyLimit": "Sie können bis zu {{max}} Routen pro Tag planen. Versuchen Sie es später erneut.",
   "routePlan_error_rateLimited": "Zu viele Versuche hintereinander. Warten Sie eine Minute und versuchen Sie es dann erneut.",
-  "routePlan_error_rateLimitedSeconds": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Sekunden erneut.",
-  "routePlan_error_rateLimitedSeconds_one": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Sekunde erneut.",
-  "routePlan_error_rateLimitedMinutes": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Minuten erneut.",
-  "routePlan_error_rateLimitedMinutes_one": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Minute erneut.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Sekunde erneut.",
+    "other": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Sekunden erneut."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Minute erneut.",
+    "other": "Zu viele Versuche hintereinander. Versuchen Sie es in {{count}} Minuten erneut."
+  },
   "routePlan_error_supporter": "Ihr Unterstützer-Status konnte nicht bestätigt werden. Stellen Sie Ihren Kauf auf dem Unterstützer-Bildschirm wieder her und versuchen Sie es dann erneut.",
   "routePlan_error_unavailable": "Die Routenplanung ist vorübergehend nicht verfügbar. Versuchen Sie es später erneut.",
   "routePlan_error_failed": "Die Route konnte gerade nicht geplant werden. Versuchen Sie es gleich noch einmal.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Weitere Aktionen",
   "moreActionsFor": "Weitere Aktionen für {{name}}",
-  "avatarGroup_moreCount_one": "{{count}} weitere Person",
-  "avatarGroup_moreCount_other": "{{count}} weitere Personen",
   "removeCategory_title": "„{{name}}“ entfernen?",
   "removeCategory_description": "Diese Kategorie wird aus der Auswahl entfernt und dieser Eintrag auf Standard zurückgesetzt. Bereits damit gespeicherte Zeiteinträge verweisen weiterhin darauf. Dies kann nicht rückgängig gemacht werden.",
   "notesImport_updateRequired": "Aktualisiere WitnessWork, um den Notizenimport zu verwenden.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Monatliche Anrechnungsgrenze",
   "monthlyMaximumCreditHours_description": "Zeitgutschriften zählen, bis deine monatliche Gesamtzeit diese Grenze erreicht. Reguläre Predigtdienstzeit zählt immer.",
   "maximumHours": "Maximale Stunden",
-  "categoryBreakdown_serviceYear_description": "Erfasste Zeit nach Kategorie vor Anwendung der Anrechnungsgrenzen."
+  "categoryBreakdown_serviceYear_description": "Erfasste Zeit nach Kategorie vor Anwendung der Anrechnungsgrenzen.",
+  "avatarGroup_moreCount": {
+    "one": "{{count}} weitere Person",
+    "other": "{{count}} weitere Personen"
+  }
 }

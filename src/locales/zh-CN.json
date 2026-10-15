@@ -307,7 +307,6 @@
     "keepGoingStrong": "继续努力",
     "onARoll": "继续"
   },
-  "hoursLeft": "剩余时间",
   "goalBasedOnPublisherType": "目标取决于你的发布者类型",
   "goalAdjustedForMonth": "本月自定义目标",
   "addTime": "添加时间",
@@ -518,7 +517,6 @@
   "custom": "自定义",
   "pleaseDescribeYourIssue": "请详细描述您的问题",
   "invalidPhone": "无效的电话号码",
-  "invalidPhone_description": "不是区域代码的有效号码：",
   "appleAppStoreReviewErrorTitle": "App Store 错误",
   "appleAppStoreReviewErrorMessage": "请将您的 WitnessWork 应用更新至最新版本（如果可用），然后重试。",
   "notAtHome": "不在家",
@@ -596,8 +594,10 @@
   "fetchSelected": "取取 {{count}} 已选中",
   "selectAll": "全部选择",
   "deselectAll": "取消选择所有",
-  "contactsMissingCoordinates": "{{count}} 联系人缺少坐标。",
-  "contactsMissingCoordinates_one": "{{count}} 联系缺少坐标。",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} 联系缺少坐标。",
+    "other": "{{count}} 联系人缺少坐标。"
+  },
   "skipFetchInProgress_title": "捡球时跳过？",
   "skipFetchInProgress_description": "坐标还在取。如果你现在跳过，剩下的联系人就不会自动更新了。你可以以后从每个联系人的详细信息获取坐标。",
   "viewMap": "查看地图",
@@ -1104,7 +1104,6 @@
   "categories": "类别",
   "tag": "标签",
   "showOtherCategories": "显示其他类别",
-  "of": "距离目标还有",
   "hoursToGoal": "小时",
   "removeCategory": "删除类别",
   "noReportsThisMonthYet": "本月尚无报告。",
@@ -1872,7 +1871,6 @@
   "failed": "失败",
   "complete_description": "如果您满足了一天的计划时间，则该天将标记为已完成。",
   "partial": "部分",
-  "plannedHours": "计划小时数",
   "projectedHoursTitle": "预计时长",
   "projectedHoursDescription": "把你已经记录的工时和你计划好的工时合并起来。目标是实现100%的目标。",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "每天",
   "short": "短",
   "average": "平均",
-  "daysLeft": "剩余天数",
   "toPlan": "计划",
   "onPace": "正在进行",
   "hrsPerDayToGoal": "每天需要{{count}}小时",
@@ -2262,7 +2259,6 @@
   "goalLabel": "目标：{{value}}小时",
   "daysTotal": "共{{count}}天",
   "monthsLeft": "还剩 {{count}} 个月",
-  "vsLastMonth": "与上月相比",
   "hrsAhead": "{{count}} 小时",
   "hrsBehind": "{{count}}小时落后",
   "aheadShort": "{{value}} 前面",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "列表",
   "contacts_searchHint": "搜索姓名、备注、自定义字段...",
   "contacts_total": "联系人",
-  "contacts_dismissed_one": "1 存档",
-  "contacts_dismissed_other": "{{count}} 存档",
   "contacts_pinStaleness_never": "从未联系过",
   "contacts_pinStaleness_recent": "本周",
   "contacts_pinStaleness_week": "本月",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "所有联系人和探访记录将从此设备和 iCloud 同步中永久删除。你的时间、报告和计划不受影响。此操作无法撤销。",
   "dataProtectionDeleteAllDescAndroid": "每位联系人和每次访问都将从这台设备和 Google 云端硬盘同步中永久删除。你的时间、报告和计划不受影响。此操作无法撤销。",
   "dataProtectionDeleteAllDoneTitle": "已删除",
-  "dataProtectionDeleteAllDoneDesc": "已删除 {{contacts}} 个联系人和 {{visits}} 次探访。",
   "audioAndHaptics": "声音与触感",
   "streaksAndBadges": "连续记录和徽章",
   "playSounds": "播放声音",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "没有一条驾车路线能连接所有这些站点。请移除任何无法驾车到达的站点，然后再试一次。",
   "routePlan_error_dailyLimit": "每天最多可规划 {{max}} 次路线。请稍后再试。",
   "routePlan_error_rateLimited": "连续尝试次数过多。请等一分钟后再试。",
-  "routePlan_error_rateLimitedSeconds": "连续尝试次数过多。请在 {{count}} 秒后再试。",
-  "routePlan_error_rateLimitedSeconds_one": "连续尝试次数过多。请在 {{count}} 秒后再试。",
-  "routePlan_error_rateLimitedMinutes": "连续尝试次数过多。请在 {{count}} 分钟后再试。",
-  "routePlan_error_rateLimitedMinutes_one": "连续尝试次数过多。请在 {{count}} 分钟后再试。",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "连续尝试次数过多。请在 {{count}} 秒后再试。",
+    "other": "连续尝试次数过多。请在 {{count}} 秒后再试。"
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "连续尝试次数过多。请在 {{count}} 分钟后再试。",
+    "other": "连续尝试次数过多。请在 {{count}} 分钟后再试。"
+  },
   "routePlan_error_supporter": "无法确认你的支持者状态。请在“支持者”页面恢复你的购买，然后再试一次。",
   "routePlan_error_unavailable": "路线规划暂时不可用。请稍后再试。",
   "routePlan_error_failed": "目前无法规划路线。请稍后再试。",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "李雅",
   "moreActions": "更多操作",
   "moreActionsFor": "{{name}}的更多操作",
-  "avatarGroup_moreCount_one": "另外 {{count}} 人",
-  "avatarGroup_moreCount_other": "另外 {{count}} 人",
   "removeCategory_title": "移除“{{name}}”？",
   "removeCategory_description": "此类别会从选择器中移除，这条记录会切换回“标准”。已使用此类别保存的时间记录仍会继续引用它。此操作无法撤销。",
   "notesImport_updateRequired": "请更新 WitnessWork 以使用笔记导入。",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "每月认可时数上限",
   "monthlyMaximumCreditHours_description": "认可时数会计入总数，直到每月合计达到此上限。一般传道时间始终计入。",
   "maximumHours": "最高时数",
-  "categoryBreakdown_serviceYear_description": "按类别记录的时间，未应用认可时数上限。"
+  "categoryBreakdown_serviceYear_description": "按类别记录的时间，未应用认可时数上限。",
+  "avatarGroup_moreCount": {
+    "one": "另外 {{count}} 人",
+    "other": "另外 {{count}} 人"
+  }
 }

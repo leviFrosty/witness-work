@@ -34,7 +34,16 @@ const PrivacyPreferencesSection = () => {
             const { contacts, visits } = deleteAllHouseholderData()
             Alert.alert(
               i18n.t('dataProtectionDeleteAllDoneTitle'),
-              i18n.t('dataProtectionDeleteAllDoneDesc', { contacts, visits })
+              i18n.t('dataProtectionDeleteAllDoneSummary', {
+                // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                contacts: i18n.t('dataProtectionDeletedContacts', {
+                  count: contacts,
+                }),
+                // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                visits: i18n.t('dataProtectionDeletedVisits', {
+                  count: visits,
+                }),
+              })
             )
           },
         },

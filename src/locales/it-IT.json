@@ -307,7 +307,6 @@
     "keepGoingStrong": "Continua ad andare forte!",
     "onARoll": "In gamba!"
   },
-  "hoursLeft": "ore rimaste",
   "goalBasedOnPublisherType": "L'obiettivo è basato sul tipo di servizio scelto",
   "goalAdjustedForMonth": "Obiettivo personalizzato per questo mese",
   "addTime": "Aggiungi tempo",
@@ -518,7 +517,6 @@
   "custom": "Obbiettivo Personale",
   "pleaseDescribeYourIssue": "Descrivi il tuo problema in modo dettaglio",
   "invalidPhone": "Numero di telefono non valido",
-  "invalidPhone_description": "non è un numero valido:",
   "appleAppStoreReviewErrorTitle": "Errore dell'App Store",
   "appleAppStoreReviewErrorMessage": "Aggiorna l'app WitnessWork all'ultima versione, se disponibile, e riprova.",
   "notAtHome": "Non a casa",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} selezionato",
   "selectAll": "Seleziona Tutti",
   "deselectAll": "Deseleziona Tutti",
-  "contactsMissingCoordinates": "{{count}} i contatti mancano le coordinate.",
-  "contactsMissingCoordinates_one": "{{count}} contatto manca le coordinate.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} contatto manca le coordinate.",
+    "other": "{{count}} i contatti mancano le coordinate."
+  },
   "skipFetchInProgress_title": "Salto mentre si riporta?",
   "skipFetchInProgress_description": "Le coordinate sono ancora in fase di recupero. Se salti ora, i contatti rimanenti non verranno aggiornati automaticamente. Puoi recuperare le coordinate di ogni contatto in seguito dai loro dati.",
   "viewMap": "Guarda la mappa",
@@ -1104,7 +1104,6 @@
   "categories": "Categorie",
   "tag": "Etichetta",
   "showOtherCategories": "Mostra altre categorie",
-  "of": "Di",
   "hoursToGoal": "ore all'obiettivo",
   "removeCategory": "Rimuovi categoria",
   "noReportsThisMonthYet": "Nessun rapporto ancora questo mese.",
@@ -1872,7 +1871,6 @@
   "failed": "Fallito",
   "complete_description": "Se rispetti l'orario pianificato per un giorno, viene contrassegnato come completato.",
   "partial": "Parziale",
-  "plannedHours": "Ore pianificate",
   "projectedHoursTitle": "Orari previsti",
   "projectedHoursDescription": "Combina le ore già registrate con quelle che hai pianificato. Punta a raggiungere il 100% del tuo obiettivo.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "al giorno",
   "short": "breve",
   "average": "avg",
-  "daysLeft": "giorni rimasti",
   "toPlan": "per pianificare",
   "onPace": "A passo di marcia",
   "hrsPerDayToGoal": "{{count}} ore/giorno necessarie",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Obiettivo: {{value}} ore",
   "daysTotal": "{{count}} giorni totali",
   "monthsLeft": "Ancora {{count}} mesi",
-  "vsLastMonth": "rispetto al mese scorso",
   "hrsAhead": "{{count}} ore avanti",
   "hrsBehind": "{{count}} ore di ritardo",
   "aheadShort": "{{value}} avanti",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Elenco",
   "contacts_searchHint": "Ricerca nomi, note, campi personalizzati..",
   "contacts_total": "Contatti",
-  "contacts_dismissed_one": "1 archiviato",
-  "contacts_dismissed_other": "{{count}} archiviato",
   "contacts_pinStaleness_never": "Mai contattato",
   "contacts_pinStaleness_recent": "Questa settimana",
   "contacts_pinStaleness_week": "Questo mese",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Tutti i contatti e le visite verranno eliminati definitivamente da questo dispositivo e dalla sincronizzazione iCloud. Il tuo tempo, i rapporti e i piani non vengono modificati. L’operazione non può essere annullata.",
   "dataProtectionDeleteAllDescAndroid": "Ogni contatto e ogni visita verranno eliminati definitivamente da questo dispositivo e dalla sincronizzazione con Google Drive. Il tuo tempo, i rapporti e i piani non sono interessati. L’operazione non può essere annullata.",
   "dataProtectionDeleteAllDoneTitle": "Eliminati",
-  "dataProtectionDeleteAllDoneDesc": "Rimossi {{contacts}} contatti e {{visits}} visite.",
   "audioAndHaptics": "Suoni e feedback aptico",
   "streaksAndBadges": "Serie e badge",
   "playSounds": "Riproduci suoni",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Nessun percorso in auto collega tutte queste tappe. Rimuovi le tappe che non si possono raggiungere in auto, poi riprova.",
   "routePlan_error_dailyLimit": "Puoi pianificare fino a {{max}} percorsi al giorno. Riprova più tardi.",
   "routePlan_error_rateLimited": "Troppi tentativi di fila. Attendi un minuto, poi riprova.",
-  "routePlan_error_rateLimitedSeconds": "Troppi tentativi di fila. Riprova tra {{count}} secondi.",
-  "routePlan_error_rateLimitedSeconds_one": "Troppi tentativi di fila. Riprova tra {{count}} secondo.",
-  "routePlan_error_rateLimitedMinutes": "Troppi tentativi di fila. Riprova tra {{count}} minuti.",
-  "routePlan_error_rateLimitedMinutes_one": "Troppi tentativi di fila. Riprova tra {{count}} minuto.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Troppi tentativi di fila. Riprova tra {{count}} secondo.",
+    "other": "Troppi tentativi di fila. Riprova tra {{count}} secondi."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Troppi tentativi di fila. Riprova tra {{count}} minuto.",
+    "other": "Troppi tentativi di fila. Riprova tra {{count}} minuti."
+  },
   "routePlan_error_supporter": "Non è stato possibile confermare il tuo stato di sostenitore. Ripristina il tuo acquisto dalla schermata Sostenitore, poi riprova.",
   "routePlan_error_unavailable": "La pianificazione del percorso è temporaneamente non disponibile. Riprova più tardi.",
   "routePlan_error_failed": "Impossibile pianificare il percorso in questo momento. Riprova tra un momento.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Altre azioni",
   "moreActionsFor": "Altre azioni per {{name}}",
-  "avatarGroup_moreCount_one": "{{count}} altra persona",
-  "avatarGroup_moreCount_other": "{{count}} altre persone",
   "removeCategory_title": "Rimuovere «{{name}}»?",
   "removeCategory_description": "Questa categoria viene rimossa dal selettore e la voce torna a Standard. Le voci temporali già salvate con questa categoria continueranno a farvi riferimento. L’operazione non può essere annullata.",
   "notesImport_updateRequired": "Aggiorna WitnessWork per usare l’importazione delle note.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Limite mensile delle ore accreditate",
   "monthlyMaximumCreditHours_description": "Le ore accreditate vengono conteggiate finché il totale mensile combinato raggiunge questo limite. Il tempo di predicazione ordinario viene sempre conteggiato.",
   "maximumHours": "Ore massime",
-  "categoryBreakdown_serviceYear_description": "Tempo registrato per categoria, prima dei limiti alle ore accreditate."
+  "categoryBreakdown_serviceYear_description": "Tempo registrato per categoria, prima dei limiti alle ore accreditate.",
+  "avatarGroup_moreCount": {
+    "one": "{{count}} altra persona",
+    "other": "{{count}} altre persone"
+  }
 }

@@ -120,7 +120,7 @@ const RecoverContactsScreen = () => {
           color: theme.colors.textAlt,
         }}
       >
-        {`${i18n.t('created')} ${formatDate(item.createdAt)}`}
+        {i18n.t('createdDate', { date: formatDate(item.createdAt) })}
       </Text>
     )
 

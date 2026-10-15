@@ -21,6 +21,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { parseDecimal } from '@/lib/mileage/units'
 
 /** How far back the role-change sheet offers a start month. */
 const MAX_START_MONTHS = 36
@@ -161,7 +162,7 @@ const PublisherTypeSelector = ({
       set({
         publisherHours: {
           ...publisherHours,
-          custom: parseFloat(goalHours) ?? 0,
+          custom: parseDecimal(goalHours) ?? 0,
         },
       })
     }

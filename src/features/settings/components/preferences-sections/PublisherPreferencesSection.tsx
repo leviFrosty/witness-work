@@ -32,6 +32,7 @@ import MonthlyMaximumCreditHoursSection from '@/features/settings/components/pre
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import { getStartDateLabels } from '@/constants/publisher'
+import { parseDecimal } from '@/lib/mileage/units'
 
 const PublisherPreferencesSection = () => {
   const {
@@ -89,8 +90,8 @@ const PublisherPreferencesSection = () => {
   }
 
   const saveLogHoursGoal = () => {
-    const parsed = parseFloat(logHoursGoal)
-    const next = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+    const parsed = parseDecimal(logHoursGoal)
+    const next = parsed !== undefined && parsed >= 0 ? parsed : 0
     setLogHoursGoal(next.toString())
     set({ publisherHours: { ...publisherHours, publisher: next } })
   }

@@ -6,8 +6,10 @@ import { MAX_DAILY_ROUTES } from '@/features/route-planning/lib/routeLimits'
 const rateLimitedFor = (retryAfterMs: number): string => {
   const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000))
   return seconds < 60
-    ? i18n.t('routePlan_error_rateLimitedSeconds', { count: seconds })
-    : i18n.t('routePlan_error_rateLimitedMinutes', {
+    ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      i18n.t('routePlan_error_rateLimitedSeconds', { count: seconds })
+    : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      i18n.t('routePlan_error_rateLimitedMinutes', {
         count: Math.ceil(seconds / 60),
       })
 }

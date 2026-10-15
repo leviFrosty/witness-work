@@ -98,9 +98,10 @@ const DayHistoryHeader = ({
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {`${actualDisplay.formatted} ${i18n.t('of')} ${goalDisplay.formatted} ${i18n.t(
-                'plannedHours'
-              )}`}
+              {i18n.t('actualOfPlanned', {
+                actual: actualDisplay.formatted,
+                planned: goalDisplay.formatted,
+              })}
             </Text>
           </>
         ) : null}

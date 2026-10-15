@@ -305,7 +305,6 @@
     "keepGoingStrong": "Continua forte!",
     "onARoll": "Em ação!"
   },
-  "hoursLeft": "horas restantes",
   "goalBasedOnPublisherType": "O objetivo é baseado no seu tipo de publicador",
   "addTime": "Adicionar Tempo",
   "updatedPlan": "Plano atualizado",
@@ -501,7 +500,6 @@
   "custom": "Personalizado",
   "pleaseDescribeYourIssue": "Descreva o seu problema em detalhes",
   "invalidPhone": "Número de telefone inválido",
-  "invalidPhone_description": "não é um número válido para o código de região:",
   "appleAppStoreReviewErrorTitle": "Erro na App Store",
   "appleAppStoreReviewErrorMessage": "Atualize a aplicação WitnessWork para a versão mais recente, se disponível, e tente novamente.",
   "notAtHome": "Não em Casa",
@@ -990,7 +988,6 @@
   "categories": "Categorias",
   "tag": "Etiqueta",
   "showOtherCategories": "Mostrar Outras Categorias",
-  "of": "de",
   "hoursToGoal": "horas até o alvo",
   "removeCategory": "Remover Categoria",
   "noReportsThisMonthYet": "Nenhum relatório neste mês ainda.",
@@ -1223,7 +1220,6 @@
   "failed": "Falha",
   "complete_description": "Se você atingir o tempo planejado para um dia, ele será marcado como concluído.",
   "partial": "Parcial",
-  "plannedHours": "Horas Planejadas",
   "planDay": "Programação do Dia",
   "scheduleIntro_plan_title": "Planeie o seu serviço",
   "scheduleIntro_plan_caption": "Escolha os dias e as horas em que vai sair. Os seus planos preenchem o calendário e acompanham o seu objetivo.",
@@ -1410,7 +1406,7 @@
   },
   "minutesShort": {
     "zero": "{{count}} Mins",
-    "one": "{{count}} Mins",
+    "one": "{{count}} Minuto",
     "other": "{{count}} Minutos"
   },
   "hoursCompact": "h",
@@ -1478,7 +1474,6 @@
   "perDay": "por dia",
   "short": "curto",
   "average": "média",
-  "daysLeft": "dias restantes",
   "toPlan": "para planear",
   "onPace": "No ritmo",
   "hrsPerDayToGoal": "{{count}} h/dia necessárias",
@@ -1487,7 +1482,6 @@
   "goalLabel": "Objetivo: {{value}} horas",
   "daysTotal": "{{count}} dias no total",
   "monthsLeft": "{{count}} meses restantes",
-  "vsLastMonth": "em relação ao mês anterior",
   "hrsAhead": "{{count}} h à frente",
   "hrsBehind": "{{count}} h atrás",
   "cumulativePace": "Ritmo vs horário",
@@ -1973,8 +1967,6 @@
   "contacts_view_list": "Lista",
   "contacts_searchHint": "Pesquisar nomes, notas, campos personalizados..",
   "contacts_total": "Contactos",
-  "contacts_dismissed_one": "1 arquivado",
-  "contacts_dismissed_other": "{{count}} arquivados",
   "contacts_pinStaleness_never": "Nunca contactado",
   "contacts_pinStaleness_recent": "Esta semana",
   "contacts_pinStaleness_week": "Este mês",
@@ -2079,8 +2071,6 @@
   "saveChanges": "Guardar alterações",
   "moreActions": "Mais ações",
   "moreActionsFor": "Mais ações para {{name}}",
-  "avatarGroup_moreCount_one": "mais {{count}} pessoa",
-  "avatarGroup_moreCount_other": "mais {{count}} pessoas",
   "yearRow_moreActions": "Mais ações para {{year}}",
   "deleteYearTime": "Eliminar todo o tempo",
   "deleteYearTime_title": "Eliminar todo o tempo de {{year}}?",
@@ -2104,8 +2094,10 @@
   "fetchSelected": "Obter {{count}} selecionadas",
   "selectAll": "Selecionar tudo",
   "deselectAll": "Desmarcar tudo",
-  "contactsMissingCoordinates": "Faltam as coordenadas de {{count}} contactos.",
-  "contactsMissingCoordinates_one": "Faltam as coordenadas de {{count}} contacto.",
+  "contactsMissingCoordinates": {
+    "one": "Faltam as coordenadas de {{count}} contacto.",
+    "other": "Faltam as coordenadas de {{count}} contactos."
+  },
   "skipFetchInProgress_title": "Ignorar durante a obtenção?",
   "skipFetchInProgress_description": "As coordenadas ainda estão a ser obtidas. Se ignorar agora, os contactos restantes não serão atualizados automaticamente. Pode obter as coordenadas de cada contacto mais tarde a partir dos respetivos detalhes.",
   "map_centerOnMyLocation": "Centrar o mapa na minha localização",
@@ -3473,7 +3465,6 @@
   "dataProtectionDeleteAllDesc": "Todos os contactos e visitas serão eliminados permanentemente deste dispositivo e da sincronização do iCloud. O seu tempo, relatórios e programações não são afetados. Esta ação não pode ser anulada.",
   "dataProtectionDeleteAllDescAndroid": "Todos os contactos e visitas serão eliminados permanentemente deste dispositivo e da sincronização do Google Drive. O seu tempo, relatórios e planos não são afetados. Esta ação não pode ser anulada.",
   "dataProtectionDeleteAllDoneTitle": "Eliminado",
-  "dataProtectionDeleteAllDoneDesc": "Foram removidos {{contacts}} contactos e {{visits}} visitas.",
   "audioAndHaptics": "Áudio e vibração",
   "streaksAndBadges": "Sequências e crachás",
   "playSounds": "Reproduzir sons",
@@ -4077,10 +4068,14 @@
   "routePlan_error_noRoute": "Nenhuma rota de carro liga todas estas paragens. Remova qualquer paragem a que não se possa chegar de carro e tente novamente.",
   "routePlan_error_dailyLimit": "Pode planear até {{max}} rotas por dia. Tente novamente mais tarde.",
   "routePlan_error_rateLimited": "Demasiadas tentativas seguidas. Aguarde um minuto e tente novamente.",
-  "routePlan_error_rateLimitedSeconds": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} segundos.",
-  "routePlan_error_rateLimitedSeconds_one": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} segundo.",
-  "routePlan_error_rateLimitedMinutes": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} minutos.",
-  "routePlan_error_rateLimitedMinutes_one": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} minuto.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} segundo.",
+    "other": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} segundos."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} minuto.",
+    "other": "Demasiadas tentativas seguidas. Tente novamente dentro de {{count}} minutos."
+  },
   "routePlan_error_supporter": "Não foi possível confirmar o seu estado de apoiante. Restaure a sua compra no ecrã de Apoiante e tente novamente.",
   "routePlan_error_unavailable": "O planeamento de rotas está temporariamente indisponível. Tente novamente mais tarde.",
   "routePlan_error_failed": "Não foi possível planear a rota neste momento. Tente novamente dentro de instantes.",
@@ -4305,5 +4300,9 @@
   "monthlyMaximumCreditHours": "Limite mensal de crédito de horas",
   "monthlyMaximumCreditHours_description": "O crédito de horas conta até o total mensal combinado atingir este limite. O tempo de pregação regular conta sempre.",
   "maximumHours": "Máximo de horas",
-  "categoryBreakdown_serviceYear_description": "Tempo registado por categoria, antes dos limites de crédito de horas."
+  "categoryBreakdown_serviceYear_description": "Tempo registado por categoria, antes dos limites de crédito de horas.",
+  "avatarGroup_moreCount": {
+    "one": "mais {{count}} pessoa",
+    "other": "mais {{count}} pessoas"
+  }
 }

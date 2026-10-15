@@ -1189,7 +1189,7 @@ const PlanDayForm = ({
       >
         {isEditMode
           ? i18n.t('save')
-          : `${i18n.t('add')} ${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
+          : i18n.t(oneTime ? 'addOneTimePlan' : 'addRecurringPlan')}
       </Text>
     </ActionButton>
   )

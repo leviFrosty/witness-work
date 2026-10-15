@@ -491,8 +491,10 @@ const MonthReport = ({
       goalHours={goalHours}
       hasMetGoal={hasMetGoal}
       periodState={isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'}
-      remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
-      totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      remainingLabel={i18n.t('daysLeftCount', { count: daysRemaining })}
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      totalLabel={i18n.t('daysCount', { count: daysInMonth })}
       achievementTier={celebratingTier}
       sealAnimatedStyle={sealAnimatedStyle}
       bar={<MonthServiceReportProgressBar month={month} year={year} />}
@@ -534,7 +536,7 @@ const MonthReport = ({
                   ),
                 }}
               >
-                {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
+                {`${momDeltaMinutes > 0 ? '↑' : '↓'} ${i18n.t('vsLastMonthValue', { value: momDeltaDisplay })}`}
               </Text>
             )}
           </View>

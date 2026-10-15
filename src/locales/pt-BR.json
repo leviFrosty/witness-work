@@ -307,7 +307,6 @@
     "keepGoingStrong": "Continue firme!",
     "onARoll": "Em um rolo!"
   },
-  "hoursLeft": "horas restantes",
   "goalBasedOnPublisherType": "A meta é baseada no seu tipo de publicador",
   "goalAdjustedForMonth": "Alvo personalizado para este mês",
   "addTime": "Adicionar Hora",
@@ -518,7 +517,6 @@
   "custom": "Personalizado",
   "pleaseDescribeYourIssue": "Por favor, descreva seu problema em detalhes",
   "invalidPhone": "Número de Telefone Inválido",
-  "invalidPhone_description": "não é um número válido para o código de região:",
   "appleAppStoreReviewErrorTitle": "Erro na App Store",
   "appleAppStoreReviewErrorMessage": "Atualize seu aplicativo WitnessWork para a versão mais recente, se disponível, e tente novamente.",
   "notAtHome": "Não em Casa",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Selecionar Todos",
   "deselectAll": "Desselecionar tudo",
-  "contactsMissingCoordinates": "{{count}} contatos estão sem coordenadas.",
-  "contactsMissingCoordinates_one": "{{count}} contato está sem coordenadas.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} contato está sem coordenadas.",
+    "other": "{{count}} contatos estão sem coordenadas."
+  },
   "skipFetchInProgress_title": "Pular enquanto busca?",
   "skipFetchInProgress_description": "As coordenadas ainda estão sendo buscadas. Se você pular agora, os contatos restantes não serão atualizados automaticamente. Você pode buscar as coordenadas de cada contato depois, a partir dos dados deles.",
   "viewMap": "Visualizar Mapa",
@@ -1104,7 +1104,6 @@
   "categories": "Categorias",
   "tag": "Etiqueta",
   "showOtherCategories": "Mostrar Outras Categorias",
-  "of": "de",
   "hoursToGoal": "horas para o alvo",
   "removeCategory": "Remover Categoria",
   "noReportsThisMonthYet": "Nenhum relatório este mês ainda.",
@@ -1872,7 +1871,6 @@
   "failed": "Fracassado",
   "complete_description": "Se você cumprir o horário planejado para um dia, ele será marcado como concluído.",
   "partial": "Parcial",
-  "plannedHours": "Horas Planejadas",
   "projectedHoursTitle": "Horas Projetadas",
   "projectedHoursDescription": "Combina as horas que você já registrou com as horas planejadas. Busque alcançar 100% do seu objetivo.",
   "scheduleStatus": {
@@ -2140,7 +2138,7 @@
   },
   "minutesShort": {
     "zero": "{{count}} Min",
-    "one": "{{count}} Minutos",
+    "one": "{{count}} Min",
     "other": "{{count}} Min"
   },
   "hoursCompact": "h",
@@ -2253,7 +2251,6 @@
   "perDay": "por dia",
   "short": "curto",
   "average": "média",
-  "daysLeft": "dias restantes",
   "toPlan": "para planejar",
   "onPace": "No ritmo",
   "hrsPerDayToGoal": "{{count}} h/dia necessárias",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Meta: {{value}} horas",
   "daysTotal": "{{count}} dias no total",
   "monthsLeft": "{{count}} meses restantes",
-  "vsLastMonth": "em relação ao mês passado",
   "hrsAhead": "{{count}} h à frente",
   "hrsBehind": "{{count}} h atrás",
   "aheadShort": "{{value}} à frente",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Lista",
   "contacts_searchHint": "Pesquisar nomes, notas, campos personalizados..",
   "contacts_total": "Contatos",
-  "contacts_dismissed_one": "1 arquivado",
-  "contacts_dismissed_other": "{{count}} arquivados",
   "contacts_pinStaleness_never": "Nunca contatado",
   "contacts_pinStaleness_recent": "Esta semana",
   "contacts_pinStaleness_week": "Este mês",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Todos os contatos e visitas serão excluídos permanentemente deste dispositivo e da sincronização do iCloud. Seu tempo, relatórios e programações não serão afetados. Isso não pode ser desfeito.",
   "dataProtectionDeleteAllDescAndroid": "Todos os contatos e visitas serão excluídos permanentemente deste dispositivo e da sincronização com o Google Drive. Seu tempo, relatórios e planos não são afetados. Essa ação não pode ser desfeita.",
   "dataProtectionDeleteAllDoneTitle": "Excluído",
-  "dataProtectionDeleteAllDoneDesc": "{{contacts}} contatos e {{visits}} visitas foram removidos.",
   "audioAndHaptics": "Áudio e tato",
   "streaksAndBadges": "Sequências e emblemas",
   "playSounds": "Reproduzir sons",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Nenhuma rota de carro liga todas estas paradas. Remova qualquer parada que não possa ser alcançada de carro e tente de novo.",
   "routePlan_error_dailyLimit": "Você pode planejar até {{max}} rotas por dia. Tente de novo mais tarde.",
   "routePlan_error_rateLimited": "Tentativas demais seguidas. Espere um minuto e tente de novo.",
-  "routePlan_error_rateLimitedSeconds": "Tentativas demais seguidas. Tente de novo em {{count}} segundos.",
-  "routePlan_error_rateLimitedSeconds_one": "Tentativas demais seguidas. Tente de novo em {{count}} segundo.",
-  "routePlan_error_rateLimitedMinutes": "Tentativas demais seguidas. Tente de novo em {{count}} minutos.",
-  "routePlan_error_rateLimitedMinutes_one": "Tentativas demais seguidas. Tente de novo em {{count}} minuto.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Tentativas demais seguidas. Tente de novo em {{count}} segundo.",
+    "other": "Tentativas demais seguidas. Tente de novo em {{count}} segundos."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Tentativas demais seguidas. Tente de novo em {{count}} minuto.",
+    "other": "Tentativas demais seguidas. Tente de novo em {{count}} minutos."
+  },
   "routePlan_error_supporter": "Não foi possível confirmar o seu status de apoiador. Recupere sua compra na tela de Apoiador e tente de novo.",
   "routePlan_error_unavailable": "O planejamento de rotas está temporariamente indisponível. Tente de novo mais tarde.",
   "routePlan_error_failed": "Não foi possível planejar a rota agora. Tente de novo em instantes.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Graça",
   "moreActions": "Mais ações",
   "moreActionsFor": "Mais ações para {{name}}",
-  "avatarGroup_moreCount_one": "mais {{count}} pessoa",
-  "avatarGroup_moreCount_other": "mais {{count}} pessoas",
   "removeCategory_title": "Remover “{{name}}”?",
   "removeCategory_description": "Esta categoria é removida do seletor e este registro volta para Padrão. Os registros de tempo já salvos com ela continuam fazendo referência à categoria. Isso não pode ser desfeito.",
   "notesImport_updateRequired": "Atualize o WitnessWork para usar a Importação de Anotações.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Limite mensal de crédito de horas",
   "monthlyMaximumCreditHours_description": "O crédito de horas conta até que o total mensal combinado atinja este limite. O tempo de pregação regular sempre conta.",
   "maximumHours": "Máximo de horas",
-  "categoryBreakdown_serviceYear_description": "Tempo registrado por categoria, antes dos limites de crédito de horas."
+  "categoryBreakdown_serviceYear_description": "Tempo registrado por categoria, antes dos limites de crédito de horas.",
+  "avatarGroup_moreCount": {
+    "one": "mais {{count}} pessoa",
+    "other": "mais {{count}} pessoas"
+  }
 }

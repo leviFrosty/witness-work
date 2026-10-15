@@ -8,7 +8,7 @@ import PhoneInput, {
 } from 'react-native-international-phone-number'
 import { ICountryCca2 } from 'react-native-international-phone-number/lib/interfaces/countryCca2'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import { parsePhoneNumber } from 'awesome-phonenumber'
+import { parsePhoneNumber, PhoneNumberPossibility } from 'awesome-phonenumber'
 import Button from '@/components/ui/Button'
 import { Contact } from '@/types/contact'
 import { TextInput, useColorScheme, View } from 'react-native'
@@ -18,13 +18,22 @@ import { useMemo, useRef } from 'react'
 import * as Localization from 'expo-localization'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import i18n, { TranslationKey } from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation } from '@/types/rootStack'
 import { usePreferences } from '@/stores/preferences'
+
+const phoneIssueKeys = {
+  'is-possible': 'phoneIssue_invalid',
+  invalid: 'phoneIssue_invalid',
+  'invalid-country-code': 'phoneIssue_invalidCountryCode',
+  'too-long': 'phoneIssue_tooLong',
+  'too-short': 'phoneIssue_tooShort',
+  unknown: 'phoneIssue_unknown',
+} as const satisfies Record<PhoneNumberPossibility, TranslationKey>
 
 export default function PersonalContactSection({
   contact,
@@ -208,9 +217,11 @@ export default function PersonalContactSection({
                           fontSize: theme.fontSize('sm'),
                           color: theme.colors.textAlt,
                         }}
-                      >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
-                        formatted.possibility
-                      }`}</Text>
+                      >
+                        {i18n.t(phoneIssueKeys[formatted.possibility], {
+                          number: formatted.number?.input,
+                        })}
+                      </Text>
                     )}
                   </View>
                 </InputRowContainer>

@@ -138,7 +138,10 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
       <Text
         numberOfLines={1}
         style={{
+          // Inside the iOS ContextMenu's hosted view, `flex: 1` alone keeps
+          // the text's full width and overflows the card.
           flex: 1,
+          flexShrink: 1,
           fontSize: theme.fontSize('sm'),
           color: theme.colors.textAlt,
         }}
@@ -291,7 +294,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
                 size={40}
                 background={contact.avatarBackground ?? undefined}
               />
-              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 2 }}>
                 <Text
                   numberOfLines={1}
                   style={{

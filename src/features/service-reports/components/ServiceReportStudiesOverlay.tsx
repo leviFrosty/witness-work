@@ -10,7 +10,10 @@ import { useEffect, useState } from 'react'
 import { type StyleProp, View, type ViewStyle } from 'react-native'
 
 import ContactPreview from '@/components/ContactPreview'
-import Avatar from '@/components/ui/Avatar'
+import ContactCard, {
+  ContactCardBody,
+  ContactCardSubtitle,
+} from '@/components/ContactCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Empty from '@/components/ui/Empty'
 import IconButton from '@/components/ui/IconButton'
@@ -26,6 +29,8 @@ import {
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
+import { useContactStalenessColor } from '@/hooks/useContactStalenessColor'
+import { formatRelative } from '@/lib/dates'
 import useConversations from '@/stores/conversationStore'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
@@ -36,19 +41,18 @@ const PAGE_SIZE = 5
 const StudyContactRow = ({
   contact,
   lastVisit,
-  last,
   onPress,
   navigateAfterClose,
 }: {
   contact: Contact
   lastVisit: Visit | null
-  last: boolean
   onPress: () => void
   /** Closes the overlay, which floats above every screen, then navigates. */
   navigateAfterClose: (navigate: () => void) => void
 }) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const stripeColor = useContactStalenessColor(contact)
   const actions = useContactMenuActions(contact, {
     onAddVisit: (notAtHome) =>
       navigateAfterClose(() =>
@@ -67,41 +71,28 @@ const StudyContactRow = ({
       accessibilityLabel={i18n.t('serviceReportInsights.openContact', {
         name: contact.name,
       })}
+      hoverRadius={theme.numbers.borderRadiusSm}
       preview={<ContactPreview contact={contact} lastVisit={lastVisit} />}
     >
-      <View
-        style={{
-          minHeight: 52,
-          paddingVertical: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          borderBottomWidth: last ? 0 : 1,
-          borderBottomColor: theme.colors.border,
-        }}
-      >
-        <Avatar
-          avatar={contact.avatar ?? { type: 'none', value: '' }}
-          name={contact.name}
-          size={36}
-          background={contact.avatarBackground ?? undefined}
+      <ContactCard stripeColor={stripeColor}>
+        <ContactCardBody
+          contact={contact}
+          subtitle={
+            <ContactCardSubtitle>
+              {lastVisit
+                ? formatRelative(lastVisit.date)
+                : i18n.t('noRecentConversation_plural')}
+            </ContactCardSubtitle>
+          }
+          trailing={
+            <LucideIcon
+              icon={ChevronRightIcon}
+              size={16}
+              color={theme.colors.textAlt}
+            />
+          }
         />
-        <Text
-          numberOfLines={1}
-          style={{
-            flex: 1,
-            color: theme.colors.text,
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {contact.name}
-        </Text>
-        <LucideIcon
-          icon={ChevronRightIcon}
-          size={16}
-          color={theme.colors.textAlt}
-        />
-      </View>
+      </ContactCard>
     </ContextMenu>
   )
 }
@@ -209,8 +200,8 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
           >
             {i18n.t('serviceReportInsights.studyContacts')}
           </Text>
-          <View>
-            {pageContacts.map((contact, index) => (
+          <View style={{ gap: 8 }}>
+            {pageContacts.map((contact) => (
               <StudyContactRow
                 key={contact.id}
                 contact={contact}
@@ -219,7 +210,6 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
                   contact,
                 })}
                 navigateAfterClose={navigateAfterClose}
-                last={index === pageContacts.length - 1}
                 onPress={() => openContact(contact)}
               />
             ))}

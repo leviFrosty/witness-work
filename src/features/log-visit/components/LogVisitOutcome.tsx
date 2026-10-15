@@ -9,7 +9,11 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
-import Avatar from '@/components/ui/Avatar'
+import ContactCard, {
+  ContactCardBody,
+  ContactCardSubtitle,
+} from '@/components/ContactCard'
+import { useContactStalenessColor } from '@/hooks/useContactStalenessColor'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { addressToString } from '@/lib/addressToString'
 import { dueFollowUpLabel } from '@/lib/suggestedContacts'
@@ -35,6 +39,7 @@ export default function LogVisitOutcome({
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const stripeColor = useContactStalenessColor(contact)
   const address = addressToString(contact.address)
   const topic = dueFollowUp?.followUp?.topic?.trim()
 
@@ -47,37 +52,16 @@ export default function LogVisitOutcome({
         paddingBottom: insets.bottom + 24,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Avatar
-          avatar={contact.avatar ?? { type: 'none', value: '' }}
-          name={contact.name}
-          size={52}
-          background={contact.avatarBackground ?? undefined}
+      <ContactCard stripeColor={stripeColor}>
+        <ContactCardBody
+          contact={contact}
+          subtitle={
+            address ? (
+              <ContactCardSubtitle>{address}</ContactCardSubtitle>
+            ) : null
+          }
         />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-            }}
-          >
-            {contact.name}
-          </Text>
-          {!!address && (
-            <Text
-              numberOfLines={2}
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {address}
-            </Text>
-          )}
-        </View>
-      </View>
+      </ContactCard>
       {dueFollowUp && topic ? (
         <View
           accessible

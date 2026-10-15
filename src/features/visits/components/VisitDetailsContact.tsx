@@ -1,4 +1,5 @@
 import {
+  ChevronRight as ChevronRightIcon,
   MessageCircle as MessageCircleIcon,
   Navigation as NavigationIcon,
   Phone as PhoneIcon,
@@ -7,12 +8,15 @@ import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
-import Avatar from '@/components/ui/Avatar'
+import ContactCard, {
+  ContactCardBody,
+  ContactCardSubtitle,
+} from '@/components/ContactCard'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
+import { useContactStalenessColor } from '@/hooks/useContactStalenessColor'
 import { addressToString, navigateTo } from '@/lib/address'
 import i18n from '@/lib/locales'
 import { handleCall, handleMessage } from '@/lib/phone'
@@ -21,8 +25,8 @@ import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 /**
- * Who the Visit was with: their photo, name, and address (opening Contact
- * Details), with Call, Text, and Navigate beside them.
+ * Who the Visit was with, as the same card the Contacts list shows (opening
+ * Contact Details), with Call, Text, and Navigate beside them.
  */
 export default function VisitDetailsContact({
   contact,
@@ -37,6 +41,7 @@ export default function VisitDetailsContact({
   const defaultNavigationMapProvider = usePreferences(
     (s) => s.defaultNavigationMapProvider
   )
+  const stripeColor = useContactStalenessColor(contact)
   const address = addressToString(contact.address)
   const phone =
     showContactPhone && contact.phone?.trim()
@@ -81,7 +86,18 @@ export default function VisitDetailsContact({
   ]
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <ContactCard
+      stripeColor={stripeColor}
+      style={{
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 0,
+      }}
+    >
+      {/* The Button owns taps on the Contact; the actions sit beside it so the
+          two never compete. */}
       <Button
         onPress={onOpen}
         accessibilityRole='button'
@@ -90,64 +106,56 @@ export default function VisitDetailsContact({
         style={{
           flex: 1,
           minWidth: 0,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
+          paddingVertical: 16,
+          paddingLeft: 18,
+          paddingRight: actions.length ? 8 : 18,
         }}
       >
-        <Avatar
-          avatar={contact.avatar ?? { type: 'none', value: '' }}
-          name={contact.name}
-          size={40}
-          background={contact.avatarBackground ?? undefined}
+        <ContactCardBody
+          contact={contact}
+          subtitle={
+            address ? (
+              <ContactCardSubtitle>{address}</ContactCardSubtitle>
+            ) : null
+          }
+          trailing={
+            actions.length ? null : (
+              <LucideIcon
+                icon={ChevronRightIcon}
+                size={16}
+                color={theme.colors.textAlt}
+              />
+            )
+          }
         />
-        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: theme.fontSize('lg') + 1,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {contact.name}
-          </Text>
-          {address ? (
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {address}
-            </Text>
-          ) : null}
-        </View>
       </Button>
-      {actions.map((action) => (
-        <PointerTooltip key={action.id} label={action.label} effect='none'>
-          <Button
-            onPress={action.onPress}
-            accessibilityRole='button'
-            accessibilityLabel={action.label}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon
-              icon={action.icon}
-              size={16}
-              color={theme.colors.accent}
-            />
-          </Button>
-        </PointerTooltip>
-      ))}
-    </View>
+      {actions.length ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginRight: 14 }}>
+          {actions.map((action) => (
+            <PointerTooltip key={action.id} label={action.label} effect='none'>
+              <Button
+                onPress={action.onPress}
+                accessibilityRole='button'
+                accessibilityLabel={action.label}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.colors.accentTranslucent,
+                }}
+              >
+                <LucideIcon
+                  icon={action.icon}
+                  size={16}
+                  color={theme.colors.accent}
+                />
+              </Button>
+            </PointerTooltip>
+          ))}
+        </View>
+      ) : null}
+    </ContactCard>
   )
 }

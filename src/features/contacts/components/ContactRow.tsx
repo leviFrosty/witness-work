@@ -10,9 +10,11 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import Card from '@/components/ui/Card'
+import ContactCard, {
+  ContactCardBody,
+  ContactCardSubtitle,
+} from '@/components/ContactCard'
 import { Contact } from '@/types/contact'
 import { useState } from 'react'
 import i18n from '@/lib/locales'
@@ -24,7 +26,6 @@ import Haptics from '@/lib/haptics'
 import SwipeableArchive from '@/features/contacts/components/swipeableActions/Archive'
 import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Dismiss'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
-import Avatar from '@/components/ui/Avatar'
 import ContextMenu from '@/components/ui/ContextMenu'
 import ContactPreview from '@/components/ContactPreview'
 import { stalenessToColor } from '@/lib/contactStaleness'
@@ -40,7 +41,6 @@ import {
   pickPreviewMatch,
 } from '@/features/contacts/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
-import GenderIcon from '@/features/contacts/components/GenderIcon'
 import { SelectionCheck } from '@/features/contacts/components/ListSelection'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
 import { usePreferences } from '@/stores/preferences'
@@ -151,7 +151,7 @@ const ContactRow = ({
   // and long presses for the whole card. In Select mode the card itself is the
   // accessibility element, a checkbox.
   const card = (
-    <Card
+    <ContactCard
       accessible={selectionMode}
       accessibilityRole={selectionMode ? 'checkbox' : undefined}
       accessibilityState={selectionMode ? { checked } : undefined}
@@ -164,57 +164,22 @@ const ContactRow = ({
             }
           : undefined
       }
-      style={{
-        paddingHorizontal: 18,
-        paddingVertical: 16,
-        borderRadius: theme.numbers.borderRadiusSm,
-        backgroundColor:
-          selected || (selectionMode && checked)
-            ? theme.colors.accentTranslucent
-            : theme.colors.backgroundLighter,
-        overflow: 'hidden',
-      }}
+      stripeColor={stripeColor}
+      selected={selected || (selectionMode && checked)}
     >
-      <View
-        pointerEvents='none'
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 4,
-          backgroundColor: stripeColor,
-        }}
-      />
-      <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
-        {selectionMode && <SelectionCheck checked={checked} />}
-        <Avatar
-          avatar={contact.avatar ?? { type: 'none', value: '' }}
-          name={contact.name}
-          size={36}
-          background={contact.avatarBackground ?? undefined}
-        />
-        <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <View style={{ flexShrink: 1 }}>
-              <HighlightedText
-                text={contact.name}
-                match={nameMatch}
-                baseStyle={{ fontSize: 18 }}
-                numberOfLines={1}
-              />
-            </View>
-            {contact.gender && (
-              <GenderIcon gender={contact.gender} size={10} opacity={0.6} />
-            )}
-          </View>
-          {previewMatch ? (
+      <ContactCardBody
+        contact={contact}
+        leading={selectionMode && <SelectionCheck checked={checked} />}
+        name={
+          <HighlightedText
+            text={contact.name}
+            match={nameMatch}
+            baseStyle={{ fontSize: 18 }}
+            numberOfLines={1}
+          />
+        }
+        subtitle={
+          previewMatch ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -241,63 +206,55 @@ const ContactRow = ({
               </View>
             </View>
           ) : detail ? (
-            <Text
-              style={{
-                color:
-                  detail.tone === 'due'
-                    ? theme.colors.orange
-                    : theme.colors.textAlt,
-                fontSize: 10,
-              }}
-              numberOfLines={1}
+            <ContactCardSubtitle
+              color={detail.tone === 'due' ? theme.colors.orange : undefined}
             >
               {detail.text}
-            </Text>
+            </ContactCardSubtitle>
           ) : (
-            <Text
-              style={{ color: theme.colors.textAlt, fontSize: 10 }}
-              numberOfLines={1}
-            >
+            <ContactCardSubtitle>
               {mostRecentConversation
                 ? formatRelative(mostRecentConversation.date)
                 : i18n.t('noRecentConversation_plural')}
               {contact.address?.city ? ` · ${contact.address.city}` : ''}
-            </Text>
-          )}
-        </View>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {hasStudiedPreviously && (
-            <IconButton
-              iconStyle={{
-                color: isActiveBibleStudy
-                  ? theme.colors.text
-                  : theme.colors.textAlt,
-              }}
-              fill={isActiveBibleStudy ? theme.colors.text : 'none'}
-              icon={BookOpenIcon}
-            />
-          )}
-          {contact.isFavorite && (
-            <IconButton
-              icon={StarIcon}
-              iconStyle={{ color: theme.colors.warn }}
-              fill={theme.colors.warn}
-              size='sm'
-            />
-          )}
-          {showsDisclosure && !selectionMode && (
-            <IconButton
-              iconStyle={{
-                color: isActiveBibleStudy
-                  ? theme.colors.text
-                  : theme.colors.textAlt,
-              }}
-              icon={ChevronRightIcon}
-            />
-          )}
-        </View>
-      </View>
-    </Card>
+            </ContactCardSubtitle>
+          )
+        }
+        trailing={
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {hasStudiedPreviously && (
+              <IconButton
+                iconStyle={{
+                  color: isActiveBibleStudy
+                    ? theme.colors.text
+                    : theme.colors.textAlt,
+                }}
+                fill={isActiveBibleStudy ? theme.colors.text : 'none'}
+                icon={BookOpenIcon}
+              />
+            )}
+            {contact.isFavorite && (
+              <IconButton
+                icon={StarIcon}
+                iconStyle={{ color: theme.colors.warn }}
+                fill={theme.colors.warn}
+                size='sm'
+              />
+            )}
+            {showsDisclosure && !selectionMode && (
+              <IconButton
+                iconStyle={{
+                  color: isActiveBibleStudy
+                    ? theme.colors.text
+                    : theme.colors.textAlt,
+                }}
+                icon={ChevronRightIcon}
+              />
+            )}
+          </View>
+        }
+      />
+    </ContactCard>
   )
 
   // The same tree in and out of Select mode, so switching modes (e.g. "Done"

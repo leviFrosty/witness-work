@@ -5,10 +5,8 @@ import {
   type ReactElement,
 } from 'react'
 import { ScrollView, View } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  ExternalLink as ExternalLinkIcon,
-} from 'lucide-react-native'
+import { ExternalLink as ExternalLinkIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -149,7 +147,7 @@ export function GroupedListRow({
           {accessory !== 'none' ? (
             <IconButton
               icon={
-                accessory === 'external' ? ExternalLinkIcon : ChevronRightIcon
+                accessory === 'external' ? ExternalLinkIcon : ChevronForwardIcon
               }
             />
           ) : null}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -49,7 +49,7 @@ export default function MileageLinkRow({
               </Text>
             ) : null}
             <LucideIcon
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={14}
               color={theme.colors.textAlt}
             />

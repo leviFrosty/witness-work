@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 
 import Button from '@/components/ui/Button'
@@ -71,7 +71,7 @@ const MonthStatusGoalButton = ({
       >
         {label}
       </Text>
-      <LucideIcon icon={ChevronRightIcon} size={12} style={{ color }} />
+      <LucideIcon icon={ChevronForwardIcon} size={12} style={{ color }} />
     </>
   )
   const accessibilityLabel = i18n.t('monthStatus.editAccessibility', {

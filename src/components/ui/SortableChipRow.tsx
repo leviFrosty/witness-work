@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
 import Haptics from '@/lib/haptics'
+import { forwardSign } from '@/lib/direction'
 import {
   RowWidths,
   reorderForDrag,
@@ -49,7 +50,10 @@ type RowState = {
   /** Every chip has been measured, so each sits at its slot. */
   placed: SharedValue<boolean>
   active: SharedValue<string | null>
-  /** The dragged chip's left edge in the row. */
+  /**
+   * The dragged chip's leading edge in the row, from the row's start. Slots,
+   * travel and this are all in reading order; `sign` turns them physical.
+   */
   dragLeft: SharedValue<number>
   /** The dragged chip's slot and the content offset when the drag began. */
   start: SharedValue<{ left: number; scroll: number }>
@@ -57,6 +61,8 @@ type RowState = {
   travel: SharedValue<number>
   /** Content offset while dragging, including the row's own scrolling. */
   scroll: SharedValue<number>
+  /** +1 when the row runs left to right, -1 in RTL. */
+  sign: 1 | -1
 }
 
 /**
@@ -113,6 +119,7 @@ export default function SortableChipRow<T>({
     start: useSharedValue({ left: 0, scroll: 0 }),
     travel: useSharedValue(0),
     scroll: useSharedValue(0),
+    sign: forwardSign(),
   }
 
   if (!measured && keys.length > 0 && keys.every((key) => key in sizes)) {
@@ -150,8 +157,16 @@ export default function SortableChipRow<T>({
   const autoScroll = useFrameCallback((frame) => {
     const key = row.active.value
     if (key === null) return
-    const left = rowStart.value + row.dragLeft.value - row.scroll.value
-    const right = left + (row.widths.value[key] ?? 0)
+    // The chip's physical edges in the viewport. In RTL the chips hang from
+    // the row's right edge, and the scroll offset stays physical.
+    const width = row.widths.value[key] ?? 0
+    const rowRight =
+      rowStart.value + rowLength(row.order.value, row.widths.value, GAP)
+    const left =
+      (row.sign === 1
+        ? rowStart.value + row.dragLeft.value
+        : rowRight - row.dragLeft.value - width) - row.scroll.value
+    const right = left + width
     const edge = viewportWidth.value - EDGE
     const overflow = left < EDGE ? left - EDGE : right > edge ? right - edge : 0
     if (overflow === 0) return
@@ -255,7 +270,8 @@ export default function SortableChipRow<T>({
 function follow(row: RowState, key: string): boolean {
   'worklet'
   const { left, scroll } = row.start.value
-  row.dragLeft.value = left + row.travel.value + (row.scroll.value - scroll)
+  row.dragLeft.value =
+    left + row.travel.value + row.sign * (row.scroll.value - scroll)
   const next = reorderForDrag(
     row.order.value,
     key,
@@ -335,11 +351,14 @@ function SortableChip({
       zIndex: lift.value > 0 ? 1 : 0,
       transform: [
         {
-          translateX: active
-            ? row.dragLeft.value
-            : sliding.value
-              ? x.value
-              : (slot ?? 0),
+          // `left: 0` is the right edge in RTL, so slots run leftward there.
+          translateX:
+            row.sign *
+            (active
+              ? row.dragLeft.value
+              : sliding.value
+                ? x.value
+                : (slot ?? 0)),
         },
         { scale: 1 + lift.value * (LIFT_SCALE - 1) },
       ],
@@ -366,7 +385,7 @@ function SortableChip({
       if (!point) return
       const start = touch.value
       if (row.active.value === key) {
-        row.travel.value = point.absoluteX - start.x
+        row.travel.value = row.sign * (point.absoluteX - start.x)
         if (follow(row, key)) scheduleOnRN(onOrderChanged)
         return
       }
@@ -387,7 +406,7 @@ function SortableChip({
       }
       row.scroll.value = scrollOffset.value
       row.start.value = { left: slot, scroll: scrollOffset.value }
-      row.travel.value = point.absoluteX - start.x
+      row.travel.value = row.sign * (point.absoluteX - start.x)
       row.dragLeft.value = slot + row.travel.value
       orderAtStart.value = row.order.value
       row.active.value = key

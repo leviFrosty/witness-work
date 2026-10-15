@@ -26,6 +26,7 @@ import { shareUrl } from '@/lib/share'
 import { usePreferences } from '@/stores/preferences'
 import { Contact } from '@/types/contact'
 import { contactAddressLines } from '@/features/contacts/lib/contactChannels'
+import { ltrIsolate } from '@/lib/direction'
 
 type Props = {
   contact: Contact
@@ -133,7 +134,7 @@ const ContactReachCard = ({
           {
             id: 'phone',
             icon: PhoneIcon,
-            text: phone,
+            text: ltrIsolate(phone),
             onPress: onCall,
             menu: [
               onCall && {
@@ -158,7 +159,7 @@ const ContactReachCard = ({
           {
             id: 'email',
             icon: MailIcon,
-            text: email,
+            text: ltrIsolate(email),
             onPress: onEmail,
             menu: [
               onEmail && {

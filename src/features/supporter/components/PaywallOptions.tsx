@@ -14,6 +14,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
+import { tracking } from '@/lib/tracking'
 
 type Tier = 'supporter' | 'tip'
 
@@ -234,7 +235,7 @@ export const DevPillButton = ({
             fontSize: 14,
             fontFamily: theme.fonts.semiBold,
             color,
-            letterSpacing: 0.8,
+            letterSpacing: tracking(0.8),
             textTransform: 'uppercase',
           }}
         >

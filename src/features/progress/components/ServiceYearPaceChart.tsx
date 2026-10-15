@@ -25,6 +25,7 @@ import {
 } from 'victory-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import ChartPlot from '@/components/charts/ChartPlot'
 import ChartXLabels from '@/components/charts/ChartXLabels'
 import Haptics from '@/lib/haptics'
 import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
@@ -35,6 +36,7 @@ import {
   type PacePoint,
   type ServiceYearPace,
 } from '@/features/progress/lib/serviceYearPace'
+import { alignText } from '@/lib/direction'
 
 const CHART_HEIGHT = 168
 const Y_GUTTER = 44
@@ -218,118 +220,120 @@ const ServiceYearPaceChart = ({
         accessibilityLabel={accessibilityLabel}
         style={{ height: CHART_HEIGHT }}
       >
-        <CartesianChart
-          data={data}
-          xKey='x'
-          yKeys={['goal', 'logged', 'planned', 'lastYear']}
-          domain={{ x: [0, 12], y: [0, yMax] }}
-          padding={PADDING}
-          // The milestone gridlines below replace Victory's default grid.
-          yAxis={[{ lineWidth: 0 }]}
-          onScaleChange={(_, nextYScale) => setYScale(() => nextYScale)}
-          chartPressState={state}
-          chartPressConfig={{
-            pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
-          }}
-          customGestures={hoverGesture}
-          actionsRef={chartActions}
-        >
-          {({ points, chartBounds, yScale: chartYScale }) => (
-            <>
-              {gridlines.map(({ minutes }) => {
-                const y = chartYScale(scale.toChart(minutes))
-                return (
-                  <SkiaLine
-                    key={minutes}
-                    p1={vec(chartBounds.left, y)}
-                    p2={vec(chartBounds.right, y)}
-                    color={theme.colors.border}
-                    strokeWidth={1}
+        <ChartPlot style={{ flex: 1 }}>
+          <CartesianChart
+            data={data}
+            xKey='x'
+            yKeys={['goal', 'logged', 'planned', 'lastYear']}
+            domain={{ x: [0, 12], y: [0, yMax] }}
+            padding={PADDING}
+            // The milestone gridlines below replace Victory's default grid.
+            yAxis={[{ lineWidth: 0 }]}
+            onScaleChange={(_, nextYScale) => setYScale(() => nextYScale)}
+            chartPressState={state}
+            chartPressConfig={{
+              pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
+            }}
+            customGestures={hoverGesture}
+            actionsRef={chartActions}
+          >
+            {({ points, chartBounds, yScale: chartYScale }) => (
+              <>
+                {gridlines.map(({ minutes }) => {
+                  const y = chartYScale(scale.toChart(minutes))
+                  return (
+                    <SkiaLine
+                      key={minutes}
+                      p1={vec(chartBounds.left, y)}
+                      p2={vec(chartBounds.right, y)}
+                      color={theme.colors.border}
+                      strokeWidth={1}
+                    />
+                  )
+                })}
+                <SkiaLine
+                  p1={vec(chartBounds.left, chartBounds.bottom)}
+                  p2={vec(chartBounds.right, chartBounds.bottom)}
+                  color={theme.colors.border}
+                  strokeWidth={1}
+                />
+                {pace.hasLastYear && (
+                  <Line
+                    points={points.lastYear}
+                    color={theme.colors.textAlt}
+                    opacity={0.55}
+                    strokeWidth={1.5}
+                    strokeCap='round'
+                    animate={ANIMATION}
                   />
-                )
-              })}
-              <SkiaLine
-                p1={vec(chartBounds.left, chartBounds.bottom)}
-                p2={vec(chartBounds.right, chartBounds.bottom)}
-                color={theme.colors.border}
-                strokeWidth={1}
-              />
-              {pace.hasLastYear && (
+                )}
                 <Line
-                  points={points.lastYear}
+                  points={points.goal}
                   color={theme.colors.textAlt}
-                  opacity={0.55}
                   strokeWidth={1.5}
+                  animate={ANIMATION}
+                >
+                  <DashPathEffect intervals={[4, 4]} />
+                </Line>
+                <Area
+                  points={points.logged}
+                  y0={chartBounds.bottom}
+                  animate={ANIMATION}
+                >
+                  <LinearGradient
+                    start={vec(0, chartBounds.top)}
+                    end={vec(0, chartBounds.bottom)}
+                    colors={[
+                      withAlpha(theme.colors.accent, 0x55),
+                      withAlpha(theme.colors.accent, 0x00),
+                    ]}
+                  />
+                </Area>
+                <Line
+                  points={points.logged}
+                  color={theme.colors.accent}
+                  strokeWidth={2.5}
                   strokeCap='round'
+                  strokeJoin='round'
                   animate={ANIMATION}
                 />
-              )}
-              <Line
-                points={points.goal}
-                color={theme.colors.textAlt}
-                strokeWidth={1.5}
-                animate={ANIMATION}
-              >
-                <DashPathEffect intervals={[4, 4]} />
-              </Line>
-              <Area
-                points={points.logged}
-                y0={chartBounds.bottom}
-                animate={ANIMATION}
-              >
-                <LinearGradient
-                  start={vec(0, chartBounds.top)}
-                  end={vec(0, chartBounds.bottom)}
-                  colors={[
-                    withAlpha(theme.colors.accent, 0x55),
-                    withAlpha(theme.colors.accent, 0x00),
-                  ]}
-                />
-              </Area>
-              <Line
-                points={points.logged}
-                color={theme.colors.accent}
-                strokeWidth={2.5}
-                strokeCap='round'
-                strokeJoin='round'
-                animate={ANIMATION}
-              />
-              <Line
-                points={points.planned}
-                color={theme.colors.accent}
-                strokeWidth={2}
-                strokeCap='round'
-                animate={ANIMATION}
-              >
-                <DashPathEffect intervals={[5, 5]} />
-              </Line>
-              {todayIndex >= 0 && !isActive && (
-                <Circle
-                  cx={points.logged[todayIndex].x}
-                  cy={points.logged[todayIndex].y ?? chartBounds.bottom}
-                  r={4.5}
+                <Line
+                  points={points.planned}
                   color={theme.colors.accent}
-                />
-              )}
-              {isActive && (
-                <>
-                  <SkiaLine
-                    p1={scrubTop}
-                    p2={scrubBottom}
-                    color={theme.colors.textAlt}
-                    strokeWidth={1}
-                  />
+                  strokeWidth={2}
+                  strokeCap='round'
+                  animate={ANIMATION}
+                >
+                  <DashPathEffect intervals={[5, 5]} />
+                </Line>
+                {todayIndex >= 0 && !isActive && (
                   <Circle
-                    cx={state.x.position}
-                    cy={scrubDotY}
-                    r={5}
+                    cx={points.logged[todayIndex].x}
+                    cy={points.logged[todayIndex].y ?? chartBounds.bottom}
+                    r={4.5}
                     color={theme.colors.accent}
                   />
-                </>
-              )}
-            </>
-          )}
-        </CartesianChart>
+                )}
+                {isActive && (
+                  <>
+                    <SkiaLine
+                      p1={scrubTop}
+                      p2={scrubBottom}
+                      color={theme.colors.textAlt}
+                      strokeWidth={1}
+                    />
+                    <Circle
+                      cx={state.x.position}
+                      cy={scrubDotY}
+                      r={5}
+                      color={theme.colors.accent}
+                    />
+                  </>
+                )}
+              </>
+            )}
+          </CartesianChart>
+        </ChartPlot>
         {/* Labels wait for Victory's scale so they never land off their line. */}
         {yScale && (
           <View
@@ -353,7 +357,7 @@ const ServiceYearPaceChart = ({
                   top: labelTop(lastYearLabel.y),
                   right: 0,
                   left: 0,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                   fontSize: theme.fontSize('xs'),
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.textAlt,
@@ -372,7 +376,7 @@ const ServiceYearPaceChart = ({
                   top: labelTop(y),
                   right: 0,
                   left: 0,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                   fontSize: theme.fontSize('xs'),
                   color: theme.colors.textAlt,
                 }}

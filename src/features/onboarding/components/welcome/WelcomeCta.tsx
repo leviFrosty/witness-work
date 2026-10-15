@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
-import { ArrowRight as ArrowRightIcon } from 'lucide-react-native'
+import { ArrowForwardIcon } from '@/components/ui/DirectionalIcon'
 import {
   Canvas,
   Group,
@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { forwardSign, isRtlLayout } from '@/lib/direction'
 import { DISPLAY_FONT_SCALE_CAP } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
@@ -49,19 +50,25 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
     const p = (time.value % SHEEN_EVERY) / SHEEN_FOR
     return p >= 1 ? -1 : p
   })
-  const sheen = useDerivedValue(() => [
-    {
-      translateX:
-        sweep.value < 0
-          ? -SHEEN_WIDTH * 2
-          : -SHEEN_WIDTH * 1.5 + sweep.value * (width + SHEEN_WIDTH * 3),
-    },
-    { skewX: -0.35 },
-  ])
+  // Skia doesn't mirror, so the sheen's path is flipped by hand in RTL to
+  // travel forward with the arrow.
+  const rtl = isRtlLayout()
+  const sign = forwardSign()
+  const sheen = useDerivedValue(() => {
+    const x =
+      sweep.value < 0
+        ? -SHEEN_WIDTH * 2
+        : -SHEEN_WIDTH * 1.5 + sweep.value * (width + SHEEN_WIDTH * 3)
+    return [
+      { translateX: rtl ? width - x - SHEEN_WIDTH : x },
+      { skewX: sign * -0.35 },
+    ]
+  })
   const arrowStyle = useAnimatedStyle(() => ({
     transform: [
       {
-        translateX: sweep.value < 0 ? 0 : Math.sin(sweep.value * Math.PI) * 4,
+        translateX:
+          sweep.value < 0 ? 0 : sign * Math.sin(sweep.value * Math.PI) * 4,
       },
     ],
   }))
@@ -136,7 +143,7 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
         </Text>
         <Animated.View style={arrowStyle}>
           <LucideIcon
-            icon={ArrowRightIcon}
+            icon={ArrowForwardIcon}
             size={19}
             strokeWidth={2.6}
             color={theme.colors.textInverse}

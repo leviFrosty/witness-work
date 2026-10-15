@@ -3,9 +3,9 @@ import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import {
   CalendarDays as CalendarDaysIcon,
-  ChevronRight as ChevronRightIcon,
   UserRound as UserRoundIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
@@ -182,7 +182,7 @@ export default function BuddyTogetherRow({
           </View>
           {open ? (
             <LucideIcon
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={18}
               color={theme.colors.textAlt}
             />

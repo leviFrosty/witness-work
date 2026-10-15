@@ -10,6 +10,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { usePreferences } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   goBack: () => void
@@ -59,7 +60,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
                   fontSize: 13,
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.accent,
-                  letterSpacing: 0.4,
+                  letterSpacing: tracking(0.4),
                   marginBottom: 8,
                 }}
               >

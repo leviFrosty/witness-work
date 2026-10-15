@@ -24,6 +24,7 @@ import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import { FAQEntry } from '@/features/updates/constants/faqs'
+import { alignText } from '@/lib/direction'
 
 const ReportLinks = () => {
   const theme = useTheme()
@@ -130,7 +131,7 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
             fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),
             color: theme.colors.text,
-            textAlign: 'left',
+            textAlign: alignText('start'),
           }}
         >
           {/* Straight into the Collapsible's host: a nested host would

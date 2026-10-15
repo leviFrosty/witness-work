@@ -22,6 +22,7 @@ import type {
   BadgeLevel,
   EarnedBadge,
 } from '@/types/badges'
+import { tracking } from '@/lib/tracking'
 
 /**
  * What a badge stands for, under its coin: the level, the name, what it counts,
@@ -59,7 +60,7 @@ export default function BadgeViewDetails({
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
               textTransform: 'uppercase',
-              letterSpacing: 1.4,
+              letterSpacing: tracking(1.4),
             }}
           >
             {badgeLevelName(level)}

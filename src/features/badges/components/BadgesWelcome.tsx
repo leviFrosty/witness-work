@@ -28,6 +28,7 @@ import Haptics from '@/lib/haptics'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { Confetti, type ConfettiHandle } from '@/vendor/ConfettiSkia'
+import { tracking } from '@/lib/tracking'
 
 export type BadgesWelcomeAction = 'look' | 'later'
 
@@ -147,7 +148,7 @@ export default function BadgesWelcome({
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.accent,
                   textTransform: 'uppercase',
-                  letterSpacing: 1.2,
+                  letterSpacing: tracking(1.2),
                 }}
               >
                 {i18n.t('badges_title')}

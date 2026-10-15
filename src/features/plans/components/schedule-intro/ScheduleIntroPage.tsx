@@ -25,6 +25,8 @@ import PlanVisual from '@/features/plans/components/schedule-intro/PlanVisual'
 import StreakVisual from '@/features/plans/components/schedule-intro/StreakVisual'
 import GraceVisual from '@/features/plans/components/schedule-intro/GraceVisual'
 import TogetherVisual from '@/features/plans/components/schedule-intro/TogetherVisual'
+import { tracking } from '@/lib/tracking'
+import { forwardSign } from '@/lib/direction'
 
 export type ScheduleIntroPageSpec = {
   id: ScheduleIntroPageId
@@ -96,6 +98,8 @@ export default function ScheduleIntroPage({
       )
     : 1
   const drift = reduceMotion ? 0 : 1
+  // `scrollX` runs in reading order; the drift is physical.
+  const sign = forwardSign()
 
   const visualStyle = useAnimatedStyle(() => {
     const offset = (scrollX.value - index * width) / Math.max(1, width)
@@ -103,7 +107,7 @@ export default function ScheduleIntroPage({
     return {
       opacity: 1 - Math.min(1, away / 0.6),
       transform: [
-        { translateX: offset * width * 0.3 * drift },
+        { translateX: sign * offset * width * 0.3 * drift },
         { scale: scale * (1 - away * 0.08 * drift) },
       ],
     }
@@ -139,7 +143,9 @@ export default function ScheduleIntroPage({
         {stage && (
           <Animated.View
             style={[
-              { width: VISUAL.width, height: VISUAL.height },
+              // Illustrations are drawn with hand-placed coordinates and
+              // transforms that don't mirror, so they keep their LTR layout.
+              { width: VISUAL.width, height: VISUAL.height, direction: 'ltr' },
               visualStyle,
             ]}
           >
@@ -171,7 +177,7 @@ export default function ScheduleIntroPage({
             style={{
               fontSize: 32,
               lineHeight: 37,
-              letterSpacing: -0.8,
+              letterSpacing: tracking(-0.8),
               fontFamily: theme.fonts.bold,
               color: palette.text,
             }}

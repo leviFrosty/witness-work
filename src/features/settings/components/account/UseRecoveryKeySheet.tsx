@@ -202,7 +202,7 @@ function RecoveryKeyForm({
         autoComplete='off'
         spellCheck={false}
         invalid={status.tone === 'error'}
-        textAlign='left'
+        textAlign='start'
         textAlignVertical='top'
         style={{
           minHeight: 88,

@@ -14,6 +14,7 @@ import { badgeDescription, badgeName, isNewBadge } from '@/lib/badges/display'
 import i18n from '@/lib/locales'
 import type { EarnedBadge, OneTimeBadgeId } from '@/types/badges'
 import type { BadgeViewOrigin } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
 
 const MEDALLION_SIZE = 48
 
@@ -42,7 +43,7 @@ export default function BadgeMomentsSection({
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
           marginLeft: 4,
         }}
       >

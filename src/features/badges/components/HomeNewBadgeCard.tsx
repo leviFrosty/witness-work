@@ -19,6 +19,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { useBadgeSession } from '@/stores/badgeSession'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
 
 const COIN_SIZE = 52
 
@@ -74,7 +75,7 @@ export default function HomeNewBadgeCard({
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.accent,
             textTransform: 'uppercase',
-            letterSpacing: 1,
+            letterSpacing: tracking(1),
           }}
         >
           {i18n.t('badges_newBadge')}

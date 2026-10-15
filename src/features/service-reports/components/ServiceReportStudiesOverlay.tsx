@@ -1,9 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
-import {
-  BookOpenCheck as StudyIcon,
-  ChevronRight as ChevronRightIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { BookOpenCheck as StudyIcon, X as XIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -35,6 +32,7 @@ import useConversations from '@/stores/conversationStore'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
 
 const PAGE_SIZE = 5
 
@@ -86,7 +84,7 @@ const StudyContactRow = ({
           }
           trailing={
             <LucideIcon
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={16}
               color={theme.colors.textAlt}
             />
@@ -195,7 +193,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('xs'),
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
           >
             {i18n.t('serviceReportInsights.studyContacts')}

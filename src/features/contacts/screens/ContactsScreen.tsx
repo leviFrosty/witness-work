@@ -2,11 +2,11 @@ import {
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
   BookUser as BookUserIcon,
-  ChevronRight as ChevronRightIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
   SlidersHorizontal as SlidersHorizontalIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -700,7 +700,7 @@ const ContactsScreen = ({
                       })}
                     </Text>
                     <LucideIcon
-                      icon={ChevronRightIcon}
+                      icon={ChevronForwardIcon}
                       size={theme.fontSize('sm')}
                       style={{ color: theme.colors.textAlt }}
                     />

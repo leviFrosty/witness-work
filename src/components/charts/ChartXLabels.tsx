@@ -5,7 +5,10 @@ import Text from '@/components/ui/MyText'
 export type ChartXLabel = {
   key: string
   label: string
-  /** Where the label centers along the plot, 0 (left edge) to 1 (right edge). */
+  /**
+   * Where the label centers along the plot, 0 (left edge) to 1 (right edge); RN
+   * mirrors it in RTL, as `ChartPlot` mirrors the plot.
+   */
   position: number
 }
 

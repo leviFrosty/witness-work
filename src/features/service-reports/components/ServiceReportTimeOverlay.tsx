@@ -18,6 +18,7 @@ import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
+import { tracking } from '@/lib/tracking'
 
 const InsightStat = ({
   label,
@@ -45,7 +46,7 @@ const InsightStat = ({
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('xs'),
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {label}

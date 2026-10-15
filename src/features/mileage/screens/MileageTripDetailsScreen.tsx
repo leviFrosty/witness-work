@@ -23,6 +23,7 @@ import useTripActions from '@/features/mileage/hooks/useTripActions'
 import type { RootStackParamList } from '@/types/rootStack'
 import RichNote from '@/components/RichNote'
 import { hasNote } from '@/lib/richText/notes'
+import { alignText } from '@/lib/direction'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageTripDetails'>
 
@@ -39,7 +40,7 @@ function DetailRow({
   return (
     <InputRowContainer label={label} lastInSection={last} controlWidth='auto'>
       <Text
-        style={{ color: theme.colors.textAlt, textAlign: 'right' }}
+        style={{ color: theme.colors.textAlt, textAlign: alignText('end') }}
         selectable
       >
         {value}

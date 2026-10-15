@@ -201,7 +201,7 @@ const ProfileCard = ({ readOnly, hideBadges, nameInvalid }: Props) => {
             autoFocusNative={!name}
             maxLength={40}
             enterKeyHint='done'
-            textAlign='left'
+            textAlign='start'
             style={{
               fontFamily: theme.fonts.semiBold,
               fontSize: 16,

@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import Avatar from '@/components/ui/Avatar'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -72,7 +72,7 @@ export default function BuddiesSharingSection() {
         onPress={() => navigation.navigate('PreferencesPublisher')}
         accessory={
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={18}
             color={theme.colors.textAlt}
           />

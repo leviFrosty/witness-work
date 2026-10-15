@@ -1,7 +1,5 @@
-import {
-  ChevronRight as ChevronRightIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 
 import PopoverCard from '@/components/PopoverCard'
@@ -18,6 +16,7 @@ import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { goalProgress } from '@/lib/goalProgress'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { tracking } from '@/lib/tracking'
 
 const GoalStat = ({ label, value }: { label: string; value: string }) => {
   const theme = useTheme()
@@ -37,7 +36,7 @@ const GoalStat = ({ label, value }: { label: string; value: string }) => {
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('xs'),
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {label}
@@ -155,7 +154,7 @@ const GoalInsightContent = ({
                 fontFamily: theme.fonts.semiBold,
                 fontSize: theme.fontSize('sm'),
                 textTransform: 'uppercase',
-                letterSpacing: 0.5,
+                letterSpacing: tracking(0.5),
               }}
             >
               {i18n.t('scheduleInsights.monthlyGoal')}
@@ -173,7 +172,7 @@ const GoalInsightContent = ({
               </Text>
               {onEditGoal ? (
                 <LucideIcon
-                  icon={ChevronRightIcon}
+                  icon={ChevronForwardIcon}
                   color={theme.colors.textAlt}
                   size={12}
                 />
@@ -332,7 +331,7 @@ const ScheduleInsights = ({
                 </Text>
               </View>
               <LucideIcon
-                icon={ChevronRightIcon}
+                icon={ChevronForwardIcon}
                 color={theme.colors.textAlt}
                 size={12}
               />

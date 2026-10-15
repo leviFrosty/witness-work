@@ -9,6 +9,7 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import useContacts from '@/stores/contactsStore'
 import { Contact } from '@/types/contact'
+import { tracking } from '@/lib/tracking'
 
 const WIDE_LABEL = 22
 const WIDE_VALUE = 36
@@ -61,7 +62,7 @@ const ContactCustomFieldsCard = ({ contact }: { contact: Contact }) => {
                 fontSize: theme.fontSize('xs') + 1,
                 fontFamily: theme.fonts.semiBold,
                 textTransform: 'uppercase',
-                letterSpacing: 0.4,
+                letterSpacing: tracking(0.4),
                 color: theme.colors.textAlt,
               }}
             >

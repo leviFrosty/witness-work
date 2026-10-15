@@ -43,6 +43,7 @@ import AssistantPreviewSheet from '@/components/AssistantPreviewSheet'
 import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
 import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 import { useShallow } from 'zustand/react/shallow'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   /** Calendar year of the month being shown. */
@@ -568,7 +569,7 @@ const AssistantHeader = ({
           fontSize: theme.fontSize('xs'),
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
           flex: 1,
         }}
       >

@@ -3,6 +3,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 export const SERVICE_YEAR_DIVIDER_HEIGHT = 56
 
@@ -66,7 +67,7 @@ export default function ServiceYearDivider({
             color: theme.colors.accent,
             fontFamily: theme.fonts.bold,
             fontSize: theme.fontSize('sm'),
-            letterSpacing: 0.3,
+            letterSpacing: tracking(0.3),
           }}
         >
           {label}

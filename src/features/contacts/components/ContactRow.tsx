@@ -1,6 +1,5 @@
 import {
   BookOpen as BookOpenIcon,
-  ChevronRight as ChevronRightIcon,
   Mail as MailIcon,
   MapPin as MapPinIcon,
   MessageCircle as MessageCircleIcon,
@@ -8,6 +7,7 @@ import {
   Star as StarIcon,
   Tag as TagIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -21,7 +21,10 @@ import i18n from '@/lib/locales'
 import { formatRelative } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
 import { FuseResultMatch } from 'fuse.js'
-import { Swipeable } from 'react-native-gesture-handler'
+import SwipeableRow, {
+  type Swipeable,
+  type SwipeSide,
+} from '@/components/ui/SwipeableRow'
 import Haptics from '@/lib/haptics'
 import SwipeableArchive from '@/features/contacts/components/swipeableActions/Archive'
 import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Dismiss'
@@ -134,12 +137,9 @@ const ContactRow = ({
 
   // Reset the row before confirming: the confirm Alert can be cancelled, and a
   // half-open row behind a dismissed Alert reads as stuck.
-  const handleSwipeOpen = (
-    direction: 'left' | 'right',
-    swipeable: Swipeable
-  ) => {
+  const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
     swipeable.reset()
-    if (direction === 'left') {
+    if (side === 'leading') {
       setDismissSheetMounted(true)
       setDismissSheetOpen(true)
     } else {
@@ -248,7 +248,7 @@ const ContactRow = ({
                     ? theme.colors.text
                     : theme.colors.textAlt,
                 }}
-                icon={ChevronRightIcon}
+                icon={ChevronForwardIcon}
               />
             )}
           </View>
@@ -262,12 +262,12 @@ const ContactRow = ({
   // one's Swipeable and native context menu host. The menu stays available.
   return (
     <>
-      <Swipeable
+      <SwipeableRow
         enabled={!selectionMode}
         onSwipeableWillOpen={() => Haptics.light()}
         containerStyle={{ backgroundColor: 'transparent' }}
-        renderLeftActions={() => <SwipeableDismiss size='sm' />}
-        renderRightActions={() => (
+        renderLeadingActions={() => <SwipeableDismiss size='sm' />}
+        renderTrailingActions={() => (
           <SwipeableArchive size='sm' permanent={dataProtectionMode} />
         )}
         onSwipeableOpen={handleSwipeOpen}
@@ -288,7 +288,7 @@ const ContactRow = ({
         >
           {card}
         </ContextMenu>
-      </Swipeable>
+      </SwipeableRow>
       {dismissSheetMounted && (
         <DismissContactSheet
           open={dismissSheetOpen}

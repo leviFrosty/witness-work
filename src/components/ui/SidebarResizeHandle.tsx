@@ -14,6 +14,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { forwardSign, isRtlLayout } from '@/lib/direction'
 import {
   clampSidebarWidth,
   SIDEBAR_LABEL_MIN_WIDTH,
@@ -77,6 +78,10 @@ export default function SidebarResizeHandle({
     dragActive.current = false
     commitWidth(nextWidth)
   }
+  // The sidebar sits on the reading start, so in RTL it widens leftward.
+  const sign = forwardSign()
+  const rtl = isRtlLayout()
+
   const finalizeDrag = () => {
     dragActive.current = false
     preview(null)
@@ -92,7 +97,9 @@ export default function SidebarResizeHandle({
     })
     .onUpdate(({ translationX }) => {
       if (!dragging.value) return
-      const nextWidth = clampSidebarWidth(startWidth.value + translationX)
+      const nextWidth = clampSidebarWidth(
+        startWidth.value + sign * translationX
+      )
       liveWidth.value = nextWidth
       const nextCompact = nextWidth < SIDEBAR_LABEL_MIN_WIDTH
       if (nextCompact !== compact.value) {
@@ -102,7 +109,9 @@ export default function SidebarResizeHandle({
     })
     .onEnd(({ translationX }, success) => {
       if (!success || !dragging.value) return
-      const nextWidth = clampSidebarWidth(startWidth.value + translationX)
+      const nextWidth = clampSidebarWidth(
+        startWidth.value + sign * translationX
+      )
       liveWidth.value = nextWidth
       dragging.value = false
       scheduleOnRN(endDrag, nextWidth)
@@ -191,8 +200,12 @@ export default function SidebarResizeHandle({
         {/* iPad pointer shows which ways the sidebar can still resize. */}
         <PointerStyleView
           accessories={[
-            ...(width > SIDEBAR_MIN_WIDTH ? (['left'] as const) : []),
-            ...(width < SIDEBAR_MAX_WIDTH ? (['right'] as const) : []),
+            ...(width > SIDEBAR_MIN_WIDTH
+              ? ([rtl ? 'right' : 'left'] as const)
+              : []),
+            ...(width < SIDEBAR_MAX_WIDTH
+              ? ([rtl ? 'left' : 'right'] as const)
+              : []),
           ]}
           style={StyleSheet.absoluteFill}
         />

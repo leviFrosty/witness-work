@@ -18,6 +18,7 @@ import {
   Headline,
 } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import { tracking } from '@/lib/tracking'
 
 const WORD_IN_MS = 620
 const WORD_IN_STAGGER = 55
@@ -94,7 +95,7 @@ const Word = ({
           style={{
             fontSize,
             lineHeight,
-            letterSpacing: -fontSize * 0.025,
+            letterSpacing: tracking(-fontSize * 0.025),
             fontFamily: theme.fonts.bold,
             color,
           }}

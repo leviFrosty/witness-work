@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
@@ -22,6 +22,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import CalendarDay from '@/components/CalendarDay'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import type { DateData } from 'react-native-calendars'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   month: number
@@ -134,7 +135,7 @@ const WeekStripTeaser = ({
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('sm'),
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {isCurrentMonth ? i18n.t('thisWeek') : i18n.t('schedule')}
@@ -156,7 +157,7 @@ const WeekStripTeaser = ({
           {i18n.t('viewFullSchedule')}
         </Text>
         <LucideIcon
-          icon={ChevronRightIcon}
+          icon={ChevronForwardIcon}
           size={12}
           color={theme.colors.textAlt}
         />

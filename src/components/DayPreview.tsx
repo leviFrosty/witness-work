@@ -18,6 +18,7 @@ import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
 import { getNoteText } from '@/lib/richText/notes'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   /** Local day. */
@@ -108,7 +109,7 @@ export default function DayPreview({
             fontFamily: theme.fonts.semiBold,
             fontSize: theme.fontSize('xs'),
             textTransform: 'uppercase',
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {title}

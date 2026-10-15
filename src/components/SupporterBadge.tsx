@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   /** Hides the "Supporter" label — shows only the heart icon chip. */
@@ -49,7 +50,7 @@ const SupporterBadge = ({ iconOnly, size = 'sm', style }: Props) => {
             fontSize,
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.supporter,
-            letterSpacing: 0.3,
+            letterSpacing: tracking(0.3),
           }}
         >
           {i18n.t('supporter')}

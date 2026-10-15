@@ -4,6 +4,7 @@ import Text from '@/components/ui/MyText'
 import Section from '@/components/ui/inputs/Section'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 /** The "Details" list of a docked form: optional rows above its dock. */
 const FormDetailsSection = (props: { children: ReactNode }) => {
@@ -16,7 +17,7 @@ const FormDetailsSection = (props: { children: ReactNode }) => {
           fontSize: theme.fontSize('sm'),
           fontFamily: theme.fonts.semiBold,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
           paddingHorizontal: 4,
         }}
       >

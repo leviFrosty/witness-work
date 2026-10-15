@@ -54,6 +54,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
 import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 
@@ -822,7 +823,7 @@ const PaperRow = ({
             color: PAPER_LABEL,
             fontFamily: theme.fonts.semiBold,
             fontSize: 11,
-            letterSpacing: 1.4,
+            letterSpacing: tracking(1.4),
             textTransform: 'uppercase',
           }}
         >

@@ -22,6 +22,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import type { DefaultNavigationMapProvider } from '@/stores/preferences'
+import { tracking } from '@/lib/tracking'
 
 type ProviderKey = 'apple' | 'google' | 'waze'
 
@@ -422,7 +423,7 @@ const NavMapPreview = ({ provider }: Props) => {
             styles.wordmark,
             {
               color: mt.chromeFg,
-              letterSpacing: mt.wordmarkLetterSpacing,
+              letterSpacing: tracking(mt.wordmarkLetterSpacing),
               fontFamily: theme.fonts.bold,
             },
           ]}
@@ -534,7 +535,7 @@ const NavMapPreview = ({ provider }: Props) => {
               fontSize: 12,
               fontFamily: theme.fonts.bold,
               color: mt.startFg,
-              letterSpacing: 0.4,
+              letterSpacing: tracking(0.4),
             }}
           >
             {i18n.t('defaultNavPreview_start')}

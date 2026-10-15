@@ -30,6 +30,7 @@ import {
 } from '@/components/richText/editor/editorProtocol'
 import useTheme from '@/contexts/theme'
 import { relativeLuminance } from '@/lib/color'
+import { isRtlLayout } from '@/lib/direction'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { richTextImages } from '@/lib/richText/inspect'
@@ -170,6 +171,7 @@ const RichTextEditor = (props: {
         border: theme.colors.border,
         fontSize: theme.fontSize('md') + fontSizeOffset,
       },
+      direction: isRtlLayout() ? 'rtl' : 'ltr',
       placeholder: props.placeholder,
       label: props.label,
       characterLimit: props.characterLimit,

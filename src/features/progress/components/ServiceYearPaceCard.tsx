@@ -15,6 +15,7 @@ import { usePreferences } from '@/stores/preferences'
 import ServiceYearPaceChart from '@/features/progress/components/ServiceYearPaceChart'
 import type { PacePoint } from '@/features/progress/lib/serviceYearPace'
 import type { ServiceYearPaceData } from '@/features/progress/hooks/useServiceYearPace'
+import { tracking } from '@/lib/tracking'
 
 /** Differences under this read as even. */
 const EVEN_MINUTES = 30
@@ -124,7 +125,7 @@ const ServiceYearPaceCard = ({ data, milestones }: Props) => {
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
             textTransform: 'uppercase',
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {i18n.t('serviceYearPace.title')}

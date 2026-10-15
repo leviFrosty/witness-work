@@ -41,6 +41,7 @@ import {
   WatchFrame,
   WatchRow,
 } from '@/features/updates/components/reveal/visuals/watchKit'
+import { tracking } from '@/lib/tracking'
 
 const LOOP_MS = 11000
 // A tenth of an hour divides both, so the total climbs in clean steps.
@@ -779,7 +780,7 @@ const Caption = ({ children }: { children: string }) => {
       style={{
         fontSize: 8.5,
         fontFamily: theme.fonts.semiBold,
-        letterSpacing: 0.4,
+        letterSpacing: tracking(0.4),
         textTransform: 'uppercase',
         color: WATCH_COLORS.textAlt,
       }}

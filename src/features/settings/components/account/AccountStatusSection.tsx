@@ -8,6 +8,7 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import useTheme from '@/contexts/theme'
+import { alignText } from '@/lib/direction'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' })
@@ -61,7 +62,7 @@ export default function AccountStatusSection({
             testID='account-number'
             style={{
               flexShrink: 1,
-              textAlign: 'right',
+              textAlign: alignText('end'),
               fontFamily: accountId ? MONO : theme.fonts.regular,
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,

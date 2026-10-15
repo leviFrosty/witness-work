@@ -5,6 +5,7 @@ import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
+import { isRtlLayout } from '@/lib/direction'
 import {
   PLAN_DAY_STEP_MINUTES,
   planDayMaxMinutes,
@@ -43,6 +44,9 @@ const PlanDaySlider = ({
     emitted.value = minutes
   }, [emitted, minutes])
 
+  // The track fills from the reading start; touches arrive in physical x.
+  const rtl = isRtlLayout()
+
   const step = (next: number) => {
     Haptics.selection()
     onChange(next)
@@ -52,7 +56,8 @@ const PlanDaySlider = ({
     'worklet'
     const usable = width.value - THUMB_SIZE
     if (usable <= 0) return
-    const fraction = Math.min(1, Math.max(0, (x - THUMB_SIZE / 2) / usable))
+    const along = Math.min(1, Math.max(0, (x - THUMB_SIZE / 2) / usable))
+    const fraction = rtl ? 1 - along : along
     const next =
       Math.round((fraction * maxMinutes) / PLAN_DAY_STEP_MINUTES) *
       PLAN_DAY_STEP_MINUTES

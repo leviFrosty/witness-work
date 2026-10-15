@@ -1,7 +1,5 @@
-import {
-  ChevronRight as ChevronRightIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
 import { View } from 'react-native'
 
@@ -15,6 +13,7 @@ import useScheduleStatus from '@/hooks/useScheduleStatus'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   month: number
@@ -39,7 +38,7 @@ const DetailStat = ({ label, value }: { label: string; value: string }) => {
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('xs'),
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {label}
@@ -217,7 +216,7 @@ const SchedulePaceInsight = ({ month, year }: Props) => {
             </Text>
           </View>
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             color={theme.colors.textAlt}
             size={12}
           />

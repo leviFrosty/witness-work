@@ -12,6 +12,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Text from '@/components/ui/MyText'
 import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
+import { alignText } from '@/lib/direction'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import { backUpNow, disableBackup, enableBackup } from '@/app/account/backup'
@@ -123,7 +124,7 @@ export default function BackupSection({
                 testID='backup-status'
                 style={{
                   flexShrink: 1,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                   fontSize: theme.fontSize('sm'),
                   color:
                     failed && !uploading

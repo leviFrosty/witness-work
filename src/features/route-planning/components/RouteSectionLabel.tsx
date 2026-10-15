@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { tracking } from '@/lib/tracking'
 
 /** The small uppercase heading above each part of the route screen. */
 export default function RouteSectionLabel({
@@ -16,7 +17,7 @@ export default function RouteSectionLabel({
         textTransform: 'uppercase',
         fontSize: theme.fontSize('sm'),
         fontFamily: theme.fonts.semiBold,
-        letterSpacing: 0.5,
+        letterSpacing: tracking(0.5),
       }}
     >
       {children}

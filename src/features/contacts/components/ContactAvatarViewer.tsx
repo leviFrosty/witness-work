@@ -40,6 +40,7 @@ import i18n from '@/lib/locales'
 import { formatBytes } from '@/lib/formatBytes'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
+import { alignText } from '@/lib/direction'
 
 interface Props {
   visible: boolean
@@ -486,7 +487,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => {
           fontSize: 13,
           fontFamily: theme.fonts.semiBold,
           flexShrink: 1,
-          textAlign: 'right',
+          textAlign: alignText('end'),
         }}
       >
         {value}

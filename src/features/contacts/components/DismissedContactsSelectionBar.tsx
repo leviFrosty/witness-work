@@ -1,8 +1,8 @@
 import {
   Archive as ArchiveIcon,
   Trash2 as TrashIcon,
-  Undo2 as Undo2Icon,
 } from 'lucide-react-native'
+import { UndoIcon } from '@/components/ui/DirectionalIcon'
 
 import { useUndismissContacts } from '@/hooks/useDismissContact'
 import useRemoveContacts from '@/hooks/useRemoveContacts'
@@ -42,7 +42,7 @@ export default function DismissedContactsSelectionBar({
   return (
     <SelectionBar bottom={bottom}>
       <SelectionBarButton
-        icon={Undo2Icon}
+        icon={UndoIcon}
         label={i18n.t('undismiss')}
         disabled={none}
         onPress={undismissSelected}

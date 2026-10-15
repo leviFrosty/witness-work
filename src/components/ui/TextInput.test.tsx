@@ -11,12 +11,14 @@ const { platform, flatten } = vi.hoisted(() => {
 })
 
 vi.mock('react-native', () => ({
+  I18nManager: { isRTL: false },
   Platform: platform,
   StyleSheet: { flatten, absoluteFill: { position: 'absolute' } },
   Text: 'Text',
   View: 'View',
 }))
 vi.mock('tamagui', () => ({ Input: 'Input', TextArea: 'TextArea' }))
+vi.mock('@/lib/tracking', () => ({ tracking: (value: unknown) => value }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: { textAlt: 'gray', border: 'silver', error: 'red' },

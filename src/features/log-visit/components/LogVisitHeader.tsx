@@ -1,8 +1,5 @@
-import {
-  ChevronLeft as ChevronLeftIcon,
-  UserPlus as UserPlusIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { UserPlus as UserPlusIcon, X as XIcon } from 'lucide-react-native'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import { Platform, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
@@ -30,7 +27,7 @@ export default function LogVisitHeader({
   const insets = useSafeAreaInsets()
   const leading = onBack ? (
     <IconButton
-      icon={ChevronLeftIcon}
+      icon={ChevronBackwardIcon}
       size='xl'
       color={theme.colors.text}
       onPress={onBack}

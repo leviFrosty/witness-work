@@ -22,6 +22,7 @@ import i18n from '@/lib/locales'
 import { shareUrl } from '@/lib/share'
 import { usePreferences } from '@/stores/preferences'
 import { Contact, Coordinate } from '@/types/contact'
+import { ltrIsolate } from '@/lib/direction'
 
 export default function CreateContactCard({
   coordinate,
@@ -140,10 +141,12 @@ export default function CreateContactCard({
                   fontSize: theme.fontSize('sm'),
                 }}
               >
-                {i18n.t('pinCoordinates', {
-                  latitude: coordinate.latitude.toFixed(5),
-                  longitude: coordinate.longitude.toFixed(5),
-                })}
+                {ltrIsolate(
+                  i18n.t('pinCoordinates', {
+                    latitude: coordinate.latitude.toFixed(5),
+                    longitude: coordinate.longitude.toFixed(5),
+                  })
+                )}
               </Text>
             </View>
           </ContextMenu>

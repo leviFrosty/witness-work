@@ -3,10 +3,12 @@ import {
   Expand as ExpandIcon,
   Info as InfoIcon,
   Navigation as NavigationIcon,
-  PanelRightClose as PanelRightCloseIcon,
-  PanelRightOpen as PanelRightOpenIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
+import {
+  PanelTrailingCloseIcon,
+  PanelTrailingOpenIcon,
+} from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -86,6 +88,7 @@ import MapPinLabel, {
 } from '@/features/map/components/MapPinLabel'
 import usePinHover from '@/features/map/hooks/usePinHover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
+import { forwardSign } from '@/lib/direction'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -1073,8 +1076,13 @@ const FullMapView = ({
                 bottom: bottomOverlayInset + 28,
                 width: inspectorWidth,
                 opacity: cardsStowed ? 0 : 1,
+                // Slides off past the trailing edge (the right in LTR).
                 transform: [
-                  { translateX: cardsStowed ? inspectorWidth + 32 : 0 },
+                  {
+                    translateX: cardsStowed
+                      ? forwardSign() * (inspectorWidth + 32)
+                      : 0,
+                  },
                 ],
                 transitionProperty: ['transform', 'opacity'],
                 ...STOW_TRANSITION,
@@ -1256,7 +1264,9 @@ const FullMapView = ({
                   >
                     <LucideIcon
                       icon={
-                        cardsStowed ? PanelRightOpenIcon : PanelRightCloseIcon
+                        cardsStowed
+                          ? PanelTrailingOpenIcon
+                          : PanelTrailingCloseIcon
                       }
                       size={theme.fontSize('sm')}
                       style={{ color: theme.colors.text }}

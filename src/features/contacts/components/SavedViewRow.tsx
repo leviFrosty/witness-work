@@ -69,7 +69,7 @@ const SavedViewRow = ({
             accessibilityLabel={i18n.t('savedViews_nameLabel')}
             maxLength={SAVED_VIEW_NAME_MAX_LENGTH}
             autoCapitalize='sentences'
-            textAlign='left'
+            textAlign='start'
           />
           <Text
             numberOfLines={1}

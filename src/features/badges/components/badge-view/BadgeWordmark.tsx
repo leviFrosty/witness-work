@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 const ICON_SIZE = 20
 
@@ -36,7 +37,7 @@ export default function BadgeWordmark() {
           fontSize: 14,
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
-          letterSpacing: 0.2,
+          letterSpacing: tracking(0.2),
         }}
       >
         {i18n.t('witnessWork')}

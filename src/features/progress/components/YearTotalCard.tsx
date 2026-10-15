@@ -14,6 +14,7 @@ import i18n from '@/lib/locales'
 import Card from '@/components/ui/Card'
 import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
+import { tracking } from '@/lib/tracking'
 
 interface YearTotalCardProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -91,7 +92,7 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               fontSize: theme.fontSize('sm'),
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
           >
             {`${serviceYear}–${serviceYear + 1}`}

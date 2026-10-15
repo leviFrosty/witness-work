@@ -33,6 +33,7 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import ContactsFilterSheet from '@/features/contacts/components/ContactsFilterSheet'
 import { RootStackNavigation } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
 
 const operatorLabel = (op: TextOperator | ComparableOperator): string => {
   switch (op) {
@@ -179,7 +180,7 @@ const ContactsSortAndFilterScreen = () => {
     color: theme.colors.textAlt,
     fontFamily: theme.fonts.semiBold,
     textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
+    letterSpacing: tracking(0.5),
   }
 
   const renderSortRow = (

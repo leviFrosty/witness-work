@@ -19,6 +19,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import Constants from 'expo-constants'
 import Badge from '@/components/ui/Badge'
 import semver from 'semver'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   /** Its takeover turn (ADR 0021): open while the arbiter shows it. */
@@ -111,7 +112,7 @@ export const WhatsNewContent = ({
                         color: theme.colors.textInverse,
                         fontSize: theme.fontSize('xs'),
                         fontFamily: theme.fonts.semiBold,
-                        letterSpacing: 0.4,
+                        letterSpacing: tracking(0.4),
                       }}
                     >
                       {i18n.t(item.name)}

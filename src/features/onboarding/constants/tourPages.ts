@@ -14,7 +14,6 @@ import {
   Map as MapIcon,
   Medal as MedalIcon,
   Moon as MoonIcon,
-  PanelsLeftBottom as PanelsLeftBottomIcon,
   Send as SendIcon,
   ShieldCheck as ShieldCheckIcon,
   Timer as TimerIcon,
@@ -22,6 +21,7 @@ import {
   Watch as WatchIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import { PanelsLeadingBottomIcon } from '@/components/ui/DirectionalIcon'
 import type { TranslationKey } from '@/lib/locales'
 import type {
   RevealColor,
@@ -240,7 +240,7 @@ export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
   },
   {
     id: 'tablets',
-    icon: PanelsLeftBottomIcon,
+    icon: PanelsLeadingBottomIcon,
     color: 'accent3',
     labelKey: 'onboardingTour_more_tablets',
     tabletOnly: true,

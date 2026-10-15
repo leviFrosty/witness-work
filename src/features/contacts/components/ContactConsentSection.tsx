@@ -5,6 +5,7 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   agreed: boolean
@@ -27,7 +28,7 @@ const ContactConsentSection = ({
           style={{
             fontSize: 11,
             color: theme.colors.textAlt,
-            letterSpacing: 1.4,
+            letterSpacing: tracking(1.4),
             fontFamily: theme.fonts.semiBold,
             textTransform: 'uppercase',
             marginHorizontal: 12,

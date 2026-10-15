@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 import { useState } from 'react'
 import Text from '@/components/ui/MyText'
@@ -129,7 +129,7 @@ const PlansPreferencesSection = () => {
             <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
               {availabilitySummary}
             </Text>
-            <IconButton icon={ChevronRightIcon} />
+            <IconButton icon={ChevronForwardIcon} />
           </View>
         </InputRowButton>
       </Section>

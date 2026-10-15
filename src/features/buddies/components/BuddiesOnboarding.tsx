@@ -4,11 +4,11 @@ import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   CalendarHeart as CalendarHeartIcon,
-  ChevronLeft as ChevronLeftIcon,
   Lock as LockIcon,
   ShieldCheck as ShieldCheckIcon,
   Users as UsersIcon,
 } from 'lucide-react-native'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
@@ -98,7 +98,7 @@ export default function BuddiesOnboarding({
       >
         {step > 0 ? (
           <IconButton
-            icon={ChevronLeftIcon}
+            icon={ChevronBackwardIcon}
             size='lg'
             onPress={() => setStep((index) => index - 1)}
             accessibilityLabel={i18n.t('goBack')}

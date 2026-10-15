@@ -47,7 +47,7 @@ const SavedViewNameInput = ({ onSave }: { onSave: (name: string) => void }) => {
           maxLength={SAVED_VIEW_NAME_MAX_LENGTH}
           autoCapitalize='sentences'
           enterKeyHint='done'
-          textAlign='left'
+          textAlign='start'
           style={{ flex: 1 }}
         />
         <ActionButton onPress={save}>

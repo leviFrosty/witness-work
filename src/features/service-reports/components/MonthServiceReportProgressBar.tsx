@@ -12,16 +12,18 @@ import {
 import { goalProgress } from '@/lib/goalProgress'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
+import { forwardSign } from '@/lib/direction'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
-  borderRadiusLeft?: boolean
-  borderRadiusRight?: boolean
+  /** Rounds the corners on the bar's reading-start side. */
+  borderRadiusStart?: boolean
+  borderRadiusEnd?: boolean
 }
 
 const ProgressBarSegment = ({
   style,
-  borderRadiusLeft,
-  borderRadiusRight,
+  borderRadiusStart,
+  borderRadiusEnd,
   ...props
 }: ProgressBarSegmentBaseProps) => {
   const theme = useTheme()
@@ -31,16 +33,16 @@ const ProgressBarSegment = ({
       style={[
         [
           {
-            borderTopLeftRadius: borderRadiusLeft
+            borderTopStartRadius: borderRadiusStart
               ? theme.numbers.borderRadiusSm
               : 0,
-            borderBottomLeftRadius: borderRadiusLeft
+            borderBottomStartRadius: borderRadiusStart
               ? theme.numbers.borderRadiusSm
               : 0,
-            borderTopRightRadius: borderRadiusRight
+            borderTopEndRadius: borderRadiusEnd
               ? theme.numbers.borderRadiusSm
               : 0,
-            borderBottomRightRadius: borderRadiusRight
+            borderBottomEndRadius: borderRadiusEnd
               ? theme.numbers.borderRadiusSm
               : 0,
             height: 20,
@@ -65,7 +67,7 @@ const StandardHours = ({ percentage, color }: ProgressBarSegmentProps) => {
         backgroundColor: color,
         width: `${percentage * 100}%`,
       }}
-      borderRadiusLeft
+      borderRadiusStart
     />
   )
 }
@@ -224,11 +226,13 @@ const MonthServiceReportProgressBar = ({
 
   // Calculate pulse position dynamically based on shimmer container width
   // The shimmer should travel across the entire shimmer container (which is already the filled portion)
+  // Runs along the fill from its reading start (mirrored in RTL).
+  const sign = forwardSign()
   const pulseTranslateX = pulseAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [
-      -60, // Start hidden to the left
-      Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
+      sign * -60, // Start hidden before the fill's start
+      sign * Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
     ],
   })
 
@@ -370,7 +374,7 @@ const MonthServiceReportProgressBar = ({
                     width: 40,
                     height: '100%',
                     backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                    transform: [{ skewX: '-20deg' }],
+                    transform: [{ skewX: `${sign * -20}deg` }],
                   }}
                 />
                 <View
@@ -381,7 +385,7 @@ const MonthServiceReportProgressBar = ({
                     width: 30,
                     height: '100%',
                     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                    transform: [{ skewX: '-20deg' }],
+                    transform: [{ skewX: `${sign * -20}deg` }],
                   }}
                 />
                 <View
@@ -392,7 +396,7 @@ const MonthServiceReportProgressBar = ({
                     width: 15,
                     height: '100%',
                     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    transform: [{ skewX: '-20deg' }],
+                    transform: [{ skewX: `${sign * -20}deg` }],
                   }}
                 />
               </Animated.View>

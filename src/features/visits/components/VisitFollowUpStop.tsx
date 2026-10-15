@@ -4,9 +4,9 @@ import {
   Bell as BellIcon,
   BellOff as BellOffIcon,
   CalendarClock as CalendarClockIcon,
-  ChevronRight as ChevronRightIcon,
   MessagesSquare as MessagesSquareIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
 import FollowUpCard, {
   FollowUpTopic,
@@ -185,7 +185,7 @@ export default function VisitFollowUpStop({
         >
           {headline}
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.accent3}
           />

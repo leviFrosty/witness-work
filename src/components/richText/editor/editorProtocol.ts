@@ -87,6 +87,11 @@ export type EditorSetup = {
   imageSources: Record<string, string>
   theme: EditorTheme
   fonts: EditorFonts
+  /**
+   * The app's layout direction, for lines without letters (an empty line being
+   * typed). Paragraphs and list items with text take their own direction.
+   */
+  direction: 'ltr' | 'rtl'
   placeholder: string
   label: string
   /** Most characters of text the note may hold. */

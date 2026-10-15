@@ -5,6 +5,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
+import { tracking } from '@/lib/tracking'
 
 const Row = ({
   icon,
@@ -69,7 +70,7 @@ const PlanMonthNextSteps = () => {
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
         accessibilityRole='header'
       >

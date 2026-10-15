@@ -2,7 +2,8 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useIsFocused } from '@react-navigation/native'
-import { ChevronLeft as ChevronLeftIcon, X as XIcon } from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import SplitSheet from '@/components/ui/SplitSheet'
@@ -153,7 +154,7 @@ const SelectedDateSheet: React.FC<Props> = ({
     >
       <IconButton
         noTransform
-        icon={ChevronLeftIcon}
+        icon={ChevronBackwardIcon}
         size={24}
         color={theme.colors.text}
         onPress={() => setForm(null)}

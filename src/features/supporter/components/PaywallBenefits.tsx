@@ -13,6 +13,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Card from '@/components/ui/Card'
 import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRatings'
+import { tracking } from '@/lib/tracking'
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
@@ -80,7 +81,7 @@ export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
             fontSize: 11,
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.supporter,
-            letterSpacing: 1.2,
+            letterSpacing: tracking(1.2),
             textTransform: 'uppercase',
           }}
         >
@@ -129,7 +130,7 @@ export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
               fontSize: 13,
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.text,
-              letterSpacing: 0.3,
+              letterSpacing: tracking(0.3),
             }}
           >
             {i18n.t('founderNoteSignOff')}
@@ -319,7 +320,7 @@ export const ComparisonChart = ({
                 fontSize: 11,
                 fontFamily: theme.fonts.semiBold,
                 color: theme.colors.textAlt,
-                letterSpacing: 1,
+                letterSpacing: tracking(1),
                 textTransform: 'uppercase',
               }}
             >
@@ -338,7 +339,7 @@ export const ComparisonChart = ({
                   fontSize: 11,
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.supporter,
-                  letterSpacing: 1,
+                  letterSpacing: tracking(1),
                   textTransform: 'uppercase',
                 }}
               >

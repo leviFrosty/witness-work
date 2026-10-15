@@ -1,7 +1,7 @@
 import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-} from 'lucide-react-native'
+  ChevronBackwardIcon,
+  ChevronForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import { type StyleProp, View, type ViewStyle } from 'react-native'
 
 import Button from '@/components/ui/Button'
@@ -69,7 +69,7 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
         }}
       >
         <LucideIcon
-          icon={ChevronLeftIcon}
+          icon={ChevronBackwardIcon}
           size={15}
           color={navColor(model.hasPrevious)}
         />
@@ -180,7 +180,7 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
           {i18n.t('pagination.next')}
         </Text>
         <LucideIcon
-          icon={ChevronRightIcon}
+          icon={ChevronForwardIcon}
           size={15}
           color={navColor(model.hasNext)}
         />

@@ -13,7 +13,7 @@ type Theme = ReturnType<typeof useTheme>
  */
 export const notesImportUserBubbleStyle = (theme: Theme): ViewStyle => ({
   borderRadius: 20,
-  borderBottomRightRadius: 4,
+  borderBottomEndRadius: 4,
   borderCurve: 'continuous',
   backgroundColor: theme.colors.accentBubble,
   paddingHorizontal: 16,

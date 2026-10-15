@@ -140,7 +140,7 @@ const PreferencesCustomFieldsScreen = () => {
                   onChangeText={setNewFieldName}
                   autoCapitalize='words'
                   maxLength={14}
-                  textAlign='left'
+                  textAlign='start'
                   style={{ flex: 1 }}
                 />
                 <ActionButton onPress={handleAdd}>
@@ -240,7 +240,7 @@ const PreferencesCustomFieldsScreen = () => {
                         }}
                         autoCapitalize='words'
                         maxLength={14}
-                        textAlign='left'
+                        textAlign='start'
                         style={{ flex: 1 }}
                       />
                       <PullDownMenu

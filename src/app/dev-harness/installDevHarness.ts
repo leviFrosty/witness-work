@@ -1,7 +1,7 @@
 import { perf } from '@/lib/perf'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
-import { LogBox } from 'react-native'
+import { I18nManager, LogBox } from 'react-native'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
@@ -21,6 +21,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
+import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
@@ -33,6 +34,8 @@ import {
   backupHarness,
   handoffHarness,
 } from '@/app/dev-harness/account'
+import { _i18n } from '@/lib/locales'
+import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
   badgeHarnessState,
@@ -156,8 +159,11 @@ function summary() {
 
 function seed(name: string) {
   const fakeDrive = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
+  const forceRtl = isDevForceRtl()
   seedScenario(name)
   if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
+  // A seed keeps the layout direction it found (Tools → Force Right to Left).
+  if (forceRtl) setDevForceRtl(true)
   return summary()
 }
 
@@ -293,6 +299,18 @@ export function installDevHarness() {
      * `offerRestore()`, `deleteAll()`, then `backup.last`.
      */
     backup: backupHarness,
+    /**
+     * The Tools "Force Right to Left" switch, without the reload: relaunch
+     * (`wwv up`) to apply it. Returns the direction the app runs in now.
+     */
+    layoutDirection: {
+      forceRtl: (on: boolean) => {
+        setDevForceRtl(on)
+        syncLayoutDirection(_i18n.locale)
+        return { rtl: I18nManager.isRTL, forceRtl: isDevForceRtl() }
+      },
+      state: () => ({ rtl: I18nManager.isRTL, forceRtl: isDevForceRtl() }),
+    },
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()
@@ -328,6 +346,8 @@ export function installDevHarness() {
       // `enabled`/`requireAfter`, and the session's `locked`.
       appLock: useAppLockSettings,
       appLockSession: useAppLockSession,
+      // `getState().request('dev')` plays the update reveal and its tour.
+      updateReveal: useUpdateRevealStore,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

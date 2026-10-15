@@ -14,6 +14,7 @@ import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { tracking } from '@/lib/tracking'
 
 const RolloverScreen = () => {
   const theme = useTheme()
@@ -80,7 +81,7 @@ const RolloverScreen = () => {
               color: theme.colors.textAlt,
               fontFamily: theme.fonts.semiBold,
               textTransform: 'uppercase',
-              letterSpacing: 1.5,
+              letterSpacing: tracking(1.5),
               marginBottom: 8,
             }}
           >

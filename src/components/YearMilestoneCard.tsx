@@ -43,6 +43,7 @@ import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useShallow } from 'zustand/react/shallow'
+import { tracking } from '@/lib/tracking'
 
 interface YearMilestoneCardProps {
   /**
@@ -477,7 +478,7 @@ const YearMilestoneCard = ({
             fontSize: theme.fontSize('sm'),
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.textAlt,
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {titleText}
@@ -614,7 +615,7 @@ const YearMilestoneCard = ({
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
           >
             {i18n.t('milestones')}

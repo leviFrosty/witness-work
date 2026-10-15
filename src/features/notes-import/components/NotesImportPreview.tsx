@@ -1,8 +1,8 @@
 import {
   BookUser as BookUserIcon,
-  ChevronRight as ChevronRightIcon,
   Clock as ClockIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
@@ -199,7 +199,7 @@ const ContactCard = ({
           </Button>
         )}
         <LucideIcon
-          icon={ChevronRightIcon}
+          icon={ChevronForwardIcon}
           size={14}
           color={theme.colors.textAlt}
           style={{ marginRight: 14 }}

@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { Swipeable } from 'react-native-gesture-handler'
+import SwipeableRow from '@/components/ui/SwipeableRow'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
@@ -38,17 +38,17 @@ export default function TripRow({ trip, vehicleName }: Props) {
   ].filter(Boolean)
 
   return (
-    <Swipeable
+    <SwipeableRow
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
         borderRadius: cardStyle.borderRadius,
       }}
-      renderRightActions={() => (
+      renderTrailingActions={() => (
         <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
       )}
-      onSwipeableOpen={(direction, swipeable) => {
-        if (direction !== 'right') return
+      onSwipeableOpen={(side, swipeable) => {
+        if (side !== 'trailing') return
         swipeable.reset()
         actions.requestDelete(trip)
       }}
@@ -117,6 +117,6 @@ export default function TripRow({ trip, vehicleName }: Props) {
           </View>
         </View>
       </ContextMenu>
-    </Swipeable>
+    </SwipeableRow>
   )
 }

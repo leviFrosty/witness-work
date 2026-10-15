@@ -13,6 +13,7 @@ import {
   UpNext,
   VisitOutcome,
 } from '@/features/contacts/lib/visitTimeline'
+import { tracking } from '@/lib/tracking'
 
 const RAIL_HEIGHT = 30
 const LINE_TOP = 13
@@ -48,7 +49,7 @@ const VisitJourneyCard = ({
     fontSize: theme.fontSize('xs') + 0.5,
     fontFamily: theme.fonts.semiBold,
     textTransform: 'uppercase' as const,
-    letterSpacing: 0.3,
+    letterSpacing: tracking(0.3),
     color: theme.colors.textAlt,
   }
   const captionStyle = {

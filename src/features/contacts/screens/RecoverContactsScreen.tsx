@@ -1,4 +1,5 @@
-import { Trash2 as Trash2Icon, Undo2 as Undo2Icon } from 'lucide-react-native'
+import { Trash2 as Trash2Icon } from 'lucide-react-native'
+import { UndoIcon } from '@/components/ui/DirectionalIcon'
 import { Pressable, ScrollView, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -162,7 +163,7 @@ const RecoverContactsScreen = () => {
       >
         <IconButton
           onPress={() => recover([item.id])}
-          icon={Undo2Icon}
+          icon={UndoIcon}
           accessibilityLabel={i18n.t('recover')}
         />
         <ContextMenu
@@ -305,7 +306,7 @@ const RecoverContactsScreen = () => {
       {selection.selecting && (
         <SelectionBar bottom={insets.bottom + 12}>
           <SelectionBarButton
-            icon={Undo2Icon}
+            icon={UndoIcon}
             label={i18n.t('recover')}
             disabled={selection.ids.length === 0}
             onPress={recoverSelected}

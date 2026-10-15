@@ -2,10 +2,10 @@ import {
   Bell as BellIcon,
   BellOff as BellOffIcon,
   Check as CheckIcon,
-  ChevronRight as ChevronRightIcon,
   Clock as ClockIcon,
   TriangleAlert as TriangleAlertIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
 import { Fragment, RefObject } from 'react'
 import { Pressable, View } from 'react-native'
@@ -279,7 +279,7 @@ const VisitTimeline = ({
                 {` · ${i18n.t('contactDetails.seeUpNext')}`}
               </Text>
               <LucideIcon
-                icon={ChevronRightIcon}
+                icon={ChevronForwardIcon}
                 size={11}
                 color={theme.colors.accent3}
               />

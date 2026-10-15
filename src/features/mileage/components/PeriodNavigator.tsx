@@ -1,8 +1,8 @@
 import { View } from 'react-native'
 import {
-  ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon,
-} from 'lucide-react-native'
+  ArrowBackwardIcon,
+  ArrowForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Badge from '@/components/ui/Badge'
@@ -64,7 +64,7 @@ export default function PeriodNavigator({
           style={navButton}
           accessibilityLabel={i18n.t('mileage.previousPeriod')}
         >
-          <IconButton icon={ArrowLeftIcon} size={15} />
+          <IconButton icon={ArrowBackwardIcon} size={15} />
         </Button>
         <View style={{ flex: 1, alignItems: 'center', gap: 4 }}>
           <Text
@@ -89,7 +89,7 @@ export default function PeriodNavigator({
           style={navButton}
           accessibilityLabel={i18n.t('mileage.nextPeriod')}
         >
-          <IconButton icon={ArrowRightIcon} size={15} />
+          <IconButton icon={ArrowForwardIcon} size={15} />
         </Button>
       </View>
     </View>

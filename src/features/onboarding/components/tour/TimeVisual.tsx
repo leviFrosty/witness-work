@@ -25,6 +25,7 @@ import {
   useRiseStyle,
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
+import { tracking } from '@/lib/tracking'
 
 const GOAL_MINUTES = 50 * 60
 const BEFORE_MINUTES = 34 * 60
@@ -437,7 +438,7 @@ const RingValue = ({
       style={{
         fontSize: 28,
         fontFamily: theme.fonts.bold,
-        letterSpacing: -0.5,
+        letterSpacing: tracking(-0.5),
         color: palette.text,
         textAlign: 'center',
       }}

@@ -22,6 +22,7 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import AssistantSection from '@/components/AssistantSection'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   scope: ProjectedTotalScope
@@ -99,7 +100,7 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
             textTransform: 'uppercase',
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {i18n.t(
@@ -115,7 +116,7 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           style={{
             fontFamily: theme.fonts.bold,
             fontSize: theme.fontSize('4xl'),
-            letterSpacing: -0.5,
+            letterSpacing: tracking(-0.5),
           }}
         >
           {projectedDisplay}

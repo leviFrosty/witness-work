@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { useState } from 'react'
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 
 import { View } from 'react-native'
 import ContextMenu from '@/components/ui/ContextMenu'
@@ -144,7 +144,7 @@ const AuxiliaryMonthRow = ({
             {label}
           </Text>
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={active ? theme.colors.accent : theme.colors.textAlt}
           />

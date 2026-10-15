@@ -8,16 +8,18 @@ import {
   Italic as ItalicIcon,
   KeyboardOff as KeyboardOffIcon,
   Link as LinkIcon,
-  List as ListIcon,
-  ListChecks as ListChecksIcon,
-  ListIndentDecrease as OutdentIcon,
-  ListIndentIncrease as IndentIcon,
-  ListOrdered as ListOrderedIcon,
-  Redo2 as RedoIcon,
   Strikethrough as StrikethroughIcon,
   Underline as UnderlineIcon,
-  Undo2 as UndoIcon,
 } from 'lucide-react-native'
+import {
+  BulletListIcon as ListIcon,
+  ChecklistIcon as ListChecksIcon,
+  IndentIcon,
+  NumberedListIcon as ListOrderedIcon,
+  OutdentIcon,
+  RedoIcon,
+  UndoIcon,
+} from '@/components/ui/DirectionalIcon'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerTooltip from '@/components/ui/PointerTooltip'

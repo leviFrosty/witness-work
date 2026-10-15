@@ -44,6 +44,7 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
 })
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('react-native', () => ({
+  I18nManager: { isRTL: false },
   Platform: {
     get OS() {
       return mocks.platform
@@ -155,10 +156,12 @@ vi.mock('lucide-react-native', () => ({
   Layers: 'Layers',
   MapPinned: 'MapPinned',
   Navigation: 'Navigation',
-  PanelRightClose: 'PanelRightClose',
-  PanelRightOpen: 'PanelRightOpen',
   Plus: 'Plus',
   Search: 'Search',
+}))
+vi.mock('@/components/ui/DirectionalIcon', () => ({
+  PanelTrailingCloseIcon: 'PanelRightClose',
+  PanelTrailingOpenIcon: 'PanelRightOpen',
 }))
 vi.mock('@/stores/contactsStore', () => ({
   default: Object.assign(

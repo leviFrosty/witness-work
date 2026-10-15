@@ -264,7 +264,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
                 autoFocus
                 maxLength={40}
                 enterKeyHint='done'
-                textAlign='left'
+                textAlign='start'
                 // Done closes the keyboard, bringing Invite back into view.
                 onBlur={revealNameField}
               />

@@ -18,6 +18,7 @@ import PlaceSearchInput from '@/components/PlaceSearchInput'
 import { addressToString } from '@/lib/address'
 import type { ResolvedPlace } from '@/lib/placeSearch'
 import { usePreferences } from '@/stores/preferences'
+import { tracking } from '@/lib/tracking'
 
 type Mode = 'search' | 'manual'
 
@@ -217,7 +218,7 @@ export default function AddressSection({
           style={{
             fontSize: 11,
             color: theme.colors.textAlt,
-            letterSpacing: 1.4,
+            letterSpacing: tracking(1.4),
             fontFamily: theme.fonts.semiBold,
             textTransform: 'uppercase',
           }}
@@ -278,7 +279,7 @@ export default function AddressSection({
                 onChangeText: (val: string) => setLine1(val),
                 autoCapitalize: 'words',
                 value: contact.address?.line1 || '',
-                textAlign: 'left',
+                textAlign: 'start',
               }}
             />
             <TextInputRow
@@ -290,7 +291,7 @@ export default function AddressSection({
                 onChangeText: (val: string) => setLine2(val),
                 value: contact.address?.line2 || '',
                 autoCapitalize: 'words',
-                textAlign: 'left',
+                textAlign: 'start',
               }}
             />
             <View
@@ -312,7 +313,7 @@ export default function AddressSection({
                     onChangeText: (val: string) => setCity(val),
                     autoCapitalize: 'words',
                     value: contact.address?.city || '',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                 />
               </View>
@@ -328,7 +329,7 @@ export default function AddressSection({
                     onChangeText: (val: string) => setState(val),
                     value: contact.address?.state || '',
                     autoCapitalize: 'words',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                 />
               </View>
@@ -352,7 +353,7 @@ export default function AddressSection({
                     onChangeText: (val: string) => setZip(val),
                     value: contact.address?.zip || '',
                     inputMode: 'numeric',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                   lastInSection
                 />
@@ -368,7 +369,7 @@ export default function AddressSection({
                     onChangeText: (val: string) => setCountry(val),
                     value: contact.address?.country || '',
                     autoCapitalize: 'words',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                   lastInSection
                 />

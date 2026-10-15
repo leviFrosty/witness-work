@@ -45,6 +45,8 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import { BADGE_LEVELS, type BadgeArtId, type BadgeLevel } from '@/types/badges'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import { tracking } from '@/lib/tracking'
+import { leftForPhysicalX } from '@/lib/direction'
 
 const MIN_COIN = 150
 const MAX_COIN = 260
@@ -61,7 +63,13 @@ const OWNER_AVATAR = 24
 export type BadgeViewBuddy = { name: string; avatar: ReactNode }
 
 type Point = { x: number; y: number }
-type Geometry = { target: Point; origin: (Point & { size: number }) | null }
+type Geometry = {
+  /** Screen coordinates relative to the root, for the flight's transforms. */
+  target: Point
+  /** The slot's `left`, which RN mirrors in RTL. */
+  targetLeft: number
+  origin: (Point & { size: number }) | null
+}
 
 /**
  * One badge, full screen and ready for a screenshot: the coin flips out of the
@@ -182,11 +190,12 @@ function BadgeViewContent({
 
   // Where the coin settles, and where it starts, both relative to this screen.
   const measure = () =>
-    root.current?.measureInWindow((rootX, rootY) =>
-      slot.current?.measureInWindow((x, y) => {
+    root.current?.measureInWindow((rootX, rootY, rootWidth) =>
+      slot.current?.measureInWindow((x, y, width) => {
         const from = params.origin
         setGeometry({
           target: { x: x - rootX, y: y - rootY },
+          targetLeft: leftForPhysicalX(x - rootX, width, rootWidth),
           origin: from
             ? { x: from.x - rootX, y: from.y - rootY, size: from.size }
             : null,
@@ -366,7 +375,7 @@ function BadgeViewContent({
                 style={[
                   {
                     position: 'absolute',
-                    left: geometry.target.x + coinSize / 2 - haloSize / 2,
+                    left: geometry.targetLeft + coinSize / 2 - haloSize / 2,
                     top: geometry.target.y + coinSize / 2 - haloSize / 2,
                     width: haloSize,
                     height: haloSize,
@@ -491,7 +500,7 @@ function BadgeViewContent({
                           fontSize: 11,
                           fontFamily: theme.fonts.semiBold,
                           textTransform: 'uppercase',
-                          letterSpacing: 0.6,
+                          letterSpacing: tracking(0.6),
                         }}
                       >
                         {i18n.t('badges_newPill')}
@@ -532,7 +541,7 @@ function BadgeViewContent({
                 style={[
                   {
                     position: 'absolute',
-                    left: geometry.target.x,
+                    left: geometry.targetLeft,
                     top: geometry.target.y,
                     width: coinSize,
                     height: coinSize,

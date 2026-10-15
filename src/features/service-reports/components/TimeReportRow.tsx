@@ -3,7 +3,10 @@ import {
   ArrowLeftRight as ArrowLeftRightIcon,
   Construction as ConstructionIcon,
 } from 'lucide-react-native'
-import { Swipeable } from 'react-native-gesture-handler'
+import SwipeableRow, {
+  type Swipeable,
+  type SwipeSide,
+} from '@/components/ui/SwipeableRow'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import { TimeEntry } from '@/types/timeEntry'
@@ -99,11 +102,8 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
     })
   }
 
-  const handleSwipeOpen = (
-    direction: 'left' | 'right',
-    swipeable: Swipeable
-  ) => {
-    if (direction !== 'right') return
+  const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
+    if (side !== 'trailing') return
 
     // Snap the row back before the confirmation lands — the alert owns the
     // interaction from here, whichever way the user answers it.
@@ -242,19 +242,17 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   ]
 
   return (
-    <Swipeable
+    <SwipeableRow
       key={report.id}
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
         borderRadius: cardStyle.borderRadius,
       }}
-      renderRightActions={() => (
+      renderTrailingActions={() => (
         <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
       )}
-      onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable)
-      }
+      onSwipeableOpen={(side, swipeable) => handleSwipeOpen(side, swipeable)}
     >
       <ContextMenu
         actions={actions}
@@ -382,7 +380,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
           )}
         </View>
       </ContextMenu>
-    </Swipeable>
+    </SwipeableRow>
   )
 }
 

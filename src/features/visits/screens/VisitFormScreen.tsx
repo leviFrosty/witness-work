@@ -682,7 +682,7 @@ const VisitFormScreen = ({
                   multiline: true,
                   enterKeyHint: 'enter',
                   defaultValue: conversation.followUp?.topic,
-                  textAlign: 'left',
+                  textAlign: 'start',
                   onChangeText: (topic: string) =>
                     setConversation({
                       ...conversation,

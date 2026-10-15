@@ -27,6 +27,7 @@ import {
   useRiseStyle,
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
+import { tracking } from '@/lib/tracking'
 
 const STRIP_Y = 196
 const STRIP_LEFT = 24
@@ -148,7 +149,7 @@ const ContactsVisual = ({
           <VisualText
             style={{
               fontSize: 10,
-              letterSpacing: 1,
+              letterSpacing: tracking(1),
               fontFamily: theme.fonts.bold,
               color: theme.colors.accent,
               textTransform: 'uppercase',

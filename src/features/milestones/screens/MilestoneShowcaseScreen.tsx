@@ -42,6 +42,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
+import { tracking } from '@/lib/tracking'
 
 const HERO_FEATURES = (
   ['liquidGlass', 'widgets', 'progress', 'contacts', 'iCloudSync'] as const
@@ -172,7 +173,7 @@ const ShowcaseHeader = () => {
             color: theme.colors.accent,
             fontFamily: theme.fonts.semiBold,
             fontSize: 11,
-            letterSpacing: 1.2,
+            letterSpacing: tracking(1.2),
           }}
         >
           {i18n.t('milestoneShowcase_kicker')}
@@ -1021,14 +1022,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    letterSpacing: -1,
+    letterSpacing: tracking(-1),
     textAlign: 'center',
     lineHeight: 38,
   },
   headerSubtitle: {
     fontSize: 13,
     textAlign: 'center',
-    letterSpacing: 0.6,
+    letterSpacing: tracking(0.6),
   },
   hero: {
     gap: 16,
@@ -1046,7 +1047,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 22,
-    letterSpacing: -0.5,
+    letterSpacing: tracking(-0.5),
   },
   heroDescription: {
     fontSize: 14,
@@ -1232,12 +1233,12 @@ const styles = StyleSheet.create({
   widgetLabel: {
     textTransform: 'uppercase',
     fontSize: 9,
-    letterSpacing: 1.4,
+    letterSpacing: tracking(1.4),
     fontWeight: '700',
   },
   widgetBigNumber: {
     fontSize: 28,
-    letterSpacing: -1,
+    letterSpacing: tracking(-1),
     lineHeight: 30,
   },
   widgetTrack: {
@@ -1272,7 +1273,7 @@ const styles = StyleSheet.create({
   /* secondary */
   secondaryHeading: {
     fontSize: 18,
-    letterSpacing: -0.4,
+    letterSpacing: tracking(-0.4),
   },
   secondaryGrid: {
     gap: 8,
@@ -1301,7 +1302,7 @@ const styles = StyleSheet.create({
   },
   closingTitle: {
     fontSize: 22,
-    letterSpacing: -0.4,
+    letterSpacing: tracking(-0.4),
   },
   closingBody: {
     fontSize: 14,

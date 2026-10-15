@@ -41,6 +41,8 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import ServiceYearPaceCard from '@/features/progress/components/ServiceYearPaceCard'
 import GoalBar, { GoalBarKey } from '@/components/GoalBar'
 import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
+import { alignText } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -294,8 +296,8 @@ const MonthRow = ({
               {
                 fontFamily: theme.fonts.semiBold,
                 color: hasActivity ? theme.colors.text : theme.colors.textAlt,
-                letterSpacing: -0.3,
-                textAlign: 'right',
+                letterSpacing: tracking(-0.3),
+                textAlign: alignText('end'),
               },
             ]}
           >
@@ -310,8 +312,8 @@ const MonthRow = ({
                 {
                   fontFamily: theme.fonts.semiBold,
                   color: deltaColor,
-                  letterSpacing: -0.3,
-                  textAlign: 'right',
+                  letterSpacing: tracking(-0.3),
+                  textAlign: alignText('end'),
                 },
               ]}
             >
@@ -427,7 +429,7 @@ const ProgressYearTab = ({
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('xs'),
                     textTransform: 'uppercase',
-                    letterSpacing: 0.5,
+                    letterSpacing: tracking(0.5),
                   },
                 ]}
                 numberOfLines={1}
@@ -442,8 +444,8 @@ const ProgressYearTab = ({
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('xs'),
                     textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                    textAlign: 'right',
+                    letterSpacing: tracking(0.5),
+                    textAlign: alignText('end'),
                   },
                 ]}
                 numberOfLines={1}
@@ -459,8 +461,8 @@ const ProgressYearTab = ({
                       color: theme.colors.textAlt,
                       fontSize: theme.fontSize('xs'),
                       textTransform: 'uppercase',
-                      letterSpacing: 0.5,
-                      textAlign: 'right',
+                      letterSpacing: tracking(0.5),
+                      textAlign: alignText('end'),
                     },
                   ]}
                   numberOfLines={1}

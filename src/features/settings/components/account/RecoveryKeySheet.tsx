@@ -151,6 +151,9 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
             fontFamily: RECOVERY_KEY_FONT,
             fontSize: theme.fontSize('lg'),
             lineHeight: theme.fontSize('lg') * 1.6,
+            // The key is Latin letters and digits in every language, so the
+            // spacing can't break Arabic joining.
+            // eslint-disable-next-line no-restricted-syntax
             letterSpacing: 1,
             textAlign: 'center',
             color: theme.colors.text,

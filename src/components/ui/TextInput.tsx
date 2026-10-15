@@ -11,9 +11,16 @@ import {
 import useTheme from '@/contexts/theme'
 import { Errors } from '@/types/textInput'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { alignInput, alignText, type FlowAlign } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 export interface TextInputProps
-  extends Omit<InputProps, 'placeholderTextColor' | 'selectionColor'> {
+  extends Omit<
+    InputProps,
+    'placeholderTextColor' | 'selectionColor' | 'textAlign'
+  > {
+  /** Reading-order alignment; `end` (the trailing side) by default. */
+  textAlign?: FlowAlign | 'center'
   invalid?: boolean
   error?: string
   errors?: Errors
@@ -55,6 +62,15 @@ const PLACEHOLDER_ALIGN_VERTICAL = {
   bottom: 'flex-end',
 } as const
 
+// A `textAlign` in a caller's style reads as start/end too.
+const toFlow = (
+  align: TextStyle['textAlign'] | FlowAlign | undefined
+): FlowAlign | 'center' => {
+  if (align === 'center') return 'center'
+  if (align === 'left' || align === 'start') return 'start'
+  return 'end'
+}
+
 const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   const {
     error,
@@ -74,6 +90,10 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   const theme = useTheme()
 
   const Component = (rest.multiline ? TextArea : Input) as typeof Input
+  const flowAlign = toFlow(
+    textAlign ?? (StyleSheet.flatten(style) as TextStyle | undefined)?.textAlign
+  )
+  const inputAlign = flowAlign === 'center' ? 'center' : alignInput(flowAlign)
 
   const resolvedStyle = StyleSheet.flatten([
     {
@@ -88,18 +108,19 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       fontFamily: theme.fonts.regular,
       fontSize: theme.fontSize('md'),
       color: theme.colors.text,
-      textAlign: 'right',
     },
     {
       ...(fontSize !== undefined && { fontSize }),
       ...(fontFamily !== undefined && { fontFamily }),
       ...(fontWeight !== undefined && { fontWeight }),
       ...(lineHeight !== undefined && { lineHeight }),
-      ...(letterSpacing !== undefined && { letterSpacing }),
-      ...(textAlign !== undefined && { textAlign }),
+      ...(letterSpacing !== undefined && {
+        letterSpacing: tracking(letterSpacing),
+      }),
       ...(textAlignVertical !== undefined && { textAlignVertical }),
     } as unknown as InputProps['style'],
     style,
+    { textAlign: inputAlign },
   ]) as InputProps['style'] & {
     backgroundColor?: string
     borderColor?: string
@@ -171,8 +192,10 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       {...(fontFamily !== undefined && { fontFamily })}
       {...(fontWeight !== undefined && { fontWeight })}
       {...(lineHeight !== undefined && { lineHeight })}
-      {...(letterSpacing !== undefined && { letterSpacing })}
-      textAlign={textAlign ?? 'right'}
+      {...(letterSpacing !== undefined && {
+        letterSpacing: tracking(letterSpacing),
+      })}
+      textAlign={inputAlign}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
         borderWidth,
@@ -236,8 +259,11 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
               fontFamily: innerStyle.fontFamily,
               fontSize: innerStyle.fontSize,
               fontWeight: innerStyle.fontWeight,
+              // Already passed through tracking() above.
+              // eslint-disable-next-line no-restricted-syntax
               letterSpacing: innerStyle.letterSpacing,
-              textAlign: (textAlign ?? 'right') as TextStyle['textAlign'],
+              textAlign:
+                flowAlign === 'center' ? 'center' : alignText(flowAlign),
             }}
           >
             {rest.placeholder}

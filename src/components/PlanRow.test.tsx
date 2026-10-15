@@ -52,6 +52,7 @@ vi.mock('react-native', async () => {
 
   return {
     Alert: { alert: vi.fn() },
+    I18nManager: { isRTL: false },
     View: Host,
   }
 })

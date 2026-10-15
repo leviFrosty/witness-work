@@ -10,6 +10,7 @@ import {
   shouldShowNotesImportSupporterCta,
   type NotesImportCredits,
 } from '@/features/notes-import/lib/notesImportUsage'
+import { alignText } from '@/lib/direction'
 
 export type RenderNotesImportSupporterCta = (props: {
   onPress: () => void
@@ -167,7 +168,7 @@ const NotesImportUsage = ({
                   color: theme.colors.accent,
                   fontFamily: theme.fonts.semiBold,
                   fontSize: theme.fontSize('sm'),
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {importBalance}

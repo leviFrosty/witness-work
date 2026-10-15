@@ -158,7 +158,7 @@ const CatchUpMonthRow = ({
           value={row.hours}
           onChangeText={(v) => onChange(index, 'hours', v)}
           placeholder='0'
-          textAlign='right'
+          textAlign='end'
         />
       </View>
       <View
@@ -187,7 +187,7 @@ const CatchUpMonthRow = ({
           value={row.creditHours}
           onChangeText={(v) => onChange(index, 'creditHours', v)}
           placeholder='0'
-          textAlign='right'
+          textAlign='end'
         />
       </View>
     </View>

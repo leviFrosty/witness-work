@@ -1,10 +1,8 @@
 import Constants from 'expo-constants'
 import semver from 'semver'
 import { useNavigation } from '@react-navigation/native'
-import {
-  ChevronRight as ChevronRightIcon,
-  Gift as GiftIcon,
-} from 'lucide-react-native'
+import { Gift as GiftIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -88,7 +86,7 @@ const UpdateTourCard = () => {
         </Text>
       </View>
       <LucideIcon
-        icon={ChevronRightIcon}
+        icon={ChevronForwardIcon}
         size={18}
         color={theme.colors.textAlt}
       />

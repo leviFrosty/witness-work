@@ -1,9 +1,11 @@
 import {
+  KeyRound as KeyRoundIcon,
   Lock as LockIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
 } from 'lucide-react-native'
+import * as BuddiesKeychain from '../../../../../modules/buddies-keychain'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
@@ -25,6 +27,16 @@ const PreferencesSection = ({
           onPress={() => handleNavigate('PreferencesPublisher')}
           selected={selectedDestination === 'PreferencesPublisher'}
         />
+        {/* Binaries before the recovery key can't replace the account key. */}
+        {BuddiesKeychain.isReplaceAvailable() && (
+          <GroupedListRow
+            icon={KeyRoundIcon}
+            label={i18n.t('account_title')}
+            onPress={() => handleNavigate('Account')}
+            selected={selectedDestination === 'Account'}
+            testID='settings-account'
+          />
+        )}
         <GroupedListRow
           icon={PaletteIcon}
           label={i18n.t('personalization')}

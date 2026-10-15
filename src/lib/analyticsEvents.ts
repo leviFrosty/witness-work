@@ -60,6 +60,7 @@ export const analyticsEventNames = [
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.
+  'account_key_replaced',
   'announcement_dismissed',
   'announcement_link_opened',
   'app_launch_timed',
@@ -110,6 +111,9 @@ export const analyticsEventNames = [
   'note_photo_failed',
   'notification_opened',
   'pointer_hover_detected',
+  'recovery_key_exported',
+  'recovery_key_used',
+  'recovery_key_viewed',
   'saved_view_applied',
   'saved_view_created',
   'schedule_year_view_opened',

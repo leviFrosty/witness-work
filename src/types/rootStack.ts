@@ -153,6 +153,8 @@ export type RootStackParamList = {
   FAQ: { scrollToCategory?: string } | undefined
   /** QR codes and a link for sharing WitnessWork with a friend. */
   ShareApp: undefined
+  /** The anonymous server account and its recovery key. */
+  Account: undefined
   OpenSourceLicenses: undefined
   More: undefined
   ServiceReportView: { month: number; year: number }

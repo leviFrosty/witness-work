@@ -26,7 +26,7 @@ public class BuddiesKeychainModule: Module {
 
     // JS checks this so OTA updates never call into a binary without the module.
     Constant("buddiesKeychainVersion") {
-      2
+      3
     }
 
     Function("peekRootSeed") { () throws -> String? in
@@ -50,6 +50,12 @@ public class BuddiesKeychainModule: Module {
 
     AsyncFunction("deleteRootSeedAsync") { () throws in
       try self.deleteRootSeed()
+    }
+
+    // Version 3: the account key received from a recovery key or another
+    // device replaces this one, here and on the User's other Apple devices.
+    AsyncFunction("replaceRootSeedAsync") { (seed: String) throws in
+      try self.replaceRootSeed(seed)
     }
 
     Function("setAlertContext") { (json: String?) throws in
@@ -89,6 +95,23 @@ public class BuddiesKeychainModule: Module {
       throw BuddiesKeychainError(message: "Root seed vanished after duplicate", status: errSecItemNotFound)
     }
     return synced
+  }
+
+  /// Replaces the synchronizable item, so the new seed reaches the User's
+  /// other Apple devices too. Deleted then added rather than updated, which
+  /// also clears a copy that hasn't synced yet; a copy syncing in between the
+  /// two is deleted again once.
+  private func replaceRootSeed(_ seed: String) throws {
+    guard Self.decodeBase64url(seed)?.count == 32 else {
+      throw BuddiesKeychainError(message: "Root seed must be 32 bytes", status: errSecParam)
+    }
+    for _ in 0..<2 {
+      try deleteRootSeed()
+      if try addRootSeed(seed) {
+        return
+      }
+    }
+    throw BuddiesKeychainError(message: "Could not replace root seed", status: errSecDuplicateItem)
   }
 
   private func deleteRootSeed() throws {
@@ -215,6 +238,16 @@ public class BuddiesKeychainModule: Module {
     let alertGroup = "\(team).\(bundleId).buddies-alerts"
     cachedAlertAccessGroup = alertGroup
     return alertGroup
+  }
+
+  private static func decodeBase64url(_ text: String) -> Data? {
+    var base64 = text
+      .replacingOccurrences(of: "-", with: "+")
+      .replacingOccurrences(of: "_", with: "/")
+    while base64.count % 4 != 0 {
+      base64.append("=")
+    }
+    return Data(base64Encoded: base64)
   }
 
   private static func base64url(_ data: Data) -> String {

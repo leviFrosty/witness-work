@@ -42,6 +42,13 @@ export const serverAccount = createServerAccount({
       now: syncNow,
       randomBytes: getRandomBytes,
     }),
+  info: (key) =>
+    fetchAccountInfo({
+      baseUrl: apis.accounts,
+      key,
+      now: syncNow,
+      randomBytes: getRandomBytes,
+    }),
   storage,
   now: Date.now,
 })

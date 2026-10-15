@@ -50,6 +50,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `icloud_restore_probe_result`                                                     | Once per session for each status/source; automatic repeated probes are suppressed.                                                                                                                                                 |
 | `saved_view_applied`                                                              | Once per session and surface (`source`); reach of Saved View switching, not how often people switch.                                                                                                                               |
 | `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                                                                                                                         |
+| `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -802,6 +803,23 @@ session-only property:
 
 Backups hold Contacts, Notes, and ministry records: open them only to debug that
 report, and delete local copies afterwards.
+
+## Account and recovery key
+
+These answer whether people save their recovery key (ADR 0026), whether
+recovery keys bring accounts to new phones, and how often using one costs
+someone their Buddies data. They're rare by nature: once a session at most for
+viewing, and once per action otherwise.
+
+| Event                   | When                                                                               | Properties                                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                      | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).              |
+| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                    | `method: copy \| share`.                                                                                                                             |
+| `recovery_key_used`     | Use a Recovery Key finished.                                                       | `outcome: replaced \| unchanged \| declined \| failed` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning). |
+| `account_key_replaced`  | This device's account key was replaced, from a recovery key or (dev builds) Tools. | `source: recovery_key \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account registered right away).                       |
+
+Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
+Mistyped keys send nothing: the form refuses them before they can be used.
 
 ## Error tracking
 

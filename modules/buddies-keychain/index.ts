@@ -29,6 +29,13 @@ interface BuddiesKeychainNative {
   peekRootSeedAsync?(): Promise<string | null>
   getOrCreateRootSeedAsync?(): Promise<string>
   deleteRootSeedAsync?(): Promise<void>
+  /**
+   * Version 3: replaces the seed (32 bytes, base64url) with one the User
+   * brought from another device. iOS replaces the synchronizable item, so it
+   * reaches their other Apple devices; Android replaces the sealed copy and its
+   * Block Store backup.
+   */
+  replaceRootSeedAsync?(seed: string): Promise<void>
   /** Android only. */
   rootSeedBackup?(): RootSeedBackup
   /**
@@ -83,6 +90,26 @@ export async function deleteRootSeed(): Promise<void> {
   if (!isAvailable()) return
   if (native!.deleteRootSeedAsync) await native!.deleteRootSeedAsync()
   else native!.deleteRootSeed()
+}
+
+/** Whether this binary can replace the seed (version 3 of the module). */
+export function isReplaceAvailable(): boolean {
+  return (
+    isAvailable() &&
+    (native!.buddiesKeychainVersion ?? 0) >= 3 &&
+    native!.replaceRootSeedAsync !== undefined
+  )
+}
+
+/**
+ * Replaces the seed (32 bytes, base64url) here and in its synced or backed-up
+ * copy. Off the JS thread. Throws on binaries without it.
+ */
+export async function replaceRootSeed(seed: string): Promise<void> {
+  if (!isReplaceAvailable()) {
+    throw new Error('Replacing the root seed requires a newer native binary')
+  }
+  await native!.replaceRootSeedAsync!(seed)
 }
 
 /**

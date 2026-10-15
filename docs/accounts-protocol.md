@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists and what it will grow into is in [ADR 0024](./adr/0024-anonymous-server-accounts.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse.
 
@@ -12,6 +12,9 @@ The server account is not ADR 0011's account id. That one is the RevenueCat iden
 | Account signing key | Ed25519, seed `HKDF-SHA256(accountKey, "", "ww-account/v1/sign", 32)` | Derived on each device; never stored                                     |
 | `accountPub`        | The signing key's public key, `b64u` (43 chars)                       | The server's `accounts.account_pub`                                      |
 | `accountId`         | 16 random bytes, `b64u` (22 chars), minted by the server              | The server, and each device's MMKV                                       |
+| Backup key          | `HKDF-SHA256(accountKey, "", "ww-account/v1/backup", 32)`             | Derived on each device; never stored                                     |
+| Recovery key        | The account key for people (see [Recovery key](#recovery-key))        | Wherever the User keeps it                                               |
+| Backup slot id      | 16 random bytes, `b64u`, one per install                              | The device's MMKV, and the server's R2 object key                        |
 
 Every feature derives its own keys from the account key with its own HKDF label (Buddies uses `ww-buddies/v1/*`), so the server can't tell that `accountPub` and a feature's public keys belong together. Only signatures the User's devices make link them.
 
@@ -38,7 +41,7 @@ Every feature derives its own keys from the account key with its own HKDF label 
 
 - Self-signed like `account/register`, under op `account/info`, so only the account key's holder reads the account. Read-only: it never creates one, and an unregistered key is `unknown_account` (404).
 - `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
-- For the app's developer Tools screen (Server account). Counts against the Buddies read edge limit.
+- Settings → Account reads the account's status with it each time the screen opens, and the developer Tools show the whole record. Counts against the Buddies read edge limit.
 
 ## Linking a Buddies inbox
 
@@ -52,6 +55,100 @@ The whole payload is also signed by the inbox's owner key, so a link takes both 
 
 The app sends a proof on every registration once it has an account, and links an inbox registered before accounts on the first sync after it gets one (once per launch). Without an account (offline, or accounts off) it registers unlinked, as before.
 
+## Handoff (Set Up Another Device)
+
+The phone with the account (the **old** phone) shows a QR code; the **new** phone scans it. The server relays four small messages through one Durable Object per channel and never sees a key it could use.
+
+### The QR code
+
+```
+https://ww-proxy.leviwilkerson.com/h#1<b64u(channelId[16] ‖ offerPub[32] ‖ secret[16])>
+```
+
+- `channelId`: 16 random bytes; the only part the server learns.
+- `offerPub`: the old phone's temporary X25519 public key, made for this handoff and forgotten after it.
+- `secret`: 16 random bytes.
+- The fragment never reaches a server. `GET /h` serves a page telling someone without the app to install it, and the app claims `/h` as a universal link and Android app link.
+
+### Keys
+
+With `claimPub` the new phone's temporary X25519 public key, `shared = X25519(own private, other public)`, and `transcript = channelId + "\n" + offerPub + "\n" + claimPub` (all b64u):
+
+| Value        | Derivation                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `claimToken` | `HKDF-SHA256(secret, "", "ww-account/v1/handoff/claim\n" + channelId, 16)`, b64u                                                     |
+| `verifier`   | `b64u(SHA-256(claimToken bytes))`; the server's copy                                                                                 |
+| `prk`        | `HKDF-Extract(salt = secret, ikm = shared)`                                                                                          |
+| `helloKey`   | `HKDF-Expand(prk, "ww-account/v1/handoff/hello\n" + transcript, 32)`                                                                 |
+| `keyKey`     | `HKDF-Expand(prk, "ww-account/v1/handoff/key\n" + transcript, 32)`                                                                   |
+| Code         | `HKDF-Expand(prk, "ww-account/v1/handoff/code\n" + transcript, 4)` as big-endian `uint32 mod 1,000,000`, six digits, shown `123 456` |
+
+Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`) with AAD `"ww-account/v1/handoff/hello\n" + channelId` or `"ww-account/v1/handoff/key\n" + channelId`.
+
+- **Hello** (new → old), sealed with `helloKey`: `{ "deviceName": string ≤ 64, "platform": "ios" | "android", "model": string ≤ 64, "appVersion": string }`.
+- **Key** (old → new), sealed with `keyKey`: `{ "v": 1, "accountKey": b64u(32 bytes), "accountId": string }`.
+
+### Ops
+
+`POST {BASE}/accounts/v1/{op}`. Ops the old phone makes are self-signed envelopes like `account/register`: the payload carries `accountPub`, `ts`, `nonce`, plus the fields below, and the account must exist. Ops the new phone makes are plain JSON authorized by `claimToken`.
+
+| Op                | Caller | Request                                                 | Response                                                      |
+| ----------------- | ------ | ------------------------------------------------------- | ------------------------------------------------------------- |
+| `handoff/open`    | Old    | `channelId`, `verifier`                                 | `{ ok, expiresAt }`; `conflict` if the channel exists         |
+| `handoff/claim`   | New    | `channelId`, `claimToken`, `claimPub`, `hello` (sealed) | `{ ok, expiresAt }`; `conflict` once another phone claimed it |
+| `handoff/status`  | Old    | `channelId`                                             | `{ ok, status, expiresAt, claimPub?, hello? }`                |
+| `handoff/send`    | Old    | `channelId`, `key` (sealed)                             | `{ ok }`; only while `claimed`                                |
+| `handoff/receive` | New    | `channelId`, `claimToken`                               | `{ ok, status, key? }`                                        |
+| `handoff/done`    | New    | `channelId`, `claimToken`                               | `{ ok }`; deletes the key blob                                |
+| `handoff/cancel`  | Either | `channelId` (old, signed) or `channelId`, `claimToken`  | `{ ok }`; deletes every blob                                  |
+
+- `status` is `open`, `claimed`, `sent`, `done`, or `cancelled`. An expired or unknown channel is 404 `not_found`.
+- A channel lives **10 minutes** from `open`, then its Durable Object deletes everything. `done` and `cancel` delete the blobs at once and keep only the status until then.
+- The first valid claim wins. Repeating it with the same body gets `ok` again (a lost response); any other claim is `conflict`. Five bad `claimToken`s burn the channel (`cancelled`).
+- Only the account that opened the channel can read its status, send, or cancel it as the old phone (`forbidden` otherwise).
+- Clients poll every 1.5 seconds while a screen is showing the handoff.
+- Limits: `handoff/open` counts against the register edge tier and 20 per account a day; the rest against the read tier.
+
+## Backup
+
+Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A restore downloads every slot and folds them with the sync merge.
+
+### The blob
+
+`0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(backupKey, nonce, gzip(plaintext), aad)`, with `aad = UTF-8("ww-account/v1/backup\n" + accountId + "\n" + slotId)`. The plaintext is UTF-8 JSON:
+
+```json
+{
+  "v": 1,
+  "deviceName": "…",
+  "platform": "ios",
+  "createdAt": 0,
+  "payload": {
+    /* SyncPayload */
+  }
+}
+```
+
+### Ops
+
+All self-signed envelopes like `account/register`, payloads with `accountPub`, `ts`, `nonce` and the fields below. The account must exist; a suspended account can still back up.
+
+| Op              | Request                         | Response                                                      |
+| --------------- | ------------------------------- | ------------------------------------------------------------- |
+| `backup/put`    | `slotId`, `size`, `sha256`      | `{ ok, uploadedAt }`                                          |
+| `backup/list`   |                                 | `{ ok, slots: [{ slotId, size, uploadedAt }] }`               |
+| `backup/get`    | `slotId`                        | The blob, `application/octet-stream`; `not_found` without one |
+| `backup/delete` | `slotId`, or none for all slots | `{ ok }`                                                      |
+
+- `backup/put` sends the envelope in headers (`x-ww-p`, `x-ww-s`) and the blob as the raw body; `sha256` is b64u of the body's SHA-256 and `size` its length. Every other op sends the envelope as the JSON body.
+- Limits: 20 MiB a blob (`too_large`, 413), 8 slots an account (`limit`), one `backup/put` a slot a minute (`rate_limited`), and the read edge tier for the rest.
+- R2's lifecycle rule deletes a slot 400 days after its last upload.
+- `disabled` (503) when the worker has no backup bucket or accounts database.
+
+## Recovery key
+
+The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford base32 (`0-9 A-Z` without `I L O U`), 55 characters, shown as `WW1-` and eleven groups of five. Reading one ignores case, spaces, and dashes, reads `I`/`L` as `1` and `O` as `0`, and refuses a bad checksum. Entering it works like receiving the key in a handoff.
+
 ## Suspension
 
 A suspended account's inboxes refuse every owner op except `inbox/delete` and `slot/remove` with `403 suspended`, close their live sockets with `4003 "suspended"`, and refuse `inbox/register`, with or without a proof. Buddies writing into the suspended User's inbox, and the User's own writes into buddies' inboxes (writer ops), still work: a buddy who wants them gone removes them. The app shows the `buddies_errorSuspended` message and backs off like the kill switch.
@@ -61,3 +158,5 @@ Moderation is maintainer-only: `POST /admin/accounts/lookup` and `/admin/account
 ## Privacy
 
 The accounts database holds the account id, `accountPub`, the status and its history (reason codes only), and which inboxes each account owns. No name, email, phone number, or private key, and nothing the User shares in Buddies. The inbox links mean the server knows which inbox belongs to which account, but not who that is or who their buddies are.
+
+Handoff channels hold two temporary public keys and two sealed blobs for at most ten minutes. Backups are ciphertext under a key only the User's devices can derive; the server keeps each slot's size, upload time, and random slot id, and can't read a device name or any data. Losing every device and the recovery key loses the backup.

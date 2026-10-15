@@ -23,6 +23,7 @@ const sessionEvents = new Set([
   'icloud_restore_probe_result',
   'saved_view_applied',
   'schedule_year_view_opened',
+  'recovery_key_viewed',
 ])
 
 let storage: MMKV | undefined

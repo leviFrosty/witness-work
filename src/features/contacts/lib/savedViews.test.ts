@@ -210,7 +210,6 @@ describe('resolveContactsQuery', () => {
   const base = {
     own,
     views: views(),
-    hasAccess: true,
     customFieldDefs: [def('lang')],
   }
 
@@ -241,15 +240,6 @@ describe('resolveContactsQuery', () => {
       resolveContactsQuery({ ...base, active: { id: 'b', edits: spanish } })
         .edited
     ).toBe(false)
-  })
-
-  it('keeps the view but stops applying it after a lapse', () => {
-    const resolved = resolveContactsQuery({
-      ...base,
-      hasAccess: false,
-      active: { id: 'b', edits: studies },
-    })
-    expect(resolved).toEqual({ query: own, view: null, edited: false })
   })
 
   it('falls back when the active view was deleted on another device', () => {

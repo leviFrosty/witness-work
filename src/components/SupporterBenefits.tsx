@@ -1,5 +1,4 @@
 import {
-  Bookmark as BookmarkIcon,
   CloudUpload as CloudUploadIcon,
   FileText as FileTextIcon,
   Palette as PaletteIcon,
@@ -162,11 +161,6 @@ const SupporterBenefits = ({ compact }: Props) => {
           icon={PaletteIcon}
           title={i18n.t('supporterPerkAccentTitle')}
           desc={i18n.t('supporterPerkAccentDesc')}
-        />
-        <PerkRow
-          icon={BookmarkIcon}
-          title={i18n.t('supporterPerkContactViewsTitle')}
-          desc={i18n.t('supporterPerkContactViewsDesc')}
         />
         {Platform.OS === 'ios' && (
           <PerkRow

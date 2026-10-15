@@ -191,7 +191,7 @@ const ContactsScreen = ({
   })
   const listContacts = contactsList.contacts
   const savedViews = useSavedContactViews()
-  const showsSavedViews = savedViews.views.length > 0 && !savedViews.locked
+  const showsSavedViews = savedViews.views.length > 0
   // Over the map once there are pins to filter (not over its onboarding or
   // empty state).
   const showsMapFilters =
@@ -316,13 +316,12 @@ const ContactsScreen = ({
         },
     ],
     [
-      savedViews.hasAccess &&
-        savedViews.views.length > 0 && {
-          id: 'saved_views',
-          title: i18n.t('savedViews_menu_edit'),
-          systemImage: 'pencil',
-          onPress: () => navigation.navigate('Saved Contact Views'),
-        },
+      savedViews.views.length > 0 && {
+        id: 'saved_views',
+        title: i18n.t('savedViews_menu_edit'),
+        systemImage: 'pencil',
+        onPress: () => navigation.navigate('Saved Contact Views'),
+      },
       dismissedCount > 0 && {
         id: 'dismissed_contacts',
         title: i18n.t('dismissedContacts'),

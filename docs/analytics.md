@@ -343,7 +343,6 @@ not overwrite the original screen. Direct paywall entry has no gate attribution.
 | `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
 | `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
 | `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (both OSs). |
-| `savedContactViews` | `saved_views`        | Saved views section at the top of `Contacts Sort And Filter`.                |
 | `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview).    |
 | `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
 

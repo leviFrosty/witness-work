@@ -14,9 +14,9 @@ export type ContactsQuery = {
 
 /**
  * A named filter + sort combination the User switches to from the Contacts
- * screen (Supporter feature). Keyed by a stable id in the preferences map, so
- * iCloud merges each view independently. Custom fields are referenced by
- * definition id, so a renamed or archived field keeps the view working.
+ * screen. Keyed by a stable id in the preferences map, so iCloud merges each
+ * view independently. Custom fields are referenced by definition id, so a
+ * renamed or archived field keeps the view working.
  */
 export type SavedContactView = ContactsQuery & {
   name: string

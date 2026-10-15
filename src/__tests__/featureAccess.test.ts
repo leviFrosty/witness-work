@@ -5,7 +5,6 @@ const allFeatures: FeatureKey[] = [
   'customAccentColor',
   'iCloudSync',
   'customAppIcon',
-  'savedContactViews',
   'routePlanning',
 ]
 

@@ -2,9 +2,6 @@ import { act, create } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
-  hasAccess: true,
-  /** RevenueCat has answered (or can't, e.g. Android without a key). */
-  accessKnown: true,
   capture: vi.fn(),
   nextId: 0,
 }))
@@ -22,18 +19,9 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => `view-${++runtime.nextId}` }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
-vi.mock('@/hooks/useFeatureAccess', () => ({
-  default: () => ({ hasAccess: runtime.hasAccess }),
-}))
 // Confirms straight away.
 vi.mock('@/lib/confirmDestructive', () => ({
   default: ({ onConfirm }: { onConfirm: () => void }) => onConfirm(),
-}))
-vi.mock('@/hooks/useCustomer', () => ({
-  default: () => ({
-    customer: runtime.accessKnown ? {} : null,
-    unavailable: false,
-  }),
 }))
 
 import { usePreferences } from '@/stores/preferences'
@@ -54,19 +42,13 @@ const Probe = ({ onRender }: { onRender: (hooks: Hooks) => void }) => {
 const mount = () => {
   const current = {} as Hooks
   const onRender = (hooks: Hooks) => Object.assign(current, hooks)
-  let renderer: ReturnType<typeof create>
   act(() => {
-    renderer = create(<Probe onRender={onRender} />)
+    create(<Probe onRender={onRender} />)
   })
-  return {
-    current,
-    rerender: () => act(() => renderer.update(<Probe onRender={onRender} />)),
-  }
+  return { current }
 }
 
 beforeEach(() => {
-  runtime.hasAccess = true
-  runtime.accessKnown = true
   runtime.capture.mockClear()
   runtime.nextId = 0
   useContacts.setState({ customFieldDefs: [] })
@@ -147,36 +129,6 @@ describe('Saved Views', () => {
     expect(current.query.query.filters).toEqual([{ kind: 'hasStudy' }])
   })
 
-  it('stops applying views after a lapse without deleting them', () => {
-    const { current, rerender } = mount()
-    act(() => {
-      current.views.saveCurrent('Studies')
-    })
-    usePreferences.setState({ contactsFilters: [{ kind: 'isFavorite' }] })
-
-    runtime.hasAccess = false
-    rerender()
-    expect(current.views.locked).toBe(true)
-    expect(current.query.view).toBeNull()
-    expect(current.query.query.filters).toEqual([{ kind: 'isFavorite' }])
-    // Free filters still edit the User's own list.
-    act(() => current.query.setFilters([]))
-    expect(usePreferences.getState().contactsFilters).toEqual([])
-    // Saving and switching need access again.
-    act(() => {
-      expect(current.views.saveCurrent('Another')).toBe(false)
-      current.views.select('view-1')
-    })
-    expect(Object.keys(usePreferences.getState().savedContactViews)).toEqual([
-      'view-1',
-    ])
-
-    runtime.hasAccess = true
-    rerender()
-    expect(current.query.view?.id).toBe('view-1')
-    expect(current.query.query.filters).toEqual([{ kind: 'hasStudy' }])
-  })
-
   it('deleting the active view returns to the User’s own filters', () => {
     const { current } = mount()
     act(() => {
@@ -186,25 +138,5 @@ describe('Saved Views', () => {
 
     expect(usePreferences.getState().savedContactViews).toEqual({})
     expect(usePreferences.getState().activeSavedContactView).toBeNull()
-  })
-
-  it('keeps showing the active view until Supporter status is known', () => {
-    const { current, rerender } = mount()
-    act(() => {
-      current.views.saveCurrent('Studies')
-    })
-
-    // Launch: RevenueCat hasn't answered yet, so no access is reported.
-    runtime.hasAccess = false
-    runtime.accessKnown = false
-    rerender()
-    expect(current.views.locked).toBe(false)
-    expect(current.query.view?.id).toBe('view-1')
-    expect(current.query.query.filters).toEqual([{ kind: 'hasStudy' }])
-
-    runtime.accessKnown = true
-    rerender()
-    expect(current.views.locked).toBe(true)
-    expect(current.query.view).toBeNull()
   })
 })

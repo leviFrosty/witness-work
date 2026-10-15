@@ -2,7 +2,6 @@ import { usePreferences } from '@/stores/preferences'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import i18n from '@/lib/locales'
-import useFeatureAccess from '@/hooks/useFeatureAccess'
 import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import {
   DEFAULT_CONTACTS_QUERY,
@@ -17,15 +16,13 @@ import {
 } from '@/features/contacts/lib/savedViews'
 
 /**
- * Saved Views (Supporter feature): the ordered list plus every way to create,
- * switch, update, rename, reorder and delete them. Saving needs access; without
- * it the views stay stored but `useContactsQuery` doesn't apply them.
+ * Saved Views: the ordered list plus every way to create, switch, update,
+ * rename, reorder and delete them.
  */
 export function useSavedContactViews() {
   const views = usePreferences((s) => s.savedContactViews)
   const setPreferences = usePreferences((s) => s.set)
-  const { hasAccess } = useFeatureAccess('savedContactViews')
-  const { query, view: activeView, edited, accessKnown } = useContactsQuery()
+  const { query, view: activeView, edited } = useContactsQuery()
 
   const ordered = orderedSavedViews(views)
 
@@ -34,7 +31,6 @@ export function useSavedContactViews() {
    * surface the User switched from, for analytics.
    */
   const select = (id: string | null, source?: 'list' | 'map') => {
-    if (!hasAccess) return
     setPreferences({ activeSavedContactView: id ? { id } : null })
     if (id)
       analytics.capture('saved_view_applied', {
@@ -49,7 +45,6 @@ export function useSavedContactViews() {
    * shows every contact again.
    */
   const saveCurrent = (name: string): boolean => {
-    if (!hasAccess) return false
     const added = addSavedView(views, name, query)
     if (!added) return false
     setPreferences({
@@ -73,7 +68,7 @@ export function useSavedContactViews() {
 
   /** Writes the active view's edits back to it. */
   const updateActive = () => {
-    if (!hasAccess || !activeView || !edited) return
+    if (!activeView || !edited) return
     setPreferences({
       savedContactViews: updateSavedViewQuery(views, activeView.id, query),
       activeSavedContactView: { id: activeView.id },
@@ -81,26 +76,23 @@ export function useSavedContactViews() {
   }
 
   const rename = (id: string, name: string) => {
-    if (!hasAccess) return
     const next = renameSavedView(views, id, name)
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
   const move = (id: string, direction: -1 | 1) => {
-    if (!hasAccess) return
     const next = moveSavedView(views, id, direction)
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
   /** Puts the views in a new order, e.g. after a chip is dragged. */
   const reorder = (ids: string[]) => {
-    if (!hasAccess) return
     const next = reorderSavedViews(views, ids)
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
   const remove = (id: string) => {
-    if (!hasAccess || !(id in views)) return
+    if (!(id in views)) return
     setPreferences({
       savedContactViews: deleteSavedView(views, id),
       ...(activeView?.id === id ? { activeSavedContactView: null } : {}),
@@ -110,7 +102,7 @@ export function useSavedContactViews() {
   /** Deletes after confirming. Only the view goes; contacts stay as they are. */
   const confirmRemove = (id: string) => {
     const view = views[id]
-    if (!hasAccess || !view) return
+    if (!view) return
     confirmDestructive({
       title: i18n.t('savedViews_delete_title', { name: view.name }),
       description: i18n.t('savedViews_delete_description'),
@@ -120,9 +112,6 @@ export function useSavedContactViews() {
 
   return {
     views: ordered,
-    hasAccess,
-    /** Kept after a lapse but no longer applied; false until access is known. */
-    locked: accessKnown && !hasAccess,
     activeView,
     edited,
     select,

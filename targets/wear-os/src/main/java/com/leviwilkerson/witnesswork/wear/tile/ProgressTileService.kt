@@ -36,6 +36,7 @@ import com.leviwilkerson.witnesswork.wear.R
 import com.leviwilkerson.witnesswork.wear.Surfaces
 import com.leviwilkerson.witnesswork.wear.WatchModel
 import com.leviwilkerson.witnesswork.wear.WatchStorage
+import com.leviwilkerson.witnesswork.wear.appLanguage
 import com.leviwilkerson.witnesswork.wear.now
 import com.leviwilkerson.witnesswork.wear.startOfDay
 import com.leviwilkerson.witnesswork.wear.ui.Accent
@@ -154,7 +155,7 @@ class ProgressTileService : TileService() {
               title = { text(progress.total.layoutString) },
               // The goal, then the pace line or Goal reached.
               content =
-                listOfNotNull(progress.goalHours.takeIf { it > 0 }?.let { "/$it" }, footer)
+                listOfNotNull(progress.goalHours.takeIf { it > 0 }?.let { "/" + snapshot.appLanguage.number(it) }, footer)
                   .joinToString(" ")
                   .ifEmpty { null }
                   ?.let { { text(it.layoutString, maxLines = 3) } },

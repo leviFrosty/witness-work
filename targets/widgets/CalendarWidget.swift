@@ -517,6 +517,7 @@ private struct CalendarWidgetView: View {
       }
     }
     .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
+    .appLanguage(entry.snapshot?.appLanguage)
     .containerBackground(.background, for: .widget)
   }
 
@@ -541,8 +542,8 @@ struct CalendarWidget: Widget {
     StaticConfiguration(kind: kind, provider: CalendarProvider()) { entry in
       CalendarWidgetView(entry: entry)
     }
-    .configurationDisplayName("Calendar")
-    .description("Your month at a glance — hours, plans, and notes per day.")
+    .configurationDisplayName(L10n.t("calendar"))
+    .description(L10n.t("widgetCalendarDescription"))
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }

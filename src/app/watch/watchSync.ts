@@ -22,6 +22,8 @@ import {
 import { tracksHours } from '@/lib/publisherCapabilities'
 import { resolveMileageUnits } from '@/features/mileage/lib/format'
 import { buildWatchSnapshot } from '@/app/watch/buildWatchSnapshot'
+import { _i18n } from '@/lib/locales'
+import { nativeLocale } from '@/lib/nativeLocale'
 import { planWatchEntries } from '@/app/watch/planWatchEntries'
 import { planWatchTrips } from '@/app/watch/planWatchTrips'
 
@@ -106,6 +108,7 @@ export function pushWatchSnapshot(
       vehicles: mileage.vehicles,
       trips: mileage.trips,
       reflectedEntryIds,
+      nativeLocale: nativeLocale(_i18n.locale),
     })
 
     const { generatedAt, ...content } = snapshot

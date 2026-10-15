@@ -82,12 +82,14 @@ data class MonthProgress(
         // Stored by a phone app from before the watch added time itself.
         val reached = goalHours > 0 && snapshot.progress >= 1
         val unit = t("hoursCompact")
+        val language = snapshot.appLanguage
+        val total = language.digits(snapshot.monthCompact)
         return MonthProgress(
           monthName = monthName,
           showsTimeEntry = showsTimeEntry,
-          total = snapshot.monthCompact,
-          hours = snapshot.monthCompact.removeSuffix(unit),
-          formatted = snapshot.monthFormatted,
+          total = total,
+          hours = total.removeSuffix(unit),
+          formatted = language.digits(snapshot.monthFormatted),
           goalHours = goalHours,
           fraction = if (goalHours > 0) snapshot.progress.coerceIn(0.0, 1.0) else null,
           paceFraction = null,
@@ -106,16 +108,17 @@ data class MonthProgress(
           .sumOf { it.hours * 60 + it.minutes }
       val minutes = baseMinutes + unsyncedMinutes
 
-      val total = compact(minutes, t)
+      val language = snapshot.appLanguage
+      val total = compact(minutes, t, language)
       val formatted =
-        if (unsyncedMinutes == 0 && snapshot.isCurrent(date)) snapshot.monthFormatted else total
+        if (unsyncedMinutes == 0 && snapshot.isCurrent(date)) language.digits(snapshot.monthFormatted) else total
 
       fun result(fraction: Double?, goalReached: Boolean, paceFraction: Double?, paceText: String?) =
         MonthProgress(
           monthName = monthName,
           showsTimeEntry = showsTimeEntry,
           total = total,
-          hours = hoursNumber(minutes),
+          hours = hoursNumber(minutes, language),
           formatted = formatted,
           goalHours = goalHours,
           fraction = fraction,
@@ -149,7 +152,7 @@ data class MonthProgress(
         fraction,
         false,
         null,
-        compact(rounded(perDay * 60).toInt(), t) + " " + t("hoursPerDayToGoal"),
+        compact(rounded(perDay * 60).toInt(), t, language) + " " + t("hoursPerDayToGoal"),
       )
     }
 
@@ -161,18 +164,17 @@ data class MonthProgress(
 
     /**
      * The phone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `11.5h`; `0h` for zero, as the
-     * snapshot's `monthCompact` has it.
+     * snapshot's `monthCompact` has it. Digits are the app Language's (`AppLanguage`).
      */
-    fun compact(minutes: Int, t: (String) -> String): String {
-      if (minutes in 1 until 60) return "$minutes" + t("minutesCompact")
-      return hoursNumber(minutes) + t("hoursCompact")
+    fun compact(minutes: Int, t: (String) -> String, language: AppLanguage = AppLanguage.SYSTEM): String {
+      if (minutes in 1 until 60) return language.number(minutes) + t("minutesCompact")
+      return hoursNumber(minutes, language) + t("hoursCompact")
     }
 
     /** Hours as `compact` rounds them, without a unit: `0`, `0.5`, `1.5`, `11.5`. */
-    fun hoursNumber(minutes: Int): String {
+    fun hoursNumber(minutes: Int, language: AppLanguage = AppLanguage.SYSTEM): String {
       val hours = maxOf(minutes, 0).toDouble() / 60
-      val tenths = rounded(hours * 10) / 10
-      return if (tenths == rounded(tenths)) "${tenths.toInt()}" else String.format(java.util.Locale.ROOT, "%.1f", tenths)
+      return language.decimal(rounded(hours * 10) / 10)
     }
 
     /** Swift's `rounded()`: to nearest, halves away from zero (Kotlin's `round` rounds halves to even). */

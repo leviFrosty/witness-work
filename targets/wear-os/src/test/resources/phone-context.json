@@ -138,7 +138,9 @@
       "watchUpNextComplicationName": "watchUpNextComplicationName",
       "wearRangeComplicationName": "wearRangeComplicationName",
       "wearSymbolComplicationName": "wearSymbolComplicationName"
-    }
+    },
+    "rtl": false,
+    "numberLocale": "en-us"
   },
   "timer": {
     "isRunning": true,

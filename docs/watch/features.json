@@ -1113,7 +1113,7 @@
       "id": "l10n.formatting",
       "area": "Localization",
       "title": "Times and durations",
-      "description": "Durations arrive formatted in the user's Duration Format and times in the app's time format; the watch only formats its compact total (30m, 2h, 1.5h, 11.5h) the way the phone does.",
+      "description": "Durations arrive formatted in the user's Duration Format and times in the app's time format; the watch only formats its compact total (30m, 2h, 1.5h, 11.5h) the way the phone does, in the app Language's digits.",
       "shared": ["src/lib/minutes.ts#export const formatMinutesCompact"],
       "watchos": {
         "status": "implemented",
@@ -1124,6 +1124,36 @@
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#fun compact"
         ]
+      }
+    },
+    {
+      "id": "l10n.direction",
+      "area": "Localization",
+      "title": "Direction and digits",
+      "description": "The watch follows the app's Language, not its own: right to left for an RTL Language (or the phone's dev Force Right to Left switch), with the pace bar filling from the right and the Directions arrow turned the other way, and the numbers it writes itself (goal, totals, timer, Add Time wheels) in that Language's digits, e.g. Arabic-Indic for Arabic.",
+      "shared": [
+        "src/lib/nativeLocale.ts#export function nativeLocale",
+        "src/app/watch/buildWatchSnapshot.ts#numberLocale"
+      ],
+      "watchos": {
+        "status": "implemented",
+        "paths": [
+          "targets/watch/AppLanguage.swift#struct AppLanguage",
+          "targets/watch/HomeView.swift#appLanguage",
+          "targets/watch/PaceBar.swift#struct PaceBar",
+          "targets/watch/UpNextView.swift#flipsForRightToLeftLayoutDirection",
+          "targets/watch-widgets/WatchWidgets.swift#appLanguage"
+        ]
+      },
+      "wearos": {
+        "status": "partial",
+        "paths": [
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/AppLanguage.kt#data class AppLanguage",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/WatchApp.kt#LocalLayoutDirection provides",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Components.kt#fun PaceBar",
+          "targets/wear-os/src/main/res/drawable/ic_directions.xml"
+        ],
+        "notes": "The app, and the numbers in the complications and the tile, follow the app's Language. The complications' and the tile's layout follows the watch's own language: the watch face and the tile renderer lay them out, with no direction of their own to set."
       }
     },
     {

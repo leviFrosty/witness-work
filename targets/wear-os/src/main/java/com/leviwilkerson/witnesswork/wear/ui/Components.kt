@@ -18,13 +18,18 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
@@ -113,45 +118,44 @@ fun IconLabel(
 
 /**
  * Progress toward the monthly goal, with a mark where the user's Plans put them by today: fill
- * left of the mark means behind, past it ahead. Never turns red; it's seen all day, and behind
+ * short of the mark means behind, past it ahead. Never turns red; it's seen all day, and behind
  * is no reason for alarm. A port of `PaceBar.swift`.
+ *
+ * Runs from the start edge, so right to left in an RTL Language: a Canvas draws in physical
+ * coordinates, so it's drawn left to right and mirrored.
  */
 @Composable
 fun PaceBar(fraction: Double, paceFraction: Double?, modifier: Modifier = Modifier) {
   val barHeight = 6.dp
+  val mirrored = LocalLayoutDirection.current == LayoutDirection.Rtl
   Canvas(modifier.fillMaxWidth().height(barHeight + 4.dp).clearAndSetSemantics {}) {
-    val height = barHeight.toPx()
-    val top = (size.height - height) / 2
-    val width = size.width
-    val markWidth = 2.dp.toPx()
-    val gap = 2.dp.toPx()
-    val markX = paceFraction?.let { (width * it.toFloat() - markWidth / 2).coerceIn(0f, width - markWidth) }
-    val radius = CornerRadius(height / 2)
-
-    fun bar() {
-      drawRoundRect(Color.White.copy(alpha = 0.25f), Offset(0f, top), Size(width, height), radius)
-      if (fraction > 0) {
-        val fill = maxOf(width * fraction.toFloat(), height)
-        drawRoundRect(Accent, Offset(0f, top), Size(fill, height), radius)
-      }
-    }
-
-    if (markX == null) {
-      bar()
-    } else {
-      // The bar is cut away beside the mark to keep it visible.
-      clipRect(right = maxOf(markX - gap, 0f)) { bar() }
-      clipRect(left = markX + markWidth + gap) { bar() }
-      drawRoundRect(Color.White, Offset(markX, 0f), Size(markWidth, size.height), CornerRadius(markWidth / 2))
-    }
+    scale(scaleX = if (mirrored) -1f else 1f, scaleY = 1f) { drawPaceBar(fraction, paceFraction, barHeight) }
   }
 }
 
-/** watchOS's timer text: `5:03` under an hour, `1:05:00` from then. */
-fun formatElapsed(elapsedMs: Double): String {
-  val seconds = (elapsedMs / 1000).toLong()
-  val hours = seconds / 3600
-  val minutes = (seconds / 60) % 60
-  val rest = seconds % 60
-  return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, rest) else "%d:%02d".format(minutes, rest)
+private fun DrawScope.drawPaceBar(fraction: Double, paceFraction: Double?, barHeight: Dp) {
+  val height = barHeight.toPx()
+  val top = (size.height - height) / 2
+  val width = size.width
+  val markWidth = 2.dp.toPx()
+  val gap = 2.dp.toPx()
+  val markX = paceFraction?.let { (width * it.toFloat() - markWidth / 2).coerceIn(0f, width - markWidth) }
+  val radius = CornerRadius(height / 2)
+
+  fun bar() {
+    drawRoundRect(Color.White.copy(alpha = 0.25f), Offset(0f, top), Size(width, height), radius)
+    if (fraction > 0) {
+      val fill = maxOf(width * fraction.toFloat(), height)
+      drawRoundRect(Accent, Offset(0f, top), Size(fill, height), radius)
+    }
+  }
+
+  if (markX == null) {
+    bar()
+  } else {
+    // The bar is cut away beside the mark to keep it visible.
+    clipRect(right = maxOf(markX - gap, 0f)) { bar() }
+    clipRect(left = markX + markWidth + gap) { bar() }
+    drawRoundRect(Color.White, Offset(markX, 0f), Size(markWidth, size.height), CornerRadius(markWidth / 2))
+  }
 }

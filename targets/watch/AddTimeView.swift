@@ -45,6 +45,7 @@ struct AddTimeView: View {
       }
       .disabled((hours == 0 && minutes == 0) || isSaving)
     }
+    .appLanguage(snapshot.appLanguage)
     .navigationTitle(L10n.t("addTime", snapshot))
   }
 

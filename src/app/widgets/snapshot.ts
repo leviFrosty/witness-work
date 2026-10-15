@@ -24,6 +24,7 @@ import {
 } from '@/app/widgets/buildAppointments'
 import { buildCalendar, WidgetCalendar } from '@/app/widgets/buildCalendar'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
+import type { NativeLocale } from '@/lib/nativeLocale'
 
 /**
  * Bumped whenever the snapshot shape changes in a way the Swift decoder cares
@@ -42,7 +43,8 @@ import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
  * label strings. Re-introduces `startOfWeek` on BuildSnapshotArgs so JS can
  * pre-build the grid with the user's preferred first column. 6 — Adds Buddies
  * to the calendar: per-day `buddies` badges and the `calendar.buddies` avatars
- * they reference.
+ * they reference. Since 6, without a bump (Swift decodes them as optional):
+ * `rtl`, `numberLocale`, and the `reportLabel`/`timerLabel` strings.
  */
 export const SNAPSHOT_VERSION = 6
 
@@ -87,6 +89,11 @@ export type WidgetStrings = {
   calendarPublisherLockedLabel: string
   /** "Create plan" quick-action tooltip / accessibility label. */
   createPlanLabel: string
+
+  /** Under the checkbox of the circular lock screen Report widget. */
+  reportLabel: string
+  /** The timer Live Activity's label. */
+  timerLabel: string
 }
 
 export type WidgetConfig = {
@@ -104,6 +111,13 @@ export type WidgetSnapshot = {
   updatedAt: number
   /** App locale at write time, e.g. 'en-us'. */
   locale: string
+  /**
+   * Lay the widgets out right to left, as the app is. They render in the widget
+   * extension, which would follow the device's language instead.
+   */
+  rtl: NativeLocale['rtl']
+  /** BCP 47 tag to write the numbers Swift formats in (`ar-u-nu-arab`). */
+  numberLocale: NativeLocale['numberLocale']
   /**
    * Supporter-only custom accent (`#RRGGBB`). `null` means use the default
    * brand green. The snapshot writer is responsible for gating on supporter
@@ -179,6 +193,8 @@ export type BuildSnapshotArgs = {
 
   // Locale
   locale: string
+  /** The app Language's direction and digits (`nativeLocale`). */
+  nativeLocale: NativeLocale
 
   /**
    * Resolved accent hex (`#RRGGBB`) or `null` to fall back to the brand green.
@@ -230,6 +246,8 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     version: SNAPSHOT_VERSION,
     updatedAt: Date.now(),
     locale: args.locale,
+    rtl: args.nativeLocale.rtl,
+    numberLocale: args.nativeLocale.numberLocale,
     accentColor: args.accentColor,
     strings: {
       monthHoursLabel: i18n.t('hours'),
@@ -263,6 +281,9 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
       calendarLabel: i18n.t('calendar'),
       calendarPublisherLockedLabel: i18n.t('calendarPublisherLocked'),
       createPlanLabel: i18n.t('createPlan'),
+
+      reportLabel: i18n.t('widgetReportLabel'),
+      timerLabel: i18n.t('timer'),
     },
     config: {
       contactSort: args.widgetContactSort,

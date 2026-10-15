@@ -5,10 +5,11 @@
 //   targets that compile it. The source is the source of truth; targets get
 //   copies because Xcode/EAS tarball flow does not reliably preserve symlinks
 //   across the local-build project archive.
-// - String catalogs for the watch, Siri (`targets/intents`), and the Buddies
-//   alerts' Notification Service Extension (`targets/notification-service`)
-//   from `src/locales`, so their bundled strings and Siri phrases use the same
-//   translations as the app, and English where a language has none yet.
+// - String catalogs for the watch, Siri (`targets/intents`), the iPhone
+//   widgets (`targets/widgets`), and the Buddies alerts' Notification Service
+//   Extension (`targets/notification-service`) from `src/locales`, so their
+//   bundled strings and Siri phrases use the same translations as the app,
+//   and English where a language has none yet.
 // - The Wear OS app's (`targets/wear-os`) copy of the Kotlin watch protocol,
 //   and its string resources from `src/locales`.
 //
@@ -95,6 +96,13 @@ const syncs = [
     files: ['phone-context.json'],
   },
   {
+    // Direction and digits in the app's Language, for the watch and both
+    // widget extensions.
+    from: 'targets/watch',
+    to: ['targets/watch-widgets/Shared', 'targets/widgets/Shared'],
+    files: ['AppLanguage.swift'],
+  },
+  {
     from: 'targets/watch',
     to: ['targets/watch-widgets/Shared'],
     files: [
@@ -107,53 +115,31 @@ const syncs = [
   },
 ]
 
+/**
+ * Each `src/locales` file's native names (`scripts/native-languages.json`,
+ * which `app.config.ts` also reads to declare the app's languages). A file may
+ * name a language alone (`ar.json`) or with its region (`es-ES.json`).
+ */
+const nativeLanguages = JSON.parse(
+  readFileSync(join(here, 'native-languages.json'), 'utf8')
+)
+const languageFiles = Object.keys(nativeLanguages).filter(
+  (file) => !file.startsWith('$')
+)
+
 /** `src/locales` file → Apple localization identifier. */
-const appleLanguages = {
-  'bem-ZM': 'bem',
-  'de-DE': 'de',
-  'en-US': 'en',
-  'es-ES': 'es',
-  'fr-FR': 'fr',
-  'it-IT': 'it',
-  'ja-JP': 'ja',
-  'ko-KR': 'ko',
-  'nl-NL': 'nl',
-  'pt-BR': 'pt-BR',
-  'pt-PT': 'pt-PT',
-  'ru-RU': 'ru',
-  'rw-RW': 'rw',
-  'sw-KE': 'sw',
-  'uk-UA': 'uk',
-  'vi-VN': 'vi',
-  'zh-CN': 'zh-Hans',
-  'zh-TW': 'zh-Hant',
-}
+const appleLanguages = Object.fromEntries(
+  languageFiles.map((file) => [file, nativeLanguages[file].apple])
+)
 
 /**
  * `src/locales` file → Android resource qualifier (`values-<qualifier>`).
  * English is the default `values`, which Android falls back to for a missing
  * key.
  */
-const androidQualifiers = {
-  'bem-ZM': 'b+bem',
-  'de-DE': 'de',
-  'en-US': '',
-  'es-ES': 'es',
-  'fr-FR': 'fr',
-  'it-IT': 'it',
-  'ja-JP': 'ja',
-  'ko-KR': 'ko',
-  'nl-NL': 'nl',
-  'pt-BR': 'pt-rBR',
-  'pt-PT': 'pt-rPT',
-  'ru-RU': 'ru',
-  'rw-RW': 'rw',
-  'sw-KE': 'sw',
-  'uk-UA': 'uk',
-  'vi-VN': 'vi',
-  'zh-CN': 'b+zh+Hans',
-  'zh-TW': 'b+zh+Hant',
-}
+const androidQualifiers = Object.fromEntries(
+  languageFiles.map((file) => [file, nativeLanguages[file].android])
+)
 
 /** `mileage.car` reads the nested `mileage` object, like i18n does. */
 function lookup(strings, key) {
@@ -181,7 +167,7 @@ export function readLocales(directory) {
   )
   if (unmapped.length) {
     throw new Error(
-      `Add ${unmapped.join(', ')} to appleLanguages and androidQualifiers in scripts/sync-widget-shared.mjs`
+      `Add ${unmapped.join(', ')} to scripts/native-languages.json`
     )
   }
   return Object.fromEntries(
@@ -526,6 +512,21 @@ function main() {
   sync(
     'targets/intents/Localizable.xcstrings',
     stringCatalog(locales, keys.intentStrings)
+  )
+
+  // The iPhone widgets' names and descriptions in the widget gallery, and
+  // labels for before the app's first snapshot.
+  const iosWidgetUnlisted = [
+    ...l10nKeys(readSwift(join(repo, 'targets/widgets'))),
+  ].filter((key) => !keys.iosWidgetStrings.includes(key))
+  if (iosWidgetUnlisted.length) {
+    throw new Error(
+      `targets/widgets uses ${iosWidgetUnlisted.join(', ')}; list them under iosWidgetStrings in src/app/watch/watchStringKeys.json`
+    )
+  }
+  sync(
+    'targets/widgets/Localizable.xcstrings',
+    stringCatalog(locales, keys.iosWidgetStrings)
   )
 
   // The Notification Service Extension words Buddies alerts from these.

@@ -9,6 +9,8 @@
 //   node scripts/watch-fixture.mjs publisher          # checkbox report, unreported
 //   node scripts/watch-fixture.mjs publisher --reported
 //   node scripts/watch-fixture.mjs pioneer --platform android
+//   node scripts/watch-fixture.mjs pioneer --rtl      # laid out right to left
+//   node scripts/watch-fixture.mjs pioneer --rtl --number-locale ar-u-nu-arab
 //
 // Seed it where each watch app keeps the phone's context (`phone-context.json`):
 // the watch app's App Group container on watchOS, the app's files directory on
@@ -32,6 +34,10 @@ const reported = args.includes('--reported')
 const platform = args.includes('--platform')
   ? args[args.indexOf('--platform') + 1]
   : 'ios'
+const rtl = args.includes('--rtl')
+const numberLocale = args.includes('--number-locale')
+  ? args[args.indexOf('--number-locale') + 1]
+  : 'en-us'
 
 const now = new Date()
 const pad = (n) => String(n).padStart(2, '0')
@@ -156,6 +162,8 @@ const snapshot = {
     vehicles: [{ id: 'fixture-vehicle-1', name: 'Corolla' }],
   },
   strings,
+  rtl,
+  numberLocale,
 }
 
 const timer = running

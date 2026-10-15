@@ -42,6 +42,7 @@ import com.leviwilkerson.witnesswork.watchprotocol.WatchOrigin
 import com.leviwilkerson.witnesswork.watchprotocol.WatchSnapshot
 import com.leviwilkerson.witnesswork.watchprotocol.WatchTimerAction
 import com.leviwilkerson.witnesswork.wear.L10n
+import com.leviwilkerson.witnesswork.wear.appLanguage
 import com.leviwilkerson.witnesswork.wear.MonthProgress
 import com.leviwilkerson.witnesswork.wear.R
 import com.leviwilkerson.witnesswork.wear.UpNext
@@ -180,7 +181,7 @@ private fun ProgressSection(
         // The goal is whole hours the user entered.
         if (progress.goalHours > 0) {
           Text(
-            "/${progress.goalHours}",
+            "/" + snapshot.appLanguage.number(progress.goalHours),
             style = MaterialTheme.typography.bodyLarge,
             color = Secondary,
             modifier = Modifier.padding(bottom = 1.dp),
@@ -210,7 +211,7 @@ private fun TimerReadout(
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
       SectionLabel(L10n.t("timer", snapshot))
       Text(
-        formatElapsed(timer.elapsedMs(now.toInstant().toEpochMilli())),
+        snapshot.appLanguage.elapsed(timer.elapsedMs(now.toInstant().toEpochMilli())),
         style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
       )
     }

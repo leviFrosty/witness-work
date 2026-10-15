@@ -47,6 +47,7 @@ struct UpNextComplication: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "WitnessWorkUpNext", provider: UpNextProvider()) { entry in
       UpNextComplicationView(entry: entry)
+        .appLanguage(entry.snapshot?.appLanguage)
         .containerBackground(.fill.tertiary, for: .widget)
         .widgetURL(entry.items.first.flatMap(UpNext.url(for:)))
     }

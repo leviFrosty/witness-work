@@ -58,6 +58,7 @@ struct ProgressComplication: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "WitnessWorkProgress", provider: ProgressProvider()) { entry in
       ProgressComplicationView(entry: entry)
+        .appLanguage(entry.snapshot?.appLanguage)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     .configurationDisplayName(L10n.t("watchComplicationName", nil))
@@ -72,6 +73,7 @@ struct ProgressRangeComplication: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "WitnessWorkProgressRange", provider: ProgressProvider()) { entry in
       CircularView(progress: entry.progress, snapshot: entry.snapshot, style: .range)
+        .appLanguage(entry.snapshot?.appLanguage)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     .configurationDisplayName(L10n.t("watchComplicationName", nil))
@@ -84,6 +86,7 @@ struct ProgressSymbolComplication: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "WitnessWorkProgressSymbol", provider: ProgressProvider()) { entry in
       CircularView(progress: entry.progress, snapshot: entry.snapshot, style: .symbol)
+        .appLanguage(entry.snapshot?.appLanguage)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     .configurationDisplayName(L10n.t("watchComplicationName", nil))
@@ -110,6 +113,15 @@ struct ProgressComplicationView: View {
 
 private func reportIcon(_ progress: MonthProgress) -> String {
   progress.publisherState == "unreported" ? "circle.dashed" : "checkmark.circle.fill"
+}
+
+private func language(_ snapshot: WatchSnapshot?) -> AppLanguage {
+  snapshot?.appLanguage ?? AppLanguage(rtl: nil, numberLocale: nil)
+}
+
+/// The goal's whole hours in the app Language's digits.
+private func goal(_ progress: MonthProgress, _ snapshot: WatchSnapshot?) -> String {
+  language(snapshot).number(progress.goalHours)
 }
 
 /// The app's green. `Color.accentColor` is white in a watch complication, so
@@ -144,7 +156,7 @@ private struct CircularView: View {
         .widgetAccentable()
         .accessibilityValue(
           progress.goalHours > 0
-            ? "\(progress.formatted) / \(progress.goalHours)" : progress.formatted)
+            ? "\(progress.formatted) / \(goal(progress, snapshot))" : progress.formatted)
     } else {
       ZStack {
         AccessoryWidgetBackground()
@@ -196,9 +208,9 @@ private struct CircularView: View {
       } currentValueLabel: {
         Text(progress.hours)
       } minimumValueLabel: {
-        Text(verbatim: "0")
+        Text(verbatim: language(snapshot).number(0))
       } maximumValueLabel: {
-        Text(verbatim: "\(progress.goalHours)")
+        Text(verbatim: goal(progress, snapshot))
       }
       .gaugeStyle(.accessoryCircular)
     case .symbol:
@@ -320,7 +332,7 @@ private struct RectangularView: View {
         Text(progress.total)
           .font(monthOnOwnLine || showsFooter ? .headline : .title3.bold())
         if progress.goalHours > 0 {
-          Text(verbatim: "/\(progress.goalHours)")
+          Text(verbatim: "/" + goal(progress, snapshot))
             .foregroundStyle(.secondary)
         }
         if !monthOnOwnLine {
@@ -362,7 +374,7 @@ private struct InlineView: View {
   var body: some View {
     if let progress, progress.showsTimeEntry {
       if progress.goalHours > 0 {
-        Text(verbatim: "\(progress.total) / \(progress.goalHours)")
+        Text(verbatim: "\(progress.total) / \(goal(progress, snapshot))")
       } else {
         Text(progress.total)
       }

@@ -167,6 +167,7 @@ private struct ContactsWidgetView: View {
       }
     }
     .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
+    .appLanguage(entry.snapshot?.appLanguage)
     .containerBackground(.background, for: .widget)
   }
 
@@ -191,7 +192,7 @@ private struct ContactsWidgetView: View {
       Text(snapshot.strings.contactsLabel.uppercased())
         .font(.caption2)
         .fontWeight(.semibold)
-        .tracking(0.5)
+        .leftToRightTracking(0.5)
         .foregroundStyle(.secondary)
         .lineLimit(1)
 
@@ -235,8 +236,8 @@ struct ContactsWidget: Widget {
     StaticConfiguration(kind: kind, provider: ContactsProvider()) { entry in
       ContactsWidgetView(entry: entry)
     }
-    .configurationDisplayName("Contacts")
-    .description("Quick access to your contacts. Sort, action, and favorites set in Settings.")
+    .configurationDisplayName(L10n.t("contacts"))
+    .description(L10n.t("widgetContactsDescription"))
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

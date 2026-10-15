@@ -36,9 +36,14 @@ struct UpNextView: View {
             Button {
               openDirections(to: place)
             } label: {
-              Label(
-                L10n.t("directions", snapshot),
-                systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+              Label {
+                Text(L10n.t("directions", snapshot))
+              } icon: {
+                // A turn toward where you're going, so it turns the other way
+                // right to left; SF Symbols doesn't flip this one itself.
+                Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                  .flipsForRightToLeftLayoutDirection(true)
+              }
             }
             .disabled(isBusy)
           }
@@ -74,6 +79,7 @@ struct UpNextView: View {
         }
       }
     }
+    .appLanguage(snapshot?.appLanguage)
     .navigationTitle(L10n.t("watchUpNext", snapshot))
   }
 

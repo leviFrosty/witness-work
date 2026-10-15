@@ -75,10 +75,11 @@ struct MonthProgress: Equatable {
 
     guard let baseMinutes else {
       // Stored by an iPhone app from before the watch added time itself.
-      total = snapshot.monthCompact
+      let language = Self.language(snapshot)
+      total = language.digits(snapshot.monthCompact)
       let unit = L10n.t("hoursCompact", snapshot)
       hours = total.hasSuffix(unit) ? String(total.dropLast(unit.count)) : total
-      formatted = snapshot.monthFormatted
+      formatted = language.digits(snapshot.monthFormatted)
       fraction = goalHours > 0 ? min(max(snapshot.progress, 0), 1) : nil
       goalReached = goalHours > 0 && snapshot.progress >= 1
       paceFraction = nil
@@ -96,9 +97,9 @@ struct MonthProgress: Equatable {
     let minutes = baseMinutes + unsyncedMinutes
 
     total = Self.compact(minutes, snapshot)
-    hours = Self.hoursNumber(minutes)
+    hours = Self.hoursNumber(minutes, snapshot)
     formatted = unsyncedMinutes == 0 && snapshot.isCurrent(at: date)
-      ? snapshot.monthFormatted : total
+      ? Self.language(snapshot).digits(snapshot.monthFormatted) : total
 
     let goalMinutes = goalHours * 60
     guard goalMinutes > 0 else {
@@ -146,17 +147,22 @@ struct MonthProgress: Equatable {
   }
 
   /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `11.5h`; `0h`
-  /// for zero, as the snapshot's `monthCompact` has it.
+  /// for zero, as the snapshot's `monthCompact` has it. Digits are the app
+  /// Language's (`AppLanguage`).
   static func compact(_ minutes: Int, _ snapshot: WatchSnapshot?) -> String {
-    if minutes > 0, minutes < 60 { return "\(minutes)" + L10n.t("minutesCompact", snapshot) }
-    return hoursNumber(minutes) + L10n.t("hoursCompact", snapshot)
+    if minutes > 0, minutes < 60 {
+      return language(snapshot).number(minutes) + L10n.t("minutesCompact", snapshot)
+    }
+    return hoursNumber(minutes, snapshot) + L10n.t("hoursCompact", snapshot)
   }
 
   /// Hours as `compact` rounds them, without a unit: `0`, `0.5`, `1.5`, `11.5`.
-  static func hoursNumber(_ minutes: Int) -> String {
+  static func hoursNumber(_ minutes: Int, _ snapshot: WatchSnapshot?) -> String {
     let hours = Double(max(minutes, 0)) / 60
-    let tenths = (hours * 10).rounded() / 10
-    return tenths == tenths.rounded()
-      ? "\(Int(tenths))" : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), tenths)
+    return language(snapshot).decimal((hours * 10).rounded() / 10)
+  }
+
+  private static func language(_ snapshot: WatchSnapshot?) -> AppLanguage {
+    snapshot?.appLanguage ?? AppLanguage(rtl: nil, numberLocale: nil)
   }
 }

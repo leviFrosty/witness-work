@@ -2832,16 +2832,16 @@
   "contacts_stalenessInfo_subtitle": "Dựa trên lượt truy cập gần đây nhất. \"Không ở nhà\" được tính là lượt thăm.",
   "contacts_stalenessCriteria_never": "Chưa có lượt truy cập nào được ghi nhận",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "Chuyến thăm cuối cùng trong ngày qua",
-    "other": "Lần truy cập cuối cùng trong vòng {{count}} ngày qua"
+    "one": "Lần thăm gần nhất trong ngày qua",
+    "other": "Lần thăm gần nhất trong vòng {{count}} ngày qua"
   },
   "contacts_stalenessCriteriaDays_week": {
-    "one": "Lần truy cập cuối cùng cách đây hơn một ngày",
-    "other": "Lần truy cập gần đây hơn {{count}} ngày trước"
+    "one": "Lần thăm gần nhất cách đây hơn một ngày",
+    "other": "Lần thăm gần nhất cách đây hơn {{count}} ngày"
   },
   "contacts_stalenessCriteriaDays_month": {
-    "one": "Lần truy cập cuối cùng cách đây hơn một ngày",
-    "other": "Lần truy cập cuối cùng hơn {{count}} ngày trước"
+    "one": "Lần thăm gần nhất cách đây hơn một ngày",
+    "other": "Lần thăm gần nhất cách đây hơn {{count}} ngày"
   },
   "colorKeyScreenTitle": "Phím màu",
   "colorKey_edit": "Chỉnh sửa phím màu",
@@ -4060,37 +4060,37 @@
   "badge_prepared_name": "Sẵn sàng lên đường",
   "badge_prepared_desc": {
     "one": "Đã lên kế hoạch thánh chức trong {{count}} tháng",
-    "other": "Đã lên kế hoạch thánh chức trong {{count}} tháng khác nhau"
+    "other": "Đã lên kế hoạch thánh chức trong {{count}} tháng"
   },
   "badge_prepared_how": "Thêm một kế hoạch vào lịch trình của bạn. Nó được tính khi đến ngày của nó.",
   "badge_conversations_name": "Lời tử tế",
   "badge_conversations_desc": {
     "one": "Đã trò chuyện trong {{count}} tháng",
-    "other": "Đã trò chuyện trong {{count}} tháng khác nhau"
+    "other": "Đã trò chuyện trong {{count}} tháng"
   },
   "badge_conversations_how": "Ghi một lần thăm mà bạn đã trò chuyện với ai đó.",
   "badge_returnVisits_name": "Thăm lại",
   "badge_returnVisits_desc": {
     "one": "Đã quay lại thăm ai đó trong {{count}} tháng",
-    "other": "Đã quay lại thăm ai đó trong {{count}} tháng khác nhau"
+    "other": "Đã quay lại thăm ai đó trong {{count}} tháng"
   },
   "badge_returnVisits_how": "Ghi một lần thăm khác với người bạn đã thăm trước đây.",
   "badge_nextTime_name": "Lần sau",
   "badge_nextTime_desc": {
     "one": "Đã lên kế hoạch điều sẽ chia sẻ tiếp theo trong {{count}} tháng",
-    "other": "Đã lên kế hoạch điều sẽ chia sẻ tiếp theo trong {{count}} tháng khác nhau"
+    "other": "Đã lên kế hoạch điều sẽ chia sẻ tiếp theo trong {{count}} tháng"
   },
   "badge_nextTime_how": "Thêm một chủ đề vào lần thăm lại để bạn biết nên chia sẻ gì lần sau.",
   "badge_keepingInTouch_name": "Giữ liên lạc",
   "badge_keepingInTouch_desc": {
     "one": "Đã trò chuyện với cùng một người trong {{count}} tháng",
-    "other": "Đã trò chuyện với cùng một người trong {{count}} tháng khác nhau"
+    "other": "Đã trò chuyện với cùng một người trong {{count}} tháng"
   },
   "badge_keepingInTouch_how": "Tiếp tục thăm một người tháng này qua tháng khác, trực tiếp, qua điện thoại hoặc qua thư.",
   "badge_together_name": "Từng đôi một",
   "badge_together_desc": {
     "one": "Đã đi rao giảng cùng một bạn đồng hành trong {{count}} tháng",
-    "other": "Đã đi rao giảng cùng một bạn đồng hành trong {{count}} tháng khác nhau"
+    "other": "Đã đi rao giảng cùng một bạn đồng hành trong {{count}} tháng"
   },
   "badge_together_how": "Lên kế hoạch cùng một bạn đồng hành. Nó được tính khi một bạn đồng hành sẽ đi và đến ngày đó.",
   "badge_firstBibleStudy_name": "Buổi học Kinh Thánh đầu tiên",

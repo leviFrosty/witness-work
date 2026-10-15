@@ -1,14 +1,17 @@
 import { Languages as LanguagesIcon } from 'lucide-react-native'
 import { GroupedListPickerRow } from '@/components/ui/GroupedList'
 import i18n, {
+  resolveAppLocale,
   TranslatedLocale,
   translatedLocales,
   translationsLabels,
 } from '@/lib/locales'
+import { logger } from '@/lib/logger'
+import { reloadApp } from '@/lib/hotUpdater'
+import { syncLayoutDirection } from '@/lib/rtl'
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { getLocales } from 'expo-localization'
-import { reloadApp } from '@/lib/hotUpdater'
 
 /** The picker's value for following the device's language. */
 const DEVICE_DEFAULT = 'device'
@@ -26,11 +29,14 @@ export default function LanguageSelector() {
   const { loadedLocale, languageFound, isFallback } = useUserLocalePrefs()
 
   function handleChange(value: string) {
-    set({
-      locale:
-        value === DEVICE_DEFAULT ? undefined : (value as TranslatedLocale),
-    })
-    void reloadApp()
+    const locale =
+      value === DEVICE_DEFAULT ? undefined : (value as TranslatedLocale)
+    set({ locale })
+    // The reload picks up the new Language's layout direction too.
+    syncLayoutDirection(resolveAppLocale(locale))
+    reloadApp().catch((err: unknown) =>
+      logger.error('[LanguageSelector] reload failed', err)
+    )
   }
 
   return (

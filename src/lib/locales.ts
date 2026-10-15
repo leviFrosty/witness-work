@@ -3,6 +3,8 @@ import enUS from '@/locales/en-US.json'
 import { getLocales } from 'expo-localization'
 import { applyFormatRegion, type DateOrder, type TimeFormat } from '@/lib/dates'
 import { readBootPreferences } from '@/stores/bootPreferences'
+import * as cardinals from 'make-plural/cardinals'
+import { createPluralizer, type CardinalRule } from '@/lib/plurals'
 
 type Translations = typeof enUS
 
@@ -55,10 +57,37 @@ export const translationsLabels: { [K in TranslatedLocale]: string } = {
   'rw-rw': 'Kinyarwanda',
 } as const
 
+// CLDR cardinal plural rules: which of zero/one/two/few/many/other a count
+// takes in each Language. The translate-locales lint checks every locale file
+// against the same rules (`.agents/skills/translate-locales/locales.mjs`).
+const pluralRules: { [K in TranslatedLocale]: CardinalRule } = {
+  'en-us': cardinals.en,
+  'de-de': cardinals.de,
+  'es-es': cardinals.es,
+  'fr-fr': cardinals.fr,
+  'it-it': cardinals.it,
+  'ja-jp': cardinals.ja,
+  'ko-kr': cardinals.ko,
+  'nl-nl': cardinals.nl,
+  'pt-br': cardinals.pt,
+  'pt-pt': cardinals.pt_PT,
+  'ru-ru': cardinals.ru,
+  'vi-vn': cardinals.vi,
+  'zh-hant-tw': cardinals.zh,
+  'zh-hans-cn': cardinals.zh,
+  'sw-ke': cardinals.sw,
+  'uk-ua': cardinals.uk,
+  'bem-zm': cardinals.bem,
+  // CLDR has no Kinyarwanda rules; it counts one/other like English.
+  'rw-rw': cardinals.en,
+}
+
 export const DEFAULT_LOCALE = 'en-us'
 export const _i18n = new I18n({ [DEFAULT_LOCALE]: enUS })
 _i18n.enableFallback = true
 _i18n.defaultLocale = DEFAULT_LOCALE
+for (const locale of translatedLocales)
+  _i18n.pluralization.register(locale, createPluralizer(pluralRules[locale]))
 
 const loadedLocales = new Set<TranslatedLocale>([DEFAULT_LOCALE])
 
@@ -85,8 +114,7 @@ try {
   const state =
     (readBootPreferences() as { state?: BootLocalePreferences } | null)
       ?.state ?? {}
-  const rawLocale = state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
-  const { locale: localeOrFallback } = handleLangFallback(rawLocale)
+  const localeOrFallback = resolveAppLocale(state.locale)
   setI18nLocale(localeOrFallback)
   const locale = formatLocaleForMoment(localeOrFallback)
   // Sets moment.locale to the Language and overlays the Format Region's
@@ -109,31 +137,44 @@ export function handleLangFallback(locale: string): {
   languageFound: boolean
   fallback: boolean
 } {
-  const userLanguage = locale.slice(0, locale.lastIndexOf('-')) // Guaranteed
-  const validTranslationLocales: string[] = translatedLocales
-  let languageFound = false
-  let fallback = false
+  const tag = locale.toLowerCase().replace(/_/g, '-')
+  const exact = translatedLocales.find((t) => t === tag)
+  if (exact) return { locale: exact, languageFound: true, fallback: false }
 
-  if (validTranslationLocales.includes(locale)) {
-    languageFound = true
-  } else if (validTranslationLocales.some((t) => t.includes(userLanguage))) {
-    const languageWithMismatchRegion = validTranslationLocales.find((t) =>
-      t.includes(userLanguage)
-    )
-    // Locale is invalid -- but we found a translation with the same language. The region is incorrect.
-    if (languageWithMismatchRegion) {
-      languageFound = true
-      fallback = true
-      locale = languageWithMismatchRegion
-    }
-  } else {
-    // No locale translation, or fallback language was found. Falling back to en-us.
-    fallback = true
-    locale = 'en-us'
+  // Match on whole subtags: `ar` must not match `ja-jp`, nor `sw` `es-es`.
+  const [language, ...rest] = tag.split('-')
+  const sameLanguage = translatedLocales.filter(
+    (t) => t.split('-')[0] === language
+  )
+  if (sameLanguage.length) {
+    // Chinese also has to match its script. Without one, Taiwan, Hong Kong
+    // and Macau write Traditional and everywhere else Simplified.
+    const script =
+      rest.find((subtag) => subtag.length === 4) ??
+      (language === 'zh'
+        ? rest.some((r) => r === 'tw' || r === 'hk' || r === 'mo')
+          ? 'hant'
+          : 'hans'
+        : undefined)
+    const match =
+      (script &&
+        sameLanguage.find((t) => t.split('-').slice(1).includes(script))) ||
+      sameLanguage[0]
+    return { locale: match, languageFound: true, fallback: true }
   }
 
-  const guaranteedLocale = locale as TranslatedLocale // Because we check all conditions or fallback to a valid locale, this is guaranteed to return a locale that is valid.
-  return { locale: guaranteedLocale, languageFound, fallback }
+  // No translation in this language: fall back to English.
+  return { locale: DEFAULT_LOCALE, languageFound: false, fallback: true }
+}
+
+/**
+ * The Language the app runs in: the user's pick in Settings, else the device's
+ * first language, resolved to a translation we ship.
+ */
+export function resolveAppLocale(preferred?: string): TranslatedLocale {
+  return handleLangFallback(
+    preferred ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+  ).locale
 }
 
 export function formatLocaleForMoment(locale: string) {
@@ -174,8 +215,28 @@ type DeepKeyOf<T> = T extends object
  */
 export type TranslationKey = DeepKeyOf<typeof enUS>
 
+/** Whether `locale`'s own translations have `key`, without English fallback. */
+function hasOwnTranslation(locale: string, key: string): boolean {
+  let node: unknown = _i18n.translations[locale]
+  for (const part of key.split(_i18n.defaultSeparator)) {
+    if (node === null || typeof node !== 'object') return false
+    node = (node as Record<string, unknown>)[part]
+  }
+  return node !== undefined && node !== null
+}
+
 const i18n = {
   t: (key: TranslationKey, options?: TranslateOptions | undefined) => {
+    // An untranslated plural falls back to the English strings, so it has to
+    // pick among them by English rules too. Russian's `one` for 21 or French's
+    // `one` for 0 would otherwise render "21 photo" and "0 photo".
+    if (
+      options?.count !== undefined &&
+      !('locale' in options) &&
+      _i18n.locale !== DEFAULT_LOCALE &&
+      !hasOwnTranslation(_i18n.locale, key)
+    )
+      return _i18n.t(key, { ...options, locale: DEFAULT_LOCALE })
     return _i18n.t(key, options)
   },
 }

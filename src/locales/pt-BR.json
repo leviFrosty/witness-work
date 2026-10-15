@@ -2825,22 +2825,22 @@
   "contacts_pinStaleness_month": "Velhos",
   "contacts_stalenessChip_all": "Todos",
   "contacts_searchPlaceholder": {
-    "one": "Buscar 1 contato",
+    "one": "Buscar {{count}} contato",
     "other": "Buscar {{count}} contatos"
   },
   "contacts_stalenessInfo_title": "O que as cores significam",
   "contacts_stalenessInfo_subtitle": "Baseado na visita mais recente. \"Não em casa\" conta como visitas.",
   "contacts_stalenessCriteria_never": "Nenhuma visita registrada ainda",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "Última visita no último dia",
+    "one": "Última visita há no máximo {{count}} dia",
     "other": "Última visita nos últimos {{count}} dias"
   },
   "contacts_stalenessCriteriaDays_week": {
-    "one": "Última visita há mais de um dia",
+    "one": "Última visita há mais de {{count}} dia",
     "other": "Última visita foi há mais de {{count}} dias"
   },
   "contacts_stalenessCriteriaDays_month": {
-    "one": "Última visita há mais de um dia",
+    "one": "Última visita faz mais de {{count}} dia",
     "other": "Última visita faz mais de {{count}} dias"
   },
   "colorKeyScreenTitle": "Tecla de Cores",
@@ -2907,7 +2907,7 @@
   "contacts_sortAndFilter_sortSection": "Classificar",
   "contacts_sortAndFilter_resultCount": {
     "zero": "Nenhuma correspondência",
-    "one": "1 correspondência",
+    "one": "{{count}} correspondência",
     "other": "{{count}} correspondências"
   },
   "contacts_sortAndFilter_sortLabel": "Ordenar: {{label}}",
@@ -2930,7 +2930,7 @@
   "savedViews_empty_description": "Em Classificar e filtrar, escolha filtros e uma ordenação e toque em Salvar como visualização.",
   "savedViews_filterCount": {
     "zero": "Sem filtros",
-    "one": "1 filtro",
+    "one": "{{count}} filtro",
     "other": "{{count}} filtros"
   },
   "savedViews_summary": "{{filters}} · Ordem: {{sort}}",
@@ -3593,7 +3593,7 @@
   "select": "Selecionar",
   "selectedCount": {
     "zero": "Selecionar itens",
-    "one": "1 selecionado",
+    "one": "{{count}} selecionado",
     "other": "{{count}} selecionados"
   },
   "copyTopic": "Copiar assunto",
@@ -3606,26 +3606,26 @@
   "editFilterEllipsis": "Editar filtro…",
   "removeFilter": "Remover filtro",
   "archiveContacts_question": {
-    "one": "Arquivar 1 contato?",
+    "one": "Arquivar {{count}} contato?",
     "other": "Arquivar {{count}} contatos?"
   },
   "archiveContacts_description": "Arquivar estes contatos os remove da sua lista. Você pode recuperá-los nas configurações.",
   "deleteContacts_question": {
-    "one": "Excluir 1 contato permanentemente?",
+    "one": "Excluir {{count}} contato permanentemente?",
     "other": "Excluir {{count}} contatos permanentemente?"
   },
   "permanentlyDeleteContacts_warning": "Isso exclui permanentemente estes contatos e todas as conversas registradas com eles. Essa ação não pode ser desfeita.",
   "contactsDismissedMessage": {
-    "one": "1 contato está dispensado até {{until}}",
+    "one": "{{count}} contato está dispensado até {{until}}",
     "other": "{{count}} contatos estão dispensados até {{until}}"
   },
   "contactsUndismissed": {
-    "one": "1 contato deixou de estar dispensado",
+    "one": "{{count}} contato deixou de estar dispensado",
     "other": "{{count}} contatos deixaram de estar dispensados"
   },
   "sendAnotherWay": "Enviar de outra forma",
   "contacts_dismissed": {
-    "one": "1 dispensado",
+    "one": "{{count}} dispensado",
     "other": "{{count}} dispensados"
   },
   "noDismissedContacts_title": "Nenhum contato dispensado",
@@ -3870,7 +3870,7 @@
     "removeCar_description": "Arquivar oculta o carro das novas viagens, mas mantém as viagens dele nos seus relatórios. Excluir também exclui as viagens dele.",
     "deleteCar_description": "Excluir o carro também exclui as viagens dele. Essa ação não pode ser desfeita.",
     "deleteCarAndTrips": {
-      "one": "Excluir carro e 1 viagem",
+      "one": "Excluir carro e {{count}} viagem",
       "other": "Excluir carro e {{count}} viagens"
     },
     "fuel": "Combustível",
@@ -3889,7 +3889,7 @@
     "deleteFuel_title": "Excluir este combustível?",
     "deleteFuel_description": {
       "zero": "O histórico de preços dele será excluído.",
-      "one": "O histórico de preços dele será excluído, e 1 carro que o usa deixará de mostrar um custo estimado.",
+      "one": "O histórico de preços dele será excluído, e {{count}} carro que o usa deixará de mostrar um custo estimado.",
       "other": "O histórico de preços dele será excluído, e {{count}} carros que o usam deixarão de mostrar um custo estimado."
     },
     "distance": "Distância",
@@ -4047,7 +4047,7 @@
   "badge_monthsShared_how": "Registre tempo, ou marque que participou, em qualquer mês.",
   "badge_yearRound_name": "O Ano Todo",
   "badge_yearRound_desc": {
-    "one": "Participou em pelo menos 10 meses de um ano de serviço",
+    "one": "Participou em pelo menos 10 meses de {{count}} ano de serviço",
     "other": "Participou em pelo menos 10 meses de {{count}} anos de serviço"
   },
   "badge_yearRound_how": "Participe em 10 meses de um ano de serviço. Dois meses de folga nunca contam contra você.",

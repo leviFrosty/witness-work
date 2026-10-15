@@ -1,5 +1,6 @@
 import '../../env'
 import '@/lib/locales'
+import { useLayoutDirectionReload } from '@/app/launch/layoutDirection'
 import 'react-native-gesture-handler'
 import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
@@ -96,10 +97,11 @@ export default function App() {
   const devRemountKey = useDevRemountKey()
   useNotesImportResume()
   const hasMigrated = useAppMigrations()
+  const directionReloadDue = useLayoutDirectionReload()
 
   // Rendering anything hides the native splash, so keep showing its exact
   // replica until the app is ready — the first screen then picks up from it.
-  if (!hasMigrated || !fontsLoaded) {
+  if (!hasMigrated || !fontsLoaded || directionReloadDue) {
     return <LaunchSplash />
   }
   perf.mark('appTreeRender')

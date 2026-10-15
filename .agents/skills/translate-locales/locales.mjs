@@ -11,13 +11,15 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import * as cardinals from 'make-plural/cardinals'
+import * as pluralCategories from 'make-plural/pluralCategories'
+import * as pluralExamples from 'make-plural/examples'
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url))
 const localeDir = path.join(repo, 'src/locales')
 const SOURCE = 'en-US'
-const PLURAL_FORMS = new Set(['zero', 'one', 'two', 'few', 'many', 'other'])
-// No pluralizer is registered with i18n-js, so every Language uses English rules.
-const RENDERED_FORMS = new Set(['zero', 'one', 'other'])
+const PLURAL_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other']
+const PLURAL_FORMS = new Set(PLURAL_ORDER)
 const TOKEN = /\{\{[^{}]*\}\}|%\{[^{}]*\}|\$\{[^{}]*\}/g
 
 const isObject = (value) => value !== null && typeof value === 'object'
@@ -38,6 +40,68 @@ function writeJson(file, value) {
 function fail(message) {
   console.error(message)
   process.exit(1)
+}
+
+const isPluralNode = (node) =>
+  isObject(node) &&
+  Object.keys(node).length > 0 &&
+  Object.keys(node).every((form) => PLURAL_FORMS.has(form))
+
+/**
+ * How `<name>` counts, mirroring `pluralRules` in src/lib/locales.ts: CLDR's
+ * rule for the language, European Portuguese apart from Brazilian, and
+ * English's for Kinyarwanda, which CLDR doesn't cover.
+ *
+ * - `forms`: what renders. The app's pluralizer tries `zero` for 0 in every
+ *   Language, then the CLDR category, then `other`.
+ * - `required`: the categories a whole number from 0 to 1,000 lands on, plus
+ *   `other`. Rarer ones (French `many` for millions) fall back to `other`.
+ * - `oneIsOne`: whether `one` means exactly 1. In French it also covers 0 and
+ *   1.5, in Russian 21 and 31, so there `one` must show the count.
+ */
+const pluralRules = new Map()
+function plurals(name) {
+  if (pluralRules.has(name)) return pluralRules.get(name)
+  const language = name.split('-')[0]
+  const key =
+    name === 'pt-PT'
+      ? 'pt_PT'
+      : Object.hasOwn(cardinals, language)
+        ? language
+        : 'en'
+  const rule = cardinals[key]
+  const required = new Set(['other'])
+  for (let n = 0; n <= 1000; n++) required.add(rule(n))
+  const examples = pluralExamples[key].cardinal
+  const info = {
+    forms: new Set(['zero', ...pluralCategories[key].cardinal]),
+    required,
+    examples,
+    oneIsOne: (examples.one ?? []).every((n) => Number(n) === 1),
+  }
+  pluralRules.set(name, info)
+  return info
+}
+
+const sample = (numbers = []) =>
+  numbers
+    .filter((n) => !n.includes('.'))
+    .slice(0, 6)
+    .join(', ')
+
+/**
+ * Forms `<name>` needs that English doesn't have (Russian `few` and `many`),
+ * for every plural key in English: `[keyPath, form, englishOther]`.
+ */
+function* extraPluralForms(en, name, keyPath = []) {
+  if (!isObject(en)) return
+  if (isPluralNode(en)) {
+    for (const form of plurals(name).required)
+      if (!Object.hasOwn(en, form)) yield [keyPath, form, en.other]
+    return
+  }
+  for (const [key, child] of Object.entries(en))
+    yield* extraPluralForms(child, name, [...keyPath, key])
 }
 
 /** Nonempty string leaves, the same set `pnpm check:locales` requires. */
@@ -107,18 +171,36 @@ const tokens = (text) => (text.match(TOKEN) ?? []).sort().join(' ')
 const braces = (text) => text.replace(TOKEN, '').replace(/[^{}]/g, '').length
 const boldMarkers = (text) => text.split('**').length - 1
 
-/** Problems per dotted key in `strings`, checked against English. */
-function lintStrings(en, strings) {
+/**
+ * Problems per dotted key in locale `name`'s `strings`, checked against
+ * English.
+ */
+function lintStrings(en, strings, name) {
   const issues = new Map()
   const add = (key, problem) =>
     issues.set(key, [...(issues.get(key) ?? []), problem])
+  const rules = plurals(name)
 
   for (const [keyPath, english] of leaves(en)) {
     const text = get(strings, keyPath)
     if (!filled(text)) continue
     const key = keyPath.join('.')
-    if (tokens(english) !== tokens(text))
-      add(key, `placeholders must be exactly: ${tokens(english) || '(none)'}`)
+    const form = keyPath.at(-1)
+    const pluralNode = get(en, keyPath.slice(0, -1))
+    let expected = [tokens(english)]
+    if (isPluralNode(pluralNode) && typeof pluralNode.other === 'string') {
+      const other = tokens(pluralNode.other)
+      // A form may write its number out ("1 match") or show the count.
+      if (form === 'one' && !rules.oneIsOne) expected = [other]
+      else if (form !== 'zero') expected.push(other)
+    }
+    if (!expected.includes(tokens(text)))
+      add(
+        key,
+        form === 'one' && !rules.oneIsOne && expected[0] !== tokens(english)
+          ? `placeholders must be exactly: ${expected[0]} ("one" also counts ${sample(rules.examples.one.filter((n) => Number(n) !== 1))} in ${name})`
+          : `placeholders must be exactly: ${expected[0] || '(none)'}`
+      )
     if (braces(english) !== braces(text))
       add(key, 'stray { or } outside placeholders')
     if (boldMarkers(english) !== boldMarkers(text))
@@ -140,19 +222,40 @@ function lintStrings(en, strings) {
     } else phrases.set(spoken, key)
   }
 
-  ;(function plurals(enNode, node, keyPath) {
+  // Forms beyond English's must be ones this Language renders, and a
+  // translated plural key needs every form a count up to 1,000 lands on.
+  ;(function pluralForms(enNode, node, keyPath) {
     if (!isObject(enNode) || !isObject(node)) return
-    const keys = Object.keys(enNode)
-    if (keys.length && keys.every((form) => PLURAL_FORMS.has(form))) {
-      for (const form of Object.keys(node))
-        if (!RENDERED_FORMS.has(form))
+    if (isPluralNode(enNode)) {
+      const key = keyPath.join('.')
+      for (const [form, text] of Object.entries(node)) {
+        if (Object.hasOwn(enNode, form)) continue
+        if (!rules.forms.has(form))
           add(
-            keyPath.join('.'),
-            `plural form "${form}" never renders; i18n-js only picks zero, one and other`
+            key,
+            `plural form "${form}" never renders; ${name} uses ${[...rules.forms].join(', ')}`
+          )
+        else if (!filled(text)) add(`${key}.${form}`, 'empty plural form')
+        else {
+          if (tokens(text) !== tokens(enNode.other))
+            add(
+              `${key}.${form}`,
+              `placeholders must be exactly: ${tokens(enNode.other) || '(none)'}`
+            )
+          if (braces(enNode.other) !== braces(text))
+            add(`${key}.${form}`, 'stray { or } outside placeholders')
+        }
+      }
+      for (const form of rules.required)
+        if (!Object.hasOwn(enNode, form) && !filled(node[form]))
+          add(
+            `${key}.${form}`,
+            `needs plural form "${form}" (${sample(rules.examples[form])}, …)`
           )
       return
     }
-    for (const key of keys) plurals(enNode[key], node[key], [...keyPath, key])
+    for (const key of Object.keys(enNode))
+      pluralForms(enNode[key], node[key], [...keyPath, key])
   })(en, strings, [])
 
   return issues
@@ -172,7 +275,7 @@ function withValue(target, enNode, [key, ...rest], value) {
     target[key] = child
     return target
   }
-  const order = Object.keys(enNode)
+  const order = isPluralNode(enNode) ? PLURAL_ORDER : Object.keys(enNode)
   const at = order.indexOf(key)
   const before = order
     .slice(0, at)
@@ -204,7 +307,7 @@ function todo() {
   for (const name of targets()) {
     const strings = readLocale(name)
     const stringsThen = since ? gitLocale(since, name) : undefined
-    const issues = lintStrings(en, strings)
+    const issues = lintStrings(en, strings, name)
     const keys = {}
     for (const [keyPath, english] of leaves(en)) {
       const key = keyPath.join('.')
@@ -221,6 +324,23 @@ function todo() {
         keys[key] = {
           reason: 'lint',
           en: english,
+          current,
+          problems: issues.get(key),
+        }
+    }
+    // Plural forms English doesn't have, such as Russian `few`: translate
+    // them from English's `other`.
+    for (const [keyPath, form, other] of extraPluralForms(en, name)) {
+      const key = [...keyPath, form].join('.')
+      const current = get(strings, [...keyPath, form])
+      const hint = `${name} plural form "${form}": ${sample(plurals(name).examples[form])}, …`
+      if (!filled(current))
+        keys[key] = { reason: 'missing', en: other, form: hint }
+      else if (issues.has(key))
+        keys[key] = {
+          reason: 'lint',
+          en: other,
+          form: hint,
           current,
           problems: issues.get(key),
         }
@@ -268,13 +388,16 @@ function apply() {
   const errors = []
   for (const [key, text] of Object.entries(translations)) {
     const keyPath = key.split('.')
-    if (typeof get(en, keyPath) !== 'string')
-      errors.push(`${key}: not a string in ${SOURCE}.json`)
+    const pluralForm =
+      isPluralNode(get(en, keyPath.slice(0, -1))) &&
+      plurals(name).forms.has(keyPath.at(-1))
+    if (typeof get(en, keyPath) !== 'string' && !pluralForm)
+      errors.push(`${key}: not a string in ${SOURCE}.json or a plural form`)
     else if (!filled(text))
       errors.push(`${key}: translation must be a nonempty string`)
     else strings = withValue(strings, en, keyPath, text)
   }
-  const issues = lintStrings(en, strings)
+  const issues = lintStrings(en, strings, name)
   for (const key of Object.keys(translations))
     for (const problem of issues.get(key) ?? [])
       errors.push(`${key}: ${problem}`)
@@ -290,7 +413,7 @@ function apply() {
 
 function lint() {
   const en = readLocale(SOURCE)
-  const english = lintStrings(en, en)
+  const english = lintStrings(en, en, SOURCE)
   for (const [keyPath, text] of leaves(en)) {
     const key = keyPath.join('.')
     if (/magic/i.test(text))
@@ -299,7 +422,7 @@ function lint() {
   let count = 0
   for (const [name, issues] of [
     [SOURCE, english],
-    ...targets().map((name) => [name, lintStrings(en, readLocale(name))]),
+    ...targets().map((name) => [name, lintStrings(en, readLocale(name), name)]),
   ])
     for (const [key, problems] of issues)
       for (const problem of problems) {

@@ -2825,22 +2825,22 @@
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "Tous",
   "contacts_searchPlaceholder": {
-    "one": "Rechercher 1 contact",
+    "one": "Rechercher parmi {{count}} contact",
     "other": "Rechercher parmi {{count}} contacts"
   },
   "contacts_stalenessInfo_title": "Ce que signifient les couleurs",
   "contacts_stalenessInfo_subtitle": "D’après la visite la plus récente. « Pas à la maison » compte comme des visites.",
   "contacts_stalenessCriteria_never": "Aucune visite enregistrée pour l’instant",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "Dernière visite dans la veille",
+    "one": "Dernière visite il y a {{count}} jour au plus",
     "other": "Dernière visite au cours des {{count}} jours"
   },
   "contacts_stalenessCriteriaDays_week": {
-    "one": "Dernière visite il y a plus d’un jour",
+    "one": "Dernière visite il y a plus de {{count}} jour",
     "other": "Dernière visite il y a plus de {{count}} jours"
   },
   "contacts_stalenessCriteriaDays_month": {
-    "one": "Dernière visite il y a plus d’un jour",
+    "one": "Dernière visite il y a plus de {{count}} jour",
     "other": "Dernière visite il y a plus de {{count}} jours"
   },
   "colorKeyScreenTitle": "Clé de couleur",
@@ -2907,7 +2907,7 @@
   "contacts_sortAndFilter_sortSection": "Trier",
   "contacts_sortAndFilter_resultCount": {
     "zero": "Pas de correspondance",
-    "one": "1 correspondance",
+    "one": "{{count}} correspondance",
     "other": "{{count}} correspondances"
   },
   "contacts_sortAndFilter_sortLabel": "Trier : {{label}}",
@@ -2930,7 +2930,7 @@
   "savedViews_empty_description": "Dans Trier et filtrer, choisissez des filtres et un tri, puis touchez Enregistrer comme vue.",
   "savedViews_filterCount": {
     "zero": "Aucun filtre",
-    "one": "1 filtre",
+    "one": "{{count}} filtre",
     "other": "{{count}} filtres"
   },
   "savedViews_summary": "{{filters}} · Tri : {{sort}}",
@@ -3593,7 +3593,7 @@
   "select": "Sélectionner",
   "selectedCount": {
     "zero": "Sélectionner des éléments",
-    "one": "1 sélectionné",
+    "one": "{{count}} sélectionné",
     "other": "{{count}} sélectionnés"
   },
   "copyTopic": "Copier le sujet",
@@ -3606,26 +3606,26 @@
   "editFilterEllipsis": "Modifier le filtre…",
   "removeFilter": "Retirer le filtre",
   "archiveContacts_question": {
-    "one": "Archiver 1 contact ?",
+    "one": "Archiver {{count}} contact ?",
     "other": "Archiver {{count}} contacts ?"
   },
   "archiveContacts_description": "Archiver ces contacts les retire de votre liste. Vous pouvez les récupérer depuis les paramètres.",
   "deleteContacts_question": {
-    "one": "Supprimer définitivement 1 contact ?",
+    "one": "Supprimer définitivement {{count}} contact ?",
     "other": "Supprimer définitivement {{count}} contacts ?"
   },
   "permanentlyDeleteContacts_warning": "Cela supprime définitivement ces contacts et toutes les conversations enregistrées avec eux. Cette action est irréversible.",
   "contactsDismissedMessage": {
-    "one": "1 contact est écarté jusqu’au {{until}}",
+    "one": "{{count}} contact est écarté jusqu’au {{until}}",
     "other": "{{count}} contacts sont écartés jusqu’au {{until}}"
   },
   "contactsUndismissed": {
-    "one": "1 contact n’est plus écarté",
+    "one": "{{count}} contact n’est plus écarté",
     "other": "{{count}} contacts ne sont plus écartés"
   },
   "sendAnotherWay": "Envoyer autrement",
   "contacts_dismissed": {
-    "one": "1 écarté",
+    "one": "{{count}} écarté",
     "other": "{{count}} écartés"
   },
   "noDismissedContacts_title": "Aucun contact écarté",
@@ -3870,7 +3870,7 @@
     "removeCar_description": "Archiver masque la voiture pour les nouveaux trajets mais conserve ses trajets dans vos rapports. Supprimer supprime aussi ses trajets.",
     "deleteCar_description": "Supprimer la voiture supprime aussi ses trajets. Cette action est irréversible.",
     "deleteCarAndTrips": {
-      "one": "Supprimer la voiture et 1 trajet",
+      "one": "Supprimer la voiture et {{count}} trajet",
       "other": "Supprimer la voiture et {{count}} trajets"
     },
     "fuel": "Carburant",
@@ -3889,7 +3889,7 @@
     "deleteFuel_title": "Supprimer ce carburant ?",
     "deleteFuel_description": {
       "zero": "Son historique de prix sera supprimé.",
-      "one": "Son historique de prix sera supprimé, et 1 voiture qui l’utilise cessera d’afficher un coût estimé.",
+      "one": "Son historique de prix sera supprimé, et {{count}} voiture qui l’utilise cessera d’afficher un coût estimé.",
       "other": "Son historique de prix sera supprimé, et {{count}} voitures qui l’utilisent cesseront d’afficher un coût estimé."
     },
     "distance": "Distance",
@@ -4047,7 +4047,7 @@
   "badge_monthsShared_how": "Enregistrez du temps, ou indiquez que vous avez participé, durant un mois quelconque.",
   "badge_yearRound_name": "Toute l’année",
   "badge_yearRound_desc": {
-    "one": "A participé pendant au moins 10 mois d’une année de service",
+    "one": "A participé pendant au moins 10 mois de {{count}} année de service",
     "other": "A participé pendant au moins 10 mois de {{count}} années de service"
   },
   "badge_yearRound_how": "Participez pendant 10 mois d’une année de service. Deux mois d’absence ne comptent jamais contre vous.",

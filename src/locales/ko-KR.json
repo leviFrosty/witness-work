@@ -2837,11 +2837,11 @@
   },
   "contacts_stalenessCriteriaDays_week": {
     "one": "마지막 방문은 하루 넘게 전입니다",
-    "other": "마지막 방문은 {{count}}일 이상 전"
+    "other": "마지막 방문은 {{count}}일 넘게 전입니다"
   },
   "contacts_stalenessCriteriaDays_month": {
     "one": "마지막 방문은 하루 넘게 전입니다",
-    "other": "마지막 방문은 {{count}}일 전"
+    "other": "마지막 방문은 {{count}}일 넘게 전입니다"
   },
   "colorKeyScreenTitle": "색상 키",
   "colorKey_edit": "색상 키 편집",
@@ -2908,7 +2908,7 @@
   "contacts_sortAndFilter_resultCount": {
     "zero": "일치하는 항목 없음",
     "one": "일치하는 항목 1건",
-    "other": "{{count}} 일치하는 항목"
+    "other": "일치하는 항목 {{count}}건"
   },
   "contacts_sortAndFilter_sortLabel": "정렬: {{label}}",
   "savedViews_title": "저장된 보기",
@@ -4060,37 +4060,37 @@
   "badge_prepared_name": "준비 완료",
   "badge_prepared_desc": {
     "one": "{{count}}개월 동안 봉사를 계획했습니다",
-    "other": "서로 다른 {{count}}개월 동안 봉사를 계획했습니다"
+    "other": "{{count}}개월 동안 봉사를 계획했습니다"
   },
   "badge_prepared_how": "일정에 계획을 추가하세요. 그 날짜가 되면 계산됩니다.",
   "badge_conversations_name": "다정한 말",
   "badge_conversations_desc": {
     "one": "{{count}}개월 동안 대화를 나눴습니다",
-    "other": "서로 다른 {{count}}개월 동안 대화를 나눴습니다"
+    "other": "{{count}}개월 동안 대화를 나눴습니다"
   },
   "badge_conversations_how": "누군가와 이야기한 방문을 기록하세요.",
   "badge_returnVisits_name": "재방문",
   "badge_returnVisits_desc": {
     "one": "{{count}}개월 동안 다시 찾아갔습니다",
-    "other": "서로 다른 {{count}}개월 동안 다시 찾아갔습니다"
+    "other": "{{count}}개월 동안 다시 찾아갔습니다"
   },
   "badge_returnVisits_how": "전에 방문한 적이 있는 사람과의 또 다른 방문을 기록하세요.",
   "badge_nextTime_name": "다음에는",
   "badge_nextTime_desc": {
     "one": "{{count}}개월 동안 다음에 전할 내용을 계획했습니다",
-    "other": "서로 다른 {{count}}개월 동안 다음에 전할 내용을 계획했습니다"
+    "other": "{{count}}개월 동안 다음에 전할 내용을 계획했습니다"
   },
   "badge_nextTime_how": "다음 방문에 주제를 추가하여 다음에 무엇을 전할지 알아 두세요.",
   "badge_keepingInTouch_name": "꾸준한 연락",
   "badge_keepingInTouch_desc": {
     "one": "{{count}}개월 동안 같은 사람과 이야기했습니다",
-    "other": "서로 다른 {{count}}개월 동안 같은 사람과 이야기했습니다"
+    "other": "{{count}}개월 동안 같은 사람과 이야기했습니다"
   },
   "badge_keepingInTouch_how": "직접 만나거나 전화나 편지로 매달 계속 누군가를 방문하세요.",
   "badge_together_name": "둘씩 짝지어",
   "badge_together_desc": {
     "one": "{{count}}개월 동안 버디와 함께 나갔습니다",
-    "other": "서로 다른 {{count}}개월 동안 버디와 함께 나갔습니다"
+    "other": "{{count}}개월 동안 버디와 함께 나갔습니다"
   },
   "badge_together_how": "버디와 함께 계획하세요. 버디가 참석하고 그 날짜가 되면 계산됩니다.",
   "badge_firstBibleStudy_name": "첫 성서 연구",

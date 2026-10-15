@@ -103,6 +103,7 @@ import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerL
 import AccountTools from '@/app/navigation/tools/AccountTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
+import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import {
   applyBadgeHistoryFixture,
   earnRandomBadges,
@@ -1148,6 +1149,8 @@ export default function ToolsScreen() {
             />
           </XView>
         </Card>
+
+        {__DEV__ && <LayoutDirectionTools />}
 
         {/* ---- Data ---- */}
         <ToolSection

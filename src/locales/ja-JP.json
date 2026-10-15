@@ -2832,8 +2832,8 @@
   "contacts_stalenessInfo_subtitle": "直近の訪問に基づいています。「家に入らない」は訪問に含まれます。",
   "contacts_stalenessCriteria_never": "まだ訪問記録はありません",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "前日の最後の訪問",
-    "other": "直近の{{count}}日以内の最後の訪問"
+    "one": "最後の訪問は1日以内です",
+    "other": "最後の訪問は{{count}}日以内です"
   },
   "contacts_stalenessCriteriaDays_week": {
     "one": "最後の訪問は1日以上前です",
@@ -2908,7 +2908,7 @@
   "contacts_sortAndFilter_resultCount": {
     "zero": "一致しない",
     "one": "1件",
-    "other": "{{count}} 一致"
+    "other": "{{count}}件"
   },
   "contacts_sortAndFilter_sortLabel": "並べ替え: {{label}}",
   "savedViews_title": "保存済みビュー",

@@ -152,7 +152,10 @@ const NotesImportThinking = ({
                 fontVariant: ['tabular-nums'],
               }}
             >
-              {`${elapsedSec.toFixed(1)}s · ~${formatTokens(tokens ?? 0)} tok`}
+              {i18n.t('notesImport_inferenceStats', {
+                seconds: elapsedSec.toFixed(1),
+                tokens: formatTokens(tokens ?? 0),
+              })}
             </Text>
             {__DEV__ ? (
               <View

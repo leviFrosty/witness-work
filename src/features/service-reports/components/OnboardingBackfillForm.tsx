@@ -23,6 +23,7 @@ import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { parseDecimal } from '@/lib/mileage/units'
 
 interface MonthRow {
   monthIndex: number
@@ -222,8 +223,8 @@ const OnboardingBackfillForm = ({
     Keyboard.dismiss()
 
     for (const row of rows) {
-      const hours = parseFloat(row.hours) || 0
-      const creditHours = parseFloat(row.creditHours) || 0
+      const hours = parseDecimal(row.hours) ?? 0
+      const creditHours = parseDecimal(row.creditHours) ?? 0
       if (hours <= 0 && creditHours <= 0) continue
 
       const date = moment()

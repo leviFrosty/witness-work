@@ -307,7 +307,6 @@
     "keepGoingStrong": "Ga zo door!",
     "onARoll": "Goed bezig"
   },
-  "hoursLeft": "uren te gaan",
   "goalBasedOnPublisherType": "Het doel is gebaseerd op uw type verkondiger",
   "goalAdjustedForMonth": "Aangepast doel voor deze maand",
   "addTime": "Voeg tijd toe",
@@ -518,7 +517,6 @@
   "custom": "Aangepast",
   "pleaseDescribeYourIssue": "Beschrijf uw probleem gedetailleerd",
   "invalidPhone": "Ongeldig telefoonnummer",
-  "invalidPhone_description": "is geen geldig nummer voor de regiocode:",
   "appleAppStoreReviewErrorTitle": "App Store-fout",
   "appleAppStoreReviewErrorMessage": "Update uw WitnessWork-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw.",
   "notAtHome": "Niet thuis",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Selecteer alles",
   "deselectAll": "Schakel alles uit",
-  "contactsMissingCoordinates": "{{count}} contacten missen coördinaten.",
-  "contactsMissingCoordinates_one": "{{count}} contact mist coördinaten.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} contact mist coördinaten.",
+    "other": "{{count}} contacten missen coördinaten."
+  },
   "skipFetchInProgress_title": "Springen tijdens het apporteren?",
   "skipFetchInProgress_description": "Coördinaten worden nog steeds opgehaald. Als je nu overslaat, worden de resterende contacten niet automatisch bijgewerkt. Je kunt later coördinaten van elk contact ophalen uit hun gegevens.",
   "viewMap": "Bekijk kaart",
@@ -1104,7 +1104,6 @@
   "categories": "Categorieën",
   "tag": "Label",
   "showOtherCategories": "Toon andere categorieën",
-  "of": "van",
   "hoursToGoal": "uur tot doel",
   "removeCategory": "Categorie verwijderen",
   "noReportsThisMonthYet": "Nog geen meldingen deze maand.",
@@ -1872,7 +1871,6 @@
   "failed": "Mislukt",
   "complete_description": "Als u uw geplande tijd voor een dag haalt, wordt deze als voltooid gemarkeerd.",
   "partial": "Gedeeltelijk",
-  "plannedHours": "Uren gepland",
   "projectedHoursTitle": "Geprojecteerde uren",
   "projectedHoursDescription": "Voegt uren die je al hebt geregistreerd samen met uren die je hebt gepland. Streef ernaar om 100% van je doel te bereiken.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "per dag",
   "short": "kort",
   "average": "gemiddelde",
-  "daysLeft": "dagen over",
   "toPlan": "tot plan",
   "onPace": "Op tempo",
   "hrsPerDayToGoal": "{{count}} uur/dag nodig",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Doel: {{value}} uur",
   "daysTotal": "{{count}} dagen totaal",
   "monthsLeft": "{{count}} resterende maanden",
-  "vsLastMonth": "vs vorige maand",
   "hrsAhead": "{{count}} uur vooruit",
   "hrsBehind": "{{count}} uur achter",
   "aheadShort": "{{value}} vooruit",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Lijst",
   "contacts_searchHint": "Namen, notities, aangepaste velden zoeken..",
   "contacts_total": "Contacten",
-  "contacts_dismissed_one": "1 gearchiveerd",
-  "contacts_dismissed_other": "{{count}} gearchiveerd",
   "contacts_pinStaleness_never": "Nooit gecontacteerd",
   "contacts_pinStaleness_recent": "Deze week",
   "contacts_pinStaleness_week": "Deze maand",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Alle contacten en bezoeken worden definitief verwijderd van dit apparaat en uit iCloud-synchronisatie. Je tijd, rapporten en planningen blijven behouden. Dit kan niet ongedaan worden gemaakt.",
   "dataProtectionDeleteAllDescAndroid": "Elk contact en elk bezoek wordt permanent verwijderd van dit apparaat en uit de Google Drive-synchronisatie. Je tijd, verslagen en plannen worden niet beïnvloed. Dit kan niet ongedaan worden gemaakt.",
   "dataProtectionDeleteAllDoneTitle": "Verwijderd",
-  "dataProtectionDeleteAllDoneDesc": "{{contacts}} contacten en {{visits}} bezoeken verwijderd.",
   "audioAndHaptics": "Geluid en haptiek",
   "streaksAndBadges": "Reeksen en badges",
   "playSounds": "Geluiden afspelen",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Er is geen rijroute die al deze stops verbindt. Verwijder elke stop die niet met de auto te bereiken is en probeer het opnieuw.",
   "routePlan_error_dailyLimit": "Je kunt per dag maximaal {{max}} routes plannen. Probeer het later opnieuw.",
   "routePlan_error_rateLimited": "Te veel pogingen achter elkaar. Wacht een minuut en probeer het opnieuw.",
-  "routePlan_error_rateLimitedSeconds": "Te veel pogingen achter elkaar. Probeer het over {{count}} seconden opnieuw.",
-  "routePlan_error_rateLimitedSeconds_one": "Te veel pogingen achter elkaar. Probeer het over {{count}} seconde opnieuw.",
-  "routePlan_error_rateLimitedMinutes": "Te veel pogingen achter elkaar. Probeer het over {{count}} minuten opnieuw.",
-  "routePlan_error_rateLimitedMinutes_one": "Te veel pogingen achter elkaar. Probeer het over {{count}} minuut opnieuw.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Te veel pogingen achter elkaar. Probeer het over {{count}} seconde opnieuw.",
+    "other": "Te veel pogingen achter elkaar. Probeer het over {{count}} seconden opnieuw."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Te veel pogingen achter elkaar. Probeer het over {{count}} minuut opnieuw.",
+    "other": "Te veel pogingen achter elkaar. Probeer het over {{count}} minuten opnieuw."
+  },
   "routePlan_error_supporter": "Je Supporter-status kon niet worden bevestigd. Herstel je aankoop via het Supporter-scherm en probeer het opnieuw.",
   "routePlan_error_unavailable": "Routeplanning is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
   "routePlan_error_failed": "Kon de route nu niet plannen. Probeer het zo meteen opnieuw.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Meer acties",
   "moreActionsFor": "Meer acties voor {{name}}",
-  "avatarGroup_moreCount_one": "{{count}} persoon meer",
-  "avatarGroup_moreCount_other": "{{count}} personen meer",
   "removeCategory_title": "‘{{name}}’ verwijderen?",
   "removeCategory_description": "Deze categorie wordt uit de kiezer verwijderd en deze invoer schakelt terug naar Standaard. Tijdinvoer die al met deze categorie is opgeslagen blijft ernaar verwijzen. Dit kan niet ongedaan worden gemaakt.",
   "notesImport_updateRequired": "Werk WitnessWork bij om Notities importeren te gebruiken.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Maandelijkse limiet voor urencompensatie",
   "monthlyMaximumCreditHours_description": "Urencompensatie telt mee totdat je gecombineerde maandtotaal deze limiet bereikt. Gewone predikingstijd telt altijd mee.",
   "maximumHours": "Maximumaantal uren",
-  "categoryBreakdown_serviceYear_description": "Geregistreerde tijd per categorie, vóór toepassing van de compensatielimieten."
+  "categoryBreakdown_serviceYear_description": "Geregistreerde tijd per categorie, vóór toepassing van de compensatielimieten.",
+  "avatarGroup_moreCount": {
+    "one": "{{count}} persoon meer",
+    "other": "{{count}} personen meer"
+  }
 }

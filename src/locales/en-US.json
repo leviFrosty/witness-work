@@ -314,7 +314,6 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
   "goalAdjustedForMonth": "Custom goal for this month",
   "addTime": "Add Time",
@@ -372,6 +371,12 @@
   "sharedTheGoodNews": "Shared the\nGood News",
   "serviceReport": "Service Report",
   "hours_lowercase": "hours",
+  "percentValue": "{{value}}%",
+  "hoursLeftValue": "{{value}} left",
+  "goalHoursSuffix": {
+    "one": "/ {{count}} hour",
+    "other": "/ {{count}} hours"
+  },
   "hours": "Hours",
   "studies": "Studies",
   "minutes": "Minutes",
@@ -386,6 +391,10 @@
   "email": "Email",
   "deleteContact": "Delete Contact",
   "created": "Created:",
+  "fileSize_bytes": "{{value}} B",
+  "fileSize_kilobytes": "{{value}} KB",
+  "fileSize_megabytes": "{{value}} MB",
+  "createdDate": "Created: {{date}}",
   "edit": "Edit",
   "contactNotFoundForId": "Contact not found for provided ID:",
   "noPersonalInformationSaved": "No personal information saved. 🧐",
@@ -446,8 +455,6 @@
   "deleteTime_description": "Deleting this time report will permanently remove it.",
   "moreActions": "More actions",
   "moreActionsFor": "More actions for {{name}}",
-  "avatarGroup_moreCount_one": "{{count}} more person",
-  "avatarGroup_moreCount_other": "{{count}} more people",
   "yearRow_moreActions": "More actions for {{year}}",
   "deleteYearTime": "Delete All Time",
   "deleteYearTime_title": "Delete All Time for {{year}}?",
@@ -485,6 +492,7 @@
   "conductedBibleStudy": "Conducted Bible Study",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bible studies won't contribute to monthly totals unless conducted at least once in the current month.",
   "bibleStudy": "Bible Study",
+  "milestoneShowcase_upNext": "Up Next",
   "study": "Study",
   "recentConversation": "Recent Conversation",
   "alphabeticalAsc": "Alphabetical (A-Z)",
@@ -500,6 +508,14 @@
   "publisherStatus_info": "Your status sets your monthly hour goal and how you record time. You can change it anytime in Settings.",
   "before": "before",
   "days_lowercase": "days",
+  "daysLeftCount": {
+    "one": "{{count}} day left",
+    "other": "{{count}} days left"
+  },
+  "daysCount": {
+    "one": "{{count}} day",
+    "other": "{{count}} days"
+  },
   "weeks_lowercase": "weeks",
   "notify": "Notify",
   "notification": "Notification",
@@ -533,7 +549,12 @@
   "custom": "Custom",
   "pleaseDescribeYourIssue": "Please describe your issue in detail",
   "invalidPhone": "Invalid Phone Number",
-  "invalidPhone_description": "is not a valid number for the region code:",
+  "invalidPhone_message": "\"{{number}}\" is not a valid number for the region code: {{region}}.",
+  "phoneIssue_tooShort": "\"{{number}}\" is too short.",
+  "phoneIssue_tooLong": "\"{{number}}\" is too long.",
+  "phoneIssue_invalidCountryCode": "\"{{number}}\" has an invalid country code.",
+  "phoneIssue_invalid": "\"{{number}}\" is not a valid phone number.",
+  "phoneIssue_unknown": "\"{{number}}\" is not a recognized phone number.",
   "appleAppStoreReviewErrorTitle": "App Store Error",
   "appleAppStoreReviewErrorMessage": "Please update your WitnessWork app to the latest version if available and try again.",
   "notAtHome": "Not at Home",
@@ -611,8 +632,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Select All",
   "deselectAll": "Deselect All",
-  "contactsMissingCoordinates": "{{count}} contacts are missing coordinates.",
-  "contactsMissingCoordinates_one": "{{count}} contact is missing coordinates.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} contact is missing coordinates.",
+    "other": "{{count}} contacts are missing coordinates."
+  },
   "skipFetchInProgress_title": "Skip while fetching?",
   "skipFetchInProgress_description": "Coordinates are still being fetched. If you skip now, the remaining contacts won't be updated automatically. You can fetch coordinates for each contact later from their details.",
   "viewMap": "View Map",
@@ -1108,7 +1131,6 @@
   "categories": "Categories",
   "tag": "Tag",
   "showOtherCategories": "Show Other Categories",
-  "of": "of",
   "hoursToGoal": "hours to goal",
   "removeCategory": "Remove Category",
   "removeCategory_title": "Remove \"{{name}}\"?",
@@ -1769,6 +1791,7 @@
   "notesImport_paperPartialTitle": "Check the text",
   "notesImport_paperPartialBody": "One of the {{total}} pages couldn't be read. Add anything that's missing before you import.",
   "notesImport_paperPartialBody_plural": "{{count}} of the {{total}} pages couldn't be read. Add anything that's missing before you import.",
+  "notesImport_inferenceStats": "{{seconds}}s · ~{{tokens}} tok",
   "notesImport_paperTruncatedBody": "A page had more writing than could be read at once. Check the end of each page and add anything that's missing.",
   "notesImport_paperLimitReachedBody": "Your pages weren't read because you have no Import Credits left right now.",
   "notesImport_paperLimit": "You've read the most pages allowed for today. Try the rest tomorrow.",
@@ -1866,6 +1889,8 @@
   "recurring": "Recurring",
   "newPlan": "New Plan",
   "plan": "Plan",
+  "addOneTimePlan": "Add One Time Plan",
+  "addRecurringPlan": "Add Recurring Plan",
   "planDetails_duration": "Duration",
   "planDetails_timeRange": "{{start}} – {{end}}",
   "planDetails_repeats": "Repeats",
@@ -1929,7 +1954,7 @@
   "failed": "Failed",
   "complete_description": "If you meet your planned time for a day, it is marked as complete.",
   "partial": "Partial",
-  "plannedHours": "planned",
+  "actualOfPlanned": "{{actual}} of {{planned}} planned",
   "projectedHoursTitle": "Projected Hours",
   "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
   "scheduleStatus": {
@@ -2311,7 +2336,6 @@
   "perDay": "per day",
   "short": "short",
   "average": "avg",
-  "daysLeft": "days left",
   "toPlan": "to plan",
   "onPace": "On pace",
   "hrsPerDayToGoal": "{{count}} hrs/day needed",
@@ -2320,12 +2344,12 @@
   "goalLabel": "Goal: {{value}}",
   "daysTotal": "{{count}} days total",
   "monthsLeft": "{{count}} months left",
-  "vsLastMonth": "vs last month",
   "hrsAhead": "{{count}} hrs ahead",
   "hrsBehind": "{{count}} hrs behind",
   "aheadShort": "{{value}} ahead",
   "behindShort": "{{value}} behind",
   "aheadOfPlan": "{{value}} ahead of plan",
+  "vsLastMonthValue": "{{value}} vs last month",
   "behindPlan": "{{value}} behind plan",
   "cumulativePace": "Pace vs schedule",
   "creditOverageChip": "+{{value}} over cap",
@@ -2791,8 +2815,6 @@
   "contacts_view_list": "List",
   "contacts_searchHint": "Search names, notes, custom fields…",
   "contacts_total": "Contacts",
-  "contacts_dismissed_one": "1 archived",
-  "contacts_dismissed_other": "{{count}} archived",
   "contacts_pinStaleness_never": "Never contacted",
   "contacts_pinStaleness_recent": "This week",
   "contacts_pinStaleness_week": "This month",
@@ -3409,7 +3431,15 @@
   "dataProtectionDeleteAllDesc": "Every contact and visit will be permanently deleted from this device and from iCloud sync. Your time, reports and plans are not affected. This cannot be undone.",
   "dataProtectionDeleteAllDescAndroid": "Every contact and visit will be permanently deleted from this device and from Google Drive sync. Your time, reports and plans are not affected. This cannot be undone.",
   "dataProtectionDeleteAllDoneTitle": "Deleted",
-  "dataProtectionDeleteAllDoneDesc": "Removed {{contacts}} contacts and {{visits}} visits.",
+  "dataProtectionDeleteAllDoneSummary": "Removed {{contacts}} and {{visits}}.",
+  "dataProtectionDeletedContacts": {
+    "one": "{{count}} contact",
+    "other": "{{count}} contacts"
+  },
+  "dataProtectionDeletedVisits": {
+    "one": "{{count}} visit",
+    "other": "{{count}} visits"
+  },
   "audioAndHaptics": "Audio & Haptics",
   "streaksAndBadges": "Streaks & Badges",
   "playSounds": "Play sounds",
@@ -4072,10 +4102,14 @@
   "routePlan_error_noRoute": "No driving route connects all of these stops. Remove any stop that can't be reached by car, then try again.",
   "routePlan_error_dailyLimit": "You can plan up to {{max}} routes a day. Try again later.",
   "routePlan_error_rateLimited": "Too many tries in a row. Wait a minute, then try again.",
-  "routePlan_error_rateLimitedSeconds": "Too many tries in a row. Try again in {{count}} seconds.",
-  "routePlan_error_rateLimitedSeconds_one": "Too many tries in a row. Try again in {{count}} second.",
-  "routePlan_error_rateLimitedMinutes": "Too many tries in a row. Try again in {{count}} minutes.",
-  "routePlan_error_rateLimitedMinutes_one": "Too many tries in a row. Try again in {{count}} minute.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Too many tries in a row. Try again in {{count}} second.",
+    "other": "Too many tries in a row. Try again in {{count}} seconds."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Too many tries in a row. Try again in {{count}} minute.",
+    "other": "Too many tries in a row. Try again in {{count}} minutes."
+  },
   "routePlan_error_supporter": "Your Supporter status couldn't be confirmed. Restore your purchase from the Supporter screen, then try again.",
   "routePlan_error_unavailable": "Route planning is temporarily unavailable. Try again later.",
   "routePlan_error_failed": "Couldn't plan the route right now. Try again in a moment.",
@@ -4285,5 +4319,9 @@
   "onboardingBuddies_private_info": "Buddies see your name, optional photo and pioneer status, and the days and times you plan to go out. Your hours, reports, goals, contacts, and notes stay private. Inviting a buddy to a Plan or Follow-up shares the details shown in it. Nothing is shared until you both confirm, and only you and your buddies can read it.",
   "onboardingBuddies_later": "Invite buddies anytime from **Schedule → Buddies**.",
   "onboardingBuddies_invited": "Invite shared. When your buddy accepts, confirm them in **Schedule → Buddies**.",
-  "onboardingBuddies_previewBuddyName": "Grace"
+  "onboardingBuddies_previewBuddyName": "Grace",
+  "avatarGroup_moreCount": {
+    "one": "{{count}} more person",
+    "other": "{{count}} more people"
+  }
 }

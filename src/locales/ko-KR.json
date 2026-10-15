@@ -307,7 +307,6 @@
     "keepGoingStrong": "계속 힘내세요!",
     "onARoll": "잘하고 있습니다!"
   },
-  "hoursLeft": "남은 시간",
   "goalBasedOnPublisherType": "목표는 전도인 유형에 따라 결정됩니다.",
   "goalAdjustedForMonth": "이번 달 맞춤 목표",
   "addTime": "시간 추가",
@@ -518,7 +517,6 @@
   "custom": "사용자 정의",
   "pleaseDescribeYourIssue": "문제를 자세히 설명해 주세요.",
   "invalidPhone": "유효하지 않은 전화 번호",
-  "invalidPhone_description": "지역 코드에 대한 유효한 숫자가 아닙니다:",
   "appleAppStoreReviewErrorTitle": "앱스토어 오류",
   "appleAppStoreReviewErrorMessage": "가능한 경우 WitnessWork 앱을 최신 버전으로 업데이트하고 다시 시도해 보세요.",
   "notAtHome": "부재자",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "모두 선택",
   "deselectAll": "모두 선택 해제",
-  "contactsMissingCoordinates": "{{count}} 연락처에 좌표가 없어.",
-  "contactsMissingCoordinates_one": "{{count}} 접촉 좌표가 누락됨.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} 접촉 좌표가 누락됨.",
+    "other": "{{count}} 연락처에 좌표가 없어."
+  },
   "skipFetchInProgress_title": "가져오는 동안 건너뛰나요?",
   "skipFetchInProgress_description": "좌표는 아직 가져오는 중입니다. 지금 건너뛰면 남은 연락처는 자동으로 업데이트되지 않습니다. 나중에 각 연락처의 세부 정보에서 좌표를 가져올 수 있습니다.",
   "viewMap": "지도 보기",
@@ -1104,7 +1104,6 @@
   "categories": "카테고리",
   "tag": "태그",
   "showOtherCategories": "다른 카테고리 표시",
-  "of": "~의",
   "hoursToGoal": "목표까지 남은 시간",
   "removeCategory": "카테고리 삭제",
   "noReportsThisMonthYet": "이번 달에는 아직 기록이 없습니다.",
@@ -1872,7 +1871,6 @@
   "failed": "실패",
   "complete_description": "하루 동안 계획한 시간을 달성하면 완료로 표시됩니다.",
   "partial": "부분",
-  "plannedHours": "계획된 시간",
   "projectedHoursTitle": "예상 근무 시간",
   "projectedHoursDescription": "이미 기록한 시간과 계획한 시간을 합산합니다. 목표의 100% 달성을 목표로 하세요.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "일당",
   "short": "짧은",
   "average": "평균",
-  "daysLeft": "남은 일수",
   "toPlan": "계획",
   "onPace": "속도에 맞춰",
   "hrsPerDayToGoal": "{{count}} 시간/일 필요",
@@ -2262,7 +2259,6 @@
   "goalLabel": "목표: {{value}} 시간",
   "daysTotal": "총 {{count}} 일",
   "monthsLeft": "{{count}}개월 남음",
-  "vsLastMonth": "지난달 대비",
   "hrsAhead": "{{count}}시간 앞섬",
   "hrsBehind": "{{count}}시간 뒤처짐",
   "aheadShort": "{{value}} 앞에",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "목록",
   "contacts_searchHint": "검색 이름, 메모, 사용자 지정 필드..",
   "contacts_total": "연락처",
-  "contacts_dismissed_one": "1 보관됨",
-  "contacts_dismissed_other": "{{count}} 보관됨",
   "contacts_pinStaleness_never": "연락이 닿지 않음",
   "contacts_pinStaleness_recent": "이번 주",
   "contacts_pinStaleness_week": "이번 달",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "모든 연락처와 방문 기록이 이 기기와 iCloud 동기화에서 영구적으로 삭제됩니다. 시간, 보고, 계획에는 영향이 없습니다. 이 작업은 취소할 수 없습니다.",
   "dataProtectionDeleteAllDescAndroid": "모든 연락처와 방문이 이 기기와 Google Drive 동기화에서 영구적으로 삭제됩니다. 시간, 보고, 계획에는 영향이 없습니다. 이 작업은 되돌릴 수 없습니다.",
   "dataProtectionDeleteAllDoneTitle": "삭제됨",
-  "dataProtectionDeleteAllDoneDesc": "연락처 {{contacts}}개와 방문 {{visits}}건을 삭제했습니다.",
   "audioAndHaptics": "사운드 및 햅틱",
   "streaksAndBadges": "연속 기록 및 배지",
   "playSounds": "사운드 재생",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "이 방문지를 모두 잇는 운전 경로가 없습니다. 차로 갈 수 없는 방문지를 삭제한 다음 다시 시도하세요.",
   "routePlan_error_dailyLimit": "하루에 최대 {{max}}개의 경로를 계획할 수 있습니다. 나중에 다시 시도하세요.",
   "routePlan_error_rateLimited": "연속으로 너무 많이 시도했습니다. 1분 기다린 후 다시 시도하세요.",
-  "routePlan_error_rateLimitedSeconds": "연속으로 너무 많이 시도했습니다. {{count}}초 후에 다시 시도하세요.",
-  "routePlan_error_rateLimitedSeconds_one": "연속으로 너무 많이 시도했습니다. {{count}}초 후에 다시 시도하세요.",
-  "routePlan_error_rateLimitedMinutes": "연속으로 너무 많이 시도했습니다. {{count}}분 후에 다시 시도하세요.",
-  "routePlan_error_rateLimitedMinutes_one": "연속으로 너무 많이 시도했습니다. {{count}}분 후에 다시 시도하세요.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "연속으로 너무 많이 시도했습니다. {{count}}초 후에 다시 시도하세요.",
+    "other": "연속으로 너무 많이 시도했습니다. {{count}}초 후에 다시 시도하세요."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "연속으로 너무 많이 시도했습니다. {{count}}분 후에 다시 시도하세요.",
+    "other": "연속으로 너무 많이 시도했습니다. {{count}}분 후에 다시 시도하세요."
+  },
   "routePlan_error_supporter": "서포터 상태를 확인할 수 없습니다. 서포터 화면에서 구매를 복원한 다음 다시 시도하세요.",
   "routePlan_error_unavailable": "경로 계획을 일시적으로 사용할 수 없습니다. 나중에 다시 시도하세요.",
   "routePlan_error_failed": "지금은 경로를 계획할 수 없습니다. 잠시 후 다시 시도하세요.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "추가 작업",
   "moreActionsFor": "{{name}} 추가 작업",
-  "avatarGroup_moreCount_one": "{{count}}명 더",
-  "avatarGroup_moreCount_other": "{{count}}명 더",
   "removeCategory_title": "‘{{name}}’ 범주를 삭제할까요?",
   "removeCategory_description": "이 범주가 선택 목록에서 삭제되고 이 기록은 표준으로 돌아갑니다. 이미 이 범주로 저장된 시간 기록은 계속 해당 범주를 참조합니다. 이 작업은 취소할 수 없습니다.",
   "notesImport_updateRequired": "노트 가져오기를 사용하려면 WitnessWork를 업데이트하세요.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "월별 인정 시간 한도",
   "monthlyMaximumCreditHours_description": "인정 시간은 월별 합산 시간이 이 한도에 도달할 때까지 포함됩니다. 일반 전파 시간은 항상 포함됩니다.",
   "maximumHours": "최대 시간",
-  "categoryBreakdown_serviceYear_description": "인정 시간 한도 적용 전의 분류별 기록 시간."
+  "categoryBreakdown_serviceYear_description": "인정 시간 한도 적용 전의 분류별 기록 시간.",
+  "avatarGroup_moreCount": {
+    "one": "{{count}}명 더",
+    "other": "{{count}}명 더"
+  }
 }

@@ -109,7 +109,10 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               color: theme.colors.textAlt,
             }}
           >
-            {daysRemaining} {i18n.t('daysLeft')}
+            {
+              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+              i18n.t('daysLeftCount', { count: daysRemaining })
+            }
           </Text>
         ) : null}
       </View>

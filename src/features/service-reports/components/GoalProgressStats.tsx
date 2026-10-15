@@ -115,7 +115,8 @@ const GoalProgressStats = ({
   // Goal hours are user-entered, so they render verbatim (as the year card's
   // Annual Goal does) rather than through the minutes formatter.
   const heroSuffix = showsGoalInHero
-    ? `/ ${goalHours} ${i18n.t('hours_lowercase')}`
+    ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      i18n.t('goalHoursSuffix', { count: goalHours })
     : isDecimal
       ? i18n.t('hours_lowercase')
       : ''
@@ -132,7 +133,7 @@ const GoalProgressStats = ({
   } else if (hasMetGoal) {
     metaContext = i18n.t('goalAchieved')
   } else if (periodState === 'current') {
-    metaLead = `${remainingDisplay.formatted} ${i18n.t('hoursLeft')}`
+    metaLead = i18n.t('hoursLeftValue', { value: remainingDisplay.formatted })
     metaContext = remainingLabel ?? null
   } else if (periodState === 'past') {
     metaLead = i18n.t('hrsShort', { value: remainingDisplay.formatted })

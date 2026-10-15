@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { useFormattedMinutes } from '@/lib/minutes'
+import i18n from '@/lib/locales'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
 
 export type CategorySegment = {
@@ -137,7 +138,7 @@ const LegendRow = ({
         {segment.credit && <CreditBadge />}
       </View>
       <Text style={{ color: theme.colors.textAlt }}>
-        {minutesWithFormat.formatted} ({percentage}%)
+        {`${minutesWithFormat.formatted} (${i18n.t('percentValue', { value: percentage })})`}
       </Text>
     </View>
   )

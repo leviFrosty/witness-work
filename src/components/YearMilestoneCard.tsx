@@ -514,7 +514,10 @@ const YearMilestoneCard = ({
               color: theme.colors.textAlt,
             }}
           >
-            {daysRemaining} {i18n.t('daysLeft')}
+            {
+              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+              i18n.t('daysLeftCount', { count: daysRemaining })
+            }
             {minutesToGoal > 0
               ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
               : ''}

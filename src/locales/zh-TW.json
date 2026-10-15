@@ -307,7 +307,6 @@
     "keepGoingStrong": "繼續堅強下去",
     "onARoll": "繼續"
   },
-  "hoursLeft": "還剩下幾個小時",
   "goalBasedOnPublisherType": "目標取決於您的傳道員類型",
   "goalAdjustedForMonth": "本月自訂目標",
   "addTime": "添加時間",
@@ -518,7 +517,6 @@
   "custom": "风俗",
   "pleaseDescribeYourIssue": "请详细描述您的问题",
   "invalidPhone": "无效的电话号码",
-  "invalidPhone_description": "不是区域代码的有效号码：",
   "appleAppStoreReviewErrorTitle": "应用商店错误",
   "appleAppStoreReviewErrorMessage": "请将您的 WitnessWork 应用程序更新到最新版本（如果可用），然后重试。",
   "notAtHome": "不在家",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} 已選取",
   "selectAll": "全部選擇",
   "deselectAll": "全部取消選擇",
-  "contactsMissingCoordinates": "{{count}} 聯絡人缺少座標。",
-  "contactsMissingCoordinates_one": "{{count}} 聯絡人缺少座標。",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} 聯絡人缺少座標。",
+    "other": "{{count}} 聯絡人缺少座標。"
+  },
   "skipFetchInProgress_title": "撿球時會跳過嗎？",
   "skipFetchInProgress_description": "座標還在取回中。如果你現在跳過，剩下的聯絡人不會自動更新。你可以之後從每個聯絡人的資料中取得座標。",
   "viewMap": "查看地图",
@@ -1104,7 +1104,6 @@
   "categories": "类别",
   "tag": "标签",
   "showOtherCategories": "显示其他类别",
-  "of": "的",
   "hoursToGoal": "达到目标的小时数",
   "removeCategory": "删除类别",
   "noReportsThisMonthYet": "本月还没有报告。",
@@ -1872,7 +1871,6 @@
   "failed": "失败",
   "complete_description": "如果您满足了一天的计划时间，则该天将被标记为已完成。",
   "partial": "部分",
-  "plannedHours": "计划小时数",
   "projectedHoursTitle": "預計時數",
   "projectedHoursDescription": "將你已記錄的工時與你已規劃的工時合併計算。目標是達成你的目標100%。",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "每天",
   "short": "短",
   "average": "平均",
-  "daysLeft": "剩餘天數",
   "toPlan": "計畫",
   "onPace": "按步就班",
   "hrsPerDayToGoal": "每天需要{{count}}小時",
@@ -2262,7 +2259,6 @@
   "goalLabel": "目標: {{value}} 小時",
   "daysTotal": "共{{count}}天",
   "monthsLeft": "剩餘 {{count}} 個月",
-  "vsLastMonth": "與上月相比",
   "hrsAhead": "{{count}} 小時",
   "hrsBehind": "{{count}}小時之後",
   "aheadShort": "{{value}} 前方",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "清單",
   "contacts_searchHint": "搜尋姓名、備註、自訂欄位...",
   "contacts_total": "聯絡人",
-  "contacts_dismissed_one": "1 存檔",
-  "contacts_dismissed_other": "{{count}} 存檔",
   "contacts_pinStaleness_never": "從未聯絡",
   "contacts_pinStaleness_recent": "本週",
   "contacts_pinStaleness_week": "本月",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "所有聯絡人和探訪記錄將從此裝置和 iCloud 同步中永久刪除。你的時間、報告和計劃不受影響。此操作無法復原。",
   "dataProtectionDeleteAllDescAndroid": "所有聯絡人和探訪都會從這部裝置和 Google 雲端硬碟同步中永久刪除。你的時間、報告和計畫不受影響。此操作無法復原。",
   "dataProtectionDeleteAllDoneTitle": "已刪除",
-  "dataProtectionDeleteAllDoneDesc": "已刪除 {{contacts}} 位聯絡人和 {{visits}} 次探訪。",
   "audioAndHaptics": "聲音與觸覺回饋",
   "streaksAndBadges": "連續紀錄與徽章",
   "playSounds": "播放聲音",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "沒有任何行車路線能連接所有這些停靠點。請移除任何無法開車抵達的停靠點，然後再試一次。",
   "routePlan_error_dailyLimit": "你每天最多可規劃 {{max}} 條路線。請稍後再試。",
   "routePlan_error_rateLimited": "連續嘗試的次數過多。請等一分鐘，然後再試一次。",
-  "routePlan_error_rateLimitedSeconds": "連續嘗試的次數過多。請 {{count}} 秒後再試。",
-  "routePlan_error_rateLimitedSeconds_one": "連續嘗試的次數過多。請 {{count}} 秒後再試。",
-  "routePlan_error_rateLimitedMinutes": "連續嘗試的次數過多。請 {{count}} 分鐘後再試。",
-  "routePlan_error_rateLimitedMinutes_one": "連續嘗試的次數過多。請 {{count}} 分鐘後再試。",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "連續嘗試的次數過多。請 {{count}} 秒後再試。",
+    "other": "連續嘗試的次數過多。請 {{count}} 秒後再試。"
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "連續嘗試的次數過多。請 {{count}} 分鐘後再試。",
+    "other": "連續嘗試的次數過多。請 {{count}} 分鐘後再試。"
+  },
   "routePlan_error_supporter": "無法確認你的支持者身分。請從支持者畫面還原你的購買項目，然後再試一次。",
   "routePlan_error_unavailable": "路線規劃暫時無法使用。請稍後再試。",
   "routePlan_error_failed": "目前無法規劃路線。請稍後再試一次。",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "更多操作",
   "moreActionsFor": "{{name}}的更多操作",
-  "avatarGroup_moreCount_one": "還有 {{count}} 人",
-  "avatarGroup_moreCount_other": "還有 {{count}} 人",
   "removeCategory_title": "移除「{{name}}」？",
   "removeCategory_description": "此類別會從選擇器中移除，這筆記錄會切換回「標準」。已使用此類別儲存的時間記錄仍會繼續參照它。此操作無法復原。",
   "notesImport_updateRequired": "請更新 WitnessWork 以使用筆記匯入。",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "每月認可時數上限",
   "monthlyMaximumCreditHours_description": "認可時數會計入總數，直到每月合計達到此上限。一般傳道時間始終計入。",
   "maximumHours": "最高時數",
-  "categoryBreakdown_serviceYear_description": "按類別記錄的時間，未套用認可時數上限。"
+  "categoryBreakdown_serviceYear_description": "按類別記錄的時間，未套用認可時數上限。",
+  "avatarGroup_moreCount": {
+    "one": "還有 {{count}} 人",
+    "other": "還有 {{count}} 人"
+  }
 }

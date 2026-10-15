@@ -305,7 +305,6 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "hours left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
   "addTime": "Add Time",
   "updatedPlan": "Updated Plan",
@@ -501,7 +500,6 @@
   "custom": "Custom",
   "pleaseDescribeYourIssue": "Please describe your issue in detail",
   "invalidPhone": "Invalid Phone Number",
-  "invalidPhone_description": "is not a valid number for the region code:",
   "appleAppStoreReviewErrorTitle": "App Store Error",
   "appleAppStoreReviewErrorMessage": "Please update your WitnessWork app to the latest version if available and try again.",
   "notAtHome": "Not at Home",
@@ -990,7 +988,6 @@
   "categories": "Categories",
   "tag": "Tag",
   "showOtherCategories": "Show Other Categories",
-  "of": "of",
   "hoursToGoal": "hours to goal",
   "removeCategory": "Remove Category",
   "noReportsThisMonthYet": "No reports this month yet.",
@@ -1223,7 +1220,6 @@
   "failed": "Failed",
   "complete_description": "If you meet your planned time for a day, it is marked as complete.",
   "partial": "Partial",
-  "plannedHours": "Hours Planned",
   "planDay": "Plan Day",
   "scheduleIntro_plan_title": "Pangeni umulimo wenu",
   "scheduleIntro_plan_caption": "Saleni inshiku ne nshita mukaya mu mulimo. Ubupange bwenu bwisula kalenda yenu kabili bukonkelela ico mwapanga ukufikapo.",
@@ -1478,7 +1474,6 @@
   "perDay": "per day",
   "short": "short",
   "average": "avg",
-  "daysLeft": "days left",
   "toPlan": "to plan",
   "onPace": "Pa nshita",
   "hrsPerDayToGoal": "{{count}} ama-awala/bushiku ifyalekabilwa",
@@ -1487,7 +1482,6 @@
   "goalLabel": "Icalandwilwe: {{value}} ama-awala",
   "daysTotal": "{{count}} inshiku shonse",
   "monthsLeft": "{{count}} imyeshi yashala",
-  "vsLastMonth": "na umweshi wa kunuma",
   "hrsAhead": "{{count}} ama-awala pa ntanshi",
   "hrsBehind": "{{count}} ama-awala panuma",
   "cumulativePace": "Inshita pa pulani",
@@ -1973,8 +1967,6 @@
   "contacts_view_list": "Lyashi",
   "contacts_searchHint": "Fwayenipo amashina, ifyebo, imisangwa yenu yenu…",
   "contacts_total": "Abakulanshanya",
-  "contacts_dismissed_one": "1 yasungwa",
-  "contacts_dismissed_other": "{{count}} yasungwa",
   "contacts_pinStaleness_never": "Ukutalwa kulanshanya nakanono",
   "contacts_pinStaleness_recent": "Uno Mulungu",
   "contacts_pinStaleness_week": "Uno Mweshi",
@@ -2109,8 +2101,6 @@
   "saveChanges": "Sunga ifyacinja",
   "moreActions": "na fimbi actions",
   "moreActionsFor": "na fimbi actions pa lwa {{name}}",
-  "avatarGroup_moreCount_one": "umuntu {{count}} umbi",
-  "avatarGroup_moreCount_other": "abantu {{count}} abambi",
   "yearRow_moreActions": "na fimbi actions pa lwa {{year}}",
   "deleteYearTime": "fumyapo inshita yonse",
   "deleteYearTime_title": "fumyapo inshita yonse pa lwa {{year}}?",
@@ -2134,8 +2124,10 @@
   "fetchSelected": "Fetch {{count}} casalwa",
   "selectAll": "Sala fyonse",
   "deselectAll": "Fumyapo ukusala fyonse",
-  "contactsMissingCoordinates": "{{count}} abantu ba kutandalila ni missing ifipimo fya ncende.",
-  "contactsMissingCoordinates_one": "{{count}} uwa kutandalila ni missing ifipimo fya ncende.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} uwa kutandalila ni missing ifipimo fya ncende.",
+    "other": "{{count}} abantu ba kutandalila ni missing ifipimo fya ncende."
+  },
   "skipFetchInProgress_title": "Skip ilyo fetching?",
   "skipFetchInProgress_description": "ifipimo fya ncende ni nomba line ukuba fetched. nga imwe skip nomba, ifishala abantu ba kutandalila won't ba calundululwa mu nshila ya iyo ine. kuti mwa fetch ifipimo fya ncende pa lwa cila uwa kutandalila panuma ukufuma yabo ifyebo.",
   "map_centerOnMyLocation": "pakati mapu pa yandi uko muli",
@@ -3503,7 +3495,6 @@
   "dataProtectionDeleteAllDesc": "Abantu ba kutandalila bonse ne ntandalilo shonse fikafumishiwapo umuyayaya pa cibombelo ici na mu iCloud sync. Inshita, amalipoti ne mapange yenu tafyakakumwe. Ici teti cibweshiwe.",
   "dataProtectionDeleteAllDescAndroid": "Cila muntu wa kulanshanya na cila ntandalilo bikafumyapo ukwabuyayaya pa cibombelo ici na mu Google Drive sync. Inshita yenu, amalipoti, ne bupange tafyacinja. Ici tacingabwelelwa.",
   "dataProtectionDeleteAllDoneTitle": "Fyafumishiwapo",
-  "dataProtectionDeleteAllDoneDesc": "Twafumyapo abantu ba kutandalila {{contacts}} ne ntandalilo {{visits}}.",
   "audioAndHaptics": "Ifyunda no Kutenkana",
   "streaksAndBadges": "Ukukonkana na Amabaji",
   "playSounds": "Lisheni ifyunda",
@@ -4107,10 +4098,14 @@
   "routePlan_error_noRoute": "Tapali nshila ya motoka iilunganya ifyakwisula ifi fyonse. Fumyeni icakwisula cili conse icitingafikwa na motoka, elyo mwesheko nakabili.",
   "routePlan_error_dailyLimit": "Kuti mwapanga inshila ukufika pa {{max}} pa bushiku. Esheniko nakabili pa numa.",
   "routePlan_error_rateLimited": "Mwaesha inshita ishingi pa kukonkana. Pembeleni iminiti, elyo mwesheko nakabili.",
-  "routePlan_error_rateLimitedSeconds": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu masekondi {{count}}.",
-  "routePlan_error_rateLimitedSeconds_one": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu sekondi {{count}}.",
-  "routePlan_error_rateLimitedMinutes": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu mineti {{count}}.",
-  "routePlan_error_rateLimitedMinutes_one": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu miniti {{count}}.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu sekondi {{count}}.",
+    "other": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu masekondi {{count}}."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu miniti {{count}}.",
+    "other": "Mwaesha inshita ishingi pa kukonkana. Esheniko nakabili mu mineti {{count}}."
+  },
   "routePlan_error_supporter": "Umusango wenu wa Supporter tawashininkishiwa. Bweshani ifyo mwashita ukufuma pa cipao ca Supporter, elyo mwesheko nakabili.",
   "routePlan_error_unavailable": "Ukupanga inshila tekubomba pa nshita ino. Esheniko nakabili pa numa.",
   "routePlan_error_failed": "Tatwapanga inshila nomba line. Esheniko nakabili panono.",
@@ -4335,5 +4330,9 @@
   "monthlyMaximumCreditHours": "Umupaka wa maawala ya milimo imbi ku mweshi",
   "monthlyMaximumCreditHours_description": "Amaawala ya milimo imbi yapendwa mpaka inshita yonse iya mweshi ifike pali uyu umupaka. Inshita ya kubila imbila nsuma ipendwa lyonse.",
   "maximumHours": "Amaawala ayengi ayasuminishiwa",
-  "categoryBreakdown_serviceYear_description": "Inshita mwalemba ukulingana ne fiputulwa, ilyo imipaka ya maawala ya milimo imbi tailabomfiwa."
+  "categoryBreakdown_serviceYear_description": "Inshita mwalemba ukulingana ne fiputulwa, ilyo imipaka ya maawala ya milimo imbi tailabomfiwa.",
+  "avatarGroup_moreCount": {
+    "one": "umuntu {{count}} umbi",
+    "other": "abantu {{count}} abambi"
+  }
 }

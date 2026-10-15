@@ -307,7 +307,6 @@
     "keepGoingStrong": "Продолжайте в том же духе!",
     "onARoll": "На высоте!"
   },
-  "hoursLeft": "часов осталось",
   "goalBasedOnPublisherType": "Цель зависит от типа вашего издателя.",
   "goalAdjustedForMonth": "Особая цель на этот месяц",
   "addTime": "Добавить время",
@@ -518,7 +517,6 @@
   "custom": "Обычай",
   "pleaseDescribeYourIssue": "Пожалуйста, опишите вашу проблему подробно",
   "invalidPhone": "Неправильный номер телефона",
-  "invalidPhone_description": "недопустимый номер для кода региона:",
   "appleAppStoreReviewErrorTitle": "Ошибка магазина приложений",
   "appleAppStoreReviewErrorMessage": "Обновите приложение WitnessWork до последней версии, если она доступна, и повторите попытку.",
   "notAtHome": "Не дома",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Selected",
   "selectAll": "Выберите все",
   "deselectAll": "Отменить выбор всех",
-  "contactsMissingCoordinates": "{{count}} координаты отсутствуют.",
-  "contactsMissingCoordinates_one": "{{count}} контакт отсутствует координаты.",
+  "contactsMissingCoordinates": {
+    "one": "У {{count}} контакта нет координат.",
+    "other": "Контактов без координат: {{count}}."
+  },
   "skipFetchInProgress_title": "Пропускать во время привозки?",
   "skipFetchInProgress_description": "Координаты всё ещё получают. Если вы пропустите сейчас, оставшиеся контакты не обновятся автоматически. Вы сможете получить координаты для каждого контакта позже по их данным.",
   "viewMap": "Посмотреть карту",
@@ -1104,7 +1104,6 @@
   "categories": "Категории",
   "tag": "Ярлык",
   "showOtherCategories": "Показать другие категории",
-  "of": "из",
   "hoursToGoal": "часов до цели",
   "removeCategory": "Удалить категорию",
   "noReportsThisMonthYet": "В этом месяце отчетов пока нет.",
@@ -1872,7 +1871,6 @@
   "failed": "Неуспешный",
   "complete_description": "Если вы уложитесь в запланированное время на день, он помечается как выполненный.",
   "partial": "Частичный",
-  "plannedHours": "Запланированные часы",
   "projectedHoursTitle": "Прогнозируемые часы работы",
   "projectedHoursDescription": "Объединяет уже набранные часы с запланированными часами. Стремитесь достичь 100% своей цели.",
   "scheduleStatus": {
@@ -2134,14 +2132,14 @@
   "colorScheme": "Цветовая схема",
   "pinLocationHelp": "Долгое нажатие на карту или нажатие «Добавить» для создания. Нажмите и удерживайте для перемещения.",
   "hoursShort": {
-    "zero": "{{count}} часов",
-    "one": "{{count}} часов",
-    "other": "{{count}} часов"
+    "zero": "{{count}} ч",
+    "one": "{{count}} ч",
+    "other": "{{count}} ч"
   },
   "minutesShort": {
-    "zero": "{{count}} минут",
-    "one": "{{count}} минут",
-    "other": "{{count}} минут"
+    "zero": "{{count}} мин",
+    "one": "{{count}} мин",
+    "other": "{{count}} мин"
   },
   "hoursCompact": "h",
   "minutesCompact": "m",
@@ -2253,7 +2251,6 @@
   "perDay": "в день",
   "short": "коротко",
   "average": "avg",
-  "daysLeft": "оставшиеся дни",
   "toPlan": "планировать",
   "onPace": "В темпе",
   "hrsPerDayToGoal": "требуется {{count}} часов в день",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Цель: {{value}} ч",
   "daysTotal": "{{count}} дней всего",
   "monthsLeft": "осталось {{count}} месяцев",
-  "vsLastMonth": "по сравнению с прошлым месяцем",
   "hrsAhead": "{{count}} часов вперед",
   "hrsBehind": "{{count}} часов позади",
   "aheadShort": "{{value}} вперёд",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Список",
   "contacts_searchHint": "Поиск по именам, заметкам, пользовательским полям..",
   "contacts_total": "Контакты",
-  "contacts_dismissed_one": "1 архивировано",
-  "contacts_dismissed_other": "{{count}} архивировано",
   "contacts_pinStaleness_never": "Никогда не связывались",
   "contacts_pinStaleness_recent": "На этой неделе",
   "contacts_pinStaleness_week": "В этом месяце",
@@ -2917,7 +2911,7 @@
   "contacts_sortAndFilter_resultCount": {
     "zero": "Нет совпадений",
     "one": "1 совпадение",
-    "other": "{{count}} совпадений"
+    "other": "Совпадений: {{count}}"
   },
   "contacts_sortAndFilter_sortLabel": "Сортировать: {{label}}",
   "savedViews_title": "Сохранённые представления",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Все контакты и посещения будут безвозвратно удалены с этого устройства и из синхронизации iCloud. Ваше время, отчёты и планы не затрагиваются. Это действие нельзя отменить.",
   "dataProtectionDeleteAllDescAndroid": "Все контакты и посещения будут безвозвратно удалены с этого устройства и из синхронизации с Google Drive. Ваше время, отчёты и планы не затрагиваются. Это действие нельзя отменить.",
   "dataProtectionDeleteAllDoneTitle": "Удалено",
-  "dataProtectionDeleteAllDoneDesc": "Удалено контактов: {{contacts}}, посещений: {{visits}}.",
   "audioAndHaptics": "Звук и тактильные сигналы",
   "streaksAndBadges": "Серии и значки",
   "playSounds": "Воспроизводить звуки",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Нет маршрута на машине, соединяющего все эти остановки. Уберите остановки, до которых нельзя добраться на машине, и повторите попытку.",
   "routePlan_error_dailyLimit": "В день можно спланировать до {{max}} маршрутов. Повторите попытку позже.",
   "routePlan_error_rateLimited": "Слишком много попыток подряд. Подождите минуту и повторите попытку.",
-  "routePlan_error_rateLimitedSeconds": "Слишком много попыток подряд. Повторите через {{count}} сек.",
-  "routePlan_error_rateLimitedSeconds_one": "Слишком много попыток подряд. Повторите через {{count}} секунду.",
-  "routePlan_error_rateLimitedMinutes": "Слишком много попыток подряд. Повторите через {{count}} мин.",
-  "routePlan_error_rateLimitedMinutes_one": "Слишком много попыток подряд. Повторите через {{count}} минуту.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Слишком много попыток подряд. Повторите через {{count}} секунду.",
+    "other": "Слишком много попыток подряд. Повторите через {{count}} сек."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Слишком много попыток подряд. Повторите через {{count}} минуту.",
+    "other": "Слишком много попыток подряд. Повторите через {{count}} мин."
+  },
   "routePlan_error_supporter": "Не удалось подтвердить ваш статус сторонника. Восстановите покупку на экране сторонника и повторите попытку.",
   "routePlan_error_unavailable": "Планирование маршрута временно недоступно. Повторите попытку позже.",
   "routePlan_error_failed": "Сейчас не удалось спланировать маршрут. Повторите попытку через минуту.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Анна",
   "moreActions": "Другие действия",
   "moreActionsFor": "Другие действия для {{name}}",
-  "avatarGroup_moreCount_one": "Ещё {{count}} чел.",
-  "avatarGroup_moreCount_other": "Ещё {{count}} чел.",
   "removeCategory_title": "Удалить «{{name}}»?",
   "removeCategory_description": "Эта категория будет удалена из списка выбора, а запись снова станет стандартной. Уже сохранённые с ней записи времени продолжат ссылаться на неё. Это действие нельзя отменить.",
   "notesImport_updateRequired": "Обновите WitnessWork, чтобы использовать импорт заметок.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Месячный лимит зачёта часов",
   "monthlyMaximumCreditHours_description": "Часы засчитываются, пока общий месячный итог не достигнет этого лимита. Обычное время проповеди учитывается всегда.",
   "maximumHours": "Максимум часов",
-  "categoryBreakdown_serviceYear_description": "Записанное время по категориям до применения лимитов зачёта часов."
+  "categoryBreakdown_serviceYear_description": "Записанное время по категориям до применения лимитов зачёта часов.",
+  "avatarGroup_moreCount": {
+    "one": "Ещё {{count}} чел.",
+    "other": "Ещё {{count}} чел."
+  }
 }

@@ -19,6 +19,7 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
+import moment from 'moment'
 import Animated, {
   Easing,
   cancelAnimation,
@@ -507,9 +508,10 @@ const ContactsVisual = () => {
               color: theme.colors.textInverse,
               fontSize: 9,
               fontFamily: theme.fonts.semiBold,
+              textTransform: 'uppercase',
             }}
           >
-            BIBLE STUDY
+            {i18n.t('bibleStudy')}
           </Text>
         </Animated.View>
       </View>
@@ -751,7 +753,7 @@ const WidgetsVisual = () => {
           ]}
         >
           <Text style={[styles.widgetLabel, { color: theme.colors.textAlt }]}>
-            APR
+            {moment().month(3).format('MMM')}
           </Text>
           <View style={styles.calendarGrid}>
             {Array.from({ length: 12 }).map((_, i) => {
@@ -797,7 +799,7 @@ const WidgetsVisual = () => {
           ]}
         >
           <Text style={[styles.widgetLabel, { color: theme.colors.textAlt }]}>
-            HOURS
+            {i18n.t('hours')}
           </Text>
           <Text
             style={[
@@ -840,7 +842,7 @@ const WidgetsVisual = () => {
       >
         <View style={styles.widgetMediumHeader}>
           <Text style={[styles.widgetLabel, { color: theme.colors.textAlt }]}>
-            UP NEXT
+            {i18n.t('milestoneShowcase_upNext')}
           </Text>
           <Animated.View
             style={[
@@ -1228,6 +1230,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   widgetLabel: {
+    textTransform: 'uppercase',
     fontSize: 9,
     letterSpacing: 1.4,
     fontWeight: '700',

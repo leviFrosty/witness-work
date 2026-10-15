@@ -307,7 +307,6 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "saa zimesalia",
   "goalBasedOnPublisherType": "Lengo linatokana na aina ya mchapishaji wako",
   "goalAdjustedForMonth": "Lengo maalum la mwezi huu",
   "addTime": "Ongeza Muda",
@@ -518,7 +517,6 @@
   "custom": "Desturi",
   "pleaseDescribeYourIssue": "Tafadhali eleza suala lako kwa undani",
   "invalidPhone": "Nambari ya Simu Batili",
-  "invalidPhone_description": "sio nambari halali kwa msimbo wa eneo:",
   "appleAppStoreReviewErrorTitle": "Hitilafu ya Duka la Programu",
   "appleAppStoreReviewErrorMessage": "Tafadhali sasisha programu yako ya WitnessWork iwe toleo jipya zaidi ikiwa inapatikana na ujaribu tena.",
   "notAtHome": "Sio Nyumbani",
@@ -596,8 +594,10 @@
   "fetchSelected": "Fetch {{count}} Imechaguliwa",
   "selectAll": "Chagua Yote",
   "deselectAll": "Ondoa zote",
-  "contactsMissingCoordinates": "Anwani za {{count}} hazina kuratibu.",
-  "contactsMissingCoordinates_one": "{{count}} mawasiliano hayana kuratibu.",
+  "contactsMissingCoordinates": {
+    "one": "{{count}} mawasiliano hayana kuratibu.",
+    "other": "Anwani za {{count}} hazina kuratibu."
+  },
   "skipFetchInProgress_title": "Ruka wakati wa kuchukua?",
   "skipFetchInProgress_description": "Kuratibu bado kunapatikana. Ukiruka sasa, anwani zilizosalia hazitasasishwa kiotomatiki. Unaweza kupata viwianishi kwa kila mwasiliani baadaye kutoka kwa maelezo yao.",
   "viewMap": "Tazama Ramani",
@@ -1104,7 +1104,6 @@
   "categories": "Kategoria",
   "tag": "Lebo",
   "showOtherCategories": "Onyesha Kategoria Zingine",
-  "of": "ya",
   "hoursToGoal": "masaa kwa lengo",
   "removeCategory": "Ondoa Kategoria",
   "noReportsThisMonthYet": "Bado hakuna ripoti mwezi huu.",
@@ -1872,7 +1871,6 @@
   "failed": "Imeshindwa",
   "complete_description": "Ukikutana na muda uliopangwa kwa siku, utawekwa alama kuwa umekamilika.",
   "partial": "Sehemu",
-  "plannedHours": "Saa Zilizopangwa",
   "projectedHoursTitle": "Masaa yaliyotarajiwa",
   "projectedHoursDescription": "Inachanganya masaa ambayo tayari umeingia na masaa uliyopanga. Lengo la kufikia 100% ya lengo lako.",
   "scheduleStatus": {
@@ -2253,7 +2251,6 @@
   "perDay": "per day",
   "short": "short",
   "average": "avg",
-  "daysLeft": "days left",
   "toPlan": "to plan",
   "onPace": "Kwenye mwendo",
   "hrsPerDayToGoal": "Saa {{count}}/siku zinahitajika",
@@ -2262,7 +2259,6 @@
   "goalLabel": "Lengo: Saa {{value}}",
   "daysTotal": "Jumla ya siku {{count}}",
   "monthsLeft": "Miezi {{count}} iliyobaki",
-  "vsLastMonth": "ikilinganishwa na mwezi uliopita",
   "hrsAhead": "Saa {{count}} mbele",
   "hrsBehind": "Saa {{count}} nyuma",
   "aheadShort": "{{value}} mbele",
@@ -2826,8 +2822,6 @@
   "contacts_view_list": "Orodha",
   "contacts_searchHint": "Tafuta majina, maandishi, sehemu maalum…",
   "contacts_total": "Anwani",
-  "contacts_dismissed_one": "1 imehifadhiwa",
-  "contacts_dismissed_other": "{{count}} zimehifadhiwa",
   "contacts_pinStaleness_never": "Haijawasiliana kamwe",
   "contacts_pinStaleness_recent": "Wiki hii",
   "contacts_pinStaleness_week": "Mwezi huu",
@@ -3429,7 +3423,6 @@
   "dataProtectionDeleteAllDesc": "Kila anwani na ziara itafutwa kabisa kwenye kifaa hiki na kwenye usawazishaji wa iCloud. Muda, ripoti na mipango yako haitaathiriwa. Hatua hii haiwezi kutenduliwa.",
   "dataProtectionDeleteAllDescAndroid": "Kila anwani na ziara zitafutwa kabisa kutoka kifaa hiki na kutoka usawazishaji wa Google Drive. Muda wako, ripoti na mipango havitaathiriwa. Hatua hii haiwezi kutenduliwa.",
   "dataProtectionDeleteAllDoneTitle": "Imefutwa",
-  "dataProtectionDeleteAllDoneDesc": "Anwani {{contacts}} na ziara {{visits}} zimeondolewa.",
   "audioAndHaptics": "Sauti na Mitetemo",
   "streaksAndBadges": "Mfululizo na Beji",
   "playSounds": "Cheza sauti",
@@ -4033,10 +4026,14 @@
   "routePlan_error_noRoute": "Hakuna njia ya gari inayounganisha vituo hivi vyote. Ondoa kituo chochote kisichoweza kufikiwa kwa gari, kisha ujaribu tena.",
   "routePlan_error_dailyLimit": "Unaweza kupanga hadi njia {{max}} kwa siku. Jaribu tena baadaye.",
   "routePlan_error_rateLimited": "Majaribio mengi mfululizo. Subiri dakika moja, kisha ujaribu tena.",
-  "routePlan_error_rateLimitedSeconds": "Majaribio mengi mfululizo. Jaribu tena baada ya sekunde {{count}}.",
-  "routePlan_error_rateLimitedSeconds_one": "Majaribio mengi mfululizo. Jaribu tena baada ya sekunde {{count}}.",
-  "routePlan_error_rateLimitedMinutes": "Majaribio mengi mfululizo. Jaribu tena baada ya dakika {{count}}.",
-  "routePlan_error_rateLimitedMinutes_one": "Majaribio mengi mfululizo. Jaribu tena baada ya dakika {{count}}.",
+  "routePlan_error_rateLimitedSeconds": {
+    "one": "Majaribio mengi mfululizo. Jaribu tena baada ya sekunde {{count}}.",
+    "other": "Majaribio mengi mfululizo. Jaribu tena baada ya sekunde {{count}}."
+  },
+  "routePlan_error_rateLimitedMinutes": {
+    "one": "Majaribio mengi mfululizo. Jaribu tena baada ya dakika {{count}}.",
+    "other": "Majaribio mengi mfululizo. Jaribu tena baada ya dakika {{count}}."
+  },
   "routePlan_error_supporter": "Hali yako ya Mfadhili haikuweza kuthibitishwa. Rejesha ununuzi wako kutoka skrini ya Mfadhili, kisha ujaribu tena.",
   "routePlan_error_unavailable": "Kupanga njia hakupatikani kwa muda. Jaribu tena baadaye.",
   "routePlan_error_failed": "Haikuweza kupanga njia sasa hivi. Jaribu tena baada ya muda mfupi.",
@@ -4248,8 +4245,6 @@
   "onboardingBuddies_previewBuddyName": "Grace",
   "moreActions": "Vitendo zaidi",
   "moreActionsFor": "Vitendo zaidi kwa {{name}}",
-  "avatarGroup_moreCount_one": "Mtu {{count}} zaidi",
-  "avatarGroup_moreCount_other": "Watu {{count}} zaidi",
   "removeCategory_title": "Uondoe \"{{name}}\"?",
   "removeCategory_description": "Aina hii itaondolewa kwenye kichagua na ingizo hili litarudi kuwa la Kawaida. Maingizo ya muda yaliyohifadhiwa tayari nayo yataendelea kuirejelea. Kitendo hiki hakiwezi kutenduliwa.",
   "notesImport_updateRequired": "Sasisha WitnessWork ili utumie Uingizaji wa Vidokezo.",
@@ -4273,5 +4268,9 @@
   "monthlyMaximumCreditHours": "Kikomo cha saa za shughuli nyingine kwa mwezi",
   "monthlyMaximumCreditHours_description": "Saa za shughuli nyingine zinahesabiwa hadi jumla ya mwezi ifikie kikomo hiki. Muda wa kawaida wa kuhubiri unahesabiwa daima.",
   "maximumHours": "Saa za juu zaidi",
-  "categoryBreakdown_serviceYear_description": "Muda uliorekodiwa kwa kila aina, kabla ya kutumia vikomo vya saa za shughuli nyingine."
+  "categoryBreakdown_serviceYear_description": "Muda uliorekodiwa kwa kila aina, kabla ya kutumia vikomo vya saa za shughuli nyingine.",
+  "avatarGroup_moreCount": {
+    "one": "Mtu {{count}} zaidi",
+    "other": "Watu {{count}} zaidi"
+  }
 }

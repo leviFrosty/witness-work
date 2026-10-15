@@ -13,7 +13,6 @@ export type FeatureKey =
   | 'customAccentColor'
   | 'iCloudSync'
   | 'customAppIcon'
-  | 'savedContactViews'
   | 'routePlanning'
   | 'buddyColor'
 
@@ -23,7 +22,6 @@ export const FEATURES: Record<FeatureKey, GateRule> = {
   customAccentColor: { gate: 'supporter-only' },
   iCloudSync: { gate: 'supporter-only' },
   customAppIcon: { gate: 'supporter-only' },
-  savedContactViews: { gate: 'supporter-only' },
   // Also enforced server-side: ww-api refuses to optimize for non-Supporters.
   routePlanning: { gate: 'supporter-only' },
   buddyColor: { gate: 'supporter-only' },

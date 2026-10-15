@@ -12,7 +12,6 @@ import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
-import IsSupporter from '@/components/IsSupporter'
 import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import { isDefaultContactsQuery } from '@/features/contacts/lib/savedViews'
@@ -20,8 +19,7 @@ import SavedViewNameInput from '@/features/contacts/components/SavedViewNameInpu
 
 /**
  * Top of Sort & Filter: save what's set up below as a named view, or — while a
- * view is showing — save changes back to it or as a new one. Supporter-only;
- * everyone else sees the standard gate in its place.
+ * view is showing — save changes back to it or as a new one.
  */
 const SavedViewSection = () => {
   const theme = useTheme()
@@ -161,13 +159,14 @@ const SavedViewSection = () => {
   }
 
   return (
-    <IsSupporter
-      feature='savedContactViews'
-      analyticsSurface='saved_views'
-      title={i18n.t('savedViews_title')}
-    >
+    <View style={{ gap: 10 }}>
+      <Text
+        style={{ fontFamily: theme.fonts.semiBold, color: theme.colors.text }}
+      >
+        {i18n.t('savedViews_title')}
+      </Text>
       {renderContent()}
-    </IsSupporter>
+    </View>
   )
 }
 

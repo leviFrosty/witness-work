@@ -97,38 +97,32 @@ export function resolveCustomFieldReferences(
 type ResolvedContactsQuery = {
   /** What the Contacts list shows. */
   query: ContactsQuery
-  /** The Saved View being shown, when one is active and the User has access. */
+  /** The Saved View being shown, when one is active. */
   view: SavedContactViewEntry | null
   /** The view's filters or sort changed and haven't been saved back to it. */
   edited: boolean
 }
 
-/**
- * The single rule for what the Contacts list applies. Without access (a lapsed
- * Supporter), the active view is ignored rather than cleared — like a custom
- * accent color, the data stays and the effect returns with access.
- */
 /** A view's own filters and sort, with its field references resolved. */
 const savedViewQuery = (
   saved: SavedContactView,
   customFieldDefs: CustomFieldDefinition[]
 ) => resolveCustomFieldReferences(pickContactsQuery(saved), customFieldDefs)
 
+/** The single rule for what the Contacts list applies. */
 export function resolveContactsQuery({
   own,
   views,
   active,
-  hasAccess,
   customFieldDefs,
 }: {
   /** The User's own filters and sort, used whenever no view applies. */
   own: ContactsQuery
   views: SavedContactViews
   active: ActiveSavedContactView | null
-  hasAccess: boolean
   customFieldDefs: CustomFieldDefinition[]
 }): ResolvedContactsQuery {
-  const saved = hasAccess && active ? views[active.id] : undefined
+  const saved = active ? views[active.id] : undefined
   if (!active || !saved) {
     return {
       query: resolveCustomFieldReferences(own, customFieldDefs),

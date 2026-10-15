@@ -34,7 +34,6 @@ const FEATURE_ROWS: ReadonlyArray<{
   },
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
-  { labelKey: 'paywallFeatureContactViews', free: false, supporter: true },
   {
     labelKey: 'paywallFeatureAppIcons',
     free: false,

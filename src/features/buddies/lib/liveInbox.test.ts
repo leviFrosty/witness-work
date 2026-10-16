@@ -3,7 +3,18 @@ import {
   createLiveInbox,
   type LiveEvent,
 } from '@/features/buddies/lib/liveInbox'
-import type { LiveSocket } from '@/features/buddies/lib/relay'
+import {
+  createRelayClient,
+  type LiveSocket,
+} from '@/features/buddies/lib/relay'
+import {
+  ownerAuthFor,
+  random,
+  RELAY_URL,
+  setup as relaySetup,
+} from '@/features/buddies/lib/testing/engineHarness'
+
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 type FakeSocket = LiveSocket & { sent: string[]; closed: boolean }
 
@@ -25,7 +36,13 @@ function fakeSocket(): FakeSocket {
   return socket
 }
 
-function setup(syncedSeq = 5) {
+/** React Native's view of a refused handshake: an error, then a 1006 close. */
+const refuse = (socket: FakeSocket) => {
+  socket.onerror?.({ message: "Expected HTTP 101 response but was '401'" })
+  socket.onclose?.({ code: 1006, reason: 'refused' })
+}
+
+function setup(syncedSeq = 5, verify?: () => Promise<unknown>) {
   const sockets: FakeSocket[] = []
   const onChange = vi.fn()
   const events: LiveEvent[] = []
@@ -39,6 +56,7 @@ function setup(syncedSeq = 5) {
     },
     syncedSeq: () => syncedSeq,
     onChange,
+    verify,
     onEvent: (event) => events.push(event),
     now: Date.now,
   })
@@ -195,6 +213,75 @@ describe('createLiveInbox', () => {
     )
   })
 
+  it('checks the session before reconnecting after a connection closed before it opened', async () => {
+    const order: string[] = []
+    const verify = vi.fn(async () => {
+      order.push('verify')
+    })
+    const { live, sockets, events } = setup(5, verify)
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    refuse(sockets[0])
+
+    await vi.advanceTimersByTimeAsync(1300)
+    expect(verify).toHaveBeenCalledTimes(1)
+    expect(sockets).toHaveLength(2)
+    expect(events.map((event) => event.type)).toEqual([
+      'connecting',
+      'closed',
+      'reconnectScheduled',
+      'connecting',
+      'verify',
+    ])
+
+    // That one opened: its close reconnects without asking again.
+    sockets[1].onopen?.()
+    sockets[1].onclose?.({ code: 1012 })
+    await vi.advanceTimersByTimeAsync(2500)
+    expect(sockets).toHaveLength(3)
+    expect(verify).toHaveBeenCalledTimes(1)
+  })
+
+  it('counts a message as opened, and checks only once per refusal', async () => {
+    const verify = vi.fn(async () => undefined)
+    const { live, sockets, message } = setup(5, verify)
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    message(sockets[0], { type: 'hello', seq: 5 })
+    sockets[0].onclose?.({ code: 1012 })
+    await vi.advanceTimersByTimeAsync(1300)
+    expect(verify).not.toHaveBeenCalled()
+
+    refuse(sockets[1])
+    await vi.advanceTimersByTimeAsync(2500)
+    expect(verify).toHaveBeenCalledTimes(1)
+    refuse(sockets[2])
+    await vi.advanceTimersByTimeAsync(6100)
+    expect(verify).toHaveBeenCalledTimes(2)
+    expect(sockets).toHaveLength(4)
+  })
+
+  it('connects after the check whatever it answers, still backing off', async () => {
+    const verify = vi.fn(async () => {
+      throw new Error('sync failed')
+    })
+    const { live, sockets, events } = setup(5, verify)
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    refuse(sockets[0])
+    await vi.advanceTimersByTimeAsync(1300)
+    expect(sockets).toHaveLength(2)
+    expect(events.map((event) => event.type)).not.toContain('openFailed')
+
+    // Refused again: the next try waits longer, never a tight loop.
+    refuse(sockets[1])
+    await vi.advanceTimersByTimeAsync(1300)
+    expect(sockets).toHaveLength(2)
+    await vi.advanceTimersByTimeAsync(1200)
+    expect(sockets).toHaveLength(3)
+    expect(verify).toHaveBeenCalledTimes(2)
+  })
+
   it('opens one connection when restarted while connecting', async () => {
     const { live, sockets } = setup()
     live.start()
@@ -202,5 +289,67 @@ describe('createLiveInbox', () => {
     live.start()
     await vi.advanceTimersByTimeAsync(5000)
     expect(sockets.filter((socket) => !socket.closed)).toHaveLength(1)
+  })
+})
+
+describe('a live connection the relay refused its token', () => {
+  beforeEach(() =>
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    })
+  )
+  afterEach(() => vi.useRealTimers())
+
+  it('gets a refreshed token through a sync before reconnecting', async () => {
+    const h = relaySetup()
+    const ann = h.user('Ann')
+    await ann.engine.sync()
+    const sockets: (FakeSocket & { authorization: string })[] = []
+    const client = createRelayClient({
+      baseUrl: RELAY_URL,
+      randomBytes: random,
+      authorize: (run, { signal }) => ann.sessions.withSession(run, { signal }),
+      fetchImpl: h.fetchImpl,
+      openSocket: (_url, headers) => {
+        const socket = Object.assign(fakeSocket(), {
+          authorization: headers.authorization,
+        })
+        sockets.push(socket)
+        // The relay's handshake checks the token as its routes do.
+        const accepted = h.fake.acceptsToken(
+          headers.authorization.replace(/^Bearer /, '')
+        )
+        setTimeout(() => (accepted ? socket.onopen?.() : refuse(socket)), 0)
+        return socket
+      },
+    })
+    const events: LiveEvent[] = []
+    const verify = vi.fn(() => ann.engine.sync({ automatic: true }))
+    const live = createLiveInbox({
+      open: () => client.openLive(ownerAuthFor(ann.seed)),
+      syncedSeq: () => ann.store.getState().syncSeq,
+      onChange: () => undefined,
+      verify,
+      onEvent: (event) => events.push(event),
+    })
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(events.filter((event) => event.type === 'open')).toHaveLength(1)
+
+    // The relay stops honoring the token long before it expires here, then
+    // drops the connection.
+    h.fake.expireAccessTokens()
+    sockets[0].onclose?.({ code: 1012 })
+    await vi.advanceTimersByTimeAsync(1300)
+    expect(sockets).toHaveLength(2)
+    expect(sockets[1].authorization).toBe(sockets[0].authorization)
+
+    await vi.advanceTimersByTimeAsync(2500)
+    expect(verify).toHaveBeenCalledTimes(1)
+    expect(sockets).toHaveLength(3)
+    expect(sockets[2].authorization).not.toBe(sockets[1].authorization)
+    expect(events.filter((event) => event.type === 'open')).toHaveLength(2)
+    expect(h.fake.sessions.size).toBe(1)
+    live.stop()
   })
 })

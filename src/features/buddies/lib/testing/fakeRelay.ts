@@ -585,5 +585,7 @@ export function createFakeRelay(now: () => number) {
     requests,
     /** Ends every access token, as their 15 minutes would: next is a 401. */
     expireAccessTokens: () => accessTokens.clear(),
+    /** Whether the relay honors this access token, as the live route checks. */
+    acceptsToken: (accessToken: string) => accessTokens.has(accessToken),
   }
 }

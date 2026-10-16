@@ -483,7 +483,10 @@ export function createRelayClient(deps: RelayDeps) {
      * The inbox's live signal: the relay says when something changed, and the
      * app syncs. The session and inbox ride in headers; ids never go in URLs.
      * Each (re)connect asks the session for a token, refreshing it when it's
-     * close to expiring; an open socket outlives its token.
+     * close to expiring; an open socket outlives its token. React Native can't
+     * say why a handshake failed, so a token the relay refused stays usable
+     * here: after one, the live inbox syncs first (`LiveInboxDeps.verify`), and
+     * that sync's 401 refreshes it.
      */
     openLive: async (auth: OwnerAuth): Promise<LiveSocket> => {
       try {

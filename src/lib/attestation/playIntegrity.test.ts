@@ -592,3 +592,154 @@ describe('Notes Import Play Integrity', () => {
     })
   })
 })
+
+describe('Play Integrity for other features (assert)', () => {
+  const SESSION_HASH = 'd'.repeat(64)
+
+  const channel = (
+    submit: (proof: unknown, call: number) => unknown = () => ({ ok: true })
+  ) => {
+    const challenges: Record<string, unknown>[] = []
+    const proofs: unknown[] = []
+    return {
+      challenges,
+      proofs,
+      request: {
+        purpose: 'account-session' as const,
+        contentHash: SESSION_HASH,
+        requestHash: SESSION_HASH,
+        challenge: async (body: Record<string, unknown>) => {
+          challenges.push(body)
+          return {
+            attestationProvider: 'play-integrity',
+            protocolVersion: 1,
+            operation: 'assert',
+            operationId: body.operationId,
+            challenge: CHALLENGE,
+            expiresAt: 1,
+          }
+        },
+        submit: async (proof: unknown) => {
+          proofs.push(proof)
+          const result = submit(proof, proofs.length - 1)
+          if (result instanceof Error) throw result
+          return result
+        },
+      },
+    }
+  }
+
+  it('binds the token to the session hashes without an install account id', async () => {
+    const harness = createHarness()
+    const routes = channel()
+
+    await harness.module.assert(routes.request)
+
+    const fields = {
+      attestationProvider: 'play-integrity',
+      protocolVersion: 1,
+      operation: 'assert',
+      operationId: 'operation-1',
+      uuid: 'install-uuid-1',
+      purpose: 'account-session',
+      contentHash: SESSION_HASH,
+      requestHash: SESSION_HASH,
+    }
+    expect(routes.challenges).toEqual([fields])
+    const binding = await sha256Hex(
+      `witnesswork.play-integrity|1|assert|account-session|operation-1|${CHALLENGE}|install-uuid-1||${SESSION_HASH}|${SESSION_HASH}`
+    )
+    expect(
+      harness.dependencies.playIntegrity.requestToken
+    ).toHaveBeenCalledWith('123456789012', binding)
+    expect(routes.proofs).toEqual([
+      {
+        kind: 'attestation',
+        fields: {
+          ...fields,
+          challenge: CHALLENGE,
+          integrityToken: 'integrity.token',
+        },
+      },
+    ])
+    expect(harness.posts).toEqual([])
+  })
+
+  it('restarts once for an invalid token and keeps device verdicts', async () => {
+    const harness = createHarness()
+    const retried = channel((_proof, call) =>
+      call === 0
+        ? new AttestationHttpError({
+            kind: 'http',
+            status: 403,
+            serverCode: 'attestation_failed',
+            reason: 'integrity_token_invalid',
+          })
+        : { ok: true }
+    )
+    await harness.module.assert(retried.request)
+    expect(retried.challenges.map((body) => body.operationId)).toEqual([
+      'operation-1',
+      'operation-2',
+    ])
+
+    const refused = channel(
+      () =>
+        new AttestationHttpError({
+          kind: 'http',
+          status: 403,
+          serverCode: 'attestation_failed',
+          reason: 'device_integrity_failed',
+        })
+    )
+    const error = await harness.module
+      .assert(refused.request)
+      .catch((caught: unknown) => caught)
+    expect(error).toBeInstanceOf(AttestationError)
+    expect(error).toMatchObject({
+      code: 'deviceIneligible',
+      reason: 'device_integrity_failed',
+    })
+  })
+
+  it('sends the dev bypass instead of a token in dev builds', async () => {
+    const harness = createHarness({ devBypass: true, supported: false })
+    const routes = channel()
+
+    await harness.module.assert(routes.request)
+
+    expect(routes.challenges).toEqual([])
+    expect(routes.proofs).toEqual([{ kind: 'devBypass', token: 'bypass' }])
+  })
+
+  it('checks Google Play before a flow that needs it', async () => {
+    await expect(createHarness().module.checkSupport()).resolves.toBe(
+      'supported'
+    )
+    await expect(
+      createHarness({ supported: false }).module.checkSupport()
+    ).resolves.toBe('unsupported')
+
+    const noPlay = createHarness()
+    vi.mocked(noPlay.dependencies.playIntegrity.prepare).mockRejectedValue(
+      new NativeError('playStoreNotFound')
+    )
+    await expect(noPlay.module.checkSupport()).resolves.toBe('unsupported')
+
+    const offline = createHarness()
+    vi.mocked(offline.dependencies.playIntegrity.prepare).mockRejectedValue(
+      new NativeError('network')
+    )
+    await expect(offline.module.checkSupport()).resolves.toBe('unknown')
+
+    const noWorker = createHarness({
+      getStatus: async () => {
+        throw new AttestationHttpError({ kind: 'network' })
+      },
+    })
+    await expect(noWorker.module.checkSupport()).resolves.toBe('unknown')
+    expect(
+      noWorker.dependencies.playIntegrity.requestToken
+    ).not.toHaveBeenCalled()
+  })
+})

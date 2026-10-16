@@ -185,6 +185,51 @@ export interface NotesImportProtectedPost {
   signal?: AbortSignal
 }
 
+/** Purposes attested on another feature's routes (`AttestedRequest`). */
+export type AttestationPurpose = 'account-session'
+
+/**
+ * How an attested request proves the device: the fields ww-api verifies (App
+ * Attest assertion or Play Integrity token, with their binding), or, in dev
+ * builds, the dev worker's bypass token sent as `x-ww-dev-bypass` instead.
+ */
+export type AttestationProof =
+  | { kind: 'attestation'; fields: Record<string, unknown> }
+  | { kind: 'devBypass'; token: string }
+
+/**
+ * A request another feature attests through its own routes, with Notes Import's
+ * challenge shape (account sessions' `session/challenge` and `session/open`,
+ * ADR 0027). Both callbacks throw `AttestationHttpError` for HTTP failures
+ * (`toAttestationHttpError`), so challenge, counter and key failures are
+ * retried or recovered as Notes Import's are; anything else reaches the caller
+ * as that error.
+ */
+export interface AttestedRequest<T> {
+  purpose: AttestationPurpose
+  /** Lowercase hex SHA-256s the assertion binds. */
+  contentHash: string
+  requestHash: string
+  /** POSTs the challenge body and resolves the answer's JSON. */
+  challenge(
+    body: Record<string, unknown>,
+    signal?: AbortSignal
+  ): Promise<unknown>
+  /** Sends the request with its proof. */
+  submit(proof: AttestationProof, signal?: AbortSignal): Promise<T>
+  signal?: AbortSignal
+}
+
+/**
+ * Whether this device can attest, checked before a flow that needs it starts:
+ * `unsupported` when it never can (a simulator, App Attest unsupported, Android
+ * without Google Play), `unknown` when that can't be told right now (offline).
+ * Whether the device and app pass is only known once ww-api checks a proof.
+ */
+export type AttestationSupport = 'supported' | 'unsupported' | 'unknown'
+
+const SHA256_HEX = /^[a-f0-9]{64}$/
+
 export interface AppAttestSnapshot {
   provider: 'app-attest'
   baseUrl: string
@@ -234,6 +279,10 @@ export interface AttestationRepairReport extends AttestationDebugReport {
 
 export interface AppAttestAuthorizer {
   post<T>(request: NotesImportProtectedPost): Promise<T>
+  /** Another feature's request, asserted with the install's key (protocol v2). */
+  assert<T>(request: AttestedRequest<T>): Promise<T>
+  /** Never creates a key or asks Apple for anything. */
+  checkSupport(): Promise<AttestationSupport>
   /** Enrolls recovery for an existing key; never creates a first-use key. */
   prepareRecovery(): Promise<void>
   /** Redacted, lifecycle-read-only state for developer diagnostics. */
@@ -344,6 +393,21 @@ type ProtectedPurpose =
   | 'notes-import-kickoff'
   | 'notes-import-verify'
   | 'notes-import-transcribe'
+  | AttestationPurpose
+
+/** Where a protected attempt asks for its challenge and sends its request. */
+type ProtectedChannel<T> = {
+  challenge(
+    body: Record<string, unknown>,
+    signal?: AbortSignal
+  ): Promise<unknown>
+  submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
+}
+
+/** Notes Import's own endpoint, or another feature's channel. */
+type ProtectedRoute<T> =
+  | { endpoint: NotesImportProtectedEndpoint | 'verify'; channel?: undefined }
+  | { endpoint?: undefined; channel: ProtectedChannel<T> }
 
 type BootstrapJournal = {
   v: typeof JOURNAL_VERSION
@@ -675,7 +739,8 @@ const buildAssertionClientData = (input: {
   operationId: string
   challenge: string
   uuid: string
-  accountId: string
+  /** Absent for purposes that aren't metered by it (ww-api reads it as ''). */
+  accountId?: string
   contentHash: string
   requestHash: string
 }): string =>
@@ -687,7 +752,7 @@ const buildAssertionClientData = (input: {
     input.operationId,
     input.challenge,
     input.uuid,
-    input.accountId,
+    input.accountId ?? '',
     input.contentHash,
     input.requestHash,
   ].join('|')
@@ -1106,6 +1171,8 @@ export const createAppAttestAuthorizer = (
     accountId?: string
     contentHash?: string
     requestHash?: string
+    /** Another feature's challenge route; Notes Import's by default. */
+    post?: ProtectedChannel<unknown>['challenge']
     signal?: AbortSignal
   }): Promise<string> => {
     throwIfAborted(input.signal)
@@ -1113,8 +1180,8 @@ export const createAppAttestAuthorizer = (
       input.protocolVersion === 2 &&
       input.operation === 'assert' &&
       (!input.purpose ||
-        !/^[a-f0-9]{64}$/.test(input.contentHash ?? '') ||
-        !/^[a-f0-9]{64}$/.test(input.requestHash ?? ''))
+        !SHA256_HEX.test(input.contentHash ?? '') ||
+        !SHA256_HEX.test(input.requestHash ?? ''))
     ) {
       throw new AttestationError('invalidInput')
     }
@@ -1136,11 +1203,11 @@ export const createAppAttestAuthorizer = (
               : {}),
           }
         : {}
-    const response = await dependencies.transport.post<unknown>(
-      'challenge',
-      body,
-      { signal: input.signal }
-    )
+    const response = input.post
+      ? await input.post(body, input.signal)
+      : await dependencies.transport.post<unknown>('challenge', body, {
+          signal: input.signal,
+        })
     if (!isRecord(response) || !isNonEmptyString(response.challenge)) {
       throw new AttestationError('invalidInput')
     }
@@ -1868,24 +1935,25 @@ export const createAppAttestAuthorizer = (
     }
   }
 
-  const protectedAttempt = async <T>(input: {
-    protocol: ProtocolVersion
-    endpoint: NotesImportProtectedEndpoint | 'verify'
-    purpose: ProtectedPurpose
-    payload: Record<string, unknown>
-    contentHash: string
-    requestHash?: string
-    operationId: string
-    keyId: string
-    uuid: string
-    accountId: string
-    allowRecovery: boolean
-    allowFreshOperation: boolean
-    signal?: AbortSignal
-    trace?: (step: AttestationDebugStep) => void
-    /** Rejects a structurally invalid protected acknowledgement. */
-    validate?: (data: unknown, operationId: string) => boolean
-  }): Promise<ProtectedAttempt<T>> =>
+  const protectedAttempt = async <T>(
+    input: ProtectedRoute<T> & {
+      protocol: ProtocolVersion
+      purpose: ProtectedPurpose
+      payload: Record<string, unknown>
+      contentHash: string
+      requestHash?: string
+      operationId: string
+      keyId: string
+      uuid: string
+      accountId?: string
+      allowRecovery: boolean
+      allowFreshOperation: boolean
+      signal?: AbortSignal
+      trace?: (step: AttestationDebugStep) => void
+      /** Rejects a structurally invalid protected acknowledgement. */
+      validate?: (data: unknown, operationId: string) => boolean
+    }
+  ): Promise<ProtectedAttempt<T>> =>
     authorizationLane.run(
       input.keyId,
       async () => {
@@ -1907,6 +1975,7 @@ export const createAppAttestAuthorizer = (
               accountId: input.accountId,
               contentHash: input.contentHash,
               requestHash: input.requestHash,
+              post: input.channel?.challenge,
               signal: input.signal,
             })
           )
@@ -1970,19 +2039,20 @@ export const createAppAttestAuthorizer = (
               }
             : {}),
           uuid: input.uuid,
-          accountId: input.accountId,
+          ...(input.accountId !== undefined && { accountId: input.accountId }),
           contentHash: input.contentHash,
           keyId: input.keyId,
           challenge,
           assertion,
         }
+        const step = input.channel ? input.purpose : input.endpoint
         try {
-          const data = await traced(input.trace, input.endpoint, async () => {
-            const response = await dependencies.transport.post<T>(
-              input.endpoint,
-              body,
-              { signal: input.signal }
-            )
+          const data = await traced(input.trace, step, async () => {
+            const response = input.channel
+              ? await input.channel.submit(body, input.signal)
+              : await dependencies.transport.post<T>(input.endpoint, body, {
+                  signal: input.signal,
+                })
             if (
               input.validate &&
               !input.validate(response, input.operationId)
@@ -2005,21 +2075,22 @@ export const createAppAttestAuthorizer = (
       input.signal
     )
 
-  const postProtected = async <T>(input: {
-    protocol: ProtocolVersion
-    endpoint: NotesImportProtectedEndpoint | 'verify'
-    purpose: ProtectedPurpose
-    payload: Record<string, unknown>
-    contentHash: string
-    requestHash?: string
-    operationId: string
-    keyId: string
-    uuid: string
-    accountId: string
-    signal?: AbortSignal
-    trace?: (step: AttestationDebugStep) => void
-    validate?: (data: unknown, operationId: string) => boolean
-  }): Promise<T> => {
+  const postProtected = async <T>(
+    input: ProtectedRoute<T> & {
+      protocol: ProtocolVersion
+      purpose: ProtectedPurpose
+      payload: Record<string, unknown>
+      contentHash: string
+      requestHash?: string
+      operationId: string
+      keyId: string
+      uuid: string
+      accountId?: string
+      signal?: AbortSignal
+      trace?: (step: AttestationDebugStep) => void
+      validate?: (data: unknown, operationId: string) => boolean
+    }
+  ): Promise<T> => {
     let keyId = input.keyId
     let operationId = input.operationId
     let allowRecovery = true
@@ -2555,6 +2626,59 @@ export const createAppAttestAuthorizer = (
         accountId: ready.accountId,
         signal,
       })
+    },
+    async assert<T>(request: AttestedRequest<T>): Promise<T> {
+      const { purpose, contentHash, requestHash, signal } = request
+      throwIfAborted(signal)
+      if (!SHA256_HEX.test(contentHash) || !SHA256_HEX.test(requestHash)) {
+        throw new AttestationError('invalidInput')
+      }
+      if (dependencies.devBypass.enabled) {
+        const token = dependencies.devBypass.token
+        return authorizationLane.run(
+          'dev-bypass',
+          () => request.submit({ kind: 'devBypass', token }, signal),
+          signal
+        )
+      }
+      let supported = false
+      try {
+        supported = dependencies.appAttest.isSupported()
+      } catch {
+        throw new AttestationError('nativeUnknown')
+      }
+      if (!supported) throw new AttestationError('unsupported')
+      // Only v2 assertions bind a purpose and a request hash.
+      if ((await waitForSignal(protocolVersion(), signal)) !== 2) {
+        throw new AttestationError('protocolUnavailable')
+      }
+      const ready = await ensureReady(2, signal)
+      return postProtected<T>({
+        protocol: 2,
+        purpose,
+        payload: {},
+        contentHash,
+        requestHash,
+        operationId: dependencies.crypto.randomUuid(),
+        keyId: ready.keyId,
+        uuid: ready.uuid,
+        channel: {
+          challenge: request.challenge,
+          submit: (fields, attemptSignal) =>
+            request.submit({ kind: 'attestation', fields }, attemptSignal),
+        },
+        signal,
+      })
+    },
+    async checkSupport(): Promise<AttestationSupport> {
+      if (dependencies.devBypass.enabled) return 'supported'
+      try {
+        return dependencies.appAttest.isSupported()
+          ? 'supported'
+          : 'unsupported'
+      } catch {
+        return 'unknown'
+      }
     },
     async prepareRecovery(): Promise<void> {
       if (

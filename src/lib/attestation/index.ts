@@ -3,6 +3,8 @@ import type {
   AppAttestSnapshot,
   AttestationDebugReport,
   AttestationRepairReport,
+  AttestationSupport,
+  AttestedRequest,
   NotesImportProtectedPost,
 } from '@/lib/attestation/appAttest'
 import type { PlayIntegritySnapshot } from '@/lib/attestation/playIntegrity'
@@ -21,6 +23,14 @@ export type AttestationSnapshot = AppAttestSnapshot | PlayIntegritySnapshot
 export interface DeviceAttestation {
   /** A Notes Import request, attested by its own challenge. */
   post<T>(request: NotesImportProtectedPost): Promise<T>
+  /**
+   * Another feature's request (account sessions' `session/open`), attested
+   * through its own challenge route. Dev builds with the bypass token send that
+   * instead, without a challenge.
+   */
+  assert<T>(request: AttestedRequest<T>): Promise<T>
+  /** Whether this device can attest at all; see `AttestationSupport`. */
+  checkSupport(): Promise<AttestationSupport>
   prepareRecovery(): Promise<void>
   getSnapshot(): AttestationSnapshot
   runDiagnostics(): Promise<AttestationDebugReport>
@@ -42,5 +52,15 @@ export const runAttestationRepair = (): Promise<AttestationRepairReport> =>
 
 export type {
   AttestationDebugReport,
+  AttestationErrorCode,
+  AttestationProof,
+  AttestationPurpose,
   AttestationRepairReport,
+  AttestationSupport,
+  AttestedRequest,
 } from '@/lib/attestation/appAttest'
+export {
+  AttestationError,
+  AttestationHttpError,
+} from '@/lib/attestation/appAttest'
+export { toAttestationHttpError } from '@/lib/attestation/transport'

@@ -2190,3 +2190,190 @@ describe('Notes Import App Attest', () => {
     expect(harness.generateAssertion).not.toHaveBeenCalled()
   })
 })
+
+describe('App Attest for other features (assert)', () => {
+  const SESSION_HASH = 'c'.repeat(64)
+
+  /** A feature's own challenge and request routes, recorded. */
+  const channel = (
+    submit: (proof: unknown, call: number) => unknown = () => ({ ok: true })
+  ) => {
+    const challenges: Record<string, unknown>[] = []
+    const proofs: unknown[] = []
+    let issued = 0
+    return {
+      challenges,
+      proofs,
+      request: {
+        purpose: 'account-session' as const,
+        contentHash: SESSION_HASH,
+        requestHash: SESSION_HASH,
+        challenge: async (body: Record<string, unknown>) => {
+          challenges.push(body)
+          return {
+            protocolVersion: 2,
+            operation: body.operation,
+            operationId: body.operationId,
+            challenge: `session-challenge-${++issued}`,
+          }
+        },
+        submit: async (proof: unknown) => {
+          proofs.push(proof)
+          return submit(proof, proofs.length - 1)
+        },
+      },
+    }
+  }
+
+  it('asserts through the feature routes without an install account id', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel()
+
+    await expect(harness.module.assert(routes.request)).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(routes.challenges).toEqual([
+      {
+        protocolVersion: 2,
+        operation: 'assert',
+        operationId: 'operation-1',
+        uuid: 'install-uuid',
+        keyId: 'active-key',
+        purpose: 'account-session',
+        accountId: undefined,
+        contentHash: SESSION_HASH,
+        requestHash: SESSION_HASH,
+      },
+    ])
+    expect(harness.hashedClientData).toEqual([
+      `witnesswork.app-attest|2|assert|account-session|operation-1|session-challenge-1|install-uuid||${SESSION_HASH}|${SESSION_HASH}`,
+    ])
+    expect(routes.proofs).toEqual([
+      {
+        kind: 'attestation',
+        fields: {
+          protocolVersion: 2,
+          operation: 'assert',
+          purpose: 'account-session',
+          operationId: 'operation-1',
+          requestHash: SESSION_HASH,
+          uuid: 'install-uuid',
+          contentHash: SESSION_HASH,
+          keyId: 'active-key',
+          challenge: 'session-challenge-1',
+          assertion: 'assertion',
+        },
+      },
+    ])
+    // Nothing went to Notes Import's routes.
+    expect(harness.posts).toEqual([])
+  })
+
+  it('asks again under a fresh operation once when the challenge expired', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel((_proof, call) => {
+      if (call === 0)
+        throw new AttestationHttpError({
+          kind: 'http',
+          status: 401,
+          serverCode: 'attestation_failed',
+          reason: 'challenge_expired',
+        })
+      return { ok: true }
+    })
+
+    await harness.module.assert(routes.request)
+
+    expect(routes.challenges.map((body) => body.operationId)).toEqual([
+      'operation-1',
+      'operation-2',
+    ])
+    expect(routes.proofs).toHaveLength(2)
+  })
+
+  it('keeps a refused attestation reason and passes other answers through', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const refused = channel(() => {
+      throw new AttestationHttpError({
+        kind: 'http',
+        status: 403,
+        serverCode: 'attestation_failed',
+        reason: 'assertion_invalid',
+      })
+    })
+    await expect(harness.module.assert(refused.request)).rejects.toMatchObject({
+      name: 'AttestationError',
+      code: 'authorizationFailed',
+      serverCode: 'attestation_failed',
+      reason: 'assertion_invalid',
+    })
+
+    const upgrade = channel(() => {
+      throw new AttestationHttpError({
+        kind: 'http',
+        status: 426,
+        serverCode: 'upgrade_required',
+      })
+    })
+    await expect(harness.module.assert(upgrade.request)).rejects.toMatchObject({
+      name: 'AttestationHttpError',
+      status: 426,
+    })
+  })
+
+  it('sends the dev bypass instead of a challenge in dev builds', async () => {
+    const harness = createHarness({ devBypass: true, uuid: null })
+    const routes = channel()
+
+    await harness.module.assert(routes.request)
+
+    expect(routes.challenges).toEqual([])
+    expect(routes.proofs).toEqual([
+      { kind: 'devBypass', token: 'dev-bypass-token' },
+    ])
+    expect(harness.generateAssertion).not.toHaveBeenCalled()
+  })
+
+  it('refuses malformed hashes and a worker without protocol v2', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel()
+    await expect(
+      harness.module.assert({ ...routes.request, requestHash: 'nope' })
+    ).rejects.toMatchObject({ code: 'invalidInput' })
+
+    const v1 = createHarness({ protocolVersion: 1, activeKeyId: 'active-key' })
+    await expect(v1.module.assert(routes.request)).rejects.toMatchObject({
+      code: 'protocolUnavailable',
+    })
+    expect(routes.challenges).toEqual([])
+  })
+
+  it('reports whether App Attest is supported without touching a key', async () => {
+    const harness = createHarness()
+    await expect(harness.module.checkSupport()).resolves.toBe('supported')
+
+    harness.dependencies.appAttest.isSupported = () => false
+    await expect(harness.module.checkSupport()).resolves.toBe('unsupported')
+    await expect(
+      harness.module.assert(channel().request)
+    ).rejects.toMatchObject({ code: 'unsupported' })
+
+    const bypass = createHarness({ devBypass: true })
+    bypass.dependencies.appAttest.isSupported = () => false
+    await expect(bypass.module.checkSupport()).resolves.toBe('supported')
+    expect(harness.generateKey).not.toHaveBeenCalled()
+  })
+})

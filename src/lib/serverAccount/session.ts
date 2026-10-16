@@ -357,6 +357,14 @@ export const OPEN_RETRY_AFTER_MS: Record<AttestationProblem, number> = {
   failed: 2 * 60_000,
   temporary: 60_000,
 }
+/**
+ * A rate-limited `session/open` (429) waits out the server's Retry-After (or
+ * body `retryAfter`) before attesting again for that account key, this long
+ * when it gives none, and never longer than a day. Try Again doesn't skip it:
+ * the server would only refuse again.
+ */
+export const OPEN_RATE_LIMIT_DEFAULT_MS = 60_000
+export const OPEN_RATE_LIMIT_MAX_MS = 24 * 60 * 60_000
 /** Tries per keystore write before marking the stored token stale. */
 export const STORE_ATTEMPTS = 2
 /**
@@ -442,6 +450,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   let keyChanges = 0
   /** Public keys this device replaced: no session opens for them again. */
   const retired = new Set<string>()
+  /** Per account key, until when `session/open` is rate limited (device clock). */
+  const openLimitedUntil = new Map<string, number>()
   let lastFailure: {
     pub: string
     error: AccountSessionError
@@ -614,15 +624,56 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     }
   }
 
+  /** The rate limit still holding off this key's `session/open`, if any. */
+  function openRateLimit(pub: string): AccountSessionError | null {
+    const until = openLimitedUntil.get(pub)
+    if (until === undefined) return null
+    const retryAfterMs = until - localNow()
+    if (retryAfterMs > 0)
+      return new AccountSessionError('rateLimited', {
+        status: 429,
+        serverCode: 'rate_limited',
+        retryAfterMs,
+      })
+    openLimitedUntil.delete(pub)
+    return null
+  }
+
   /**
    * Attests this device for the account key (the challenge from
-   * `/attestation/v1/challenge`), then opens the session with the proof.
+   * `/attestation/v1/challenge`), then opens the session with the proof. While
+   * the server's rate limit on it lasts, fails at once with `rateLimited`,
+   * asking nothing of the device or the server.
    */
-  function open(
+  async function open(
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
     call: { signal?: AbortSignal; current?: () => boolean } = {}
+  ): Promise<OpenedSession> {
+    const pub = key.publicKey
+    const limited = openRateLimit(pub)
+    if (limited) throw limited
+    try {
+      return await attestAndOpen(accountKey, key, reason, call)
+    } catch (error) {
+      const failure = toAccountSessionError(error)
+      if (failure.failure === 'rateLimited') {
+        const wait = Math.min(
+          Math.max(failure.retryAfterMs ?? OPEN_RATE_LIMIT_DEFAULT_MS, 1_000),
+          OPEN_RATE_LIMIT_MAX_MS
+        )
+        openLimitedUntil.set(pub, localNow() + wait)
+      }
+      throw failure
+    }
+  }
+
+  function attestAndOpen(
+    accountKey: Uint8Array,
+    key: AccountSigningKey,
+    reason: SessionOpenReason,
+    call: { signal?: AbortSignal; current?: () => boolean }
   ): Promise<OpenedSession> {
     const hash = sessionAttestationHash(key.publicKey)
     const device = deviceLabelFor(accountKey, key.publicKey)

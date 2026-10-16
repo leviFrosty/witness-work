@@ -15,6 +15,7 @@ import {
   type AccountSessionEvent,
   createAccountSessions,
   KEY_CHANGE_CLOSE_WAIT_MS,
+  OPEN_RATE_LIMIT_DEFAULT_MS,
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
   STORE_ATTEMPTS,
@@ -729,6 +730,84 @@ describe('account sessions', () => {
       failure: 'unavailable',
       serverCode: 'disabled',
     })
+  })
+
+  it('waits out a rate-limited session/open, attesting again only after Retry-After', async () => {
+    const { worker, attestation, sessions, clock, info, events } = setup()
+    worker.override.set('session/open', (call) =>
+      call === 0
+        ? new Response(
+            JSON.stringify({
+              ok: false,
+              error: 'rate_limited',
+              code: 'rate_limited',
+            }),
+            {
+              status: 429,
+              headers: {
+                'content-type': 'application/json',
+                'retry-after': '120',
+              },
+            }
+          )
+        : null
+    )
+
+    await expect(info()).rejects.toMatchObject({
+      name: 'AccountSessionError',
+      failure: 'rateLimited',
+      retryAfterMs: 120_000,
+    })
+    // Every call until then fails at once: no attestation, no request, and
+    // nothing more reported. The User's Try Again included.
+    clock.now += 30_000
+    await expect(info()).rejects.toMatchObject({
+      failure: 'rateLimited',
+      retryAfterMs: 90_000,
+    })
+    await expect(
+      sessions.ensure(undefined, { retry: true })
+    ).rejects.toMatchObject({ failure: 'rateLimited' })
+    await expect(sessions.openDetached(KEY_A)).rejects.toMatchObject({
+      failure: 'rateLimited',
+    })
+    expect(attestation.assert).toHaveBeenCalledTimes(1)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(events).toEqual([
+      expect.objectContaining({ op: 'session/open', outcome: 'rateLimited' }),
+    ])
+
+    clock.now += 90_000
+    await expect(info()).resolves.toBeTruthy()
+    expect(attestation.assert).toHaveBeenCalledTimes(2)
+  })
+
+  it('reads the wait from the body, or waits a minute, for that account key only', async () => {
+    const { worker, attestation, clock, info } = setup()
+    worker.override.set('session/open', (call) =>
+      call === 0
+        ? failure(429, 'rate_limited', { retryAfter: 30 })
+        : call === 2
+          ? failure(429, 'rate_limited')
+          : null
+    )
+
+    await expect(info()).rejects.toMatchObject({ retryAfterMs: 30_000 })
+    clock.now += 29_000
+    await expect(info()).rejects.toMatchObject({ failure: 'rateLimited' })
+    expect(attestation.assert).toHaveBeenCalledTimes(1)
+    // Another account key isn't held back.
+    await expect(info(KEY_B)).resolves.toBeTruthy()
+    expect(attestation.assert).toHaveBeenCalledTimes(2)
+
+    clock.now += 1_000
+    await expect(info()).rejects.toMatchObject({ failure: 'rateLimited' })
+    expect(attestation.assert).toHaveBeenCalledTimes(3)
+    clock.now += OPEN_RATE_LIMIT_DEFAULT_MS - 1
+    await expect(info()).rejects.toMatchObject({ failure: 'rateLimited' })
+    expect(attestation.assert).toHaveBeenCalledTimes(3)
+    clock.now += 1
+    await expect(info()).resolves.toBeTruthy()
   })
 
   it('sends the dev bypass header in place of an attestation', async () => {

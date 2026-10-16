@@ -1,8 +1,5 @@
-import {
-  Clock as ClockIcon,
-  Star as StarIcon,
-  Undo2 as Undo2Icon,
-} from 'lucide-react-native'
+import { Clock as ClockIcon, Star as StarIcon } from 'lucide-react-native'
+import { UndoIcon } from '@/components/ui/DirectionalIcon'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
@@ -152,7 +149,7 @@ export default function DismissedContactRow({
           lost, so it runs immediately rather than behind a confirmation. */}
       <IconButton
         onPress={undismissContact}
-        icon={Undo2Icon}
+        icon={UndoIcon}
         size='md'
         accessibilityLabel={i18n.t('undismiss')}
         hitSlop={6}

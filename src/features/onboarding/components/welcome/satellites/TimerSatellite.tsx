@@ -11,6 +11,7 @@ import { formatMs } from '@/features/service-reports/hooks/useStopWatch'
 import SatelliteSurface, {
   SatelliteProps,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
+import { tracking } from '@/lib/tracking'
 
 // A believable session already under way: 1h 24m 07s.
 const STARTED_MS = (84 * 60 + 7) * 1000
@@ -83,7 +84,7 @@ const TimerSatellite = ({ palette, focus, reduceMotion }: SatelliteProps) => {
           fontSize: 18,
           fontFamily: theme.fonts.semiBold,
           fontVariant: ['tabular-nums'],
-          letterSpacing: 0.3,
+          letterSpacing: tracking(0.3),
           color: palette.text,
         }}
       >

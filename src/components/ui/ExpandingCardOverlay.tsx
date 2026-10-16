@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { leftForPhysicalX } from '@/lib/direction'
 
 export type ExpandingCardOrigin = {
   x: number
@@ -70,10 +71,14 @@ const ExpandingCardOverlay = ({
     progress.value = withSpring(open ? 1 : 0, MORPH_SPRING)
   }, [open, origin, progress])
 
+  // Measured in screen coordinates; `left` is mirrored in RTL.
+  const originLeft = origin
+    ? leftForPhysicalX(origin.x, origin.width, windowWidth)
+    : 0
   const containerStyle = useAnimatedStyle(() => {
     if (!origin) return {}
     return {
-      left: interpolate(progress.value, [0, 1], [origin.x, targetX]),
+      left: interpolate(progress.value, [0, 1], [originLeft, targetX]),
       top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
       width: interpolate(progress.value, [0, 1], [origin.width, targetWidth]),
       height: interpolate(

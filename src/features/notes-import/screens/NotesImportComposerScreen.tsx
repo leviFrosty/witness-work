@@ -652,7 +652,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           gap,
           backgroundColor: theme.colors.card,
           borderRadius: 20,
-          borderBottomLeftRadius: 4,
+          borderBottomStartRadius: 4,
           borderCurve: 'continuous',
           paddingHorizontal: 14,
           paddingVertical: 11,

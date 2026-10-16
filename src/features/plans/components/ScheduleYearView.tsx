@@ -1,8 +1,8 @@
 import moment from 'moment'
 import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-} from 'lucide-react-native'
+  ChevronBackwardIcon,
+  ChevronForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import { type Ref, useImperativeHandle, useRef, useState } from 'react'
 import {
   type LayoutRectangle,
@@ -218,7 +218,7 @@ export default function ScheduleYearView({
             }}
           >
             <IconButton
-              icon={ChevronLeftIcon}
+              icon={ChevronBackwardIcon}
               size='lg'
               onPress={() => changeYear(serviceYear - 1)}
               accessibilityLabel={i18n.t(
@@ -238,7 +238,7 @@ export default function ScheduleYearView({
               {spanLabel}
             </Text>
             <IconButton
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size='lg'
               onPress={() => changeYear(serviceYear + 1)}
               accessibilityLabel={i18n.t('scheduleCalendar.nextServiceYear')}

@@ -40,6 +40,7 @@ import {
   savedReminderOffsetMinutes,
 } from '@/lib/reminderSchedule'
 import { offsetToMinutes } from '@/lib/notificationOffset'
+import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
 
@@ -183,7 +184,7 @@ const OrDivider = () => {
           fontSize: 11,
           fontFamily: theme.fonts.bold,
           color: theme.colors.textAlt,
-          letterSpacing: 1,
+          letterSpacing: tracking(1),
         }}
       >
         {i18n.t('or').toUpperCase()}
@@ -489,7 +490,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
                     fontSize: 11,
                     fontFamily: theme.fonts.bold,
                     color: isOverdue ? theme.colors.warn : theme.colors.accent,
-                    letterSpacing: 1,
+                    letterSpacing: tracking(1),
                   }}
                 >
                   {dueLabel.toUpperCase()}
@@ -517,7 +518,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
                       fontSize: 11,
                       fontFamily: theme.fonts.bold,
                       color: theme.colors.textAlt,
-                      letterSpacing: 1,
+                      letterSpacing: tracking(1),
                     }}
                   >
                     {i18n.t('youLastWrote').toUpperCase()}

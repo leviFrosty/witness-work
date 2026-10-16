@@ -13,7 +13,10 @@ vi.mock('react-native', () => ({ View: 'View' }))
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mocks.navigate }),
 }))
-vi.mock('lucide-react-native', () => ({ ChevronRight: 'Icon', Route: 'Icon' }))
+vi.mock('lucide-react-native', () => ({ Route: 'Icon' }))
+vi.mock('@/components/ui/DirectionalIcon', () => ({
+  ChevronForwardIcon: 'Icon',
+}))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, numbers: {}, fontSize: () => 14 }),
 }))

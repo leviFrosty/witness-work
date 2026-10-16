@@ -1,9 +1,11 @@
 import {
   ArrowDown as ArrowDownIcon,
-  ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon,
   ArrowUp as ArrowUpIcon,
 } from 'lucide-react-native'
+import {
+  ArrowBackwardIcon,
+  ArrowForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import Animated from 'react-native-reanimated'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -14,8 +16,8 @@ import i18n from '@/lib/locales'
 const ICONS = {
   up: ArrowUpIcon,
   down: ArrowDownIcon,
-  left: ArrowLeftIcon,
-  right: ArrowRightIcon,
+  backward: ArrowBackwardIcon,
+  forward: ArrowForwardIcon,
 }
 
 /** Floats over the Schedule while today is out of view, pointing the way back. */
@@ -26,8 +28,11 @@ export default function JumpToTodayButton({
   onPress,
 }: {
   visible: boolean
-  /** Where today is from what's on screen. */
-  direction: 'up' | 'down' | 'left' | 'right'
+  /**
+   * Where today is from what's on screen: up/down in the month list, backward
+   * (earlier) or forward (later) between service years.
+   */
+  direction: 'up' | 'down' | 'backward' | 'forward'
   bottom: number
   onPress: () => void
 }) {

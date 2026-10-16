@@ -79,6 +79,7 @@ import ContextMenu, {
 import MonthStatusGoalButton from '@/features/service-reports/components/MonthStatusGoalButton'
 import { monthStatusShortLabel } from '@/lib/monthStatus'
 import useMonthStatus from '@/features/service-reports/hooks/useMonthStatus'
+import { alignText } from '@/lib/direction'
 
 interface MonthReportProps {
   monthsReports: TimeEntry[] | null
@@ -504,7 +505,7 @@ const MonthReport = ({
             {showPace && (
               <Text
                 style={{
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                   fontSize: theme.fontSize('sm'),
                   fontFamily: theme.fonts.semiBold,
                   color: toneColor(
@@ -521,7 +522,7 @@ const MonthReport = ({
             {showMomDelta && (
               <Text
                 style={{
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                   fontSize: theme.fontSize('xs'),
                   color: toneColor(
                     // When both months cleared goal, a downward delta

@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
+import { tracking } from '@/lib/tracking'
 import {
   drawerLayout,
   inputLayout,
@@ -50,7 +51,7 @@ export const SectionTitle = ({
           fontSize: theme.fontSize('sm'),
           color: isDrawer ? theme.colors.text : theme.colors.textAlt,
           opacity: isDrawer ? 0.75 : 1,
-          letterSpacing: isDrawer ? 0.8 : 0,
+          letterSpacing: tracking(isDrawer ? 0.8 : 0),
           textTransform: isDrawer ? 'uppercase' : 'none',
         }}
       >

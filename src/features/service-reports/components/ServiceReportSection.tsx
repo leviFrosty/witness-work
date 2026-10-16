@@ -1,8 +1,6 @@
 import { View } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  Plus as PlusIcon,
-} from 'lucide-react-native'
+import { Plus as PlusIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import Card from '@/components/ui/Card'
@@ -89,7 +87,7 @@ const ServiceReportSection = () => {
             {i18n.t('serviceReport')}
           </Text>
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.textAlt}
           />

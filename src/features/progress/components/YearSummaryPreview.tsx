@@ -14,6 +14,7 @@ import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Context-menu preview for a Year-by-Year row: the service year's credit-capped
@@ -63,7 +64,7 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
           fontSize: theme.fontSize('sm'),
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {`${serviceYear}–${serviceYear + 1}`}

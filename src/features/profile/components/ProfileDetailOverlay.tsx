@@ -49,6 +49,8 @@ import {
   totalMinutes,
 } from '@/features/profile/lib/profileStats'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { tracking } from '@/lib/tracking'
+import { leftForPhysicalX } from '@/lib/direction'
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
 /** Fading away for a badge view, which grows out of the tapped medallion. */
@@ -83,7 +85,7 @@ const Stat = ({
           fontSize: 11,
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {label}
@@ -180,10 +182,12 @@ const ProfileDetailOverlay = () => {
     })
   }
 
+  // Measured in screen coordinates; `left` is mirrored in RTL.
+  const originLeft = origin ? leftForPhysicalX(origin.x, origin.width, winW) : 0
   const containerStyle = useAnimatedStyle(() => {
     if (!origin) return {}
     return {
-      left: interpolate(progress.value, [0, 1], [origin.x, targetX]),
+      left: interpolate(progress.value, [0, 1], [originLeft, targetX]),
       top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
       width: interpolate(progress.value, [0, 1], [origin.width, targetW]),
       height: interpolate(progress.value, [0, 1], [origin.height, targetH]),

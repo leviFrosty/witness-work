@@ -33,6 +33,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { BadgeKey } from '@/types/badges'
 import { Confetti, type ConfettiHandle } from '@/vendor/ConfettiSkia'
+import { tracking } from '@/lib/tracking'
 
 export type BadgeCelebrationContent =
   | { kind: 'live'; keys: BadgeKey[] }
@@ -220,7 +221,7 @@ export default function BadgeCelebration({
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.accent,
                   textTransform: 'uppercase',
-                  letterSpacing: 1,
+                  letterSpacing: tracking(1),
                 }}
               >
                 {lead ? title : i18n.t('badges_title')}

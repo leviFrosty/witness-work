@@ -6,6 +6,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { mix, withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Where a Follow-up stands, as its card shows it. Until a visit keeps it, it's
@@ -100,7 +101,7 @@ export function FollowUpTopic({
           style={{
             fontSize: theme.fontSize('xs') + 0.5,
             fontFamily: theme.fonts.bold,
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
             textTransform: 'uppercase',
             color: detail,
           }}
@@ -156,7 +157,7 @@ export default function FollowUpCard({
             style={{
               fontSize: theme.fontSize('xs') + 1,
               fontFamily: theme.fonts.bold,
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
               textTransform: 'uppercase',
               color: colors.accent,
             }}

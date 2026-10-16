@@ -22,6 +22,7 @@ import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import WelcomeCta from '@/features/onboarding/components/welcome/WelcomeCta'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTourPage from '@/features/updates/components/reveal/RevealTourPage'
+import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 interface TourAction {
   label: string
@@ -74,9 +75,18 @@ const RevealTour = ({
   const last = index === pages.length - 1
   const pageId = pages[index]?.id
 
+  // Offsets are physical; `scrollX` runs from the reading start, so page
+  // math reads the same in RTL.
+  const rtl = isRtlLayout()
+  const contentWidth = pages.length * width
   const onScroll = useAnimatedScrollHandler((e) => {
-    scrollX.value = e.contentOffset.x
+    scrollX.value = flowScrollX(e.contentOffset.x, contentWidth, width, rtl)
   })
+  const scrollToPage = (page: number) =>
+    scrollRef.current?.scrollTo({
+      x: flowScrollX(page * width, contentWidth, width, rtl),
+      animated: true,
+    })
   // The page under the middle of the screen is the current one, whether it got
   // there by a swipe or by Next.
   useAnimatedReaction(
@@ -92,7 +102,7 @@ const RevealTour = ({
 
   const next = () => {
     if (last) return
-    scrollRef.current?.scrollTo({ x: (index + 1) * width, animated: true })
+    scrollToPage(index + 1)
   }
 
   // Registered again on every render so it reads the current page.
@@ -102,11 +112,7 @@ const RevealTour = ({
       'hardwareBackPress',
       () => {
         if (index === 0) onBackFromStart()
-        else
-          scrollRef.current?.scrollTo({
-            x: (index - 1) * width,
-            animated: true,
-          })
+        else scrollToPage(index - 1)
         return true
       }
     )

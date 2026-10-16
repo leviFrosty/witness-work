@@ -10,6 +10,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import MyTextInput, { TextInputProps } from '@/components/ui/TextInput'
 import { Errors } from '@/types/textInput'
 import useTheme from '@/contexts/theme'
+import { alignText } from '@/lib/direction'
 
 interface TextInputRowProps {
   errors?: Errors
@@ -77,7 +78,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
             placeholderTextColor={theme.colors.textAlt}
             onChangeText={() => setErrors?.({ ...errors, [id || '']: '' })}
             hitSlop={{ top: 20, bottom: 20 }}
-            textAlign='right'
+            textAlign='end'
             clearButtonMode='while-editing'
             enterKeyHint='next'
             {...textInputProps}
@@ -87,7 +88,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
               style={{
                 color: theme.colors.error,
                 fontFamily: theme.fonts.semiBold,
-                textAlign: 'right',
+                textAlign: alignText('end'),
                 fontSize: 12,
               }}
             >

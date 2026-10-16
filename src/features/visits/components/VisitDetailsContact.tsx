@@ -1,9 +1,9 @@
 import {
-  ChevronRight as ChevronRightIcon,
   MessageCircle as MessageCircleIcon,
   Navigation as NavigationIcon,
   Phone as PhoneIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { parsePhoneNumber } from 'awesome-phonenumber'
@@ -121,7 +121,7 @@ export default function VisitDetailsContact({
           trailing={
             actions.length ? null : (
               <LucideIcon
-                icon={ChevronRightIcon}
+                icon={ChevronForwardIcon}
                 size={16}
                 color={theme.colors.textAlt}
               />

@@ -5,6 +5,7 @@ import useTheme from '@/contexts/theme'
 import { progressLabel, progressToward } from '@/features/badges/lib/badgeText'
 import { badgeHowTo } from '@/lib/badges/display'
 import type { BadgeCollectionId, BadgeLevel } from '@/types/badges'
+import { alignText } from '@/lib/direction'
 
 /**
  * A slim bar toward one level of a collection, "4 of 6 months", and how to grow
@@ -74,7 +75,7 @@ export default function BadgeProgress({
           style={{
             fontSize: 12,
             color: theme.colors.textAlt,
-            textAlign: heading ? 'left' : 'center',
+            textAlign: heading ? alignText('start') : 'center',
           }}
         >
           {badgeHowTo(art)}

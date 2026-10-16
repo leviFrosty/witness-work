@@ -1,8 +1,6 @@
 import { View } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  Plus as PlusIcon,
-} from 'lucide-react-native'
+import { Plus as PlusIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import Button from '@/components/ui/Button'
 import EmphasizedText from '@/components/ui/EmphasizedText'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -62,7 +60,7 @@ export default function VisitNoFollowUpStop({
             }}
           />
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.accent}
           />

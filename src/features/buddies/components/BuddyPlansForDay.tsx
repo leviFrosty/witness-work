@@ -18,6 +18,7 @@ import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Faded, read-only buddy Plans for one day — they never mix with the User's
@@ -97,7 +98,7 @@ export default function BuddyPlansForDay({
           textTransform: 'uppercase',
           fontSize: theme.fontSize('sm'),
           fontFamily: theme.fonts.semiBold,
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {i18n.t('buddies_dayTitle')}

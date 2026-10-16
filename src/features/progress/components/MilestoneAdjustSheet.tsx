@@ -37,6 +37,7 @@ import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
 import usePublisher from '@/hooks/usePublisher'
 import useRoleForMonth from '@/hooks/useRoleForMonth'
 import { useShallow } from 'zustand/react/shallow'
+import { tracking } from '@/lib/tracking'
 
 const MILESTONE_STEP = 10
 
@@ -605,7 +606,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         color: theme.colors.textAlt,
                         fontSize: theme.fontSize('xs'),
                         fontFamily: theme.fonts.semiBold,
-                        letterSpacing: 0.5,
+                        letterSpacing: tracking(0.5),
                       }}
                       numberOfLines={1}
                     >

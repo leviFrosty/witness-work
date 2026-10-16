@@ -1,7 +1,5 @@
-import {
-  Award as AwardIcon,
-  ChevronRight as ChevronRightIcon,
-} from 'lucide-react-native'
+import { Award as AwardIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
@@ -98,7 +96,7 @@ const StreaksAndBadgesPreferencesSection = () => {
             }
             lastInSection
           >
-            <IconButton icon={ChevronRightIcon} />
+            <IconButton icon={ChevronForwardIcon} />
           </InputRowButton>
         )}
       </Section>

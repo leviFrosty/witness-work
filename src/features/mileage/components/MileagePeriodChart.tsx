@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native'
 import { Line as SkiaLine, vec } from '@shopify/react-native-skia'
 import { CartesianChart } from 'victory-native'
 import useTheme from '@/contexts/theme'
+import ChartPlot from '@/components/charts/ChartPlot'
 import ChartXLabels, {
   type ChartXLabel,
 } from '@/components/charts/ChartXLabels'
@@ -103,33 +104,35 @@ const MileagePeriodChart = ({
   return (
     <View style={{ gap: 4 }}>
       <View style={{ height: CHART_HEIGHT }}>
-        <CartesianChart
-          data={data}
-          xKey='x'
-          yKeys={['y']}
-          domain={{ x: [-0.5, count - 0.5], y: [0, yMax] }}
-          padding={{ top: PLOT_TOP, bottom: 0, left: 0, right: 0 }}
-          yAxis={[{ lineWidth: 0 }]}
-        >
-          {({ chartBounds }) => (
-            <>
-              <SkiaLine
-                p1={vec(chartBounds.left, chartBounds.bottom)}
-                p2={vec(chartBounds.right, chartBounds.bottom)}
-                color={theme.colors.border}
-                strokeWidth={1}
-              />
-              <AnimatedStackedBars
-                values={values}
-                colors={colors}
-                chartBounds={chartBounds}
-                yMax={yMax}
-                innerPadding={INNER_PADDING}
-                radius={radius}
-              />
-            </>
-          )}
-        </CartesianChart>
+        <ChartPlot style={{ flex: 1 }}>
+          <CartesianChart
+            data={data}
+            xKey='x'
+            yKeys={['y']}
+            domain={{ x: [-0.5, count - 0.5], y: [0, yMax] }}
+            padding={{ top: PLOT_TOP, bottom: 0, left: 0, right: 0 }}
+            yAxis={[{ lineWidth: 0 }]}
+          >
+            {({ chartBounds }) => (
+              <>
+                <SkiaLine
+                  p1={vec(chartBounds.left, chartBounds.bottom)}
+                  p2={vec(chartBounds.right, chartBounds.bottom)}
+                  color={theme.colors.border}
+                  strokeWidth={1}
+                />
+                <AnimatedStackedBars
+                  values={values}
+                  colors={colors}
+                  chartBounds={chartBounds}
+                  yMax={yMax}
+                  innerPadding={INNER_PADDING}
+                  radius={radius}
+                />
+              </>
+            )}
+          </CartesianChart>
+        </ChartPlot>
         <View
           onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
           style={{

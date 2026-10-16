@@ -322,7 +322,7 @@ const PublisherTypeSelector = ({
             onChangeText: setGoalHours,
             onBlur: saveCustomHours,
             inputMode: 'decimal',
-            textAlign: 'left',
+            textAlign: 'start',
           }}
         />
       )}

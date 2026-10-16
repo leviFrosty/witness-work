@@ -328,7 +328,7 @@ export default function PlaceSearchInput({
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textAlt}
           accessibilityLabel={accessibilityLabel}
-          textAlign='left'
+          textAlign='start'
           clearButtonMode='while-editing'
           autoCorrect={false}
           returnKeyType='search'

@@ -18,6 +18,7 @@ import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
+import { ltrIsolate } from '@/lib/direction'
 
 export default function PinLocation(props: {
   contact: Contact
@@ -128,10 +129,12 @@ export default function PinLocation(props: {
             </View>
             {contact.coordinate && (
               <Text style={{ color: theme.colors.textAlt }}>
-                {i18n.t('pinCoordinates', {
-                  latitude: contact.coordinate.latitude.toFixed(5),
-                  longitude: contact.coordinate.longitude.toFixed(5),
-                })}
+                {ltrIsolate(
+                  i18n.t('pinCoordinates', {
+                    latitude: contact.coordinate.latitude.toFixed(5),
+                    longitude: contact.coordinate.longitude.toFixed(5),
+                  })
+                )}
               </Text>
             )}
           </View>

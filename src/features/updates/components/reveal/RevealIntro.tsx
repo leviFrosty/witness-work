@@ -25,6 +25,7 @@ import { UPDATE_REVEAL_NAME } from '@/features/updates/constants/updateReveal'
 import { RevealHeadline } from '@/features/updates/hooks/useRevealChoreography'
 import { RevealChip } from '@/features/updates/hooks/useRevealPages'
 import RevealChips from '@/features/updates/components/reveal/RevealChips'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   palette: WelcomePalette
@@ -159,7 +160,7 @@ const RevealIntro = ({
                 maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
                 style={{
                   fontSize: 12,
-                  letterSpacing: 1.2,
+                  letterSpacing: tracking(1.2),
                   fontFamily: theme.fonts.bold,
                   color: theme.colors.accent,
                   textTransform: 'uppercase',

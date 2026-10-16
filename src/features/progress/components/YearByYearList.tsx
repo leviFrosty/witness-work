@@ -28,6 +28,8 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import useConfirmDeleteServiceYear from '@/features/service-reports/hooks/useConfirmDeleteServiceYear'
 import YearSummaryPreview from '@/features/progress/components/YearSummaryPreview'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
+import { alignText } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
 
@@ -126,7 +128,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.textAlt,
             fontSize: theme.fontSize('sm'),
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
             paddingHorizontal: 29,
             textTransform: 'uppercase',
           }}
@@ -241,7 +243,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                       color: theme.colors.text,
                       fontSize: theme.fontSize('sm'),
                       minWidth: 56,
-                      textAlign: 'right',
+                      textAlign: alignText('end'),
                     }}
                   >
                     {totalDisplay}

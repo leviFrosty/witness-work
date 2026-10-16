@@ -26,6 +26,7 @@ import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useToWindow } from '@/components/ui/sheetWindowFrame'
+import { leftForPhysicalX } from '@/lib/direction'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
@@ -395,7 +396,12 @@ const AnchoredPopover = ({
     maxHeight?: number
   } = anchor
     ? resolvePosition({
-        anchor,
+        // Resolvers think in reading order: in RTL the anchor is mirrored, and
+        // the `left` they return is read as the distance from the right edge.
+        anchor: {
+          ...anchor,
+          x: leftForPhysicalX(anchor.x, anchor.width, dims.width),
+        },
         windowWidth: dims.width,
         windowHeight: dims.height,
         contentWidth,

@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronRight } from 'lucide-react-native'
+import { ChevronDown } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { Children, Fragment, isValidElement, ReactNode, useState } from 'react'
 import { Platform, Pressable, View } from 'react-native'
 import Card from '@/components/ui/Card'
@@ -9,6 +10,8 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
+import { alignText } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 export const MONO = Platform.select({
   ios: 'Menlo',
@@ -104,7 +107,7 @@ export const ToolSection = ({
           </Text>
         ) : null}
         <LucideIcon
-          icon={expanded ? ChevronDown : ChevronRight}
+          icon={expanded ? ChevronDown : ChevronForwardIcon}
           size={theme.fontSize('md')}
           color={theme.colors.textAlt}
         />
@@ -136,7 +139,7 @@ export const ToolSubheading = ({
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('xs'),
           color: theme.colors.textAlt,
-          letterSpacing: 0.8,
+          letterSpacing: tracking(0.8),
           textTransform: 'uppercase',
         }}
       >
@@ -197,7 +200,7 @@ export const ToolRow = ({
               color: theme.colors.textAlt,
               fontFamily: MONO,
               fontSize: theme.fontSize('sm'),
-              textAlign: 'right',
+              textAlign: alignText('end'),
             }}
           >
             {value}

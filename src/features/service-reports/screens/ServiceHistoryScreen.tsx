@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Keyboard, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-} from 'lucide-react-native'
+  ChevronBackwardIcon,
+  ChevronForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
@@ -58,6 +58,7 @@ import {
   type ServiceHistoryDrafts,
 } from '@/features/service-reports/lib/serviceHistoryDrafts'
 import { noteUserAction } from '@/lib/userAction'
+import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceHistory'>
 
@@ -189,7 +190,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
       >
         <XView style={{ justifyContent: 'space-between', gap: 12 }}>
           <IconButton
-            icon={ChevronLeftIcon}
+            icon={ChevronBackwardIcon}
             accessibilityLabel={i18n.t('serviceHistory.previousYear')}
             color={
               serviceYear > oldestServiceYear ? undefined : theme.colors.border
@@ -210,7 +211,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
             {serviceYearLabel(serviceYear)}
           </Text>
           <IconButton
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             accessibilityLabel={i18n.t('serviceHistory.nextYear')}
             color={
               serviceYear < newestServiceYear ? undefined : theme.colors.border
@@ -274,7 +275,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('xs'),
                     textTransform: 'uppercase',
-                    letterSpacing: 0.5,
+                    letterSpacing: tracking(0.5),
                     paddingHorizontal: inputLayout.horizontalPadding,
                   }}
                 >
@@ -333,7 +334,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                         placeholder: '0',
                         value: row.hours,
                         onChangeText: (hours) => updateRow(index, { hours }),
-                        textAlign: 'right',
+                        textAlign: 'end',
                       }}
                     />
                     <TextInputRow
@@ -348,7 +349,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                         value: row.creditHours,
                         onChangeText: (creditHours) =>
                           updateRow(index, { creditHours }),
-                        textAlign: 'right',
+                        textAlign: 'end',
                       }}
                     />
                   </>

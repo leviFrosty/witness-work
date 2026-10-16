@@ -15,6 +15,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   goBack: () => void
@@ -110,7 +111,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
               fontSize: 11,
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.supporter,
-              letterSpacing: 1.2,
+              letterSpacing: tracking(1.2),
               textTransform: 'uppercase',
             }}
           >
@@ -220,7 +221,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
                   fontSize: 14,
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.text,
-                  letterSpacing: 0.3,
+                  letterSpacing: tracking(0.3),
                 }}
               >
                 {i18n.t('founderNoteSignOff')}

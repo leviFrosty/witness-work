@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
+import { tracking } from '@/lib/tracking'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()
@@ -74,7 +75,7 @@ export const TimerSection = () => {
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('sm'),
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
           >
             {i18n.t('timer')}

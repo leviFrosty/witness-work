@@ -15,6 +15,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 /** What a stop on the rail marks. `today` is the Today marker. */
 export type RailNode =
@@ -150,7 +151,7 @@ function TodayMarker() {
           color: theme.colors.background,
           fontSize: theme.fontSize('xs'),
           fontFamily: theme.fonts.bold,
-          letterSpacing: 0.8,
+          letterSpacing: tracking(0.8),
           textTransform: 'uppercase',
         }}
       >

@@ -3,8 +3,8 @@ import {
   Download as DownloadIcon,
   FileInput as FileInputIcon,
   Sprout as SproutIcon,
-  Undo2 as Undo2Icon,
 } from 'lucide-react-native'
+import { UndoIcon } from '@/components/ui/DirectionalIcon'
 import { Alert } from 'react-native'
 import { useState } from 'react'
 import {
@@ -105,7 +105,7 @@ const MoreScreen = () => {
       <AppPreferencesSection />
       <GroupedListSection>
         <GroupedListRow
-          icon={Undo2Icon}
+          icon={UndoIcon}
           label={i18n.t('recoverContacts')}
           onPress={() => pushScreen('Recover Contacts')}
         />

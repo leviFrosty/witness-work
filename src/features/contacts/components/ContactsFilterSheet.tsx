@@ -21,6 +21,7 @@ import Sheet from '@/components/ui/Sheet'
 import Text from '@/components/ui/MyText'
 import ChoiceChips, { ChoiceChip } from '@/components/ui/ChoiceChips'
 import MyTextInput from '@/components/ui/TextInput'
+import { tracking } from '@/lib/tracking'
 
 export type ContactsFilterSheetProps = {
   open: boolean
@@ -370,7 +371,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     color: theme.colors.textAlt,
     fontFamily: theme.fonts.semiBold,
     textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
+    letterSpacing: tracking(0.5),
   }
 
   const fieldOptions: ChoiceChip<Exclude<FieldKey, null>>[] =
@@ -537,7 +538,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   placeholderTextColor={
                     theme.colors.textAlt as InputProps['placeholderTextColor']
                   }
-                  textAlign='left'
+                  textAlign='start'
                 />
               </View>
             )}

@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { ReactNode, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
@@ -35,6 +35,8 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import DayPreview, { dayHasPreview } from '@/components/DayPreview'
 import useDayMenuActions from '@/hooks/useDayMenuActions'
 import { formatMonthDayCompact } from '@/lib/dates'
+import { alignText } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 interface AllDaysListProps {
   month: number
@@ -157,13 +159,13 @@ const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
             fontFamily: theme.fonts.semiBold,
             color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
             minWidth: 44,
-            textAlign: 'right',
+            textAlign: alignText('end'),
           }}
         >
           {row.hoursLabel}
         </Text>
         <LucideIcon
-          icon={ChevronRightIcon}
+          icon={ChevronForwardIcon}
           size={12}
           color={theme.colors.textAlt}
         />
@@ -358,7 +360,7 @@ const AllDaysList = ({
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('xs'),
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
             numberOfLines={1}
           >
@@ -370,7 +372,7 @@ const AllDaysList = ({
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('xs'),
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
             numberOfLines={1}
           >
@@ -382,9 +384,9 @@ const AllDaysList = ({
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('xs'),
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
               minWidth: 44,
-              textAlign: 'right',
+              textAlign: alignText('end'),
             }}
             numberOfLines={1}
           >

@@ -10,6 +10,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import type { SuggestedSectionKey } from '@/lib/suggestedContacts'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Everyone else ('all' or 'other') and search results sit below the
@@ -68,7 +69,7 @@ export default function SuggestedSectionHeader({
           textTransform: 'uppercase',
           fontSize: theme.fontSize('xs'),
           fontFamily: theme.fonts.semiBold,
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {title}

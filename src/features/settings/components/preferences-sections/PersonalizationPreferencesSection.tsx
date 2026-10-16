@@ -2,10 +2,10 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Select from '@/components/ui/Select'
 import { usePreferences } from '@/stores/preferences'
 import {
-  ChevronRight as ChevronRightIcon,
   Palette as PaletteIcon,
   Shapes as ShapesIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { Platform, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import Section from '@/components/ui/inputs/Section'
@@ -77,7 +77,7 @@ const PersonalizationPreferencesSection = () => {
           onPress={() => navigation.navigate('PreferencesColorKey')}
           lastInSection
         >
-          <IconButton icon={ChevronRightIcon} />
+          <IconButton icon={ChevronForwardIcon} />
         </InputRowButton>
       </Section>
       {Platform.OS === 'ios' && (
@@ -88,7 +88,7 @@ const PersonalizationPreferencesSection = () => {
             onPress={() => navigation.navigate('PreferencesAppIcon')}
             lastInSection
           >
-            <IconButton icon={ChevronRightIcon} />
+            <IconButton icon={ChevronForwardIcon} />
           </InputRowButton>
         </Section>
       )}

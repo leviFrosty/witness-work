@@ -13,6 +13,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { alignText } from '@/lib/direction'
 
 export interface MonthGoalEditorSheetProps {
   open: boolean
@@ -123,7 +124,7 @@ const MonthGoalEditorSheet = ({
               style={{
                 color: theme.colors.textAlt,
                 fontSize: theme.fontSize('lg'),
-                textAlign: 'right',
+                textAlign: alignText('end'),
               }}
             >
               {regularGoalDisplay.formatted}

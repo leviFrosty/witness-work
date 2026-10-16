@@ -46,6 +46,7 @@ import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import ScheduleIntroPage, {
   type ScheduleIntroPageSpec,
 } from '@/features/plans/components/schedule-intro/ScheduleIntroPage'
+import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 /** How the intro was closed. Bounded, safe as an analytics value. */
 type CloseMethod = 'plan' | 'done' | 'close' | 'back'
@@ -163,8 +164,12 @@ export default function ScheduleIntroOverlay({
     if (pageId) viewed.current.add(pageId)
   }, [pageId])
 
+  // Offsets are physical; `scrollX` runs from the reading start, so page
+  // math reads the same in RTL.
+  const rtl = isRtlLayout()
+  const contentWidth = pages.length * width
   const onScroll = useAnimatedScrollHandler((e) => {
-    scrollX.value = e.contentOffset.x
+    scrollX.value = flowScrollX(e.contentOffset.x, contentWidth, width, rtl)
   })
   useAnimatedReaction(
     () => (width > 0 ? Math.round(scrollX.value / width) : 0),
@@ -197,7 +202,10 @@ export default function ScheduleIntroOverlay({
 
   const next = () => {
     if (last) return finish('plan')
-    scrollRef.current?.scrollTo({ x: (index + 1) * width, animated: true })
+    scrollRef.current?.scrollTo({
+      x: flowScrollX((index + 1) * width, contentWidth, width, rtl),
+      animated: true,
+    })
   }
 
   const rootStyle = useAnimatedStyle(() => ({ opacity: fade.value }))

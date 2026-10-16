@@ -12,6 +12,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
+import { tracking } from '@/lib/tracking'
 
 const HeroCard = () => {
   const theme = useTheme()
@@ -138,7 +139,7 @@ const SupporterBenefits = ({ compact }: Props) => {
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: tracking(0.5),
         }}
       >
         {i18n.t('supportersUnlock')}

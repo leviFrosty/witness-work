@@ -5,6 +5,7 @@ import { useCardStyle } from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
+import { alignText } from '@/lib/direction'
 
 // Compose's Collapsible pads its own header and content (16dp each side).
 const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
@@ -79,7 +80,7 @@ export default function CollapsibleCard({
             fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),
             color: theme.colors.text,
-            textAlign: 'left',
+            textAlign: alignText('start'),
           }}
         >
           {opened && contentWidth ? (

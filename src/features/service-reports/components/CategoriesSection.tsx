@@ -1,7 +1,5 @@
-import {
-  ChevronRight as ChevronRightIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useState } from 'react'
 import { View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
@@ -18,6 +16,7 @@ import i18n from '@/lib/locales'
 
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   segments: CategorySegment[]
@@ -89,7 +88,7 @@ const CategoriesSection = ({
               ))}
             </View>
             <LucideIcon
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={12}
               style={{ color: theme.colors.textAlt }}
             />
@@ -108,13 +107,13 @@ const CategoriesSection = ({
                 color: theme.colors.textAlt,
                 fontSize: theme.fontSize('sm'),
                 textTransform: 'uppercase',
-                letterSpacing: 0.5,
+                letterSpacing: tracking(0.5),
               }}
             >
               {i18n.t('categories')}
             </Text>
             <IconButton
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={12}
               iconStyle={{ color: theme.colors.textAlt }}
             />

@@ -23,6 +23,7 @@ import { GENDER_COLORS } from '@/components/GenderIcon'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { Contact } from '@/types/contact'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   contact: Contact
@@ -144,7 +145,7 @@ const ContactIdentityCard = ({
         style={{
           fontSize: 11,
           color: theme.colors.textAlt,
-          letterSpacing: 1.4,
+          letterSpacing: tracking(1.4),
           fontFamily: theme.fonts.semiBold,
           textTransform: 'uppercase',
           marginHorizontal: 12,
@@ -187,7 +188,7 @@ const ContactIdentityCard = ({
               enterKeyHint='next'
               fontSize={20}
               fontFamily={theme.fonts.semiBold}
-              textAlign='left'
+              textAlign='start'
               hitSlop={0}
               style={{ color: theme.colors.text, width: '100%' }}
             />

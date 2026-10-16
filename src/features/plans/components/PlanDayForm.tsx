@@ -3,10 +3,10 @@ import { analytics } from '@/lib/analytics'
 import { formatTime } from '@/lib/dates'
 import {
   Calendar1 as Calendar1Icon,
-  CornerDownRight as CornerDownRightIcon,
   Repeat as RepeatIcon,
   X as XIcon,
 } from 'lucide-react-native'
+import { CornerDownForwardIcon } from '@/components/ui/DirectionalIcon'
 import { Modal, Pressable, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -287,7 +287,7 @@ const RecurringSaveScopeModal = (props: {
     {
       scope: 'future',
       title: i18n.t('saveScope_future_title'),
-      icon: CornerDownRightIcon,
+      icon: CornerDownForwardIcon,
       dots: [false, true, true],
       lines: [false, true],
     },
@@ -318,8 +318,8 @@ const RecurringSaveScopeModal = (props: {
         <View
           style={{
             backgroundColor: theme.colors.backgroundLighter,
-            borderTopLeftRadius: theme.numbers.borderRadiusLg,
-            borderTopRightRadius: theme.numbers.borderRadiusLg,
+            borderTopStartRadius: theme.numbers.borderRadiusLg,
+            borderTopEndRadius: theme.numbers.borderRadiusLg,
             borderColor: theme.colors.border,
             borderTopWidth: 1,
             padding: 20,

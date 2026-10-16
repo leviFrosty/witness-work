@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
 import { disconnectGoogleDrive } from '@/lib/syncTransport/googleDrive/googleDriveAuth'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
+import { alignText } from '@/lib/direction'
 
 /**
  * Android: the Google Account this device syncs with. Shows whether Google
@@ -101,7 +102,9 @@ const GoogleDriveAccountSection = () => {
           {busy && (
             <ActivityIndicator size='small' color={theme.colors.textAlt} />
           )}
-          <Text style={{ color: theme.colors.textAlt, textAlign: 'right' }}>
+          <Text
+            style={{ color: theme.colors.textAlt, textAlign: alignText('end') }}
+          >
             {status}
           </Text>
         </View>

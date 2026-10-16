@@ -18,6 +18,7 @@ import { formatMinutes } from '@/lib/minutes'
 import GlassCard from '@/components/ui/GlassCard'
 import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Flattens the store's `TimeEntriesByYear` shape into a single `TimeEntry[]`.
@@ -108,7 +109,7 @@ const LifetimeHoursCard = () => {
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.textAlt,
             fontSize: theme.fontSize('sm'),
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {i18n.t('lifetimeHours').toUpperCase()}
@@ -130,7 +131,7 @@ const LifetimeHoursCard = () => {
               lineHeight: isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
-              letterSpacing: -1,
+              letterSpacing: tracking(-1),
             }}
           >
             {formattedLifetime}

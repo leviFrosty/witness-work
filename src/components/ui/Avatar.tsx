@@ -28,6 +28,7 @@ import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import { ProfileAvatar } from '@/types/avatar'
 import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
+import { leftForPhysicalX } from '@/lib/direction'
 
 /**
  * Whether an `avatar.value` string actually resolves to something `<Image>` can
@@ -301,7 +302,8 @@ const Avatar = ({
             style={[
               {
                 position: 'absolute',
-                left: anchor.x,
+                // Measured in screen coordinates; `left` mirrors in RTL.
+                left: leftForPhysicalX(anchor.x, anchor.size, dims.width),
                 top: anchor.y,
                 width: anchor.size,
                 height: anchor.size,

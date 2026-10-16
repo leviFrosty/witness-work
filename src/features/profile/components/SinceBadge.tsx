@@ -2,6 +2,7 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   icon: AppIcon
@@ -43,7 +44,7 @@ const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
             fontSize: 11,
             color: theme.colors.textAlt,
             textTransform: 'uppercase',
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
           }}
         >
           {label}

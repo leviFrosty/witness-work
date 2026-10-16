@@ -1,6 +1,7 @@
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { alignText } from '@/lib/direction'
 
 /** A read-only label and value on a details screen (Plan, Visit). */
 export default function DetailRow({
@@ -26,7 +27,7 @@ export default function DetailRow({
       controlStyle={{ maxWidth: '70%' }}
     >
       <Text
-        style={{ color: theme.colors.textAlt, textAlign: 'right' }}
+        style={{ color: theme.colors.textAlt, textAlign: alignText('end') }}
         selectable
       >
         {value}

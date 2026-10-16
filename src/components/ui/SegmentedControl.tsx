@@ -8,6 +8,7 @@ import type {
   NativeSegmentedControlProps,
   NativeSegmentedOption,
 } from '@/components/ui/NativeSegmentedControl.types'
+import { tracking } from '@/lib/tracking'
 
 export interface SegmentedOption<T extends string = string>
   extends NativeSegmentedOption<T> {
@@ -122,7 +123,7 @@ function PillSegmentedControl<T extends string>({
                   fontSize: Math.max(10, labelFontSize - 2),
                   fontFamily: theme.fonts.semiBold,
                   color: opt.subLabel.color ?? theme.colors.supporter,
-                  letterSpacing: 0.3,
+                  letterSpacing: tracking(0.3),
                 }}
               >
                 {opt.subLabel.text}

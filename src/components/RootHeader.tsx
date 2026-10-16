@@ -33,6 +33,7 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
+import { isRtlLayout } from '@/lib/direction'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
@@ -181,7 +182,8 @@ export default function RootHeader({
             {/* Scaled rather than resized so the title shrinks smoothly. */}
             <Animated.View
               style={{
-                transformOrigin: 'left center',
+                // Shrinks toward the title's reading start.
+                transformOrigin: isRtlLayout() ? 'right center' : 'left center',
                 transform: [{ scale: compact ? 0.82 : 1 }],
                 transitionProperty: 'transform',
                 ...FLOAT_TRANSITION,

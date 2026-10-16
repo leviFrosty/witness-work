@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
@@ -113,7 +113,7 @@ export default function BuddyRow({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {streak > 0 && <StreakBadge count={streak} size='sm' />}
             <LucideIcon
-              icon={ChevronRightIcon}
+              icon={ChevronForwardIcon}
               size={18}
               color={theme.colors.textAlt}
             />

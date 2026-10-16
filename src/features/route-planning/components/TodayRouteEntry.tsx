@@ -1,9 +1,7 @@
 import { View } from 'react-native'
 import moment from 'moment'
-import {
-  ChevronRight as ChevronRightIcon,
-  Route as RouteIcon,
-} from 'lucide-react-native'
+import { Route as RouteIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import SupporterBadge from '@/components/SupporterBadge'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -82,7 +80,7 @@ export default function TodayRouteEntry({
         </View>
         {hasAccess ? (
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.textAlt}
           />

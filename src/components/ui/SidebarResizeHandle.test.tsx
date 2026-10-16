@@ -16,6 +16,7 @@ const runtime = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({
+  I18nManager: { isRTL: false },
   StyleSheet: { absoluteFill: {} },
   View: 'View',
 }))

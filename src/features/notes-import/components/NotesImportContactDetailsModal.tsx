@@ -20,6 +20,7 @@ import type {
   PreviewSelection,
 } from '@/features/notes-import/lib/buildNotesImportPreview'
 import type { MappedWarning } from '@/features/notes-import/lib/mapNotesImport'
+import { tracking } from '@/lib/tracking'
 
 /**
  * A contact and everything imported alongside it — its fields, its warnings,
@@ -69,7 +70,7 @@ const SectionLabel = ({ children }: { children: string }) => {
         color: theme.colors.textAlt,
         fontFamily: theme.fonts.semiBold,
         fontSize: theme.fontSize('xs'),
-        letterSpacing: 0.5,
+        letterSpacing: tracking(0.5),
         textTransform: 'uppercase',
       }}
     >

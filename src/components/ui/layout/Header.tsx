@@ -1,8 +1,5 @@
-import {
-  ChevronLeft as ChevronLeftIcon,
-  Menu as MenuIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { Menu as MenuIcon, X as XIcon } from 'lucide-react-native'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -86,7 +83,7 @@ const HeaderContent = ({
       return XIcon
     }
     if (buttonType === 'back') {
-      return ChevronLeftIcon
+      return ChevronBackwardIcon
     }
 
     return MenuIcon

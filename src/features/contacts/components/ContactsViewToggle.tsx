@@ -1,9 +1,9 @@
 import {
-  List as ListIcon,
   LucideIcon as LucideIconType,
   Map as MapIcon,
 } from 'lucide-react-native'
 import { View } from 'react-native'
+import { BulletListIcon as ListIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { ContactsView } from '@/types/homeStack'

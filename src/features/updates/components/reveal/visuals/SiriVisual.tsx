@@ -216,7 +216,7 @@ const Spoken = ({
     >
       <Surface
         palette={palette}
-        style={{ padding: 14, gap: 8, borderBottomRightRadius: 6 }}
+        style={{ padding: 14, gap: 8, borderBottomEndRadius: 6 }}
       >
         <IconTile icon={AudioLinesIcon} color={quoteColor} size={24} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 4 }}>
@@ -238,7 +238,7 @@ const Spoken = ({
             style={{
               paddingVertical: 8,
               paddingHorizontal: 12,
-              borderBottomRightRadius: 6,
+              borderBottomEndRadius: 6,
             }}
           >
             <VisualText

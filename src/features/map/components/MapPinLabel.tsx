@@ -31,7 +31,15 @@ export default function MapPinLabel({
       pointerEvents='none'
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      // The label is placed in map points, which don't mirror in RTL.
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        direction: 'ltr',
+      }}
     >
       <TooltipBubble
         label={name}

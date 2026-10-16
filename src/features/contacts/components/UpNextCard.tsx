@@ -15,6 +15,7 @@ import { formatRelative, formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { relativeDayLabel } from '@/features/contacts/lib/visitDates'
 import { UpNext } from '@/features/contacts/lib/visitTimeline'
+import { tracking } from '@/lib/tracking'
 
 type Props = {
   upNext: UpNext
@@ -90,7 +91,7 @@ const UpNextCard = ({
             fontSize: theme.fontSize('xs') + 1,
             fontFamily: theme.fonts.semiBold,
             textTransform: 'uppercase',
-            letterSpacing: 0.5,
+            letterSpacing: tracking(0.5),
             color: muted,
           }}
         >

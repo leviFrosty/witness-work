@@ -1,8 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
-import {
-  ChevronRight as ChevronRightIcon,
-  SlidersHorizontal as SlidersHorizontalIcon,
-} from 'lucide-react-native'
+import { SlidersHorizontal as SlidersHorizontalIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import IconButton from '@/components/ui/IconButton'
@@ -43,7 +41,7 @@ export default function VisitCustomFieldsSection({
               onChangeText: (value: string) => setCustomField(def.id, value),
               value: customFields?.[def.id] ?? '',
               autoCapitalize: 'words',
-              textAlign: 'left',
+              textAlign: 'start',
             }}
           />
           <CustomFieldPrivacyWarning
@@ -57,7 +55,7 @@ export default function VisitCustomFieldsSection({
         onPress={() => navigation.navigate('PreferencesConversationFields')}
         lastInSection
       >
-        <IconButton icon={ChevronRightIcon} />
+        <IconButton icon={ChevronForwardIcon} />
       </InputRowButton>
     </Section>
   )

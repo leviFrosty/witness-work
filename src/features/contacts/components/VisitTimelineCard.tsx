@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { Swipeable } from 'react-native-gesture-handler'
+import SwipeableRow from '@/components/ui/SwipeableRow'
 import RichNote from '@/components/RichNote'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
@@ -52,11 +52,11 @@ const VisitTimelineCard = ({
   const noteStyle = { fontSize: theme.fontSize('sm') + 1, lineHeight: 19 }
 
   return (
-    <Swipeable
+    <SwipeableRow
       onSwipeableWillOpen={() => Haptics.light()}
-      renderRightActions={() => <SwipeableDelete />}
-      onSwipeableOpen={(direction, swipeable) => {
-        if (direction !== 'right') return
+      renderTrailingActions={() => <SwipeableDelete />}
+      onSwipeableOpen={(side, swipeable) => {
+        if (side !== 'trailing') return
         swipeable.reset()
         requestDelete()
       }}
@@ -206,7 +206,7 @@ const VisitTimelineCard = ({
           )}
         </View>
       </ContextMenu>
-    </Swipeable>
+    </SwipeableRow>
   )
 }
 

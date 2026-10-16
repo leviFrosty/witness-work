@@ -5,7 +5,10 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { ReactNode } from 'react'
 import { View } from 'react-native'
-import { Swipeable } from 'react-native-gesture-handler'
+import SwipeableRow, {
+  type Swipeable,
+  type SwipeSide,
+} from '@/components/ui/SwipeableRow'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
 import useCategories from '@/stores/categories'
@@ -38,6 +41,7 @@ import {
 import { richTextImages } from '@/lib/richText/inspect'
 import { getNoteDoc, getNoteText, hasNote } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
+import { alignText } from '@/lib/direction'
 
 /** For ordering a day's Plans; anytime Plans come first, like all-day events. */
 export const getPlanItemStartTime = (item: PlanListItem): number => {
@@ -194,11 +198,8 @@ const PlanRow = (props: {
   }`
   const longNote = showsNote && isLongNote(displayNote)
 
-  const handleSwipeOpen = (
-    direction: 'left' | 'right',
-    swipeable: Swipeable
-  ) => {
-    if (direction !== 'right') return
+  const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
+    if (side !== 'trailing') return
 
     // Snap the row back before the confirmation lands — the alert owns the
     // interaction from here, whichever way the user answers it.
@@ -207,16 +208,14 @@ const PlanRow = (props: {
   }
 
   return (
-    <Swipeable
+    <SwipeableRow
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
         borderRadius: cardStyle.borderRadius,
       }}
-      renderRightActions={() => <SwipeableDelete />}
-      onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable)
-      }
+      renderTrailingActions={() => <SwipeableDelete />}
+      onSwipeableOpen={(side, swipeable) => handleSwipeOpen(side, swipeable)}
     >
       <ContextMenu
         actions={menu}
@@ -270,7 +269,7 @@ const PlanRow = (props: {
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
                     maxWidth: '45%',
-                    textAlign: 'right',
+                    textAlign: alignText('end'),
                   }}
                   numberOfLines={1}
                 >
@@ -315,7 +314,7 @@ const PlanRow = (props: {
           </View>
         </View>
       </ContextMenu>
-    </Swipeable>
+    </SwipeableRow>
   )
 }
 

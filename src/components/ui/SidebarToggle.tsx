@@ -1,4 +1,7 @@
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react-native'
+import {
+  PanelLeadingCloseIcon,
+  PanelLeadingOpenIcon,
+} from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import IconButton from '@/components/ui/IconButton'
@@ -23,7 +26,7 @@ export default function SidebarToggle({ mode }: { mode: 'hide' | 'show' }) {
     >
       <IconButton
         noTransform
-        icon={sidebarVisible ? PanelLeftClose : PanelLeftOpen}
+        icon={sidebarVisible ? PanelLeadingCloseIcon : PanelLeadingOpenIcon}
         size={22}
         color={theme.colors.textAlt}
         accessibilityLabel={label}

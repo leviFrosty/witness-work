@@ -2,10 +2,10 @@ import { ReactNode, RefObject } from 'react'
 import { View } from 'react-native'
 import {
   ChevronDown as ChevronDownIcon,
-  ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -187,7 +187,7 @@ export const FormRowDisclosure = () => {
   const theme = useTheme()
   return (
     <LucideIcon
-      icon={ChevronRightIcon}
+      icon={ChevronForwardIcon}
       size={16}
       color={theme.colors.textAlt}
     />

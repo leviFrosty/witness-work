@@ -1,8 +1,6 @@
 import { View } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  Link as LinkIcon,
-} from 'lucide-react-native'
+import { Link as LinkIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -94,7 +92,7 @@ export default function PendingInviteRow({
       ]}
       accessory={
         <LucideIcon
-          icon={ChevronRightIcon}
+          icon={ChevronForwardIcon}
           size={18}
           color={theme.colors.textAlt}
         />

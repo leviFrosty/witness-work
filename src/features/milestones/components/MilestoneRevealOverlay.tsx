@@ -18,6 +18,7 @@ import useFireworks from '@/hooks/useFireworks'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
+import { tracking } from '@/lib/tracking'
 
 interface Props {
   /** Whether the reveal is currently presented. */
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
   welcome: {
     fontSize: 15,
     textAlign: 'center',
-    letterSpacing: 2.4,
+    letterSpacing: tracking(2.4),
     color: TEXT_DIM,
   },
   titleArea: {
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
     fontSize: 46,
     lineHeight: 54,
     textAlign: 'center',
-    letterSpacing: -1.2,
+    letterSpacing: tracking(-1.2),
     color: TEXT_PRIMARY,
   },
   tagline: {
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: TEXT_FAINT,
     marginTop: 8,
-    letterSpacing: 1.2,
+    letterSpacing: tracking(1.2),
   },
   ctaArea: {
     gap: 12,

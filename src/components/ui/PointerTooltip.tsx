@@ -11,7 +11,9 @@ import useTheme from '@/contexts/theme'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import PointerHover, { type PointerEffect } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
+import { isRtlLayout } from '@/lib/direction'
 
+/** `left`/`right` are the start/end sides: they swap in RTL. */
 type Placement = 'right' | 'left' | 'top' | 'bottom'
 type Rect = { x: number; y: number; width: number; height: number }
 type Tip = { id: number; label: string; anchor: Rect; placement: Placement }
@@ -126,7 +128,14 @@ export function PointerTooltipLayer() {
 function PlacedTooltip({ tip }: { tip: Tip }) {
   const window = useWindowDimensions()
   const [size, setSize] = useState<Size>()
-  const { anchor, placement } = tip
+  const { anchor } = tip
+  // `left` and `right` name the side toward the content, so they swap with
+  // the layout: a sidebar's labels open leftward when it sits on the right.
+  const placement = isRtlLayout()
+    ? (({ left: 'right', right: 'left' } as const)[
+        tip.placement as 'left' | 'right'
+      ] ?? tip.placement)
+    : tip.placement
 
   const position = (() => {
     if (!size) return undefined
@@ -150,7 +159,15 @@ function PlacedTooltip({ tip }: { tip: Tip }) {
       pointerEvents='none'
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      // Placed in window coordinates, which don't mirror in RTL.
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        direction: 'ltr',
+      }}
     >
       <TooltipBubble label={tip.label} position={position} onSize={setSize} />
     </View>

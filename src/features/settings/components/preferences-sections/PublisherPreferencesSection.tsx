@@ -1,8 +1,9 @@
 import {
   Car as CarIcon,
-  ChevronRight as ChevronRightIcon,
+  ChevronDown as ChevronDownIcon,
   History as HistoryIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
@@ -163,7 +164,7 @@ const PublisherPreferencesSection = () => {
               onChangeText: setLogHoursGoal,
               onBlur: saveLogHoursGoal,
               inputMode: 'decimal',
-              textAlign: 'left',
+              textAlign: 'start',
             }}
           />
         )}
@@ -193,7 +194,7 @@ const PublisherPreferencesSection = () => {
           }
           lastInSection
         >
-          <IconButton icon={ChevronRightIcon} />
+          <IconButton icon={ChevronForwardIcon} />
         </InputRowButton>
       </Section>
 
@@ -213,7 +214,7 @@ const PublisherPreferencesSection = () => {
             onPress={() => navigation.navigate('Mileage')}
             lastInSection
           >
-            <IconButton icon={ChevronRightIcon} />
+            <IconButton icon={ChevronForwardIcon} />
           </InputRowButton>
         )}
       </Section>
@@ -243,12 +244,9 @@ const PublisherPreferencesSection = () => {
                 {i18n.t('advanced')}
               </Text>
               <LucideIcon
-                icon={ChevronRightIcon}
+                icon={advancedOpen ? ChevronDownIcon : ChevronForwardIcon}
                 size={12}
                 color={theme.colors.textAlt}
-                style={{
-                  transform: [{ rotate: advancedOpen ? '90deg' : '0deg' }],
-                }}
               />
               <HoverTint
                 visible={advancedHovered}

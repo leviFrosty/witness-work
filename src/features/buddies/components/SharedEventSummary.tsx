@@ -2,9 +2,9 @@ import { View } from 'react-native'
 import moment from 'moment'
 import {
   Calendar as CalendarIcon,
-  ChevronRight as ChevronRightIcon,
   MessageSquare as MessageSquareIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -65,7 +65,7 @@ export default function SharedEventSummary({
             {title}
           </Text>
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.textAlt}
           />

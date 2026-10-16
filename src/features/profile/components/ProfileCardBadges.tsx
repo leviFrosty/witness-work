@@ -1,4 +1,4 @@
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import BadgeRow from '@/components/badges/BadgeRow'
@@ -52,7 +52,7 @@ export default function ProfileCardBadges({
         <BadgeRow badges={badges} />
       </View>
       <LucideIcon
-        icon={ChevronRightIcon}
+        icon={ChevronForwardIcon}
         size={14}
         color={theme.colors.textAlt}
       />

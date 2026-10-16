@@ -11,13 +11,17 @@ import StarterKit from '@tiptap/starter-kit'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
 import Image from '@tiptap/extension-image'
 import { CharacterCount, Placeholder } from '@tiptap/extensions'
-import type { NodeViewRenderer } from '@tiptap/core'
+import { Extension, type NodeViewRenderer } from '@tiptap/core'
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import type {
   EditorCommand,
   EditorFormatState,
   EditorSetup,
 } from '@/components/richText/editor/editorProtocol'
 import { normalizeImageScale, snapImageScale } from '@/lib/richText/imageScale'
+import { textDirection } from '@/lib/textDirection'
 
 /*
  * The note editor's web half: Tiptap in the WebView, driven by the native
@@ -261,6 +265,68 @@ const NoteImage = Image.extend({
   },
 }).configure({ inline: false, allowBase64: false })
 
+const DIRECTED_NODES = new Set(['paragraph', 'heading', 'listItem', 'taskItem'])
+
+/**
+ * Decorates `node`'s paragraphs, headings and list items with their direction
+ * and returns `node`'s own. A text block's comes from its text; any other
+ * node's from its first child that has one. That's the first letter of its
+ * `textContent` (what `RichTextView` reads for a list item), without reading a
+ * nested list's text again at every level.
+ */
+function collectDirections(
+  node: ProseMirrorNode,
+  contentStart: number,
+  decorations: Decoration[]
+): 'ltr' | 'rtl' | undefined {
+  if (node.isTextblock) return textDirection(node.textContent)
+  let first: 'ltr' | 'rtl' | undefined
+  node.forEach((child, offset) => {
+    const pos = contentStart + offset
+    const dir = collectDirections(child, pos + 1, decorations)
+    if (dir && DIRECTED_NODES.has(child.type.name)) {
+      decorations.push(Decoration.node(pos, pos + child.nodeSize, { dir }))
+    }
+    first ??= dir
+  })
+  return first
+}
+
+function textDirections(doc: ProseMirrorNode): DecorationSet {
+  const decorations: Decoration[] = []
+  collectDirections(doc, 0, decorations)
+  return DecorationSet.create(doc, decorations)
+}
+
+const textDirectionsKey = new PluginKey<DecorationSet>('noteTextDirections')
+
+/**
+ * Gives each paragraph, heading and list item the direction of its first letter
+ * (`textDirection`, as `RichTextView` does), so an English line in an Arabic
+ * note keeps its own side, list marker included. Lines without letters (an
+ * empty line being typed) follow the app's direction from the root. Only
+ * decorations: nothing is stored in the note. Worked out again only when the
+ * text changes, not as the caret or selection moves.
+ */
+const TextDirections = Extension.create({
+  name: 'noteTextDirections',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin<DecorationSet>({
+        key: textDirectionsKey,
+        state: {
+          init: (_, state) => textDirections(state.doc),
+          apply: (tr, directions) =>
+            tr.docChanged ? textDirections(tr.doc) : directions,
+        },
+        props: {
+          decorations: (state) => textDirectionsKey.getState(state),
+        },
+      }),
+    ]
+  },
+})
+
 function setImageSource(id: string, src: string) {
   imageSources.set(id, src)
   for (const img of imageElements.get(id) ?? []) img.src = src
@@ -403,15 +469,20 @@ function styles(setup: EditorSetup): string {
   const t = setup.theme
   return `${fontFaces(setup)}
 :root{color-scheme:${t.scheme};}
+/* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
+#root{flex-direction:column;}
 html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
 body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
 .ProseMirror{outline:none;box-sizing:border-box;min-height:100vh;padding:12px 16px 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
 .ProseMirror p{margin:0 0 6px;}
 .ProseMirror h1{font-size:1.43em;font-weight:700;line-height:1.25;margin:4px 0 6px;}
 .ProseMirror h2{font-size:1.15em;font-weight:700;line-height:1.3;margin:4px 0 6px;}
-.ProseMirror ul,.ProseMirror ol{margin:0 0 6px;padding-left:24px;}
+.ProseMirror p,.ProseMirror h1,.ProseMirror h2{text-align:start;}
+.ProseMirror ul,.ProseMirror ol{margin:0 0 6px;padding:0;}
+.ProseMirror li{margin-inline-start:24px;}
 .ProseMirror li>p{margin:0 0 4px;}
-.ProseMirror ul[data-type=taskList]{list-style:none;padding-left:2px;}
+.ProseMirror ul[data-type=taskList]{list-style:none;}
+.ProseMirror ul[data-type=taskList]>li{margin-inline-start:2px;}
 .ProseMirror ul[data-type=taskList] li{display:flex;gap:8px;align-items:flex-start;}
 .ProseMirror ul[data-type=taskList] li>label{flex:0 0 auto;margin-top:1px;}
 .ProseMirror ul[data-type=taskList] li>div{flex:1 1 auto;min-width:0;}
@@ -429,7 +500,7 @@ body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-s
 .note-image-handle.top-right{right:-22px;top:-22px;cursor:nesw-resize;}
 .note-image-handle.bottom-left{left:-22px;bottom:-22px;cursor:nesw-resize;}
 .note-image-handle.bottom-right{right:-22px;bottom:-22px;cursor:nwse-resize;}
-.ProseMirror p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:${t.textAlt};float:left;height:0;pointer-events:none;}`
+.ProseMirror p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:${t.textAlt};float:${setup.direction === 'rtl' ? 'right' : 'left'};height:0;pointer-events:none;}`
 }
 
 /**
@@ -497,6 +568,7 @@ export default function RichTextEditorDom(props: Props) {
         TaskItem.configure({ nested: true }),
         NoteImage,
         Placeholder.configure({ placeholder: setup?.placeholder ?? '' }),
+        TextDirections,
         CharacterCount.configure({ limit: setup?.characterLimit ?? null }),
       ],
       editorProps: {
@@ -504,6 +576,9 @@ export default function RichTextEditorDom(props: Props) {
           role: 'textbox',
           'aria-multiline': 'true',
           'aria-label': setup?.label ?? '',
+          // Lines without letters follow the app; the rest take their own
+          // direction (`TextDirections`).
+          dir: setup?.direction ?? 'ltr',
           autocapitalize: 'sentences',
           spellcheck: 'true',
         },

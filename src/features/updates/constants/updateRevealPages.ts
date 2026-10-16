@@ -13,7 +13,6 @@ import {
   MapPinned as MapPinnedIcon,
   Medal as MedalIcon,
   PanelBottom as PanelBottomIcon,
-  PanelsLeftBottom as PanelsLeftBottomIcon,
   Pointer as PointerIcon,
   Search as SearchIcon,
   Send as SendIcon,
@@ -24,6 +23,7 @@ import {
   Watch as WatchIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import { PanelsLeadingBottomIcon } from '@/components/ui/DirectionalIcon'
 import type { Theme } from '@/constants/theme'
 import type { TranslationKey } from '@/lib/locales'
 
@@ -231,7 +231,7 @@ export const REVEAL_MORE_ITEMS: RevealMoreItem[] = [
   },
   {
     id: 'tablets',
-    icon: PanelsLeftBottomIcon,
+    icon: PanelsLeadingBottomIcon,
     color: 'accent3',
     labelKey: 'updateReveal_more_tablets',
     tabletOnly: true,

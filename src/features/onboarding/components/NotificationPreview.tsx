@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { tracking } from '@/lib/tracking'
 
 /**
  * Renders a mock iOS-style notification banner that teases the exact
@@ -65,7 +66,7 @@ const NotificationPreview = () => {
               fontSize: theme.fontSize('xs'),
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
-              letterSpacing: 0.5,
+              letterSpacing: tracking(0.5),
             }}
           >
             {i18n.t('notificationPreview_appName')}

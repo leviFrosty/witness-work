@@ -31,6 +31,9 @@ export default function HandoffCode({ code }: { code: string }) {
         style={{
           fontFamily: MONO,
           fontSize: 40,
+          // Western digits in every language, so the spacing can't break
+          // Arabic joining.
+          // eslint-disable-next-line no-restricted-syntax
           letterSpacing: 4,
           fontWeight: '600',
           textAlign: 'center',

@@ -360,8 +360,8 @@ const WhenDock = (props: Props) => {
           ? undefined
           : {
               backgroundColor: theme.colors.backgroundLighter,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopStartRadius: 24,
+              borderTopEndRadius: 24,
               borderTopWidth: 1,
               borderColor: theme.colors.border,
               paddingTop: 14,

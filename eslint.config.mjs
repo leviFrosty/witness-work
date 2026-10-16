@@ -43,6 +43,101 @@ const sheetImports = [
   { group: ['@expo/ui/community/bottom-sheet'], message: sheetMessage },
 ]
 
+// Icons that point along the reading direction mirror in right-to-left
+// layouts; `@/components/ui/DirectionalIcon` has a reading-order name for each
+// one the app uses (add one there before using a new name). Not listed, so not
+// mirrored: clocks, media controls, checkmarks, diagonal and trend arrows.
+const directionalIconNames = [
+  'ArrowBigLeft',
+  'ArrowBigLeftDash',
+  'ArrowBigRight',
+  'ArrowBigRightDash',
+  'ArrowLeft',
+  'ArrowLeftFromLine',
+  'ArrowLeftToLine',
+  'ArrowRight',
+  'ArrowRightFromLine',
+  'ArrowRightToLine',
+  'ChevronFirst',
+  'ChevronLast',
+  'ChevronLeft',
+  'ChevronRight',
+  'ChevronsLeft',
+  'ChevronsRight',
+  'CircleArrowLeft',
+  'CircleArrowRight',
+  'CircleChevronLeft',
+  'CircleChevronRight',
+  'CornerDownLeft',
+  'CornerDownRight',
+  'CornerUpLeft',
+  'CornerUpRight',
+  'Forward',
+  'IndentDecrease',
+  'IndentIncrease',
+  'List',
+  'ListChecks',
+  'ListIndentDecrease',
+  'ListIndentIncrease',
+  'ListOrdered',
+  'LogIn',
+  'LogOut',
+  'MoveLeft',
+  'MoveRight',
+  'PanelLeft',
+  'PanelLeftClose',
+  'PanelLeftDashed',
+  'PanelLeftOpen',
+  'PanelRight',
+  'PanelRightClose',
+  'PanelRightDashed',
+  'PanelRightOpen',
+  'PanelsLeftBottom',
+  'PanelsRightBottom',
+  'PanelsTopLeft',
+  'Redo',
+  'Redo2',
+  'RedoDot',
+  'Reply',
+  'ReplyAll',
+  'SquareArrowLeft',
+  'SquareArrowRight',
+  'SquareChevronLeft',
+  'SquareChevronRight',
+  'Undo',
+  'Undo2',
+  'UndoDot',
+]
+const directionalIconMessage =
+  'Use the reading-direction icons in @/components/ui/DirectionalIcon (ChevronForwardIcon, ArrowBackwardIcon, …), which mirror in right-to-left layouts.'
+const directionalIconImports = {
+  group: ['lucide-react-native', 'lucide-react-native/*'],
+  // lucide exports each icon as `X`, `XIcon` and `LucideX`.
+  importNames: directionalIconNames.flatMap((name) => [
+    name,
+    `${name}Icon`,
+    `Lucide${name}`,
+  ]),
+  message: directionalIconMessage,
+}
+// The same icons as default imports of their own files
+// (`lucide-react-native/icons/chevron-right`).
+const kebab = (name) =>
+  name
+    .replace(/([a-z])([A-Z0-9])/g, '$1-$2')
+    .replace(/([0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+const directionalIconFiles = {
+  group: directionalIconNames.flatMap((name) =>
+    ['lucide-react-native/icons', 'lucide-react-native/dist/*/icons'].flatMap(
+      (dir) => [`${dir}/${kebab(name)}`, `${dir}/${kebab(name)}.*`]
+    )
+  ),
+  message: directionalIconMessage,
+}
+// Corners React Native never mirrors.
+const physicalCornerRadius = '/^border(Top|Bottom)(Left|Right)Radius$/'
+
 export default tseslint.config(
   {
     ignores: [
@@ -212,13 +307,44 @@ export default tseslint.config(
   ...[
     {
       file: undefined,
-      patterns: [soundImports, hapticImports, ...sheetImports],
+      patterns: [
+        soundImports,
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+      ],
     },
-    { file: 'src/lib/audio.ts', patterns: [hapticImports, ...sheetImports] },
-    { file: 'src/lib/haptics.ts', patterns: [soundImports, ...sheetImports] },
+    {
+      file: 'src/lib/audio.ts',
+      patterns: [
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+      ],
+    },
+    {
+      file: 'src/lib/haptics.ts',
+      patterns: [
+        soundImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+      ],
+    },
     {
       file: 'src/components/ui/NativeSheet*.tsx',
-      patterns: [soundImports, hapticImports],
+      patterns: [
+        soundImports,
+        hapticImports,
+        directionalIconImports,
+        directionalIconFiles,
+      ],
+    },
+    {
+      file: 'src/components/ui/DirectionalIcon.tsx',
+      patterns: [soundImports, hapticImports, ...sheetImports],
     },
   ].map(({ file, patterns }) => ({
     files: [file ?? 'src/**/*.{js,jsx,ts,tsx}'],
@@ -228,10 +354,63 @@ export default tseslint.config(
           'src/lib/audio.ts',
           'src/lib/haptics.ts',
           'src/components/ui/NativeSheet*.tsx',
+          'src/components/ui/DirectionalIcon.tsx',
           'src/__tests__/**',
         ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },
   })),
+  // Right-to-left layouts (Arabic). React Native swaps `left` and `right` for
+  // text, but not for Android inputs, so alignment goes through
+  // `alignText`/`alignInput` (`@/lib/direction`) or a TextInput's
+  // `textAlign='start'|'end'`, which say what they mean. Corner radii are never
+  // mirrored, so a corner that marks a side (a chat bubble's tail, joined
+  // segments) uses `border(Top|Bottom)(Start|End)Radius`. Letter spacing breaks
+  // joined scripts, so non-zero values go through `tracking()`
+  // (`@/lib/tracking`). Disable per line, with a reason, where a physical side
+  // or fixed spacing is meant (Latin-only artwork).
+  {
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    ignores: ['src/__tests__/**', 'src/**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "Property:matches([key.name='textAlign'], [key.value='textAlign']) Literal[value=/^(left|right)$/]",
+          message:
+            "Use alignText('start'|'end') or alignInput(...) from @/lib/direction instead of a physical textAlign.",
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='textAlign'] Literal[value=/^(left|right)$/]",
+          message:
+            "Use textAlign='start'|'end' (TextInput) or alignText(...) from @/lib/direction instead of a physical textAlign.",
+        },
+        {
+          selector: `Property:matches([key.name=${physicalCornerRadius}], [key.value=${physicalCornerRadius}])`,
+          message:
+            'Use border(Top|Bottom)(Start|End)Radius, which mirror in right-to-left layouts.',
+        },
+        {
+          selector: `JSXAttribute[name.name=${physicalCornerRadius}]`,
+          message:
+            'Use border(Top|Bottom)(Start|End)Radius, which mirror in right-to-left layouts.',
+        },
+        {
+          selector:
+            "ObjectExpression > Property:matches([key.name='letterSpacing'], [key.value='letterSpacing']):not([value.type='Literal'][value.value=0]):not([value.type='CallExpression'][value.callee.name='tracking']):not([value.type='Identifier'][value.name='undefined'])",
+          message:
+            'Wrap letter spacing in tracking() from @/lib/tracking; it drops spacing in joined scripts such as Arabic.',
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='letterSpacing']:not([value.expression.type='Literal'][value.expression.value=0]):not([value.expression.type='CallExpression'][value.expression.callee.name='tracking'])",
+          message:
+            'Wrap letter spacing in tracking() from @/lib/tracking; it drops spacing in joined scripts such as Arabic.',
+        },
+      ],
+    },
+  },
   {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],
     languageOptions: {

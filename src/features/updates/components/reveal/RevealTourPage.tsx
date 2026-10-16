@@ -24,6 +24,8 @@ import {
   VISUAL,
 } from '@/features/updates/components/reveal/visuals/kit'
 import MoreVisual from '@/features/updates/components/reveal/visuals/MoreVisual'
+import { tracking } from '@/lib/tracking'
+import { forwardSign } from '@/lib/direction'
 
 /** How small or large an illustration may draw to fill its stage. */
 const VISUAL_SCALE = { min: 0.62, max: 1.5 }
@@ -83,6 +85,8 @@ const RevealTourPage = ({
     : 1
 
   const drift = reduceMotion ? 0 : 1
+  // `scrollX` runs in reading order; the drift is physical.
+  const sign = forwardSign()
   const visualStyle = useAnimatedStyle(() => {
     const offset = (scrollX.value - index * width) / Math.max(1, width)
     const away = Math.min(1, Math.abs(offset))
@@ -90,7 +94,7 @@ const RevealTourPage = ({
       // Gone by the time it would trail into the next page's space.
       opacity: 1 - Math.min(1, away / 0.6),
       transform: [
-        { translateX: offset * width * 0.3 * drift },
+        { translateX: sign * offset * width * 0.3 * drift },
         { scale: scale * (1 - away * 0.08 * drift) },
       ],
     }
@@ -141,7 +145,9 @@ const RevealTourPage = ({
         {stage && (
           <Animated.View
             style={[
-              { width: VISUAL.width, height: VISUAL.height },
+              // Illustrations are drawn with hand-placed coordinates and
+              // transforms that don't mirror, so they keep their LTR layout.
+              { width: VISUAL.width, height: VISUAL.height, direction: 'ltr' },
               visualStyle,
             ]}
           >
@@ -173,7 +179,7 @@ const RevealTourPage = ({
             style={{
               fontSize: 32,
               lineHeight: 37,
-              letterSpacing: -0.8,
+              letterSpacing: tracking(-0.8),
               fontFamily: theme.fonts.bold,
               color: palette.text,
             }}

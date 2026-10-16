@@ -3,10 +3,10 @@ import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
   Car as CarIcon,
-  ChevronRight as ChevronRightIcon,
   Fuel as FuelIcon,
   Route as RouteIcon,
 } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import useMileage from '@/stores/mileage'
@@ -150,7 +150,7 @@ export default function MileageHomeSection() {
             </View>
           </View>
           <LucideIcon
-            icon={ChevronRightIcon}
+            icon={ChevronForwardIcon}
             size={16}
             color={theme.colors.textAlt}
           />

@@ -1,8 +1,8 @@
+import { FileText as FileTextIcon } from 'lucide-react-native'
 import {
-  ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon,
-  FileText as FileTextIcon,
-} from 'lucide-react-native'
+  ArrowBackwardIcon,
+  ArrowForwardIcon,
+} from '@/components/ui/DirectionalIcon'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
@@ -181,7 +181,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                       alignItems: 'center',
                     }}
                   >
-                    <IconButton icon={ArrowLeftIcon} size={15} />
+                    <IconButton icon={ArrowBackwardIcon} size={15} />
                     <Text style={{ color: theme.colors.textAlt }}>
                       {moment(selectedMonth).subtract(1, 'month').format('MMM')}
                     </Text>
@@ -206,7 +206,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                     <Text style={{ color: theme.colors.textAlt }}>
                       {moment(selectedMonth).add(1, 'month').format('MMM')}
                     </Text>
-                    <IconButton icon={ArrowRightIcon} size={15} />
+                    <IconButton icon={ArrowForwardIcon} size={15} />
                   </View>
                 </Button>
               </XView>

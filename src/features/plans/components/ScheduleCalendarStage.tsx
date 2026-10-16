@@ -150,8 +150,8 @@ export default function ScheduleCalendarStage({
                 ? 'up'
                 : 'down'
               : yearServiceYear > currentServiceYear
-                ? 'left'
-                : 'right'
+                ? 'backward'
+                : 'forward'
           }
           bottom={bottomInset - 28}
           onPress={monthActive ? jumpToToday : showCurrentServiceYear}

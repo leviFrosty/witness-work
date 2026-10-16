@@ -3,10 +3,8 @@ import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Linking, View } from 'react-native'
-import {
-  ChevronRight as ChevronRightIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { listSyncDevices } from '@/lib/syncDevices'
@@ -43,6 +41,7 @@ import {
   buildICloudStatus,
   UPLOAD_GRACE_MS,
 } from '@/features/settings/lib/iCloudStatus'
+import { alignText } from '@/lib/direction'
 
 const formatOrDash = (ts: number | null): string =>
   ts ? formatDateTime(ts, { style: 'medium', withSeconds: true }) : '—'
@@ -810,7 +809,7 @@ const PreferencesiCloudScreenInner = () => {
               <Text
                 style={{
                   color: theme.colors.text,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {status.text}
@@ -820,7 +819,7 @@ const PreferencesiCloudScreenInner = () => {
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: 12,
-                    textAlign: 'right',
+                    textAlign: alignText('end'),
                   }}
                 >
                   {status.subtitle}
@@ -886,7 +885,7 @@ const PreferencesiCloudScreenInner = () => {
                 style={{
                   color: theme.colors.textAlt,
                   flexShrink: 1,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {formatOrDash(lastiCloudPushedAt)}
@@ -900,7 +899,7 @@ const PreferencesiCloudScreenInner = () => {
                 style={{
                   color: theme.colors.textAlt,
                   flexShrink: 1,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {formatOrDash(lastiCloudPulledAt)}
@@ -914,7 +913,7 @@ const PreferencesiCloudScreenInner = () => {
                 style={{
                   color: theme.colors.textAlt,
                   flexShrink: 1,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {formatOrDash(lastiCloudRemoteWrittenAt)}
@@ -929,7 +928,7 @@ const PreferencesiCloudScreenInner = () => {
                 style={{
                   color: theme.colors.textAlt,
                   flexShrink: 1,
-                  textAlign: 'right',
+                  textAlign: alignText('end'),
                 }}
               >
                 {lastiCloudRemoteDeviceName ??
@@ -973,7 +972,7 @@ const PreferencesiCloudScreenInner = () => {
                 <Text style={{ color: theme.colors.textAlt }}>
                   {deviceCount}
                 </Text>
-                <IconButton icon={ChevronRightIcon} />
+                <IconButton icon={ChevronForwardIcon} />
               </View>
             </InputRowButton>
           </Section>

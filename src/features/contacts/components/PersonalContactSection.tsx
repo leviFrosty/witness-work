@@ -25,6 +25,8 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation } from '@/types/rootStack'
 import { usePreferences } from '@/stores/preferences'
+import { alignInput, alignText } from '@/lib/direction'
+import { tracking } from '@/lib/tracking'
 
 const phoneIssueKeys = {
   'is-possible': 'phoneIssue_invalid',
@@ -119,7 +121,7 @@ export default function PersonalContactSection({
           style={{
             fontSize: 11,
             color: theme.colors.textAlt,
-            letterSpacing: 1.4,
+            letterSpacing: tracking(1.4),
             fontFamily: theme.fonts.semiBold,
             textTransform: 'uppercase',
           }}
@@ -178,11 +180,15 @@ export default function PersonalContactSection({
                         },
                         input: {
                           fontSize: theme.fontSize('lg'),
-                          textAlign: 'left',
+                          // The library's input is a plain TextInput. A phone
+                          // number keeps its left-to-right order in RTL.
+                          textAlign: alignInput('start'),
+                          direction: 'ltr',
                           paddingHorizontal: 10,
                           color: theme.colors.text,
                         },
                         callingCode: {
+                          direction: 'ltr',
                           fontSize: theme.fontSize('md'),
                           color: theme.colors.text,
                         },
@@ -213,7 +219,7 @@ export default function PersonalContactSection({
                     {placeholder.current.length > 0 && !formatted.possible && (
                       <Text
                         style={{
-                          textAlign: 'right',
+                          textAlign: alignText('end'),
                           fontSize: theme.fontSize('sm'),
                           color: theme.colors.textAlt,
                         }}
@@ -240,7 +246,7 @@ export default function PersonalContactSection({
                     onChangeText: (val: string) => setEmail(val),
                     value: contact.email,
                     autoCapitalize: 'none',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                   lastInSection={last}
                 />
@@ -259,7 +265,7 @@ export default function PersonalContactSection({
                     },
                     value: customFields?.[def.id] ?? '',
                     autoCapitalize: 'words',
-                    textAlign: 'left',
+                    textAlign: 'start',
                   }}
                   lastInSection={last}
                 />

@@ -18,6 +18,7 @@ import FollowUpCardProgress from '@/features/visits/components/FollowUpCardProgr
 import useFollowUpCardDismissal from '@/features/visits/hooks/useFollowUpCardDismissal'
 import useFollowUpCardItems from '@/features/visits/hooks/useFollowUpCardItems'
 import useLogNotAtHome from '@/features/visits/hooks/useLogNotAtHome'
+import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 const PADDING = 16
 const GAP = 10
@@ -64,9 +65,17 @@ const ApproachingConversations = ({
     width - PADDING * 2 - (single ? 0 : PEEK + GAP)
   )
   const interval = entryWidth + GAP
+  // Offsets are physical, so in RTL they count from the far (right) end.
+  const rtl = isRtlLayout()
+  const contentWidth =
+    PADDING * 2 +
+    items.length * entryWidth +
+    Math.max(0, items.length - 1) * GAP
+  const offsetFor = (target: number) =>
+    flowScrollX(target * interval, contentWidth, width, rtl)
 
   const scrollTo = (target: number, animated: boolean) => {
-    scrollRef.current?.scrollTo({ x: target * interval, animated })
+    scrollRef.current?.scrollTo({ x: offsetFor(target), animated })
     setIndex(target)
   }
 
@@ -92,14 +101,14 @@ const ApproachingConversations = ({
     if (advanceTo === undefined) return
     const timer = setTimeout(() => {
       scrollRef.current?.scrollTo({
-        x: advanceTo * interval,
+        x: flowScrollX(advanceTo * interval, contentWidth, width, rtl),
         animated: !reduceMotion,
       })
       setIndex(advanceTo)
       setAdvanceTo(undefined)
     }, ADVANCE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [advanceTo, interval, reduceMotion])
+  }, [advanceTo, interval, contentWidth, width, rtl, reduceMotion])
 
   useEffect(() => {
     if (completedCount === undefined) return
@@ -213,14 +222,23 @@ const ApproachingConversations = ({
               // after Undo brings the list back from all caught up).
               onLayout={() =>
                 scrollRef.current?.scrollTo({
-                  x: index * interval,
+                  x: offsetFor(index),
                   animated: false,
                 })
               }
               // A swipe overrides a pending move to the next Follow-up.
               onScrollBeginDrag={() => setAdvanceTo(undefined)}
-              onMomentumScrollEnd={(e) =>
-                setIndex(Math.round(e.nativeEvent.contentOffset.x / interval))
+              onMomentumScrollEnd={({ nativeEvent }) =>
+                setIndex(
+                  Math.round(
+                    flowScrollX(
+                      nativeEvent.contentOffset.x,
+                      nativeEvent.contentSize.width,
+                      nativeEvent.layoutMeasurement.width,
+                      rtl
+                    ) / interval
+                  )
+                )
               }
             >
               {items.map((item) => (

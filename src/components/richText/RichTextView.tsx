@@ -14,9 +14,12 @@ import type {
   RichTextBlock,
   RichTextDoc,
   RichTextImageAttrs,
+  RichTextInline,
   RichTextListItem,
   RichTextTaskItem,
 } from '@/types/richText'
+import { alignText, isRtlLayout } from '@/lib/direction'
+import { textDirection } from '@/lib/textDirection'
 
 const BLOCK_GAP = 6
 const ITEM_GAP = 4
@@ -41,6 +44,47 @@ function headingStyle(level: 1 | 2, ctx: Context): TextStyle {
   }
 }
 
+const inlineText = (content: RichTextInline[] | undefined) =>
+  (content ?? [])
+    .map((node) => (node.type === 'text' ? node.text : ''))
+    .join('')
+
+/**
+ * All of a list item's text, nested lists included (ProseMirror's
+ * `textContent`).
+ */
+const blocksText = (blocks: RichTextBlock[]): string =>
+  blocks
+    .map((block) =>
+      block.type === 'paragraph' || block.type === 'heading'
+        ? inlineText(block.content)
+        : block.type === 'image'
+          ? ''
+          : block.content.map((item) => blocksText(item.content)).join('')
+    )
+    .join('')
+
+/** Whether `text` reads against the app's direction (English in Arabic). */
+const isAgainstLayout = (text: string) => {
+  const direction = textDirection(text)
+  return !!direction && direction !== (isRtlLayout() ? 'rtl' : 'ltr')
+}
+
+/**
+ * A paragraph or heading reads in the direction of its first letter, as in the
+ * editor: an English line in an Arabic note stays left-aligned, and the other
+ * way round. Lines without letters follow the app.
+ */
+function directionStyle(content: RichTextInline[] | undefined): TextStyle {
+  const text = inlineText(content)
+  const direction = textDirection(text)
+  if (!direction) return {}
+  return {
+    textAlign: alignText(isAgainstLayout(text) ? 'end' : 'start'),
+    writingDirection: direction,
+  }
+}
+
 function renderBlocks(
   blocks: RichTextBlock[],
   ctx: Context,
@@ -50,7 +94,7 @@ function renderBlocks(
     switch (block.type) {
       case 'paragraph':
         return (
-          <Text key={index} style={ctx.base}>
+          <Text key={index} style={[directionStyle(block.content), ctx.base]}>
             {block.content?.length ? (
               <RichTextSpans content={block.content} options={ctx.spans} />
             ) : (
@@ -63,7 +107,11 @@ function renderBlocks(
           <Text
             key={index}
             accessibilityRole='header'
-            style={[ctx.base, headingStyle(block.attrs.level, ctx)]}
+            style={[
+              directionStyle(block.content),
+              ctx.base,
+              headingStyle(block.attrs.level, ctx),
+            ]}
           >
             <RichTextSpans content={block.content} options={ctx.spans} />
           </Text>
@@ -72,20 +120,30 @@ function renderBlocks(
       case 'orderedList':
         return (
           <View key={index} style={{ gap: ITEM_GAP }}>
-            {block.content.map((item, itemIndex) => (
-              <ListRow
-                key={itemIndex}
-                marker={
-                  <Text style={[ctx.base, { textAlign: 'right' }]}>
-                    {block.type === 'bulletList'
-                      ? BULLETS[depth % BULLETS.length]
-                      : `${(block.attrs?.start ?? 1) + itemIndex}.`}
-                  </Text>
-                }
-              >
-                {renderItem(item, ctx, depth)}
-              </ListRow>
-            ))}
+            {block.content.map((item, itemIndex) => {
+              const against = isAgainstLayout(blocksText(item.content))
+              return (
+                <ListRow
+                  key={itemIndex}
+                  against={against}
+                  marker={
+                    <Text
+                      style={[
+                        ctx.base,
+                        // Hugs the item's text.
+                        { textAlign: alignText(against ? 'start' : 'end') },
+                      ]}
+                    >
+                      {block.type === 'bulletList'
+                        ? BULLETS[depth % BULLETS.length]
+                        : `${(block.attrs?.start ?? 1) + itemIndex}.`}
+                    </Text>
+                  }
+                >
+                  {renderItem(item, ctx, depth)}
+                </ListRow>
+              )
+            })}
           </View>
         )
       case 'taskList':
@@ -96,6 +154,7 @@ function renderBlocks(
               return (
                 <ListRow
                   key={itemIndex}
+                  against={isAgainstLayout(blocksText(item.content))}
                   marker={
                     <TaskBox
                       checked={item.attrs.checked}
@@ -151,10 +210,26 @@ function renderItem(
   return renderBlocks(item.content, itemCtx, depth + 1)
 }
 
-function ListRow(props: { marker: ReactNode; children: ReactNode }) {
+/**
+ * A list item: the marker on its text's reading-start side. `against` flips it
+ * for an item written against the app's direction (English in Arabic), as the
+ * editor does.
+ */
+function ListRow(props: {
+  marker: ReactNode
+  against: boolean
+  children: ReactNode
+}) {
   return (
-    <View style={{ flexDirection: 'row', gap: 6 }}>
-      <View style={{ width: MARKER_WIDTH, alignItems: 'flex-end' }}>
+    <View
+      style={{ flexDirection: props.against ? 'row-reverse' : 'row', gap: 6 }}
+    >
+      <View
+        style={{
+          width: MARKER_WIDTH,
+          alignItems: props.against ? 'flex-start' : 'flex-end',
+        }}
+      >
         {props.marker}
       </View>
       <View style={{ flex: 1, gap: ITEM_GAP }}>{props.children}</View>

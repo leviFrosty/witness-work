@@ -1,4 +1,4 @@
-import { ChevronLeft as ChevronLeftIcon } from 'lucide-react-native'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, {
@@ -123,7 +123,7 @@ const OnboardingNav = ({
             accessibilityRole='button'
             accessibilityLabel={i18n.t('goBack')}
           >
-            <ChevronLeftIcon color={theme.colors.text} size={22} />
+            <ChevronBackwardIcon color={theme.colors.text} size={22} />
           </Button>
         ) : null}
         <Text style={styles.navTitle}>{i18n.t('witnessWork')}</Text>

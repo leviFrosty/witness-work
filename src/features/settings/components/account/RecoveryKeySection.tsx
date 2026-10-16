@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { Alert, View } from 'react-native'
-import {
-  KeyRound as KeyRoundIcon,
-  LogIn as LogInIcon,
-} from 'lucide-react-native'
+import { KeyRound as KeyRoundIcon } from 'lucide-react-native'
+import { LogInIcon } from '@/components/ui/DirectionalIcon'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'

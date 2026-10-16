@@ -3,7 +3,7 @@ import { Pressable, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
-import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -194,7 +194,7 @@ export default function HomeStreakChip() {
                 {i18n.t('streak_howItWorks')}
               </Text>
               <LucideIcon
-                icon={ChevronRightIcon}
+                icon={ChevronForwardIcon}
                 size={12}
                 color={theme.colors.accent}
               />

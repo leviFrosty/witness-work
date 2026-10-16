@@ -155,6 +155,12 @@ export type RootStackParamList = {
   ShareApp: undefined
   /** The anonymous server account and its recovery key. */
   Account: undefined
+  /** Set Up Another Device: this phone shows a QR code for a new one. */
+  'Set Up Another Device': { entry?: 'settings' | 'tools' } | undefined
+  /** Sign In with QR Code: scan, or open, another phone's handoff link. */
+  'Sign In With QR Code':
+    | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }
+    | undefined
   OpenSourceLicenses: undefined
   More: undefined
   ServiceReportView: { month: number; year: number }

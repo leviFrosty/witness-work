@@ -42,11 +42,12 @@ export const accountKey = createAccountKeyService({
 export const accountKeyAvailable = () => BuddiesKeychain.isAvailable()
 export const accountKeyReplaceable = () => BuddiesKeychain.isReplaceAvailable()
 
-export type AccountKeyReplaceSource = 'recovery_key' | 'tools'
+export type AccountKeyReplaceSource = 'recovery_key' | 'handoff' | 'tools'
 
 /**
  * Replaces the account key (see `AccountKeyService.replace`), records it, and
- * then lets Buddies start here when the new key already has it elsewhere.
+ * then lets Buddies start here when the new key already has it elsewhere. A
+ * handoff starts Buddies itself once the old phone knows it's done.
  */
 export async function replaceAccountKey(
   newKey: Uint8Array,
@@ -63,7 +64,7 @@ export async function replaceAccountKey(
       had_inbox: result.loss.inboxRegistered,
       registered: result.accountId !== null,
     })
-    void joinBuddiesHere().catch(() => undefined)
+    if (source !== 'handoff') void joinBuddiesHere().catch(() => undefined)
   }
   return result
 }

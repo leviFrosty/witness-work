@@ -1,6 +1,7 @@
 import ContactImportListener from '@/features/contacts/components/ContactImportListener'
 import SharedGoodNewsListener from '@/features/contacts/components/SharedGoodNewsListener'
 import BuddyInviteListener from '@/app/deep-links/BuddyInviteListener'
+import HandoffLinkListener from '@/app/deep-links/HandoffLinkListener'
 
 /**
  * Aggregates all components that subscribe to incoming URLs / file intents
@@ -13,6 +14,7 @@ export default function DeepLinkListeners() {
       <SharedGoodNewsListener />
       <ContactImportListener />
       <BuddyInviteListener />
+      <HandoffLinkListener />
     </>
   )
 }

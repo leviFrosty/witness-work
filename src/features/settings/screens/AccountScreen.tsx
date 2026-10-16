@@ -3,11 +3,12 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import AccountStatusSection from '@/features/settings/components/account/AccountStatusSection'
 import RecoveryKeySection from '@/features/settings/components/account/RecoveryKeySection'
+import HandoffSection from '@/features/settings/components/account/HandoffSection'
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
 
 /**
- * Settings → Account: the anonymous server account (ADR 0024) and its recovery
- * key (ADR 0026).
+ * Settings → Account: the anonymous server account (ADR 0024), moving it to
+ * another phone, and its recovery key (ADR 0026).
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
@@ -18,6 +19,7 @@ const AccountScreen = () => {
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <AccountStatusSection overview={overview} />
+          <HandoffSection />
           <RecoveryKeySection onAccountChanged={() => void refresh()} />
         </ScrollView>
       </Wrapper>

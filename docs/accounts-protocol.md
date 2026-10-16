@@ -92,22 +92,31 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 
 `POST {BASE}/accounts/v1/{op}`. Ops the old phone makes are self-signed envelopes like `account/register`: the payload carries `accountPub`, `ts`, `nonce`, plus the fields below, and the account must exist. Ops the new phone makes are plain JSON authorized by `claimToken`.
 
-| Op                | Caller | Request                                                 | Response                                                      |
-| ----------------- | ------ | ------------------------------------------------------- | ------------------------------------------------------------- |
-| `handoff/open`    | Old    | `channelId`, `verifier`                                 | `{ ok, expiresAt }`; `conflict` if the channel exists         |
-| `handoff/claim`   | New    | `channelId`, `claimToken`, `claimPub`, `hello` (sealed) | `{ ok, expiresAt }`; `conflict` once another phone claimed it |
-| `handoff/status`  | Old    | `channelId`                                             | `{ ok, status, expiresAt, claimPub?, hello? }`                |
-| `handoff/send`    | Old    | `channelId`, `key` (sealed)                             | `{ ok }`; only while `claimed`                                |
-| `handoff/receive` | New    | `channelId`, `claimToken`                               | `{ ok, status, key? }`                                        |
-| `handoff/done`    | New    | `channelId`, `claimToken`                               | `{ ok }`; deletes the key blob                                |
-| `handoff/cancel`  | Either | `channelId` (old, signed) or `channelId`, `claimToken`  | `{ ok }`; deletes every blob                                  |
+| Op                | Caller | Request                                                 | Response                                                          |
+| ----------------- | ------ | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| `handoff/open`    | Old    | `channelId`, `verifier`                                 | `{ ok, expiresAt }`; `conflict` while the channel is live         |
+| `handoff/claim`   | New    | `channelId`, `claimToken`, `claimPub`, `hello` (sealed) | `{ ok, expiresAt }`; `conflict` once claimed by another, or ended |
+| `handoff/status`  | Old    | `channelId`                                             | `{ ok, status, expiresAt, claimPub?, hello? }`                    |
+| `handoff/send`    | Old    | `channelId`, `key` (sealed)                             | `{ ok }`; `conflict` unless `claimed`                             |
+| `handoff/receive` | New    | `channelId`, `claimToken`                               | `{ ok, status, key? }`; `key` only while `sent`                   |
+| `handoff/done`    | New    | `channelId`, `claimToken`                               | `{ ok }`; deletes the key blob; `conflict` before `sent`          |
+| `handoff/cancel`  | Either | `channelId` (old, signed) or `channelId`, `claimToken`  | `{ ok }`; deletes every blob; after `done`, `ok` and stays `done` |
 
-- `status` is `open`, `claimed`, `sent`, `done`, or `cancelled`. An expired or unknown channel is 404 `not_found`.
-- A channel lives **10 minutes** from `open`, then its Durable Object deletes everything. `done` and `cancel` delete the blobs at once and keep only the status until then.
-- The first valid claim wins. Repeating it with the same body gets `ok` again (a lost response); any other claim is `conflict`. Five bad `claimToken`s burn the channel (`cancelled`).
-- Only the account that opened the channel can read its status, send, or cancel it as the old phone (`forbidden` otherwise).
+- `status` is `open`, `claimed`, `sent`, `done`, or `cancelled`. An expired or unknown channel is 404 `not_found`. An expired `channelId` can be opened again.
+- A channel lives **10 minutes** from `open`, then its Durable Object deletes everything. `done` and `cancel` delete the blobs at once and keep only the status until then. Repeating `done` is `ok`.
+- The first valid claim wins. Repeating it with the same body gets `ok` again (a lost response); any other claim, or any claim on a cancelled channel, is `conflict`.
+- A wrong `claimToken` is 401 `bad_signature`. Wrong tokens count on `claim`, `receive`, `done`, and the new phone's `cancel`, in any state: the fifth burns the channel (`cancelled`), even once it's claimed.
+- Only the account that opened the channel can read its status, send, or cancel it as the old phone: 403 `forbidden` for any other account. `forbidden` is new with handoff; Buddies doesn't use it.
+- A sealed `hello` over 2,048 characters or `key` over 1,024 is 413 `too_large`.
+- A suspended account can still hand off: `handoff/*` checks only that the account exists (`unknown_account` otherwise).
 - Clients poll every 1.5 seconds while a screen is showing the handoff.
 - Limits: `handoff/open` counts against the register edge tier and 20 per account a day; the rest against the read tier.
+
+### The app
+
+- Settings → Account → **Set Up Another Device** registers the account first when it needs to (the account key is created if there's none), then opens a channel. Leaving the screen, or Make a New Code, cancels it.
+- **Sign In with QR Code** is in Settings → Account, and in onboarding under "I already use WitnessWork" → From your other phone. A `/h` link opened from the system camera opens it with the link. A Use a Recovery Key alternative sits under the scanner.
+- Once the key arrives, the new phone registers its `accountPub` and checks the `accountId` matches the sealed one before it replaces anything. It replaces the key with the same warning as a recovery key (Buddies data on this phone is deleted, and on iOS the other Apple devices change too); declining cancels the channel. Then `done`, and Buddies starts here when the account already has this key's inbox linked (`account/info`), without waiting for iCloud Sync.
 
 ## Backup
 

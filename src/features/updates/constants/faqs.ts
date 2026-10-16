@@ -114,6 +114,8 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesRemove', category: 'buddies' },
   { id: 'buddiesSuspended', category: 'buddies' },
   { id: 'accountOverview', category: 'account' },
+  { id: 'accountHandoff', category: 'account' },
+  { id: 'accountHandoffTrouble', category: 'account' },
   { id: 'accountRecoveryKey', category: 'account' },
   { id: 'accountRecoveryKeyUse', category: 'account' },
   { id: 'badgesOverview', category: 'badges' },

@@ -8,7 +8,6 @@ import useTheme from '@/contexts/theme'
 import { accountKey, replaceAccountKey } from '@/app/account/accountKey'
 import { analytics } from '@/lib/analytics'
 import {
-  type AccountKeyLoss,
   losesSomething,
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
@@ -21,6 +20,7 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
+import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
 
 type Props = {
   open: boolean
@@ -75,40 +75,6 @@ export default function UseRecoveryKeySheet(props: Props) {
         setBusy={setBusy}
       />
     </Sheet>
-  )
-}
-
-/** Asks before replacing; resolves whether to go ahead. */
-function confirmReplace(loss: AccountKeyLoss): Promise<boolean> {
-  const message = [
-    loss.buddies > 0
-      ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('account_replaceBuddies', { count: loss.buddies })
-      : losesSomething(loss)
-        ? i18n.t('account_replaceInbox')
-        : null,
-    Platform.OS === 'ios' ? i18n.t('account_replaceAppleDevices') : null,
-  ]
-    .filter(Boolean)
-    .join('\n\n')
-  return new Promise((resolve) =>
-    Alert.alert(
-      i18n.t('account_replaceTitle'),
-      message,
-      [
-        {
-          text: i18n.t('cancel'),
-          style: 'cancel',
-          onPress: () => resolve(false),
-        },
-        {
-          text: i18n.t('account_replaceConfirm'),
-          style: losesSomething(loss) ? 'destructive' : 'default',
-          onPress: () => resolve(true),
-        },
-      ],
-      { cancelable: true, onDismiss: () => resolve(false) }
-    )
   )
 }
 
@@ -173,7 +139,7 @@ function RecoveryKeyForm({
       if (
         differs &&
         (losesSomething(loss) || Platform.OS === 'ios') &&
-        !(await confirmReplace(loss))
+        !(await confirmAccountReplace(loss, 'recoveryKey'))
       ) {
         analytics.capture('recovery_key_used', { outcome: 'declined' })
         return

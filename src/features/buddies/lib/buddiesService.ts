@@ -3,7 +3,7 @@ import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
-import { serverAccount } from '@/lib/serverAccount'
+import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
@@ -62,6 +62,10 @@ const engine = createBuddiesEngine({
   relay: createRelayClient({
     baseUrl: apis.buddies,
     randomBytes,
+    // Every relay call carries the account session (ADR 0027); its account
+    // key is the root seed, read from the Keychain as the engine reads it.
+    authorize: (run, { signal }) =>
+      accountSessions.withSession(run, { signal }),
     // The relay refuses a signed call more than 5 minutes off its clock, so a
     // device clock that's wrong would otherwise fail every call for good.
     now: syncNow,

@@ -10,6 +10,7 @@ import {
   request,
   type RequestOptions,
 } from '@/lib/http/request'
+import { toB64u } from '@/lib/bytes'
 import { type AccountStatus, isAccountStatus } from '@/lib/serverAccount/client'
 import {
   type DeviceLabel,
@@ -662,9 +663,14 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     return raceSignal(promise, call.signal)
   }
 
+  /** The last key derived, by its account key: Buddies asks on every call. */
+  let derived: { accountKey: string; key: AccountSigningKey } | null = null
   const keyFor = async (accountKey?: Uint8Array) => {
     const bytes = accountKey ?? (await deps.accountKey())
-    return { bytes, key: deriveAccountSigningKey(bytes) }
+    const encoded = toB64u(bytes)
+    if (derived?.accountKey !== encoded)
+      derived = { accountKey: encoded, key: deriveAccountSigningKey(bytes) }
+    return { bytes, key: derived.key }
   }
 
   /**

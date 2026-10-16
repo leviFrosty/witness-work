@@ -208,8 +208,14 @@ created a Buddies Invite (the share sheet opened), else `skipped`; Continue
 without inviting also sends `onboarding_step_skipped`. Each invite attempt sends
 `onboarding_buddies_invite_result` with `status`: `shared` (the share sheet
 completed), `dismissed`, or `error` with a bounded `reason` (`name_required`,
-`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, or `error`). No links, invite
-ids, or names are sent.
+`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, `unverified`,
+`verify_later`, `update`, or `error`). No links, invite ids, or names are sent.
+The same Buddies failure reasons (`buddiesFailureReason`) are on
+`buddies_push_registration` and `buddies_tray_sync_failed`: `unverified` means
+this device can't be verified, so it has no account session and Buddies sends
+nothing (ADR 0027); `verify_later`, that verifying it failed for now; `update`,
+that ww-api needs a newer app. The step leaves itself out on a device that can
+never be verified.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is

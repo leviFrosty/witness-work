@@ -16,7 +16,6 @@ import {
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
 import {
-  InboxAccountProof,
   isRelayConnectivityError,
   isRelayError,
   OwnerAuth,
@@ -130,7 +129,10 @@ import {
   type SharedBadge,
 } from '@/types/badges'
 import type { DayPlan } from '@/types/timeEntry'
-import type { ServerAccountSession } from '@/lib/serverAccount/serverAccount'
+import {
+  deriveAccountSigningKey,
+  signInboxLink,
+} from '@/lib/serverAccount/keys'
 import type { RichTextImageAttrs } from '@/types/richText'
 import { mapRichTextImages, richTextImages } from '@/lib/richText/inspect'
 import {
@@ -174,14 +176,17 @@ export type BuddiesEngineDeps = {
   getRootSeed: () => Promise<Uint8Array>
   deleteRootSeed: () => Promise<void>
   /**
-   * The User's server account (ADR 0024), from the account key: the root seed.
-   * Inbox registrations carry its claim, so the relay knows which account owns
-   * the inbox and can suspend it. Without it, or while it's unavailable,
-   * Buddies works unlinked, as before accounts.
+   * The User's server account (ADR 0024), whose key is the root seed. Every
+   * relay call carries its session (the relay client's `authorize`), and
+   * `inbox/register` its claim on the inbox, so the relay knows which account
+   * owns the inbox and can suspend it.
    */
   account?: {
-    ensure: (accountKey: Uint8Array) => Promise<ServerAccountSession | null>
-    /** The relay doesn't know the account: register it again next time. */
+    /**
+     * The relay doesn't know the session's account (the server's accounts were
+     * reset, say): forget the session, so the next call opens a new one, which
+     * creates the account again.
+     */
     forget: () => void
   }
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
@@ -544,6 +549,8 @@ function newPairedAt(state: BuddiesState, inboxId: string, now: number) {
 export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const { relay, store } = deps
   let cachedIdentity: { seed: string; identity: BuddyIdentity } | null = null
+  /** The root seed each identity came from: the account key, for its claim. */
+  const accountKeys = new WeakMap<BuddyIdentity, Uint8Array>()
   let identityLoad: Promise<BuddyIdentity> | null = null
   let registering: Promise<BuddyIdentity> | null = null
   const pairCache = new Map<string, PairKeys>()
@@ -556,8 +563,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   } | null = null
   /** Automatic syncs wait until then: the relay asked to back off. */
   let coolDownUntil = 0
-  /** This launch already tried to link the inbox to the server account. */
-  let accountLinkTried = false
   /** Removals that failed: how often in a row, and when to try again. */
   const removalRetries = new Map<string, { failures: number; at: number }>()
   /** Events recent syncs read, by seq, for `describePush`. */
@@ -599,6 +604,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const key = toB64u(seed)
         if (cachedIdentity?.seed !== key) {
           cachedIdentity = { seed: key, identity: deriveIdentity(seed) }
+          accountKeys.set(cachedIdentity.identity, seed)
           pairCache.clear()
         }
         return cachedIdentity.identity
@@ -617,7 +623,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function dropIdentity() {
     cachedIdentity = null
     pairCache.clear()
-    accountLinkTried = false
   }
 
   /** The inbox id, without waiting on the seed: render paths read this. */
@@ -636,6 +641,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inboxId: me.inboxId,
       ownerSeed: me.ownerSeed,
       ownerPub: me.ownerPub,
+      link: {
+        sign: (accountId) => {
+          const accountKey = accountKeys.get(me)
+          if (!accountKey) throw new Error('Buddies identity without its seed')
+          return signInboxLink(
+            deriveAccountSigningKey(accountKey),
+            accountId,
+            me.inboxId,
+            me.ownerPub
+          )
+        },
+        linked: () => {
+          if (store.getState().accountLinkedInboxId !== me.inboxId)
+            store.setState({ accountLinkedInboxId: me.inboxId })
+        },
+      },
     }
   }
 
@@ -712,70 +733,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return 0
   }
 
-  /** The server account's claim on this User's inbox; null without one. */
-  async function accountProof(
-    me: BuddyIdentity
-  ): Promise<InboxAccountProof | null> {
-    if (!deps.account || !cachedIdentity) return null
-    try {
-      const account = await deps.account.ensure(fromB64u(cachedIdentity.seed))
-      return account
-        ? {
-            accountId: account.accountId,
-            signature: account.signInboxLink(me.inboxId, me.ownerPub),
-          }
-        : null
-    } catch {
-      return null
-    }
-  }
-
   /**
-   * `inbox/register`, with the server account's claim when there is one. If the
-   * relay doesn't know the account (its database was reset, say), the inbox
-   * registers unlinked and the account registers again next time.
+   * `inbox/register`, linking the inbox to the session's account. If the relay
+   * doesn't know that account, a new session (which creates it) tries once
+   * more.
    */
   async function registerInbox(me: BuddyIdentity, call?: RelayCallOptions) {
-    const account = await accountProof(me)
-    let response: { accountId?: string }
     try {
-      response = await relay.registerInbox(
-        ownerAuth(me),
-        call,
-        account ?? undefined
-      )
+      await relay.registerInbox(ownerAuth(me), call)
     } catch (error) {
-      if (!account || !isRelayError(error, 'unknown_account')) throw error
-      deps.account?.forget()
-      response = await relay.registerInbox(ownerAuth(me), call)
-    }
-    if (account && response.accountId === account.accountId)
-      store.setState({ accountLinkedInboxId: me.inboxId })
-  }
-
-  /**
-   * Links an inbox registered before accounts (or while they were off) to the
-   * server account: once per launch, and only with an account to link. Only a
-   * suspension stops the sync; anything else is tried again next launch.
-   */
-  async function linkAccount(me: BuddyIdentity, call?: RelayCallOptions) {
-    const state = store.getState()
-    if (
-      accountLinkTried ||
-      state.registeredInboxId !== me.inboxId ||
-      state.accountLinkedInboxId === me.inboxId
-    )
-      return
-    accountLinkTried = true
-    const account = await accountProof(me)
-    if (!account) return
-    try {
-      const response = await relay.registerInbox(ownerAuth(me), call, account)
-      if (response.accountId === account.accountId)
-        store.setState({ accountLinkedInboxId: me.inboxId })
-    } catch (error) {
-      if (isRelayError(error, 'suspended')) throw error
-      if (isRelayError(error, 'unknown_account')) deps.account?.forget()
+      if (!deps.account || !isRelayError(error, 'unknown_account')) throw error
+      deps.account.forget()
+      await relay.registerInbox(ownerAuth(me), call)
     }
   }
 
@@ -3980,7 +3949,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     // Read again each sync: another device's seed may have synced in.
     await identity({ fresh: true })
     const me = await ensureInbox(call)
-    await linkAccount(me, call)
     slotsAddedDuringSync.clear()
     if (store.getState().slotsNeedRestore) await restoreInbox(me, call)
     const since = store.getState().syncSeq
@@ -4079,12 +4047,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /**
    * How long the relay asked to be left alone, from a failed call: its
-   * Retry-After, or a default for rate limits and the kill switch.
+   * Retry-After, or a default for rate limits and the kill switch. A device
+   * that couldn't be verified waits as long as its session does before
+   * attesting again.
    */
   function noteBackPressure(error: unknown) {
     if (!(error instanceof RelayError)) return
     const wait =
-      error.code === 'disabled' || error.code === 'suspended'
+      error.code === 'disabled' ||
+      error.code === 'suspended' ||
+      error.code === 'upgrade_required'
         ? Math.max(error.retryAfterMs ?? 0, DISABLED_COOL_DOWN_MS)
         : error.code === 'rate_limited'
           ? (error.retryAfterMs ?? RATE_LIMIT_COOL_DOWN_MS)
@@ -4165,7 +4137,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /**
    * Reads the inbox from this device's cursor and applies nothing: proof the
-   * relay accepts this device's signature, for Tools' relay check.
+   * relay accepts this device's session, for Tools' relay check.
    */
   async function probeInbox() {
     const me = await ensureInbox()

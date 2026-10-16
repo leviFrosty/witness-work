@@ -1,17 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  concatBytes,
-  fromB64u,
-  fromUtf8,
-  toB64u,
-  utf8,
-} from '@/features/buddies/lib/bytes'
-import {
-  ed25519Verify,
-  open,
-  seal,
-  sha256,
-} from '@/features/buddies/lib/crypto'
+import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
+import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
 import {
   deriveDirection,
   deriveIdentity,
@@ -23,7 +12,7 @@ import {
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
 import { buildBuddyCardDays } from '@/features/buddies/lib/card'
-import { createRelayClient, RelayError } from '@/features/buddies/lib/relay'
+import { RelayError } from '@/features/buddies/lib/relay'
 import {
   BADGE_PUSH_KIND,
   BADGE_REACTION_PUSH_KIND,
@@ -86,6 +75,7 @@ import type {
   ShareReply,
 } from '@/features/buddies/lib/schemas'
 import {
+  ownerAuthFor,
   pair,
   type Plans,
   random,
@@ -231,21 +221,15 @@ describe('buildBuddyCardDays', () => {
 })
 
 describe('buddies relay client', () => {
-  it('signs over the exact payload bytes', async () => {
-    const { fake } = setup()
-    const me = deriveIdentity(random(32))
-    const client = createRelayClient({
-      baseUrl: 'https://relay.test',
-      randomBytes: random,
-      fetchImpl: fake.fetchImpl as typeof fetch,
-    })
-    await client.registerInbox(me)
-    await expect(client.syncInbox(me, 0)).resolves.toMatchObject({ seq: 0 })
-
-    const impostor = deriveIdentity(random(32))
+  it("refuses another account's session on an inbox", async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const impostor = user('Impostor')
+    await mom.engine.sync()
+    // Even with Mom's owner key, its session is its own account's.
     await expect(
-      client.syncInbox({ ...impostor, inboxId: me.inboxId }, 0)
-    ).rejects.toEqual(new RelayError('bad_signature', 401))
+      impostor.relay.syncInbox(ownerAuthFor(mom.seed), 0)
+    ).rejects.toEqual(new RelayError('forbidden', 403))
   })
 
   it('probes the inbox for the relay check without applying anything', async () => {
@@ -263,34 +247,6 @@ describe('buddies relay client', () => {
     expect(probe.seq).toBeGreaterThan(before.syncSeq)
     expect(anna.store.getState().syncSeq).toBe(before.syncSeq)
     expect(anna.store.getState().buddies[0].name).toBe('Mom')
-  })
-
-  it('opens the live signal with an owner signature in headers, not the URL', () => {
-    const me = deriveIdentity(random(32))
-    const opened: { url: string; headers: Record<string, string> }[] = []
-    const client = createRelayClient({
-      baseUrl: 'https://relay.test',
-      randomBytes: random,
-      openSocket: (url, headers) => {
-        opened.push({ url, headers })
-        return {} as never
-      },
-    })
-    client.openLive(me)
-
-    const [{ url, headers }] = opened
-    expect(url).toBe('wss://relay.test/buddies/v1/inbox/live')
-    const payload = fromB64u(headers['x-buddies-p'])
-    expect(JSON.parse(new TextDecoder().decode(payload))).toMatchObject({
-      inboxId: me.inboxId,
-    })
-    expect(
-      ed25519Verify(
-        fromB64u(headers['x-buddies-s']),
-        concatBytes(utf8('ww-buddies/v1\ninbox/live\n'), payload),
-        fromB64u(me.ownerPub)
-      )
-    ).toBe(true)
   })
 })
 
@@ -2592,7 +2548,7 @@ describe('badges', () => {
   }
 
   /** Writes what the app itself never would, as `from` into `to`'s inbox. */
-  function rawWriter(env: Env, from: User, to: User) {
+  function rawWriter(from: User, to: User) {
     const me = deriveIdentity(from.seed)
     const buddy = buddyOf(from, to)
     const { slotId, contentKey, writerSeed } = deriveDirection(
@@ -2611,7 +2567,7 @@ describe('badges', () => {
     return {
       event: (kind: string, body: unknown) => {
         const eventId = toB64u(random(16))
-        return env.relay.putEvent(auth, {
+        return from.relay.putEvent(auth, {
           eventId,
           kind,
           blob: sealed(
@@ -2622,7 +2578,7 @@ describe('badges', () => {
         })
       },
       card: (body: unknown) =>
-        env.relay.putCard(
+        from.relay.putCard(
           auth,
           sealed(body, `ww-buddies/v1/card|${to.inboxId}|${slotId}`)
         ),
@@ -2675,7 +2631,7 @@ describe('badges', () => {
     // An app from before badges sends none.
     expect(buddyOf(anna, levi).badges).toEqual([])
 
-    const raw = rawWriter(env, levi, anna)
+    const raw = rawWriter(levi, anna)
     const card = {
       v: 1,
       name: 'Levi',
@@ -2755,8 +2711,8 @@ describe('badges', () => {
     }
     expect(rosterSchema.safeParse(roster).success).toBe(true)
     const me = deriveIdentity(levi.seed)
-    await env.relay.putRoster(
-      { inboxId: me.inboxId, ownerSeed: me.ownerSeed, ownerPub: me.ownerPub },
+    await levi.relay.putRoster(
+      ownerAuthFor(levi.seed),
       seal(
         me.rosterKey,
         utf8(JSON.stringify(roster)),
@@ -2914,7 +2870,7 @@ describe('badges', () => {
   it("drops badges this build doesn't know, and news with none it does", async () => {
     const env = await duo()
     const { levi, anna } = env
-    const raw = rawWriter(env, levi, anna)
+    const raw = rawWriter(levi, anna)
     await raw.event(BADGE_PUSH_KIND, {
       v: 1,
       badges: [
@@ -3030,13 +2986,8 @@ describe('badges', () => {
     // An older app on the iPad then saves a later photo choice.
     env.advance(1000)
     const me = deriveIdentity(levi.seed)
-    const owner = {
-      inboxId: me.inboxId,
-      ownerSeed: me.ownerSeed,
-      ownerPub: me.ownerPub,
-    }
-    await env.relay.putRoster(
-      owner,
+    await levi.relay.putRoster(
+      ownerAuthFor(levi.seed),
       seal(
         me.rosterKey,
         utf8(
@@ -3447,7 +3398,7 @@ describe('badges', () => {
       ])
 
       // An older choice arriving late changes nothing.
-      await rawWriter(env, levi, anna).event(BADGE_REACTION_PUSH_KIND, {
+      await rawWriter(levi, anna).event(BADGE_REACTION_PUSH_KIND, {
         v: 1,
         badge: yearRound,
         e: 'clap',
@@ -3479,7 +3430,7 @@ describe('badges', () => {
     it('ignores malformed reactions without failing the sync', async () => {
       const env = await reactionDuo()
       const { levi, anna, reactionEntries } = env
-      const raw = rawWriter(env, levi, anna)
+      const raw = rawWriter(levi, anna)
       const valid = { v: 1, badge: yearRound, e: 'party', rev: 1 }
       for (const body of [
         { ...valid, e: '🎉' },
@@ -3502,7 +3453,7 @@ describe('badges', () => {
     it("ignores reactions from anyone but an active buddy, to badges the User doesn't have, and with badges off", async () => {
       const env = await reactionDuo()
       const { levi, anna, reactionEntries } = env
-      const raw = rawWriter(env, levi, anna)
+      const raw = rawWriter(levi, anna)
       const react = (badge: { c: string; l?: number }, rev: number) =>
         raw.event(BADGE_REACTION_PUSH_KIND, { v: 1, badge, e: 'clap', rev })
 

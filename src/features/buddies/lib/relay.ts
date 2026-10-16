@@ -1,8 +1,23 @@
-import { HttpError, request } from '@/lib/http/request'
+import {
+  HttpError,
+  type HttpResponse,
+  request,
+  type RequestOptions,
+} from '@/lib/http/request'
+import { logger } from '@/lib/logger'
+import {
+  AccountSessionError,
+  type AttestationProblem,
+  OPEN_RETRY_AFTER_MS,
+} from '@/lib/serverAccount/session'
 import { concatBytes, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { ed25519Sign } from '@/features/buddies/lib/crypto'
 
-/** Client for the Buddies relay — wire contract in docs/buddies-protocol.md. */
+/**
+ * Client for the Buddies relay — wire contract in docs/buddies-protocol.md.
+ * Every request carries this User's attested account session (ADR 0027,
+ * "Authentication (sessions)" in the protocol).
+ */
 
 const RELAY_ERROR_CODES = [
   'bad_request',
@@ -20,17 +35,23 @@ const RELAY_ERROR_CODES = [
   'no_buddies',
   'suspended',
   'unknown_account',
+  'unauthorized',
+  'forbidden',
+  'not_linked',
+  'upgrade_required',
 ] as const
 
 /**
  * The relay's own codes, plus `network` (never reached it), `timeout` (no
- * answer in time), `cancelled` (the caller gave up) and `unknown`.
+ * answer in time), `cancelled` (the caller gave up), `unverified` (this device
+ * couldn't prove it's WitnessWork, so it has no session) and `unknown`.
  */
 export type RelayErrorCode =
   | (typeof RELAY_ERROR_CODES)[number]
   | 'network'
   | 'timeout'
   | 'cancelled'
+  | 'unverified'
   | 'unknown'
 
 export class RelayError extends Error {
@@ -38,7 +59,9 @@ export class RelayError extends Error {
     readonly code: RelayErrorCode,
     readonly status: number,
     /** How long the relay asked callers to wait (its Retry-After), if it did. */
-    readonly retryAfterMs: number | null = null
+    readonly retryAfterMs: number | null = null,
+    /** For `unverified`: whether it can't ever, or only couldn't now. */
+    readonly attestation: AttestationProblem | null = null
   ) {
     super(`Buddies relay error: ${code}`)
     this.name = 'RelayError'
@@ -71,14 +94,23 @@ export function isRelayError(
   )
 }
 
-/** The server account's claim on an inbox, for `inbox/register`. */
-export type InboxAccountProof = { accountId: string; signature: string }
+/** Links this User's inbox to their server account (`inbox/register`). */
+export type InboxLink = {
+  /** The account key's signature over the link to `accountId`. */
+  sign: (accountId: string) => string
+  /** The relay says the inbox belongs to `accountId`, the session's. */
+  linked?: (accountId: string) => void
+}
 
-/** Signs owner ops for one inbox. */
+/**
+ * This User's own inbox. The session says who's calling; the owner key signs
+ * only `inbox/register`, which proves the account holds the inbox's key.
+ */
 export type OwnerAuth = {
   inboxId: string
   ownerSeed: Uint8Array
   ownerPub: string
+  link: InboxLink
 }
 
 /** Signs writes into one slot of someone else's inbox. */
@@ -150,9 +182,22 @@ export type LiveSocket = {
   onclose: ((event: { code?: number; reason?: string }) => void) | null
 }
 
+/**
+ * Runs `run` with this User's attested account session: the `Authorization`
+ * header and the session's account. Throws `AccountSessionError` when there's
+ * no session to be had, so no request goes out without one; a 401 for the token
+ * refreshes it and runs `run` once more. `accountSessions.withSession` in the
+ * app.
+ */
+export type RelayAuthorize = <T>(
+  run: (authorization: string, session: { accountId: string }) => Promise<T>,
+  call: { signal?: AbortSignal }
+) => Promise<T>
+
 export type RelayDeps = {
   baseUrl: string
   randomBytes: (length: number) => Uint8Array
+  authorize: RelayAuthorize
   fetchImpl?: typeof fetch
   /** Signed requests' timestamps; the relay refuses one 5 minutes off. */
   now?: () => number
@@ -176,6 +221,13 @@ type HeaderWebSocket = new (
 
 const openSocket = (url: string, headers: Record<string, string>) =>
   new (WebSocket as unknown as HeaderWebSocket)(url, null, { headers })
+
+/** What one request sends besides its URL, method, and session. */
+type RelayRequest = Pick<RequestOptions, 'headers' | 'json' | 'body'>
+
+/** A payload's fields as UTF-8 JSON, `b64u`: `payload`, or its header. */
+const encodeFields = (fields: Record<string, unknown>) =>
+  toB64u(utf8(JSON.stringify(fields)))
 
 export function createRelayClient(deps: RelayDeps) {
   /**
@@ -204,30 +256,60 @@ export function createRelayClient(deps: RelayDeps) {
     return response
   }
 
+  /**
+   * Sends `op` with the session. `build` makes the request for each try (a 401
+   * for the token is tried once more, with a freshly signed body), from the
+   * session's account.
+   */
+  async function send<T>(
+    op: string,
+    build: (accountId: string) => RelayRequest,
+    call: RelayCallOptions,
+    transport: Pick<RequestOptions, 'responseType' | 'idempotent'> & {
+      timeoutMs: number
+    }
+  ): Promise<HttpResponse<T>> {
+    try {
+      return await deps.authorize(
+        (authorization, session) => {
+          const built = build(session.accountId)
+          return request<T>({
+            url: `${deps.baseUrl}/buddies/v1/${op}`,
+            method: 'POST',
+            ...built,
+            headers: { ...built.headers, authorization },
+            responseType: transport.responseType,
+            timeoutMs: call.timeoutMs ?? transport.timeoutMs,
+            signal: call.signal,
+            idempotent: transport.idempotent,
+            // Signed envelopes carry a nonce the relay accepts once, so a
+            // retry is a new request with a new signature; the engine decides
+            // that. Only reads say otherwise.
+            retry: { retries: transport.idempotent ? 1 : 0 },
+            fetchImpl,
+          })
+        },
+        { signal: call.signal }
+      )
+    } catch (error) {
+      const failure = relayErrorFrom(error)
+      // The session's account isn't the inbox's: a state this device should
+      // never reach. Ids stay out of the log.
+      if (failure.code === 'forbidden')
+        logger.warn(`[buddies] ${op}: forbidden`)
+      throw failure
+    }
+  }
+
   async function post<T>(
     op: string,
-    body: { p: string; s?: string },
+    build: (accountId: string) => RelayRequest,
     call: RelayCallOptions = {},
-    fullSync = false
+    timeoutMs = RELAY_TIMEOUT_MS
   ) {
-    let response: { status: number; data: { ok?: boolean } | null }
-    try {
-      response = await request<{ ok?: boolean } | null>({
-        url: `${deps.baseUrl}/buddies/v1/${op}`,
-        method: 'POST',
-        json: body,
-        timeoutMs:
-          call.timeoutMs ??
-          (fullSync ? RELAY_FULL_SYNC_TIMEOUT_MS : RELAY_TIMEOUT_MS),
-        signal: call.signal,
-        // Signed envelopes carry a nonce the relay accepts once, so a retry
-        // is a new request with a new signature; the engine decides that.
-        retry: { retries: 0 },
-        fetchImpl,
-      })
-    } catch (error) {
-      throw relayErrorFrom(error)
-    }
+    const response = await send<{ ok?: boolean } | null>(op, build, call, {
+      timeoutMs,
+    })
     if (response.data?.ok !== true)
       throw new RelayError('unknown', response.status)
     return response.data as T
@@ -249,13 +331,13 @@ export function createRelayClient(deps: RelayDeps) {
       concatBytes(utf8(`ww-buddies/v1\n${op}\n`), payload),
       seed
     )
-    return { p: toB64u(payload), s: toB64u(signature) }
+    return { payload: toB64u(payload), signature: toB64u(signature) }
   }
 
   /** Sends a signed call; after `stale`, corrects the clock and sends again. */
-  async function retryStale<T>(send: () => Promise<T>): Promise<T> {
+  async function retryStale<T>(sendOnce: () => Promise<T>): Promise<T> {
     try {
-      return await send()
+      return await sendOnce()
     } catch (error) {
       if (!isRelayError(error, 'stale')) throw error
       const serverTime = staleServerTime
@@ -263,114 +345,172 @@ export function createRelayClient(deps: RelayDeps) {
       if (serverTime !== null) skewMs += serverTime - now()
       else if (deps.recalibrate) await deps.recalibrate().catch(() => {})
       else throw error
-      return send()
+      return sendOnce()
     }
   }
 
-  function signed<T>(
+  /**
+   * `inbox/register`: the owner's envelope, with the session account's claim
+   * (required with a session), so the inbox is linked to the account.
+   */
+  async function registerInbox(auth: OwnerAuth, call: RelayCallOptions = {}) {
+    let accountId = ''
+    const response = await retryStale(() =>
+      post<{ ok: true; accountId?: string }>(
+        'inbox/register',
+        (sessionAccountId) => {
+          accountId = sessionAccountId
+          return {
+            json: envelope('inbox/register', auth.ownerSeed, {
+              inboxId: auth.inboxId,
+              ownerPub: auth.ownerPub,
+              account: { accountId, signature: auth.link.sign(accountId) },
+            }),
+          }
+        },
+        call
+      )
+    )
+    if (response.accountId === accountId) auth.link.linked?.(accountId)
+    return response
+  }
+
+  /**
+   * An inbox registered before accounts answers owner ops with `not_linked`:
+   * link it (`inbox/register` with the account's claim), then send once more.
+   */
+  async function linked<T>(
+    auth: OwnerAuth,
+    call: RelayCallOptions,
+    sendOnce: () => Promise<T>
+  ): Promise<T> {
+    try {
+      return await sendOnce()
+    } catch (error) {
+      if (!isRelayError(error, 'not_linked')) throw error
+      await registerInbox(auth, call)
+      return sendOnce()
+    }
+  }
+
+  /**
+   * An owner op: the payload's fields as plain JSON. The session is the
+   * authority, so there's no signature, `ts`, or `nonce`.
+   */
+  function owner<T>(
     op: string,
-    seed: Uint8Array,
+    auth: OwnerAuth,
     fields: Record<string, unknown>,
-    call?: RelayCallOptions,
-    fullSync = false
+    call: RelayCallOptions = {},
+    timeoutMs?: number
   ) {
-    return retryStale(() =>
-      post<T>(op, envelope(op, seed, fields), call, fullSync)
+    return linked(auth, call, () =>
+      post<T>(
+        op,
+        () => ({ json: { inboxId: auth.inboxId, ...fields } }),
+        call,
+        timeoutMs
+      )
     )
   }
 
-  /** `blob/put`: the body is the raw bytes, so the envelope rides in headers. */
+  /** A writer op: the slot's writer envelope stays its capability. */
+  function writer<T>(
+    op: string,
+    auth: WriterAuth,
+    fields: Record<string, unknown>
+  ) {
+    return retryStale(() =>
+      post<T>(op, () => ({
+        json: envelope(op, auth.writerSeed, {
+          inboxId: auth.inboxId,
+          slotId: auth.slotId,
+          ...fields,
+        }),
+      }))
+    )
+  }
+
+  /** `invite/*`: the capability they carry, unsigned. */
+  function capability<T>(
+    op: string,
+    fields: Record<string, unknown>,
+    call?: RelayCallOptions
+  ) {
+    return post<T>(
+      op,
+      () => ({ json: { payload: encodeFields(fields) } }),
+      call
+    )
+  }
+
+  /** `blob/put`: the body is the raw bytes, so the fields ride in a header. */
   async function putBlobOnce(
     auth: OwnerAuth,
     blob: BlobUpload,
     call: RelayCallOptions
   ) {
-    const { p, s } = envelope('blob/put', auth.ownerSeed, {
-      ...owner(auth),
-      blobId: blob.blobId,
-      bytes: blob.data.length,
-      expiresAt: blob.expiresAt,
-      readTokenHash: blob.readTokenHash,
-    })
-    let response: { status: number; data: { ok?: boolean } | null }
-    try {
-      response = await request<{ ok?: boolean } | null>({
-        url: `${deps.baseUrl}/buddies/v1/blob/put`,
-        method: 'POST',
+    const response = await send<{ ok?: boolean } | null>(
+      'blob/put',
+      () => ({
         headers: {
           'content-type': 'application/octet-stream',
-          'x-buddies-p': p,
-          'x-buddies-s': s,
+          'x-buddies-payload': encodeFields({
+            inboxId: auth.inboxId,
+            blobId: blob.blobId,
+            bytes: blob.data.length,
+            expiresAt: blob.expiresAt,
+            readTokenHash: blob.readTokenHash,
+          }),
         },
         body: blob.data,
-        timeoutMs: call.timeoutMs ?? RELAY_BLOB_TIMEOUT_MS,
-        signal: call.signal,
-        retry: { retries: 0 },
-        fetchImpl,
-      })
-    } catch (error) {
-      throw relayErrorFrom(error)
-    }
+      }),
+      call,
+      { timeoutMs: RELAY_BLOB_TIMEOUT_MS }
+    )
     if (response.data?.ok !== true)
       throw new RelayError('unknown', response.status)
     return response.data as { ok: true; expiresAt: number }
   }
 
-  function unsigned<T>(
-    op: string,
-    fields: Record<string, unknown>,
-    call?: RelayCallOptions
-  ) {
-    return post<T>(op, { p: toB64u(utf8(JSON.stringify(fields))) }, call)
-  }
-
-  const owner = (auth: OwnerAuth) => ({ inboxId: auth.inboxId })
-  const writer = (auth: WriterAuth) => ({
-    inboxId: auth.inboxId,
-    slotId: auth.slotId,
-  })
-
   return {
     /**
-     * `account` links the inbox to the User's server account (ADR 0024); the
-     * answer's `accountId` says which account the inbox belongs to, if any.
+     * Registers the inbox and links it to the session's account (ADR 0024); the
+     * answer's `accountId` says which account the inbox belongs to.
      */
-    registerInbox: (
-      auth: OwnerAuth,
-      call?: RelayCallOptions,
-      account?: InboxAccountProof
-    ) =>
-      signed<{ ok: true; accountId?: string }>(
-        'inbox/register',
-        auth.ownerSeed,
-        {
-          ...owner(auth),
-          ownerPub: auth.ownerPub,
-          ...(account ? { account } : {}),
-        },
-        call
-      ),
+    registerInbox,
     /**
      * The inbox's live signal: the relay says when something changed, and the
-     * app syncs. Auth rides in headers; ids never go in URLs.
+     * app syncs. The session and inbox ride in headers; ids never go in URLs.
+     * Each (re)connect asks the session for a token, refreshing it when it's
+     * close to expiring; an open socket outlives its token.
      */
-    openLive: (auth: OwnerAuth) => {
-      const { p, s } = envelope('inbox/live', auth.ownerSeed, owner(auth))
-      return (deps.openSocket ?? openSocket)(
-        `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
-        { 'x-buddies-p': p, 'x-buddies-s': s }
-      )
+    openLive: async (auth: OwnerAuth): Promise<LiveSocket> => {
+      try {
+        return await deps.authorize(
+          async (authorization) =>
+            (deps.openSocket ?? openSocket)(
+              `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
+              {
+                authorization,
+                'x-buddies-payload': encodeFields({ inboxId: auth.inboxId }),
+              }
+            ),
+          {}
+        )
+      } catch (error) {
+        throw relayErrorFrom(error)
+      }
     },
     syncInbox: (auth: OwnerAuth, since: number, call?: RelayCallOptions) =>
-      signed<RelaySyncResponse>(
+      owner<RelaySyncResponse>(
         'inbox/sync',
-        auth.ownerSeed,
-        { ...owner(auth), since },
+        auth,
+        { since },
         call,
-        since === 0
+        since === 0 ? RELAY_FULL_SYNC_TIMEOUT_MS : RELAY_TIMEOUT_MS
       ),
-    deleteInbox: (auth: OwnerAuth) =>
-      signed('inbox/delete', auth.ownerSeed, owner(auth)),
+    deleteInbox: (auth: OwnerAuth) => owner('inbox/delete', auth, {}),
     registerDevice: (
       auth: OwnerAuth,
       device: PushAddress & {
@@ -378,24 +518,15 @@ export function createRelayClient(deps: RelayDeps) {
         templates: Record<string, PushTemplate>
       },
       call?: RelayCallOptions
-    ) =>
-      signed(
-        'device/register',
-        auth.ownerSeed,
-        { ...owner(auth), ...device },
-        call
-      ),
+    ) => owner('device/register', auth, device, call),
     unregisterDevice: (auth: OwnerAuth, deviceId: string) =>
-      signed('device/unregister', auth.ownerSeed, { ...owner(auth), deviceId }),
+      owner('device/unregister', auth, { deviceId }),
     addSlot: (auth: OwnerAuth, slotId: string, writerPub: string) =>
-      signed('slot/add', auth.ownerSeed, { ...owner(auth), slotId, writerPub }),
+      owner('slot/add', auth, { slotId, writerPub }),
     removeSlot: (auth: OwnerAuth, slotId: string) =>
-      signed('slot/remove', auth.ownerSeed, { ...owner(auth), slotId }),
+      owner('slot/remove', auth, { slotId }),
     putRoster: (auth: OwnerAuth, blob: string) =>
-      signed<{ seq: number }>('roster/put', auth.ownerSeed, {
-        ...owner(auth),
-        blob,
-      }),
+      owner<{ seq: number }>('roster/put', auth, { blob }),
     createInvite: (
       auth: OwnerAuth,
       invite: {
@@ -404,38 +535,30 @@ export function createRelayClient(deps: RelayDeps) {
         blob: string
         expiresAt: number
       }
-    ) => signed('invite/create', auth.ownerSeed, { ...owner(auth), ...invite }),
+    ) => owner('invite/create', auth, invite),
     deleteInvite: (auth: OwnerAuth, inviteId: string) =>
-      signed('invite/delete', auth.ownerSeed, { ...owner(auth), inviteId }),
+      owner('invite/delete', auth, { inviteId }),
     fetchInvite: (inviteId: string, call?: RelayCallOptions) =>
-      unsigned<{ blob: string; expiresAt: number; status: 'open' | 'claimed' }>(
-        'invite/fetch',
-        { inviteId },
-        call
-      ),
+      capability<{
+        blob: string
+        expiresAt: number
+        status: 'open' | 'claimed'
+      }>('invite/fetch', { inviteId }, call),
     claimInvite: (inviteId: string, claimSecret: string, blob: string) =>
-      unsigned('invite/claim', { inviteId, claimSecret, blob }),
+      capability('invite/claim', { inviteId, claimSecret, blob }),
     putCard: (auth: WriterAuth, blob: string) =>
-      signed<{ seq: number }>('card/put', auth.writerSeed, {
-        ...writer(auth),
-        blob,
-      }),
+      writer<{ seq: number }>('card/put', auth, { blob }),
     putEvent: (
       auth: WriterAuth,
       event: { eventId: string; kind: string; blob: string; push: boolean }
-    ) =>
-      signed<{ seq: number }>('event/put', auth.writerSeed, {
-        ...writer(auth),
-        ...event,
-      }),
-    leaveSlot: (auth: WriterAuth) =>
-      signed('slot/leave', auth.writerSeed, writer(auth)),
+    ) => writer<{ seq: number }>('event/put', auth, event),
+    leaveSlot: (auth: WriterAuth) => writer('slot/leave', auth, {}),
     /**
      * Stores an encrypted shared photo under this inbox. Putting the same blob
      * again only extends its expiry.
      */
     putBlob: (auth: OwnerAuth, blob: BlobUpload, call: RelayCallOptions = {}) =>
-      retryStale(() => putBlobOnce(auth, blob, call)),
+      linked(auth, call, () => putBlobOnce(auth, blob, call)),
     /**
      * A buddy's shared photo, still encrypted. Any miss (unknown, expired, or a
      * wrong token) is the same `not_found`.
@@ -444,33 +567,68 @@ export function createRelayClient(deps: RelayDeps) {
       ref: { inboxId: string; blobId: string; token: string },
       call: RelayCallOptions = {}
     ): Promise<Uint8Array> => {
-      try {
-        const response = await request<Uint8Array>({
-          url: `${deps.baseUrl}/buddies/v1/blob/get`,
-          method: 'POST',
-          json: { p: toB64u(utf8(JSON.stringify(ref))) },
+      const response = await send<Uint8Array>(
+        'blob/get',
+        () => ({ json: { payload: encodeFields(ref) } }),
+        call,
+        // Reading a blob changes nothing, so a lost answer can be retried.
+        {
+          timeoutMs: RELAY_BLOB_TIMEOUT_MS,
           responseType: 'bytes',
-          timeoutMs: call.timeoutMs ?? RELAY_BLOB_TIMEOUT_MS,
-          signal: call.signal,
-          // Reading a blob changes nothing, so a lost answer can be retried.
           idempotent: true,
-          retry: { retries: 1 },
-          fetchImpl,
-        })
-        return response.data
-      } catch (error) {
-        throw relayErrorFrom(error)
-      }
+        }
+      )
+      return response.data
     },
     deleteBlobs: (auth: OwnerAuth, blobIds: string[]) =>
-      signed('blob/delete', auth.ownerSeed, { ...owner(auth), blobIds }),
+      owner('blob/delete', auth, { blobIds }),
   }
 }
 
 export type RelayClient = ReturnType<typeof createRelayClient>
 
-/** A failed `request()` as the relay's own error. */
+/** No session to send with, as the relay error Buddies shows for it. */
+function relayErrorFromSession(error: AccountSessionError): RelayError {
+  const status = error.status ?? 0
+  switch (error.failure) {
+    case 'offline':
+      return new RelayError('network', 0)
+    case 'cancelled':
+      return new RelayError('cancelled', 0)
+    case 'attestation': {
+      // The session waits this long before attesting again by itself.
+      const problem = error.attestation ?? 'failed'
+      return new RelayError(
+        'unverified',
+        status,
+        OPEN_RETRY_AFTER_MS[problem],
+        problem
+      )
+    }
+    case 'upgrade':
+      return new RelayError('upgrade_required', status || 426)
+    case 'unavailable':
+      // Accounts are off on the server, and Buddies needs one.
+      return new RelayError(
+        error.serverCode === 'disabled' ? 'disabled' : 'unknown',
+        status,
+        error.retryAfterMs
+      )
+    case 'rateLimited':
+      return new RelayError('rate_limited', status || 429, error.retryAfterMs)
+    case 'server':
+      return new RelayError(
+        status === 401 ? 'unauthorized' : 'unknown',
+        status,
+        error.retryAfterMs
+      )
+  }
+}
+
+/** A failed `request()`, or no session for it, as the relay's own error. */
 function relayErrorFrom(error: unknown): RelayError {
+  if (error instanceof RelayError) return error
+  if (error instanceof AccountSessionError) return relayErrorFromSession(error)
   if (!(error instanceof HttpError)) return new RelayError('network', 0)
   switch (error.kind) {
     case 'offline':

@@ -16,6 +16,7 @@ import useTheme from '@/contexts/theme'
 import { platformKey } from '@/app/account/attestationCopy'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffCode from '@/features/settings/components/account/handoff/HandoffCode'
 import HandoffScanPanel from '@/features/settings/components/account/handoff/HandoffScanPanel'
@@ -33,6 +34,15 @@ const LINK_PROBLEM = {
   version: 'handoff_scanVersion',
   damaged: 'handoff_scanDamaged',
 } as const
+
+/**
+ * Failures scanning again or a recovery key can't fix: the device can't be
+ * verified, or the app needs an update.
+ */
+const FINAL = new Set<HandoffFailure | 'replace_failed'>([
+  'unverified',
+  'updateRequired',
+])
 
 /**
  * Sign In with QR Code, on the new phone: scan the other phone's code (or open
@@ -72,6 +82,16 @@ const SignInWithQrScreen = () => {
     onPress: reset,
     testID: 'handoff-scan-again',
   }
+  const failureActions = (reason: HandoffFailure | 'replace_failed') =>
+    FINAL.has(reason)
+      ? {
+          primary: {
+            label: i18n.t('done'),
+            onPress: () => navigation.goBack(),
+            testID: 'handoff-failed-done',
+          },
+        }
+      : { primary: scanAgain, secondary: recoveryKeyAction }
 
   const content = () => {
     if (unverifiable)
@@ -150,8 +170,7 @@ const SignInWithQrScreen = () => {
                 )
               : handoffFailureMessage('new', completion.reason)
           }
-          primary={scanAgain}
-          secondary={recoveryKeyAction}
+          {...failureActions(completion.reason)}
           testID='handoff-failed'
         />
       )
@@ -226,8 +245,7 @@ const SignInWithQrScreen = () => {
             tone='error'
             title={i18n.t('handoff_failedTitle')}
             body={handoffFailureMessage('new', state.reason)}
-            primary={scanAgain}
-            secondary={recoveryKeyAction}
+            {...failureActions(state.reason)}
             testID='handoff-failed'
           />
         )

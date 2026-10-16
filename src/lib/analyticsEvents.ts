@@ -176,6 +176,9 @@ export const analyticsEventNames = [
   'google_drive_access_lost',
   'google_drive_connect_outcome',
   'google_drive_disconnected',
+  // App-wide Update Required (ADR 0027 §6).
+  'update_required_shown',
+  'update_required_store_opened',
   // Onboarding and activation.
   'onboarding_backfill_completed',
   'onboarding_buddies_invite_result',

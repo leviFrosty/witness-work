@@ -25,6 +25,7 @@ const sessionEvents = new Set([
   'saved_view_applied',
   'schedule_year_view_opened',
   'recovery_key_viewed',
+  'update_required_shown',
 ])
 
 let storage: MMKV | undefined

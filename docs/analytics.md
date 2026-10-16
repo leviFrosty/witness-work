@@ -52,6 +52,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                                                                                                                         |
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
+| `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -823,6 +824,16 @@ viewing, and once per action otherwise.
 
 Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
 Mistyped keys send nothing: the form refuses them before they can be used.
+
+### Update Required
+
+These answer how many people an app version floor or a 426 from ww-api blocks,
+and whether they go update.
+
+| Event                          | When                                                          | Properties                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `update_required_shown`        | Update Required covered the app. Once per session and source. | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
+| `update_required_store_opened` | The User tapped Update WitnessWork.                           | `source`.                                                                                                                                          |
 
 ### Account backup
 

@@ -36,4 +36,6 @@ export default {
   // Device attestation for the whole API (App Attest key setup, challenges).
   attestationChallenge: `${BASE_URL}/attestation/v1/challenge`,
   attestationRegister: `${BASE_URL}/attestation/v1/register`,
+  // The app-wide minimum version (docs/accounts-protocol.md, "Updates").
+  appConfig: `${BASE_URL}/app/v1/config`,
 }

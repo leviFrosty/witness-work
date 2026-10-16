@@ -553,6 +553,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const accountKeys = new WeakMap<BuddyIdentity, Uint8Array>()
   let identityLoad: Promise<BuddyIdentity> | null = null
   let registering: Promise<BuddyIdentity> | null = null
+  /**
+   * Identities whose inbox `deleteEverything` deleted. A sync already under way
+   * with one finds its inbox gone, which isn't the relay's inactivity wipe: it
+   * must not register it again. The same seed coming back later (a handoff, a
+   * recovery key) derives a new identity, which may.
+   */
+  const deletedIdentities = new WeakSet<BuddyIdentity>()
   const pairCache = new Map<string, PairKeys>()
   let syncInFlight: Promise<SyncOutcome> | null = null
   /** The one sync queued behind the running one; see `sync`. */
@@ -739,6 +746,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * more.
    */
   async function registerInbox(me: BuddyIdentity, call?: RelayCallOptions) {
+    if (deletedIdentities.has(me)) throw new RelayError('cancelled', 0)
     try {
       await relay.registerInbox(ownerAuth(me), call)
     } catch (error) {
@@ -3914,6 +3922,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       response = await relay.syncInbox(ownerAuth(me), since, call)
     } catch (error) {
       if (!isRelayError(error, 'not_found')) throw error
+      if (deletedIdentities.has(me)) throw new RelayError('cancelled', 0)
       // Wiped for inactivity, or deleted by another of this User's devices.
       await restoreInbox(me, call)
       response = await relay.syncInbox(ownerAuth(me), 0, call)
@@ -4301,12 +4310,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await flushRemovals(me, { force: true })
     if (store.getState().pendingRemovals.length > 0)
       throw new BuddyRemovalPendingError('everything')
+    // Marked before the inbox goes. A failure before the seed is deleted
+    // keeps this identity, so its next sync brings the inbox back.
+    deletedIdentities.add(me)
     try {
-      await relay.deleteInbox(ownerAuth(me))
+      try {
+        await relay.deleteInbox(ownerAuth(me))
+      } catch (error) {
+        if (!isRelayError(error, 'not_found')) throw error
+      }
+      await deps.deleteRootSeed()
     } catch (error) {
-      if (!isRelayError(error, 'not_found')) throw error
+      deletedIdentities.delete(me)
+      throw error
     }
-    await deps.deleteRootSeed()
     cachedIdentity = null
     pairCache.clear()
     shareSends.clear()

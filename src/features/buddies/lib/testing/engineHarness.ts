@@ -211,6 +211,10 @@ export function setup() {
       /** This device's relay client, with its session. */
       relay,
       sessions,
+      /** Puts a root seed back, as a handoff or a recovery key would. */
+      setRootSeed: (next: Uint8Array) => {
+        rootSeed = next
+      },
       /** Makes this device's next `session/open` fail to attest, or not. */
       setAttestation: (problem: AttestationProblem | null) => {
         attestation = problem

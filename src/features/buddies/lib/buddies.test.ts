@@ -853,6 +853,39 @@ describe('buddies pairing', () => {
     ])
   })
 
+  it('never registers again an inbox it deleted, for a sync under way', async () => {
+    const { fake, setAfterOp, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+
+    // A sync that started before Delete Buddies (a handoff onto this phone)
+    // reads the inbox just after it went, and finds it gone.
+    let syncing: Promise<unknown> | null = null
+    setAfterOp(async (op) => {
+      if (op !== 'inbox/delete' || syncing) return
+      syncing = mom.engine.sync().catch((error: unknown) => error)
+      await syncing
+    })
+    await mom.engine.deleteEverything()
+    expect(fake.inboxes.has(mom.inboxId)).toBe(false)
+    expect(await syncing).toEqual(new RelayError('cancelled', 0))
+  })
+
+  it('registers the inbox again when its seed comes back after a delete', async () => {
+    const { fake, user } = setup()
+    const mom = user('Mom')
+    await mom.engine.createInvite()
+    await mom.engine.deleteEverything()
+    expect(fake.inboxes.has(mom.inboxId)).toBe(false)
+
+    // Handed back from another phone in the same launch.
+    mom.setRootSeed(mom.seed)
+    await mom.engine.sync()
+    expect(fake.inboxes.has(mom.inboxId)).toBe(true)
+    expect(mom.store.getState().registeredInboxId).toBe(mom.inboxId)
+  })
+
   it('deletes everything and leaves each buddy', async () => {
     const { fake, user } = setup()
     const mom = user('Mom')

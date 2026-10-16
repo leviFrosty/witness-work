@@ -7,7 +7,11 @@ const { slot, blur, hold, tooltip } = vi.hoisted(() => ({
     React.createElement(name, props),
   blur: { listener: null as (() => void) | null },
   hold: vi.fn(),
-  tooltip: { show: vi.fn(), dismiss: vi.fn() },
+  tooltip: {
+    show: vi.fn(),
+    // Rejects like the native call once the tooltip has left composition.
+    dismiss: vi.fn(() => Promise.reject(new Error('No handler registered'))),
+  },
 }))
 
 vi.mock('react-native', () => ({

@@ -1,4 +1,5 @@
 import { perf } from '@/lib/perf'
+import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
 import { LogBox } from 'react-native'
 import useContacts from '@/stores/contactsStore'
@@ -302,6 +303,9 @@ export function installDevHarness() {
       // `open`, and `away` while a badge view opened from it is up.
       profileOverlay: useProfileOverlay,
       splitSheet: useSplitSheetPreferences,
+      // `enabled`/`requireAfter`, and the session's `locked`.
+      appLock: useAppLockSettings,
+      appLockSession: useAppLockSession,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

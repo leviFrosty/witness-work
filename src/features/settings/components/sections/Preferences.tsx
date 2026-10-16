@@ -1,4 +1,5 @@
 import {
+  Lock as LockIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
@@ -35,6 +36,12 @@ const PreferencesSection = ({
           label={i18n.t('preferences')}
           onPress={() => handleNavigate('Preferences')}
           selected={selectedDestination === 'Preferences'}
+        />
+        <GroupedListRow
+          icon={LockIcon}
+          label={i18n.t('security')}
+          onPress={() => handleNavigate('Security')}
+          selected={selectedDestination === 'Security'}
         />
       </GroupedListSection>
     </>

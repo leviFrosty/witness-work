@@ -291,6 +291,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       'expo-localization',
+      [
+        'expo-local-authentication',
+        { faceIDPermission: enUS.faceIdPermissionPurpose },
+      ],
       // SDK 57 removed the top-level `splash` config key; the splash screen
       // is now configured exclusively through this plugin.
       [

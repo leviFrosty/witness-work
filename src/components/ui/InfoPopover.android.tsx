@@ -32,8 +32,12 @@ export default function InfoPopover({
   const tooltip = useRef<TooltipBoxRef>(null)
 
   // The tooltip lives in its own window, which would stay over the next screen.
+  // Dismissing one that has already left composition rejects; nothing's open.
   useEffect(
-    () => navigation.addListener('blur', () => void tooltip.current?.dismiss()),
+    () =>
+      navigation.addListener('blur', () => {
+        tooltip.current?.dismiss().catch(() => {})
+      }),
     [navigation]
   )
 

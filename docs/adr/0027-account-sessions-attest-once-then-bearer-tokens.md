@@ -18,7 +18,8 @@ attesting `inbox/register`, `invite/*`, and `blob/put` as required before a
 production rollout.
 
 The envelope also makes every route do its own authentication. Each one
-parses `{p, s}`, checks `ts`, verifies a signature, and looks up the account,
+parses `{ payload, signature }` (the legacy `{p, s}` from older builds),
+checks `ts`, verifies a signature, and looks up the account,
 and `backup/put` has to move the envelope into headers to keep the body for
 the blob. Gating a new route on "has an account" means repeating all of that.
 
@@ -48,13 +49,15 @@ from the account. That's its own change.
 
 ### 2. Attest once, when a session opens
 
-A new op, `session/open`, is the one place an account proves it's the app.
-It carries the account key's self-signed envelope and an attestation bound
-to `accountPub`: an App Attest assertion on iOS, or a Play Integrity
-standard-request token on Android. Both use the challenge → assertion shape
-Notes Import already uses (ADR 0017), under a new purpose, `account-session`.
-`session/open` creates the account if it doesn't exist, which replaces
-`account/register`.
+A new route, `POST /accounts/v1/sessions` (signed as op `session/open`), is
+the one place an account proves it's the app. It carries the account key's
+self-signed envelope and an attestation bound to `accountPub`: an App Attest
+assertion on iOS, or a Play Integrity standard-request token on Android. Both
+use the challenge → assertion shape Notes Import already uses (ADR 0017),
+under a new purpose, `account-session`, with the challenge from ww-api's
+API-wide `POST /attestation/v1/challenge` (which replaces Notes Import's
+own). Opening a session creates the account if it doesn't exist, which
+replaces `account/register`.
 
 **No integrity, no account.** WitnessWork is supported only from the App
 Store and Google Play. A device that can't attest gets no account and no
@@ -65,27 +68,28 @@ token in place of attestation. Production never does.
 
 ### 3. Short access tokens, rotating refresh tokens
 
-`session/open` returns two tokens:
+Opening a session returns two tokens:
 
 - **An access token**, a JWT signed with HMAC-SHA256 under a Worker secret
   (`kid` for rotation). It lasts 15 minutes. Its claims are the account
-  (`sub`), the session (`sid`), the platform, and an issuer per environment,
+  (`sub`), the session (`sid`), the `platform`, and an issuer per environment,
   so a development token never passes on production. It's sent as
   `Authorization: Bearer` and kept in memory only.
 - **A refresh token**, opaque and random. The server keeps only its hash, in
   a new `account_sessions` table in the accounts database. Each refresh
-  replaces it. A token reused after it was replaced revokes the session,
+  (`POST /accounts/v1/sessions/refresh`) replaces it. A token reused after it was replaced revokes the session,
   except within 60 seconds of the replacement, which covers a lost response.
   The device keeps it in the platform keystore without syncing, so every
   device has its own session.
 
-A session lasts 90 days from `session/open`, and refreshing doesn't extend
-it. After that the app opens a new one, attesting again, without asking the
+A session lasts 90 days from opening, and refreshing doesn't extend it.
+After that the app opens a new one, attesting again, without asking the
 User anything. An account keeps at most 10 sessions, and opening another
-ends the oldest. `session/close` ends a session. The app calls it on sign
-out, when it replaces the account key, and before Delete Buddies.
+ends the oldest. `DELETE /accounts/v1/sessions/current` ends a session. The
+app calls it on sign out, when it replaces the account key, and before
+Delete Buddies.
 
-`session/open` can carry a short label for the device, sealed with a key
+Opening a session can carry a short label for the device, sealed with a key
 derived from the account key, so the User's own devices can show which
 devices hold sessions while the server can't read it.
 
@@ -96,17 +100,17 @@ the bearer token and hands the route the account and session. Routes that
 refuse suspended accounts also check the status. Routes stop parsing
 envelopes to find out who's calling.
 
-| Route                                                                                               | Authentication                                                      |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `account/info`; `handoff/open`, `status`, `send`, `cancel` (old phone); `backup/put`, `list`, `get` | Bearer token                                                        |
-| `backup/delete`                                                                                     | Bearer token **and** the account key's signature                    |
-| `handoff/claim`, `receive`, `done`, `cancel` (new phone)                                            | `claimToken`, unchanged: the new phone has no session yet           |
-| Buddies `inbox/register`                                                                            | Bearer token **and** the owner's signature, once, to bind the inbox |
-| Buddies owner ops, the live socket                                                                  | Bearer token; the inbox checks it's the account it belongs to       |
-| Buddies writer ops (`card/put`, `event/put`, `slot/leave`)                                          | Bearer token **and** the slot's writer signature                    |
-| Buddies `invite/fetch`, `invite/claim`, `blob/get`                                                  | Bearer token **and** the capability they carry today                |
-| Notes Import (`kickoff`, the legacy run, `verify`, `transcribe`)                                    | Bearer token; metered by account                                    |
-| Route planning                                                                                      | Unchanged, for now                                                  |
+| Route                                                                                                           | Authentication                                                      |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `GET /accounts/v1/account`; `handoff/open`, `status`, `send`, `cancel` (old phone); `backup/put`, `list`, `get` | Bearer token                                                        |
+| `backup/delete`                                                                                                 | Bearer token **and** the account key's signature                    |
+| `handoff/claim`, `receive`, `done`, `cancel` (new phone)                                                        | `claimToken`, unchanged: the new phone has no session yet           |
+| Buddies `inbox/register`                                                                                        | Bearer token **and** the owner's signature, once, to bind the inbox |
+| Buddies owner ops, the live socket                                                                              | Bearer token; the inbox checks it's the account it belongs to       |
+| Buddies writer ops (`card/put`, `event/put`, `slot/leave`)                                                      | Bearer token **and** the slot's writer signature                    |
+| Buddies `invite/fetch`, `invite/claim`, `blob/get`                                                              | Bearer token **and** the capability they carry today                |
+| Notes Import (`kickoff`, the legacy run, `verify`, `transcribe`)                                                | Bearer token; metered by account                                    |
+| Route planning                                                                                                  | Unchanged, for now                                                  |
 
 - **Destructive ops keep a signature.** A token that leaks for 15 minutes
   shouldn't be able to delete backups, so `backup/delete` needs the account

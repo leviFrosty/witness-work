@@ -63,6 +63,7 @@ describe('trackSync', () => {
       syncing: 0,
       failure: { reason: 'offline', at: 1001 },
       relayDisabled: false,
+      accountSuspended: false,
     })
   })
 
@@ -98,6 +99,24 @@ describe('trackSync', () => {
     })
     await track(async () => {})
     expect(store.getState().relayDisabled).toBe(false)
+  })
+
+  it('keeps a suspension through other failures until a sync works', async () => {
+    const { store, track } = harness()
+    await expect(
+      track(() => Promise.reject(new Failure('suspended')))
+    ).rejects.toThrow()
+    expect(store.getState().accountSuspended).toBe(true)
+    await expect(
+      track(() => Promise.reject(new Failure('offline')))
+    ).rejects.toThrow()
+    expect(store.getState()).toMatchObject({
+      accountSuspended: true,
+      relayDisabled: false,
+      failure: { reason: 'offline' },
+    })
+    await track(async () => {})
+    expect(store.getState().accountSuspended).toBe(false)
   })
 
   it('reads the failure reason only for failures', async () => {

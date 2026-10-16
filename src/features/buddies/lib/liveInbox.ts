@@ -11,6 +11,8 @@ const CHANGE_DEBOUNCE_MS = 300
 
 /** The relay closed the socket because the inbox is gone. */
 const CLOSE_GONE = 4001
+/** The relay closed the socket because the inbox's account is suspended. */
+const CLOSE_SUSPENDED = 4003
 
 type LiveMessage = { type: 'hello' | 'changed'; seq: number }
 
@@ -175,6 +177,12 @@ export function createLiveInbox(deps: LiveInboxDeps) {
       emit({ type: 'closed', code: event.code, reason: event.reason })
       // A wiped inbox is restored by the next sync.
       if (event.code === CLOSE_GONE && running) sync()
+      // The relay would refuse every reconnect. The sync records the
+      // suspension, which keeps this off until a sync works again.
+      if (event.code === CLOSE_SUSPENDED) {
+        if (running) sync()
+        return
+      }
       scheduleReconnect()
     }
   }

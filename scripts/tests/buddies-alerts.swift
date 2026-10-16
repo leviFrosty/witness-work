@@ -116,6 +116,20 @@ import Foundation
     check(
       ownerPub.isValidSignature(B64U.decode(envelope["signature"]!)!, for: signed),
       "the extension's envelope verifies")
+
+    // The fetch: the envelope as JSON, named as the extension's, with no token.
+    let request = try InboxFetch.request(
+      url: URL(string: "https://relay.example/buddies/v1/inbox/sync")!, envelope: envelope)
+    check(request.httpMethod == "POST", "fetch method")
+    check(request.value(forHTTPHeaderField: "content-type") == "application/json", "fetch content type")
+    check(
+      request.value(forHTTPHeaderField: "x-buddies-client") == "notification-service",
+      "fetch names the extension")
+    check(request.value(forHTTPHeaderField: "authorization") == nil, "fetch sends no token")
+    check(
+      request.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
+        == envelope,
+      "fetch body is the envelope")
   }
 
   /// English strings, from the app's source of truth.

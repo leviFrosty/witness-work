@@ -5,10 +5,18 @@ import Security
 /// Fetches the event a push is about when it was too big to ride along: an
 /// owner-signed `inbox/sync` from just before its `seq` (docs/buddies-protocol.md,
 /// "Request envelope"). Reads only; the app's own sync applies events.
+///
+/// The extension can't hold the session's rotating refresh token without
+/// racing the app, so it signs with the owner key and names itself in
+/// `clientHeader`: the relay keeps serving this one legacy request after the
+/// legacy switch is off, for an inbox linked to an account ("Authentication
+/// (sessions)").
 enum InboxFetch {
   enum Failure: Error {
     case noRelay, badKey, rejected
   }
+
+  static let clientHeader = (name: "x-buddies-client", value: "notification-service")
 
   /// The payload bytes, in the order the app writes them.
   static func payload(inboxId: String, since: Int, ts: Int64, nonce: Data) -> Data {
@@ -23,6 +31,16 @@ enum InboxFetch {
     let key = try Curve25519.Signing.PrivateKey(rawRepresentation: ownerSeed)
     let signature = try key.signature(for: Data("ww-buddies/v1\n\(op)\n".utf8) + payload)
     return ["payload": B64U.encode(payload), "signature": B64U.encode(signature)]
+  }
+
+  /// The `inbox/sync` POST carrying `envelope`.
+  static func request(url: URL, envelope: [String: String]) throws -> URLRequest {
+    var request = URLRequest(url: url, timeoutInterval: 15)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "content-type")
+    request.setValue(clientHeader.value, forHTTPHeaderField: clientHeader.name)
+    request.httpBody = try JSONSerialization.data(withJSONObject: envelope)
+    return request
   }
 
   static func event(
@@ -48,11 +66,7 @@ enum InboxFetch {
         ts: Int64(Date().timeIntervalSince1970 * 1000),
         nonce: nonce),
       ownerSeed: ownerSeed)
-    var request = URLRequest(url: url, timeoutInterval: 15)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "content-type")
-    request.httpBody = try JSONSerialization.data(withJSONObject: body)
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await session.data(for: Self.request(url: url, envelope: body))
     guard
       (response as? HTTPURLResponse)?.statusCode == 200,
       let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],

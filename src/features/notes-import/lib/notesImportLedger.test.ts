@@ -188,15 +188,28 @@ describe('migrateLedgerEntry', () => {
 
   it('keeps a valid activeRun and drops a malformed one', () => {
     const ok = migrateLedgerEntry(
-      { hash: 'a', activeRun: { importId: 'i', subscribeToken: 's' } },
-      1
-    )
-    expect(ok?.activeRun).toEqual({ importId: 'i', subscribeToken: 's' })
-    const bad = migrateLedgerEntry(
       { hash: 'a', activeRun: { importId: 'i' } },
       1
     )
-    expect(bad?.activeRun).toBeNull()
+    expect(ok?.activeRun).toEqual({ importId: 'i' })
+    for (const activeRun of [{ importId: '' }, { importId: 1 }, {}, 'i']) {
+      const bad = migrateLedgerEntry({ hash: 'a', activeRun }, 1)
+      expect(bad?.activeRun).toBeNull()
+    }
+  })
+
+  it('drops a run from before account sessions, so it kicks off again from its notes', () => {
+    const e = migrateLedgerEntry(
+      {
+        hash: 'a',
+        notesText: 'notes',
+        activeRun: { importId: 'i', subscribeToken: 's' },
+      },
+      1
+    )
+    expect(e?.state).toBe('working')
+    expect(e?.activeRun).toBeNull()
+    expect(e?.notesText).toBe('notes')
   })
 
   it('drops a stray activeRun on a non-Working (Ready) row', () => {
@@ -204,7 +217,7 @@ describe('migrateLedgerEntry', () => {
       {
         hash: 'a',
         result: result(),
-        activeRun: { importId: 'i', subscribeToken: 's' },
+        activeRun: { importId: 'i' },
       },
       1
     )
@@ -311,7 +324,7 @@ describe('ledger lifecycle transitions (pure)', () => {
     it('on null creates a fresh Working row (createdAt = nowMs, no result/commit)', () => {
       const e = beginWorkingTransition(null, {
         notesText: 'Visited Maria\nrest',
-        activeRun: { importId: 'i', subscribeToken: 's' },
+        activeRun: { importId: 'i' },
         nowMs: 1000,
       })
       expect(e.state).toBe('working')
@@ -324,7 +337,7 @@ describe('ledger lifecycle transitions (pure)', () => {
       expect(e.history).toEqual([])
       expect(e.createdAt).toBe(1000)
       expect(e.updatedAt).toBe(1000)
-      expect(e.activeRun).toEqual({ importId: 'i', subscribeToken: 's' })
+      expect(e.activeRun).toEqual({ importId: 'i' })
     })
 
     it('re-opening a Ready row (refine) flips to Working but PRESERVES result/summary/history/createdAt', () => {
@@ -335,7 +348,7 @@ describe('ledger lifecycle transitions (pure)', () => {
       })
       const e = beginWorkingTransition(existing, {
         notesText: 'Visited Maria\nmore',
-        activeRun: { importId: 'i2', subscribeToken: 't2' },
+        activeRun: { importId: 'i2' },
         nowMs: 50,
       })
       expect(e.state).toBe('working')
@@ -348,7 +361,7 @@ describe('ledger lifecycle transitions (pure)', () => {
       expect(e.parsedAt).toBe(20)
       expect(e.createdAt).toBe(10) // original kept
       // Refreshed fields.
-      expect(e.activeRun).toEqual({ importId: 'i2', subscribeToken: 't2' })
+      expect(e.activeRun).toEqual({ importId: 'i2' })
       expect(e.updatedAt).toBe(50)
       expect(e.provisionalTitle).toBe('Visited Maria')
     })
@@ -371,7 +384,7 @@ describe('ledger lifecycle transitions (pure)', () => {
         state: 'done',
         commit: commit(),
         acceptedAt: 30,
-        activeRun: { importId: 'i', subscribeToken: 's' },
+        activeRun: { importId: 'i' },
       })
       const e = putParsedTransition(
         existing,
@@ -462,7 +475,7 @@ describe('ledger lifecycle transitions (pure)', () => {
       const existing = readyEntry({
         state: 'working',
         result: null,
-        activeRun: { importId: 'i', subscribeToken: 's' },
+        activeRun: { importId: 'i' },
       })
       const e = stoppedTransition(existing, 120)
       expect(e.state).toBe('stopped')
@@ -487,7 +500,7 @@ describe('ledger lifecycle transitions (pure)', () => {
   describe('setActiveRunTransition', () => {
     it('updates only activeRun + updatedAt', () => {
       const existing = readyEntry({ updatedAt: 20 })
-      const run = { importId: 'x', subscribeToken: 'y' }
+      const run = { importId: 'x' }
       const e = setActiveRunTransition(existing, run, 100)
       expect(e.activeRun).toBe(run)
       expect(e.updatedAt).toBe(100)
@@ -505,14 +518,14 @@ describe('ledger lifecycle (store-backed)', () => {
   it('walks Working → Ready → Done → (undo) Ready', () => {
     beginWorkingEntry('h1', {
       notesText: 'Visited Maria\nmore',
-      activeRun: { importId: 'imp', subscribeToken: 'tok' },
+      activeRun: { importId: 'imp' },
       nowMs: 1000,
     })
     let e = getLedgerEntry('h1')!
     expect(e.state).toBe('working')
     expect(e.notesText).toBe('Visited Maria\nmore')
     expect(e.provisionalTitle).toBe('Visited Maria')
-    expect(e.activeRun).toEqual({ importId: 'imp', subscribeToken: 'tok' })
+    expect(e.activeRun).toEqual({ importId: 'imp' })
     expect(e.createdAt).toBe(1000)
 
     putParsedResult('h1', result({ summary: 'Maria visit' }), 2000)
@@ -556,14 +569,14 @@ describe('ledger lifecycle (store-backed)', () => {
     putParsedResult('h2', result(), 20)
     beginWorkingEntry('h2', {
       notesText: 'notes',
-      activeRun: { importId: 'i2', subscribeToken: 't2' },
+      activeRun: { importId: 'i2' },
       nowMs: 30,
     })
     const e = getLedgerEntry('h2')!
     expect(e.state).toBe('working')
     expect(e.createdAt).toBe(10)
     expect(e.result).not.toBeNull() // kept as a refinement base
-    expect(e.activeRun).toEqual({ importId: 'i2', subscribeToken: 't2' })
+    expect(e.activeRun).toEqual({ importId: 'i2' })
   })
 
   it('accumulates the conversation thread across refinements', () => {
@@ -643,11 +656,8 @@ describe('ledger lifecycle (store-backed)', () => {
 
   it('setActiveRun updates only the run handle', () => {
     beginWorkingEntry('h3', { notesText: 'n', activeRun: null, nowMs: 1 })
-    setActiveRun('h3', { importId: 'x', subscribeToken: 'y' }, 2)
-    expect(getLedgerEntry('h3')!.activeRun).toEqual({
-      importId: 'x',
-      subscribeToken: 'y',
-    })
+    setActiveRun('h3', { importId: 'x' }, 2)
+    expect(getLedgerEntry('h3')!.activeRun).toEqual({ importId: 'x' })
     setActiveRun('h3', null, 3)
     expect(getLedgerEntry('h3')!.activeRun).toBeNull()
   })

@@ -8,8 +8,7 @@ import {
   randomBytes as nodeRandomBytes,
 } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { ed25519 } from '@noble/curves/ed25519.js'
-import { concatBytes, fromB64u, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
+import { concatBytes, fromB64u, toB64u, utf8 } from '@/lib/bytes'
 import {
   buildHandoffLink,
   createHandoffKeyPair,
@@ -34,7 +33,7 @@ import {
   type OfferAccount,
 } from '@/lib/serverAccount/handoffSession'
 import { HttpError } from '@/lib/http/request'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -63,9 +62,11 @@ type Channel = {
 
 const LIFETIME_MS = 10 * 60 * 1000
 
-function fakeServer(options: { clock?: () => number; skewMs?: number } = {}) {
+function fakeServer(options: { clock?: () => number } = {}) {
   const clock = options.clock ?? Date.now
+  /** Access tokens, and the account each one's session is for. */
   const accounts = new Map<string, string>()
+  const bearers: { op: string; authorization: string | null }[] = []
   const channels = new Map<string, Channel>()
   const calls: string[] = []
   /** Answers the next status call with this claimPub (a hostile server). */
@@ -101,33 +102,13 @@ function fakeServer(options: { clock?: () => number; skewMs?: number } = {}) {
     calls.push(op)
     const body = JSON.parse(String(init.body)) as Record<string, string>
 
-    if ('p' in body) {
-      const payloadBytes = fromB64u(body.p)
-      const payload = JSON.parse(fromUtf8(payloadBytes)) as Record<
-        string,
-        unknown
-      >
-      const valid = ed25519.verify(
-        fromB64u(body.s),
-        concatBytes(utf8(`ww-account/v1\n${op}\n`), payloadBytes),
-        fromB64u(payload.accountPub as string)
-      )
-      if (!valid) return error(401, 'bad_signature')
-      const serverNow = clock() + (options.skewMs ?? 0)
-      if (Math.abs((payload.ts as number) - serverNow) > 5 * 60 * 1000)
-        return error(401, 'stale', { serverTime: serverNow })
-      const accountPub = payload.accountPub as string
-      if (op === 'account/register') {
-        if (!accounts.has(accountPub))
-          accounts.set(accountPub, toB64u(random(16)))
-        return reply(200, {
-          ok: true,
-          accountId: accounts.get(accountPub),
-          status: 'active',
-        })
-      }
-      const accountId = accounts.get(accountPub)
-      if (!accountId) return error(404, 'unknown_account')
+    const headers = new Headers(init.headers)
+    const authorization = headers.get('authorization')
+    bearers.push({ op, authorization })
+    if (authorization) {
+      const payload = body as Record<string, unknown>
+      const accountId = accounts.get(authorization.replace(/^Bearer /, ''))
+      if (!accountId) return error(401, 'unauthorized')
       const channelId = payload.channelId as string
       if (op === 'handoff/open') {
         if (live(channelId)) return error(409, 'conflict')
@@ -211,6 +192,7 @@ function fakeServer(options: { clock?: () => number; skewMs?: number } = {}) {
   return {
     fetchImpl,
     calls,
+    bearers,
     channels,
     accounts,
     swapClaimPub: (value: string | null) => {
@@ -221,13 +203,17 @@ function fakeServer(options: { clock?: () => number; skewMs?: number } = {}) {
 
 type Server = ReturnType<typeof fakeServer>
 
-/** An account registered on the server, as the old phone holds it. */
+/** An account with an open session, as the old phone holds it. */
 function registeredAccount(server: Server): OfferAccount {
   const accountKey = random(32)
-  const signingKey = deriveAccountSigningKey(accountKey)
   const accountId = toB64u(random(16))
-  server.accounts.set(signingKey.publicKey, accountId)
-  return { accountKey, accountId, signingKey }
+  const token = toB64u(random(16))
+  server.accounts.set(token, accountId)
+  return {
+    accountKey,
+    accountId,
+    authorize: (run) => run(`Bearer ${token}`),
+  }
 }
 
 const deps = (server: Server, now: () => number = Date.now) => ({
@@ -651,28 +637,60 @@ describe('handoff sessions', () => {
     expect(server.calls.length).toBe(before)
   })
 
-  it('signs again with the server clock after `stale`', async () => {
-    const server = fakeServer({ skewMs: 60 * 60 * 1000 })
+  it("sends the old phone's ops with its session token, the new phone's without", async () => {
+    const server = fakeServer()
     const account = registeredAccount(server)
     const old = createOfferSession(account, deps(server))
     await old.open()
-    expect(old.state.step).toBe('waiting')
-    expect(server.calls.filter((op) => op === 'handoff/open')).toHaveLength(2)
+    if (old.state.step !== 'waiting') throw new Error('not waiting')
+    const parsed = parseHandoffLink(old.state.link)
+    if (!parsed.ok) throw new Error('bad link')
+    const fresh = createClaimSession(parsed.offer, HELLO, deps(server))
+    await fresh.claim()
+    await old.poll()
+    await old.cancel()
+    const sent = (op: string) =>
+      server.bearers
+        .filter((entry) => entry.op === op)
+        .map((entry) => entry.authorization !== null)
+    expect(sent('handoff/open')).toEqual([true])
+    expect(sent('handoff/status')).toContain(true)
+    expect(sent('handoff/claim')).toEqual([false])
+    expect(sent('handoff/cancel')).toEqual([true])
   })
 
-  it('needs a registered account on the old phone', async () => {
+  it("fails on the old phone when its session isn't the account's, or can't be opened", async () => {
     const server = fakeServer()
-    const accountKey = random(32)
-    const old = createOfferSession(
+    const other = registeredAccount(server)
+    const owner = registeredAccount(server)
+    const opened = createOfferSession(owner, deps(server))
+    await opened.open()
+    if (opened.state.step !== 'waiting') throw new Error('not waiting')
+
+    const unknown = createOfferSession(
       {
-        accountKey,
+        accountKey: random(32),
         accountId: toB64u(random(16)),
-        signingKey: deriveAccountSigningKey(accountKey),
+        authorize: (run) => run('Bearer nobody'),
       },
       deps(server)
     )
-    await old.open()
-    expect(old.state).toEqual({ step: 'failed', reason: 'noAccount' })
+    await unknown.open()
+    expect(unknown.state).toEqual({ step: 'failed', reason: 'server' })
+
+    const unverified = createOfferSession(
+      {
+        ...other,
+        authorize: async () => {
+          throw new AccountSessionError('attestation', {
+            attestation: 'device',
+          })
+        },
+      },
+      deps(server)
+    )
+    await unverified.open()
+    expect(unverified.state).toEqual({ step: 'failed', reason: 'unverified' })
   })
 
   it('keeps polling through a dropped connection', async () => {
@@ -727,5 +745,34 @@ describe('handoffFailureFor', () => {
     expect(handoffFailureFor(new HttpError('offline'), 'x')).toBe('offline')
     expect(handoffFailureFor(new HttpError('timeout'), 'x')).toBe('offline')
     expect(handoffFailureFor(new Error('x'), 'x')).toBe('server')
+  })
+
+  it("maps a session that couldn't be opened, and an outdated app", () => {
+    const attestation = (problem: 'device' | 'temporary' | 'failed') =>
+      new AccountSessionError('attestation', { attestation: problem })
+    expect(handoffFailureFor(attestation('device'), 'x')).toBe('unverified')
+    expect(handoffFailureFor(attestation('failed'), 'x')).toBe('unverified')
+    expect(handoffFailureFor(attestation('temporary'), 'x')).toBe('verifyLater')
+    const failed = (reason: string) =>
+      new HttpError('client', 403, 'attestation_failed', null, undefined, {
+        ok: false,
+        code: 'attestation_failed',
+        reason,
+      })
+    expect(handoffFailureFor(failed('integrity_unavailable'), 'x')).toBe(
+      'verifyLater'
+    )
+    expect(handoffFailureFor(failed('app_not_recognized'), 'x')).toBe(
+      'unverified'
+    )
+    expect(
+      handoffFailureFor(new HttpError('client', 426, 'upgrade_required'), 'x')
+    ).toBe('updateRequired')
+    expect(
+      handoffFailureFor(
+        new AccountSessionError('upgrade', { status: 426 }),
+        'x'
+      )
+    ).toBe('updateRequired')
   })
 })

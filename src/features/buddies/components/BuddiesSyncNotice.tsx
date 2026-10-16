@@ -1,11 +1,14 @@
-import { ActivityIndicator } from 'react-native'
+import { ActivityIndicator, Platform } from 'react-native'
 import {
   Ban as BanIcon,
   CircleAlert as CircleAlertIcon,
+  Clock as ClockIcon,
   CloudOff as CloudOffIcon,
+  ShieldAlert as ShieldAlertIcon,
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
+import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -17,6 +20,8 @@ const ICONS = {
   offline: WifiOffIcon,
   disabled: CloudOffIcon,
   suspended: BanIcon,
+  unverified: ShieldAlertIcon,
+  verifyLater: ClockIcon,
   error: CircleAlertIcon,
 }
 
@@ -24,13 +29,18 @@ const MESSAGES = {
   offline: 'buddies_syncOffline',
   disabled: 'buddies_syncUnavailable',
   suspended: 'buddies_errorSuspended',
+  unverified: 'buddies_syncUnverified',
+  verifyLater: 'buddies_syncVerifyLater',
   error: 'buddies_syncFailed',
 } as const
 
+/** Trying again can help: it verifies this device again too. */
+const RETRYABLE = new Set<Notice>(['error', 'unverified', 'verifyLater'])
+
 /**
  * A slim line saying why Buddies couldn't refresh, while what's saved still
- * shows. A plain failure can be tried again; a spinner takes its place while a
- * sync runs.
+ * shows. A plain failure, or a device that couldn't be verified, can be tried
+ * again; a spinner takes its place while a sync runs.
  */
 export default function BuddiesSyncNotice({
   notice,
@@ -71,7 +81,18 @@ export default function BuddiesSyncNotice({
       >
         {i18n.t(MESSAGES[notice])}
       </Text>
-      {notice !== 'error' ? null : syncing ? (
+      {notice === 'unverified' && (
+        <InfoPopover
+          centered
+          title={i18n.t('account_unverifiedTitle')}
+          description={i18n.t(
+            Platform.OS === 'android'
+              ? 'buddies_errorUnverifiedAndroid'
+              : 'buddies_errorUnverified'
+          )}
+        />
+      )}
+      {!RETRYABLE.has(notice) ? null : syncing ? (
         <ActivityIndicator
           size='small'
           color={theme.colors.textAlt}

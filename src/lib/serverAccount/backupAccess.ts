@@ -1,10 +1,13 @@
 import { getRandomBytes } from 'expo-crypto'
 import apis from '@/constants/apis'
 import { HttpError } from '@/lib/http/request'
-import { serverAccount } from '@/lib/serverAccount'
-import type { RegisterAccountOptions } from '@/lib/serverAccount/client'
+import { bearerOptions, serverAccount } from '@/lib/serverAccount'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
-import { deleteBackup } from '@/lib/serverAccount/backupClient'
+import {
+  type BackupClientOptions,
+  deleteBackup,
+} from '@/lib/serverAccount/backupClient'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 import { BackupError } from '@/lib/serverAccount/backupScheduler'
 import {
   backupSchedule,
@@ -14,35 +17,40 @@ import {
 import { syncNow } from '@/lib/syncClock'
 
 /**
- * The account a backup op runs as: the account key, its registered account, and
- * the signing options. Shared by the app's backup service and Delete Buddies,
- * which deletes the backup before the key is gone.
+ * The account a backup op runs as: the account key, its account, and the
+ * session (plus the key's signature, for `delete`). Shared by the app's backup
+ * service and Delete Buddies, which deletes the backup before the key is gone.
  */
 export type BackupAccess = {
   accountKey: Uint8Array
   accountId: string
-  options: RegisterAccountOptions
+  options: BackupClientOptions
 }
 
-/** Registers the account when needed; `BackupError` when it can't. */
+/**
+ * Opens the account's session when needed (creating the account the first
+ * time); `BackupError` when it can't.
+ */
 export async function backupAccessFor(
   accountKey: Uint8Array
 ): Promise<BackupAccess> {
-  const session = await serverAccount.ensure(accountKey)
-  if (!session) {
-    const cached = serverAccount.cached(accountKey)
-    const off =
-      !cached?.accountId && (cached?.unavailableUntil ?? 0) > Date.now()
-    throw new BackupError(off ? 'unavailable' : 'offline')
+  let accountId: string
+  try {
+    accountId = (await serverAccount.connect(accountKey)).accountId
+  } catch (error) {
+    throw backupErrorFrom(error)
   }
   return {
     accountKey,
-    accountId: session.accountId,
+    accountId,
     options: {
-      baseUrl: apis.accounts,
-      key: deriveAccountSigningKey(accountKey),
-      now: syncNow,
-      randomBytes: getRandomBytes,
+      ...bearerOptions(accountKey),
+      sign: {
+        baseUrl: apis.accounts,
+        key: deriveAccountSigningKey(accountKey),
+        now: syncNow,
+        randomBytes: getRandomBytes,
+      },
     },
   }
 }
@@ -50,6 +58,15 @@ export async function backupAccessFor(
 /** A backup request's failure, as the scheduler and Settings name it. */
 export function backupErrorFrom(error: unknown): BackupError {
   if (error instanceof BackupError) return error
+  if (error instanceof AccountSessionError) {
+    if (error.failure === 'attestation')
+      return new BackupError(
+        error.attestation === 'temporary' ? 'verify_later' : 'unverified'
+      )
+    if (error.failure === 'upgrade') return new BackupError('update')
+    if (error.serverCode === 'account_key_unavailable')
+      return new BackupError('key')
+  }
   if (error instanceof HttpError) {
     // `Retry-After`, or the body's `retryAfter` (seconds) without one.
     const retryAfter = (error.body as { retryAfter?: unknown } | null)
@@ -81,7 +98,7 @@ export function backupErrorFrom(error: unknown): BackupError {
 
 /**
  * Runs a backup op as the account. An account the server no longer knows is
- * forgotten and registered again once.
+ * forgotten, and its session opened again once.
  */
 export async function withBackupAccess<T>(
   accountKey: Uint8Array,
@@ -109,8 +126,9 @@ export async function withBackupAccess<T>(
  * Deletes every slot of `accountKey`'s account, before Delete Buddies deletes
  * the key: afterwards nothing could sign the deletion, and the backup would sit
  * unreadable until it expired. Throws `BackupError` when it can't, so the
- * caller keeps the key. No account (accounts off) means no backup. Afterwards
- * this install's backup, if on, uploads under the new key's account.
+ * caller keeps the key. No account (accounts off) means no backup, and a device
+ * that can't open a session never made one. Afterwards this install's backup,
+ * if on, uploads under the new key's account.
  */
 export async function deleteBackupsBeforeKeyLoss(
   accountKey: Uint8Array
@@ -118,7 +136,11 @@ export async function deleteBackupsBeforeKeyLoss(
   try {
     await withBackupAccess(accountKey, (access) => deleteBackup(access.options))
   } catch (error) {
-    if (error instanceof BackupError && error.code === 'unavailable') return
+    if (
+      error instanceof BackupError &&
+      (error.code === 'unavailable' || error.code === 'unverified')
+    )
+      return
     throw error
   }
   const { enabled } = useBackupState.getState()

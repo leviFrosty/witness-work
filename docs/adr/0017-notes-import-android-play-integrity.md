@@ -130,6 +130,12 @@ Keychain's lifetime.
   behavior.
 - If `ANDROID_ID` is unavailable, the app falls back to a random UUID.
 
+Since ADR 0027, the Play Integrity check runs once, when the account session
+opens (purpose `account-session`), instead of on each import; imports carry the
+session's bearer token and meter the account. The challenge binding and server
+verification above are unchanged, and the per-import form remains only for app
+versions from before sessions.
+
 ## Considered options
 
 - **Classic requests with a server nonce.** Natural challenge binding, but

@@ -10,14 +10,41 @@ import {
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import { approveHandoff } from '@/app/account/handoff'
-import i18n from '@/lib/locales'
+import { platformKey } from '@/app/account/attestationCopy'
+import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
+import i18n, { type TranslationKey } from '@/lib/locales'
+import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffQrPanel from '@/features/settings/components/account/handoff/HandoffQrPanel'
 import HandoffApproval from '@/features/settings/components/account/handoff/HandoffApproval'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
 import useOfferHandoff from '@/features/settings/hooks/useOfferHandoff'
+
+const PROBLEM: Record<OfferStartProblem, TranslationKey> = {
+  unsupported: 'account_updateRequired',
+  unavailable: 'handoff_problemUnavailable',
+  unverified: platformKey(
+    'handoff_failUnverifiedOld',
+    'handoff_failUnverifiedOldAndroid'
+  ),
+  verifyLater: 'handoff_failVerifyLater',
+  updateRequired: 'handoff_failUpdate',
+  offline: 'handoff_problemOffline',
+}
+
+/** Problems that can pass by themselves. */
+const RETRYABLE = new Set<OfferStartProblem>([
+  'unavailable',
+  'verifyLater',
+  'offline',
+])
+
+/**
+ * Failures a new code can't fix: the device can't be verified, or the app needs
+ * an update.
+ */
+const FINAL = new Set<HandoffFailure>(['unverified', 'updateRequired'])
 
 /**
  * Set Up Another Device, on the phone that has the account: a QR code for the
@@ -44,20 +71,18 @@ const SetUpAnotherDeviceScreen = () => {
         <HandoffStatus
           icon={start.problem === 'offline' ? WifiOffIcon : CircleAlertIcon}
           tone='error'
-          body={i18n.t(
-            start.problem === 'offline'
-              ? 'handoff_problemOffline'
-              : start.problem === 'unavailable'
-                ? 'handoff_problemUnavailable'
-                : 'account_updateRequired'
-          )}
+          body={i18n.t(PROBLEM[start.problem])}
           primary={
-            start.problem === 'unsupported'
-              ? undefined
-              : {
+            RETRYABLE.has(start.problem)
+              ? {
                   label: i18n.t('handoff_tryAgain'),
                   onPress: newCode,
                   testID: 'handoff-try-again',
+                }
+              : {
+                  label: i18n.t('done'),
+                  onPress: () => navigation.goBack(),
+                  testID: 'handoff-problem-done',
                 }
           }
           testID='handoff-problem'
@@ -134,7 +159,15 @@ const SetUpAnotherDeviceScreen = () => {
             tone='error'
             title={i18n.t('handoff_oldFailedTitle')}
             body={handoffFailureMessage('old', state.reason)}
-            primary={newCodeAction}
+            primary={
+              FINAL.has(state.reason)
+                ? {
+                    label: i18n.t('done'),
+                    onPress: () => navigation.goBack(),
+                    testID: 'handoff-failed-done',
+                  }
+                : newCodeAction
+            }
             testID='handoff-failed'
           />
         )

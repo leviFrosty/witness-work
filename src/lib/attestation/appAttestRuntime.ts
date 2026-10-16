@@ -2,14 +2,14 @@ import * as Crypto from 'expo-crypto'
 import { MMKV } from 'react-native-mmkv'
 import { getOrCreateAccountId } from '@/lib/account'
 import { getOrCreateInstallId } from '@/lib/installId'
-import { createNotesImportAppAttest } from '@/features/notes-import/lib/notesImportAppAttest'
+import { createAppAttestAuthorizer } from '@/lib/attestation/appAttest'
 import {
-  notesImportBaseUrl,
-  notesImportDevBypass,
-  notesImportTransport,
-} from '@/features/notes-import/lib/notesImportTransport'
-import * as AppAttest from '../../../../modules/app-attest'
-import * as KeychainUuid from '../../../../modules/keychain-uuid'
+  attestationBaseUrl,
+  attestationDevBypass,
+  attestationTransport,
+} from '@/lib/attestation/transport'
+import * as AppAttest from '../../../modules/app-attest'
+import * as KeychainUuid from '../../../modules/keychain-uuid'
 
 let _legacyStore: MMKV | null = null
 const legacyStore = (): MMKV =>
@@ -73,7 +73,7 @@ const clearLifecycleJournal = (): void => {
 
 const recoveryTokenHash = async (token: string): Promise<string> => {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
-    throw new Error('Invalid Notes Import recovery token')
+    throw new Error('Invalid App Attest recovery token')
   }
   const padded = `${token.replace(/-/g, '+').replace(/_/g, '/')}=`
   const binary = globalThis.atob(padded)
@@ -82,7 +82,7 @@ const recoveryTokenHash = async (token: string): Promise<string> => {
     tokenBytes[index] = binary.charCodeAt(index)
   }
   if (tokenBytes.length !== 32) {
-    throw new Error('Invalid Notes Import recovery token')
+    throw new Error('Invalid App Attest recovery token')
   }
   const digest = new Uint8Array(
     await Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, tokenBytes)
@@ -96,7 +96,7 @@ const recoveryTokenHash = async (token: string): Promise<string> => {
     .replace(/=+$/, '')
 }
 
-export const notesImportAppAttest = createNotesImportAppAttest({
+export const appAttestAuthorizer = createAppAttestAuthorizer({
   appAttest: {
     isSupported: AppAttest.isSupported,
     generateKey: AppAttest.generateKey,
@@ -139,11 +139,11 @@ export const notesImportAppAttest = createNotesImportAppAttest({
     recoveryTokenHash,
     randomUuid: Crypto.randomUUID,
   },
-  transport: notesImportTransport,
-  devBypass: notesImportDevBypass,
-  baseUrl: notesImportBaseUrl,
+  transport: attestationTransport,
+  devBypass: attestationDevBypass,
+  baseUrl: attestationBaseUrl,
   now: Date.now,
 })
 
-export const prepareNotesImportAppAttestRecovery = (): Promise<void> =>
-  notesImportAppAttest.prepareRecovery()
+export const prepareAppAttestRecovery = (): Promise<void> =>
+  appAttestAuthorizer.prepareRecovery()

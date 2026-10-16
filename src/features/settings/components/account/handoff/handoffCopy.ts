@@ -1,3 +1,4 @@
+import { platformKey } from '@/app/account/attestationCopy'
 import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { HandoffHello } from '@/lib/serverAccount/handoff'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -13,6 +14,12 @@ const OLD: Record<HandoffFailure, TranslationKey> = {
   badToken: 'handoff_failServer',
   tampered: 'handoff_failTampered',
   noAccount: 'handoff_failNoAccount',
+  unverified: platformKey(
+    'handoff_failUnverifiedOld',
+    'handoff_failUnverifiedOldAndroid'
+  ),
+  verifyLater: 'handoff_failVerifyLater',
+  updateRequired: 'handoff_failUpdate',
   rateLimited: 'handoff_failRateLimited',
   server: 'handoff_failServer',
 }
@@ -28,6 +35,12 @@ const NEW: Record<HandoffFailure, TranslationKey> = {
   badToken: 'handoff_failBadToken',
   tampered: 'handoff_failTampered',
   noAccount: 'handoff_failServer',
+  unverified: platformKey(
+    'handoff_failUnverifiedNew',
+    'handoff_failUnverifiedNewAndroid'
+  ),
+  verifyLater: 'handoff_failVerifyLater',
+  updateRequired: 'handoff_failUpdate',
   rateLimited: 'handoff_failRateLimited',
   server: 'handoff_failServer',
 }

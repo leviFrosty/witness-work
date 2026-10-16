@@ -120,8 +120,12 @@ coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
       R_ACC["`**/accounts/v1/...**
-signed account ops, handoff relay,
-encrypted backups`"]
+attested sessions, bearer ops,
+handoff relay, encrypted backups`"]
+      R_ATTEST["`**/attestation/v1/...**
+challenges, App Attest key setup`"]
+      R_APPCFG["`**GET /app/v1/config**
+minimum app version`"]
       R_LINKS["`**GET /c, /b, /h, /.well-known**
 link pages, Universal + App Links`"]
       R_RATINGS["`**GET /app-store/ratings**
@@ -139,11 +143,13 @@ one per inbox, sealed data`")]
       R2[("`**R2: ww-buddy-blobs**
 sealed photos, 90 days max`")]
     end
-    subgraph NI_STATE["Notes Import state"]
+    subgraph AT_STATE["Attestation state"]
       DO_AA[("`**AppAttestIdentity DO**
 attested key per iOS install`")]
       DO_PI[("`**PlayIntegrityChallenges DO**
 one-time Android challenges`")]
+    end
+    subgraph NI_STATE["Notes Import state"]
       DO_IDX[("`**NotesImportIndex DO**
 credits per account`")]
       DO_RUN[("`**NotesImportRun DO**
@@ -151,7 +157,8 @@ one per import, about 1 hour`")]
     end
     subgraph ACC_STATE["Account state"]
       D_ACC[("`**D1: accounts**
-account ids, public keys, inbox links`")]
+account ids, public keys, inbox links,
+sessions`")]
       DO_HANDOFF[("`**AccountHandoff DO**
 one per handoff, 10 minutes`")]
       R2_BACKUP[("`**R2: ww-account-backups**
@@ -191,14 +198,17 @@ analytics, flags, surveys, errors`"]
   A_CORE -->|"Follow-ups as events"| P_CAL
   A_BUDDIES -->|"root seed"| P_SEED
   A_SYNC -->|"sync files + photos"| P_SYNC
-  A_NOTES -->|"attest device"| P_ATTEST
+  A_ACCOUNT -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
-  A_ACCOUNT -->|"register, sealed handoff, sealed backup"| R_ACC
-  A_NOTES -->|"notes text, SSE stream"| R_NOTES
+  A_ACCOUNT -->|"open session, sealed handoff, sealed backup"| R_ACC
+  A_ACCOUNT -->|"key setup, session challenge"| R_ATTEST
+  A_SHELL -->|"minimum version"| R_APPCFG
+  A_NOTES -->|"account session"| A_ACCOUNT
+  A_NOTES -->|"bearer: notes text, SSE stream"| R_NOTES
   A_ROUTE -->|"today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
   A_LINKS -->|"/c, /b and /h links"| R_LINKS
@@ -214,10 +224,14 @@ analytics, flags, surveys, errors`"]
   R_ACC -->|"accounts"| D_ACC
   R_ACC -->|"handoff channel"| DO_HANDOFF
   R_ACC -->|"backup slots"| R2_BACKUP
+  R_ACC -->|"iOS assertion"| DO_AA
+  R_ACC -->|"Android verdict"| S_GPI
+  R_ATTEST -->|"iOS keys, challenges"| DO_AA
+  R_ATTEST -->|"Android challenge"| DO_PI
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
-  R_NOTES -->|"iOS attest"| DO_AA
-  R_NOTES -->|"Android challenge"| DO_PI
+  R_NOTES -->|"legacy iOS attest"| DO_AA
+  R_NOTES -->|"legacy Android challenge"| DO_PI
   R_NOTES -->|"credits"| DO_IDX
   R_NOTES -->|"run, SSE"| DO_RUN
   R_ROUTE -->|"daily quota"| DO_RPQ
@@ -228,7 +242,7 @@ analytics, flags, surveys, errors`"]
   R_BUD -.->|"push"| P_PUSH
   P_PUSH -.->|"iOS alert"| C_NSE
   P_PUSH -.->|"Android data push"| A_BUDDIES
-  R_NOTES -->|"Android verdict"| S_GPI
+  R_NOTES -->|"legacy Android verdict"| S_GPI
   DO_RUN -->|"streamed output"| S_OR
   S_OR --> S_LLM
   R_ROUTE -->|"waypoint sequence"| S_HERE
@@ -250,7 +264,7 @@ analytics, flags, surveys, errors`"]
   class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
+  class R_BUD,R_ACC,R_ATTEST,R_APPCFG,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
 ```
@@ -258,7 +272,7 @@ analytics, flags, surveys, errors`"]
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
-- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)).
+- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). It calls ww-api with the account's attested session, which stands in for attesting each import ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)); the legacy edges serve app versions from before sessions.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

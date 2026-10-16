@@ -12,6 +12,7 @@ const dailyEvents = new Set([
   'backup_reminder_viewed',
   'pointer_hover_detected',
   'account_backup_failed',
+  'account_session_failed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',
@@ -25,6 +26,7 @@ const sessionEvents = new Set([
   'saved_view_applied',
   'schedule_year_view_opened',
   'recovery_key_viewed',
+  'update_required_shown',
 ])
 
 let storage: MMKV | undefined

@@ -95,12 +95,12 @@ import {
   type NotesImportStatus,
 } from '@/features/notes-import/lib/notesImportClient'
 import {
-  getNotesImportAuthSnapshot,
-  runNotesImportAuthDiagnostics,
-  runNotesImportAuthRepair,
-  type NotesImportAuthDebugReport,
-  type NotesImportAuthRepairReport,
-} from '@/features/notes-import/lib/notesImportAuthRuntime'
+  getAttestationSnapshot,
+  runAttestationDiagnostics,
+  runAttestationRepair,
+  type AttestationDebugReport,
+  type AttestationRepairReport,
+} from '@/lib/attestation'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 import AccountTools from '@/app/navigation/tools/AccountTools'
@@ -250,12 +250,13 @@ export default function ToolsScreen() {
   const notesImportCredits = useNotesImportManager((s) => s.credits)
   // Cheap MMKV/Keychain reads; recomputed per render so recent lifecycle state
   // changes are reflected immediately.
-  const authSnapshot = getNotesImportAuthSnapshot()
+  const authSnapshot = getAttestationSnapshot()
   const [authBusy, setAuthBusy] = useState(false)
-  const [authReport, setAuthReport] =
-    useState<NotesImportAuthDebugReport | null>(null)
+  const [authReport, setAuthReport] = useState<AttestationDebugReport | null>(
+    null
+  )
   const [repairReport, setRepairReport] =
-    useState<NotesImportAuthRepairReport | null>(null)
+    useState<AttestationRepairReport | null>(null)
   const [proxyProbe, setProxyProbe] = useState<{
     health: unknown
     status: NotesImportStatus | { error: string } | null
@@ -276,7 +277,7 @@ export default function ToolsScreen() {
     if (authBusy) return
     setAuthBusy(true)
     try {
-      const report = await runNotesImportAuthDiagnostics()
+      const report = await runAttestationDiagnostics()
       setAuthReport(report)
       toast.show(report.ok ? 'Auth diagnostics passed' : 'Auth step failed', {
         message: report.ok
@@ -293,7 +294,7 @@ export default function ToolsScreen() {
     if (authBusy) return
     setAuthBusy(true)
     try {
-      const report = await runNotesImportAuthRepair()
+      const report = await runAttestationRepair()
       setRepairReport(report)
       const lastFailed = report.steps.filter((s) => !s.ok).pop()
       toast.show(

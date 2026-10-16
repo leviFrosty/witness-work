@@ -52,6 +52,8 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                                                                                                                         |
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
+| `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
+| `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -206,8 +208,14 @@ created a Buddies Invite (the share sheet opened), else `skipped`; Continue
 without inviting also sends `onboarding_step_skipped`. Each invite attempt sends
 `onboarding_buddies_invite_result` with `status`: `shared` (the share sheet
 completed), `dismissed`, or `error` with a bounded `reason` (`name_required`,
-`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, or `error`). No links, invite
-ids, or names are sent.
+`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, `unverified`,
+`verify_later`, `update`, or `error`). No links, invite ids, or names are sent.
+The same Buddies failure reasons (`buddiesFailureReason`) are on
+`buddies_push_registration` and `buddies_tray_sync_failed`: `unverified` means
+this device can't be verified, so it has no account session and Buddies sends
+nothing (ADR 0027); `verify_later`, that verifying it failed for now; `update`,
+that ww-api needs a newer app. The step leaves itself out on a device that can
+never be verified.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
@@ -238,15 +246,20 @@ preview edits, prompt toggles, and warning openings are dropped.
 
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
-platforms during the `notes-import-android` rollout. Android verification failures
-use bounded `error_code` values: `device_ineligible` (Play Integrity rejected the
-device or app build), `play_services_required` (Play Store/services missing or
-outdated), `attestation_unavailable` (the verification service, our verifier
-or secure storage had trouble; temporary, on both platforms), or
-`attestation_failed` (verification ran and didn't pass). Their share of Android
-attempts shows whether the device requirement blocks real users. No verdicts,
-tokens, or identifiers are attached. `active_cap` appears only after the
-automatic back-off (about 3 minutes) gives up.
+platforms during the `notes-import-android` rollout. Notes Import runs on the
+account session (ADR 0027), so a device that can't be verified fails before any
+import, with bounded `error_code` values on both platforms: `device_ineligible`
+(this device or app build can never be verified: App Attest unsupported, no
+Google Play, or ww-api found it isn't genuine), `attestation_unavailable`
+(Apple, Google or our verifier couldn't check it just then; temporary), or
+`attestation_failed` (verification ran and didn't pass). `suspended` (the
+account was suspended) and `upgrade_required` (ww-api answered 426) can appear
+too. Builds before sessions sent `play_services_required` for missing or
+outdated Play services; it's `device_ineligible` now. `account_session_failed`
+says why the session itself couldn't open. Their share of attempts shows whether
+the device requirement blocks real users. No verdicts, tokens, or identifiers
+are attached. `active_cap` appears only after the automatic back-off (about 3
+minutes) gives up.
 
 `notes_import_availability_failed` fires at most once per composer visit when
 the availability check couldn't run, with `state`: `offline` (no connection) or
@@ -273,7 +286,7 @@ with `method: paper`, `paper_source` (`onboarding` or `composer`), `page_count`,
 and `outcome`: `inserted`, `partial` (some pages read, with `failed_pages`),
 `empty`, `cancelled`, `failed`, or `limit_reached` (no Import Credits left, so
 no page was read). A stopped batch adds `error_code` (for example
-`transcribe_limit`, `network`, `attestation_failed`). The onboarding chooser's
+`transcribe_limit`, `network`, `attestation_failed`, `suspended`). The onboarding chooser's
 `import_type_selected` uses `import_type: paper`, and
 `onboarding_import_options_viewed` adds `paper_available`. Page images and their
 text are never sent.
@@ -814,15 +827,39 @@ recovery keys bring accounts to new phones, and how often using one costs
 someone their Buddies data. They're rare by nature: once a session at most for
 viewing, and once per action otherwise.
 
-| Event                   | When                                                                                           | Properties                                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                                  | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).              |
-| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                                | `method: copy \| share`.                                                                                                                             |
-| `recovery_key_used`     | Use a Recovery Key finished.                                                                   | `outcome: replaced \| unchanged \| declined \| failed` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning). |
-| `account_key_replaced`  | This device's account key was replaced, from a recovery key, a handoff, or (dev builds) Tools. | `source: recovery_key \| handoff \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account registered right away).            |
+| Event                   | When                                                                                           | Properties                                                                                                                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                                  | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).                                                                                                 |
+| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                                | `method: copy \| share`.                                                                                                                                                                                                                |
+| `recovery_key_used`     | Use a Recovery Key finished, or showed that this device can't be verified.                     | `outcome: replaced \| unchanged \| declined \| failed \| unverified` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning; `unverified`: this device can never attest, so the form didn't show). |
+| `account_key_replaced`  | This device's account key was replaced, from a recovery key, a handoff, or (dev builds) Tools. | `source: recovery_key \| handoff \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account's session opened right away).                                                                                         |
 
 Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
 Mistyped keys send nothing: the form refuses them before they can be used.
+
+### Account sessions
+
+These answer whether devices can open an attested account session (ADR 0027)
+and why they can't. A device opens one when its account first connects, after
+90 days, and after a session ends; refreshing the access token sends nothing.
+
+| Event                    | When                                                                                          | Properties                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_session_opened` | A session opened.                                                                             | `reason: new \| expired \| ended \| unsaved \| handoff` (`expired`: the last one reached 90 days; `ended`: the server ended it, so refreshing it failed; `unsaved`: the keystore couldn't save a refreshed token, so the stored one was stale; `handoff`: the new phone in Set Up Another Device).                                                                            |
+| `account_session_failed` | Opening one failed. Once per UTC day per reason. Offline and cancelled attempts send nothing. | `reason: attestation_device \| attestation_temporary \| attestation_failed \| unavailable \| upgrade \| rateLimited \| server` (`attestation_device`: this device or app can't be verified; `attestation_temporary`: Apple, Google, or the server couldn't check it just then), `server_reason`: ww-api's stable reason, such as `device_integrity_failed`, when it gave one. |
+
+Never the account id, `accountPub`, session ids, tokens, the device label, or
+the attestation itself.
+
+### Update Required
+
+These answer how many people an app version floor or a 426 from ww-api blocks,
+and whether they go update.
+
+| Event                          | When                                                          | Properties                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `update_required_shown`        | Update Required covered the app. Once per session and source. | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
+| `update_required_store_opened` | The User tapped Update WitnessWork.                           | `source`.                                                                                                                                          |
 
 ### Account backup
 
@@ -830,15 +867,15 @@ These answer whether people turn on the end-to-end encrypted backup (ADR 0026
 §4), why uploads fail, and whether restoring brings people's records to a new
 phone. Uploads that succeed send nothing.
 
-| Event                       | When                                                                                    | Properties                                                                                                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `account_backup_changed`    | Backup was turned on or off on this device.                                             | `enabled`, `source: settings \| restore \| tools` (`restore`: the offer after a restore), `deleted_server_copy` (when turned off: whether this device's slot was deleted too). |
-| `account_backup_failed`     | An upload failed. Once per UTC day per reason.                                          | `reason: offline \| unavailable \| too_large \| limit \| rate_limited \| key \| server`.                                                                                       |
-| `account_backup_deleted`    | The User deleted one slot or every slot.                                                | `scope: slot \| all`, `source: settings \| disable \| tools`.                                                                                                                  |
-| `account_restore_offered`   | The restore question showed: the account has a backup.                                  | `source: handoff \| recovery_key \| fresh_install \| settings \| tools`, `slots` (count), `local_data` (this device already had records).                                      |
-| `account_restore_chosen`    | The User answered it.                                                                   | `choice: replace \| combine \| skip`, `source`.                                                                                                                                |
-| `account_restore_completed` | The restore applied.                                                                    | `mode: replace \| combine`, `slots` (read), `skipped` (from a newer app version or unreadable), `source`.                                                                      |
-| `account_restore_failed`    | Listing or downloading failed, or no slot could be read. Nothing on the device changed. | `reason: offline \| unavailable \| newer \| unreadable \| server`, `source`.                                                                                                   |
+| Event                       | When                                                                                    | Properties                                                                                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_backup_changed`    | Backup was turned on or off on this device.                                             | `enabled`, `source: settings \| restore \| tools` (`restore`: the offer after a restore), `deleted_server_copy` (when turned off: whether this device's slot was deleted too).                                                                                  |
+| `account_backup_failed`     | An upload failed. Once per UTC day per reason.                                          | `reason: offline \| unavailable \| too_large \| limit \| rate_limited \| key \| unverified \| verify_later \| update \| server` (`unverified`: this device can't be verified; `verify_later`: verifying it failed for now; `update`: ww-api needs a newer app). |
+| `account_backup_deleted`    | The User deleted one slot or every slot.                                                | `scope: slot \| all`, `source: settings \| disable \| tools`.                                                                                                                                                                                                   |
+| `account_restore_offered`   | The restore question showed: the account has a backup.                                  | `source: handoff \| recovery_key \| fresh_install \| settings \| tools`, `slots` (count), `local_data` (this device already had records).                                                                                                                       |
+| `account_restore_chosen`    | The User answered it.                                                                   | `choice: replace \| combine \| skip`, `source`.                                                                                                                                                                                                                 |
+| `account_restore_completed` | The restore applied.                                                                    | `mode: replace \| combine`, `slots` (read), `skipped` (from a newer app version or unreadable), `source`.                                                                                                                                                       |
+| `account_restore_failed`    | Listing or downloading failed, or no slot could be read. Nothing on the device changed. | `reason: offline \| unavailable \| newer \| unreadable \| server`, `source`.                                                                                                                                                                                    |
 
 Never the account id, slot ids, sizes, device names, or anything from inside
 a backup. Delete Buddies deleting the backup first sends no backup event.
@@ -849,13 +886,13 @@ These answer whether people use the QR handoff to move phones (ADR 0026), from
 where, how far they get, and why it fails. One attempt sends a handful of events
 at most; polling sends none.
 
-| Event               | When                                                                                                                | Properties                                                                                                                                                                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handoff_started`   | The old phone opened a code (each new code counts), or the new phone started claiming a scanned or opened one.      | `role: old \| new`, `entry: settings \| onboarding \| link \| tools`.                                                                                                                                                                          |
-| `handoff_claimed`   | A phone claimed the code: on the old phone when "Allow … to sign in?" shows, on the new one when it shows the code. | `role`.                                                                                                                                                                                                                                        |
-| `handoff_answered`  | The User on the old phone tapped Allow or Don't Allow.                                                              | `answer: allow \| decline`.                                                                                                                                                                                                                    |
-| `handoff_completed` | The old phone saw `done`, or the new phone stored the key and told the server.                                      | `role`.                                                                                                                                                                                                                                        |
-| `handoff_failed`    | The attempt stopped without completing.                                                                             | `role`, `reason`: the protocol's (`offline`, `unavailable`, `expired`, `used`, `conflict`, `cancelled`, `badToken`, `tampered`, `noAccount`, `rateLimited`, `server`) or the app's (`left`, `new_code`, `replace_declined`, `replace_failed`). |
+| Event               | When                                                                                                                | Properties                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handoff_started`   | The old phone opened a code (each new code counts), or the new phone started claiming a scanned or opened one.      | `role: old \| new`, `entry: settings \| onboarding \| link \| tools`.                                                                                                                                                                                                                                                                                                                                                           |
+| `handoff_claimed`   | A phone claimed the code: on the old phone when "Allow … to sign in?" shows, on the new one when it shows the code. | `role`.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `handoff_answered`  | The User on the old phone tapped Allow or Don't Allow.                                                              | `answer: allow \| decline`.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `handoff_completed` | The old phone saw `done`, or the new phone stored the key and told the server.                                      | `role`.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `handoff_failed`    | The attempt stopped without completing.                                                                             | `role`, `reason`: the protocol's (`offline`, `unavailable`, `expired`, `used`, `conflict`, `cancelled`, `badToken`, `tampered`, `noAccount`, `rateLimited`, `server`), the account session's (`unverified`: this phone can't be verified, including before Sign In with QR Code starts; `verifyLater`: verifying it failed for now; `updateRequired`), or the app's (`left`, `new_code`, `replace_declined`, `replace_failed`). |
 
 Never the channel id, either public key, the code, the device's name or model,
 the account key, or the account id. The Tools self-test sends nothing.

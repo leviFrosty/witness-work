@@ -161,8 +161,8 @@ export function computeCryptoVectors(): CryptoVectors {
   )
   const signed = concatBytes(utf8('ww-buddies/v1\ninbox/sync\n'), payload)
   const signature = ed25519Sign(signed, me.ownerSeed)
-  out['envelope.p'] = toB64u(payload)
-  out['envelope.s'] = toB64u(signature)
+  out['envelope.payload'] = toB64u(payload)
+  out['envelope.signature'] = toB64u(signature)
   out['envelope.verifies'] = String(
     ed25519Verify(signature, signed, fromB64u(me.ownerPub))
   )

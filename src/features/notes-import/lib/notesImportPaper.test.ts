@@ -7,7 +7,7 @@ const { joinPaperPages, mapInOrder, stopsPaperBatch } = await import(
   '@/features/notes-import/lib/notesImportPaper'
 )
 const { canonicalProtectedRequest } = await import(
-  '@/features/notes-import/lib/notesImportAppAttest'
+  '@/lib/attestation/appAttest'
 )
 
 describe('Import from Paper helpers', () => {

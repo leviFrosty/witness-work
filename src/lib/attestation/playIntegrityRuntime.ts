@@ -1,15 +1,15 @@
 import * as Crypto from 'expo-crypto'
 import { getOrCreateAccountId } from '@/lib/account'
 import { getOrCreateInstallId } from '@/lib/installId'
-import { createNotesImportPlayIntegrity } from '@/features/notes-import/lib/notesImportPlayIntegrity'
+import { createPlayIntegrityAuthorizer } from '@/lib/attestation/playIntegrity'
 import {
-  notesImportBaseUrl,
-  notesImportDevBypass,
-  notesImportTransport,
-} from '@/features/notes-import/lib/notesImportTransport'
-import * as PlayIntegrity from '../../../../modules/play-integrity'
+  attestationBaseUrl,
+  attestationDevBypass,
+  attestationTransport,
+} from '@/lib/attestation/transport'
+import * as PlayIntegrity from '../../../modules/play-integrity'
 
-export const notesImportPlayIntegrity = createNotesImportPlayIntegrity({
+export const playIntegrityAuthorizer = createPlayIntegrityAuthorizer({
   playIntegrity: {
     isSupported: PlayIntegrity.isSupported,
     prepare: PlayIntegrity.prepare,
@@ -27,9 +27,9 @@ export const notesImportPlayIntegrity = createNotesImportPlayIntegrity({
       }),
     randomUuid: Crypto.randomUUID,
   },
-  transport: notesImportTransport,
-  devBypass: notesImportDevBypass,
-  baseUrl: notesImportBaseUrl,
+  transport: attestationTransport,
+  devBypass: attestationDevBypass,
+  baseUrl: attestationBaseUrl,
   now: Date.now,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 })

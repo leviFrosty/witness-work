@@ -96,6 +96,7 @@ import {
   notesImportCommitCountsLine,
   notesImportCountsLine,
   unavailableDetail,
+  unverifiedDeviceKey,
 } from '@/features/notes-import/lib/notesImportMessages'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
@@ -767,7 +768,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // appending the operator's detail (e.g. a maintenance window) when present.
   // When this build is under the proxy's minimum app version the message
   // explains the version gap instead and offers an App Store jump — the only
-  // unavailable state the user can fix themselves.
+  // unavailable state the user can fix themselves. A device that can't be
+  // verified gets the account's words for it.
   const unavailableBanner = () => {
     const detail = unavailableDetail(availability.reason)
     const updateRequired = availability.updateRequired
@@ -796,9 +798,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                     current: updateRequired.currentVersion,
                     min: updateRequired.minVersion,
                   })
-                : detail
-                  ? i18n.t('notesImport_unavailableBannerDetail', { detail })
-                  : i18n.t('notesImport_unavailableBanner')}
+                : availability.reason === 'device_unverified'
+                  ? i18n.t(unverifiedDeviceKey())
+                  : detail
+                    ? i18n.t('notesImport_unavailableBannerDetail', { detail })
+                    : i18n.t('notesImport_unavailableBanner')}
             </Text>
           </View>
           {updateRequired && (

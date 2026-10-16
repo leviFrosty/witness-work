@@ -1,8 +1,8 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { HttpError } from '@/lib/http/request'
-import { registerAccount } from '@/lib/serverAccount/client'
 import {
+  type BackupClientOptions,
   deleteBackup,
   getBackup,
   listBackups,
@@ -16,34 +16,39 @@ import {
   sealBackup,
 } from '@/lib/serverAccount/backupCrypto'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  interopAccount,
+  interopEnabled,
+  interopRelayUrl,
+} from '@/lib/serverAccount/testing/interopSessions'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 
 /**
- * Opt-in contract check of the backup ops against a real worker, e.g.
- * `BUDDIES_RELAY_URL=http://localhost:8787 pnpm exec vitest run backup.interop`
- * with ww-api's `wrangler dev` running. Skipped by default.
+ * Opt-in contract check of the backup ops against a real worker (see
+ * `interopSessions`). Skipped by default.
  */
-const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 async function account() {
-  const accountKey = random(32)
-  const options = {
-    baseUrl: relayUrl!,
-    key: deriveAccountSigningKey(accountKey),
-    now: Date.now,
-    randomBytes: random,
+  const { accountKey, accountId, bearer } = await interopAccount(random)
+  const options: BackupClientOptions = {
+    ...bearer,
+    sign: {
+      baseUrl: interopRelayUrl!,
+      key: deriveAccountSigningKey(accountKey),
+      now: Date.now,
+      randomBytes: random,
+    },
   }
-  const { accountId } = await registerAccount(options)
   return { accountKey, accountId, options }
 }
 
 const code = (error: unknown) =>
   error instanceof HttpError ? error.serverCode : String(error)
 
-describe.skipIf(!relayUrl)('backup against a real worker', () => {
+describe.skipIf(!interopEnabled)('backup against a real worker', () => {
   it('puts, lists, gets, and deletes slots', async () => {
     const { accountKey, accountId, options } = await account()
     const backupKey = deriveBackupKey(accountKey)
@@ -109,7 +114,7 @@ describe.skipIf(!relayUrl)('backup against a real worker', () => {
     expect(await listBackups(options)).toEqual([])
   })
 
-  it('refuses a body that doesn’t match what was signed', async () => {
+  it('refuses a body that doesn’t match its digest', async () => {
     const { options } = await account()
     const slotId = newBackupSlotId(random)
     const failure = await putBackup(
@@ -121,7 +126,7 @@ describe.skipIf(!relayUrl)('backup against a real worker', () => {
   })
 })
 
-/** Flips a byte of the uploaded body after it was signed. */
+/** Flips a byte of the uploaded body after its digest was taken. */
 const tamperingFetch: typeof fetch = (input, init) => {
   const body: unknown = init?.body
   if (body instanceof Uint8Array) {

@@ -1,7 +1,6 @@
 import { HttpError } from '@/lib/http/request'
 import type {
   AccountStatus,
-  RegisteredAccount,
   ServerAccountInfo,
 } from '@/lib/serverAccount/client'
 import {
@@ -9,6 +8,12 @@ import {
   deriveAccountSigningKey,
   signInboxLink,
 } from '@/lib/serverAccount/keys'
+import {
+  AccountSessionError,
+  type AccountSessionInfo,
+  type AttestationProblem,
+  toAccountSessionError,
+} from '@/lib/serverAccount/session'
 
 /**
  * The server account (ADR 0024): an anonymous account the server owns, so it
@@ -17,8 +22,10 @@ import {
  *
  * The account key is the User's one secret (today the Buddies root seed); the
  * server knows the account by a random id and the public half of a key derived
- * from it. The id is kept on this device only, with the public key it belongs
- * to, so a different account key registers again.
+ * from it. This device reaches it through an attested session (ADR 0027,
+ * `session.ts`), whose `session/open` creates the account the first time. The
+ * id is kept on this device, with the public key it belongs to, for features
+ * that only need to name it.
  */
 
 /** What this device remembers. Never synced or backed up. */
@@ -44,21 +51,41 @@ export type ServerAccountSession = {
 }
 
 export type ServerAccountDeps = {
-  register: (key: AccountSigningKey) => Promise<RegisteredAccount>
-  /** `account/info`: the account as the server holds it, never creating one. */
-  info?: (key: AccountSigningKey) => Promise<ServerAccountInfo>
+  /** This device's attested sessions (`createAccountSessions`). */
+  sessions: {
+    ensure: (
+      accountKey: Uint8Array,
+      call?: { retry?: boolean }
+    ) => Promise<AccountSessionInfo>
+    forget: () => void
+    close: () => Promise<void>
+    changeKey: <T>(
+      swap: () => Promise<T>,
+      keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
+    ) => Promise<T>
+    noteStatus?: (accountPub: string, status: AccountStatus) => void
+  }
+  /** `account/info` over the session: the account as the server holds it. */
+  info?: (accountKey: Uint8Array) => Promise<ServerAccountInfo>
   storage: ServerAccountStorage
   now: () => number
 }
 
 /**
  * The account as the Account screen shows it: `unavailable` while the server
- * has accounts off, `offline` while it can't be reached (with what this device
- * last knew).
+ * has accounts off, `unverified` when this device couldn't prove it's
+ * WitnessWork, `offline` while it can't be reached (with what this device last
+ * knew).
  */
 export type ServerAccountCheck =
   | { state: AccountStatus; accountId: string }
   | { state: 'unavailable'; accountId: null }
+  | {
+      state: 'unverified'
+      problem: AttestationProblem
+      accountId: string | null
+    }
+  | { state: 'updateRequired'; accountId: string | null }
   | {
       state: 'offline'
       accountId: string | null
@@ -68,9 +95,10 @@ export type ServerAccountCheck =
 /** With accounts off on the server, ask about once a day. */
 export const ACCOUNTS_UNAVAILABLE_RETRY_MS = 24 * 60 * 60 * 1000
 
-export function createServerAccount(deps: ServerAccountDeps) {
-  const registering = new Map<string, Promise<string | null>>()
+const isDisabled = (error: unknown) =>
+  error instanceof HttpError && error.serverCode === 'disabled'
 
+export function createServerAccount(deps: ServerAccountDeps) {
   const session = (
     key: AccountSigningKey,
     accountId: string
@@ -80,50 +108,22 @@ export function createServerAccount(deps: ServerAccountDeps) {
       signInboxLink(key, accountId, inboxId, ownerPub),
   })
 
-  async function register(key: AccountSigningKey): Promise<string | null> {
-    try {
-      const { accountId, status } = await deps.register(key)
-      deps.storage.set({ accountPub: key.publicKey, accountId, status })
-      return accountId
-    } catch (error) {
-      if (error instanceof HttpError && error.serverCode === 'disabled')
-        deps.storage.set({
-          accountPub: key.publicKey,
-          accountId: null,
-          unavailableUntil: deps.now() + ACCOUNTS_UNAVAILABLE_RETRY_MS,
-        })
-      // Anything else (offline, say) is tried again next time.
-      return null
-    }
-  }
+  const remember = (
+    key: AccountSigningKey,
+    account: { accountId: string; status: AccountStatus }
+  ) =>
+    deps.storage.set({
+      accountPub: key.publicKey,
+      accountId: account.accountId,
+      status: account.status,
+    })
 
-  /**
-   * The account for this account key, registered on first use. Null while the
-   * server can't be reached or has accounts off: features then work without
-   * one, as before accounts.
-   */
-  async function ensure(
-    accountKey: Uint8Array
-  ): Promise<ServerAccountSession | null> {
-    const key = deriveAccountSigningKey(accountKey)
-    const cached = deps.storage.get()
-    if (cached?.accountPub === key.publicKey) {
-      if (cached.accountId) return session(key, cached.accountId)
-      if ((cached.unavailableUntil ?? 0) > deps.now()) return null
-    }
-    let pending = registering.get(key.publicKey)
-    if (!pending) {
-      pending = register(key).finally(() => registering.delete(key.publicKey))
-      registering.set(key.publicKey, pending)
-    }
-    const accountId = await pending
-    return accountId ? session(key, accountId) : null
-  }
-
-  /** The server doesn't know the remembered account: register again next time. */
-  function forget() {
-    deps.storage.set(null)
-  }
+  const markUnavailable = (key: AccountSigningKey) =>
+    deps.storage.set({
+      accountPub: key.publicKey,
+      accountId: null,
+      unavailableUntil: deps.now() + ACCOUNTS_UNAVAILABLE_RETRY_MS,
+    })
 
   /** What this device remembers for this account key, without asking. */
   function cached(accountKey: Uint8Array): CachedServerAccount | null {
@@ -135,62 +135,140 @@ export function createServerAccount(deps: ServerAccountDeps) {
   }
 
   /**
-   * The account's current state: registered first when there's none yet, then
-   * read back with `account/info` and kept. An account the server no longer
-   * knows registers again.
+   * The account for this account key, through its session: opened (attesting
+   * this device, and creating the account the first time) when there's none.
+   * Throws `AccountSessionError`: `unavailable` while accounts are off (asked
+   * again after a day), `attestation`, `offline`, …. `retry` asks again right
+   * away (the User tapped Try Again).
    */
-  async function check(accountKey: Uint8Array): Promise<ServerAccountCheck> {
-    const offline = (): ServerAccountCheck => {
-      const known = cached(accountKey)
+  async function connect(
+    accountKey: Uint8Array,
+    call: { retry?: boolean } = {}
+  ): Promise<ServerAccountSession> {
+    const key = deriveAccountSigningKey(accountKey)
+    const known = cached(accountKey)
+    if (
+      !call.retry &&
+      known &&
+      !known.accountId &&
+      (known.unavailableUntil ?? 0) > deps.now()
+    )
+      throw new AccountSessionError('unavailable', {
+        serverCode: 'disabled',
+      })
+    try {
+      const opened = await deps.sessions.ensure(accountKey, call)
       if (
-        known &&
-        !known.accountId &&
-        (known.unavailableUntil ?? 0) > deps.now()
+        known?.accountId !== opened.accountId ||
+        known.status !== opened.status
       )
-        return { state: 'unavailable', accountId: null }
-      return {
-        state: 'offline',
-        accountId: known?.accountId ?? null,
-        lastStatus: known?.status ?? null,
-      }
+        remember(key, opened)
+      return session(key, opened.accountId)
+    } catch (error) {
+      if (isDisabled(error)) markUnavailable(key)
+      throw toAccountSessionError(error)
     }
-    let account = await ensure(accountKey)
-    if (!account) return offline()
+  }
+
+  /**
+   * The account, or null when there's none to be had (offline, accounts off, or
+   * this device can't attest): features like Buddies then work without one, as
+   * before accounts.
+   */
+  async function ensure(
+    accountKey: Uint8Array
+  ): Promise<ServerAccountSession | null> {
+    try {
+      return await connect(accountKey)
+    } catch {
+      return null
+    }
+  }
+
+  /** Forgets the account and its session here, without telling the server. */
+  function forget() {
+    deps.storage.set(null)
+    deps.sessions.forget()
+  }
+
+  /**
+   * Ends this device's session (`session/close`) and forgets the account here.
+   * Never throws. Replacing or deleting the account key uses `changeKey`.
+   */
+  async function close(): Promise<void> {
+    await deps.sessions.close().catch(() => undefined)
+    deps.storage.set(null)
+  }
+
+  /**
+   * Replaces or deletes the account key (`swap`) with no session in between:
+   * ends the old key's session and forgets its account first, and opens none
+   * until `swap` is done (`AccountSessions.changeKey`).
+   */
+  function changeKey<T>(
+    swap: () => Promise<T>,
+    keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
+  ): Promise<T> {
+    return deps.sessions.changeKey(async () => {
+      deps.storage.set(null)
+      return swap()
+    }, keys)
+  }
+
+  function failedCheck(
+    accountKey: Uint8Array,
+    error: unknown
+  ): ServerAccountCheck {
+    const failure = toAccountSessionError(error)
+    const known = cached(accountKey)
+    if (failure.failure === 'unavailable')
+      return { state: 'unavailable', accountId: null }
+    if (failure.failure === 'attestation')
+      return {
+        state: 'unverified',
+        problem: failure.attestation ?? 'failed',
+        accountId: known?.accountId ?? null,
+      }
+    if (failure.failure === 'upgrade')
+      return { state: 'updateRequired', accountId: known?.accountId ?? null }
+    return {
+      state: 'offline',
+      accountId: known?.accountId ?? null,
+      lastStatus: known?.status ?? null,
+    }
+  }
+
+  /**
+   * The account's current state: its session opened first when there's none
+   * yet, then read back with `account/info` and kept.
+   */
+  async function check(
+    accountKey: Uint8Array,
+    call: { retry?: boolean } = {}
+  ): Promise<ServerAccountCheck> {
+    let account: ServerAccountSession
+    try {
+      account = await connect(accountKey, call)
+    } catch (error) {
+      return failedCheck(accountKey, error)
+    }
     if (!deps.info) {
       const status = cached(accountKey)?.status ?? 'active'
       return { state: status, accountId: account.accountId }
     }
     const key = deriveAccountSigningKey(accountKey)
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const info = await deps.info(key)
-        deps.storage.set({
-          accountPub: key.publicKey,
-          accountId: info.accountId,
-          status: info.status,
-        })
-        return { state: info.status, accountId: info.accountId }
-      } catch (error) {
-        if (!(error instanceof HttpError)) throw error
-        if (error.serverCode === 'disabled') {
-          deps.storage.set({
-            accountPub: key.publicKey,
-            accountId: null,
-            unavailableUntil: deps.now() + ACCOUNTS_UNAVAILABLE_RETRY_MS,
-          })
-          return { state: 'unavailable', accountId: null }
-        }
-        if (error.serverCode !== 'unknown_account' || attempt > 0)
-          return offline()
-        forget()
-        account = await ensure(accountKey)
-        if (!account) return offline()
-      }
+    try {
+      const info = await deps.info(accountKey)
+      remember(key, info)
+      deps.sessions.noteStatus?.(key.publicKey, info.status)
+      return { state: info.status, accountId: info.accountId }
+    } catch (error) {
+      if (isDisabled(error)) markUnavailable(key)
+      return failedCheck(accountKey, error)
     }
-    return offline()
   }
 
-  return { ensure, forget, cached, check }
+  return { connect, ensure, forget, close, changeKey, cached, check }
 }
 
 export type ServerAccount = ReturnType<typeof createServerAccount>

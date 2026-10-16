@@ -1,67 +1,30 @@
 import { describe, expect, it, vi } from 'vitest'
-import { toB64u } from '@/features/buddies/lib/bytes'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { RelayError } from '@/features/buddies/lib/relay'
-import {
-  pair,
-  random,
-  setup,
-} from '@/features/buddies/lib/testing/engineHarness'
+import { pair, setup } from '@/features/buddies/lib/testing/engineHarness'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
-import {
-  type CachedServerAccount,
-  createServerAccount,
-} from '@/lib/serverAccount/serverAccount'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 
 /**
- * ADR 0024: the engine links the User's inbox to their server account when it
- * registers, links inboxes registered before accounts on the next sync, and
- * stops at a suspension.
+ * ADR 0024 and ADR 0027: every relay call carries the User's account session,
+ * registering links the inbox to that account, an inbox from before accounts is
+ * linked when the relay says `not_linked`, and a suspension stops the sync.
  */
 
 type Harness = ReturnType<typeof setup>
 
-/** A real `createServerAccount` whose server is the fake relay's accounts. */
-function serverAccountOn(h: Harness, { available = true } = {}) {
-  let cached: CachedServerAccount | null = null
-  const register = vi.fn(async (key: { publicKey: string }) => {
-    if (!available) throw new Error('offline')
-    const known = [...h.fake.accounts].find(
-      ([, account]) => account.accountPub === key.publicKey
-    )
-    const accountId = known?.[0] ?? toB64u(random(16))
-    if (!known)
-      h.fake.accounts.set(accountId, {
-        accountPub: key.publicKey,
-        status: 'active',
-      })
-    return { accountId, status: 'active' as const }
-  })
-  const account = createServerAccount({
-    register,
-    storage: {
-      get: () => cached,
-      set: (value) => {
-        cached = value
-      },
-    },
-    now: h.now,
-  })
-  return { account, register, forget: vi.spyOn(account, 'forget') }
-}
-
-/** Counts `inbox/register` requests from here on. */
-function countRegisters(h: Harness) {
+/** Counts Buddies requests by op from here on. */
+function countOps(h: Harness) {
   const ops: string[] = []
   h.setAfterOp(async (op) => {
     ops.push(op)
   })
-  return () => ops.filter((op) => op === 'inbox/register').length
+  return (op: string) => ops.filter((sent) => sent === op).length
 }
 
 const accountIdOf = (h: Harness, seed: Uint8Array) =>
@@ -71,10 +34,9 @@ const accountIdOf = (h: Harness, seed: Uint8Array) =>
   )?.[0]
 
 describe('linking the inbox to the server account', () => {
-  it('links a new inbox when it registers', async () => {
+  it("links a new inbox to its session's account when it registers", async () => {
     const h = setup()
-    const { account } = serverAccountOn(h)
-    const ann = h.user('Ann', undefined, random(32), { account })
+    const ann = h.user('Ann')
     await ann.engine.sync()
     const accountId = accountIdOf(h, ann.seed)
     expect(accountId).toBeDefined()
@@ -82,59 +44,101 @@ describe('linking the inbox to the server account', () => {
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
   })
 
-  it('links an inbox registered before accounts once, on the next sync', async () => {
+  it('links an inbox from before accounts when the relay says so, then retries', async () => {
     const h = setup()
-    const seed = random(32)
-    const before = h.user('Ann', undefined, seed)
-    await before.engine.sync()
-    expect(h.fake.inboxAccounts.size).toBe(0)
-
-    // The same device after an update that has accounts.
-    const { account } = serverAccountOn(h)
-    const ann = h.user('Ann', undefined, seed, { account })
-    ann.store.setState(before.store.getState())
-    const registers = countRegisters(h)
+    const ann = h.user('Ann')
     await ann.engine.sync()
-    expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(accountIdOf(h, seed))
+    // As registered by an app version before accounts.
+    h.fake.inboxAccounts.delete(ann.inboxId)
+    ann.store.setState({ accountLinkedInboxId: null })
+
+    const sent = countOps(h)
+    await expect(ann.engine.sync()).resolves.toBe('synced')
+    expect(sent('inbox/register')).toBe(1)
+    // The refused read, then the same read once linked.
+    expect(sent('inbox/sync')).toBe(2)
+    expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(accountIdOf(h, ann.seed))
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
+
     await ann.engine.sync()
-    expect(registers()).toBe(1)
+    expect(sent('inbox/register')).toBe(1)
   })
 
-  it('keeps working unlinked while accounts are unavailable, without extra registrations', async () => {
+  it('links before any owner op, not only reads', async () => {
     const h = setup()
-    const { account } = serverAccountOn(h, { available: false })
-    const ann = h.user('Ann', undefined, random(32), { account })
-    const registers = countRegisters(h)
+    const ann = h.user('Ann')
     await ann.engine.sync()
-    await ann.engine.sync()
-    expect(registers()).toBe(1)
-    expect(h.fake.inboxAccounts.size).toBe(0)
-    expect(ann.store.getState().accountLinkedInboxId).toBeNull()
+    h.fake.inboxAccounts.delete(ann.inboxId)
+    await ann.engine.createInvite()
+    expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(accountIdOf(h, ann.seed))
+    expect(h.fake.invites.size).toBe(1)
   })
 
-  it('forgets an account the relay does not know, and links a fresh one', async () => {
+  it("opens a new session when the relay doesn't know its account", async () => {
     const h = setup()
-    const { account, forget, register } = serverAccountOn(h)
-    const ann = h.user('Ann', undefined, random(32), { account })
-    const stale = (await account.ensure(ann.seed))!.accountId
+    const ann = h.user('Ann')
+    const { accountId: stale } = await ann.sessions.ensure()
+    // The server's accounts were reset; the access token still names one.
     h.fake.accounts.clear()
     await ann.engine.sync()
-    expect(forget).toHaveBeenCalledTimes(1)
-    expect(register).toHaveBeenCalledTimes(2)
     const fresh = accountIdOf(h, ann.seed)
+    expect(fresh).toBeDefined()
     expect(fresh).not.toBe(stale)
     expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(fresh)
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
   })
 })
 
+describe('a session for every request', () => {
+  it('sends nothing to the relay from a device that can’t be verified', async () => {
+    const h = setup()
+    const ann = h.user('Ann')
+    ann.setAttestation('device')
+    const error = await ann.engine.sync().catch((e: unknown) => e)
+    expect(error).toEqual(
+      new RelayError('unverified', 0, 30 * 60 * 1000, 'device')
+    )
+    expect(buddiesErrorMessage(error)).toBe('buddies_errorUnverified')
+    await expect(ann.engine.createInvite()).rejects.toMatchObject({
+      code: 'unverified',
+    })
+    expect(h.fake.requests).toEqual([])
+    expect(ann.store.getState().registeredInboxId).toBeNull()
+  })
+
+  it('backs off automatic syncs while verifying waits, and starts once verified', async () => {
+    const h = setup()
+    const ann = h.user('Ann')
+    ann.setAttestation('temporary')
+    const error = await ann.engine.sync().catch((e: unknown) => e)
+    expect(buddiesErrorMessage(error)).toBe('buddies_errorVerifyLater')
+    expect(ann.engine.coolingDown()).toBe(true)
+    await expect(ann.engine.sync({ automatic: true })).resolves.toBe('skipped')
+
+    ann.setAttestation(null)
+    h.advance(60 * 1000)
+    await expect(ann.engine.sync({ automatic: true })).resolves.toBe('synced')
+    expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(accountIdOf(h, ann.seed))
+  })
+
+  it('refreshes an expired access token once and sends again', async () => {
+    const h = setup()
+    const ann = h.user('Ann')
+    await ann.engine.sync()
+    h.fake.expireAccessTokens()
+    const sent = countOps(h)
+    await expect(ann.engine.sync()).resolves.toBe('synced')
+    // Refused once for the token, then sent with the refreshed one.
+    expect(sent('inbox/sync')).toBe(2)
+    expect(h.fake.sessions.size).toBe(1)
+  })
+})
+
 describe('a suspended account', () => {
   it('stops syncing with a message, while buddies carry on', async () => {
     const h = setup()
-    const { account } = serverAccountOn(h)
-    const ann = h.user('Ann', undefined, random(32), { account })
-    const ben = h.user('Ben', undefined, random(32), { account })
+    const ann = h.user('Ann')
+    const ben = h.user('Ben')
     await pair(ann, ben)
 
     h.fake.accounts.get(accountIdOf(h, ann.seed)!)!.status = 'suspended'
@@ -148,9 +152,8 @@ describe('a suspended account', () => {
 
   it('still lets them remove a buddy', async () => {
     const h = setup()
-    const { account } = serverAccountOn(h)
-    const ann = h.user('Ann', undefined, random(32), { account })
-    const ben = h.user('Ben', undefined, random(32), { account })
+    const ann = h.user('Ann')
+    const ben = h.user('Ben')
     await pair(ann, ben)
     h.fake.accounts.get(accountIdOf(h, ann.seed)!)!.status = 'suspended'
     await ann.engine.removeBuddy(ben.inboxId)

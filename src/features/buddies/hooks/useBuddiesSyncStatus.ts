@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger'
+import { accountSessions } from '@/lib/serverAccount'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddiesSyncNotice } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -16,14 +17,22 @@ export default function useBuddiesSyncStatus() {
   const failure = useBuddiesSession((state) => state.failure)
   const relayDisabled = useBuddiesSession((state) => state.relayDisabled)
 
+  const notice = hasInbox
+    ? buddiesSyncNotice({ failure, relayDisabled }, lastSyncAt)
+    : null
+
   return {
-    notice: hasInbox
-      ? buddiesSyncNotice({ failure, relayDisabled }, lastSyncAt)
-      : null,
+    notice,
     syncing,
     firstLoad: hasInbox && lastSyncAt === 0 && syncing,
-    retry: () => {
-      void buddiesEngine
+    retry: async () => {
+      // The User asked: verify this device again now, without the session's
+      // wait after a failed attempt. A failure shows on the sync below.
+      if (notice === 'unverified' || notice === 'verifyLater')
+        await accountSessions
+          .ensure(undefined, { retry: true })
+          .catch(() => undefined)
+      await buddiesEngine
         .sync()
         .catch((error) => logger.warn('[buddies] retry sync', error))
     },

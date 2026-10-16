@@ -4,6 +4,7 @@ import { analytics } from '@/lib/analytics'
 import {
   type AccountKeyLoss,
   createAccountKeyService,
+  type OpenedAccountSession,
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
 import { serverAccount } from '@/lib/serverAccount'
@@ -54,9 +55,14 @@ export async function replaceAccountKey(
   {
     source,
     confirmedLoss = false,
-  }: { source: AccountKeyReplaceSource; confirmedLoss?: boolean }
+    session,
+  }: {
+    source: AccountKeyReplaceSource
+    confirmedLoss?: boolean
+    session?: OpenedAccountSession
+  }
 ): Promise<ReplaceAccountKeyResult> {
-  const result = await accountKey.replace(newKey, { confirmedLoss })
+  const result = await accountKey.replace(newKey, { confirmedLoss, session })
   if (result.outcome === 'replaced') {
     analytics.capture('account_key_replaced', {
       source,

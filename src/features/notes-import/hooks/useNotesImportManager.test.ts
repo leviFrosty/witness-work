@@ -12,7 +12,7 @@ type Snapshot = {
 
 type PendingRun = {
   args: {
-    onKickoff?: (run: { importId: string; subscribeToken: string }) => void
+    onKickoff?: (run: { importId: string }) => void
     onCredits?: (credits: Snapshot) => void
   }
   resolve: (value: unknown) => void

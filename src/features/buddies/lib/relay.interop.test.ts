@@ -1,64 +1,49 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
+import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
 import {
   BADGE_REACTION_PUSH_KIND,
   BUDDY_PUSH_KINDS,
   createBuddiesEngine,
 } from '@/features/buddies/lib/engine'
+import { concatBytes, toB64u, utf8 } from '@/features/buddies/lib/bytes'
+import { ed25519Sign, sha256 } from '@/features/buddies/lib/crypto'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
-import { createRelayClient } from '@/features/buddies/lib/relay'
+import {
+  createRelayClient,
+  type LiveSocket,
+  RelayError,
+} from '@/features/buddies/lib/relay'
 import type { BuddyStreak } from '@/features/buddies/lib/schemas'
 import {
   BuddiesState,
   initialBuddiesState,
   OutgoingShareSpec,
 } from '@/features/buddies/lib/state'
+import { ownerAuthFor } from '@/features/buddies/lib/testing/engineHarness'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { SharedBadge } from '@/types/badges'
-import { fetchAccountInfo, registerAccount } from '@/lib/serverAccount/client'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { fetchAccountInfo } from '@/lib/serverAccount/client'
 import {
-  type CachedServerAccount,
-  createServerAccount,
-} from '@/lib/serverAccount/serverAccount'
+  interopEnabled,
+  interopSessions,
+} from '@/lib/serverAccount/testing/interopSessions'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 /**
  * Opt-in contract check against a real relay, e.g.
- * `BUDDIES_RELAY_URL=http://localhost:8787 pnpm exec vitest run relay.interop`
- * with ww-api's `wrangler dev` running. Skipped by default.
+ * `BUDDIES_RELAY_URL=http://localhost:8787 ACCOUNTS_DEV_BYPASS=… pnpm exec
+ * vitest run relay.interop` with ww-api's `wrangler dev` running. Every relay
+ * call carries an account session, opened with the dev bypass
+ * (`interopSessions`), so it's skipped without both.
  */
 const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
-/** A server account (ADR 0024) on the same worker, remembered in memory. */
-function serverAccount() {
-  let cached: CachedServerAccount | null = null
-  return createServerAccount({
-    register: (key) =>
-      registerAccount({
-        baseUrl: relayUrl!,
-        key,
-        now: Date.now,
-        randomBytes: random,
-      }),
-    storage: {
-      get: () => cached,
-      set: (value) => {
-        cached = value
-      },
-    },
-    now: Date.now,
-  })
-}
-
-function user(
-  name: string,
-  badges?: SharedBadge[],
-  account?: ReturnType<typeof serverAccount>
-) {
+function user(name: string, badges?: SharedBadge[]) {
   const seed = random(32)
+  const sessions = interopSessions(random, seed)
   let shares: OutgoingShareSpec[] = []
   let streak: BuddyStreak | undefined
   /**
@@ -80,13 +65,22 @@ function user(
       }
     },
   }
+  const relay = createRelayClient({
+    baseUrl: relayUrl!,
+    randomBytes: random,
+    authorize: (run, { signal }) =>
+      sessions.withSession(run, { accountKey: seed, signal }),
+    // Node's WebSocket takes headers as React Native's does.
+    openSocket: (url, headers) =>
+      new WebSocket(url, { headers } as never) as unknown as LiveSocket,
+  })
   const engine = createBuddiesEngine({
-    relay: createRelayClient({ baseUrl: relayUrl!, randomBytes: random }),
+    relay,
     store,
     randomBytes: random,
     now: () => Date.now() + ahead,
     getRootSeed: async () => seed,
-    account,
+    account: { forget: sessions.forget },
     getProfile: () => ({ name, badges }),
     getShares: () => shares,
     getStreak: () => streak,
@@ -107,6 +101,8 @@ function user(
     engine,
     store,
     seed,
+    sessions,
+    relay,
     inboxId: deriveIdentity(seed).inboxId,
     setShares: (next: OutgoingShareSpec[]) => {
       shares = next
@@ -143,21 +139,97 @@ async function pair(inviter: ReturnType<typeof user>, invitee: typeof inviter) {
   await invitee.engine.sync()
 }
 
-describe.skipIf(!relayUrl)('buddies relay interop', () => {
-  it('links the inbox to a server account the worker registered', async () => {
-    const account = serverAccount()
-    const ann = user('Ann', undefined, account)
+describe.skipIf(!interopEnabled)('buddies relay interop', () => {
+  it('links the inbox to the account of its session', async () => {
+    const ann = user('Ann')
     await ann.engine.sync()
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
     const info = await fetchAccountInfo({
       baseUrl: relayUrl!,
-      key: deriveAccountSigningKey(ann.seed),
-      now: Date.now,
-      randomBytes: random,
+      authorize: (run) =>
+        ann.sessions.withSession(run, { accountKey: ann.seed }),
     })
     expect(info).toMatchObject({ status: 'active', inboxIds: [ann.inboxId] })
     await ann.engine.deleteEverything()
   })
+
+  it('links an inbox registered before sessions when an owner op says not_linked', async () => {
+    const ann = user('Ann')
+    // Registered the legacy way: an owner envelope and no token.
+    const me = deriveIdentity(ann.seed)
+    const payload = utf8(
+      JSON.stringify({
+        inboxId: me.inboxId,
+        ownerPub: me.ownerPub,
+        ts: Date.now(),
+        nonce: toB64u(random(16)),
+      })
+    )
+    const signature = ed25519Sign(
+      concatBytes(utf8('ww-buddies/v1\ninbox/register\n'), payload),
+      me.ownerSeed
+    )
+    const legacy = await fetch(`${relayUrl}/buddies/v1/inbox/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        payload: toB64u(payload),
+        signature: toB64u(signature),
+      }),
+    })
+    expect(legacy.status).toBe(200)
+    await expect(
+      ann.relay.syncInbox(ownerAuthFor(ann.seed), 0)
+    ).resolves.toMatchObject({ seq: 0 })
+    const info = await fetchAccountInfo({
+      baseUrl: relayUrl!,
+      authorize: (run) =>
+        ann.sessions.withSession(run, { accountKey: ann.seed }),
+    })
+    expect(info.inboxIds).toEqual([ann.inboxId])
+
+    // Another account's session can't use the inbox, owner key or not.
+    const ben = user('Ben')
+    await expect(
+      ben.relay.syncInbox(ownerAuthFor(ann.seed), 0)
+    ).rejects.toEqual(new RelayError('forbidden', 403))
+    await ann.engine.deleteEverything()
+  })
+
+  it('stores and reads a shared photo, and opens the live signal', async () => {
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+
+    const data = random(2048)
+    const token = random(32)
+    const blobId = toB64u(sha256(data))
+    await expect(
+      mom.relay.putBlob(ownerAuthFor(mom.seed), {
+        blobId,
+        data,
+        expiresAt: Date.now() + 86_400_000,
+        readTokenHash: toB64u(sha256(token)),
+      })
+    ).resolves.toMatchObject({ ok: true })
+    const read = await anna.relay.getBlob({
+      inboxId: mom.inboxId,
+      blobId,
+      token: toB64u(token),
+    })
+    expect(toB64u(read)).toBe(toB64u(data))
+
+    const socket = await mom.relay.openLive(ownerAuthFor(mom.seed))
+    const hello = await new Promise<unknown>((resolve, reject) => {
+      socket.onmessage = (event) => resolve(JSON.parse(String(event.data)))
+      socket.onerror = () => reject(new Error('live socket refused'))
+    })
+    socket.close(1000)
+    expect(hello).toMatchObject({ type: 'hello' })
+
+    await mom.engine.deleteEverything()
+    await anna.engine.deleteEverything()
+  }, 30_000)
 
   it('pairs, exchanges cards, and ends the connection', async () => {
     const mom = user('Mom')
@@ -220,7 +292,8 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
       endsAt: Date.now() + 2 * 86_400_000,
       expiresAt: Date.now() + 3 * 86_400_000,
       details: {
-        d: '2026-09-26',
+        // Tomorrow: an ended Plan can't be answered.
+        d: moment().add(1, 'day').format('YYYY-MM-DD'),
         s: 600,
         m: 120,
         title: 'Cart witnessing',

@@ -2,13 +2,18 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { BuddiesAvailability } from '@/features/buddies/lib/availability'
+import type { AttestationSupport } from '@/lib/attestation'
 
 const runtime = vi.hoisted(() => ({
   availability: 'hidden' as BuddiesAvailability,
+  support: null as AttestationSupport | null,
 }))
 
 vi.mock('@/features/buddies/hooks/useBuddiesAvailability', () => ({
   default: () => runtime.availability,
+}))
+vi.mock('@/features/settings/hooks/useAttestationSupport', () => ({
+  default: () => runtime.support,
 }))
 
 import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
@@ -34,6 +39,7 @@ afterEach(() => {
   act(() => renderer?.unmount())
   renderer = undefined
   runtime.availability = 'hidden'
+  runtime.support = null
 })
 
 describe('useOnboardingBuddiesAvailable', () => {
@@ -49,6 +55,15 @@ describe('useOnboardingBuddiesAvailable', () => {
     runtime.availability = 'loading'
     expect(await render(false)).toBe(true)
     runtime.availability = 'disabled'
+    expect(await render(false)).toBe(true)
+  })
+
+  it('leaves the step out on a device that can never be verified', async () => {
+    runtime.availability = 'enabled'
+    runtime.support = 'unsupported'
+    expect(await render(false)).toBe(false)
+    // Still checking, or unsure: Buddies says so if it can't verify later.
+    runtime.support = 'unknown'
     expect(await render(false)).toBe(true)
   })
 

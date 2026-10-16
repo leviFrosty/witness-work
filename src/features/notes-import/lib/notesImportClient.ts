@@ -1,18 +1,16 @@
 import { fetch as expoFetch } from 'expo/fetch'
 import apis from '@/constants/apis'
-import { HttpError, request } from '@/lib/http/request'
+import { HttpError, type RequestOptions } from '@/lib/http/request'
+import { kindForStatus } from '@/lib/http/networkError'
 import { perf } from '@/lib/perf'
+import { type AttestationSupport, deviceAttestation } from '@/lib/attestation'
+import { attestationTransport } from '@/lib/attestation/transport'
+import { accountSessions } from '@/lib/serverAccount'
 import {
-  NotesImportAppAttestError,
-  NotesImportAppAttestHttpError,
-  type NotesImportAppAttestErrorCode,
-} from '@/features/notes-import/lib/notesImportAppAttest'
-import { notesImportAuth } from '@/features/notes-import/lib/notesImportAuthRuntime'
-import {
-  notesImportTransport,
-  toNotesImportHttpError,
-} from '@/features/notes-import/lib/notesImportTransport'
-import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
+  AccountSessionError,
+  type AttestationProblem,
+} from '@/lib/serverAccount/session'
+import { notesImportRevenueCatAppUserId } from '@/features/notes-import/lib/revenueCatAppUserId'
 import type {
   NotesImportContext,
   NotesImportResult,
@@ -25,21 +23,24 @@ import {
 } from '@/features/notes-import/lib/notesImportUsage'
 
 /**
- * Notes Import network client. Delegates authenticated kickoff/legacy posts,
- * identity injection, App Attest lifecycle, recovery, and dev bypass to the
- * deep Notes Import App Attest module. This file owns model-response
- * normalization and the kickoff → SSE/result lifecycle only.
+ * Notes Import network client. Every call but the public status probe goes
+ * through this device's attested account session (ADR 0027): it carries
+ * `Authorization: Bearer`, ww-api meters the session's account, and the
+ * session's own attestation stands in for attesting each import. The session
+ * client opens, refreshes and reopens the session, refreshes once on a 401, and
+ * shows Update Required on a 426. This file owns the request bodies,
+ * model-response normalization and the kickoff → SSE/result lifecycle.
  *
  * Two model paths exist:
  *
- * - {@link runNotesImportStreaming} (preferred): an attested kickoff returns an
- *   import id + a short-lived subscribe token; progress then streams over SSE
- *   (via `expo/fetch`) so the user sees the model working instead of a dead
- *   spinner. The run lives server-side in a Durable Object, so a dropped or
- *   backgrounded connection resumes losslessly (replay by `Last-Event-ID`, with
- *   a result-snapshot fallback).
- * - {@link requestNotesImport} (legacy): one blocking request/response. Kept as a
- *   fallback during the streaming cutover.
+ * - {@link runNotesImportStreaming} (preferred): kickoff returns an import id;
+ *   progress then streams over SSE (via `expo/fetch`) so the user sees the
+ *   model working instead of a dead spinner. The run lives server-side in a
+ *   Durable Object, so a dropped or backgrounded connection resumes losslessly
+ *   (replay by `Last-Event-ID`, with a result-snapshot fallback). Only the
+ *   account that kicked a run off can read or delete it.
+ * - {@link requestNotesImport}: one blocking request/response, the synchronous
+ *   fallback.
  */
 
 export type { NotesImportCredits } from '@/features/notes-import/lib/notesImportUsage'
@@ -78,27 +79,38 @@ export type NotesImportErrorCode =
   | 'limit_reached'
   | 'refinement_limit'
   | 'too_large'
-  | 'attestation_required'
+  /** This device's session couldn't be opened: verification didn't pass. */
   | 'attestation_failed'
   /**
-   * Device verification couldn't run right now (the attestation service, our
-   * server's verifier, or secure storage had trouble). Temporary: retry later.
-   * Distinct from `attestation_failed` / `device_ineligible`.
+   * Device verification couldn't run right now (Apple, Google, or ww-api's
+   * verifier had trouble). Temporary: retry later. Distinct from
+   * `attestation_failed` / `device_ineligible`.
    */
   | 'attestation_unavailable'
   | 'model_error'
   | 'bad_request'
   | 'active_cap'
-  /** Import from Paper: this identity read its page allowance for today. */
+  /** Import from Paper: this account read its page allowance for today. */
   | 'transcribe_limit'
   | 'unavailable'
   | 'network'
   | 'cancelled'
   | 'unknown'
-  /** Android: Play Integrity says this device or app build can't be verified. */
+  /**
+   * This device or app build can never be verified (a simulator, App Attest
+   * unsupported, Android without Google Play, or ww-api found it isn't
+   * genuine), so it can't have the account session Notes Import needs.
+   */
   | 'device_ineligible'
-  /** Android: Play Store / Play services are missing or need an update. */
-  | 'play_services_required'
+  /** Ww-api suspended this account: no new imports or page reads. */
+  | 'suspended'
+  /** Ww-api answered 426: this app version is too old. */
+  | 'upgrade_required'
+  /**
+   * A run route found no import this account may read: deleted, past its
+   * retention, or another account's.
+   */
+  | 'not_found'
 
 /**
  * A typed failure the hook can branch on (e.g. show the paywall on
@@ -115,7 +127,7 @@ export class NotesImportClientError extends Error {
   debug?: string
   /** Authoritative usage attached to an allowance denial, when valid. */
   credits?: NotesImportCredits
-  /** Stable App Attest semantic metadata, when supplied by the backend. */
+  /** The server's stable reason (a refused attestation), when it gave one. */
   reason?: string
   action?: string
   /** How long the server asked to wait (`active_cap`, outages), when it said. */
@@ -160,14 +172,15 @@ export class NotesImportStatusContractError extends Error {
 }
 
 /**
- * Cheap, unauthenticated availability probe (no App Attest, no inference).
- * Throws the transport's {@link NotesImportAppAttestHttpError} on a network or
- * HTTP failure (classify it with `classifyNetworkError`), or
- * {@link NotesImportStatusContractError} on a malformed body.
+ * Cheap, public availability probe (no session, no inference). Shared with App
+ * Attest's protocol negotiation and Play Integrity's project lookup. Throws the
+ * transport's `AttestationHttpError` on a network or HTTP failure (classify it
+ * with `classifyNetworkError`), or {@link NotesImportStatusContractError} on a
+ * malformed body.
  */
 export const fetchNotesImportStatus = async (): Promise<NotesImportStatus> => {
   const status = normalizeNotesImportStatus(
-    await notesImportTransport.getStatus()
+    await attestationTransport.getStatus()
   )
   if (!status) throw new NotesImportStatusContractError()
   return status
@@ -178,6 +191,25 @@ export const getNotesImportStatus =
   async (): Promise<NotesImportStatus | null> =>
     fetchNotesImportStatus().catch(() => null)
 
+let deviceSupport: Promise<AttestationSupport> | null = null
+
+/**
+ * Whether this device is already known to fail verification, so Notes Import
+ * can say so before the User writes anything: it can't attest at all (checked
+ * once per launch), or its last session open was refused for the device and is
+ * still holding off. Never opens a session or creates an account key.
+ */
+export const notesImportDeviceUnverified = async (): Promise<boolean> => {
+  if (accountSessions.lastOpenFailure()?.attestation === 'device') return true
+  const pending = (deviceSupport ??= deviceAttestation
+    .checkSupport()
+    .catch((): AttestationSupport => 'unknown'))
+  const support = await pending
+  // Unknown (offline, Play unreachable) is asked again next time.
+  if (support === 'unknown' && deviceSupport === pending) deviceSupport = null
+  return support === 'unsupported'
+}
+
 export interface RequestNotesImportArgs {
   notesText: string
   context: NotesImportContext
@@ -185,11 +217,22 @@ export interface RequestNotesImportArgs {
   refinement?: { previousResultJSON: string; instruction: string }
 }
 
+/**
+ * Per-route budgets. Only the synchronous fallback waits for the model, and
+ * transcribe for the vision model to read one page; kickoff returns quickly, so
+ * a stalled connection there fails in seconds. Opening the session, when it has
+ * to, happens before these start.
+ */
+const KICKOFF_TIMEOUT_MS = 15_000
+const SYNC_TIMEOUT_MS = 90_000
+const TRANSCRIBE_TIMEOUT_MS = 60_000
+const RESULT_TIMEOUT_MS = 15_000
+const DESTROY_TIMEOUT_MS = 10_000
+
 const NOTES_IMPORT_ERROR_CODES = new Set<NotesImportErrorCode>([
   'limit_reached',
   'refinement_limit',
   'too_large',
-  'attestation_required',
   'attestation_failed',
   'model_error',
   'bad_request',
@@ -199,6 +242,9 @@ const NOTES_IMPORT_ERROR_CODES = new Set<NotesImportErrorCode>([
   'network',
   'cancelled',
   'unknown',
+  'suspended',
+  'upgrade_required',
+  'not_found',
 ])
 
 const isNotesImportErrorCode = (
@@ -210,138 +256,174 @@ const isNotesImportErrorCode = (
 const developerDebug = (value: string): string | undefined =>
   typeof __DEV__ !== 'undefined' && __DEV__ ? value : undefined
 
-/**
- * Authorization codes that mean verification couldn't run right now, not that
- * this device failed it: Apple's or Google's attestation service is down, our
- * verifier or its storage is, the capability probe failed, or the device's
- * secure storage was briefly unreadable.
- */
-const TEMPORARY_AUTH_CODES = new Set<NotesImportAppAttestErrorCode>([
-  'serverUnavailable',
-  'protocolUnavailable',
-  'storageFailure',
-])
-
-const authErrorCode = (
-  code: NotesImportAppAttestErrorCode
-): NotesImportErrorCode => {
-  if (code === 'cancelled') return 'cancelled'
-  if (code === 'network') return 'network'
-  if (code === 'deviceIneligible') return 'device_ineligible'
-  if (code === 'playServicesUnavailable') return 'play_services_required'
-  if (TEMPORARY_AUTH_CODES.has(code)) return 'attestation_unavailable'
-  return 'attestation_failed'
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 /**
  * A 429 or 5xx whose code this build doesn't know (`server_error`, the per-IP
- * `rate_limited`, a proxy's bare 502): the service is busy, not the app
- * broken.
+ * `rate_limited`, sessions `disabled`, a proxy's bare 502): the service is
+ * busy, not the app broken.
  */
-const isTemporaryHttpFailure = (status: number | undefined) =>
-  status === 429 || (status !== undefined && status >= 500)
+const isTemporaryHttpFailure = (status: number | null | undefined) =>
+  status === 429 || (status != null && status >= 500)
+
+const cancelledError = () =>
+  new NotesImportClientError('cancelled', 'Import cancelled')
+
+const networkError = () =>
+  new NotesImportClientError('network', 'Network error')
+
+/** What a session that couldn't be opened means for an import. */
+const ATTESTATION_CODES: Record<AttestationProblem, NotesImportErrorCode> = {
+  device: 'device_ineligible',
+  temporary: 'attestation_unavailable',
+  failed: 'attestation_failed',
+}
+
+/** A session that couldn't be opened or used (`AccountSessionError`). */
+const fromSessionError = (e: AccountSessionError): NotesImportClientError => {
+  const debug = developerDebug(`session=${e.failure}`)
+  const status = e.status ?? undefined
+  switch (e.failure) {
+    case 'cancelled':
+      return cancelledError()
+    case 'offline':
+      return networkError()
+    case 'attestation': {
+      const code = ATTESTATION_CODES[e.attestation ?? 'failed']
+      return new NotesImportClientError(
+        code,
+        code === 'attestation_unavailable'
+          ? 'Device verification unavailable'
+          : 'Device verification failed',
+        status,
+        debug,
+        undefined,
+        e.reason ?? undefined
+      )
+    }
+    case 'upgrade':
+      return new NotesImportClientError(
+        'upgrade_required',
+        'Update required',
+        status,
+        debug
+      )
+    case 'unavailable':
+    case 'rateLimited': {
+      const error = new NotesImportClientError(
+        'unavailable',
+        'Notes Import request failed',
+        status,
+        debug
+      )
+      if (e.retryAfterMs !== null) error.retryAfterMs = e.retryAfterMs
+      return error
+    }
+    case 'server':
+      return new NotesImportClientError(
+        isTemporaryHttpFailure(e.status) ? 'unavailable' : 'unknown',
+        'Notes Import request failed',
+        status,
+        debug
+      )
+  }
+}
+
+/**
+ * A Notes Import route's own refusal. ww-api's bodies carry the stable code in
+ * `code` (`error` is human text), plus `credits` on allowance denials and
+ * `retryAfter` (seconds) when it says when to come back.
+ */
+const fromHttpError = (e: HttpError): NotesImportClientError => {
+  if (e.kind === 'cancelled') return cancelledError()
+  // No response: offline, refused, or the timeout fired.
+  if (e.status === null) return networkError()
+  const body = isRecord(e.body) ? e.body : null
+  // The stream's refusals have no body to read; their code is the error's own.
+  const serverCode = typeof body?.code === 'string' ? body.code : e.serverCode
+  const code: NotesImportErrorCode = isNotesImportErrorCode(serverCode)
+    ? serverCode
+    : // The token was refused even after a refresh: this session won't do.
+      e.status === 401
+      ? 'attestation_failed'
+      : isTemporaryHttpFailure(e.status)
+        ? 'unavailable'
+        : 'unknown'
+  const error = new NotesImportClientError(
+    code,
+    'Notes Import request failed',
+    e.status,
+    developerDebug(
+      `status=${e.status}${serverCode ? ` server=${serverCode}` : ''}`
+    ),
+    normalizeNotesImportCredits(body?.credits) ?? undefined,
+    typeof body?.reason === 'string' ? body.reason : undefined,
+    typeof body?.action === 'string' ? body.action : undefined
+  )
+  const bodyRetryAfter =
+    typeof body?.retryAfter === 'number' ? body.retryAfter * 1000 : null
+  const retryAfterMs = e.retryAfterMs ?? bodyRetryAfter
+  if (retryAfterMs !== null) error.retryAfterMs = retryAfterMs
+  return error
+}
 
 const toClientError = (e: unknown): NotesImportClientError => {
   if (e instanceof NotesImportClientError) return e
-  if (e instanceof HttpError) return toClientError(toNotesImportHttpError(e))
-  if (e instanceof NotesImportAppAttestError) {
-    const code = authErrorCode(e.code)
-    const message =
-      code === 'cancelled'
-        ? 'Import cancelled'
-        : code === 'network'
-          ? 'Network error'
-          : code === 'attestation_unavailable'
-            ? 'Device verification unavailable'
-            : 'Device verification failed'
-    return new NotesImportClientError(
-      code,
-      message,
-      e.status,
-      developerDebug(`auth=${e.code}`),
-      undefined,
-      e.reason,
-      e.action
-    )
-  }
-  if (e instanceof NotesImportAppAttestHttpError) {
-    const code = isNotesImportErrorCode(e.serverCode)
-      ? e.serverCode
-      : e.kind === 'cancelled'
-        ? 'cancelled'
-        : e.kind === 'network'
-          ? 'network'
-          : isTemporaryHttpFailure(e.status)
-            ? 'unavailable'
-            : 'unknown'
-    const message =
-      code === 'cancelled'
-        ? 'Import cancelled'
-        : code === 'network'
-          ? 'Network error'
-          : 'Notes Import request failed'
-    const error = new NotesImportClientError(
-      code,
-      message,
-      e.status,
-      e.serverCode ? developerDebug(`server=${e.serverCode}`) : undefined,
-      normalizeNotesImportCredits(e.credits) ?? undefined,
-      e.reason,
-      e.action
-    )
-    if (e.retryAfterMs !== undefined) error.retryAfterMs = e.retryAfterMs
-    return error
-  }
-  if (e instanceof Error && e.name === 'AbortError') {
-    return new NotesImportClientError('cancelled', 'Import cancelled')
-  }
+  // An HttpError too, so first.
+  if (e instanceof AccountSessionError) return fromSessionError(e)
+  if (e instanceof HttpError) return fromHttpError(e)
+  if (e instanceof Error && e.name === 'AbortError') return cancelledError()
   return new NotesImportClientError(
     'unknown',
     e instanceof Error ? e.message : 'Unknown error'
   )
 }
 
-/**
- * The single caller seam for protected model posts. The deep module injects
- * both identities and owns protocol negotiation, FIFO authorization, and every
- * key lifecycle transition.
- */
-const postAttested = <T>(
-  endpoint: 'kickoff' | 'legacy' | 'transcribe',
-  payload: Record<string, unknown>,
-  contentHash: string,
-  signal?: AbortSignal
-): Promise<T> =>
-  notesImportAuth.post<T>({
-    endpoint,
-    payload,
-    contentHash,
-    signal,
-  })
-
-/**
- * Runs a Notes Import (or a follow-up refinement) end to end via the LEGACY
- * blocking path: identity, App Attest (or dev bypass), and the metered model
- * call in one request/response. Throws {@link NotesImportClientError} with a
- * branchable `code` on failure.
- */
-export const requestNotesImport = async ({
-  notesText,
-  context,
-  refinement,
-}: RequestNotesImportArgs): Promise<NotesImportResponse> => {
-  const contentHash = await notesContentHash(notesText)
+/** A bearer request as this device's account session. */
+const sessionRequest = async <T>(options: RequestOptions): Promise<T> => {
   try {
-    const response = await postAttested<NotesImportWireResponse>(
-      'legacy',
-      { notesText, context, refinement },
-      contentHash
-    )
-    return normalizeNotesImportResponse(response)
+    return (await accountSessions.request<T>(options)).data
   } catch (e) {
     throw toClientError(e)
   }
 }
+
+/**
+ * Kickoff's and the synchronous fallback's body. No identity, hashes or
+ * attestation: the session's account is the meter, and the session attested
+ * when it opened.
+ */
+const modelRequestBody = ({
+  notesText,
+  context,
+  refinement,
+}: RequestNotesImportArgs) => {
+  const revenueCatAppUserId = notesImportRevenueCatAppUserId()
+  return {
+    notesText,
+    context,
+    ...(refinement && { refinement }),
+    ...(revenueCatAppUserId && { revenueCatAppUserId }),
+  }
+}
+
+/**
+ * Runs a Notes Import (or a follow-up refinement) end to end over the
+ * synchronous fallback: the metered model call in one request/response. Throws
+ * {@link NotesImportClientError} with a branchable `code` on failure.
+ */
+export const requestNotesImport = async (
+  args: RequestNotesImportArgs
+): Promise<NotesImportResponse> =>
+  normalizeNotesImportResponse(
+    await sessionRequest<NotesImportWireResponse>({
+      url: apis.notesImport,
+      method: 'POST',
+      json: modelRequestBody(args),
+      timeoutMs: SYNC_TIMEOUT_MS,
+    })
+  )
 
 // --- Import from Paper (page transcription) ----------------------------
 
@@ -359,8 +441,7 @@ export interface TranscribedNotesPage {
 }
 
 /**
- * Reads one page photo into plain text (ADR 0025). Attested like kickoff; the
- * content hash is the SHA-256 of the base64 string the server receives. No
+ * Reads one page photo into plain text (ADR 0025), as the session's account. No
  * credit is spent here: the text goes into the composer for review and is
  * imported through the normal kickoff. Throws {@link NotesImportClientError}.
  */
@@ -369,27 +450,22 @@ export const transcribeNotesPage = async ({
   mimeType,
   signal,
 }: TranscribeNotesPageArgs): Promise<TranscribedNotesPage> => {
-  const contentHash = await notesContentHash(image)
-  let response: unknown
-  try {
-    response = await postAttested<unknown>(
-      'transcribe',
-      { image, mimeType },
-      contentHash,
-      signal
-    )
-  } catch (e) {
-    throw toClientError(e)
-  }
-  if (
-    typeof response !== 'object' ||
-    response === null ||
-    typeof (response as { text?: unknown }).text !== 'string'
-  ) {
+  const revenueCatAppUserId = notesImportRevenueCatAppUserId()
+  const response = await sessionRequest<unknown>({
+    url: apis.notesImportTranscribe,
+    method: 'POST',
+    json: {
+      image,
+      mimeType,
+      ...(revenueCatAppUserId && { revenueCatAppUserId }),
+    },
+    timeoutMs: TRANSCRIBE_TIMEOUT_MS,
+    signal,
+  })
+  if (!isRecord(response) || typeof response.text !== 'string') {
     throw new NotesImportClientError('unknown', 'Malformed transcription')
   }
-  const { text, truncated } = response as { text: string; truncated?: unknown }
-  return { text, truncated: truncated === true }
+  return { text: response.text, truncated: response.truncated === true }
 }
 
 // --- Streaming import (kickoff → SSE) ----------------------------------
@@ -427,7 +503,6 @@ type ImportStreamWireEvent =
 
 interface NotesImportKickoffResponse {
   importId: string
-  subscribeToken: string
   refinement: boolean
   /** Required current usage snapshot; validated before reaching the manager. */
   credits: unknown
@@ -454,26 +529,24 @@ type StreamOutcome =
     }
   | { kind: 'closed' }
 
-/** Attested kickoff: gate inference, reserve a concurrency slot, return ids. */
+/** Kickoff: gate inference, reserve a concurrency slot, return the run's id. */
 const kickoffNotesImport = async ({
-  notesText,
-  context,
-  refinement,
   signal,
+  ...args
 }: RequestNotesImportArgs & {
   signal?: AbortSignal
 }): Promise<NotesImportKickoffResponse> => {
-  const contentHash = await notesContentHash(notesText)
-  try {
-    return await postAttested<NotesImportKickoffResponse>(
-      'kickoff',
-      { notesText, context, refinement },
-      contentHash,
-      signal
-    )
-  } catch (e) {
-    throw toClientError(e)
+  const response = await sessionRequest<unknown>({
+    url: apis.notesImportKickoff,
+    method: 'POST',
+    json: modelRequestBody(args),
+    timeoutMs: KICKOFF_TIMEOUT_MS,
+    signal,
+  })
+  if (!isRecord(response) || typeof response.importId !== 'string') {
+    throw new NotesImportClientError('unknown', 'Malformed kickoff')
   }
+  return response as unknown as NotesImportKickoffResponse
 }
 
 /**
@@ -508,30 +581,35 @@ class StreamIdleError extends Error {
   }
 }
 
+/** The stream's answers that reconnecting can't fix. */
+const STREAM_REFUSALS: Record<number, string> = {
+  /** The session handles this one: refresh once and reconnect. */
+  401: 'unauthorized',
+  404: 'not_found',
+  426: 'upgrade_required',
+}
+
 /**
- * Open the SSE stream and pump events until a terminal one or the connection
- * closes. Returns the outcome; throws if the AbortSignal fires or the
- * connection errors. Uses `expo/fetch` because React Native's built-in fetch
- * can't read a streaming body and has no EventSource.
+ * Open the SSE stream with the session's `authorization` and pump events until
+ * a terminal one or the connection closes. Returns the outcome; throws if the
+ * AbortSignal fires or the connection errors, and an `HttpError` for a 401, 404
+ * or 426, which reconnecting can't fix (the session refreshes on the 401). Uses
+ * `expo/fetch` because React Native's built-in fetch can't read a streaming
+ * body and has no EventSource.
  *
  * An idle watchdog ({@link SSE_IDLE_TIMEOUT_MS}, reset by every chunk,
  * heartbeats included) aborts a stalled connection and returns `closed`, so the
  * caller falls through to its snapshot-and-reconnect path.
- *
- * Exported so the resume path can re-enter a live run by its persisted
- * `subscribeToken` without a fresh kickoff.
  */
 export const consumeStream = async (
   importId: string,
-  subscribeToken: string,
+  authorization: string,
   lastEventId: string,
   onEvent: (ev: ImportStreamEvent) => void,
   onCursor: (id: string) => void,
   signal?: AbortSignal
 ): Promise<StreamOutcome> => {
-  const params = new URLSearchParams({ token: subscribeToken })
   const resuming = lastEventId && lastEventId !== '0'
-  if (resuming) params.set('lastEventId', lastEventId)
 
   // Our own controller, so the watchdog can drop the connection without
   // touching the caller's signal. Hermes may lack AbortSignal.any.
@@ -559,22 +637,20 @@ export const consumeStream = async (
   try {
     armIdle()
     const res = await Promise.race([
-      expoFetch(`${apis.notesImportEvents(importId)}?${params.toString()}`, {
+      expoFetch(apis.notesImportEvents(importId), {
         method: 'GET',
         headers: {
           Accept: 'text/event-stream',
+          Authorization: authorization,
           ...(resuming ? { 'Last-Event-ID': lastEventId } : {}),
         },
         signal: controller.signal,
       }),
       idle,
     ])
-    if (res.status === 401) {
-      return {
-        kind: 'error',
-        code: 'attestation_required',
-        message: 'Stream token expired',
-      }
+    const refusal = STREAM_REFUSALS[res.status]
+    if (refusal) {
+      throw new HttpError(kindForStatus(res.status), res.status, refusal)
     }
     if (!res.ok || !res.body) return { kind: 'closed' }
 
@@ -649,14 +725,11 @@ export const consumeStream = async (
 /** Final-result snapshot for reconnect after the stream closed. */
 export const fetchNotesImportResult = async (
   importId: string,
-  subscribeToken: string,
   signal?: AbortSignal
 ): Promise<ResultSnapshot> => {
-  const { data } = await request<WireResultSnapshot>({
-    url: `${apis.notesImportResult(importId)}?token=${encodeURIComponent(
-      subscribeToken
-    )}`,
-    timeoutMs: 15_000,
+  const data = await sessionRequest<WireResultSnapshot>({
+    url: apis.notesImportResult(importId),
+    timeoutMs: RESULT_TIMEOUT_MS,
     signal,
   })
   return {
@@ -674,31 +747,29 @@ export const fetchNotesImportResult = async (
   }
 }
 
-/** The live run handle the client persists ("activeRun") while Working. */
+/**
+ * The live run handle the client persists ("activeRun") while Working. The
+ * session's token authorizes it; there's no per-run secret.
+ */
 export interface NotesImportRunHandle {
   importId: string
-  subscribeToken: string
 }
 
 /**
  * Forget a run entirely, server-side: aborts any in-flight model call AND wipes
  * its Durable Object immediately (rather than letting it self-evict after the
- * retention window), freeing the user's concurrency slot. Authorized by the
- * same `?token=` capability as cancel/result (destroy can't spend inference, so
- * it needs no App Attest). Best-effort and fire-and-forget: a failed destroy
- * just falls back to the DO self-evicting. Backs the history view's per-row
- * delete.
+ * retention window), freeing the account's concurrency slot. Best-effort and
+ * fire-and-forget: a failed destroy just falls back to the DO self-evicting,
+ * and a 404 means it's already gone. Backs the history view's per-row delete.
  */
 export const destroyNotesImport = async (
   run: NotesImportRunHandle
 ): Promise<void> => {
   try {
-    await request({
-      url: `${apis.notesImportDestroy(run.importId)}?token=${encodeURIComponent(
-        run.subscribeToken
-      )}`,
+    await accountSessions.request({
+      url: apis.notesImportDestroy(run.importId),
       method: 'POST',
-      timeoutMs: 10_000,
+      timeoutMs: DESTROY_TIMEOUT_MS,
       responseType: 'none',
     })
   } catch {
@@ -726,41 +797,58 @@ export interface RunStreamingArgs extends RequestNotesImportArgs {
 }
 
 /**
+ * Failures reconnecting can't fix: the session couldn't be had (this device
+ * can't be verified, accounts are off, the app is too old), or the run isn't
+ * this account's to read (404). Offline and a busy server reconnect instead.
+ */
+const endsStream = (e: unknown): boolean => {
+  if (e instanceof AccountSessionError)
+    return (
+      e.failure === 'attestation' ||
+      e.failure === 'upgrade' ||
+      e.failure === 'unavailable'
+    )
+  return e instanceof HttpError && (e.status === 401 || e.status === 404)
+}
+
+/**
  * Subscribe to a run's SSE stream and resolve with its final result, surviving
  * a dropped/backgrounded connection: resume from the last event id, fall back
- * to a result snapshot, then a bounded reconnect. Throws
- * {@link NotesImportClientError} — notably `attestation_required` when the
- * subscribe token has expired (~1h), which the resume path treats as
- * "re-kickoff". Does NOT kick off; the run must already exist (`importId` +
- * `subscribeToken`).
+ * to a result snapshot, then a bounded reconnect. Each connection takes the
+ * session's current token (a fresh one once it's near expiry, and after a 401
+ * one refresh and a second try), so a run outlives any one token. Throws
+ * {@link NotesImportClientError} — notably `not_found` when the run is gone or
+ * isn't this account's, which the resume path treats as "re-kickoff". Does NOT
+ * kick off; the run must already exist.
  */
 const streamRunToCompletion = async (
-  run: NotesImportRunHandle,
+  { importId }: NotesImportRunHandle,
   onEvent?: (ev: ImportStreamEvent) => void,
   signal?: AbortSignal
 ): Promise<NotesImportResponse> => {
-  const { importId, subscribeToken } = run
   let lastEventId = '0'
   let attempts = 0
   for (;;) {
-    if (signal?.aborted) {
-      throw new NotesImportClientError('cancelled', 'Import cancelled')
-    }
+    if (signal?.aborted) throw cancelledError()
     const cursorBefore = lastEventId
     let outcome: StreamOutcome
     try {
-      outcome = await consumeStream(
-        importId,
-        subscribeToken,
-        lastEventId,
-        (ev) => onEvent?.(ev),
-        (id) => {
-          lastEventId = id
-        },
-        signal
+      outcome = await accountSessions.withSession(
+        (authorization) =>
+          consumeStream(
+            importId,
+            authorization,
+            lastEventId,
+            (ev) => onEvent?.(ev),
+            (id) => {
+              lastEventId = id
+            },
+            signal
+          ),
+        { signal }
       )
     } catch (e) {
-      if (signal?.aborted) throw toClientError(e)
+      if (signal?.aborted || endsStream(e)) throw toClientError(e)
       outcome = { kind: 'closed' }
     }
 
@@ -782,15 +870,15 @@ const streamRunToCompletion = async (
 
     // Stream dropped without a terminal event (e.g. iOS backgrounding). Prefer
     // a result snapshot; otherwise reconnect from the last seen event id.
-    const snap = await fetchNotesImportResult(
-      importId,
-      subscribeToken,
-      signal
-    ).catch(() => null)
-    // A cancel/stop during the snapshot fetch must not resolve as a success.
-    if (signal?.aborted) {
-      throw new NotesImportClientError('cancelled', 'Import cancelled')
+    let snap: ResultSnapshot | null = null
+    try {
+      snap = await fetchNotesImportResult(importId, signal)
+    } catch (e) {
+      const code = e instanceof NotesImportClientError ? e.code : 'unknown'
+      if (!signal?.aborted && isFinalSnapshotFailure(code)) throw e
     }
+    // A cancel/stop during the snapshot fetch must not resolve as a success.
+    if (signal?.aborted) throw cancelledError()
     if (snap?.status === 'done' && snap.payload) return snap.payload
     if (snap?.status === 'error' && snap.error) {
       throw new NotesImportClientError(
@@ -811,11 +899,19 @@ const streamRunToCompletion = async (
   }
 }
 
+/** A snapshot failure that reconnecting can't fix (see `endsStream`). */
+const isFinalSnapshotFailure = (code: NotesImportErrorCode): boolean =>
+  code === 'not_found' ||
+  code === 'device_ineligible' ||
+  code === 'attestation_failed' ||
+  code === 'attestation_unavailable' ||
+  code === 'upgrade_required'
+
 /**
- * Runs a Notes Import (or refinement) over the streaming path: attested
- * kickoff, then subscribe to the SSE progress stream, surfacing every event via
- * `onEvent` and resolving with the final result. The new run handle is surfaced
- * via `onKickoff` so the caller can persist it for resume. Throws
+ * Runs a Notes Import (or refinement) over the streaming path: kickoff, then
+ * subscribe to the SSE progress stream, surfacing every event via `onEvent` and
+ * resolving with the final result. The new run handle is surfaced via
+ * `onKickoff` so the caller can persist it for resume. Throws
  * {@link NotesImportClientError}.
  */
 export const runNotesImportStreaming = async ({
@@ -827,19 +923,19 @@ export const runNotesImportStreaming = async ({
   onCredits,
   signal,
 }: RunStreamingArgs): Promise<NotesImportResponse> => {
-  const { importId, subscribeToken, credits } = await kickoffNotesImport({
+  const { importId, credits } = await kickoffNotesImport({
     notesText,
     context,
     refinement,
     signal,
   })
-  onKickoff?.({ importId, subscribeToken })
+  onKickoff?.({ importId })
   // Surface the usage snapshot up front so the meter populates at run start.
   const kickoffCredits = normalizeNotesImportCredits(credits)
   if (kickoffCredits) onCredits?.(kickoffCredits)
   onEvent?.({ type: 'status', status: 'queued' })
 
-  return streamRunToCompletion({ importId, subscribeToken }, onEvent, signal)
+  return streamRunToCompletion({ importId }, onEvent, signal)
 }
 
 export interface ResumeNotesImportArgs extends RunStreamingArgs {
@@ -849,15 +945,15 @@ export interface ResumeNotesImportArgs extends RunStreamingArgs {
 
 /**
  * Resumes a Working import after the app was killed/backgrounded, WITHOUT
- * spending a kickoff first: reconnect to the persisted run via its subscribe
- * token (replay + tail), falling back to the result snapshot. If the token /
- * result window has lapsed (~1h) or the run is otherwise unreachable, it
- * escalates to an attested re-kickoff from the persisted `notesText` — which is
- * credit-free (the meter is idempotent per contentHash) and lands on the same
- * run if still alive, otherwise replays the cached result or re-runs.
- * `onKickoff` fires only on that re-kickoff, with the fresh run handle to
- * persist. Throws {@link NotesImportClientError} for genuine terminal failures
- * (e.g. model_error).
+ * spending a kickoff first: reconnect to the persisted run (replay + tail),
+ * falling back to the result snapshot. If the run is gone (deleted, past its
+ * ~1h retention, or another account's) or otherwise unreachable, it escalates
+ * to a re-kickoff from the persisted `notesText` — credit-free when this
+ * account already imported the same notes (the meter is idempotent per
+ * contentHash) — which lands on the same run if still alive, otherwise replays
+ * the cached result or re-runs. `onKickoff` fires only on that re-kickoff, with
+ * the fresh run handle to persist. Throws {@link NotesImportClientError} for
+ * genuine terminal failures (e.g. model_error).
  */
 export const resumeNotesImport = async ({
   run,
@@ -874,9 +970,9 @@ export const resumeNotesImport = async ({
   } catch (e) {
     if (signal?.aborted) throw e
     const code = e instanceof NotesImportClientError ? e.code : 'unknown'
-    // Token/result window lapsed (~1h) or the run is unreachable → re-kickoff
-    // from the persisted notes. Genuine terminal errors surface unchanged.
-    if (code !== 'attestation_required' && code !== 'network') throw e
+    // The run is gone or unreachable → re-kickoff from the persisted notes.
+    // Genuine terminal errors surface unchanged.
+    if (code !== 'not_found' && code !== 'network') throw e
     return runNotesImportStreaming({
       notesText,
       context,

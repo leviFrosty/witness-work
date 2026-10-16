@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 
+const platform = vi.hoisted(() => ({ OS: 'ios' }))
+vi.mock('react-native', () => ({ Platform: platform }))
+
 // Mock i18n so the formatting/structure is asserted deterministically without
 // loading the real locale bundle (which pulls in the RN runtime).
 vi.mock('@/lib/locales', () => ({
@@ -43,18 +46,27 @@ describe('errorMessageKey', () => {
     expect(errorMessageKey('attestation_failed')).toBe(
       'notesImport_attestationError'
     )
-    expect(errorMessageKey('attestation_required')).toBe(
-      'notesImport_attestationError'
+    expect(errorMessageKey('attestation_unavailable')).toBe(
+      'notesImport_attestationUnavailable'
     )
     expect(errorMessageKey('refinement_limit')).toBe(
       'notesImport_refinementLimit'
     )
+    expect(errorMessageKey('suspended')).toBe('notesImport_suspended')
+    expect(errorMessageKey('upgrade_required')).toBe(
+      'notesImport_updateRequired'
+    )
+    expect(errorMessageKey('not_found')).toBe('notesImport_error')
+  })
+
+  it('explains an unverifiable device in the account’s words, per platform', () => {
+    platform.OS = 'ios'
+    expect(errorMessageKey('device_ineligible')).toBe('account_unverifiedBody')
+    platform.OS = 'android'
     expect(errorMessageKey('device_ineligible')).toBe(
-      'notesImport_deviceIneligibleAndroid'
+      'account_unverifiedBodyAndroid'
     )
-    expect(errorMessageKey('play_services_required')).toBe(
-      'notesImport_playServicesRequiredAndroid'
-    )
+    platform.OS = 'ios'
   })
 
   it('falls back to the generic error key', () => {
@@ -77,6 +89,7 @@ describe('unavailableDetail', () => {
     expect(unavailableDetail('disabled')).toBeUndefined()
     expect(unavailableDetail('no_provider')).toBeUndefined()
     expect(unavailableDetail('version_below_min')).toBeUndefined()
+    expect(unavailableDetail('device_unverified')).toBeUndefined()
   })
 
   it('treats empty/whitespace/nullish reasons as no detail', () => {

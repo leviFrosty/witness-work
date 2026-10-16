@@ -10,12 +10,12 @@ vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 import {
   ENDPOINT_TIMEOUT_MS,
   STATUS_TIMEOUT_MS,
-  notesImportDevBypass,
-  notesImportTransport,
-} from '@/features/notes-import/lib/notesImportTransport'
+  attestationDevBypass,
+  attestationTransport,
+} from '@/lib/attestation/transport'
 import { apiDevBypass } from '@/lib/http/devBypass'
-import { NotesImportAppAttestHttpError } from '@/features/notes-import/lib/notesImportAppAttest'
-import type { NotesImportAppAttestEndpoint } from '@/features/notes-import/lib/notesImportAppAttest'
+import { AttestationHttpError } from '@/lib/attestation/appAttest'
+import type { AttestationEndpoint } from '@/lib/attestation/appAttest'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status })
@@ -44,6 +44,7 @@ describe('Notes Import transport timeouts', () => {
   it('gives only the posts that wait for a model the longer budgets', () => {
     expect(ENDPOINT_TIMEOUT_MS).toEqual({
       challenge: 15_000,
+      attestationChallenge: 15_000,
       registration: 15_000,
       verify: 15_000,
       kickoff: 15_000,
@@ -59,15 +60,15 @@ describe('Notes Import transport timeouts', () => {
       vi.useFakeTimers()
       vi.stubGlobal('fetch', stalledFetch())
       let failure: unknown
-      void notesImportTransport
-        .post(endpoint as NotesImportAppAttestEndpoint, {})
+      void attestationTransport
+        .post(endpoint as AttestationEndpoint, {})
         .catch((e: unknown) => {
           failure = e
         })
       await vi.advanceTimersByTimeAsync(budget - 1)
       expect(failure).toBeUndefined()
       await vi.advanceTimersByTimeAsync(1)
-      expect(failure).toBeInstanceOf(NotesImportAppAttestHttpError)
+      expect(failure).toBeInstanceOf(AttestationHttpError)
       expect(failure).toMatchObject({ kind: 'network', timedOut: true })
       expect(classifyNetworkError(failure)).toBe('timeout')
     }
@@ -77,7 +78,7 @@ describe('Notes Import transport timeouts', () => {
     vi.useFakeTimers()
     vi.stubGlobal('fetch', stalledFetch())
     let failure: unknown
-    void notesImportTransport.getStatus().catch((e: unknown) => {
+    void attestationTransport.getStatus().catch((e: unknown) => {
       failure = e
     })
     await vi.advanceTimersByTimeAsync(STATUS_TIMEOUT_MS)
@@ -98,7 +99,7 @@ describe('Notes Import transport errors', () => {
       )
     )
     await expect(
-      notesImportTransport.post('kickoff', { a: 1 })
+      attestationTransport.post('kickoff', { a: 1 })
     ).rejects.toMatchObject({ serverCode: 'active_cap', retryAfterMs: 15_000 })
   })
 
@@ -116,7 +117,7 @@ describe('Notes Import transport errors', () => {
       )
     )
     await expect(
-      notesImportTransport.post('kickoff', { a: 1 })
+      attestationTransport.post('kickoff', { a: 1 })
     ).rejects.toMatchObject({
       kind: 'http',
       status: 429,
@@ -134,7 +135,7 @@ describe('Notes Import transport errors', () => {
         throw new TypeError('Network request failed')
       })
     )
-    const offline = await notesImportTransport
+    const offline = await attestationTransport
       .post('challenge', {})
       .catch((e: unknown) => e)
     expect(offline).toMatchObject({ kind: 'network', timedOut: false })
@@ -142,7 +143,7 @@ describe('Notes Import transport errors', () => {
 
     vi.stubGlobal('fetch', stalledFetch())
     const controller = new AbortController()
-    const pending = notesImportTransport.post(
+    const pending = attestationTransport.post(
       'challenge',
       {},
       { signal: controller.signal }
@@ -151,11 +152,28 @@ describe('Notes Import transport errors', () => {
     await expect(pending).rejects.toMatchObject({ kind: 'cancelled' })
   })
 
+  it('registers keys and gets other features’ challenges at /attestation/v1', async () => {
+    const fetchImpl = vi.fn(async () => json(200, { ok: true }))
+    vi.stubGlobal('fetch', fetchImpl)
+    await attestationTransport.post('registration', {})
+    await attestationTransport.post('attestationChallenge', {})
+    await attestationTransport.post('challenge', {})
+    const urls = (fetchImpl.mock.calls as unknown as [string][]).map(
+      ([url]) => new URL(url).pathname
+    )
+    expect(urls).toEqual([
+      '/attestation/v1/register',
+      '/attestation/v1/challenge',
+      // Notes Import keeps its own until it moves.
+      '/notes-import/challenge',
+    ])
+  })
+
   it('sends JSON with the caller headers', async () => {
     const fetchImpl = vi.fn(async () => json(200, { ok: true }))
     vi.stubGlobal('fetch', fetchImpl)
     await expect(
-      notesImportTransport.post(
+      attestationTransport.post(
         'verify',
         { a: 1 },
         { headers: { 'x-test': '1' } }
@@ -185,8 +203,8 @@ describe('Notes Import status probe', () => {
         })
     )
     vi.stubGlobal('fetch', fetchImpl)
-    const first = notesImportTransport.getStatus()
-    const second = notesImportTransport.getStatus()
+    const first = attestationTransport.getStatus()
+    const second = attestationTransport.getStatus()
     answer(json(200, { available: true }))
     await expect(first).resolves.toEqual({ available: true })
     await expect(second).resolves.toEqual({ available: true })
@@ -196,7 +214,7 @@ describe('Notes Import status probe', () => {
       'fetch',
       vi.fn(async () => json(200, { available: false }))
     )
-    await expect(notesImportTransport.getStatus()).resolves.toEqual({
+    await expect(attestationTransport.getStatus()).resolves.toEqual({
       available: false,
     })
   })
@@ -204,6 +222,6 @@ describe('Notes Import status probe', () => {
 
 describe('Notes Import dev bypass', () => {
   it('is the shared API bypass', () => {
-    expect(notesImportDevBypass).toBe(apiDevBypass)
+    expect(attestationDevBypass).toBe(apiDevBypass)
   })
 })

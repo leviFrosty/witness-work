@@ -60,9 +60,12 @@ export const analyticsEventNames = [
   'notes_import_refined',
   'notes_import_submitted',
   // Feature adoption and actionable outcomes.
+  'account_activity_viewed',
   'account_backup_changed',
   'account_backup_deleted',
   'account_backup_failed',
+  'account_device_signed_out',
+  'account_devices_viewed',
   'account_key_replaced',
   'account_restore_chosen',
   'account_restore_completed',

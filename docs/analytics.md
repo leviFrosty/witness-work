@@ -851,6 +851,20 @@ and why they can't. A device opens one when its account first connects, after
 Never the account id, `accountPub`, session ids, tokens, the device label, or
 the attestation itself.
 
+### Account devices and activity
+
+These answer whether people look at their signed-in devices and account
+history (ADR 0028), whether a reused sign-in is ever in front of them, and
+whether signing a device out works.
+
+| Event                       | When                                                              | Properties                                                                                               |
+| --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `account_devices_viewed`    | Signed-In Devices listed the account's devices. Once per session. | `devices` (count).                                                                                       |
+| `account_activity_viewed`   | Account Activity showed its first page. Once per session.         | `entries` (count on the first page, at most 50), `suspicious` (the page has a `session.refresh_reused`). |
+| `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| dev` (the signed-out device's).                    |
+
+Never session ids, device names or labels, entry contents, or the account id.
+
 ### Update Required
 
 These answer how many people an app version floor or a 426 from ww-api blocks,

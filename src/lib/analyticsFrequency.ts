@@ -26,6 +26,8 @@ const sessionEvents = new Set([
   'saved_view_applied',
   'schedule_year_view_opened',
   'recovery_key_viewed',
+  'account_activity_viewed',
+  'account_devices_viewed',
   'update_required_shown',
 ])
 

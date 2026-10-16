@@ -76,7 +76,7 @@ const createHarness = (
     headers?: Record<string, string>
   }[] = []
   const defaultPost: PostHandler = (endpoint, body) =>
-    endpoint === 'challenge'
+    endpoint === 'challenge' || endpoint === 'attestationChallenge'
       ? {
           attestationProvider: 'play-integrity',
           protocolVersion: 1,
@@ -628,6 +628,22 @@ describe('Play Integrity for other features (assert)', () => {
       },
     }
   }
+
+  it('gets the challenge from /attestation/v1 when the feature has no route of its own', async () => {
+    const harness = createHarness()
+    const { challenge: _own, ...request } = channel().request
+
+    await expect(harness.module.assert(request)).resolves.toEqual({ ok: true })
+
+    expect(harness.posts.map((post) => post.endpoint)).toEqual([
+      'attestationChallenge',
+    ])
+    expect(harness.posts[0].body).toMatchObject({
+      attestationProvider: 'play-integrity',
+      purpose: 'account-session',
+      contentHash: SESSION_HASH,
+    })
+  })
 
   it('binds the token to the session hashes without an install account id', async () => {
     const harness = createHarness()

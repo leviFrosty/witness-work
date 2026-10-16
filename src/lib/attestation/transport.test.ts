@@ -44,6 +44,7 @@ describe('Notes Import transport timeouts', () => {
   it('gives only the posts that wait for a model the longer budgets', () => {
     expect(ENDPOINT_TIMEOUT_MS).toEqual({
       challenge: 15_000,
+      attestationChallenge: 15_000,
       registration: 15_000,
       verify: 15_000,
       kickoff: 15_000,
@@ -149,6 +150,23 @@ describe('Notes Import transport errors', () => {
     )
     controller.abort()
     await expect(pending).rejects.toMatchObject({ kind: 'cancelled' })
+  })
+
+  it('registers keys and gets other features’ challenges at /attestation/v1', async () => {
+    const fetchImpl = vi.fn(async () => json(200, { ok: true }))
+    vi.stubGlobal('fetch', fetchImpl)
+    await attestationTransport.post('registration', {})
+    await attestationTransport.post('attestationChallenge', {})
+    await attestationTransport.post('challenge', {})
+    const urls = (fetchImpl.mock.calls as unknown as [string][]).map(
+      ([url]) => new URL(url).pathname
+    )
+    expect(urls).toEqual([
+      '/attestation/v1/register',
+      '/attestation/v1/challenge',
+      // Notes Import keeps its own until it moves.
+      '/notes-import/challenge',
+    ])
   })
 
   it('sends JSON with the caller headers', async () => {

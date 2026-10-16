@@ -180,9 +180,11 @@ const createHarness = (options: HarnessOptions = {}) => {
         }
         posts.push(call)
         events.push(`post:${endpoint}:start`)
+        const isChallenge =
+          endpoint === 'challenge' || endpoint === 'attestationChallenge'
         let result = options.post
           ? await options.post(call, posts.length - 1)
-          : endpoint === 'challenge'
+          : isChallenge
             ? { challenge: `challenge-${++challenge}` }
             : { ok: true }
         if (
@@ -190,7 +192,7 @@ const createHarness = (options: HarnessOptions = {}) => {
           result !== null &&
           body.protocolVersion === 2
         ) {
-          if (endpoint === 'challenge') {
+          if (isChallenge) {
             result = {
               protocolVersion: 2,
               operation: body.operation,
@@ -2224,6 +2226,30 @@ describe('App Attest for other features (assert)', () => {
       },
     }
   }
+
+  it('gets the challenge from /attestation/v1 when the feature has no route of its own', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const { challenge: _own, ...request } = channel().request
+
+    await expect(harness.module.assert(request)).resolves.toEqual({
+      ok: true,
+    })
+
+    const challenges = harness.posts.filter((call) =>
+      call.endpoint.toLowerCase().includes('challenge')
+    )
+    expect(challenges.map((call) => call.endpoint)).toEqual([
+      'attestationChallenge',
+    ])
+    expect(challenges[0].body).toMatchObject({
+      purpose: 'account-session',
+      contentHash: SESSION_HASH,
+      requestHash: SESSION_HASH,
+    })
+  })
 
   it('asserts through the feature routes without an install account id', async () => {
     const harness = createHarness({

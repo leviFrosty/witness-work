@@ -1,5 +1,8 @@
 export type AttestationEndpoint =
+  /** Notes Import's own challenge route. */
   | 'challenge'
+  /** `POST /attestation/v1/challenge`, for every other feature. */
+  | 'attestationChallenge'
   | 'registration'
   | 'kickoff'
   | 'legacy'
@@ -210,8 +213,11 @@ export interface AttestedRequest<T> {
   /** Lowercase hex SHA-256s the assertion binds. */
   contentHash: string
   requestHash: string
-  /** POSTs the challenge body and resolves the answer's JSON. */
-  challenge(
+  /**
+   * POSTs the challenge body and resolves the answer's JSON. Defaults to the
+   * API-wide `POST /attestation/v1/challenge`.
+   */
+  challenge?(
     body: Record<string, unknown>,
     signal?: AbortSignal
   ): Promise<unknown>
@@ -2663,7 +2669,12 @@ export const createAppAttestAuthorizer = (
         keyId: ready.keyId,
         uuid: ready.uuid,
         channel: {
-          challenge: request.challenge,
+          challenge:
+            request.challenge ??
+            ((body, attemptSignal) =>
+              dependencies.transport.post('attestationChallenge', body, {
+                signal: attemptSignal,
+              })),
           submit: (fields, attemptSignal) =>
             request.submit({ kind: 'attestation', fields }, attemptSignal),
         },

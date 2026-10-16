@@ -144,7 +144,7 @@ type ProtectedRoute<T> =
   | {
       endpoint?: undefined
       channel: {
-        challenge: AttestedRequest<T>['challenge']
+        challenge: NonNullable<AttestedRequest<T>['challenge']>
         submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
       }
     }
@@ -655,7 +655,12 @@ export const createPlayIntegrityAuthorizer = (
       const project = await waitForSignal(cloudProjectNumber(), signal)
       return protectedPost<T>({
         channel: {
-          challenge: request.challenge,
+          challenge:
+            request.challenge ??
+            ((body, attemptSignal) =>
+              dependencies.transport.post('attestationChallenge', body, {
+                signal: attemptSignal,
+              })),
           submit: (fields, attemptSignal) =>
             request.submit({ kind: 'attestation', fields }, attemptSignal),
         },

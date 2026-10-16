@@ -14,7 +14,6 @@ export default {
   notesImport: `${BASE_URL}/notes-import`,
   notesImportStatus: `${BASE_URL}/notes-import/status`,
   notesImportChallenge: `${BASE_URL}/notes-import/challenge`,
-  notesImportAttest: `${BASE_URL}/notes-import/attest`,
   // Attested no-op — dev Tools diagnostics verify an assertion server-side
   // without spending credits or inference.
   notesImportVerify: `${BASE_URL}/notes-import/verify`,
@@ -34,4 +33,7 @@ export default {
   buddies: BASE_URL,
   // Base for the server account's `/accounts/v1/*` ops (docs/accounts-protocol.md).
   accounts: BASE_URL,
+  // Device attestation for the whole API (App Attest key setup, challenges).
+  attestationChallenge: `${BASE_URL}/attestation/v1/challenge`,
+  attestationRegister: `${BASE_URL}/attestation/v1/register`,
 }

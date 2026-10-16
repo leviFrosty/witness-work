@@ -10,9 +10,12 @@ import {
 /**
  * HTTP transport shared by both attestation authorizers (App Attest on iOS,
  * Play Integrity on Android) and Notes Import's availability check. The
- * install's App Attest key is registered, and both providers' capabilities are
- * read, through Notes Import's routes. Failures become sanitized
- * {@link AttestationHttpError}s carrying only stable metadata.
+ * install's App Attest key is registered at `/attestation/v1/register`, and
+ * features other than Notes Import get challenges from
+ * `/attestation/v1/challenge`. Notes Import keeps its own challenge and verify
+ * routes, and both providers' capabilities are still read from its status.
+ * Failures become sanitized {@link AttestationHttpError}s carrying only stable
+ * metadata.
  */
 
 /** Unauthenticated availability/capability probe. */
@@ -24,6 +27,7 @@ export const STATUS_TIMEOUT_MS = 8_000
  */
 export const ENDPOINT_TIMEOUT_MS: Record<AttestationEndpoint, number> = {
   challenge: 15_000,
+  attestationChallenge: 15_000,
   registration: 15_000,
   verify: 15_000,
   kickoff: 15_000,
@@ -44,8 +48,10 @@ const endpointUrl = (endpoint: AttestationEndpoint): string => {
   switch (endpoint) {
     case 'challenge':
       return apis.notesImportChallenge
+    case 'attestationChallenge':
+      return apis.attestationChallenge
     case 'registration':
-      return apis.notesImportAttest
+      return apis.attestationRegister
     case 'kickoff':
       return apis.notesImportKickoff
     case 'transcribe':

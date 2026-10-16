@@ -8,6 +8,7 @@ import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { updateRequiredByServer } from '@/lib/appUpdate'
 import { deviceAttestation } from '@/lib/attestation'
+import { errorTracking } from '@/lib/errorTracking'
 import { fromB64u } from '@/lib/bytes'
 import { logger } from '@/lib/logger'
 import { syncNow } from '@/lib/syncClock'
@@ -51,6 +52,8 @@ const SESSION_SECRET = 'account-session'
 // A binary without the module keeps the session for this launch only.
 let memorySession: string | null = null
 
+const STALE_SESSION_KEY = 'session-stale'
+
 /** The platform keystore, never synced (`modules/device-secrets`). */
 const sessionStore: SessionStore = {
   read: async () =>
@@ -64,6 +67,15 @@ const sessionStore: SessionStore = {
     }
     if (value) await DeviceSecrets.write(SESSION_SECRET, value)
     else await DeviceSecrets.remove(SESSION_SECRET)
+  },
+  // Outside the keystore, so a keystore that fails can't lose it too. Only a
+  // hash, never a token.
+  stale: {
+    read: async () => store().getString(STALE_SESSION_KEY) ?? null,
+    write: async (hash) =>
+      hash
+        ? store().set(STALE_SESSION_KEY, hash)
+        : store().delete(STALE_SESSION_KEY),
   },
 }
 
@@ -117,6 +129,11 @@ export const accountSessions = createAccountSessions({
   },
   onUpgradeRequired: updateRequiredByServer,
   onEvent: reportSessionEvent,
+  // The keystore's own error, which never holds the token.
+  onStoreFailure: (op, error) => {
+    logger.warn(`[account] session ${op} failed`, error)
+    errorTracking.captureException(error, { accountSession: op })
+  },
 })
 
 /** Bearer ops as one account key's session. */

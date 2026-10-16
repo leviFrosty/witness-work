@@ -1,3 +1,5 @@
+import { sha256 } from '@noble/hashes/sha2.js'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import {
   AttestationError,
   AttestationHttpError,
@@ -10,7 +12,7 @@ import {
   request,
   type RequestOptions,
 } from '@/lib/http/request'
-import { toB64u } from '@/lib/bytes'
+import { toB64u, utf8 } from '@/lib/bytes'
 import { type AccountStatus, isAccountStatus } from '@/lib/serverAccount/client'
 import {
   type DeviceLabel,
@@ -41,6 +43,16 @@ import {
  * and retries on a 401, and opens a new session (attesting again, without
  * asking the User) when the old one ended or reached its 90 days. A 426
  * `upgrade_required` calls `onUpgradeRequired`.
+ *
+ * Every refresh replaces the refresh token, and presenting a replaced one after
+ * the server's grace minute ends the session as a reused token. So a new token
+ * is written to the keystore before anything uses it. When that write fails
+ * (twice), this launch keeps the session in memory, and the stale token the
+ * keystore still holds is marked by its hash in a second store (`stale`): the
+ * next launch discards it and opens a new session (reason `unsaved`) instead of
+ * presenting it. A later write that works makes the mark moot. A failed delete
+ * (closing, forgetting) is marked the same way, and the next launch deletes the
+ * token again.
  */
 
 /** Why this device couldn't prove it's WitnessWork. */
@@ -222,8 +234,22 @@ export const isUnauthorized = (error: unknown) =>
 /** Where the refresh token is kept: the platform keystore in the app. */
 export type SessionStore = {
   read: () => Promise<string | null>
+  /** Null deletes it. */
   write: (value: string | null) => Promise<void>
+  /**
+   * Kept apart from the keystore (device-local MMKV in the app), for when
+   * writing to it fails: the hash (`staleTokenHash`) of a refresh token the
+   * keystore may still hold but this device must never present again.
+   */
+  stale?: {
+    read: () => Promise<string | null>
+    write: (hash: string | null) => Promise<void>
+  }
 }
+
+/** How a stale refresh token is marked: hex SHA-256, never the token. */
+export const staleTokenHash = (refreshToken: string) =>
+  bytesToHex(sha256(utf8(`ww-account/v1/stale\n${refreshToken}`)))
 
 /** Why a new session was opened. */
 export type SessionOpenReason =
@@ -233,6 +259,11 @@ export type SessionOpenReason =
   | 'expired'
   /** The server ended it (a reused refresh token, or the 10-session cap). */
   | 'ended'
+  /**
+   * The keystore's refresh token was stale: saving its replacement failed, so
+   * presenting it could end the session as a reused token.
+   */
+  | 'unsaved'
   /** For a key received from another device, before it replaces this one. */
   | 'handoff'
 
@@ -263,6 +294,11 @@ export type AccountSessionDeps = {
   /** Ww-api answered 426 `upgrade_required`. */
   onUpgradeRequired?: () => void
   onEvent?: (event: AccountSessionEvent) => void
+  /**
+   * Writing (`save`) or deleting (`delete`) the stored session failed twice.
+   * The error is the store's; it never holds a token.
+   */
+  onStoreFailure?: (op: 'save' | 'delete', error: unknown) => void
 }
 
 /** The account a session belongs to. */
@@ -321,6 +357,8 @@ export const OPEN_RETRY_AFTER_MS: Record<AttestationProblem, number> = {
   failed: 2 * 60_000,
   temporary: 60_000,
 }
+/** Tries per keystore write before marking the stored token stale. */
+export const STORE_ATTEMPTS = 2
 
 function parseStored(raw: string | null): Stored | null {
   if (!raw) return null
@@ -387,6 +425,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   let generation = 0
   let flight: { pub: string; promise: Promise<Live> } | null = null
   let storeQueue: Promise<void> = Promise.resolve()
+  /** The refresh token the keystore holds, as far as this launch knows. */
+  let storedToken: string | null = null
+  /** A stale mark may be set (`SessionStore.stale`). */
+  let staleMarked = false
+  /** The stored session was stale, and the next open says so. */
+  let discardedStale = false
   let lastFailure: {
     pub: string
     error: AccountSessionError
@@ -403,21 +447,86 @@ export function createAccountSessions(deps: AccountSessionDeps) {
 
   const upgradeRequired = () => deps.onUpgradeRequired?.()
 
-  /** Store writes run in order, so a late delete never clears a new session. */
-  function persist(value: Stored | null): Promise<void> {
-    const json = value ? JSON.stringify(value) : null
-    storeQueue = storeQueue
-      .then(() => deps.store.write(json))
-      .catch(() => undefined)
-    return storeQueue
+  /** Never throws: a mark that can't be written leaves the token as it is. */
+  async function markStale(refreshToken: string | null) {
+    if (!deps.store.stale || (refreshToken === null && !staleMarked)) return
+    try {
+      await deps.store.stale.write(
+        refreshToken === null ? null : staleTokenHash(refreshToken)
+      )
+      staleMarked = refreshToken !== null
+    } catch {
+      // Then the next launch presents it, and at worst the server ends that
+      // session and a new one is opened, as it would be anyway.
+    }
   }
+
+  /**
+   * Writes the stored session (null deletes it), in order, so a late write
+   * never replaces a newer one. `current` false skips a write the session has
+   * moved past (closed, forgotten, or replaced). Tries twice; then marks the
+   * token the keystore still holds stale, reports it, and rejects.
+   */
+  function persist(
+    value: Stored | null,
+    current: () => boolean = () => true
+  ): Promise<'saved' | 'skipped'> {
+    const json = value ? JSON.stringify(value) : null
+    const token = value?.refreshToken ?? null
+    const write = storeQueue.then(async (): Promise<'saved' | 'skipped'> => {
+      if (!current()) return 'skipped'
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await deps.store.write(json)
+          storedToken = token
+          if (staleMarked) await markStale(null)
+          return 'saved'
+        } catch (error) {
+          if (attempt < STORE_ATTEMPTS) continue
+          // The status changing alone leaves the same token stored.
+          if (storedToken !== token) await markStale(storedToken)
+          deps.onStoreFailure?.(value ? 'save' : 'delete', error)
+          throw error
+        }
+      }
+    })
+    storeQueue = write.then(
+      () => undefined,
+      () => undefined
+    )
+    return write
+  }
+
+  /**
+   * `persist`, for callers that go on either way: a session that couldn't be
+   * saved is still this launch's, and the next launch won't present its
+   * predecessor (see the top of this file).
+   */
+  const save = (
+    value: Stored | null,
+    current?: () => boolean
+  ): Promise<'saved' | 'skipped' | 'failed'> =>
+    persist(value, current).catch(() => 'failed' as const)
 
   function load(): Promise<void> {
     loading ??= storeQueue.then(async () => {
       const saved = parseStored(await deps.store.read().catch(() => null))
+      storedToken = saved?.refreshToken ?? null
+      const stale = deps.store.stale
+        ? await deps.store.stale.read().catch(() => null)
+        : null
+      staleMarked = stale !== null
       // A session opened or adopted while reading wins.
-      if (saved && !live)
-        live = { ...saved, accessToken: null, accessExpiresAt: 0 }
+      if (!saved || live) return
+      if (stale === staleTokenHash(saved.refreshToken)) {
+        // A newer token never reached the keystore. Presenting this one could
+        // end the session as a reused token, so open a new one instead, and
+        // delete it again (the mark stays until that works).
+        discardedStale = true
+        void save(null, () => live === null)
+        return
+      }
+      live = { ...saved, accessToken: null, accessExpiresAt: 0 }
     })
     return loading
   }
@@ -453,11 +562,6 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accessToken: opened.accessToken,
     accessExpiresAt: accessExpiry(opened.accessExpiresAt),
   })
-
-  function setLive(next: Live | null) {
-    live = next
-    void persist(next ? stored(next) : null)
-  }
 
   async function timed<T>(
     op: AccountSessionEvent['op'],
@@ -578,15 +682,16 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     if (flight?.pub === pub) return raceSignal(flight.promise, call.signal)
 
     const startedAt = generation
+    const unchanged = () => startedAt === generation
     const run = async (): Promise<Live> => {
       const current = live
       if (current?.accountPub === pub && accessUsable(current, call.rejected))
         return current
-      let reason: SessionOpenReason = 'new'
+      let reason: SessionOpenReason = discardedStale ? 'unsaved' : 'new'
       if (current && current.accountPub !== pub) {
         // Another account key's session: end it rather than leave it behind.
         live = null
-        void persist(null)
+        void save(null)
         void closeTokens({ ...current, accessUsable: accessUsable(current) })
       } else if (current && !sessionValid(current)) {
         reason = 'expired'
@@ -595,8 +700,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           const tokens = await timed('session/refresh', () =>
             refreshSession(current.refreshToken, clientOptions())
           )
-          if (startedAt !== generation)
-            throw new AccountSessionError('cancelled')
+          if (!unchanged()) throw new AccountSessionError('cancelled')
           const next: Live = {
             ...current,
             refreshToken: tokens.refreshToken,
@@ -604,7 +708,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
             accessToken: tokens.accessToken,
             accessExpiresAt: accessExpiry(tokens.accessExpiresAt),
           }
-          setLive(next)
+          // In the keystore before anything uses it. A failed write still
+          // uses it, and marks the replaced token stale.
+          const saved = await save(stored(next), unchanged)
+          if (saved === 'skipped' || !unchanged())
+            throw new AccountSessionError('cancelled')
+          live = next
           return next
         } catch (error) {
           // Only an ended or expired session opens a new one; offline keeps
@@ -641,13 +750,15 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           lastFailure = { pub, error: failure, until: Infinity }
         throw failure
       }
-      if (startedAt !== generation) {
+      const next = toLive(pub, opened)
+      const saved = unchanged() ? await save(stored(next), unchanged) : null
+      if (saved === null || saved === 'skipped' || !unchanged()) {
         void closeTokens({ ...opened, accessUsable: true })
         throw new AccountSessionError('cancelled')
       }
       lastFailure = null
-      const next = toLive(pub, opened)
-      setLive(next)
+      discardedStale = false
+      live = next
       return next
     }
     const previous = flight?.promise
@@ -763,11 +874,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         if (settled) return
         settled = true
         await load()
-        generation++
+        const adoptedAt = ++generation
         flight = null
         lastFailure = null
-        setLive(toLive(key.publicKey, opened))
-        await storeQueue
+        live = toLive(key.publicKey, opened)
+        // Kept for this launch even when the keystore fails.
+        await save(stored(live), () => generation === adoptedAt)
       },
       close: async () => {
         if (settled) return
@@ -780,7 +892,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   /**
    * Ends this device's session (`session/close`) and forgets it: before the
    * account key is replaced or deleted. Never throws; offline, the server ends
-   * it in time.
+   * it in time. A delete the keystore refuses twice is reported
+   * (`onStoreFailure`), and the token marked stale, so the next launch deletes
+   * it instead of using it.
    */
   async function close(): Promise<void> {
     await load()
@@ -789,7 +903,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     flight = null
     lastFailure = null
     live = null
-    await persist(null)
+    await save(null)
     if (current)
       await closeTokens({ ...current, accessUsable: accessUsable(current) })
   }
@@ -800,13 +914,15 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     flight = null
     lastFailure = null
     live = null
-    void persist(null)
+    void save(null)
   }
 
   /** Reading the account (`GET /accounts/v1/account`) found a newer status. */
   function noteStatus(accountPub: string, status: AccountStatus) {
     if (live?.accountPub !== accountPub || live.status === status) return
-    setLive({ ...live, status })
+    const next = { ...live, status }
+    live = next
+    void save(stored(next), () => live === next)
   }
 
   function snapshot(): AccountSessionSnapshot | null {

@@ -16,6 +16,8 @@ import {
   createAccountSessions,
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
+  STORE_ATTEMPTS,
+  staleTokenHash,
 } from '@/lib/serverAccount/session'
 import { sessionAttestationHash } from '@/lib/serverAccount/sessionClient'
 
@@ -191,18 +193,38 @@ function fakeAttestation(
   return { requests, assert: vi.fn(assert) as typeof assert & Mock }
 }
 
-function memoryStore(initial: string | null = null) {
+function memoryStore(
+  initial: string | null = null,
+  staleHash: string | null = null
+) {
   const store = {
     value: initial,
     writes: [] as (string | null)[],
+    staleHash,
+    /** How many writes in a row the keystore refuses next. */
+    failWrites: 0,
     read: vi.fn(async () => store.value),
     write: vi.fn(async (value: string | null) => {
+      if (store.failWrites > 0) {
+        store.failWrites--
+        throw new Error('keystore refused')
+      }
       store.value = value
       store.writes.push(value)
     }),
+    stale: {
+      read: async () => store.staleHash,
+      write: async (hash: string | null) => {
+        store.staleHash = hash
+      },
+    },
   }
   return store satisfies SessionStore
 }
+
+/** The next launch, reading what the last one left in both stores. */
+const nextLaunchStore = (store: ReturnType<typeof memoryStore>) =>
+  memoryStore(store.value, store.staleHash)
 
 function setup(
   options: {
@@ -219,6 +241,7 @@ function setup(
   const attestation = options.attestation ?? fakeAttestation()
   const events: AccountSessionEvent[] = []
   const onUpgradeRequired = vi.fn()
+  const onStoreFailure = vi.fn()
   let nonce = 0
   const sessions = createAccountSessions({
     baseUrl: BASE,
@@ -236,6 +259,7 @@ function setup(
     fetchImpl: worker.fetchImpl,
     onUpgradeRequired,
     onEvent: (event) => events.push(event),
+    onStoreFailure,
   })
   const info = (accountKey?: Uint8Array) =>
     sessions.request<{ accountId: string }>(
@@ -253,6 +277,7 @@ function setup(
     attestation,
     events,
     onUpgradeRequired,
+    onStoreFailure,
     sessions,
     info,
   }
@@ -421,6 +446,144 @@ describe('account sessions', () => {
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-1')
     await expect(info()).resolves.toBeTruthy()
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('keeps a rotated refresh token out of use until the keystore has it', async () => {
+    const { worker, store, clock, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    let release!: () => void
+    store.write.mockImplementationOnce(
+      (value) =>
+        new Promise<void>((resolve) => {
+          release = () => {
+            store.value = value
+            resolve()
+          }
+        })
+    )
+
+    const pending = info()
+    await vi.waitFor(() => expect(store.write).toHaveBeenCalledTimes(2))
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    // Not a request with the new access token until rt-3 is stored.
+    expect(worker.opsCalled('account/info')).toHaveLength(1)
+
+    release()
+    await pending
+    expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
+    expect(worker.opsCalled('account/info')).toHaveLength(2)
+  })
+
+  it('retries a keystore write that fails once, without marking anything', async () => {
+    const { store, clock, info, onStoreFailure } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    store.failWrites = 1
+
+    await info()
+
+    expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
+    expect(store.staleHash).toBeNull()
+    expect(onStoreFailure).not.toHaveBeenCalled()
+  })
+
+  it('uses a refresh token it couldn’t save for this launch, and the next launch opens a new session instead of presenting the stale one', async () => {
+    const first = setup()
+    await first.info()
+    first.clock.now += ACCESS_LIFETIME_MS
+    first.store.failWrites = STORE_ATTEMPTS
+
+    await expect(first.info()).resolves.toBeTruthy()
+
+    // This launch carries on with the new pair…
+    expect(
+      first.worker.opsCalled('account/info').at(-1)?.headers.authorization
+    ).toBe('Bearer at-4')
+    expect(first.onStoreFailure).toHaveBeenCalledWith('save', expect.any(Error))
+    // …while the keystore still holds rt-1, marked stale by its hash.
+    expect(JSON.parse(first.store.value!).refreshToken).toBe('rt-1')
+    expect(first.store.staleHash).toBe(staleTokenHash('rt-1'))
+    expect(first.store.staleHash).not.toContain('rt-1')
+    await first.info()
+    expect(first.worker.opsCalled('session/refresh')).toHaveLength(1)
+
+    // Long past the server's grace minute.
+    first.clock.now += 60 * 60_000
+    const relaunched = setup({
+      store: nextLaunchStore(first.store),
+      clock: first.clock,
+      worker: first.worker,
+    })
+    await relaunched.info()
+
+    // rt-1 is never presented again: a new session, attested.
+    expect(
+      first.worker.opsCalled('session/refresh').map((call) => call.body)
+    ).toEqual([{ refreshToken: 'rt-1' }])
+    expect(relaunched.attestation.assert).toHaveBeenCalledTimes(1)
+    expect(relaunched.events).toEqual([
+      expect.objectContaining({
+        op: 'session/open',
+        reason: 'unsaved',
+        outcome: 'ok',
+      }),
+    ])
+    expect(JSON.parse(relaunched.store.value!).sessionId).toBe('sid-2')
+    expect(relaunched.store.staleHash).toBeNull()
+  })
+
+  it('needs no new session once a later write works', async () => {
+    const first = setup()
+    await first.info()
+    first.clock.now += ACCESS_LIFETIME_MS
+    first.store.failWrites = STORE_ATTEMPTS
+    await first.info()
+    first.clock.now += ACCESS_LIFETIME_MS
+    await first.info()
+    expect(JSON.parse(first.store.value!).refreshToken).toBe('rt-5')
+    expect(first.store.staleHash).toBeNull()
+
+    const relaunched = setup({
+      store: nextLaunchStore(first.store),
+      clock: first.clock,
+      worker: first.worker,
+    })
+    await relaunched.info()
+
+    expect(relaunched.attestation.assert).not.toHaveBeenCalled()
+    expect(first.worker.opsCalled('session/refresh').at(-1)?.body).toEqual({
+      refreshToken: 'rt-5',
+    })
+  })
+
+  it('reports a delete the keystore refuses on close, and the next launch deletes the token instead of using it', async () => {
+    const first = setup()
+    await first.info()
+    first.store.failWrites = STORE_ATTEMPTS
+
+    await first.sessions.close()
+
+    expect(first.worker.sessions[0].ended).toBe(true)
+    expect(first.onStoreFailure).toHaveBeenCalledWith(
+      'delete',
+      expect.any(Error)
+    )
+    expect(first.store.value).not.toBeNull()
+    expect(first.store.staleHash).toBe(staleTokenHash('rt-1'))
+    expect(first.sessions.snapshot()).toBeNull()
+
+    const relaunched = setup({
+      store: nextLaunchStore(first.store),
+      clock: first.clock,
+      worker: first.worker,
+    })
+    await relaunched.sessions.ready()
+    expect(relaunched.store.value).toBeNull()
+    expect(relaunched.store.staleHash).toBeNull()
+    expect(relaunched.sessions.snapshot()).toBeNull()
+    await relaunched.info()
+    expect(first.worker.opsCalled('session/refresh')).toHaveLength(0)
   })
 
   it('picks up the stored session after a relaunch without attesting', async () => {

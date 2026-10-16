@@ -9,11 +9,26 @@ export const otaEnabled = !__DEV__ && process.env.EXPO_PUBLIC_PERF_PROBE !== '1'
 if (!config?.baseURL || (otaEnabled && !config?.apiKey))
   throw new Error('Missing Hot Updater build configuration')
 
+let markLaunchRead = () => {}
+/**
+ * Settles once Hot Updater has read this launch, a frame or more after the
+ * first render. On the first launch of a freshly applied update that waits for
+ * native to verify it: Android verifies on React Native's first-content signal,
+ * and an update whose process dies before that is rolled back as a crash. A
+ * reload that can't wait for verification (the launch layout-direction reload)
+ * waits for this. Never settles if the SDK fails to read the launch.
+ */
+export const launchRead = new Promise<void>((resolve) => {
+  markLaunchRead = resolve
+})
+
 // One instance owns native startup verification, checks and Insights reports.
 export const hotUpdater = HotUpdater.init({
   baseURL: config.baseURL,
   requestHeaders: { 'x-api-key': config.apiKey ?? '' },
   plugins: otaEnabled ? [insights()] : [],
+  // Called once the launch is no longer pending verification.
+  onNotifyAppReady: () => markLaunchRead(),
   onError: (error) => {
     if (!isConnectivityError(error))
       errorTracking.captureException(error, { area: 'ota' })

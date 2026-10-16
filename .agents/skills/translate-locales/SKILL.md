@@ -13,7 +13,7 @@ You're WitnessWork's translator; there's no separate approval step. `src/locales
 
 ## Where strings go
 
-- `src/lib/locales.ts` loads the 17 target files through i18n-js. `bem-ZM` is Bemba, `rw-RW` Kinyarwanda and `sw-KE` Swahili. Interpolation is `{{name}}` or `%{name}`, and plural objects use `zero`/`one`/`other`.
+- `src/lib/locales.ts` loads the 17 target files through i18n-js. `bem-ZM` is Bemba, `rw-RW` Kinyarwanda and `sw-KE` Swahili. Interpolation is `{{name}}` or `%{name}`. Plural objects use the CLDR forms `zero`/`one`/`two`/`few`/`many`/`other` (see Plurals below).
 - `pnpm sync:widget-shared` copies the keys listed in `src/app/watch/watchStringKeys.json` from every locale into the Apple Watch and Siri string catalogs (`targets/**/*.xcstrings`). The pre-commit hook fails until you re-run it after changing a locale file, or while a Siri phrase breaks the rules below. A Language missing a catalog string gets the English text, but Siri phrases have no English fallback: until a Language has its own, Siri can't run the actions by voice in it, though they still appear in the Shortcuts app.
 - Locale files don't drive iOS permission prompts (`app.config.ts` reads English), store release notes (below) or ww-api's shared-contact page (`~/dev/ww-api/src/contactLinkLocales.ts`).
 - Crowdin is gone. Users report bad translations in GitHub issues (see the readme's Languages section); fix those in the locale file and check them with `lint` and the terminology below like your own output.
@@ -27,6 +27,8 @@ You're WitnessWork's translator; there's no separate approval step. `src/locales
    - `missing`: absent or empty.
    - `changed`: English changed since `<ref>` but the translation didn't. `was` holds the old English and `current` the stale translation.
    - `lint`: the current translation fails a check (`problems`).
+
+   Plural forms the Language needs but English lacks, such as Russian `few`, appear as their own keys (`contactDetails.studyCount.few`). Their `en` is English's `other`, and `form` says which numbers the form covers.
 
    At a release cut `<ref>` is the last released tag. Without `--since` you only get `missing` and `lint`. `--locale ru-RU` (repeatable) limits the run; `--chunk 300` splits big worklists into `-01`, `-02`, … files.
 
@@ -46,9 +48,14 @@ Then apply the done files and spot-check each locale: the same term for the same
 
 ## Translation rules
 
-- **Values only.** Keep English's keys and nesting; don't add, rename or delete keys. Leave keys that aren't in `en-US.json` alone.
+- **Values only.** Keep English's keys and nesting; don't add, rename or delete keys, apart from the plural forms your Language needs (Plurals below). Leave keys that aren't in `en-US.json` alone.
 - **Placeholders** stay exactly as written: `{{count}}`, `%{name}`, `${applicationName}`. Keep the same names and the same number of each, and translate nothing inside the braces. Move them wherever the grammar needs. Keep `**bold**` markers around the matching words.
-- **Plurals.** Keep English's forms (`zero`/`one`/`other`); don't add `two`, `few` or `many`. i18n-js applies English plural rules to every Language (no pluralizer is registered), so `one` means exactly 1 and `other` covers 2, 5, 21 and the rest. For Russian, Ukrainian and other languages with more forms, write `other` so it reads right for any number. Use count-neutral wording (`Контакты: {{count}}`) or an abbreviation (`{{count}} дн.`), as the existing strings do. Take the same care with any string that has `{{count}}`.
+- **Plurals.** `src/lib/locales.ts` registers each Language's CLDR cardinal rule (from `make-plural`) with i18n-js. For a count it tries `zero` first when the count is 0 (English uses it for "No matches"), then the Language's category, then `other`, so a missing form falls back to `other` instead of showing a missing-translation string. A plural key the Language doesn't have yet renders English's forms by English's rule (`i18n.t` in `src/lib/locales.ts`), so it reads as plain English until translated. `lint` checks each locale against its own rule:
+  - **Required:** every category a whole number from 0 to 1,000 lands on, plus `other`. English, German and most others need `one`/`other`; Russian and Ukrainian `one`/`few`/`many`/`other`; Arabic all six; Japanese, Korean, Vietnamese and Chinese only `other`.
+  - **Optional:** categories only huge numbers reach, such as French, Spanish, Italian and Portuguese `many` (a million). `other` covers them.
+  - **Never renders:** a form outside the Language's categories, such as `few` in German. English's own forms are always allowed, so the files keep English's shape (Japanese still has `one`, though `other` renders for 1 there; write `other` so it reads right for 1 too).
+  - **`one` that isn't just 1:** in French and Brazilian Portuguese `one` also covers 0 and 1.5, in Russian and Ukrainian 21, 31 and 101. There `one` must show the count like English `other` (`{{count}} contact`), not "1 contact" or "a day".
+  - Extra forms use exactly the placeholders of English `other`. Write each form in the grammar its numbers take (Russian `few`: 2 контакта, `many`: 5 контактов).
 - **Meaning over words.** Translate what the UI does, naturally, and keep labels and buttons about as short as English. When a string quotes a UI label (a FAQ answer, "turn on Log my hours"), use that label's translation from the same locale.
 - **Register.** Match the file's form of address, such as German `du` or French `vous`. Check a few existing strings first.
 - **Names.** Keep WitnessWork and Scribe AI. Use Apple's and Google's localized names for their products and settings (Shortcuts, Settings, Google Play).

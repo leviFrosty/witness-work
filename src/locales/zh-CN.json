@@ -2832,16 +2832,16 @@
   "contacts_stalenessInfo_subtitle": "根据最近的一次访问。“不在家里”算是探访。",
   "contacts_stalenessCriteria_never": "目前还没有记录到任何来访",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "过去一天内的最后一次拜访",
-    "other": "最近一次就诊时间为过去{{count}}天"
+    "one": "最近一次拜访在过去一天内",
+    "other": "最近一次拜访在过去 {{count}} 天内"
   },
   "contacts_stalenessCriteriaDays_week": {
     "one": "上次拜访已是一天多前",
-    "other": "上次就诊已超过{{count}}天"
+    "other": "上次拜访已超过 {{count}} 天"
   },
   "contacts_stalenessCriteriaDays_month": {
     "one": "上次拜访已是一天多前",
-    "other": "上次就诊已超过{{count}}天"
+    "other": "上次拜访已超过 {{count}} 天"
   },
   "colorKeyScreenTitle": "颜色说明",
   "colorKey_edit": "编辑颜色键",
@@ -2908,7 +2908,7 @@
   "contacts_sortAndFilter_resultCount": {
     "zero": "无匹配",
     "one": "1 个匹配",
-    "other": "{{count}} 匹配"
+    "other": "{{count}} 个匹配"
   },
   "contacts_sortAndFilter_sortLabel": "排序：{{label}}",
   "savedViews_title": "已存视图",
@@ -4060,37 +4060,37 @@
   "badge_prepared_name": "准备就绪",
   "badge_prepared_desc": {
     "one": "在 {{count}} 个月中计划了传道工作",
-    "other": "在 {{count}} 个不同的月份中计划了传道工作"
+    "other": "在 {{count}} 个月中计划了传道工作"
   },
   "badge_prepared_how": "在你的日程中添加一个计划。到了计划的那一天才会计入。",
   "badge_conversations_name": "亲切交谈",
   "badge_conversations_desc": {
     "one": "在 {{count}} 个月中与人交谈过",
-    "other": "在 {{count}} 个不同的月份中与人交谈过"
+    "other": "在 {{count}} 个月中与人交谈过"
   },
   "badge_conversations_how": "记录一次你与人交谈的访问。",
   "badge_returnVisits_name": "重访",
   "badge_returnVisits_desc": {
     "one": "在 {{count}} 个月中重访过某人",
-    "other": "在 {{count}} 个不同的月份中重访过某人"
+    "other": "在 {{count}} 个月中重访过某人"
   },
   "badge_returnVisits_how": "再记录一次对你以前访问过的人的访问。",
   "badge_nextTime_name": "下一次",
   "badge_nextTime_desc": {
     "one": "在 {{count}} 个月中计划了下次要分享的内容",
-    "other": "在 {{count}} 个不同的月份中计划了下次要分享的内容"
+    "other": "在 {{count}} 个月中计划了下次要分享的内容"
   },
   "badge_nextTime_how": "为跟进添加一个话题，这样你就知道下次要分享什么。",
   "badge_keepingInTouch_name": "保持联系",
   "badge_keepingInTouch_desc": {
     "one": "在 {{count}} 个月中与同一个人交谈",
-    "other": "在 {{count}} 个不同的月份中与同一个人交谈"
+    "other": "在 {{count}} 个月中与同一个人交谈"
   },
   "badge_keepingInTouch_how": "月复一月地持续探访某人，可以当面、电话或书信联系。",
   "badge_together_name": "两人一组",
   "badge_together_desc": {
     "one": "在 {{count}} 个月中与同伴一起外出传道",
-    "other": "在 {{count}} 个不同的月份中与同伴一起外出传道"
+    "other": "在 {{count}} 个月中与同伴一起外出传道"
   },
   "badge_together_how": "与同伴一起制定计划。当有同伴参加且那一天到来时才会计入。",
   "badge_firstBibleStudy_name": "首次圣经研读",

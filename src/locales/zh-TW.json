@@ -2832,16 +2832,16 @@
   "contacts_stalenessInfo_subtitle": "根據最近一次的拜訪。「不在家裡」算是探訪。",
   "contacts_stalenessCriteria_never": "目前還沒有記錄到任何訪客",
   "contacts_stalenessCriteriaDays_recent": {
-    "one": "過去一天內的最後一次拜訪",
-    "other": "最近一次造訪，時間在過去 {{count}} 天內"
+    "one": "最近一次拜訪在過去一天內",
+    "other": "最近一次拜訪在過去 {{count}} 天內"
   },
   "contacts_stalenessCriteriaDays_week": {
-    "one": "上次來訪已經超過一天了",
-    "other": "上次就診已經超過{{count}}天了"
+    "one": "上次拜訪已超過一天",
+    "other": "上次拜訪已超過 {{count}} 天"
   },
   "contacts_stalenessCriteriaDays_month": {
-    "one": "上次來訪已經超過一天了",
-    "other": "上次就診已經超過{{count}}天了"
+    "one": "上次拜訪已超過一天",
+    "other": "上次拜訪已超過 {{count}} 天"
   },
   "colorKeyScreenTitle": "色彩標示",
   "colorKey_edit": "編輯顏色鍵",
@@ -2908,7 +2908,7 @@
   "contacts_sortAndFilter_resultCount": {
     "zero": "無匹配",
     "one": "1 個匹配",
-    "other": "{{count}} 匹配"
+    "other": "{{count}} 個匹配"
   },
   "contacts_sortAndFilter_sortLabel": "排序：{{label}}",
   "savedViews_title": "儲存的檢視",
@@ -4060,37 +4060,37 @@
   "badge_prepared_name": "準備就緒",
   "badge_prepared_desc": {
     "one": "在 {{count}} 個月安排了你的傳道",
-    "other": "在 {{count}} 個不同的月份安排了你的傳道"
+    "other": "在 {{count}} 個月安排了你的傳道"
   },
   "badge_prepared_how": "在你的行程中新增一個計畫。計畫的日子到了才會計算。",
   "badge_conversations_name": "親切的話語",
   "badge_conversations_desc": {
     "one": "在 {{count}} 個月有過對話",
-    "other": "在 {{count}} 個不同的月份有過對話"
+    "other": "在 {{count}} 個月有過對話"
   },
   "badge_conversations_how": "記錄一次你與人交談的探訪。",
   "badge_returnVisits_name": "回訪",
   "badge_returnVisits_desc": {
     "one": "在 {{count}} 個月回去探訪了某人",
-    "other": "在 {{count}} 個不同的月份回去探訪了某人"
+    "other": "在 {{count}} 個月回去探訪了某人"
   },
   "badge_returnVisits_how": "記錄再次探訪你以前探訪過的人。",
   "badge_nextTime_name": "下一次",
   "badge_nextTime_desc": {
     "one": "在 {{count}} 個月規劃了下次要分享的內容",
-    "other": "在 {{count}} 個不同的月份規劃了下次要分享的內容"
+    "other": "在 {{count}} 個月規劃了下次要分享的內容"
   },
   "badge_nextTime_how": "為後續探訪加上主題，讓你知道下次要分享什麼。",
   "badge_keepingInTouch_name": "保持聯繫",
   "badge_keepingInTouch_desc": {
     "one": "在 {{count}} 個月與同一個人交談",
-    "other": "在 {{count}} 個不同的月份與同一個人交談"
+    "other": "在 {{count}} 個月與同一個人交談"
   },
   "badge_keepingInTouch_how": "持續逐月探訪某人，無論是當面、電話或書信。",
   "badge_together_name": "兩人同行",
   "badge_together_desc": {
     "one": "在 {{count}} 個月與夥伴一起出去傳道",
-    "other": "在 {{count}} 個不同的月份與夥伴一起出去傳道"
+    "other": "在 {{count}} 個月與夥伴一起出去傳道"
   },
   "badge_together_how": "與夥伴一起安排計畫。有夥伴會參加且那一天到了才會計算。",
   "badge_firstBibleStudy_name": "第一個聖經研究",
@@ -4190,8 +4190,8 @@
   "buddies_pushBadgeReactionTitle": "有夥伴對你的徽章做出了回應",
   "buddies_notifBadge": "{{name}} 獲得了新徽章",
   "buddies_notifBadgeMore": {
-    "one": "{{badge}} 等 {{count}} 個",
-    "other": "{{badge}} 等 {{count}} 個"
+    "one": "{{badge}} 及另外 {{count}} 個",
+    "other": "{{badge}} 及另外 {{count}} 個"
   },
   "buddies_notifBadgeReaction": "{{name}} 對 {{badge}} 回應了 {{emoji}}",
   "buddies_newsChannelName": "夥伴動態",

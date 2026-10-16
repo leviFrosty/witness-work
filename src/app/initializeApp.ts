@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications'
 import { errorTracking } from '@/lib/errorTracking'
 import { hotUpdater } from '@/lib/hotUpdater'
 import { downloadUpdateOnLaunch } from '@/features/updates/lib/updates'
+import { isLayoutDirectionReloadDue } from '@/app/launch/layoutDirection'
 import Constants from 'expo-constants'
 import { LogBox, Platform } from 'react-native'
 import { isAudioEnabled } from '@/lib/audio'
@@ -42,7 +43,9 @@ export function initializeApp() {
     updateBundleId: hotUpdater.getBundleId(),
   })
 
-  void downloadUpdateOnLaunch()
+  // A launch that reloads for its layout direction leaves the download to the
+  // reloaded launch, so the reload can't pick up a bundle staged meanwhile.
+  if (!isLayoutDirectionReloadDue()) void downloadUpdateOnLaunch()
 
   // Verification hooks (scripts/verify). The require keeps them out of release
   // bundles because Metro drops the dead branch before resolving it.

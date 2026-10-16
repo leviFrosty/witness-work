@@ -136,6 +136,23 @@ describe('createLiveInbox', () => {
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
+  it('stops reconnecting when the relay closes for a suspended account', async () => {
+    const { live, sockets, onChange } = setup()
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    sockets[0].onclose?.({ code: 4003 })
+    // The sync learns the suspension, which keeps the live signal off.
+    expect(onChange).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(120 * 1000)
+    expect(sockets).toHaveLength(1)
+
+    // A later start (back in the foreground) tries again.
+    live.stop()
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sockets).toHaveLength(2)
+  })
+
   it('reports what happens on the connection for diagnostics', async () => {
     const { live, sockets, events, message } = setup(5)
     live.start()

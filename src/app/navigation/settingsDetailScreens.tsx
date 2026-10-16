@@ -169,6 +169,18 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('handoff_setUp'),
   },
   {
+    name: 'Account Devices',
+    getComponent: () =>
+      require('@/features/settings/screens/AccountDevicesScreen').default,
+    title: () => i18n.t('accountSecurity_devices'),
+  },
+  {
+    name: 'Account Activity',
+    getComponent: () =>
+      require('@/features/settings/screens/AccountActivityScreen').default,
+    title: () => i18n.t('accountSecurity_activity'),
+  },
+  {
     name: 'Sign In With QR Code',
     getComponent: () =>
       require('@/features/settings/screens/SignInWithQrScreen').default,

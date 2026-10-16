@@ -13,6 +13,7 @@ import {
   ListIndentIncrease,
   ListOrdered,
   LogIn,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
@@ -133,6 +134,8 @@ export const IndentIcon = mirroredIcon(ListIndentIncrease, 'IndentIcon')
 export const OutdentIcon = mirroredIcon(ListIndentDecrease, 'OutdentIcon')
 /** Signing in: the arrow enters the door from the reading-start side. */
 export const LogInIcon = mirroredIcon(LogIn, 'LogInIcon')
+/** Signing out: the arrow leaves the door toward the reading-end side. */
+export const LogOutIcon = mirroredIcon(LogOut, 'LogOutIcon')
 
 // List glyphs hang their markers on the reading-start side, as SF Symbols'
 // list.bullet / list.number / checklist do. Redrawn rather than flipped so the

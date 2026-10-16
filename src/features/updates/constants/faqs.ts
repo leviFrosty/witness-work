@@ -120,6 +120,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'accountVerification', category: 'account' },
   { id: 'accountRecoveryKey', category: 'account' },
   { id: 'accountRecoveryKeyUse', category: 'account' },
+  { id: 'accountActivity', category: 'account' },
   { id: 'badgesOverview', category: 'badges' },
   { id: 'badgesView', category: 'badges' },
   { id: 'badgesMonths', category: 'badges' },

@@ -157,6 +157,10 @@ export type RootStackParamList = {
   Account: undefined
   /** Set Up Another Device: this phone shows a QR code for a new one. */
   'Set Up Another Device': { entry?: 'settings' | 'tools' } | undefined
+  /** The account's signed-in devices (ADR 0028). */
+  'Account Devices': undefined
+  /** The account's security history (ADR 0028). */
+  'Account Activity': undefined
   /** Sign In with QR Code: scan, or open, another phone's handoff link. */
   'Sign In With QR Code':
     | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }

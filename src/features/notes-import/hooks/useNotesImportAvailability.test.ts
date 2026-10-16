@@ -53,8 +53,8 @@ vi.mock('@/lib/appLifecycle', () => ({
 
 /** What the transport throws when nothing answers. */
 const networkFailure = () =>
-  Object.assign(new Error('Notes Import network request failed'), {
-    name: 'NotesImportAppAttestHttpError',
+  Object.assign(new Error('Attested network request failed'), {
+    name: 'AttestationHttpError',
     kind: 'network',
   })
 const contractFailure = () => new Error('malformed')

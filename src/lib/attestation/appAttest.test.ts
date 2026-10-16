@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createNotesImportAppAttest,
-  NotesImportAppAttestHttpError,
+  createAppAttestAuthorizer,
+  AttestationHttpError,
   type AppAttestNativeFailureCode,
-  type NotesImportAppAttestDependencies,
-  type NotesImportAppAttestEndpoint,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+  type AppAttestDependencies,
+  type AttestationEndpoint,
+} from '@/lib/attestation/appAttest'
 
 const CONTENT_HASH = 'a'.repeat(64)
 const REQUEST_CONTEXT = {
@@ -28,7 +28,7 @@ const DIAGNOSTIC_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 type PostCall = {
-  endpoint: NotesImportAppAttestEndpoint
+  endpoint: AttestationEndpoint
   body: Record<string, unknown>
   headers?: Record<string, string>
   signal?: AbortSignal
@@ -95,7 +95,7 @@ const createHarness = (options: HarnessOptions = {}) => {
     options.generateAssertion ?? (async () => 'assertion')
   )
 
-  const dependencies: NotesImportAppAttestDependencies = {
+  const dependencies: AppAttestDependencies = {
     appAttest: {
       isSupported: () => true,
       generateKey,
@@ -165,7 +165,7 @@ const createHarness = (options: HarnessOptions = {}) => {
           },
         })),
       post: async <T>(
-        endpoint: NotesImportAppAttestEndpoint,
+        endpoint: AttestationEndpoint,
         body: Record<string, unknown>,
         transportOptions?: {
           headers?: Record<string, string>
@@ -227,7 +227,7 @@ const createHarness = (options: HarnessOptions = {}) => {
   }
 
   return {
-    module: createNotesImportAppAttest(dependencies),
+    module: createAppAttestAuthorizer(dependencies),
     dependencies,
     events,
     generateAssertion,
@@ -722,7 +722,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({ kind: 'cancelled' })
+          throw new AttestationHttpError({ kind: 'cancelled' })
         }
         return { ok: true }
       },
@@ -817,7 +817,7 @@ describe('Notes Import App Attest', () => {
       keyId: 'generated-before-cancellation',
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -837,7 +837,7 @@ describe('Notes Import App Attest', () => {
           return { challenge: `challenge-${String(body.operation)}` }
         }
         if (endpoint === 'registration' && registrationAttempts++ < 2) {
-          throw new NotesImportAppAttestHttpError({ kind: 'network' })
+          throw new AttestationHttpError({ kind: 'network' })
         }
         return { ok: true }
       },
@@ -852,7 +852,7 @@ describe('Notes Import App Attest', () => {
     ).rejects.toMatchObject({ code: 'network' })
     expect(harness.persisted.journal).not.toBeNull()
 
-    const restartedModule = createNotesImportAppAttest(harness.dependencies)
+    const restartedModule = createAppAttestAuthorizer(harness.dependencies)
     await restartedModule.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -878,7 +878,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrationAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 503,
             serverCode: 'server_error',
@@ -910,7 +910,7 @@ describe('Notes Import App Attest', () => {
       uuid: null,
       post: ({ endpoint }) => {
         if (endpoint === 'challenge' && challengeAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 429,
             serverCode: 'attestation_failed',
@@ -962,7 +962,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrationAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 429,
             serverCode: 'attestation_failed',
@@ -1007,7 +1007,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrations++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1042,7 +1042,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1100,7 +1100,7 @@ describe('Notes Import App Attest', () => {
           body.operation === 'enroll' &&
           enrollmentRegistrations++ === 0
         ) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1335,7 +1335,7 @@ describe('Notes Import App Attest', () => {
       attestationRetryable: false,
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -1376,7 +1376,7 @@ describe('Notes Import App Attest', () => {
       attestationRetryable: true,
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -1503,7 +1503,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') {
           if (reason === 'challenge_expired') {
-            throw new NotesImportAppAttestHttpError({
+            throw new AttestationHttpError({
               kind: 'http',
               status: 401,
               serverCode: 'attestation_failed',
@@ -1514,7 +1514,7 @@ describe('Notes Import App Attest', () => {
           return { challenge: 'challenge' }
         }
         if (endpoint === 'kickoff') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1655,7 +1655,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'kickoff' && kickoffAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',
@@ -1713,7 +1713,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',
@@ -1779,7 +1779,7 @@ describe('Notes Import App Attest', () => {
       activeKeyId: 'legacy-active-key',
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        throw new NotesImportAppAttestHttpError({
+        throw new AttestationHttpError({
           kind: 'http',
           status: 401,
           serverCode: 'attestation_failed',
@@ -2102,7 +2102,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',

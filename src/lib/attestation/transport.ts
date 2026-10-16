@@ -3,15 +3,16 @@ import { apiDevBypass } from '@/lib/http/devBypass'
 import { HttpError, request } from '@/lib/http/request'
 import { perf } from '@/lib/perf'
 import {
-  NotesImportAppAttestHttpError,
-  type NotesImportAppAttestEndpoint,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+  AttestationHttpError,
+  type AttestationEndpoint,
+} from '@/lib/attestation/appAttest'
 
 /**
- * HTTP transport shared by both Notes Import authorizers (App Attest on iOS,
- * Play Integrity on Android) and the availability check. Failures become
- * sanitized {@link NotesImportAppAttestHttpError}s carrying only stable
- * metadata.
+ * HTTP transport shared by both attestation authorizers (App Attest on iOS,
+ * Play Integrity on Android) and Notes Import's availability check. The
+ * install's App Attest key is registered, and both providers' capabilities are
+ * read, through Notes Import's routes. Failures become sanitized
+ * {@link AttestationHttpError}s carrying only stable metadata.
  */
 
 /** Unauthenticated availability/capability probe. */
@@ -21,26 +22,25 @@ export const STATUS_TIMEOUT_MS = 8_000
  * attestation round-trips and the streaming kickoff return quickly, so a
  * stalled connection there fails in seconds instead of a minute and a half.
  */
-export const ENDPOINT_TIMEOUT_MS: Record<NotesImportAppAttestEndpoint, number> =
-  {
-    challenge: 15_000,
-    registration: 15_000,
-    verify: 15_000,
-    kickoff: 15_000,
-    // Waits for the vision model to read one page.
-    transcribe: 60_000,
-    legacy: 90_000,
-  }
+export const ENDPOINT_TIMEOUT_MS: Record<AttestationEndpoint, number> = {
+  challenge: 15_000,
+  registration: 15_000,
+  verify: 15_000,
+  kickoff: 15_000,
+  // Waits for the vision model to read one page.
+  transcribe: 60_000,
+  legacy: 90_000,
+}
 
 /** The shared dev-worker bypass (`@/lib/http/devBypass`). */
-export const notesImportDevBypass = apiDevBypass
+export const attestationDevBypass = apiDevBypass
 
-export const notesImportBaseUrl = apis.notesImport.replace(
+export const attestationBaseUrl = apis.notesImport.replace(
   /\/notes-import$/,
   ''
 )
 
-const endpointUrl = (endpoint: NotesImportAppAttestEndpoint): string => {
+const endpointUrl = (endpoint: AttestationEndpoint): string => {
   switch (endpoint) {
     case 'challenge':
       return apis.notesImportChallenge
@@ -61,16 +61,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
 /**
- * `request()` failures in the shape the authorizers branch on. Notes Import
- * bodies carry the stable code in `code` (`error` is human text), so read it
- * from the body rather than `HttpError.serverCode`.
+ * `request()` failures in the shape the authorizers branch on. ww-api's bodies
+ * carry the stable code in `code` (`error` is human text), so read it from the
+ * body rather than `HttpError.serverCode`.
  */
-export const toNotesImportHttpError = (
+export const toAttestationHttpError = (
   error: unknown
-): NotesImportAppAttestHttpError => {
-  if (error instanceof NotesImportAppAttestHttpError) return error
+): AttestationHttpError => {
+  if (error instanceof AttestationHttpError) return error
   if (!(error instanceof HttpError)) {
-    return new NotesImportAppAttestHttpError({
+    return new AttestationHttpError({
       kind:
         error instanceof Error && error.name === 'AbortError'
           ? 'cancelled'
@@ -78,11 +78,11 @@ export const toNotesImportHttpError = (
     })
   }
   if (error.kind === 'cancelled') {
-    return new NotesImportAppAttestHttpError({ kind: 'cancelled' })
+    return new AttestationHttpError({ kind: 'cancelled' })
   }
   if (error.status === null) {
     // No response: offline, refused, or the timeout fired.
-    return new NotesImportAppAttestHttpError({
+    return new AttestationHttpError({
       kind: 'network',
       timedOut: error.kind === 'timeout',
     })
@@ -91,7 +91,7 @@ export const toNotesImportHttpError = (
   const bodyRetryAfter =
     typeof payload?.retryAfter === 'number' ? payload.retryAfter * 1000 : null
   const retryAfterMs = error.retryAfterMs ?? bodyRetryAfter
-  return new NotesImportAppAttestHttpError({
+  return new AttestationHttpError({
     kind: 'http',
     status: error.status,
     serverCode: typeof payload?.code === 'string' ? payload.code : undefined,
@@ -118,7 +118,7 @@ const getStatus = (): Promise<unknown> => {
   })
     .then(({ data }) => data)
     .catch((error: unknown) => {
-      throw toNotesImportHttpError(error)
+      throw toAttestationHttpError(error)
     })
     .finally(() => {
       if (statusInFlight === pending) statusInFlight = null
@@ -127,10 +127,10 @@ const getStatus = (): Promise<unknown> => {
   return pending
 }
 
-export const notesImportTransport = {
+export const attestationTransport = {
   getStatus,
   post: async <T>(
-    endpoint: NotesImportAppAttestEndpoint,
+    endpoint: AttestationEndpoint,
     body: Record<string, unknown>,
     options?: { headers?: Record<string, string>; signal?: AbortSignal }
   ): Promise<T> => {
@@ -145,7 +145,7 @@ export const notesImportTransport = {
       })
       return data
     } catch (error) {
-      throw toNotesImportHttpError(error)
+      throw toAttestationHttpError(error)
     }
   },
 }

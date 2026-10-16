@@ -1,21 +1,21 @@
 import {
   DIAGNOSTIC_CONTENT_HASH,
-  NotesImportAppAttestError,
-  NotesImportAppAttestHttpError,
+  AttestationError,
+  AttestationHttpError,
   canonicalProtectedRequest,
   throwIfAborted,
   waitForSignal,
-  type NotesImportAppAttestEndpoint,
-  type NotesImportAppAttestErrorCode,
-  type NotesImportAuthDebugReport,
-  type NotesImportAuthDebugStep,
-  type NotesImportAuthRepairReport,
+  type AttestationEndpoint,
+  type AttestationErrorCode,
+  type AttestationDebugReport,
+  type AttestationDebugStep,
+  type AttestationRepairReport,
   type NotesImportProtectedPost,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+} from '@/lib/attestation/appAttest'
 
 /**
- * Android's Notes Import authorization (ADR 0017): Google Play Integrity
- * standard requests instead of App Attest.
+ * Android's device attestation (ADR 0017): Google Play Integrity standard
+ * requests instead of App Attest.
  *
  * There is no device key, so there is nothing to register, journal, enroll, or
  * recover. Each protected request asks ww-api for a one-time challenge bound to
@@ -72,7 +72,7 @@ export type PlayIntegrityNativeFailureCode =
   | 'internal'
   | 'unknown'
 
-export interface NotesImportPlayIntegrityDependencies {
+export interface PlayIntegrityDependencies {
   playIntegrity: {
     isSupported(): boolean
     prepare(cloudProjectNumber: string): Promise<void>
@@ -93,7 +93,7 @@ export interface NotesImportPlayIntegrityDependencies {
   transport: {
     getStatus(): Promise<unknown>
     post<T>(
-      endpoint: NotesImportAppAttestEndpoint,
+      endpoint: AttestationEndpoint,
       body: Record<string, unknown>,
       options?: { headers?: Record<string, string>; signal?: AbortSignal }
     ): Promise<T>
@@ -106,7 +106,7 @@ export interface NotesImportPlayIntegrityDependencies {
   random?(): number
 }
 
-export interface NotesImportPlayIntegritySnapshot {
+export interface PlayIntegritySnapshot {
   provider: 'play-integrity'
   baseUrl: string
   devBypassEnabled: boolean
@@ -116,15 +116,15 @@ export interface NotesImportPlayIntegritySnapshot {
   accountIdentity: 'local' | 'adopted' | 'missing' | 'error'
 }
 
-export interface NotesImportPlayIntegrity {
+export interface PlayIntegrityAuthorizer {
   post<T>(request: NotesImportProtectedPost): Promise<T>
   /** Nothing to recover without a device key; kept for interface parity. */
   prepareRecovery(): Promise<void>
-  getSnapshot(): NotesImportPlayIntegritySnapshot
+  getSnapshot(): PlayIntegritySnapshot
   /** The attested no-op verify through the full protected path. */
-  runDiagnostics(): Promise<NotesImportAuthDebugReport>
+  runDiagnostics(): Promise<AttestationDebugReport>
   /** Same as diagnostics: there is no key to rotate. */
-  runRepair(): Promise<NotesImportAuthRepairReport>
+  runRepair(): Promise<AttestationRepairReport>
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -166,14 +166,14 @@ const cloudProjectFromStatus = (status: unknown): string => {
     typeof play.cloudProjectNumber !== 'string' ||
     !/^\d{1,20}$/.test(play.cloudProjectNumber)
   ) {
-    throw new NotesImportAppAttestError('protocolUnavailable')
+    throw new AttestationError('protocolUnavailable')
   }
   return play.cloudProjectNumber
 }
 
 const nativeFailureToErrorCode = (
   code: PlayIntegrityNativeFailureCode
-): NotesImportAppAttestErrorCode => {
+): AttestationErrorCode => {
   switch (code) {
     case 'unsupported':
       return 'unsupported'
@@ -221,7 +221,7 @@ const RESTART_REASONS = new Set([
   'integrity_token_invalid',
 ])
 
-const metadata = (error: NotesImportAppAttestHttpError) => ({
+const metadata = (error: AttestationHttpError) => ({
   status: error.status,
   serverCode: error.serverCode,
   reason: error.reason,
@@ -234,59 +234,53 @@ const metadata = (error: NotesImportAppAttestHttpError) => ({
  * reach the client as the server's own codes.
  */
 const playHttpAuthError = (
-  error: NotesImportAppAttestHttpError
-): NotesImportAppAttestError | null => {
+  error: AttestationHttpError
+): AttestationError | null => {
   if (error.kind === 'cancelled') {
-    return new NotesImportAppAttestError('cancelled', metadata(error))
+    return new AttestationError('cancelled', metadata(error))
   }
   if (error.kind === 'network') {
-    return new NotesImportAppAttestError('network', metadata(error))
+    return new AttestationError('network', metadata(error))
   }
   switch (error.reason) {
     case 'device_integrity_failed':
     case 'app_not_recognized':
-      return new NotesImportAppAttestError('deviceIneligible', metadata(error))
+      return new AttestationError('deviceIneligible', metadata(error))
     case 'challenge_not_found':
     case 'challenge_expired':
-      return new NotesImportAppAttestError('challengeExpired', metadata(error))
+      return new AttestationError('challengeExpired', metadata(error))
     case 'operation_conflict':
     case 'integrity_token_invalid':
-      return new NotesImportAppAttestError(
-        'authorizationFailed',
-        metadata(error)
-      )
+      return new AttestationError('authorizationFailed', metadata(error))
     case 'integrity_unavailable':
     case 'storage_unavailable':
     case 'too_many_challenges':
-      return new NotesImportAppAttestError('serverUnavailable', metadata(error))
+      return new AttestationError('serverUnavailable', metadata(error))
     case 'invalid_request':
-      return new NotesImportAppAttestError('invalidInput', metadata(error))
+      return new AttestationError('invalidInput', metadata(error))
     case 'unsupported_protocol':
-      return new NotesImportAppAttestError(
-        'protocolUnavailable',
-        metadata(error)
-      )
+      return new AttestationError('protocolUnavailable', metadata(error))
     default:
       return null
   }
 }
 
 const restartRequested = (error: unknown): boolean =>
-  error instanceof NotesImportAppAttestHttpError &&
+  error instanceof AttestationHttpError &&
   error.reason !== undefined &&
   RESTART_REASONS.has(error.reason)
 
 const toAuthError = (error: unknown): Error => {
-  if (error instanceof NotesImportAppAttestError) return error
-  if (error instanceof NotesImportAppAttestHttpError) {
+  if (error instanceof AttestationError) return error
+  if (error instanceof AttestationHttpError) {
     return playHttpAuthError(error) ?? error
   }
-  return new NotesImportAppAttestError('network')
+  return new AttestationError('network')
 }
 
-export const createNotesImportPlayIntegrity = (
-  dependencies: NotesImportPlayIntegrityDependencies
-): NotesImportPlayIntegrity => {
+export const createPlayIntegrityAuthorizer = (
+  dependencies: PlayIntegrityDependencies
+): PlayIntegrityAuthorizer => {
   let capabilityPromise: Promise<string> | null = null
   let negotiatedProtocolVersion: 1 | null = null
 
@@ -309,15 +303,12 @@ export const createNotesImportPlayIntegrity = (
         return value
       })
       .catch((error: unknown) => {
-        if (error instanceof NotesImportAppAttestError) throw error
+        if (error instanceof AttestationError) throw error
         // Offline or cancelled is not an outage; say so.
-        if (
-          error instanceof NotesImportAppAttestHttpError &&
-          error.kind !== 'http'
-        ) {
+        if (error instanceof AttestationHttpError && error.kind !== 'http') {
           throw playHttpAuthError(error) ?? error
         }
-        throw new NotesImportAppAttestError('protocolUnavailable')
+        throw new AttestationError('protocolUnavailable')
       })
     capabilityPromise = pending
     void pending.catch(() => {
@@ -334,7 +325,7 @@ export const createNotesImportPlayIntegrity = (
     } catch {
       // Fall through to the shared storage failure.
     }
-    throw new NotesImportAppAttestError('storageFailure')
+    throw new AttestationError('storageFailure')
   }
 
   const hashHex = async (value: string): Promise<string> => {
@@ -344,7 +335,7 @@ export const createNotesImportPlayIntegrity = (
     } catch {
       // Fall through to the shared system failure.
     }
-    throw new NotesImportAppAttestError('systemFailure')
+    throw new AttestationError('systemFailure')
   }
 
   const requestToken = async (
@@ -364,7 +355,7 @@ export const createNotesImportPlayIntegrity = (
           dependencies.random ?? Math.random
         )
         if (!RETRYABLE_NATIVE_FAILURES.has(code) || delay === undefined) {
-          throw new NotesImportAppAttestError(nativeFailureToErrorCode(code))
+          throw new AttestationError(nativeFailureToErrorCode(code))
         }
         await waitForSignal(dependencies.sleep(delay), signal)
       }
@@ -372,7 +363,7 @@ export const createNotesImportPlayIntegrity = (
   }
 
   /** Optional per-step trace for the diagnostics report. */
-  type Trace = (step: NotesImportAuthDebugStep) => void
+  type Trace = (step: AttestationDebugStep) => void
 
   const traced = async <T>(
     trace: Trace | undefined,
@@ -391,7 +382,7 @@ export const createNotesImportPlayIntegrity = (
         ok: false,
         ms: Math.max(0, dependencies.now() - started),
         code:
-          mapped instanceof NotesImportAppAttestError
+          mapped instanceof AttestationError
             ? mapped.code
             : 'authorizationFailed',
       })
@@ -442,7 +433,7 @@ export const createNotesImportPlayIntegrity = (
           typeof challengeResponse.challenge !== 'string' ||
           !/^[A-Za-z0-9_-]{43}$/.test(challengeResponse.challenge)
         ) {
-          throw new NotesImportAppAttestError('protocolUnavailable')
+          throw new AttestationError('protocolUnavailable')
         }
         const challenge = challengeResponse.challenge
         const binding = await hashHex(
@@ -466,7 +457,7 @@ export const createNotesImportPlayIntegrity = (
             { signal: input.signal }
           )
           if (input.validate && !input.validate(data, operationId)) {
-            throw new NotesImportAppAttestError('authorizationFailed')
+            throw new AttestationError('authorizationFailed')
           }
           return data
         })
@@ -500,9 +491,9 @@ export const createNotesImportPlayIntegrity = (
     data.protocolVersion === PROTOCOL_VERSION &&
     data.operationId === operationId
 
-  const runVerify = async (): Promise<NotesImportAuthDebugReport> => {
+  const runVerify = async (): Promise<AttestationDebugReport> => {
     const operationId = dependencies.crypto.randomUuid()
-    const report: NotesImportAuthDebugReport = {
+    const report: AttestationDebugReport = {
       ok: false,
       protocolVersion: null,
       correlationId: operationId,
@@ -522,14 +513,14 @@ export const createNotesImportPlayIntegrity = (
             requestHash: DIAGNOSTIC_CONTENT_HASH,
           })
           if (!isRecord(data) || data.ok !== true) {
-            throw new NotesImportAppAttestError('authorizationFailed')
+            throw new AttestationError('authorizationFailed')
           }
         })
         report.ok = true
         return report
       }
       await traced(trace, 'supported', async () => {
-        if (!supported()) throw new NotesImportAppAttestError('unsupported')
+        if (!supported()) throw new AttestationError('unsupported')
       })
       const project = await traced(trace, 'capability', cloudProjectNumber)
       report.protocolVersion = PROTOCOL_VERSION
@@ -554,7 +545,7 @@ export const createNotesImportPlayIntegrity = (
           ok: false,
           ms: 0,
           code:
-            mapped instanceof NotesImportAppAttestError
+            mapped instanceof AttestationError
               ? mapped.code
               : 'authorizationFailed',
         })
@@ -574,7 +565,7 @@ export const createNotesImportPlayIntegrity = (
       // Android only ever uses the streaming kickoff (and page transcription);
       // ww-api refuses Play Integrity on the legacy synchronous endpoint.
       if (endpoint === 'legacy') {
-        throw new NotesImportAppAttestError('protocolUnavailable')
+        throw new AttestationError('protocolUnavailable')
       }
       const purpose =
         endpoint === 'transcribe'
@@ -598,7 +589,7 @@ export const createNotesImportPlayIntegrity = (
           signal
         )
       }
-      if (!supported()) throw new NotesImportAppAttestError('unsupported')
+      if (!supported()) throw new AttestationError('unsupported')
       const project = await waitForSignal(cloudProjectNumber(), signal)
       return protectedPost<T>({
         endpoint,
@@ -611,11 +602,9 @@ export const createNotesImportPlayIntegrity = (
       })
     },
     prepareRecovery: async () => {},
-    getSnapshot(): NotesImportPlayIntegritySnapshot {
-      let installIdentity: NotesImportPlayIntegritySnapshot['installIdentity'] =
-        'missing'
-      let accountIdentity: NotesImportPlayIntegritySnapshot['accountIdentity'] =
-        'missing'
+    getSnapshot(): PlayIntegritySnapshot {
+      let installIdentity: PlayIntegritySnapshot['installIdentity'] = 'missing'
+      let accountIdentity: PlayIntegritySnapshot['accountIdentity'] = 'missing'
       try {
         const uuid = dependencies.identity.getOrCreateUuid()
         installIdentity = uuid ? 'present' : 'missing'

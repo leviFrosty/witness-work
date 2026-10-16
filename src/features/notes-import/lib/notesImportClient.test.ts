@@ -1,9 +1,9 @@
 import { fetch as expoFetch } from 'expo/fetch'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  NotesImportAppAttestError,
-  NotesImportAppAttestHttpError,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+  AttestationError,
+  AttestationHttpError,
+} from '@/lib/attestation/appAttest'
 
 const harness = vi.hoisted(() => ({
   post: vi.fn(),
@@ -18,8 +18,8 @@ vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 vi.mock('@/features/notes-import/lib/notesContentHash', () => ({
   notesContentHash: vi.fn(async () => 'a'.repeat(64)),
 }))
-vi.mock('@/features/notes-import/lib/notesImportAuthRuntime', () => ({
-  notesImportAuth: { post: harness.post },
+vi.mock('@/lib/attestation', () => ({
+  deviceAttestation: { post: harness.post },
 }))
 
 import {
@@ -90,7 +90,7 @@ describe('Notes Import client authorization errors', () => {
 
   it('preserves backend reason and action from semantic authorization errors', async () => {
     harness.post.mockRejectedValueOnce(
-      new NotesImportAppAttestError('counterConflict', {
+      new AttestationError('counterConflict', {
         status: 409,
         serverCode: 'attestation_failed',
         reason: 'counter_not_increasing',
@@ -114,7 +114,7 @@ describe('Notes Import client authorization errors', () => {
     'maps Android verification failure %s to %s',
     async (authCode, clientCode) => {
       harness.post.mockRejectedValueOnce(
-        new NotesImportAppAttestError(authCode, {
+        new AttestationError(authCode, {
           status: 403,
           reason: 'device_integrity_failed',
           action: 'none',
@@ -131,7 +131,7 @@ describe('Notes Import client authorization errors', () => {
 
   it('keeps cancellation distinct from a network failure', async () => {
     harness.post.mockRejectedValueOnce(
-      new NotesImportAppAttestHttpError({ kind: 'cancelled' })
+      new AttestationHttpError({ kind: 'cancelled' })
     )
 
     await expect(runNotesImportStreaming(request)).rejects.toMatchObject({
@@ -203,7 +203,7 @@ describe('Notes Import service errors this build does not know', () => {
     [502, undefined],
   ])('reads a %i %s as temporarily unavailable', async (status, serverCode) => {
     harness.post.mockRejectedValueOnce(
-      new NotesImportAppAttestHttpError({
+      new AttestationHttpError({
         kind: 'http',
         status,
         serverCode,
@@ -218,7 +218,7 @@ describe('Notes Import service errors this build does not know', () => {
 
   it('keeps an unknown 4xx as unknown', async () => {
     harness.post.mockRejectedValueOnce(
-      new NotesImportAppAttestHttpError({
+      new AttestationHttpError({
         kind: 'http',
         status: 418,
         serverCode: 'teapot',
@@ -242,9 +242,7 @@ describe('Notes Import attestation outages', () => {
   ] as const)(
     'reports %s as a temporary outage, not a failed device',
     async (authCode) => {
-      harness.post.mockRejectedValueOnce(
-        new NotesImportAppAttestError(authCode)
-      )
+      harness.post.mockRejectedValueOnce(new AttestationError(authCode))
       await expect(runNotesImportStreaming(request)).rejects.toMatchObject({
         code: 'attestation_unavailable',
       })
@@ -254,9 +252,7 @@ describe('Notes Import attestation outages', () => {
   it.each(['authorizationFailed', 'unsupported', 'invalidKey'] as const)(
     'keeps %s as a verification failure',
     async (authCode) => {
-      harness.post.mockRejectedValueOnce(
-        new NotesImportAppAttestError(authCode)
-      )
+      harness.post.mockRejectedValueOnce(new AttestationError(authCode))
       await expect(runNotesImportStreaming(request)).rejects.toMatchObject({
         code: 'attestation_failed',
       })

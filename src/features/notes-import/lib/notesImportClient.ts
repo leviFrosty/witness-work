@@ -3,15 +3,15 @@ import apis from '@/constants/apis'
 import { HttpError, request } from '@/lib/http/request'
 import { perf } from '@/lib/perf'
 import {
-  NotesImportAppAttestError,
-  NotesImportAppAttestHttpError,
-  type NotesImportAppAttestErrorCode,
-} from '@/features/notes-import/lib/notesImportAppAttest'
-import { notesImportAuth } from '@/features/notes-import/lib/notesImportAuthRuntime'
+  AttestationError,
+  AttestationHttpError,
+  type AttestationErrorCode,
+} from '@/lib/attestation/appAttest'
+import { deviceAttestation } from '@/lib/attestation'
 import {
-  notesImportTransport,
-  toNotesImportHttpError,
-} from '@/features/notes-import/lib/notesImportTransport'
+  attestationTransport,
+  toAttestationHttpError,
+} from '@/lib/attestation/transport'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import type {
   NotesImportContext,
@@ -161,13 +161,13 @@ export class NotesImportStatusContractError extends Error {
 
 /**
  * Cheap, unauthenticated availability probe (no App Attest, no inference).
- * Throws the transport's {@link NotesImportAppAttestHttpError} on a network or
- * HTTP failure (classify it with `classifyNetworkError`), or
+ * Throws the transport's {@link AttestationHttpError} on a network or HTTP
+ * failure (classify it with `classifyNetworkError`), or
  * {@link NotesImportStatusContractError} on a malformed body.
  */
 export const fetchNotesImportStatus = async (): Promise<NotesImportStatus> => {
   const status = normalizeNotesImportStatus(
-    await notesImportTransport.getStatus()
+    await attestationTransport.getStatus()
   )
   if (!status) throw new NotesImportStatusContractError()
   return status
@@ -216,15 +216,13 @@ const developerDebug = (value: string): string | undefined =>
  * verifier or its storage is, the capability probe failed, or the device's
  * secure storage was briefly unreadable.
  */
-const TEMPORARY_AUTH_CODES = new Set<NotesImportAppAttestErrorCode>([
+const TEMPORARY_AUTH_CODES = new Set<AttestationErrorCode>([
   'serverUnavailable',
   'protocolUnavailable',
   'storageFailure',
 ])
 
-const authErrorCode = (
-  code: NotesImportAppAttestErrorCode
-): NotesImportErrorCode => {
+const authErrorCode = (code: AttestationErrorCode): NotesImportErrorCode => {
   if (code === 'cancelled') return 'cancelled'
   if (code === 'network') return 'network'
   if (code === 'deviceIneligible') return 'device_ineligible'
@@ -243,8 +241,8 @@ const isTemporaryHttpFailure = (status: number | undefined) =>
 
 const toClientError = (e: unknown): NotesImportClientError => {
   if (e instanceof NotesImportClientError) return e
-  if (e instanceof HttpError) return toClientError(toNotesImportHttpError(e))
-  if (e instanceof NotesImportAppAttestError) {
+  if (e instanceof HttpError) return toClientError(toAttestationHttpError(e))
+  if (e instanceof AttestationError) {
     const code = authErrorCode(e.code)
     const message =
       code === 'cancelled'
@@ -264,7 +262,7 @@ const toClientError = (e: unknown): NotesImportClientError => {
       e.action
     )
   }
-  if (e instanceof NotesImportAppAttestHttpError) {
+  if (e instanceof AttestationHttpError) {
     const code = isNotesImportErrorCode(e.serverCode)
       ? e.serverCode
       : e.kind === 'cancelled'
@@ -312,7 +310,7 @@ const postAttested = <T>(
   contentHash: string,
   signal?: AbortSignal
 ): Promise<T> =>
-  notesImportAuth.post<T>({
+  deviceAttestation.post<T>({
     endpoint,
     payload,
     contentHash,

@@ -2,17 +2,17 @@ import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
   DIAGNOSTIC_CONTENT_HASH,
-  NotesImportAppAttestError,
-  NotesImportAppAttestHttpError,
-  type NotesImportAppAttestEndpoint,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+  AttestationError,
+  AttestationHttpError,
+  type AttestationEndpoint,
+} from '@/lib/attestation/appAttest'
 import {
   buildPlayIntegrityClientData,
-  createNotesImportPlayIntegrity,
+  createPlayIntegrityAuthorizer,
   tokenRetryDelayMs,
-  type NotesImportPlayIntegrityDependencies,
+  type PlayIntegrityDependencies,
   type PlayIntegrityNativeFailureCode,
-} from '@/features/notes-import/lib/notesImportPlayIntegrity'
+} from '@/lib/attestation/playIntegrity'
 
 const CONTENT_HASH =
   'e0129726d5d80305a40c79da48fae94cdf34a3e95b8a476c5287f268699d7097'
@@ -53,7 +53,7 @@ class NativeError extends Error {
 }
 
 type PostHandler = (
-  endpoint: NotesImportAppAttestEndpoint,
+  endpoint: AttestationEndpoint,
   body: Record<string, unknown>,
   headers?: Record<string, string>
 ) => unknown
@@ -71,7 +71,7 @@ const createHarness = (
 ) => {
   let operation = 0
   const posts: {
-    endpoint: NotesImportAppAttestEndpoint
+    endpoint: AttestationEndpoint
     body: Record<string, unknown>
     headers?: Record<string, string>
   }[] = []
@@ -93,7 +93,7 @@ const createHarness = (
             operationId: body.operationId,
           }
         : { importId: 'imp_1', subscribeToken: 'sub' }
-  const dependencies: NotesImportPlayIntegrityDependencies = {
+  const dependencies: PlayIntegrityDependencies = {
     playIntegrity: {
       isSupported: () => options.supported ?? true,
       prepare: vi.fn(async () => {}),
@@ -124,7 +124,7 @@ const createHarness = (
         )
         if (result instanceof Error) throw result
         return result
-      }) as NotesImportPlayIntegrityDependencies['transport']['post'],
+      }) as PlayIntegrityDependencies['transport']['post'],
     },
     devBypass: { enabled: options.devBypass ?? false, token: 'bypass' },
     baseUrl: 'https://api.example',
@@ -135,7 +135,7 @@ const createHarness = (
   return {
     dependencies,
     posts,
-    module: createNotesImportPlayIntegrity(dependencies),
+    module: createPlayIntegrityAuthorizer(dependencies),
   }
 }
 
@@ -151,7 +151,7 @@ const kickoff = (
   })
 
 const httpError = (status: number, reason: string, serverCode?: string) =>
-  new NotesImportAppAttestHttpError({
+  new AttestationHttpError({
     kind: 'http',
     status,
     reason,
@@ -282,7 +282,7 @@ describe('Notes Import Play Integrity', () => {
               operationId: body.operationId,
               challenge: CHALLENGE,
             }
-          : new NotesImportAppAttestHttpError({
+          : new AttestationHttpError({
               kind: 'http',
               status: 403,
               reason,
@@ -292,12 +292,12 @@ describe('Notes Import Play Integrity', () => {
     })
 
     const error = await kickoff(harness).catch((e: unknown) => e)
-    expect(error).toBeInstanceOf(NotesImportAppAttestError)
+    expect(error).toBeInstanceOf(AttestationError)
     expect(error).toMatchObject({ code, reason })
   })
 
   it('passes allowance denials through as the server’s own codes', async () => {
-    const denial = new NotesImportAppAttestHttpError({
+    const denial = new AttestationHttpError({
       kind: 'http',
       status: 402,
       serverCode: 'limit_reached',
@@ -383,7 +383,7 @@ describe('Notes Import Play Integrity', () => {
   it('reports an unreachable capability probe as a network failure, not an outage', async () => {
     const harness = createHarness({
       getStatus: async () => {
-        throw new NotesImportAppAttestHttpError({ kind: 'network' })
+        throw new AttestationHttpError({ kind: 'network' })
       },
     })
     await expect(kickoff(harness)).rejects.toMatchObject({ code: 'network' })
@@ -392,7 +392,7 @@ describe('Notes Import Play Integrity', () => {
   it('reports a failing capability probe as protocolUnavailable', async () => {
     const harness = createHarness({
       getStatus: async () => {
-        throw new NotesImportAppAttestHttpError({ kind: 'http', status: 503 })
+        throw new AttestationHttpError({ kind: 'http', status: 503 })
       },
     })
     await expect(kickoff(harness)).rejects.toMatchObject({

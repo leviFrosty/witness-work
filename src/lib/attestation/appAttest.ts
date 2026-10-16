@@ -1,4 +1,4 @@
-export type NotesImportAppAttestEndpoint =
+export type AttestationEndpoint =
   | 'challenge'
   | 'registration'
   | 'kickoff'
@@ -17,7 +17,7 @@ export type AppAttestNativeFailureCode =
   | 'systemFailure'
   | 'unknown'
 
-export type NotesImportAppAttestErrorCode =
+export type AttestationErrorCode =
   | 'unsupported'
   | 'invalidArgument'
   | 'invalidInput'
@@ -50,19 +50,19 @@ interface NotesImportAppAttestSemanticMetadata {
   action?: string
 }
 
-export class NotesImportAppAttestError extends Error {
-  readonly code: NotesImportAppAttestErrorCode
+export class AttestationError extends Error {
+  readonly code: AttestationErrorCode
   readonly status?: number
   readonly serverCode?: string
   readonly reason?: string
   readonly action?: string
 
   constructor(
-    code: NotesImportAppAttestErrorCode,
+    code: AttestationErrorCode,
     options: NotesImportAppAttestSemanticMetadata = {}
   ) {
-    super(`Notes Import authorization failed (${code})`)
-    this.name = 'NotesImportAppAttestError'
+    super(`Device attestation failed (${code})`)
+    this.name = 'AttestationError'
     this.code = code
     this.status = options.status
     this.serverCode = options.serverCode
@@ -71,7 +71,7 @@ export class NotesImportAppAttestError extends Error {
   }
 }
 
-export interface NotesImportAppAttestHttpErrorOptions {
+export interface AttestationHttpErrorOptions {
   kind: 'network' | 'http' | 'cancelled'
   /**
    * A `network` failure that started but didn't finish in time, rather than one
@@ -92,7 +92,7 @@ export interface NotesImportAppAttestHttpErrorOptions {
  * Sanitized transport failure. It deliberately carries no request body, raw
  * response, challenge, attestation, assertion, or server-localized message.
  */
-export class NotesImportAppAttestHttpError extends Error {
+export class AttestationHttpError extends Error {
   readonly kind: 'network' | 'http' | 'cancelled'
   readonly timedOut: boolean
   readonly status?: number
@@ -102,18 +102,18 @@ export class NotesImportAppAttestHttpError extends Error {
   readonly credits?: unknown
   readonly retryAfterMs?: number
 
-  constructor(options: NotesImportAppAttestHttpErrorOptions) {
+  constructor(options: AttestationHttpErrorOptions) {
     const timedOut = options.kind === 'network' && options.timedOut === true
     super(
       options.kind === 'cancelled'
-        ? 'Notes Import request cancelled'
+        ? 'Attested request cancelled'
         : timedOut
-          ? 'Notes Import request timed out'
+          ? 'Attested request timed out'
           : options.kind === 'network'
-            ? 'Notes Import network request failed'
-            : 'Notes Import HTTP request failed'
+            ? 'Attested network request failed'
+            : 'Attested HTTP request failed'
     )
-    this.name = 'NotesImportAppAttestHttpError'
+    this.name = 'AttestationHttpError'
     this.kind = options.kind
     this.timedOut = timedOut
     this.status = options.status
@@ -125,7 +125,7 @@ export class NotesImportAppAttestHttpError extends Error {
   }
 }
 
-export interface NotesImportAppAttestDependencies {
+export interface AppAttestDependencies {
   appAttest: {
     isSupported(): boolean
     generateKey(): Promise<string>
@@ -168,7 +168,7 @@ export interface NotesImportAppAttestDependencies {
   transport: {
     getStatus(): Promise<unknown>
     post<T>(
-      endpoint: NotesImportAppAttestEndpoint,
+      endpoint: AttestationEndpoint,
       body: Record<string, unknown>,
       options?: { headers?: Record<string, string>; signal?: AbortSignal }
     ): Promise<T>
@@ -185,7 +185,7 @@ export interface NotesImportProtectedPost {
   signal?: AbortSignal
 }
 
-export interface NotesImportAuthSnapshot {
+export interface AppAttestSnapshot {
   provider: 'app-attest'
   baseUrl: string
   devBypassEnabled: boolean
@@ -213,41 +213,40 @@ export interface NotesImportAuthSnapshot {
   }
 }
 
-export interface NotesImportAuthDebugStep {
+export interface AttestationDebugStep {
   step: string
   ok: boolean
   ms: number
-  code?: NotesImportAppAttestErrorCode
+  code?: AttestationErrorCode
 }
 
-export interface NotesImportAuthDebugReport {
+export interface AttestationDebugReport {
   ok: boolean
   protocolVersion: 1 | 2 | null
   correlationId: string
-  steps: NotesImportAuthDebugStep[]
+  steps: AttestationDebugStep[]
 }
 
-export interface NotesImportAuthRepairReport
-  extends NotesImportAuthDebugReport {
+export interface AttestationRepairReport extends AttestationDebugReport {
   /** True when the repair replaced the active key via the recovery credential. */
   keyRotated: boolean
 }
 
-export interface NotesImportAppAttest {
+export interface AppAttestAuthorizer {
   post<T>(request: NotesImportProtectedPost): Promise<T>
   /** Enrolls recovery for an existing key; never creates a first-use key. */
   prepareRecovery(): Promise<void>
   /** Redacted, lifecycle-read-only state for developer diagnostics. */
-  getSnapshot(): NotesImportAuthSnapshot
+  getSnapshot(): AppAttestSnapshot
   /** Uses an existing key only; never binds, enrolls, recovers, or promotes. */
-  runDiagnostics(): Promise<NotesImportAuthDebugReport>
+  runDiagnostics(): Promise<AttestationDebugReport>
   /**
    * Attested no-op through the full protected path — the one flow that can
    * replace a key Apple refuses to sign with. Unlike diagnostics it may bind,
    * enroll, and recover, exactly as a real protected request would; it spends
    * no credits and runs no inference.
    */
-  runRepair(): Promise<NotesImportAuthRepairReport>
+  runRepair(): Promise<AttestationRepairReport>
 }
 
 const APP_ATTEST_PROTOCOL = 'witnesswork.app-attest'
@@ -277,8 +276,8 @@ const START_NEW_OPERATION_REASONS = new Set([
   'counter_not_increasing',
 ])
 
-const cancellationError = (): NotesImportAppAttestError =>
-  new NotesImportAppAttestError('cancelled')
+const cancellationError = (): AttestationError =>
+  new AttestationError('cancelled')
 
 export const throwIfAborted = (signal?: AbortSignal): void => {
   if (signal?.aborted) throw cancellationError()
@@ -445,12 +444,12 @@ const stableCanonicalJson = (value: unknown): string => {
       return ordered
     })
     if (serialized === undefined) {
-      throw new NotesImportAppAttestError('invalidInput')
+      throw new AttestationError('invalidInput')
     }
     return serialized
   } catch (error) {
-    if (error instanceof NotesImportAppAttestError) throw error
-    throw new NotesImportAppAttestError('invalidInput')
+    if (error instanceof AttestationError) throw error
+    throw new AttestationError('invalidInput')
   }
 }
 
@@ -465,7 +464,7 @@ export const canonicalProtectedRequest = (
 ): string => {
   if (typeof payload.image === 'string') {
     if (typeof payload.mimeType !== 'string') {
-      throw new NotesImportAppAttestError('invalidInput')
+      throw new AttestationError('invalidInput')
     }
     return stableCanonicalJson({
       imageHash: contentHash,
@@ -473,7 +472,7 @@ export const canonicalProtectedRequest = (
     })
   }
   if (typeof payload.notesText !== 'string' || !isRecord(payload.context)) {
-    throw new NotesImportAppAttestError('invalidInput')
+    throw new AttestationError('invalidInput')
   }
   return stableCanonicalJson({
     notesText: payload.notesText,
@@ -487,7 +486,7 @@ const parseJournal = (raw: string): LifecycleJournal => {
   try {
     value = JSON.parse(raw)
   } catch {
-    throw new NotesImportAppAttestError('invalidState')
+    throw new AttestationError('invalidState')
   }
   if (
     !isRecord(value) ||
@@ -499,7 +498,7 @@ const parseJournal = (raw: string): LifecycleJournal => {
     !Number.isFinite(value.updatedAt) ||
     value.updatedAt < 0
   ) {
-    throw new NotesImportAppAttestError('invalidState')
+    throw new AttestationError('invalidState')
   }
 
   const restartCount = operationRestartCount(value.operationRestartCount)
@@ -612,7 +611,7 @@ const parseJournal = (raw: string): LifecycleJournal => {
     }
   }
 
-  throw new NotesImportAppAttestError('invalidState')
+  throw new AttestationError('invalidState')
 }
 
 const protocolVersionFromStatus = (status: unknown): ProtocolVersion => {
@@ -625,11 +624,11 @@ const protocolVersionFromStatus = (status: unknown): ProtocolVersion => {
   if (!isRecord(appAttest)) return 1
   const versions = appAttest.protocolVersions
   if (!Array.isArray(versions)) {
-    throw new NotesImportAppAttestError('protocolUnavailable')
+    throw new AttestationError('protocolUnavailable')
   }
   if (versions.includes(2)) return 2
   if (versions.includes(1)) return 1
-  throw new NotesImportAppAttestError('protocolUnavailable')
+  throw new AttestationError('protocolUnavailable')
 }
 
 const purposeForEndpoint = (
@@ -695,7 +694,7 @@ const buildAssertionClientData = (input: {
 
 const nativeFailureToErrorCode = (
   code: AppAttestNativeFailureCode
-): NotesImportAppAttestErrorCode => {
+): AttestationErrorCode => {
   switch (code) {
     case 'unsupported':
     case 'invalidArgument':
@@ -723,12 +722,12 @@ const nativeFailureToErrorCode = (
  * deliberately excluded: that is a caller bug, and rotating keys would neither
  * fix it nor stop it recurring.
  */
-const isDeadKeyFailure = (code: NotesImportAppAttestErrorCode): boolean =>
+const isDeadKeyFailure = (code: AttestationErrorCode): boolean =>
   code === 'invalidKey' || code === 'invalidInput'
 
 const httpAuthError = (
-  error: NotesImportAppAttestHttpError
-): NotesImportAppAttestError | null => {
+  error: AttestationHttpError
+): AttestationError | null => {
   const options: NotesImportAppAttestSemanticMetadata = {
     status: error.status,
     serverCode: error.serverCode,
@@ -736,56 +735,56 @@ const httpAuthError = (
     action: error.action,
   }
   if (error.kind === 'cancelled') {
-    return new NotesImportAppAttestError('cancelled', options)
+    return new AttestationError('cancelled', options)
   }
   if (error.kind === 'network') {
-    return new NotesImportAppAttestError('network', options)
+    return new AttestationError('network', options)
   }
   if (
     (error.reason && CHALLENGE_SERVER_REASONS.has(error.reason)) ||
     error.serverCode === 'challenge_expired'
   ) {
-    return new NotesImportAppAttestError('challengeExpired', options)
+    return new AttestationError('challengeExpired', options)
   }
   if (
     (error.reason && COUNTER_SERVER_REASONS.has(error.reason)) ||
     error.serverCode === 'counter_conflict'
   ) {
-    return new NotesImportAppAttestError('counterConflict', options)
+    return new AttestationError('counterConflict', options)
   }
   if (
     (error.reason && RECOVERY_SERVER_REASONS.has(error.reason)) ||
     error.serverCode === 'key_inactive' ||
     error.serverCode === 'recovery_required'
   ) {
-    return new NotesImportAppAttestError('keyInactive', options)
+    return new AttestationError('keyInactive', options)
   }
   if (error.reason && RECOVERY_UNAVAILABLE_REASONS.has(error.reason)) {
-    return new NotesImportAppAttestError('recoveryUnavailable', options)
+    return new AttestationError('recoveryUnavailable', options)
   }
   if (
     error.reason === 'storage_unavailable' ||
     error.reason === 'too_many_challenges'
   ) {
-    return new NotesImportAppAttestError('serverUnavailable', options)
+    return new AttestationError('serverUnavailable', options)
   }
   if (error.reason === 'unsupported_protocol') {
-    return new NotesImportAppAttestError('protocolUnavailable', options)
+    return new AttestationError('protocolUnavailable', options)
   }
   if (error.reason === 'invalid_request') {
-    return new NotesImportAppAttestError('invalidInput', options)
+    return new AttestationError('invalidInput', options)
   }
   if (error.reason === 'operation_conflict') {
-    return new NotesImportAppAttestError('authorizationFailed', options)
+    return new AttestationError('authorizationFailed', options)
   }
   if (error.status === 401 || error.status === 403) {
-    return new NotesImportAppAttestError('authorizationFailed', options)
+    return new AttestationError('authorizationFailed', options)
   }
   return null
 }
 
 const semanticMetadata = (
-  error: NotesImportAppAttestHttpError
+  error: AttestationHttpError
 ): NotesImportAppAttestSemanticMetadata => ({
   status: error.status,
   serverCode: error.serverCode,
@@ -795,8 +794,8 @@ const semanticMetadata = (
 
 const startNewOperationRequested = (error: unknown): boolean => {
   if (
-    !(error instanceof NotesImportAppAttestHttpError) &&
-    !(error instanceof NotesImportAppAttestError)
+    !(error instanceof AttestationHttpError) &&
+    !(error instanceof AttestationError)
   ) {
     return false
   }
@@ -807,9 +806,7 @@ const startNewOperationRequested = (error: unknown): boolean => {
   )
 }
 
-const isRetryableLifecycleHttpError = (
-  error: NotesImportAppAttestHttpError
-): boolean =>
+const isRetryableLifecycleHttpError = (error: AttestationHttpError): boolean =>
   error.kind === 'network' ||
   (error.status !== undefined && error.status >= 500 && error.status <= 599)
 
@@ -870,20 +867,21 @@ const pendingStage = (journal: LifecycleJournal): string => {
 
 const pendingKind = (
   journal: LifecycleJournal
-): NonNullable<NotesImportAuthSnapshot['pendingOperation']>['kind'] => {
+): NonNullable<AppAttestSnapshot['pendingOperation']>['kind'] => {
   if (journal.kind === 'bootstrap') return 'bootstrap'
   if (journal.kind === 'enrollment') return 'enrollment'
   return journal.mode === 'recovery' ? 'recovery' : 'bind'
 }
 
 /**
- * Deep Notes Import authorization module. Callers provide a protected payload;
- * this module owns identity injection, protocol negotiation, all key lifecycle
- * transitions, exact-operation journaling, FIFO authorization, and redaction.
+ * Deep App Attest authorization module (ADR 0017), shared by every feature that
+ * attests. Callers provide a protected payload; this module owns identity
+ * injection, protocol negotiation, all key lifecycle transitions,
+ * exact-operation journaling, FIFO authorization, and redaction.
  */
-export const createNotesImportAppAttest = (
-  dependencies: NotesImportAppAttestDependencies
-): NotesImportAppAttest => {
+export const createAppAttestAuthorizer = (
+  dependencies: AppAttestDependencies
+): AppAttestAuthorizer => {
   const authorizationLane = new FifoLane()
   const lifecycleLane = new FifoLane()
   let protocolPromise: Promise<ProtocolVersion> | null = null
@@ -901,8 +899,8 @@ export const createNotesImportAppAttest = (
     try {
       return operation()
     } catch (error) {
-      if (error instanceof NotesImportAppAttestError) throw error
-      throw new NotesImportAppAttestError('storageFailure')
+      if (error instanceof AttestationError) throw error
+      throw new AttestationError('storageFailure')
     }
   }
 
@@ -985,7 +983,7 @@ export const createNotesImportAppAttest = (
     tokenHash?: string
   ): void => {
     if (protocol === 2 && !tokenHash) {
-      throw new NotesImportAppAttestError('invalidState')
+      throw new AttestationError('invalidState')
     }
     if (recoveryStorageSupported()) {
       storage(() => dependencies.secureStore.writeActiveKeyId(keyId))
@@ -999,7 +997,7 @@ export const createNotesImportAppAttest = (
 
   const recoveryToken = (create: boolean): string | null => {
     if (!recoveryStorageSupported()) {
-      if (create) throw new NotesImportAppAttestError('protocolUnavailable')
+      if (create) throw new AttestationError('protocolUnavailable')
       return null
     }
     const token = storage(() =>
@@ -1008,7 +1006,7 @@ export const createNotesImportAppAttest = (
         : dependencies.secureStore.readRecoveryToken()
     )
     if (token !== null && token.length === 0) {
-      throw new NotesImportAppAttestError('storageFailure')
+      throw new AttestationError('storageFailure')
     }
     return token
   }
@@ -1017,12 +1015,12 @@ export const createNotesImportAppAttest = (
     try {
       const hash = await dependencies.crypto.recoveryTokenHash(token)
       if (!isNonEmptyString(hash)) {
-        throw new NotesImportAppAttestError('storageFailure')
+        throw new AttestationError('storageFailure')
       }
       return hash
     } catch (error) {
-      if (error instanceof NotesImportAppAttestError) throw error
-      throw new NotesImportAppAttestError('storageFailure')
+      if (error instanceof AttestationError) throw error
+      throw new AttestationError('storageFailure')
     }
   }
 
@@ -1034,18 +1032,18 @@ export const createNotesImportAppAttest = (
     try {
       const hash = await dependencies.crypto.sha256Hex(canonicalJson)
       if (!/^[a-f0-9]{64}$/.test(hash)) {
-        throw new NotesImportAppAttestError('systemFailure')
+        throw new AttestationError('systemFailure')
       }
       return hash
     } catch (error) {
-      if (error instanceof NotesImportAppAttestError) throw error
-      throw new NotesImportAppAttestError('systemFailure')
+      if (error instanceof AttestationError) throw error
+      throw new AttestationError('systemFailure')
     }
   }
 
-  const nativeError = (error: unknown): NotesImportAppAttestError => {
+  const nativeError = (error: unknown): AttestationError => {
     const code = dependencies.appAttest.classifyError(error) ?? 'unknown'
-    return new NotesImportAppAttestError(nativeFailureToErrorCode(code))
+    return new AttestationError(nativeFailureToErrorCode(code))
   }
 
   const invokeNative = async <T>(
@@ -1082,17 +1080,14 @@ export const createNotesImportAppAttest = (
         return version
       })
       .catch((error: unknown) => {
-        if (error instanceof NotesImportAppAttestError) throw error
-        if (error instanceof NotesImportAppAttestHttpError) {
+        if (error instanceof AttestationError) throw error
+        if (error instanceof AttestationHttpError) {
           throw (
             httpAuthError(error) ??
-            new NotesImportAppAttestError(
-              'protocolUnavailable',
-              semanticMetadata(error)
-            )
+            new AttestationError('protocolUnavailable', semanticMetadata(error))
           )
         }
-        throw new NotesImportAppAttestError('protocolUnavailable')
+        throw new AttestationError('protocolUnavailable')
       })
     protocolPromise = pending
     void pending.catch(() => {
@@ -1121,7 +1116,7 @@ export const createNotesImportAppAttest = (
         !/^[a-f0-9]{64}$/.test(input.contentHash ?? '') ||
         !/^[a-f0-9]{64}$/.test(input.requestHash ?? ''))
     ) {
-      throw new NotesImportAppAttestError('invalidInput')
+      throw new AttestationError('invalidInput')
     }
     const body =
       input.protocolVersion === 2
@@ -1147,7 +1142,7 @@ export const createNotesImportAppAttest = (
       { signal: input.signal }
     )
     if (!isRecord(response) || !isNonEmptyString(response.challenge)) {
-      throw new NotesImportAppAttestError('invalidInput')
+      throw new AttestationError('invalidInput')
     }
     if (input.protocolVersion === 2) {
       if (
@@ -1155,7 +1150,7 @@ export const createNotesImportAppAttest = (
         response.operation !== input.operation ||
         response.operationId !== input.operationId
       ) {
-        throw new NotesImportAppAttestError('protocolUnavailable')
+        throw new AttestationError('protocolUnavailable')
       }
     }
     return response.challenge
@@ -1181,16 +1176,16 @@ export const createNotesImportAppAttest = (
             ? isV1Acknowledgement(response)
             : isV2RegistrationAcknowledgement(response, operation, operationId)
         if (!valid) {
-          throw new NotesImportAppAttestError('authorizationFailed')
+          throw new AttestationError('authorizationFailed')
         }
         return
       } catch (error) {
-        if (error instanceof NotesImportAppAttestError) throw error
-        if (error instanceof NotesImportAppAttestHttpError) {
+        if (error instanceof AttestationError) throw error
+        if (error instanceof AttestationHttpError) {
           if (startNewOperationRequested(error)) {
             throw (
               httpAuthError(error) ??
-              new NotesImportAppAttestError(
+              new AttestationError(
                 'authorizationFailed',
                 semanticMetadata(error)
               )
@@ -1199,29 +1194,23 @@ export const createNotesImportAppAttest = (
           if (attempt === 0 && isRetryableLifecycleHttpError(error)) continue
           throw (
             httpAuthError(error) ??
-            new NotesImportAppAttestError(
-              'authorizationFailed',
-              semanticMetadata(error)
-            )
+            new AttestationError('authorizationFailed', semanticMetadata(error))
           )
         }
-        throw new NotesImportAppAttestError('network')
+        throw new AttestationError('network')
       }
     }
   }
 
   const throwLifecycleError = (error: unknown): never => {
-    if (error instanceof NotesImportAppAttestError) throw error
-    if (error instanceof NotesImportAppAttestHttpError) {
+    if (error instanceof AttestationError) throw error
+    if (error instanceof AttestationHttpError) {
       throw (
         httpAuthError(error) ??
-        new NotesImportAppAttestError(
-          'authorizationFailed',
-          semanticMetadata(error)
-        )
+        new AttestationError('authorizationFailed', semanticMetadata(error))
       )
     }
-    throw new NotesImportAppAttestError('network')
+    throw new AttestationError('network')
   }
 
   async function completeCandidate(
@@ -1239,7 +1228,7 @@ export const createNotesImportAppAttest = (
       if (original.operationRestartCount === 1) {
         // Keep the exhausted journal as a 24-hour tombstone so relaunches cannot
         // reset the replacement budget and generate Secure Enclave keys forever.
-        throw new NotesImportAppAttestError('invalidState')
+        throw new AttestationError('invalidState')
       }
       return startCandidate({
         protocolVersion: original.protocolVersion,
@@ -1257,10 +1246,10 @@ export const createNotesImportAppAttest = (
       let token: string | null = null
       if (candidate.protocolVersion === 2) {
         token = recoveryToken(false)
-        if (!token) throw new NotesImportAppAttestError('recoveryUnavailable')
+        if (!token) throw new AttestationError('recoveryUnavailable')
         const actualTokenHash = await hashRecoveryToken(token)
         if (actualTokenHash !== candidate.recoveryTokenHash) {
-          throw new NotesImportAppAttestError('invalidState')
+          throw new AttestationError('invalidState')
         }
       }
 
@@ -1317,7 +1306,7 @@ export const createNotesImportAppAttest = (
           writeJournal(candidate)
         } catch (error) {
           if (
-            error instanceof NotesImportAppAttestError &&
+            error instanceof AttestationError &&
             error.code === 'serverUnavailable'
           ) {
             candidate = {
@@ -1397,13 +1386,13 @@ export const createNotesImportAppAttest = (
       const token = bootstrap.recoveryTokenHash
         ? recoveryToken(false)
         : recoveryToken(true)
-      if (!token) throw new NotesImportAppAttestError('recoveryUnavailable')
+      if (!token) throw new AttestationError('recoveryUnavailable')
       const actualTokenHash = await hashRecoveryToken(token)
       if (
         bootstrap.recoveryTokenHash &&
         bootstrap.recoveryTokenHash !== actualTokenHash
       ) {
-        throw new NotesImportAppAttestError('invalidState')
+        throw new AttestationError('invalidState')
       }
       if (!bootstrap.recoveryTokenHash) {
         bootstrap = { ...bootstrap, recoveryTokenHash: actualTokenHash }
@@ -1415,7 +1404,7 @@ export const createNotesImportAppAttest = (
       if (bootstrap.operationRestartCount === 1) {
         // The second generation result was also lost. Keep this marker until its
         // TTL expires rather than creating an unbounded stream of orphaned keys.
-        throw new NotesImportAppAttestError('invalidState')
+        throw new AttestationError('invalidState')
       }
       bootstrap = {
         ...bootstrap,
@@ -1446,7 +1435,7 @@ export const createNotesImportAppAttest = (
       throw classified
     }
     if (!isNonEmptyString(keyId)) {
-      throw new NotesImportAppAttestError('nativeUnknown')
+      throw new AttestationError('nativeUnknown')
     }
 
     const candidate: CandidateJournal = {
@@ -1501,13 +1490,13 @@ export const createNotesImportAppAttest = (
       const token =
         existingToken ??
         (enrollment.recoveryTokenHash ? null : recoveryToken(true))
-      if (!token) throw new NotesImportAppAttestError('recoveryUnavailable')
+      if (!token) throw new AttestationError('recoveryUnavailable')
       const actualTokenHash = await hashRecoveryToken(token)
       if (
         enrollment.recoveryTokenHash &&
         enrollment.recoveryTokenHash !== actualTokenHash
       ) {
-        throw new NotesImportAppAttestError('invalidState')
+        throw new AttestationError('invalidState')
       }
       if (!enrollment.recoveryTokenHash) {
         enrollment = { ...enrollment, recoveryTokenHash: actualTokenHash }
@@ -1625,19 +1614,16 @@ export const createNotesImportAppAttest = (
     try {
       return await completeEnrollment(enrollment, signal)
     } catch (error) {
-      if (
-        error instanceof NotesImportAppAttestError &&
-        isDeadKeyFailure(error.code)
-      ) {
+      if (error instanceof AttestationError && isDeadKeyFailure(error.code)) {
         // Enrollment may have committed before its response was lost and the app
         // was then reinstalled. Try a token that predates this enrollment once;
         // a token created moments before the local invalidKey was never enrolled.
         if (!recoveryTokenPredatedEnrollment) {
-          throw new NotesImportAppAttestError('recoveryUnavailable')
+          throw new AttestationError('recoveryUnavailable')
         }
         const token = recoveryToken(false)
         if (!token) {
-          throw new NotesImportAppAttestError('recoveryUnavailable')
+          throw new AttestationError('recoveryUnavailable')
         }
         const tokenHash = await hashRecoveryToken(token)
         clearJournal()
@@ -1661,7 +1647,7 @@ export const createNotesImportAppAttest = (
     const currentUuid = storage(() => dependencies.identity.peekUuid())
     if (currentUuid !== journal.uuid) {
       clearJournal()
-      throw new NotesImportAppAttestError('invalidState')
+      throw new AttestationError('invalidState')
     }
     if (journal.kind === 'candidate') {
       return completeCandidate(journal, signal)
@@ -1700,10 +1686,10 @@ export const createNotesImportAppAttest = (
           const activeWithoutIdentity = readActiveKeyIdWithMigration()
           const tokenWithoutIdentity = recoveryToken(false)
           if (activeWithoutIdentity || tokenWithoutIdentity) {
-            throw new NotesImportAppAttestError('invalidState')
+            throw new AttestationError('invalidState')
           }
           uuid = storage(() => dependencies.identity.getOrCreateUuid())
-          if (!uuid) throw new NotesImportAppAttestError('storageFailure')
+          if (!uuid) throw new AttestationError('storageFailure')
           const bootstrap: BootstrapJournal = {
             v: JOURNAL_VERSION,
             kind: 'bootstrap',
@@ -1724,7 +1710,7 @@ export const createNotesImportAppAttest = (
             if (recoveryToken(false)) {
               // A recovery-capable reinstall must wait for v2; v1 has no token
               // proof and must never consume this state with a blind bind.
-              throw new NotesImportAppAttestError('protocolUnavailable')
+              throw new AttestationError('protocolUnavailable')
             }
             // Contained v1 first-use compatibility: the deployed server's
             // first-writer UUID pin accepts only an unbound identity. A reinstall
@@ -1790,7 +1776,7 @@ export const createNotesImportAppAttest = (
         }
 
         const accountId = storage(() => dependencies.identity.getAccountId())
-        if (!accountId) throw new NotesImportAppAttestError('storageFailure')
+        if (!accountId) throw new AttestationError('storageFailure')
         return { keyId, uuid, accountId }
       },
       signal
@@ -1803,7 +1789,7 @@ export const createNotesImportAppAttest = (
     signal?: AbortSignal
   ): Promise<string> => {
     if (protocol !== 2) {
-      throw new NotesImportAppAttestError('invalidKey')
+      throw new AttestationError('invalidKey')
     }
     return lifecycleLane.run(
       'lifecycle',
@@ -1815,7 +1801,7 @@ export const createNotesImportAppAttest = (
         if (pending) return resumeJournal(pending, signal)
 
         const token = recoveryToken(false)
-        if (!token) throw new NotesImportAppAttestError('recoveryUnavailable')
+        if (!token) throw new AttestationError('recoveryUnavailable')
         const tokenHash = await hashRecoveryToken(token)
         return startCandidate({
           protocolVersion: 2,
@@ -1831,27 +1817,25 @@ export const createNotesImportAppAttest = (
   }
 
   const recoveryRequested = (error: unknown): boolean =>
-    error instanceof NotesImportAppAttestHttpError &&
+    error instanceof AttestationHttpError &&
     ((error.reason !== undefined &&
       RECOVERY_SERVER_REASONS.has(error.reason)) ||
       error.serverCode === 'key_inactive' ||
       error.serverCode === 'recovery_required')
 
   const throwProtectedError = (error: unknown): never => {
-    if (error instanceof NotesImportAppAttestError) throw error
-    if (error instanceof NotesImportAppAttestHttpError) {
+    if (error instanceof AttestationError) throw error
+    if (error instanceof AttestationHttpError) {
       const authError = httpAuthError(error)
       if (authError) throw authError
       throw error
     }
-    throw new NotesImportAppAttestError('network')
+    throw new AttestationError('network')
   }
 
-  const diagnosticErrorCode = (
-    error: unknown
-  ): NotesImportAppAttestErrorCode => {
-    if (error instanceof NotesImportAppAttestError) return error.code
-    if (error instanceof NotesImportAppAttestHttpError) {
+  const diagnosticErrorCode = (error: unknown): AttestationErrorCode => {
+    if (error instanceof AttestationError) return error.code
+    if (error instanceof AttestationHttpError) {
       return httpAuthError(error)?.code ?? 'authorizationFailed'
     }
     return nativeError(error).code
@@ -1859,7 +1843,7 @@ export const createNotesImportAppAttest = (
 
   /** Records one redacted repair-report step around an operation, rethrowing. */
   const traced = async <T>(
-    trace: ((step: NotesImportAuthDebugStep) => void) | undefined,
+    trace: ((step: AttestationDebugStep) => void) | undefined,
     name: string,
     operation: () => Promise<T>
   ): Promise<T> => {
@@ -1898,7 +1882,7 @@ export const createNotesImportAppAttest = (
     allowRecovery: boolean
     allowFreshOperation: boolean
     signal?: AbortSignal
-    trace?: (step: NotesImportAuthDebugStep) => void
+    trace?: (step: AttestationDebugStep) => void
     /** Rejects a structurally invalid protected acknowledgement. */
     validate?: (data: unknown, operationId: string) => boolean
   }): Promise<ProtectedAttempt<T>> =>
@@ -1966,7 +1950,7 @@ export const createNotesImportAppAttest = (
         } catch (error) {
           if (
             input.allowRecovery &&
-            error instanceof NotesImportAppAttestError &&
+            error instanceof AttestationError &&
             isDeadKeyFailure(error.code)
           ) {
             return { kind: 'recover' }
@@ -2003,7 +1987,7 @@ export const createNotesImportAppAttest = (
               input.validate &&
               !input.validate(response, input.operationId)
             ) {
-              throw new NotesImportAppAttestError('authorizationFailed')
+              throw new AttestationError('authorizationFailed')
             }
             return response
           })
@@ -2033,7 +2017,7 @@ export const createNotesImportAppAttest = (
     uuid: string
     accountId: string
     signal?: AbortSignal
-    trace?: (step: NotesImportAuthDebugStep) => void
+    trace?: (step: AttestationDebugStep) => void
     validate?: (data: unknown, operationId: string) => boolean
   }): Promise<T> => {
     let keyId = input.keyId
@@ -2060,7 +2044,7 @@ export const createNotesImportAppAttest = (
         continue
       }
       if (!allowRecovery) {
-        throw new NotesImportAppAttestError('keyInactive')
+        throw new AttestationError('keyInactive')
       }
       keyId = await traced(input.trace, 'recover-key', () =>
         recoverKey(input.protocol, keyId, input.uuid, input.signal)
@@ -2079,14 +2063,14 @@ export const createNotesImportAppAttest = (
     return storage(() => dependencies.persistence.readLegacyKeyId())
   }
 
-  const getSnapshot = (): NotesImportAuthSnapshot => {
-    let installIdentity: NotesImportAuthSnapshot['installIdentity'] = 'missing'
-    let accountIdentity: NotesImportAuthSnapshot['accountIdentity'] = 'missing'
-    let activeKey: NotesImportAuthSnapshot['activeKey'] = 'missing'
-    let tokenState: NotesImportAuthSnapshot['recoveryToken'] = 'missing'
-    let recoveryEnrollment: NotesImportAuthSnapshot['recoveryEnrollment'] =
+  const getSnapshot = (): AppAttestSnapshot => {
+    let installIdentity: AppAttestSnapshot['installIdentity'] = 'missing'
+    let accountIdentity: AppAttestSnapshot['accountIdentity'] = 'missing'
+    let activeKey: AppAttestSnapshot['activeKey'] = 'missing'
+    let tokenState: AppAttestSnapshot['recoveryToken'] = 'missing'
+    let recoveryEnrollment: AppAttestSnapshot['recoveryEnrollment'] =
       'unsupported'
-    let pendingOperation: NotesImportAuthSnapshot['pendingOperation'] = null
+    let pendingOperation: AppAttestSnapshot['pendingOperation'] = null
 
     let uuid: string | null = null
     try {
@@ -2186,7 +2170,7 @@ export const createNotesImportAppAttest = (
   }
 
   const stepRunner =
-    (steps: NotesImportAuthDebugStep[]) =>
+    (steps: AttestationDebugStep[]) =>
     async <T>(
       name: string,
       operation: () => Promise<T>
@@ -2212,7 +2196,7 @@ export const createNotesImportAppAttest = (
     }
 
   /** Attested no-op via the dev bypass header; shared by diagnostics and repair. */
-  const runDevBypassVerify = async <R extends NotesImportAuthDebugReport>(
+  const runDevBypassVerify = async <R extends AttestationDebugReport>(
     report: R,
     operationId: string
   ): Promise<R> =>
@@ -2251,7 +2235,7 @@ export const createNotesImportAppAttest = (
           }
         )
         if (!isAssertionAcknowledgement(response, protocol, operationId)) {
-          throw new NotesImportAppAttestError('authorizationFailed')
+          throw new AttestationError('authorizationFailed')
         }
         return response
       })
@@ -2265,9 +2249,7 @@ export const createNotesImportAppAttest = (
    * key the system will no longer sign with, record whether the recovery
    * credential a repair would re-register under actually exists.
    */
-  const appendRecoverabilityNote = (
-    report: NotesImportAuthDebugReport
-  ): void => {
+  const appendRecoverabilityNote = (report: AttestationDebugReport): void => {
     const failed = report.steps.find((entry) => !entry.ok)
     if (
       !failed?.code ||
@@ -2292,9 +2274,9 @@ export const createNotesImportAppAttest = (
     })
   }
 
-  const runDiagnostics = async (): Promise<NotesImportAuthDebugReport> => {
+  const runDiagnostics = async (): Promise<AttestationDebugReport> => {
     const operationId = dependencies.crypto.randomUuid()
-    const report: NotesImportAuthDebugReport = {
+    const report: AttestationDebugReport = {
       ok: false,
       protocolVersion: null,
       correlationId: operationId,
@@ -2398,7 +2380,7 @@ export const createNotesImportAppAttest = (
           assertion: assertionResult.value,
         })
         if (!isAssertionAcknowledgement(response, protocol, operationId)) {
-          throw new NotesImportAppAttestError('authorizationFailed')
+          throw new AttestationError('authorizationFailed')
         }
         return response
       })
@@ -2409,9 +2391,9 @@ export const createNotesImportAppAttest = (
     return completed
   }
 
-  const runRepair = async (): Promise<NotesImportAuthRepairReport> => {
+  const runRepair = async (): Promise<AttestationRepairReport> => {
     const operationId = dependencies.crypto.randomUuid()
-    const report: NotesImportAuthRepairReport = {
+    const report: AttestationRepairReport = {
       ok: false,
       protocolVersion: null,
       correlationId: operationId,
@@ -2445,9 +2427,9 @@ export const createNotesImportAppAttest = (
       try {
         value = dependencies.appAttest.isSupported()
       } catch {
-        throw new NotesImportAppAttestError('nativeUnknown')
+        throw new AttestationError('nativeUnknown')
       }
-      if (!value) throw new NotesImportAppAttestError('unsupported')
+      if (!value) throw new AttestationError('unsupported')
     })
     if (!supported.ok) return report
 
@@ -2545,17 +2527,17 @@ export const createNotesImportAppAttest = (
       try {
         supported = dependencies.appAttest.isSupported()
       } catch {
-        throw new NotesImportAppAttestError('nativeUnknown')
+        throw new AttestationError('nativeUnknown')
       }
       if (!supported) {
-        throw new NotesImportAppAttestError('unsupported')
+        throw new AttestationError('unsupported')
       }
       const negotiatedProtocol = await waitForSignal(protocolVersion(), signal)
       const ready = await ensureReady(negotiatedProtocol, signal)
       // ww-api reads pages only under v2, where the assertion signs the
       // request hash that binds the image type.
       if (endpoint === 'transcribe' && negotiatedProtocol !== 2) {
-        throw new NotesImportAppAttestError('protocolUnavailable')
+        throw new AttestationError('protocolUnavailable')
       }
       const protectedProtocol = endpoint === 'legacy' ? 1 : negotiatedProtocol
       const requestHash =

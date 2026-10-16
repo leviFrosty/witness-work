@@ -33,12 +33,16 @@ export const losesSomething = (loss: AccountKeyLoss) =>
 export type AccountKeyServiceDeps = {
   store: AccountKeyStore
   /**
-   * The server account (`serverAccount`). `close` ends the old key's session
-   * and forgets its account before the key changes.
+   * The server account (`serverAccount`). `changeKey` ends the old key's
+   * session and forgets its account, then runs the swap while no session can
+   * open, so none is ever opened for the old key in between.
    */
   account: {
     ensure: (accountKey: Uint8Array) => Promise<{ accountId: string } | null>
-    close: () => Promise<void>
+    changeKey: (
+      swap: () => Promise<void>,
+      keys: { from: Uint8Array | null; to: Uint8Array }
+    ) => Promise<void>
   }
   /**
    * Buddies, whose identity derives from the key. Before the key changes,
@@ -122,10 +126,16 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
       // Throws, changing nothing more, while a buddy can't be left yet.
       await deps.buddies.release()
     }
-    await deps.store.replace(toB64u(newKey))
-    await deps.account.close()
-    deps.buddies.forget()
-    await session?.adopt()
+    // The old key's session ends before the new key is stored, and the new
+    // one (or `session`) is the next to open.
+    await deps.account.changeKey(
+      async () => {
+        await deps.store.replace(toB64u(newKey))
+        deps.buddies.forget()
+        await session?.adopt()
+      },
+      { from: current, to: newKey }
+    )
     const account = await deps.account.ensure(newKey).catch(() => null)
     return { outcome: 'replaced', loss, accountId: account?.accountId ?? null }
   }
@@ -134,9 +144,10 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
    * Makes `newKey` this device's account key. The same key changes nothing.
    * Otherwise, when this device's Buddies has buddies or an inbox, it needs
    * `confirmedLoss` (else `AccountKeyLossError`) and runs Delete Buddies first,
-   * which tells the buddies. Then it stores the key, ends the old key's
-   * session, forgets the old Buddies identity, and opens the new account's
-   * session (or adopts `session`). One at a time.
+   * which tells the buddies. Then it ends the old key's session, stores the
+   * key, forgets the old Buddies identity, and adopts `session` (with no
+   * session opened for either key in between), and opens the new account's
+   * session if it has none. One at a time.
    */
   function replace(
     newKey: Uint8Array,

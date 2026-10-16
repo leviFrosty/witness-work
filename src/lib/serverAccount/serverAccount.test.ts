@@ -210,6 +210,10 @@ function fakeSessions(
     close: vi.fn(async () => {
       live = null
     }),
+    changeKey: async <T>(swap: () => Promise<T>) => {
+      live = null
+      return swap()
+    },
     noteStatus: vi.fn(),
   } satisfies ServerAccountDeps['sessions']
   return { sessions, opens }

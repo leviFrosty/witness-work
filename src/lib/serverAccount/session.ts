@@ -359,6 +359,11 @@ export const OPEN_RETRY_AFTER_MS: Record<AttestationProblem, number> = {
 }
 /** Tries per keystore write before marking the stored token stale. */
 export const STORE_ATTEMPTS = 2
+/**
+ * How long replacing the account key waits for the server to close the old
+ * session; it's forgotten here either way.
+ */
+export const KEY_CHANGE_CLOSE_WAIT_MS = 5_000
 
 function parseStored(raw: string | null): Stored | null {
   if (!raw) return null
@@ -431,6 +436,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   let staleMarked = false
   /** The stored session was stale, and the next open says so. */
   let discardedStale = false
+  /** A key change in progress (`changeKey`), which every call waits out. */
+  let keyChange: Promise<void> | null = null
+  /** Key changes begun, so a key read during one is read again. */
+  let keyChanges = 0
+  /** Public keys this device replaced: no session opens for them again. */
+  const retired = new Set<string>()
   let lastFailure: {
     pub: string
     error: AccountSessionError
@@ -611,7 +622,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
-    signal?: AbortSignal
+    call: { signal?: AbortSignal; current?: () => boolean } = {}
   ): Promise<OpenedSession> {
     const hash = sessionAttestationHash(key.publicKey)
     const device = deviceLabelFor(accountKey, key.publicKey)
@@ -623,6 +634,10 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           contentHash: hash,
           requestHash: hash,
           submit: async (proof, attemptSignal) => {
+            // Closed, forgotten, or its key replaced while attesting: no
+            // session for it reaches the server.
+            if (call.current && !call.current())
+              throw new AttestationHttpError({ kind: 'cancelled' })
             try {
               return await sendSessionOpen(
                 { proof, device },
@@ -637,7 +652,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
               throw toAttestationHttpError(error)
             }
           },
-          signal,
+          signal: call.signal,
         }),
       { reason }
     )
@@ -666,6 +681,22 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     }
   }
 
+  /** Waits for `promise` at most `ms`; it carries on in the background. */
+  const settleWithin = (promise: Promise<unknown>, ms: number) =>
+    new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, ms)
+      const done = () => {
+        clearTimeout(timer)
+        resolve()
+      }
+      promise.then(done, done)
+    })
+
+  /** Until a key change in progress (`changeKey`) is over. */
+  async function keySettled() {
+    while (keyChange) await keyChange
+  }
+
   /**
    * A usable session for this key: the current one, refreshed, or a new one.
    * One at a time; callers for the same key share it.
@@ -675,8 +706,14 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     key: AccountSigningKey,
     call: { rejected?: string; retry?: boolean; signal?: AbortSignal }
   ): Promise<Live> {
-    await load()
     const pub = key.publicKey
+    // Nothing starts while the account key is being replaced, so no session
+    // opens or refreshes for the old key in between.
+    do {
+      await keySettled()
+      if (retired.has(pub)) throw new AccountSessionError('cancelled')
+      await load()
+    } while (keyChange)
     if (live?.accountPub === pub && accessUsable(live, call.rejected))
       return live
     if (flight?.pub === pub) return raceSignal(flight.promise, call.signal)
@@ -684,6 +721,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     const startedAt = generation
     const unchanged = () => startedAt === generation
     const run = async (): Promise<Live> => {
+      if (!unchanged()) throw new AccountSessionError('cancelled')
       const current = live
       if (current?.accountPub === pub && accessUsable(current, call.rejected))
         return current
@@ -735,9 +773,10 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         lastFailure.until > localNow()
       )
         throw lastFailure.error
+      if (!unchanged()) throw new AccountSessionError('cancelled')
       let opened: OpenedSession
       try {
-        opened = await open(accountKey, key, reason)
+        opened = await open(accountKey, key, reason, { current: unchanged })
       } catch (error) {
         const failure = toAccountSessionError(error)
         if (failure.failure === 'attestation')
@@ -776,8 +815,16 @@ export function createAccountSessions(deps: AccountSessionDeps) {
 
   /** The last key derived, by its account key: Buddies asks on every call. */
   let derived: { accountKey: string; key: AccountSigningKey } | null = null
-  const keyFor = async (accountKey?: Uint8Array) => {
+  /** The account key, read once no key change is under way. */
+  async function settledKey(accountKey?: Uint8Array): Promise<Uint8Array> {
+    await keySettled()
+    const changes = keyChanges
     const bytes = accountKey ?? (await deps.accountKey())
+    // A key change began while reading: read it again once that's over.
+    return changes === keyChanges && !keyChange ? bytes : settledKey(accountKey)
+  }
+  const keyFor = async (accountKey?: Uint8Array) => {
+    const bytes = await settledKey(accountKey)
     const encoded = toB64u(bytes)
     if (derived?.accountKey !== encoded)
       derived = { accountKey: encoded, key: deriveAccountSigningKey(bytes) }
@@ -864,7 +911,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     call: { signal?: AbortSignal } = {}
   ): Promise<DetachedSession> {
     const key = deriveAccountSigningKey(accountKey)
-    const opened = await open(accountKey, key, 'handoff', call.signal)
+    const opened = await open(accountKey, key, 'handoff', {
+      signal: call.signal,
+    })
     let settled = false
     return {
       accountId: opened.accountId,
@@ -917,6 +966,50 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     void save(null)
   }
 
+  /**
+   * Replaces or deletes this device's account key with no session in between:
+   * ends and forgets the current session first (here even when the server can't
+   * be told; it waits at most `KEY_CHANGE_CLOSE_WAIT_MS` for that), then runs
+   * `swap`, which stores the new key (and may adopt its session), while every
+   * call waits, so none opens or refreshes a session for the old key. Once
+   * `swap` resolves, no session opens for `from` or the forgotten session's key
+   * again in this launch. When `swap` throws, the old key stays usable and its
+   * next call opens a new session. One at a time.
+   */
+  async function changeKey<T>(
+    swap: () => Promise<T>,
+    keys: { from?: Uint8Array | null; to?: Uint8Array | null } = {}
+  ): Promise<T> {
+    await keySettled()
+    let done!: () => void
+    keyChange = new Promise<void>((resolve) => {
+      done = resolve
+    })
+    keyChanges++
+    try {
+      await load()
+      const current = live
+      generation++
+      flight = null
+      lastFailure = null
+      live = null
+      const closing = current
+        ? closeTokens({ ...current, accessUsable: accessUsable(current) })
+        : Promise.resolve()
+      await save(null)
+      await settleWithin(closing, KEY_CHANGE_CLOSE_WAIT_MS)
+      const result = await swap()
+      const toPub = keys.to ? deriveAccountSigningKey(keys.to).publicKey : null
+      if (current) retired.add(current.accountPub)
+      if (keys.from) retired.add(deriveAccountSigningKey(keys.from).publicKey)
+      if (toPub) retired.delete(toPub)
+      return result
+    } finally {
+      keyChange = null
+      done()
+    }
+  }
+
   /** Reading the account (`GET /accounts/v1/account`) found a newer status. */
   function noteStatus(accountPub: string, status: AccountStatus) {
     if (live?.accountPub !== accountPub || live.status === status) return
@@ -946,6 +1039,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     openDetached,
     close,
     forget,
+    changeKey,
     noteStatus,
     snapshot,
     lastOpenFailure,

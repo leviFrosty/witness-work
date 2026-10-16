@@ -35,9 +35,17 @@ function setup({
       log.push(`account.ensure:${toB64u(accountKey)}`)
       return accountId ? { accountId } : null
     }),
-    close: vi.fn(async () => {
-      log.push('account.close')
-    }),
+    // Ends the old key's session; none opens until the swap is done.
+    changeKey: vi.fn(
+      async (
+        swap: () => Promise<void>,
+        _keys: { from: Uint8Array | null; to: Uint8Array }
+      ) => {
+        log.push('account.close')
+        await swap()
+        log.push('account.unblock')
+      }
+    ),
   }
   const buddies = {
     loss: vi.fn(() => buddiesLoss),
@@ -77,13 +85,14 @@ describe('account key service', () => {
     })
     expect(store.replace).not.toHaveBeenCalled()
     expect(buddies.release).not.toHaveBeenCalled()
-    expect(account.close).not.toHaveBeenCalled()
+    expect(account.changeKey).not.toHaveBeenCalled()
     expect(await service.lossIfReplaced(key)).toEqual(NO_LOSS)
   })
 
   it('replaces a key with nothing derived from it, and registers the account', async () => {
+    const key = random()
     const newKey = random()
-    const { service, log, stored, buddies } = setup({ key: random() })
+    const { service, log, stored, buddies, account } = setup({ key })
     expect(await service.replace(newKey)).toEqual({
       outcome: 'replaced',
       loss: NO_LOSS,
@@ -91,12 +100,18 @@ describe('account key service', () => {
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(buddies.release).not.toHaveBeenCalled()
+    // The old key's session ends before the new key is stored.
     expect(log).toEqual([
-      'store.replace',
       'account.close',
+      'store.replace',
       'buddies.forget',
+      'account.unblock',
       `account.ensure:${toB64u(newKey)}`,
     ])
+    expect(account.changeKey).toHaveBeenCalledWith(expect.any(Function), {
+      from: key,
+      to: newKey,
+    })
   })
 
   it('stores a key on a device that had none, without asking', async () => {
@@ -123,7 +138,7 @@ describe('account key service', () => {
     expect(stored()).toBe(toB64u(key))
     expect(store.replace).not.toHaveBeenCalled()
     expect(buddies.release).not.toHaveBeenCalled()
-    expect(account.close).not.toHaveBeenCalled()
+    expect(account.changeKey).not.toHaveBeenCalled()
   })
 
   it('runs Delete Buddies first when confirmed, even for an inbox alone', async () => {
@@ -138,9 +153,10 @@ describe('account key service', () => {
     expect(stored()).toBe(toB64u(newKey))
     expect(log).toEqual([
       'buddies.release',
-      'store.replace',
       'account.close',
+      'store.replace',
       'buddies.forget',
+      'account.unblock',
       `account.ensure:${toB64u(newKey)}`,
     ])
   })
@@ -181,20 +197,31 @@ describe('account key service', () => {
       }),
     }
     await service.replace(newKey, { session })
+    // Adopted before any other session can open.
     expect(log).toEqual([
-      'store.replace',
       'account.close',
+      'store.replace',
       'buddies.forget',
       'session.adopt',
+      'account.unblock',
       `account.ensure:${toB64u(newKey)}`,
     ])
   })
 
-  it('surfaces a failed native write without forgetting the account', async () => {
-    const { service, store, account } = setup({ key: random() })
+  it('surfaces a failed native write, keeping the old key', async () => {
+    const key = random()
+    const { service, store, account, buddies, log, stored } = setup({ key })
     store.replace.mockRejectedValueOnce(new Error('keychain'))
-    await expect(service.replace(random())).rejects.toThrow('keychain')
-    expect(account.close).not.toHaveBeenCalled()
+    const session = { adopt: vi.fn(async () => undefined) }
+    await expect(service.replace(random(), { session })).rejects.toThrow(
+      'keychain'
+    )
+    // The old session ended first; the old key's next call opens another.
+    expect(log).toEqual(['account.close'])
+    expect(stored()).toBe(toB64u(key))
+    expect(buddies.forget).not.toHaveBeenCalled()
+    expect(session.adopt).not.toHaveBeenCalled()
+    expect(account.ensure).not.toHaveBeenCalled()
   })
 
   it('refuses a key that isn’t 32 bytes', async () => {
@@ -216,7 +243,7 @@ describe('account key service', () => {
     const first = service.replace(random())
     const second = service.replace(random())
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(log).toEqual(['store.replace:slow'])
+    expect(log).toEqual(['account.close', 'store.replace:slow'])
     release()
     await Promise.all([first, second])
     expect(log.filter((entry) => entry.startsWith('store.replace'))).toEqual([

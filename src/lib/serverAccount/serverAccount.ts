@@ -59,6 +59,10 @@ export type ServerAccountDeps = {
     ) => Promise<AccountSessionInfo>
     forget: () => void
     close: () => Promise<void>
+    changeKey: <T>(
+      swap: () => Promise<T>,
+      keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
+    ) => Promise<T>
     noteStatus?: (accountPub: string, status: AccountStatus) => void
   }
   /** `account/info` over the session: the account as the server holds it. */
@@ -188,12 +192,27 @@ export function createServerAccount(deps: ServerAccountDeps) {
   }
 
   /**
-   * Ends this device's session (`session/close`) and forgets the account here:
-   * before the account key is replaced or deleted. Never throws.
+   * Ends this device's session (`session/close`) and forgets the account here.
+   * Never throws. Replacing or deleting the account key uses `changeKey`.
    */
   async function close(): Promise<void> {
     await deps.sessions.close().catch(() => undefined)
     deps.storage.set(null)
+  }
+
+  /**
+   * Replaces or deletes the account key (`swap`) with no session in between:
+   * ends the old key's session and forgets its account first, and opens none
+   * until `swap` is done (`AccountSessions.changeKey`).
+   */
+  function changeKey<T>(
+    swap: () => Promise<T>,
+    keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
+  ): Promise<T> {
+    return deps.sessions.changeKey(async () => {
+      deps.storage.set(null)
+      return swap()
+    }, keys)
   }
 
   function failedCheck(
@@ -249,7 +268,7 @@ export function createServerAccount(deps: ServerAccountDeps) {
     }
   }
 
-  return { connect, ensure, forget, close, cached, check }
+  return { connect, ensure, forget, close, changeKey, cached, check }
 }
 
 export type ServerAccount = ReturnType<typeof createServerAccount>

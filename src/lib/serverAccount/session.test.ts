@@ -14,6 +14,7 @@ import {
   AccountSessionError,
   type AccountSessionEvent,
   createAccountSessions,
+  KEY_CHANGE_CLOSE_WAIT_MS,
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
   STORE_ATTEMPTS,
@@ -72,7 +73,10 @@ function fakeWorker(clock: { now: number }) {
     body: Record<string, unknown> | null
   }[] = []
   let issued = 0
-  const override = new Map<string, (call: number) => Response | null>()
+  const override = new Map<
+    string,
+    (call: number) => Response | null | Promise<Response | null>
+  >()
 
   const tokens = (session: Session) => {
     const accessToken = `at-${++issued}`
@@ -98,7 +102,7 @@ function fakeWorker(clock: { now: number }) {
     const headers = (init.headers ?? {}) as Record<string, string>
     const body = typeof init.body === 'string' ? JSON.parse(init.body) : null
     calls.push({ op, headers, body })
-    const forced = override.get(op)?.(
+    const forced = await override.get(op)?.(
       calls.filter((call) => call.op === op).length - 1
     )
     if (forced) return forced
@@ -232,7 +236,8 @@ function setup(
     clock?: { now: number }
     worker?: ReturnType<typeof fakeWorker>
     attestation?: ReturnType<typeof fakeAttestation>
-    accountKey?: Uint8Array
+    /** This device's account key, which a test may replace. */
+    device?: { key: Uint8Array }
   } = {}
 ) {
   const clock = options.clock ?? { now: 1_800_000_000_000 }
@@ -250,7 +255,7 @@ function setup(
     randomBytes: (length) => new Uint8Array(length).fill(++nonce % 256),
     attestation,
     store,
-    accountKey: async () => options.accountKey ?? KEY_A,
+    accountKey: async () => options.device?.key ?? KEY_A,
     deviceLabel: () => ({
       name: 'Test Phone',
       platform: 'ios',
@@ -784,6 +789,145 @@ describe('account sessions', () => {
     await declined.close()
     expect(worker.sessions[1].ended).toBe(true)
     expect(JSON.parse(store.value!).accountPub).toBe(PUB_B)
+  })
+
+  it('replaces the key with no session in between: the old one ends first, and calls wait for the swap', async () => {
+    const device = { key: KEY_A }
+    const { worker, store, sessions, info, events } = setup({ device })
+    await info()
+    let waiting: Promise<unknown>[] = []
+    let duringSwap: { ended: boolean; stored: string | null } | null = null
+
+    await sessions.changeKey(
+      async () => {
+        duringSwap = {
+          ended: worker.sessions[0].ended,
+          stored: store.value,
+        }
+        // Started mid-swap: the device's key, and the old key by name.
+        waiting = [
+          info().then((response) => response.data.accountId),
+          info(KEY_A).catch((error: unknown) => error),
+        ]
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        expect(worker.opsCalled('session/open')).toHaveLength(1)
+        expect(worker.opsCalled('session/refresh')).toHaveLength(0)
+        device.key = KEY_B
+      },
+      { from: KEY_A, to: KEY_B }
+    )
+
+    expect(duringSwap).toEqual({ ended: true, stored: null })
+    const [accountB, oldKey] = await Promise.all(waiting)
+    expect(accountB).toBe(worker.accounts.get(PUB_B))
+    // No session for the old key once it's replaced, in this launch.
+    expect(oldKey).toMatchObject({ failure: 'cancelled' })
+    await expect(sessions.ensure(KEY_A)).rejects.toMatchObject({
+      failure: 'cancelled',
+    })
+    expect(
+      worker
+        .opsCalled('session/open')
+        .map((_, i) => openPayload(worker, i).accountPub)
+    ).toEqual([PUB_A, PUB_B])
+    expect(events.filter((event) => event.op === 'session/open')).toEqual([
+      expect.objectContaining({ reason: 'new', outcome: 'ok' }),
+      expect.objectContaining({ reason: 'new', outcome: 'ok' }),
+    ])
+    expect(JSON.parse(store.value!).accountPub).toBe(PUB_B)
+  })
+
+  it('adopts the new key’s session inside the swap, so nothing opens another', async () => {
+    const device = { key: KEY_A }
+    const { worker, sessions, info } = setup({ device })
+    await info()
+    const detached = await sessions.openDetached(KEY_B)
+    let racing: Promise<unknown> | null = null
+
+    await sessions.changeKey(
+      async () => {
+        racing = info()
+        device.key = KEY_B
+        await detached.adopt()
+      },
+      { from: KEY_A, to: KEY_B }
+    )
+    await racing
+
+    expect(worker.opsCalled('session/open')).toHaveLength(2)
+    expect(worker.sessions[0].ended).toBe(true)
+    expect(worker.sessions[1].ended).toBe(false)
+  })
+
+  it('forgets the old session even when the server can’t be told, waiting only so long', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      const device = { key: KEY_A }
+      const { worker, store, sessions, info } = setup({ device })
+      await info()
+      worker.override.set('session/close', () => new Promise(() => {}))
+      const swap = vi.fn(async () => {
+        device.key = KEY_B
+      })
+
+      const changed = sessions.changeKey(swap, { from: KEY_A, to: KEY_B })
+      await vi.advanceTimersByTimeAsync(KEY_CHANGE_CLOSE_WAIT_MS - 1)
+      expect(swap).not.toHaveBeenCalled()
+      expect(store.value).toBeNull()
+      expect(sessions.snapshot()).toBeNull()
+      await vi.advanceTimersByTimeAsync(1)
+      await changed
+      expect(swap).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the old key usable when the swap fails', async () => {
+    const { worker, sessions, info } = setup()
+    await info()
+
+    await expect(
+      sessions.changeKey(
+        async () => {
+          throw new Error('keychain')
+        },
+        { from: KEY_A, to: KEY_B }
+      )
+    ).rejects.toThrow('keychain')
+
+    await expect(info()).resolves.toBeTruthy()
+    expect(worker.sessions[0].ended).toBe(true)
+    expect(openPayload(worker, 1).accountPub).toBe(PUB_A)
+  })
+
+  it('sends no session/open the key change overtook while attesting', async () => {
+    let release!: () => void
+    const attestation = fakeAttestation()
+    const assert = attestation.assert.getMockImplementation()!
+    attestation.assert.mockImplementationOnce(async (request) => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return assert(request)
+    })
+    const device = { key: KEY_A }
+    const { worker, sessions, info } = setup({ attestation, device })
+
+    const first = info().catch((error: unknown) => error)
+    await vi.waitFor(() => expect(release).toBeDefined())
+    await sessions.changeKey(
+      async () => {
+        device.key = KEY_B
+      },
+      { from: KEY_A, to: KEY_B }
+    )
+    release()
+
+    expect(await first).toMatchObject({ failure: 'cancelled' })
+    expect(worker.opsCalled('session/open')).toHaveLength(0)
+    await info()
+    expect(openPayload(worker).accountPub).toBe(PUB_B)
   })
 
   it('lets one caller stop waiting without cancelling the shared open', async () => {

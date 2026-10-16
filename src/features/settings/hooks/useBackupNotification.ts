@@ -7,6 +7,7 @@ import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { backupReminderDueAt } from '@/features/settings/lib/backupReminder'
 import { syncTransport } from '@/lib/syncTransport'
+import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { useShallow } from 'zustand/react/shallow'
 
 /**
@@ -44,6 +45,10 @@ export default function useBackupNotification(
     }))
   )
 
+  const accountBackupAt = useBackupState((state) =>
+    state.enabled ? state.schedule.lastPutAt : null
+  )
+
   const dueAt = backupReminderDueAt({
     remindMeAboutBackups,
     frequencyDays,
@@ -57,6 +62,7 @@ export default function useBackupNotification(
     uploadConfirmationSupported:
       syncTransport().supportsUploadStatus() ||
       syncTransport().writeConfirmsUpload,
+    accountBackupAt,
     now,
   })
   if (dueAt === null) return null

@@ -52,6 +52,7 @@ import { useDeletedContactRetention } from '@/app/useDeletedContactRetention'
 import { useTimeEntryCreditNormalization } from '@/app/useTimeEntryCreditNormalization'
 import { useCalendarSync } from '@/app/calendar/useCalendarSync'
 import { useICloudSync } from '@/app/sync/useICloudSync'
+import { useAccountBackup } from '@/app/account/useAccountBackup'
 import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
@@ -82,6 +83,7 @@ function LaunchWork() {
   useNoteImageCleanup(useAfterLaunch('idle'))
   useDeletedContactRetention(useAfterLaunch('idle'))
   useTimeEntryCreditNormalization(useAfterLaunch('idle'))
+  useAccountBackup(useAfterLaunch('idle'))
   return null
 }
 

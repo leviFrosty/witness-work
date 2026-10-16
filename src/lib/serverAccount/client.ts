@@ -31,6 +31,23 @@ export type SignedAccountOp =
   | 'handoff/status'
   | 'handoff/send'
   | 'handoff/cancel'
+  | 'backup/put'
+  | 'backup/list'
+  | 'backup/get'
+  | 'backup/delete'
+
+/** How one signed op travels, past the default JSON envelope and answer. */
+export type SignedAccountTransport = {
+  /**
+   * Sent as the raw body, with the envelope in `x-ww-p` and `x-ww-s`
+   * (`backup/put`).
+   */
+  rawBody?: Uint8Array
+  responseType?: 'json' | 'bytes'
+  timeoutMs?: number
+  /** Repeating it can't do anything twice, so a lost answer is retried once. */
+  idempotent?: boolean
+}
 
 /**
  * Sends a self-signed account op: `accountPub`, `ts`, `nonce`, and the op's own
@@ -40,7 +57,8 @@ export type SignedAccountOp =
 export async function sendSignedAccountOp<T>(
   op: SignedAccountOp,
   fields: Record<string, unknown>,
-  options: RegisterAccountOptions
+  options: RegisterAccountOptions,
+  transport: SignedAccountTransport = {}
 ) {
   const send = async (ts: number) => {
     const payload = utf8(
@@ -51,13 +69,25 @@ export async function sendSignedAccountOp<T>(
         nonce: toB64u(options.randomBytes(16)),
       })
     )
+    const p = toB64u(payload)
+    const s = signAccountRequest(op, payload, options.key)
     return request<T>({
       url: `${options.baseUrl}/accounts/v1/${op}`,
-      json: {
-        p: toB64u(payload),
-        s: signAccountRequest(op, payload, options.key),
-      },
-      timeoutMs: ACCOUNT_TIMEOUT_MS,
+      ...(transport.rawBody
+        ? {
+            method: 'POST' as const,
+            headers: {
+              'content-type': 'application/octet-stream',
+              'x-ww-p': p,
+              'x-ww-s': s,
+            },
+            body: transport.rawBody,
+          }
+        : { json: { p, s } }),
+      responseType: transport.responseType,
+      timeoutMs: transport.timeoutMs ?? ACCOUNT_TIMEOUT_MS,
+      idempotent: transport.idempotent,
+      retry: transport.idempotent ? { retries: 1 } : undefined,
       signal: options.signal,
       fetchImpl: options.fetchImpl,
     })

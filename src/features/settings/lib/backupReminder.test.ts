@@ -112,6 +112,16 @@ describe('backupReminderDueAt', () => {
     ).not.toBe(null)
   })
 
+  it('stays quiet while the account backup uploaded within the period', () => {
+    expect(backupReminderDueAt({ ...base, accountBackupAt: daysAgo(2) })).toBe(
+      null
+    )
+    // A stale account backup reminds as usual.
+    expect(
+      backupReminderDueAt({ ...base, accountBackupAt: daysAgo(40) })
+    ).not.toBeNull()
+  })
+
   it('never comes due with reminders off', () => {
     expect(backupReminderDueAt({ ...base, remindMeAboutBackups: false })).toBe(
       null

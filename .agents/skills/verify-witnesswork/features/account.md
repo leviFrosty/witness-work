@@ -11,6 +11,10 @@ Settings → Account shows the User's anonymous server account (its number and w
 - `handoff-offer` is Set Up Another Device on the phone with the account: the QR code with its countdown and Make a New Code, then "Allow … to sign in?" with the six-digit code, Allow / Don't Allow, and the result.
 - `handoff-claim` is Sign In with QR Code on the new phone: the scanner (or an opened `/h` link), the code to compare, the replace warning when this phone has Buddies data, and "Signed in". Use a Recovery Key Instead sits under it.
 - `handoff-tools` is Tools → Account → Handoff: the current or last session with its request log, Copy QR link (dev), Simulate expiry or cancel, Show a QR code, Open the scanner, Run self-test, and a link parser with Sign in with this link.
+- `backup-settings` is Settings → Account → Backup: the WitnessWork Backup switch (off by default), Last Backup with its size or failure, Back Up Now, and the photos `InfoPopover`.
+- `backup-slots` is the Backups list under it: "This phone" / "Another device" rows with date and size, deleting one, Restore from Backup, and Delete Backup.
+- `backup-restore` is the restore offer after Sign In with QR Code, after Use a Recovery Key, and once on a fresh install whose key came back: Restore when there's nothing here, otherwise Replace / Combine / Not Now, then Turn On Backup.
+- `backup-tools` is Tools → Account → Backup: slot id, schedule (pending, last result and code, last hash, next attempt), the raw server list, the log, Upload now, Decrypt a slot, Restore dry run, Delete a slot, Simulate a corrupt download, and Reset backup state.
 
 ## How to get to it (user POV)
 
@@ -19,6 +23,7 @@ Settings → Account shows the User's anonymous server account (its number and w
 - Onboarding: "I already use WitnessWork" → From your other phone opens Sign In with QR Code.
 - A `https://ww-proxy.leviwilkerson.com/h#1…` link (the QR code's) opens Sign In with QR Code, during onboarding too.
 - Tools → Account.
+- Settings → Account → Backup.
 
 ## Driving it with ww-verify
 
@@ -48,6 +53,17 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 - **Self-test.** `wwv eval '__WW_DEV__.handoff.selfTest()'`, then `__WW_DEV__.handoff.selfTestResult`: every step `ok`, ending with `Status → done (old)`.
 - **A buddy to lose or keep.** A headless Buddies engine on the local relay (see `relay.interop.test.ts` for the setup) can create an invite: open it with `wwv link`, Accept, then have the engine confirm.
 
+### WitnessWork Backup
+
+Needs the backup ops on the local worker (`WW_API_DIR=<ww-api checkout>` until they're on `origin/main`). The upload is debounced 30 s after a data change, and the server takes one put a slot a minute.
+
+- **Turn it on.** Settings → Account → WitnessWork Backup, or `wwv eval '__WW_DEV__.backup.enable()'`. `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
+- **The server copy.** `__WW_DEV__.backup.list()`, then `__WW_DEV__.backup.last`: the account's slots. `inspect()` then `last` decrypts every slot to counts; `dryRun()` previews what Combine would add.
+- **Restore on another phone.** Hand the account over (above) or Use a Recovery Key with the first phone's key. The offer follows "Signed in" / "Recovery key added". With seeded data it asks Replace / Combine / Not Now; read the store back afterwards (`wwv eval` on the stores, or the screens). `__WW_DEV__.backup.offerRestore()` runs the offer again.
+- **A corrupt slot.** `__WW_DEV__.backup.simulateCorruptDownload()` before the restore: it restores the rest and says one couldn't be read.
+- **Delete Backup.** The Backups list → Delete Backup → confirm: `list()` from either phone is `[]` and backup is off.
+- **Delete Buddies.** With backup on, Buddies Settings → Delete My Buddies Data says the backup is deleted and the recovery key changes. After it, the old account's `list()` is `[]` (check from another phone on that account), the log says `deleted every slot before the account key changed`, and within about a minute the phone uploads under a new `accountPub`.
+
 ## Gotchas
 
 - `wwv up` hashes `app.config.ts` only when it loads. In a worktree without `.env`, it can fail to (`EXPO_PUBLIC_HOT_UPDATER_API_KEY is required`), and the fingerprint silently leaves the config out, so a changed intent filter reuses an old binary. Copy the main checkout's `.env` and `.env.local` into the worktree first.
@@ -56,3 +72,4 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 - Typing into the multiline field on iOS can drop characters when typed fast; `wwv ad fill` replaces the whole value.
 - The native module's `replaceRootSeed` needs a build from this tree (`buddiesKeychainVersion` 3); with an older binary the Settings row is hidden.
 - On iOS the key is a synchronizable Keychain item; the simulator keeps it across app reinstalls and `wwv seed`, so `hasKey` can be true on a fresh seed.
+- Backup state lives in MMKV (`server-account` → `backup`), so `wwv seed` keeps it; Tools → Account → Backup → Reset backup state clears it.

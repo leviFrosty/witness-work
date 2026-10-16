@@ -37,6 +37,13 @@ already holds the User's Buddies key, because its Plans (and so its Buddy Card)
 match the User's other devices. See "Another of the User's devices" in
 [buddies-protocol.md](./buddies-protocol.md).
 
+The account backup ([accounts-protocol.md](./accounts-protocol.md#backup))
+uploads the same payload, end-to-end encrypted, to ww-api, without its
+`resetEpoch`. Its restore validates each slot with `parsePayload`, folds with
+`foldRemotePayloads`, and replaces (`replaceLocalWithRemote`) or merges
+(`mergeIntoLocal.ts`, as a pull does), keeping this device's reset generation
+and pull bookkeeping, so sync here merges the restored records with its cloud.
+
 JSON backups additionally include categories, mileage, and profile. Restoring a backup
 preserves installation identity and local consent/settings, including backups
 created by older versions that included them. Missing optional stores are kept.
@@ -78,7 +85,8 @@ from their first observation. Data protection erasure remains immediate.
 
 ## Runtime and recovery
 
-`installiCloudSync` subscribes to stores and availability/foreground events.
+`installiCloudSync` subscribes to stores (`subscribeToLocalDataChanges`, which
+the account backup uses too) and availability/foreground events.
 Changes set a persisted pending-push flag before scheduling the five-second
 write. Failed writes back off: 5 s, 20 s, 1, 2, 5 and then every 15 min while
 active (at least 1 min when throttled, 15 min when the account is full), and
@@ -235,6 +243,7 @@ The Cloud console setup is in ADR 0019's Consequences.
 | `src/app/sync/payload.ts`, `payloadValidation.ts`                               | Wire boundary, legacy normalization, known setting types    |
 | `src/app/sync/merge.ts`, `preferencesMerge.ts`                                  | Record/tombstone and per-entry preference merge             |
 | `src/app/sync/foldRemotePayloads.ts`                                            | Fold foreign snapshots for restore                          |
+| `src/app/sync/mergeIntoLocal.ts`, `localChanges.ts`                             | Merge payloads into the stores; the shared change trigger   |
 | `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`       | Legacy repair and deleted-detail expiry                     |
 | `src/app/sync/imageSync.ts`, `imageSources.ts`, `imageNames.ts`                 | Photo transfer, reference guards, cleanup policy            |
 | `src/app/notifications/useReconciledReminders.ts`                               | Local reminder reconciliation on iOS and Android            |

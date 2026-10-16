@@ -28,7 +28,11 @@ import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { mmkvStorage } from '@/stores/mmkv'
-import { accountHarness, handoffHarness } from '@/app/dev-harness/account'
+import {
+  accountHarness,
+  backupHarness,
+  handoffHarness,
+} from '@/app/dev-harness/account'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
   badgeHarnessState,
@@ -283,6 +287,12 @@ export function installDevHarness() {
      * `handoff.selfTest()` then `handoff.selfTestResult`.
      */
     handoff: handoffHarness,
+    /**
+     * The account backup: `backup.state()`; `enable()`, `uploadNow()`,
+     * `list()`, `inspect()` (decrypted slots as counts), `dryRun()`,
+     * `offerRestore()`, `deleteAll()`, then `backup.last`.
+     */
+    backup: backupHarness,
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()

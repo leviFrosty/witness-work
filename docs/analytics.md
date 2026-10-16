@@ -51,6 +51,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `saved_view_applied`                                                              | Once per session and surface (`source`); reach of Saved View switching, not how often people switch.                                                                                                                               |
 | `schedule_year_view_opened`                                                       | Once per session and way in (`source`); reach of the Schedule's Year view, not every zoom.                                                                                                                                         |
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
+| `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -210,7 +211,8 @@ ids, or names are sent.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
-`guided`, `icloud_restore`, or `backup_restore`. Home checklist view/completed/
+`guided`, `icloud_restore`, `backup_restore`, or `account_backup` (From your other
+phone restored the account's backup). Home checklist view/completed/
 dismissed remains; individual manual checkbox toggles are dropped. The checklist
 is the same four steps for everyone (plan, log time or check off the month, add
 a return visit, send the first report), so completion now spans a full report
@@ -821,6 +823,25 @@ viewing, and once per action otherwise.
 
 Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
 Mistyped keys send nothing: the form refuses them before they can be used.
+
+### Account backup
+
+These answer whether people turn on the end-to-end encrypted backup (ADR 0026
+§4), why uploads fail, and whether restoring brings people's records to a new
+phone. Uploads that succeed send nothing.
+
+| Event                       | When                                                                                    | Properties                                                                                                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `account_backup_changed`    | Backup was turned on or off on this device.                                             | `enabled`, `source: settings \| restore \| tools` (`restore`: the offer after a restore), `deleted_server_copy` (when turned off: whether this device's slot was deleted too). |
+| `account_backup_failed`     | An upload failed. Once per UTC day per reason.                                          | `reason: offline \| unavailable \| too_large \| limit \| rate_limited \| key \| server`.                                                                                       |
+| `account_backup_deleted`    | The User deleted one slot or every slot.                                                | `scope: slot \| all`, `source: settings \| disable \| tools`.                                                                                                                  |
+| `account_restore_offered`   | The restore question showed: the account has a backup.                                  | `source: handoff \| recovery_key \| fresh_install \| settings \| tools`, `slots` (count), `local_data` (this device already had records).                                      |
+| `account_restore_chosen`    | The User answered it.                                                                   | `choice: replace \| combine \| skip`, `source`.                                                                                                                                |
+| `account_restore_completed` | The restore applied.                                                                    | `mode: replace \| combine`, `slots` (read), `skipped` (from a newer app version or unreadable), `source`.                                                                      |
+| `account_restore_failed`    | Listing or downloading failed, or no slot could be read. Nothing on the device changed. | `reason: offline \| unavailable \| newer \| unreadable \| server`, `source`.                                                                                                   |
+
+Never the account id, slot ids, sizes, device names, or anything from inside
+a backup. Delete Buddies deleting the backup first sends no backup event.
 
 ### Set Up Another Device
 

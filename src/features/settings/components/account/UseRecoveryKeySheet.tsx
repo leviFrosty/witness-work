@@ -6,6 +6,7 @@ import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { accountKey, replaceAccountKey } from '@/app/account/accountKey'
+import { offerRestore } from '@/app/account/backupRestore'
 import { analytics } from '@/lib/analytics'
 import {
   losesSomething,
@@ -27,6 +28,8 @@ type Props = {
   onClose: () => void
   /** The key was used: this device's account changed (or already matched). */
   onDone: () => void
+  /** The account's backup was restored afterwards. */
+  onRestored?: () => void
 }
 
 /**
@@ -57,9 +60,23 @@ export default function UseRecoveryKeySheet(props: Props) {
             i18n.t('account_sameKeyBody')
           )
         else
+          // Then the account's backup, when it has one.
           Alert.alert(
             i18n.t('account_replacedTitle'),
-            i18n.t('account_replacedBody')
+            i18n.t('account_replacedBody'),
+            [
+              {
+                text: i18n.t('ok'),
+                onPress: () =>
+                  void offerRestore('recovery_key')
+                    .then((result) => {
+                      if (result.outcome === 'restored') props.onRestored?.()
+                    })
+                    .catch((error: unknown) =>
+                      logger.warn('[backup] restore offer failed', error)
+                    ),
+              },
+            ]
           )
       }}
       dismissible={!busy}

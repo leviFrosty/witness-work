@@ -3,6 +3,12 @@ import {
   createFakeGoogleDrive,
   memoryTransfer,
 } from '@/lib/syncTransport/googleDrive/__tests__/driveTestKit'
+import {
+  type BackupPlaintext,
+  deriveBackupKey,
+  openBackup,
+  sealBackup,
+} from '@/lib/serverAccount/backupCrypto'
 
 // Android sync end to end: the real engine on the real Google Drive transport,
 // with two or three "devices" (each a fresh module graph with its own stores)
@@ -113,6 +119,8 @@ async function device(
     }),
   }))
   const sync = await import('@/app/sync/iCloudSync')
+  const backupData = await import('@/app/account/backupData')
+  const householder = await import('@/stores/householderData')
   const { registerAndroidSyncTransport, usesGoogleDriveSync } = await import(
     '@/lib/syncTransport'
   )
@@ -163,6 +171,8 @@ async function device(
   useSupporter.getState().setSupporter(supporter)
   return {
     ...sync,
+    backupData,
+    householder,
     name,
     files,
     usesGoogleDriveSync,
@@ -454,5 +464,196 @@ describe('Google Drive sync between Android devices', () => {
     expect(await phone.iCloudSync.push('manual')).toBe(false)
     expect(drive.files('someone-else')).toEqual([])
     expect(phone.contactNames()).toEqual(['Ada'])
+  })
+})
+
+// The account backup (ADR 0026 §4) reuses the sync payload and merge. These
+// run its restore on the same engine and stores, and check that Google Drive
+// sync on the restoring device carries on as before.
+describe('Account backup restore', () => {
+  type Device = Awaited<ReturnType<typeof device>>
+  const accountId = 'A'.repeat(22)
+  const backupKey = deriveBackupKey(new Uint8Array(32).fill(5))
+  let slots = 0
+
+  /** `from`'s slot as the server hands it back, opened and read on `to`. */
+  const slotOf = (
+    from: Device,
+    to: Device,
+    tweak: (plaintext: BackupPlaintext) => BackupPlaintext = (p) => p
+  ) => {
+    const address = { accountId, slotId: `slot-${++slots}`.padEnd(22, 'x') }
+    const plaintext = tweak(
+      from.backupData.buildBackupPlaintext({
+        deviceName: from.name,
+        platform: 'android',
+        now: NOW,
+      })
+    )
+    const blob = sealBackup(backupKey, plaintext, address, new Uint8Array(24))
+    const read = to.backupData.readBackupPayload(
+      openBackup(backupKey, blob, address),
+      NOW
+    )
+    if (!read.ok) throw new Error(read.problem)
+    return read.payload
+  }
+
+  it('folds slots from two devices, whatever their sync histories', async () => {
+    const phone = await device('phone', { account: 'phone-drive' })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    phone.usePreferences.setState({
+      iCloudResetEpoch: { id: 'phone-reset', at: NOW, deviceId: 'phone' },
+    })
+    const tablet = await device('tablet', { account: 'tablet-drive' })
+    tablet.useContacts.setState({
+      contacts: [contact('c2', 'Ben Ito', NOW)] as never,
+    })
+    tablet.useConversations.setState({
+      conversations: [visit('v1', 'c2', NOW)] as never,
+    })
+    // A backup never carries a sync reset generation…
+    expect(
+      phone.backupData.buildBackupPlaintext({
+        deviceName: 'phone',
+        platform: 'android',
+        now: NOW,
+      }).payload
+    ).not.toHaveProperty('resetEpoch')
+
+    const fresh = await device('new-phone', { enabled: false })
+    const fromPhone = slotOf(phone, fresh, (plaintext) => ({
+      ...plaintext,
+      // …and one that did (an older writer) still folds with the others.
+      payload: {
+        ...(plaintext.payload as object),
+        resetEpoch: { id: 'old', at: NOW + 5, deviceId: 'phone' },
+      },
+    }))
+    const folded = fresh.backupData.foldBackupPayloads([
+      fromPhone,
+      slotOf(tablet, fresh),
+    ])!
+    fresh.backupData.replaceLocalWithBackup(folded)
+    expect(fresh.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    expect(fresh.useConversations.getState().conversations).toHaveLength(1)
+    expect(fresh.usePreferences.getState().iCloudResetEpoch).toBeNull()
+  })
+
+  it('Replace keeps this device’s sync history, so its next pull merges', async () => {
+    const phone = await device('phone')
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    await phone.iCloudSync.overwriteRemoteWithLocal()
+    const epoch = phone.usePreferences.getState().iCloudResetEpoch
+    expect(epoch).not.toBeNull()
+
+    const tablet = await device('tablet')
+    await tablet.iCloudSync.pullAndMerge('manual')
+    expect(tablet.contactNames()).toEqual(['Ada Reyes'])
+    const before = tablet.usePreferences.getState()
+    expect(before.iCloudResetEpoch).toEqual(epoch)
+
+    // An iPhone that never synced with this Drive backs up Ben.
+    const iphone = await device('iphone', {
+      account: 'other',
+      enabled: false,
+    })
+    iphone.useContacts.setState({
+      contacts: [contact('c2', 'Ben Ito', NOW)] as never,
+    })
+    const folded = tablet.backupData.foldBackupPayloads([
+      slotOf(iphone, tablet),
+    ])!
+    tablet.backupData.replaceLocalWithBackup(folded)
+    expect(tablet.contactNames()).toEqual(['Ben Ito'])
+    const after = tablet.usePreferences.getState()
+    expect(after.iCloudResetEpoch).toEqual(epoch)
+    expect(after.lastiCloudPulledAt).toBe(before.lastiCloudPulledAt)
+    expect(after.lastiCloudRemoteDeviceName).toBe(
+      before.lastiCloudRemoteDeviceName
+    )
+    // Drive sync merges rather than adopting a reset or ignoring its files.
+    await tablet.iCloudSync.pullAndMerge('manual')
+    expect(tablet.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    // Still the one reset it adopted before the restore; no new one.
+    expect(tablet.usePreferences.getState().iCloudResetAdoptedNotice).toEqual(
+      before.iCloudResetAdoptedNotice
+    )
+    expect(await tablet.iCloudSync.push('manual')).toBe(true)
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(phone.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    expect(phone.usePreferences.getState().iCloudResetEpoch).toEqual(epoch)
+    expect(phone.usePreferences.getState().iCloudResetAdoptedNotice).toBeNull()
+  })
+
+  it('Combine keeps this device’s records and adds the backup’s', async () => {
+    const phone = await device('phone', { enabled: false })
+    phone.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW - 10_000),
+        contact('c2', 'Ben Ito', NOW),
+      ] as never,
+    })
+    const tablet = await device('tablet', { enabled: false })
+    tablet.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada R.', NOW - 20_000),
+        contact('c3', 'Cara Diaz', NOW),
+      ] as never,
+    })
+    const payload = slotOf(phone, tablet)
+    const preview = tablet.backupData.previewCombine([payload])
+    expect(preview).toMatchObject({
+      changed: true,
+      before: { contacts: 2 },
+      after: { contacts: 3 },
+    })
+    // The dry run wrote nothing.
+    expect(tablet.contactNames()).toEqual(['Ada R.', 'Cara Diaz'])
+    expect(tablet.backupData.combineLocalWithBackup([payload])).toBe(true)
+    // Last writer wins per record, as in sync.
+    expect(tablet.contactNames()).toEqual(['Ada Reyes', 'Ben Ito', 'Cara Diaz'])
+    expect(tablet.backupData.combineLocalWithBackup([payload])).toBe(false)
+  })
+
+  it('carries data protection erasures, never the erased details', async () => {
+    const phone = await device('phone', { enabled: false })
+    phone.usePreferences.setState({ dataProtectionMode: true })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW - 10_000)] as never,
+    })
+    phone.householder.deleteHouseholderContact('c1')
+    const tablet = await device('tablet', { enabled: false })
+    tablet.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW - 20_000)] as never,
+    })
+    const payload = slotOf(phone, tablet)
+    expect(JSON.stringify(payload)).not.toContain('Ada Reyes')
+    tablet.backupData.combineLocalWithBackup([payload])
+    expect(tablet.contactNames()).toEqual([])
+    expect(JSON.stringify(tablet.useContacts.getState())).not.toContain(
+      'Ada Reyes'
+    )
+  })
+
+  it('leaves out a payload from a newer app, and one it can’t read', async () => {
+    const phone = await device('phone', { enabled: false })
+    const plaintext = (payload: unknown): BackupPlaintext => ({
+      v: 1,
+      deviceName: 'x',
+      platform: 'ios',
+      createdAt: NOW,
+      payload,
+    })
+    expect(
+      phone.backupData.readBackupPayload(plaintext({ version: 99 }), NOW)
+    ).toEqual({ ok: false, problem: 'newer' })
+    expect(
+      phone.backupData.readBackupPayload(plaintext({ version: 1 }), NOW)
+    ).toEqual({ ok: false, problem: 'unreadable' })
   })
 })

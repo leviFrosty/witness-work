@@ -42,6 +42,6 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 - [Calendar Sync](./calendar-sync.md) covers connecting a calendar, publishing Follow-ups, disconnecting, and Android's calendar provider read-back.
 - [Cloud sync](./cloud-sync.md) covers iCloud Sync screens on iOS and Google Drive Sync on Android through a local fake Drive, including two Android users as two devices.
 - [Badges](./badges.md) covers the profile overlay's badges section, the Badges screen and badge sheet, earning a badge live (a celebration after the User's own action, or the Home "New badge" card otherwise) and the history summary, takeovers one at a time (ADR 0021), the Show badges switch, a buddy's badges and badge alerts, and the onboarding and update reveal pages.
-- [Account and recovery key](./account.md) covers Settings → Account, showing and using a recovery key, Set Up Another Device and Sign In with QR Code (the QR handoff between two phones), and Tools → Account.
+- [Account and recovery key](./account.md) covers Settings → Account, showing and using a recovery key, Set Up Another Device and Sign In with QR Code (the QR handoff between two phones), WitnessWork Backup and restoring it, and Tools → Account.
 
 Not mapped yet: supporter route planning, saved contact views, Notes Import (Scribe) on Android, the supporter pause offer, and Settings → About and Advanced. Map one with `maintain-verification-skill` before relying on this index for it.

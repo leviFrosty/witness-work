@@ -114,7 +114,7 @@ UTF-8("ww-account/v1\ninbox/link\n" + accountId + "\n" + inboxId + "\n" + ownerP
 
 The whole payload is also signed by the inbox's owner key, so a link takes both keys. The relay checks the account and the signature, registers the inbox, and only then writes the link. An inbox already linked to another account is `conflict`. The answer's `accountId` names the account the inbox belongs to, with or without a proof.
 
-The app sends a proof on every registration once it has an account, and links an inbox registered before accounts on the first sync after it gets one (once per launch). Without an account (offline, or accounts off) it registers unlinked, as before.
+Every Buddies request carries the account's session ([Authentication](./buddies-protocol.md#authentication-sessions)), so the app registers only with a proof, for the token's account, and an inbox is always linked. An inbox registered before accounts answers owner ops with `not_linked`; the app then links it with `inbox/register` and sends the op once more. Without a session (offline, or this device can't be verified) Buddies sends nothing.
 
 ## Handoff (Set Up Another Device)
 

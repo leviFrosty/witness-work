@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse.
 
@@ -15,6 +15,8 @@ The server account is not ADR 0011's account id. That one is the RevenueCat iden
 | Backup key          | `HKDF-SHA256(accountKey, "", "ww-account/v1/backup", 32)`             | Derived on each device; never stored                                     |
 | Recovery key        | The account key for people (see [Recovery key](#recovery-key))        | Wherever the User keeps it                                               |
 | Backup slot id      | 16 random bytes, `b64u`, one per install                              | The device's MMKV, and the server's R2 object key                        |
+| Access token        | JWT, 15 minutes (see [Sessions](#sessions))                           | The app's memory only                                                    |
+| Refresh token       | 32 random bytes, `b64u`, one per session                              | The platform keystore, not synced; the server keeps its SHA-256          |
 
 Every feature derives its own keys from the account key with its own HKDF label (Buddies uses `ww-buddies/v1/*`), so the server can't tell that `accountPub` and a feature's public keys belong together. Only signatures the User's devices make link them.
 
@@ -22,12 +24,59 @@ Every feature derives its own keys from the account key with its own HKDF label 
 
 `POST {BASE}/accounts/v1/{op}` with the Buddies envelope `{ "p": b64u(UTF-8 JSON), "s": b64u(Ed25519) }`. The signature covers `UTF-8("ww-account/v1\n" + op + "\n")` followed by the decoded bytes of `p`. The context differs from Buddies' `ww-buddies/v1`, so no signature counts for both. Errors use the Buddies error envelope and codes, including `stale` with `serverTime`.
 
+Ops marked **Bearer** below take `Authorization: Bearer <access token>` from an attested [session](#sessions) instead of an envelope, and send their fields as plain JSON. While ww-api's legacy switch is on, they also accept the envelope, so older app versions keep working; once it's off, an envelope alone is 426 `upgrade_required` (see [Updates and the legacy switch](#updates-and-the-legacy-switch)). A request with an `Authorization` header is always taken as a bearer request, never as an envelope.
+
+## Sessions
+
+An account proves it's the app once, when it opens a session, and then calls with short access tokens.
+
+### `session/challenge`
+
+The body is the same challenge request Notes Import uses: an App Attest v2 `assert` challenge on iOS, or a Play Integrity v1 challenge on Android (`attestationProvider: "play-integrity"`), with:
+
+- `purpose`: `account-session`.
+- `contentHash` and `requestHash`: both `hex(SHA-256(UTF-8("ww-account/v1/session\n" + accountPub)))`, so the attestation covers the account key.
+
+The answer is Notes Import's challenge answer (`challenge`, `expiresAt`). An install whose App Attest key isn't set up yet sets it up first, the way Notes Import does; the key is the install's, not the account's.
+
+### `session/open`
+
+| Payload                                               | Response                                                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `accountPub`, `ts`, `nonce`, `attestation`, `device`? | `{ ok, accountId, status, sessionId, accessToken, accessExpiresAt, refreshToken, sessionExpiresAt }` |
+
+- Self-signed by the account signing key, like `account/register`. `attestation` holds the fields Notes Import's kickoff sends for the challenge above: the App Attest assertion fields, or `attestationProvider`, `challenge`, and `integrityToken` for Play Integrity. The signature covers them, and the attestation covers `accountPub`, so neither can be moved to another request.
+- Creates the account when `accountPub` has none, so it replaces `account/register`. `status` is `active` or `suspended`; a suspended account still gets a session (it can still hand off and back up).
+- A failed attestation is 403 `attestation_failed` with a stable `reason`: `device_integrity_failed`, `app_not_recognized`, `integrity_token_invalid`, `integrity_unavailable`, or a challenge reason (Notes Import's reasons). There's no fallback: no attestation, no account.
+- On the development worker, `x-ww-dev-bypass` with the bypass token stands in for `attestation`. Production ignores it.
+- `device` (optional) is the device's label sealed with the Buddies `seal` format under `HKDF-SHA256(accountKey, "", "ww-account/v1/device", 32)`, AAD `"ww-account/v1/device\n" + accountPub`; at most 512 characters (`too_large`). Its plaintext is `{ "name": string ≤ 64, "platform": "ios" | "android", "model": string ≤ 64 }`. The server stores it on the session and can't read it; only the account's devices can, to show which devices hold sessions.
+- Opening an eleventh session for an account ends its oldest.
+- Counts against the Buddies register edge limit and 20 per account a rolling day.
+
+### `session/refresh`
+
+Plain JSON, no envelope: `{ refreshToken }` → `{ ok, accessToken, accessExpiresAt, refreshToken, sessionExpiresAt }`.
+
+- Every refresh replaces the refresh token. Sending the one just replaced within 60 seconds (a lost response) gets a new pair; sending any older one ends the session.
+- An ended or expired session is 401 `unauthorized`, and the app opens a new one, attesting again, without asking the User.
+- A session lasts 90 days from `session/open`. Refreshing doesn't extend it.
+- Counts against the Buddies read edge limit.
+
+### `session/close`
+
+**Bearer**, no body → `{ ok }`. Ends the token's session; repeating it is `ok`. The app calls it on sign out, before replacing the account key, and before Delete Buddies.
+
+### The access token
+
+A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`), `sid` (the session), `plat` (`ios`, `android`, or `dev`), `iss` (one per environment, so a development token never passes on production), `aud` (`ww-account`), `iat`, `exp` (15 minutes). A missing, expired, or invalid token is 401 `unauthorized` with `WWW-Authenticate: Bearer error="invalid_token"`; the app refreshes once and retries.
+
 ### `account/register`
 
 | Payload                     | Response                    |
 | --------------------------- | --------------------------- |
 | `accountPub`, `ts`, `nonce` | `{ ok, accountId, status }` |
 
+- Replaced by `session/open`, and kept for app versions before it. Once the legacy switch is off, it's 426 `upgrade_required`.
 - Self-signed by the account signing key. `status` is `active` or `suspended`.
 - Idempotent: the same `accountPub` always gets the same `accountId`, so a replay learns nothing new and there's no nonce cache.
 - Counts against the Buddies register edge limit and a per-caller daily quota.
@@ -39,7 +88,7 @@ Every feature derives its own keys from the account key with its own HKDF label 
 | --------------------------- | --------------------------------------------------------------------------- |
 | `accountPub`, `ts`, `nonce` | `{ ok, accountId, accountPub, status, createdAt, inboxIds, statusChanges }` |
 
-- Self-signed like `account/register`, under op `account/info`, so only the account key's holder reads the account. Read-only: it never creates one, and an unregistered key is `unknown_account` (404).
+- **Bearer**, no body. Before sessions it was self-signed like `account/register`, under op `account/info`, and that form stays while the legacy switch is on. Read-only: it never creates one, and an unregistered key (envelope form) is `unknown_account` (404).
 - `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
 - Settings → Account reads the account's status with it each time the screen opens, and the developer Tools show the whole record. Counts against the Buddies read edge limit.
 
@@ -90,7 +139,7 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 
 ### Ops
 
-`POST {BASE}/accounts/v1/{op}`. Ops the old phone makes are self-signed envelopes like `account/register`: the payload carries `accountPub`, `ts`, `nonce`, plus the fields below, and the account must exist. Ops the new phone makes are plain JSON authorized by `claimToken`.
+`POST {BASE}/accounts/v1/{op}`. Ops the old phone makes are **Bearer** with the fields below as plain JSON (before sessions, self-signed envelopes like `account/register` whose payload also carries `accountPub`, `ts`, `nonce`; the account must exist). Ops the new phone makes are plain JSON authorized by `claimToken`: the new phone has no session until it has the key.
 
 | Op                | Caller | Request                                                 | Response                                                          |
 | ----------------- | ------ | ------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -116,7 +165,7 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 
 - Settings → Account → **Set Up Another Device** registers the account first when it needs to (the account key is created if there's none), then opens a channel. Leaving the screen, or Make a New Code, cancels it.
 - **Sign In with QR Code** is in Settings → Account, and in onboarding under "I already use WitnessWork" → From your other phone. A `/h` link opened from the system camera opens it with the link. A Use a Recovery Key alternative sits under the scanner.
-- Once the key arrives, the new phone registers its `accountPub` and checks the `accountId` matches the sealed one before it replaces anything. It replaces the key with the same warning as a recovery key (Buddies data on this phone is deleted, and on iOS the other Apple devices change too); declining cancels the channel. Then `done`, and Buddies starts here when the account already has this key's inbox linked (`account/info`), without waiting for iCloud Sync.
+- Once the key arrives, the new phone opens a session for it (`session/open`, attesting this phone) and checks the `accountId` matches the sealed one before it replaces anything. It replaces the key with the same warning as a recovery key (Buddies data on this phone is deleted, and on iOS the other Apple devices change too); declining cancels the channel. Then `done`, and Buddies starts here when the account already has this key's inbox linked (`account/info`), without waiting for iCloud Sync.
 
 ## Backup
 
@@ -140,7 +189,7 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 
 ### Ops
 
-All self-signed envelopes like `account/register`, payloads with `accountPub`, `ts`, `nonce` and the fields below. The account must exist; a suspended account can still back up.
+`backup/put`, `backup/list`, and `backup/get` are **Bearer**. `backup/delete` is Bearer **and** a self-signed envelope (payload `accountPub`, `ts`, `nonce`, and the fields below) whose account must be the token's: a leaked token alone can't delete backups. Before sessions, all four were self-signed envelopes. A suspended account can still back up.
 
 | Op              | Request                         | Response                                                      |
 | --------------- | ------------------------------- | ------------------------------------------------------------- |
@@ -149,11 +198,11 @@ All self-signed envelopes like `account/register`, payloads with `accountPub`, `
 | `backup/get`    | `slotId`                        | The blob, `application/octet-stream`; `not_found` without one |
 | `backup/delete` | `slotId`, or none for all slots | `{ ok }`                                                      |
 
-- `backup/put` sends the envelope in headers (`x-ww-p`, `x-ww-s`) and the blob as the raw body (`application/octet-stream`); `sha256` is b64u of the body's SHA-256 and `size` its length. A body that doesn't match them is `bad_request`. Every other op sends the envelope as the JSON body.
+- `backup/put` sends the blob as the raw body (`application/octet-stream`) with `slotId` in `x-ww-slot-id` and `sha256` (b64u of the body's SHA-256) in `x-ww-sha256`; `size` is `Content-Length`. Before sessions it sent an envelope with all three in `x-ww-p`/`x-ww-s`. A body that doesn't match them is `bad_request`. Every other op sends its fields as the JSON body.
 - `backup/get` answers with the bytes exactly as put, `Cache-Control: no-store`.
 - `backup/delete` is idempotent: a missing slot is `ok`.
 - Limits: 20 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read), 8 slots an account (`limit`, 429, for a new slot only), and one `backup/put` a slot a minute (`rate_limited`, 429, with `Retry-After` for the rest of the minute). `backup/put` counts against the Buddies photo-upload edge tier, the rest against the read tier.
-- An unregistered `accountPub` is `unknown_account` (404). A suspended account can still back up.
+- In the envelope form, an unregistered `accountPub` is `unknown_account` (404). A suspended account can still back up.
 - R2's lifecycle rule deletes a slot 400 days after its last upload.
 - `disabled` (503) when the worker has no backup bucket or accounts database.
 
@@ -171,6 +220,12 @@ All self-signed envelopes like `account/register`, payloads with `accountPub`, `
 
 The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford base32 (`0-9 A-Z` without `I L O U`), 55 characters, shown as `WW1-` and eleven groups of five. Reading one ignores case, spaces, and dashes, reads `I`/`L` as `1` and `O` as `0`, and refuses a bad checksum. Entering it works like receiving the key in a handoff.
 
+## Updates and the legacy switch
+
+`GET {BASE}/app/v1/config` (no authentication) → `{ ok, minAppVersion? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
+
+KV `auth:legacy` (`on` when absent, then the `AUTH_LEGACY` var): while on, every converted route (accounts, backup, handoff, Buddies, Notes Import) also accepts the way it authenticated before sessions. Set to `off`, those requests are refused with **426 `upgrade_required`** (`Retry-After` absent; updating is the fix), and the app shows Update Required. Edge-cached for 60 seconds. Raising `app:min-version` first means current app versions show the update screen before any request is refused.
+
 ## Suspension
 
 A suspended account's inboxes refuse every owner op except `inbox/delete` and `slot/remove` with `403 suspended`, close their live sockets with `4003 "suspended"`, and refuse `inbox/register`, with or without a proof. Buddies writing into the suspended User's inbox, and the User's own writes into buddies' inboxes (writer ops), still work: a buddy who wants them gone removes them. The app shows the `buddies_errorSuspended` message and backs off like the kill switch.
@@ -180,5 +235,7 @@ Moderation is maintainer-only: `POST /admin/accounts/lookup` and `/admin/account
 ## Privacy
 
 The accounts database holds the account id, `accountPub`, the status and its history (reason codes only), and which inboxes each account owns. No name, email, phone number, or private key, and nothing the User shares in Buddies. The inbox links mean the server knows which inbox belongs to which account, but not who that is or who their buddies are.
+
+Sessions hold the account id, the platform, the SHA-256 of the current and previous refresh tokens, and their times; not the install, its App Attest key, or `accountPub`. Access tokens carry the account id and session id and are never logged.
 
 Handoff channels hold two temporary public keys and two sealed blobs for at most ten minutes. Backups are ciphertext under a key only the User's devices can derive; the server keeps each slot's size, upload time, and random slot id, and can't read a device name or any data. Losing every device and the recovery key loses the backup.

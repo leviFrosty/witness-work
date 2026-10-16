@@ -41,6 +41,20 @@ Since the MVP: shared Plans and Follow-up invitations, requests to join, and bad
 
 Ed25519 public keys are 32 raw bytes, `b64u`-encoded (43 chars).
 
+### Authentication (sessions)
+
+Every op also takes `Authorization: Bearer <access token>` from an attested account session ([ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md), [Sessions](./accounts-protocol.md#sessions)). A request with that header is a **bearer request**:
+
+| Kind                                       | Bearer request                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inbox/register`                           | The token, plus the self-signed envelope above. The token's account must be the one the `account` proof names (the proof is required in a bearer request), or `forbidden`.                                                                                                                         |
+| Owner ops                                  | The token only. The body is the payload's fields as plain JSON, without `p`, `s`, `ts`, or `nonce`. The inbox must be linked to the token's account: `forbidden` otherwise, and `not_linked` (409) for an inbox registered before accounts, which the app links with `inbox/register` and retries. |
+| `blob/put`, `inbox/live`                   | The token, and the same fields as JSON, `b64u`-encoded, in `x-buddies-p` with no `x-buddies-s`. Same account check as owner ops.                                                                                                                                                                   |
+| Writer ops                                 | The token, plus the writer envelope above. The writer signature stays the slot's capability; the relay checks the token's session but doesn't compare its account with the slot or store it.                                                                                                       |
+| `invite/fetch`, `invite/claim`, `blob/get` | The token, plus today's body; the capability is unchanged.                                                                                                                                                                                                                                         |
+
+A missing, expired, or invalid token is 401 `unauthorized`. A request without the header is a **legacy request**, served exactly as before while ww-api's legacy switch is on and refused with 426 `upgrade_required` once it's off ([Updates and the legacy switch](./accounts-protocol.md#updates-and-the-legacy-switch)). Suspension applies as before: by the inbox's copy of the account status, not by the token.
+
 ### Responses
 
 Success: HTTP 200 with `{ "ok": true, ... }`. Failure: `{ "ok": false, "error": "<code>", "code": "<code>" }` (`code` repeats `error`; older relays sent `error` alone) with:

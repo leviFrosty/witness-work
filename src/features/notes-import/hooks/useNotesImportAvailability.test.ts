@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   enabled: false,
   androidEnabled: false,
   status: vi.fn(),
+  deviceUnverified: vi.fn(),
   platform: 'ios',
   online: true as boolean | null,
   foreground: [] as { listener: () => void; minIntervalMs: number }[],
@@ -23,6 +24,7 @@ vi.mock('@/lib/featureFlags', () => ({
 }))
 vi.mock('@/features/notes-import/lib/notesImportClient', () => ({
   fetchNotesImportStatus: mocks.status,
+  notesImportDeviceUnverified: mocks.deviceUnverified,
 }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 vi.mock('@/lib/http/online', () => ({
@@ -65,6 +67,7 @@ vi.mock('expo-constants', () => ({
 beforeEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
+  mocks.deviceUnverified.mockResolvedValue(false)
   mocks.enabled = false
   mocks.androidEnabled = false
   mocks.platform = 'ios'
@@ -181,6 +184,48 @@ describe('Notes Import availability', () => {
       true
     )
     expect(snapshots.at(-1)?.loading).toBe(false)
+    await close()
+  })
+  it('closes on a device that can’t be verified, since imports need its account session', async () => {
+    mocks.enabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    mocks.deviceUnverified.mockResolvedValue(true)
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({
+      available: false,
+      status: 'unavailable',
+      reason: 'device_unverified',
+      schedule: null,
+      loading: false,
+    })
+    await close()
+  })
+  it('lets the version floor and an outage win over an unverified device', async () => {
+    mocks.enabled = true
+    mocks.deviceUnverified.mockResolvedValue(true)
+    mocks.status.mockResolvedValue({ available: false, reason: 'disabled' })
+    const outage = await mount()
+    expect(outage.snapshots.at(-1)).toMatchObject({ reason: 'disabled' })
+    await outage.close()
+
+    vi.resetModules()
+    mocks.status.mockResolvedValue({
+      available: true,
+      limits: schedule,
+      minAppVersion: '9.0.0',
+    })
+    const floor = await mount()
+    expect(floor.snapshots.at(-1)).toMatchObject({
+      reason: 'version_below_min',
+    })
+    await floor.close()
+  })
+  it('opens when the device check itself fails', async () => {
+    mocks.enabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    mocks.deviceUnverified.mockRejectedValue(new Error('native'))
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({ available: true })
     await close()
   })
   it('opens only after both checks succeed', async () => {

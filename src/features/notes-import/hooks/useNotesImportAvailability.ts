@@ -7,7 +7,10 @@ import { addForegroundListener } from '@/lib/appLifecycle'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import { addReconnectListener, getOnline } from '@/lib/http/online'
 import { perf } from '@/lib/perf'
-import { fetchNotesImportStatus } from '@/features/notes-import/lib/notesImportClient'
+import {
+  fetchNotesImportStatus,
+  notesImportDeviceUnverified,
+} from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/notesImportUsage'
 import {
   notesImportUpdateRequired,
@@ -18,7 +21,9 @@ import {
  * - `disabled`: the feature flag is closed; nothing is checked.
  * - `checking`: the first check of this session is running.
  * - `available` / `unavailable`: the server answered (unavailable covers its kill
- *   switch, the version floor and Android without Play Integrity).
+ *   switch, the version floor, Android without Play Integrity, and a device
+ *   that can't be verified, so it can't have the account session Notes Import
+ *   needs).
  * - `offline`: the check couldn't run because the device has no connection.
  * - `failed`: the device is online but the check didn't get an answer.
  */
@@ -101,6 +106,9 @@ const failureStatus = (error: unknown): 'offline' | 'failed' => {
 
 const fromStatus = async (): Promise<ProbeResult> => {
   const closed = { schedule: null, updateRequired: null, paperMaxPages: null }
+  // Asked alongside the status: it never opens a session or contacts the
+  // server for the account, and a failure means it isn't known.
+  const deviceUnverified = notesImportDeviceUnverified().catch(() => false)
   let status
   try {
     status = await fetchNotesImportStatus()
@@ -129,6 +137,10 @@ const fromStatus = async (): Promise<ProbeResult> => {
   }
   if (!status.available) {
     return { ...closed, status: 'unavailable', reason: status.reason ?? null }
+  }
+  // Every import goes through the attested account session (ADR 0027).
+  if (await deviceUnverified) {
+    return { ...closed, status: 'unavailable', reason: 'device_unverified' }
   }
   return {
     status: 'available',

@@ -5,7 +5,6 @@ import type {
   AttestationRepairReport,
   AttestationSupport,
   AttestedRequest,
-  NotesImportProtectedPost,
 } from '@/lib/attestation/appAttest'
 import type { PlayIntegritySnapshot } from '@/lib/attestation/playIntegrity'
 import { appAttestAuthorizer } from '@/lib/attestation/appAttestRuntime'
@@ -19,14 +18,15 @@ import { playIntegrityAuthorizer } from '@/lib/attestation/playIntegrityRuntime'
 
 export type AttestationSnapshot = AppAttestSnapshot | PlayIntegritySnapshot
 
-/** What each platform's authorizer provides. */
+/**
+ * What each platform's authorizer provides. Features attest once, through the
+ * account session's `session/open` (ADR 0027), never per request.
+ */
 export interface DeviceAttestation {
-  /** A Notes Import request, attested by its own challenge. */
-  post<T>(request: NotesImportProtectedPost): Promise<T>
   /**
-   * Another feature's request (account sessions' `session/open`), attested
-   * through its own challenge route. Dev builds with the bypass token send that
-   * instead, without a challenge.
+   * An attested request through its own challenge route (account sessions'
+   * `session/open`). Dev builds with the bypass token send that instead,
+   * without a challenge.
    */
   assert<T>(request: AttestedRequest<T>): Promise<T>
   /** Whether this device can attest at all; see `AttestationSupport`. */

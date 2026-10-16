@@ -17,9 +17,10 @@ export default {
   // Attested no-op — dev Tools diagnostics verify an assertion server-side
   // without spending credits or inference.
   notesImportVerify: `${BASE_URL}/notes-import/verify`,
-  // Streaming import: attested kickoff → SSE progress stream → result snapshot.
+  // Streaming import on the account session: kickoff → SSE progress stream →
+  // result snapshot.
   notesImportKickoff: `${BASE_URL}/notes-import/kickoff`,
-  // Import from Paper: attested, reads one page photo into text.
+  // Import from Paper: reads one page photo into text, on the account session.
   notesImportTranscribe: `${BASE_URL}/notes-import/transcribe`,
   notesImportEvents: (importId: string) =>
     `${BASE_URL}/notes-import/${importId}/events`,

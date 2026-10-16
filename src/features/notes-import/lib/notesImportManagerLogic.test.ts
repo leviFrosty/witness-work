@@ -295,16 +295,27 @@ describe('classifyRunOutcome', () => {
     })
   })
 
-  it('keeps an ineligible Android device non-retryable but Play updates retryable', () => {
-    expect(
-      classifyRunOutcome({ aborted: false, code: 'device_ineligible' }, opts)
-    ).toMatchObject({ kind: 'failed', report: false, retryable: false })
-    expect(
-      classifyRunOutcome(
-        { aborted: false, code: 'play_services_required' },
-        opts
-      )
-    ).toMatchObject({ kind: 'failed', report: false, retryable: true })
+  it.each(['device_ineligible', 'suspended', 'upgrade_required'] as const)(
+    'offers no retry for %s, which retrying the same import can’t fix',
+    (code) => {
+      expect(classifyRunOutcome({ aborted: false, code }, opts)).toMatchObject({
+        kind: 'failed',
+        report: false,
+        retryable: false,
+      })
+    }
+  )
+
+  it.each([
+    'attestation_failed',
+    'attestation_unavailable',
+    'not_found',
+  ] as const)('keeps %s retryable', (code) => {
+    expect(classifyRunOutcome({ aborted: false, code }, opts)).toMatchObject({
+      kind: 'failed',
+      report: false,
+      retryable: true,
+    })
   })
 
   it('keeps import and refinement allowance denials non-retryable', () => {
@@ -537,7 +548,7 @@ describe('decideCreditsUpdate', () => {
 })
 
 describe('classifyStartRun', () => {
-  const run = { importId: 'i', subscribeToken: 't' } as NotesImportRunHandle
+  const run: NotesImportRunHandle = { importId: 'i' }
 
   it('reconnects when there is a live run', () => {
     expect(classifyStartRun({ activeRun: run, notesText: '' })).toBe(

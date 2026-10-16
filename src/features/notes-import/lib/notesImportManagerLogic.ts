@@ -178,15 +178,18 @@ export type RunOutcomeDecision =
 
 /**
  * Whether retrying the same import can succeed. Allowance denials need the
- * window to reset (or Supporter), and an ineligible device stays ineligible, so
- * those offer no Retry.
+ * window to reset (or Supporter), an ineligible device stays ineligible, a
+ * suspended account stays suspended until support reinstates it, and an old app
+ * version needs updating, so those offer no Retry.
  */
 export const isRetryableNotesImportError = (
   code: NotesImportErrorCode
 ): boolean =>
   code !== 'limit_reached' &&
   code !== 'refinement_limit' &&
-  code !== 'device_ineligible'
+  code !== 'device_ineligible' &&
+  code !== 'suspended' &&
+  code !== 'upgrade_required'
 
 /**
  * `active_cap` backoff: the server's Retry-After plus jitter when it sends one;

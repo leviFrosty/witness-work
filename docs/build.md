@@ -219,6 +219,12 @@ Development builds don't verify App Links (the debug key isn't in
 `adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com`,
 or drive invites with `wwv link`.
 
+Account sessions (ADR 0027) keep their refresh token in `modules/device-secrets`
+on both platforms: a non-synchronizable, this-device-only Keychain item on iOS,
+and a file sealed under the Android Keystore in `noBackupFilesDir` on Android.
+Neither syncs or moves to another device. On a binary without the module the
+token lives in memory, and each launch opens a new session.
+
 Notes Import on Android authenticates with Google Play Integrity instead of App
 Attest (ADR 0017, `modules/play-integrity`). It opens only when both the
 `notes-import` and `notes-import-android` flags are on and ww-api advertises

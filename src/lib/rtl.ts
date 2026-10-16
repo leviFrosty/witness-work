@@ -57,6 +57,15 @@ export function setDevForceRtl(on: boolean): void {
 }
 
 /**
+ * Whether the app lays out right to left in `locale`: an RTL Language, or any
+ * Language while the dev switch is on. The widgets and watch apps follow the
+ * same answer (`src/lib/nativeLocale.ts`).
+ */
+export function isRtlLayoutFor(locale: string): boolean {
+  return isDevForceRtl() || isRtlLocale(locale)
+}
+
+/**
  * Points React Native's layout direction at `locale` (the active app Language),
  * or at RTL while the dev switch is on.
  *
@@ -71,7 +80,7 @@ export function syncLayoutDirection(locale: string): {
   rtl: boolean
   needsReload: boolean
 } {
-  const rtl = isDevForceRtl() || isRtlLocale(locale)
+  const rtl = isRtlLayoutFor(locale)
   I18nManager.allowRTL(rtl)
   I18nManager.forceRTL(rtl)
   return { rtl, needsReload: I18nManager.isRTL !== rtl }

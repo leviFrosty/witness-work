@@ -41,6 +41,7 @@ import com.leviwilkerson.witnesswork.watchprotocol.WatchOrigin
 import com.leviwilkerson.witnesswork.watchprotocol.WatchSnapshot
 import com.leviwilkerson.witnesswork.wear.L10n
 import com.leviwilkerson.witnesswork.wear.WatchModel
+import com.leviwilkerson.witnesswork.wear.appLanguage
 import kotlinx.coroutines.launch
 
 /**
@@ -112,10 +113,10 @@ fun AddTimeScreen(snapshot: WatchSnapshot, hours: Int, minutes: Int, fromTimer: 
               onSelected = { selectedPicker = index },
               modifier = Modifier.width(PICKER_WIDTH),
               contentDescription = {
-                "${state.selectedOptionIndex} ${L10n.t(if (index == 0) "hours" else "minutes", snapshot)}"
+                "${snapshot.appLanguage.number(state.selectedOptionIndex)} ${L10n.t(if (index == 0) "hours" else "minutes", snapshot)}"
               },
             ) { option, _ ->
-              Text("$option", style = MaterialTheme.typography.titleLarge)
+              Text(snapshot.appLanguage.number(option), style = MaterialTheme.typography.titleLarge)
             }
           }
         }

@@ -54,6 +54,24 @@ class MonthProgressTest {
   }
 
   @Test
+  fun `writes the app Language's digits`() {
+    val arabic = AppLanguage(rtl = true, numberLocale = "ar-u-nu-arab")
+    assertEquals(
+      listOf("٠h", "٣٠m", "٢h", "١٫٥h", "١٦٫٥h"),
+      listOf(0, 30, 120, 90, 990).map { MonthProgress.compact(it, t, arabic) },
+    )
+    assertEquals("٥:٠٣", arabic.elapsed(303_000.0))
+    // Figures the phone already wrote.
+    assertEquals("١٦٫٥", arabic.digits("16.5"))
+    assertEquals("١:٠٥ / ٥٠h", arabic.digits("1:05 / 50h"))
+    // Latin digits stay as the phone writes them, whatever the decimal separator.
+    val german = AppLanguage(rtl = false, numberLocale = "de-de")
+    assertEquals("1.5h", MonthProgress.compact(90, t, german))
+    assertEquals("1:05:00", german.elapsed(3_900_000.0))
+    assertEquals("16.5", german.digits("16.5"))
+  }
+
+  @Test
   fun `shows the phone's figures while nothing is waiting`() {
     val p = progress(at(5))
     assertEquals("16.5h", p.total)

@@ -41,6 +41,10 @@ struct HomeView: View {
         }
       }
     }
+    // The app's direction and digits, whatever the watch's language. Each
+    // screen's content, not the NavigationStack: its bar stays where the
+    // system puts the clock.
+    .appLanguage(snapshot.appLanguage)
   }
 }
 
@@ -59,7 +63,7 @@ private struct ProgressSection: View {
           .font(.title2.bold())
         // The goal is whole hours the user entered.
         if progress.goalHours > 0 {
-          Text(verbatim: "/\(progress.goalHours)")
+          Text(verbatim: "/" + snapshot.appLanguage.number(progress.goalHours))
             .foregroundStyle(.secondary)
         }
       }

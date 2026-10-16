@@ -113,7 +113,7 @@ private struct AppointmentRow: View {
               // other widgets, less shouty than a solid-red pill.
               Text(strings.overdueLabel.uppercased())
                 .font(.system(size: 9, weight: .bold))
-                .tracking(0.3)
+                .leftToRightTracking(0.3)
                 .foregroundStyle(WidgetColor.error)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 1)
@@ -174,6 +174,7 @@ private struct AppointmentsWidgetView: View {
       }
     }
     .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
+    .appLanguage(entry.snapshot?.appLanguage)
     .containerBackground(.background, for: .widget)
   }
 
@@ -188,7 +189,7 @@ private struct AppointmentsWidgetView: View {
             .uppercased())
         .font(.caption2)
         .fontWeight(.semibold)
-        .tracking(0.5)
+        .leftToRightTracking(0.5)
         .foregroundStyle(.secondary)
         .lineLimit(1)
 
@@ -226,8 +227,8 @@ struct AppointmentsWidget: Widget {
     StaticConfiguration(kind: kind, provider: AppointmentsProvider()) { entry in
       AppointmentsWidgetView(entry: entry)
     }
-    .configurationDisplayName("Appointments")
-    .description("Upcoming follow-ups. Overdue items surface a reschedule sheet on tap.")
+    .configurationDisplayName(L10n.t("appointments"))
+    .description(L10n.t("widgetAppointmentsDescription"))
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }

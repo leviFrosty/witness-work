@@ -47,6 +47,13 @@ struct WidgetSnapshot: Decodable {
     let calendarLabel: String
     let calendarPublisherLockedLabel: String
     let createPlanLabel: String
+
+    // Added after version 6, so `nil` from an older app; see `L10n` for the
+    // bundled fallback.
+    /// Under the checkbox of the circular lock screen widget.
+    let reportLabel: String?
+    /// The Live Activity's label.
+    let timerLabel: String?
   }
 
   // MARK: Config (Settings > Widgets — source of truth)
@@ -213,6 +220,12 @@ struct WidgetSnapshot: Decodable {
   let version: Int
   let updatedAt: Double
   let locale: String
+  /// The app lays out right to left (its Language, or the dev switch). `nil`
+  /// from an app older than right-to-left support.
+  let rtl: Bool?
+  /// BCP 47 tag the app writes numbers in, e.g. `ar-u-nu-arab` for
+  /// Arabic-Indic digits. `nil` from an older app.
+  let numberLocale: String?
   /// Supporter-only hex (`#RRGGBB`). `nil` means fall back to the brand green.
   /// JS already gates this on supporter status, so Swift just trusts the field.
   let accentColor: String?
@@ -222,4 +235,9 @@ struct WidgetSnapshot: Decodable {
   let contacts: [Contact]
   let appointments: [Appointment]
   let calendar: Calendar
+}
+
+extension WidgetSnapshot {
+  /// Direction and digits in the app's Language (`AppLanguage`).
+  var appLanguage: AppLanguage { AppLanguage(rtl: rtl, numberLocale: numberLocale) }
 }

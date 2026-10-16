@@ -16,6 +16,7 @@ import {
   handleLangFallback,
 } from '@/lib/locales'
 import { applyFormatRegion, resolveStartOfWeek } from '@/lib/dates'
+import { nativeLocale } from '@/lib/nativeLocale'
 import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
 import { logger } from '@/lib/logger'
 import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
@@ -153,6 +154,7 @@ function pushSnapshot(reason: string): void {
       }),
       buddyMarkers: buddyMarkers(),
       locale: prefs.locale ?? DEFAULT_LOCALE,
+      nativeLocale: nativeLocale(language),
       accentColor,
     })
 

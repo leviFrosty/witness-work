@@ -70,6 +70,18 @@
     "watchUpNextComplicationDescription",
     "watchUpNextComplicationName"
   ],
+  "iosWidgetStrings": [
+    "appointments",
+    "calendar",
+    "contacts",
+    "serviceReport",
+    "timer",
+    "widgetAppointmentsDescription",
+    "widgetCalendarDescription",
+    "widgetContactsDescription",
+    "widgetReportDescription",
+    "widgetReportLabel"
+  ],
   "wearStrings": [
     "siriStopTimerShort",
     "siriTimerEmpty",

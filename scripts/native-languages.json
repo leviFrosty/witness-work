@@ -1,0 +1,22 @@
+{
+  "$comment": "Each src/locales file's language as the native platforms name it. `apple` is the Apple localization identifier, which is also the BCP 47 tag `app.config.ts` declares for iOS (CFBundleLocalizations) and Android (the per-app language list). `android` is the resource qualifier (`values-<qualifier>`); English is the default `values`. Read by scripts/sync-widget-shared.mjs and app.config.ts.",
+  "ar": { "apple": "ar", "android": "ar" },
+  "bem-ZM": { "apple": "bem", "android": "b+bem" },
+  "de-DE": { "apple": "de", "android": "de" },
+  "en-US": { "apple": "en", "android": "" },
+  "es-ES": { "apple": "es", "android": "es" },
+  "fr-FR": { "apple": "fr", "android": "fr" },
+  "it-IT": { "apple": "it", "android": "it" },
+  "ja-JP": { "apple": "ja", "android": "ja" },
+  "ko-KR": { "apple": "ko", "android": "ko" },
+  "nl-NL": { "apple": "nl", "android": "nl" },
+  "pt-BR": { "apple": "pt-BR", "android": "pt-rBR" },
+  "pt-PT": { "apple": "pt-PT", "android": "pt-rPT" },
+  "ru-RU": { "apple": "ru", "android": "ru" },
+  "rw-RW": { "apple": "rw", "android": "rw" },
+  "sw-KE": { "apple": "sw", "android": "sw" },
+  "uk-UA": { "apple": "uk", "android": "uk" },
+  "vi-VN": { "apple": "vi", "android": "vi" },
+  "zh-CN": { "apple": "zh-Hans", "android": "b+zh+Hans" },
+  "zh-TW": { "apple": "zh-Hant", "android": "b+zh+Hant" }
+}

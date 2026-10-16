@@ -57,9 +57,16 @@ Dev and beta each have their own group so they can iterate without polluting pro
 ## Adding a field to the snapshot
 
 1. Add the field to `WidgetSnapshot` in `src/app/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()` (or one of the `build*.ts` helpers it composes). Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, `src/lib/contacts.ts`, etc. — never reimplement.
-2. If the new field is for **display strings**, resolve them via `i18n.t()` in JS so the widget never needs Swift-side localization.
+2. If the new field is for **display strings**, resolve them via `i18n.t()` in JS so the widget shows the app's language. Only text shown without a snapshot (the gallery) belongs in the bundled catalog.
 3. If the schema change is breaking (renamed/removed field), bump `SNAPSHOT_VERSION` in both `snapshot.ts` and `SUPPORTED_VERSION` in `targets/widgets/Snapshot.swift`. The widgets will render the empty placeholder until the app rewrites the snapshot.
 4. Add the corresponding field to the Swift `WidgetSnapshot` struct in `targets/widgets/Snapshot.swift` (single file shared across all widgets in the bundle).
+
+## Language, direction and numbers
+
+Widgets show the language chosen in the app, which can differ from the phone's:
+
+- **Text** comes translated in the snapshot's `strings`. The widget gallery's names and descriptions are system UI shown before any snapshot, so they come from `targets/widgets/Localizable.xcstrings` in the phone's language. `pnpm sync:widget-shared` generates it from `src/locales` for the keys under `iosWidgetStrings` in `src/app/watch/watchStringKeys.json`; Swift reads them with `L10n.t("key")` (`WidgetStrings.swift`), and the sync fails on a key it uses but doesn't list.
+- **Direction and digits** come from the snapshot's `rtl` and `numberLocale`. Each widget's root view, and the Live Activity's, applies `.appLanguage(snapshot.appLanguage)` (`Shared/AppLanguage.swift`, from `targets/watch`): right to left for an RTL Language or the dev Force Right to Left switch, and SwiftUI's number formatting in Arabic-Indic digits for Arabic. Numbers Swift writes into a `String` go through `snapshot.appLanguage.number(_:)` or `.decimal(_:)`, and figures the phone already wrote (`monthHoursFormatted`) through `.digits(_:)`. Lay views out with `.leading`/`.trailing` and use `.leftToRightTracking(_:)` for letter spacing, which pulls Arabic's joined letters apart. See [ADR 0026](./adr/0026-app-owns-layout-direction.md).
 
 ## Adding a new widget
 

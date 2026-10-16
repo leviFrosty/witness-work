@@ -5,8 +5,12 @@ import WidgetKit
 // `scripts/sync-widget-shared.mjs`.
 
 /// Progress toward the monthly goal, with a mark where the user's Plans put
-/// them by today. Fill left of the mark means behind, past it ahead. Never
+/// them by today. Fill short of the mark means behind, past it ahead. Never
 /// turns red: it's seen all day, and behind is no reason for alarm.
+///
+/// Runs from the leading edge, so right to left in an RTL Language: SwiftUI
+/// mirrors the `.leading` alignments, the mask's `HStack` and the mark's
+/// `offset(x:)` alike.
 struct PaceBar: View {
   let fraction: Double
   let paceFraction: Double?

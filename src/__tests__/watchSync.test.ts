@@ -121,7 +121,11 @@ vi.mock('expo-localization', () => ({
 }))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
+  _i18n: { locale: 'en-us' },
   DEFAULT_LOCALE: 'en-us',
+}))
+vi.mock('@/lib/nativeLocale', () => ({
+  nativeLocale: () => ({ rtl: false, numberLocale: 'en-us' }),
 }))
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],

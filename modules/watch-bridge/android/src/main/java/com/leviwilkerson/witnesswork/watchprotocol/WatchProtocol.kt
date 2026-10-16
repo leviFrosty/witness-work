@@ -436,6 +436,10 @@ data class WatchSnapshot(
   val categories: List<Category>,
   val mileage: Mileage?,
   val strings: Map<String, String>,
+  /** The app lays out right to left; `null` from a phone app older than right-to-left support. */
+  val rtl: Boolean? = null,
+  /** BCP 47 tag the app writes numbers in, e.g. `ar-u-nu-arab`; `null` from an older phone app. */
+  val numberLocale: String? = null,
 ) : JsonEncodable {
   data class Category(val id: String, val name: String, val isCredit: Boolean?) : JsonEncodable {
     override fun toJson(): JSONObject =
@@ -526,6 +530,8 @@ data class WatchSnapshot(
       .put("categories", JSONArray(categories.map { it.toJson() }))
       .putOpt("mileage", mileage?.toJson())
       .put("strings", JSONObject(strings as Map<*, *>))
+      .putOpt("rtl", rtl)
+      .putOpt("numberLocale", numberLocale)
 
   companion object {
     const val SUPPORTED_VERSION = 1
@@ -554,6 +560,8 @@ data class WatchSnapshot(
         categories = json.getJSONArray("categories").objects().map(Category::fromJson),
         mileage = json.optJSONObject("mileage")?.let(Mileage::fromJson),
         strings = strings.keys().asSequence().associateWith { strings.getString(it) },
+        rtl = json.optBooleanOrNull("rtl"),
+        numberLocale = json.optStringOrNull("numberLocale"),
       )
     }
   }

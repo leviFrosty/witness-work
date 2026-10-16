@@ -80,10 +80,14 @@ describe('stringCatalog', () => {
     )
   })
 
-  it('gives every language text for every watch and Siri string', async () => {
+  it('gives every language text for every watch, Siri and widget string', async () => {
     const locales = readLocales(path.join(__dirname, '../src/locales'))
     const catalog = parse(
-      stringCatalog(locales, [...keys.strings, ...keys.intentStrings])
+      stringCatalog(locales, [
+        ...keys.strings,
+        ...keys.intentStrings,
+        ...keys.iosWidgetStrings,
+      ])
     )
 
     for (const { localizations } of Object.values(catalog.strings)) {
@@ -122,8 +126,34 @@ describe('readLocales', () => {
       await writeFile(path.join(directory, 'en-US.json'), '{}')
       await writeFile(path.join(directory, 'xx-XX.json'), '{}')
       expect(() => readLocales(directory)).toThrow(
-        'Add xx-XX to appleLanguages'
+        'Add xx-XX to scripts/native-languages.json'
       )
+    } finally {
+      await rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('reads a language named without a region, like ar.json', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'ww-locales-'))
+    try {
+      await writeFile(path.join(directory, 'en-US.json'), '{"timer":"Timer"}')
+      await writeFile(path.join(directory, 'ar.json'), '{"timer":"المؤقت"}')
+      const locales = readLocales(directory)
+      expect(Object.keys(locales)).toEqual(['ar', 'en-US'])
+
+      const catalog = parse(stringCatalog(locales, ['timer']))
+      expect(catalog.strings.timer.localizations.ar.stringUnit).toEqual({
+        state: 'translated',
+        value: 'المؤقت',
+      })
+      expect(
+        wearStringResources(locales, {
+          strings: ['timer'],
+          widgetStrings: [],
+          wearStrings: [],
+          androidVariants: [],
+        })['values-ar']
+      ).toContain('<string name="timer" formatted="false">المؤقت</string>')
     } finally {
       await rm(directory, { recursive: true, force: true })
     }

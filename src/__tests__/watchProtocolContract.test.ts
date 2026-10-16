@@ -115,6 +115,7 @@ const args = (
   distanceUnit: 'mi',
   vehicles: [{ id: 'car', name: 'Corolla', createdAt: 1 }],
   trips: [],
+  nativeLocale: { rtl: false, numberLocale: 'en-us' },
 })
 
 type Shape = string | { [key: string]: Shape } | Shape[]

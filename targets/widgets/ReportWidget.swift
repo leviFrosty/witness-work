@@ -26,15 +26,6 @@ private struct ReportProvider: TimelineProvider {
   }
 }
 
-// MARK: - Helpers
-
-/// Drops the trailing `.0` for whole numbers so the badge doesn't read
-/// "5.0 hrs/day". Mirrors `_.round(x, 1)` formatting from HourEntryCard.
-private func formatHours(_ value: Double) -> String {
-  if value == value.rounded() { return String(Int(value)) }
-  return String(format: "%.1f", value)
-}
-
 // MARK: - Hours mode
 //
 // Always renders the current month — never today or week. Two layouts:
@@ -66,7 +57,7 @@ private struct MonthEyebrow: View {
     Text(label.uppercased())
       .font(.caption2)
       .fontWeight(.semibold)
-      .tracking(0.5)
+      .leftToRightTracking(0.5)
       .foregroundStyle(.secondary)
   }
 }
@@ -135,9 +126,11 @@ private struct PaceBadge: View {
         tint: tint
       )
     } else if let perDay = report.hoursPerDayNeeded {
+      // Drops the trailing `.0` for whole numbers so the badge doesn't read
+      // "5.0 hrs/day". Mirrors `_.round(x, 1)` formatting from HourEntryCard.
       pill(
         icon: "target",
-        text: "\(formatHours(perDay)) \(strings.hoursPerDayToGoalSuffix)",
+        text: "\(snapshot.appLanguage.decimal(perDay)) \(strings.hoursPerDayToGoalSuffix)",
         tint: accent
       )
     }
@@ -179,7 +172,7 @@ private struct SmallMonthCard: View {
       Spacer(minLength: 0)
 
       BigHoursNumber(
-        formatted: report.monthHoursFormatted,
+        formatted: snapshot.appLanguage.digits(report.monthHoursFormatted),
         goalHours: report.goalHours,
         size: 46
       )
@@ -236,7 +229,7 @@ private struct MediumMonthCard: View {
       HStack(alignment: .bottom, spacing: WidgetSpacing.xl) {
         VStack(alignment: .leading, spacing: 2) {
           BigHoursNumber(
-            formatted: report.monthHoursFormatted,
+            formatted: snapshot.appLanguage.digits(report.monthHoursFormatted),
             goalHours: report.goalHours,
             size: 44
           )
@@ -419,7 +412,7 @@ private struct CircularReportView: View {
         EmptyView()
       } currentValueLabel: {
         VStack(spacing: 0) {
-          Text(compactHours(report.monthMinutes))
+          Text(compactHours(report.monthMinutes, snapshot.appLanguage))
             .font(.system(size: 14, weight: .bold))
           Text("/\(report.goalHours)")
             .font(.system(size: 8, weight: .semibold))
@@ -434,7 +427,7 @@ private struct CircularReportView: View {
         VStack(spacing: 1) {
           Image(systemName: "square")
             .font(.system(size: 22, weight: .semibold))
-          Text("Report")
+          Text(snapshot.strings.reportLabel ?? L10n.t("widgetReportLabel"))
             .font(.system(size: 8, weight: .semibold))
         }
         .widgetURL(WidgetURLs.sharedGoodNews)
@@ -460,12 +453,12 @@ private struct CircularReportView: View {
 
   /// Shortest possible hours string that still fits in the 45pt circular
   /// gauge. Uses integer hours for anything ≥ 10 and one decimal otherwise.
-  private func compactHours(_ minutes: Int) -> String {
+  private func compactHours(_ minutes: Int, _ language: AppLanguage) -> String {
     let hours = Double(minutes) / 60
     if hours >= 10 || hours == hours.rounded() {
-      return String(Int(hours.rounded()))
+      return language.number(Int(hours.rounded()))
     }
-    return String(format: "%.1f", hours)
+    return language.decimal(hours)
   }
 }
 
@@ -483,7 +476,7 @@ private struct RectangularReportView: View {
           Text(strings.monthLabel.uppercased())
             .font(.system(size: 9, weight: .bold))
           Spacer(minLength: 0)
-          Text("\(report.monthHoursFormatted) / \(report.goalHours)")
+          Text("\(snapshot.appLanguage.digits(report.monthHoursFormatted)) / \(report.goalHours)")
             .font(.system(size: 12, weight: .bold))
             .lineLimit(1)
         }
@@ -585,6 +578,7 @@ private struct ReportWidgetView: View {
       }
     }
     .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
+    .appLanguage(entry.snapshot?.appLanguage)
     .containerBackground(.background, for: .widget)
   }
 
@@ -618,8 +612,8 @@ struct ReportWidget: Widget {
     StaticConfiguration(kind: kind, provider: ReportProvider()) { entry in
       ReportWidgetView(entry: entry)
     }
-    .configurationDisplayName("Service Report")
-    .description("This month's hours toward your goal.")
+    .configurationDisplayName(L10n.t("serviceReport"))
+    .description(L10n.t("widgetReportDescription"))
     .supportedFamilies([
       .systemSmall,
       .systemMedium,

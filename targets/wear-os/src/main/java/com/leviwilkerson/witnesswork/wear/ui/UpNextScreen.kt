@@ -41,6 +41,7 @@ import com.leviwilkerson.witnesswork.wear.L10n
 import com.leviwilkerson.witnesswork.wear.R
 import com.leviwilkerson.witnesswork.wear.UpNext
 import com.leviwilkerson.witnesswork.wear.WatchModel
+import com.leviwilkerson.witnesswork.wear.appLanguage
 import kotlinx.coroutines.launch
 
 /**
@@ -121,7 +122,7 @@ fun UpNextScreen(itemId: String) {
           if (timer.isRunning) {
             val tick = rememberClock(1_000)
             PlatterRow(Modifier.transformedHeight(this, spec), SurfaceTransformation(spec)) {
-              IconLabel(R.drawable.ic_timer, formatElapsed(timer.elapsedMs(tick.toInstant().toEpochMilli())), Accent)
+              IconLabel(R.drawable.ic_timer, snapshot.appLanguage.elapsed(timer.elapsedMs(tick.toInstant().toEpochMilli())), Accent)
             }
           } else {
             RowButton(

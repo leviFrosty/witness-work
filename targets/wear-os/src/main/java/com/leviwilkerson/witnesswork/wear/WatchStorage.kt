@@ -10,6 +10,7 @@ import java.io.File
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 /** A request that changes data on the phone, kept until the phone app has handled its entry. */
 data class OutboxItem(
@@ -93,11 +94,15 @@ object WatchStorage {
   }
 }
 
-/** `YYYY-MM` of `date` in the Gregorian calendar, matching the phone's key. */
-fun monthKey(date: ZonedDateTime): String = "%04d-%02d".format(date.year, date.monthValue)
+/**
+ * `YYYY-MM` of `date` in the Gregorian calendar, matching the phone's key. Always ASCII digits:
+ * the watch's own language may write `٢٠٢٦-١٠`.
+ */
+fun monthKey(date: ZonedDateTime): String = String.format(Locale.ROOT, "%04d-%02d", date.year, date.monthValue)
 
-/** `YYYY-MM-DD` of `date` in the Gregorian calendar. Watch entries carry this day. */
-fun dayKey(date: ZonedDateTime): String = "%04d-%02d-%02d".format(date.year, date.monthValue, date.dayOfMonth)
+/** `YYYY-MM-DD` of `date` in the Gregorian calendar, in ASCII digits. Watch entries carry this day. */
+fun dayKey(date: ZonedDateTime): String =
+  String.format(Locale.ROOT, "%04d-%02d-%02d", date.year, date.monthValue, date.dayOfMonth)
 
 /** False once the month the progress describes has ended, until the phone sends a new snapshot. */
 fun WatchSnapshot.isCurrent(at: ZonedDateTime): Boolean = monthKey == monthKey(at)

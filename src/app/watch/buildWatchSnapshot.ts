@@ -15,6 +15,7 @@ import { defaultVehicleId } from '@/lib/mileage/calc'
 import { Contact } from '@/types/contact'
 import { Publisher } from '@/types/publisher'
 import watchStringKeys from '@/app/watch/watchStringKeys.json'
+import type { NativeLocale } from '@/lib/nativeLocale'
 
 /**
  * Bumped when the shape changes in a way the watch's Swift decoder cares about.
@@ -78,6 +79,13 @@ export type WatchSnapshot = {
     vehicles: { id: string; name: string }[]
   }
   strings: Record<string, string>
+  /**
+   * Lay out right to left, as the app is. The watch would follow its own
+   * language instead.
+   */
+  rtl: NativeLocale['rtl']
+  /** BCP 47 tag for the numbers the watch writes itself (`ar-u-nu-arab`). */
+  numberLocale: NativeLocale['numberLocale']
 }
 
 export type BuildWatchSnapshotArgs = BuildReportArgs & {
@@ -92,6 +100,8 @@ export type BuildWatchSnapshotArgs = BuildReportArgs & {
   distanceUnit: DistanceUnit
   vehicles: Vehicle[]
   trips: Trip[]
+  /** The app Language's direction and digits (`nativeLocale`). */
+  nativeLocale: NativeLocale
 }
 
 function activeVehicles(vehicles: Vehicle[], trips: Trip[]) {
@@ -206,5 +216,7 @@ export function buildWatchSnapshot(
       vehicles: activeVehicles(args.vehicles, args.trips),
     },
     strings: watchStrings(args.platform),
+    rtl: args.nativeLocale.rtl,
+    numberLocale: args.nativeLocale.numberLocale,
   }
 }

@@ -338,6 +338,12 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   /// `nil` from an iPhone app older than Siri trip logging.
   public let mileage: Mileage?
   public let strings: [String: String]
+  /// The app lays out right to left (its Language, or the dev switch); `nil`
+  /// from an iPhone app older than right-to-left support.
+  public let rtl: Bool?
+  /// BCP 47 tag the app writes numbers in, e.g. `en-us`, or `ar-u-nu-arab`
+  /// for Arabic-Indic digits; `nil` from an older iPhone app.
+  public let numberLocale: String?
 }
 
 /// iPhone → watch: published as the application context, and returned with

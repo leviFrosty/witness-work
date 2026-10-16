@@ -25,6 +25,7 @@ import com.leviwilkerson.witnesswork.wear.R
 import com.leviwilkerson.witnesswork.wear.Surfaces
 import com.leviwilkerson.witnesswork.wear.WatchModel
 import com.leviwilkerson.witnesswork.wear.WatchStorage
+import com.leviwilkerson.witnesswork.wear.appLanguage
 import com.leviwilkerson.witnesswork.wear.now
 import com.leviwilkerson.witnesswork.wear.startOfDay
 import java.time.ZonedDateTime
@@ -147,14 +148,14 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
                       ((progress.fraction ?: 0.0) * progress.goalHours).toFloat(),
                       0f,
                       progress.goalHours.toFloat(),
-                      text(totalOfGoal(progress)),
+                      text(totalOfGoal(progress, snapshot)),
                     )
                   else ->
                     RangedValueComplicationData.Builder(
                       (progress.fraction ?: 0.0).toFloat(),
                       0f,
                       1f,
-                      text(totalOfGoal(progress)),
+                      text(totalOfGoal(progress, snapshot)),
                     )
                 }
                   // The bare number, as Apple's gauges show it; a unit shrinks the digits.
@@ -178,7 +179,7 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
               progress == null -> ShortTextComplicationData.Builder(text("—"), text("—"))
               progress.showsTimeEntry ->
                 // The total alone, as in the Apple Watch's corner: faces draw a title larger.
-                ShortTextComplicationData.Builder(text(progress.total), text(totalOfGoal(progress)))
+                ShortTextComplicationData.Builder(text(progress.total), text(totalOfGoal(progress, snapshot)))
                   .setMonochromaticImage(image(context, R.drawable.ic_clock))
               // A Kingdom Publisher gets the month as the text and the status as the icon, as
               // in the Apple Watch's corner.
@@ -196,8 +197,8 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
               progress.showsTimeEntry -> {
                 val footer =
                   if (progress.goalReached) L10n.t("goalReached", snapshot) else progress.paceText
-                LongTextComplicationData.Builder(text(footer ?: totalOfGoal(progress)), text(totalOfGoal(progress)))
-                  .setTitle(text("${progress.monthName} · ${totalOfGoal(progress)}"))
+                LongTextComplicationData.Builder(text(footer ?: totalOfGoal(progress, snapshot)), text(totalOfGoal(progress, snapshot)))
+                  .setTitle(text("${progress.monthName} · ${totalOfGoal(progress, snapshot)}"))
                   .setMonochromaticImage(image(context, R.drawable.ic_clock))
               }
               else -> {
@@ -220,8 +221,12 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
     }
 
     /** `12.5h / 50`, or the total alone without a goal (the Apple Watch's inline text). */
-    private fun totalOfGoal(progress: MonthProgress) =
-      if (progress.goalHours > 0) "${progress.total} / ${progress.goalHours}" else progress.total
+    private fun totalOfGoal(progress: MonthProgress, snapshot: WatchSnapshot?) =
+      if (progress.goalHours > 0) {
+        "${progress.total} / ${snapshot.appLanguage.number(progress.goalHours)}"
+      } else {
+        progress.total
+      }
   }
 }
 

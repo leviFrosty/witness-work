@@ -10,34 +10,44 @@ import WidgetKit
 ///
 /// The timer text uses `Text(timerInterval:)` so it self-updates each second
 /// without requiring ActivityKit pushes.
+///
+/// The label, direction and digits follow the app's Language from the widget
+/// snapshot, as the widgets do; the Activity's attributes carry none of it.
 @available(iOS 16.2, *)
 struct StopwatchLiveActivity: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: StopwatchAttributes.self) { context in
       // Lock screen + banner presentation.
-      StopwatchLockScreenView(state: context.state)
+      let snapshot = StopwatchSnapshot.load()
+      StopwatchLockScreenView(state: context.state, label: snapshot.timerLabel)
+        .appLanguage(snapshot.language)
         .activityBackgroundTint(Color.black.opacity(0.6))
         .activitySystemActionForegroundColor(.white)
     } dynamicIsland: { context in
-      DynamicIsland {
+      let snapshot = StopwatchSnapshot.load()
+      let language = snapshot.language
+      return DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
           Label {
-            Text("Timer")
+            Text(snapshot.timerLabel)
               .font(.caption2)
               .foregroundStyle(.secondary)
           } icon: {
             Image(systemName: "stopwatch")
               .foregroundStyle(Color(red: 0.29, green: 0.82, blue: 0.49))
           }
+          .appLanguage(language)
         }
         DynamicIslandExpandedRegion(.trailing) {
           StopwatchControlsView(state: context.state, compact: true)
+            .appLanguage(language)
         }
         DynamicIslandExpandedRegion(.bottom) {
           StopwatchTimerText(state: context.state)
             .font(.system(size: 44, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .frame(maxWidth: .infinity, alignment: .center)
+            .appLanguage(language)
         }
       } compactLeading: {
         Image(systemName: "stopwatch")
@@ -50,6 +60,7 @@ struct StopwatchLiveActivity: Widget {
         // timer values (e.g. "0:13") before the hours digit appeared.
         StopwatchTimerText(state: context.state)
           .monospacedDigit()
+          .appLanguage(language)
       } minimal: {
         Image(systemName: "stopwatch")
           .foregroundStyle(Color(red: 0.29, green: 0.82, blue: 0.49))
@@ -58,16 +69,39 @@ struct StopwatchLiveActivity: Widget {
   }
 }
 
+/// The few `snapshot.json` fields the Live Activity reads, decoded without
+/// the rest of the widget snapshot: both presentations load it on every update.
+private struct StopwatchSnapshot: Decodable {
+  private struct Strings: Decodable {
+    let timerLabel: String?
+  }
+
+  let version: Int
+  private let rtl: Bool?
+  private let numberLocale: String?
+  private let strings: Strings
+
+  /// Before the first snapshot, the bundled word and the system's direction.
+  static func load() -> (timerLabel: String, language: AppLanguage?) {
+    let snapshot = SnapshotLoader.load(StopwatchSnapshot.self, version: \.version)
+    return (
+      snapshot?.strings.timerLabel ?? L10n.t("timer"),
+      snapshot.map { AppLanguage(rtl: $0.rtl, numberLocale: $0.numberLocale) }
+    )
+  }
+}
+
 // MARK: - Views
 
 @available(iOS 16.2, *)
 private struct StopwatchLockScreenView: View {
   let state: StopwatchAttributes.ContentState
+  let label: String
 
   var body: some View {
     HStack {
       VStack(alignment: .leading, spacing: 4) {
-        Label("Timer", systemImage: "stopwatch")
+        Label(label, systemImage: "stopwatch")
           .font(.caption)
           .foregroundStyle(.secondary)
         StopwatchTimerText(state: state)
@@ -146,14 +180,4 @@ private struct StopwatchControlsView: View {
     .labelStyle(.iconOnly)
     .controlSize(compact ? .regular : .large)
   }
-}
-
-// MARK: - Formatting
-
-private func formatElapsed(ms: Double) -> String {
-  let totalSeconds = Int(ms / 1000)
-  let hours = totalSeconds / 3600
-  let minutes = (totalSeconds % 3600) / 60
-  let seconds = totalSeconds % 60
-  return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
 }

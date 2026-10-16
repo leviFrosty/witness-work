@@ -18,3 +18,8 @@ enum L10n {
     t(key, snapshot).replacingOccurrences(of: "\n", with: " ")
   }
 }
+
+extension WatchSnapshot {
+  /// Direction and digits in the app's Language (`AppLanguage`).
+  var appLanguage: AppLanguage { AppLanguage(rtl: rtl, numberLocale: numberLocale) }
+}

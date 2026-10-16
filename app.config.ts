@@ -1,6 +1,9 @@
 import enUS from './src/locales/en-US.json'
 import otaEnvironments from './config/ota-environments.json'
+import nativeLanguages from './scripts/native-languages.json'
 import { execSync } from 'child_process'
+import { readdirSync } from 'fs'
+import path from 'path'
 import { ExpoConfig, ConfigContext } from 'expo/config'
 /**
  * Passed in from `env` property in profile `./eas.json` to eas build.
@@ -47,6 +50,26 @@ const APP_NAME = {
 const CAMERA_PERMISSION = enUS.cameraPermissionPurpose
 // Scribe AI voice logs (ADR 0018). Audio is transcribed on-device only.
 const MICROPHONE_PERMISSION = enUS.microphonePermissionPurpose
+
+/**
+ * Every language the app has a translation for (a `src/locales` file), as Apple
+ * and Android name it, English first. Declared so iOS (Settings > the app >
+ * Language) and Android 13+ (Settings > App languages) offer them, and so iOS
+ * shows its own controls and alerts in the app in that language. The app's
+ * Language stays the one picked in the app, or Device Default; see ADR 0026 for
+ * how they fit together.
+ */
+const APP_LANGUAGES = readdirSync(path.join(__dirname, 'src', 'locales'))
+  .filter((file) => file.endsWith('.json'))
+  .map((file) => {
+    const name = file.slice(0, -'.json'.length) as keyof typeof nativeLanguages
+    const language = nativeLanguages[name]
+    if (typeof language !== 'object') {
+      throw new Error(`Add ${name} to scripts/native-languages.json`)
+    }
+    return language.apple
+  })
+  .sort((a, b) => Number(b === 'en') - Number(a === 'en') || a.localeCompare(b))
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   if (!IS_DEV && !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
@@ -239,6 +262,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       '@bacons/apple-targets',
       // The Wear OS app (targets/wear-os) as the `:wear` Gradle module.
       './plugins/with-wear-os',
+      ['./plugins/with-android-locale-config', { locales: APP_LANGUAGES }],
       './plugins/with-posthog-symbols-last',
       [
         'react-native-maps',
@@ -296,7 +320,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           microphonePermission: MICROPHONE_PERMISSION,
         },
       ],
-      'expo-localization',
+      // The app owns layout direction (ADR 0026): no `supportsRTL` or
+      // `forcesRTL`. Android's list comes from with-android-locale-config.
+      ['expo-localization', { supportedLocales: { ios: APP_LANGUAGES } }],
       [
         'expo-local-authentication',
         { faceIDPermission: enUS.faceIdPermissionPurpose },

@@ -30,7 +30,7 @@ Goal: ship Arabic as WitnessWork's first right-to-left language on iOS and Andro
 
 - `handleLangFallback` (`src/lib/locales.ts:112`): a tag without a region, like `ar`, slices to `a` and matches `ja-jp`.
 - `src/lib/momentLocales.ts` has no `ar` entry; `src/lib/dates.ts:30-62` has no Arabic Format Region.
-- `scripts/sync-widget-shared.mjs:110-156` throws on locales missing from `appleLanguages`/`androidQualifiers`.
+- `scripts/sync-widget-shared.mjs:110-156` throws on locales missing from `appleLanguages`/`androidQualifiers`. (Now `scripts/native-languages.json`, which has `ar`.)
 - `pnpm check:locales` needs a fully translated file (~3,900 strings).
 - `localeCompare` without a locale (`src/lib/contactsSort.ts`, `src/lib/contactsFilters.ts`); no Arabic normalization in Fuse search (`faqSearch.ts`, `contactsSearch.ts`).
 
@@ -38,7 +38,7 @@ Goal: ship Arabic as WitnessWork's first right-to-left language on iOS and Andro
 
 - `src/lib/minutes.ts` and ~40 `toLocaleString`/`Intl` calls without a locale print Latin digits.
 - Parsers that fail on ٠-٩: `src/lib/mileage/units.ts:136`, `MonthlyMaximumCreditHoursSection.tsx:20`, `serviceHistoryDrafts.ts:23-26`, `MilestoneAdjustSheet.tsx:232`, `PublisherPreferencesSection.tsx:92`, `MonthGoalEditorSheet.tsx:64`, `OnboardingBackfillForm.tsx:225-226`, `PublisherTypeSelector.tsx:164`, `ColorKeyPreferencesSection.tsx:111`.
-- Native `String(format: "%.1f")`: `targets/widgets/ReportWidget.swift:35,468`, `targets/watch/MonthProgress.swift:160`.
+- Native `String(format: "%.1f")`: `targets/widgets/ReportWidget.swift:35,468`, `targets/watch/MonthProgress.swift:160`. (Step 4: `AppLanguage` writes them in the app Language's digits.)
 - Mixed-direction runs such as `١٢-١٨` and times need bidi marks (jw.org inserts U+200F).
 
 ### Layout
@@ -60,9 +60,11 @@ About 40 template literals join translated fragments (`${goalHours} ${hours_lowe
 ### Native
 
 - No `CFBundleLocalizations` for any language.
-- `targets/watch/PaceBar.swift:52` (and its copy in watch-widgets) uses a physical `.offset(x:)`; the Wear OS pace bar in `Components.kt:120-146` draws in physical coordinates.
+- `targets/watch/PaceBar.swift:52` (and its copy in watch-widgets) uses `.offset(x:)`; the Wear OS pace bar in `Components.kt:120-146` draws in physical coordinates. (SwiftUI mirrors `offset(x:)` under RTL, so only the Wear OS bar was wrong.)
+- Widgets, the Live Activity and both watch apps render natively and would follow the device's language, not the app's, for direction and digits.
 - Hard-coded English: `ReportWidget.swift:437,622`, `StopwatchLiveActivity.swift:25,70`, widget gallery descriptions.
 - 22 Siri shortcut phrases need Arabic.
+- iOS permission prompts come from `Info.plist` in English; localized `InfoPlist.strings` are a follow-up.
 
 ## Execution
 
@@ -92,8 +94,8 @@ Each step is one PR on `main`. Steps 1-4 change nothing visible for existing lan
      - **Keys stay ASCII; digits are localized on display.** `moment.format` writes ASCII digits in every Language: `src/lib/momentLocales.ts` drops the `postformat` of every moment locale it loads (moment's `ar` would turn `YYYY-MM-DD` into `٢٠٢٦-١٠-١٤` and corrupt store keys, notification ids, buddy payloads and widget dates), keeping `preparse` so parsing accepts both digit sets. Display goes through `src/lib/dates.ts`: the intent helpers (`formatDate`, `formatTime`, `formatRelative`, …), `formatDisplay(m, pattern)` for other patterns such as `MMMM YYYY`, and `localizeDisplayDate(text)` for a string already built with `format`. A missed display site shows Latin digits in Arabic; it can't break data. `src/__tests__/arabicDateKeys.test.ts` checks every loadable moment locale and the main keys.
      - The glued sentences, and the remaining `1 day`/`N days` and `_plural` key pairs, are single plural keys, translated into every shipped Language.
 4. **Native**
-   - `ar` in `sync-widget-shared.mjs`; `supportedLocales` through the expo-localization plugin (no RTL flags).
-   - Mirror the watch and Wear OS pace bars; localize the hard-coded widget and Live Activity strings; locale-aware number formatting in Swift.
+   - `ar` in `scripts/native-languages.json`, which the sync script and `app.config.ts` read; `supportedLocales` through the expo-localization plugin for iOS (no RTL flags), and `plugins/with-android-locale-config.js` for Android ([ADR 0026](./adr/0026-app-owns-layout-direction.md) has why).
+   - Widget and watch snapshots carry the app's direction and number locale (`src/lib/nativeLocale.ts`); `AppLanguage` in Swift and Kotlin applies them. Mirror the Wear OS pace bar and the Directions arrow; localize the hard-coded widget and Live Activity strings; write native numbers in the app Language's digits.
 5. **Arabic**
    - `src/locales/ar.json` via `translate-locales`, including plurals and Siri phrases.
    - Register in `locales.ts` (`العربية`), App Store (`ar-SA`) and Play listings, Help Center FAQ on languages, readme language count, translate-locales skill counts.

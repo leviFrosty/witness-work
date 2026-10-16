@@ -198,7 +198,6 @@ analytics, flags, surveys, errors`"]
   A_CORE -->|"Follow-ups as events"| P_CAL
   A_BUDDIES -->|"root seed"| P_SEED
   A_SYNC -->|"sync files + photos"| P_SYNC
-  A_NOTES -->|"attest device"| P_ATTEST
   A_ACCOUNT -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
@@ -206,10 +205,10 @@ analytics, flags, surveys, errors`"]
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
   A_ACCOUNT -->|"open session, sealed handoff, sealed backup"| R_ACC
-  A_ACCOUNT -->|"session challenge"| R_ATTEST
-  A_NOTES -->|"App Attest key setup"| R_ATTEST
+  A_ACCOUNT -->|"key setup, session challenge"| R_ATTEST
   A_SHELL -->|"minimum version"| R_APPCFG
-  A_NOTES -->|"notes text, SSE stream"| R_NOTES
+  A_NOTES -->|"account session"| A_ACCOUNT
+  A_NOTES -->|"bearer: notes text, SSE stream"| R_NOTES
   A_ROUTE -->|"today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
   A_LINKS -->|"/c, /b and /h links"| R_LINKS
@@ -231,8 +230,8 @@ analytics, flags, surveys, errors`"]
   R_ATTEST -->|"Android challenge"| DO_PI
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
-  R_NOTES -->|"iOS attest"| DO_AA
-  R_NOTES -->|"Android challenge"| DO_PI
+  R_NOTES -->|"legacy iOS attest"| DO_AA
+  R_NOTES -->|"legacy Android challenge"| DO_PI
   R_NOTES -->|"credits"| DO_IDX
   R_NOTES -->|"run, SSE"| DO_RUN
   R_ROUTE -->|"daily quota"| DO_RPQ
@@ -243,7 +242,7 @@ analytics, flags, surveys, errors`"]
   R_BUD -.->|"push"| P_PUSH
   P_PUSH -.->|"iOS alert"| C_NSE
   P_PUSH -.->|"Android data push"| A_BUDDIES
-  R_NOTES -->|"Android verdict"| S_GPI
+  R_NOTES -->|"legacy Android verdict"| S_GPI
   DO_RUN -->|"streamed output"| S_OR
   S_OR --> S_LLM
   R_ROUTE -->|"waypoint sequence"| S_HERE
@@ -273,7 +272,7 @@ analytics, flags, surveys, errors`"]
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
-- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)).
+- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). It calls ww-api with the account's attested session, which stands in for attesting each import ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)); the legacy edges serve app versions from before sessions.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

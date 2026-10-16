@@ -246,15 +246,20 @@ preview edits, prompt toggles, and warning openings are dropped.
 
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
-platforms during the `notes-import-android` rollout. Android verification failures
-use bounded `error_code` values: `device_ineligible` (Play Integrity rejected the
-device or app build), `play_services_required` (Play Store/services missing or
-outdated), `attestation_unavailable` (the verification service, our verifier
-or secure storage had trouble; temporary, on both platforms), or
-`attestation_failed` (verification ran and didn't pass). Their share of Android
-attempts shows whether the device requirement blocks real users. No verdicts,
-tokens, or identifiers are attached. `active_cap` appears only after the
-automatic back-off (about 3 minutes) gives up.
+platforms during the `notes-import-android` rollout. Notes Import runs on the
+account session (ADR 0027), so a device that can't be verified fails before any
+import, with bounded `error_code` values on both platforms: `device_ineligible`
+(this device or app build can never be verified: App Attest unsupported, no
+Google Play, or ww-api found it isn't genuine), `attestation_unavailable`
+(Apple, Google or our verifier couldn't check it just then; temporary), or
+`attestation_failed` (verification ran and didn't pass). `suspended` (the
+account was suspended) and `upgrade_required` (ww-api answered 426) can appear
+too. Builds before sessions sent `play_services_required` for missing or
+outdated Play services; it's `device_ineligible` now. `account_session_failed`
+says why the session itself couldn't open. Their share of attempts shows whether
+the device requirement blocks real users. No verdicts, tokens, or identifiers
+are attached. `active_cap` appears only after the automatic back-off (about 3
+minutes) gives up.
 
 `notes_import_availability_failed` fires at most once per composer visit when
 the availability check couldn't run, with `state`: `offline` (no connection) or
@@ -281,7 +286,7 @@ with `method: paper`, `paper_source` (`onboarding` or `composer`), `page_count`,
 and `outcome`: `inserted`, `partial` (some pages read, with `failed_pages`),
 `empty`, `cancelled`, `failed`, or `limit_reached` (no Import Credits left, so
 no page was read). A stopped batch adds `error_code` (for example
-`transcribe_limit`, `network`, `attestation_failed`). The onboarding chooser's
+`transcribe_limit`, `network`, `attestation_failed`, `suspended`). The onboarding chooser's
 `import_type_selected` uses `import_type: paper`, and
 `onboarding_import_options_viewed` adds `paper_available`. Page images and their
 text are never sent.

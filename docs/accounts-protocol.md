@@ -228,6 +228,24 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 - **Delete.** Settings → Account lists the account's slots as "This phone" or "Another device" with their date and size (names are inside the ciphertext). Deleting one, or Delete Backup for all, deletes from R2 at once; either also turns backup off on this device. Turning backup off asks whether to delete this device's slot.
 - **Delete Buddies** deletes the account key, so it first deletes every slot of the account, with the key's session and signature, then closes the session. If deleting the slots fails, nothing else happens and the User is told. With backup on, the next upload creates the new key's account, and the app says the recovery key changed. Replacing the key with another (a handoff or a recovery key) leaves the old account's slots to expire.
 
+## Notes Import
+
+Notes Import calls ww-api only through the session (ADR 0027 §4; `src/features/notes-import/lib/notesImportClient.ts`). Every route but the public `GET /notes-import/status` is **Bearer**, and the session's attestation stands in for attesting each import: the bodies carry no install id, hashes or attestation fields, and the token's account is the meter (allowances, the concurrency cap, Import from Paper's page limit). Usage under an install or shared account id doesn't carry over; each account starts a fresh window. ww-api's README has the full contract.
+
+| Route                                       | Body                                                        | 200                                                          |
+| ------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
+| `POST /notes-import/kickoff`                | `{ notesText, context, refinement?, revenueCatAppUserId? }` | `{ importId, refinement, credits }`                          |
+| `POST /notes-import` (synchronous fallback) | the same                                                    | `{ result, contentHash, refinement, emptyCharged, credits }` |
+| `POST /notes-import/transcribe`             | `{ image, mimeType, revenueCatAppUserId? }`                 | `{ ok, text, truncated, pagesRemaining }`                    |
+| `GET /notes-import/{importId}/events`       | none; `Last-Event-ID` to resume                             | the SSE stream                                               |
+| `GET /notes-import/{importId}/result`       | none                                                        | `{ status, payload?, error? }`                               |
+| `POST /notes-import/{importId}/destroy`     | none                                                        | `{ ok: true }`                                               |
+
+- **Supporter.** `revenueCatAppUserId` is the id `CustomerProvider` logs in to RevenueCat with (ADR 0011's shared account id, else the install id), sent only when it's 8 to 64 of `A-Z a-z 0-9 _ -`, never a RevenueCat anonymous id. Absent means not a Supporter. `notesImportRevenueCatAppUserId` produces it, and goes away once RevenueCat is linked to the account.
+- **Runs.** The run handle the ledger keeps is the import id alone. A handle from an app version before sessions (it has a `subscribeToken`) is dropped when read, so that import kicks off again from its saved notes. Run routes serve only the account's own imports, and anything else is 404 `not_found`: resuming then kicks off again too, and a destroy treats it as already deleted. Each SSE connection takes the session's current token in `Authorization` (a fresh one once the old is within a minute of expiry), so a run outlives its token; a 401 refreshes once and reconnects with `Last-Event-ID`.
+- **Refusals.** A session that can't be opened stops the import before any Notes Import route: `device_ineligible` when this device or app can never be verified (the copy is `account_unverifiedBody`, which names Notes Import), `attestation_unavailable` when verifying has to wait, `attestation_failed` otherwise. 403 `suspended` on kickoff, the synchronous fallback or transcribe shows `notesImport_suspended`; reading and deleting runs still work. 426 shows Update Required.
+- **Availability.** Notes Import counts as unavailable on a device that can never attest (`checkSupport`, once per launch) or whose last session open was refused for the device and is still waiting (`lastOpenFailure`), so the composer says so before the User writes anything. Neither opens a session.
+
 ## Recovery key
 
 The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford base32 (`0-9 A-Z` without `I L O U`), 55 characters, shown as `WW1-` and eleven groups of five. Reading one ignores case, spaces, and dashes, reads `I`/`L` as `1` and `O` as `0`, and refuses a bad checksum. Entering it works like receiving the key in a handoff.
@@ -240,7 +258,7 @@ KV `auth:legacy` (`on` when absent, then the `AUTH_LEGACY` var): while on, every
 
 ## Suspension
 
-A suspended account's inboxes refuse every owner op except `inbox/delete` and `slot/remove` with `403 suspended`, close their live sockets with `4003 "suspended"`, and refuse `inbox/register`, with or without a proof. Buddies writing into the suspended User's inbox, and the User's own writes into buddies' inboxes (writer ops), still work: a buddy who wants them gone removes them. The app shows the `buddies_errorSuspended` message and backs off like the kill switch.
+A suspended account's inboxes refuse every owner op except `inbox/delete` and `slot/remove` with `403 suspended`, close their live sockets with `4003 "suspended"`, and refuse `inbox/register`, with or without a proof. Buddies writing into the suspended User's inbox, and the User's own writes into buddies' inboxes (writer ops), still work: a buddy who wants them gone removes them. The app shows the `buddies_errorSuspended` message and backs off like the kill switch. Notes Import refuses new imports and page reads with `403 suspended` and shows `notesImport_suspended`, with no Retry; the account's runs can still be read and deleted.
 
 Moderation is maintainer-only: `POST /admin/accounts/lookup` and `/admin/accounts/status` with `x-ww-admin-token` (ww-api `AGENTS.md`, Accounts). A report names the buddy's `inboxId`, which finds the account.
 

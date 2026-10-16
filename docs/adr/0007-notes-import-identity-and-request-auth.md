@@ -11,6 +11,8 @@ Two layers, because no single primitive does both jobs:
 - **Identity** — generate a UUIDv4 once and store it in the iOS **Keychain** (`...AfterFirstUnlockThisDeviceOnly`, non-synchronizing). It survives a normal delete/reinstall, and we reuse it as the RevenueCat custom App User ID so usage correlates with entitlement status. The proxy keeps the free-usage counter server-side in Cloudflare KV keyed by this UUID; Supporter status (unlimited) is verified server-side against the RevenueCat REST API.
 - **Request authentication** — gate every proxy call with Apple **App Attest**. The Secure-Enclave assertion cryptographically proves the request came from a genuine, unmodified instance of our app on a real Apple device. This — not the UUID — is the security boundary.
 
+Since ADR 0027, Notes Import identifies the User by the server account's attested session, and attests once, when that session opens: imports carry its bearer token, and allowances meter the account. The per-request App Attest and the UUID meter above remain only for app versions from before sessions.
+
 ## Considered options
 
 - **Trust the client-asserted UUID alone.** Rejected: trivially reset by clearing Keychain or bypassed entirely by hitting the proxy directly.

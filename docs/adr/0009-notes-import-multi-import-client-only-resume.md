@@ -35,7 +35,10 @@ stream via the persisted subscribe token (no attestation); if that token/result
 window has lapsed (~1h), it re-runs the attested `/kickoff` from the persisted
 notesText. Re-kickoff is **credit-free** because the credit meter is idempotent
 per `contentHash`, and it lands on the same run if alive or replays the cached
-result — so it is safe as a universal resume primitive. **No new backend
+result — so it is safe as a universal resume primitive. (Since ADR 0027 the
+persisted handle is the import id alone: reconnecting uses the account session's
+bearer token, kickoff isn't attested per request, and a run the account can't
+read is 404 `not_found`, which re-kicks off.) **No new backend
 endpoints** are added; the only backend change is a `summary` field on the parse
 result. Backgrounded-completion is surfaced **in-app** (a "ready to review"
 badge on return), not via push.

@@ -48,18 +48,9 @@ asking who they are.
    versions before it never send a proof, so they register unlinked as before.
    Without the D1 binding, accounts are off and the app works unlinked.
 
-This is phase 1. Later phases, each its own change:
-
-- An app-wide backup encrypted with a key derived from the account key, kept
-  by the server.
-- Moving to a new phone by QR code. The new phone shows a temporary key, and
-  the old phone sends the account key sealed to it. Moving between iOS and
-  Android then keeps the same account, inbox, and buddies. ADR 0023's second
-  device check then starts Buddies when the account's data is restored, not
-  only after iCloud Sync pulls.
-- A recovery key for a lost phone.
-- Anonymous tokens, so the relay can enforce a suspension without seeing
-  which account sent a request.
+This is phase 1. Moving the account to another phone by QR code, a recovery
+key, and an end-to-end encrypted backup are ADR 0026, which also drops
+anonymous tokens from the plan.
 
 ## Considered options
 
@@ -87,6 +78,6 @@ This is phase 1. Later phases, each its own change:
   Attest and Play Integrity on registration (reserved, not enforced) are what
   would make that costly.
 - On Android, two phones still have two seeds, so two accounts, until the QR
-  move exists.
+  move (ADR 0026) joins them.
 - The name clash with ADR 0011's account id is deliberate to resolve later:
   the server account could become the RevenueCat identity too.

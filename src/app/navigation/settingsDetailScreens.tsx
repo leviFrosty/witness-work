@@ -157,6 +157,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('regionAndFormats'),
   },
   {
+    name: 'Account',
+    getComponent: () =>
+      require('@/features/settings/screens/AccountScreen').default,
+    title: () => i18n.t('account_title'),
+  },
+  {
     name: 'PreferencesPersonalization',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen')

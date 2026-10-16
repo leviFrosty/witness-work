@@ -609,6 +609,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return identityLoad
   }
 
+  /**
+   * The account key was replaced (after `deleteEverything` when there was
+   * anything to leave): forget everything derived from the old seed, so the
+   * next call derives the new identity and links its inbox again.
+   */
+  function dropIdentity() {
+    cachedIdentity = null
+    pairCache.clear()
+    accountLinkTried = false
+  }
+
   /** The inbox id, without waiting on the seed: render paths read this. */
   function knownInboxId(): string | null {
     return (
@@ -4395,6 +4406,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     coolingDown,
     /** Reads the seed (off the JS thread) so `alertContext` can answer. */
     loadIdentity: () => identity().then(() => undefined),
+    dropIdentity,
     openLive,
     probeInbox,
     registerPush,

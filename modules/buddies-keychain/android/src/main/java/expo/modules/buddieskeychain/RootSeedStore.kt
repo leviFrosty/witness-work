@@ -136,6 +136,43 @@ internal class RootSeedStore(context: Context) {
   }
 
   /**
+   * Replaces the seed with one the User brought from another device (a
+   * recovery key, say). The old seed's Block Store copy goes first, by the same
+   * rule as `delete`: when a backup this install wrote or restored can't be
+   * deleted, this throws and keeps everything, so a reinstall can never bring
+   * the old seed back. The new seed is then backed up as a created one is,
+   * with cloud backup only while it can be end-to-end encrypted; until that
+   * succeeds the backup state is `pending`, never a mismatched copy.
+   */
+  fun replace(seed: ByteArray) {
+    if (seed.size != SEED_BYTES) throw RootSeedException("Root seed must be $SEED_BYTES bytes")
+    synchronized(blockStoreLock) {
+      synchronized(lock) {
+        try {
+          blockStore()?.let { client ->
+            await(
+              client.deleteBytes(
+                DeleteBytesRequest.Builder().setKeys(listOf(BLOCK_STORE_KEY)).build()
+              )
+            )
+          }
+        } catch (error: Exception) {
+          if (!isUnsupported(error) && backupMarker.exists()) {
+            throw RootSeedException("Could not replace the backed-up root seed", error)
+          }
+        }
+        backupMarker.delete()
+        // Checked again for the new seed, even if writing it fails below.
+        backupChecked = false
+        retrieveFailure = null
+        writeSealed(seed)
+        cached = seed.copyOf()
+      }
+    }
+    scheduleBackupCheck()
+  }
+
+  /**
    * Where the seed is backed up, for diagnostics: `cloud` (end-to-end
    * encrypted), `device` (Block Store on this device only), `restored` (came
    * from Block Store; re-stored at the next launch), `pending`, or

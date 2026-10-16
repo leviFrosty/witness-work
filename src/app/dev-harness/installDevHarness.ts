@@ -28,6 +28,7 @@ import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { mmkvStorage } from '@/stores/mmkv'
+import { accountHarness } from '@/app/dev-harness/account'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
   badgeHarnessState,
@@ -271,6 +272,11 @@ export function installDevHarness() {
       simulateBuddyReaction: (badgeKey?: string, emoji?: string) =>
         simulateBuddyReaction(badgeKey, emoji),
     },
+    /**
+     * The account key and server account: `account.read()`, then
+     * `account.last`; `account.randomRecoveryKey()` for a valid key to enter.
+     */
+    account: accountHarness,
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()

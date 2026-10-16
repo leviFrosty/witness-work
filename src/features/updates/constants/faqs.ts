@@ -10,6 +10,7 @@ export type FAQCategory =
   | 'map'
   | 'customization'
   | 'backups'
+  | 'account'
   | 'supporter'
   | 'general'
 
@@ -112,6 +113,9 @@ export const FAQS: FAQEntry[] = [
   { id: 'buddiesNotSent', category: 'buddies' },
   { id: 'buddiesRemove', category: 'buddies' },
   { id: 'buddiesSuspended', category: 'buddies' },
+  { id: 'accountOverview', category: 'account' },
+  { id: 'accountRecoveryKey', category: 'account' },
+  { id: 'accountRecoveryKeyUse', category: 'account' },
   { id: 'badgesOverview', category: 'badges' },
   { id: 'badgesView', category: 'badges' },
   { id: 'badgesMonths', category: 'badges' },
@@ -340,6 +344,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'map',
   'customization',
   'backups',
+  'account',
   'supporter',
   'general',
 ]

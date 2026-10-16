@@ -23,7 +23,7 @@ class BuddiesKeychainModule : Module() {
 
     // JS checks this so OTA updates never call into a binary without the module.
     Constant("buddiesKeychainVersion") {
-      1
+      3
     }
 
     Function("peekRootSeed") { ->
@@ -56,6 +56,18 @@ class BuddiesKeychainModule : Module() {
 
     AsyncFunction("deleteRootSeedAsync") Coroutine { ->
       withContext(Dispatchers.IO) { store.delete() }
+    }
+
+    // Version 3: the account key received from a recovery key or another
+    // device replaces this one, here and in Block Store.
+    AsyncFunction("replaceRootSeedAsync") Coroutine { seed: String ->
+      val bytes =
+        try {
+          Base64.decode(seed, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+        } catch (error: IllegalArgumentException) {
+          throw RootSeedException("The root seed isn't base64url", error)
+        }
+      withContext(Dispatchers.IO) { store.replace(bytes) }
     }
   }
 

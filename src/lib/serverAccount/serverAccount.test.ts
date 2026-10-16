@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { concatBytes, fromB64u, fromUtf8, utf8 } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
-import { fetchAccountInfo, registerAccount } from '@/lib/serverAccount/client'
+import {
+  type ServerAccountInfo,
+  fetchAccountInfo,
+  registerAccount,
+} from '@/lib/serverAccount/client'
 import {
   deriveAccountSigningKey,
   signInboxLink,
@@ -193,6 +197,7 @@ describe('createServerAccount', () => {
     expect(storage.get()).toEqual({
       accountPub: deriveAccountSigningKey(accountKey).publicKey,
       accountId: ACCOUNT_ID,
+      status: 'active',
     })
   })
 
@@ -244,5 +249,104 @@ describe('createServerAccount', () => {
     expect(await account.ensure(accountKey)).toBeNull()
     expect(await account.ensure(accountKey)).toBeNull()
     expect(register).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('serverAccount.check', () => {
+  const info = (status: 'active' | 'suspended' = 'active') =>
+    vi.fn(
+      async (): Promise<ServerAccountInfo> => ({
+        accountId: ACCOUNT_ID,
+        accountPub: '',
+        status,
+        createdAt: 0,
+        inboxIds: [],
+        statusChanges: [],
+      })
+    )
+  const register = () =>
+    vi.fn(async () => ({ accountId: ACCOUNT_ID, status: 'active' as const }))
+
+  it('registers, then keeps the status the server reads back', async () => {
+    const storage = memoryStorage()
+    const account = createServerAccount({
+      register: register(),
+      info: info('suspended'),
+      storage,
+      now: () => 0,
+    })
+    const accountKey = random(32)
+    expect(await account.check(accountKey)).toEqual({
+      state: 'suspended',
+      accountId: ACCOUNT_ID,
+    })
+    expect(account.cached(accountKey)?.status).toBe('suspended')
+    expect(account.cached(random(32))).toBeNull()
+  })
+
+  it('registers again when the server no longer knows the account', async () => {
+    const registerAccount = register()
+    const readInfo = info()
+    readInfo.mockRejectedValueOnce(
+      new HttpError('client', 404, 'unknown_account')
+    )
+    const account = createServerAccount({
+      register: registerAccount,
+      info: readInfo,
+      storage: memoryStorage(),
+      now: () => 0,
+    })
+    const accountKey = random(32)
+    await account.ensure(accountKey)
+    expect(await account.check(accountKey)).toEqual({
+      state: 'active',
+      accountId: ACCOUNT_ID,
+    })
+    expect(registerAccount).toHaveBeenCalledTimes(2)
+  })
+
+  it('says offline with what it last knew, and unavailable while accounts are off', async () => {
+    const readInfo = info()
+    readInfo.mockRejectedValueOnce(new HttpError('offline'))
+    const storage = memoryStorage()
+    const account = createServerAccount({
+      register: register(),
+      info: readInfo,
+      storage,
+      now: () => 0,
+    })
+    const accountKey = random(32)
+    expect(await account.check(accountKey)).toEqual({
+      state: 'offline',
+      accountId: ACCOUNT_ID,
+      lastStatus: 'active',
+    })
+
+    const off = createServerAccount({
+      register: vi.fn(async () => {
+        throw new HttpError('server', 503, 'disabled')
+      }),
+      info: info(),
+      storage: memoryStorage(),
+      now: () => 0,
+    })
+    expect(await off.check(accountKey)).toEqual({
+      state: 'unavailable',
+      accountId: null,
+    })
+
+    const unreachable = createServerAccount({
+      register: vi.fn(async () => {
+        throw new HttpError('offline')
+      }),
+      info: info(),
+      storage: memoryStorage(),
+      now: () => 0,
+    })
+    expect(await unreachable.check(accountKey)).toEqual({
+      state: 'offline',
+      accountId: null,
+      lastStatus: null,
+    })
   })
 })

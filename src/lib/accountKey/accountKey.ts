@@ -1,0 +1,152 @@
+import { fromB64u, toB64u } from '@/lib/bytes'
+
+/**
+ * The account key (ADR 0026): the User's one secret, 32 random bytes that every
+ * account feature derives its keys from. Today it's the Buddies root seed, kept
+ * in iCloud Keychain on iOS and sealed under the Keystore with a Block Store
+ * backup on Android. It's created the first time any account feature needs it,
+ * and can be replaced by one the User brings from another device (a recovery
+ * key).
+ */
+
+/** Where the key is kept: base64url text, as the native module takes it. */
+export type AccountKeyStore = {
+  /** Null when there's none yet. */
+  peek: () => Promise<string | null>
+  getOrCreate: () => Promise<string>
+  replace: (key: string) => Promise<void>
+}
+
+/** What replacing the key takes from this device. */
+export type AccountKeyLoss = {
+  /** Buddies on this device, who are removed (and leave this User's inbox). */
+  buddies: number
+  /** The Buddies inbox registered for the current key, which is deleted. */
+  inboxRegistered: boolean
+}
+
+export const NO_LOSS: AccountKeyLoss = { buddies: 0, inboxRegistered: false }
+
+export const losesSomething = (loss: AccountKeyLoss) =>
+  loss.buddies > 0 || loss.inboxRegistered
+
+export type AccountKeyServiceDeps = {
+  store: AccountKeyStore
+  /** The server account (`serverAccount`). */
+  account: {
+    ensure: (accountKey: Uint8Array) => Promise<{ accountId: string } | null>
+    forget: () => void
+  }
+  /**
+   * Buddies, whose identity derives from the key. Before the key changes,
+   * `release` (Delete Buddies) leaves every buddy and deletes the inbox, so no
+   * one is left with a buddy whose key is gone; afterwards `forget` drops the
+   * identity it cached from the old key.
+   */
+  buddies: {
+    loss: () => AccountKeyLoss
+    release: () => Promise<void>
+    forget: () => void
+  }
+}
+
+export type ReplaceAccountKeyResult =
+  | { outcome: 'unchanged' }
+  | {
+      outcome: 'replaced'
+      loss: AccountKeyLoss
+      /** Null while the server can't be reached or has accounts off. */
+      accountId: string | null
+    }
+
+/**
+ * Replacing the key would take something from this device, and the caller
+ * didn't confirm it: show the User `loss`, then call again with
+ * `confirmedLoss`.
+ */
+export class AccountKeyLossError extends Error {
+  constructor(readonly loss: AccountKeyLoss) {
+    super('Replacing the account key would delete Buddies data')
+    this.name = 'AccountKeyLossError'
+  }
+}
+
+const KEY_BYTES = 32
+
+const sameBytes = (a: Uint8Array, b: Uint8Array) =>
+  a.length === b.length && a.every((byte, i) => byte === b[i])
+
+export function createAccountKeyService(deps: AccountKeyServiceDeps) {
+  let replacing: Promise<ReplaceAccountKeyResult> | null = null
+
+  /** The key, or null when this device has none yet. */
+  async function peek(): Promise<Uint8Array | null> {
+    const key = await deps.store.peek()
+    return key ? fromB64u(key) : null
+  }
+
+  /** The key, created (32 random bytes) when there's none. */
+  async function getOrCreate(): Promise<Uint8Array> {
+    return fromB64u(await deps.store.getOrCreate())
+  }
+
+  /**
+   * What replacing the key with `newKey` would take from this device: nothing
+   * when it's the same key, or when there's no key yet.
+   */
+  async function lossIfReplaced(newKey?: Uint8Array): Promise<AccountKeyLoss> {
+    const current = await peek()
+    if (!current || (newKey && sameBytes(current, newKey))) return NO_LOSS
+    return deps.buddies.loss()
+  }
+
+  async function run(
+    newKey: Uint8Array,
+    confirmedLoss: boolean
+  ): Promise<ReplaceAccountKeyResult> {
+    const current = await peek()
+    if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
+    const loss = current ? deps.buddies.loss() : NO_LOSS
+    if (losesSomething(loss)) {
+      if (!confirmedLoss) throw new AccountKeyLossError(loss)
+      // Throws, changing nothing more, while a buddy can't be left yet.
+      await deps.buddies.release()
+    }
+    await deps.store.replace(toB64u(newKey))
+    deps.account.forget()
+    deps.buddies.forget()
+    const account = await deps.account.ensure(newKey).catch(() => null)
+    return { outcome: 'replaced', loss, accountId: account?.accountId ?? null }
+  }
+
+  /**
+   * Makes `newKey` this device's account key. The same key changes nothing.
+   * Otherwise, when this device's Buddies has buddies or an inbox, it needs
+   * `confirmedLoss` (else `AccountKeyLossError`) and runs Delete Buddies first,
+   * which tells the buddies. Then it stores the key, forgets the old server
+   * account and Buddies identity, and registers the new account. One at a
+   * time.
+   */
+  function replace(
+    newKey: Uint8Array,
+    { confirmedLoss = false }: { confirmedLoss?: boolean } = {}
+  ): Promise<ReplaceAccountKeyResult> {
+    if (newKey.length !== KEY_BYTES)
+      return Promise.reject(new Error('Account key must be 32 bytes'))
+    const previous = replacing ?? Promise.resolve()
+    const next = previous
+      .catch(() => undefined)
+      .then(() => run(newKey, confirmedLoss))
+    replacing = next
+    void next
+      .catch(() => undefined)
+      .finally(() => {
+        if (replacing === next) replacing = null
+      })
+    return next
+  }
+
+  return { peek, getOrCreate, lossIfReplaced, replace }
+}
+
+export type AccountKeyService = ReturnType<typeof createAccountKeyService>

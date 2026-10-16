@@ -1,4 +1,5 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
+import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
 import {
   BADGE_REACTION_PUSH_KIND,
@@ -222,7 +223,8 @@ describe.skipIf(!relayUrl)('buddies relay interop', () => {
       endsAt: Date.now() + 2 * 86_400_000,
       expiresAt: Date.now() + 3 * 86_400_000,
       details: {
-        d: '2026-09-26',
+        // Tomorrow: an ended Plan can't be answered.
+        d: moment().add(1, 'day').format('YYYY-MM-DD'),
         s: 600,
         m: 120,
         title: 'Cart witnessing',

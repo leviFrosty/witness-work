@@ -66,12 +66,16 @@ const SetUpAnotherDeviceScreen = () => {
           tone='error'
           body={i18n.t(PROBLEM[start.problem])}
           primary={
-            !RETRYABLE.has(start.problem)
-              ? undefined
-              : {
+            RETRYABLE.has(start.problem)
+              ? {
                   label: i18n.t('handoff_tryAgain'),
                   onPress: newCode,
                   testID: 'handoff-try-again',
+                }
+              : {
+                  label: i18n.t('done'),
+                  onPress: () => navigation.goBack(),
+                  testID: 'handoff-problem-done',
                 }
           }
           testID='handoff-problem'

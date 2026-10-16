@@ -17,12 +17,12 @@ enum InboxFetch {
         .utf8)
   }
 
-  /// `{ p, s }`: the payload, signed over `"ww-buddies/v1\n" + op + "\n"` and its
-  /// bytes with the owner key (Ed25519).
+  /// `{ payload, signature }`: the payload, signed over `"ww-buddies/v1\n" + op +
+  /// "\n"` and its bytes with the owner key (Ed25519).
   static func envelope(op: String, payload: Data, ownerSeed: Data) throws -> [String: String] {
     let key = try Curve25519.Signing.PrivateKey(rawRepresentation: ownerSeed)
     let signature = try key.signature(for: Data("ww-buddies/v1\n\(op)\n".utf8) + payload)
-    return ["p": B64U.encode(payload), "s": B64U.encode(signature)]
+    return ["payload": B64U.encode(payload), "signature": B64U.encode(signature)]
   }
 
   static func event(

@@ -108,13 +108,13 @@ import Foundation
     check(B64U.encode(ownerPub.rawRepresentation) == v["identity.ownerPub"], "owner key")
     let payload = InboxFetch.payload(
       inboxId: v["identity.inboxId"]!, since: 0, ts: 1_790_000_000_000, nonce: Data(count: 16))
-    check(B64U.encode(payload) == v["envelope.p"], "envelope payload bytes")
+    check(B64U.encode(payload) == v["envelope.payload"], "envelope payload bytes")
     let signed = Data("ww-buddies/v1\ninbox/sync\n".utf8) + payload
-    check(ownerPub.isValidSignature(B64U.decode(v["envelope.s"]!)!, for: signed), "verifies the app's envelope")
+    check(ownerPub.isValidSignature(B64U.decode(v["envelope.signature"]!)!, for: signed), "verifies the app's envelope")
     let envelope = try InboxFetch.envelope(op: "inbox/sync", payload: payload, ownerSeed: ownerSeed)
-    check(envelope["p"] == v["envelope.p"], "envelope p")
+    check(envelope["payload"] == v["envelope.payload"], "envelope payload")
     check(
-      ownerPub.isValidSignature(B64U.decode(envelope["s"]!)!, for: signed),
+      ownerPub.isValidSignature(B64U.decode(envelope["signature"]!)!, for: signed),
       "the extension's envelope verifies")
   }
 

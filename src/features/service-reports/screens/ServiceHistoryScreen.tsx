@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Keyboard, View } from 'react-native'
+import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
   ChevronBackwardIcon,
@@ -183,254 +184,258 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
         keyboardShouldPersistTaps='handled'
         showsVerticalScrollIndicator={false}
         extraScrollHeight={20}
-        contentContainerStyle={{
-          paddingHorizontal: inputLayout.horizontalPadding,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-          paddingTop: 16,
-          paddingBottom: 32,
-          gap: 16,
-        }}
       >
-        <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-          <IconButton
-            icon={ChevronBackwardIcon}
-            accessibilityLabel={i18n.t('serviceHistory.previousYear')}
-            color={
-              serviceYear > oldestServiceYear ? undefined : theme.colors.border
-            }
-            onPress={
-              serviceYear > oldestServiceYear
-                ? () => changeServiceYear(serviceYear - 1)
-                : undefined
-            }
-          />
-          <Text
-            accessibilityRole='header'
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('xl'),
-            }}
-          >
-            {serviceYearLabel(serviceYear)}
-          </Text>
-          <IconButton
-            icon={ChevronForwardIcon}
-            accessibilityLabel={i18n.t('serviceHistory.nextYear')}
-            color={
-              serviceYear < newestServiceYear ? undefined : theme.colors.border
-            }
-            onPress={
-              serviceYear < newestServiceYear
-                ? () => changeServiceYear(serviceYear + 1)
-                : undefined
-            }
-          />
-        </XView>
-
-        <Text
+        <ContentColumn
           style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
             paddingHorizontal: inputLayout.horizontalPadding,
+            paddingTop: 16,
+            paddingBottom: 32,
+            gap: 16,
           }}
         >
-          {i18n.t('serviceHistory.description')}
-        </Text>
+          <XView style={{ justifyContent: 'space-between', gap: 12 }}>
+            <IconButton
+              icon={ChevronBackwardIcon}
+              accessibilityLabel={i18n.t('serviceHistory.previousYear')}
+              color={
+                serviceYear > oldestServiceYear
+                  ? undefined
+                  : theme.colors.border
+              }
+              onPress={
+                serviceYear > oldestServiceYear
+                  ? () => changeServiceYear(serviceYear - 1)
+                  : undefined
+              }
+            />
+            <Text
+              accessibilityRole='header'
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xl'),
+              }}
+            >
+              {serviceYearLabel(serviceYear)}
+            </Text>
+            <IconButton
+              icon={ChevronForwardIcon}
+              accessibilityLabel={i18n.t('serviceHistory.nextYear')}
+              color={
+                serviceYear < newestServiceYear
+                  ? undefined
+                  : theme.colors.border
+              }
+              onPress={
+                serviceYear < newestServiceYear
+                  ? () => changeServiceYear(serviceYear + 1)
+                  : undefined
+              }
+            />
+          </XView>
 
-        {rows.map((row, index) => {
-          const monthLabel = formatDisplay(row.target, 'MMMM YYYY')
-          const copiedRow = copiedFromPreviousMonth(
-            drafts,
-            serviceYear,
-            index,
-            buildRows
-          )
-          const isCheckbox =
-            getEntryMode(roleOfMonthStatus(row.status)) === 'checkbox'
-          const canApplyLater =
-            index < rows.length - 1 &&
-            row.status !== row.savedStatus &&
-            rows.slice(index + 1).some((r) => r.status !== row.status)
-
-          return (
-            <View key={monthlyGoalKey(row.target)} style={{ gap: 6 }}>
-              {/* Long-press the month's header to copy or clear it. Both
-                only change the unsaved form, so leaving undoes them. */}
-              <ContextMenu
-                actions={[
-                  rowsDiffer(copiedRow, row) && {
-                    id: 'copy_previous_month',
-                    title: i18n.t('copyFromPreviousMonth'),
-                    systemImage: 'doc.on.doc',
-                    onPress: () => updateRow(index, copiedRow),
-                  },
-                  rowsDiffer(clearedRow(row), row) && {
-                    id: 'clear_month',
-                    title: i18n.t('clearMonth'),
-                    systemImage: 'xmark.circle',
-                    onPress: () => updateRow(index, clearedRow(row)),
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                    textTransform: 'uppercase',
-                    letterSpacing: tracking(0.5),
-                    paddingHorizontal: inputLayout.horizontalPadding,
-                  }}
-                >
-                  {monthLabel}
-                </Text>
-              </ContextMenu>
-              <Section>
-                <InputRowSelect
-                  label={i18n.t('status')}
-                  selectProps={{
-                    data: statusItems,
-                    value: row.status,
-                    onChange: ({ value }) =>
-                      updateRow(index, { status: value }),
-                  }}
-                />
-                {row.loggedMinutes !== null ? (
-                  <InputRowContainer
-                    label={
-                      isCheckbox
-                        ? i18n.t('sharedInMinistry')
-                        : i18n.t('serviceHistory.logged')
-                    }
-                    info={i18n.t('serviceHistory.loggedDescription')}
-                    controlWidth='auto'
-                    lastInSection
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('lg'),
-                      }}
-                    >
-                      {isCheckbox
-                        ? i18n.t('yes')
-                        : formatMinutes(row.loggedMinutes, timeDisplayFormat)
-                            .formatted}
-                    </Text>
-                  </InputRowContainer>
-                ) : isCheckbox ? (
-                  <InputRowSwitch
-                    label={i18n.t('sharedInMinistry')}
-                    value={row.shared}
-                    onValueChange={(shared) => updateRow(index, { shared })}
-                    lastInSection
-                  />
-                ) : (
-                  <>
-                    <TextInputRow
-                      label={i18n.t('onboardingBackfillHoursLabel')}
-                      controlStyle={{ width: 96 }}
-                      textInputProps={{
-                        accessibilityLabel: i18n.t(
-                          'onboardingBackfillHoursA11y',
-                          {
-                            month: monthLabel,
-                          }
-                        ),
-                        inputMode: 'decimal',
-                        maxLength: 6,
-                        placeholder: formatPlainNumber(0),
-                        value: row.hours,
-                        onChangeText: (hours) => updateRow(index, { hours }),
-                        textAlign: 'end',
-                      }}
-                    />
-                    <TextInputRow
-                      label={i18n.t('onboardingBackfillCreditLabel')}
-                      controlStyle={{ width: 96 }}
-                      lastInSection
-                      textInputProps={{
-                        accessibilityLabel: i18n.t(
-                          'onboardingBackfillCreditA11y',
-                          {
-                            month: monthLabel,
-                          }
-                        ),
-                        inputMode: 'decimal',
-                        maxLength: 6,
-                        placeholder: formatPlainNumber(0),
-                        value: row.creditHours,
-                        onChangeText: (creditHours) =>
-                          updateRow(index, { creditHours }),
-                        textAlign: 'end',
-                      }}
-                    />
-                  </>
-                )}
-              </Section>
-              {canApplyLater ? (
-                <Button
-                  noTransform
-                  accessibilityRole='button'
-                  onPress={() =>
-                    updateRows((prev) =>
-                      withStatusAppliedToLaterMonths(prev, index)
-                    )
-                  }
-                  style={{
-                    alignSelf: 'flex-start',
-                    paddingHorizontal: inputLayout.horizontalPadding,
-                    paddingVertical: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.colors.accent,
-                      fontFamily: theme.fonts.semiBold,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {i18n.t('serviceHistory.applyToLaterMonths', {
-                      status: monthStatusLabel(row.status, publisherHours),
-                    })}
-                  </Text>
-                </Button>
-              ) : null}
-            </View>
-          )
-        })}
-
-        {hasTimeThisYear ? (
-          <Button
-            noTransform
-            accessibilityRole='button'
-            onPress={() =>
-              confirmDeleteYear({
-                endYear: serviceYear + 1,
-                // The year's rows rebuild without its time; its draft goes too.
-                onDeleted: () =>
-                  setDrafts((prev) => discardDraft(prev, serviceYear)),
-              })
-            }
+          <Text
             style={{
-              alignSelf: 'center',
-              paddingVertical: 8,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
               paddingHorizontal: inputLayout.horizontalPadding,
             }}
           >
-            <Text
+            {i18n.t('serviceHistory.description')}
+          </Text>
+
+          {rows.map((row, index) => {
+            const monthLabel = formatDisplay(row.target, 'MMMM YYYY')
+            const copiedRow = copiedFromPreviousMonth(
+              drafts,
+              serviceYear,
+              index,
+              buildRows
+            )
+            const isCheckbox =
+              getEntryMode(roleOfMonthStatus(row.status)) === 'checkbox'
+            const canApplyLater =
+              index < rows.length - 1 &&
+              row.status !== row.savedStatus &&
+              rows.slice(index + 1).some((r) => r.status !== row.status)
+
+            return (
+              <View key={monthlyGoalKey(row.target)} style={{ gap: 6 }}>
+                {/* Long-press the month's header to copy or clear it. Both
+                only change the unsaved form, so leaving undoes them. */}
+                <ContextMenu
+                  actions={[
+                    rowsDiffer(copiedRow, row) && {
+                      id: 'copy_previous_month',
+                      title: i18n.t('copyFromPreviousMonth'),
+                      systemImage: 'doc.on.doc',
+                      onPress: () => updateRow(index, copiedRow),
+                    },
+                    rowsDiffer(clearedRow(row), row) && {
+                      id: 'clear_month',
+                      title: i18n.t('clearMonth'),
+                      systemImage: 'xmark.circle',
+                      onPress: () => updateRow(index, clearedRow(row)),
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                      textTransform: 'uppercase',
+                      letterSpacing: tracking(0.5),
+                      paddingHorizontal: inputLayout.horizontalPadding,
+                    }}
+                  >
+                    {monthLabel}
+                  </Text>
+                </ContextMenu>
+                <Section>
+                  <InputRowSelect
+                    label={i18n.t('status')}
+                    selectProps={{
+                      data: statusItems,
+                      value: row.status,
+                      onChange: ({ value }) =>
+                        updateRow(index, { status: value }),
+                    }}
+                  />
+                  {row.loggedMinutes !== null ? (
+                    <InputRowContainer
+                      label={
+                        isCheckbox
+                          ? i18n.t('sharedInMinistry')
+                          : i18n.t('serviceHistory.logged')
+                      }
+                      info={i18n.t('serviceHistory.loggedDescription')}
+                      controlWidth='auto'
+                      lastInSection
+                    >
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: theme.fontSize('lg'),
+                        }}
+                      >
+                        {isCheckbox
+                          ? i18n.t('yes')
+                          : formatMinutes(row.loggedMinutes, timeDisplayFormat)
+                              .formatted}
+                      </Text>
+                    </InputRowContainer>
+                  ) : isCheckbox ? (
+                    <InputRowSwitch
+                      label={i18n.t('sharedInMinistry')}
+                      value={row.shared}
+                      onValueChange={(shared) => updateRow(index, { shared })}
+                      lastInSection
+                    />
+                  ) : (
+                    <>
+                      <TextInputRow
+                        label={i18n.t('onboardingBackfillHoursLabel')}
+                        controlStyle={{ width: 96 }}
+                        textInputProps={{
+                          accessibilityLabel: i18n.t(
+                            'onboardingBackfillHoursA11y',
+                            {
+                              month: monthLabel,
+                            }
+                          ),
+                          inputMode: 'decimal',
+                          maxLength: 6,
+                          placeholder: formatPlainNumber(0),
+                          value: row.hours,
+                          onChangeText: (hours) => updateRow(index, { hours }),
+                          textAlign: 'end',
+                        }}
+                      />
+                      <TextInputRow
+                        label={i18n.t('onboardingBackfillCreditLabel')}
+                        controlStyle={{ width: 96 }}
+                        lastInSection
+                        textInputProps={{
+                          accessibilityLabel: i18n.t(
+                            'onboardingBackfillCreditA11y',
+                            {
+                              month: monthLabel,
+                            }
+                          ),
+                          inputMode: 'decimal',
+                          maxLength: 6,
+                          placeholder: formatPlainNumber(0),
+                          value: row.creditHours,
+                          onChangeText: (creditHours) =>
+                            updateRow(index, { creditHours }),
+                          textAlign: 'end',
+                        }}
+                      />
+                    </>
+                  )}
+                </Section>
+                {canApplyLater ? (
+                  <Button
+                    noTransform
+                    accessibilityRole='button'
+                    onPress={() =>
+                      updateRows((prev) =>
+                        withStatusAppliedToLaterMonths(prev, index)
+                      )
+                    }
+                    style={{
+                      alignSelf: 'flex-start',
+                      paddingHorizontal: inputLayout.horizontalPadding,
+                      paddingVertical: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.colors.accent,
+                        fontFamily: theme.fonts.semiBold,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {i18n.t('serviceHistory.applyToLaterMonths', {
+                        status: monthStatusLabel(row.status, publisherHours),
+                      })}
+                    </Text>
+                  </Button>
+                ) : null}
+              </View>
+            )
+          })}
+
+          {hasTimeThisYear ? (
+            <Button
+              noTransform
+              accessibilityRole='button'
+              onPress={() =>
+                confirmDeleteYear({
+                  endYear: serviceYear + 1,
+                  // The year's rows rebuild without its time; its draft goes too.
+                  onDeleted: () =>
+                    setDrafts((prev) => discardDraft(prev, serviceYear)),
+                })
+              }
               style={{
-                color: theme.colors.error,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('sm'),
+                alignSelf: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: inputLayout.horizontalPadding,
               }}
             >
-              {i18n.t('deleteThisYearsTime')}
-            </Text>
-          </Button>
-        ) : null}
+              <Text
+                style={{
+                  color: theme.colors.error,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                }}
+              >
+                {i18n.t('deleteThisYearsTime')}
+              </Text>
+            </Button>
+          ) : null}
+        </ContentColumn>
       </KeyboardAwareScrollView>
 
       <View

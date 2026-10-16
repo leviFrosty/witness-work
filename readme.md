@@ -29,7 +29,7 @@ Due to my increased time constraints volunteering, my day job, family, etc., I'm
 
 ## Languages 🌐
 
-WitnessWork is available in 18 languages, translated with AI. If a translation looks wrong, please [open an issue](https://github.com/leviFrosty/witness-work/issues/new) with the language, the screen, and the correct wording. Thank you!
+WitnessWork is available in 19 languages, translated with AI, including Arabic with a right-to-left layout. If a translation looks wrong, please [open an issue](https://github.com/leviFrosty/witness-work/issues/new) with the language, the screen, and the correct wording. Thank you!
 
 ## Building
 

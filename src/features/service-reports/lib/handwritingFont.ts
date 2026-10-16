@@ -11,9 +11,9 @@ import { fonts } from '@/constants/theme'
  * enormous — Klee One ~8.7MB, Ma Shan Zheng ~5.9MB, Gaegu ~3MB each — and only
  * a Korean/Japanese/Chinese user viewing this one screen ever needs them.
  * Bundling all three shipped ~26MB of fonts to every user. Instead we download
- * the matching face on demand from Google Fonts' free OFL mirror
- * (github.com/google/fonts) and cache it, falling back to the bundled Latin
- * face while it loads or if the download fails.
+ * the matching face (and the small Arabic Ruqʿah one) on demand from Google
+ * Fonts' free OFL mirror (github.com/google/fonts) and cache it, falling back
+ * to the bundled Latin face while it loads or if the download fails.
  */
 
 const FALLBACK = 'Kalam_400Regular'
@@ -43,6 +43,11 @@ const REMOTE_FONTS: Record<string, string> = {
     'https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-SemiBold.ttf',
   MaShanZheng_400Regular:
     'https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf',
+  // Ruqʿah, the everyday Arabic handwriting style (~0.1MB each).
+  ArefRuqaa_400Regular:
+    'https://raw.githubusercontent.com/google/fonts/main/ofl/arefruqaa/ArefRuqaa-Regular.ttf',
+  ArefRuqaa_700Bold:
+    'https://raw.githubusercontent.com/google/fonts/main/ofl/arefruqaa/ArefRuqaa-Bold.ttf',
 }
 
 type FontPair = { regular: string; bold: string }
@@ -56,6 +61,8 @@ function targetFontsFor(locale: string): FontPair {
     return { regular: 'KleeOne_400Regular', bold: 'KleeOne_600SemiBold' }
   if (lower.startsWith('zh'))
     return { regular: 'MaShanZheng_400Regular', bold: 'MaShanZheng_400Regular' }
+  if (lower.split('-')[0] === 'ar')
+    return { regular: 'ArefRuqaa_400Regular', bold: 'ArefRuqaa_700Bold' }
   return { regular: FALLBACK, bold: FALLBACK_BOLD }
 }
 

@@ -6,6 +6,7 @@ import {
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
+import { isRtlLayout } from '@/lib/direction'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import MenuItems from '@/components/ui/MenuItems.ios'
 import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
@@ -130,7 +131,14 @@ export default function ContextMenu({
       }
     >
       {/* Without this, rows first laid out under the home indicator measure short. */}
-      <Host matchContents colorScheme={colorScheme} ignoreSafeArea='all'>
+      <Host
+        // Hosted content keeps the layout of its first pass in a right-to-left
+        // layout, measured before the width arrived; remount it at the width.
+        key={isRtlLayout() ? width : undefined}
+        matchContents
+        colorScheme={colorScheme}
+        ignoreSafeArea='all'
+      >
         {menu}
       </Host>
     </View>

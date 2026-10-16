@@ -30,6 +30,7 @@ const translationLoaders = {
   'uk-ua': () => require('../locales/uk-UA.json'),
   'bem-zm': () => require('../locales/bem-ZM.json'), // Bemba
   'rw-rw': () => require('../locales/rw-RW.json'),
+  ar: () => require('../locales/ar.json'), // One Arabic for every country
 } as const satisfies Record<string, () => Partial<Translations>>
 export type TranslatedLocale = keyof typeof translationLoaders
 
@@ -56,6 +57,7 @@ export const translationsLabels: { [K in TranslatedLocale]: string } = {
   'uk-ua': 'українська',
   'bem-zm': 'Ichibemba',
   'rw-rw': 'Kinyarwanda',
+  ar: 'العربية',
 } as const
 
 // CLDR cardinal plural rules: which of zero/one/two/few/many/other a count
@@ -81,6 +83,7 @@ const pluralRules: { [K in TranslatedLocale]: CardinalRule } = {
   'bem-zm': cardinals.bem,
   // CLDR has no Kinyarwanda rules; it counts one/other like English.
   'rw-rw': cardinals.en,
+  ar: cardinals.ar,
 }
 
 export const DEFAULT_LOCALE = 'en-us'
@@ -180,7 +183,9 @@ export function handleLangFallback(locale: string): {
       (script &&
         sameLanguage.find((t) => t.split('-').slice(1).includes(script))) ||
       sameLanguage[0]
-    return { locale: match, languageFound: true, fallback: true }
+    // A translation without a region (`ar`) is the one for every country, so
+    // `ar-eg` isn't falling back to anything.
+    return { locale: match, languageFound: true, fallback: match !== language }
   }
 
   // No translation in this language: fall back to English.

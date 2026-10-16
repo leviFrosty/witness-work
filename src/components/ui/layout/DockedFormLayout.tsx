@@ -330,9 +330,12 @@ const DockedFormLayout = (props: {
               else if (state.current.keyboardOverlap)
                 revealFocusedField(handles())
             }}
-            contentContainerStyle={props.contentContainerStyle}
+            // In a right-to-left layout iOS pins a content container narrower
+            // than the scroll view to its right edge, so the container stays
+            // full width and the column (often capped and centered) sits in it.
+            contentContainerStyle={{ flexGrow: 1 }}
           >
-            {props.children}
+            <View style={props.contentContainerStyle}>{props.children}</View>
           </ScrollView>
         </Animated.View>
         <Animated.View

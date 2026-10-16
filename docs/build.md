@@ -289,6 +289,16 @@ record the mapping; copy the exact corresponding translations into
 `.asc/cut-release/play-metadata/<play-locale>/changelogs/<versionCode>.txt`.
 Translate additional Play-only locales from the same source when needed.
 
+| ASC     | Play     | ASC       | Play    |
+| ------- | -------- | --------- | ------- |
+| `en-US` | `en-US`  | `ru`      | `ru-RU` |
+| `fr-FR` | `fr-FR`  | `vi`      | `vi`    |
+| `de-DE` | `de-DE`  | `ja`      | `ja-JP` |
+| `nl-NL` | `nl-NL`  | `ko`      | `ko-KR` |
+| `it`    | `it-IT`  | `zh-Hans` | `zh-CN` |
+| `pt-BR` | `pt-BR`  | `zh-Hant` | `zh-TW` |
+| `es-MX` | `es-419` | `ar-SA`   | `ar`    |
+
 Google Play allows [500 Unicode characters per language](https://support.google.com/googleplay/android-developer/answer/9859348).
 Keep every shared translation within that limit. If a summary needs shortening,
 update the shared ASC text too; do not truncate only Play or write separate

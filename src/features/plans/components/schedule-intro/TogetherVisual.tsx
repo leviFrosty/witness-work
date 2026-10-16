@@ -164,7 +164,7 @@ function GoingLabel({
       ]}
     >
       <VisualText style={{ fontSize: 11, color: theme.colors.accent }}>
-        {i18n.t('buddies_going')}
+        {i18n.t('buddies_replyGoing')}
       </VisualText>
     </Animated.View>
   )

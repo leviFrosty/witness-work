@@ -4,6 +4,12 @@
     "Add ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15,6 +21,12 @@
     "Add ${spokenDuration} to ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف ${spokenDuration} إلى ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26,6 +38,12 @@
     "Add hours in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف ساعات في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37,6 +55,12 @@
     "Add time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف وقتًا في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -150,6 +174,12 @@
     "Create ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنشئ إدخالًا مدته ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +191,12 @@
     "Create a time entry in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنشئ إدخال وقت في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -172,6 +208,12 @@
     "Enter ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +225,12 @@
     "Enter time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل الوقت في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -194,6 +242,12 @@
     "Log ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -205,6 +259,12 @@
     "Log a round trip in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل رحلة ذهاب وإياب في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +378,12 @@
     "Log a trip in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل رحلة في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -431,6 +497,12 @@
     "Log hours in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الساعات في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -442,6 +514,12 @@
     "Log time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الوقت في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -555,6 +633,12 @@
     "Pause my timer in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوقف المؤقّت مؤقتًا في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +752,12 @@
     "Record ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دوّن ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -679,6 +769,12 @@
     "Record time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دوّن الوقت في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -690,6 +786,12 @@
     "Start my timer in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ المؤقّت في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -803,6 +905,12 @@
     "Stop my timer in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنهِ المؤقّت في ${applicationName}"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -916,6 +1024,12 @@
     "Submit ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسل ${spokenDuration} إلى ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -927,6 +1041,12 @@
     "Submit time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسل الوقت إلى ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -938,6 +1058,12 @@
     "Track ${spokenDuration} in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احسب ${spokenDuration} في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -949,6 +1075,12 @@
     "Track time in ${applicationName}" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تتبّع الوقت في ${applicationName}"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",

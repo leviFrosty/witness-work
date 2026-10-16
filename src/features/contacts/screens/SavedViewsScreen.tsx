@@ -1,5 +1,6 @@
 import { Bookmark as BookmarkIcon } from 'lucide-react-native'
 import { useEffect, useRef } from 'react'
+import ContentColumn from '@/components/ui/layout/ContentColumn'
 import type { InputRef } from 'tamagui'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -39,44 +40,43 @@ const SavedViewsScreen = ({ navigation, route }: Props) => {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-          paddingHorizontal: inputLayout.horizontalPadding,
-          paddingVertical: 24,
-        }}
-      >
-        {views.length === 0 ? (
-          <Empty
-            icon={
-              <LucideIcon
-                icon={BookmarkIcon}
-                size={24}
-                color={theme.colors.text}
-              />
-            }
-            title={i18n.t('savedViews_empty_title')}
-            description={i18n.t('savedViews_empty_description')}
-          />
-        ) : (
-          <Section>
-            {views.map((view, index) => (
-              <SavedViewRow
-                key={view.id}
-                view={view}
-                first={index === 0}
-                last={index === views.length - 1}
-                customFieldDefs={customFieldDefs}
-                inputRef={view.id === focusId ? focusRef : undefined}
-                onRename={(name) => rename(view.id, name)}
-                onMove={(direction) => move(view.id, direction)}
-                onDelete={() => confirmRemove(view.id)}
-              />
-            ))}
-          </Section>
-        )}
+      <KeyboardAwareScrollView>
+        <ContentColumn
+          style={{
+            paddingHorizontal: inputLayout.horizontalPadding,
+            paddingVertical: 24,
+          }}
+        >
+          {views.length === 0 ? (
+            <Empty
+              icon={
+                <LucideIcon
+                  icon={BookmarkIcon}
+                  size={24}
+                  color={theme.colors.text}
+                />
+              }
+              title={i18n.t('savedViews_empty_title')}
+              description={i18n.t('savedViews_empty_description')}
+            />
+          ) : (
+            <Section>
+              {views.map((view, index) => (
+                <SavedViewRow
+                  key={view.id}
+                  view={view}
+                  first={index === 0}
+                  last={index === views.length - 1}
+                  customFieldDefs={customFieldDefs}
+                  inputRef={view.id === focusId ? focusRef : undefined}
+                  onRename={(name) => rename(view.id, name)}
+                  onMove={(direction) => move(view.id, direction)}
+                  onDelete={() => confirmRemove(view.id)}
+                />
+              ))}
+            </Section>
+          )}
+        </ContentColumn>
       </KeyboardAwareScrollView>
     </Wrapper>
   )

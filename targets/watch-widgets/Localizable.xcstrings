@@ -4,6 +4,12 @@
     "aheadOfSchedule" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متقدّم على الجدول!"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
     "behindSchedule" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متأخر عن الجدول"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -230,6 +242,12 @@
     "followUp" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -343,6 +361,12 @@
     "goalReached" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقّق الهدف"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +480,12 @@
     "hours" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الساعات"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +599,12 @@
     "hoursCompact" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "س"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -682,6 +718,12 @@
     "hoursPerDayToGoal" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوميًا لبلوغ الهدف!"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -795,6 +837,12 @@
     "minutesCompact" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "د"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -908,6 +956,12 @@
     "month" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشهر"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1021,6 +1075,12 @@
     "reportedToday" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإبلاغ اليوم"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1134,6 +1194,12 @@
     "sharedTheGoodNews" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نشرت\nالبشارة"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1247,6 +1313,12 @@
     "today" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1360,6 +1432,12 @@
     "tomorrow" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غدًا"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1473,6 +1551,12 @@
     "watchComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خدمتك هذا الشهر بنظرة سريعة."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1586,6 +1670,12 @@
     "watchComplicationName" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقدّم الشهري"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1699,6 +1789,12 @@
     "watchNothingScheduled" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء مجدول"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1812,6 +1908,12 @@
     "watchNow" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآن"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2027,12 @@
     "watchRangeComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعات هذا الشهر على مقياس من الصفر إلى هدفك."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2038,6 +2146,12 @@
     "watchSymbolComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ساعات هذا الشهر على مقياس نحو هدفك."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2151,6 +2265,12 @@
     "watchThen" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد ذلك"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2264,6 +2384,12 @@
     "watchUpNext" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التالي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2377,6 +2503,12 @@
     "watchUpNextComplicationDescription" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعتك أو خطتك التالية."
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2490,6 +2622,12 @@
     "watchUpNextComplicationName" : {
       "extractionState" : "manual",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التالي"
+          }
+        },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",

@@ -502,7 +502,7 @@ const BuddiesPreview = () => {
               numberOfLines={1}
               style={label(11, theme.colors.text, true)}
             >
-              {`${i18n.t('buddies_going')} · ${formatTime(moment().hour(9).minute(0))}`}
+              {`${i18n.t('buddies_replyGoing')} · ${formatTime(moment().hour(9).minute(0))}`}
             </Text>
           </Animated.View>
         </View>

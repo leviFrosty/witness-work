@@ -74,6 +74,7 @@ import {
   contactItemIndex,
   ContactsListItem,
 } from '@/features/contacts/lib/suggestedContactsList'
+import { alignInput } from '@/lib/direction'
 
 /**
  * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
@@ -555,6 +556,9 @@ const ContactsScreen = ({
                       color: theme.colors.text,
                       fontFamily: theme.fonts.regular,
                       fontSize: theme.fontSize('md'),
+                      // Explicit: an unaligned field follows the app bundle's language on
+                      // iOS, which can be Arabic while the app runs in English.
+                      textAlign: alignInput('start'),
                     }}
                   />
                 </View>

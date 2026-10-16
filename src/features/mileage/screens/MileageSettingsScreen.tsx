@@ -1,5 +1,6 @@
 import { ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useToastController } from '@tamagui/toast'
 import { Plus as PlusIcon } from 'lucide-react-native'
@@ -105,139 +106,140 @@ export default function MileageSettingsScreen() {
     })
 
   return (
-    <ScrollView
-      style={{ backgroundColor: theme.colors.background }}
-      contentContainerStyle={{
-        padding: inputLayout.horizontalPadding,
-        paddingBottom: insets.bottom + 30,
-        width: '100%',
-        maxWidth: inputLayout.contentMaxWidth,
-        alignSelf: 'center',
-        gap: 24,
-      }}
-    >
-      <View style={{ gap: 8 }}>
-        <SectionTitle>{i18n.t('mileage.cars')}</SectionTitle>
-        <Section>
-          {carRows(active, true)}
-          <MileageLinkRow
-            label={i18n.t('mileage.addCar')}
-            leftIcon={PlusIcon}
-            onPress={() =>
-              navigation.navigate('MileageVehicleForm', {
-                source: 'mileage_settings',
-              })
-            }
-            lastInSection
-          />
-        </Section>
-      </View>
-
-      {archived.length > 0 && (
-        <View style={{ gap: 8 }}>
-          <SectionTitle>{i18n.t('mileage.archivedCars')}</SectionTitle>
-          <Section>{carRows(archived, false)}</Section>
-        </View>
-      )}
-
-      <View style={{ gap: 8 }}>
-        <SectionTitle>{i18n.t('mileage.fuels')}</SectionTitle>
-        <Section>
-          {fuels.map((fuel) => {
-            const price = effectiveEntry(index.pricesByFuel.get(fuel.id), today)
-            return (
-              <MileageLinkRow
-                key={fuel.id}
-                label={fuel.name}
-                value={price ? format.price(price.pricePerGallon) : undefined}
-                onPress={() =>
-                  navigation.navigate('MileageFuelForm', { fuelId: fuel.id })
-                }
-              />
-            )
-          })}
-          <MileageLinkRow
-            label={i18n.t('mileage.addFuel')}
-            leftIcon={PlusIcon}
-            onPress={() => navigation.navigate('MileageFuelForm')}
-            lastInSection
-          />
-        </Section>
-      </View>
-
-      <View style={{ gap: 8 }}>
-        <SectionTitle>{i18n.t('mileage.units.title')}</SectionTitle>
-        <Section>
-          <InputRowSelect
-            label={i18n.t('mileage.distanceUnit')}
-            selectProps={{
-              data: [
-                {
-                  label: i18n.t('mileage.autoUnit', {
-                    unit: distanceLabel(auto.distanceUnit),
-                  }),
-                  value: AUTO,
-                },
-                ...DISTANCE_UNITS.map((unit) => ({
-                  label: distanceLabel(unit),
-                  value: unit,
-                })),
-              ],
-              value: distanceUnit ?? AUTO,
-              onChange: ({ value }) => {
-                set({
-                  distanceUnit:
-                    value === AUTO ? undefined : (value as DistanceUnit),
-                })
-              },
-              accessibilityLabel: i18n.t('mileage.distanceUnit'),
-            }}
-          />
-          <InputRowSelect
-            label={i18n.t('mileage.fuelEconomyUnit')}
-            lastInSection
-            selectProps={{
-              data: [
-                {
-                  label: i18n.t('mileage.autoUnit', {
-                    unit: economyLabel(auto.economyUnit),
-                  }),
-                  value: AUTO,
-                },
-                ...FUEL_ECONOMY_UNITS.map((unit) => ({
-                  label: economyLabel(unit),
-                  value: unit,
-                })),
-              ],
-              value: fuelEconomyUnit ?? AUTO,
-              onChange: ({ value }) => {
-                set({
-                  fuelEconomyUnit:
-                    value === AUTO ? undefined : (value as FuelEconomyUnit),
-                })
-              },
-              accessibilityLabel: i18n.t('mileage.fuelEconomyUnit'),
-            }}
-          />
-        </Section>
-      </View>
-
-      <Button
-        noTransform
-        accessibilityRole='button'
-        onPress={requestDeleteAll}
-        style={{ alignItems: 'center', paddingVertical: 12 }}
+    <ScrollView style={{ backgroundColor: theme.colors.background }}>
+      <ContentColumn
+        style={{
+          padding: inputLayout.horizontalPadding,
+          paddingBottom: insets.bottom + 30,
+          gap: 24,
+        }}
       >
-        <Text
-          style={{
-            color: theme.colors.error,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('md'),
-          }}
+        <View style={{ gap: 8 }}>
+          <SectionTitle>{i18n.t('mileage.cars')}</SectionTitle>
+          <Section>
+            {carRows(active, true)}
+            <MileageLinkRow
+              label={i18n.t('mileage.addCar')}
+              leftIcon={PlusIcon}
+              onPress={() =>
+                navigation.navigate('MileageVehicleForm', {
+                  source: 'mileage_settings',
+                })
+              }
+              lastInSection
+            />
+          </Section>
+        </View>
+
+        {archived.length > 0 && (
+          <View style={{ gap: 8 }}>
+            <SectionTitle>{i18n.t('mileage.archivedCars')}</SectionTitle>
+            <Section>{carRows(archived, false)}</Section>
+          </View>
+        )}
+
+        <View style={{ gap: 8 }}>
+          <SectionTitle>{i18n.t('mileage.fuels')}</SectionTitle>
+          <Section>
+            {fuels.map((fuel) => {
+              const price = effectiveEntry(
+                index.pricesByFuel.get(fuel.id),
+                today
+              )
+              return (
+                <MileageLinkRow
+                  key={fuel.id}
+                  label={fuel.name}
+                  value={price ? format.price(price.pricePerGallon) : undefined}
+                  onPress={() =>
+                    navigation.navigate('MileageFuelForm', { fuelId: fuel.id })
+                  }
+                />
+              )
+            })}
+            <MileageLinkRow
+              label={i18n.t('mileage.addFuel')}
+              leftIcon={PlusIcon}
+              onPress={() => navigation.navigate('MileageFuelForm')}
+              lastInSection
+            />
+          </Section>
+        </View>
+
+        <View style={{ gap: 8 }}>
+          <SectionTitle>{i18n.t('mileage.units.title')}</SectionTitle>
+          <Section>
+            <InputRowSelect
+              label={i18n.t('mileage.distanceUnit')}
+              selectProps={{
+                data: [
+                  {
+                    label: i18n.t('mileage.autoUnit', {
+                      unit: distanceLabel(auto.distanceUnit),
+                    }),
+                    value: AUTO,
+                  },
+                  ...DISTANCE_UNITS.map((unit) => ({
+                    label: distanceLabel(unit),
+                    value: unit,
+                  })),
+                ],
+                value: distanceUnit ?? AUTO,
+                onChange: ({ value }) => {
+                  set({
+                    distanceUnit:
+                      value === AUTO ? undefined : (value as DistanceUnit),
+                  })
+                },
+                accessibilityLabel: i18n.t('mileage.distanceUnit'),
+              }}
+            />
+            <InputRowSelect
+              label={i18n.t('mileage.fuelEconomyUnit')}
+              lastInSection
+              selectProps={{
+                data: [
+                  {
+                    label: i18n.t('mileage.autoUnit', {
+                      unit: economyLabel(auto.economyUnit),
+                    }),
+                    value: AUTO,
+                  },
+                  ...FUEL_ECONOMY_UNITS.map((unit) => ({
+                    label: economyLabel(unit),
+                    value: unit,
+                  })),
+                ],
+                value: fuelEconomyUnit ?? AUTO,
+                onChange: ({ value }) => {
+                  set({
+                    fuelEconomyUnit:
+                      value === AUTO ? undefined : (value as FuelEconomyUnit),
+                  })
+                },
+                accessibilityLabel: i18n.t('mileage.fuelEconomyUnit'),
+              }}
+            />
+          </Section>
+        </View>
+
+        <Button
+          noTransform
+          accessibilityRole='button'
+          onPress={requestDeleteAll}
+          style={{ alignItems: 'center', paddingVertical: 12 }}
         >
-          {i18n.t('mileage.deleteAllEllipsis')}
-        </Text>
-      </Button>
+          <Text
+            style={{
+              color: theme.colors.error,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('md'),
+            }}
+          >
+            {i18n.t('mileage.deleteAllEllipsis')}
+          </Text>
+        </Button>
+      </ContentColumn>
     </ScrollView>
   )
 }

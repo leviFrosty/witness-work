@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
-import { alignText, isRtlLayout } from '@/lib/direction'
+import { alignText } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
 import { appDigitSystem, formatPlainNumber } from '@/lib/numbers'
 
@@ -39,10 +39,12 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   const theme = useTheme()
   const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const nested = useContext(NestedText)
-  // iOS aligns unaligned text by its first letter, so a Latin name in an RTL
-  // layout would sit on the left. Hug the reading start instead, as Android
-  // already does; spans inside take their paragraph's alignment.
-  const alignStart = Platform.OS === 'ios' && isRtlLayout() && !nested
+  // iOS doesn't align unaligned text by the layout but by its first letter and
+  // the app bundle's language, which follows the phone: a Latin name in an RTL
+  // layout would sit on the left, and English on an Arabic phone on the right.
+  // Hug the reading start instead, as Android already does; spans inside take
+  // their paragraph's alignment.
+  const alignStart = Platform.OS === 'ios' && !nested
 
   const flatStyle = (StyleSheet.flatten(style) ?? {}) as TextStyle
   const incomingFontSize = flatStyle.fontSize ?? theme.fontSize('md')

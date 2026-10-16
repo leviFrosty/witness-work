@@ -88,7 +88,7 @@ import MapPinLabel, {
 } from '@/features/map/components/MapPinLabel'
 import usePinHover from '@/features/map/hooks/usePinHover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
-import { forwardSign } from '@/lib/direction'
+import { alignInput, forwardSign, isRtlLayout } from '@/lib/direction'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -208,14 +208,18 @@ const FullMapView = ({
     [contactMarkers, normalizedSearch]
   )
 
+  // Room the floating inspector takes on the trailing edge, the physical left
+  // in a right-to-left layout. Map padding and pin points are physical.
+  const inspectorInset =
+    isWide && hasMappedContacts && !cardsStowed ? inspectorWidth + 32 : 0
+  const inspectorLeft = isRtlLayout() ? inspectorInset : 0
+  const inspectorRight = isRtlLayout() ? 0 : inspectorInset
   // Pin labels stay on the open map, clear of the floating header, inspector
   // and bottom bar.
   const pinLabelBounds = {
-    left: 0,
+    left: inspectorLeft,
     top: topInset,
-    right:
-      width -
-      (isWide && hasMappedContacts && !cardsStowed ? inspectorWidth + 32 : 0),
+    right: width - inspectorRight,
     bottom: height - bottomOverlayInset,
   }
   const pinHover = usePinHover({
@@ -830,11 +834,8 @@ const FullMapView = ({
                   ? undefined
                   : {
                       top: topInset,
-                      right:
-                        isWide && hasMappedContacts && !cardsStowed
-                          ? inspectorWidth + 32
-                          : 0,
-                      left: 0,
+                      right: inspectorRight,
+                      left: inspectorLeft,
                       bottom:
                         insets.bottom +
                         (Platform.OS === 'android'
@@ -978,6 +979,9 @@ const FullMapView = ({
                     color: theme.colors.text,
                     fontFamily: theme.fonts.regular,
                     fontSize: theme.fontSize('md'),
+                    // Explicit: an unaligned field follows the app bundle's language on
+                    // iOS, which can be Arabic while the app runs in English.
+                    textAlign: alignInput('start'),
                     padding: 0,
                   }}
                 />

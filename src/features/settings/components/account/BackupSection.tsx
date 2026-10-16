@@ -17,10 +17,11 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import { backUpNow, disableBackup, enableBackup } from '@/app/account/backup'
 import {
-  BACKUP_FAILURE_DETAIL,
   BACKUP_FAILURE_STATUS,
+  backupFailureDetail,
   backupTurnOnFailure,
 } from '@/app/account/backupCopy'
+import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import { formatCalendar } from '@/lib/dates'
 import { formatBytes } from '@/lib/formatBytes'
 import i18n from '@/lib/locales'
@@ -31,8 +32,11 @@ import { useBackupState } from '@/lib/serverAccount/backupStore'
  * why it couldn't), and Back Up Now.
  */
 export default function BackupSection({
+  accountState,
   onChanged,
 }: {
+  /** The Account section's state, just above: it may already explain a failure. */
+  accountState: AccountOverview['state']
   /** Backup was turned on or off: list the slots again. */
   onChanged: () => void
 }) {
@@ -90,6 +94,12 @@ export default function BackupSection({
             size: formatBytes(schedule.lastSize),
           })
         : i18n.t('backup_statusNotYet')
+  const footer =
+    enabled && failed && !uploading
+      ? backupFailureDetail(schedule.lastError!, accountState)
+      : enabled
+        ? 'backup_footerOn'
+        : 'backup_footerOff'
 
   return (
     <View style={{ gap: 5 }}>
@@ -147,13 +157,7 @@ export default function BackupSection({
           />
         )}
       </Section>
-      <SectionFooter
-        text={
-          enabled && failed && !uploading
-            ? i18n.t(BACKUP_FAILURE_DETAIL[schedule.lastError!])
-            : i18n.t(enabled ? 'backup_footerOn' : 'backup_footerOff')
-        }
-      />
+      {footer && <SectionFooter text={i18n.t(footer)} />}
     </View>
   )
 }

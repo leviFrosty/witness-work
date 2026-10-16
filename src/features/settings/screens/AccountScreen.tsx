@@ -31,7 +31,7 @@ const AccountScreen = () => {
             overview={overview}
             onRetry={() => void refresh({ retry: true })}
           />
-          <BackupSection onChanged={changed} />
+          <BackupSection accountState={overview.state} onChanged={changed} />
           <BackupSlotsSection
             slots={backups.slots}
             mySlotId={backups.mySlotId}

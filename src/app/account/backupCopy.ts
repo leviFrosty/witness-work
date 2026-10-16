@@ -1,4 +1,5 @@
 import { attestationProblemBody } from '@/app/account/attestationCopy'
+import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import type { TranslationKey } from '@/lib/locales'
 import type { BackupFailure } from '@/lib/serverAccount/backupScheduler'
 
@@ -29,6 +30,29 @@ export const BACKUP_FAILURE_DETAIL: Record<BackupFailure, TranslationKey> = {
   verify_later: 'backup_errorVerifyLater',
   update: 'account_updateRequired',
 }
+
+/** The Account section's state whose footer already explains a failure. */
+const EXPLAINED_BY_ACCOUNT: Partial<
+  Record<BackupFailure, AccountOverview['state']>
+> = {
+  unverified: 'unverified',
+  verify_later: 'unverified',
+  update: 'updateRequired',
+}
+
+/**
+ * What the User can do about a failed backup, under the section. Null when the
+ * Account section just above already says it (this device can't be verified, or
+ * the app needs an update), but not for a failure the account has since got
+ * past.
+ */
+export const backupFailureDetail = (
+  failure: BackupFailure,
+  accountState: AccountOverview['state']
+): TranslationKey | null =>
+  EXPLAINED_BY_ACCOUNT[failure] === accountState
+    ? null
+    : BACKUP_FAILURE_DETAIL[failure]
 
 /** Why turning backup on didn't work. */
 export const backupTurnOnFailure = (code: BackupFailure): TranslationKey => {

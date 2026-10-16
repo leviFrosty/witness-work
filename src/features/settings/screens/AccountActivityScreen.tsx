@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import {
@@ -78,56 +78,60 @@ const AccountActivityScreen = () => {
   const [failure, setFailure] = useState<LoadFailure | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [moreFailed, setMoreFailed] = useState(false)
+  // Bumped by Try Again to read the first page again.
+  const [reloads, setReloads] = useState(0)
   const latest = useRef(0)
-
-  const loadFirst = useCallback(async () => {
-    const run = ++latest.current
-    setLoading(true)
-    try {
-      const page = await loadAccountActivity(null)
-      if (run !== latest.current) return
-      setLoaded(page)
-      setFailure(null)
-      setMoreFailed(false)
-      return page
-    } catch (error) {
-      if (run !== latest.current) return
-      logger.warn('[account] reading activity failed', error)
-      setFailure(loadFailure(error))
-    } finally {
-      if (run === latest.current) setLoading(false)
-    }
-  }, [])
+  const reported = useRef(false)
 
   useEffect(() => {
-    void loadFirst().then((page) => {
-      if (page)
-        analytics.capture('account_activity_viewed', {
-          entries: page.entries.length,
-          suspicious: page.entries.some(isSuspiciousActivity),
-        })
-    })
-  }, [loadFirst])
+    const run = ++latest.current
+    setLoading(true)
+    loadAccountActivity(null)
+      .then((page) => {
+        if (run !== latest.current) return
+        setLoaded(page)
+        setFailure(null)
+        setMoreFailed(false)
+        if (!reported.current) {
+          reported.current = true
+          analytics.capture('account_activity_viewed', {
+            entries: page.entries.length,
+            suspicious: page.entries.some(isSuspiciousActivity),
+          })
+        }
+      })
+      .catch((error: unknown) => {
+        if (run !== latest.current) return
+        logger.warn('[account] reading activity failed', error)
+        setFailure(loadFailure(error))
+      })
+      .finally(() => {
+        if (run === latest.current) setLoading(false)
+      })
+  }, [reloads])
 
-  const loadMore = async ({ retry = false } = {}) => {
+  // Promise chains, not try/finally, which React Compiler can't compile yet.
+  const loadMore = ({ retry = false } = {}) => {
     if (!loaded?.nextCursor || loadingMore || (moreFailed && !retry)) return
     setMoreFailed(false)
     const run = latest.current
     setLoadingMore(true)
-    try {
-      const page = await loadAccountActivity(loaded.nextCursor)
-      if (run !== latest.current) return
-      setLoaded({
-        entries: [...loaded.entries, ...page.entries],
-        nextCursor: page.nextCursor,
-        context: page.context,
+    loadAccountActivity(loaded.nextCursor)
+      .then((page) => {
+        if (run !== latest.current) return
+        setLoaded({
+          entries: [...loaded.entries, ...page.entries],
+          nextCursor: page.nextCursor,
+          context: page.context,
+        })
       })
-    } catch (error) {
-      logger.warn('[account] reading older activity failed', error)
-      if (run === latest.current) setMoreFailed(true)
-    } finally {
-      if (run === latest.current) setLoadingMore(false)
-    }
+      .catch((error: unknown) => {
+        logger.warn('[account] reading older activity failed', error)
+        if (run === latest.current) setMoreFailed(true)
+      })
+      .finally(() => {
+        if (run === latest.current) setLoadingMore(false)
+      })
   }
 
   const sublabel = (entry: ActivityEntry) => {
@@ -148,7 +152,7 @@ const AccountActivityScreen = () => {
                   ? i18n.t('accountActivity_offline')
                   : i18n.t('accountActivity_loadFailed')
               }
-              onRetry={() => void loadFirst()}
+              onRetry={() => setReloads((count) => count + 1)}
             />
           </View>
         </Wrapper>
@@ -177,7 +181,7 @@ const AccountActivityScreen = () => {
             <FlashList
               data={entries}
               keyExtractor={(entry) => entry.id}
-              onEndReached={() => void loadMore()}
+              onEndReached={() => loadMore()}
               onEndReachedThreshold={0.5}
               renderItem={({ item, index }) => {
                 const suspicious = isSuspiciousActivity(item)
@@ -199,7 +203,7 @@ const AccountActivityScreen = () => {
                     <InputRowButton
                       label={i18n.t('accountActivity_loadMoreFailed')}
                       sublabel={i18n.t('accountActivity_retry')}
-                      onPress={() => void loadMore({ retry: true })}
+                      onPress={() => loadMore({ retry: true })}
                       lastInSection
                     />
                   ) : (

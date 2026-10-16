@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView, View } from 'react-native'
-import { useFocusEffect } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
 import {
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
@@ -51,38 +51,40 @@ const AccountDevicesScreen = () => {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [loading, setLoading] = useState(true)
   const [failure, setFailure] = useState<LoadFailure | null>(null)
+  // Bumped to list again: after a sign-out, or Try Again.
+  const [reloads, setReloads] = useState(0)
+  const focused = useIsFocused()
   const latest = useRef(0)
   const reported = useRef(false)
 
-  // Memoized for useFocusEffect, which re-runs whenever its callback changes.
-  const refresh = useCallback(async () => {
+  // Lists the devices each time the screen comes into focus.
+  useEffect(() => {
+    if (!focused) return
     const run = ++latest.current
     setLoading(true)
-    try {
-      const next = await loadAccountDevices()
-      if (run !== latest.current) return
-      setLoaded(next)
-      setFailure(null)
-      if (!reported.current) {
-        reported.current = true
-        analytics.capture('account_devices_viewed', {
-          devices: next.devices.length,
-        })
-      }
-    } catch (error) {
-      if (run !== latest.current) return
-      logger.warn('[account] listing devices failed', error)
-      setFailure(loadFailure(error))
-    } finally {
-      if (run === latest.current) setLoading(false)
-    }
-  }, [])
+    loadAccountDevices()
+      .then((next) => {
+        if (run !== latest.current) return
+        setLoaded(next)
+        setFailure(null)
+        if (!reported.current) {
+          reported.current = true
+          analytics.capture('account_devices_viewed', {
+            devices: next.devices.length,
+          })
+        }
+      })
+      .catch((error: unknown) => {
+        if (run !== latest.current) return
+        logger.warn('[account] listing devices failed', error)
+        setFailure(loadFailure(error))
+      })
+      .finally(() => {
+        if (run === latest.current) setLoading(false)
+      })
+  }, [focused, reloads])
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh()
-    }, [refresh])
-  )
+  const refresh = () => setReloads((count) => count + 1)
 
   const signOut = (device: AccountDevice, name: string) =>
     Alert.alert(
@@ -112,7 +114,7 @@ const AccountDevicesScreen = () => {
                   i18n.t('accountDevices_signOutFailedBody')
                 )
               })
-              .finally(() => void refresh()),
+              .finally(refresh),
         },
       ]
     )
@@ -172,7 +174,7 @@ const AccountDevicesScreen = () => {
                     ? i18n.t('accountDevices_loadFailed')
                     : null
               }
-              onRetry={() => void refresh()}
+              onRetry={refresh}
             />
           )}
         </ScrollView>

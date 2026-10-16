@@ -63,6 +63,7 @@ export const analyticsEventNames = [
   'announcement_dismissed',
   'announcement_link_opened',
   'app_launch_timed',
+  'app_lock_changed',
   'app_share_completed',
   'app_share_failed',
   'app_share_tapped',

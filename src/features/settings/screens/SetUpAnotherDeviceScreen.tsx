@@ -10,14 +10,34 @@ import {
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import { approveHandoff } from '@/app/account/handoff'
-import i18n from '@/lib/locales'
+import { platformKey } from '@/app/account/attestationCopy'
+import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffQrPanel from '@/features/settings/components/account/handoff/HandoffQrPanel'
 import HandoffApproval from '@/features/settings/components/account/handoff/HandoffApproval'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
 import useOfferHandoff from '@/features/settings/hooks/useOfferHandoff'
+
+const PROBLEM: Record<OfferStartProblem, TranslationKey> = {
+  unsupported: 'account_updateRequired',
+  unavailable: 'handoff_problemUnavailable',
+  unverified: platformKey(
+    'handoff_failUnverifiedOld',
+    'handoff_failUnverifiedOldAndroid'
+  ),
+  verifyLater: 'handoff_failVerifyLater',
+  updateRequired: 'handoff_failUpdate',
+  offline: 'handoff_problemOffline',
+}
+
+/** Problems that can pass by themselves. */
+const RETRYABLE = new Set<OfferStartProblem>([
+  'unavailable',
+  'verifyLater',
+  'offline',
+])
 
 /**
  * Set Up Another Device, on the phone that has the account: a QR code for the
@@ -44,15 +64,9 @@ const SetUpAnotherDeviceScreen = () => {
         <HandoffStatus
           icon={start.problem === 'offline' ? WifiOffIcon : CircleAlertIcon}
           tone='error'
-          body={i18n.t(
-            start.problem === 'offline'
-              ? 'handoff_problemOffline'
-              : start.problem === 'unavailable'
-                ? 'handoff_problemUnavailable'
-                : 'account_updateRequired'
-          )}
+          body={i18n.t(PROBLEM[start.problem])}
           primary={
-            start.problem === 'unsupported'
+            !RETRYABLE.has(start.problem)
               ? undefined
               : {
                   label: i18n.t('handoff_tryAgain'),

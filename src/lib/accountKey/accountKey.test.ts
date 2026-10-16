@@ -35,8 +35,8 @@ function setup({
       log.push(`account.ensure:${toB64u(accountKey)}`)
       return accountId ? { accountId } : null
     }),
-    forget: vi.fn(() => {
-      log.push('account.forget')
+    close: vi.fn(async () => {
+      log.push('account.close')
     }),
   }
   const buddies = {
@@ -77,7 +77,7 @@ describe('account key service', () => {
     })
     expect(store.replace).not.toHaveBeenCalled()
     expect(buddies.release).not.toHaveBeenCalled()
-    expect(account.forget).not.toHaveBeenCalled()
+    expect(account.close).not.toHaveBeenCalled()
     expect(await service.lossIfReplaced(key)).toEqual(NO_LOSS)
   })
 
@@ -93,7 +93,7 @@ describe('account key service', () => {
     expect(buddies.release).not.toHaveBeenCalled()
     expect(log).toEqual([
       'store.replace',
-      'account.forget',
+      'account.close',
       'buddies.forget',
       `account.ensure:${toB64u(newKey)}`,
     ])
@@ -123,7 +123,7 @@ describe('account key service', () => {
     expect(stored()).toBe(toB64u(key))
     expect(store.replace).not.toHaveBeenCalled()
     expect(buddies.release).not.toHaveBeenCalled()
-    expect(account.forget).not.toHaveBeenCalled()
+    expect(account.close).not.toHaveBeenCalled()
   })
 
   it('runs Delete Buddies first when confirmed, even for an inbox alone', async () => {
@@ -139,7 +139,7 @@ describe('account key service', () => {
     expect(log).toEqual([
       'buddies.release',
       'store.replace',
-      'account.forget',
+      'account.close',
       'buddies.forget',
       `account.ensure:${toB64u(newKey)}`,
     ])
@@ -172,11 +172,29 @@ describe('account key service', () => {
     })
   })
 
+  it('keeps a session already opened for the new key', async () => {
+    const newKey = random()
+    const { service, log } = setup({ key: random() })
+    const session = {
+      adopt: vi.fn(async () => {
+        log.push('session.adopt')
+      }),
+    }
+    await service.replace(newKey, { session })
+    expect(log).toEqual([
+      'store.replace',
+      'account.close',
+      'buddies.forget',
+      'session.adopt',
+      `account.ensure:${toB64u(newKey)}`,
+    ])
+  })
+
   it('surfaces a failed native write without forgetting the account', async () => {
     const { service, store, account } = setup({ key: random() })
     store.replace.mockRejectedValueOnce(new Error('keychain'))
     await expect(service.replace(random())).rejects.toThrow('keychain')
-    expect(account.forget).not.toHaveBeenCalled()
+    expect(account.close).not.toHaveBeenCalled()
   })
 
   it('refuses a key that isn’t 32 bytes', async () => {

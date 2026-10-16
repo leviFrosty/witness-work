@@ -74,7 +74,11 @@ const engine = createBuddiesEngine({
   now: Date.now,
   getRootSeed: async () =>
     fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
-  deleteRootSeed: () => BuddiesKeychain.deleteRootSeed(),
+  // The seed is the account key: its session ends first (ADR 0027).
+  deleteRootSeed: async () => {
+    await serverAccount.close()
+    await BuddiesKeychain.deleteRootSeed()
+  },
   account: serverAccount,
   getPlans: () => {
     const { dayPlans, recurringPlans } = useServiceReport.getState()

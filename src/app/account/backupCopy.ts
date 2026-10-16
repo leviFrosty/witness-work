@@ -1,3 +1,4 @@
+import { attestationProblemBody } from '@/app/account/attestationCopy'
 import type { TranslationKey } from '@/lib/locales'
 import type { BackupFailure } from '@/lib/serverAccount/backupScheduler'
 
@@ -10,6 +11,9 @@ export const BACKUP_FAILURE_STATUS: Record<BackupFailure, TranslationKey> = {
   rate_limited: 'backup_statusWaiting',
   key: 'backup_statusKey',
   server: 'backup_statusServer',
+  unverified: 'backup_statusUnverified',
+  verify_later: 'backup_statusVerifyLater',
+  update: 'backup_statusUpdate',
 }
 
 /** What the User can do about it, under the section. */
@@ -21,14 +25,27 @@ export const BACKUP_FAILURE_DETAIL: Record<BackupFailure, TranslationKey> = {
   rate_limited: 'backup_errorWaiting',
   key: 'account_keyFailedBody',
   server: 'backup_errorServer',
+  unverified: attestationProblemBody('device'),
+  verify_later: 'backup_errorVerifyLater',
+  update: 'account_updateRequired',
 }
 
 /** Why turning backup on didn't work. */
-export const backupTurnOnFailure = (code: BackupFailure): TranslationKey =>
-  code === 'offline'
-    ? 'backup_turnOnOffline'
-    : code === 'unavailable'
-      ? 'backup_errorUnavailable'
-      : code === 'key'
-        ? 'account_keyFailedBody'
-        : 'backup_errorServer'
+export const backupTurnOnFailure = (code: BackupFailure): TranslationKey => {
+  switch (code) {
+    case 'offline':
+      return 'backup_turnOnOffline'
+    case 'unavailable':
+      return 'backup_errorUnavailable'
+    case 'key':
+      return 'account_keyFailedBody'
+    case 'unverified':
+      return attestationProblemBody('device')
+    case 'verify_later':
+      return attestationProblemBody('temporary')
+    case 'update':
+      return 'account_updateRequired'
+    default:
+      return 'backup_errorServer'
+  }
+}

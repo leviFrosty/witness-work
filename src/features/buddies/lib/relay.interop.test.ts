@@ -15,19 +15,23 @@ import {
 } from '@/features/buddies/lib/state'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { SharedBadge } from '@/types/badges'
-import { fetchAccountInfo, registerAccount } from '@/lib/serverAccount/client'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { fetchAccountInfo } from '@/lib/serverAccount/client'
 import {
   type CachedServerAccount,
   createServerAccount,
 } from '@/lib/serverAccount/serverAccount'
+import {
+  interopEnabled,
+  interopSessions,
+} from '@/lib/serverAccount/testing/interopSessions'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 /**
  * Opt-in contract check against a real relay, e.g.
  * `BUDDIES_RELAY_URL=http://localhost:8787 pnpm exec vitest run relay.interop`
- * with ww-api's `wrangler dev` running. Skipped by default.
+ * with ww-api's `wrangler dev` running. Skipped by default. The account test
+ * also needs the dev bypass (`interopSessions`).
  */
 const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
@@ -35,14 +39,9 @@ const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 /** A server account (ADR 0024) on the same worker, remembered in memory. */
 function serverAccount() {
   let cached: CachedServerAccount | null = null
-  return createServerAccount({
-    register: (key) =>
-      registerAccount({
-        baseUrl: relayUrl!,
-        key,
-        now: Date.now,
-        randomBytes: random,
-      }),
+  const sessions = interopSessions(random)
+  const account = createServerAccount({
+    sessions,
     storage: {
       get: () => cached,
       set: (value) => {
@@ -51,6 +50,7 @@ function serverAccount() {
     },
     now: Date.now,
   })
+  return Object.assign(account, { sessions })
 }
 
 function user(
@@ -144,20 +144,22 @@ async function pair(inviter: ReturnType<typeof user>, invitee: typeof inviter) {
 }
 
 describe.skipIf(!relayUrl)('buddies relay interop', () => {
-  it('links the inbox to a server account the worker registered', async () => {
-    const account = serverAccount()
-    const ann = user('Ann', undefined, account)
-    await ann.engine.sync()
-    expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
-    const info = await fetchAccountInfo({
-      baseUrl: relayUrl!,
-      key: deriveAccountSigningKey(ann.seed),
-      now: Date.now,
-      randomBytes: random,
-    })
-    expect(info).toMatchObject({ status: 'active', inboxIds: [ann.inboxId] })
-    await ann.engine.deleteEverything()
-  })
+  it.skipIf(!interopEnabled)(
+    'links the inbox to a server account the worker registered',
+    async () => {
+      const account = serverAccount()
+      const ann = user('Ann', undefined, account)
+      await ann.engine.sync()
+      expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
+      const info = await fetchAccountInfo({
+        baseUrl: relayUrl!,
+        authorize: (run) =>
+          account.sessions.withSession(run, { accountKey: ann.seed }),
+      })
+      expect(info).toMatchObject({ status: 'active', inboxIds: [ann.inboxId] })
+      await ann.engine.deleteEverything()
+    }
+  )
 
   it('pairs, exchanges cards, and ends the connection', async () => {
     const mom = user('Mom')

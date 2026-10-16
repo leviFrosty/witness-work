@@ -68,6 +68,8 @@ export const analyticsEventNames = [
   'account_restore_completed',
   'account_restore_failed',
   'account_restore_offered',
+  'account_session_failed',
+  'account_session_opened',
   'announcement_dismissed',
   'announcement_link_opened',
   'app_launch_timed',

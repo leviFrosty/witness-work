@@ -40,6 +40,12 @@ export type BackupFailure =
   | 'rate_limited'
   /** The account key couldn't be read or created. */
   | 'key'
+  /** This device couldn't prove it's WitnessWork, so it has no session. */
+  | 'unverified'
+  /** The same, but Apple's or Google's check was only unavailable for now. */
+  | 'verify_later'
+  /** Ww-api needs a newer app version (426). */
+  | 'update'
   /** Anything else the server or the app got wrong. */
   | 'server'
 
@@ -59,6 +65,7 @@ const PASSING: ReadonlySet<BackupFailure> = new Set([
   'offline',
   'server',
   'rate_limited',
+  'verify_later',
 ])
 
 const SERVER_BACKOFF_MS = [60_000, 5 * 60_000, 15 * 60_000, 60 * 60_000]
@@ -74,7 +81,11 @@ export function backupRetryDelayMs(
       return Math.max(retryAfterMs ?? 0, BACKUP_MIN_INTERVAL_MS)
     case 'unavailable':
     case 'limit':
+    case 'unverified':
+    case 'update':
       return BACKUP_DAILY_MS
+    case 'verify_later':
+      return 15 * 60_000
     case 'too_large':
       return 6 * 60 * 60_000
     case 'offline':

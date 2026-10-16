@@ -3,14 +3,13 @@ import apis from '@/constants/apis'
 import { accountKey } from '@/app/account/accountKey'
 import { handoffHello } from '@/app/account/handoff'
 import { toB64u } from '@/lib/bytes'
-import { serverAccount } from '@/lib/serverAccount'
+import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { parseHandoffLink } from '@/lib/serverAccount/handoff'
 import {
   createClaimSession,
   createOfferSession,
   type HandoffEvent,
 } from '@/lib/serverAccount/handoffSession'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import { syncNow } from '@/lib/syncClock'
 
 export type SelfTestStep = {
@@ -81,7 +80,8 @@ export async function runHandoffSelfTest(
     {
       accountKey: key!,
       accountId: accountId!,
-      signingKey: deriveAccountSigningKey(key!),
+      authorize: (run) =>
+        accountSessions.withSession(run, { accountKey: key! }),
     },
     deps
   )

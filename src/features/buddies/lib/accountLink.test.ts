@@ -26,24 +26,41 @@ vi.mock('@/lib/locales', () => ({
 
 type Harness = ReturnType<typeof setup>
 
-/** A real `createServerAccount` whose server is the fake relay's accounts. */
+/**
+ * A real `createServerAccount` whose server is the fake relay's accounts, with
+ * sessions kept per key until forgotten. `register` counts `session/open`s.
+ */
 function serverAccountOn(h: Harness, { available = true } = {}) {
   let cached: CachedServerAccount | null = null
-  const register = vi.fn(async (key: { publicKey: string }) => {
+  let live: { accountPub: string; accountId: string } | null = null
+  const register = vi.fn(async (accountPub: string) => {
     if (!available) throw new Error('offline')
     const known = [...h.fake.accounts].find(
-      ([, account]) => account.accountPub === key.publicKey
+      ([, account]) => account.accountPub === accountPub
     )
     const accountId = known?.[0] ?? toB64u(random(16))
-    if (!known)
-      h.fake.accounts.set(accountId, {
-        accountPub: key.publicKey,
-        status: 'active',
-      })
-    return { accountId, status: 'active' as const }
+    if (!known) h.fake.accounts.set(accountId, { accountPub, status: 'active' })
+    return accountId
   })
   const account = createServerAccount({
-    register,
+    sessions: {
+      ensure: async (accountKey) => {
+        const accountPub = deriveAccountSigningKey(accountKey).publicKey
+        if (live?.accountPub !== accountPub)
+          live = { accountPub, accountId: await register(accountPub) }
+        return {
+          accountId: live.accountId,
+          status: 'active',
+          sessionId: 'session',
+        }
+      },
+      forget: () => {
+        live = null
+      },
+      close: async () => {
+        live = null
+      },
+    },
     storage: {
       get: () => cached,
       set: (value) => {

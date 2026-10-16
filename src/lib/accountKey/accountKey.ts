@@ -32,10 +32,13 @@ export const losesSomething = (loss: AccountKeyLoss) =>
 
 export type AccountKeyServiceDeps = {
   store: AccountKeyStore
-  /** The server account (`serverAccount`). */
+  /**
+   * The server account (`serverAccount`). `close` ends the old key's session
+   * and forgets its account before the key changes.
+   */
   account: {
     ensure: (accountKey: Uint8Array) => Promise<{ accountId: string } | null>
-    forget: () => void
+    close: () => Promise<void>
   }
   /**
    * Buddies, whose identity derives from the key. Before the key changes,
@@ -49,6 +52,12 @@ export type AccountKeyServiceDeps = {
     forget: () => void
   }
 }
+
+/**
+ * A session already opened for the new key (a handoff's new phone checks the
+ * account with one): kept once the key is stored, instead of opening another.
+ */
+export type OpenedAccountSession = { adopt: () => Promise<void> }
 
 export type ReplaceAccountKeyResult =
   | { outcome: 'unchanged' }
@@ -102,7 +111,8 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
 
   async function run(
     newKey: Uint8Array,
-    confirmedLoss: boolean
+    confirmedLoss: boolean,
+    session: OpenedAccountSession | undefined
   ): Promise<ReplaceAccountKeyResult> {
     const current = await peek()
     if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
@@ -113,8 +123,9 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
       await deps.buddies.release()
     }
     await deps.store.replace(toB64u(newKey))
-    deps.account.forget()
+    await deps.account.close()
     deps.buddies.forget()
+    await session?.adopt()
     const account = await deps.account.ensure(newKey).catch(() => null)
     return { outcome: 'replaced', loss, accountId: account?.accountId ?? null }
   }
@@ -123,20 +134,23 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
    * Makes `newKey` this device's account key. The same key changes nothing.
    * Otherwise, when this device's Buddies has buddies or an inbox, it needs
    * `confirmedLoss` (else `AccountKeyLossError`) and runs Delete Buddies first,
-   * which tells the buddies. Then it stores the key, forgets the old server
-   * account and Buddies identity, and registers the new account. One at a
-   * time.
+   * which tells the buddies. Then it stores the key, ends the old key's
+   * session, forgets the old Buddies identity, and opens the new account's
+   * session (or adopts `session`). One at a time.
    */
   function replace(
     newKey: Uint8Array,
-    { confirmedLoss = false }: { confirmedLoss?: boolean } = {}
+    {
+      confirmedLoss = false,
+      session,
+    }: { confirmedLoss?: boolean; session?: OpenedAccountSession } = {}
   ): Promise<ReplaceAccountKeyResult> {
     if (newKey.length !== KEY_BYTES)
       return Promise.reject(new Error('Account key must be 32 bytes'))
     const previous = replacing ?? Promise.resolve()
     const next = previous
       .catch(() => undefined)
-      .then(() => run(newKey, confirmedLoss))
+      .then(() => run(newKey, confirmedLoss, session))
     replacing = next
     void next
       .catch(() => undefined)

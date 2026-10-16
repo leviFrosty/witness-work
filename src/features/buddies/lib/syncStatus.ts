@@ -14,12 +14,18 @@ export type BuddySyncStatus = {
   failure: { reason: BuddySyncFailureReason; at: number } | null
   /** The relay's kill switch refused a sync; cleared by one that works. */
   relayDisabled: boolean
+  /**
+   * The relay refused a sync for a suspended account; cleared by one that
+   * works.
+   */
+  accountSuspended: boolean
 }
 
 export const initialBuddySyncStatus: BuddySyncStatus = {
   syncing: 0,
   failure: null,
   relayDisabled: false,
+  accountSuspended: false,
 }
 
 /**
@@ -35,12 +41,19 @@ export function settledSyncStatus(
   outcome: { at: number; reason?: BuddySyncFailureReason }
 ): BuddySyncStatus {
   const syncing = Math.max(0, status.syncing - 1)
-  if (!outcome.reason) return { syncing, failure: null, relayDisabled: false }
+  if (!outcome.reason)
+    return {
+      syncing,
+      failure: null,
+      relayDisabled: false,
+      accountSuspended: false,
+    }
   return {
     syncing,
     failure: { reason: outcome.reason, at: outcome.at },
-    // Any other failure says nothing about the kill switch.
+    // Any other failure says nothing about the kill switch or a suspension.
     relayDisabled: status.relayDisabled || outcome.reason === 'disabled',
+    accountSuspended: status.accountSuspended || outcome.reason === 'suspended',
   }
 }
 

@@ -300,9 +300,16 @@ export default function BuddiesRuntime() {
           .catch(logFailure),
       onEvent: recordLiveEvent,
     })
-    /** Off while the relay's kill switch is on: it would only be refused. */
+    /**
+     * Off while the relay's kill switch is on or the account is suspended: it
+     * would only be refused.
+     */
+    const liveRefused = (state: {
+      relayDisabled: boolean
+      accountSuspended: boolean
+    }) => state.relayDisabled || state.accountSuspended
     const startLive = () => {
-      if (useBuddiesSession.getState().relayDisabled) return
+      if (liveRefused(useBuddiesSession.getState())) return
       live.start()
     }
     useBuddiesDiagnostics.setState({
@@ -335,11 +342,12 @@ export default function BuddiesRuntime() {
       // A held answer goes out now; the app may not run again for a while.
       void buddiesEngine.sendHeldReplies().catch(logFailure)
     })
-    // The kill switch turned on: stop the live signal. Off again (a sync
-    // worked): start it.
+    // The kill switch turned on or the account was suspended: stop the live
+    // signal. Cleared again (a sync worked): start it.
     const session = useBuddiesSession.subscribe((state, previous) => {
-      if (state.relayDisabled === previous.relayDisabled) return
-      if (state.relayDisabled) live.stop()
+      const refused = liveRefused(state)
+      if (refused === liveRefused(previous)) return
+      if (refused) live.stop()
       else if (AppState.currentState === 'active') startLive()
     })
     // A new push token (restore, or the system rotating it) must reach the

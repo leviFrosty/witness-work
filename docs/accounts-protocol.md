@@ -177,7 +177,7 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 
 ### The app
 
-- Settings → Account → **Set Up Another Device** opens the account's session first when there's none (creating the account key and the account the first time), then opens a channel. When this phone can't be verified, or needs an update, it says so instead. Leaving the screen, or Make a New Code, cancels it.
+- Settings → Account → **Set Up Another Device** opens the account's session first when there's none (creating the account key and the account the first time), then opens a channel. When this phone can't be verified, or needs an update, it says so instead, with Done in place of Make a New Code, whether that's found before the code or after. Leaving the screen, or Make a New Code, cancels it.
 - **Sign In with QR Code** is in Settings → Account, and in onboarding under "I already use WitnessWork" → From your other phone. A `/h` link opened from the system camera opens it with the link. A Use a Recovery Key alternative sits under the scanner.
 - Once the key arrives, the new phone opens a session for it (`POST /accounts/v1/sessions`, attesting this phone) and checks the `accountId` matches the sealed one before it replaces anything. It replaces the key with the same warning as a recovery key (Buddies data on this phone is deleted, and on iOS the other Apple devices change too) and keeps that session; declining closes the session and cancels the channel. Then `done`, and Buddies starts here when the account already has this key's inbox linked (`GET /accounts/v1/account`), without waiting for iCloud Sync.
 

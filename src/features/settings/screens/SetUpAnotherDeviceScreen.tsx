@@ -13,6 +13,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { platformKey } from '@/app/account/attestationCopy'
 import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffQrPanel from '@/features/settings/components/account/handoff/HandoffQrPanel'
 import HandoffApproval from '@/features/settings/components/account/handoff/HandoffApproval'
@@ -38,6 +39,12 @@ const RETRYABLE = new Set<OfferStartProblem>([
   'verifyLater',
   'offline',
 ])
+
+/**
+ * Failures a new code can't fix: the device can't be verified, or the app needs
+ * an update.
+ */
+const FINAL = new Set<HandoffFailure>(['unverified', 'updateRequired'])
 
 /**
  * Set Up Another Device, on the phone that has the account: a QR code for the
@@ -152,7 +159,15 @@ const SetUpAnotherDeviceScreen = () => {
             tone='error'
             title={i18n.t('handoff_oldFailedTitle')}
             body={handoffFailureMessage('old', state.reason)}
-            primary={newCodeAction}
+            primary={
+              FINAL.has(state.reason)
+                ? {
+                    label: i18n.t('done'),
+                    onPress: () => navigation.goBack(),
+                    testID: 'handoff-failed-done',
+                  }
+                : newCodeAction
+            }
             testID='handoff-failed'
           />
         )

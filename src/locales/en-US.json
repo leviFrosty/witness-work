@@ -4559,7 +4559,7 @@
   "accountActivity_anotherDevice": "another device",
   "accountActivity_created": "Account created",
   "accountActivity_suspended": "Account suspended",
-  "accountActivity_suspendedDetail": "Buddies is turned off for this account.",
+  "accountActivity_suspendedDetail": "Buddies and Notes Import were turned off for this account.",
   "accountActivity_reinstated": "Account reinstated",
   "accountActivity_signedIn": "Signed in on %{device}",
   "accountActivity_signedInUnknown": "A device signed in",

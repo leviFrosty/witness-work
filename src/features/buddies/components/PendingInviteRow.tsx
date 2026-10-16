@@ -2,7 +2,6 @@ import { View } from 'react-native'
 import { Link as LinkIcon } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
-import moment from 'moment'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -10,6 +9,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import useInviteLinkActions from '@/features/buddies/hooks/useInviteLinkActions'
 import type { OutgoingInvite } from '@/features/buddies/lib/state'
+import { formatRelative } from '@/lib/dates'
 
 const AVATAR_SIZE = 44
 
@@ -56,7 +56,7 @@ export default function PendingInviteRow({
       }
       title={i18n.t('buddies_inviteRowTitle')}
       subtitle={i18n.t('buddies_inviteRowSubtitle', {
-        time: moment(invite.expiresAt).fromNow(),
+        time: formatRelative(invite.expiresAt),
       })}
       onPress={showCode}
       actions={[

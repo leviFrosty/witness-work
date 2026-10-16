@@ -16,6 +16,8 @@ import Button from '@/components/ui/Button'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
+import { parseHours } from '@/features/service-reports/lib/serviceHistoryDrafts'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
@@ -23,7 +25,7 @@ import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
-import { parseDecimal } from '@/lib/mileage/units'
+import { formatDisplay } from '@/lib/dates'
 
 interface MonthRow {
   monthIndex: number
@@ -130,7 +132,10 @@ const CatchUpMonthRow = ({
           fontSize: 16,
         }}
       >
-        {moment().month(row.monthIndex).year(row.year).format('MMMM YYYY')}
+        {formatDisplay(
+          moment().month(row.monthIndex).year(row.year),
+          'MMMM YYYY'
+        )}
       </Text>
       <View
         style={{
@@ -157,7 +162,7 @@ const CatchUpMonthRow = ({
           inputMode='decimal'
           value={row.hours}
           onChangeText={(v) => onChange(index, 'hours', v)}
-          placeholder='0'
+          placeholder={formatPlainNumber(0)}
           textAlign='end'
         />
       </View>
@@ -186,7 +191,7 @@ const CatchUpMonthRow = ({
           inputMode='decimal'
           value={row.creditHours}
           onChangeText={(v) => onChange(index, 'creditHours', v)}
-          placeholder='0'
+          placeholder={formatPlainNumber(0)}
           textAlign='end'
         />
       </View>
@@ -223,8 +228,8 @@ const OnboardingBackfillForm = ({
     Keyboard.dismiss()
 
     for (const row of rows) {
-      const hours = parseDecimal(row.hours) ?? 0
-      const creditHours = parseDecimal(row.creditHours) ?? 0
+      const hours = parseHours(row.hours)
+      const creditHours = parseHours(row.creditHours)
       if (hours <= 0 && creditHours <= 0) continue
 
       const date = moment()

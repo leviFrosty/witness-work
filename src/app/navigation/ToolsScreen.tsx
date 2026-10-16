@@ -23,6 +23,9 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import { parseIntegerInput, toAsciiDigits } from '@/lib/digits'
+import { formatMinutes } from '@/lib/minutes'
+import { reminderLead } from '@/lib/reminderContent'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
@@ -146,8 +149,8 @@ import {
 const DEFAULT_MOCK_CONTACT_COUNT = 30
 
 const parseMockContactCount = (value: string) => {
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed > 0
+  const parsed = parseIntegerInput(value)
+  return parsed !== undefined && parsed > 0
     ? parsed
     : DEFAULT_MOCK_CONTACT_COUNT
 }
@@ -844,9 +847,10 @@ export default function ToolsScreen() {
       notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: i18n.t('plan_reminder_title'),
-          body: `${i18n.t('plan_notification_part1')} 1 ${i18n.t(
-            'minutes_lowercase'
-          )}. (1h)\nDev imminent test plan`,
+          body: `${i18n.t('planReminderBody', {
+            lead: reminderLead(planStart, fireAt) ?? '',
+            duration: formatMinutes(60, 'decimal').formatted,
+          })}\nDev imminent test plan`,
           sound: true,
         },
         trigger: {
@@ -1168,7 +1172,9 @@ export default function ToolsScreen() {
                   value={mockContactCountInput}
                   placeholder={`${DEFAULT_MOCK_CONTACT_COUNT}`}
                   onChangeText={(value) =>
-                    setMockContactCountInput(value.replace(/[^0-9]/g, ''))
+                    setMockContactCountInput(
+                      toAsciiDigits(value).replace(/[^0-9]/g, '')
+                    )
                   }
                   onBlur={() => {
                     setMockContactCountInput(`${mockContactCount}`)

@@ -2,6 +2,7 @@ import round from 'lodash/round'
 import { usePreferences } from '@/stores/preferences'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 
 /**
  * Duration Format — the single module for rendering a length-of-time as text
@@ -47,8 +48,12 @@ export const formatMinutes = (
       break
     }
     case 'short':
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      formatted = `${i18n.t('hoursShort', { count: hours })} ${i18n.t('minutesShort', { count: minutes })}`
+      formatted = i18n.t('hoursAndMinutesShort', {
+        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        hours: i18n.t('hoursShort', { count: hours }),
+        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+        minutes: i18n.t('minutesShort', { count: minutes }),
+      })
   }
 
   return {
@@ -101,7 +106,7 @@ export const formatMinutesCompact = (
   options: CompactDurationOptions = {}
 ): string => {
   if (options.unit === 'hours') {
-    return `${value}${i18n.t('hoursCompact')}`
+    return `${formatPlainNumber(value)}${i18n.t('hoursCompact')}`
   }
 
   // Whole minutes only, so a fraction like 59.6 reads "1h", not "59.6m".
@@ -112,17 +117,17 @@ export const formatMinutesCompact = (
 
   // For times under 1 hour, show minutes with localized abbreviation (e.g., "30m")
   if (totalMinutes < 60) {
-    return `${totalMinutes}${i18n.t('minutesCompact')}`
+    return `${formatPlainNumber(totalMinutes)}${i18n.t('minutesCompact')}`
   }
 
   // For whole hours, show number with localized abbreviation (e.g., "2h")
   if (totalMinutes % 60 === 0) {
     const hours = Math.floor(decimalHours)
-    return `${hours}${i18n.t('hoursCompact')}`
+    return `${formatPlainNumber(hours)}${i18n.t('hoursCompact')}`
   }
 
   // For fractional hours, show 1 decimal place with localized abbreviation
   // (e.g., "2.5h", "11.5h"). Long days keep the decimal too, so a calendar
   // square agrees with the day's "X of Y planned" total.
-  return `${Math.round(decimalHours * 10) / 10}${i18n.t('hoursCompact')}`
+  return `${formatPlainNumber(Math.round(decimalHours * 10) / 10)}${i18n.t('hoursCompact')}`
 }

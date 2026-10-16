@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { Visit } from '@/types/visit'
+import { localizeDisplayDate } from '@/lib/dates'
 
 /**
  * Pure derivations behind the Contact Details timeline. A Visit's outcome and
@@ -164,11 +165,13 @@ export const getJourney = (
 export const gapBetween = (newer: Date, older: Date): string | null =>
   moment(newer).isSame(older, 'day')
     ? null
-    : moment
-        .duration(
-          moment(newer).startOf('day').diff(moment(older).startOf('day'))
-        )
-        .humanize()
+    : localizeDisplayDate(
+        moment
+          .duration(
+            moment(newer).startOf('day').diff(moment(older).startOf('day'))
+          )
+          .humanize()
+      )
 
 /** A note that holds only whitespace is treated as no note at all. */
 export const visibleNote = (note?: string): string | null =>

@@ -12,6 +12,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { useFormattedMinutes } from '@/lib/minutes'
 import type {
   MytimeImportPreview as Preview,
@@ -100,7 +101,7 @@ const MytimeImportPreview = ({
         <Row
           icon={BookUserIcon}
           label={i18n.t('mytimeImport_contacts')}
-          value={String(preview.contacts)}
+          value={formatPlainNumber(preview.contacts)}
           checked={selection.contacts}
           disabled={disabled}
           onToggle={() => onToggle('contacts')}
@@ -110,7 +111,7 @@ const MytimeImportPreview = ({
         <Row
           icon={MessagesSquareIcon}
           label={i18n.t('mytimeImport_visits')}
-          value={String(preview.visits)}
+          value={formatPlainNumber(preview.visits)}
           checked={selection.visits}
           disabled={disabled}
           onToggle={() => onToggle('visits')}

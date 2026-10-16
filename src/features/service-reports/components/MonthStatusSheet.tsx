@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
@@ -17,6 +16,7 @@ import {
   type MonthStatus,
 } from '@/lib/monthStatus'
 import { usePreferences } from '@/stores/preferences'
+import { formatDisplay } from '@/lib/dates'
 
 export type MonthStatusScope = 'month' | 'onward'
 
@@ -53,7 +53,7 @@ const MonthStatusSheet = ({
     setScope('month')
   }, [open, status])
 
-  const monthLabel = moment({ year, month }).format('MMMM YYYY')
+  const monthLabel = formatDisplay({ year, month }, 'MMMM YYYY')
 
   const statusItems: SelectData<MonthStatus> = monthStatuses.map((s) => ({
     label: monthStatusLabel(s, publisherHours),

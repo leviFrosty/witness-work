@@ -91,7 +91,10 @@ export default function VisitPastStop({
                   color: theme.colors.textAlt,
                 }}
               >
-                {`${i18n.t('customFieldLabel', { label: field.label })} ${field.value}`}
+                {i18n.t('customFieldLine', {
+                  label: field.label,
+                  value: field.value,
+                })}
               </Text>
             </View>
           ))}

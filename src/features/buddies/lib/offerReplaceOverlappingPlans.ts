@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { Alert } from 'react-native'
 import { analytics } from '@/lib/analytics'
-import { formatStartTime } from '@/lib/dates'
+import { formatStartTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import {
@@ -35,7 +35,7 @@ export default function offerReplaceOverlappingPlans(
   if (overlapping.length === 0) return
   const [first] = overlapping
   const day = moment(share.details.d, 'YYYY-MM-DD')
-  const date = day.format('ddd, MMM D')
+  const date = formatWeekdayMonthDayCompact(day)
   const hasRecurring = overlapping.some(
     (contribution) => contribution.source === 'recurring'
   )

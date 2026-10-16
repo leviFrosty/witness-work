@@ -1,5 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { concatBytes } from '@/lib/bytes'
+import { toAsciiDigits } from '@/lib/digits'
 
 /**
  * The recovery key: the account key written for people
@@ -68,10 +69,11 @@ export type ParsedRecoveryKey =
 
 /**
  * The key's 55 characters as typed: case, spaces, and dashes ignored, `I` and
- * `L` read as `1`, `O` as `0`, and a leading `WW1` dropped.
+ * `L` read as `1`, `O` as `0`, Arabic-Indic digits as 0-9, and a leading `WW1`
+ * dropped.
  */
 export function normalizeRecoveryKey(input: string): string {
-  const text = input
+  const text = toAsciiDigits(input)
     .toUpperCase()
     .replace(SEPARATORS, '')
     .replace(/[IL]/g, '1')

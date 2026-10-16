@@ -6,6 +6,7 @@ vi.mock('@/lib/dates', () => ({
   formatTime: () => '7:30 PM',
   formatWeekdayMonthDayCompact: (m: moment.Moment) => m.format('ddd, MMM D'),
   formatDate: (m: moment.Moment) => m.format('MMM D, YYYY'),
+  localizeDisplayDate: (text: string) => text,
 }))
 vi.mock('@/lib/locales', () => ({
   default: {

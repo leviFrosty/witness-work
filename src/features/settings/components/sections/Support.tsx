@@ -5,7 +5,6 @@ import {
   Share2 as Share2Icon,
 } from 'lucide-react-native'
 import { Alert, Platform } from 'react-native'
-import moment from 'moment'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import links from '@/constants/links'
@@ -17,6 +16,7 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
+import { formatDisplay } from '@/lib/dates'
 
 /** The supporter's status, first in Support. */
 const SupporterRow = ({ since }: { since: Date }) => {
@@ -33,7 +33,7 @@ const SupporterRow = ({ since }: { since: Date }) => {
       )}
       sublabel={i18n.t(
         isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
-        { year: moment(since).format('YYYY') }
+        { year: formatDisplay(since, 'YYYY') }
       )}
     />
   )

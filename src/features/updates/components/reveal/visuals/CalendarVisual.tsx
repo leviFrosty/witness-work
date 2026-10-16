@@ -19,6 +19,7 @@ import {
   useRiseStyle,
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
+import { formatDisplay } from '@/lib/dates'
 
 const PAD = 14
 const COLUMNS = 5
@@ -142,7 +143,7 @@ const CalendarVisual = ({
                     color: i === 2 ? theme.colors.textInverse : palette.text,
                   }}
                 >
-                  {day.format('D')}
+                  {formatDisplay(day, 'D')}
                 </VisualText>
               </View>
             </View>

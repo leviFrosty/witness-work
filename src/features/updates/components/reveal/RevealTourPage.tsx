@@ -203,7 +203,9 @@ const RevealTourPage = ({
         {page.callout && (
           <Animated.View
             accessible
-            accessibilityLabel={`${i18n.t('updateReveal_siri_tryLabel')} ${page.callout}`}
+            accessibilityLabel={i18n.t('updateReveal_siri_tryA11y', {
+              phrase: page.callout,
+            })}
             style={[
               {
                 flexDirection: 'row',

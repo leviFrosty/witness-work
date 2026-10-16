@@ -15,6 +15,7 @@ import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { withAlpha } from '@/lib/color'
 import {
@@ -249,7 +250,7 @@ const GraceVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
                   color: theme.colors.orange,
                 }}
               >
-                {String(STREAK)}
+                {formatPlainNumber(STREAK)}
               </VisualText>
             </Animated.View>
           </View>

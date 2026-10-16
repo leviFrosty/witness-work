@@ -27,6 +27,7 @@ import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
+import { formatPlainNumber } from '@/lib/numbers'
 import { monthlyGoalKey } from '@/lib/monthlyGoals'
 import {
   monthStatusLabel,
@@ -59,6 +60,7 @@ import {
 } from '@/features/service-reports/lib/serviceHistoryDrafts'
 import { noteUserAction } from '@/lib/userAction'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceHistory'>
 
@@ -77,7 +79,10 @@ const latestServiceYear = (): number => {
 }
 
 const serviceYearLabel = (serviceYear: number) =>
-  `${serviceYear}–${serviceYear + 1}`
+  i18n.t('scheduleCalendar.serviceYearSpan', {
+    start: formatPlainNumber(serviceYear),
+    end: formatPlainNumber(serviceYear + 1),
+  })
 
 /**
  * **Service History** editor: one row per finished month of a Service Year,
@@ -235,7 +240,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
         </Text>
 
         {rows.map((row, index) => {
-          const monthLabel = moment(row.target).format('MMMM YYYY')
+          const monthLabel = formatDisplay(row.target, 'MMMM YYYY')
           const copiedRow = copiedFromPreviousMonth(
             drafts,
             serviceYear,
@@ -328,10 +333,15 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                       label={i18n.t('onboardingBackfillHoursLabel')}
                       controlStyle={{ width: 96 }}
                       textInputProps={{
-                        accessibilityLabel: `${monthLabel} ${i18n.t('onboardingBackfillHoursLabel')}`,
+                        accessibilityLabel: i18n.t(
+                          'onboardingBackfillHoursA11y',
+                          {
+                            month: monthLabel,
+                          }
+                        ),
                         inputMode: 'decimal',
                         maxLength: 6,
-                        placeholder: '0',
+                        placeholder: formatPlainNumber(0),
                         value: row.hours,
                         onChangeText: (hours) => updateRow(index, { hours }),
                         textAlign: 'end',
@@ -342,10 +352,15 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                       controlStyle={{ width: 96 }}
                       lastInSection
                       textInputProps={{
-                        accessibilityLabel: `${monthLabel} ${i18n.t('onboardingBackfillCreditLabel')}`,
+                        accessibilityLabel: i18n.t(
+                          'onboardingBackfillCreditA11y',
+                          {
+                            month: monthLabel,
+                          }
+                        ),
                         inputMode: 'decimal',
                         maxLength: 6,
-                        placeholder: '0',
+                        placeholder: formatPlainNumber(0),
                         value: row.creditHours,
                         onChangeText: (creditHours) =>
                           updateRow(index, { creditHours }),

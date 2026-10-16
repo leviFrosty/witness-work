@@ -15,6 +15,7 @@ import {
 import useTheme from '@/contexts/theme'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import { withAlpha } from '@/lib/color'
 import {
   Bar,
@@ -325,7 +326,7 @@ const BadgeCount = ({
       <VisualText
         style={{ color: '#FFFFFF', fontSize: 9, fontFamily: theme.fonts.bold }}
       >
-        {String(count)}
+        {formatPlainNumber(count)}
       </VisualText>
     </Animated.View>
   )

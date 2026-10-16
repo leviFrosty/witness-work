@@ -4,6 +4,7 @@ import Sheet from '@/components/ui/Sheet'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatPlainNumber } from '@/lib/numbers'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import WheelPicker from '@/components/ui/WheelPicker'
@@ -20,7 +21,10 @@ interface AddEarlierYearSheetProps {
 }
 
 const formatPickerLabel = (endYear: number): string =>
-  `${endYear - 1}-${endYear}`
+  i18n.t('scheduleCalendar.serviceYearSpan', {
+    start: formatPlainNumber(endYear - 1),
+    end: formatPlainNumber(endYear),
+  })
 
 const AddEarlierYearSheet = ({
   open,

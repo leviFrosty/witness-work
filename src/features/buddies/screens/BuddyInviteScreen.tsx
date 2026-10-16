@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import moment from 'moment'
 import ActionButton from '@/components/ui/ActionButton'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
@@ -25,6 +24,7 @@ import type {
   BuddyTenure,
 } from '@/features/buddies/lib/schemas'
 import { noteUserAction } from '@/lib/userAction'
+import { formatRelative } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy Invite'>
 
@@ -177,7 +177,7 @@ export default function BuddyInviteScreen({ route }: Props) {
             }}
           >
             {i18n.t('buddies_codeExpires', {
-              time: moment(preview.expiresAt).fromNow(),
+              time: formatRelative(preview.expiresAt),
             })}
           </Text>
         </View>

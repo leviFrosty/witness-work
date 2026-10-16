@@ -1,12 +1,19 @@
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 
 /** A file or blob size for people: `512 B`, `12.3 KB`, `1.25 MB`. */
 export function formatBytes(bytes?: number | null): string {
   if (bytes === undefined || bytes === null) return '—'
-  if (bytes < 1024) return i18n.t('fileSize_bytes', { value: bytes })
+  const fixed = (value: number, digits: number) =>
+    formatNumber(value, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })
+  if (bytes < 1024)
+    return i18n.t('fileSize_bytes', { value: formatNumber(bytes) })
   if (bytes < 1024 * 1024)
-    return i18n.t('fileSize_kilobytes', { value: (bytes / 1024).toFixed(1) })
+    return i18n.t('fileSize_kilobytes', { value: fixed(bytes / 1024, 1) })
   return i18n.t('fileSize_megabytes', {
-    value: (bytes / (1024 * 1024)).toFixed(2),
+    value: fixed(bytes / (1024 * 1024), 2),
   })
 }

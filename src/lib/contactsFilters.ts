@@ -8,6 +8,8 @@ import {
 } from '@/lib/conversations'
 import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 import { StalenessBreakpoints } from '@/types/staleness'
+import { compareText } from '@/lib/collation'
+import { normalizeNumericInput } from '@/lib/digits'
 
 export type TextOperator =
   | 'equals'
@@ -66,13 +68,14 @@ const compareAsNumberOrText = (
   rawB: string,
   op: 'gt' | 'lt'
 ): boolean => {
-  const a = Number(rawA)
-  const b = Number(rawB)
+  // Numbers typed in any digit system (`12`, `١٢`) compare as numbers.
+  const a = Number(normalizeNumericInput(rawA))
+  const b = Number(normalizeNumericInput(rawB))
   if (Number.isFinite(a) && Number.isFinite(b)) {
     return op === 'gt' ? a > b : a < b
   }
   // fallback: lexicographic
-  const cmp = norm(rawA).localeCompare(norm(rawB))
+  const cmp = compareText(norm(rawA), norm(rawB))
   return op === 'gt' ? cmp > 0 : cmp < 0
 }
 

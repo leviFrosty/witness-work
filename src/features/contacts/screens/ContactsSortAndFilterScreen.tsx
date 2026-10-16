@@ -68,23 +68,45 @@ const describeFilter = (
       const fieldKey = `contacts_field_${filter.kind}` as const
       const label = i18n.t(fieldKey)
       if (filter.op === 'isSet' || filter.op === 'notSet') {
-        return `${label} ${operatorLabel(filter.op)}`
+        return i18n.t('contacts_filterSummaryOp', {
+          field: label,
+          op: operatorLabel(filter.op),
+        })
       }
-      return `${label} ${operatorLabel(filter.op)} "${filter.value}"`
+      return i18n.t('contacts_filterSummaryOpValue', {
+        field: label,
+        op: operatorLabel(filter.op),
+        value: filter.value,
+      })
     }
     case 'customField': {
       const def = customFieldDefs.find((d) => d.id === filter.defId)
       const prefix = i18n.t('contacts_field_customField')
       const labelName = def?.label ?? ''
-      const head = labelName ? `${prefix}: ${labelName}` : prefix
+      const head = labelName
+        ? i18n.t('contacts_filterSummaryField', {
+            field: prefix,
+            value: labelName,
+          })
+        : prefix
       if (filter.op === 'isSet' || filter.op === 'notSet') {
-        return `${head} ${operatorLabel(filter.op)}`
+        return i18n.t('contacts_filterSummaryOp', {
+          field: head,
+          op: operatorLabel(filter.op),
+        })
       }
-      return `${head} ${operatorLabel(filter.op)} "${filter.value}"`
+      return i18n.t('contacts_filterSummaryOpValue', {
+        field: head,
+        op: operatorLabel(filter.op),
+        value: filter.value,
+      })
     }
     case 'pinStaleness': {
       const valueKey = `contacts_pinStaleness_${filter.value}` as const
-      return `${i18n.t('contacts_field_pinStaleness')}: ${i18n.t(valueKey)}`
+      return i18n.t('contacts_filterSummaryField', {
+        field: i18n.t('contacts_field_pinStaleness'),
+        value: i18n.t(valueKey),
+      })
     }
     case 'isFavorite':
       return i18n.t('contacts_field_isFavorite')

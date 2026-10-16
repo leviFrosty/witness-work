@@ -1,4 +1,3 @@
-import moment from 'moment'
 import type { ReactNode, RefObject } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,6 +10,7 @@ import type { CalendarMonth } from '@/lib/monthlyGoals'
 import CalendarKey from '@/features/plans/components/CalendarKey'
 import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 import ScheduleScreenSections from '@/features/plans/components/ScheduleScreenSections'
+import { formatDisplay } from '@/lib/dates'
 
 const MARGIN = 12
 
@@ -76,7 +76,8 @@ export default function MonthOverviewPopover({
               fontFamily: theme.fonts.bold,
             }}
           >
-            {moment({ year: month.year, month: month.month, day: 1 }).format(
+            {formatDisplay(
+              { year: month.year, month: month.month, day: 1 },
               'MMMM YYYY'
             )}
           </Text>

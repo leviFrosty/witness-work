@@ -7,6 +7,8 @@ import {
   ConversationIndex,
 } from '@/lib/conversationIndex'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
+import { compareText } from '@/lib/collation'
+import { normalizeNumericInput } from '@/lib/digits'
 
 export type ContactSortDirection = 'asc' | 'desc'
 
@@ -60,7 +62,7 @@ const localeCmp = (
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
   if (!aSet || !bSet) return missing(aSet, bSet)
-  return a!.localeCompare(b!)
+  return compareText(a!, b!)
 }
 
 const dateCmp = (a: string | undefined, b: string | undefined): KeyCompare => {
@@ -80,8 +82,8 @@ const numberCmp = (
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
   if (!aSet || !bSet) return missing(aSet, bSet)
-  const an = Number(a)
-  const bn = Number(b)
+  const an = Number(normalizeNumericInput(a!))
+  const bn = Number(normalizeNumericInput(b!))
   if (Number.isFinite(an) && Number.isFinite(bn)) return an - bn
   return localeCmp(a, b)
 }
@@ -113,9 +115,9 @@ const compareKey = (
       return ar - br
     }
     case 'az':
-      return a.name.localeCompare(b.name)
+      return compareText(a.name, b.name)
     case 'za':
-      return b.name.localeCompare(a.name)
+      return compareText(b.name, a.name)
     case 'bibleStudy': {
       const ar = index.mostRecentStudyMs.get(a.id)
       const br = index.mostRecentStudyMs.get(b.id)

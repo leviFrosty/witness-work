@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Alert } from 'react-native'
 import { X as XIcon } from 'lucide-react-native'
-import moment from 'moment'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -14,6 +13,7 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import type { IncomingClaim } from '@/features/buddies/lib/state'
 import { noteUserAction } from '@/lib/userAction'
+import { formatRelative } from '@/lib/dates'
 
 /** Someone claimed one of my invites; nothing is shared until I confirm. */
 export default function BuddyRequestRow({
@@ -65,7 +65,7 @@ export default function BuddyRequestRow({
       leading={<BuddyAvatar avatar={claim.avatar} name={claim.name} />}
       title={claim.name}
       subtitle={i18n.t('buddies_requestRowSubtitle', {
-        time: moment(claim.receivedAt).fromNow(),
+        time: formatRelative(claim.receivedAt),
       })}
       actions={
         busy

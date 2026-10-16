@@ -241,4 +241,79 @@ describe('lib/contactsSearch', () => {
       expect(highlighted.map((s) => s.text)).toEqual(['Johnson', 'Johnson'])
     })
   })
+
+  describe('Arabic', () => {
+    const mohammed = c({ id: 'm', name: 'مُحَمَّد الأحمد' })
+    const fatima = c({ id: 'f', name: 'فاطمة إبراهيم' })
+    const mustafa = c({ id: 's', name: 'مصطفى علي' })
+    const contacts = [mohammed, fatima, mustafa]
+    const fuse = buildContactsFuse(contacts, [])
+    const firstId = (query: string) =>
+      searchContactsFuzzy(query, fuse, contacts)[0]?.contact.id
+
+    it('finds voweled names from a plain query, and the reverse', () => {
+      expect(firstId('محمد')).toBe('m')
+      expect(firstId('فَاطِمَة')).toBe('f')
+    })
+
+    it('treats alef forms, ta marbuta and alef maqsura as one letter', () => {
+      expect(firstId('الاحمد')).toBe('m')
+      expect(firstId('فاطمه ابراهيم')).toBe('f')
+      expect(firstId('مصطفي')).toBe('s')
+    })
+
+    it('highlights the stored spelling, harakat included', () => {
+      const [result] = searchContactsFuzzy('محمد', fuse, contacts)
+      const nameMatch = result.matches?.find((m) => m.key === 'contact.name')
+      expect(nameMatch?.value).toBe('مُحَمَّد الأحمد')
+      const snippet = buildSnippet(nameMatch!.value!, nameMatch!.indices)
+      const highlighted = snippet.segments
+        .filter((segment) => segment.highlighted)
+        .map((segment) => segment.text)
+      expect(highlighted[0]).toBe('مُحَمَّد')
+    })
+
+    it('finds Latin-digit numbers from Arabic-Indic and Persian digits', () => {
+      const ada = c({ id: 'a', name: 'Ada Reyes', phone: '0551234567' })
+      const omar = c({
+        id: 'o',
+        name: 'عمر',
+        address: { line1: 'شارع ٢٣', zip: '11564' },
+      })
+      const people = [ada, omar]
+      const digits = buildContactsFuse(people, [])
+      const search = (query: string) =>
+        searchContactsFuzzy(query, digits, people)
+      expect(search('٠٥٥١')[0]?.contact.id).toBe('a')
+      expect(search('۰۵۵۱')[0]?.contact.id).toBe('a')
+      expect(search('١١٥٦٤')[0]?.contact.id).toBe('o')
+
+      const phone = search('٠٥٥١')[0].matches?.find(
+        (m) => m.key === 'contact.phone'
+      )
+      expect(phone?.value).toBe('0551234567')
+      expect(phone?.indices).toContainEqual([0, 3])
+    })
+
+    it('highlights stored Arabic-Indic digits from a Latin-digit query', () => {
+      const omar = c({ id: 'o', name: 'عمر', phone: '٠٥٥١٢٣٤٥٦٧' })
+      const fuse = buildContactsFuse([omar], [])
+      const [result] = searchContactsFuzzy('0551', fuse, [omar])
+      const phone = result.matches?.find((m) => m.key === 'contact.phone')
+      expect(phone?.value).toBe('٠٥٥١٢٣٤٥٦٧')
+      const snippet = buildSnippet(phone!.value!, phone!.indices)
+      expect(
+        snippet.segments.filter((s) => s.highlighted).map((s) => s.text)
+      ).toEqual(['٠٥٥١'])
+    })
+
+    it('leaves Latin highlighting as it was', () => {
+      const ada = c({ id: 'a', name: 'Ada Reyes' })
+      const latin = buildContactsFuse([ada], [])
+      const [result] = searchContactsFuzzy('Ada', latin, [ada])
+      const nameMatch = result.matches?.find((m) => m.key === 'contact.name')
+      expect(nameMatch?.value).toBe('Ada Reyes')
+      expect(nameMatch?.indices).toContainEqual([0, 2])
+    })
+  })
 })

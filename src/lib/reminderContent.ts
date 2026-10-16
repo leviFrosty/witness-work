@@ -56,7 +56,7 @@ export function reminderContent(
           : i18n.t('visitReminderBodyNowPrivate')
       const topic =
         !options.dataProtectionMode && reminder.note?.trim()
-          ? `${i18n.t('reminder_topic')}${reminder.note.trim()}`
+          ? `\n${i18n.t('reminder_topicLine', { topic: reminder.note.trim() })}`
           : ''
       return { title: i18n.t('reminder_title'), body: body + topic, data }
     }

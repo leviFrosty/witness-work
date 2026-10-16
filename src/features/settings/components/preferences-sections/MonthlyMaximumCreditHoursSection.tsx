@@ -6,6 +6,8 @@ import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import i18n from '@/lib/locales'
+import { isDigitsOnlyInput, parseIntegerInput } from '@/lib/digits'
+import { formatPlainNumber } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 
 const MonthlyMaximumCreditHoursSection = () => {
@@ -17,11 +19,14 @@ const MonthlyMaximumCreditHoursSection = () => {
   const [draft, setDraft] = useState<string | null>(null)
 
   const changeLimit = (value: string) => {
-    if (!/^\d*$/.test(value) || Number(value) > 200) return
+    // Any digits the keyboard types: 0-9 or Arabic-Indic.
+    if (!isDigitsOnlyInput(value)) return
+    const hours = parseIntegerInput(value)
+    if (hours !== undefined && hours > 200) return
     setDraft(value)
     // Clearing the input is an editing step, not a request for unlimited credit.
-    if (value === '' || Number(value) === limitHours) return
-    set({ overrideCreditLimit: true, customCreditLimitHours: Number(value) })
+    if (hours === undefined || hours === limitHours) return
+    set({ overrideCreditLimit: true, customCreditLimitHours: hours })
   }
 
   return (
@@ -35,7 +40,7 @@ const MonthlyMaximumCreditHoursSection = () => {
         textInputProps={{
           accessibilityLabel: i18n.t('monthlyMaximumCreditHours'),
           accessibilityHint: i18n.t('creditLimitNoLimitHint'),
-          value: draft ?? limitHours.toString(),
+          value: draft ?? formatPlainNumber(limitHours),
           onChangeText: changeLimit,
           onEndEditing: () => setDraft(null),
           type: 'number',

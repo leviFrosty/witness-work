@@ -15,6 +15,7 @@ import type { TimeEntriesByYear } from '@/types/timeEntry'
 import type { Category } from '@/types/category'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
+import { formatDisplay } from '@/lib/dates'
 
 export type MonthReportData = {
   /** Whether the publisher logged any ministry this month (not a rollover). */
@@ -129,7 +130,7 @@ export const buildMonthReportData = ({
 
     if (detailed.ldc > 0) {
       creditLines.push(
-        `${i18n.t('ldc')}: ${formatMinutesCompact(detailed.ldc)}`
+        i18n.t('ldcLine', { value: formatMinutesCompact(detailed.ldc) })
       )
     }
 
@@ -139,7 +140,12 @@ export const buildMonthReportData = ({
         ? categories.find((c) => c.id === report.categoryId)
         : undefined
       const label = liveCategory?.name ?? report.tag
-      creditLines.push(`${label}: ${formatMinutesCompact(report.minutes)}`)
+      creditLines.push(
+        i18n.t('creditCategoryLine', {
+          label,
+          value: formatMinutesCompact(report.minutes),
+        })
+      )
     })
 
     if (!creditLines.length && adjusted.creditOverage <= 0) return ''
@@ -147,14 +153,16 @@ export const buildMonthReportData = ({
     const lines = [
       i18n.t('creditBreakdown'),
       ...creditLines,
-      `${i18n.t('creditApplied')}: ${formatMinutesCompact(credit, { unit: 'hours' })}`,
+      i18n.t('creditAppliedLine', {
+        value: formatMinutesCompact(credit, { unit: 'hours' }),
+      }),
     ]
 
     if (adjusted.creditOverage > 0) {
       lines.push(
-        `${i18n.t('creditNotApplied')}: ${formatMinutesCompact(
-          adjusted.creditOverage
-        )} ${i18n.t('creditOverCap')}`
+        i18n.t('creditNotAppliedLine', {
+          value: formatMinutesCompact(adjusted.creditOverage),
+        })
       )
       lines.push(
         credit === 0
@@ -184,13 +192,19 @@ export const buildMonthReportData = ({
           : i18n.t('no')
         : hours
 
-    return `${i18n.t('serviceReport')} - ${moment()
-      .month(month)
-      .format('MMM')} ${year}\n\n---\n\n${i18n.t(
-      'hours'
-    )}: ${hoursForPublisherOrPioneer}\n${i18n.t('credit')}: ${credit}\n${i18n.t(
-      'studies'
-    )}: ${studies}\n${i18n.t('notes')}:\n${notes ? `\n${notes}` : ''}`
+    const lines = [
+      i18n.t('reportShareTitle', {
+        month: formatDisplay(moment().month(month).year(year), 'MMM YYYY'),
+      }),
+      '',
+      '---',
+      '',
+      i18n.t('reportShareHoursLine', { value: hoursForPublisherOrPioneer }),
+      i18n.t('reportShareCreditLine', { value: credit }),
+      i18n.t('reportShareStudiesLine', { value: studies ?? 0 }),
+      i18n.t('reportShareNotesHeading'),
+    ]
+    return `${lines.join('\n')}\n${notes ? `\n${notes}` : ''}`
   }
 
   return {

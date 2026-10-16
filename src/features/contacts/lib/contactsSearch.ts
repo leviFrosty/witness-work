@@ -1,6 +1,11 @@
 import Fuse, { FuseResultMatch, IFuseOptions, RangeTuple } from 'fuse.js'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
+import {
+  foldArabicForSearch,
+  foldArabicWithIndexMap,
+  unfoldRange,
+} from '@/lib/searchNormalize'
 
 export type ContactSearchEntry = {
   contact: Contact
@@ -55,6 +60,46 @@ const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
   { name: 'contact.address.zip', weight: 0.05 },
 ]
 
+/**
+ * Fuse reads every searched field folded for Arabic (`foldArabicForSearch`), so
+ * `محمد` finds `مُحَمَّد` and `فاطمه` finds `فاطمة`. Other scripts come back
+ * unchanged.
+ */
+const getFoldedValue: IFuseOptions<ContactSearchEntry>['getFn'] = (
+  entry,
+  path
+) => {
+  const value: unknown = Fuse.config.getFn(entry, path)
+  if (typeof value === 'string') return foldArabicForSearch(value)
+  if (Array.isArray(value))
+    return value.map((item) =>
+      typeof item === 'string' ? foldArabicForSearch(item) : item
+    )
+  return value as string
+}
+
+/**
+ * Points a match found in folded text back at the stored text, so the highlight
+ * and snippet show the contact's own spelling.
+ */
+const unfoldMatch = (
+  entry: ContactSearchEntry,
+  match: FuseResultMatch
+): FuseResultMatch => {
+  if (!match.key) return match
+  const source: unknown = Fuse.config.getFn(entry, match.key)
+  if (typeof source !== 'string') return match
+  const map = foldArabicWithIndexMap(source)
+  if (!map || map.folded !== match.value) return match
+  return {
+    ...match,
+    value: source,
+    indices: match.indices.map((range) =>
+      unfoldRange(range, map, source.length)
+    ),
+  }
+}
+
 export const buildContactsFuse = (
   contacts: Contact[],
   conversations: Visit[]
@@ -62,6 +107,7 @@ export const buildContactsFuse = (
   const entries = buildEntries(contacts, conversations)
   return new Fuse(entries, {
     keys: FUSE_KEYS,
+    getFn: getFoldedValue,
     // Loose enough to absorb single-letter transpositions ("jhon" → "John")
     // while still rejecting unrelated terms. With `ignoreLocation: true` and
     // weighted multi-key search, scores trend higher than fuse's default 0.6,
@@ -93,9 +139,9 @@ export const searchContactsFuzzy = (
 ): ContactSearchMatch[] => {
   const trimmed = query.trim()
   if (trimmed.length === 0) return contacts.map((contact) => ({ contact }))
-  return fuse.search(trimmed).map((r) => ({
+  return fuse.search(foldArabicForSearch(trimmed)).map((r) => ({
     contact: r.item.contact,
-    matches: r.matches,
+    matches: r.matches?.map((match) => unfoldMatch(r.item, match)),
   }))
 }
 

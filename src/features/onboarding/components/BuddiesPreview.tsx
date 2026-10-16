@@ -20,6 +20,7 @@ import { withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact } from '@/lib/minutes'
 import { useProfile } from '@/stores/profile'
+import { formatTime } from '@/lib/dates'
 
 /**
  * The sketch is laid out on a fixed stage, centered in a card that stretches,
@@ -501,7 +502,7 @@ const BuddiesPreview = () => {
               numberOfLines={1}
               style={label(11, theme.colors.text, true)}
             >
-              {`${i18n.t('buddies_going')} · ${moment().hour(9).minute(0).format('LT')}`}
+              {`${i18n.t('buddies_going')} · ${formatTime(moment().hour(9).minute(0))}`}
             </Text>
           </Animated.View>
         </View>

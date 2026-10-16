@@ -729,7 +729,10 @@ const PreferencesiCloudScreenInner = () => {
               </Text>
               <InfoPopover
                 title={i18n.t(syncKey('iCloudSync'))}
-                description={`${i18n.t(syncKey('iCloudSync_description'))} ${i18n.t(syncKey('iCloudBetaNotice'))}`}
+                description={i18n.t('twoSentences', {
+                  first: i18n.t(syncKey('iCloudSync_description')),
+                  second: i18n.t(syncKey('iCloudBetaNotice')),
+                })}
               />
             </View>
             <Badge color={theme.colors.accentTranslucent}>
@@ -931,14 +934,17 @@ const PreferencesiCloudScreenInner = () => {
                   textAlign: alignText('end'),
                 }}
               >
-                {lastiCloudRemoteDeviceName ??
-                  (lastiCloudRemoteDeviceId
-                    ? lastiCloudRemoteDeviceId.slice(0, 8)
-                    : '—')}
                 {lastiCloudRemoteDeviceId &&
                 iCloudDeviceId === lastiCloudRemoteDeviceId
-                  ? ` (${i18n.t(syncKey('iCloudThisDevice'))})`
-                  : ''}
+                  ? i18n.t('iCloudDeviceIsThisDevice', {
+                      device:
+                        lastiCloudRemoteDeviceName ??
+                        lastiCloudRemoteDeviceId.slice(0, 8),
+                    })
+                  : (lastiCloudRemoteDeviceName ??
+                    (lastiCloudRemoteDeviceId
+                      ? lastiCloudRemoteDeviceId.slice(0, 8)
+                      : '—'))}
               </Text>
             </InputRowContainer>
           </Section>

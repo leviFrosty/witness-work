@@ -10,6 +10,7 @@ import { Image } from 'expo-image'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import XView from '@/components/ui/layout/XView'
 import Card from '@/components/ui/Card'
 import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRatings'
@@ -167,17 +168,17 @@ export const SocialProofRow = () => {
           }}
         >
           {i18n.t('paywallSocialProofRatingAverage', {
-            rating: averageRating.toLocaleString(undefined, {
+            rating: formatNumber(averageRating, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }),
-            ratings: ratingCount.toLocaleString(),
+            ratings: formatNumber(ratingCount),
           })}
         </Text>
       </XView>
       <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
         {i18n.t('paywallSocialProofCountries', {
-          countries: countryCount.toLocaleString(),
+          countries: formatNumber(countryCount),
         })}
       </Text>
     </View>

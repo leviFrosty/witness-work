@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
@@ -14,6 +13,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import type { Publisher } from '@/types/publisher'
+import { formatDisplay } from '@/lib/dates'
 
 /** Sentinel select value: the new role applies to every month. */
 const ALL_MONTHS = 'all'
@@ -63,9 +63,9 @@ const RoleStartSheet = ({
       label:
         i === 0
           ? i18n.t('roleStart.thisMonth', {
-              month: moment(m).format('MMMM YYYY'),
+              month: formatDisplay(m, 'MMMM YYYY'),
             })
-          : moment(m).format('MMMM YYYY'),
+          : formatDisplay(m, 'MMMM YYYY'),
       value: monthlyGoalKey(m),
     })),
     { label: i18n.t('roleStart.allMonths'), value: ALL_MONTHS },
@@ -82,7 +82,7 @@ const RoleStartSheet = ({
   const description = from
     ? i18n.t('roleStart.fromDescription', {
         role: roleLabel,
-        month: moment(from).format('MMMM YYYY'),
+        month: formatDisplay(from, 'MMMM YYYY'),
       })
     : i18n.t('roleStart.allMonthsDescription', { role: roleLabel })
 

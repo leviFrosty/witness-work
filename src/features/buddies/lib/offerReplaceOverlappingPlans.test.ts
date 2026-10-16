@@ -10,6 +10,8 @@ vi.mock('react-native', () => ({
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/dates', () => ({
   formatStartTime: (minutes: number) => `${minutes}m`,
+  formatWeekdayMonthDayCompact: (m: { format(pattern: string): string }) =>
+    m.format('ddd, MMM D'),
 }))
 vi.mock('@/lib/locales', () => ({
   default: {

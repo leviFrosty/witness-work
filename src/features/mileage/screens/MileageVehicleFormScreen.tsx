@@ -27,7 +27,7 @@ import {
 import {
   displayToPricePerGallon,
   economyToMpg,
-  formatInputNumber,
+  formatEditableNumber,
   fuelVolumeUnit,
   mpgToEconomy,
   parseDecimal,
@@ -68,7 +68,7 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
   const toEconomyInput = (mpg?: number) =>
     mpg === undefined
       ? ''
-      : formatInputNumber(mpgToEconomy(mpg, format.economyUnit), 1)
+      : formatEditableNumber(mpgToEconomy(mpg, format.economyUnit), 1)
   const currentFuel =
     current?.fuelId && fuels.some((f) => f.id === current.fuelId)
       ? current.fuelId
@@ -295,7 +295,9 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
           </Section>
           <Section>
             <TextInputRow
-              label={`${i18n.t('mileage.fuelEconomy')} (${format.economySuffix})`}
+              label={i18n.t('mileage.fuelEconomyWithUnit', {
+                unit: format.economySuffix,
+              })}
               info={i18n.t('mileage.fuelEconomy_info')}
               lastInSection
               textInputProps={{

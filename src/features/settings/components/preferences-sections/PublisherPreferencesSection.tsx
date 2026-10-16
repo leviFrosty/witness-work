@@ -13,6 +13,8 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
+import { parseDecimalInput } from '@/lib/digits'
+import { formatPlainNumber } from '@/lib/numbers'
 import { analytics } from '@/lib/analytics'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -33,7 +35,6 @@ import MonthlyMaximumCreditHoursSection from '@/features/settings/components/pre
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import { getStartDateLabels } from '@/constants/publisher'
-import { parseDecimal } from '@/lib/mileage/units'
 
 const PublisherPreferencesSection = () => {
   const {
@@ -67,7 +68,7 @@ const PublisherPreferencesSection = () => {
   // Hours Logging goal input — mirrors the Custom role's goal input in
   // `PublisherTypeSelector`: local text state, persisted on blur.
   const [logHoursGoal, setLogHoursGoal] = useState(
-    publisherHours.publisher.toString()
+    formatPlainNumber(publisherHours.publisher)
   )
   const logHoursGoalInput = useRef<RNTextInput>(null)
 
@@ -91,9 +92,8 @@ const PublisherPreferencesSection = () => {
   }
 
   const saveLogHoursGoal = () => {
-    const parsed = parseDecimal(logHoursGoal)
-    const next = parsed !== undefined && parsed >= 0 ? parsed : 0
-    setLogHoursGoal(next.toString())
+    const next = parseDecimalInput(logHoursGoal) ?? 0
+    setLogHoursGoal(formatPlainNumber(next))
     set({ publisherHours: { ...publisherHours, publisher: next } })
   }
 

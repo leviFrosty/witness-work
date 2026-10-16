@@ -6,7 +6,7 @@ import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import { formatStartTime } from '@/lib/dates'
+import { formatStartTime, formatDisplay, formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { analytics } from '@/lib/analytics'
@@ -116,7 +116,7 @@ export default function BuddyTwoWeekStrip({
             color: isToday ? theme.colors.accent : theme.colors.text,
           }}
         >
-          {day.format('D')}
+          {formatDisplay(day, 'D')}
         </Text>
         <XView style={{ gap: 3 }}>
           <Dot color={plans ? theirColor : undefined} />
@@ -125,7 +125,7 @@ export default function BuddyTwoWeekStrip({
       </View>
     )
     const label = [
-      day.format('dddd, LL'),
+      formatDisplay(day, 'dddd, LL'),
       plans
         ? i18n.t('buddies_stripTheirPlans', {
             name: buddyName,
@@ -195,7 +195,7 @@ export default function BuddyTwoWeekStrip({
           ? i18n.t('buddies_noPlansTwoWeeks', { name: buddyName })
           : card
             ? i18n.t('buddies_plansUpdated', {
-                time: moment(card.updatedAt).fromNow(),
+                time: formatRelative(card.updatedAt),
               })
             : undefined
       }

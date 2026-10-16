@@ -4,6 +4,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useFullBrightness from '@/hooks/useFullBrightness'
 import i18n from '@/lib/locales'
+import { localizeAppDigits } from '@/lib/numbers'
 import { useHandoffCountdown } from '@/features/settings/hooks/useHandoffSession'
 import { HandoffTextButton } from '@/features/settings/components/account/handoff/HandoffStatus'
 
@@ -11,7 +12,9 @@ const MAX_QR = 320
 
 const countdown = (ms: number) => {
   const seconds = Math.ceil(ms / 1000)
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+  return localizeAppDigits(
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+  )
 }
 
 /**

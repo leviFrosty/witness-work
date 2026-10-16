@@ -1,6 +1,6 @@
 import moment from 'moment'
 import i18n from '@/lib/locales'
-import { formatDate, formatWeekdayMonthDayCompact } from '@/lib/dates'
+import { formatDisplay, formatWeekdayMonthDayCompact } from '@/lib/dates'
 
 /**
  * Day heading for a visit card or follow-up: `Fri, Jun 5` within the current
@@ -13,7 +13,7 @@ export const visitDayLabel = (
   const m = moment(date)
   return m.isSame(now, 'year')
     ? formatWeekdayMonthDayCompact(m)
-    : `${m.format('ddd')}, ${formatDate(m, { style: 'medium' })}`
+    : formatDisplay(m, 'ddd, ll')
 }
 
 /** `Today` / `Tomorrow`, otherwise the visit day label. */

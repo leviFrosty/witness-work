@@ -7,6 +7,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 
 const SIZES = {
   sm: { icon: 12, text: 12, paddingH: 7, paddingV: 2 },
@@ -63,7 +64,7 @@ export default function StreakBadge({
           fontVariant: ['tabular-nums'],
         }}
       >
-        {count.toLocaleString()}
+        {formatNumber(count)}
       </Text>
       {endsIn && (
         <>

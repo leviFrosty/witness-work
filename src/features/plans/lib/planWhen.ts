@@ -36,7 +36,7 @@ export function formatPlanWhen({
 }): string {
   const day = moment(date)
   const dayLabel = formatPlanDay(day)
-  if (anytime) return `${dayLabel} · ${i18n.t('planAnytime')}`
+  if (anytime) return i18n.t('planDayAnytime', { day: dayLabel })
   if (startTimeInMinutes === undefined) return dayLabel
 
   const start = `${dayLabel} · ${formatStartTime(startTimeInMinutes)}`

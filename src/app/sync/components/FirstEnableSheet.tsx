@@ -95,7 +95,10 @@ const FirstEnableSheet: React.FC<Props> = ({
           }}
         >
           {remoteSummary
-            ? `${i18n.t(syncKey('iCloudFirstEnableDescription'))} ${remoteSummary}`
+            ? i18n.t('twoSentences', {
+                first: i18n.t(syncKey('iCloudFirstEnableDescription')),
+                second: remoteSummary,
+              })
             : i18n.t(syncKey('iCloudFirstEnableDescription'))}
         </Text>
       </View>

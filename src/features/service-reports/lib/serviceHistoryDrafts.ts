@@ -1,4 +1,5 @@
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import { normalizeNumericInput } from '@/lib/digits'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import { roleOfMonthStatus, type MonthStatus } from '@/lib/monthStatus'
 import { getEntryMode } from '@/lib/publisherCapabilities'
@@ -20,8 +21,11 @@ export type BuildServiceHistoryRows = (
   serviceYear: number
 ) => ServiceHistoryRow[]
 
+/** Typed hours in any digit system (`12.5`, `12,5`, `١٢٫٥`); 0 when invalid. */
 export const parseHours = (value: string): number => {
-  const hours = Number.parseFloat(value.replace(',', '.'))
+  const hours = Number.parseFloat(
+    normalizeNumericInput(value).replace(',', '.')
+  )
   return Number.isFinite(hours) && hours > 0 ? hours : 0
 }
 

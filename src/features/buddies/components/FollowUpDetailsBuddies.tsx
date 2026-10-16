@@ -190,7 +190,13 @@ export default function FollowUpDetailsBuddies({
             <EmphasizedText
               key={answer}
               translate={(marked) =>
-                `${index > 0 ? ' ' : ''}${i18n.t(key, marked)}`
+                index > 0
+                  ? // Continues the previous sentence's paragraph.
+                    i18n.t('twoSentences', {
+                      first: '',
+                      second: i18n.t(key, marked),
+                    })
+                  : i18n.t(key, marked)
               }
               values={values}
               emphasis={{

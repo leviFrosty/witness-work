@@ -21,6 +21,7 @@ import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
+import { formatPlainNumber, localizeAppDigits } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 
 import Text from '@/components/ui/MyText'
@@ -145,8 +146,10 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
           {rows.map(({ endYear, hours, minutes, reportCount }) => {
             const ratio = Math.max(0, Math.min(1, hours / divisor))
             const startYear = endYear - 1
-            const endShort = String(endYear % 100).padStart(2, '0')
-            const label = `${startYear}—${endShort}`
+            const label = i18n.t('scheduleCalendar.serviceYearSpanShort', {
+              start: formatPlainNumber(startYear),
+              end: localizeAppDigits(String(endYear % 100).padStart(2, '0')),
+            })
             const totalDisplay = formatMinutes(
               minutes,
               timeDisplayFormat

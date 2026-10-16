@@ -5,7 +5,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import { formatStartTime } from '@/lib/dates'
+import { formatStartTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
@@ -148,7 +148,7 @@ export default function BuddyPlansForDay({
                 buddy={buddy}
                 d={key}
                 plan={plan}
-                label={`${moment(date).format('ddd, MMM D')}, ${label}`}
+                label={`${formatWeekdayMonthDayCompact(moment(date))}, ${label}`}
                 askToJoin={askToJoin}
               />
             )}

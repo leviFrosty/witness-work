@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { View } from 'react-native'
-import moment from 'moment'
 import { ChartLine as ChartLineIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
@@ -16,6 +15,7 @@ import ServiceYearPaceChart from '@/features/progress/components/ServiceYearPace
 import type { PacePoint } from '@/features/progress/lib/serviceYearPace'
 import type { ServiceYearPaceData } from '@/features/progress/hooks/useServiceYearPace'
 import { tracking } from '@/lib/tracking'
+import { formatDisplay } from '@/lib/dates'
 
 /** Differences under this read as even. */
 const EVEN_MINUTES = 30
@@ -89,26 +89,27 @@ const ServiceYearPaceCard = ({ data, milestones }: Props) => {
     })
   )
 
-  const chartSummary = [
-    i18n.t('serviceYearPace.summary', {
-      logged: format(pace.loggedMinutes),
-      goal: format(pace.goalMinutes),
-    }),
-    headline,
-    lastYearLine,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const summary = i18n.t('serviceYearPace.summary', {
+    logged: format(pace.loggedMinutes),
+    goal: format(pace.goalMinutes),
+  })
+  const summaryDetails = [headline, lastYearLine].filter(Boolean).join(', ')
+  const chartSummary = summaryDetails
+    ? i18n.t('serviceYearPace.summaryWithDetails', {
+        summary,
+        details: summaryDetails,
+      })
+    : summary
 
   const scrubbedMonth = scrubbed ? pace.months[scrubbed.monthIndex] : null
   const scrubbedTitle =
     scrubbed?.kind === 'today'
       ? i18n.t('today')
       : scrubbedMonth
-        ? moment({
-            year: scrubbedMonth.year,
-            month: scrubbedMonth.month,
-          }).format('MMMM YYYY')
+        ? formatDisplay(
+            { year: scrubbedMonth.year, month: scrubbedMonth.month },
+            'MMMM YYYY'
+          )
         : null
 
   return (

@@ -15,6 +15,8 @@ import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { parseIntegerInput, toAsciiDigits } from '@/lib/digits'
+import { formatPlainNumber, localizeAppDigits } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
@@ -230,7 +232,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   }
 
   const commitInput = (value: number, raw: string) => {
-    const parsed = parseInt(raw, 10)
+    const parsed = parseIntegerInput(raw) ?? NaN
     setInputBuffers((prev) => {
       const copy = { ...prev }
       delete copy[value]
@@ -286,7 +288,11 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const renderSubtitle = () => {
     if (annualGoalHours <= 0) return null
     const parts: string[] = []
-    parts.push(`${completedHoursDisplay.formatted} logged`)
+    parts.push(
+      i18n.t('scheduleCalendar.logged', {
+        value: completedHoursDisplay.formatted,
+      })
+    )
     parts.push(
       i18n.t('milestonesHitChip', {
         hit: hitState.totalHit,
@@ -432,7 +438,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                 const isNext = hitState.next === value
                 const buffer = inputBuffers[value]
                 const displayValue =
-                  buffer !== undefined ? buffer : String(value)
+                  buffer !== undefined ? buffer : formatPlainNumber(value)
 
                 return (
                   <View
@@ -489,7 +495,11 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         onChangeText={(text) =>
                           setInputBuffers((prev) => ({
                             ...prev,
-                            [value]: text.replace(/[^0-9]/g, ''),
+                            // Keep the digits, typed 0-9 or Arabic-Indic, and
+                            // show them in the app Language's.
+                            [value]: localizeAppDigits(
+                              toAsciiDigits(text).replace(/[^0-9]/g, '')
+                            ),
                           }))
                         }
                         onBlur={() => commitInput(value, displayValue)}

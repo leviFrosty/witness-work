@@ -1,5 +1,6 @@
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { formatRelative } from '@/lib/dates'
+import { compareText } from '@/lib/collation'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import {
@@ -133,7 +134,7 @@ function compareBySort(
     case 'longestContacted': {
       // Never-contacted come first (most needy), then oldest contact.
       if (a.lastConversationAt === null && b.lastConversationAt === null)
-        return a.name.localeCompare(b.name)
+        return compareText(a.name, b.name)
       if (a.lastConversationAt === null) return -1
       if (b.lastConversationAt === null) return 1
       return a.lastConversationAt - b.lastConversationAt
@@ -143,10 +144,10 @@ function compareBySort(
         return b.lastConversationAt - a.lastConversationAt
       if (a.lastConversationAt) return -1
       if (b.lastConversationAt) return 1
-      return a.name.localeCompare(b.name)
+      return compareText(a.name, b.name)
     }
     case 'az':
-      return a.name.localeCompare(b.name)
+      return compareText(a.name, b.name)
     case 'bibleStudy': {
       // Studies first, then by recent conversation as tiebreaker.
       if (a.isBibleStudy !== b.isBibleStudy) return a.isBibleStudy ? -1 : 1

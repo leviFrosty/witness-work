@@ -20,6 +20,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import moment from 'moment'
+import { formatDisplay } from '@/lib/dates'
 import Animated, {
   Easing,
   cancelAnimation,
@@ -188,7 +189,9 @@ const ShowcaseHeader = () => {
         {i18n.t('milestoneReveal_title')}
       </Text>
       <Text style={[styles.headerSubtitle, { color: theme.colors.textAlt }]}>
-        {`v${MILESTONE_UPDATE_VERSION} · ${i18n.t('milestoneShowcase_subtitle')}`}
+        {i18n.t('milestoneShowcase_versionSubtitle', {
+          version: MILESTONE_UPDATE_VERSION,
+        })}
       </Text>
     </Animated.View>
   )
@@ -754,7 +757,7 @@ const WidgetsVisual = () => {
           ]}
         >
           <Text style={[styles.widgetLabel, { color: theme.colors.textAlt }]}>
-            {moment().month(3).format('MMM')}
+            {formatDisplay(moment().month(3), 'MMM')}
           </Text>
           <View style={styles.calendarGrid}>
             {Array.from({ length: 12 }).map((_, i) => {

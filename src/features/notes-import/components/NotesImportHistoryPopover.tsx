@@ -353,12 +353,14 @@ const NotesImportHistoryPopover = ({ renderTrigger }: Props) => {
           {inProgressCount > 0 &&
             summaryLine(
               theme.colors.warnText,
+              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
               i18n.t('notesImport_inProgressCount', { count: inProgressCount }),
               theme.colors.warn
             )}
           {readyCount > 0 &&
             summaryLine(
               theme.colors.textAlt,
+              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
               i18n.t('notesImport_readyCount', { count: readyCount })
             )}
 

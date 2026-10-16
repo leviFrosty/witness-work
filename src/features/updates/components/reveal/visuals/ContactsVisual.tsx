@@ -28,6 +28,7 @@ import {
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
 import { tracking } from '@/lib/tracking'
+import { formatRelative } from '@/lib/dates'
 
 const STRIP_Y = 196
 const STRIP_LEFT = 24
@@ -156,7 +157,7 @@ const ContactsVisual = ({
             }}
           >
             {i18n.t('contactDetails.upNext', {
-              countdown: moment().add(2, 'days').fromNow(),
+              countdown: formatRelative(moment().add(2, 'days')),
             })}
           </VisualText>
           <Bar

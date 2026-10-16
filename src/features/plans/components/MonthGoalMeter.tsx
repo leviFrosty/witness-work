@@ -8,6 +8,7 @@ import { plannedMinutesThroughDayForMonth } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import GoalMeterCard from '@/features/plans/components/GoalMeterCard'
+import { formatDisplay } from '@/lib/dates'
 
 type Props = CalendarMonth & {
   onPress: () => void
@@ -47,7 +48,8 @@ export default function MonthGoalMeter({
 
   return (
     <GoalMeterCard
-      title={moment({ year, month, day: 1 }).format(
+      title={formatDisplay(
+        { year, month, day: 1 },
         year === today.getFullYear() ? 'MMMM' : 'MMM YYYY'
       )}
       goalMinutes={goalMinutes}

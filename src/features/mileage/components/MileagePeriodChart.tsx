@@ -11,7 +11,7 @@ import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import AnimatedStackedBars from '@/features/mileage/components/AnimatedStackedBars'
 import { withAlpha } from '@/lib/color'
-import { formatMonthDayCompact } from '@/lib/dates'
+import { formatMonthDayCompact, formatDisplay } from '@/lib/dates'
 import {
   bucketTrips,
   fromDateKey,
@@ -44,7 +44,7 @@ type Props = {
 
 const bucketLabel = (bucket: MileageBucket) =>
   bucket.kind === 'month'
-    ? fromDateKey(bucket.start).format('MMMM YYYY')
+    ? formatDisplay(fromDateKey(bucket.start), 'MMMM YYYY')
     : formatMonthDayCompact(fromDateKey(bucket.start))
 
 /**
@@ -92,7 +92,7 @@ const MileagePeriodChart = ({
     }
     if (period.kind === 'month') {
       return LABELED_MONTH_DAYS.has(day.date())
-        ? [{ key: bucket.start, label: day.format('D'), position }]
+        ? [{ key: bucket.start, label: formatDisplay(day, 'D'), position }]
         : []
     }
     // Every other month keeps longer month names from colliding.

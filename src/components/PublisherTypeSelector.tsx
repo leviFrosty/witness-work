@@ -1,6 +1,8 @@
 import { CircleCheck as CircleCheckIcon } from 'lucide-react-native'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
+import { parseDecimalInput } from '@/lib/digits'
+import { formatPlainNumber } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 import { publishers } from '@/constants/publisher'
 import Select, { SelectData } from '@/components/ui/Select'
@@ -21,7 +23,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { parseDecimal } from '@/lib/mileage/units'
 
 /** How far back the role-change sheet offers a start month. */
 const MAX_START_MONTHS = 36
@@ -91,7 +92,9 @@ const PublisherTypeSelector = ({
   const { publisherHours, role, monthlyGoalOverrides, setRole, set } =
     usePreferences()
   const serviceReports = useServiceReport((s) => s.serviceReports)
-  const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
+  const [goalHours, setGoalHours] = useState(
+    formatPlainNumber(publisherHours.custom)
+  )
   const customHoursInput = useRef<RNTextInput>(null)
   const [pendingRole, setPendingRole] = useState<Publisher | null>(null)
   const [hoveredRole, setHoveredRole] = useState<Publisher | null>(null)
@@ -162,7 +165,7 @@ const PublisherTypeSelector = ({
       set({
         publisherHours: {
           ...publisherHours,
-          custom: parseDecimal(goalHours) ?? 0,
+          custom: parseDecimalInput(goalHours) ?? 0,
         },
       })
     }

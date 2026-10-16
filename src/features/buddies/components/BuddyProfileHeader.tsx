@@ -2,7 +2,6 @@ import {
   Star as StarIcon,
   UsersRound as UsersRoundIcon,
 } from 'lucide-react-native'
-import moment from 'moment'
 import ProfileCardLayout, {
   type ProfileCardDetail,
 } from '@/components/ProfileCardLayout'
@@ -19,6 +18,7 @@ import {
 } from '@/features/buddies/lib/buddyProfile'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { usePreferences } from '@/stores/preferences'
+import { formatDate } from '@/lib/dates'
 
 /**
  * A buddy on the same card as the User's own Profile. Under a nickname, their
@@ -41,7 +41,7 @@ export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
       icon: UsersRoundIcon,
       tint: theme.colors.textAlt,
       text: i18n.t('buddies_sharingSince', {
-        date: moment(buddy.pairedAt).format('LL'),
+        date: formatDate(buddy.pairedAt),
       }),
     },
   ].filter((detail): detail is ProfileCardDetail => !!detail)

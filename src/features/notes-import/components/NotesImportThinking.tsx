@@ -7,6 +7,7 @@ import ShimmerText from '@/components/ui/ShimmerText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { TranslationKey } from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import NotesImportAvatar from '@/features/notes-import/components/NotesImportAvatar'
 
 const ACTIVE_STATUS_KEYS: TranslationKey[] = [
@@ -27,9 +28,9 @@ const RESUMING_STATUS_KEYS: TranslationKey[] = [
  * → "1.2k").
  */
 const formatTokens = (tokens: number): string => {
-  if (tokens < 1000) return `${tokens}`
+  if (tokens < 1000) return formatNumber(tokens)
   const thousands = Math.round((tokens / 1000) * 10) / 10
-  return `${thousands}k`
+  return `${formatNumber(thousands)}k`
 }
 
 interface Props {
@@ -153,7 +154,10 @@ const NotesImportThinking = ({
               }}
             >
               {i18n.t('notesImport_inferenceStats', {
-                seconds: elapsedSec.toFixed(1),
+                seconds: formatNumber(elapsedSec, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }),
                 tokens: formatTokens(tokens ?? 0),
               })}
             </Text>

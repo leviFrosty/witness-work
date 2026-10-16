@@ -4,7 +4,9 @@ import { useFocusEffect } from '@react-navigation/native'
 import {
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
+  Tablet as TabletIcon,
 } from 'lucide-react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
@@ -12,7 +14,11 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import LoadStatus from '@/features/settings/components/account/activity/LoadStatus'
-import { deviceTitle } from '@/features/settings/components/account/activity/activityCopy'
+import {
+  type DeviceKind,
+  deviceKind,
+  deviceTitle,
+} from '@/features/settings/components/account/activity/activityCopy'
 import {
   type LoadFailure,
   loadFailure,
@@ -29,6 +35,12 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 
 type Loaded = { devices: AccountDevice[]; context: AccountActivityContext }
+
+const ICONS: Record<DeviceKind, AppIcon> = {
+  phone: SmartphoneIcon,
+  tablet: TabletIcon,
+  computer: MonitorIcon,
+}
 
 /**
  * Settings → Account → Signed-In Devices (ADR 0028): the account's live
@@ -129,12 +141,7 @@ const AccountDevicesScreen = () => {
                   return (
                     <InputRowButton
                       key={device.sessionId}
-                      leftIcon={
-                        (loaded.context.readLabel(device.device)?.platform ??
-                          device.platform) === 'dev'
-                          ? MonitorIcon
-                          : SmartphoneIcon
-                      }
+                      leftIcon={ICONS[deviceKind(device, loaded.context)]}
                       label={name}
                       sublabel={
                         device.current

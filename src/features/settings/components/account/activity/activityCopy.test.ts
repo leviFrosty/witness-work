@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   activityDetail,
   activityTitle,
+  deviceKind,
   deviceTitle,
   isSuspiciousActivity,
 } from '@/features/settings/components/account/activity/activityCopy'
@@ -25,6 +26,14 @@ vi.mock('@/lib/locales', async () => {
 const labels: Record<string, DeviceLabel> = {
   pixel: { name: 'Pixel 9', platform: 'android', model: 'Pixel 9' },
   iphone: { name: 'iPhone 17', platform: 'ios', model: 'iPhone 17' },
+  ipad: { name: 'Ana’s iPad', platform: 'ios', model: 'iPad Air 11-inch (M3)' },
+  ipadUnnamed: { name: 'iPad', platform: 'ios', model: '' },
+  pixelTablet: {
+    name: 'Pixel Tablet',
+    platform: 'android',
+    model: 'Pixel Tablet',
+  },
+  iphoneNamedIpad: { name: 'iPad', platform: 'ios', model: 'iPhone 17' },
 }
 const context = {
   currentSessionId: 'me',
@@ -138,5 +147,37 @@ describe('deviceTitle', () => {
     expect(deviceTitle({ platform: 'dev', device: 'bad' }, context)).toBe(
       'Development build'
     )
+  })
+})
+
+describe('deviceKind', () => {
+  const kind = (
+    device: string | null,
+    platform: 'ios' | 'android' | 'dev' | null
+  ) => deviceKind({ platform, device }, context)
+
+  it('is a tablet for an iPad or an Android tablet', () => {
+    expect(kind('ipad', 'ios')).toBe('tablet')
+    expect(kind('ipad', 'dev')).toBe('tablet')
+    expect(kind('ipadUnnamed', 'ios')).toBe('tablet')
+    expect(kind('pixelTablet', 'android')).toBe('tablet')
+  })
+
+  it('goes by the model before the name', () => {
+    expect(kind('iphoneNamedIpad', 'ios')).toBe('phone')
+  })
+
+  it('is a phone otherwise', () => {
+    expect(kind('iphone', 'ios')).toBe('phone')
+    expect(kind('pixel', 'android')).toBe('phone')
+    expect(kind('pixel', 'dev')).toBe('phone')
+    expect(kind(null, 'ios')).toBe('phone')
+    expect(kind('bad', 'android')).toBe('phone')
+    expect(kind(null, null)).toBe('phone')
+  })
+
+  it('is a computer for a development build without a label', () => {
+    expect(kind(null, 'dev')).toBe('computer')
+    expect(kind('bad', 'dev')).toBe('computer')
   })
 })

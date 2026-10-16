@@ -35,6 +35,26 @@ export function deviceTitle(
   return name || platformDeviceName(device.platform)
 }
 
+/** What a device row's icon shows. */
+export type DeviceKind = 'phone' | 'tablet' | 'computer'
+
+const TABLET_MODEL = /\b(iPad|tablet)\b/i
+
+/**
+ * An iPad or an Android tablet ("Pixel Tablet") by its label's model, or its
+ * name when the model is blank; a development build without a label is a
+ * computer; anything else is a phone.
+ */
+export function deviceKind(
+  device: { platform: SessionPlatform | null; device: string | null },
+  context: Pick<AccountActivityContext, 'readLabel'>
+): DeviceKind {
+  const label = context.readLabel(device.device)
+  if (!label) return device.platform === 'dev' ? 'computer' : 'phone'
+  const model = label.model.trim() || label.name
+  return TABLET_MODEL.test(model) ? 'tablet' : 'phone'
+}
+
 /** A device inside a sentence: "this device", its name, or "an iPhone or iPad". */
 function deviceInSentence(
   session: ActivitySession,

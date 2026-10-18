@@ -40,7 +40,10 @@ import {
 import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
 import { addNoteImageReferences } from '@/stores/noteImages'
 import { localSharedPhotoId } from '@/features/buddies/lib/sharedNotes'
-import { trackSync } from '@/features/buddies/lib/syncStatus'
+import {
+  accountActiveStatus,
+  trackSync,
+} from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
@@ -70,6 +73,9 @@ const engine = createBuddiesEngine({
     // device clock that's wrong would otherwise fail every call for good.
     now: syncNow,
     recalibrate: () => refreshSyncClock({ force: true }),
+    // Reinstated: the notice clears and the live signal comes back now, not
+    // on the next sync.
+    onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
   }),
   store: useBuddies,
   randomBytes,

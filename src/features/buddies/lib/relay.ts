@@ -208,6 +208,12 @@ export type RelayDeps = {
    * and sent once more.
    */
   recalibrate?: () => Promise<unknown>
+  /**
+   * A call the relay refuses for a suspended account went through, so the
+   * account is active: `inbox/register`, or an owner op other than leaving
+   * (`inbox/delete`, `slot/remove`).
+   */
+  onAccountActive?: () => void
   /** React Native's WebSocket, which can send headers, by default. */
   openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
 }
@@ -224,6 +230,12 @@ const openSocket = (url: string, headers: Record<string, string>) =>
 
 /** What one request sends besides its URL, method, and session. */
 type RelayRequest = Pick<RequestOptions, 'headers' | 'json' | 'body'>
+
+/** Owner ops the relay still takes from a suspended account: leaving. */
+const SUSPENDED_ALLOWED_OPS: ReadonlySet<string> = new Set([
+  'inbox/delete',
+  'slot/remove',
+])
 
 /** A payload's fields as UTF-8 JSON, `b64u`: `payload`, or its header. */
 const encodeFields = (fields: Record<string, unknown>) =>
@@ -372,6 +384,7 @@ export function createRelayClient(deps: RelayDeps) {
       )
     )
     if (response.accountId === accountId) auth.link.linked?.(accountId)
+    deps.onAccountActive?.()
     return response
   }
 
@@ -404,7 +417,7 @@ export function createRelayClient(deps: RelayDeps) {
     call: RelayCallOptions = {},
     timeoutMs?: number
   ) {
-    return linked(auth, call, () =>
+    const result = linked(auth, call, () =>
       post<T>(
         op,
         () => ({ json: { inboxId: auth.inboxId, ...fields } }),
@@ -412,6 +425,11 @@ export function createRelayClient(deps: RelayDeps) {
         timeoutMs
       )
     )
+    if (SUSPENDED_ALLOWED_OPS.has(op)) return result
+    return result.then((response) => {
+      deps.onAccountActive?.()
+      return response
+    })
   }
 
   /** A writer op: the slot's writer envelope stays its capability. */

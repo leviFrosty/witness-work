@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
 import {
+  accountActiveStatus,
   buddiesSyncNotice,
   initialBuddySyncStatus,
   settledSyncStatus,
@@ -117,6 +118,31 @@ describe('trackSync', () => {
     })
     await track(async () => {})
     expect(store.getState().accountSuspended).toBe(false)
+  })
+
+  it('ends a suspension when another call shows the account is active', async () => {
+    const { store, track } = harness()
+    await expect(
+      track(() => Promise.reject(new Failure('suspended')))
+    ).rejects.toThrow()
+    store.setState(accountActiveStatus)
+    expect(store.getState()).toMatchObject({
+      accountSuspended: false,
+      failure: null,
+    })
+    expect(buddiesSyncNotice(store.getState(), 0)).toBeNull()
+  })
+
+  it('leaves other failures and the kill switch to the next sync', () => {
+    const status: BuddySyncStatus = {
+      ...initialBuddySyncStatus,
+      failure: { reason: 'offline', at: 5 },
+      relayDisabled: true,
+    }
+    expect(accountActiveStatus(status)).toBe(status)
+    expect(accountActiveStatus({ ...status, accountSuspended: true })).toEqual(
+      status
+    )
   })
 
   it('reads the failure reason only for failures', async () => {

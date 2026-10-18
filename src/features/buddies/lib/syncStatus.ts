@@ -64,6 +64,21 @@ export function settledSyncStatus(
 }
 
 /**
+ * The status once a call the relay refuses for a suspended account went through
+ * (see `RelayDeps.onAccountActive`): the suspension is over, before the next
+ * sync says so.
+ */
+export function accountActiveStatus(status: BuddySyncStatus): BuddySyncStatus {
+  const failed = status.failure?.reason === 'suspended'
+  if (!status.accountSuspended && !failed) return status
+  return {
+    ...status,
+    accountSuspended: false,
+    failure: failed ? null : status.failure,
+  }
+}
+
+/**
  * Runs one sync and records how it went. Callers see the same result as an
  * untracked sync. A sync that didn't run (`skipped`), or that its caller
  * cancelled, says nothing new and leaves the status as it was.

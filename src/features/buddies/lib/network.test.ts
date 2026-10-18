@@ -55,9 +55,10 @@ function clientOn(fetchImpl: typeof fetch, extra: Partial<RelayDeps> = {}) {
 /** One engine on a scripted relay: `fetchImpl` decides every answer. */
 function scripted(
   fetchImpl: typeof fetch,
-  extra: Partial<BuddiesEngineDeps> = {}
+  extra: Partial<BuddiesEngineDeps> = {},
+  relayExtra: Partial<RelayDeps> = {}
 ) {
-  const { client, seed } = clientOn(fetchImpl)
+  const { client, seed } = clientOn(fetchImpl, relayExtra)
   const store = memoryStore({})
   const engine = createBuddiesEngine({
     relay: client,
@@ -70,7 +71,7 @@ function scripted(
     getProfile: () => ({ name: 'Mom' }),
     ...extra,
   })
-  return { engine, store, seed }
+  return { engine, store, seed, client }
 }
 
 /** A fake relay whose ops can be stalled, or answered with an error, by op. */
@@ -287,6 +288,46 @@ describe('sync scheduling', () => {
     expect(engine.coolingDown()).toBe(true)
     now += 60 * 1000
     expect(engine.coolingDown()).toBe(false)
+  })
+
+  it('holds automatic syncs back only a minute for a suspended account', async () => {
+    let now = Date.parse('2026-09-23T15:00:00Z')
+    const relay = flakyRelay()
+    const { engine } = scripted(relay.fetchImpl, { now: () => now })
+    await engine.ensureInbox()
+    relay.failures.set('inbox/sync', reply(403, { error: 'suspended' }))
+    await expect(engine.sync()).rejects.toMatchObject({ code: 'suspended' })
+    now += 59 * 1000
+    expect(engine.coolingDown()).toBe(true)
+    now += 1000
+    expect(engine.coolingDown()).toBe(false)
+  })
+
+  it('says when a call shows the account is active (not suspended)', async () => {
+    const relay = flakyRelay()
+    const onAccountActive = vi.fn()
+    const { engine, seed, client } = scripted(
+      relay.fetchImpl,
+      {},
+      { onAccountActive }
+    )
+    // Registering and syncing are refused for a suspended account.
+    await engine.ensureInbox()
+    expect(onAccountActive).toHaveBeenCalledTimes(1)
+    await engine.sync()
+    const afterSync = onAccountActive.mock.calls.length
+    expect(afterSync).toBeGreaterThan(1)
+
+    relay.failures.set('inbox/sync', reply(403, { error: 'suspended' }))
+    await expect(engine.sync()).rejects.toMatchObject({ code: 'suspended' })
+    expect(onAccountActive).toHaveBeenCalledTimes(afterSync)
+
+    // A suspended account may still leave, so these prove nothing.
+    const auth = ownerAuthFor(seed)
+    onAccountActive.mockClear()
+    await client.removeSlot(auth, 'AAAAAAAAAAAAAAAAAAAAAA').catch(() => {})
+    await client.deleteInbox(auth)
+    expect(onAccountActive).not.toHaveBeenCalled()
   })
 
   it('registers a new inbox once, however many ask at the same time', async () => {

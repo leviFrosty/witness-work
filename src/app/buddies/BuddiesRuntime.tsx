@@ -62,6 +62,11 @@ import type { Visit } from '@/types/visit'
  */
 const PUSH_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
 const PUBLISH_DEBOUNCE_MS = 30 * 1000
+/**
+ * While the account is suspended and the app is open, it checks back after this
+ * long, doubling after each refusal (see `startFallbackPoll`).
+ */
+const SUSPENDED_CHECK_MS = 60 * 1000
 
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
@@ -176,9 +181,11 @@ const currentRecipients = () =>
  * relay's live signal says the inbox changed while the app is open (polling the
  * open notifications tray only while that signal is down). While the relay's
  * kill switch is on, the live signal stays off and only returns to the app
- * check back, every 15 minutes at most. Publishes a Buddy Card and shared Plans
- * after the data behind them changes: at once when who's invited changes, so a
- * buddy sees an invitation as it's sent, otherwise debounced.
+ * check back, every 15 minutes at most. While the account is suspended it stays
+ * off too, and the app checks back minutes apart, so a reinstatement brings it
+ * back without a relaunch. Publishes a Buddy Card and shared Plans after the
+ * data behind them changes: at once when who's invited changes, so a buddy sees
+ * an invitation as it's sent, otherwise debounced.
  */
 export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
@@ -226,6 +233,7 @@ export default function BuddiesRuntime() {
     let publishTimer: ReturnType<typeof setTimeout> | null = null
     let replyTimer: ReturnType<typeof setTimeout> | null = null
     let stopTrayPoll: (() => void) | null = null
+    let stopSuspendedCheck: (() => void) | null = null
     let lastPushCheck = 0
     let recipients = currentRecipients()
     /** A change behind the Buddy Card was made here (see `publishCards`). */
@@ -255,6 +263,19 @@ export default function BuddiesRuntime() {
             await syncBuddyNotifications('poll')
             return useBuddyTraySync.getState().failedAt === null
           })
+        : null
+    }
+    /**
+     * The live signal is off while suspended, so nothing else would notice a
+     * reinstatement while the app stays open.
+     */
+    const checkWhileSuspended = (suspended: boolean) => {
+      stopSuspendedCheck?.()
+      stopSuspendedCheck = suspended
+        ? startFallbackPoll(async () => {
+            await buddiesEngine.sync({ automatic: true }).catch(logFailure)
+            return !useBuddiesSession.getState().accountSuspended
+          }, SUSPENDED_CHECK_MS)
         : null
     }
 
@@ -346,8 +367,11 @@ export default function BuddiesRuntime() {
       void buddiesEngine.sendHeldReplies().catch(logFailure)
     })
     // The kill switch turned on or the account was suspended: stop the live
-    // signal. Cleared again (a sync worked): start it.
+    // signal. Cleared again (a sync or another call worked): start it.
+    checkWhileSuspended(useBuddiesSession.getState().accountSuspended)
     const session = useBuddiesSession.subscribe((state, previous) => {
+      if (state.accountSuspended !== previous.accountSuspended)
+        checkWhileSuspended(state.accountSuspended)
       const refused = liveRefused(state)
       if (refused === liveRefused(previous)) return
       if (refused) live.stop()
@@ -493,6 +517,7 @@ export default function BuddiesRuntime() {
     return () => {
       if (publishTimer) clearTimeout(publishTimer)
       stopTrayPoll?.()
+      stopSuspendedCheck?.()
       if (replyTimer) clearTimeout(replyTimer)
       live.stop()
       useBuddiesDiagnostics.setState({ controls: null })

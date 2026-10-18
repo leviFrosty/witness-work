@@ -281,6 +281,11 @@ const RATE_LIMIT_COOL_DOWN_MS = 60 * 1000
  * the app checks back now and then instead of polling a switched-off service.
  */
 export const DISABLED_COOL_DOWN_MS = 15 * 60 * 1000
+/**
+ * The account is suspended: automatic syncs wait this long. Shorter than the
+ * kill switch's, so reinstatement shows within minutes of the next check.
+ */
+export const SUSPENDED_COOL_DOWN_MS = 60 * 1000
 /** A removal that keeps failing is retried after this, doubling to an hour. */
 const REMOVAL_RETRY_BASE_MS = 60 * 1000
 const REMOVAL_RETRY_MAX_MS = 60 * 60 * 1000
@@ -4063,15 +4068,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function noteBackPressure(error: unknown) {
     if (!(error instanceof RelayError)) return
     const wait =
-      error.code === 'disabled' ||
-      error.code === 'suspended' ||
-      error.code === 'upgrade_required'
+      error.code === 'disabled' || error.code === 'upgrade_required'
         ? Math.max(error.retryAfterMs ?? 0, DISABLED_COOL_DOWN_MS)
-        : error.code === 'rate_limited'
-          ? (error.retryAfterMs ?? RATE_LIMIT_COOL_DOWN_MS)
-          : error.code === 'limit'
-            ? null
-            : error.retryAfterMs
+        : error.code === 'suspended'
+          ? Math.max(error.retryAfterMs ?? 0, SUSPENDED_COOL_DOWN_MS)
+          : error.code === 'rate_limited'
+            ? (error.retryAfterMs ?? RATE_LIMIT_COOL_DOWN_MS)
+            : error.code === 'limit'
+              ? null
+              : error.retryAfterMs
     if (wait === null) return
     coolDownUntil = Math.max(coolDownUntil, deps.now() + wait)
   }

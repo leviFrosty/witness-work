@@ -13,6 +13,8 @@ export default {
   notesImportHealth: `${BASE_URL}/health`,
   notesImport: `${BASE_URL}/notes-import`,
   notesImportStatus: `${BASE_URL}/notes-import/status`,
+  // The account's allowance, the same on every device (Bearer, read-only).
+  notesImportUsage: `${BASE_URL}/notes-import/usage`,
   notesImportChallenge: `${BASE_URL}/notes-import/challenge`,
   // Attested no-op — dev Tools diagnostics verify an assertion server-side
   // without spending credits or inference.

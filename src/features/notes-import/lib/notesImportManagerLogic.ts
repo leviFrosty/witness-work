@@ -259,6 +259,8 @@ export type CreditsUpdateSource =
   | 'kickoff'
   | 'terminal'
   | 'denial'
+  /** The account's allowance, read from `GET /notes-import/usage`. */
+  | 'account'
   | 'hydrate'
   | 'focus'
   | 'app-active'
@@ -318,6 +320,11 @@ const mergeAuthoritativeCredits = (
  * authority. Hydrate/focus/AppState-active normalize only persisted authority,
  * so a projected kickoff decrement can never be promoted by a later lifecycle
  * pass. When authority expires, it replaces display state and is persisted.
+ *
+ * An account read is authority too, merged the same way, so a read that started
+ * before an import settled can't put its credit back. It leaves a running
+ * import's kickoff projection on screen, since the account doesn't count a run
+ * until it settles.
  */
 export const decideCreditsUpdate = (args: {
   current: NotesImportCredits | null
@@ -340,6 +347,23 @@ export const decideCreditsUpdate = (args: {
           refreshed: false,
         }
       : unchangedCreditsDecision(args)
+  }
+
+  if (args.source === 'account') {
+    const normalized = normalizeNotesImportCredits(args.incoming, {
+      now: args.now,
+    })
+    if (!normalized) return unchangedCreditsDecision(args)
+
+    const merged = mergeAuthoritativeCredits(args.authoritative, normalized)
+    const projecting = args.currentProvenance === 'kickoff'
+    return {
+      credits: projecting ? args.current : merged,
+      provenance: projecting ? 'kickoff' : 'authoritative',
+      authoritative: merged,
+      persist: true,
+      refreshed: false,
+    }
   }
 
   if (args.source === 'terminal' || args.source === 'denial') {

@@ -245,6 +245,108 @@ export const normalizeNotesImportCredits = (
 }
 
 /**
+ * `GET /notes-import/usage`: the account's allowance right now, the same on
+ * every device on the account (ADR 0027), as kickoff would meter it.
+ */
+export interface NotesImportAccountUsage {
+  /** The account counts as a Supporter (ADR 0029). */
+  supporter: boolean
+  /**
+   * RevenueCat couldn't be reached, so the server answered (and meters) the
+   * account as free for now.
+   */
+  supporterCheckFailed: boolean
+  accountStatus: 'active' | 'suspended'
+  imports: {
+    /** `null` when unlimited. */
+    limit: number | null
+    /** New imports charged in the current window, on every device. */
+    used: number
+    /** `null` when unlimited. */
+    remaining: number | null
+    /** When the current window ends; `null` before its first charge. */
+    resetsAt: string | null
+  }
+  /** Refinements allowed for each import; `null` when unlimited. */
+  refinementsPerImport: number | null
+  windowDays: number
+}
+
+/**
+ * Strict validation for the account usage answer. Anything malformed is
+ * unavailable (`null`), so the composer keeps what it shows.
+ */
+export const normalizeNotesImportAccountUsage = (
+  value: unknown
+): NotesImportAccountUsage | null => {
+  if (!isRecord(value) || value.ok !== true) return null
+  const { supporter, supporterCheckFailed, accountStatus, imports } = value
+  const refinements = value.refinements
+  if (
+    typeof supporter !== 'boolean' ||
+    typeof supporterCheckFailed !== 'boolean' ||
+    (accountStatus !== 'active' && accountStatus !== 'suspended') ||
+    !isRecord(imports) ||
+    !isRecord(refinements) ||
+    !isAllowanceValue(refinements.limitPerImport) ||
+    typeof value.windowDays !== 'number' ||
+    !Number.isFinite(value.windowDays) ||
+    value.windowDays <= 0
+  ) {
+    return null
+  }
+  const { limit, used, remaining, resetsAt } = imports
+  if (
+    !isValidAllowance(remaining, limit) ||
+    typeof used !== 'number' ||
+    !Number.isInteger(used) ||
+    used < 0 ||
+    (resetsAt !== null && !isUtcIsoTimestamp(resetsAt))
+  ) {
+    return null
+  }
+  return {
+    supporter,
+    supporterCheckFailed,
+    accountStatus,
+    imports: {
+      limit: limit as number | null,
+      used,
+      remaining,
+      resetsAt: resetsAt as string | null,
+    },
+    refinementsPerImport: refinements.limitPerImport,
+    windowDays: value.windowDays,
+  }
+}
+
+/**
+ * The account's allowance as the composer's balance. `null` when the server
+ * couldn't check Supporter status: the composer keeps what it shows rather than
+ * tell a Supporter they're free. Refinements carry each import's fresh
+ * allowance; an import's own refinement balance comes from its runs.
+ */
+export const accountUsageCredits = (
+  usage: NotesImportAccountUsage,
+  options: { now?: number } = {}
+): NotesImportCredits | null =>
+  usage.supporterCheckFailed
+    ? null
+    : normalizeNotesImportCredits(
+        {
+          remaining: usage.imports.remaining,
+          limit: usage.imports.limit,
+          resetsAt: usage.imports.resetsAt,
+          isSupporter: usage.supporter,
+          refinements: {
+            remaining: usage.refinementsPerImport,
+            limit: usage.refinementsPerImport,
+          },
+        },
+        options
+      )
+
+/**
  * Rebuilds the complete display snapshot for one content hash. Import allowance
  * fields are global, while refinement allowance is lifetime state owned by the
  * selected source text. Missing per-hash state is unavailable rather than
@@ -266,12 +368,16 @@ export const shouldShowNotesImportSupporterCta = (
 
 /** What the composer's Import Credits control shows. */
 export type NotesImportUsageView =
-  /** The server's balance, from this device's last import. */
+  /**
+   * The server's balance: the account's (`GET /notes-import/usage`), or this
+   * device's last import's.
+   */
   | { kind: 'balance'; credits: NotesImportCredits }
   /**
-   * No balance yet (before the first import on this device): the allowance from
-   * the public schedule, `null` when unlimited. Not a balance: imports on the
-   * account's other devices may have used some of it.
+   * No balance (the account's couldn't be read, and this device hasn't
+   * imported): the allowance from the public schedule, `null` when unlimited.
+   * Not a balance: imports on the account's other devices may have used some of
+   * it.
    */
   | { kind: 'allowance'; limit: number | null; windowDays: number }
   /** Neither a balance nor the schedule (offline, or the status failed). */

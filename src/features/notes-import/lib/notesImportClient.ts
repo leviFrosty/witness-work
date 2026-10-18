@@ -5,7 +5,7 @@ import { kindForStatus } from '@/lib/http/networkError'
 import { perf } from '@/lib/perf'
 import { type AttestationSupport, deviceAttestation } from '@/lib/attestation'
 import { attestationTransport } from '@/lib/attestation/transport'
-import { accountSessions } from '@/lib/serverAccount'
+import { accountSessions, hasAccountKey } from '@/lib/serverAccount'
 import {
   AccountSessionError,
   type AttestationProblem,
@@ -15,9 +15,12 @@ import type {
   NotesImportContext,
   NotesImportResult,
 } from '@/features/notes-import/lib/notesImportTypes'
+import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
 import {
+  normalizeNotesImportAccountUsage,
   normalizeNotesImportCredits,
   normalizeNotesImportStatus,
+  type NotesImportAccountUsage,
   type NotesImportCredits,
   type NotesImportStatus,
 } from '@/features/notes-import/lib/notesImportUsage'
@@ -190,6 +193,30 @@ export const fetchNotesImportStatus = async (): Promise<NotesImportStatus> => {
 export const getNotesImportStatus =
   async (): Promise<NotesImportStatus | null> =>
     fetchNotesImportStatus().catch(() => null)
+
+/**
+ * The account's allowance (`GET /notes-import/usage`), the same on every device
+ * on the account. Read as this device's session, opening one only when the
+ * device already has the account key (a second device often has the key before
+ * it has a session); it never creates a key. Null without either, on any
+ * failure (servers from before the route answer 404), or for a malformed
+ * answer, so the composer keeps what it shows.
+ */
+export const fetchNotesImportAccountUsage =
+  async (): Promise<NotesImportAccountUsage | null> => {
+    try {
+      await accountSessions.ready()
+      if (!accountSessions.snapshot() && !(await hasAccountKey())) return null
+      const response = await accountSessions.request<unknown>({
+        url: apis.notesImportUsage,
+        method: 'GET',
+        timeoutMs: ACCOUNT_TIMEOUT_MS,
+      })
+      return normalizeNotesImportAccountUsage(response.data)
+    } catch {
+      return null
+    }
+  }
 
 let deviceSupport: Promise<AttestationSupport> | null = null
 

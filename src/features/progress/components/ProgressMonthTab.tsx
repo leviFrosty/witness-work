@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import { getMonthsReports } from '@/lib/serviceReport'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
@@ -38,6 +39,8 @@ interface ProgressMonthTabProps {
   adding: boolean
   onAddingChange: (adding: boolean) => void
   onNavigate: (destination: ProgressCardDestination) => void
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
 }
 
 /**
@@ -56,6 +59,7 @@ const ProgressMonthTab = ({
   adding,
   onAddingChange,
   onNavigate,
+  scrollBars,
 }: ProgressMonthTabProps) => {
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
@@ -123,13 +127,21 @@ const ProgressMonthTab = ({
     <View ref={leading.frameRef} collapsable={false} style={{ flex: 1 }}>
       <KeyboardAwareScrollView
         ref={leadingRef}
+        {...scrollBars}
         onScroll={(e) => {
           leading.props.onScroll(e)
           if (!daysBeside) dayReveal.onScroll(e)
+          scrollBars?.onScroll(e)
         }}
         scrollEventThrottle={16}
-        onLayout={leading.props.onLayout}
-        onContentSizeChange={leading.props.onContentSizeChange}
+        onLayout={(e) => {
+          leading.props.onLayout()
+          scrollBars?.onLayout(e)
+        }}
+        onContentSizeChange={(width, height) => {
+          leading.props.onContentSizeChange(width, height)
+          scrollBars?.onContentSizeChange(width, height)
+        }}
         scrollEnabled={!dragging}
         keyboardShouldPersistTaps='handled'
         style={{ flex: 1 }}

@@ -19,6 +19,8 @@ import { useScheduleIntro } from '@/stores/scheduleIntro'
 import { useTakeover } from '@/stores/takeover'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import RootHeader from '@/components/RootHeader'
+import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
+import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import SelectedDateSheet, {
   SelectedDateSheetState,
@@ -153,6 +155,10 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     setSelectedDateSheet({ open: !isWide, date: date.toDate() })
   }, [linkedDate, isWide, view, navigation, showMonth, revealDay])
 
+  // A day's sheet holds the bars as they are: it keeps the day it opened on
+  // in view above itself, measured with the header where it is.
+  const bars = useHideBarsOnScroll({ paused: selectedDateSheet.open })
+
   const selectedDate = selectedDateSheet.date
   const selectedMonthReports =
     getMonthsReports(
@@ -185,6 +191,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
           : undefined
       }
       bottomInset={bottomInset}
+      scrollBars={bars.scrollProps}
       onPressDay={pressDay}
       editableGoal={editableGoal}
       onEditGoal={openGoalEditor}
@@ -193,21 +200,23 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <RootHeader
-        title={i18n.t('Schedule')}
-        actions={
-          <>
-            <ScheduleViewToggle
-              value={view}
-              onChange={(next) => changeView(next, 'toggle')}
-            />
-            {/* Phones show the label only where the title still fits beside
+      <ScrollAwayHeader hidden={bars.hidden}>
+        <RootHeader
+          title={i18n.t('Schedule')}
+          actions={
+            <>
+              <ScheduleViewToggle
+                value={view}
+                onChange={(next) => changeView(next, 'toggle')}
+              />
+              {/* Phones show the label only where the title still fits beside
             it; it's easy to miss as an icon. */}
-            <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
-          </>
-        }
-        contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-      />
+              <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
+            </>
+          }
+          contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+        />
+      </ScrollAwayHeader>
       {isWide ? (
         <View
           style={{

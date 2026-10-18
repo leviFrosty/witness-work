@@ -2,7 +2,9 @@ import { perf } from '@/lib/perf'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
-import { useState } from 'react'
+import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
+import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
+import { ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -71,7 +73,7 @@ const pullThenPush = async () => {
   await iCloudSync.push('pull-to-refresh')
 }
 
-export const HomeScreen = () => {
+export const HomeScreen = ({ header }: { header: ReactNode }) => {
   perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -156,22 +158,37 @@ export const HomeScreen = () => {
     (key) => !sections.hidden.includes(key)
   )
 
+  // A day's sheet holds the bars as they are: it keeps the day it opened on
+  // in view above itself, measured with the header where it is. Editing keeps
+  // them, since the header holds Done.
+  const bars = useHideBarsOnScroll({
+    enabled: !editing,
+    paused: selectedDateSheet.open,
+  })
   return (
     <View
       ref={scroll.frameRef}
       collapsable={false}
       style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
     >
+      <ScrollAwayHeader hidden={bars.hidden}>{header}</ScrollAwayHeader>
       <KeyboardAwareScrollView
         ref={weekStrip.scrollRef}
+        {...bars.scrollProps}
         onScroll={(e) => {
           scroll.props.onScroll(e)
           weekStrip.onScroll(e)
+          bars.onScroll(e)
         }}
-        onLayout={scroll.props.onLayout}
-        onContentSizeChange={scroll.props.onContentSizeChange}
+        onLayout={(e) => {
+          scroll.props.onLayout()
+          bars.scrollProps.onLayout(e)
+        }}
+        onContentSizeChange={(width, height) => {
+          scroll.props.onContentSizeChange(width, height)
+          bars.scrollProps.onContentSizeChange(width, height)
+        }}
         scrollEnabled={!dragging}
-        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + (hasSidebar ? 30 : 85) + weekStrip.bottomInset,

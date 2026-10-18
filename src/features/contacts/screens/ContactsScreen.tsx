@@ -9,13 +9,7 @@ import {
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native'
+import { TextInput, useWindowDimensions, View } from 'react-native'
 import { Input, InputProps } from 'tamagui'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
@@ -61,7 +55,10 @@ import {
   SelectionTextButton,
 } from '@/features/contacts/components/ListSelection'
 import useListSelection from '@/features/contacts/hooks/useListSelection'
-import { trackListScroll } from '@/features/contacts/lib/listHeaderCollapse'
+import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
+import useHideTabBar from '@/hooks/useHideTabBar'
+import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
+import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import SavedViewsBar from '@/features/contacts/components/SavedViewsBar'
@@ -89,9 +86,10 @@ import { alignInput } from '@/lib/direction'
  * Map pins the contacts the List shows (it keeps its own search), and its
  * header carries the same Saved View and last-visit chips. On the Map the
  * header floats translucent over it so the map runs edge to edge, and compacts
- * once the user starts exploring. On the List, scrolling down tucks everything
- * but the title and search away; scrolling up, swiping down on the header, or
- * tapping the title restores it.
+ * (and the tab bar slides away) once the user starts exploring; swiping down on
+ * the header or tapping the title restores both. On the List, scrolling down
+ * tucks the header, chips and tab bar away and leaves search; scrolling up
+ * brings them back.
  */
 
 const ContactsScreen = ({
@@ -128,9 +126,11 @@ const ContactsScreen = ({
   const [mapExplored, setMapExplored] = useState(false)
   // Each visit to the Map starts with the full header.
   if (!showsMap && mapExplored) setMapExplored(false)
-  const [listCollapsed, setListCollapsed] = useState(false)
-  if (showsMap && listCollapsed) setListCollapsed(false)
-  const listScroll = useRef({ userDriven: false, lastY: 0, anchorY: 0 })
+  const screenReader = useScreenReaderEnabled()
+  // Exploring the map slides the tab bar away too, and its cards drop into the
+  // room.
+  const mapBarHidden = showsMap && mapExplored && !hasSidebar && !screenReader
+  useHideTabBar(mapBarHidden)
 
   // Map was its own tab; keep reporting its reach as the `Map` screen (sent
   // once per session like every screen).
@@ -155,6 +155,9 @@ const ContactsScreen = ({
   const setSearch = useContactsSearchStore((s) => s.setSearch)
   const searchInputRef = useRef<TextInput>(null)
   const isFocused = useIsFocused()
+  // Like the List, each return to the Map starts with the full header and tab
+  // bar.
+  if (!isFocused && mapExplored) setMapExplored(false)
 
   useEffect(() => {
     if (!focusSearch || !isFocused || showsMap) return
@@ -203,6 +206,10 @@ const ContactsScreen = ({
     selection.isSelected(contact.id)
   )
   const bottomChrome = insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT)
+  // Select mode keeps its bar where the tab bar was, so nothing moves.
+  const bars = useHideBarsOnScroll({
+    enabled: !showsMap && !selection.selecting,
+  })
 
   const selectedContact =
     listContacts.find((contact) => contact.id === selectedId) ?? listContacts[0]
@@ -228,43 +235,12 @@ const ContactsScreen = ({
     return () => cancelAnimationFrame(frame)
   }, [isWide, selectedContact, contactsList.items])
 
-  const collapseList = (collapsed: boolean) => {
-    if (collapsed === listCollapsed) return
-    setListCollapsed(collapsed)
-  }
-
   const expandHeader = () => {
-    if (!listCollapsed && !mapExplored) return
-
-    setListCollapsed(false)
+    if (!mapExplored) return
     setMapExplored(false)
   }
 
-  // Only the user's own scrolling counts — the list also jumps to the top on
-  // its own as the search changes.
-  const handleListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent
-    const frame = {
-      y: contentOffset.y,
-      contentHeight: contentSize.height,
-      viewportHeight: layoutMeasurement.height,
-    }
-    if (!listScroll.current.userDriven) {
-      listScroll.current.lastY = frame.y
-      return
-    }
-    const collapsed = trackListScroll(listScroll.current, frame)
-    if (collapsed !== undefined) collapseList(collapsed)
-  }
-  const setListScrollUserDriven = (userDriven: boolean) => () => {
-    listScroll.current.userDriven = userDriven
-  }
-  const handleListDragStart = () => {
-    listScroll.current.userDriven = true
-    listScroll.current.anchorY = listScroll.current.lastY
-  }
-
-  const headerCollapsed = listCollapsed || mapExplored
+  const headerCollapsed = mapExplored
   const headerSwipeDown = Gesture.Pan()
     .runOnJS(true)
     .enabled(headerCollapsed)
@@ -443,32 +419,34 @@ const ContactsScreen = ({
               : undefined
           }
         >
-          <RootHeader
-            floating={showsMap}
-            compact={headerCollapsed}
-            onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
-            title={
-              selection.selecting
-                ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                  i18n.t('selectedCount', { count: selection.ids.length })
-                : i18n.t('contacts_screen_title')
-            }
-            actions={headerActions}
-            contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-          >
-            {showsMapFilters && (
-              <Collapse collapsed={headerCollapsed}>
-                <View style={{ gap: 10, paddingBottom: 10 }}>
-                  {showsSavedViews && <SavedViewsBar surface='map' />}
-                  <ContactsStalenessChips
-                    contacts={mappedContacts}
-                    index={conversationIndex}
-                    surface='map'
-                  />
-                </View>
-              </Collapse>
-            )}
-          </RootHeader>
+          <ScrollAwayHeader hidden={bars.hidden}>
+            <RootHeader
+              floating={showsMap}
+              compact={headerCollapsed}
+              onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
+              title={
+                selection.selecting
+                  ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                    i18n.t('selectedCount', { count: selection.ids.length })
+                  : i18n.t('contacts_screen_title')
+              }
+              actions={headerActions}
+              contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+            >
+              {showsMapFilters && (
+                <Collapse collapsed={headerCollapsed}>
+                  <View style={{ gap: 10, paddingBottom: 10 }}>
+                    {showsSavedViews && <SavedViewsBar surface='map' />}
+                    <ContactsStalenessChips
+                      contacts={mappedContacts}
+                      index={conversationIndex}
+                      surface='map'
+                    />
+                  </View>
+                </Collapse>
+              )}
+            </RootHeader>
+          </ScrollAwayHeader>
         </View>
       </GestureDetector>
       {showsMap ? (
@@ -565,14 +543,14 @@ const ContactsScreen = ({
               </View>
 
               {showsSavedViews && (
-                <Collapse collapsed={listCollapsed}>
+                <Collapse collapsed={bars.hidden}>
                   <View style={{ paddingTop: 10 }}>
                     <SavedViewsBar surface='list' />
                   </View>
                 </Collapse>
               )}
 
-              <Collapse collapsed={listCollapsed}>
+              <Collapse collapsed={bars.hidden}>
                 <View style={{ paddingTop: 10 }}>
                   <ContactsStalenessChips
                     contacts={activeContacts}
@@ -585,7 +563,7 @@ const ContactsScreen = ({
               {/* Subtle sort indicator. Only shows when the user has changed
               away from the default — keeps the resting state quiet. */}
               {isSortNonDefault && sortLabel.length > 0 && (
-                <Collapse collapsed={listCollapsed}>
+                <Collapse collapsed={bars.hidden}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -714,14 +692,8 @@ const ContactsScreen = ({
               keyboardShouldPersistTaps='handled'
               keyboardDismissMode='on-drag'
               drawDistance={flashListDrawDistance}
-              onScroll={handleListScroll}
-              scrollEventThrottle={16}
-              onScrollBeginDrag={handleListDragStart}
-              onScrollEndDrag={setListScrollUserDriven(false)}
-              onMomentumScrollBegin={setListScrollUserDriven(true)}
-              onMomentumScrollEnd={setListScrollUserDriven(false)}
-              // Tapping the status bar returns to the top on iOS.
-              onScrollToTop={() => collapseList(false)}
+              // Tapping the status bar (iOS) brings the bars back too.
+              {...bars.scrollProps}
               contentContainerStyle={{
                 paddingHorizontal: 12,
                 paddingBottom:

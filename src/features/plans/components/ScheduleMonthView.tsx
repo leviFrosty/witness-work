@@ -1,4 +1,5 @@
 import { FlashList, type FlashListRef } from '@shopify/flash-list'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import moment from 'moment'
 import type { RefObject } from 'react'
 import { type LayoutRectangle, View } from 'react-native'
@@ -43,6 +44,8 @@ type Props = {
   /** Scales with the zoom: the weekday header and the weeks. */
   zoomStyle: AnimatedStyle<ViewStyle>
   onScroll: (offsetY: number) => void
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
   /** The scaled part's frame within the view. */
   onZoomFrameLayout: (frame: LayoutRectangle) => void
   /** The list's frame within the scaled part. */
@@ -74,6 +77,7 @@ export default function ScheduleMonthView({
   chromeStyle,
   zoomStyle,
   onScroll,
+  scrollBars,
   onZoomFrameLayout,
   onListLayout,
   onListLoad,
@@ -173,7 +177,12 @@ export default function ScheduleMonthView({
             // The focused month stays out of here: a new month would
             // re-render every week on screen mid-scroll.
             extraData={{ selectedKey, index, buddyMarkers }}
-            onScroll={(e) => onScroll(e.nativeEvent.contentOffset.y)}
+            {...scrollBars}
+            scrollsToTop={!!scrollBars}
+            onScroll={(e) => {
+              onScroll(e.nativeEvent.contentOffset.y)
+              scrollBars?.onScroll(e)
+            }}
             scrollEventThrottle={16}
             onStartReached={onStartReached}
             onStartReachedThreshold={2}

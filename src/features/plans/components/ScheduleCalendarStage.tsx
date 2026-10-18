@@ -7,6 +7,7 @@ import ScheduleMonthView from '@/features/plans/components/ScheduleMonthView'
 import ScheduleYearView from '@/features/plans/components/ScheduleYearView'
 import type useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar'
 import type { ScheduleDayIndex } from '@/features/plans/lib/scheduleDayIndex'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 
 /** How far a pinch must go before it zooms. */
 const PINCH_OUT = 0.8
@@ -19,6 +20,8 @@ type Props = {
   selectedKey?: string
   /** Room under the content for the floating tab bar. */
   bottomInset: number
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
   onPressDay: (date: Date) => void
   editableGoal: (month: CalendarMonth) => boolean
   onEditGoal: (month: CalendarMonth) => void
@@ -35,6 +38,7 @@ export default function ScheduleCalendarStage({
   buddyMarkers,
   selectedKey,
   bottomInset,
+  scrollBars,
   onPressDay,
   editableGoal,
   onEditGoal,
@@ -110,6 +114,9 @@ export default function ScheduleCalendarStage({
             buddyMarkers={buddyMarkers}
             selectedKey={selectedKey}
             bottomInset={bottomInset}
+            // Only the view in front tracks scrolling (and takes the
+            // status-bar tap, which iOS ignores with two takers).
+            scrollBars={monthActive ? scrollBars : undefined}
             chromeStyle={zoom.monthChromeStyle}
             zoomStyle={zoom.monthZoomStyle}
             onScroll={onScroll}
@@ -134,6 +141,7 @@ export default function ScheduleCalendarStage({
             index={index}
             bottomInset={bottomInset}
             zoomStyle={zoom.yearZoomStyle}
+            scrollBars={monthActive ? undefined : scrollBars}
             onChangeServiceYear={changeServiceYear}
             onPressMonth={zoomIn}
             editableGoal={editableGoal}

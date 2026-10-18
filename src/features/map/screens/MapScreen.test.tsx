@@ -1,5 +1,4 @@
 import React, { useImperativeHandle, useRef } from 'react'
-import { View } from 'react-native'
 import { act, create } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
@@ -479,7 +478,9 @@ describe('Dropped pin on an empty tablet map', () => {
     mocks.contacts = []
     await act(async () => root.update(screen()))
     const emptyCard = root.root.findAll(
-      (node) => node.type === View && typeof node.props.onLayout === 'function'
+      (node) =>
+        String(node.type) === 'AnimatedView' &&
+        typeof node.props.onLayout === 'function'
     )[0]
     const { left, bottom, width } = emptyCard.props.style
     const locationButton = () =>

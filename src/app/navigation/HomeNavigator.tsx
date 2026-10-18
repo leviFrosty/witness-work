@@ -57,59 +57,64 @@ const HomeNavigator = () => {
       }
     : undefined
 
+  // Home renders its own header so scrolling can tuck it away.
+  const header = (
+    // Paints the full-width strip; the navigation theme's default background
+    // is near-white even in dark mode.
+    <View style={{ backgroundColor: theme.colors.background }}>
+      <RootHeader
+        title={i18n.t('Home')}
+        onLongPressTitle={onLongPressTitle}
+        contentStyle={{ maxWidth: isWide ? contentMaxWidth : 720 }}
+        actions={
+          homeEditing.editing ? (
+            // As on the Home Screen: add on one side, Done on the other.
+            <>
+              {hidden.length ? (
+                <HeaderPillButton
+                  icon={PlusIcon}
+                  label={i18n.t('homeEdit.addSections')}
+                  onPress={() => homeEditing.setAdding(true)}
+                  compact='auto'
+                />
+              ) : null}
+              <HeaderPillButton
+                icon={CheckIcon}
+                label={i18n.t('done')}
+                onPress={homeEditing.finish}
+              />
+            </>
+          ) : (
+            <>
+              {__DEV__ && (
+                <IconButton
+                  icon={RefreshCwIcon}
+                  size='xl'
+                  hitSlop={12}
+                  accessibilityLabel='DEV: remount all screens (hold to reload JS)'
+                  onPress={triggerDevRemount}
+                  onLongPress={() => DevSettings.reload()}
+                />
+              )}
+              <HomeStreakChip />
+              <NotificationsBell />
+            </>
+          )
+        }
+      />
+    </View>
+  )
+
   return (
     <Stack.Navigator
       screenOptions={{
         contentStyle: { backgroundColor: theme.colors.background },
-        // Paint the full-width strip; the navigation theme's default
-        // background is near-white even in dark mode.
-        header: () => (
-          <View style={{ backgroundColor: theme.colors.background }}>
-            <RootHeader
-              title={i18n.t('Home')}
-              onLongPressTitle={onLongPressTitle}
-              contentStyle={{ maxWidth: isWide ? contentMaxWidth : 720 }}
-              actions={
-                homeEditing.editing ? (
-                  // As on the Home Screen: add on one side, Done on the other.
-                  <>
-                    {hidden.length ? (
-                      <HeaderPillButton
-                        icon={PlusIcon}
-                        label={i18n.t('homeEdit.addSections')}
-                        onPress={() => homeEditing.setAdding(true)}
-                        compact='auto'
-                      />
-                    ) : null}
-                    <HeaderPillButton
-                      icon={CheckIcon}
-                      label={i18n.t('done')}
-                      onPress={homeEditing.finish}
-                    />
-                  </>
-                ) : (
-                  <>
-                    {__DEV__ && (
-                      <IconButton
-                        icon={RefreshCwIcon}
-                        size='xl'
-                        hitSlop={12}
-                        accessibilityLabel='DEV: remount all screens (hold to reload JS)'
-                        onPress={triggerDevRemount}
-                        onLongPress={() => DevSettings.reload()}
-                      />
-                    )}
-                    <HomeStreakChip />
-                    <NotificationsBell />
-                  </>
-                )
-              }
-            />
-          </View>
-        ),
+        headerShown: false,
       }}
     >
-      <Stack.Screen name='Dashboard' component={HomeScreen} />
+      <Stack.Screen name='Dashboard'>
+        {() => <HomeScreen header={header} />}
+      </Stack.Screen>
     </Stack.Navigator>
   )
 }

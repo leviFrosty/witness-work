@@ -2,6 +2,11 @@ import * as Application from 'expo-application'
 import * as Notifications from 'expo-notifications'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
+import { accountSessions } from '@/lib/serverAccount'
+import {
+  deriveAccountSigningKey,
+  signInboxLink,
+} from '@/lib/serverAccount/keys'
 import { fromB64u } from '@/features/buddies/lib/bytes'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { isBuddiesNewsKind } from '@/features/buddies/lib/pushAlerts'
@@ -33,12 +38,29 @@ export function prepareBuddiesPush({
     try {
       if (useBuddies.getState().registeredInboxId === null)
         throw new Error('Buddies has not started on this device')
-      const me = deriveIdentity(
-        fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
-      )
-      const relay = createRelayClient({ baseUrl: apis.buddies, randomBytes })
+      const seed = fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
+      const me = deriveIdentity(seed)
+      const relay = createRelayClient({
+        baseUrl: apis.buddies,
+        randomBytes,
+        authorize: (run, { signal }) =>
+          accountSessions.withSession(run, { signal }),
+      })
       const { events } = await relay.syncInbox(
-        { inboxId: me.inboxId, ownerSeed: me.ownerSeed, ownerPub: me.ownerPub },
+        {
+          inboxId: me.inboxId,
+          ownerSeed: me.ownerSeed,
+          ownerPub: me.ownerPub,
+          link: {
+            sign: (accountId) =>
+              signInboxLink(
+                deriveAccountSigningKey(seed),
+                accountId,
+                me.inboxId,
+                me.ownerPub
+              ),
+          },
+        },
         0
       )
       const event =

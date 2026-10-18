@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import {
   BuddyInviteError,
@@ -5,6 +6,7 @@ import {
 } from '@/features/buddies/lib/engine'
 import { isRelayError } from '@/features/buddies/lib/relay'
 import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
+import type { BuddySyncFailureReason } from '@/features/buddies/lib/syncStatus'
 
 /** A localized, user-facing sentence for any Buddies failure. */
 export function buddiesErrorMessage(error: unknown): string {
@@ -30,6 +32,16 @@ export function buddiesErrorMessage(error: unknown): string {
     return error.scope === 'buddy'
       ? i18n.t('buddies_removePending')
       : i18n.t('buddies_deleteAllPending')
+  if (isRelayError(error, 'unverified'))
+    return error.attestation === 'temporary'
+      ? i18n.t('buddies_errorVerifyLater')
+      : i18n.t(
+          Platform.OS === 'android'
+            ? 'buddies_errorUnverifiedAndroid'
+            : 'buddies_errorUnverified'
+        )
+  if (isRelayError(error, 'upgrade_required'))
+    return i18n.t('buddies_errorUpdate')
   if (isRelayError(error, 'network')) return i18n.t('buddies_errorOffline')
   if (isRelayError(error, 'timeout')) return i18n.t('buddies_errorTimeout')
   if (isRelayError(error, 'disabled')) return i18n.t('buddies_errorDisabled')
@@ -42,14 +54,18 @@ export function buddiesErrorMessage(error: unknown): string {
 }
 
 /**
- * Worth offering Try Again for: the connection, a rate limit, or something
- * unexpected. Not for answers that stay the same (an invite that's gone, the
- * kill switch, a full roster).
+ * Worth offering Try Again for: the connection, a rate limit, verifying this
+ * device for now, or something unexpected. Not for answers that stay the same
+ * (an invite that's gone, the kill switch, a full roster, a device that can't
+ * be verified, an app that needs updating).
  */
 export function isRetryableBuddiesError(error: unknown): boolean {
   if (error instanceof BuddyInviteError) return false
   if (error instanceof BuddyRemovalPendingError) return false
+  if (isRelayError(error, 'unverified'))
+    return error.attestation === 'temporary'
   return !(
+    isRelayError(error, 'upgrade_required') ||
     isRelayError(error, 'disabled') ||
     isRelayError(error, 'suspended') ||
     isRelayError(error, 'not_found') ||
@@ -60,12 +76,14 @@ export function isRetryableBuddiesError(error: unknown): boolean {
 }
 
 /** A bounded analytics value for a Buddies failure; never its message. */
-export function buddiesFailureReason(
-  error: unknown
-): 'offline' | 'disabled' | 'suspended' | 'rate_limited' | 'error' {
+export function buddiesFailureReason(error: unknown): BuddySyncFailureReason {
   // A request that got no answer in time is a connection problem too.
   if (isRelayError(error, 'network') || isRelayError(error, 'timeout'))
     return 'offline'
+  // No session: this device couldn't prove it's WitnessWork (ADR 0027).
+  if (isRelayError(error, 'unverified'))
+    return error.attestation === 'temporary' ? 'verify_later' : 'unverified'
+  if (isRelayError(error, 'upgrade_required')) return 'update'
   if (isRelayError(error, 'disabled')) return 'disabled'
   if (isRelayError(error, 'suspended')) return 'suspended'
   if (isRelayError(error, 'rate_limited')) return 'rate_limited'

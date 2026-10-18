@@ -35,6 +35,8 @@ function parseMessage(data: unknown): LiveMessage | 'pong' | null {
 /** What happened on the live connection, for diagnostics (Tools). */
 export type LiveEvent =
   | { type: 'connecting' }
+  /** The last connection closed before it opened: checking the session. */
+  | { type: 'verify' }
   | { type: 'openFailed'; error: string }
   | { type: 'open' }
   | { type: 'hello'; seq: number; behind: boolean }
@@ -58,6 +60,15 @@ export type LiveInboxDeps = {
    * always syncs.
    */
   onChange: (seq?: number) => void
+  /**
+   * An authorized HTTP call to the relay (a sync), run before reconnecting
+   * after a connection closed before it opened. React Native can't say why a
+   * handshake failed, and an access token the relay refused would otherwise be
+   * sent again on every reconnect until it expires here; a 401 on this call
+   * refreshes it through the session. The connection is tried next whatever it
+   * answers, so a sync that fails for another reason never keeps it down.
+   */
+  verify?: () => Promise<unknown>
   onEvent?: (event: LiveEvent) => void
   now?: () => number
 }
@@ -76,6 +87,11 @@ export function createLiveInbox(deps: LiveInboxDeps) {
   let opened = false
   let pingSentAt: number | null = null
   let connecting = false
+  /**
+   * The last connection closed before it opened (or said anything), as one the
+   * relay refused does: `verify` runs before the next.
+   */
+  let refused = false
   let failures = 0
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let pingTimer: ReturnType<typeof setInterval> | null = null
@@ -143,12 +159,14 @@ export function createLiveInbox(deps: LiveInboxDeps) {
   const attach = (live: LiveSocket) => {
     socket = live
     opened = false
+    let heard = false
     live.onopen = () => {
-      opened = true
+      opened = heard = true
       emit({ type: 'open' })
       pingTimer = setInterval(() => sendPing(live), PING_INTERVAL_MS)
     }
     live.onmessage = (event) => {
+      heard = true
       const message = parseMessage(event.data)
       if (message === 'pong') {
         if (pongTimer) clearTimeout(pongTimer)
@@ -171,6 +189,7 @@ export function createLiveInbox(deps: LiveInboxDeps) {
     }
     live.onclose = (event) => {
       if (socket !== live) return
+      if (!heard) refused = true
       socket = null
       opened = false
       clearTimers()
@@ -191,21 +210,33 @@ export function createLiveInbox(deps: LiveInboxDeps) {
     if (!running || socket || connecting) return
     connecting = true
     emit({ type: 'connecting' })
-    deps.open().then(
-      (live) => {
-        connecting = false
-        if (running && !socket) attach(live)
-        else live.close(1000)
-      },
-      (error: unknown) => {
-        connecting = false
-        emit({
-          type: 'openFailed',
-          error: error instanceof Error ? error.message : String(error),
-        })
-        scheduleReconnect()
-      }
-    )
+    const verify = refused ? deps.verify : undefined
+    if (verify) emit({ type: 'verify' })
+    const verified = verify
+      ? Promise.resolve()
+          .then(verify)
+          .catch(() => undefined)
+      : Promise.resolve()
+    verified
+      .then(() => {
+        refused = false
+        return deps.open()
+      })
+      .then(
+        (live) => {
+          connecting = false
+          if (running && !socket) attach(live)
+          else live.close(1000)
+        },
+        (error: unknown) => {
+          connecting = false
+          emit({
+            type: 'openFailed',
+            error: error instanceof Error ? error.message : String(error),
+          })
+          scheduleReconnect()
+        }
+      )
   }
 
   /** Drops the current connection without reconnecting. */

@@ -15,8 +15,8 @@ export type AccountOverview =
 
 /**
  * The account's number and status, checked with the server each time the screen
- * comes into view. Doesn't create an account key: without one, the account
- * isn't set up yet.
+ * comes into view (opening this device's session when there's none). Doesn't
+ * create an account key: without one, the account isn't set up yet.
  */
 export default function useAccountOverview() {
   const [overview, setOverview] = useState<AccountOverview>({
@@ -25,7 +25,8 @@ export default function useAccountOverview() {
   const latest = useRef(0)
 
   // Memoized for useFocusEffect, which re-runs whenever its callback changes.
-  const refresh = useCallback(async () => {
+  // `retry` verifies this device again right away (Try Again).
+  const refresh = useCallback(async ({ retry = false } = {}) => {
     const run = ++latest.current
     const set = (next: AccountOverview) => {
       if (run === latest.current) setOverview(next)
@@ -35,7 +36,7 @@ export default function useAccountOverview() {
       if (!key) return set({ state: 'notSetUp' })
       const known = serverAccount.cached(key)
       set({ state: 'checking', accountId: known?.accountId ?? null })
-      set(await serverAccount.check(key))
+      set(await serverAccount.check(key, { retry }))
     } catch (error) {
       logger.warn('Account check failed', error)
       set({ state: 'offline', accountId: null, lastStatus: null })

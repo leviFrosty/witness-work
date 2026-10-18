@@ -26,7 +26,11 @@ import {
   receiveHandoff,
   sendHandoffKey,
 } from '@/lib/serverAccount/handoffClient'
-import type { AccountSigningKey } from '@/lib/serverAccount/keys'
+import type { AccountAuthorize } from '@/lib/serverAccount/client'
+import {
+  AccountSessionError,
+  attestationProblemFor,
+} from '@/lib/serverAccount/session'
 
 /**
  * One Set Up Another Device attempt on each phone (docs/accounts-protocol.md,
@@ -58,6 +62,12 @@ export type HandoffFailure =
   | 'tampered'
   /** The server doesn't know this phone's account, or it isn't the opener's. */
   | 'noAccount'
+  /** This phone couldn't prove it's WitnessWork, so it has no session. */
+  | 'unverified'
+  /** The same, but only for now: Apple's or Google's check was unavailable. */
+  | 'verifyLater'
+  /** Ww-api needs a newer app version (426). */
+  | 'updateRequired'
   | 'rateLimited'
   /** Anything else the server said. */
   | 'server'
@@ -88,7 +98,20 @@ export type HandoffDebugSnapshot = {
 }
 
 export function handoffFailureFor(error: unknown, op: string): HandoffFailure {
+  if (error instanceof AccountSessionError && error.failure === 'attestation')
+    return error.attestation === 'temporary' ? 'verifyLater' : 'unverified'
   if (!(error instanceof HttpError)) return 'server'
+  if (error.status === 426 || error.serverCode === 'upgrade_required')
+    return 'updateRequired'
+  if (error.serverCode === 'attestation_failed') {
+    const reason = (error.body as { reason?: unknown } | null)?.reason
+    return attestationProblemFor(
+      null,
+      typeof reason === 'string' ? reason : null
+    ) === 'temporary'
+      ? 'verifyLater'
+      : 'unverified'
+  }
   if (
     error.kind === 'offline' ||
     error.kind === 'timeout' ||
@@ -212,7 +235,8 @@ export type OfferState =
 export type OfferAccount = {
   accountKey: Uint8Array
   accountId: string
-  signingKey: AccountSigningKey
+  /** The account's session: the old phone's ops are Bearer. */
+  authorize: AccountAuthorize
 }
 
 export type OfferSession = ReturnType<typeof createOfferSession>
@@ -238,9 +262,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
 
   const options = () => ({
     baseUrl: deps.baseUrl,
-    key: account.signingKey,
-    now: deps.now,
-    randomBytes: deps.randomBytes,
+    authorize: account.authorize,
     fetchImpl: deps.fetchImpl,
   })
 

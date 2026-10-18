@@ -43,11 +43,11 @@ export type NotesImportState = 'working' | 'ready' | 'done' | 'stopped'
 /**
  * The live run handle for the current background model execution, persisted
  * only while an import is **Working** so the client can reconnect to its SSE
- * stream. Meaningless (and cleared) once the import is Ready/Done.
+ * stream. Meaningless (and cleared) once the import is Ready/Done. The account
+ * session authorizes it (ADR 0027).
  */
 export interface NotesImportActiveRun {
   importId: string
-  subscribeToken: string
 }
 
 /**
@@ -173,11 +173,17 @@ export const unviewedReadyImportCount = (
   entries: NotesImportLedgerEntry[]
 ): number => entries.filter(isUnviewedReady).length
 
-const isActiveRun = (v: unknown): v is NotesImportActiveRun =>
-  typeof v === 'object' &&
-  v !== null &&
-  typeof (v as NotesImportActiveRun).importId === 'string' &&
-  typeof (v as NotesImportActiveRun).subscribeToken === 'string'
+/**
+ * The run handle, or null. A handle from an app version before account sessions
+ * also kept a `subscribeToken`: ww-api serves that run only to the token, never
+ * to a session, so it's dropped and the import kicks off again from its notes
+ * (resume's own fallback), without a reconnect bound to fail.
+ */
+const sanitizeActiveRun = (v: unknown): NotesImportActiveRun | null => {
+  if (typeof v !== 'object' || v === null || 'subscribeToken' in v) return null
+  const { importId } = v as Partial<NotesImportActiveRun>
+  return typeof importId === 'string' && importId ? { importId } : null
+}
 
 /** Keeps only well-formed messages; pre-history rows (no array) become []. */
 const sanitizeHistory = (raw: unknown): NotesImportChatMessage[] => {
@@ -243,8 +249,7 @@ export const migrateLedgerEntry = (
       : provisionalTitleFromNotes(notesText)
   // A live run handle is meaningful only while Working — drop a stray one left
   // on a Ready/Done row by a crash or a hand-edited record.
-  const activeRun =
-    state === 'working' && isActiveRun(o.activeRun) ? o.activeRun : null
+  const activeRun = state === 'working' ? sanitizeActiveRun(o.activeRun) : null
   const updatedAt =
     typeof o.updatedAt === 'number'
       ? o.updatedAt

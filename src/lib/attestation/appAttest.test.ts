@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createNotesImportAppAttest,
-  NotesImportAppAttestHttpError,
+  createAppAttestAuthorizer,
+  AttestationHttpError,
   type AppAttestNativeFailureCode,
-  type NotesImportAppAttestDependencies,
-  type NotesImportAppAttestEndpoint,
-} from '@/features/notes-import/lib/notesImportAppAttest'
+  type AppAttestDependencies,
+  type AttestationEndpoint,
+} from '@/lib/attestation/appAttest'
 
 const CONTENT_HASH = 'a'.repeat(64)
 const REQUEST_CONTEXT = {
@@ -28,7 +28,7 @@ const DIAGNOSTIC_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 type PostCall = {
-  endpoint: NotesImportAppAttestEndpoint
+  endpoint: AttestationEndpoint
   body: Record<string, unknown>
   headers?: Record<string, string>
   signal?: AbortSignal
@@ -95,7 +95,7 @@ const createHarness = (options: HarnessOptions = {}) => {
     options.generateAssertion ?? (async () => 'assertion')
   )
 
-  const dependencies: NotesImportAppAttestDependencies = {
+  const dependencies: AppAttestDependencies = {
     appAttest: {
       isSupported: () => true,
       generateKey,
@@ -165,7 +165,7 @@ const createHarness = (options: HarnessOptions = {}) => {
           },
         })),
       post: async <T>(
-        endpoint: NotesImportAppAttestEndpoint,
+        endpoint: AttestationEndpoint,
         body: Record<string, unknown>,
         transportOptions?: {
           headers?: Record<string, string>
@@ -180,9 +180,11 @@ const createHarness = (options: HarnessOptions = {}) => {
         }
         posts.push(call)
         events.push(`post:${endpoint}:start`)
+        const isChallenge =
+          endpoint === 'challenge' || endpoint === 'attestationChallenge'
         let result = options.post
           ? await options.post(call, posts.length - 1)
-          : endpoint === 'challenge'
+          : isChallenge
             ? { challenge: `challenge-${++challenge}` }
             : { ok: true }
         if (
@@ -190,7 +192,7 @@ const createHarness = (options: HarnessOptions = {}) => {
           result !== null &&
           body.protocolVersion === 2
         ) {
-          if (endpoint === 'challenge') {
+          if (isChallenge) {
             result = {
               protocolVersion: 2,
               operation: body.operation,
@@ -227,7 +229,7 @@ const createHarness = (options: HarnessOptions = {}) => {
   }
 
   return {
-    module: createNotesImportAppAttest(dependencies),
+    module: createAppAttestAuthorizer(dependencies),
     dependencies,
     events,
     generateAssertion,
@@ -722,7 +724,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({ kind: 'cancelled' })
+          throw new AttestationHttpError({ kind: 'cancelled' })
         }
         return { ok: true }
       },
@@ -817,7 +819,7 @@ describe('Notes Import App Attest', () => {
       keyId: 'generated-before-cancellation',
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -837,7 +839,7 @@ describe('Notes Import App Attest', () => {
           return { challenge: `challenge-${String(body.operation)}` }
         }
         if (endpoint === 'registration' && registrationAttempts++ < 2) {
-          throw new NotesImportAppAttestHttpError({ kind: 'network' })
+          throw new AttestationHttpError({ kind: 'network' })
         }
         return { ok: true }
       },
@@ -852,7 +854,7 @@ describe('Notes Import App Attest', () => {
     ).rejects.toMatchObject({ code: 'network' })
     expect(harness.persisted.journal).not.toBeNull()
 
-    const restartedModule = createNotesImportAppAttest(harness.dependencies)
+    const restartedModule = createAppAttestAuthorizer(harness.dependencies)
     await restartedModule.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -878,7 +880,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrationAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 503,
             serverCode: 'server_error',
@@ -910,7 +912,7 @@ describe('Notes Import App Attest', () => {
       uuid: null,
       post: ({ endpoint }) => {
         if (endpoint === 'challenge' && challengeAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 429,
             serverCode: 'attestation_failed',
@@ -962,7 +964,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrationAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 429,
             serverCode: 'attestation_failed',
@@ -1007,7 +1009,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration' && registrations++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1042,7 +1044,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1100,7 +1102,7 @@ describe('Notes Import App Attest', () => {
           body.operation === 'enroll' &&
           enrollmentRegistrations++ === 0
         ) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1335,7 +1337,7 @@ describe('Notes Import App Attest', () => {
       attestationRetryable: false,
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -1376,7 +1378,7 @@ describe('Notes Import App Attest', () => {
       attestationRetryable: true,
     })
 
-    const restarted = createNotesImportAppAttest(harness.dependencies)
+    const restarted = createAppAttestAuthorizer(harness.dependencies)
     await restarted.post({
       endpoint: 'kickoff',
       payload: REQUEST_PAYLOAD,
@@ -1503,7 +1505,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') {
           if (reason === 'challenge_expired') {
-            throw new NotesImportAppAttestHttpError({
+            throw new AttestationHttpError({
               kind: 'http',
               status: 401,
               serverCode: 'attestation_failed',
@@ -1514,7 +1516,7 @@ describe('Notes Import App Attest', () => {
           return { challenge: 'challenge' }
         }
         if (endpoint === 'kickoff') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 409,
             serverCode: 'attestation_failed',
@@ -1655,7 +1657,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'kickoff' && kickoffAttempts++ === 0) {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',
@@ -1713,7 +1715,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',
@@ -1779,7 +1781,7 @@ describe('Notes Import App Attest', () => {
       activeKeyId: 'legacy-active-key',
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        throw new NotesImportAppAttestHttpError({
+        throw new AttestationHttpError({
           kind: 'http',
           status: 401,
           serverCode: 'attestation_failed',
@@ -2102,7 +2104,7 @@ describe('Notes Import App Attest', () => {
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         if (endpoint === 'registration') {
-          throw new NotesImportAppAttestHttpError({
+          throw new AttestationHttpError({
             kind: 'http',
             status: 401,
             serverCode: 'attestation_failed',
@@ -2188,5 +2190,216 @@ describe('Notes Import App Attest', () => {
       body: { purpose: 'notes-import-verify' },
     })
     expect(harness.generateAssertion).not.toHaveBeenCalled()
+  })
+})
+
+describe('App Attest for other features (assert)', () => {
+  const SESSION_HASH = 'c'.repeat(64)
+
+  /** A feature's own challenge and request routes, recorded. */
+  const channel = (
+    submit: (proof: unknown, call: number) => unknown = () => ({ ok: true })
+  ) => {
+    const challenges: Record<string, unknown>[] = []
+    const proofs: unknown[] = []
+    let issued = 0
+    return {
+      challenges,
+      proofs,
+      request: {
+        purpose: 'account-session' as const,
+        contentHash: SESSION_HASH,
+        requestHash: SESSION_HASH,
+        challenge: async (body: Record<string, unknown>) => {
+          challenges.push(body)
+          return {
+            protocolVersion: 2,
+            operation: body.operation,
+            operationId: body.operationId,
+            challenge: `session-challenge-${++issued}`,
+          }
+        },
+        submit: async (proof: unknown) => {
+          proofs.push(proof)
+          return submit(proof, proofs.length - 1)
+        },
+      },
+    }
+  }
+
+  it('gets the challenge from /attestation/v1 when the feature has no route of its own', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const { challenge: _own, ...request } = channel().request
+
+    await expect(harness.module.assert(request)).resolves.toEqual({
+      ok: true,
+    })
+
+    const challenges = harness.posts.filter((call) =>
+      call.endpoint.toLowerCase().includes('challenge')
+    )
+    expect(challenges.map((call) => call.endpoint)).toEqual([
+      'attestationChallenge',
+    ])
+    expect(challenges[0].body).toMatchObject({
+      purpose: 'account-session',
+      contentHash: SESSION_HASH,
+      requestHash: SESSION_HASH,
+    })
+  })
+
+  it('asserts through the feature routes without an install account id', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel()
+
+    await expect(harness.module.assert(routes.request)).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(routes.challenges).toEqual([
+      {
+        protocolVersion: 2,
+        operation: 'assert',
+        operationId: 'operation-1',
+        uuid: 'install-uuid',
+        keyId: 'active-key',
+        purpose: 'account-session',
+        accountId: undefined,
+        contentHash: SESSION_HASH,
+        requestHash: SESSION_HASH,
+      },
+    ])
+    expect(harness.hashedClientData).toEqual([
+      `witnesswork.app-attest|2|assert|account-session|operation-1|session-challenge-1|install-uuid||${SESSION_HASH}|${SESSION_HASH}`,
+    ])
+    expect(routes.proofs).toEqual([
+      {
+        kind: 'attestation',
+        fields: {
+          protocolVersion: 2,
+          operation: 'assert',
+          purpose: 'account-session',
+          operationId: 'operation-1',
+          requestHash: SESSION_HASH,
+          uuid: 'install-uuid',
+          contentHash: SESSION_HASH,
+          keyId: 'active-key',
+          challenge: 'session-challenge-1',
+          assertion: 'assertion',
+        },
+      },
+    ])
+    // Nothing went to Notes Import's routes.
+    expect(harness.posts).toEqual([])
+  })
+
+  it('asks again under a fresh operation once when the challenge expired', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel((_proof, call) => {
+      if (call === 0)
+        throw new AttestationHttpError({
+          kind: 'http',
+          status: 401,
+          serverCode: 'attestation_failed',
+          reason: 'challenge_expired',
+        })
+      return { ok: true }
+    })
+
+    await harness.module.assert(routes.request)
+
+    expect(routes.challenges.map((body) => body.operationId)).toEqual([
+      'operation-1',
+      'operation-2',
+    ])
+    expect(routes.proofs).toHaveLength(2)
+  })
+
+  it('keeps a refused attestation reason and passes other answers through', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const refused = channel(() => {
+      throw new AttestationHttpError({
+        kind: 'http',
+        status: 403,
+        serverCode: 'attestation_failed',
+        reason: 'assertion_invalid',
+      })
+    })
+    await expect(harness.module.assert(refused.request)).rejects.toMatchObject({
+      name: 'AttestationError',
+      code: 'authorizationFailed',
+      serverCode: 'attestation_failed',
+      reason: 'assertion_invalid',
+    })
+
+    const upgrade = channel(() => {
+      throw new AttestationHttpError({
+        kind: 'http',
+        status: 426,
+        serverCode: 'upgrade_required',
+      })
+    })
+    await expect(harness.module.assert(upgrade.request)).rejects.toMatchObject({
+      name: 'AttestationHttpError',
+      status: 426,
+    })
+  })
+
+  it('sends the dev bypass instead of a challenge in dev builds', async () => {
+    const harness = createHarness({ devBypass: true, uuid: null })
+    const routes = channel()
+
+    await harness.module.assert(routes.request)
+
+    expect(routes.challenges).toEqual([])
+    expect(routes.proofs).toEqual([
+      { kind: 'devBypass', token: 'dev-bypass-token' },
+    ])
+    expect(harness.generateAssertion).not.toHaveBeenCalled()
+  })
+
+  it('refuses malformed hashes and a worker without protocol v2', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+    })
+    const routes = channel()
+    await expect(
+      harness.module.assert({ ...routes.request, requestHash: 'nope' })
+    ).rejects.toMatchObject({ code: 'invalidInput' })
+
+    const v1 = createHarness({ protocolVersion: 1, activeKeyId: 'active-key' })
+    await expect(v1.module.assert(routes.request)).rejects.toMatchObject({
+      code: 'protocolUnavailable',
+    })
+    expect(routes.challenges).toEqual([])
+  })
+
+  it('reports whether App Attest is supported without touching a key', async () => {
+    const harness = createHarness()
+    await expect(harness.module.checkSupport()).resolves.toBe('supported')
+
+    harness.dependencies.appAttest.isSupported = () => false
+    await expect(harness.module.checkSupport()).resolves.toBe('unsupported')
+    await expect(
+      harness.module.assert(channel().request)
+    ).rejects.toMatchObject({ code: 'unsupported' })
+
+    const bypass = createHarness({ devBypass: true })
+    bypass.dependencies.appAttest.isSupported = () => false
+    await expect(bypass.module.checkSupport()).resolves.toBe('supported')
+    expect(harness.generateKey).not.toHaveBeenCalled()
   })
 })

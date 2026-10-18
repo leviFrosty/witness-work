@@ -298,6 +298,9 @@ export default function BuddiesRuntime() {
         void buddiesEngine
           .sync({ minSeq: seq, automatic: true })
           .catch(logFailure),
+      // After a refused handshake: a sync's 401 refreshes the session's token
+      // before the next connection sends it.
+      verify: () => buddiesEngine.sync({ automatic: true }).catch(logFailure),
       onEvent: recordLiveEvent,
     })
     /**

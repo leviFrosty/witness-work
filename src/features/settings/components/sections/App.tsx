@@ -52,7 +52,9 @@ const AppSection = ({
               ? undefined
               : notesImport.updateRequired
                 ? i18n.t('notesImport_updateRequired')
-                : i18n.t('notesImport_unavailable')
+                : notesImport.reason === 'device_unverified'
+                  ? i18n.t('account_statusUnverified')
+                  : i18n.t('notesImport_unavailable')
           }
           onPress={() => handleNavigate('NotesImportComposer')}
           selected={selectedDestination === 'NotesImportComposer'}

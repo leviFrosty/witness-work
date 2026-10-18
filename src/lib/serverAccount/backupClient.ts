@@ -1,18 +1,26 @@
 import { HttpError } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import {
-  type RegisterAccountOptions,
+  type BearerAccountOptions,
+  sendBearerAccountOp,
   sendSignedAccountOp,
+  type SignedAccountOptions,
 } from '@/lib/serverAccount/client'
 import { backupBlobDigest } from '@/lib/serverAccount/backupCrypto'
 
 /**
  * `/accounts/v1/backup/*` (docs/accounts-protocol.md, "Backup"): every op is
- * signed by the account key. `put` sends the envelope in headers and the blob
- * as the raw body; the rest are JSON envelopes. Failures throw `HttpError`,
- * whose `serverCode` is the server's (`too_large`, `limit`, `rate_limited`,
- * `not_found`, `disabled`, `unknown_account`, …).
+ * **Bearer**, with the account session's token. `put` sends the blob as the raw
+ * body with its slot and digest in headers; the rest send JSON. `delete` is
+ * also signed by the account key, so a leaked token alone can't delete backups.
+ * Failures throw `HttpError`, whose `serverCode` is the server's (`too_large`,
+ * `limit`, `rate_limited`, `not_found`, `disabled`, …).
  */
+
+/** Bearer ops, and the account key's signature for `delete`. */
+export type BackupClientOptions = BearerAccountOptions & {
+  sign: SignedAccountOptions
+}
 
 /** The server's caps, mirrored so the app can say so before uploading. */
 export const BACKUP_LIMITS = {
@@ -47,19 +55,19 @@ const isSlot = (value: unknown): value is BackupSlot => {
 
 /** Replaces this slot's blob. Resolves the server's upload time. */
 export async function putBackup(
-  options: RegisterAccountOptions,
+  options: BearerAccountOptions,
   slotId: string,
   blob: Uint8Array
 ): Promise<{ uploadedAt: number }> {
-  const response = await sendSignedAccountOp<{
+  // `size` is the body's Content-Length.
+  const response = await sendBearerAccountOp<{
     ok?: boolean
     uploadedAt?: unknown
-  }>(
-    'backup/put',
-    { slotId, size: blob.length, sha256: backupBlobDigest(blob) },
-    options,
-    { rawBody: blob, timeoutMs: BLOB_TIMEOUT_MS }
-  )
+  }>('backup/put', null, options, {
+    rawBody: blob,
+    headers: { 'x-ww-slot-id': slotId, 'x-ww-sha256': backupBlobDigest(blob) },
+    timeoutMs: BLOB_TIMEOUT_MS,
+  })
   const uploadedAt = response.data?.uploadedAt
   if (response.data?.ok !== true || typeof uploadedAt !== 'number')
     throw new HttpError('server', response.status, 'unexpected_response')
@@ -68,9 +76,9 @@ export async function putBackup(
 
 /** The account's slots: ids, sizes and upload times, never their contents. */
 export async function listBackups(
-  options: RegisterAccountOptions
+  options: BearerAccountOptions
 ): Promise<BackupSlot[]> {
-  const response = await sendSignedAccountOp<{
+  const response = await sendBearerAccountOp<{
     ok?: boolean
     slots?: unknown
   }>('backup/list', {}, options, { idempotent: true })
@@ -90,10 +98,10 @@ export async function listBackups(
 
 /** One slot's blob, exactly as put; `not_found` without one. */
 export async function getBackup(
-  options: RegisterAccountOptions,
+  options: BearerAccountOptions,
   slotId: string
 ): Promise<Uint8Array> {
-  const response = await sendSignedAccountOp<Uint8Array>(
+  const response = await sendBearerAccountOp<Uint8Array>(
     'backup/get',
     { slotId },
     options,
@@ -102,16 +110,21 @@ export async function getBackup(
   return response.data
 }
 
-/** Deletes one slot, or every slot of the account without `slotId`. */
+/**
+ * Deletes one slot, or every slot of the account without `slotId`. Bearer and
+ * the account key's envelope: the token's account must be the key's.
+ */
 export async function deleteBackup(
-  options: RegisterAccountOptions,
+  options: BackupClientOptions,
   slotId?: string
 ): Promise<void> {
-  const response = await sendSignedAccountOp<{ ok?: boolean }>(
-    'backup/delete',
-    slotId ? { slotId } : {},
-    options,
-    { idempotent: true }
+  const response = await options.authorize((authorization) =>
+    sendSignedAccountOp<{ ok?: boolean }>(
+      'backup/delete',
+      slotId ? { slotId } : {},
+      { ...options.sign, signal: options.signal },
+      { headers: { authorization }, idempotent: true }
+    )
   )
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')

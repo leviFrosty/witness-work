@@ -2,7 +2,6 @@ import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { toB64u } from '@/lib/bytes'
 import { HttpError, request } from '@/lib/http/request'
-import { registerAccount } from '@/lib/serverAccount/client'
 import { deriveClaimToken, parseHandoffLink } from '@/lib/serverAccount/handoff'
 import {
   cancelHandoffAsOffer,
@@ -13,16 +12,20 @@ import {
   createClaimSession,
   createOfferSession,
 } from '@/lib/serverAccount/handoffSession'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  interopAccount,
+  interopEnabled,
+  interopRelayUrl,
+  interopSessions,
+} from '@/lib/serverAccount/testing/interopSessions'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 /**
- * Opt-in contract check of Set Up Another Device against a real worker, e.g.
- * `BUDDIES_RELAY_URL=http://localhost:8787 pnpm exec vitest run
- * handoff.interop` with ww-api's `wrangler dev` running. Skipped by default.
+ * Opt-in contract check of Set Up Another Device against a real worker (see
+ * `interopSessions`). Skipped by default.
  */
-const relayUrl = process.env.BUDDIES_RELAY_URL
+const relayUrl = interopRelayUrl
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 const HELLO = {
@@ -33,17 +36,10 @@ const HELLO = {
 }
 
 async function oldPhone() {
-  const accountKey = random(32)
-  const signingKey = deriveAccountSigningKey(accountKey)
-  const options = {
-    baseUrl: relayUrl!,
-    key: signingKey,
-    now: Date.now,
-    randomBytes: random,
-  }
-  const { accountId } = await registerAccount(options)
+  const { accountKey, accountId, bearer } = await interopAccount(random)
+  const options = bearer
   const session = createOfferSession(
-    { accountKey, accountId, signingKey },
+    { accountKey, accountId, authorize: bearer.authorize },
     { baseUrl: relayUrl!, now: Date.now, randomBytes: random }
   )
   await session.open()
@@ -71,7 +67,7 @@ const code = async (run: () => Promise<unknown>) => {
   }
 }
 
-describe.skipIf(!relayUrl)('handoff against a real worker', () => {
+describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
   it('hands the account key to a new phone', async () => {
     const old = await oldPhone()
     const fresh = newPhone(old.offer)
@@ -88,6 +84,11 @@ describe.skipIf(!relayUrl)('handoff against a real worker', () => {
     if (fresh.state.step !== 'received') return
     expect(toB64u(fresh.state.received.accountKey)).toBe(toB64u(old.accountKey))
     expect(fresh.state.received.accountId).toBe(old.accountId)
+    // The new phone opens its own session with the key it received.
+    const received = fresh.state.received.accountKey
+    const opened = await interopSessions(random).openDetached(received)
+    expect(opened.accountId).toBe(old.accountId)
+    await opened.close()
     await fresh.finish()
     expect(fresh.debug().events.at(-1)?.outcome).toBe('ok')
     await old.session.poll()

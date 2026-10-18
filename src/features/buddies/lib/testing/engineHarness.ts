@@ -4,7 +4,7 @@ import {
   type BuddiesEngineDeps,
 } from '@/features/buddies/lib/engine'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
-import { createRelayClient } from '@/features/buddies/lib/relay'
+import { createRelayClient, type OwnerAuth } from '@/features/buddies/lib/relay'
 import type { BuddyStreak } from '@/features/buddies/lib/schemas'
 import {
   type BuddiesState,
@@ -13,6 +13,16 @@ import {
   type OutgoingShareSpec,
 } from '@/features/buddies/lib/state'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
+import type { AttestedRequest } from '@/lib/attestation/appAttest'
+import {
+  deriveAccountSigningKey,
+  signInboxLink,
+} from '@/lib/serverAccount/keys'
+import {
+  AccountSessionError,
+  type AttestationProblem,
+  createAccountSessions,
+} from '@/lib/serverAccount/session'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
 /**
@@ -42,6 +52,68 @@ export function memoryStore(initial: Partial<BuddiesState>) {
   }
 }
 
+export const RELAY_URL = 'https://relay.test'
+
+/**
+ * One device's account sessions on the fake relay: the app's own
+ * `createAccountSessions`, attesting with the dev bypass unless `attestation`
+ * names a problem, and kept in memory.
+ */
+export function testSessions({
+  fetchImpl,
+  now,
+  accountKey,
+  attestation = () => null,
+}: {
+  fetchImpl: typeof fetch
+  now: () => number
+  accountKey: () => Promise<Uint8Array>
+  attestation?: () => AttestationProblem | null
+}) {
+  let stored: string | null = null
+  return createAccountSessions({
+    baseUrl: RELAY_URL,
+    now,
+    localNow: now,
+    randomBytes: random,
+    attestation: {
+      assert: <T>(request: AttestedRequest<T>) => {
+        const problem = attestation()
+        if (problem)
+          throw new AccountSessionError('attestation', { attestation: problem })
+        return request.submit({ kind: 'devBypass', token: 'test' })
+      },
+    },
+    store: {
+      read: async () => stored,
+      write: async (value) => {
+        stored = value
+      },
+    },
+    accountKey,
+    fetchImpl,
+  })
+}
+
+/** The `OwnerAuth` an engine builds for `seed`'s inbox. */
+export function ownerAuthFor(seed: Uint8Array): OwnerAuth {
+  const me = deriveIdentity(seed)
+  return {
+    inboxId: me.inboxId,
+    ownerSeed: me.ownerSeed,
+    ownerPub: me.ownerPub,
+    link: {
+      sign: (accountId) =>
+        signInboxLink(
+          deriveAccountSigningKey(seed),
+          accountId,
+          me.inboxId,
+          me.ownerPub
+        ),
+    },
+  }
+}
+
 export function setup() {
   let clock = Date.parse('2026-09-23T15:00:00Z')
   const now = () => clock
@@ -50,18 +122,15 @@ export function setup() {
   const offlineOps = new Set<string>()
   /** Runs after the relay handled a request, before its response arrives. */
   let afterOp: ((op: string) => Promise<void>) | null = null
-  const relay = createRelayClient({
-    baseUrl: 'https://relay.test',
-    randomBytes: random,
-    fetchImpl: (async (url: string, init?: RequestInit) => {
-      const op = String(url).split('/buddies/v1/')[1]
-      if (offlineOps.has(op)) throw new TypeError('Network request failed')
-      const response = await fake.fetchImpl(url, init)
-      await afterOp?.(op)
-      return response
-    }) as typeof fetch,
-    now,
-  })
+  /** Buddies ops reach the relay through this; sessions too, unhooked. */
+  const fetchImpl = (async (url: string, init?: RequestInit) => {
+    const op: string | undefined = String(url).split('/buddies/v1/')[1]
+    if (op === undefined) return fake.fetchImpl(url, init)
+    if (offlineOps.has(op)) throw new TypeError('Network request failed')
+    const response = await fake.fetchImpl(url, init)
+    await afterOp?.(op)
+    return response
+  }) as typeof fetch
 
   function user(
     name: string,
@@ -84,6 +153,22 @@ export function setup() {
     const store = memoryStore({})
     const profile: BuddyProfile = { name }
     let rootSeed: Uint8Array | null = seed
+    const rootSeedNow = async () => (rootSeed ??= random(32))
+    let attestation: AttestationProblem | null = null
+    // The session follows the root seed (the account key), as in the app.
+    const sessions = testSessions({
+      fetchImpl,
+      now,
+      accountKey: rootSeedNow,
+      attestation: () => attestation,
+    })
+    const relay = createRelayClient({
+      baseUrl: RELAY_URL,
+      randomBytes: random,
+      authorize: (run, { signal }) => sessions.withSession(run, { signal }),
+      fetchImpl,
+      now,
+    })
     let shares: OutgoingShareSpec[] = []
     let streak: BuddyStreak | undefined
     let showBadges = true
@@ -97,10 +182,12 @@ export function setup() {
       store,
       randomBytes: random,
       now,
-      getRootSeed: async () => (rootSeed ??= random(32)),
+      getRootSeed: rootSeedNow,
       deleteRootSeed: async () => {
+        await sessions.close()
         rootSeed = null
       },
+      account: { forget: sessions.forget },
       getPlans: () => plans,
       getProfile: () => profile,
       getStreak: () => streak,
@@ -121,6 +208,17 @@ export function setup() {
       profile,
       seed,
       inboxId: deriveIdentity(seed).inboxId,
+      /** This device's relay client, with its session. */
+      relay,
+      sessions,
+      /** Puts a root seed back, as a handoff or a recovery key would. */
+      setRootSeed: (next: Uint8Array) => {
+        rootSeed = next
+      },
+      /** Makes this device's next `session/open` fail to attest, or not. */
+      setAttestation: (problem: AttestationProblem | null) => {
+        attestation = problem
+      },
       setShares: (next: OutgoingShareSpec[]) => {
         shares = next
       },
@@ -140,7 +238,7 @@ export function setup() {
 
   return {
     fake,
-    relay,
+    fetchImpl,
     offlineOps,
     setAfterOp: (hook: typeof afterOp) => {
       afterOp = hook

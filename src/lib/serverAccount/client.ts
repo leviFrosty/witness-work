@@ -1,19 +1,31 @@
-import { HttpError, request } from '@/lib/http/request'
+import {
+  HttpError,
+  type HttpResponse,
+  request,
+  type RequestOptions,
+} from '@/lib/http/request'
 import { RELAY_ID_PATTERN, toB64u, utf8 } from '@/lib/bytes'
 import {
   type AccountSigningKey,
   signAccountRequest,
 } from '@/lib/serverAccount/keys'
 
-/** Client for `/accounts/v1/*` (docs/accounts-protocol.md). */
+/**
+ * Client for `/accounts/v1/*` (docs/accounts-protocol.md). Most ops are
+ * **Bearer**: they carry the attested session's access token (`session.ts`).
+ * `session/open` and `backup/delete` are signed by the account key instead
+ * (`backup/delete` by both). Signed envelopes are `{ payload, signature }`.
+ */
 
 export const ACCOUNT_TIMEOUT_MS = 15 * 1000
 
 export type AccountStatus = 'active' | 'suspended'
 
-export type RegisteredAccount = { accountId: string; status: AccountStatus }
+export const isAccountStatus = (value: unknown): value is AccountStatus =>
+  value === 'active' || value === 'suspended'
 
-export type RegisterAccountOptions = {
+/** How a self-signed op is signed and sent. */
+export type SignedAccountOptions = {
   baseUrl: string
   key: AccountSigningKey
   /** Request timestamps; the server refuses one 5 minutes off its clock. */
@@ -23,27 +35,21 @@ export type RegisterAccountOptions = {
   signal?: AbortSignal
 }
 
-/** Ops signed by the account key (docs/accounts-protocol.md). */
-export type SignedAccountOp =
-  | 'account/register'
-  | 'account/info'
-  | 'handoff/open'
-  | 'handoff/status'
-  | 'handoff/send'
-  | 'handoff/cancel'
-  | 'backup/put'
-  | 'backup/list'
-  | 'backup/get'
-  | 'backup/delete'
+/**
+ * Ops signed by the account key (docs/accounts-protocol.md). The op name is the
+ * signature's context; the route is its own.
+ */
+export type SignedAccountOp = 'session/open' | 'backup/delete'
+
+const SIGNED_PATHS: Record<SignedAccountOp, string> = {
+  'session/open': 'sessions',
+  'backup/delete': 'backup/delete',
+}
 
 /** How one signed op travels, past the default JSON envelope and answer. */
 export type SignedAccountTransport = {
-  /**
-   * Sent as the raw body, with the envelope in `x-ww-p` and `x-ww-s`
-   * (`backup/put`).
-   */
-  rawBody?: Uint8Array
-  responseType?: 'json' | 'bytes'
+  /** Sent too: the dev bypass, or the bearer token of a step-up op. */
+  headers?: Record<string, string>
   timeoutMs?: number
   /** Repeating it can't do anything twice, so a lost answer is retried once. */
   idempotent?: boolean
@@ -57,7 +63,7 @@ export type SignedAccountTransport = {
 export async function sendSignedAccountOp<T>(
   op: SignedAccountOp,
   fields: Record<string, unknown>,
-  options: RegisterAccountOptions,
+  options: SignedAccountOptions,
   transport: SignedAccountTransport = {}
 ) {
   const send = async (ts: number) => {
@@ -69,22 +75,14 @@ export async function sendSignedAccountOp<T>(
         nonce: toB64u(options.randomBytes(16)),
       })
     )
-    const p = toB64u(payload)
-    const s = signAccountRequest(op, payload, options.key)
     return request<T>({
-      url: `${options.baseUrl}/accounts/v1/${op}`,
-      ...(transport.rawBody
-        ? {
-            method: 'POST' as const,
-            headers: {
-              'content-type': 'application/octet-stream',
-              'x-ww-p': p,
-              'x-ww-s': s,
-            },
-            body: transport.rawBody,
-          }
-        : { json: { p, s } }),
-      responseType: transport.responseType,
+      url: `${options.baseUrl}/accounts/v1/${SIGNED_PATHS[op]}`,
+      method: 'POST',
+      json: {
+        payload: toB64u(payload),
+        signature: signAccountRequest(op, payload, options.key),
+      },
+      headers: transport.headers,
       timeoutMs: transport.timeoutMs ?? ACCOUNT_TIMEOUT_MS,
       idempotent: transport.idempotent,
       retry: transport.idempotent ? { retries: 1 } : undefined,
@@ -101,34 +99,97 @@ export async function sendSignedAccountOp<T>(
   }
 }
 
-const isStatus = (value: unknown): value is AccountStatus =>
-  value === 'active' || value === 'suspended'
+/**
+ * Runs a request with the account session's `Authorization` header, refreshing
+ * the session and running it again after a 401 (`AccountSessions.withSession`
+ * for one account key).
+ */
+export type AccountAuthorize = <T>(
+  run: (authorization: string) => Promise<T>
+) => Promise<T>
+
+/** How a bearer op reaches the server. */
+export type BearerAccountOptions = {
+  baseUrl: string
+  authorize: AccountAuthorize
+  fetchImpl?: typeof fetch
+  signal?: AbortSignal
+}
+
+/** Ops that take the session's bearer token. */
+export type BearerAccountOp =
+  | 'account/info'
+  | 'handoff/open'
+  | 'handoff/status'
+  | 'handoff/send'
+  | 'handoff/cancel'
+  | 'backup/put'
+  | 'backup/list'
+  | 'backup/get'
 
 /**
- * The account for this signing key, created on first use; the same key always
- * gets the same account. Failures throw `HttpError`.
+ * `GET /accounts/v1/account` reads the account; the rest are `POST
+ * /accounts/v1/{op}`, so their ids stay out of URLs.
  */
-export async function registerAccount(
-  options: RegisterAccountOptions
-): Promise<RegisteredAccount> {
-  const response = await sendSignedAccountOp<{
-    ok?: boolean
-    accountId?: unknown
-    status?: unknown
-  }>('account/register', {}, options)
-  const { accountId, status } = response.data ?? {}
-  if (
-    response.data?.ok !== true ||
-    typeof accountId !== 'string' ||
-    !RELAY_ID_PATTERN.test(accountId) ||
-    !isStatus(status)
+const BEARER_ROUTES: Partial<
+  Record<BearerAccountOp, { method: 'GET'; path: string }>
+> = {
+  'account/info': { method: 'GET', path: 'account' },
+}
+
+/** How one bearer op travels, past the default JSON body and answer. */
+export type BearerAccountTransport = {
+  /** Sent as the raw body (`backup/put`), with these headers. */
+  rawBody?: Uint8Array
+  headers?: Record<string, string>
+  responseType?: RequestOptions['responseType']
+  timeoutMs?: number
+  idempotent?: boolean
+}
+
+/**
+ * Sends a bearer op with `fields` as its JSON body, or no body for `null`.
+ * Failures throw `HttpError` (an `AccountSessionError` when there's no session
+ * to send it with).
+ */
+export function sendBearerAccountOp<T>(
+  op: BearerAccountOp,
+  fields: Record<string, unknown> | null,
+  options: BearerAccountOptions,
+  transport: BearerAccountTransport = {}
+): Promise<HttpResponse<T>> {
+  const route = BEARER_ROUTES[op] ?? { method: 'POST', path: op }
+  return options.authorize((authorization) =>
+    request<T>({
+      url: `${options.baseUrl}/accounts/v1/${route.path}`,
+      method: route.method,
+      ...(transport.rawBody
+        ? {
+            headers: {
+              ...transport.headers,
+              authorization,
+              'content-type': 'application/octet-stream',
+            },
+            body: transport.rawBody,
+          }
+        : {
+            headers: { ...transport.headers, authorization },
+            ...(fields !== null && { json: fields }),
+          }),
+      responseType: transport.responseType,
+      timeoutMs: transport.timeoutMs ?? ACCOUNT_TIMEOUT_MS,
+      idempotent: transport.idempotent,
+      retry: transport.idempotent ? { retries: 1 } : undefined,
+      signal: options.signal,
+      fetchImpl: options.fetchImpl,
+    })
   )
-    throw new HttpError('server', response.status, 'unexpected_response')
-  return { accountId, status }
 }
 
 /** What the server holds for this device's own account (`account/info`). */
-export type ServerAccountInfo = RegisteredAccount & {
+export type ServerAccountInfo = {
+  accountId: string
+  status: AccountStatus
   accountPub: string
   createdAt: number
   inboxIds: string[]
@@ -136,16 +197,17 @@ export type ServerAccountInfo = RegisteredAccount & {
 }
 
 /**
- * Reads this signing key's account, for the developer tools. Never creates one:
- * an unregistered key throws `HttpError` with `unknown_account`.
+ * Reads the session's account (`GET /accounts/v1/account`): its status, which
+ * inboxes it holds, and its history. Failures throw `HttpError`.
  */
 export async function fetchAccountInfo(
-  options: RegisterAccountOptions
+  options: BearerAccountOptions
 ): Promise<ServerAccountInfo> {
-  const response = await sendSignedAccountOp<Record<string, unknown>>(
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
     'account/info',
-    {},
-    options
+    null,
+    options,
+    { idempotent: true }
   )
   const data = response.data ?? {}
   const { accountId, accountPub, status, createdAt, inboxIds, statusChanges } =
@@ -155,14 +217,14 @@ export async function fetchAccountInfo(
     typeof accountId !== 'string' ||
     !RELAY_ID_PATTERN.test(accountId) ||
     typeof accountPub !== 'string' ||
-    !isStatus(status) ||
+    !isAccountStatus(status) ||
     typeof createdAt !== 'number' ||
     !Array.isArray(inboxIds) ||
     !inboxIds.every((id) => typeof id === 'string') ||
     !Array.isArray(statusChanges) ||
     !statusChanges.every(
       (change) =>
-        isStatus(change?.status) && typeof change?.createdAt === 'number'
+        isAccountStatus(change?.status) && typeof change?.createdAt === 'number'
     )
   )
     throw new HttpError('server', response.status, 'unexpected_response')

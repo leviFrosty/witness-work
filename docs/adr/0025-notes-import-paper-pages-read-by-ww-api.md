@@ -20,6 +20,8 @@ The text pipeline stays as it is: App Attest or Play Integrity on each request (
 - **Metering.** Reading pages spends no Import Credit; sending the reviewed text is one ordinary import. Two limits keep the free model call bounded: a free user with no imports left is refused before any page is read (the same `limit_reached`), and each identity gets a rolling daily page allowance (40, or 200 for Supporters; 429 `transcribe_limit` past it).
 - **Failures.** A failure every page would repeat (allowance, verification, connection, outage) stops the batch, and whatever was read is kept. A failed or truncated page keeps the rest and tells the user to check the text.
 
+Since ADR 0027, `transcribe` is a bearer request on the account session: no per-page attestation or hashes, and the page allowance counts per account. A suspended account is refused (`suspended`), which stops the batch.
+
 ## Considered options
 
 - **Keep it on the device and add ML Kit on Android.** Rejected: ML Kit's text recognizer is built for print, and handwriting is the point.

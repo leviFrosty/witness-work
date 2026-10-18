@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import {
   useNavigation,
@@ -13,7 +13,10 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { platformKey } from '@/app/account/attestationCopy'
+import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffCode from '@/features/settings/components/account/handoff/HandoffCode'
 import HandoffScanPanel from '@/features/settings/components/account/handoff/HandoffScanPanel'
@@ -22,6 +25,7 @@ import HandoffStatus, {
 } from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
 import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
+import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 
@@ -32,10 +36,20 @@ const LINK_PROBLEM = {
 } as const
 
 /**
+ * Failures scanning again or a recovery key can't fix: the device can't be
+ * verified, or the app needs an update.
+ */
+const FINAL = new Set<HandoffFailure | 'replace_failed'>([
+  'unverified',
+  'updateRequired',
+])
+
+/**
  * Sign In with QR Code, on the new phone: scan the other phone's code (or open
  * its link), compare the code both show, and once the other phone allows it,
  * this phone uses the account. A recovery key is the way in without the other
- * phone.
+ * phone. A device that can never attest is told so first, before it claims the
+ * other phone's code.
  */
 const SignInWithQrScreen = () => {
   const theme = useTheme()
@@ -43,9 +57,20 @@ const SignInWithQrScreen = () => {
   const route =
     useRoute<RouteProp<RootStackParamList, 'Sign In With QR Code'>>()
   const entry = route.params?.entry ?? 'settings'
+  const support = useAttestationSupport()
+  const unverifiable = support === 'unsupported'
+  // An opened link waits until it's known this device can sign in.
   const { session, state, linkProblem, completion, scanned, reset } =
-    useClaimHandoff(entry, route.params?.link)
+    useClaimHandoff(
+      entry,
+      support === null || unverifiable ? undefined : route.params?.link
+    )
   const [recovering, setRecovering] = useState(false)
+
+  useEffect(() => {
+    if (unverifiable)
+      analytics.capture('handoff_failed', { role: 'new', reason: 'unverified' })
+  }, [unverifiable])
 
   const recoveryKeyAction = {
     label: i18n.t('handoff_useRecoveryKey'),
@@ -57,8 +82,40 @@ const SignInWithQrScreen = () => {
     onPress: reset,
     testID: 'handoff-scan-again',
   }
+  const failureActions = (reason: HandoffFailure | 'replace_failed') =>
+    FINAL.has(reason)
+      ? {
+          primary: {
+            label: i18n.t('done'),
+            onPress: () => navigation.goBack(),
+            testID: 'handoff-failed-done',
+          },
+        }
+      : { primary: scanAgain, secondary: recoveryKeyAction }
 
   const content = () => {
+    if (unverifiable)
+      return (
+        <HandoffStatus
+          icon={CircleAlertIcon}
+          tone='error'
+          title={i18n.t('account_unverifiedTitle')}
+          body={i18n.t(
+            platformKey(
+              'handoff_signInUnverified',
+              'handoff_signInUnverifiedAndroid'
+            )
+          )}
+          primary={{
+            label: i18n.t('done'),
+            onPress: () => navigation.goBack(),
+            testID: 'handoff-unverified-done',
+          }}
+          testID='handoff-unverified'
+        />
+      )
+    if (support === null && route.params?.link)
+      return <HandoffStatus loading body={i18n.t('handoff_connecting')} />
     if (completion !== 'idle' && completion !== 'running') {
       if (completion.outcome === 'done') {
         const restored = completion.restore.outcome === 'restored'
@@ -113,8 +170,7 @@ const SignInWithQrScreen = () => {
                 )
               : handoffFailureMessage('new', completion.reason)
           }
-          primary={scanAgain}
-          secondary={recoveryKeyAction}
+          {...failureActions(completion.reason)}
           testID='handoff-failed'
         />
       )
@@ -189,8 +245,7 @@ const SignInWithQrScreen = () => {
             tone='error'
             title={i18n.t('handoff_failedTitle')}
             body={handoffFailureMessage('new', state.reason)}
-            primary={scanAgain}
-            secondary={recoveryKeyAction}
+            {...failureActions(state.reason)}
             testID='handoff-failed'
           />
         )

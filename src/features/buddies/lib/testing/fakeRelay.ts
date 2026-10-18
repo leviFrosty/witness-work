@@ -11,6 +11,11 @@ import { ed25519Verify, sha256 } from '@/features/buddies/lib/crypto'
  * In-memory relay implementing docs/buddies-protocol.md closely enough to
  * exercise the client end to end: signatures, slots, caps, invite lifecycle,
  * seq semantics, and push intents. Not a substitute for ww-api's own tests.
+ *
+ * Bearer-only, as with ww-api's legacy switch off: every op needs a session's
+ * access token (426 `upgrade_required` without one), which it opens, refreshes
+ * and closes at `/accounts/v1/sessions` (docs/accounts-protocol.md) without
+ * checking an attestation.
  */
 
 type StoredEvent = {
@@ -75,6 +80,22 @@ export function createFakeRelay(now: () => number) {
     { accountPub: string; status: 'active' | 'suspended' }
   >()
   const inboxAccounts = new Map<string, string>()
+  /** Live sessions by id, and the access tokens they handed out. */
+  const sessions = new Map<
+    string,
+    { accountId: string; refreshToken: string; expiresAt: number }
+  >()
+  const accessTokens = new Map<
+    string,
+    { accountId: string; sessionId: string }
+  >()
+  let issued = 0
+  /** Every Buddies request, for tests of what goes on the wire. */
+  const requests: {
+    op: string
+    headers: Record<string, string>
+    body: unknown
+  }[] = []
   const suspended = (inboxId: string) => {
     const accountId = inboxAccounts.get(inboxId)
     return (
@@ -114,12 +135,29 @@ export function createFakeRelay(now: () => number) {
     inbox.events = inbox.events.filter((event) => event.slotId !== slotId)
   }
 
-  /** `blob/put`: the envelope rides in headers; the body is the bytes. */
-  function putBlob(init: RequestInit | undefined) {
+  /**
+   * An owner op's account check: the inbox must be linked to the caller's
+   * account. Null when it is.
+   */
+  function notOwner(inboxId: string, accountId: string) {
+    const linked = inboxAccounts.get(inboxId)
+    if (linked === undefined) return fail(409, 'not_linked')
+    if (linked !== accountId) return fail(403, 'forbidden')
+    return null
+  }
+
+  /** `blob/put`: the fields ride in a header; the body is the bytes. */
+  function putBlob(
+    init: RequestInit | undefined,
+    headers: Record<string, string>,
+    accountId: string
+  ) {
     if (!capabilities.photos) return fail(503, 'photos_disabled')
-    const headers = (init?.headers ?? {}) as Record<string, string>
-    const bytes = fromB64u(headers['x-buddies-p'])
-    const payload = JSON.parse(fromUtf8(bytes)) as {
+    if (headers['x-buddies-signature'] !== undefined)
+      return fail(400, 'bad_request')
+    const payload = JSON.parse(
+      fromUtf8(fromB64u(headers['x-buddies-payload']))
+    ) as {
       inboxId: string
       blobId: string
       bytes: number
@@ -128,12 +166,8 @@ export function createFakeRelay(now: () => number) {
     }
     const inbox = inboxes.get(payload.inboxId)
     if (!inbox) return fail(404, 'not_found')
-    const signed = ed25519Verify(
-      fromB64u(headers['x-buddies-s']),
-      concatBytes(utf8('ww-buddies/v1\nblob/put\n'), bytes),
-      fromB64u(inbox.ownerPub)
-    )
-    if (!signed) return fail(401, 'bad_signature')
+    const refused = notOwner(payload.inboxId, accountId)
+    if (refused) return refused
     const data = init?.body as Uint8Array
     if (data.length > 1024 * 1024) return fail(413, 'too_large')
     // Like the relay: at most 90 days out, and only from an inbox with a buddy.
@@ -159,16 +193,135 @@ export function createFakeRelay(now: () => number) {
     return ok({ expiresAt })
   }
 
+  /** Opens a session for `accountPub`'s account, made the first time. */
+  function openSession(accountPub: string) {
+    let accountId = [...accounts].find(
+      ([, account]) => account.accountPub === accountPub
+    )?.[0]
+    if (!accountId) {
+      accountId = toB64u(
+        sha256(utf8(`fake-account|${accountPub}|${issued++}`)).slice(0, 16)
+      )
+      accounts.set(accountId, { accountPub, status: 'active' })
+    }
+    const sessionId = `session-${issued++}`
+    const session = {
+      accountId,
+      refreshToken: `refresh-${issued++}`,
+      expiresAt: now() + 90 * 24 * 60 * 60 * 1000,
+    }
+    sessions.set(sessionId, session)
+    const accessToken = `access-${issued++}`
+    accessTokens.set(accessToken, { accountId, sessionId })
+    return {
+      ok: true,
+      accountId,
+      status: accounts.get(accountId)!.status,
+      sessionId,
+      accessToken,
+      accessExpiresAt: now() + 15 * 60 * 1000,
+      refreshToken: session.refreshToken,
+      sessionExpiresAt: session.expiresAt,
+    }
+  }
+
+  /** `/accounts/v1/sessions…`: open, refresh, and close. */
+  function sessionRoute(path: string, init: RequestInit | undefined) {
+    if (path === 'sessions') {
+      const body = JSON.parse(String(init?.body)) as {
+        payload: string
+        signature: string
+      }
+      const bytes = fromB64u(body.payload)
+      const { accountPub } = JSON.parse(fromUtf8(bytes)) as {
+        accountPub: string
+      }
+      const signed = ed25519Verify(
+        fromB64u(body.signature),
+        concatBytes(utf8('ww-account/v1\nsession/open\n'), bytes),
+        fromB64u(accountPub)
+      )
+      if (!signed) return fail(401, 'bad_signature')
+      return respond(201, openSession(accountPub))
+    }
+    if (path === 'sessions/refresh') {
+      const { refreshToken } = JSON.parse(String(init?.body)) as {
+        refreshToken: string
+      }
+      const found = [...sessions].find(
+        ([, session]) => session.refreshToken === refreshToken
+      )
+      if (!found || found[1].expiresAt <= now())
+        return fail(401, 'unauthorized')
+      const [sessionId, session] = found
+      session.refreshToken = `refresh-${issued++}`
+      const accessToken = `access-${issued++}`
+      accessTokens.set(accessToken, { accountId: session.accountId, sessionId })
+      return ok({
+        accessToken,
+        accessExpiresAt: now() + 15 * 60 * 1000,
+        refreshToken: session.refreshToken,
+        sessionExpiresAt: session.expiresAt,
+      })
+    }
+    if (path === 'sessions/current') {
+      const caller = callerOf(headersOf(init))
+      if (caller instanceof Response) return caller
+      sessions.delete(caller.sessionId)
+      for (const [token, access] of accessTokens)
+        if (access.sessionId === caller.sessionId) accessTokens.delete(token)
+      return ok()
+    }
+    return fail(404, 'not_found')
+  }
+
+  const headersOf = (init: RequestInit | undefined) =>
+    Object.fromEntries(
+      Object.entries((init?.headers ?? {}) as Record<string, string>).map(
+        ([name, value]) => [name.toLowerCase(), value]
+      )
+    )
+
+  /** The session a request's bearer token belongs to, or the refusal. */
+  function callerOf(headers: Record<string, string>) {
+    const authorization = headers.authorization
+    // A request without a token is a legacy one, refused with the switch off.
+    if (!authorization?.startsWith('Bearer '))
+      return fail(426, 'upgrade_required')
+    return (
+      accessTokens.get(authorization.slice('Bearer '.length)) ??
+      fail(401, 'unauthorized')
+    )
+  }
+
   async function fetchImpl(url: string | URL | Request, init?: RequestInit) {
+    if (String(url).includes('/accounts/v1/'))
+      return sessionRoute(String(url).split('/accounts/v1/')[1], init)
     const op = String(url).split('/buddies/v1/')[1]
-    if (op === 'blob/put') return putBlob(init)
-    const body = JSON.parse(String(init?.body)) as { p: string; s?: string }
-    const bytes = fromB64u(body.p)
-    const payload = JSON.parse(fromUtf8(bytes)) as Record<string, never>
+    const headers = headersOf(init)
+    requests.push({
+      op,
+      headers,
+      body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+    })
+    const caller = callerOf(headers)
+    if (caller instanceof Response) return caller
+    const { accountId } = caller
+    if (op === 'blob/put') return putBlob(init, headers, accountId)
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+    /** Envelope ops sign `payload`; capability ops send it unsigned. */
+    const enveloped = typeof body.payload === 'string'
+    const bytes = enveloped ? fromB64u(body.payload as string) : null
+    // Owner ops send their fields as the body itself.
+    const payload = (bytes ? JSON.parse(fromUtf8(bytes)) : body) as Record<
+      string,
+      never
+    >
     const signedBy = (publicKey: string) =>
-      body.s !== undefined &&
+      bytes !== null &&
+      typeof body.signature === 'string' &&
       ed25519Verify(
-        fromB64u(body.s),
+        fromB64u(body.signature),
         concatBytes(utf8(`ww-buddies/v1\n${op}\n`), bytes),
         fromB64u(publicKey)
       )
@@ -233,31 +386,29 @@ export function createFakeRelay(now: () => number) {
     if (op === 'inbox/register') {
       if (!signedBy(payload.ownerPub)) return fail(401, 'bad_signature')
       if (suspended(payload.inboxId)) return fail(403, 'suspended')
+      // With a session the account's claim is required, for its account.
       const proof = payload.account as
         | { accountId: string; signature: string }
         | undefined
-      let claim: string | null = null
-      if (proof) {
-        const account = accounts.get(proof.accountId)
-        if (!account) return fail(404, 'unknown_account')
-        const linkSigned = ed25519Verify(
-          fromB64u(proof.signature),
-          utf8(
-            `ww-account/v1\ninbox/link\n${proof.accountId}\n${payload.inboxId}\n${payload.ownerPub}`
-          ),
-          fromB64u(account.accountPub)
-        )
-        if (!linkSigned) return fail(401, 'bad_signature')
-        const linked = inboxAccounts.get(payload.inboxId)
-        if (linked && linked !== proof.accountId) return fail(409, 'conflict')
-        if (account.status === 'suspended') return fail(403, 'suspended')
-        claim = proof.accountId
-      }
+      if (!proof) return fail(400, 'bad_request')
+      if (proof.accountId !== accountId) return fail(403, 'forbidden')
+      const account = accounts.get(proof.accountId)
+      if (!account) return fail(404, 'unknown_account')
+      const linkSigned = ed25519Verify(
+        fromB64u(proof.signature),
+        utf8(
+          `ww-account/v1\ninbox/link\n${proof.accountId}\n${payload.inboxId}\n${payload.ownerPub}`
+        ),
+        fromB64u(account.accountPub)
+      )
+      if (!linkSigned) return fail(401, 'bad_signature')
+      const linked = inboxAccounts.get(payload.inboxId)
+      if (linked && linked !== proof.accountId) return fail(409, 'conflict')
+      if (account.status === 'suspended') return fail(403, 'suspended')
       const existing = inboxes.get(payload.inboxId)
       if (existing && existing.ownerPub !== payload.ownerPub)
         return fail(409, 'conflict')
-      if (claim) inboxAccounts.set(payload.inboxId, claim)
-      const accountId = inboxAccounts.get(payload.inboxId)
+      inboxAccounts.set(payload.inboxId, proof.accountId)
       if (!existing)
         inboxes.set(payload.inboxId, {
           ownerPub: payload.ownerPub,
@@ -269,7 +420,7 @@ export function createFakeRelay(now: () => number) {
           roster: null,
           openInvites: new Set(),
         })
-      return ok(accountId ? { accountId } : {})
+      return ok({ accountId: proof.accountId })
     }
 
     const inbox = inboxes.get(payload.inboxId)
@@ -335,7 +486,9 @@ export function createFakeRelay(now: () => number) {
       return ok({ seq: inbox.seq })
     }
 
-    if (!signedBy(inbox.ownerPub)) return fail(401, 'bad_signature')
+    if (enveloped) return fail(400, 'bad_request')
+    const refused = notOwner(payload.inboxId, accountId)
+    if (refused) return refused
     if (
       suspended(payload.inboxId) &&
       op !== 'inbox/delete' &&
@@ -428,5 +581,11 @@ export function createFakeRelay(now: () => number) {
     capabilities,
     accounts,
     inboxAccounts,
+    sessions,
+    requests,
+    /** Ends every access token, as their 15 minutes would: next is a 401. */
+    expireAccessTokens: () => accessTokens.clear(),
+    /** Whether the relay honors this access token, as the live route checks. */
+    acceptsToken: (accessToken: string) => accessTokens.has(accessToken),
   }
 }

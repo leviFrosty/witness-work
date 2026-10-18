@@ -4,6 +4,12 @@ export type BuddySyncFailureReason =
   | 'disabled'
   | 'suspended'
   | 'rate_limited'
+  /** This device can't be verified, so it has no account session. */
+  | 'unverified'
+  /** Verifying this device failed for now. */
+  | 'verify_later'
+  /** Ww-api needs a newer app. */
+  | 'update'
   | 'error'
 
 /** How Buddies syncs from anywhere in the app have gone. */
@@ -103,12 +109,15 @@ export async function trackSync<Outcome>(
 
 /**
  * What the Buddies screen says about syncing: nothing while the latest sync
- * worked, else why it didn't. Rate limits read as a plain failure.
+ * worked, else why it didn't. Rate limits read as a plain failure, and so does
+ * an app that needs updating (Update Required covers the screen anyway).
  */
 export type BuddiesSyncNotice =
   | 'offline'
   | 'disabled'
   | 'suspended'
+  | 'unverified'
+  | 'verifyLater'
   | 'error'
   | null
 
@@ -122,8 +131,10 @@ export function buddiesSyncNotice(
   if (
     failure.reason === 'offline' ||
     failure.reason === 'disabled' ||
-    failure.reason === 'suspended'
+    failure.reason === 'suspended' ||
+    failure.reason === 'unverified'
   )
     return failure.reason
+  if (failure.reason === 'verify_later') return 'verifyLater'
   return 'error'
 }

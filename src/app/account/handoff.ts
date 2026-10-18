@@ -18,9 +18,8 @@ import {
 } from '@/lib/accountKey/accountKey'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
-import { serverAccount } from '@/lib/serverAccount'
+import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
-import { registerAccount } from '@/lib/serverAccount/client'
 import type { HandoffHello, HandoffOffer } from '@/lib/serverAccount/handoff'
 import {
   type ClaimSession,
@@ -31,7 +30,10 @@ import {
   handoffFailureFor,
   type OfferSession,
 } from '@/lib/serverAccount/handoffSession'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  type DetachedSession,
+  toAccountSessionError,
+} from '@/lib/serverAccount/session'
 import { syncNow } from '@/lib/syncClock'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 
@@ -145,13 +147,33 @@ export type OfferStartProblem =
   | 'unsupported'
   /** Accounts are off on the server. */
   | 'unavailable'
-  /** The account couldn't be registered: offline or the server failed. */
+  /** This device couldn't prove it's WitnessWork. */
+  | 'unverified'
+  /** Verifying this device failed for now (Apple or Google, or the server). */
+  | 'verifyLater'
+  /** The server needs a newer app. */
+  | 'updateRequired'
+  /** The account couldn't be reached: offline or the server failed. */
   | 'offline'
 
+/** Why the account's session couldn't be opened, for the old phone. */
+function offerStartProblem(error: unknown): OfferStartProblem {
+  const failure = toAccountSessionError(error)
+  switch (failure.failure) {
+    case 'unavailable':
+      return 'unavailable'
+    case 'attestation':
+      return failure.attestation === 'temporary' ? 'verifyLater' : 'unverified'
+    case 'upgrade':
+      return 'updateRequired'
+  }
+  return 'offline'
+}
+
 /**
- * The old phone: makes sure the account key exists and the account is
- * registered, then opens a channel. Resolves the session (opening) or why it
- * can't start.
+ * The old phone: makes sure the account key exists and the account's session is
+ * open (registering the account the first time), then opens a channel. Resolves
+ * the session (opening) or why it can't start.
  */
 export async function startOfferHandoff(
   entry: HandoffEntry,
@@ -162,23 +184,20 @@ export async function startOfferHandoff(
 > {
   if (!accountKeyAvailable()) return { ok: false, problem: 'unsupported' }
   const key = await accountKey.getOrCreate()
-  const account = await serverAccount.ensure(key)
-  if (!account) {
-    const cached = serverAccount.cached(key)
-    const off =
-      !cached?.accountId && (cached?.unavailableUntil ?? 0) > Date.now()
+  let accountId: string
+  try {
+    accountId = (await serverAccount.connect(key)).accountId
+  } catch (error) {
+    const problem = offerStartProblem(error)
     if (!quiet)
-      analytics.capture('handoff_failed', {
-        role: 'old',
-        reason: off ? 'unavailable' : 'offline',
-      })
-    return { ok: false, problem: off ? 'unavailable' : 'offline' }
+      analytics.capture('handoff_failed', { role: 'old', reason: problem })
+    return { ok: false, problem }
   }
   const session = createOfferSession(
     {
       accountKey: key,
-      accountId: account.accountId,
-      signingKey: deriveAccountSigningKey(key),
+      accountId,
+      authorize: (run) => accountSessions.withSession(run, { accountKey: key }),
     },
     sessionDeps()
   )
@@ -237,10 +256,11 @@ export type ClaimCompletion =
     }
 
 /**
- * The new phone, once the key arrived: checks the key registers as the account
- * it came with, warns when replacing this phone's key loses Buddies data
- * (`confirmReplace`), replaces it, tells the old phone it's done, and starts
- * Buddies when the account uses it.
+ * The new phone, once the key arrived: opens a session with the key (attesting
+ * this phone) and checks it's the account the key came with, warns when
+ * replacing this phone's key loses Buddies data (`confirmReplace`), replaces it
+ * and keeps that session, tells the old phone it's done, and starts Buddies
+ * when the account uses it.
  */
 export async function completeClaimHandoff(
   session: ClaimSession,
@@ -258,23 +278,20 @@ export async function completeClaimHandoff(
     return { outcome: 'failed', reason: 'conflict' }
   const { accountKey: newKey, accountId } = state.received
 
-  // The key must be the account's: the same accountPub always registers as
-  // the same accountId.
+  // The key must be the account's: the same accountPub always opens a session
+  // for the same accountId.
+  let opened: DetachedSession
   try {
-    const registered = await registerAccount({
-      baseUrl: apis.accounts,
-      key: deriveAccountSigningKey(newKey),
-      now: syncNow,
-      randomBytes: getRandomBytes,
-    })
-    if (registered.accountId !== accountId) {
-      session.fail('tampered')
-      return { outcome: 'failed', reason: 'tampered' }
-    }
+    opened = await accountSessions.openDetached(newKey)
   } catch (error) {
-    const reason = handoffFailureFor(error, 'account/register')
+    const reason = handoffFailureFor(error, 'session/open')
     session.fail(reason)
     return { outcome: 'failed', reason }
+  }
+  if (opened.accountId !== accountId) {
+    await opened.close()
+    session.fail('tampered')
+    return { outcome: 'failed', reason: 'tampered' }
   }
 
   const current = await accountKey.peek()
@@ -290,6 +307,7 @@ export async function completeClaimHandoff(
     (losesSomething(loss) || Platform.OS === 'ios') &&
     !(await confirmReplace(loss))
   ) {
+    await opened.close()
     await endHandoff(session, 'replace_declined')
     return { outcome: 'declined' }
   }
@@ -298,11 +316,15 @@ export async function completeClaimHandoff(
     const result = await replaceAccountKey(newKey, {
       source: 'handoff',
       confirmedLoss: true,
+      session: opened,
     })
     if (result.outcome === 'replaced' && result.accountId !== accountId)
-      logger.warn('[handoff] the new account registered under another id')
+      logger.warn('[handoff] the new account opened under another id')
+    // Already this phone's key, with its own session: the extra one ends.
+    await opened.close()
   } catch (error) {
     logger.warn('[handoff] replacing the account key failed', error)
+    await opened.close()
     await endHandoff(session, 'replace_failed')
     return {
       outcome: 'failed',

@@ -19,6 +19,7 @@ import {
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
@@ -341,6 +342,8 @@ export function installDevHarness() {
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
+      // Notes Import's ledger `entries` and each run's live `runtimes`.
+      notesImport: useNotesImportManager,
       // The bell's book (`seen`, `dismissed`) and its counted `unread`.
       notificationsTray: useNotificationsTray,
       // `setState({ celebrating: { count, kind } })` replays a milestone; with

@@ -1,6 +1,6 @@
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { sha256 } from '@noble/hashes/sha2.js'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, type Mock, vi } from 'vitest'
 import { concatBytes, fromB64u, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
 import {
@@ -9,6 +9,7 @@ import {
   listBackups,
   putBackup,
 } from '@/lib/serverAccount/backupClient'
+import type { AccountAuthorize } from '@/lib/serverAccount/client'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -35,14 +36,22 @@ function fakeFetch(respond: (seen: Seen, index: number) => Response) {
     seen.push(entry)
     return respond(entry, seen.length - 1)
   }) as unknown as typeof fetch
+  const authorize = vi.fn(<T>(run: (authorization: string) => Promise<T>) =>
+    run('Bearer access')
+  ) as AccountAuthorize & Mock
   const options = {
     baseUrl: 'https://api.test',
-    key,
-    now: () => 1_000_000,
-    randomBytes: (length: number) => new Uint8Array(length).fill(1),
+    authorize,
     fetchImpl,
+    sign: {
+      baseUrl: 'https://api.test',
+      key,
+      now: () => 1_000_000,
+      randomBytes: (length: number) => new Uint8Array(length).fill(1),
+      fetchImpl,
+    },
   }
-  return { seen, options }
+  return { seen, options, authorize }
 }
 
 const json = (status: number, body: unknown) =>
@@ -51,65 +60,43 @@ const json = (status: number, body: unknown) =>
     headers: { 'content-type': 'application/json' },
   })
 
-/** Checks the envelope's signature the way the worker does, and returns `p`. */
-function verified(op: string, p: string, s: string) {
-  const payload = fromB64u(p)
+/** Checks the envelope's signature the way the worker does; its payload. */
+function verified(op: string, payload: string, signature: string) {
+  const payloadBytes = fromB64u(payload)
   expect(
     ed25519.verify(
-      fromB64u(s),
-      concatBytes(utf8(`ww-account/v1\n${op}\n`), payload),
+      fromB64u(signature),
+      concatBytes(utf8(`ww-account/v1\n${op}\n`), payloadBytes),
       fromB64u(key.publicKey)
     )
   ).toBe(true)
-  return JSON.parse(fromUtf8(payload)) as Record<string, unknown>
+  return JSON.parse(fromUtf8(payloadBytes)) as Record<string, unknown>
 }
 
 describe('backup client', () => {
-  it('puts the blob as the raw body with the envelope in headers', async () => {
+  it('puts the blob as the raw body with its slot and digest in headers', async () => {
     const blob = new Uint8Array([1, 2, 3, 4, 5])
-    const { seen, options } = fakeFetch(() =>
+    const { seen, options, authorize } = fakeFetch(() =>
       json(200, { ok: true, uploadedAt: 42 })
     )
     expect(await putBackup(options, SLOT, blob)).toEqual({ uploadedAt: 42 })
+    expect(authorize).toHaveBeenCalledTimes(1)
     const [request] = seen
     expect(request.url).toBe('https://api.test/accounts/v1/backup/put')
-    expect(request.headers['content-type']).toBe('application/octet-stream')
-    expect(request.body).toBe(blob)
-    const payload = verified(
-      'backup/put',
-      request.headers['x-ww-p'],
-      request.headers['x-ww-s']
-    )
-    expect(payload).toMatchObject({
-      slotId: SLOT,
-      size: 5,
-      sha256: toB64u(sha256(blob)),
-      accountPub: key.publicKey,
-      ts: 1_000_000,
+    expect(request.headers).toMatchObject({
+      authorization: 'Bearer access',
+      'content-type': 'application/octet-stream',
+      'x-ww-slot-id': SLOT,
+      'x-ww-sha256': toB64u(sha256(blob)),
     })
-  })
-
-  it('signs again with the server’s clock after `stale`', async () => {
-    const { seen, options } = fakeFetch((_, index) =>
-      index === 0
-        ? json(401, { ok: false, code: 'stale', serverTime: 5_000_000 })
-        : json(200, { ok: true, uploadedAt: 1 })
-    )
-    await putBackup(options, SLOT, new Uint8Array([9]))
-    expect(seen).toHaveLength(2)
-    expect(
-      verified(
-        'backup/put',
-        seen[1].headers['x-ww-p'],
-        seen[1].headers['x-ww-s']
-      ).ts
-    ).toBe(5_000_000)
+    expect(request.headers).not.toHaveProperty('x-ww-payload')
+    expect(request.body).toBe(blob)
   })
 
   it('surfaces the server’s codes', async () => {
     for (const [status, code] of [
       [413, 'too_large'],
-      [409, 'limit'],
+      [429, 'limit'],
       [429, 'rate_limited'],
       [503, 'disabled'],
     ] as const) {
@@ -122,7 +109,7 @@ describe('backup client', () => {
     }
   })
 
-  it('lists, gets, and deletes with JSON envelopes', async () => {
+  it('lists and gets with the session token and JSON bodies', async () => {
     const blob = new Uint8Array([7, 8, 9])
     const { seen, options } = fakeFetch(({ url }) => {
       if (url.endsWith('/backup/list'))
@@ -130,31 +117,60 @@ describe('backup client', () => {
           ok: true,
           slots: [{ slotId: SLOT, size: 3, uploadedAt: 10 }],
         })
-      if (url.endsWith('/backup/get'))
-        return new Response(blob, {
-          status: 200,
-          headers: { 'content-type': 'application/octet-stream' },
-        })
-      return json(200, { ok: true })
+      return new Response(blob, {
+        status: 200,
+        headers: { 'content-type': 'application/octet-stream' },
+      })
     })
     expect(await listBackups(options)).toEqual([
       { slotId: SLOT, size: 3, uploadedAt: 10 },
     ])
     expect(await getBackup(options, SLOT)).toEqual(blob)
+    expect(seen.map((request) => request.headers.authorization)).toEqual([
+      'Bearer access',
+      'Bearer access',
+    ])
+    expect(seen.map((request) => JSON.parse(request.body as string))).toEqual([
+      {},
+      { slotId: SLOT },
+    ])
+  })
+
+  it('deletes with the session token and the account key’s envelope', async () => {
+    const { seen, options } = fakeFetch(() => json(200, { ok: true }))
     await deleteBackup(options, SLOT)
     await deleteBackup(options)
     const bodies = seen.map((request) => {
-      const { p, s } = JSON.parse(request.body as string) as {
-        p: string
-        s: string
+      expect(request.url).toBe('https://api.test/accounts/v1/backup/delete')
+      expect(request.headers.authorization).toBe('Bearer access')
+      const { payload, signature } = JSON.parse(request.body as string) as {
+        payload: string
+        signature: string
       }
-      return verified(request.url.split('/v1/')[1], p, s)
+      return verified('backup/delete', payload, signature)
     })
-    expect(bodies[0]).not.toHaveProperty('slotId')
-    expect(bodies[1].slotId).toBe(SLOT)
-    expect(bodies[2].slotId).toBe(SLOT)
+    expect(bodies[0]).toMatchObject({
+      slotId: SLOT,
+      accountPub: key.publicKey,
+      ts: 1_000_000,
+    })
     // Every slot: no slotId at all.
-    expect(bodies[3]).not.toHaveProperty('slotId')
+    expect(bodies[1]).not.toHaveProperty('slotId')
+  })
+
+  it('signs a delete again with the server’s clock after `stale`', async () => {
+    const { seen, options } = fakeFetch((_, index) =>
+      index === 0
+        ? json(401, { ok: false, code: 'stale', serverTime: 5_000_000 })
+        : json(200, { ok: true })
+    )
+    await deleteBackup(options, SLOT)
+    expect(seen).toHaveLength(2)
+    const { payload, signature } = JSON.parse(seen[1].body as string) as {
+      payload: string
+      signature: string
+    }
+    expect(verified('backup/delete', payload, signature).ts).toBe(5_000_000)
   })
 
   it('refuses a malformed slot list', async () => {

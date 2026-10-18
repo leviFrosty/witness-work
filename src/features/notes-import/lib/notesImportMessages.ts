@@ -1,7 +1,17 @@
+import { Platform } from 'react-native'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
+
+/**
+ * What Notes Import needs on a device that can't be verified: the account's own
+ * words (ADR 0027), which name Notes Import already.
+ */
+export const unverifiedDeviceKey = (): TranslationKey =>
+  Platform.OS === 'android'
+    ? 'account_unverifiedBodyAndroid'
+    : 'account_unverifiedBody'
 
 /**
  * Maps a run's error code to its user-facing i18n key. Callers cast the result
@@ -17,7 +27,6 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
     case 'network':
       return 'notesImport_networkError'
     case 'attestation_failed':
-    case 'attestation_required':
       return 'notesImport_attestationError'
     case 'attestation_unavailable':
       return 'notesImport_attestationUnavailable'
@@ -26,9 +35,11 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
     case 'transcribe_limit':
       return 'notesImport_paperLimit'
     case 'device_ineligible':
-      return 'notesImport_deviceIneligibleAndroid'
-    case 'play_services_required':
-      return 'notesImport_playServicesRequiredAndroid'
+      return unverifiedDeviceKey()
+    case 'suspended':
+      return 'notesImport_suspended'
+    case 'upgrade_required':
+      return 'notesImport_updateRequired'
     case 'refinement_limit':
       return 'notesImport_refinementLimit'
     case 'unavailable':
@@ -38,12 +49,16 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
   }
 }
 
-/** Machine reason codes the proxy emits; everything else is operator free text. */
+/**
+ * Machine reason codes the proxy emits, or the app sets (`device_unverified`);
+ * everything else is operator free text.
+ */
 const MACHINE_UNAVAILABLE_REASONS = new Set([
   'disabled',
   'no_provider',
   'version_below_min',
   'android_unavailable',
+  'device_unverified',
 ])
 
 /**

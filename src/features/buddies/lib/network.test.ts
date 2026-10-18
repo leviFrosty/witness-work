@@ -5,20 +5,22 @@ import {
   createBuddiesEngine,
   type BuddiesEngineDeps,
 } from '@/features/buddies/lib/engine'
-import { deriveIdentity } from '@/features/buddies/lib/keys'
 import {
   createRelayClient,
   RELAY_FULL_SYNC_TIMEOUT_MS,
   RELAY_TIMEOUT_MS,
   RelayError,
+  type RelayDeps,
 } from '@/features/buddies/lib/relay'
 import type { OutgoingShareSpec } from '@/features/buddies/lib/state'
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import {
   memoryStore,
+  ownerAuthFor,
   pair,
   random,
   setup,
+  testSessions,
 } from '@/features/buddies/lib/testing/engineHarness'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -32,19 +34,33 @@ const opOf = (url: unknown) => String(url).split('/buddies/v1/')[1]
 const reply = (status: number, body: unknown, headers = {}) =>
   new Response(JSON.stringify(body), { status, headers })
 
+/** A relay client for a new device on `fetchImpl`, with its own session. */
+function clientOn(fetchImpl: typeof fetch, extra: Partial<RelayDeps> = {}) {
+  const seed = random(32)
+  const sessions = testSessions({
+    fetchImpl,
+    now: Date.now,
+    accountKey: async () => seed,
+  })
+  const client = createRelayClient({
+    baseUrl: BASE_URL,
+    randomBytes: random,
+    authorize: (run, { signal }) => sessions.withSession(run, { signal }),
+    fetchImpl,
+    ...extra,
+  })
+  return { client, seed }
+}
+
 /** One engine on a scripted relay: `fetchImpl` decides every answer. */
 function scripted(
   fetchImpl: typeof fetch,
   extra: Partial<BuddiesEngineDeps> = {}
 ) {
-  const seed = random(32)
+  const { client, seed } = clientOn(fetchImpl)
   const store = memoryStore({})
   const engine = createBuddiesEngine({
-    relay: createRelayClient({
-      baseUrl: BASE_URL,
-      randomBytes: random,
-      fetchImpl,
-    }),
+    relay: client,
     store,
     randomBytes: random,
     now: Date.now,
@@ -122,11 +138,7 @@ describe('the relay client', () => {
 
   it("cancels a call when the caller's signal aborts", async () => {
     const relay = flakyRelay()
-    const client = createRelayClient({
-      baseUrl: BASE_URL,
-      randomBytes: random,
-      fetchImpl: relay.fetchImpl,
-    })
+    const { client } = clientOn(relay.fetchImpl)
     relay.stalled.add('invite/fetch')
     const controller = new AbortController()
     const fetched = client.fetchInvite('x', { signal: controller.signal })
@@ -138,6 +150,7 @@ describe('the relay client', () => {
     const client = createRelayClient({
       baseUrl: BASE_URL,
       randomBytes: random,
+      authorize: (run) => run('Bearer token', { accountId: 'a'.repeat(22) }),
       fetchImpl: (async () =>
         reply(
           503,
@@ -154,24 +167,30 @@ describe('the relay client', () => {
     let skew = 10 * 60 * 1000
     const stamps: number[] = []
     const fake = createFakeRelay(Date.now)
-    const client = createRelayClient({
-      baseUrl: BASE_URL,
-      randomBytes: random,
-      now: () => Date.now() + skew,
-      recalibrate: async () => {
-        skew = 0
-      },
-      fetchImpl: (async (url: string, init?: RequestInit) => {
-        const { p } = JSON.parse(String(init?.body)) as { p: string }
-        const { ts } = JSON.parse(fromUtf8(fromB64u(p))) as { ts: number }
+    const { client, seed } = clientOn(
+      (async (url: string, init?: RequestInit) => {
+        if (!opOf(url)) return fake.fetchImpl(url, init)
+        const { payload } = JSON.parse(String(init?.body)) as {
+          payload: string
+        }
+        const { ts } = JSON.parse(fromUtf8(fromB64u(payload))) as {
+          ts: number
+        }
         stamps.push(ts)
         if (Math.abs(ts - Date.now()) > 5 * 60 * 1000)
           return reply(401, { error: 'stale' })
         return fake.fetchImpl(url, init)
       }) as typeof fetch,
-    })
-    const me = deriveIdentity(random(32))
-    await expect(client.registerInbox(me)).resolves.toMatchObject({ ok: true })
+      {
+        now: () => Date.now() + skew,
+        recalibrate: async () => {
+          skew = 0
+        },
+      }
+    )
+    await expect(
+      client.registerInbox(ownerAuthFor(seed))
+    ).resolves.toMatchObject({ ok: true })
     expect(stamps).toHaveLength(2)
     expect(Math.abs(stamps[1] - Date.now())).toBeLessThan(60 * 1000)
   })
@@ -182,15 +201,15 @@ describe("the relay's clock", () => {
     const recalibrate = vi.fn(async () => {})
     const stamps: number[] = []
     const fake = createFakeRelay(Date.now)
-    const client = createRelayClient({
-      baseUrl: BASE_URL,
-      randomBytes: random,
-      // An hour fast, with nothing to correct it.
-      now: () => Date.now() + 60 * 60 * 1000,
-      recalibrate,
-      fetchImpl: (async (url: string, init?: RequestInit) => {
-        const { p } = JSON.parse(String(init?.body)) as { p: string }
-        const { ts } = JSON.parse(fromUtf8(fromB64u(p))) as { ts: number }
+    const { client, seed } = clientOn(
+      (async (url: string, init?: RequestInit) => {
+        if (!opOf(url)) return fake.fetchImpl(url, init)
+        const { payload } = JSON.parse(String(init?.body)) as {
+          payload: string
+        }
+        const { ts } = JSON.parse(fromUtf8(fromB64u(payload))) as {
+          ts: number
+        }
         stamps.push(ts)
         if (Math.abs(ts - Date.now()) > 5 * 60 * 1000)
           return reply(401, {
@@ -201,11 +220,13 @@ describe("the relay's clock", () => {
           })
         return fake.fetchImpl(url, init)
       }) as typeof fetch,
-    })
-    const me = deriveIdentity(random(32))
+      // An hour fast, with nothing to correct it.
+      { now: () => Date.now() + 60 * 60 * 1000, recalibrate }
+    )
+    const me = ownerAuthFor(seed)
     await client.registerInbox(me)
-    // Later calls are stamped right the first time.
-    await client.syncInbox(me, 0)
+    // Later signed calls are stamped right the first time.
+    await client.registerInbox(me)
     expect(stamps).toHaveLength(3)
     expect(Math.abs(stamps[2] - Date.now())).toBeLessThan(60 * 1000)
     expect(recalibrate).not.toHaveBeenCalled()

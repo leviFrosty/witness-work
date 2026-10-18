@@ -27,8 +27,11 @@ const AccountScreen = () => {
         <ScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
-          <AccountStatusSection overview={overview} />
-          <BackupSection onChanged={changed} />
+          <AccountStatusSection
+            overview={overview}
+            onRetry={() => void refresh({ retry: true })}
+          />
+          <BackupSection accountState={overview.state} onChanged={changed} />
           <BackupSlotsSection
             slots={backups.slots}
             mySlotId={backups.mySlotId}

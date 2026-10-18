@@ -6,6 +6,7 @@ import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { accountKey, replaceAccountKey } from '@/app/account/accountKey'
+import { platformKey } from '@/app/account/attestationCopy'
 import { offerRestore } from '@/app/account/backupRestore'
 import { analytics } from '@/lib/analytics'
 import {
@@ -22,6 +23,7 @@ import { logger } from '@/lib/logger'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
 import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
+import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 
 type Props = {
   open: boolean
@@ -36,7 +38,8 @@ type Props = {
  * Enter a recovery key to make its account this device's. Checks the key as
  * it's typed; when the key differs from this device's and Buddies has data
  * here, a destructive confirmation names what's lost first. Closing the sheet
- * cancels.
+ * cancels. A device that can never attest can't use the account, so it's told
+ * that instead of replacing anything.
  */
 export default function UseRecoveryKeySheet(props: Props) {
   const theme = useTheme()
@@ -95,6 +98,32 @@ export default function UseRecoveryKeySheet(props: Props) {
   )
 }
 
+/** This device can never attest: the account wouldn't work here. */
+function Unverifiable() {
+  const theme = useTheme()
+  useEffect(() => {
+    analytics.capture('recovery_key_used', { outcome: 'unverified' })
+  }, [])
+  return (
+    <View style={{ padding: 20, gap: 12 }} testID='recovery-key-unverified'>
+      <Text
+        accessibilityRole='header'
+        style={{ fontSize: theme.fontSize('lg'), fontFamily: theme.fonts.bold }}
+      >
+        {i18n.t('account_unverifiedTitle')}
+      </Text>
+      <Text>
+        {i18n.t(
+          platformKey(
+            'handoff_signInUnverified',
+            'handoff_signInUnverifiedAndroid'
+          )
+        )}
+      </Text>
+    </View>
+  )
+}
+
 function RecoveryKeyForm({
   onFinished,
   busy,
@@ -105,6 +134,7 @@ function RecoveryKeyForm({
   setBusy: (busy: boolean) => void
 }) {
   const theme = useTheme()
+  const support = useAttestationSupport()
   const [value, setValue] = useState('')
   const input = useRef<RNTextInput>(null)
   const parsed = parseRecoveryKey(value)
@@ -180,6 +210,8 @@ function RecoveryKeyForm({
       setBusy(false)
     }
   }
+
+  if (support === 'unsupported') return <Unverifiable />
 
   return (
     <View style={{ padding: 20, gap: 12 }}>

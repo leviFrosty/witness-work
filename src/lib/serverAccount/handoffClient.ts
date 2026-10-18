@@ -1,17 +1,17 @@
 import { HttpError, request } from '@/lib/http/request'
 import {
   ACCOUNT_TIMEOUT_MS,
-  type RegisterAccountOptions,
-  sendSignedAccountOp,
+  type BearerAccountOptions,
+  sendBearerAccountOp,
 } from '@/lib/serverAccount/client'
 
 /**
  * Client for `/accounts/v1/handoff/*` (docs/accounts-protocol.md, "Handoff").
- * The old phone's ops are signed by the account key; the new phone's are plain
- * JSON authorized by the claim token. Failures throw `HttpError`, with the
- * server's code (`not_found`, `conflict`, `bad_signature`, `forbidden`,
- * `too_large`, `unknown_account`, `disabled`, `rate_limited`, …) in
- * `serverCode`.
+ * The old phone's ops are **Bearer**, with its account session; the new phone's
+ * are plain JSON authorized by the claim token, since it has no session until
+ * it has the key. Failures throw `HttpError`, with the server's code
+ * (`not_found`, `conflict`, `bad_signature`, `forbidden`, `too_large`,
+ * `unknown_account`, `disabled`, `rate_limited`, …) in `serverCode`.
  */
 
 export type HandoffStatus = 'open' | 'claimed' | 'sent' | 'done' | 'cancelled'
@@ -27,8 +27,8 @@ const STATUSES: readonly HandoffStatus[] = [
 const isStatus = (value: unknown): value is HandoffStatus =>
   STATUSES.includes(value as HandoffStatus)
 
-/** The old phone: signed by the account key. */
-export type OfferClientOptions = RegisterAccountOptions
+/** The old phone: its account session. */
+export type OfferClientOptions = BearerAccountOptions
 
 /** The new phone: no account yet, so nothing to sign with. */
 export type ClaimClientOptions = {
@@ -80,12 +80,12 @@ async function plain(
   return { status: response.status, data: response.data ?? null }
 }
 
-async function signed(
+async function bearer(
   op: 'handoff/open' | 'handoff/status' | 'handoff/send' | 'handoff/cancel',
   fields: Record<string, string>,
   options: OfferClientOptions
 ) {
-  const response = await sendSignedAccountOp<Body>(op, fields, options)
+  const response = await sendBearerAccountOp<Body>(op, fields, options)
   return { status: response.status, data: response.data ?? null }
 }
 
@@ -94,7 +94,7 @@ export async function openHandoff(
   { channelId, verifier }: { channelId: string; verifier: string },
   options: OfferClientOptions
 ): Promise<{ expiresAt: number }> {
-  const response = await signed(
+  const response = await bearer(
     'handoff/open',
     { channelId, verifier },
     options
@@ -107,7 +107,7 @@ export async function handoffStatus(
   channelId: string,
   options: OfferClientOptions
 ): Promise<HandoffStatusView> {
-  const response = await signed('handoff/status', { channelId }, options)
+  const response = await bearer('handoff/status', { channelId }, options)
   const data = response.data
   if (!isStatus(data?.status)) throw unexpected(response.status)
   return {
@@ -123,7 +123,7 @@ export async function sendHandoffKey(
   { channelId, key }: { channelId: string; key: string },
   options: OfferClientOptions
 ): Promise<void> {
-  okOnly(await signed('handoff/send', { channelId, key }, options))
+  okOnly(await bearer('handoff/send', { channelId, key }, options))
 }
 
 /** Old phone: ends the channel. A no-op once `done`. */
@@ -131,7 +131,7 @@ export async function cancelHandoffAsOffer(
   channelId: string,
   options: OfferClientOptions
 ): Promise<void> {
-  okOnly(await signed('handoff/cancel', { channelId }, options))
+  okOnly(await bearer('handoff/cancel', { channelId }, options))
 }
 
 /** New phone: claims the channel with its key and sealed hello. */

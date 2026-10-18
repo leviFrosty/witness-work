@@ -61,6 +61,7 @@ import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 import UndoToastLayer from '@/components/UndoToastLayer'
 import AppLockGate from '@/app/app-lock/AppLockGate'
+import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
 
 initializeApp()
 
@@ -180,6 +181,7 @@ export default function App() {
                             <RootStackComponent />
                             <UndoToastLayer />
                             <PointerTooltipLayer />
+                            <UpdateRequiredGate />
                             {/* Last, so it covers everything else. */}
                             <AppLockGate />
                           </SurveyProvider>

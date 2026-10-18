@@ -16,8 +16,8 @@ vi.mock('react-native', () => ({
   },
 }))
 vi.mock('@/lib/featureFlags', () => ({ useFeatureFlag: () => mocks.enabled }))
-vi.mock('@/features/notes-import/lib/notesImportAppAttestRuntime', () => ({
-  prepareNotesImportAppAttestRecovery: mocks.prepare,
+vi.mock('@/lib/attestation/appAttestRuntime', () => ({
+  prepareAppAttestRecovery: mocks.prepare,
 }))
 vi.mock('@/features/notes-import/hooks/useNotesImportManager', () => ({
   useNotesImportManager: {

@@ -38,6 +38,12 @@ export const routePlanErrorMessage = ({
         : i18n.t('routePlan_error_rateLimited')
     case 'supporter_required':
       return i18n.t('routePlan_error_supporter')
+    case 'suspended':
+      return i18n.t('routePlan_error_suspended')
+    case 'device_unverified':
+      return i18n.t('routePlan_error_unverified')
+    case 'verify_later':
+      return i18n.t('account_verifyLaterBody')
     case 'unavailable':
       return i18n.t('routePlan_error_unavailable')
     case 'supporter_check_failed':

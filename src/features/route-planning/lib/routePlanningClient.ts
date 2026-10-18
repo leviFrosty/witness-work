@@ -1,14 +1,18 @@
 import apis from '@/constants/apis'
-import { devBypassHeaders } from '@/lib/http/devBypass'
 import { errorBodyCode } from '@/lib/http/errorBody'
 import { classifyNetworkError } from '@/lib/http/networkError'
-import { HttpError, request } from '@/lib/http/request'
+import { HttpError } from '@/lib/http/request'
+import { accountSessions } from '@/lib/serverAccount'
+import { linkBeforePaidCall } from '@/lib/serverAccount/revenueCatLinkRuntime'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 import type { Coordinate } from '@/types/contact'
 
 /**
- * Client for ww-api `POST /route-planning/optimize`. Sends the account id (for
- * the server's Supporter check) and bare coordinates — never names, addresses,
- * notes, or topics.
+ * Client for ww-api `POST /route-planning/optimize`, as this device's attested
+ * account session (ADR 0027): the server checks the account's Supporter status
+ * (ADR 0029), so this links the RevenueCat customer first when this launch
+ * hasn't. Sends bare coordinates only — never names, addresses, notes, or
+ * topics.
  */
 
 export type RouteOptimization = {
@@ -22,6 +26,12 @@ export type RouteOptimization = {
 export type RoutePlanningError =
   | 'supporter_required'
   | 'supporter_check_failed'
+  /** The account is suspended. */
+  | 'suspended'
+  /** This device can never be verified, so it has no account session. */
+  | 'device_unverified'
+  /** Verifying this device has to wait (Apple or Google unreachable). */
+  | 'verify_later'
   | 'daily_limit'
   | 'rate_limited'
   | 'no_route'
@@ -43,6 +53,7 @@ export type OptimizeRouteResult =
 const SERVER_ERRORS = new Set<RoutePlanningError>([
   'supporter_required',
   'supporter_check_failed',
+  'suspended',
   'daily_limit',
   'rate_limited',
   'no_route',
@@ -63,24 +74,57 @@ const isOrder = (value: unknown, count: number): value is number[] =>
   new Set(value).size === count &&
   value.every((index) => Number.isInteger(index) && index >= 0 && index < count)
 
+/** Why the session couldn't be used, in the screen's terms. */
+const sessionFailure = (
+  error: AccountSessionError
+): OptimizeRouteResult & { ok: false } => {
+  switch (error.failure) {
+    case 'offline':
+      return { ok: false, error: 'offline' }
+    case 'cancelled':
+      return { ok: false, error: 'cancelled' }
+    case 'unavailable':
+      return { ok: false, error: 'unavailable' }
+    case 'rateLimited':
+      return {
+        ok: false,
+        error: 'rate_limited',
+        ...(error.retryAfterMs !== null && {
+          retryAfterMs: error.retryAfterMs,
+        }),
+      }
+    case 'attestation':
+      return error.attestation === 'device'
+        ? { ok: false, error: 'device_unverified' }
+        : error.attestation === 'temporary'
+          ? { ok: false, error: 'verify_later' }
+          : { ok: false, error: 'failed' }
+    // `upgrade` already showed Update Required.
+    default:
+      return { ok: false, error: 'failed' }
+  }
+}
+
 export const optimizeRoute = async ({
-  accountId,
   start,
   stops,
   signal,
 }: {
-  accountId: string
   start: Coordinate
   stops: Coordinate[]
   signal?: AbortSignal
 }): Promise<OptimizeRouteResult> => {
   try {
+    await linkBeforePaidCall()
+    if (signal?.aborted) return { ok: false, error: 'cancelled' }
     // Not retried: each call counts toward the daily route limit.
-    const { data } = await request<Record<string, unknown> | null>({
+    const { data } = await accountSessions.request<Record<
+      string,
+      unknown
+    > | null>({
       url: apis.routePlanningOptimize,
       method: 'POST',
-      json: { accountId, start: point(start), stops: stops.map(point) },
-      headers: devBypassHeaders(),
+      json: { start: point(start), stops: stops.map(point) },
       timeoutMs: OPTIMIZE_TIMEOUT_MS,
       signal,
     })
@@ -95,6 +139,8 @@ export const optimizeRoute = async ({
     }
     return { ok: true, order: data.order, distanceMeters, durationSeconds }
   } catch (error) {
+    // An HttpError too, so first.
+    if (error instanceof AccountSessionError) return sessionFailure(error)
     // `code` is the stable code; `error` is a message older builds show.
     const code = errorBodyCode(error)
     if (SERVER_ERRORS.has(code as RoutePlanningError)) {

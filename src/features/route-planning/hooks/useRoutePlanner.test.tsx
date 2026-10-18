@@ -12,9 +12,6 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios', Version: '18.4' } }))
-vi.mock('@/hooks/useAccount', () => ({
-  default: () => ({ accountId: 'account-1234' }),
-}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))
 vi.mock('@/lib/links', () => ({ openURL: mocks.openURL }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
@@ -91,7 +88,6 @@ describe('useRoutePlanner', () => {
     await act(async () => planner.plan())
 
     expect(mocks.optimizeRoute).toHaveBeenCalledWith({
-      accountId: 'account-1234',
       start: here,
       stops: [stop(1), stop(2), stop(3)].map((s) => s.coordinate),
       signal: expect.any(AbortSignal),

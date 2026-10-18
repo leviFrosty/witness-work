@@ -1,14 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ fetch: vi.fn(), offline: false }))
+const mocks = vi.hoisted(() => ({
+  fetch: vi.fn(),
+  offline: false,
+  links: 0,
+  sessionError: null as unknown,
+}))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => mocks.offline }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
+vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  linkBeforePaidCall: async () => {
+    mocks.links++
+  },
+}))
+// The session adds its bearer token; `sessionError` stands in for a session
+// that couldn't be opened.
+vi.mock('@/lib/serverAccount', async () => {
+  const { request } = await import('@/lib/http/request')
+  return {
+    accountSessions: {
+      request: async (options: Parameters<typeof request>[0]) => {
+        if (mocks.sessionError) throw mocks.sessionError
+        return request({
+          ...options,
+          headers: { ...options.headers, authorization: 'Bearer at-1' },
+        })
+      },
+    },
+  }
+})
 vi.stubGlobal('fetch', mocks.fetch)
 
 import { optimizeRoute } from '@/features/route-planning/lib/routePlanningClient'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 
 const args = {
-  accountId: 'account-1234',
   start: { latitude: 39.1, longitude: -84.5 },
   stops: [
     { latitude: 39.11, longitude: -84.51 },
@@ -25,10 +51,12 @@ const respond = (
 beforeEach(() => {
   mocks.fetch.mockReset()
   mocks.offline = false
+  mocks.links = 0
+  mocks.sessionError = null
 })
 
 describe('optimizeRoute', () => {
-  it('sends the account id and bare coordinates only', async () => {
+  it('sends bare coordinates only, as the session, after linking RevenueCat', async () => {
     mocks.fetch.mockResolvedValue(
       respond(200, {
         order: [1, 0],
@@ -47,8 +75,9 @@ describe('optimizeRoute', () => {
     expect(url).toBe(
       'https://ww-proxy.leviwilkerson.com/route-planning/optimize'
     )
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer at-1')
+    expect(mocks.links).toBe(1)
     expect(body).toEqual({
-      accountId: 'account-1234',
       start: { lat: 39.1, lng: -84.5 },
       stops: [
         { lat: 39.11, lng: -84.51 },
@@ -70,6 +99,7 @@ describe('optimizeRoute', () => {
   it('passes known server codes through and folds the rest into failed', async () => {
     for (const code of [
       'supporter_required',
+      'suspended',
       'daily_limit',
       'rate_limited',
       'no_route',
@@ -138,5 +168,29 @@ describe('optimizeRoute', () => {
     await expect(
       optimizeRoute({ ...args, signal: controller.signal })
     ).resolves.toEqual({ ok: false, error: 'cancelled' })
+  })
+
+  it('explains a session that could not be opened', async () => {
+    const cases: [AccountSessionError, unknown][] = [
+      [new AccountSessionError('offline'), { ok: false, error: 'offline' }],
+      [
+        new AccountSessionError('attestation', { attestation: 'device' }),
+        { ok: false, error: 'device_unverified' },
+      ],
+      [
+        new AccountSessionError('attestation', { attestation: 'temporary' }),
+        { ok: false, error: 'verify_later' },
+      ],
+      [new AccountSessionError('upgrade'), { ok: false, error: 'failed' }],
+      [
+        new AccountSessionError('unavailable'),
+        { ok: false, error: 'unavailable' },
+      ],
+    ]
+    for (const [error, expected] of cases) {
+      mocks.sessionError = error
+      await expect(optimizeRoute(args)).resolves.toEqual(expected)
+    }
+    expect(mocks.fetch).not.toHaveBeenCalled()
   })
 })

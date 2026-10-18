@@ -4265,6 +4265,8 @@
   },
   "routePlan_error_supporter": "Your Supporter status couldn't be confirmed. Restore your purchase from the Supporter screen, then try again.",
   "routePlan_error_unavailable": "Route planning is temporarily unavailable. Try again later.",
+  "routePlan_error_suspended": "Route planning has been turned off for your account. If you think this is a mistake, contact support from the Help Center.",
+  "routePlan_error_unverified": "WitnessWork couldn't verify this device, so route planning isn't available on it. Everything else works as usual.",
   "routePlan_error_failed": "Couldn't plan the route right now. Try again in a moment.",
   "badgeLevel_1": "Bronze",
   "badgeLevel_2": "Silver",

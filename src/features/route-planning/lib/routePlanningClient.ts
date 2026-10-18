@@ -3,7 +3,10 @@ import { errorBodyCode } from '@/lib/http/errorBody'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import { HttpError } from '@/lib/http/request'
 import { accountSessions } from '@/lib/serverAccount'
-import { linkBeforePaidCall } from '@/lib/serverAccount/revenueCatLinkRuntime'
+import {
+  linkBeforePaidCall,
+  relinkAfterSupporterRefusal,
+} from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 import type { Coordinate } from '@/types/contact'
 
@@ -117,16 +120,26 @@ export const optimizeRoute = async ({
   try {
     await linkBeforePaidCall()
     if (signal?.aborted) return { ok: false, error: 'cancelled' }
-    // Not retried: each call counts toward the daily route limit.
-    const { data } = await accountSessions.request<Record<
-      string,
-      unknown
-    > | null>({
-      url: apis.routePlanningOptimize,
-      method: 'POST',
-      json: { start: point(start), stops: stops.map(point) },
-      timeoutMs: OPTIMIZE_TIMEOUT_MS,
-      signal,
+    const send = () =>
+      accountSessions.request<Record<string, unknown> | null>({
+        url: apis.routePlanningOptimize,
+        method: 'POST',
+        json: { start: point(start), stops: stops.map(point) },
+        timeoutMs: OPTIMIZE_TIMEOUT_MS,
+        signal,
+      })
+    // Not retried otherwise: each call counts toward the daily route limit. A
+    // `supporter_required` refusal never counts, and can mean the server lost
+    // this device's RevenueCat link: link again, and retry once if that made
+    // the account a Supporter.
+    const { data } = await send().catch(async (error: unknown) => {
+      if (
+        errorBodyCode(error) !== 'supporter_required' ||
+        !(await relinkAfterSupporterRefusal()) ||
+        signal?.aborted
+      )
+        throw error
+      return send()
     })
     const distanceMeters = Number(data?.distanceMeters)
     const durationSeconds = Number(data?.durationSeconds)

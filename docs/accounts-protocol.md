@@ -318,6 +318,7 @@ ww-api answers whether an account is a Supporter from its own record, which Reve
 - when a session opens, the account key changes, or the RevenueCat id changes (ADR 0011 adopting another device's id);
 - after a purchase or a restore, and whenever RevenueCat reports a change in entitlements;
 - before Notes Import's kickoff and route planning, when this launch hasn't linked yet;
+- when route planning is refused as not a Supporter (`supporter_required`), even if it linked today: the server can have dropped the link (the 5-account cap) or never got it. If the link answers Supporter, the app retries the call once; the refusal didn't count toward the route limits;
 - otherwise at most once a day, when the app comes to the foreground.
 
 It remembers the last link (a hash of the account id and RevenueCat id, and the time) in device-local MMKV. Offline or a refused session waits for the next trigger; 503 waits out its `Retry-After`. A link failure never blocks Notes Import or route planning: the server answers from what it already has.

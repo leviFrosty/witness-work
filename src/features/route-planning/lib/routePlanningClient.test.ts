@@ -4,6 +4,8 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   offline: false,
   links: 0,
+  relinks: 0,
+  relinkSupporter: false,
   sessionError: null as unknown,
 }))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => mocks.offline }))
@@ -11,6 +13,10 @@ vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   linkBeforePaidCall: async () => {
     mocks.links++
+  },
+  relinkAfterSupporterRefusal: async () => {
+    mocks.relinks++
+    return mocks.relinkSupporter
   },
 }))
 // The session adds its bearer token; `sessionError` stands in for a session
@@ -52,6 +58,8 @@ beforeEach(() => {
   mocks.fetch.mockReset()
   mocks.offline = false
   mocks.links = 0
+  mocks.relinks = 0
+  mocks.relinkSupporter = false
   mocks.sessionError = null
 })
 
@@ -118,6 +126,47 @@ describe('optimizeRoute', () => {
       ok: false,
       error: 'failed',
     })
+  })
+
+  it('links again and retries once when refused as not a Supporter', async () => {
+    mocks.relinkSupporter = true
+    mocks.fetch
+      .mockResolvedValueOnce(respond(403, { code: 'supporter_required' }))
+      .mockResolvedValueOnce(
+        respond(200, { order: [0, 1], distanceMeters: 1, durationSeconds: 1 })
+      )
+    await expect(optimizeRoute(args)).resolves.toMatchObject({ ok: true })
+    expect(mocks.relinks).toBe(1)
+    expect(mocks.fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops at one retry, and none when the new link isn’t a Supporter', async () => {
+    mocks.fetch.mockImplementation(async () =>
+      respond(403, { code: 'supporter_required' })
+    )
+    await expect(optimizeRoute(args)).resolves.toEqual({
+      ok: false,
+      error: 'supporter_required',
+    })
+    expect(mocks.fetch).toHaveBeenCalledTimes(1)
+
+    mocks.relinkSupporter = true
+    await expect(optimizeRoute(args)).resolves.toEqual({
+      ok: false,
+      error: 'supporter_required',
+    })
+    expect(mocks.fetch).toHaveBeenCalledTimes(3)
+    expect(mocks.relinks).toBe(2)
+  })
+
+  it('never links again for any other refusal', async () => {
+    mocks.relinkSupporter = true
+    mocks.fetch.mockImplementation(async () =>
+      respond(429, { code: 'daily_limit' })
+    )
+    await optimizeRoute(args)
+    expect(mocks.relinks).toBe(0)
+    expect(mocks.fetch).toHaveBeenCalledTimes(1)
   })
 
   it('passes the server Retry-After along with a rate limit', async () => {

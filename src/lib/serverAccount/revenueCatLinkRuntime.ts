@@ -76,6 +76,25 @@ export const linkBeforePaidCall = async (): Promise<void> => {
   clearTimeout(timer)
 }
 
+/**
+ * After ww-api refused a paid call as not a Supporter: links again now, even if
+ * this device linked today, because the server can have lost the link (each
+ * customer keeps at most 5 accounts, ADR 0029) or never got it (a link that
+ * failed or took too long). Waits at most `PAID_CALL_LINK_WAIT_MS`. True when
+ * the server now answers Supporter, so the call is worth one retry.
+ */
+export const relinkAfterSupporterRefusal = async (): Promise<boolean> => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const outcome = await Promise.race([
+    revenueCatLink.ensure({ force: true, open: true, reason: 'refused' }),
+    new Promise<null>((resolve) => {
+      timer = setTimeout(() => resolve(null), PAID_CALL_LINK_WAIT_MS)
+    }),
+  ])
+  clearTimeout(timer)
+  return outcome?.result === 'linked' && outcome.supporter
+}
+
 onAccountChange((change) => {
   // A session just opened: `open` waits for it rather than opening another.
   // After a key change only an existing session counts: after Delete Buddies

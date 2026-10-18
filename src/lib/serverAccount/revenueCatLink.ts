@@ -45,6 +45,8 @@ export type RevenueCatLinkReason =
   | 'adopted'
   | 'entitlements'
   | 'paid_call'
+  /** The server refused a paid call as not a Supporter. */
+  | 'refused'
   | 'tools'
 
 export type RevenueCatLinkOutcome =

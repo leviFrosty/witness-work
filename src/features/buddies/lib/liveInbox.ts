@@ -156,16 +156,37 @@ export function createLiveInbox(deps: LiveInboxDeps) {
     }, inMs)
   }
 
+  /**
+   * Closes a connection that's no longer wanted. React Native on Android can't
+   * cancel one that's still connecting, so it may open (and talk) after it was
+   * closed: close it again then, now that closing works, and ignore it.
+   */
+  const discard = (live: LiveSocket) => {
+    live.onopen = live.onmessage = () => live.close(1000)
+    live.onerror = live.onclose = null
+    live.close(1000)
+  }
+
   const attach = (live: LiveSocket) => {
     socket = live
     opened = false
     let heard = false
+    /** Dropped or replaced since: see `discard`. */
+    const stale = () => {
+      if (socket === live) return false
+      live.close(1000)
+      return true
+    }
     live.onopen = () => {
+      if (stale()) return
       opened = heard = true
       emit({ type: 'open' })
-      pingTimer = setInterval(() => sendPing(live), PING_INTERVAL_MS)
+      pingTimer = setInterval(() => {
+        if (!stale()) sendPing(live)
+      }, PING_INTERVAL_MS)
     }
     live.onmessage = (event) => {
+      if (stale()) return
       heard = true
       const message = parseMessage(event.data)
       if (message === 'pong') {
@@ -220,13 +241,15 @@ export function createLiveInbox(deps: LiveInboxDeps) {
     verified
       .then(() => {
         refused = false
-        return deps.open()
+        // Stopped while checking: opening now would only be closed again.
+        return running ? deps.open() : null
       })
       .then(
         (live) => {
           connecting = false
+          if (!live) return
           if (running && !socket) attach(live)
-          else live.close(1000)
+          else discard(live)
         },
         (error: unknown) => {
           connecting = false
